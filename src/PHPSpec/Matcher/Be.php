@@ -2,7 +2,7 @@
 
 require_once 'PHPSpec/Matcher/Interface.php';
 
-class PHPSpec_Matcher_Equal implements PHPSpec_Matcher_Interface
+class PHPSpec_Matcher_Be implements PHPSpec_Matcher_Interface
 {
 
     protected $_expected = null;
@@ -22,16 +22,16 @@ class PHPSpec_Matcher_Equal implements PHPSpec_Matcher_Interface
 
     public function getFailureMessage()
     {
-        return 'expected ' . strval($this->_expected) . ', got ' . strval($this->_actual) . ' (using equal())';
+        return 'expected ' . strval($this->_expected) . ', got ' . strval($this->_actual) . ' (using be())';
     }
 
     public function getNegativeFailureMessage()
     {
-        return 'expected ' . strval($this->_actual) . ' not to equal ' . strval($this->_expected) . ' (using equal())';
+        return 'expected ' . strval($this->_actual) . ' not to be ' . strval($this->_expected) . ' (using be())';
     }
 
     public function getDescription()
     {
-        return 'equal ' . strval($this->_expected);
+        return 'be ' . strval($this->_expected);
     }
 }
