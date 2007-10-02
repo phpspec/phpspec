@@ -9,10 +9,11 @@ class Foo {
     public $member = 1;
 }
 
-$foo = PHPSpec_Specification::getSpec('Foo');
+$foo = new Foo;
+$spec = PHPSpec_Specification::getSpec($foo);
 
-$foo->member->should()->equal(1);
-assert($foo->getMatcherResult() === true);
+$spec->member->should()->equal(1);
+assert($spec->getMatcherResult() === true);
 
 ?>
 ===DONE===
