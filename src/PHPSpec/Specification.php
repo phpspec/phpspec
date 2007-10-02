@@ -21,6 +21,8 @@ class PHPSpec_Specification
 
     protected $_matcherResult = null;
 
+    protected $_matcher = null;
+
     public function __construct(PHPSpec_Object_Interrogator $interrogator = null)
     {
         if (!is_null($interrogator)) {
@@ -103,6 +105,21 @@ class PHPSpec_Specification
     public function getMatcherResult()
     {
         return $this->_matcherResult;
+    }
+
+    protected function __set($name, $value)
+    {
+        $this->_interrogator->{$name} = $value;
+    }
+
+    protected function __isset($name)
+    {
+        return isset($this->_interrogator->{$name});
+    }
+
+    protected function __unset($name)
+    {
+        unset($this->_interrogator->{$name});
     }
 
     protected function _createMatcher($method)
