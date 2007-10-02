@@ -3,7 +3,7 @@ Should proxy method calls to the source object
 --FILE--
 <?php
 require dirname(__FILE__) . '/../_setup.inc';
-require_once 'PHPSpec/Object/Proxy.php';
+require_once 'PHPSpec/Object/Interrogator.php';
 
 class Foo {
     private $arg1 = null;
@@ -15,7 +15,7 @@ class Foo {
     }
 }
 
-$proxy = new PHPSpec_Object_Proxy('Foo', 1);
+$proxy = new PHPSpec_Object_Interrogator('Foo', 1);
 assert('$proxy->getArg1() == 1');
 
 
