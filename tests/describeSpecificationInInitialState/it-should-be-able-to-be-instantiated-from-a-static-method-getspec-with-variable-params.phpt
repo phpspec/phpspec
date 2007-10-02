@@ -8,7 +8,7 @@ require_once 'PHPSpec/Specification.php';
 class Foo {}
 
 $spec = PHPSpec_Specification::getSpec('Foo');
-assert('is_a($spec, "PHPSpec_Specification")')
+assert('$spec instanceof PHPSpec_Specification')
 
 ?>
 ===DONE===
