@@ -24,10 +24,7 @@ class PHPSpec_Expectation
 
     public function __toString()
     {
-        if ($this->getExpectedMatcherResult() === true) {
-            return 'should';
-        }
-        return 'should not';
+        return $this->getExpectedMatcherResult() === true ? 'should' : 'should not';
     }
 
 }
