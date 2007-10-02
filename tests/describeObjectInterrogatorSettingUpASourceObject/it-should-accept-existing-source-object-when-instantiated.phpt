@@ -2,8 +2,7 @@
 Should accept an existing source object when instantiated
 --FILE--
 <?php
-require dirname(__FILE__) . '/../_setup.inc';
-require_once 'PHPSpec/Object/Interrogator.php';
+require_once dirname(__FILE__) . '/../_setup.inc';
 
 class Foo {
 }

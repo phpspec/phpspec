@@ -2,8 +2,7 @@
 Should return a meaningful failure message if requested
 --FILE--
 <?php
-require dirname(__FILE__) . '/../_setup.inc';
-require_once 'PHPSpec/Matcher/Be.php';
+require_once dirname(__FILE__) . '/../_setup.inc';
 
 $be = new PHPSpec_Matcher_Be(1);
 $be->matches(0);

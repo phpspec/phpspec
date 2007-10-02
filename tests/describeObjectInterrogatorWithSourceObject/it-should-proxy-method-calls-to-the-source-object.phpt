@@ -2,8 +2,7 @@
 Should proxy method calls to the source object
 --FILE--
 <?php
-require dirname(__FILE__) . '/../_setup.inc';
-require_once 'PHPSpec/Object/Interrogator.php';
+require_once dirname(__FILE__) . '/../_setup.inc';
 
 class Foo {
     private $arg1 = null;

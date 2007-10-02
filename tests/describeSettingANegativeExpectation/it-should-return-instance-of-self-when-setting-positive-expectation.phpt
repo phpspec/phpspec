@@ -2,8 +2,7 @@
 Should return instance of self when setting a negative expectation
 --FILE--
 <?php
-require dirname(__FILE__) . '/../_setup.inc';
-require_once 'PHPSpec/Expectation.php';
+require_once dirname(__FILE__) . '/../_setup.inc';
 
 $expect = new PHPSpec_Expectation;
 $returned = $expect->shouldNot();

@@ -2,8 +2,7 @@
 Should be able to set and retrieve result for matchers
 --FILE--
 <?php
-require dirname(__FILE__) . '/../_setup.inc';
-require_once 'PHPSpec/Specification.php';
+require_once dirname(__FILE__) . '/../_setup.inc';
 
 class Foo {}
 

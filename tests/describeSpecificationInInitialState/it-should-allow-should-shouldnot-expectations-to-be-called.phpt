@@ -2,8 +2,7 @@
 Should allow should and shouldnot expectations to be called
 --FILE--
 <?php
-require dirname(__FILE__) . '/../_setup.inc';
-require_once 'PHPSpec/Specification.php';
+require_once dirname(__FILE__) . '/../_setup.inc';
 
 class Foo {}
 
