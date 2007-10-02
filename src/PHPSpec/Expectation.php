@@ -5,11 +5,6 @@ class PHPSpec_Expectation
 
     protected $_expectedMatcherResult = true;
 
-    public function __construct()
-    {
-    
-    }
-
     public function should()
     {
         $this->_expectedMatcherResult = true;
@@ -25,6 +20,14 @@ class PHPSpec_Expectation
     public function getExpectedMatcherResult()
     {
         return $this->_expectedMatcherResult;
+    }
+
+    public function __toString()
+    {
+        if ($this->getExpectedMatcherResult() === true) {
+            return 'should';
+        }
+        return 'should not';
     }
 
 }

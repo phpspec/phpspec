@@ -1,0 +1,5 @@
+TOTAL TIME: 01:27
+21 PASSED TESTS
+0 SKIPPED TESTS
+1 FAILED TESTS:
+D:\xampp\htdocs\projects\phpspec\trunk\tests\describeDslAsAProxyToSourceObject\it-should-construct-source-object-via-getSpec-with-optional-arguments.phpt
