@@ -56,6 +56,9 @@ class PHPSpec_Specification
 
     public function getInterrogator()
     {
+        if (is_null($this->_interrogator)) {
+            throw new Exception('an Interrogator has not yet been created');
+        }
         return $this->_interrogator;
     }
 
