@@ -1,0 +1,6 @@
+TOTAL TIME: 00:22
+3 PASSED TESTS
+0 SKIPPED TESTS
+2 FAILED TESTS:
+D:\xampp\htdocs\projects\phpspec\trunk\tests\Matcher\False\it-should-return-a-description-with-expected-value.phpt
+D:\xampp\htdocs\projects\phpspec\trunk\tests\Matcher\False\it-should-return-a-meaningful-negative-failure-message-if-requested.phpt
