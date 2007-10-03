@@ -15,12 +15,15 @@ class PHPSpec_Specification
 
     protected $_matcher = null;
 
+    protected $_runner = null; // hackish for phpt for now
+
     public function __construct(PHPSpec_Object_Interrogator $interrogator = null)
     {
         if (!is_null($interrogator)) {
             $this->_interrogator = $interrogator;
         }
         $this->_expectation = new PHPSpec_Expectation;
+        $this->_runner = new PHPSpec_Runner_Phpt;
     }
 
     public static function getSpec() // variable param list
@@ -37,6 +40,11 @@ class PHPSpec_Specification
         if (in_array($method, array('should', 'shouldNot'))) {
             $this->_expectation->$method();
             return $this;
+        }
+        if (in_array($method, array('be'))) {
+            if (empty($args)) {
+                return $this;
+            }
         }
         if (in_array($method, array('equal', 'be', 'anInstanceOf', 'greaterThan', 'true', 'false'))) {
             $this->setExpectedValue(array_shift($args));
@@ -102,6 +110,11 @@ class PHPSpec_Specification
         return $this->_matcherResult;
     }
 
+    public function setRunner($runner)
+    {
+        $this->_runner = $runner;
+    }
+
     protected function __set($name, $value)
     {
         $this->_interrogator->{$name} = $value;
@@ -126,6 +139,7 @@ class PHPSpec_Specification
     protected function _performMatching()
     {
         $this->setMatcherResult($this->_matcher->matches($this->getActualValue()));
+        $this->_runner->notify($this);
     }
 
 }

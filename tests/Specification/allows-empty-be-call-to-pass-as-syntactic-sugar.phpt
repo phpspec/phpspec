@@ -1,5 +1,5 @@
 --TEST--
-Should run a matcher and store result if a known matcher method is called
+Should allow an empty be() call to pass back Spec object since it's just a sugar call for grammer
 --FILE--
 <?php
 require_once dirname(__FILE__) . '/../_setup.inc';
@@ -16,7 +16,7 @@ $foo = new Foo;
 $spec = PHPSpec_Specification::getSpec($foo);
 $spec->setRunner(new RunnerSwallow); // isolate default phpt runner
 
-$spec->member->should()->equal(1);
+$spec->member->should()->be()->greaterThan(0);
 assert($spec->getMatcherResult() === true);
 
 ?>
