@@ -1,11 +1,11 @@
 --TEST--
-Should return instance of self when setting positive expectation
+Should return instance of self when setting a negative expectation
 --FILE--
 <?php
 require_once dirname(__FILE__) . '/../_setup.inc';
 
 $expect = new PHPSpec_Expectation;
-$returned = $expect->should();
+$returned = $expect->shouldNot();
 
 assert('$returned === $expect');
 

@@ -1,13 +1,13 @@
 --TEST--
-Should setup spec to expect a matcher having a FALSE result
+Should return TRUE if actual Object is an instance of expected class type
 --FILE--
 <?php
 require_once dirname(__FILE__) . '/../_setup.inc';
 
 $expect = new PHPSpec_Expectation;
-$expect->shouldNot();
+$expect->should();
 
-assert('$expect->getExpectedMatcherResult() === false');
+assert('$expect->getExpectedMatcherResult() === true');
 
 ?>
 ===DONE===

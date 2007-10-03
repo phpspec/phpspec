@@ -1,13 +1,13 @@
 --TEST--
-Should return instance of self when setting positive expectation
+Should setup spec to expect a matcher having a FALSE result
 --FILE--
 <?php
 require_once dirname(__FILE__) . '/../_setup.inc';
 
 $expect = new PHPSpec_Expectation;
-$returned = $expect->should();
+$expect->shouldNot();
 
-assert('$returned === $expect');
+assert('$expect->getExpectedMatcherResult() === false');
 
 ?>
 ===DONE===
