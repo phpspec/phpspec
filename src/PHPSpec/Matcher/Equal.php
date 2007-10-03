@@ -1,7 +1,5 @@
 <?php
 
-require_once 'PHPSpec/Matcher/Interface.php';
-
 class PHPSpec_Matcher_Equal implements PHPSpec_Matcher_Interface
 {
 
