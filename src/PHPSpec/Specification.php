@@ -38,7 +38,7 @@ class PHPSpec_Specification
             $this->_expectation->$method();
             return $this;
         }
-        if (in_array($method, array('equal', 'be', 'anInstanceOf'))) {
+        if (in_array($method, array('equal', 'be', 'anInstanceOf', 'greaterThan', 'true', 'false'))) {
             $this->setExpectedValue(array_shift($args));
             $this->_createMatcher($method);
             $this->_performMatching();
