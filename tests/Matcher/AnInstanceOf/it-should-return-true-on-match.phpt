@@ -2,7 +2,7 @@
 Should return TRUE if actual Object is an instance of expected class type
 --FILE--
 <?php
-require_once dirname(__FILE__) . '/../_setup.inc';
+require_once dirname(__FILE__) . '/../../_setup.inc';
 
 class Bar {}
 $bar = new Bar;
