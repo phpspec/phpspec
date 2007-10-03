@@ -1,13 +1,5 @@
 <?php
 
-require_once 'PHPSpec/Expectation.php';
-require_once 'PHPSpec/Object/Interrogator.php';
-
-/** Matchers */
-require_once 'PHPSpec/Matcher/Equal.php';
-require_once 'PHPSpec/Matcher/Be.php';
-require_once 'PHPSpec/Matcher/AnInstanceOf.php';
-
 class PHPSpec_Specification
 {
 
