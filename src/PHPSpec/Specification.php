@@ -58,6 +58,22 @@ class PHPSpec_Specification
 
     public function __get($name)
     {
+        if (in_array($name, array('should', 'shouldNot', 'a', 'an', 'of'))) {
+            if (in_array($name, array('should', 'shouldNot', 'be'))) {
+                switch ($name) {
+                    case 'should':
+                        $this->should();
+                        break;
+                    case 'shouldNot':
+                        $this->shouldNot();
+                        break;
+                    case 'be':
+                        $this->be();
+                        break;
+                }
+            }
+            return $this;
+        }
         $this->setActualValue($this->_interrogator->{$name});
         return $this;
     }
