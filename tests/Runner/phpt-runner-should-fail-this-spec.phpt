@@ -1,5 +1,5 @@
 --TEST--
-Phpt runner should fail this specification description
+Phpt runner should fail this specification description (normally the EXPECT section must hold "PASS" text).
 --FILE--
 <?php
 require_once dirname(__FILE__) . '/../_setup.inc';
@@ -12,6 +12,5 @@ $foo = new Foo;
 describe($foo)->member->should()->be()->greaterThan(1);
 
 ?>
-===DONE===
 --EXPECT--
-===DONE===
+expected greater than 1, got 1 (using greaterThan())

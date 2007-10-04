@@ -7,12 +7,15 @@ class PHPSpec_Runner_Phpt
     {
     }
 
-    public function notify(PHPSpec_Specification $specification)
+    public function notify(PHPSpec_Specification $specification, PHPSpec_Expectation $expectation)
     {
-        if ($specification->getMatcherResult() === true) {
-            assert(true);
+        if ($specification->getMatcherResult() === $expectation->getExpectedMatcherResult()) {
+            echo 'PASS';
             return;
         }
-        assert(false); // not to figure out how phpt works under the hood ;-)
+        if ($specification->getMatcherResult() === true) {
+            echo $specification->getMatcherNegativeFailureMessage();
+        }
+        echo $specification->getMatcherFailureMessage();
     }
 }

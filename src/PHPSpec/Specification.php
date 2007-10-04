@@ -110,6 +110,16 @@ class PHPSpec_Specification
         return $this->_matcherResult;
     }
 
+    public function getMatcherFailureMessage()
+    {
+        return $this->_matcher->getFailureMessage();
+    }
+
+    public function getMatcherNegativeFailureMessage()
+    {
+        return $this->_matcher->getNegativeFailureMessage();
+    }
+
     public function setRunner($runner)
     {
         $this->_runner = $runner;
@@ -139,7 +149,7 @@ class PHPSpec_Specification
     protected function _performMatching()
     {
         $this->setMatcherResult($this->_matcher->matches($this->getActualValue()));
-        $this->_runner->notify($this);
+        $this->_runner->notify($this, $this->getExpectation());
     }
 
 }

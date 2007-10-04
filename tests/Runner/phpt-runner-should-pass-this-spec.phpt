@@ -12,6 +12,5 @@ $foo = new Foo;
 describe($foo)->member->should()->be()->greaterThan(0);
 
 ?>
-===DONE===
 --EXPECT--
-===DONE===
+PASS
