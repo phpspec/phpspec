@@ -58,7 +58,7 @@ class PHPSpec_Specification
 
     public function __get($name)
     {
-        if (in_array($name, array('should', 'shouldNot', 'a', 'an', 'of'))) {
+        if (in_array($name, array('should', 'shouldNot', 'a', 'an', 'of', 'be'))) {
             if (in_array($name, array('should', 'shouldNot', 'be'))) {
                 switch ($name) {
                     case 'should':
