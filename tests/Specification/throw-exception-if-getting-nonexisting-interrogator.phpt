@@ -10,7 +10,7 @@ $spec = new PHPSpec_Specification;
 try {
     $int = $spec->getInterrogator();
     assert(false);
-} catch(Exception $e) {
+} catch(PHPSpec_Exception $e) {
     assert(true);
 }
 
