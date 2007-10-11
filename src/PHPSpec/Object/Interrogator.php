@@ -15,10 +15,10 @@ class PHPSpec_Object_Interrogator
                 if ($class->isInstantiable()) {
                     $object = call_user_func_array(array($class, 'newInstance'), $args);
                 } else {
-                    throw new Exception('class cannot be instantiated');
+                    throw new PHPSpec_Exception('class cannot be instantiated');
                 }
             } else {
-                throw new Exception('not a valid class type');
+                throw new PHPSpec_Exception('not a valid class type');
             }
         }
         $this->_sourceObject = $object;

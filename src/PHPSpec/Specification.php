@@ -15,7 +15,7 @@ class PHPSpec_Specification
 
     protected $_matcher = null;
 
-    protected $_runner = null; // hackish for phpt for now
+    //protected $_runner = null; // hackish for phpt for now
 
     public function __construct(PHPSpec_Object_Interrogator $interrogator = null)
     {
@@ -23,14 +23,14 @@ class PHPSpec_Specification
             $this->_interrogator = $interrogator;
         }
         $this->_expectation = new PHPSpec_Expectation;
-        $this->_runner = new PHPSpec_Runner_Phpt;
+        //$this->_runner = new PHPSpec_Runner_Phpt;
     }
 
     public static function getSpec() // variable param list
     {
         $args = func_get_args();
         $class = new ReflectionClass('PHPSpec_Object_Interrogator');
-        $interrogator = call_user_func_array(array($class, 'newInstance'), $args);
+        $interrogator = $class->newInstanceArgs($args);
         $spec = new self($interrogator);
         return $spec;
     }
@@ -81,7 +81,7 @@ class PHPSpec_Specification
     public function getInterrogator()
     {
         if (is_null($this->_interrogator)) {
-            throw new Exception('an Interrogator has not yet been created');
+            throw new PHPSpec_Exception('an Interrogator has not yet been created');
         }
         return $this->_interrogator;
     }
@@ -159,13 +159,13 @@ class PHPSpec_Specification
     protected function _createMatcher($method)
     {
         $matcherClass = 'PHPSpec_Matcher_' . ucfirst($method);
-        $this->_matcher = new $matcherClass($this->getExpectedValue());
+        $this->_matcher = new $matcherClass( $this->getExpectedValue() );
     }
 
     protected function _performMatching()
     {
-        $this->setMatcherResult($this->_matcher->matches($this->getActualValue()));
-        $this->_runner->notify($this, $this->getExpectation());
+        $this->setMatcherResult($this->_matcher->matches( $this->getActualValue() ));
+        //$this->_runner->notify($this, $this->getExpectation());
     }
 
 }
