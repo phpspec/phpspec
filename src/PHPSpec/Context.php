@@ -1,6 +1,6 @@
 <?php
 
-class PHPSpec_Context
+class PHPSpec_Context implements Countable
 {
 
     protected $_description = null;
@@ -8,10 +8,26 @@ class PHPSpec_Context
     protected $_specMethods = array();
     protected $_count = 0;
     protected $_sharedContextName = null;
+    protected $_specificationDsl = null;
 
     public function __construct()
     {
         $this->_buildDetails();
+    }
+
+    public function spec($object)
+    {
+        $interrogator = new PHPSpec_Object_Interrogator($object);
+        $this->_specificationDsl = new PHPSpec_Specification($interrogator);
+        return $this->_specificationDsl;
+    }
+
+    public function getCurrentSpecification()
+    {
+        if (is_null($this->_specificationDsl)) {
+            throw new PHPSpec_Exception('no specification object created yet');
+        }
+        return $this->_specificationDsl;
     }
 
     public function setDescription($description)
@@ -29,34 +45,39 @@ class PHPSpec_Context
         return $this->_specMethods;
     }
 
+    public function count()
+    {
+        return $this->_count;
+    }
+
     public function getSpecificationCount()
     {
         return $this->_count;
     }
 
-    public function run(PHPSpec_Runner $runner)
-    {
-        $this->_runner = $runner;
-        // ...
-    }
-
-    public function setRunner(PHPSpec_Runner $runner)
-    {
-        $this->_runner = $runner;
-    }
-
-    /**@todo */
+    /** @todo methods */
     public function sharedBehaviourWith($contextName)
     {
         $this->_sharedContextName = $contextName;
     }
-
-
     public function before()
     {
     }
-
     public function after()
+    {
+    }
+    public function beforeEach()
+    {
+        $this->before();
+    }
+    public function afterEach()
+    {
+        $this->after();
+    }
+    public function beforeAll()
+    {
+    }
+    public function afterAll()
     {
     }
 
