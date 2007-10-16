@@ -46,7 +46,7 @@ class PHPSpec_Runner_Collection implements Countable
             } catch (Exception $e) {
                 throw $e;
             }
-
+            $result->addPass($example);
         }
     }
 
