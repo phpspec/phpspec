@@ -41,12 +41,12 @@ class PHPSpec_Runner_Collection implements Countable
 
             try {
                 $example->execute();
+                $result->addPass($example);
             } catch (PHPSpec_Runner_FailedMatcherException $e) {
                 $result->addFailure($example);
             } catch (Exception $e) {
                 throw $e;
             }
-            $result->addPass($example);
         }
     }
 
