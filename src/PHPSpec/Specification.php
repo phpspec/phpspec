@@ -46,7 +46,7 @@ class PHPSpec_Specification
                 return $this;
             }
         }
-        if (in_array($method, array('equal', 'be', 'anInstanceOf', 'greaterThan', 'true', 'false'))) {
+        if (in_array($method, array('equal', 'be', 'anInstanceOf', 'greaterThan', 'true', 'false', 'beEmpty'))) {
             $this->setExpectedValue(array_shift($args));
             $this->_createMatcher($method);
             $this->_performMatching();
