@@ -36,9 +36,12 @@ class PHPSpec_Runner_Collection implements Countable
 
     public function execute(PHPSpec_Runner_Result $result)
     {
+        if (method_exists($this->_context, 'beforeAll')) {
+            $this->_context->beforeAll();
+        }
+
         $examples = $this->getExamples();
         foreach ($examples as $example) {
-
             try {
                 $example->execute();
                 $result->addPass($example);
@@ -47,6 +50,10 @@ class PHPSpec_Runner_Collection implements Countable
             } catch (Exception $e) {
                 throw $e;
             }
+        }
+
+        if (method_exists($this->_context, 'afterAll')) {
+            $this->_context->afterAll();
         }
     }
 

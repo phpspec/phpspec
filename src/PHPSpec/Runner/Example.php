@@ -46,9 +46,22 @@ class PHPSpec_Runner_Example
         return $this->_failedMessage;
     }
 
-    public function execute() // add error/exception catchers
+    public function execute()
     {
+        /**
+         * spec execution
+         */
+        if (method_exists($this->_context, 'before')) {
+            $this->_context->before();
+        }
         $this->_context->{$this->_methodName}();
+        if (method_exists($this->_context, 'after')) {
+            $this->_context->after();
+        }
+
+        /**
+         * Result collection
+         */
         $this->_specificationBeingExecuted = $this->_context->getCurrentSpecification();
         $expected = $this->_specificationBeingExecuted->getExpectation()->getExpectedMatcherResult();
         $actual = $this->_specificationBeingExecuted->getMatcherResult();
