@@ -4,10 +4,10 @@ Should return a description of the expectation
 <?php
 require_once dirname(__FILE__) . '/../../_setup.inc';
 
-$false = new PHPSpec_Matcher_False(false);
+$false = new PHPSpec_Matcher_BeFalse(false);
 $false->matches(false);
 echo $false->getDescription();
 
 ?>
 --EXPECT--
-FALSE
+be FALSE

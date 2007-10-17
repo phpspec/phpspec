@@ -16,7 +16,7 @@ $foo = new Foo;
 $spec = PHPSpec_Specification_Object::getSpec($foo);
 $spec->setRunner(new RunnerSwallow); // isolate default phpt runner
 
-$spec->member->should()->be()->greaterThan(0);
+$spec->member->should()->be()->beGreaterThan(0);
 assert($spec->getMatcherResult() === true);
 
 ?>

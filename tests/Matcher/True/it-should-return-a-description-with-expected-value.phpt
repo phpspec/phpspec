@@ -4,9 +4,9 @@ Should return a description of the expectation
 <?php
 require_once dirname(__FILE__) . '/../../_setup.inc';
 
-$true = new PHPSpec_Matcher_True(true);
+$true = new PHPSpec_Matcher_BeTrue(true);
 echo $true->getDescription();
 
 ?>
 --EXPECT--
-TRUE
+be TRUE

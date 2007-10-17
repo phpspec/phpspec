@@ -4,9 +4,9 @@ Should return a meaningful failure message if requested
 <?php
 require_once dirname(__FILE__) . '/../../_setup.inc';
 
-$false = new PHPSpec_Matcher_BeFalse(false);
-$false->matches(true);
-assert('$false->getFailureMessage() == "expected FALSE, got TRUE or non-boolean (using beFalse())"');
+$equal = new PHPSpec_Matcher_BeEqualTo(1);
+$equal->matches(0);
+assert('$equal->getFailureMessage() == "expected 1, got 0 (using beEqualTo())"');
 
 ?>
 ===DONE===

@@ -8,7 +8,7 @@ class Bar {}
 class Foo {}
 $foo = new Foo;
 
-$be = new PHPSpec_Matcher_AnInstanceOf('Bar');
+$be = new PHPSpec_Matcher_BeAnInstanceOf('Bar');
 assert('!$be->matches($foo)');
 
 ?>

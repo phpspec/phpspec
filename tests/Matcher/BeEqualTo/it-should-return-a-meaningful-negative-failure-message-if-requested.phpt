@@ -4,11 +4,11 @@ Should return a meaningful failure message if requested
 <?php
 require_once dirname(__FILE__) . '/../../_setup.inc';
 
-$greater = new PHPSpec_Matcher_BeGreaterThan(1);
-$greater->matches(0);
+$equal = new PHPSpec_Matcher_BeEqualTo(1);
+$equal->matches(0);
 assert('
-$greater->getNegativeFailureMessage() 
-    == "expected 0 not to be greater than 1 (using beGreaterThan())"
+$equal->getNegativeFailureMessage() 
+    == "expected 0 not to equal 1 (using beEqualTo())"
 ');
 
 ?>

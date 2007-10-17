@@ -1,6 +1,6 @@
 <?php
 
-class PHPSpec_Matcher_GreaterThan implements PHPSpec_Matcher_Interface
+class PHPSpec_Matcher_BeGreaterThan implements PHPSpec_Matcher_Interface
 {
 
     protected $_expected = null;
@@ -20,16 +20,16 @@ class PHPSpec_Matcher_GreaterThan implements PHPSpec_Matcher_Interface
 
     public function getFailureMessage()
     {
-        return 'expected greater than ' . strval($this->_expected) . ', got ' . strval($this->_actual) . ' (using greaterThan())';
+        return 'expected greater than ' . strval($this->_expected) . ', got ' . strval($this->_actual) . ' (using beGreaterThan())';
     }
 
     public function getNegativeFailureMessage()
     {
-        return 'expected ' . strval($this->_actual) . ' not to be greater than ' . strval($this->_expected) . ' (using greaterThan())';
+        return 'expected ' . strval($this->_actual) . ' not to be greater than ' . strval($this->_expected) . ' (using beGreaterThan())';
     }
 
     public function getDescription()
     {
-        return 'greater than ' . strval($this->_expected);
+        return 'be greater than ' . strval($this->_expected);
     }
 }

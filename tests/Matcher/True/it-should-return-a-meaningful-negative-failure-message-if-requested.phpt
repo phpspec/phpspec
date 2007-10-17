@@ -4,11 +4,11 @@ Should return a meaningful failure message if requested
 <?php
 require_once dirname(__FILE__) . '/../../_setup.inc';
 
-$true = new PHPSpec_Matcher_True(true);
+$true = new PHPSpec_Matcher_BeTrue(true);
 $true->matches(true);
 assert('
 $true->getNegativeFailureMessage() 
-    == "expected FALSE or non-boolean not TRUE (using true())"
+    == "expected FALSE or non-boolean not TRUE (using beTrue())"
 ');
 
 ?>

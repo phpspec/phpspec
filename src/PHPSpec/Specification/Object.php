@@ -24,7 +24,7 @@ class PHPSpec_Specification_Object extends PHPSpec_Specification
                 return $this;
             }
         }
-        if (in_array($method, array('equal', 'be', 'anInstanceOf', 'greaterThan', 'true', 'false', 'beEmpty'))) {
+        if (in_array($method, array('equal', 'be', 'beAnInstanceOf', 'beGreaterThan', 'beTrue', 'beFalse', 'beEmpty'))) {
             $this->setExpectedValue(array_shift($args));
             $this->_createMatcher($method);
             $this->_performMatching();

@@ -4,9 +4,9 @@ Should return a description with expected value
 <?php
 require_once dirname(__FILE__) . '/../../_setup.inc';
 
-$greater = new PHPSpec_Matcher_GreaterThan(1);
+$greater = new PHPSpec_Matcher_BeGreaterThan(1);
 echo $greater->getDescription();
 
 ?>
 --EXPECT--
-greater than 1
+be greater than 1

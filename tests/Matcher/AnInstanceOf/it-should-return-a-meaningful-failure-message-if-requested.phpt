@@ -8,11 +8,11 @@ class Bar {}
 class Foo {}
 $foo = new Foo;
 
-$be = new PHPSpec_Matcher_AnInstanceOf('Bar');
+$be = new PHPSpec_Matcher_BeAnInstanceOf('Bar');
 $be->matches($foo);
 
 echo $be->getFailureMessage();
 
 ?>
 --EXPECT--
-expected Bar, got Foo (using anInstanceOf())
+expected Bar, got Foo (using beAnInstanceOf())

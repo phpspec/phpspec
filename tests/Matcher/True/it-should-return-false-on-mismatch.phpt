@@ -4,7 +4,7 @@ Should return FALSE if actual value is not a boolean TRUE
 <?php
 require_once dirname(__FILE__) . '/../../_setup.inc';
 
-$true = new PHPSpec_Matcher_True(true);
+$true = new PHPSpec_Matcher_BeTrue(true);
 assert('!$true->matches(false)');
 
 ?>

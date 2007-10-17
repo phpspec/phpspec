@@ -11,7 +11,7 @@ class RunnerSwallow {
 $spec = PHPSpec_Specification_Scalar::getSpec(100);
 $spec->setRunner(new RunnerSwallow); // isolate default phpt runner
 
-$spec->should()->be()->greaterThan(0);
+$spec->should()->be()->beGreaterThan(0);
 assert($spec->getMatcherResult() === true);
 
 ?>

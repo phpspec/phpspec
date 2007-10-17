@@ -1,6 +1,6 @@
 <?php
 
-class PHPSpec_Matcher_True implements PHPSpec_Matcher_Interface
+class PHPSpec_Matcher_BeFalse implements PHPSpec_Matcher_Interface
 {
 
     protected $_expected = null;
@@ -9,7 +9,7 @@ class PHPSpec_Matcher_True implements PHPSpec_Matcher_Interface
 
     public function __construct($expected)
     {
-        $this->_expected = true;
+        $this->_expected = false;
     }
 
     public function matches($actual)
@@ -23,16 +23,16 @@ class PHPSpec_Matcher_True implements PHPSpec_Matcher_Interface
 
     public function getFailureMessage()
     {
-        return 'expected TRUE, got FALSE or non-boolean (using true())';
+        return 'expected FALSE, got TRUE or non-boolean (using beFalse())';
     }
 
     public function getNegativeFailureMessage()
     {
-        return 'expected FALSE or non-boolean not TRUE (using true())';
+        return 'expected TRUE or non-boolean not FALSE (using beFalse())';
     }
 
     public function getDescription()
     {
-        return 'TRUE';
+        return 'be FALSE';
     }
 }

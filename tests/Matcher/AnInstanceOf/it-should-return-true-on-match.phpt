@@ -7,7 +7,7 @@ require_once dirname(__FILE__) . '/../../_setup.inc';
 class Bar {}
 $bar = new Bar;
 
-$be = new PHPSpec_Matcher_AnInstanceOf('Bar');
+$be = new PHPSpec_Matcher_BeAnInstanceOf('Bar');
 assert('$be->matches($bar)');
 
 ?>

@@ -1,6 +1,6 @@
 <?php
 
-class PHPSpec_Matcher_AnInstanceOf implements PHPSpec_Matcher_Interface
+class PHPSpec_Matcher_BeAnInstanceOf implements PHPSpec_Matcher_Interface
 {
 
     protected $_expected = null;
@@ -25,12 +25,12 @@ class PHPSpec_Matcher_AnInstanceOf implements PHPSpec_Matcher_Interface
 
     public function getFailureMessage()
     {
-        return 'expected ' . strval($this->_expected) . ', got ' . strval($this->_actual) . ' (using anInstanceOf())';
+        return 'expected ' . strval($this->_expected) . ', got ' . strval($this->_actual) . ' (using beAnInstanceOf())';
     }
 
     public function getNegativeFailureMessage()
     {
-        return 'expected ' . strval($this->_actual) . ' not to be ' . strval($this->_expected) . ' (using anInstanceOf())';
+        return 'expected ' . strval($this->_actual) . ' not to be ' . strval($this->_expected) . ' (using beAnInstanceOf())';
     }
 
     public function getDescription()
