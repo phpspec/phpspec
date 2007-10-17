@@ -29,9 +29,16 @@ class PHPSpec_Specification
     public static function getSpec() // variable param list
     {
         $args = func_get_args();
-        $class = new ReflectionClass('PHPSpec_Object_Interrogator');
-        $interrogator = $class->newInstanceArgs($args);
-        $spec = new self($interrogator);
+        $value = $args[0];
+        if ((is_string($value) && class_exists($value, true)) || is_object($value)) {
+            $class = new ReflectionClass('PHPSpec_Object_Interrogator');
+            $interrogator = $class->newInstanceArgs($args);
+            $spec = new PHPSpec_Specification_Object($interrogator);
+        } else {
+            $scalarValue = array_shift($args);
+            $spec = new PHPSpec_Specification_Scalar($scalarValue);
+        }
+        
         return $spec;
     }
 

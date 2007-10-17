@@ -32,11 +32,17 @@ class PHPSpec_Runner_Example
 
     public function getSpecificationBeingExecuted()
     {
+        if (is_null($this->_specificationBeingExecuted)) {
+            throw new PHPSpec_Exception('cannot return a PHPSpec_Specification until the example is executed');
+        }
         return $this->_specificationBeingExecuted;
     }
 
     public function getFailedMessage()
     {
+        if (is_null($this->_failedMessage)) {
+            throw new PHPSpec_Exception('cannot return a failure message until the example is executed');
+        }
         return $this->_failedMessage;
     }
 

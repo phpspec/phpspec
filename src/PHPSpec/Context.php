@@ -15,10 +15,15 @@ class PHPSpec_Context implements Countable
         $this->_buildDetails();
     }
 
-    public function spec($object)
+    public function spec($value)
     {
-        $interrogator = new PHPSpec_Object_Interrogator($object);
-        $this->_specificationDsl = new PHPSpec_Specification($interrogator);
+        if ((is_string($value) && class_exists($value, true)) || is_object($value)) {
+            $interrogator = new PHPSpec_Object_Interrogator($value);
+            $this->_specificationDsl = PHPSpec_Specification::getSpec($interrogator);
+        } else {
+            $this->_specificationDsl = PHPSpec_Specification::getSpec($value);
+        }
+
         return $this->_specificationDsl;
     }
 
