@@ -1,5 +1,0 @@
-TOTAL TIME: 08:25
-123 PASSED TESTS
-0 SKIPPED TESTS
-1 FAILED TESTS:
-D:\xampp\htdocs\projects\phpspec\trunk\tests\Runner\Example\executes-a-fail-spec-and-throws-a-failedmatcher-exception.phpt
