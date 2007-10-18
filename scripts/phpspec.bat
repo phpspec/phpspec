@@ -168,5 +168,5 @@ REM permanent authorization for you to choose that version for the
 REM Library.
 REM
 
-set PHPBIN="?PHPPATH?"
-"?PHPPATH?" "?COMMANDPATH?" %*
+set PHPBIN="@php_bin@"
+"@php_bin@" "@php_dir@/PHPSpec/Console/Command.php" %*
