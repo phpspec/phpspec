@@ -159,8 +159,9 @@ Other Targets:
                 <pear minimum_version="1.6.0" recommended_version="1.6.2" />
             </dependencies>
 
-            <replacement path="phpspec" from="@php_bin@" to="php_bin" type="pear-config" />
-            <replacement path="phpspec.bat" from="@php_bin@" to="php_bin" type="pear-config" />
+            <dirroles key="scripts">script</dirroles>
+            <replacement path="scripts/phpspec" type="pear-config" from="@php_bin@" to="php_bin" />
+            <replacement path="scripts/phpspec.bat" from="@php_bin@" to="php_bin" type="pear-config" />
             
             <release>
                 <install as="phpspec" name="scripts/phpspec" />
