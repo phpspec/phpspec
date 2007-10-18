@@ -114,7 +114,6 @@ Other Targets:
                 <exclude name="**/.svn/**" />
                 <exclude name="build/**" />
                 <exclude name="src/**" />
-				<exclude name="scripts/**" />
             </fileset>
         </copy>
         <copy todir="${spec.pear.dir}">
@@ -132,6 +131,8 @@ Other Targets:
             <name>PHPSpec</name>
             <summary>A Behaviour-Driven Development framework for PHP</summary>
             <channel>pear.php.net</channel>
+            <!-- need to setup channel.phpspec.net/org etc, prior to first real release -->
+            <!--<channel>channel.phpspec.net</channel>-->
 
 			<date>2007-10-18</date>
 			
@@ -158,8 +159,12 @@ Other Targets:
                 <pear minimum_version="1.6.0" recommended_version="1.6.2" />
             </dependencies>
 
-			<replacement path="phpunit" from="@php_bin@" to="php_bin" type="pear-config" />
-			<replacement path="phpunit.bat" from="@php_bin@" to="php_bin" type="pear-config" />
+            <replacement path="phpspec" from="@php_bin@" to="php_bin" type="pear-config" />
+            <replacement path="phpspec.bat" from="@php_bin@" to="php_bin" type="pear-config" />
+            
+            <release>
+                <install as="phpspec" name="scripts/phpspec" />
+            </release>
             
             <changelog version="${spec.version}" date="2007-10-18" license="LGPL">
                 This is a DEV release for testing and
