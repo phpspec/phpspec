@@ -57,6 +57,8 @@ Other Targets:
     <property name="spec.tarball" value="${spec.stage}/${spec.name}-${spec.version}.tar" />
     <property name="spec.tarball.pear" value="${spec.stage}/${spec.name}-${spec.version}.tgz" />
     <property name="spec.zipball" value="${spec.stage}/${spec.name}-${spec.version}.zip" />
+	<property name="spec.script.unix" value="phpspec" />
+	<property name="spec.script.windows" value="phpspec.bat" />
     <property name="lang" value="en" />
 
     <target name="build" depends="prepare, prepare.pear, stage, stage.pear">
@@ -112,6 +114,7 @@ Other Targets:
                 <exclude name="**/.svn/**" />
                 <exclude name="build/**" />
                 <exclude name="src/**" />
+				<exclude name="scripts/**" />
             </fileset>
         </copy>
         <copy todir="${spec.pear.dir}">
@@ -119,6 +122,8 @@ Other Targets:
                 <exclude name="**/.svn/**" />
             </fileset>
         </copy>
+		<!--copy file="${spec.src}/scripts/${spec.script.unix}" tofile="${spec.pear.dir}/phpspec" overwrite="true" /-->
+		<copy file="${spec.src}/scripts/${spec.script.windows}" tofile="${spec.pear.dir}/phpspec.bat" overwrite="true" />
     </target>
 
     <target name="pearify" depends="build.pear">
@@ -127,6 +132,12 @@ Other Targets:
             <name>PHPSpec</name>
             <summary>A Behaviour-Driven Development framework for PHP</summary>
             <channel>pear.php.net</channel>
+
+			<date>2007-10-18</date>
+			
+			<dirroles key="tests" value="test" />
+			<dirroles key="scripts" value="script" />
+
             <description>
             	<!--        Don't exceed this width         -->
                 This package will install a DEV version of the
@@ -146,6 +157,9 @@ Other Targets:
                 <php minimum_version="5.2.0" />
                 <pear minimum_version="1.6.0" recommended_version="1.6.2" />
             </dependencies>
+
+			<replacement path="phpunit" from="@php_bin@" to="php_bin" type="pear-config" />
+			<replacement path="phpunit.bat" from="@php_bin@" to="php_bin" type="pear-config" />
             
             <changelog version="${spec.version}" date="2007-10-18" license="LGPL">
                 This is a DEV release for testing and
