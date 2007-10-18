@@ -16,42 +16,21 @@ class PHPSpec_Specification_Scalar extends PHPSpec_Specification
 
     public function __call($method, $args)
     {
-        if (in_array($method, array('should', 'shouldNot'))) {
-            $this->_expectation->$method();
-            return $this;
+        $dslResult = parent::__call($method, $args);
+        if (!is_null($dslResult)) {
+            return $dslResult;
         }
-        if (in_array($method, array('be'))) {
-            if (empty($args)) {
-                return $this;
-            }
-        }
-        if (in_array($method, array('equal', 'be', 'beAnInstanceOf', 'beGreaterThan', 'beTrue', 'beFalse', 'beEmpty'))) {
-            $this->setExpectedValue(array_shift($args));
-            $this->_createMatcher($method);
-            $this->_performMatching();
-            return;
-        }
+
         throw new PHPSpec_Exception('unknown method called');
     }
 
     public function __get($name)
     {
-        if (in_array($name, array('should', 'shouldNot', 'a', 'an', 'of', 'be'))) {
-            if (in_array($name, array('should', 'shouldNot', 'be'))) {
-                switch ($name) {
-                    case 'should':
-                        $this->should();
-                        break;
-                    case 'shouldNot':
-                        $this->shouldNot();
-                        break;
-                    case 'be':
-                        $this->be();
-                        break;
-                }
-            }
-            return $this;
+        $dslResult = parent::__get($name);
+        if (!is_null($dslResult)) {
+            return $dslResult;
         }
+
         throw new PHPSpec_Exception('unknown property requested');
     }
 
