@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+
+<!--
+
+PHPSpec: A Behaviour-Driven Development Framework for PHP5
+
+Phing Usage:
+
+    phing [ <options> ] [ <targetnames> ]
+
+    example:
+
+    phing dist   ...where "dist" is the target for execution
+
+Phing Targets:
+
+    prepare: Creates any necessary staging directories
+
+    build: Prepares and stages files
+
+    stage: Stages files either copying or exporting to staging directory
+
+    dist: Packages staged files to zip and gzip tarball
+
+    clean: Cleans up, deletes staging directories, returns to state 0
+
+Other Targets:
+
+    src.check: Check for the existence of local source code
+
+    svn.export: Export the source code from subversion
+
+-->
+
+<project name="PHPSpec" default="dist" basedir=".">
+
+    <property name="spec.src.default" value="${project.basedir}/.." />
+    <property name="spec.name" value="PHPSpec" />
+    <property name="spec.version" value="0.0.1a" />
+    <property name="spec.svn.baseurl" value="http://phpspec.googlecode.com/svn/" />
+    <property name="spec.svn.url" value="${svn.url}/trunk" />
+    <property name="spec.svn.tag" value="HEAD" />
+    <property name="spec.svn.export" value="./${spec.name}-export-${spec.svn.tag}" />
+    <property name="spec.stage" value="${project.basedir}/stage" />
+    <property name="spec.stage.dir" value="${spec.stage}/${spec.name}-${spec.version}" />
+    <property name="spec.tarball" value="${spec.stage}/${spec.name}-${spec.version}.tar" />
+    <property name="spec.zipball" value="${spec.stage}/${spec.name}-${spec.version}.zip" />
+    <property name="lang" value="en" />
+
+    <target name="build" depends="prepare, stage">
+    </target>
+
+    <target name="src.check">
+        <available file="${spec.src.default}/src/PHPSpec/Framework.php" property="spec.src" value="${spec.src.default}" />
+        <!--svnlastrevision svnpath="svn" repositoryurl="${spec.svn.url}" workingcopy="${project.basedir}" propertyname="spec.svn.revision" /-->
+    </target>
+
+    <target name="prepare" depends="src.check">
+        <echo msg="Making directory ${spec.stage}" />
+        <mkdir dir="${spec.stage}" />
+        <echo msg="Making directory ${spec.stage.dir}" />
+        <mkdir dir="${spec.stage.dir}" />
+    </target>
+
+    <target name="svn.export" unless="spec.src">
+        <svnexport svnpath="svn" repositoryurl="${spec.svn.url}" todir="${spec.svn.export}" />
+        <property name="spec.src" value="${spec.svn.export}" />
+    </target>
+
+    <target name="stage" depends="prepare, svn.export">
+        <echo msg="Staging files from ${spec.src} to ${spec.stage.dir}" />
+        <copy todir="${spec.stage.dir}">
+            <fileset dir="${spec.src}">
+                <exclude name="**/.svn/**" />
+                <exclude name="build/**" />
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="dist" depends="build">
+        <echo message="Creating tar and zip archives..." />
+        <tar destfile="${spec.tarball}.gz" basedir="${spec.stage.dir}" compression="gzip" />
+
+        <echo message="Zip archive creation is disabled by build.xml file" />
+        <!--zip destfile="${spec.zipball}" basedir="${spec.stage.dir}" /-->
+    </target>
+
+    <target name="clean">
+
+    </target>
+
+</project>
