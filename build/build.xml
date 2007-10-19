@@ -41,8 +41,8 @@ Other Targets:
     <property name="spec.src.default" value="${project.basedir}/.." />
     <property name="spec.src.classpath" value="/src" />
     <property name="spec.name" value="PHPSpec" />
-    <property name="spec.version" value="0.2.0dev" /> <!-- VERSION FOR EDITING -->
-    <property name="spec.stability" value="alpha" />
+    <property name="spec.version" value="0.2.0devel" /> <!-- VERSION FOR EDITING -->
+    <property name="spec.stability" value="devel" />
     <property name="spec.svn.baseurl" value="http://phpspec.googlecode.com/svn/" />
     <property name="spec.svn.url" value="${svn.url}/trunk" />
     <property name="spec.svn.tag" value="HEAD" />
