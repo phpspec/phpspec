@@ -19,6 +19,11 @@ class PHPSpec_Console_Command
             self::$_runnable += $loader->load(self::$_getopt->specFile);
         }
 
+        if (isset(self::$_getopt->directoryRecursive)) {
+            $loader = new PHPSpec_Runner_Loader_DirectoryRecursive;
+            self::$_runnable += $loader->load(self::$_getopt->directoryRecursiveStart);
+        }
+
         if (empty(self::$_runnable)) {
             echo 'No specs to execute!';
             return;

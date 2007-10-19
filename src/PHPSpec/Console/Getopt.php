@@ -22,6 +22,11 @@ class PHPSpec_Console_Getopt
         }
 
         // resume the search for recognisable cli flags
+        if (substr($this->_argv[1], 0, 2) !== '-r') {
+            $this->_options['directoryRecursive'] = true;
+            $this->_options['directoryRecursiveStart'] = getcwd();
+            return;
+        }
 
         
     }
