@@ -14,7 +14,16 @@ class PHPSpec_Console_Getopt
         } else {
             $this->_argv = $argv;
         }
-        $this->_options['specFile'] = $this->_argv[1];
+
+        // checking for classname/filename before any cli flags
+        if (substr($this->_argv[1], 0, 1) !== '-') {
+            $this->_options['specFile'] = $this->_argv[1];
+            return;
+        }
+
+        // resume the search for recognisable cli flags
+
+        
     }
 
     public function getOption($name)
@@ -35,6 +44,16 @@ class PHPSpec_Console_Getopt
     protected function __set($name, $value)
     {
         $this->setOption($name, $value);
+    }
+
+    public function hasOption($name)
+    {
+        return isset($this->_options[$name]);
+    }
+
+    protected function __isset($name)
+    {
+        return $this->hasOption($name);
     }
 
 }
