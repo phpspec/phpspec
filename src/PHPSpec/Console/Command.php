@@ -19,7 +19,7 @@ class PHPSpec_Console_Command
             self::$_runnable[] = $loader->load(self::$_getopt->specFile);
         }
 
-        if (empty($self::$_runnable)) {
+        if (empty(self::$_runnable)) {
             echo 'No specs to execute!';
             return;
         }
