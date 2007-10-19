@@ -41,7 +41,7 @@ Other Targets:
     <property name="spec.src.default" value="${project.basedir}/.." />
     <property name="spec.src.classpath" value="/src" />
     <property name="spec.name" value="PHPSpec" />
-    <property name="spec.version" value="0.0.1a" />
+    <property name="spec.version" value="0.2.0dev" /> <!-- VERSION FOR EDITING -->
     <property name="spec.stability" value="alpha" />
     <property name="spec.svn.baseurl" value="http://phpspec.googlecode.com/svn/" />
     <property name="spec.svn.url" value="${svn.url}/trunk" />
@@ -60,6 +60,7 @@ Other Targets:
 	<property name="spec.script.unix" value="phpspec" />
 	<property name="spec.script.windows" value="phpspec.bat" />
     <property name="lang" value="en" />
+    <php expression="date('Y-m-d')" returnProperty="date"/>
 
     <target name="build" depends="prepare, prepare.pear, stage, stage.pear">
     </target>
@@ -121,8 +122,6 @@ Other Targets:
                 <exclude name="**/.svn/**" />
             </fileset>
         </copy>
-		<!--copy file="${spec.src}/scripts/${spec.script.unix}" tofile="${spec.pear.dir}/phpspec" overwrite="true" /-->
-		<copy file="${spec.src}/scripts/${spec.script.windows}" tofile="${spec.pear.dir}/phpspec.bat" overwrite="true" />
     </target>
 
     <target name="pearify" depends="build.pear">
@@ -131,21 +130,26 @@ Other Targets:
             <name>PHPSpec</name>
             <summary>A Behaviour-Driven Development framework for PHP</summary>
             <channel>pear.php.net</channel>
-            <!-- need to setup channel.phpspec.net/org etc, prior to first real release -->
-            <!--<channel>channel.phpspec.net</channel>-->
-
-			<date>2007-10-18</date>
-			
-			<dirroles key="tests" value="test" />
-			<dirroles key="scripts" value="script" />
-
             <description>
-            	<!--        Don't exceed this width         -->
-                This package will install a DEV version of the
-                PHPSpec BDD framework for PHP5. We are
-                presently short on documentation so please
-                consult the mailing list with your questions.
+                Note: This is a development version for testing and feedback
+                purposes only.
+
+                PHPSpec is a Behaviour-Driven Development (BDD) framework
+                for PHP5. It provides a Domain Specific Language for describing
+                the behaviour of PHP code with executable, readable
+                specifications that guide you in designing source code. As well
+                as serving as documentation of your system's behaviour, these
+                specifications can be frequently executed as tests to verify
+                the behaviours being specified are being maintained.
+                
+                BDD is often described as what you are currently doing, if you are
+                doing TDD (Test-Driven Development) well. The purpose of
+                BDD is to make it easier to perform and understand by using
+                clear, unambiguous language driven by a user-friendly
+                Domain Specific Language (DSL).
             </description>
+
+			<date>${date}</date>
             
             <lead user="padraic" name="Pádraic Brady" email="padraic@php.net" />
             <lead user="tswicegood" name="Travis Swicegood" email="developer@domain51.com" />
@@ -156,18 +160,21 @@ Other Targets:
             
             <dependencies>
                 <php minimum_version="5.2.0" />
-                <pear minimum_version="1.6.0" recommended_version="1.6.2" />
+                <pear minimum_version="1.6.0" />
+                <!--extension name="spl" /-->
             </dependencies>
-
-            <dirroles key="scripts">script</dirroles>
-            <replacement path="scripts/phpspec" type="pear-config" from="@php_bin@" to="php_bin" />
-            <replacement path="scripts/phpspec.bat" from="@php_bin@" to="php_bin" type="pear-config" />
             
+            <dirroles key="scripts">script</dirroles>
+            <dirroles key="tests">test</dirroles>
+            <replacement path="scripts/phpspec" type="pear-config" from="@php_bin@" to="php_bin" />
+            <replacement path="scripts/phpspec.bat" type="pear-config" from="@php_bin@" to="php_bin" />
+            <replacement path="scripts/phpspec.bat" type="pear-config" from="@php_dir@" to="php_dir" />
             <release>
                 <install as="phpspec" name="scripts/phpspec" />
+                <install as="phpspec.bat" name="scripts/phpspec.bat" />
             </release>
             
-            <changelog version="${spec.version}" date="2007-10-18" license="LGPL">
+            <changelog version="${spec.version}" date="${date}" license="LGPL">
                 This is a DEV release for testing and
                 feedback only.
             </changelog>
@@ -180,7 +187,7 @@ Other Targets:
         <tar destfile="${spec.tarball}.gz" basedir="${spec.stage.dir}" compression="gzip" />
         <move file="${spec.tarball}.gz" todir="${spec.dist}" overwrite="true" />
 
-        <echo message="ZIP archive creation is disabled by build.xml file" />
+        <echo message="ZIP archive creation is disabled in build.xml file" />
         <!--zip destfile="${spec.zipball}" basedir="${spec.stage.dir}" /-->
         <!--move file="${spec.zipball}" todir="${spec.dist}" overwrite="true" /-->
 
