@@ -16,7 +16,7 @@ class PHPSpec_Console_Command
         // check for straight class to execute
         if (isset(self::$_getopt->specFile)) {
             $loader = new PHPSpec_Runner_Loader_Classname;
-            self::$_runnable[] = $loader->load(self::$_getopt->specFile);
+            self::$_runnable += $loader->load(self::$_getopt->specFile);
         }
 
         if (empty(self::$_runnable)) {
