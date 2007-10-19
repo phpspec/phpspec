@@ -50,7 +50,7 @@ class PHPSpec_Specification
         if (in_array($method, array('equal', 'be', 'beEqualTo', 'beAnInstanceOf', 'beGreaterThan', 'beTrue', 'beFalse', 'beEmpty'))) {
             $this->setExpectedValue(array_shift($args));
             $this->_createMatcher($method);
-            $this->_performMatching();
+            $this->_performMatching($args);
             return true;
         }
     }
@@ -136,9 +136,16 @@ class PHPSpec_Specification
         $this->_matcher = new $matcherClass( $this->getExpectedValue() );
     }
 
-    protected function _performMatching()
+    protected function _performMatching($args = null)
     {
-        $this->setMatcherResult($this->_matcher->matches( $this->getActualValue() ));
+        if (!is_null($args) && is_array($args)) {
+            $matchArgs = array($this->getActualValue()) + $args;
+        } else {
+            $matchArgs = array($this->getActualValue());
+        }
+        $this->setMatcherResult(call_user_func_array(array($this->_matcher, 'matches'), $matchArgs));
+
+        //$this->_matcher->matches( $this->getActualValue() )
         //$this->_runner->notify($this, $this->getExpectation());
     }
 
