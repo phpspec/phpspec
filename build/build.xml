@@ -202,4 +202,12 @@ Other Targets:
         <delete dir="${spec.dist}" />
     </target>
 
+    <target name="install" depends="dist">
+        <exec command="pear install ${spec.pear.package}" dir="${spec.dist.pear}" />
+    </target>
+
+    <target name="install.force" depends="dist">
+        <exec command="pear install --force ${spec.pear.package}" dir="${spec.dist.pear}" />
+    </target>
+
 </project>
