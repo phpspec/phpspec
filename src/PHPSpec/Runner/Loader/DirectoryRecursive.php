@@ -5,31 +5,35 @@ class PHPSpec_Runner_Loader_DirectoryRecursive
 
     protected $_loaded = array();
 
+    protected $_loadedClasses = array();
+
+    protected $_filter = null;
+
+    protected $_filterName = 'PHPSpec_Runner_Filter_Standard';
+
+    protected $_directory = null;
+
     public function load($directory)
     {
-        $dirpath = new DirectoryIterator($directory);
-        foreach($dirpath as $resource) {
-            if () {
+        $this->_directory = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($directory)
+        );
+
+        $filterIterator = $this->getFilter();
+
+        foreach ($filterIterator as $file) {
+            $pathName = $file->getPathname();
+            require_once $pathName;
             
+            $fileName = $file->getFilename();
+            $className = substr($fileName, 0, strlen($fileName) - 4);
+            if (class_exists($className, false) && !in_array($className, $this->_loadedClasses)) {
+                $classReflected = new ReflectionClass($className);
+                $this->_loaded[] = $classReflected;
             }
         }
 
-
-        /**$class = $className;
-        if (substr($className, strlen($className) - 4, 4) == '.php') {
-            $classFile = $className;
-            $class = substr($className, 0, strlen($className) - 4);
-        } else {
-            $classFile = $className . '.php';
-        }
-
-        require_once $classFile;
-
-        $classReflected = new ReflectionClass($class);
-
-        $this->_loaded = array($classReflected);
-
-        return $this->_loaded;*/
+        return $this->_loaded;
     }
 
     public function getLoaded()
@@ -37,14 +41,21 @@ class PHPSpec_Runner_Loader_DirectoryRecursive
         return $this->_loaded;
     }
 
-    protected function compileRunnableBehaviours($dir)
+    public function setFilterClass($filterName)
     {
-        $recursiveDir = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($dir)
-        );
-        foreach($recursiveDir as $file) {
-            echo $file, PHP_EOL;
-        }   
+        $this->_filterName = $filterName;
+    }
+
+    public function getFilter()
+    {
+        if (is_null($this->_filter)) {
+            if (is_null($this->_directory)) {
+                throw new Exception();
+            }
+            $reflection = new ReflectionClass($this->_filterName);
+            $this->_filter = $reflection->newInstance($this->_directory);
+        }
+        return $this->_filter;
     }
 
 }
