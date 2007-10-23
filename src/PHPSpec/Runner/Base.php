@@ -25,8 +25,6 @@ class PHPSpec_Runner_Base implements Countable
     {
         $result = $this->getResult();
         $this->_collection->execute($result);
-        echo count($this), ' Specs Executed:', PHP_EOL;
-        echo $result; //reported plug later
     }
 
     public function setResult(PHPSpec_Runner_Result $result)
