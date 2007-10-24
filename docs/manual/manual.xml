@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+[
+    <!ENTITY % xinclude SYSTEM "xinclude.mod">
+    %xinclude;
+]>
+<book id="manual" lang="en">
+    <bookinfo>
+        <title>PHPSpec Reference Manual</title>
+        <subtitle>A Behaviour-Driven Development Framework for PHP</subtitle>
+        <edition>Qwerty Asdfg Zxcvb</edition>
+        <pubdate><?dbtimestamp format="Y-m-d"?></pubdate>
+        <copyright>
+            <year><?dbtimestamp format="Y"?></year>
+            <holder>
+                Pádraic Brady
+                (<ulink url="http://blog.astrumfutura.com" />)
+            </holder><!-- add holders as needed -->
+        </copyright>
+    </bookinfo>
+    <chapter id="introduction">
+        <title>Introduction to PHPSpec</title>
+        <xi:include href="references/overview.xml" />
+    </chapter>
+    <xi:include href="references/copyrights.xml" />
+    <index id="the.index" />
+</book>

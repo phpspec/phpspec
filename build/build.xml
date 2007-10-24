@@ -62,10 +62,17 @@ Other Targets:
     <property name="lang" value="en" />
     <php expression="date('Y-m-d')" returnProperty="date"/>
 
+	<property name="spec.manual" value="${project.basedir}/stage-manual" />
+	<property name="spec.manual.dir" value="${spec.manual}/docbook" />
+	<property name="spec.dist.manual" value="${spec.dist}/manual" />
+
     <target name="build" depends="prepare, prepare.pear, stage, stage.pear">
     </target>
 
     <target name="build.pear" depends="prepare.pear, stage.pear">
+    </target>
+
+	<target name="build.manual" depends="prepare.manual, stage.manual">
     </target>
 
     <target name="src.check">
@@ -91,6 +98,15 @@ Other Targets:
         <echo msg="Making Distribution Files directory ${spec.dist}" />
         <mkdir dir="${spec.dist}" />
         <mkdir dir="${spec.dist.pear}" />
+    </target>
+
+	<target name="prepare.manual" depends="src.check">
+        <echo msg="Making Manual directory ${spec.manual}" />
+        <mkdir dir="${spec.manual}" />
+		<echo msg="Making directory ${spec.manual.dir}" />
+        <mkdir dir="${spec.manual.dir}" />
+
+		<mkdir dir="${spec.dist.manual}" />
     </target>
 
     <target name="svn.export" unless="spec.src">
@@ -120,6 +136,14 @@ Other Targets:
         <copy todir="${spec.pear.dir}">
             <fileset dir="${spec.src}${spec.src.classpath}">
                 <exclude name="**/.svn/**" />
+            </fileset>
+        </copy>
+    </target>
+
+	<target name="stage.manual" depends="prepare.manual, svn.export">
+        <echo msg="Staging files from ${spec.src} to ${spec.manual.dir} for DocBook > HTML generation" />
+        <copy todir="${spec.manual.dir}">
+            <fileset dir="${spec.src}/docs/manual">
             </fileset>
         </copy>
     </target>
@@ -200,6 +224,8 @@ Other Targets:
         <delete dir="${spec.stage}" />
         <delete dir="${spec.pear}" />
         <delete dir="${spec.dist}" />
+
+		<delete dir="${spec.manual}" />
     </target>
 
     <target name="install" depends="dist">
@@ -209,5 +235,21 @@ Other Targets:
     <target name="install.force" depends="dist">
         <exec command="pear install --force ${spec.pear.package}" dir="${spec.dist.pear}" />
     </target>
+
+	<target name="docs" depends="build.manual">
+		<echo msg="Rendering manual..." />
+		<copy todir="${spec.dist.manual}">
+		  <filterchain>
+			<xincludefilter basedir="${spec.manual.dir}" />
+			<xsltfilter style="${spec.manual.dir}/html.xsl">
+			  <param name="base.dir" expression="${spec.dist.manual}/" />
+			</xsltfilter>
+		  </filterchain>
+		  <fileset dir="${spec.manual.dir}">
+			<include name="manual.xml" />
+		  </fileset>
+		</copy>
+		<echo msg="Manual has been rendered." />
+	</target>
 
 </project>
