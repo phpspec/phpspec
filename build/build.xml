@@ -65,6 +65,10 @@ Other Targets:
 	<property name="spec.manual" value="${project.basedir}/stage-manual" />
 	<property name="spec.manual.dir" value="${spec.manual}/docbook" />
 	<property name="spec.dist.manual" value="${spec.dist}/manual" />
+    
+    <property name="docbookxslurl"  value="http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl" />
+    <property name="docbookdtdurl" value="http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" />
+    <property file="build.properties" override="true" />
 
     <target name="build" depends="prepare, prepare.pear, stage, stage.pear">
     </target>
@@ -143,9 +147,18 @@ Other Targets:
 	<target name="stage.manual" depends="prepare.manual, svn.export">
         <echo msg="Staging files from ${spec.src} to ${spec.manual.dir} for DocBook > HTML generation" />
         <copy todir="${spec.manual.dir}">
+            <filterchain>
+                <replacetokens>
+                    <token key="DOCBOOK_XSL" value="${docbookxslurl}" />
+                    <token key="DOCBOOK_DTD" value="${docbookdtdurl}" />
+                </replacetokens>
+            </filterchain>
             <fileset dir="${spec.src}/docs/manual">
             </fileset>
         </copy>
+
+        <!-- replacement task for xsl/dtd default locations using http:// or file:// -->
+
     </target>
 
     <target name="pearify" depends="build.pear">
