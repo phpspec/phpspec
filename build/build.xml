@@ -66,7 +66,7 @@ Other Targets:
 	<property name="spec.manual.dir" value="${spec.manual}/docbook" />
 	<property name="spec.dist.manual" value="${spec.dist}/manual" />
     
-    <property name="docbookxslurl"  value="http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl" />
+    <property name="docbookxslurl"  value="http://docbook.sourceforge.net/release/xsl/current/html/chunk.xsl" />
     <property name="docbookdtdurl" value="http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" />
     <property file="build.properties" override="true" />
 
