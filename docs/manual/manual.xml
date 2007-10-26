@@ -9,7 +9,6 @@
     <bookinfo>
         <title>PHPSpec Reference Manual</title>
         <subtitle>A Behaviour-Driven Development Framework for PHP</subtitle>
-        <edition>Qwerty Asdfg Zxcvb</edition>
         <pubdate><?dbtimestamp format="Y-m-d"?></pubdate>
         <copyright>
             <year><?dbtimestamp format="Y"?></year>
@@ -18,11 +17,20 @@
                 (<ulink url="http://blog.astrumfutura.com" />)
             </holder><!-- add holders as needed -->
         </copyright>
+        <legalnotice>
+            <para>
+            This work is licensed under the Creative Commons Attribution 3.0 License. To view a copy of this license, visit <ulink url="http://creativecommons.org/licenses/by/3.0/" /> or send a letter to Creative Commons, 559 Nathan Abbott Way, Stanford, California 94305, USA.
+            </para> 	    
+        </legalnotice>
     </bookinfo>
+
+    <!-- Chapter List -->
     <chapter id="introduction">
         <title>Introduction to PHPSpec</title>
         <xi:include href="references/overview.xml" />
     </chapter>
+
+
     <xi:include href="references/copyrights.xml" />
     <index id="the.index" />
 </book>
