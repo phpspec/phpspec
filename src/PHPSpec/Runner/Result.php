@@ -1,15 +1,13 @@
 <?php
 
-class PHPSpec_Runner_Result
+class PHPSpec_Runner_Result implements Countable
 {
 
     protected $_failed = array();
 
     protected $_passed = array();
 
-    public function __construct()
-    {
-    }
+    protected $_specCount = 0;
 
     public function execute(PHPSpec_Runner_Collection $collection)
     {
@@ -31,18 +29,29 @@ class PHPSpec_Runner_Result
         return $this->_failed;
     }
 
-    protected function __toString()
+    public function getPasses()
     {
-        $str = '';
-        $str = count($this->_passed) . ' Specs Passed' . PHP_EOL;
-        foreach ($this->_failed as $failure) {
-            $str .= $failure->getContextDescription();
-            $str .= ' => ' . $failure->getSpecificationText();
-            $str .= ' => ' . $failure->getFailedMessage();
-            $str .= PHP_EOL;
-        }
-        $str .= 'DONE';
-        return $str;
+        return $this->_failed;
+    }
+
+    public function addSpecCount($count)
+    {
+        $this->_specCount += intval($count);
+    }
+
+    public function setSpecCount($count)
+    {
+        $this->_specCount = intval($count);
+    }
+
+    public function getSpecCount()
+    {
+        return $this->_specCount;
+    }
+
+    public function count()
+    {
+        return $this->getSpecCount();
     }
 
 }

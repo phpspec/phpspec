@@ -22,5 +22,4 @@ assert('$base instanceof PHPSpec_Runner_Base');
 ?>
 ===DONE===
 --EXPECT--
-0 Specs Executed:
 ===DONE===

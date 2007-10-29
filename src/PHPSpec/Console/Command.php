@@ -26,18 +26,18 @@ class PHPSpec_Console_Command
             return;
         }
 
-        $specCount = 0;
         $result = new PHPSpec_Runner_Result;
         foreach ($runnable as $behaviourContextReflection) {
             $contextObject = $behaviourContextReflection->newInstance();
             $collection = new PHPSpec_Runner_Collection($contextObject);
             $runner = PHPSpec_Runner_Base::execute($collection, $result);
-            $specCount += count($runner);
+            $result->addSpecCount( count($runner) );
         }
 
-        echo $specCount, ' Specs Executed:', PHP_EOL;
-        echo $runner->getResult();
-        
+        // use a Text reporter for console output
+        $textReporter = new PHPSpec_Runner_Reporter_Text( $runner->getResult() );
+        echo $textReporter;
+
     }
 
 }
