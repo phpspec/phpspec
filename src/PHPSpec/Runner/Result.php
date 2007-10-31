@@ -7,6 +7,8 @@ class PHPSpec_Runner_Result implements Countable
 
     protected $_passed = array();
 
+    protected $_exceptions = array();
+
     protected $_specCount = 0;
 
     public function execute(PHPSpec_Runner_Collection $collection)
@@ -19,6 +21,11 @@ class PHPSpec_Runner_Result implements Countable
         $this->_failed[] = $example;
     }
 
+    public function addException(PHPSpec_Runner_Example $example, Exception $e)
+    {
+        $this->_exceptions[] = array($example, $e);
+    }
+
     public function addPass(PHPSpec_Runner_Example $example)
     {
         $this->_passed[] = $example;
@@ -27,6 +34,11 @@ class PHPSpec_Runner_Result implements Countable
     public function getFailures()
     {
         return $this->_failed;
+    }
+
+    public function getExceptions()
+    {
+        return $this->_exceptions;
     }
 
     public function getPasses()

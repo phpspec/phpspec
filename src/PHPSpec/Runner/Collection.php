@@ -48,7 +48,7 @@ class PHPSpec_Runner_Collection implements Countable
             } catch (PHPSpec_Runner_FailedMatcherException $e) {
                 $result->addFailure($example);
             } catch (Exception $e) {
-                throw $e;
+                $result->addException($example, $e);
             }
         }
 
