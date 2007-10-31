@@ -46,7 +46,7 @@ class PHPSpec_Runner_Result implements Countable
         return $this->_failed;
     }
 
-    public function addSpecCount($count)
+    public function addSpecCount($count = 1)
     {
         $this->_specCount += intval($count);
     }

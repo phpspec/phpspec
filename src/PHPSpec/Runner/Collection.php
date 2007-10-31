@@ -46,6 +46,7 @@ class PHPSpec_Runner_Collection implements Countable
 
         $examples = $this->getExamples();
         foreach ($examples as $example) {
+            $result->addSpecCount();
             try {
                 $example->execute();
                 $result->addPass($example);

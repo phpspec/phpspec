@@ -31,7 +31,6 @@ class PHPSpec_Console_Command
             $contextObject = $behaviourContextReflection->newInstance();
             $collection = new PHPSpec_Runner_Collection($contextObject);
             $runner = PHPSpec_Runner_Base::execute($collection, $result);
-            $result->addSpecCount( count($runner) );
         }
 
         // use a Text reporter for console output
