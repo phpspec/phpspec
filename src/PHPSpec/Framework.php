@@ -29,3 +29,17 @@ function describe()
     $args = func_get_args();
     return call_user_func_array(array('PHPSpec_Specification','getSpec'), $args);
 }
+
+function PHPSpec_ErrorHandler($errno, $errstr, $errfile, $errline)
+{
+    if (!($errno & error_reporting())) {
+        return;
+    }
+
+    $backtrace = debug_backtrace();
+    array_shift($backtrace);
+
+    throw new PHPSpec_Runner_ErrorException($errstr, $errno, $errfile, $errline, $backtrace);
+
+    return true;
+}

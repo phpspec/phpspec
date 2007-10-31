@@ -36,9 +36,13 @@ class PHPSpec_Runner_Collection implements Countable
 
     public function execute(PHPSpec_Runner_Result $result)
     {
+        // add error trap
+
         if (method_exists($this->_context, 'beforeAll')) {
             $this->_context->beforeAll();
         }
+
+        set_error_handler('PHPSpec_ErrorHandler');
 
         $examples = $this->getExamples();
         foreach ($examples as $example) {
@@ -47,14 +51,22 @@ class PHPSpec_Runner_Collection implements Countable
                 $result->addPass($example);
             } catch (PHPSpec_Runner_FailedMatcherException $e) {
                 $result->addFailure($example);
+            } catch (PHPSpec_Runner_ErrorException $e) {
+                $result->addException($example, $e);
+
+            // catchall for other uncaught exceptions
             } catch (Exception $e) {
                 $result->addException($example, $e);
             }
         }
 
+        restore_error_handler();
+
         if (method_exists($this->_context, 'afterAll')) {
             $this->_context->afterAll();
         }
+
+        // leave error trap
     }
 
     protected function _buildExamples()
