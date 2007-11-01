@@ -28,14 +28,6 @@ class PHPSpec_Specification
 {
 
     /**
-     * Interrogator object utilised to mediate between the DSL and an Object
-     * value being specified.
-     *
-     * @var PHPSpec_Object_Interrogator
-     */
-    protected $_interrogator = null;
-
-    /**
      * An object representation of a expectation representing
      * "should" or "should not" states
      *
@@ -115,21 +107,66 @@ class PHPSpec_Specification
      */
     public function __call($method, $args)
     {
+        // check for an expectation type
         if (in_array($method, array('should', 'shouldNot'))) {
             $this->_expectation->$method();
             return $this;
         }
+
+        // pass through on empty be() calls as syntactic sugar
         if (in_array($method, array('be'))) {
             if (empty($args)) {
                 return $this;
             }
         }
-        if (in_array($method, array('equal', 'be', 'beEqualTo', 'beAnInstanceOf', 'beGreaterThan', 'beTrue', 'beFalse', 'beEmpty'))) {
+
+        // check for Matcher references
+        $matchers = array(
+            'equal', 'be', 'beEqualTo', 'beAnInstanceOf', 'beGreaterThan', 'beTrue', 'beFalse', 'beEmpty', 'beLessThan', 'beGreaterThanOrEqualTo', 'beLessThanOrEqualTo', 'beSet', 'beNull', 'beOfType', 'beIdenticalTo'
+        );
+        if (in_array($method, $matchers)) {
             $this->setExpectedValue(array_shift($args));
             $this->_createMatcher($method);
             $this->_performMatching($args);
             return true;
         }
+
+        // check for any predicate style matching
+        $result = preg_match("/^((haveA)|(have)|(beA)|(be))*/", $method, $matches);
+        if ($result && empty($args) && $this instanceof PHPSpec_Specification_Object) {
+            $predicate = $matches[0];
+            $predicateSuffix = substr($method, strlen($predicate) - 1);
+            if (strpos($predicate, 'have') !== false) {
+                $predicateMethodPrefixes = array('has', 'hasA');
+            } else {
+                $predicateMethodPrefixes = array('is', 'isA');
+            }
+            $predicatePossibleMatches = array();
+            foreach ($predicateMethodPrefixes as $prefix) {
+                $predicatePossibleMatches[] = $prefix . $predicateSuffix;
+            }
+            $predicateObject = $this->getInterrogator()->getSourceObject();
+            $reflectedObject = new ReflectionObject($predicateObject);
+            $methods = $reflectionObject->getMethods();
+            foreach ($methods as $m) {
+                foreach ($predicatePossibleMatches as $possible) {
+                    if ($possible == $m->getName()) {
+                        $methodToPredicate = $m->getName();
+                        break 2;
+                    }
+                }
+            }
+            if (!empty($methodToPredicate)) {
+                $this->setExpectedValue(true);
+                $this->_createMatcher('predicate');
+                $this->_matcher->setMethodName($methodToPredicate);
+                $this->_matcher->setObject($predicateObject);
+                $this->_matcher->setPredicateCall($method);
+                $this->_performMatching();
+                return true;
+            }
+        }
+
     }
 
     /**
@@ -159,7 +196,7 @@ class PHPSpec_Specification
             return $this;
         }
     }
-    
+
     /**
      * Return the Expectation object ruling how Matcher results are
      * interpreted (whether a matcher boolean result counts as a pass
@@ -182,7 +219,7 @@ class PHPSpec_Specification
     {
         $this->_expectedValue = $value;
     }
-    
+
     /**
      * Get an Expected value with which to instantiate any new Matcher
      *
@@ -192,7 +229,7 @@ class PHPSpec_Specification
     {
         return $this->_expectedValue;
     }
-    
+
     /**
      * Set an Actual value with which to call a Matcher operation
      * and ascertain whether Expected and Actual values match.
@@ -238,7 +275,7 @@ class PHPSpec_Specification
     {
         $this->_matcherResult = $result;
     }
-    
+
     /**
      * Get the boolean result from running a Matcher
      *

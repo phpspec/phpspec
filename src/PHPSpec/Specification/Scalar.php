@@ -61,7 +61,7 @@ class PHPSpec_Specification_Scalar extends PHPSpec_Specification
     public function getScalar()
     {
         if (is_null($this->_scalarValue)) {
-            throw new PHPSpec_Exception('an scalar value has not yet been initialised');
+            throw new PHPSpec_Exception('a scalar value has not yet been initialised');
         }
         return $this->_scalarValue;
     }

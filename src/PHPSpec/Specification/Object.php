@@ -27,6 +27,12 @@
 class PHPSpec_Specification_Object extends PHPSpec_Specification
 {
 
+    /**
+     * Interrogator object utilised to mediate between the DSL and an Object
+     * value being specified.
+     *
+     * @var PHPSpec_Object_Interrogator
+     */
     protected $_interrogator = null;
 
     public function __construct(PHPSpec_Object_Interrogator $interrogator = null)
