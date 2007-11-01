@@ -21,6 +21,10 @@ class PHPSpec_Console_Command
             $runnable += $loader->load( getcwd() );
         }
 
+        if (isset($options->specdox) || isset($options->s)) {
+            $generateSpecdox = true;
+        }
+
         if (empty($runnable)) {
             echo 'No specs to execute!';
             return;
@@ -35,6 +39,9 @@ class PHPSpec_Console_Command
 
         // use a Text reporter for console output
         $textReporter = new PHPSpec_Runner_Reporter_Text( $runner->getResult() );
+        if ($generateSpecdox) {
+            $textReporter->doSpecdox();
+        }
         echo $textReporter;
 
     }

@@ -21,12 +21,21 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
         }
 
         $exceptions = $this->_result->getExceptions();
+        $errors = $this->_result->getErrors(); 
 
         if (count($exceptions) > 0) {
             foreach ($exceptions as $exception) {
-                $str .= $exception[0]->getContextDescription();
-                $str .= ' => ' . $exception[0]->getSpecificationText();
-                $str .= ' => ' . $exception[1]->getMessage();
+                $str .= $exception->getContextDescription();
+                $str .= ' => ' . $exception->getSpecificationText();
+                $str .= ' => ' . $exception->getMessage();
+                $str .= PHP_EOL;
+            }
+        }
+        if (count($errors) > 0) {
+            foreach ($errors as $error) {
+                $str .= $error->getContextDescription();
+                $str .= ' => ' . $error->getSpecificationText();
+                $str .= ' => ' . $error->getMessage();
                 $str .= PHP_EOL;
             }
         }
@@ -38,6 +47,11 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
     public function __toString()
     {
         return $this->toString();
+    }
+
+    public function getSpecdox()
+    {
+        return 'specdox';
     }
 
 }

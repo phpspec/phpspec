@@ -36,8 +36,6 @@ class PHPSpec_Runner_Collection implements Countable
 
     public function execute(PHPSpec_Runner_Result $result)
     {
-        // add error trap
-
         if (method_exists($this->_context, 'beforeAll')) {
             $this->_context->beforeAll();
         }
@@ -53,9 +51,7 @@ class PHPSpec_Runner_Collection implements Countable
             } catch (PHPSpec_Runner_FailedMatcherException $e) {
                 $result->addFailure($example);
             } catch (PHPSpec_Runner_ErrorException $e) {
-                $result->addException($example, $e);
-
-            // catchall for other uncaught exceptions
+                $result->addError($example, $e);
             } catch (Exception $e) {
                 $result->addException($example, $e);
             }
@@ -66,8 +62,6 @@ class PHPSpec_Runner_Collection implements Countable
         if (method_exists($this->_context, 'afterAll')) {
             $this->_context->afterAll();
         }
-
-        // leave error trap
     }
 
     protected function _buildExamples()

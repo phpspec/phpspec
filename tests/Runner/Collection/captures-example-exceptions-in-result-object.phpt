@@ -17,9 +17,9 @@ $result = new PHPSpec_Runner_Result;
 $collection->execute($result);
 
 $exceptionArray = $result->getExceptions();
-$exceptionExpected = $exceptionArray[0][1];
+$exceptionExpected = $exceptionArray[0];
 
-assert('$exceptionExpected instanceof Exception');
+assert('$exceptionExpected instanceof PHPSpec_Runner_Example_Exception');
 
 ?>
 ===DONE===
