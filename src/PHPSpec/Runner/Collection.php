@@ -60,11 +60,11 @@ class PHPSpec_Runner_Collection implements Countable
 
     public function execute(PHPSpec_Runner_Result $result)
     {
+        set_error_handler('PHPSpec_ErrorHandler');
+
         if (method_exists($this->_context, 'beforeAll')) {
             $this->_context->beforeAll();
         }
-
-        set_error_handler('PHPSpec_ErrorHandler');
 
         $examples = $this->getExamples();
         foreach ($examples as $example) {
@@ -81,11 +81,11 @@ class PHPSpec_Runner_Collection implements Countable
             }
         }
 
-        restore_error_handler();
-
         if (method_exists($this->_context, 'afterAll')) {
             $this->_context->afterAll();
         }
+
+        restore_error_handler();
     }
 
     protected function _buildExamples()

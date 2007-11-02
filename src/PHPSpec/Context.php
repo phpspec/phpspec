@@ -99,7 +99,7 @@ class PHPSpec_Context implements Countable
         }
         return $this->_specificationDsl;
     }
-    
+
     /**
      * Set a textual description (specdox style) for this Context
      *
@@ -146,10 +146,21 @@ class PHPSpec_Context implements Countable
      * Returns the number of qualifying executable methods found
      *
      * @return int
-     */ 
+     */
     public function getSpecificationCount()
     {
         return $this->_count;
+    }
+
+    /**
+     * Return the Context file path
+     *
+     * @return string The filepath to this Context class
+     */
+    public function getFileName()
+    {
+        $reflected = new ReflectionObject($this);
+        return $reflected->getFileName();
     }
 
     /**
@@ -164,7 +175,7 @@ class PHPSpec_Context implements Countable
         $object = new ReflectionObject($this);
         $class = $object->getName();
         //if (substr($class, 0, 8) !== 'describe') {
-        if (!preg_match("/^(describe)*/i"), $class) {
+        if (!preg_match("/^(describe)*/i", $class)) {
             throw new Exception('behaviour context did not start with \'describe\'');
         }
         $this->_addSpecifications($object->getMethods());
