@@ -19,7 +19,7 @@
  */
 
 /** PHPSpec_Framework */
-require_once 'PHPSpec/Framework.php';
+require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'Framework.php';
 
 /**
  * @category   PHPSpec
@@ -33,6 +33,7 @@ class PHPSpec_Console_Command
     public static function main()
     {
         $runnable = array();
+        $generateSpecdox = false;
         $options = new PHPSpec_Console_Getopt;
 
         // check for straight class to execute
