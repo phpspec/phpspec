@@ -45,7 +45,7 @@ class PHPSpec_Matcher_Predicate extends PHPSpec_Matcher_True
 
     public function setPredicateCall($callName)
     {
-        $this->_predicateCall = $callName
+        $this->_predicateCall = $callName;
     }
 
     public function matches($actual)
