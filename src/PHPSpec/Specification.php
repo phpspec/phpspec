@@ -14,14 +14,14 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class PHPSpec_Specification
@@ -147,7 +147,7 @@ class PHPSpec_Specification
             }
             $predicateObject = $this->getInterrogator()->getSourceObject();
             $reflectedObject = new ReflectionObject($predicateObject);
-            $methods = $reflectionObject->getMethods();
+            $methods = $reflectedObject->getMethods();
             foreach ($methods as $m) {
                 foreach ($predicatePossibleMatches as $possible) {
                     if ($possible == $m->getName()) {
