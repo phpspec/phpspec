@@ -19,7 +19,7 @@ $spec = PHPSpec_Specification_Object::getSpec($foo);
 $spec->setRunner(new RunnerSwallow);
 
 $spec->should()->haveSomething();
-assert($spec->getMatcherResult() === true);
+assert('$spec->getMatcherResult() === true');
 
 ?>
 ===DONE===
