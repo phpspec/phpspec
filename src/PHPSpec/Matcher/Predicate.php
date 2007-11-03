@@ -26,12 +26,17 @@
  */
 class PHPSpec_Matcher_Predicate extends PHPSpec_Matcher_BeTrue
 {
-
+   
     protected $_object = null;
 
     protected $_method = null;
 
     protected $_predicateCall = null;
+    
+    public function __construct($expected)
+    {
+        parent::__construct($expected);
+    }
 
     public function setObject($object)
     {
@@ -51,13 +56,13 @@ class PHPSpec_Matcher_Predicate extends PHPSpec_Matcher_BeTrue
         $this->_predicateCall = $callName;
     }
 
-    public function matches($actual)
+    public function matches($UnusedParamSoIgnore)
     {
         $this->_actual = $this->_object->{$this->_method}();
-        if (!is_bool($actual)) {
+        if (!is_bool($this->_actual)) {
             return false;
         }
-        return $this->_expected === $this->_actual;
+        return $this->_expected == $this->_actual;
     }
 
     public function getFailureMessage()

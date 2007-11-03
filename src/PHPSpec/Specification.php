@@ -135,7 +135,11 @@ class PHPSpec_Specification
         $result = preg_match("/^((haveA)|(have)|(beA)|(be))*/", $method, $matches);
         if ($result && empty($args) && $this instanceof PHPSpec_Specification_Object) {
             $predicate = $matches[0];
-            $predicateSuffix = substr($method, strlen($predicate) - 1);
+            $predicateSuffix = substr($method, strlen($predicate));
+            if (!isset($predicateSuffix) || empty($predicateSuffix)) {
+            	$predicateSuffix = '';
+            }
+            
             if (strpos($predicate, 'have') !== false) {
                 $predicateMethodPrefixes = array('has', 'hasA');
             } else {
@@ -145,18 +149,19 @@ class PHPSpec_Specification
             foreach ($predicateMethodPrefixes as $prefix) {
                 $predicatePossibleMatches[] = $prefix . $predicateSuffix;
             }
-            $predicateObject = $this->getInterrogator()->getSourceObject();
+            $predicateObject = $this->getInterrogator()
+                ->getSourceObject(); // it's buried deep ;)
             $reflectedObject = new ReflectionObject($predicateObject);
             $methods = $reflectedObject->getMethods();
-            foreach ($methods as $m) {
-                foreach ($predicatePossibleMatches as $possible) {
+            foreach ($predicatePossibleMatches as $possible) {
+                foreach ($methods as $m) {
                     if ($possible == $m->getName()) {
                         $methodToPredicate = $m->getName();
                         break 2;
                     }
                 }
             }
-            if (!empty($methodToPredicate)) {
+            if (!empty($methodToPredicate) && strlen($methodToPredicate) >= 2) {
                 $this->setExpectedValue(true);
                 $this->_createMatcher('predicate');
                 $this->_matcher->setMethodName($methodToPredicate);
