@@ -14,17 +14,17 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Matcher_Predicate extends PHPSpec_Matcher_True
+class PHPSpec_Matcher_Predicate extends PHPSpec_Matcher_BeTrue
 {
 
     protected $_object = null;
@@ -33,8 +33,11 @@ class PHPSpec_Matcher_Predicate extends PHPSpec_Matcher_True
 
     protected $_predicateCall = null;
 
-    public function setObject(stdClass $object)
+    public function setObject($object)
     {
+        if (!is_object($object)) {
+            throw new PHPSpec_Exception('not an object');
+        }
         $this->_object = $object;
     }
 
