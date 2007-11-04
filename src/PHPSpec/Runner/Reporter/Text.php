@@ -48,59 +48,81 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
         $str = PHP_EOL . PHP_EOL;
         $str .= 'Finished in ' . $this->_result->getRuntime() . ' seconds';
         $str .= PHP_EOL . PHP_EOL . count($this->_result) . ' examples';
-        $str .= ', ' . $this->_result->countPasses() . ' passed';
+        
+        $count = $this->_result->countPasses();
+        if ($count == 1) {
+            $str .= ', ' . $count . ' pass';
+        } else {
+            $str .= ', ' . $count . ' passes';
+        }
         
         if ($this->_result->countFailures() > 0) {
-        	$str .= ', ' . $this->_result->countFailures() . ' failed';
+            $count = $this->_result->countFailures();
+        	if ($count == 1) {
+        		$str .= ', ' . $count . ' failure';
+        	} else {
+        		$str .= ', ' . $count . ' failures';
+        	}
         }
         if ($this->_result->countErrors() > 0) {
-            $str .= ', ' . $this->_result->countErrors() . ' errors';
+            $count = $this->_result->countErrors();
+            if ($count == 1) {
+                $str .= ', ' . $count . ' error';
+            } else {
+                $str .= ', ' . $count . ' errors';
+            }
         }
         if ($this->_result->countExceptions() > 0) {
-            $str .= ', ' . $this->_result->countExceptions() . ' exceptions';
+            $count = $this->_result->countExceptions();
+            if ($count == 1) {
+                $str .= ', ' . $count . ' exception';
+            } else {
+                $str .= ', ' . $count . ' exceptions';
+            }
         }
         if ($this->_result->countPending() > 0) {
             $str .= ', ' . $this->_result->countPending() . ' pending';
         }
         
+        $reportedIssues = PHP_EOL . PHP_EOL;
         if ($this->_result->countFailures() > 0) {
             $failed = $this->_result->getTypes('failure');
             foreach ($failed as $failure) {
-                $str .= $failure->getContextDescription();
-                $str .= ' => ' . $failure->getSpecificationText();
-                $str .= ' => ' . $failure->getFailedMessage();
-                $str .= PHP_EOL;
+                $reportedIssues .= $failure->getContextDescription();
+                $reportedIssues .= ' => ' . $failure->getSpecificationText();
+                $reportedIssues .= ' => ' . $failure->getFailedMessage();
+                $reportedIssues .= PHP_EOL;
             }
         }
         if ($this->_result->countErrors() > 0) {
             $errors = $this->_result->getTypes('error');
             foreach ($errors as $error) {
-                $str .= $error->getContextDescription();
-                $str .= ' => ' . $error->getSpecificationText();
-                $str .= ' => ' . $error->getMessage();
-                $str .= PHP_EOL;
+                $reportedIssues .= $error->getContextDescription();
+                $reportedIssues .= ' => ' . $error->getSpecificationText();
+                $reportedIssues .= ' => ' . $error->getMessage();
+                $reportedIssues .= PHP_EOL;
             }
         }
         if ($this->_result->countExceptions() > 0) {
             $exceptions = $this->_result->getTypes('exception');
             foreach ($exceptions as $exception) {
-                $str .= $exception->getContextDescription();
-                $str .= ' => ' . $exception->getSpecificationText();
-                $str .= ' => ' . $exception->getMessage();
-                $str .= PHP_EOL;
+                $reportedIssues .= $exception->getContextDescription();
+                $reportedIssues .= ' => ' . $exception->getSpecificationText();
+                $reportedIssues .= ' => ' . $exception->getMessage();
+                $reportedIssues .= PHP_EOL;
             }
         }
         if ($this->_result->countPending() > 0) {
             $pendings = $this->_result->getTypes('pending');
             foreach ($pendings as $pending) {
-                $str .= $pending->getContextDescription();
-                $str .= ' => ' . $pending->getSpecificationText();
-                $str .= ' => ' . $pending->getMessage();
-                $str .= PHP_EOL;
+                $reportedIssues .= $pending->getContextDescription();
+                $reportedIssues .= ' => ' . $pending->getSpecificationText();
+                $reportedIssues .= ' => ' . $pending->getMessage();
+                $reportedIssues .= PHP_EOL;
             }
         }
         
-        return $str . PHP_EOL;
+        return $str . $reportedIssues . PHP_EOL;
     }
 
     public function __toString()
