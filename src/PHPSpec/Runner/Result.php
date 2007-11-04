@@ -102,9 +102,17 @@ class PHPSpec_Runner_Result implements Countable
         $class = 'PHPSpec_Runner_Example_' . ucfirst($type);
         $types = array();
         foreach ($this->_examples as $example) {
-            if ($example instanceof $class) {
+            if ($class == 'PHPSpec_Runner_Example_Exception') {
+                if ($example instanceof $class
+                    && !$example instanceof PHPSpec_Runner_Example_Error
+                    && !$example instanceof PHPSpec_Runner_Example_Pending) {
+                    $types[] = $example;
+                }
+            } elseif ($example instanceof $class) {
                 $types[] = $example;
             }
+            
+            
         }
         return $types;
     }
