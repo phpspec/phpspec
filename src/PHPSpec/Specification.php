@@ -149,6 +149,7 @@ class PHPSpec_Specification
             foreach ($predicateMethodPrefixes as $prefix) {
                 $predicatePossibleMatches[] = $prefix . $predicateSuffix;
             }
+            
             $predicateObject = $this->getInterrogator()
                 ->getSourceObject(); // it's buried deep ;)
             $reflectedObject = new ReflectionObject($predicateObject);
@@ -339,7 +340,7 @@ class PHPSpec_Specification
      * to the DSL grammer.
      *
      * @param DSL method call which was found to be a Matcher reference
-     * @return false
+     * @return null
      */
     protected function _createMatcher($method)
     {

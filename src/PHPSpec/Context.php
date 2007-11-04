@@ -14,14 +14,14 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class PHPSpec_Context implements Countable
@@ -77,13 +77,7 @@ class PHPSpec_Context implements Countable
      */
     public function spec($value)
     {
-        if ((is_string($value) && class_exists($value, true)) || is_object($value)) {
-            $interrogator = new PHPSpec_Object_Interrogator($value);
-            $this->_specificationDsl = PHPSpec_Specification::getSpec($interrogator);
-        } else {
-            $this->_specificationDsl = PHPSpec_Specification::getSpec($value);
-        }
-
+        $this->_specificationDsl = PHPSpec_Specification::getSpec($value);
         return $this->_specificationDsl;
     }
 
