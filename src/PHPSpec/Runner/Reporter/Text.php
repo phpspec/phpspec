@@ -14,14 +14,14 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
@@ -49,7 +49,8 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
         }
 
         $exceptions = $this->_result->getExceptions();
-        $errors = $this->_result->getErrors(); 
+        $errors = $this->_result->getErrors();
+        $pendings = $this->_result->getPending(); 
 
         if (count($exceptions) > 0) {
             foreach ($exceptions as $exception) {
@@ -64,6 +65,14 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
                 $str .= $error->getContextDescription();
                 $str .= ' => ' . $error->getSpecificationText();
                 $str .= ' => ' . $error->getMessage();
+                $str .= PHP_EOL;
+            }
+        }
+        if (count($pendings) > 0) {
+            foreach ($pendings as $pending) {
+                $str .= $pending->getContextDescription();
+                $str .= ' => ' . $pending->getSpecificationText();
+                $str .= ' => ' . $pending->getMessage();
                 $str .= PHP_EOL;
             }
         }

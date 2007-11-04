@@ -14,14 +14,14 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class PHPSpec_Runner_Result implements Countable
@@ -36,6 +36,8 @@ class PHPSpec_Runner_Result implements Countable
     protected $_exceptionCount = 0;
 
     protected $_errorCount = 0;
+    
+    protected $_pendingCount = 0;
 
     protected $_specCount = 0;
 
@@ -60,6 +62,12 @@ class PHPSpec_Runner_Result implements Countable
     {
         $this->_examples[] = new PHPSpec_Runner_Example_Error($example, $e);
         $this->_errorCount++;
+    }
+    
+    public function addPending(PHPSpec_Runner_Example $example, Exception $e)
+    {
+        $this->_examples[] = new PHPSpec_Runner_Example_Pending($example, $e);
+        $this->_pendingCount++;
     }
 
     public function addPass(PHPSpec_Runner_Example $example)
@@ -122,6 +130,17 @@ class PHPSpec_Runner_Result implements Countable
             }
         }
         return $errors;
+    }
+    
+    public function getPending()
+    {
+        $pending = array();
+        foreach ($this->_examples as $example) {
+            if ($example instanceof PHPSpec_Runner_Example_Pending) {
+                $pending[] = $example;
+            }
+        }
+        return $pending;
     }
 
     public function addSpecCount($count = 1)

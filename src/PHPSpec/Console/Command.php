@@ -93,13 +93,23 @@ class PHPSpec_Console_Command
      * run all tests continually, with 10 second delays between each
      * iterative run and report as normal for each iteration to the console
      * output.
+     * 
+     * Use the CTRL+C key combination to trigger an exit from the console
+     * running loop used for Autotesting.
      *
      * @param PHPSpec_Console_Getopt $options
      */
     public static function autotest(PHPSpec_Console_Getopt $options)
     {
         set_time_limit(0);
-    	$options->a = null;
+        
+    	if (isset($options->a)) {
+    		$options->a = null;
+    	}
+        if (isset($options->autotest)) {
+            $options->autotest = null;
+        }
+
     	while(true) {
     	    self::main($options);
     	    sleep(10);

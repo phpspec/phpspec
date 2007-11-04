@@ -156,7 +156,18 @@ class PHPSpec_Context implements Countable
         $reflected = new ReflectionObject($this);
         return $reflected->getFileName();
     }
-
+    
+    /**
+     * Set status of the current example from which called to Pending, i.e.
+     * awaiting completion.
+     * 
+     * @return null
+     */
+    public function pending($message = null)
+    {
+    	throw new PHPSpec_Runner_PendingException($message);
+    }
+    
     /**
      * Based on the Context object generate all necessary data required
      * in order to count, retrieve and execute the specs/examples held

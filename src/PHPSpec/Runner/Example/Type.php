@@ -14,14 +14,14 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class PHPSpec_Runner_Example_Type
@@ -32,6 +32,7 @@ class PHPSpec_Runner_Example_Type
     protected $_isFail = false;
     protected $_isException = false;
     protected $_isError = false;
+    protected $_isPending = false;
 
     public function __construct(PHPSpec_Runner_Example $example)
     {
@@ -61,6 +62,11 @@ class PHPSpec_Runner_Example_Type
     public function isError()
     {
         return $this->_isError;
+    }
+    
+    public function isPending()
+    {
+        return $this->_isPending;
     }
 
     public function __call($method, $args)

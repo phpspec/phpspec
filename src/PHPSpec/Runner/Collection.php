@@ -14,14 +14,14 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class PHPSpec_Runner_Collection implements Countable
@@ -76,6 +76,8 @@ class PHPSpec_Runner_Collection implements Countable
                 $result->addFailure($example);
             } catch (PHPSpec_Runner_ErrorException $e) {
                 $result->addError($example, $e);
+            } catch (PHPSpec_Runner_PendingException $e) {
+                $result->addPending($example, $e);
             } catch (Exception $e) {
                 $result->addException($example, $e);
             }
