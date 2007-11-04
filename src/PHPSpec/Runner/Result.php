@@ -23,6 +23,7 @@
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ * @todo       Needs a suite of updated tests, esp. addressing output being traced out
  */
 class PHPSpec_Runner_Result implements Countable
 {
@@ -40,6 +41,12 @@ class PHPSpec_Runner_Result implements Countable
     protected $_pendingCount = 0;
 
     protected $_specCount = 0;
+    
+    protected $_reporter = null;
+    
+    protected $_runtimeStart = 0;
+    
+    protected $_runtimeEnd = 0;
 
     public function execute(PHPSpec_Runner_Collection $collection)
     {
@@ -50,30 +57,35 @@ class PHPSpec_Runner_Result implements Countable
     {
         $this->_examples[] = new PHPSpec_Runner_Example_Fail($example);
         $this->_failCount++;
+        $this->_reporter->outputStatus('F');
     }
 
     public function addException(PHPSpec_Runner_Example $example, Exception $e)
     {
         $this->_examples[] = new PHPSpec_Runner_Example_Exception($example, $e);
         $this->_exceptionCount++;
+        $this->_reporter->outputStatus('E');
     }
 
     public function addError(PHPSpec_Runner_Example $example, Exception $e)
     {
         $this->_examples[] = new PHPSpec_Runner_Example_Error($example, $e);
         $this->_errorCount++;
+        $this->_reporter->outputStatus('E');
     }
     
     public function addPending(PHPSpec_Runner_Example $example, Exception $e)
     {
         $this->_examples[] = new PHPSpec_Runner_Example_Pending($example, $e);
         $this->_pendingCount++;
+        $this->_reporter->outputStatus('P');
     }
 
     public function addPass(PHPSpec_Runner_Example $example)
     {
         $this->_examples[] = new PHPSpec_Runner_Example_Pass($example);
         $this->_passCount++;
+        $this->_reporter->outputStatus('.');
     }
 
     /**
@@ -96,61 +108,12 @@ class PHPSpec_Runner_Result implements Countable
         }
         return $types;
     }
-
-    public function getPasses()
+    
+    public function setReporter(PHPSpec_Runner_Reporter $reporter)
     {
-        $passes = array();
-        foreach ($this->_examples as $example) {
-            if ($example instanceof PHPSpec_Runner_Example_Pass) {
-                $passes[] = $example;
-            }
-        }
-        return $passes;
-    }
-
-    public function getFailures()
-    {
-        $fails = array();
-        foreach ($this->_examples as $example) {
-            if ($example instanceof PHPSpec_Runner_Example_Fail) {
-                $fails[] = $example;
-            }
-        }
-        return $fails;
-    }
-
-    public function getExceptions()
-    {
-        $exceptions = array();
-        foreach ($this->_examples as $example) {
-            if ($example instanceof PHPSpec_Runner_Example_Exception) {
-                $exceptions[] = $example;
-            }
-        }
-        return $exceptions;
-    }
-
-    public function getErrors()
-    {
-        $errors = array();
-        foreach ($this->_examples as $example) {
-            if ($example instanceof PHPSpec_Runner_Example_Error) {
-                $errors[] = $example;
-            }
-        }
-        return $errors;
+    	$this->_reporter = $reporter;
     }
     
-    public function getPending()
-    {
-        $pending = array();
-        foreach ($this->_examples as $example) {
-            if ($example instanceof PHPSpec_Runner_Example_Pending) {
-                $pending[] = $example;
-            }
-        }
-        return $pending;
-    }
 
     public function addSpecCount($count = 1)
     {
@@ -177,7 +140,7 @@ class PHPSpec_Runner_Result implements Countable
         return $this->_passCount;
     }
 
-    public function countFails()
+    public function countFailures()
     {
         return $this->_failCount;
     }
@@ -195,6 +158,18 @@ class PHPSpec_Runner_Result implements Countable
     public function countPending()
     {
         return $this->_pendingCount;
+    }
+    
+    public function setRuntimeStart($microtime) {
+        $this->_runtimeStart = $microtime;
+    }
+    
+    public function setRuntimeEnd($microtime) {
+        $this->_runtimeEnd = $microtime;
+    }
+    
+    public function getRuntime() {
+        return ($this->_runtimeEnd - $this->_runtimeStart);
     }
 
 }

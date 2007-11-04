@@ -27,19 +27,44 @@
 class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
 {
 
+    public function output()
+    {
+    	echo $this;
+    }
+    
     /**
-     * really need to dump this crap and put in a proper output block
+     * Output a status symbol after each test run.
+     * . for Pass, E for error/exception, F for failure, and P for pending
+     *
+     * @param string $symbol
      */
-
+    public function outputStatus($symbol)
+    {
+    	echo $symbol;
+    }
+    
     public function toString()
     {
-        $str = '';
-        $str .= PHP_EOL . count($this->_result) . ' Specs Executed:' . PHP_EOL;
-        $str .= count($this->_result->getPasses()) . ' Specs Passed' . PHP_EOL;
+        $str = PHP_EOL . PHP_EOL;
+        $str .= 'Finished in ' . $this->_result->getRuntime() . ' seconds';
+        $str .= PHP_EOL . PHP_EOL . count($this->_result) . ' examples';
+        $str .= ', ' . $this->_result->countPasses() . ' passed';
         
-        $failed = $this->_result->getFailures();
-
-        if (count($failed) > 0) {
+        if ($this->_result->countFailures() > 0) {
+        	$str .= ', ' . $this->_result->countFailures() . ' failed';
+        }
+        if ($this->_result->countErrors() > 0) {
+            $str .= ', ' . $this->_result->countErrors() . ' errors';
+        }
+        if ($this->_result->countExceptions() > 0) {
+            $str .= ', ' . $this->_result->countExceptions() . ' exceptions';
+        }
+        if ($this->_result->countPending() > 0) {
+            $str .= ', ' . $this->_result->countPending() . ' pending';
+        }
+        
+        if ($this->_result->countFailures() > 0) {
+            $failed = $this->_result->getTypes('failure');
             foreach ($failed as $failure) {
                 $str .= $failure->getContextDescription();
                 $str .= ' => ' . $failure->getSpecificationText();
@@ -47,20 +72,8 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
                 $str .= PHP_EOL;
             }
         }
-
-        $exceptions = $this->_result->getExceptions();
-        $errors = $this->_result->getErrors();
-        $pendings = $this->_result->getPending(); 
-
-        if (count($exceptions) > 0) {
-            foreach ($exceptions as $exception) {
-                $str .= $exception->getContextDescription();
-                $str .= ' => ' . $exception->getSpecificationText();
-                $str .= ' => ' . $exception->getMessage();
-                $str .= PHP_EOL;
-            }
-        }
-        if (count($errors) > 0) {
+        if ($this->_result->countErrors() > 0) {
+            $errors = $this->_result->getTypes('error');
             foreach ($errors as $error) {
                 $str .= $error->getContextDescription();
                 $str .= ' => ' . $error->getSpecificationText();
@@ -68,7 +81,17 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
                 $str .= PHP_EOL;
             }
         }
-        if (count($pendings) > 0) {
+        if ($this->_result->countExceptions() > 0) {
+            $exceptions = $this->_result->getTypes('exception');
+            foreach ($exceptions as $exception) {
+                $str .= $exception->getContextDescription();
+                $str .= ' => ' . $exception->getSpecificationText();
+                $str .= ' => ' . $exception->getMessage();
+                $str .= PHP_EOL;
+            }
+        }
+        if ($this->_result->countPending() > 0) {
+            $pendings = $this->_result->getTypes('pending');
             foreach ($pendings as $pending) {
                 $str .= $pending->getContextDescription();
                 $str .= ' => ' . $pending->getSpecificationText();
@@ -76,9 +99,8 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
                 $str .= PHP_EOL;
             }
         }
-
-        $str .= 'DONE' . PHP_EOL;
-        return $str;
+        
+        return $str . PHP_EOL;
     }
 
     public function __toString()

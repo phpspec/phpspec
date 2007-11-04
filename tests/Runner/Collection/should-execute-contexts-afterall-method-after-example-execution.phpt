@@ -20,9 +20,15 @@ class Mock2 extends PHPSpec_Runner_Result
     public function __construct(){}
 }
 
+class Mock3 extends PHPSpec_Runner_Reporter_Text {
+    public function __construct() {}
+    public function outputStatus() {}
+}
 
 $collection = new PHPSpec_Runner_Collection(new describeEmptyArray, 'Mock');
-$collection->execute(new Mock2);
+$result = new Mock2;
+$result->setReporter(new Mock3);
+$collection->execute($result);
 
 ?>
 --EXPECT--

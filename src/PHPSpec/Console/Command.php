@@ -70,18 +70,21 @@ class PHPSpec_Console_Command
         }
 
         $result = new PHPSpec_Runner_Result;
+        $result->setRuntimeStart(microtime(true));
+        
+        // use a Text reporter for console output
+        $textReporter = new PHPSpec_Runner_Reporter_Text($result);
+        $result->setReporter($textReporter);
+        
         foreach ($runnable as $behaviourContextReflection) {
             $contextObject = $behaviourContextReflection->newInstance();
             $collection = new PHPSpec_Runner_Collection($contextObject);
             $runner = PHPSpec_Runner_Base::execute($collection, $result);
         }
+        
+        $result->setRuntimeEnd(microtime(true));
 
-        // use a Text reporter for console output
-        $textReporter = new PHPSpec_Runner_Reporter_Text( $runner->getResult() );
-        if ($generateSpecdox) {
-            $textReporter->doSpecdox();
-        }
-        echo $textReporter;
+        $textReporter->output();
         
         unset($textReporter, $result, $runner, $runnable, $collection,
             $contextObject, $behaviourContextReflection);

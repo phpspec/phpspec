@@ -10,13 +10,18 @@ class describeEmptyArray extends PHPSpec_Context
         trigger_error('I have failed!', E_USER_ERROR);
     }
 }
+class Mock3 extends PHPSpec_Runner_Reporter_Text {
+    public function __construct() {}
+    public function outputStatus() {}
+}
 
 
 $collection = new PHPSpec_Runner_Collection(new describeEmptyArray);
 $result = new PHPSpec_Runner_Result;
+$result->setReporter(new Mock3);
 $collection->execute($result);
 
-$exceptionArray = $result->getExceptions();
+$exceptionArray = $result->getTypes('error');
 $exceptionExpected = $exceptionArray[0];
 
 assert('$exceptionExpected instanceof PHPSpec_Runner_Example_Error');

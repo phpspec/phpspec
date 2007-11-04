@@ -19,8 +19,7 @@ echo $textReporter;
 ?>
 ===DONE===
 --EXPECT--
+Finished in 0 seconds
 
-3 Specs Executed:
-3 Specs Passed
-DONE
+3 examples, 0 passed
 ===DONE===
