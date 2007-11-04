@@ -49,21 +49,13 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
         $str .= 'Finished in ' . $this->_result->getRuntime() . ' seconds';
         $str .= PHP_EOL . PHP_EOL . count($this->_result) . ' examples';
         
-        $count = $this->_result->countPasses();
+        $count = $this->_result->countFailures();
         if ($count == 1) {
-            $str .= ', ' . $count . ' pass';
+            $str .= ', ' . $count . ' failure';
         } else {
-            $str .= ', ' . $count . ' passes';
+            $str .= ', ' . $count . ' failures';
         }
-        
-        if ($this->_result->countFailures() > 0) {
-            $count = $this->_result->countFailures();
-        	if ($count == 1) {
-        		$str .= ', ' . $count . ' failure';
-        	} else {
-        		$str .= ', ' . $count . ' failures';
-        	}
-        }
+        	
         if ($this->_result->countErrors() > 0) {
             $count = $this->_result->countErrors();
             if ($count == 1) {
