@@ -76,6 +76,15 @@ class PHPSpec_Runner_Result implements Countable
         $this->_passCount++;
     }
 
+    /**
+     * Get an array of Example types which contain the specific Example
+     * objects to collate any other details needed for reporting or
+     * even re-performance.
+     * 
+     * @todo Needs refactoring to remove these duplicate methods!
+     * @param string $type The PHPSpec_Runner_Example type being declared
+     * @return array Array of all examples of this specific type
+     */
     public function getTypes($type)
     {
         $class = 'PHPSpec_Runner_Example_' . ucfirst($type);
@@ -181,6 +190,11 @@ class PHPSpec_Runner_Result implements Countable
     public function countErrors()
     {
         return $this->_errorCount;
+    }
+    
+    public function countPending()
+    {
+        return $this->_pendingCount;
     }
 
 }
