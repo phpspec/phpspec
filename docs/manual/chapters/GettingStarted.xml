@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section id="getting.started.overview">
+  <title>Getting Started</title>
+
+  <para>PHPSpec is a framework which provides programmers with a Domain
+  Specific Language to describe the behaviour of PHP code with readable,
+  executable examples that guide you in the design process and serve well as
+  both documentation and tests.</para>
+
+  <section>
+    <title>You Start By Writing A Specification</title>
+
+    <para>A specification is a collection of examples specific to a particular
+    context. If you image a game of 10-pin Bowling, we can assume that the
+    game has a beginning. So our first context, is a game prior to it
+    starting.</para>
+
+    <para>Start by writing a simple example that expresses a small part of the
+    behaviour our new Bowling game should exhibit.</para>
+
+    <programlisting role="php">class DescribeNewBowlingGame extends PHPSpec_Context
+{
+
+    private $_bowling = null;
+
+    public function before()
+    {
+        $this-&gt;_bowling = new Bowling;
+    }
+
+    public function itShouldScore0ForGutterGame()
+    {
+        for ($i=1; $i&lt;=20; $i++) {
+            $this-&gt;_bowling-&gt;hit(0);
+        }
+        $this-&gt;spec($this-&gt;_bowling-&gt;score)-&gt;should-&gt;equal(0);
+    }
+
+}</programlisting>
+
+    <para>You can execute this example by saving the class to
+    <classname>DescribeNewBowlingGame.php</classname>, navigating to its
+    location from the command line and running the
+    <classname>phpspec</classname> command as follows.</para>
+
+    <screen><userinput>phpspec DescribeNewBowlingGame</userinput></screen>
+
+    <para>Run the example and it will fail since no Bowling class really
+    exists.</para>
+
+    <para>Now write just enough code to make it pass.</para>
+
+    <programlisting role="php">class Bowling
+{
+
+    public $score = 0;
+
+    public function hit()
+    {     
+    }
+
+}</programlisting>
+
+    <para>Rerun the example and enjoy the result of a passing spec.</para>
+  </section>
+
+  <section>
+    <title>Take Very Small Steps</title>
+
+    <para>There's no need to suddenly jump in and write code immediately.
+    Instead consider what other behaviour is required, add a specification
+    example demonstrating it, and only then implement it. Before long the
+    workflow will feel perfectly natural and you'll gain confidence from
+    knowing all your specifications (specs) are passing.</para>
+
+    <para>It's often a useful exercise to write out your specifications before
+    hand in plain English. You can use this as a basis when writing the
+    executable examples for PHPSpec. On the reverse side, soon PHPSpec will
+    also be able to output specifications in plain text format. In essense,
+    PHPSpec (as a BDD framework) forwards the notion that no matter how
+    complex code might eventually become, the specifications will always be
+    clear and readable. This reflects the TDD objective of Tests being a good
+    form of documentation.</para>
+
+    <para>Also, remember to refactor your code as needed - keep it clean and
+    manageable as you continue the BDD process.</para>
+  </section>
+</section>
