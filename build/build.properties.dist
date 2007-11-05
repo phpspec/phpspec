@@ -1,2 +1,2 @@
-docbookxslurl=http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
+docbookxslurl=http://docbook.sourceforge.net/release/xsl/current/html/chunk.xsl
 docbookdtdurl=http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd

@@ -24,6 +24,8 @@ Phing Targets:
 
     pearify: Create a pear package.xml and source code directory tree
 
+	docs: Generates the HTML manual only
+
     clean: Cleans up, deletes staging directories, returns to state 0
 
 Other Targets:
@@ -122,8 +124,9 @@ Other Targets:
         <echo msg="Staging files from ${spec.src} to ${spec.stage.dir}" />
         <copy todir="${spec.stage.dir}">
             <fileset dir="${spec.src}">
-                <exclude name="**/.svn/**" />
+                <exclude name="**/.**/**" />
                 <exclude name="build/**" />
+				<exclude name="docs/**" />
             </fileset>
         </copy>
     </target>
@@ -132,14 +135,15 @@ Other Targets:
         <echo msg="Staging files from ${spec.src} to ${spec.pear.dir} for PEAR Packaging" />
         <copy todir="${spec.pear.dir}">
             <fileset dir="${spec.src}">
-                <exclude name="**/.svn/**" />
+                <exclude name="**/.**/**" />
                 <exclude name="build/**" />
+				<exclude name="docs/**" />
                 <exclude name="src/**" />
             </fileset>
         </copy>
         <copy todir="${spec.pear.dir}">
             <fileset dir="${spec.src}${spec.src.classpath}">
-                <exclude name="**/.svn/**" />
+                <exclude name="**/.**/**" />
             </fileset>
         </copy>
     </target>
@@ -203,6 +207,7 @@ Other Targets:
             
             <dirroles key="scripts">script</dirroles>
             <dirroles key="tests">test</dirroles>
+			<dirroles key="docs">doc</dirroles>
             <replacement path="scripts/phpspec" type="pear-config" from="@php_bin@" to="php_bin" />
             <replacement path="scripts/phpspec.bat" type="pear-config" from="@php_bin@" to="php_bin" />
             <replacement path="scripts/phpspec.bat" type="pear-config" from="@php_dir@" to="php_dir" />
@@ -219,7 +224,7 @@ Other Targets:
         </d51pearpkg2>
     </target>
 
-    <target name="dist" depends="build, pearify, dist.docs">
+    <target name="dist" depends="build, dist.docs, pearify">
         <echo message="Creating tar and zip archives..." />
         <tar destfile="${spec.tarball}.gz" basedir="${spec.stage.dir}" compression="gzip" />
         <move file="${spec.tarball}.gz" todir="${spec.dist}" overwrite="true" />
@@ -237,7 +242,6 @@ Other Targets:
         <delete dir="${spec.stage}" />
         <delete dir="${spec.pear}" />
         <delete dir="${spec.dist}" />
-
 		<delete dir="${spec.manual}" />
     </target>
 
