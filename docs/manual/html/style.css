@@ -44,6 +44,10 @@ pre.screen {
 	clear: right;
 }
 
+strong.userinput {
+    font-weight: normal;
+}
+
 div.variablelist dl dt span.term {
 	font-weight: bold;
 }
