@@ -219,7 +219,7 @@ Other Targets:
         </d51pearpkg2>
     </target>
 
-    <target name="dist" depends="build, pearify">
+    <target name="dist" depends="build, pearify, dist.docs">
         <echo message="Creating tar and zip archives..." />
         <tar destfile="${spec.tarball}.gz" basedir="${spec.stage.dir}" compression="gzip" />
         <move file="${spec.tarball}.gz" todir="${spec.dist}" overwrite="true" />
@@ -265,5 +265,16 @@ Other Targets:
 		</copy>
 		<echo msg="Manual has been rendered." />
 	</target>
+
+    <target name="dist.docs" depends="docs">
+        <copy todir="${spec.stage.dir}/docs/manual">
+            <fileset dir="${spec.dist.manual}">
+            </fileset>
+        </copy>
+        <copy todir="${spec.pear.dir}/docs/manual">
+            <fileset dir="${spec.dist.manual}">
+            </fileset>
+        </copy>
+    </target>
 
 </project>
