@@ -17,7 +17,10 @@
 
     <para>These methods of testing are extremely easy but they bely a serious
     problem. You cannot easily repeat these same tests without a lot of
-    effort.</para>
+    effort. It's in avoiding this effort, and making tests or examples
+    repeatable that makes PHPSpec a valuable tool. I'm not going to exclude
+    SimpleTest, PHPUnit or PHPT from that either - familiarity with more than
+    one framework in PHP is always advisable.</para>
 
     <para>Using a framework like PHPSpec allows you to write examples which
     are repeatable. These automatic tests can be executed time and time again
@@ -64,11 +67,20 @@ $this-&gt;spec($logger)-&gt;should-&gt;haveFile();</programlisting>
 
     <para>Because code examples make for great documentation (not just tests)
     it's better to have examples which follow the natural flow of plain
-    English to improve their readability and clarity.</para>
+    English to improve their readability and clarity. Not only that but done
+    properly any set of examples should be translatable back into their plain
+    text form so you have a sentence (based on our earlier examples)
+    of:</para>
 
-    <para>Before we continue, remember that BDD is not TDD with "should"
-    instead of "assert". There are bigger reasons for BDD besides a simple
-    language differential from TDD.</para>
+    <informalexample>
+      <para>Logger</para>
+
+      <para>- should have a file</para>
+    </informalexample>
+
+    <para>Before we continue, remember that BDD is not just TDD with "should"
+    instead of "assert". There are other reasons for BDD's raison d'etre
+    besides a simple language differential from TDD.</para>
   </section>
 
   <section>
@@ -117,22 +129,70 @@ $this-&gt;spec($logger)-&gt;should-&gt;haveFile();</programlisting>
     <section>
       <title>The Workflow of BDD using PHPSpec</title>
 
-      <para>1. Idenitify a valuable behaviour you want to implement.</para>
+      <para>The process of applying BDD to your coding methodology. Remember
+      to execute your examples once written to ensure they first fail, and
+      during implementation until you're successfully passing them.</para>
 
-      <para>2. Describe it in plain text in the form "it should ...", i.e. a
-      specification.</para>
+      <orderedlist>
+        <listitem>
+          <para>Identify a valuable behaviour you want to implement</para>
+        </listitem>
 
-      <para>3. Write a one or more specs/examples for the "it should"
-      components of your specification.</para>
+        <listitem>
+          <para>Describe it in plain text in the form "it should ... ", i.e. a
+          specification</para>
+        </listitem>
 
-      <para>4. Implement the behaviour you've just described.</para>
+        <listitem>
+          <para>Write one or more specs/examples for the "it should"
+          components of your specification</para>
+        </listitem>
 
-      <para>5. Refactor the implemented code if needed.</para>
+        <listitem>
+          <para>Implement the behaviour you've just described in the
+          specification</para>
+        </listitem>
 
-      <para>6 Return to step 1.</para>
+        <listitem>
+          <para>Refactor the implemented code if needed</para>
+        </listitem>
+
+        <listitem>
+          <para>Return to Step 1</para>
+        </listitem>
+      </orderedlist>
 
       <para>We'll cover this in greater detail when explaining exactly what
-      Behaviour-Driven Development is later.</para>
+      Behaviour-Driven Development is later. The steps are very similar to the
+      TDD variant of write test, write code, refactor except there's also a
+      focus on the documentation/specification aspect and we're not discussing
+      Testing (that specs make good tests is coincidental to the true purpose
+      of BDD which is to improve design).</para>
     </section>
+  </section>
+
+  <section>
+    <title>PHPSpec And BDD In Context</title>
+
+    <para>PHPSpec is the first Behaviour-Driven Development framework for PHP,
+    so in PHP terms we're the new kid on the block - andfull of wacky ideas!
+    Outside of PHP, BDD has become progressively more and more popular with a
+    proliferation of frameworks from Ruby's RSpec to Java's JBehave.
+    Frameworks exist for Java, Ruby, .NET, Smalltalk, Javascript and more.
+    Often there exists more than one BDD framework in a language. Java has
+    three or more.</para>
+
+    <para>On the flip side, traditional Unit Testing frameworks have started
+    to take notice of the swell of support for BDD and started to provide BDD
+    friendly APIs. These have not been overwhelmingly successful however. As I
+    noted before - BDD is not just TDD with "should" instead of "assert".
+    However these milder approaches are still valuable for intermixing BDD
+    specifications with existing TDD Unit Tests without switching frameworks
+    completely.</para>
+
+    <para>This will get more confusing as BDD frameworks start to do the exact
+    same - offering API Runner support for Unit Tests so migration is even
+    simpler. Something RSpec in Ruby is already beginning to improve in recent
+    versions.</para>
   </section>
 </chapter>

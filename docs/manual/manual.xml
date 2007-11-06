@@ -39,6 +39,8 @@
 
     <xi:include href="chapters/Introduction.xml" />
 
+    <xi:include href="chapters/PHPSpecsGoals.xml" />
+
     <xi:include href="references/copyrights.xml" />
     <index id="the.index" />
 </book>
