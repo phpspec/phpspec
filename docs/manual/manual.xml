@@ -37,6 +37,7 @@
         <xi:include href="chapters/GettingStarted.xml" />
     </chapter>
 
+    <xi:include href="chapters/Introduction.xml" />
 
     <xi:include href="references/copyrights.xml" />
     <index id="the.index" />

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<section id="getting.started.overview">
+<section id="getting.started">
   <title>Getting Started</title>
 
   <para>PHPSpec is a framework which provides programmers with a Domain
@@ -8,12 +8,35 @@
   both documentation and tests.</para>
 
   <section>
+    <title>What is PHPSpec?</title>
+
+    <para>PHPSpec is a simple framework. As the official description suggests
+    you can write code examples which are repeatable. This means you write an
+    example, and may repeat it as often as you wish to ensure the
+    implementation code it relates to continues to abide by the example.
+    PHPSpec is related to Unit Testing, but our Behaviour-Driven Development
+    (BDD) origins determine we use a clear plain English style API. This API,
+    given it's fluent style and approximation of natural language is therefore
+    referred to as a Domain Specific Language (DSL). At a deeper level,
+    PHPSpec was designed entirely with BDD in mind. Though similar to Unit
+    Testing, the framework is being designed to support BDD from the ground so
+    that learning, understanding and practicing BDD is as easy as
+    possible.</para>
+  </section>
+
+  <section>
     <title>You Start By Writing A Specification</title>
+
+    <para>In practicing Behaviour-Driven Development, everything starts with a
+    specification.</para>
 
     <para>A specification is a collection of examples specific to a particular
     context. If you image a game of 10-pin Bowling, we can assume that the
     game has a beginning. So our first context, is a game prior to it
-    starting.</para>
+    starting. Each example should describe some facet of behaviour. A Bowling
+    game, for example, is subject to rules concerning scores. So writing an
+    example showing how many pins hit relates to the resulting score would
+    capture such behaviour quite well.</para>
 
     <para>Start by writing a simple example that expresses a small part of the
     behaviour our new Bowling game should exhibit.</para>
@@ -31,7 +54,7 @@
     public function itShouldScore0ForGutterGame()
     {
         for ($i=1; $i&lt;=20; $i++) {
-            $this-&gt;_bowling-&gt;hit(0);
+            $this-&gt;_bowling-&gt;hit(0); // someone is really bad at bowling!
         }
         $this-&gt;spec($this-&gt;_bowling-&gt;score)-&gt;should-&gt;equal(0);
     }
@@ -62,6 +85,17 @@
 }</programlisting>
 
     <para>Rerun the example and enjoy the result of a passing spec.</para>
+
+    <para>As we note below, take very small steps. We've implemented our first
+    example so to write more code, we should first write more examples
+    demonstrating how any new code should behave. This is encouraged by all
+    spec methods, which must start with the term "itShould". Perhaps the next
+    step is hitting one or more pins - that would allow us to predict a score
+    for an example, and also lead us to implementing some scoring rules for
+    our new <classname>Bowling::hit()</classname> method.</para>
+
+    <para>A more elaborate demonstration of using PHPSpec in a BDD setting is
+    introduced later in this book.</para>
   </section>
 
   <section>
