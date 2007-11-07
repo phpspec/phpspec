@@ -287,4 +287,129 @@ Finished in 0.0468921661377 seconds
       that behaviour transparently.</para>
     </section>
   </section>
+
+  <section id="spec.domain.specific.language">
+    <title>The Spec Domain Specific Language (DSL)</title>
+
+    <para><indexterm>
+        <primary>Domain Specific Language</primary>
+
+        <seealso>DSL</seealso>
+      </indexterm>PHPSpec writes coded Examples of behaviour using a Domain
+    Specific Language (DSL) for describing expectations. The DSL was designed
+    to approximate plain English so it intuitive to use, read and
+    comprehend.</para>
+
+    <para>The basic form of the DSL is to attach an Expectation (should or
+    should not) and a Matcher (be, beAnInstanceOf, equal, etc.) to the value
+    or object passed to a new Spec.</para>
+
+    <example>
+      <title>Example Spec DSL: Bowling should not be an instance of
+      Logger</title>
+
+      <programlisting role="php">$bowling = new Bowling;
+$this-&gt;spec($bowling)-&gt;shouldNot-&gt;beAnInstanceOf('Logger');</programlisting>
+    </example>
+
+    <section id="actual.value.term">
+      <title>The Actual Value Term</title>
+
+      <para>In a PHPSpec Example method block, the DSL is instantiated using a
+      call to the <classname>PHPSpec_Context::spec()</classname>. This accepts
+      three possible parameter groupings.</para>
+
+      <orderedlist>
+        <listitem>
+          <para>A scalar value, i.e. string, integer, boolean, float, or
+          array</para>
+        </listitem>
+
+        <listitem>
+          <para>An object</para>
+        </listitem>
+
+        <listitem>
+          <para>An object name, together with any constructor
+          parameters</para>
+        </listitem>
+      </orderedlist>
+
+      <example>
+        <title>Actual Term: Scalar Examples</title>
+
+        <programlisting role="php">$this-&gt;spec('i am a string')-&gt;should-beString();
+$this-&gt;spec(567)-&gt;should-&gt;equal(567);
+$this-&gt;spec(array(1, 2, 3))-&gt;shouldNot-&gt;beEmpty();</programlisting>
+      </example>
+
+      <example>
+        <title>Actual Term: Object Examples</title>
+
+        <programlisting role="php">$this-&gt;spec(new Bowling)-&gt;should-&gt;beAnInstanceOf('Bowling');
+
+$bowling = new Bowling;
+$this-&gt;spec($bowling)-&gt;shouldNot-&gt;havePlayers();</programlisting>
+      </example>
+
+      <example>
+        <title>Actual Term: Object Name With Constructor Params</title>
+
+        <programlisting role="php">$this-&gt;spec('Bowling', new Player('Joe'), new Player('Jim'))-&gt;should-&gt;havePlayers();</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>The Expectation Term (Should or Should Not)</title>
+
+      <para>Just as with English, all expectations fall into one of two
+      possible classes. Those you expect to fail, and those you expect to
+      pass. Whether you wish a Matched Actual Value or an Unmatched Actual
+      Value to be interpreted as a pass depends on the use of the DSL
+      <classname>should</classname> or <classname>shouldNot</classname>
+      phrases.</para>
+
+      <para>All the examples below are expected to pass.</para>
+
+      <example>
+        <title>Expectation Term: Various Passing Examples</title>
+
+        <programlisting role="php">$spec-&gt;( array() )-&gt;should-&gt;beEmpty();
+$spec-&gt;('Bowling')-&gt;shouldNot-&gt;havePlayers();
+$spec-&gt;('i am a string')-&gt;should-&gt;match("/^[a-z ]$/");
+$spec-&gt;(is_int('string'))-&gt;shouldNot-&gt;beTrue();</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>The Matcher Term</title>
+
+      <para>Whereas Unit Testing frameworks rely on assertions, PHPSpec splits
+      the responsibility between an Expectation and a Matcher. A Matcher is a
+      simple object which compares an Actual Value Term with the expected
+      value passed to the Matcher method in the DSL for a positive or negative
+      match. The form of a Matcher is ruled by the
+      <classname>PHPSpec_Matcher_Interface</classname> interface so you can
+      write custom Matchers (pending feature).</para>
+
+      <para>An already expansive range of Matchers are provided by the PHPSpec
+      framework.</para>
+
+      <section>
+        <title>Predicate Matchers</title>
+
+        <para>A Predicate Matcher<indexterm>
+            <primary>Matcher</primary>
+
+            <secondary>Predicate Matching</secondary>
+          </indexterm> is a Matcher which captures it's actual value from an
+        object being specified. It does so by seeking and then calling a
+        method of the form <classname>isSomething()</classname> or
+        <classname>hasSomething()</classname>. We saw this already in previous
+        DSL examples where the DSL method <classname>havePlayers()</classname>
+        is translated into a call to
+        <classname>Bowling::hasPlayers()</classname>.</para>
+      </section>
+    </section>
+  </section>
 </chapter>
