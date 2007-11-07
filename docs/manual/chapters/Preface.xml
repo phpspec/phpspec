@@ -39,7 +39,7 @@
   <para>PHPSpec is the result of this effort. A Behaviour-Driven Development
   (BDD) framework for PHP5.</para>
 
-  <section>
+  <section id="audience">
     <title>Audience</title>
 
     <para>This book is intended for those who have an interest in applying
@@ -52,7 +52,7 @@
     concept of Behaviour-Driven Development up front as Chapter 1.</para>
   </section>
 
-  <section>
+  <section id="requirements">
     <title>Requirements</title>
 
     <para>PHPSpec was designed for PHP5, specifically any version above PHP
@@ -60,14 +60,14 @@
     this has not yet been formally tested.</para>
   </section>
 
-  <section>
+  <section id="this.book.is.free">
     <title>This Book Is Free</title>
 
     <para>This book, all chapters, references, and examples are licensed under
     the Creative Commons Attribution 3.0 License.</para>
   </section>
 
-  <section>
+  <section id="acknowledgements">
     <title>Acknowledgements</title>
 
     <para>There are a lot of people to thank. I'll list names later. Obviously

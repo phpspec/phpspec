@@ -2,8 +2,8 @@
 <chapter>
   <title>PHPSpec's Goals</title>
 
-  <section>
-    <title></title>
+  <section id="goals">
+    <title>Goals!</title>
 
     <para>As we've seen PHPSpec is a Behaviour-Driven Development framework
     which allows you to write code examples which can be executed time and

@@ -7,7 +7,7 @@
   executable examples that guide you in the design process and serve well as
   both documentation and tests.</para>
 
-  <section>
+  <section id="what.is.phpspec">
     <title>What is PHPSpec?</title>
 
     <para>PHPSpec is a simple framework. As the official description suggests
@@ -17,14 +17,17 @@
     PHPSpec is related to Unit Testing, but our Behaviour-Driven Development
     (BDD) origins determine we use a clear plain English style API. This API,
     given it's fluent style and approximation of natural language is therefore
-    referred to as a Domain Specific Language (DSL). At a deeper level,
-    PHPSpec was designed entirely with BDD in mind. Though similar to Unit
-    Testing, the framework is being designed to support BDD from the ground so
-    that learning, understanding and practicing BDD is as easy as
+    referred to as a Domain Specific Language (DSL)<indexterm>
+        <primary>domain specific language</primary>
+      </indexterm>. At a deeper level, PHPSpec was designed entirely with BDD
+    in mind. Though similar to Unit Testing<indexterm>
+        <primary>Unit Testing</primary>
+      </indexterm>, the framework is being designed to support BDD from the
+    ground so that learning, understanding and practicing BDD is as easy as
     possible.</para>
   </section>
 
-  <section>
+  <section id="you.start.by.writing.a.specification">
     <title>You Start By Writing A Specification</title>
 
     <para>In practicing Behaviour-Driven Development, everything starts with a
@@ -98,7 +101,7 @@
     introduced later in this book.</para>
   </section>
 
-  <section>
+  <section id="take.very.small.steps">
     <title>Take Very Small Steps</title>
 
     <para>There's no need to suddenly jump in and write code immediately.

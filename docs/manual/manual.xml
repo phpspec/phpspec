@@ -41,6 +41,8 @@
 
     <xi:include href="chapters/PHPSpecsGoals.xml" />
 
+    <xi:include href="chapters/WritingSpecsWithPHPSpec.xml" />
+
     <xi:include href="references/copyrights.xml" />
     <index id="the.index" />
 </book>

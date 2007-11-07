@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<section>
-  <title>Installation with PEAR</title>
+<section id="installation">
+  <title>Installation</title>
 
-  <section>
+  <section id="installing.phpspec.with.pear">
     <title>Installing PHPSpec with PEAR</title>
 
     <para>PHPSpec should be installed using the PEAR Installer. PEAR (PHP
@@ -17,14 +17,14 @@
     <para>To install PHPSpec, download the tarball archive called
     "PHPSpec-0.2.0devel.tgz". From the commandline issue the command:</para>
 
-    <screen><userinput>pear install -f PHPSpec-0.2.0devel.tgz</userinput></screen>
+    <screen>pear install -f PHPSpec-0.2.0devel.tgz</screen>
 
     <para>PEAR will do all the hard work, including installing the
     <classname>phpspec</classname> command line script. In the future we will
     publish public releases using a dedicated PEAR channel.</para>
   </section>
 
-  <section>
+  <section id="installing.phpspec.manually">
     <title>Installing PHPSpec Manually</title>
 
     <para>To install PHPSpec manually, you can use the non-Pearified tarball
