@@ -72,16 +72,12 @@
       </indexterm> first.</para>
 
     <example>
-      <title>Some plain text specifications for a filesystem Logger</title>
+      <title>Some Plain Text Specs for a Filesystem Logger</title>
 
-      <para>New Filesystem Logger:</para>
-
-      <para>- should create a new log file if none currently exists</para>
-
-      <para>- should use an existing log file if one exists without truncating
-      it</para>
-
-      <para>- should throw Exception if existing log file not writeable</para>
+      <screen>New Filesystem Logger:
+- should create a new log file if none currently exists
+- should use an existing log file if one exists without truncating it
+- should throw Exception if existing log file not writeable</screen>
     </example>
 
     <para>These simple plain text specifications can be translated to PHPSpec
@@ -395,7 +391,191 @@ $spec-&gt;(is_int('string'))-&gt;shouldNot-&gt;beTrue();</programlisting>
       <para>An already expansive range of Matchers are provided by the PHPSpec
       framework.</para>
 
+      <para>A Matcher is general appended as the last term to a Spec as
+      demonstrated in earlier examples.</para>
+
       <section>
+        <title>Matchers Included In PHPSpec</title>
+
+        <para>Note that all Matchers will return a boolean when called thus
+        ending the fluent interface of the Spec. Parameters marked
+        <classname>NULL</classname> generally mean a parameter is not required
+        (the expected value is implicit in the Matcher name).</para>
+
+        <table>
+          <title>PHPSpec Matchers</title>
+
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry align="center">Matcher Method</entry>
+
+                <entry align="center">Explanation</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry><para><classname>bool be (mixed
+                $expected)</classname></para></entry>
+
+                <entry>Identical to using <classname>equal()</classname> and
+                reflects general English usage.</entry>
+              </row>
+
+              <row>
+                <entry><classname>bool beEqualTo (mixed
+                $expected)</classname></entry>
+
+                <entry>Identical to using <classname>equal()</classname> and
+                reflects general English usage.</entry>
+              </row>
+
+              <row>
+                <entry><classname>bool equal (mixed
+                $expected)</classname></entry>
+
+                <entry>Attempts to match the expected value on an equal basis
+                intelligently comparing scalar values, object class, array
+                content, or other metrics generally associated with two items
+                being equivelant.</entry>
+              </row>
+
+              <row>
+                <entry><classname>bool beTrue (null
+                $expected)</classname></entry>
+
+                <entry>Matches the actual value against
+                <classname>TRUE</classname>.</entry>
+              </row>
+
+              <row>
+                <entry><classname>bool beFalse (null
+                $expected)</classname></entry>
+
+                <entry>Matches the actual value against
+                <classname>FALSE</classname>.</entry>
+              </row>
+
+              <row>
+                <entry><classname>bool beNull (null
+                $expected)</classname></entry>
+
+                <entry>Checks if the actual value is
+                <classname>NULL</classname>.</entry>
+              </row>
+
+              <row>
+                <entry><classname>bool be (mixed
+                $expected)</classname></entry>
+
+                <entry>Checks if the actual value is empty (using
+                <classname>empty()</classname>).</entry>
+              </row>
+
+              <row>
+                <entry><para><classname>bool beSet (null
+                $expected)</classname></para></entry>
+
+                <entry>Checks if the actual value is set (using
+                <classname>isset()</classname>).</entry>
+              </row>
+
+              <row>
+                <entry><para><classname>bool beAnInstanceOf (string
+                $expected)</classname></para></entry>
+
+                <entry>Determines if the actual value is both an object and an
+                instance of the class type provided.</entry>
+              </row>
+
+              <row>
+                <entry><para><classname>bool beOfType (string
+                $expected)</classname></para></entry>
+
+                <entry>Checks the value type accepting a string decription of
+                the expected type (e.g. 'int', 'stdClass').</entry>
+              </row>
+
+              <row>
+                <entry><para><classname>bool beInt (null
+                $expected)</classname></para></entry>
+
+                <entry>Checks if the actual value is an integer. This is a
+                precise check - the string form of an integer will not
+                match.</entry>
+              </row>
+
+              <row>
+                <entry><para><classname>bool beArray (null
+                $expected)</classname></para></entry>
+
+                <entry>Checks if the actual value is an array.</entry>
+              </row>
+
+              <row>
+                <entry><para><classname>bool beString (null
+                $expected)</classname></para></entry>
+
+                <entry>Checks if the actual value is a string.</entry>
+              </row>
+
+              <row>
+                <entry><para><classname>bool beFloat (null
+                $expected)</classname></para></entry>
+
+                <entry>Checks if the actual value is a float.</entry>
+              </row>
+
+              <row>
+                <entry><para><classname>bool beObject (null
+                $expected)</classname></para></entry>
+
+                <entry>Checks if the actual value is an object; does not
+                perform type comparison on class type.</entry>
+              </row>
+
+              <row>
+                <entry><para><classname>bool beGreaterThan (mixed
+                $expected)</classname></para></entry>
+
+                <entry>Checks if the actual value is greater than
+                (<classname>&gt;</classname>) the expected value
+                provided.</entry>
+              </row>
+
+              <row>
+                <entry><para><classname>bool beLessThan (mixed
+                $expected)</classname></para></entry>
+
+                <entry>Checks if the actual value is less than
+                (<classname>&lt;</classname>) the expected value
+                provided</entry>
+              </row>
+
+              <row>
+                <entry><para><classname>bool beGreaterThanOrEqualTo (mixed
+                $expected)</classname></para></entry>
+
+                <entry>Checks if the actual value is greater than or equal to
+                (<classname>&gt;=</classname>) the expected value
+                provided</entry>
+              </row>
+
+              <row>
+                <entry><para><classname>bool beLessThanOrEqualTo (mixed
+                $expected)</classname></para></entry>
+
+                <entry>Checks if the actual value is less than or equal to
+                (<classname>&lt;=</classname>) the expected value
+                provided</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </section>
+
+      <section id="predicate.matchers">
         <title>Predicate Matchers</title>
 
         <para>A Predicate Matcher<indexterm>
@@ -408,7 +588,59 @@ $spec-&gt;(is_int('string'))-&gt;shouldNot-&gt;beTrue();</programlisting>
         <classname>hasSomething()</classname>. We saw this already in previous
         DSL examples where the DSL method <classname>havePlayers()</classname>
         is translated into a call to
-        <classname>Bowling::hasPlayers()</classname>.</para>
+        <classname>Bowling::hasPlayers()</classname>. A boolean result from
+        the called method is then compared to a boolean
+        <classname>TRUE</classname> to check for a positive or negative
+        match.</para>
+
+        <example>
+          <title>Example of Classes and Predicate Matcher Calls</title>
+
+          <programlisting>class Insect {
+
+    public function isInsect() {
+        return true;
+    }
+
+    public function hasWings() {
+        return true;
+    }
+
+}
+
+class Flea extends Insect {
+
+    public function hasWings() {
+        return false; // Fleas are wingless blood sucking things
+    }
+
+}
+
+class DescribeFlea extends PHPSpec_Context {
+
+    public function itShouldBeAnInsect()
+    {
+        $flee = new Flea;
+        $this-&gt;spec($flea)-&gt;should-&gt;beAnInsect(); // Flea::isInsect() == TRUE
+    }
+
+    public function itShouldHaveNoWings()
+    {
+        $flee = new Flea;
+        $this-&gt;spec($flea)-&gt;shouldNot-&gt;haveWings(); // Flea::hasWings() == FALSE
+    }
+}</programlisting>
+        </example>
+
+        <para>Predicate Matcher methods in the DSL allow for the use of
+        <classname>be()</classname>, <classname>beA()</classname>,
+        <classname>beAn()</classname> variations which are primarily for
+        allowing grammatically correct structures and are otherwise identical.
+        Same applies to <classname>have()</classname>. The same variations are
+        also searched for when matching to an object's methods (even object
+        methods can be grammatically correct!). This form of matching will
+        eventually be expanded to allow for other predicate style calling
+        methods. If you have any suggestions be sure to let us know.</para>
       </section>
     </section>
   </section>

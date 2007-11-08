@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<section id="getting.started">
+<section id="phpspec.getting.started">
   <title>Getting Started</title>
 
   <para>PHPSpec is a framework which provides programmers with a Domain

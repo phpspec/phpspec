@@ -39,6 +39,7 @@ Other Targets:
 <project name="PHPSpec" default="dist" basedir=".">
 
     <taskdef classname="phing.tasks.ext.d51PearPkg2Task" name="d51pearpkg2" />
+    <taskdef classname="phing.tasks.ext.PHPHighlighterTask" name="phphighlighter" />
 
     <property name="spec.src.default" value="${project.basedir}/.." />
     <property name="spec.src.classpath" value="/src" />
@@ -267,6 +268,7 @@ Other Targets:
 			<include name="manual.xml" />
 		  </fileset>
 		</copy>
+        <phphighlighter dir="${spec.dist.manual}" />
 		<echo msg="Manual has been rendered." />
 	</target>
 
