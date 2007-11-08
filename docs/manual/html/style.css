@@ -82,3 +82,64 @@ div.revinfo {
 code.code {
     font-family: "Lucida Console", monospace;
 }
+
+ol.code {
+    width: 90%;
+    margin: 0 5%;
+    padding: 0;
+    font-size: 0.75em;
+    line-height: 1.8em;
+    overflow: hidden;
+    color: #939399;
+    text-align: left;
+    list-style-position: inside;
+    border: 1px solid #d3d3d0;
+}
+ol.code li {
+    float: left;
+    clear: both;
+    width: 99%;
+    white-space: nowrap;
+    margin: 0;
+    padding: 0 0 0 1%;
+    background: #fff;
+}
+ol.code li.even { background: #f3f3f0; }
+ol.code li code {
+    font: 1.2em courier, monospace;
+    color: #c30;
+    white-space: pre;
+    padding-left: 0.5em;
+}
+ul.code {
+    width: 90%;
+    margin: 0 5%;
+    padding: 0;
+    font-size: 0.75em;
+    line-height: 1.8em;
+    overflow: hidden;
+    color: #939399;
+    text-align: left;
+    list-style:none;
+    border: 1px solid #d3d3d0;
+}
+ul.code li {
+    float: left;
+    clear: both;
+    width: 99%;
+    white-space: nowrap;
+    margin: 0;
+    padding: 0 0 0 1%;
+    background: #fff;
+}
+ul.code li.even { background: #f3f3f0; }
+ul.code li code {
+    font: 1.2em courier, monospace;
+    color: #c30;
+    white-space: pre;
+    padding-left: 0.5em;
+}
+.code .comment { color: #939399; }
+.code .default { color: #44c; }
+.code .keyword { color: #373; }
+.code .string { color: #c30; }
