@@ -132,24 +132,24 @@ class PHPSpec_Specification
         }
 
         // check for any predicate style matching
-        $result = preg_match("/^((haveA)|(have)|(beA)|(be))*/", $method, $matches);
+        $result = preg_match("/^((be)|(have)|(beA)|(haveA)|(haveAn)|(beAn))*/", $method, $matches);
         if ($result && empty($args) && $this instanceof PHPSpec_Specification_Object) {
             $predicate = $matches[0];
             $predicateSuffix = substr($method, strlen($predicate));
             if (!isset($predicateSuffix) || empty($predicateSuffix)) {
             	$predicateSuffix = '';
             }
-            
+
             if (strpos($predicate, 'have') !== false) {
-                $predicateMethodPrefixes = array('has', 'hasA');
+                $predicateMethodPrefixes = array('has', 'hasA', 'hasAn');
             } else {
-                $predicateMethodPrefixes = array('is', 'isA');
+                $predicateMethodPrefixes = array('is', 'isA', 'isAn');
             }
             $predicatePossibleMatches = array();
             foreach ($predicateMethodPrefixes as $prefix) {
                 $predicatePossibleMatches[] = $prefix . $predicateSuffix;
             }
-            
+
             $predicateObject = $this->getInterrogator()
                 ->getSourceObject(); // it's buried deep ;)
             $reflectedObject = new ReflectionObject($predicateObject);
