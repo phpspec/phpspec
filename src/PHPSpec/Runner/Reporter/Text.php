@@ -78,7 +78,7 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
         
         $reportedIssues = PHP_EOL . PHP_EOL;
         if ($this->_result->countFailures() > 0) {
-            $failed = $this->_result->getTypes('failure');
+            $failed = $this->_result->getTypes('fail');
             foreach ($failed as $failure) {
                 $reportedIssues .= $failure->getContextDescription();
                 $reportedIssues .= ' => ' . $failure->getSpecificationText();

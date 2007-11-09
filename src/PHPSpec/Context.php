@@ -179,9 +179,8 @@ class PHPSpec_Context implements Countable
     {
         $object = new ReflectionObject($this);
         $class = $object->getName();
-        //if (substr($class, 0, 8) !== 'describe') {
-        if (!preg_match("/^(describe)*/i", $class)) {
-            throw new Exception('behaviour context did not start with \'describe\'');
+        if (!preg_match("/.*(spec)$/i", $class) && !preg_match("/^(describe).*/i", $class)) {
+            throw new Exception('behaviour context did not end with \'Spec\' or \'spec\', or did not start with \'Describe\' or \'describe\'');
         }
         $this->_addSpecifications($object->getMethods());
         $this->_addDescription($class);

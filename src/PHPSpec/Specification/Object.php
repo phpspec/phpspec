@@ -41,6 +41,9 @@ class PHPSpec_Specification_Object extends PHPSpec_Specification
             $this->_interrogator = $interrogator;
         }
         $this->_expectation = new PHPSpec_Expectation;
+
+        // default actual will be the object itself
+        $this->setActualValue($interrogator->getSourceObject());
     }
 
     public function __call($method, $args)

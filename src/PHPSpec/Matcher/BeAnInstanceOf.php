@@ -42,7 +42,13 @@ class PHPSpec_Matcher_BeAnInstanceOf implements PHPSpec_Matcher_Interface
             $this->_actual = $this->_expected;
             return true;
         } else {
-            $this->_actual = get_class($actual);
+            if (is_object($actual)) {
+                $this->_actual = get_class($actual);
+            } elseif (is_null($actual)) {
+                $this->_actual = 'NULL';
+            } else {
+                $this->_actual = $actual;
+            }
         }
         return false;
     }

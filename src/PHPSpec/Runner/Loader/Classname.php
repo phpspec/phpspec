@@ -39,6 +39,13 @@ class PHPSpec_Runner_Loader_Classname
             $classFile = $className . '.php';
         }
 
+        if (!file_exists($classFile)) {
+            if (preg_match("/^(describe)/i", $className)) {
+                $classBase = substr($className, 8);
+                $classFile = $classBase . 'Spec.php';
+            }
+        }
+
         require_once $classFile;
 
         $classReflected = new ReflectionClass($class);
