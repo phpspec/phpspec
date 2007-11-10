@@ -389,7 +389,7 @@ $spec-&gt;(is_int('string'))-&gt;shouldNot-&gt;beTrue();</programlisting>
       write custom Matchers (pending feature).</para>
 
       <para>An already expansive range of Matchers are provided by the PHPSpec
-      framework.</para>
+      framework. [Note: Some are still awaiting development.]</para>
 
       <para>A Matcher is general appended as the last term to a Spec as
       demonstrated in earlier examples.</para>
@@ -588,7 +588,7 @@ $spec-&gt;(is_int('string'))-&gt;shouldNot-&gt;beTrue();</programlisting>
         <classname>hasSomething()</classname>. We saw this already in previous
         DSL examples where the DSL method <classname>havePlayers()</classname>
         is translated into a call to
-        <classname>Bowling::hasPlayers()</classname>. A boolean result from
+		<classname>Bowling::hasPlayers()</classname>. A boolean result from
         the called method is then compared to a boolean
         <classname>TRUE</classname> to check for a positive or negative
         match.</para>

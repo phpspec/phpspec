@@ -69,7 +69,7 @@
     location from the command line and running the
     <classname>phpspec</classname> command as follows.</para>
 
-    <screen><userinput>phpspec DescribeNewBowlingGame</userinput></screen>
+    <screen>phpspec DescribeNewBowlingGame</screen>
 
     <para>Run the example and it will fail since no Bowling class really
     exists.</para>

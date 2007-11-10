@@ -84,6 +84,7 @@ code.code {
 }
 
 ol.code {
+	font-family: "Lucida Console", monospace;
     width: 90%;
     margin: 0 5%;
     padding: 0;
@@ -112,6 +113,7 @@ ol.code li code {
     padding-left: 0.5em;
 }
 ul.code {
+	font-family: "Lucida Console", monospace;
     width: 90%;
     margin: 0 5%;
     padding: 0;
@@ -120,7 +122,7 @@ ul.code {
     overflow: hidden;
     color: #939399;
     text-align: left;
-    list-style:none;
+    list-style: none;
     border: 1px solid #d3d3d0;
 }
 ul.code li {
