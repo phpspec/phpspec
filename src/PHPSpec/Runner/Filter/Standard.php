@@ -14,14 +14,14 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class PHPSpec_Runner_Filter_Standard extends FilterIterator
@@ -32,8 +32,9 @@ class PHPSpec_Runner_Filter_Standard extends FilterIterator
         $path = $this->getInnerIterator()->current();
         $fileName = basename($path);
         $filePrefix = substr($fileName, 0, 8);
+        $filePostfix = substr($fileName, -8, 4);
         $fileSuffix = substr($fileName, -4, 4);
-        if (($filePrefix == 'Describe' || $filePrefix == 'describe') && $fileSuffix == '.php') {
+        if (($filePrefix == 'Describe' || $filePrefix == 'describe' || $filePostfix == 'Spec' || $filePostfix == 'spec') && $fileSuffix == '.php') {
             return true;
         }
         return false;

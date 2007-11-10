@@ -165,6 +165,10 @@ class PHPSpec_Context implements Countable
      */
     public function pending($message = null)
     {
+        if (is_null($message)) {
+        	$message = 'Incomplete';
+        }
+        
     	throw new PHPSpec_Runner_PendingException($message);
     }
     

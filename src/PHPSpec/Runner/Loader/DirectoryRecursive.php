@@ -14,14 +14,14 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class PHPSpec_Runner_Loader_DirectoryRecursive
@@ -49,10 +49,9 @@ class PHPSpec_Runner_Loader_DirectoryRecursive
             $pathName = $file->getPathname();
             require_once $pathName;
             
-            $fileName = $file->getFilename();
-            $className = substr($fileName, 0, strlen($fileName) - 4);
-            if (class_exists($className, false) && !in_array($className, $this->_loadedClasses)) {
-                $classReflected = new ReflectionClass($className);
+            $class = $this->_getClassName($file);
+            if (!in_array($class, $this->_loadedClasses)) {
+                $classReflected = new ReflectionClass($class);
                 $this->_loaded[] = $classReflected;
             }
         }
@@ -81,5 +80,22 @@ class PHPSpec_Runner_Loader_DirectoryRecursive
         }
         return $this->_filter;
     }
+    
+    protected function _getClassName(splFileInfo $file)
+    {
+        $fileName = $file->getFilename();
+        $className = substr($fileName, 0, strlen($fileName) - 4);
+        $className2 = 'Describe' . substr($fileName, 0, strlen($fileName) - 8);
+        $className3 = 'describe' . substr($fileName, 0, strlen($fileName) - 8);
+        if (class_exists($className, false)) {
+            $class = $className;
+        } elseif (class_exists($className2, false)) {
+            $class = $className2;
+        } elseif (class_exists($className3, false)) {
+            $class = $className3;
+        }
+        return $class;
+    }
+    
 
 }
