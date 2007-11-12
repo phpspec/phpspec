@@ -40,6 +40,8 @@ class PHPSpec_Runner_Result implements Countable
     
     protected $_pendingCount = 0;
 
+    protected $_deliberateFailCount = 0;
+
     protected $_specCount = 0;
     
     protected $_reporter = null;
@@ -57,6 +59,13 @@ class PHPSpec_Runner_Result implements Countable
     {
         $this->_examples[] = new PHPSpec_Runner_Example_Fail($example);
         $this->_failCount++;
+        $this->_reporter->outputStatus('F');
+    }
+
+    public function addDeliberateFailure(PHPSpec_Runner_Example $example, Exception $e)
+    {
+        $this->_examples[] = new PHPSpec_Runner_Example_DeliberateFail($example, $e);
+        $this->_deliberateFailCount++;
         $this->_reporter->outputStatus('F');
     }
 
@@ -105,7 +114,8 @@ class PHPSpec_Runner_Result implements Countable
             if ($class == 'PHPSpec_Runner_Example_Exception') {
                 if ($example instanceof $class
                     && !$example instanceof PHPSpec_Runner_Example_Error
-                    && !$example instanceof PHPSpec_Runner_Example_Pending) {
+                    && !$example instanceof PHPSpec_Runner_Example_Pending
+                    && !$example instanceof PHPSpec_Runner_Example_DeliberateFail) {
                     $types[] = $example;
                 }
             } elseif ($example instanceof $class) {
@@ -151,6 +161,11 @@ class PHPSpec_Runner_Result implements Countable
     public function countFailures()
     {
         return $this->_failCount;
+    }
+
+    public function countDeliberateFailures()
+    {
+        return $this->_deliberateFailCount;
     }
 
     public function countExceptions()

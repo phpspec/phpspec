@@ -33,6 +33,7 @@ class PHPSpec_Runner_Example_Type
     protected $_isException = false;
     protected $_isError = false;
     protected $_isPending = false;
+    protected $_isDeliberateFail = false;
 
     public function __construct(PHPSpec_Runner_Example $example)
     {
@@ -67,6 +68,11 @@ class PHPSpec_Runner_Example_Type
     public function isPending()
     {
         return $this->_isPending;
+    }
+
+    public function isDeliberateFail()
+    {
+        return $this->_isDeliberateFail;
     }
 
     public function __call($method, $args)

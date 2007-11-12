@@ -171,6 +171,11 @@ class PHPSpec_Context implements Countable
         
     	throw new PHPSpec_Runner_PendingException($message);
     }
+
+    public function fail($message = null)
+    {
+        throw new PHPSpec_Runner_DeliberateFailException($message);
+    }
     
     /**
      * Based on the Context object generate all necessary data required

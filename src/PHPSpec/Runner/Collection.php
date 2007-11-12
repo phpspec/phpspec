@@ -78,6 +78,8 @@ class PHPSpec_Runner_Collection implements Countable
                 $result->addError($example, $e);
             } catch (PHPSpec_Runner_PendingException $e) {
                 $result->addPending($example, $e);
+            } catch (PHPSpec_Runner_DeliberateFailException $e) {
+                $result->addDeliberateFailure($example, $e);
             } catch (Exception $e) {
                 $result->addException($example, $e);
             }

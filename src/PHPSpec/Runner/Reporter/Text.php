@@ -49,7 +49,7 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
         $str .= 'Finished in ' . $this->_result->getRuntime() . ' seconds';
         $str .= PHP_EOL . PHP_EOL . count($this->_result) . ' examples';
         
-        $count = $this->_result->countFailures();
+        $count = $this->_result->countFailures() + $this->_result->countDeliberateFailures();
         if ($count == 1) {
             $str .= ', ' . $count . ' failure';
         } else {
@@ -83,6 +83,15 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
                 $reportedIssues .= $failure->getContextDescription();
                 $reportedIssues .= ' => ' . $failure->getSpecificationText();
                 $reportedIssues .= ' => ' . $failure->getFailedMessage();
+                $reportedIssues .= PHP_EOL;
+            }
+        }
+        if ($this->_result->countDeliberateFailures() > 0) {
+            $failed = $this->_result->getTypes('deliberateFail');
+            foreach ($failed as $failure) {
+                $reportedIssues .= $failure->getContextDescription();
+                $reportedIssues .= ' => ' . $failure->getSpecificationText();
+                $reportedIssues .= ' => ' . $failure->getMessage();
                 $reportedIssues .= PHP_EOL;
             }
         }
