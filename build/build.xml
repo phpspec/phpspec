@@ -209,16 +209,16 @@ Other Targets:
             <dirroles key="scripts">script</dirroles>
             <dirroles key="tests">test</dirroles>
 			<dirroles key="docs">doc</dirroles>
-            <!--replacement path="scripts/phpspec" type="pear-config" from="@php_bin@" to="php_bin" />
+            <replacement path="scripts/phpspec" type="pear-config" from="@php_bin@" to="php_bin" />
             <replacement path="scripts/phpspec.bat" type="pear-config" from="@php_bin@" to="php_bin" />
             <replacement path="scripts/phpspec.bat" type="pear-config" from="@php_dir@" to="php_dir" />
             <release>
                 <install as="phpspec" name="scripts/phpspec" />
                 <install as="phpspec.bat" name="scripts/phpspec.bat" />
-            </release-->
+            </release>
             
             <changelog version="${spec.version}" date="${date}" license="LGPL">
-                This is a DEV release for testing and
+                This is a DEVEL release for testing and
                 feedback only.
             </changelog>
             
