@@ -42,6 +42,11 @@ class PHPSpec_Runner_Example_Exception extends PHPSpec_Runner_Example_Type
         return $this->_exception;
     }
 
+    public function toString()
+    {
+        return (string) $this->_exception;
+    }
+
     public function __call($method, $args)
     {
         if (method_exists($this->_example, $method)) {

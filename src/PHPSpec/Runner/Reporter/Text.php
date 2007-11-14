@@ -78,48 +78,69 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
         
         $reportedIssues = PHP_EOL . PHP_EOL;
         if ($this->_result->countFailures() > 0) {
+            $reportedIssues .= 'Failures:' . PHP_EOL . PHP_EOL;
             $failed = $this->_result->getTypes('fail');
+            $increment = 1;
             foreach ($failed as $failure) {
-                $reportedIssues .= $failure->getContextDescription();
-                $reportedIssues .= ' => ' . $failure->getSpecificationText();
-                $reportedIssues .= ' => ' . $failure->getFailedMessage();
-                $reportedIssues .= PHP_EOL;
+                $reportedIssues .= $increment . ')' . PHP_EOL;
+                $reportedIssues .= '\'' . $this->_format($failure->getContextDescription());
+                $reportedIssues .= $failure->getSpecificationText() . '\' FAILED';
+                $reportedIssues .= PHP_EOL . $failure->getFailedMessage();
+                $reportedIssues .= PHP_EOL . PHP_EOL;
+                $increment++;
+            }
+            if ($this->_result->countDeliberateFailures() > 0) {
+                $failed = $this->_result->getTypes('deliberateFail');
+                foreach ($failed as $failure) {
+                    $reportedIssues .= $increment . ')' . PHP_EOL;
+                    $reportedIssues .= '\'' . $this->_format($failure->getContextDescription());
+                    $reportedIssues .= $failure->getSpecificationText() . '\' FAILED';
+                    $reportedIssues .= PHP_EOL . $failure->getMessage();
+                    $reportedIssues .= PHP_EOL . PHP_EOL;
+                    $increment++;
+                }
             }
         }
-        if ($this->_result->countDeliberateFailures() > 0) {
-            $failed = $this->_result->getTypes('deliberateFail');
-            foreach ($failed as $failure) {
-                $reportedIssues .= $failure->getContextDescription();
-                $reportedIssues .= ' => ' . $failure->getSpecificationText();
-                $reportedIssues .= ' => ' . $failure->getMessage();
-                $reportedIssues .= PHP_EOL;
-            }
-        }
+        
+        $increment = 1;
         if ($this->_result->countErrors() > 0) {
+            $reportedIssues .= 'Errors:' . PHP_EOL . PHP_EOL;
             $errors = $this->_result->getTypes('error');
             foreach ($errors as $error) {
-                $reportedIssues .= $error->getContextDescription();
-                $reportedIssues .= ' => ' . $error->getSpecificationText();
-                $reportedIssues .= ' => ' . $error->getMessage();
-                $reportedIssues .= PHP_EOL;
+                $reportedIssues .= $increment . ')' . PHP_EOL;
+                $reportedIssues .= '\'' . $this->_format($error->getContextDescription());
+                $reportedIssues .= $error->getSpecificationText() . '\' ERROR';
+                $reportedIssues .= PHP_EOL . $error->toString();
+                $reportedIssues .= PHP_EOL . PHP_EOL;
+                $increment++;
             }
         }
+
+        $increment = 1;
         if ($this->_result->countExceptions() > 0) {
+            $reportedIssues .= 'Exceptions:' . PHP_EOL . PHP_EOL;
             $exceptions = $this->_result->getTypes('exception');
             foreach ($exceptions as $exception) {
-                $reportedIssues .= $exception->getContextDescription();
-                $reportedIssues .= ' => ' . $exception->getSpecificationText();
-                $reportedIssues .= ' => ' . $exception->getMessage();
-                $reportedIssues .= PHP_EOL;
+                $reportedIssues .= $increment . ')' . PHP_EOL;
+                $reportedIssues .= '\'' . $this->_format($exception->getContextDescription());
+                $reportedIssues .= $exception->getSpecificationText() . '\' EXCEPTION';
+                $reportedIssues .= PHP_EOL . $exception->toString();
+                $reportedIssues .= PHP_EOL . PHP_EOL;
+                $increment++;
             }
         }
+
+        $increment = 1;
         if ($this->_result->countPending() > 0) {
+            $reportedIssues .= 'Pending:' . PHP_EOL . PHP_EOL;
             $pendings = $this->_result->getTypes('pending');
             foreach ($pendings as $pending) {
-                $reportedIssues .= $pending->getContextDescription();
-                $reportedIssues .= ' => ' . $pending->getSpecificationText();
-                $reportedIssues .= ' => ' . $pending->getMessage();
-                $reportedIssues .= PHP_EOL;
+                $reportedIssues .= $increment . ')' . PHP_EOL;
+                $reportedIssues .= '\'' . $this->_format($pending->getContextDescription());
+                $reportedIssues .= $pending->getSpecificationText() . '\' PENDING';
+                $reportedIssues .= PHP_EOL . $pending->getMessage();
+                $reportedIssues .= PHP_EOL . PHP_EOL;
+                $increment++;
             }
         }
         
@@ -134,6 +155,12 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
     public function getSpecdox()
     {
         return 'specdox';
+    }
+
+    protected function _format($description)
+    {
+        $description = preg_replace("/^describe /", '', $description);
+        return $description . ' ';
     }
 
 }
