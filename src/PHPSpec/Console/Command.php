@@ -60,7 +60,7 @@ class PHPSpec_Console_Command
             $runnable += $loader->load( getcwd() );
         }
 
-        if (isset($options->s) || isset($options->specdox)) {
+        if (isset($options->s) || (isset($options->format) && $options->format == 'specdoc')) {
             $generateSpecdox = true;
         }
 
@@ -84,7 +84,7 @@ class PHPSpec_Console_Command
         
         $result->setRuntimeEnd(microtime(true));
 
-        $textReporter->output();
+        $textReporter->output($generateSpecdox);
         
         unset($textReporter, $result, $runner, $runnable, $collection,
             $contextObject, $behaviourContextReflection);

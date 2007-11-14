@@ -27,9 +27,9 @@
 class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
 {
 
-    public function output()
+    public function output($specs = false)
     {
-    	echo $this;
+    	echo $this->toString($specs);
     }
     
     /**
@@ -43,10 +43,15 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
     	echo $symbol;
     }
     
-    public function toString()
+    public function toString($specs = false)
     {
         $str = PHP_EOL . PHP_EOL;
         $str .= 'Finished in ' . $this->_result->getRuntime() . ' seconds';
+
+        if ($specs) {
+            $str .= PHP_EOL . PHP_EOL . $this->getSpecDox();
+        }
+
         $str .= PHP_EOL . PHP_EOL . count($this->_result) . ' examples';
         
         $count = $this->_result->countFailures() + $this->_result->countDeliberateFailures();
@@ -154,7 +159,30 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
 
     public function getSpecdox()
     {
-        return 'specdox';
+        $examples = $this->_result->getExamples();
+        $contexts = array();
+        $str = '';
+        foreach ($examples as $example) {
+            if (!isset($contexts[$example->getContextDescription()])) {
+                $contexts[$example->getContextDescription()] = array();
+            }
+            $contexts[$example->getContextDescription()][] = $example;
+        }
+        foreach ($contexts as $description=>$arrayOfExamples) {
+           $str .=  $this->_format($description) . PHP_EOL;
+           foreach($arrayOfExamples as $example) {
+               $str .= '  -' . $example->getSpecificationText();
+               if (!$example instanceof PHPSpec_Runner_Example_Pass) {
+                    $class = get_class($example);
+                    $parts = explode('_', $class);
+                    $type = array_pop($parts);
+                    $str .= ' (' . strtoupper($type) . ')';
+               }
+               $str .= PHP_EOL;
+           }
+           $str .= PHP_EOL . PHP_EOL;
+        }
+        return $str;
     }
 
     protected function _format($description)

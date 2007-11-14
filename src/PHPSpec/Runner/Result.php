@@ -148,6 +148,11 @@ class PHPSpec_Runner_Result implements Countable
         return $this->_specCount;
     }
 
+    public function getExamples()
+    {
+        return $this->_examples;
+    }
+
     public function count()
     {
         return $this->getSpecCount();
