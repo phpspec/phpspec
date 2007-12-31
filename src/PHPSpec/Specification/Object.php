@@ -14,14 +14,14 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class PHPSpec_Specification_Object extends PHPSpec_Specification
@@ -35,11 +35,9 @@ class PHPSpec_Specification_Object extends PHPSpec_Specification
      */
     protected $_interrogator = null;
 
-    public function __construct(PHPSpec_Object_Interrogator $interrogator = null)
+    public function __construct(PHPSpec_Object_Interrogator $interrogator)
     {
-        if (!is_null($interrogator)) {
-            $this->_interrogator = $interrogator;
-        }
+        $this->_interrogator = $interrogator;
         $this->_expectation = new PHPSpec_Expectation;
 
         // default actual will be the object itself
