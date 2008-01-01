@@ -9,13 +9,10 @@ require_once dirname(__FILE__) . '/../../../_setup.inc';
  */
 
 class Mock extends PHPSpec_Runner_Result {
-    public function __construct() {}
-    public function __toString() { return ''; }
-    public function getPasses() { return array(1,2); }
-    public function getFailures() { return array(); }
-    public function getExceptions() { return array( new Mock2 ); }
-    public function getErrors() { return array(); }
     public function count() { return 3; }
+    public function getRuntime() { return 3; }
+    public function countExceptions() {return 1;}
+    public function getTypes($type) { return array(new Mock2); }
 }
 
 class Mock2 extends PHPSpec_Runner_Example_Exception {
@@ -32,7 +29,15 @@ echo $textReporter;
 ?>
 ===DONE===
 --EXPECT--
-Finished in 0 seconds
+Finished in 3 seconds
 
-3 examples, 0 passed
+3 examples, 0 failures, 1 exception
+
+Exceptions:
+
+1)
+'x y' EXCEPTION
+
+
+
 ===DONE===

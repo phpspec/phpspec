@@ -121,8 +121,6 @@ class PHPSpec_Runner_Result implements Countable
             } elseif ($example instanceof $class) {
                 $types[] = $example;
             }
-            
-            
         }
         return $types;
     }
