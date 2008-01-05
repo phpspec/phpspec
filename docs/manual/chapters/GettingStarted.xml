@@ -69,6 +69,17 @@
     location from the command line and running the
     <classname>phpspec</classname> command as follows.</para>
 
+    <note>
+      <para>Naming conventions also allow for the
+      <classname>DescribeNewBowlingGame</classname> class to be defined in a
+      file called NewBowlingGameSpec.php. This additional convention is common
+      in other BDD frameworks and is replicated here for easier transition
+      from other BDD frameworks to PHPSpec. On the command line the phpspec
+      parameter is always the filename or the filename with the ".php" file
+      suffix removed. Whichever convention you prefer - be sure to apply it
+      consistently.</para>
+    </note>
+
     <screen>phpspec DescribeNewBowlingGame</screen>
 
     <para>Run the example and it will fail since no Bowling class really

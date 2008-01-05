@@ -33,6 +33,22 @@ class PHPSpec_Runner_Loader_Classname
     {
         $class = '';
         
+        /**
+         * Convention; For loading spec files and classes on command line
+         * 
+         * Convention #1: Classnames are reflected in Filenames which follow the
+         * format of "Describe*", e.g. "DescribeNewBowlingGame" defined in
+         * "DescribeNewBowlingGame.php".
+         * 
+         * Convention #2: Classnames are reflected in the Filename by removing
+         * the "Describe" prefix and appending a "Spec" suffix, e.g.
+         * "DescribeNewBowlingGame" defined in "NewBowlingGameSpec.php".
+         * 
+         * Conventions are case sensitive. Both Spec and Describe are expected
+         * to commence with a capital letter. On the command line, the .php
+         * prefix is optional.
+         */
+        
         if (substr($className, strlen($className)-4, 4) !== '.php' && strpos($className, 'Describe') == 0 && substr($className, strlen($className)-4, 4) !== 'Spec') {
         	$class = $className;
         	$classFile = $className . '.php';

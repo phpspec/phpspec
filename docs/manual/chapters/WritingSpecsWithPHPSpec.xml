@@ -108,14 +108,20 @@
         <primary>pending specs</primary>
       </indexterm> examples. The pending status simply means they are
     incomplete or pending completion. If you were to execute this spec from
-    the command line when saved as DescribeNewFilesystemLogger.php, the output
-    would look something like:</para>
+    the command line when saved as NewFilesystemLoggerSpec.php (using the
+    alternate filename convention which utilises a "Spec" suffix and omits the
+    "Describe" prefix), the output would look something like:</para>
 
     <screen>PPP
 
 Finished in 0.0468921661377 seconds
 
 3 examples, 0 failures, 3 pending</screen>
+
+    <para>The relevant command line target to run PHPSpec would be something
+    like:</para>
+
+    <screen>phpspec NewFileSystemLoggerSpec</screen>
 
     <para>We now have two example methods. Based on the defined
     specifications, let's fill these in with something useful.</para>
@@ -188,8 +194,10 @@ Finished in 0.0468921661377 seconds
         </listitem>
 
         <listitem>
-          <para>All Example methods in a Context must begind with "itShould",
-          again to encourage full sentence specification text</para>
+          <para>All Example methods in a Context must begin with "itShould",
+          again to encourage full sentence specification text (this might be
+          later shortened to optionally omit "Should" to allow present tense
+          specification language)</para>
         </listitem>
 
         <listitem>
@@ -201,7 +209,7 @@ Finished in 0.0468921661377 seconds
         <listitem>
           <para>The domain specific langauge (DSL) generally includes an
           Expectation (should/shouldNot) and a Matcher (beSomething,
-          haveSomething, etc.)</para>
+          haveSomething, equals, etc.)</para>
         </listitem>
 
         <listitem>
@@ -293,12 +301,16 @@ Finished in 0.0468921661377 seconds
         <seealso>DSL</seealso>
       </indexterm>PHPSpec writes coded Examples of behaviour using a Domain
     Specific Language (DSL) for describing expectations. The DSL was designed
-    to approximate plain English so it intuitive to use, read and
-    comprehend.</para>
+    to approximate plain grammatically accurate English so it is intuitive to
+    use, read and comprehend.</para>
 
     <para>The basic form of the DSL is to attach an Expectation (should or
     should not) and a Matcher (be, beAnInstanceOf, equal, etc.) to the value
-    or object passed to a new Spec.</para>
+    or object passed to a new Spec. This approach leads to a relatively easy
+    to read sentance requiring minimal translation into the plain English (or
+    other language!) we normally think in. Since the translation effort is
+    minimised, and is closer to how we really think, it's invariably easy to
+    review, critique and modify.</para>
 
     <example>
       <title>Example Spec DSL: Bowling should not be an instance of
@@ -381,8 +393,8 @@ $spec-&gt;(is_int('string'))-&gt;shouldNot-&gt;beTrue();</programlisting>
       <title>The Matcher Term</title>
 
       <para>Whereas Unit Testing frameworks rely on assertions, PHPSpec splits
-      the responsibility between an Expectation and a Matcher. A Matcher is a
-      simple object which compares an Actual Value Term with the expected
+      the responsibility between an Expectation Term and a Matcher. A Matcher
+      is a simple object which compares an Actual Value Term with the expected
       value passed to the Matcher method in the DSL for a positive or negative
       match. The form of a Matcher is ruled by the
       <classname>PHPSpec_Matcher_Interface</classname> interface so you can
@@ -588,7 +600,7 @@ $spec-&gt;(is_int('string'))-&gt;shouldNot-&gt;beTrue();</programlisting>
         <classname>hasSomething()</classname>. We saw this already in previous
         DSL examples where the DSL method <classname>havePlayers()</classname>
         is translated into a call to
-		<classname>Bowling::hasPlayers()</classname>. A boolean result from
+        <classname>Bowling::hasPlayers()</classname>. A boolean result from
         the called method is then compared to a boolean
         <classname>TRUE</classname> to check for a positive or negative
         match.</para>
@@ -636,11 +648,12 @@ class DescribeFlea extends PHPSpec_Context {
         <classname>be()</classname>, <classname>beA()</classname>,
         <classname>beAn()</classname> variations which are primarily for
         allowing grammatically correct structures and are otherwise identical.
-        Same applies to <classname>have()</classname>. The same variations are
-        also searched for when matching to an object's methods (even object
-        methods can be grammatically correct!). This form of matching will
-        eventually be expanded to allow for other predicate style calling
-        methods. If you have any suggestions be sure to let us know.</para>
+        Same applies to <classname>have(), haveA(), and haveAn()</classname>.
+        The same variations are also searched for when matching to an object's
+        methods (even object methods can be grammatically correct!). This form
+        of matching will eventually be expanded to allow for other predicate
+        style calling methods. If you have any suggestions be sure to let us
+        know.</para>
       </section>
     </section>
   </section>
