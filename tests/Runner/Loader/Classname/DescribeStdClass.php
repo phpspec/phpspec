@@ -1,6 +1,6 @@
 <?php
 
-class describeStdClass extends PHPSpec_Context
+class DescribeStdClass extends PHPSpec_Context
 {
 
 }
