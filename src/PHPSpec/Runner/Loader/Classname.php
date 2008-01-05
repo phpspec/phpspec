@@ -31,20 +31,7 @@ class PHPSpec_Runner_Loader_Classname
 
     public function load($className)
     {
-        $class = $className;
-        /**if (substr($className, strlen($className) - 4, 4) == '.php') {
-            $classFile = $className;
-            $class = substr($className, 0, strlen($className) - 4);
-        } else {
-            $classFile = $className . '.php';
-        }
-
-        if (!file_exists($classFile)) {
-            if (preg_match("/^(describe)/i", $className)) {
-                $classBase = substr($className, 8);
-                $classFile = $classBase . 'Spec.php';
-            }
-        }**/
+        $class = '';
         
         if (substr($className, strlen($className)-4, 4) !== '.php' && strpos($className, 'Describe') == 0 && substr($className, strlen($className)-4, 4) !== 'Spec') {
         	$class = $className;
@@ -53,14 +40,24 @@ class PHPSpec_Runner_Loader_Classname
             $classPartial = substr($className, 0, strlen($className)-4);
             $class = 'Describe' . $classPartial;
             $classFile = $className . '.php';
+        } elseif (substr($className, strlen($className)-4, 4) == '.php' && substr($className, 0, 8) == 'Describe') {
+        	$class = substr($className, 0, strlen($className)-4);
+        	$classFile = $className;
+        } elseif (substr($className, strlen($className)-4, 4) == '.php' && substr($className, strlen($className)-8, 4) == 'Spec') {
+            $classPartial = substr($className, 0, strlen($className)-8);
+            $class = 'Describe' . $classPartial;
+            $classFile = $className;
         } else {
-            //var_dump(strpos($className, 'Describe')); exit;
         	throw new PHPSpec_Exception('Invalid class or filename given for a spec; spec could not be found using "' . $className . '"');
         }
         
+        // existence test not implemented - let require call catch fatal error
         
-
         require_once $classFile;
+        
+        if (!class_exists($class, false)) {
+            throw new PHPSpec_Exception('The class ' . $class . ' is not defined within the spec file ' . $classFile);
+        }
 
         $classReflected = new ReflectionClass($class);
 

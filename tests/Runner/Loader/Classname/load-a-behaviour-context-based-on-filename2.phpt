@@ -5,9 +5,9 @@ Should load a behaviour context class based on file name from the current direct
 require_once dirname(__FILE__) . '/../../../_setup.inc';
 
 $loader = new PHPSpec_Runner_Loader_Classname;
-$specs = $loader->load('describeStdClass.php');
+$specs = $loader->load('DescribeStdClass.php');
 
-assert('$specs[0]->getName() == "describeStdClass"');
+assert('$specs[0]->getName() == "DescribeStdClass"');
 
 ?>
 ===DONE===
