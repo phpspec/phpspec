@@ -14,14 +14,14 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class PHPSpec_Runner_Loader_Classname
@@ -32,7 +32,7 @@ class PHPSpec_Runner_Loader_Classname
     public function load($className)
     {
         $class = $className;
-        if (substr($className, strlen($className) - 4, 4) == '.php') {
+        /**if (substr($className, strlen($className) - 4, 4) == '.php') {
             $classFile = $className;
             $class = substr($className, 0, strlen($className) - 4);
         } else {
@@ -44,7 +44,21 @@ class PHPSpec_Runner_Loader_Classname
                 $classBase = substr($className, 8);
                 $classFile = $classBase . 'Spec.php';
             }
+        }**/
+        
+        if (substr($className, strlen($className)-4, 4) !== '.php' && strpos($className, 'Describe') == 0 && substr($className, strlen($className)-4, 4) !== 'Spec') {
+        	$class = $className;
+        	$classFile = $className . '.php';
+        } elseif (substr($className, strlen($className)-4, 4) !== '.php' && substr($className, strlen($className)-4, 4) == 'Spec') {
+            $classPartial = substr($className, 0, strlen($className)-4);
+            $class = 'Describe' . $classPartial;
+            $classFile = $className . '.php';
+        } else {
+            //var_dump(strpos($className, 'Describe')); exit;
+        	throw new PHPSpec_Exception('Invalid class or filename given for a spec; spec could not be found using "' . $className . '"');
         }
+        
+        
 
         require_once $classFile;
 
