@@ -44,8 +44,8 @@ Other Targets:
     <property name="spec.src.default" value="${project.basedir}/.." />
     <property name="spec.src.classpath" value="/src" />
     <property name="spec.name" value="PHPSpec" />
-    <property name="spec.version" value="0.2.0devel" /> <!-- VERSION FOR EDITING -->
-    <property name="spec.stability" value="devel" />
+    <property name="spec.version" value="0.2.0beta" /> <!-- VERSION FOR EDITING -->
+    <property name="spec.stability" value="beta" />
     <property name="spec.svn.baseurl" value="http://phpspec.googlecode.com/svn/" />
     <property name="spec.svn.url" value="${svn.url}/trunk" />
     <property name="spec.svn.tag" value="HEAD" />
@@ -171,10 +171,9 @@ Other Targets:
 
             <name>PHPSpec</name>
             <summary>A Behaviour-Driven Development framework for PHP</summary>
-            <channel>pear.php.net</channel>
+            <channel>pear.phpspec.org</channel>
             <description>
-                Note: This is a development version for testing and feedback
-                purposes only.
+                Note: This is a beta release for testing and feedback.
 
                 PHPSpec is a Behaviour-Driven Development (BDD) framework
                 for PHP5. It provides a Domain Specific Language for describing
