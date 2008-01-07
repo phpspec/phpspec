@@ -256,6 +256,8 @@ Other Targets:
 	<target name="docs" depends="build.manual">
 		<echo msg="Rendering manual..." />
         <copy file="${spec.manual.dir}/html/style.css" todir="${spec.dist.manual}" />
+		<mkdir dir="${spec.dist.manual}/images" />
+		<copy file="${spec.manual.dir}/images/note.png" todir="${spec.dist.manual}/images" />
 		<copy todir="${spec.dist.manual}">
 		  <filterchain>
 			<xincludefilter basedir="${spec.manual.dir}" />
