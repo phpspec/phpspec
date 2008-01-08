@@ -362,7 +362,11 @@ class PHPSpec_Specification
         } else {
             $matchArgs = array($this->getActualValue());
         }
-        $this->setMatcherResult(call_user_func_array(array($this->_matcher, 'matches'), $matchArgs));
+        $result = call_user_func_array(array($this->_matcher, 'matches'), $matchArgs);
+        $this->setMatcherResult($result);
+        if (!$result) {
+            throw new PHPSpec_Runner_FailedMatcherException();
+        }
     }
 
 }

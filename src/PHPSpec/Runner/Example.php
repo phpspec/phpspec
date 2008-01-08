@@ -78,7 +78,12 @@ class PHPSpec_Runner_Example
         if (method_exists($this->_context, 'before')) {
             $this->_context->before();
         }
-        $this->_context->{$this->_methodName}();
+
+        try {
+            $this->_context->{$this->_methodName}();
+        } catch (PHPSpec_Runner_FailedMatcherException $e) {
+        }
+
         if (method_exists($this->_context, 'after')) {
             $this->_context->after();
         }

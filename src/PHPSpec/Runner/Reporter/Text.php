@@ -187,7 +187,7 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
 
     protected function _format($description)
     {
-        $description = preg_replace("/^describe /", '', $description);
+        $description = preg_replace('/spec$/', '', preg_replace('/^describe ?/', '', $description));
         return $description . ' ';
     }
 

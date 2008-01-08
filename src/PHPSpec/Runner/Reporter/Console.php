@@ -40,6 +40,8 @@ class PHPSpec_Runner_Reporter_Console extends PHPSpec_Runner_Reporter_Text
      */
     public function outputStatus($symbol)
     {
+        // Windows NT (or earlier without ANSI.SYS) do not
+        // support the ANSI color escape codes.
         if (preg_match('/windows/i', php_uname('s'))) {
             echo $symbol;
             return;
@@ -57,6 +59,7 @@ class PHPSpec_Runner_Reporter_Console extends PHPSpec_Runner_Reporter_Text
             case 'P':
                 $symbol = Console_Color::convert("%y$symbol%n");
                 break;
+            default:
         }
     	echo $symbol;
     }
