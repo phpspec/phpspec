@@ -72,6 +72,8 @@ class PHPSpec_Runner_Example
 
     public function execute()
     {
+        $this->_context->clearCurrentSpecification();
+
         /**
          * spec execution
          */
@@ -92,6 +94,10 @@ class PHPSpec_Runner_Example
          * Result collection
          */
         $this->_specificationBeingExecuted = $this->_context->getCurrentSpecification();
+        if (is_null($this->_specificationBeingExecuted)) {
+            return;
+        }
+
         $expected = $this->_specificationBeingExecuted->getExpectation()->getExpectedMatcherResult();
         $actual = $this->_specificationBeingExecuted->getMatcherResult();
         if ($expected !== $actual) { // ===

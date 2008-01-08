@@ -88,9 +88,6 @@ class PHPSpec_Context implements Countable
      */
     public function getCurrentSpecification()
     {
-        if (is_null($this->_specificationDsl)) {
-            throw new PHPSpec_Exception('no specification object created yet');
-        }
         return $this->_specificationDsl;
     }
 
@@ -175,6 +172,11 @@ class PHPSpec_Context implements Countable
     public function fail($message = null)
     {
         throw new PHPSpec_Runner_DeliberateFailException($message);
+    }
+
+    public function clearCurrentSpecification()
+    {
+        $this->_specificationDsl = null;
     }
     
     /**
