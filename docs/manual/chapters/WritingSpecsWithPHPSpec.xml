@@ -478,7 +478,7 @@ $spec-&gt;(is_int('string'))-&gt;shouldNot-&gt;beTrue();</programlisting>
               </row>
 
               <row>
-                <entry><classname>bool be (mixed
+                <entry><classname>bool beEmpty (mixed
                 $expected)</classname></entry>
 
                 <entry>Checks if the actual value is empty (using
