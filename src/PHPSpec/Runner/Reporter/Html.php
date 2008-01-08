@@ -1,5 +1,7 @@
 <?php
 
+require_once 'Console/Color.php';
+
 class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter {
 
     protected $_headerSent = false;
@@ -16,36 +18,34 @@ class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter {
 	public function outputStatus($symbol)
 	{
         if (!$this->_headerSent) {
-            ob_start();
 		    $this->renderHeader();
+		    $this->_headerSent = true;
         }
         switch ($symbol) {
             case '.':
-                $symbol = Console_Color::convert("%g$symbol%n");
+                $symbol = '<span class="passsymbol">.</span>';
                 break;
             case 'F':
-                $symbol = Console_Color::convert("%r$symbol%n");
+                $symbol = '<span class="failsymbol">F</span>';
                 break;
             case 'E':
-                $symbol = Console_Color::convert("%r$symbol%n");
+                $symbol = '<span class="failsymbol">E</span>';
                 break;
             case 'P':
-                $symbol = Console_Color::convert("%y$symbol%n");
+                $symbol = '<span class="pendingsymbol">P</span>';
                 break;
             default:
         }
-        if (!$this->_headerSent) {
-            echo ob_get_clean();
-        } else {
-            echo $symbol;
-        }
+        echo $symbol;
 	}
 
 	public function toString($specs = false)
 	{
-		if (!$this->_headerSent) {
+		if ($this->_headerSent) {
+		    ob_start();
+        } else {
             ob_start();
-		    $this->renderHeader();
+            $this->renderHeader();
         }
 		$this->renderSummary();
 		if($specs){
@@ -138,15 +138,15 @@ class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter {
 					display:block;
 					margin-top:4px;
 					font-size:0.8em;
-				    white-space: pre ;
+				    white-space: pre;
 				}
-                span .pass {
+                span .passsymbol {
                     color: green;
                 }
-                spec .fail {
+                span .failsymbol {
                     color: red;
                 }
-                spec .pending {
+                span .pendingsymbol {
                     color: yellow;
                 }
 			</style>			

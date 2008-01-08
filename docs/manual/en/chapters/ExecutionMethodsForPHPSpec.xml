@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<chapter id="execution.methods.for.phpspec">
+  <title>Execution Methods for PHPSpec</title>
+
+  <para>PHPSpec offers two distinct modes for executing specs or examples. The
+  method most used throughout this manual requires using the command line
+  <classname>phpspec</classname> operation from a console like bash or MS-DOS.
+  An alternative method is available for executing specs by opening a .php URL
+  in your preferred web browser. This alternative can output in either plain
+  text or HTML as determined by various options.</para>
+
+  <section id="the.console.runner">
+    <title>The Console Runner</title>
+
+    <para>Using PHPSpec from the console is the default option which requires
+    no additional work from your perspective. Simple write your specs,
+    navigate to their location on the command line, and issue a command
+    like:</para>
+
+    <screen>phpspec --recursive</screen>
+
+    <para>This simple command recursively scans the current directory, and all
+    child directories, for spec files and executes all the examples each spec
+    file contains. The simplicity of this method makes using the console the
+    most obvious choice. If you're using a Unix console then you even get some
+    coloured output!</para>
+
+    <para>The <classname>phpspec</classname> console command has a number of
+    useful options which will be expanded substantially as development of
+    subsequent versions progresses. Each option usually has both a full length
+    version, and a shorter single character version. A table of the currently
+    available options is presented below.</para>
+
+    <table>
+      <title>PHPSpec Console Options</title>
+
+      <tgroup cols="3">
+        <thead>
+          <row>
+            <entry align="center">Fulltext Variant</entry>
+
+            <entry align="center">Single Character Variant</entry>
+
+            <entry align="center">Explanation</entry>
+          </row>
+        </thead>
+
+        <tbody>
+          <row>
+            <entry>--recursive</entry>
+
+            <entry>-r</entry>
+
+            <entry>Recursively search the current directory and all child
+            directories for specs, and execute all spec files and their
+            examples as found.</entry>
+          </row>
+
+          <row>
+            <entry>--reporter=[html/console/text]</entry>
+
+            <entry><emphasis>None</emphasis></entry>
+
+            <entry>Use one of the available reporters to format output as
+            either HTML, Text, or standard Console output. The default depends
+            on the scenario but always defaults to Console when PHPSpec is run
+            from the command line.</entry>
+          </row>
+
+          <row>
+            <entry>--specdoc</entry>
+
+            <entry>-s</entry>
+
+            <entry>Add specdoc output (i.e. a plain text list of all
+            specifications) to the results output for all reporters.</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
+  </section>
+
+  <section id="the.http.runner">
+    <title>The HTTP Runner</title>
+
+    <para>The HTTP Runner is not an immediately available mode. Instead you
+    need to do a small amount of setup within a PHP file which you intend
+    calling from a web browser. This is actually a really simple task, and the
+    available options for utilising a HTTP runner are identical to the options
+    available for the Console Runner as outlined above.</para>
+
+    <para>Here's a simple example of a HTTP Runner stored to a file called
+    AllSpecs.php.</para>
+
+    <programlisting role="php">&lt;?php
+
+require_once 'PHPSpec.php';
+
+$options = new stdClass;
+$options-&gt;recursive = true;
+$options-&gt;specdocs = true;
+$options-&gt;reporter = 'html';
+
+PHPSpec_Runner::run($options);</programlisting>
+
+    <para>The <classname>PHPSpec_Runner</classname> class is actually used
+    internally by the default Console Runner so what we're doing here is
+    pretty simple. All we're really doing is duplicating the internal work the
+    Console Runner performs within a PHP file we can visit from a web
+    browser.</para>
+
+    <para>First of all, we include the base PHPSpec.php file. Since PHPSpec
+    takes advantage of PHP5 autoloading, there's no need to include any other
+    PHPSpec files. Secondly, we setup the desired options in a
+    <classname>stdClass</classname> (a PHP5 standard class) as object
+    properties - optionally you can also use a plain array since it will just
+    be converted to a standard object internally anyway.</para>
+
+    <para>The options are typical for a complete execution of all specs.
+    PHPSpec will recursively search the current directory and all child
+    directories for specs to execute, it will output specdoc formatted
+    specifications in plain text along with the results, and it will use the
+    HTML reporter to output HTML.</para>
+
+    <para>Finally we call PHPSpec_Runner's static run() method. And that's all
+    there is to it! If you only want to execute a sub-directory of your specs,
+    you can copy a similar file to that directory (recursive searching does
+    not traverse parent directories).</para>
+  </section>
+</chapter>

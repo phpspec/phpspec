@@ -123,7 +123,7 @@ Other Targets:
     </target>
 
     <target name="stage" depends="prepare, svn.export">
-        <echo msg="Staging files from ${spec.src} to ${spec.stage.dir}" />
+        <echo msg="Staging files from ${spec.src} to ${spec.stage.dir} for Standard Packaging" />
         <copy todir="${spec.stage.dir}">
             <fileset dir="${spec.src}">
                 <exclude name="**/.**/**" />
