@@ -72,9 +72,14 @@ class PHPSpec_Console_Command
         $result = new PHPSpec_Runner_Result;
         $result->setRuntimeStart(microtime(true));
         
-        // use a Text reporter for console output
-        $textReporter = new PHPSpec_Runner_Reporter_Console($result);
-        $result->setReporter($textReporter);
+        if (isset($options->reporter)) {
+        	$reporterClass = 'PHPSpec_Runner_Reporter_' . ucwords($options->reporter);
+        } else {
+        	$reporterClass = 'PHPSpec_Runner_Reporter_Console';
+        }        
+        $reporter = new $reporterClass($result);
+        
+        $result->setReporter($reporter); 
         
         foreach ($runnable as $behaviourContextReflection) {
             $contextObject = $behaviourContextReflection->newInstance();
@@ -119,7 +124,10 @@ class PHPSpec_Console_Command
     	}
     }
     
-
 }
 
-PHPSpec_Console_Command::main();
+if (isset($options) && $options instanceof PHPSpec_Console_Getopt) {
+	PHPSpec_Console_Command::main($options);
+} else {
+	PHPSpec_Console_Command::main();
+}
