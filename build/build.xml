@@ -63,6 +63,7 @@ Other Targets:
 	<property name="spec.script.unix" value="phpspec" />
 	<property name="spec.script.windows" value="phpspec.bat" />
     <property name="lang" value="en" />
+	<property name="languages" value="en" /> <!-- Add additional manual languages here -->
     <php expression="date('Y-m-d')" returnProperty="date"/>
 
 	<property name="spec.manual" value="${project.basedir}/stage-manual" />
@@ -161,9 +162,6 @@ Other Targets:
             <fileset dir="${spec.src}/docs/manual">
             </fileset>
         </copy>
-
-        <!-- replacement task for xsl/dtd default locations using http:// or file:// -->
-
     </target>
 
     <target name="pearify" depends="build.pear">
@@ -255,23 +253,29 @@ Other Targets:
 
 	<target name="docs" depends="build.manual">
 		<echo msg="Rendering manual..." />
-        <copy file="${spec.manual.dir}/html/style.css" todir="${spec.dist.manual}" />
-		<mkdir dir="${spec.dist.manual}/images" />
-		<copy file="${spec.manual.dir}/images/note.png" todir="${spec.dist.manual}/images" />
-		<copy todir="${spec.dist.manual}">
+        <foreach list="${languages}" param="lang" target="docs.lang" />
+		<echo msg="Manual has been rendered." />
+	</target>
+		
+	<target name="docs.lang">
+		<echo msg="Rendering ${lang} language manual." />
+        <copy file="${spec.manual.dir}/${lang}/html/style.css" todir="${spec.dist.manual}" />
+		<mkdir dir="${spec.dist.manual}/${lang}/images" />
+		<copy file="${spec.manual.dir}/${lang}/images/note.png" todir="${spec.dist.manual}/images" />
+		<copy todir="${spec.dist.manual}/${lang}">
 		  <filterchain>
-			<xincludefilter basedir="${spec.manual.dir}" />
-			<xsltfilter style="${spec.manual.dir}/html.xsl">
-			  <param name="base.dir" expression="${spec.dist.manual}/" />
+			<xincludefilter basedir="${spec.manual.dir}/${lang}" />
+			<xsltfilter style="${spec.manual.dir}/${lang}/html.xsl">
+			  <param name="base.dir" expression="${spec.dist.manual}/${lang}" />
 			</xsltfilter>
 		  </filterchain>
-		  <fileset dir="${spec.manual.dir}">
+		  <fileset dir="${spec.manual.dir}/${lang}">
 			<include name="manual.xml" />
 		  </fileset>
 		</copy>
-        <phpdocbookhighlighter dir="${spec.dist.manual}" />
-		<echo msg="Manual has been rendered." />
-	</target>
+        <phpdocbookhighlighter dir="${spec.dist.manual}/${lang}" />
+		<echo msg="Manual for ${lang} language has been rendered." />
+	<target>
 
     <target name="dist.docs" depends="docs">
         <copy todir="${spec.stage.dir}/docs/manual">
