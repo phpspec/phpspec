@@ -259,23 +259,23 @@ Other Targets:
 		
 	<target name="docs.lang">
 		<echo msg="Rendering ${lang} language manual." />
-        <copy file="${spec.manual.dir}/${lang}/html/style.css" todir="${spec.dist.manual}" />
+        <copy file="${spec.manual.dir}/${lang}/html/style.css" todir="${spec.dist.manual}/${lang}" />
 		<mkdir dir="${spec.dist.manual}/${lang}/images" />
-		<copy file="${spec.manual.dir}/${lang}/images/note.png" todir="${spec.dist.manual}/images" />
-		<copy todir="${spec.dist.manual}/${lang}">
+		<copy file="${spec.manual.dir}/${lang}/images/note.png" todir="${spec.dist.manual}/${lang}/images" />
+		<copy todir="${spec.dist.manual}/${lang}/">
 		  <filterchain>
-			<xincludefilter basedir="${spec.manual.dir}/${lang}" />
+			<xincludefilter basedir="${spec.manual.dir}/${lang}/" />
 			<xsltfilter style="${spec.manual.dir}/${lang}/html.xsl">
-			  <param name="base.dir" expression="${spec.dist.manual}/${lang}" />
+			  <param name="base.dir" expression="${spec.dist.manual}/${lang}/" />
 			</xsltfilter>
 		  </filterchain>
-		  <fileset dir="${spec.manual.dir}/${lang}">
+		  <fileset dir="${spec.manual.dir}/${lang}/">
 			<include name="manual.xml" />
 		  </fileset>
 		</copy>
-        <phpdocbookhighlighter dir="${spec.dist.manual}/${lang}" />
+        <phpdocbookhighlighter dir="${spec.dist.manual}/${lang}/" />
 		<echo msg="Manual for ${lang} language has been rendered." />
-	<target>
+	</target>
 
     <target name="dist.docs" depends="docs">
         <copy todir="${spec.stage.dir}/docs/manual">
