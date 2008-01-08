@@ -14,14 +14,14 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter

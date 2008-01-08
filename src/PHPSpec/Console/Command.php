@@ -73,7 +73,7 @@ class PHPSpec_Console_Command
         $result->setRuntimeStart(microtime(true));
         
         // use a Text reporter for console output
-        $textReporter = new PHPSpec_Runner_Reporter_Text($result);
+        $textReporter = new PHPSpec_Runner_Reporter_Console($result);
         $result->setReporter($textReporter);
         
         foreach ($runnable as $behaviourContextReflection) {
