@@ -63,7 +63,7 @@ Other Targets:
 	<property name="spec.script.unix" value="phpspec" />
 	<property name="spec.script.windows" value="phpspec.bat" />
     <property name="lang" value="en" />
-	<property name="languages" value="en" /> <!-- Add additional manual languages here -->
+	<property name="languages" value="en,ja" /> <!-- Add additional manual languages here -->
     <php expression="date('Y-m-d')" returnProperty="date"/>
 
 	<property name="spec.manual" value="${project.basedir}/stage-manual" />
