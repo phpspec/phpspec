@@ -1,6 +1,8 @@
 <?php
 
-class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter{
+class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter {
+
+    protected $_headerSent = false;
 
 	public function output($specs = false)
 	{
@@ -12,13 +14,39 @@ class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter{
      * @param string $symbol
      */
 	public function outputStatus($symbol)
-	{		
+	{
+        if (!$this->_headerSent) {
+            ob_start();
+		    $this->renderHeader();
+        }
+        switch ($symbol) {
+            case '.':
+                $symbol = Console_Color::convert("%g$symbol%n");
+                break;
+            case 'F':
+                $symbol = Console_Color::convert("%r$symbol%n");
+                break;
+            case 'E':
+                $symbol = Console_Color::convert("%r$symbol%n");
+                break;
+            case 'P':
+                $symbol = Console_Color::convert("%y$symbol%n");
+                break;
+            default:
+        }
+        if (!$this->_headerSent) {
+            echo ob_get_clean();
+        } else {
+            echo $symbol;
+        }
 	}
 
 	public function toString($specs = false)
 	{
-		ob_start();
-		$this->renderHeader();
+		if (!$this->_headerSent) {
+            ob_start();
+		    $this->renderHeader();
+        }
 		$this->renderSummary();
 		if($specs){
 			$this->renderSpecDocs();
@@ -43,8 +71,7 @@ class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter{
 		return $description . ' ';
 	}
 
-	public function getSpecdox(){
-			
+	public function getSpecdox(){		
 	}
 	
 	private function renderHeader(){
@@ -112,7 +139,16 @@ class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter{
 					margin-top:4px;
 					font-size:0.8em;
 				    white-space: pre ;
-				}				
+				}
+                span .pass {
+                    color: green;
+                }
+                spec .fail {
+                    color: red;
+                }
+                spec .pending {
+                    color: yellow;
+                }
 			</style>			
 		</head>
 		<body>

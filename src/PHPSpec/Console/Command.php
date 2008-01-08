@@ -37,63 +37,17 @@ class PHPSpec_Console_Command
      */
     public static function main(PHPSpec_Console_Getopt $options = null)
     {
-        $runnable = array();
-        $generateSpecdox = false;
         if (is_null($options)) {
         	$options = new PHPSpec_Console_Getopt;
         }
-        
         if (isset($options->a) || isset($options->autotest)) {
         	self::autotest($options);
         	return;
         }
-        
-        // check for straight class to execute
-        if (isset($options->specFile)) {
-            $loader = new PHPSpec_Runner_Loader_Classname;
-            $runnable += $loader->load($options->specFile);
-        }
-    
-        // should only recurse if not running a single spec
-        if (isset($options->r) && !isset($options->specFile)) {
-            $loader = new PHPSpec_Runner_Loader_DirectoryRecursive;
-            $runnable += $loader->load( getcwd() );
-        }
-
-        if (isset($options->s) || (isset($options->format) && $options->format == 'specdoc')) {
-            $generateSpecdox = true;
-        }
-
-        if (empty($runnable)) {
-            echo 'No specs to execute!';
-            return;
-        }
-
-        $result = new PHPSpec_Runner_Result;
-        $result->setRuntimeStart(microtime(true));
-        
-        if (isset($options->reporter)) {
-        	$reporterClass = 'PHPSpec_Runner_Reporter_' . ucwords($options->reporter);
-        } else {
-        	$reporterClass = 'PHPSpec_Runner_Reporter_Console';
-        }        
-        $reporter = new $reporterClass($result);
-        
-        $result->setReporter($reporter); 
-        
-        foreach ($runnable as $behaviourContextReflection) {
-            $contextObject = $behaviourContextReflection->newInstance();
-            $collection = new PHPSpec_Runner_Collection($contextObject);
-            $runner = PHPSpec_Runner_Base::execute($collection, $result);
-        }
-        
-        $result->setRuntimeEnd(microtime(true));
-
-        $textReporter->output($generateSpecdox);
-        
-        unset($textReporter, $result, $runner, $runnable, $collection,
-            $contextObject, $behaviourContextReflection);
-
+        if (!isset($options->reporter)) {
+        	$options->reporter = 'Console';
+        } 
+        PHPSpec_Runner::run($options);
     }
 
     /**
@@ -126,8 +80,4 @@ class PHPSpec_Console_Command
     
 }
 
-if (isset($options) && $options instanceof PHPSpec_Console_Getopt) {
-	PHPSpec_Console_Command::main($options);
-} else {
-	PHPSpec_Console_Command::main();
-}
+PHPSpec_Console_Command::main();

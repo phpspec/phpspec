@@ -72,6 +72,15 @@ class PHPSpec_Console_Getopt
         return $this->_options;
     }
 
+    public function getAllOptionsAsObject() 
+    {
+        $options = new stdClass;
+        foreach ($this->_options as $key=>$value) {
+            $options->$key = $value;
+        }
+        return $options;
+    }
+
     public static function parseOptionString($str)
     {
         $argv = explode(' ', $str);
