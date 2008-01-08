@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section id="installation">
+  <title>インストール</title>
+
+  <para>
+    PHPSpec は PEAR でインストールしなければなりません。
+    PEAR (PHP Extension and Application Respository)
+    とは、PEAR パッケージの管理や配布を簡単に行うための仕組みのことです。
+    PHP がインストールされていれば、既に PEAR システムも利用できるようになっているでしょう。
+  </para>
+
+  <section id="installing.phpspec.with.pear">
+    <title>PEAR を使用した PHPSpec のインストール</title>
+
+    <para>
+      PHPSpec は、専用の PEAR チャネルで配布されています。
+      PEAR チャネルシステムはきわめて簡単に使用でき、
+      PEAR が利用できるところならばどこでも簡単に PHPSpec をインストールできるようになります。
+      インストールの前に、まず次のコマンドで PHPSpec
+      のチャネルを登録しましょう。
+    </para>
+
+    <screen>pear channel-discover pear.phpspec.org</screen>
+
+    <para>
+      これで、新しいチャネルについての情報を PEAR から取得します。
+    </para>
+
+    <para>
+      インストールの方法は、そのバージョンやリリース状態によって変わります。
+      このドキュメントの執筆時点では PHPSpec はベータ版としてリリースされているので、
+      使用するコマンドは次のようになります。
+    </para>
+
+    <screen>pear install phpspec/PHPSpec-beta</screen>
+
+    <note>
+      <para>
+        PHPSpec の正式版がリリースされれば、最後の
+        "-beta" は不要になります。
+      </para>
+    </note>
+
+    <note>
+      <para>
+        PHPSpec の開発版スナップショットは、常に
+        <ulink url="http://dev.phpspec.org">http://dev.phpspec.org</ulink>
+        に公開されています。このスナップショットは不安定なものなので、
+        テストやフィードバックといった用途以外では用いないでください。
+        開発版スナップショットのインストール方法については、以下の
+        "手動での PHPSpec のインストール" のセクションを参照ください。
+      </para>
+    </note>
+  </section>
+
+  <section>
+    <title>PEAR パッケージをダウンロードすることによる PHPSpec のインストール</title>
+
+    <para>
+      PEAR チャネルシステムを使わずに PHPSpec をインストールするには、
+      PEAR パッケージのアーカイブを <ulink
+      url="http://pear.phpspec.org/get">http://pear.phpspec.org/get</ulink>
+      からダウンロードしたうえで次のコマンドを実行します。
+    </para>
+
+    <screen>pear install -f PHPSpec-0.2.0devel.tgz</screen>
+
+    <para>
+      あとは PEAR がうまい具合に処理を行い、コマンドラインから使用するスクリプト
+      <classname>phpspec</classname> もインストールしてくれます。
+      将来的には、専用の PEAR チャネルを用意して正式版を公開する予定です。
+      このインストール方法は、普通に PEAR からインストールするのとそれほど変わりません。
+      完全な手動インストールを行いたい場合は、次のセクションをごらんください。
+    </para>
+  </section>
+
+  <section id="installing.phpspec.manually">
+    <title>手動での PHPSpec のインストール</title>
+
+    <para>
+      PHPSpec を手動でインストールするには、PEAR パッケージ版ではないアーカイブ
+      "PHPSpec-0.2.0beta.tar.gz" を <ulink
+      url="http://pear.phpspec.org/get/nonpear">http://pear.phpspec.org/get/nonpear</ulink>
+      からダウンロードします。これを好きな場所に展開し、
+      その "src" ディレクトリを php.ini の include_path に追加します。
+      また、"scripts" ディレクトリにあるスクリプト phpspec
+      (Windows の場合は phpspec.bat)
+      を、パスの通った場所にコピーします。必要に応じてこのスクリプトを編集し、
+      PHP バイナリ実行ファイルの場所や PHPSpec_Console_Command
+      クラスファイルの場所を設定する必要があります。
+    </para>
+  </section>
+</section>

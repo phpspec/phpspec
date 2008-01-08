@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+    "@DOCBOOK_DTD@"
+[
+    <!ENTITY % xinclude SYSTEM "xinclude.mod">
+    %xinclude;
+]>
+<book id="manual" lang="ja">
+    <bookinfo>
+        <title>PHPSpec リファレンスマニュアル</title>
+        <subtitle>PHP 用の振舞駆動開発フレームワーク</subtitle>
+        <pubdate><?dbtimestamp format="Y-m-d"?></pubdate>
+        <copyright>
+            <year><?dbtimestamp format="Y"?></year>
+            <holder>
+                Pádraic Brady
+                (<ulink url="http://blog.astrumfutura.com" />)
+            </holder><!-- add holders as needed -->
+        </copyright>
+        <legalnotice>
+            <para>
+            This work is licensed under the Creative Commons Attribution 3.0 License. To view a copy of this license, visit <ulink url="http://creativecommons.org/licenses/by/3.0/" /> or send a letter to Creative Commons, 559 Nathan Abbott Way, Stanford, California 94305, USA.
+            </para> 	    
+        </legalnotice>
+    </bookinfo>
+
+    <!-- Chapter List -->
+    <xi:include href="chapters/Preface.xml" />
+
+    <chapter id="installing.phpspec">
+        <title>PHPSpec のインストール</title>
+        <xi:include href="chapters/InstallingPHPSpec.xml" />
+    </chapter>
+
+    <chapter id="getting.started">
+        <title>さぁはじめましょう</title>
+        <xi:include href="chapters/GettingStarted.xml" />
+    </chapter>
+
+    <xi:include href="chapters/Introduction.xml" />
+
+    <xi:include href="chapters/PHPSpecsGoals.xml" />
+
+    <xi:include href="chapters/WritingSpecsWithPHPSpec.xml" />
+
+    <xi:include href="references/copyrights.xml" />
+    <index id="the.index" />
+</book>
