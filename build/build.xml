@@ -255,6 +255,17 @@ Other Targets:
 		<echo msg="Rendering manual..." />
         <foreach list="${languages}" param="lang" target="docs.lang" />
 		<echo msg="Manual has been rendered." />
+		<echo msg="Rendering API Docs..." />
+		<mkdir dir="${spec.dist.manual}/apidocs" />
+		<phpdoc title="PHPSpec API Documentation" 
+            destdir="${spec.dist.manual}/apidocs"
+            sourcecode="${spec.src}/src"
+            output="HTML:frames:DOM/earthli">
+            <fileset dir="${spec.src}/src">
+                <include name="**" />
+            </fileset>
+        </phpdoc>
+		<echo msg="API Docs have been rendered." />
 	</target>
 		
 	<target name="docs.lang">
