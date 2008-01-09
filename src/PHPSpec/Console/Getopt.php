@@ -123,7 +123,13 @@ class PHPSpec_Console_Getopt
             }
         }
         if (!is_null($encountered)) {
-            $this->_options[$encountered] = true;
+            $parts = explode('=', $encountered);
+            if (count($parts) == 1) {
+                $this->_options[$encountered] = true;
+            } elseif (count($parts) == 2) {
+                $encountered = $parts[0];
+                $this->_options[$encountered] = $parts[1];
+            }
         }
     }
 

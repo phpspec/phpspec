@@ -19,6 +19,7 @@ class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter {
 	{
         if (!$this->_headerSent) {
 		    $this->renderHeader();
+            echo '<div id="symbols">';
 		    $this->_headerSent = true;
         }
         switch ($symbol) {
@@ -42,6 +43,7 @@ class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter {
 	public function toString($specs = false)
 	{
 		if ($this->_headerSent) {
+            echo '</div>';
 		    ob_start();
         } else {
             ob_start();
@@ -104,10 +106,13 @@ class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter {
 					background-color:red;
 					color:white;
 				}
-				#summary,#errors,#specdoc,#failures,#exceptions,#pending{
+				#symbols,#summary,#errors,#specdoc,#failures,#exceptions,#pending{
 					margin:4px;
 					padding:4px;
-				}				
+				}
+                #symbols {
+                    background-color: #000000;
+                }
 				#errors,#specdoc,#failures,#exceptions,#pending{					
 					background-color:#fffff7;
 					border:1px solid #d5d4c5;
@@ -140,13 +145,13 @@ class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter {
 					font-size:0.8em;
 				    white-space: pre;
 				}
-                span .passsymbol {
+                .passsymbol {
                     color: green;
                 }
-                span .failsymbol {
+                .failsymbol {
                     color: red;
                 }
-                span .pendingsymbol {
+                .pendingsymbol {
                     color: yellow;
                 }
 			</style>			

@@ -44,8 +44,8 @@ Other Targets:
     <property name="spec.src.default" value="${project.basedir}/.." />
     <property name="spec.src.classpath" value="/src" />
     <property name="spec.name" value="PHPSpec" />
-    <property name="spec.version" value="0.2.0beta" /> <!-- VERSION FOR EDITING -->
-    <property name="spec.stability" value="beta" />
+    <property name="spec.version" value="0.2.0" /> <!-- VERSION FOR EDITING -->
+    <property name="spec.stability" value="stable" />
     <property name="spec.svn.baseurl" value="http://phpspec.googlecode.com/svn/" />
     <property name="spec.svn.url" value="${svn.url}/trunk" />
     <property name="spec.svn.tag" value="HEAD" />
@@ -200,7 +200,12 @@ Other Targets:
             <dependencies>
                 <php minimum_version="5.2.0" />
                 <pear minimum_version="1.6.0" />
-                <!--extension name="spl" /-->
+                <package name="Console_Color"
+                         channel="pear.php.net"
+                         minimum_version="1.6.0" />
+			    <package name="Text_Diff"
+                         channel="pear.php.net"
+                         minimum_version="1.6.0" />
             </dependencies>
             
             <dirroles key="scripts">script</dirroles>
@@ -213,9 +218,23 @@ Other Targets:
                 <install as="phpspec" name="scripts/phpspec" />
                 <install as="phpspec.bat" name="scripts/phpspec.bat" />
             </release>
+
+			<changelog version="0.2.0" date="2008-01-09" license="LGPL">
+                * Added support for HTML reporting output
+				* Added support for executing specs from a HTTP Runner
+				* Thanks to Modmac
+				* Committed three patches courtesy of KUBO Atsuhiro fixing
+				  several issues, include one reporting bug
+			    * Included Japanese translation of the manual courtesy
+				  of TAKAGI Masahiro
+				* Refactored Runner logic into PHPSpec_Runner class
+				* Added API Docs to documentation directory
+				* Cleaned up and documented Console and HTTP options in
+				  a new manual chapter
+            </changelog>
             
-            <changelog version="${spec.version}" date="${date}" license="LGPL">
-                This is a DEVEL release for testing and
+            <changelog version="0.2.0beta" date="2008-01-06" license="LGPL">
+                This is a BETA release for testing and
                 feedback only.
             </changelog>
             
