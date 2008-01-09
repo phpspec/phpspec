@@ -82,7 +82,7 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
         }
         
         $reportedIssues = PHP_EOL . PHP_EOL;
-        if ($this->_result->countFailures() > 0) {
+        if ($this->_result->countFailures() > 0 || $this->_result->countDeliberateFailures() > 0) {
             $reportedIssues .= 'Failures:' . PHP_EOL . PHP_EOL;
             $failed = $this->_result->getTypes('fail');
             $increment = 1;

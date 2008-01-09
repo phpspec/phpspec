@@ -208,7 +208,7 @@ class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter {
 
 
 	private function renderFailures(){
-		if ($this->_result->countFailures() > 0) {
+		if ($this->_result->countFailures() > 0 || $this->_result->countDeliberateFailures() > 0) {
 		?>
 		<div id="failures">
 			<h2>Failures</h2>
@@ -222,7 +222,18 @@ class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter {
 					<code class="message"><?php echo $failure->getFailedMessage(); ?></code>					
 				</div>
 				<?php				
-			}?>			
+			}?>
+            <?php			
+			$failed = $this->_result->getTypes('deliberateFail');
+			foreach ($failed as $failure) {
+				?>
+				<div class="failure">
+					<span class="context"><?php echo $this->_format($failure->getContextDescription()); ?></span>
+					<span class="spec"><?php echo $failure->getSpecificationText(); ?> FAILED</span>
+					<code class="message"><?php echo $failure->getMessage(); ?></code>					
+				</div>
+				<?php				
+			}?>
 		</div>
 		<?php
 		}
@@ -239,7 +250,7 @@ class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter {
 				?>
 				<div class="error">
 					<span class="context"><?php echo $this->_format($error->getContextDescription()); ?></span>
-					<span class="spec"><?php echo $error->getSpecificationText(); ?> FAILED</span>
+					<span class="spec"><?php echo $error->getSpecificationText(); ?> ERROR</span>
 					<code class="message"><?php echo $error->toString(); ?></code>					
 				</div>
 				<?php				
@@ -260,7 +271,7 @@ class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter {
 				?>
 				<div class="exception">
 					<span class="context"><?php echo $this->_format($exception->getContextDescription()); ?></span>
-					<span class="spec"><?php echo $exception->getSpecificationText(); ?> FAILED</span>
+					<span class="spec"><?php echo $exception->getSpecificationText(); ?> EXCEPTION</span>
 					<code class="message"><?php echo $exception->toString(); ?></code>					
 				</div>
 				<?php				
@@ -281,7 +292,7 @@ class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter {
 				?>
 				<div class="exception">
 					<span class="context"><?php echo $this->_format($pending->getContextDescription()); ?></span>
-					<span class="spec"><?php echo $pending->getSpecificationText(); ?> FAILED</span>
+					<span class="spec"><?php echo $pending->getSpecificationText(); ?> PENDING</span>
 					<code class="message"><?php echo $pending->getMessage(); ?></code>					
 				</div>
 				<?php				
