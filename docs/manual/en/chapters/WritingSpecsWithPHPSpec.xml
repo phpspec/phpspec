@@ -632,13 +632,13 @@ class DescribeFlea extends PHPSpec_Context {
 
     public function itShouldBeAnInsect()
     {
-        $flee = new Flea;
+        $flea = new Flea;
         $this-&gt;spec($flea)-&gt;should-&gt;beAnInsect(); // Flea::isInsect() == TRUE
     }
 
     public function itShouldHaveNoWings()
     {
-        $flee = new Flea;
+        $flea = new Flea;
         $this-&gt;spec($flea)-&gt;shouldNot-&gt;haveWings(); // Flea::hasWings() == FALSE
     }
 }</programlisting>
