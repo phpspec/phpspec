@@ -44,7 +44,7 @@ Other Targets:
     <property name="spec.src.default" value="${project.basedir}/.." />
     <property name="spec.src.classpath" value="/src" />
     <property name="spec.name" value="PHPSpec" />
-    <property name="spec.version" value="0.2.2" /> <!-- VERSION FOR EDITING -->
+    <property name="spec.version" value="0.2.3" /> <!-- VERSION FOR EDITING -->
     <property name="spec.stability" value="stable" />
     <property name="spec.svn.baseurl" value="http://phpspec.googlecode.com/svn/" />
     <property name="spec.svn.url" value="${svn.url}/trunk" />
@@ -215,6 +215,12 @@ Other Targets:
                 <install as="phpspec" name="scripts/phpspec" />
                 <install as="phpspec.bat" name="scripts/phpspec.bat" />
             </release>
+
+			<changelog version="0.2.3" date="2008-01-11" license="LGPL">
+                * Patched a Predicate issue courtesy KUBO Atsuhiro
+				* Reminder to self that no regression testing coupled with
+				  a busy day equals a bad time to make a release!
+            </changelog>
 
 			<changelog version="0.2.2" date="2008-01-11" license="LGPL">
                 * Patched a Predicate issue courtesy of Takagi Masahiro

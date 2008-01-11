@@ -132,7 +132,7 @@ class PHPSpec_Specification
         }
 
         // check for any predicate style matching
-        $result = preg_match("/^((?:be|have)A?n?)(.*)/", $method, $matches);
+        $result = preg_match("/^((?:be|have)(?:A|An)?)(.*)/", $method, $matches);
         if ($result && empty($args) && $this instanceof PHPSpec_Specification_Object) {
             $predicate = $matches[1];
             $predicateSuffix = $matches[2];
