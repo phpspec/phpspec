@@ -122,7 +122,7 @@ class PHPSpec_Specification
 
         // check for Matcher references
         $matchers = array(
-            'equal', 'be', 'beEqualTo', 'beAnInstanceOf', 'beGreaterThan', 'beTrue', 'beFalse', 'beEmpty', 'beLessThan', 'beGreaterThanOrEqualTo', 'beLessThanOrEqualTo', 'beSet', 'beNull', 'beOfType', 'beIdenticalTo'
+            'equal', 'be', 'beEqualTo', 'beAnInstanceOf', 'beGreaterThan', 'beTrue', 'beFalse', 'beEmpty', 'beLessThan', 'beGreaterThanOrEqualTo', 'beLessThanOrEqualTo', 'beSet', 'beNull', 'beOfType', 'beIdenticalTo', 'match', 'throw'
         );
         if (in_array($method, $matchers)) {
             $this->setExpectedValue(array_shift($args));
