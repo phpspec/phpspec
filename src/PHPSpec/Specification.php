@@ -132,13 +132,10 @@ class PHPSpec_Specification
         }
 
         // check for any predicate style matching
-        $result = preg_match("/^((be)|(have)|(beA)|(haveA)|(haveAn)|(beAn))*/", $method, $matches);
+        $result = preg_match("/^((?:be|have)A?n?)(.*)/", $method, $matches);
         if ($result && empty($args) && $this instanceof PHPSpec_Specification_Object) {
-            $predicate = $matches[0];
-            $predicateSuffix = substr($method, strlen($predicate));
-            if (!isset($predicateSuffix) || empty($predicateSuffix)) {
-            	$predicateSuffix = '';
-            }
+            $predicate = $matches[1];
+            $predicateSuffix = $matches[2];
 
             if (strpos($predicate, 'have') !== false) {
                 $predicateMethodPrefixes = array('has', 'hasA', 'hasAn');
