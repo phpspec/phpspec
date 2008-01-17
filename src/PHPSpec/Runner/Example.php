@@ -14,14 +14,14 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class PHPSpec_Runner_Example
@@ -75,8 +75,12 @@ class PHPSpec_Runner_Example
         $this->_context->clearCurrentSpecification();
 
         /**
-         * spec execution
+         * Spec execution
+         * *Each methods are reserved for internal stepping setup/teardown
          */
+        if (method_exists($this->_context, 'beforeEach')) {
+            $this->_context->beforeEach();
+        }
         if (method_exists($this->_context, 'before')) {
             $this->_context->before();
         }
@@ -88,6 +92,9 @@ class PHPSpec_Runner_Example
 
         if (method_exists($this->_context, 'after')) {
             $this->_context->after();
+        }
+        if (method_exists($this->_context, 'afterEach')) {
+            $this->_context->afterEach();
         }
 
         /**
