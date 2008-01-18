@@ -207,7 +207,7 @@ Other Targets:
             
             <dirroles key="scripts">script</dirroles>
             <dirroles key="tests">test</dirroles>
-			<dirroles key="tests">specs</dirroles>
+			<dirroles key="specs">test</dirroles>
 			<dirroles key="docs">doc</dirroles>
             <replacement path="scripts/phpspec" type="pear-config" from="@php_bin@" to="php_bin" />
             <replacement path="scripts/phpspec.bat" type="pear-config" from="@php_bin@" to="php_bin" />
