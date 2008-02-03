@@ -22,6 +22,8 @@ require_once 'Zend/Controller/Front.php';
 
 require_once 'Zend/Controller/Request/Http.php';
 
+require_once 'Zend/Di.php';
+
 /**
  * @category   PHPSpec
  * @package    PHPSpec
@@ -162,6 +164,13 @@ class PHPSpec_Context_Zend extends PHPSpec_Context
         	make a get or post request first');
         }
         return $this->_response;
+    }
+    
+    public function replaceClass()
+    {
+        $args = func_get_args();
+        $method = new ReflectionMethod('Zend_Di', 'replaceClass');
+        $method->invokeArgs(null, $args);
     }
 
     public function setController($controllerName)
