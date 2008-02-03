@@ -8,6 +8,6 @@ class PhpspecController extends Zend_Controller_Action
     {
         $this->getResponse()->setBody(
             $this->getRequest()->text
-        )
+        );
     }
 }
