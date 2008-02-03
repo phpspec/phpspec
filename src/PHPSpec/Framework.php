@@ -38,7 +38,12 @@ class PHPSpec_Framework
             return false;
         }
         $path = dirname(dirname(__FILE__));
-        include_once $path . '/' . str_replace('_', '/', $class) . '.php';
+        $file = $path . '/' . str_replace('_', '/', $class) . '.php';
+        if (!file_exists($file)) {
+            throw new PHPSpec_Exception('include_once("' . $file . '"): file does not exist');
+        } else {
+            include_once $file;
+        }
     }
 
 }

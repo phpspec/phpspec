@@ -122,7 +122,9 @@ class PHPSpec_Specification
 
         // check for Matcher references
         $matchers = array(
-            'equal', 'be', 'beEqualTo', 'beAnInstanceOf', 'beGreaterThan', 'beTrue', 'beFalse', 'beEmpty', 'beLessThan', 'beGreaterThanOrEqualTo', 'beLessThanOrEqualTo', 'beSet', 'beNull', 'beOfType', 'beIdenticalTo', 'match', 'throw'
+            'equal', 'be', 'beEqualTo', 'beAnInstanceOf', 'beGreaterThan', 'beTrue', 'beFalse', 'beEmpty', 'beLessThan', 'beGreaterThanOrEqualTo', 'beLessThanOrEqualTo', 'beSet', 'beNull', 'beOfType', 'beIdenticalTo', 'match', 'throw',
+
+            'beSuccess', 'haveText'
         );
         if (in_array($method, $matchers)) {
             $this->setExpectedValue(array_shift($args));
@@ -338,11 +340,19 @@ class PHPSpec_Specification
      *
      * @param DSL method call which was found to be a Matcher reference
      * @return null
+     * @todo Refactor Matcher inclusion into a more extensible system
      */
     protected function _createMatcher($method)
     {
         $matcherClass = 'PHPSpec_Matcher_' . ucfirst($method);
-        $this->_matcher = new $matcherClass( $this->getExpectedValue() );
+        try {
+            if (class_exists($matcherClass, true)) {
+                $this->_matcher = new $matcherClass( $this->getExpectedValue() );
+            }
+        } catch (PHPSpec_Exception $e) {
+            $matcherClass = 'PHPSpec_Context_Zend_Matcher_' . ucfirst($method);
+            $this->_matcher = new $matcherClass( $this->getExpectedValue() );
+        }
     }
 
     /**
