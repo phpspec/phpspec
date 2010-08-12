@@ -12,7 +12,7 @@ class PHPSpec_Context_Zend_Response extends Zend_Controller_Response_Http
         $this->_context = $context;
     }
 
-    protected function __get($name) 
+    public function __get($name) 
     {
         if (preg_match("/should/", $name)) {
             return $this->_context->spec($this)->$name;

@@ -74,17 +74,17 @@ class PHPSpec_Specification_Object extends PHPSpec_Specification
         return $this->_interrogator;
     }
 
-    protected function __set($name, $value)
+    public function __set($name, $value)
     {
         $this->_interrogator->{$name} = $value;
     }
 
-    protected function __isset($name)
+    public function __isset($name)
     {
         return isset($this->_interrogator->{$name});
     }
 
-    protected function __unset($name)
+    public function __unset($name)
     {
         unset($this->_interrogator->{$name});
     }
