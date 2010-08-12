@@ -19,6 +19,11 @@
  */
 
 /**
+ * @see PHPSpec_Exception
+ */
+ require_once 'PHPSpec/Exception.php';
+ 
+/**
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
