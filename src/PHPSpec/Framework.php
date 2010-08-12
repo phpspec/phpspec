@@ -68,6 +68,7 @@ function PHPSpec_ErrorHandler($errno, $errstr, $errfile, $errline)
     $backtrace = debug_backtrace();
     array_shift($backtrace);
 
+    include_once 'PHPSpec/Runner/ErrorException.php';
     throw new PHPSpec_Runner_ErrorException($errstr, $errno, $errfile, $errline, $backtrace);
 
     return true;
