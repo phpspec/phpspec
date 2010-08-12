@@ -70,8 +70,14 @@ class PHPSpec_Runner_Collection implements Countable
         foreach ($examples as $example) {
             $result->addSpecCount();
             try {
+                if (method_exists($this->_context, 'before')) {
+                    $this->_context->before();
+                }
                 $example->execute();
                 $result->addPass($example);
+                if (method_exists($this->_context, 'after')) {
+                    $this->_context->after();
+                }
             } catch (PHPSpec_Runner_FailedMatcherException $e) {
                 $result->addFailure($example);
             } catch (PHPSpec_Runner_ErrorException $e) {
