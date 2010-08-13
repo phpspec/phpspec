@@ -22,7 +22,7 @@ class Mock2 extends PHPSpec_Runner_Result
 
 class Mock3 extends PHPSpec_Runner_Reporter_Text {
     public function __construct() {}
-    public function outputStatus() {}
+    public function outputStatus($symbol) {}
 }
 
 $collection = new PHPSpec_Runner_Collection(new describeEmptyArray, 'Mock');

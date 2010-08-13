@@ -12,7 +12,7 @@ class describeEmptyArray extends PHPSpec_Context
 }
 class Mock3 extends PHPSpec_Runner_Reporter_Text {
     public function __construct() {}
-    public function outputStatus() {}
+    public function outputStatus($symbol) {}
 }
 
 

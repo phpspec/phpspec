@@ -11,7 +11,8 @@ assert('$reflection->hasMethod("__construct")');
 
 $constructor = new ReflectionMethod('PHPSpec_Matcher_Interface', '__construct');
 assert('$constructor->getNumberOfParameters() == 1');
-$param = array_shift($constructor->getParameters());
+$parameters = $constructor->getParameters();
+$param = array_shift($parameters);
 assert('$param->isOptional() == false');
 
 ?>
