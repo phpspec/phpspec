@@ -9,7 +9,7 @@ class PHPSpec_Runner
             throw new PHPSpec_Exception('PHPSpec_Runner received no options!');
         }
         if (is_array($options)) {
-            $options = self::->_toObject($options);
+            $options = self::_toObject($options);
         }
 
         $runnable = array();
