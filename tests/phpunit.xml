@@ -1,0 +1,7 @@
+<phpunit bootstrap="bootstrap.php">
+ <testsuites>
+  <testsuite name="src">
+    <directory>./PHPSpec</directory>
+  </testsuite>
+ </testsuites>
+</phpunit>
