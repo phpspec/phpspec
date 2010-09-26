@@ -2,7 +2,7 @@
 
 require_once 'PHPSpec/_files/BooSpec.php';
 
-class ContextTest extends PHPUnit_Framework_TestCase
+class PHPSpec_ContextTest extends PHPUnit_Framework_TestCase
 {
 	private $context;
 	

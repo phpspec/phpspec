@@ -1,6 +1,6 @@
 <?php
 
-class ExpectationTest extends PHPUnit_Framework_TestCase {
+class PHPSpec_ExpectationTest extends PHPUnit_Framework_TestCase {
 	private $expect;
 	
 	public function setUp() {

@@ -1,6 +1,6 @@
 <?php
 
-class BeAnInstanceOfTest extends PHPUnit_Framework_TestCase {
+class PHPSpec_Matcher_BeAnInstanceOfTest extends PHPUnit_Framework_TestCase {
 	private $matcher;
 	
 	public function setUp() {
@@ -36,6 +36,8 @@ class BeAnInstanceOfTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function itShouldReturnFalseOnMismatch() {
 		$this->assertFalse($this->matcher->matches(new Bar));
+		$this->assertFalse($this->matcher->matches(NULL));
+		$this->assertFalse($this->matcher->matches('a string'));
 	}
 	
 	/**
@@ -43,5 +45,5 @@ class BeAnInstanceOfTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function itShouldReturnTrueOnMatch() {
 		$this->assertTrue($this->matcher->matches(new Foo));
-	}
+	}	
 }

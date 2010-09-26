@@ -22,7 +22,7 @@ require_once 'Zend/Controller/Front.php';
 
 require_once 'Zend/Controller/Request/Http.php';
 
-require_once 'Zend/Di.php';
+// require_once 'Zend/Di.php';
 
 /**
  * @category   PHPSpec

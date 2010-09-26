@@ -4,4 +4,12 @@
     <directory>./PHPSpec</directory>
   </testsuite>
  </testsuites>
+ <filter>
+  <whitelist>
+   <directory>../src/PHPSpec</directory>
+  </whitelist>
+ </filter>
+ <!-- <logging>
+   <log type="coverage-html" target="/var/www/coverage/phpspec" />
+  </logging> -->
 </phpunit>

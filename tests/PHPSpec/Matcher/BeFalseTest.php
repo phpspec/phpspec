@@ -1,6 +1,6 @@
 <?php
 
-class BeFalseTest extends PHPUnit_Framework_TestCase {
+class PHPSpec_Matcher_BeFalseTest extends PHPUnit_Framework_TestCase {
 	private $matcher;
 	
 	public function setUp() {
@@ -34,6 +34,8 @@ class BeFalseTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function itShouldReturnFalseOnMismatch() {
 		$this->assertFalse($this->matcher->matches(TRUE));
+		$this->assertFalse($this->matcher->matches(''));
+		$this->assertFalse($this->matcher->matches(0));
 	}
 	
 	/**

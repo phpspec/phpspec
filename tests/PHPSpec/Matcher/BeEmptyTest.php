@@ -1,6 +1,6 @@
 <?php
 
-class BeEmptyTest extends PHPUnit_Framework_TestCase {
+class PHPSpec_Matcher_BeEmptyTest extends PHPUnit_Framework_TestCase {
 	private $matcher;
 	const SOMETHING = 'something';
 	

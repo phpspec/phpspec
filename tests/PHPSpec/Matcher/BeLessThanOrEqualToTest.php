@@ -1,6 +1,6 @@
 <?php
 
-class BeLessThanOrEqualToTest extends PHPUnit_Framework_TestCase {
+class PHPSpec_Matcher_BeLessThanOrEqualToTest extends PHPUnit_Framework_TestCase {
     private $matcher;
 	
 	public function setUp() {

@@ -38,7 +38,7 @@ class PHPSpec_Matcher_BeEmpty implements PHPSpec_Matcher_Interface
 
     public function matches($actual)
     {
-        return empty($this->_actual);
+        return empty($actual);
     }
 
     public function getFailureMessage()
@@ -53,6 +53,6 @@ class PHPSpec_Matcher_BeEmpty implements PHPSpec_Matcher_Interface
 
     public function getDescription()
     {
-        return 'beEmpty';
+        return 'be empty';
     }
 }

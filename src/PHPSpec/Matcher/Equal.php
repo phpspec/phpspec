@@ -43,6 +43,7 @@ class PHPSpec_Matcher_Equal
         if (!is_null($epsilon)) {
             $this->_epsilon = $epsilon;
         }
+
         $this->_actual = $actual;
         $type = gettype($actual);
 
@@ -56,31 +57,46 @@ class PHPSpec_Matcher_Equal
         if (is_object($this->_expected) && is_object($this->_actual) && (get_class($this->_expected) !== get_class($this->_actual))) {
             return false;
         }
+        if (is_object($this->_expected) && is_object($this->_actual) && (get_class($this->_expected) === get_class($this->_actual))) {
+            return $this->_expected === $this->_actual;
+        }
 
         if (is_array($this->_actual) && is_array($this->_expected)) {
             // compare arrays - we'll curently enforce key equality
-            return $this->_expected == $this->_actual;
+            return $this->_expected === $this->_actual;
         }
-
+	
         if (!is_array($this->_expected) && !is_array($this->_actual) && !is_object($this->_expected) && !is_object($this->_actual)) {
+			$type = $this->_ensureFloatIsDetectedCorrectly($type);
             // scalar comparisons
             switch ($type) {
                 case 'integer':
                 case 'float':
                     if (is_null($this->_epsilon)) {
-                        return ($this->_expected == $this->_actual);
+                        return ($this->_expected === $this->_actual);
                     } else {
                         // float comparison using expected epsilon
                         return (abs($this->_expected - $this->_actual) <= $this->_epsilon);
                     }
                     break;
-                default:
-                    return $this->_expected == $this->_actual;
-                    break;
             }
         }
+        return $this->_expected === $this->_actual;
+    }
 
-        return true;
+	/**
+	 * Ensures that type is detected correctly in case of floats
+	 * gettype returns integer when you pass a float to it
+	 * 
+	 * @param string $type
+	 * @return string
+	 */
+    private function _ensureFloatIsDetectedCorrectly($type)
+    {
+		if (is_float($this->_actual)) {
+			$type = 'float';
+		}
+		return $type;
     }
 
     public function getFailureMessage()

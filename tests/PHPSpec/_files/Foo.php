@@ -8,4 +8,8 @@ class Foo {
     public function getArg1() {
         return $this->arg1;
     }
+
+    public function hasArg1() {
+	    return !empty($this->arg1);
+    }
 }
