@@ -77,7 +77,14 @@ class PHPSpec_Console_Command
     	    sleep(10);
     	}
     }
+
+    public static function printUsage() {
+        echo <<<USAGE
+Usage: phpspec (FILE|DIRECTORY) + [options]
+    -c, --colour, --color            Show coloured (red/green) output
+    -a, --autospec                   Run all tests continually, every 10 seconds
+
+USAGE;
+}
     
 }
-
-PHPSpec_Console_Command::main();
