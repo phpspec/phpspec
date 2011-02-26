@@ -89,14 +89,19 @@ class PHPSpec_Console_Getopt
     }
 
     protected function _parse(array $argv)
-    {
+    {   
         // get rid of the Command.php reference
         if (is_file($argv[0])) {
             array_shift($argv);
         }
 
+        if (empty($argv)) {
+            PHPSpec_Console_Command::printUsage();
+            return;
+        }
+
         // if the first argument is not a - or -- option it should be a spec filename
-        if ($argv[0][0] !== '-') {
+        if ($argv[0]{0} !== '-') {
             $this->_options['specFile'] = $argv[0];
             array_shift($argv);
         }
