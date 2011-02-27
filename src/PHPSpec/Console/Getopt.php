@@ -26,21 +26,23 @@
  */
 class PHPSpec_Console_Getopt
 {
-	public $exit = false;
-
     protected $_options = array();
 
     public function __construct(array $argv = null)
     {
         if (is_null($argv)) {
             $argv = $_SERVER['argv'];
-        }
+        }  
         $this->_parse($argv);
+
+        if (!isset($this->_options['reporter'])) {
+            $this->_options['reporter'] = 'Console';
+        }
     }
 
     public function getOption($name)
     {
-        return $this->_options[$name];
+        return isset($this->_options[$name]) ? $this->_options[$name] : null;
     }
 
     public function __get($name)
@@ -63,6 +65,11 @@ class PHPSpec_Console_Getopt
         return isset($this->_options[$name]);
     }
 
+	public function noneGiven()
+	{
+		return $this->_options['noneGiven'] === true;
+	}
+
     public function __isset($name)
     {
         return $this->hasOption($name);
@@ -75,13 +82,13 @@ class PHPSpec_Console_Getopt
         if (is_file($argv[0])) {
             array_shift($argv);
         }
-        
+
+        $this->_options['noneGiven'] = false;
         if (empty($argv)) {
-            PHPSpec_Console_Command::printUsage();
-            $this->exit = true;
+            $this->_options['noneGiven'] = true;
             return;
         }
-
+                                        
         // if the first argument is not a - or -- option it should be a spec filename
         if ($argv[0]{0} !== '-') {
             $this->_options['specFile'] = $argv[0];
@@ -118,6 +125,8 @@ class PHPSpec_Console_Getopt
                 $this->_options[$encountered] = $parts[1];
             }
         }
+
+        
     }
 
 }

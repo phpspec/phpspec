@@ -2,19 +2,22 @@
 
 require_once 'PHPSpec/Console/Getopt.php';
 
-class PHPSpec_Console_GetoptTest extends PHPUnit_Framework_TestCase {
+class PHPSpec_Console_GetoptTest extends PHPUnit_Extensions_OutputTestCase {
 	/**
-	 * @test
-	 **/
-	public function itShouldPrintUsageWhenNoArgumentsAreGiven()
-	{
-		ob_start();
-		$getOpt = new PHPSpec_Console_Getopt(array('/usr/bin/phpspec'));
-		$output = ob_get_contents();
-		ob_end_clean();
-	    $this->assertSame("Usage: phpspec (FILE|DIRECTORY) + [options]
-    -c, --colour, --color            Show coloured (red/green) output
-    -a, --autospec                   Run all tests continually, every 10 seconds
-", $output);
-	} 
+     * @test
+     **/
+    public function itUsesTheArgumentListFromCommandLineToCreateGeooptIfNothingIsGiven()
+    {
+	    $tmp = $_SERVER['argv']; 
+	    $_SERVER['argv'] = array(PHPSPEC_BIN, 'empty');
+		$getopt = new PHPSpec_Console_Getopt();
+		$this->assertSame(
+			array(
+				'noneGiven' => false, 
+				'specFile' => 'empty', 
+				'reporter' => 'Console' // Console is the default reporter
+			),
+			$this->readAttribute($getopt, '_options')); 
+		$_SERVER['argv'] = $tmp;
+     }  
 }

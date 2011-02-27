@@ -3,18 +3,11 @@
 class PHPSpec_Runner
 {
 
-    public static function run($options)
+    public function run($options)
     {
-        if (empty($options) || (!is_array($options) && !$options instanceof PHPSpec_Console_Getopt && !$options instanceof stdClass)) {
-            throw new PHPSpec_Exception('PHPSpec_Runner received no options!');
-        }
-        if (is_array($options)) {
-            $options = self::_toObject($options);
-        }
-
         $runnable = array();
         $generateSpecdox = false;
-
+                                    
         // check for straight class to execute
         if (isset($options->specFile)) {
 	        $pathToFile = getcwd();
@@ -72,14 +65,4 @@ class PHPSpec_Runner
             $contextObject, $behaviourContextReflection);
 
     }
-
-    protected static function _toObject(array $optionArray) 
-    {
-        $options = new stdClass;
-        foreach ($optionArray as $key=>$value) {
-            $options->$key = $value;
-        }
-        return $options;
-    }
-
 }

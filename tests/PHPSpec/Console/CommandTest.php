@@ -1,45 +1,78 @@
 <?php
 
 class PHPSpec_Console_CommandTest extends PHPUnit_Extensions_OutputTestCase {
-    /**
-     * @test
-     **/
-    public function itPrintsUsageItNoOptionsAreGiven()
-    {
-	    $usage = <<<USAGE
-Usage: phpspec (FILE|DIRECTORY) + [options]
-    -c, --colour, --color            Show coloured (red/green) output
-    -a, --autospec                   Run all tests continually, every 10 seconds
-
-USAGE;
-	    chdir(dirname(__FILE__) . '/empty');
-		PHPSpec_Console_Command::main(new PHPSpec_Console_Getopt(array(PHPSPEC_BIN)));
-		$this->expectOutputString($usage);
-		chdir(TESTS_ROOT_DIR);
-    }
-
-    /**
-     * @test
-     **/
-    public function itPrintsNoSpecsToExecuteIfAEmptyDirectoryIsGiven()
-    {
-	    chdir(dirname(__FILE__));
-	    PHPSpec_Console_Command::main(new PHPSpec_Console_Getopt(array(PHPSPEC_BIN, 'empty')));
-	    $this->expectOutputString('No specs to execute!' . PHP_EOL);
-	    chdir(TESTS_ROOT_DIR);
-    }
+      
+	/** @test */
+	public function itCreatesAGetoptIfNoneIsGiven() {
+		$command = new PHPSpec_Console_Command;
+		$this->assertTrue($this->readAttribute($command, 'options') instanceof PHPSpec_Console_Getopt);
+	}
+	
+	/** @test */
+	public function itCreatesAAutotestIfNoneIsGiven() {
+		$command = new PHPSpec_Console_Command;
+		$this->assertTrue($command->getAutotest() instanceof PHPSpec_Extensions_Autotest);
+	}
+	
+	/** @test */
+	public function itCreatesARunnerIfNoneIsGiven() {
+		$command = new PHPSpec_Console_Command;
+		$this->assertTrue($command->getRunner() instanceof PHPSpec_Runner);
+	} 
 
     /**
-     * @test
-     **/
-    public function itUsesTheArgumentListFromCommandLineToCreateGeooptIfNothingIsGiven()
-    {
-	    chdir(dirname(__FILE__));
-	    $tmp = $_SERVER['argv']; 
-	    $_SERVER['argv'] = array(PHPSPEC_BIN, 'empty');
-		PHPSpec_Console_Command::main();
-		$this->expectOutputString('No specs to execute!' . PHP_EOL); 
-		chdir(TESTS_ROOT_DIR);
-		$_SERVER['argv'] = $tmp;
-    }
+	 * @test
+	 **/
+	public function itPrintsUsageWhenGetoptIsMarkedWithExit()
+	{
+		$getopt = $this->getMock('PHPSpec_Console_Getopt');
+		$getopt->expects($this->once())
+		       ->method('noneGiven')
+			   ->will($this->returnValue(true));
+		$command = new PHPSpec_Console_Command($getopt);
+		
+		$command->run();
+		
+	    $this->expectOutputString(PHPSpec_Console_Command::USAGE);
+	}
+
+	/**
+	 * @test
+	 */
+	public function itCallsTheAutotestIfTheOptionIsPassed()
+	{
+		$getopt = $this->getMock('PHPSpec_Console_Getopt');
+		$getopt->expects($this->once())
+			->method('getOption')
+			->with('a')
+			->will($this->returnValue(true));
+		$command = new PHPSpec_Console_Command($getopt);
+		
+		$autotest = $this->getMock('PHPSpec_Extensions_Autotest');
+		$autotest->expects($this->once())
+		         ->method('run');
+
+		$command->setAutotest($autotest);
+		$command->run();
+	}
+	
+	/**
+	 * @test
+	 */
+	public function itRunsIfOneOptionsIsGiven()
+	{
+		$getopt = $this->getMock('PHPSpec_Console_Getopt');
+		$getopt->expects($this->once())
+		       ->method('noneGiven')
+			   ->will($this->returnValue(false));
+		$command = new PHPSpec_Console_Command($getopt);
+
+		$runner = $this->getMock('PHPSpec_Runner');
+		$runner->expects($this->once())
+			   ->method('run')
+			   ->with($getopt);
+		$command->setRunner($runner);
+		
+		$command->run(); 
+	}
 }

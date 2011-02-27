@@ -174,5 +174,6 @@ require_once 'PHPSpec/Framework.php';
 
 require 'PHPSpec/Console/Command.php';
 
-PHPSpec_Console_Command::main(new PHPSpec_Console_Getopt($_SERVER['argv']));
+$command = new PHPSpec_Console_Command;
+$command->run();
 ?>

@@ -29,64 +29,92 @@ require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'Framework.php';
  */
 class PHPSpec_Console_Command
 {
+	/**
+	 * @var PHPSpec_Extensions_Autotest
+	 */
+	protected $autotest;
+	
+	/**
+	 * @var PHPSpec_Runner
+	 */
+	protected $runner;
+	
+	/**
+	 * PHPSpec_Console_Getopt
+	 */
+	protected $options;
+	
+    const USAGE = "Usage: phpspec (FILE|DIRECTORY) + [options]
+    -c, --colour, --color            Show coloured (red/green) output
+    -a, --autospec                   Run all tests continually, every 10 seconds\r\n";
 
     /**
-     * 
-     * @todo should not directly echo reporter since some will pass mesgs only
      * @param PHPSpec_Console_Getopt $options
      */
-    public static function main(PHPSpec_Console_Getopt $options = null)
+    public function __construct(PHPSpec_Console_Getopt $options = null)
     {
         if (is_null($options)) {
-        	$options = new PHPSpec_Console_Getopt;
-        } elseif ($options->exit === true) {
-	        return;
+            $options = new PHPSpec_Console_Getopt;
         }
-        if (isset($options->a) || isset($options->autotest)) {
-        	self::autotest($options);
-        	return;
+        $this->options = $options;
+    }
+
+    public function run()
+    {
+		if ($this->options->noneGiven()) {
+			$this->printUsage();
+			return;
+		}
+		
+	    if ($this->options->getOption('a') || $this->options->getOption('autotest')) {
+            $this->getAutotest()->run($this);
+            return;
         }
-        if (!isset($options->reporter)) {
-        	$options->reporter = 'Console';
-        } 
-        PHPSpec_Runner::run($options);
+ 
+		$this->getRunner()->run($this->options);
+    }
+    
+    /**
+     * @return PHPSpec_Extensions_Autotest
+     */
+    public function getAutotest()
+    {
+        if (!$this->autotest instanceof PHPSpec_Extensions_Autotest) {
+            $this->autotest = new PHPSpec_Extensions_Autotest;
+        }
+        return $this->autotest;
+    } 
+    
+	/**
+	 * @param PHPSpec_Extensions_Autotest $autotest
+	 */
+    public function setAutotest(PHPSpec_Extensions_Autotest $autotest)
+    {
+        $this->autotest = $autotest;
     }
 
     /**
-     * The autotest() static method serves as PHPSpec's Autotester. It will
-     * run all tests continually, with 10 second delays between each
-     * iterative run and report as normal for each iteration to the console
-     * output.
-     * 
-     * Use the CTRL+C key combination to trigger an exit from the console
-     * running loop used for Autotesting.
-     *
-     * @param PHPSpec_Console_Getopt $options
-     */
-    public static function autotest(PHPSpec_Console_Getopt $options)
+     * @return PHPSpec_Runner
+     */ 
+    public function getRunner()
     {
-        set_time_limit(0);
-        
-    	if (isset($options->a)) {
-    		$options->a = null;
-    	}
-        if (isset($options->autotest)) {
-            $options->autotest = null;
+        if (!$this->runner instanceof PHPSpec_Runner) {
+            $this->runner = new PHPSpec_Runner;
         }
+        return $this->runner;
+    } 
 
-    	while(true) {
-    	    self::main($options);
-    	    sleep(10);
-    	}
+	/**
+	 * @param PHPSpec_Runner $runner
+	 */
+    public function setRunner(PHPSpec_Runner $runner)
+    {
+        $this->runner = $runner;
     }
 
-    public static function printUsage() {
-        echo <<<USAGE
-Usage: phpspec (FILE|DIRECTORY) + [options]
-    -c, --colour, --color            Show coloured (red/green) output
-    -a, --autospec                   Run all tests continually, every 10 seconds
-
-USAGE;
-}
+    public function printUsage()
+    {
+        echo self::USAGE;
+    }
     
 }
