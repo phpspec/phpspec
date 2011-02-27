@@ -195,7 +195,7 @@ class PHPSpec_Runner_Result implements Countable
     }
     
     public function getRuntime() {
-        return ($this->_runtimeEnd - $this->_runtimeStart);
+        return sprintf("%.6F", $this->_runtimeEnd - $this->_runtimeStart);
     }
 
 }
