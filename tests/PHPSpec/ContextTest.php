@@ -74,4 +74,42 @@ class PHPSpec_ContextTest extends PHPUnit_Framework_TestCase
 		$this->context->spec(new Foo);
 		$this->assertTrue($this->context->spec(new Foo) instanceof PHPSpec_Specification);
 	}
+	
+	/**
+	 * @test
+	 **/
+	public function shouldIndicateItIsPending()
+	{
+	    $this->setExpectedException('PHPSpec_Runner_PendingException');
+	    $this->context->pending();
+	}
+	
+	/**
+	 * @test
+	 **/
+	public function shouldIndicateWhenItDeliberateFails()
+	{
+	    $this->setExpectedException('PHPSpec_Runner_DeliberateFailException');
+	    $this->context->fail();
+	}
+	
+	/**
+	 * @test
+	 * @depends specMethodReturnsASpecificationObject
+	 **/
+	public function shouldBeAbleToClearCurrentSpecification()
+	{
+		$this->context->clearCurrentSpecification();
+	    $this->assertNull($this->context->getCurrentSpecification());
+	}
+	
+	/**
+	 * @test
+	 **/
+	public function itShouldRejectContextClassWithDescribeOrSpec()
+	{
+		include_once 'PHPSpec/_files/TazSpec.php';
+	    $this->setExpectedException('Exception');
+	    $context = new TazSpook;
+	}
 }

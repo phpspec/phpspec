@@ -20,6 +20,33 @@ class InterrogatorTest extends PHPUnit_Framework_TestCase {
 	/**
 	 * @test
 	 */
+	public function itShouldAcceptStringNamingTheSourceObject() {
+		$this->interrogator = new PHPSpec_Object_Interrogator('Foo');
+		$this->assertTrue(is_a($this->interrogator->getSourceObject(), "Foo"));		
+	}
+	
+	/**
+	 * @test
+	 */
+	public function itShouldRejectStringNamingNonExistingSourceObject() {
+		include_once 'PHPSpec/_files/NonInstantiable.php';
+		$this->setExpectedException('PHPSpec_Exception');
+		$this->interrogator = new PHPSpec_Object_Interrogator('NonInstantiable');
+	}
+	
+	/**
+	 * @test
+	 */
+	public function itShouldRejectAnythingElseApartFromStringOrObject() {
+		$this->setExpectedException('PHPSpec_Exception');
+		$this->interrogator = new PHPSpec_Object_Interrogator();
+		$this->interrogator = new PHPSpec_Object_Interrogator(1);
+		$this->interrogator = new PHPSpec_Object_Interrogator(TRUE);
+	}
+	
+	/**
+	 * @test
+	 */
 	public function itShouldConstructSourceObjectViaGetSpecWithOptionalArguments() {
 		$this->assertTrue(is_a($this->interrogator->getSourceObject(), "Foo"));
 	}
