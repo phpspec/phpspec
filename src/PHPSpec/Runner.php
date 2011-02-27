@@ -14,11 +14,21 @@ class PHPSpec_Runner
 
         $runnable = array();
         $generateSpecdox = false;
-        
+
         // check for straight class to execute
         if (isset($options->specFile)) {
-            $loader = new PHPSpec_Runner_Loader_Classname;
-            $runnable += $loader->load($options->specFile);
+	        $pathToFile = getcwd();
+	        if (false !== strpos($options->specFile, '/')) {
+		        $pathToFile = str_replace("/" . basename($options->specFile), '', $options->specFile);
+		        $options->specFile = basename($options->specFile);
+	        }
+	        if (is_dir(realpath($pathToFile . "/$options->specFile"))) {
+		        $loader = new PHPSpec_Runner_Loader_DirectoryRecursive;
+            	$runnable += $loader->load(realpath($pathToFile . "/$options->specFile"));
+	        } else {
+		        $loader = new PHPSpec_Runner_Loader_Classname;
+				$runnable += $loader->load($options->specFile, $pathToFile);
+	        }
         }
     
         // should only recurse if not running a single spec
@@ -32,7 +42,7 @@ class PHPSpec_Runner
         }
 
         if (empty($runnable)) {
-            echo 'No specs to execute!';
+            echo 'No specs to execute!' . PHP_EOL;
             return;
         }
 

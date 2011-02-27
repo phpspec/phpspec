@@ -50,7 +50,7 @@ class PHPSpec_Runner_Loader_DirectoryRecursive
             require_once $pathName;
             
             $class = $this->_getClassName($file);
-            if (!in_array($class, $this->_loadedClasses)) {
+            if ($class && !in_array($class, $this->_loadedClasses)) {
                 $classReflected = new ReflectionClass($class);
                 $this->_loaded[] = $classReflected;
             }
@@ -94,7 +94,9 @@ class PHPSpec_Runner_Loader_DirectoryRecursive
         } elseif (class_exists($className3, false)) {
             $class = $className3;
         }
-        return $class;
+		if (isset($class)) {
+			return $class;
+		}
     }
     
 

@@ -209,9 +209,6 @@ class PHPSpec_Context implements Countable
      */
     protected function _addDescription($class)
     {
-        if (!is_string($class)) {
-            return false;
-        }
         $terms = preg_split("/(?=[[:upper:]])/", $class, -1, PREG_SPLIT_NO_EMPTY);
         $termsLowercase = array_map('strtolower', $terms);
         $this->setDescription(implode(' ', $termsLowercase));

@@ -29,7 +29,7 @@ class PHPSpec_Runner_Loader_Classname
 
     protected $_loaded = array();
 
-    public function load($className)
+    public function load($className, $pathToFile)
     {
         $class = '';
         
@@ -69,7 +69,7 @@ class PHPSpec_Runner_Loader_Classname
         
         // existence test not implemented - let require call catch fatal error
         
-        require_once $classFile;
+        require_once $pathToFile . '/' . $classFile;
         
         if (!class_exists($class, false)) {
             throw new PHPSpec_Exception('The class ' . $class . ' is not defined within the spec file ' . $classFile);

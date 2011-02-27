@@ -26,6 +26,7 @@
  */
 class PHPSpec_Console_Getopt
 {
+	public $exit = false;
 
     protected $_options = array();
 
@@ -89,14 +90,16 @@ class PHPSpec_Console_Getopt
     }
 
     protected function _parse(array $argv)
-    {   
+    { 
+	  
         // get rid of the Command.php reference
         if (is_file($argv[0])) {
             array_shift($argv);
         }
-
+        
         if (empty($argv)) {
             PHPSpec_Console_Command::printUsage();
+            $this->exit = true;
             return;
         }
 

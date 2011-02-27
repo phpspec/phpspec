@@ -39,6 +39,8 @@ class PHPSpec_Console_Command
     {
         if (is_null($options)) {
         	$options = new PHPSpec_Console_Getopt;
+        } elseif ($options->exit === true) {
+	        return;
         }
         if (isset($options->a) || isset($options->autotest)) {
         	self::autotest($options);
