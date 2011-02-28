@@ -45,14 +45,75 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
     
     public function toString($specs = false)
     {
-        $str = PHP_EOL . PHP_EOL;
+        $str = PHP_EOL;
         $str .= 'Finished in ' . $this->_result->getRuntime() . ' seconds';
 
         if ($specs) {
             $str .= PHP_EOL . PHP_EOL . $this->getSpecDox();
         }
 
-        $str .= PHP_EOL . PHP_EOL . count($this->_result) . ' examples';
+        $str .= $this->getTotals();
+        
+        $reportedIssues = PHP_EOL . PHP_EOL;
+        if ($this->_result->countFailures() > 0 || $this->_result->countDeliberateFailures() > 0) {
+            $reportedIssues .= 'Failures:' . PHP_EOL . PHP_EOL;
+            $failed = $this->_result->getTypes('fail');
+            $increment = 1;
+            foreach ($failed as $failure) {
+	            $reportedIssues .= $this->formatReportedIssue($increment, $failure, $failure->getFailedMessage());
+            }
+            if ($this->_result->countDeliberateFailures() > 0) {
+                $failed = $this->_result->getTypes('deliberateFail');
+                foreach ($failed as $failure) {
+	                $reportedIssues .= $this->formatReportedIssue($increment, $failure, $failure->getMessage());
+                }
+            }
+        }
+        
+        $increment = 1;
+        if ($this->_result->countErrors() > 0) {
+            $reportedIssues .= 'Errors:' . PHP_EOL . PHP_EOL;
+            $errors = $this->_result->getTypes('error');
+            foreach ($errors as $error) { 
+	            $reportedIssues .= $this->formatReportedIssue($increment, $error, $error->toString(), 'ERROR');
+            }
+        }
+
+        $increment = 1;
+        if ($this->_result->countExceptions() > 0) {
+            $reportedIssues .= 'Exceptions:' . PHP_EOL . PHP_EOL;
+            $exceptions = $this->_result->getTypes('exception');
+            foreach ($exceptions as $exception) { 
+	            $reportedIssues .= $this->formatReportedIssue($increment, $exception, $exception->toString(), 'EXCEPTION');
+            }
+        }
+
+        $increment = 1;
+        if ($this->_result->countPending() > 0) {
+            $reportedIssues .= 'Pending:' . PHP_EOL . PHP_EOL;
+            $pendings = $this->_result->getTypes('pending');
+            foreach ($pendings as $pending) {
+	            $reportedIssues .= $this->formatReportedIssue($increment, $pending, $pending->getMessage(), 'PENDING');
+            }
+        }
+        
+        return $reportedIssues . $str . PHP_EOL;
+    }
+
+    public function formatReportedIssue(&$increment, $issue, $message, $issueType = 'FAILED')
+    {
+		$reportedIssues = $increment . ')' . PHP_EOL;
+		$reportedIssues .= '\'' . $this->_format($issue->getContextDescription());
+		$reportedIssues .= $issue->getSpecificationText() . '\' ' . $issueType;
+		$reportedIssues .= PHP_EOL . $message;
+		$reportedIssues .= PHP_EOL . PHP_EOL;
+		$increment++;
+		return $reportedIssues;
+    }
+
+    public function getTotals()
+    {
+	    $str = PHP_EOL . PHP_EOL . count($this->_result) . ' examples';
         
         $count = $this->_result->countFailures() + $this->_result->countDeliberateFailures();
         if ($count == 1) {
@@ -80,76 +141,16 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
         if ($this->_result->countPending() > 0) {
             $str .= ', ' . $this->_result->countPending() . ' pending';
         }
-        
-        $reportedIssues = PHP_EOL . PHP_EOL;
-        if ($this->_result->countFailures() > 0 || $this->_result->countDeliberateFailures() > 0) {
-            $reportedIssues .= 'Failures:' . PHP_EOL . PHP_EOL;
-            $failed = $this->_result->getTypes('fail');
-            $increment = 1;
-            foreach ($failed as $failure) {
-                $reportedIssues .= $increment . ')' . PHP_EOL;
-                $reportedIssues .= '\'' . $this->_format($failure->getContextDescription());
-                $reportedIssues .= $failure->getSpecificationText() . '\' FAILED';
-                $reportedIssues .= PHP_EOL . $failure->getFailedMessage();
-                $reportedIssues .= PHP_EOL . PHP_EOL;
-                $increment++;
-            }
-            if ($this->_result->countDeliberateFailures() > 0) {
-                $failed = $this->_result->getTypes('deliberateFail');
-                foreach ($failed as $failure) {
-                    $reportedIssues .= $increment . ')' . PHP_EOL;
-                    $reportedIssues .= '\'' . $this->_format($failure->getContextDescription());
-                    $reportedIssues .= $failure->getSpecificationText() . '\' FAILED';
-                    $reportedIssues .= PHP_EOL . $failure->getMessage();
-                    $reportedIssues .= PHP_EOL . PHP_EOL;
-                    $increment++;
-                }
-            }
-        }
-        
-        $increment = 1;
-        if ($this->_result->countErrors() > 0) {
-            $reportedIssues .= 'Errors:' . PHP_EOL . PHP_EOL;
-            $errors = $this->_result->getTypes('error');
-            foreach ($errors as $error) {
-                $reportedIssues .= $increment . ')' . PHP_EOL;
-                $reportedIssues .= '\'' . $this->_format($error->getContextDescription());
-                $reportedIssues .= $error->getSpecificationText() . '\' ERROR';
-                $reportedIssues .= PHP_EOL . $error->toString();
-                $reportedIssues .= PHP_EOL . PHP_EOL;
-                $increment++;
-            }
-        }
+        return $str;
+    }
 
-        $increment = 1;
-        if ($this->_result->countExceptions() > 0) {
-            $reportedIssues .= 'Exceptions:' . PHP_EOL . PHP_EOL;
-            $exceptions = $this->_result->getTypes('exception');
-            foreach ($exceptions as $exception) {
-                $reportedIssues .= $increment . ')' . PHP_EOL;
-                $reportedIssues .= '\'' . $this->_format($exception->getContextDescription());
-                $reportedIssues .= $exception->getSpecificationText() . '\' EXCEPTION';
-                $reportedIssues .= PHP_EOL . $exception->toString();
-                $reportedIssues .= PHP_EOL . PHP_EOL;
-                $increment++;
-            }
-        }
-
-        $increment = 1;
-        if ($this->_result->countPending() > 0) {
-            $reportedIssues .= 'Pending:' . PHP_EOL . PHP_EOL;
-            $pendings = $this->_result->getTypes('pending');
-            foreach ($pendings as $pending) {
-                $reportedIssues .= $increment . ')' . PHP_EOL;
-                $reportedIssues .= '\'' . $this->_format($pending->getContextDescription());
-                $reportedIssues .= $pending->getSpecificationText() . '\' PENDING';
-                $reportedIssues .= PHP_EOL . $pending->getMessage();
-                $reportedIssues .= PHP_EOL . PHP_EOL;
-                $increment++;
-            }
-        }
-        
-        return $str . $reportedIssues . PHP_EOL;
+    public function hasIssues()
+    {
+	      return ($this->_result->countFailures() +
+	              $this->_result->countDeliberateFailures() +
+	              $this->_result->countErrors() +
+	              $this->_result->countExceptions()) > 0;
+	      
     }
 
     public function __toString()

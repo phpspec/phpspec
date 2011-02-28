@@ -63,5 +63,18 @@ class PHPSpec_Runner_Reporter_Console extends PHPSpec_Runner_Reporter_Text
         }
     	echo $symbol;
     }
-
+    
+    public function getTotals()
+    {
+	     return $this->hasIssues() ?
+	            Console_Color::convert("%r" . parent::getTotals() . "%n") :
+	            Console_Color::convert("%g" . parent::getTotals() . "%n");
+	}
+	
+	public function formatReportedIssue(&$increment, $issue, $message, $issueType = 'FAILED')
+    {
+	 	return $this->hasIssues() ?
+	            Console_Color::convert("%r" . parent::formatReportedIssue(&$increment, $issue, $message, $issueType) . "%n") :
+	            Console_Color::convert("%g" . parent::formatReportedIssue(&$increment, $issue, $message, $issueType) . "%n");
+	}
 }
