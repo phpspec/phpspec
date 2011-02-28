@@ -44,12 +44,13 @@ class PHPSpec_Matcher_BeInteger implements PHPSpec_Matcher_Interface
 
     public function getFailureMessage()
     {
-        return 'expected to be integer, got ' . strval($this->_actual) . ' type of ' . gettype($this->_actual) . ' (using beInteger())';
+		$type = is_object($this->_actual) ? get_class($this->_actual) : gettype($this->_actual);
+        return 'expected to be integer, got ' . var_export($this->_actual, true) . ' type of ' . $type . ' (using beInteger())';
     }
 
     public function getNegativeFailureMessage()
     {
-        return 'expected ' . strval($this->_actual) . ' not to be integer (using beInteger())';
+        return 'expected ' . var_export($this->_actual, true) . ' not to be integer (using beInteger())';
     }
 
     public function getDescription()

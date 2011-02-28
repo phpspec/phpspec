@@ -11,7 +11,7 @@ class PHPSpec_Matcher_MatchTest extends PHPUnit_Framework_TestCase {
 	 * @test
 	 **/
 	public function itShouldReturnADescriptionWithExpectedValue() {
-	    $this->assertSame('match /bar/ PCRE regular expression', $this->matcher->getDescription());
+	    $this->assertSame('match \'/bar/\' PCRE regular expression', $this->matcher->getDescription());
 	}
 	
 	/**
@@ -19,14 +19,14 @@ class PHPSpec_Matcher_MatchTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function itShouldReturnAMeaningfulFailureMessageIfRequested() {
 		$this->matcher->matches('foo');
-		$this->assertSame('expected match for /bar/ PCRE regular expression, got foo (using match())', $this->matcher->getFailureMessage());
+		$this->assertSame('expected match for \'/bar/\' PCRE regular expression, got \'foo\' (using match())', $this->matcher->getFailureMessage());
 	}
 	
 	/**
 	* @test
 	*/
     public function itShouldReturnAMeaningulNegativeFailureMessageIfRequired() {
-	    $this->assertSame('expected no match for /bar/ PCRE regular expression, got bar (using match())', $this->matcher->getNegativeFailureMessage());
+	    $this->assertSame('expected no match for \'/bar/\' PCRE regular expression, got \'bar\' (using match())', $this->matcher->getNegativeFailureMessage());
     }
 		
 	/**

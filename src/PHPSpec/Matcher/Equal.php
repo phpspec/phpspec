@@ -101,16 +101,16 @@ class PHPSpec_Matcher_Equal
 
     public function getFailureMessage()
     {
-        return 'expected ' . strval($this->_expected) . ', got ' . strval($this->_actual) . ' (using equal())';
+        return 'expected ' . var_export($this->_expected, true) . ', got ' . var_export($this->_actual, true) . ' (using equal())';
     }
 
     public function getNegativeFailureMessage()
     {
-        return 'expected ' . strval($this->_actual) . ' not to equal ' . strval($this->_expected) . ' (using equal())';
+        return 'expected ' . var_export($this->_actual, true) . ' not to equal ' . var_export($this->_expected, true) . ' (using equal())';
     }
 
     public function getDescription()
     {
-        return 'equal ' . strval($this->_expected);
+        return 'equal ' . var_export($this->_expected, true);
     }
 }

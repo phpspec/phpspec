@@ -29,12 +29,12 @@ class PHPSpec_Matcher_BeEqualTo extends PHPSpec_Matcher_Equal implements PHPSpec
 
     public function getFailureMessage()
     {
-        return 'expected ' . strval($this->_expected) . ', got ' . strval($this->_actual) . ' (using beEqualTo())';
+        return 'expected ' . var_export($this->_expected, true) . ', got ' . var_export($this->_actual, true) . ' (using beEqualTo())';
     }
 
     public function getNegativeFailureMessage()
     {
-        return 'expected ' . strval($this->_actual) . ' not to equal ' . strval($this->_expected) . ' (using beEqualTo())';
+        return 'expected ' . var_export($this->_actual, true) . ' not to equal ' . var_export($this->_expected, true) . ' (using beEqualTo())';
     }
 
     public function getDescription()

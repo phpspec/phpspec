@@ -14,21 +14,21 @@ class PHPSpec_Matcher_BeAnInstanceOfTest extends PHPUnit_Framework_TestCase {
 	 * @test
 	 */
 	public function itShouldReturnADescriptionWithExpectedValue() {
-		$this->assertSame('be an instance of Foo', $this->matcher->getDescription());
+		$this->assertSame("be an instance of 'Foo'", $this->matcher->getDescription());
 	}
 	
 	/**
 	 * @test
 	 */
 	public function itShouldReturnAMeanifulFailureMessageIfRequested() {
-		$this->assertSame('expected Foo, got Bar (using beAnInstanceOf())', $this->matcher->getFailureMessage());
+		$this->assertSame('expected \'Foo\', got \'Bar\' (using beAnInstanceOf())', $this->matcher->getFailureMessage());
 	}
 	
 	/**
 	 * @test
 	 */
 	public function itShouldReturnAMeanifulNegativeFailureMessageIfRequested() {
-		$this->assertSame('expected Bar not to be Foo (using beAnInstanceOf())', $this->matcher->getNegativeFailureMessage());
+		$this->assertSame('expected \'Bar\' not to be \'Foo\' (using beAnInstanceOf())', $this->matcher->getNegativeFailureMessage());
 	}
 	
 	/**

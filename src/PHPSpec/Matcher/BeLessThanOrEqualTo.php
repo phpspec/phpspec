@@ -44,16 +44,16 @@ class PHPSpec_Matcher_BeLessThanOrEqualTo implements PHPSpec_Matcher_Interface
 
     public function getFailureMessage()
     {
-        return 'expected less than or equal to ' . strval($this->_expected) . ', got ' . strval($this->_actual) . ' (using beLessThanOrEqualTo())';
+        return 'expected less than or equal to ' . var_export($this->_expected, true) . ', got ' . var_export($this->_actual, true) . ' (using beLessThanOrEqualTo())';
     }
 
     public function getNegativeFailureMessage()
     {
-        return 'expected ' . strval($this->_actual) . ' not to be less than or equal to ' . strval($this->_expected) . ' (using beLessThanOrEqualTo())';
+        return 'expected ' . var_export($this->_actual, true) . ' not to be less than or equal to ' . var_export($this->_expected, true) . ' (using beLessThanOrEqualTo())';
     }
 
     public function getDescription()
     {
-        return 'be less than or equal to ' . strval($this->_expected);
+        return 'be less than or equal to ' . var_export($this->_expected, true);
     }
 }

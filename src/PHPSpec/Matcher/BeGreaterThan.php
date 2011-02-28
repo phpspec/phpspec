@@ -44,12 +44,12 @@ class PHPSpec_Matcher_BeGreaterThan implements PHPSpec_Matcher_Interface
 
     public function getFailureMessage()
     {
-        return 'expected greater than ' . strval($this->_expected) . ', got ' . strval($this->_actual) . ' (using beGreaterThan())';
+        return 'expected greater than ' . var_export($this->_expected, true) . ', got ' . var_export($this->_actual, true) . ' (using beGreaterThan())';
     }
 
     public function getNegativeFailureMessage()
     {
-        return 'expected ' . strval($this->_actual) . ' not to be greater than ' . strval($this->_expected) . ' (using beGreaterThan())';
+        return 'expected ' . var_export($this->_actual, true) . ' not to be greater than ' . var_export($this->_expected, true) . ' (using beGreaterThan())';
     }
 
     public function getDescription()

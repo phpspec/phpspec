@@ -44,16 +44,16 @@ class PHPSpec_Matcher_Match implements PHPSpec_Matcher_Interface
 
     public function getFailureMessage()
     {
-        return 'expected match for ' . strval($this->_expected) . ' PCRE regular expression, got ' . strval($this->_actual) . ' (using match())';
+        return 'expected match for ' . var_export($this->_expected, true) . ' PCRE regular expression, got ' . var_export($this->_actual, true) . ' (using match())';
     }
 
     public function getNegativeFailureMessage()
     {
-        return 'expected no match for ' . strval($this->_expected) . ' PCRE regular expression, got ' . strval($this->_actual) . ' (using match())';
+        return 'expected no match for ' . var_export($this->_expected, true) . ' PCRE regular expression, got ' . var_export($this->_actual, true) . ' (using match())';
     }
 
     public function getDescription()
     {
-        return 'match ' . strval($this->_expected) . ' PCRE regular expression';
+        return 'match ' . var_export($this->_expected, true) . ' PCRE regular expression';
     }
 }

@@ -44,7 +44,7 @@ class PHPSpec_Matcher_BeNull implements PHPSpec_Matcher_Interface
 
     public function getFailureMessage()
     {
-        return 'expected to be NULL, got ' . strval($this->_actual) . ' (using beNull())';
+        return 'expected to be NULL, got ' . var_export($this->_actual, true) . ' (using beNull())';
     }
 
     public function getNegativeFailureMessage()

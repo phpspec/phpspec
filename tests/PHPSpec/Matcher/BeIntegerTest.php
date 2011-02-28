@@ -19,14 +19,14 @@ class PHPSpec_Matcher_BeIntegerTest extends PHPUnit_Framework_TestCase {
 	 * @test
 	 */
 	public function itShouldReturnAMeaningfulFailureMessageIfRequested() {
-		$this->assertSame('expected to be integer, got hello world type of string (using beInteger())', $this->matcher->getFailureMessage());
+		$this->assertSame('expected to be integer, got \'hello world\' type of string (using beInteger())', $this->matcher->getFailureMessage());
 	}
 	
 	/**
 	 * @test
 	 */
 	public function itShouldReturnAMeaningulNegativeFailureMessageIfRequired() {
-		$this->assertSame('expected hello world not to be integer (using beInteger())', $this->matcher->getNegativeFailureMessage());
+		$this->assertSame('expected \'hello world\' not to be integer (using beInteger())', $this->matcher->getNegativeFailureMessage());
 	}
 	
 	/**

@@ -29,16 +29,16 @@ class PHPSpec_Matcher_Be extends PHPSpec_Matcher_Equal implements PHPSpec_Matche
 
     public function getFailureMessage()
     {
-        return 'expected ' . strval($this->_expected) . ', got ' . strval($this->_actual) . ' (using be())';
+        return 'expected ' . var_export($this->_expected, true) . ', got ' . var_export($this->_actual, true) . ' (using be())';
     }
 
     public function getNegativeFailureMessage()
     {
-        return 'expected ' . strval($this->_actual) . ' not to be ' . strval($this->_expected) . ' (using be())';
+        return 'expected ' . var_export($this->_actual, true) . ' not to be ' . var_export($this->_expected, true) . ' (using be())';
     }
 
     public function getDescription()
     {
-        return 'be ' . strval($this->_expected);
+        return 'be ' . var_export($this->_expected, true);
     }
 }

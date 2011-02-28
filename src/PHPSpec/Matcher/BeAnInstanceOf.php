@@ -55,16 +55,16 @@ class PHPSpec_Matcher_BeAnInstanceOf implements PHPSpec_Matcher_Interface
 
     public function getFailureMessage()
     {
-        return 'expected ' . strval($this->_expected) . ', got ' . strval($this->_actual) . ' (using beAnInstanceOf())';
+        return 'expected ' . var_export($this->_expected, true) . ', got ' . var_export($this->_actual, true) . ' (using beAnInstanceOf())';
     }
 
     public function getNegativeFailureMessage()
     {
-        return 'expected ' . strval($this->_actual) . ' not to be ' . strval($this->_expected) . ' (using beAnInstanceOf())';
+        return 'expected ' . var_export($this->_actual, true) . ' not to be ' . var_export($this->_expected, true) . ' (using beAnInstanceOf())';
     }
 
     public function getDescription()
     {
-        return 'be an instance of ' . strval($this->_expected);
+        return 'be an instance of ' . var_export($this->_expected, true);
     }
 }
