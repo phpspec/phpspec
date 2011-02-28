@@ -84,10 +84,12 @@ class PHPSpec_Runner_Example
         if (method_exists($this->_context, 'before')) {
             $this->_context->before();
         }
-
+        
+        $line = '';
         try {
             $this->_context->{$this->_methodName}();
         } catch (PHPSpec_Runner_FailedMatcherException $e) {
+            $line = $e->getFormattedLine();
         }
 
         if (method_exists($this->_context, 'after')) {
@@ -113,7 +115,9 @@ class PHPSpec_Runner_Example
             } else {
                 $this->_failedMessage = $this->_specificationBeingExecuted->getMatcherNegativeFailureMessage();
             }
-            throw new PHPSpec_Runner_FailedMatcherException(); // add spec data later
+            $e =  new PHPSpec_Runner_FailedMatcherException();
+            $e->setFormattedLine($line);
+            throw $e; // add spec data later
         }
     }
 

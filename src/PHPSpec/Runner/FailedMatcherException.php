@@ -26,5 +26,32 @@
  */
 class PHPSpec_Runner_FailedMatcherException extends PHPSpec_Exception
 {
-
+    protected $formattedLine;
+    public function __construct($message = null, $code = 0, Exception $previous = null)
+    {
+         parent::__construct($message, $code, $previous);
+         $this->formattedLine = $this->formatFailureLine();
+    }
+    
+    public function getFormattedLine()
+    {
+        return $this->formattedLine;
+    }
+    
+    public function setFormattedLine($formattedLine)
+    {
+        return $this->formattedLine = $formattedLine;
+    }
+    
+    protected function formatFailureLine()
+    {
+        $trace = $this->getTrace();
+        while($step = next($trace)) {
+            if (strpos($step['class'], 'Describe') === 0 ||
+                strpos($step['class'], 'Spec') === strlen($step['class']) - 4) {
+                $failure = prev($trace);
+                return $failure['file'] . ":" . $failure['line'];
+            }
+        }
+    }
 }

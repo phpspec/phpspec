@@ -58,28 +58,30 @@ class PHPSpec_Runner_Reporter_Console extends PHPSpec_Runner_Reporter_Text
                 break;
             default:
         }
-    	echo $symbol;
+        echo $symbol;
     }
     
     public function getTotals()
     {
-		$totals = parent::getTotals();
-		if ($this->_showColors) {
-			return $this->hasIssues() ?
-	            Console_Color::convert("%r" . $totals . "%n") :
-	            Console_Color::convert("%g" . $totals . "%n");
-		}
-	    return $totals;
-	}
-	
-	public function formatReportedIssue(&$increment, $issue, $message, $issueType = 'FAILED')
+        $totals = parent::getTotals();
+        if ($this->_showColors) {
+            return $this->hasIssues() ?
+                Console_Color::convert("%r" . $totals . "%n") :
+                ($this->hasPending() ? Console_Color::convert("%y" . $totals . "%n") :
+                                       Console_Color::convert("%g" . $totals . "%n"));
+        }
+        return $totals;
+    }
+    
+    public function formatReportedIssue(&$increment, $issue, $message, $issueType = 'FAILED')
     {
-		$issues = parent::formatReportedIssue(&$increment, $issue, $message, $issueType);
-		if ($this->_showColors) {
-			return $this->hasIssues() ?
-				Console_Color::convert("%r" . $issues . "%n") :
-				Console_Color::convert("%g" . $issues . "%n");
-		}
-		return $issues;
-	}
+        $issues = parent::formatReportedIssue(&$increment, $issue, $message, $issueType);
+        if ($this->_showColors) {
+            return $this->hasIssues() ?
+                Console_Color::convert("%r" . $issues . "%n") :
+                ($this->hasPending() ? Console_Color::convert("%y" . $issues . "%n") :
+                                       Console_Color::convert("%g" . $issues . "%n"));  
+        }
+        return $issues;
+    }
 }

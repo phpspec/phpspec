@@ -28,5 +28,16 @@ class PHPSpec_Runner_Example_Fail extends PHPSpec_Runner_Example_Type
 {
 
     protected $_isFail = true;
+    protected $_line = '';
+    
+    public function setLine($line)
+    {
+        $this->_line = $line;
+    }
+    
+    public function getLine()
+    {
+        return $this->_line;
+    }
 
 }

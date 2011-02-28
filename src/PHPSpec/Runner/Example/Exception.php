@@ -44,7 +44,19 @@ class PHPSpec_Runner_Example_Exception extends PHPSpec_Runner_Example_Type
 
     public function toString()
     {
-        return (string) $this->_exception;
+        return (string) $this->_exception->getMessage();
+    }
+
+    public function getPrettyTrace($lines)
+    {
+        $formatted = '';
+        foreach ($this->_exception->getTrace() as $line) {
+            if ($lines === 0) {
+                 return $formatted;
+            }
+            $formatted .= $line['file'] . ':' . $line['line'] . PHP_EOL;
+            $lines--;
+        }
     }
 
     public function __call($method, $args)

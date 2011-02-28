@@ -79,7 +79,7 @@ class PHPSpec_Runner_Collection implements Countable
                     $this->_context->after();
                 }
             } catch (PHPSpec_Runner_FailedMatcherException $e) {
-                $result->addFailure($example);
+                $result->addFailure($example, $e->getFormattedLine());
             } catch (PHPSpec_Runner_ErrorException $e) {
                 $result->addError($example, $e);
             } catch (PHPSpec_Runner_PendingException $e) {

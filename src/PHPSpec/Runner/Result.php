@@ -55,9 +55,11 @@ class PHPSpec_Runner_Result implements Countable
         $collection->execute($this);
     }
 
-    public function addFailure(PHPSpec_Runner_Example $example)
+    public function addFailure(PHPSpec_Runner_Example $example, $line)
     {
-        $this->_examples[] = new PHPSpec_Runner_Example_Fail($example);
+        $fail = new PHPSpec_Runner_Example_Fail($example);
+        $fail->setLine($line);
+        $this->_examples[] = $fail;
         $this->_failCount++;
         $this->_reporter->outputStatus('F');
     }
@@ -127,7 +129,7 @@ class PHPSpec_Runner_Result implements Countable
     
     public function setReporter(PHPSpec_Runner_Reporter $reporter)
     {
-    	$this->_reporter = $reporter;
+        $this->_reporter = $reporter;
     }
     
 
