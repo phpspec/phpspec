@@ -27,8 +27,8 @@
 abstract class PHPSpec_Runner_Reporter
 {
 
-    protected $_result;
-
+    protected $_result; 
+    protected $_showColors = false; 
     protected $_doSpecdox = false;
 
     public function __construct(PHPSpec_Runner_Result $result)
@@ -40,6 +40,11 @@ abstract class PHPSpec_Runner_Reporter
     {
         $this->_doSpecdox = $bool;
     }
+
+	public function showColors($show)
+	{
+		$this->_showColors = $show;
+	}
 
     abstract public function toString();
 

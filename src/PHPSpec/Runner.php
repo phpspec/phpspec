@@ -48,6 +48,9 @@ class PHPSpec_Runner
         	$reporterClass = 'PHPSpec_Runner_Reporter_Text';
         }        
         $reporter = new $reporterClass($result);
+        if ($options->c || $options->color || $options->colour) {
+			$reporter->showColors(true);
+		}
         
         $result->setReporter($reporter); 
         

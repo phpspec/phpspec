@@ -28,7 +28,6 @@ require_once 'Console/Color.php';
  */
 class PHPSpec_Runner_Reporter_Console extends PHPSpec_Runner_Reporter_Text
 {
-    
     /**
      * Output a status symbol after each test run.
      * . for Pass, E for error/exception, F for failure, and P for
@@ -48,16 +47,14 @@ class PHPSpec_Runner_Reporter_Console extends PHPSpec_Runner_Reporter_Text
         }
         switch ($symbol) {
             case '.':
-                $symbol = Console_Color::convert("%g$symbol%n");
+                $symbol = $this->_showColors ? Console_Color::convert("%g$symbol%n") : $symbol;
                 break;
             case 'F':
-                $symbol = Console_Color::convert("%r$symbol%n");
-                break;
             case 'E':
-                $symbol = Console_Color::convert("%r$symbol%n");
+                $symbol = $this->_showColors ? Console_Color::convert("%r$symbol%n") : $symbol;
                 break;
             case 'P':
-                $symbol = Console_Color::convert("%y$symbol%n");
+                $symbol = $this->_showColors ? Console_Color::convert("%y$symbol%n") : $symbol;
                 break;
             default:
         }
@@ -66,15 +63,23 @@ class PHPSpec_Runner_Reporter_Console extends PHPSpec_Runner_Reporter_Text
     
     public function getTotals()
     {
-	     return $this->hasIssues() ?
-	            Console_Color::convert("%r" . parent::getTotals() . "%n") :
-	            Console_Color::convert("%g" . parent::getTotals() . "%n");
+		$totals = parent::getTotals();
+		if ($this->_showColors) {
+			return $this->hasIssues() ?
+	            Console_Color::convert("%r" . $totals . "%n") :
+	            Console_Color::convert("%g" . $totals . "%n");
+		}
+	    return $totals;
 	}
 	
 	public function formatReportedIssue(&$increment, $issue, $message, $issueType = 'FAILED')
     {
-	 	return $this->hasIssues() ?
-	            Console_Color::convert("%r" . parent::formatReportedIssue(&$increment, $issue, $message, $issueType) . "%n") :
-	            Console_Color::convert("%g" . parent::formatReportedIssue(&$increment, $issue, $message, $issueType) . "%n");
+		$issues = parent::formatReportedIssue(&$increment, $issue, $message, $issueType);
+		if ($this->_showColors) {
+			return $this->hasIssues() ?
+				Console_Color::convert("%r" . $issues . "%n") :
+				Console_Color::convert("%g" . $issues . "%n");
+		}
+		return $issues;
 	}
 }

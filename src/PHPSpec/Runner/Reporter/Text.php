@@ -45,8 +45,7 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
     
     public function toString($specs = false)
     {
-        $str = PHP_EOL;
-        $str .= 'Finished in ' . $this->_result->getRuntime() . ' seconds';
+        $str = 'Finished in ' . $this->_result->getRuntime() . ' seconds';
 
         if ($specs) {
             $str .= PHP_EOL . PHP_EOL . $this->getSpecDox();
