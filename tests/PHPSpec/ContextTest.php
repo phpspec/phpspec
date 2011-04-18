@@ -2,7 +2,7 @@
 
 require_once 'PHPSpec/_files/BooSpec.php';
 
-class PHPSpec_ContextTest extends PHPUnit_Framework_TestCase
+class PHPSpec_ContextTest extends \PHPUnit_Framework_TestCase
 {
 	private $context;
 	
@@ -39,7 +39,7 @@ class PHPSpec_ContextTest extends PHPUnit_Framework_TestCase
 	public function getCurrentSpecificationReturnSpecificationObject() {
 		include_once 'PHPSpec/_files/Foo.php';
 		$this->context->spec(new Foo);
-		$this->assertTrue($this->context->getCurrentSpecification() instanceof PHPSpec_Specification);
+		$this->assertTrue($this->context->getCurrentSpecification() instanceof \PHPSpec\Specification);
 	}
 	
 	/**
@@ -72,7 +72,7 @@ class PHPSpec_ContextTest extends PHPUnit_Framework_TestCase
 	public function specMethodReturnsASpecificationObject() {
 		include_once 'PHPSpec/_files/Foo.php';
 		$this->context->spec(new Foo);
-		$this->assertTrue($this->context->spec(new Foo) instanceof PHPSpec_Specification);
+		$this->assertTrue($this->context->spec(new Foo) instanceof \PHPSpec\Specification);
 	}
 	
 	/**
@@ -80,7 +80,7 @@ class PHPSpec_ContextTest extends PHPUnit_Framework_TestCase
 	 **/
 	public function shouldIndicateItIsPending()
 	{
-	    $this->setExpectedException('PHPSpec_Runner_PendingException');
+	    $this->setExpectedException("\\PHPSpec\\Runner\\PendingException");
 	    $this->context->pending();
 	}
 	
@@ -89,7 +89,7 @@ class PHPSpec_ContextTest extends PHPUnit_Framework_TestCase
 	 **/
 	public function shouldIndicateWhenItDeliberateFails()
 	{
-	    $this->setExpectedException('PHPSpec_Runner_DeliberateFailException');
+	    $this->setExpectedException("\\PHPSpec\\Runner\\DeliberateFailException");
 	    $this->context->fail();
 	}
 	

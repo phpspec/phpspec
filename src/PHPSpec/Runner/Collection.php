@@ -17,6 +17,7 @@
  * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Runner;
 
 /**
  * @category   PHPSpec
@@ -24,7 +25,7 @@
  * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Runner_Collection implements Countable
+class Collection implements \Countable
 {
 
     protected $_context = null;
@@ -32,7 +33,7 @@ class PHPSpec_Runner_Collection implements Countable
     protected $_description = null;
     protected $_exampleClass = 'PHPSpec_Runner_Example';
 
-    public function __construct(PHPSpec_Context $context, $exampleClass = null)
+    public function __construct(\PHPSpec\Context $context, $exampleClass = null)
     {
         $this->_context = $context;
         if (!is_null($exampleClass)) {
@@ -58,7 +59,7 @@ class PHPSpec_Runner_Collection implements Countable
         return count($this->_examples);
     }
 
-    public function execute(PHPSpec_Runner_Result $result)
+    public function execute(Result $result)
     {
         set_error_handler('PHPSpec_ErrorHandler');
 
@@ -78,15 +79,15 @@ class PHPSpec_Runner_Collection implements Countable
                 if (method_exists($this->_context, 'after')) {
                     $this->_context->after();
                 }
-            } catch (PHPSpec_Runner_FailedMatcherException $e) {
+            } catch (FailedMatcherException $e) {
                 $result->addFailure($example, $e->getFormattedLine());
-            } catch (PHPSpec_Runner_ErrorException $e) {
+            } catch (ErrorException $e) {
                 $result->addError($example, $e);
-            } catch (PHPSpec_Runner_PendingException $e) {
+            } catch (PendingException $e) {
                 $result->addPending($example, $e);
-            } catch (PHPSpec_Runner_DeliberateFailException $e) {
+            } catch (DeliberateFailException $e) {
                 $result->addDeliberateFailure($example, $e);
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $result->addException($example, $e);
             }
         }
@@ -106,16 +107,16 @@ class PHPSpec_Runner_Collection implements Countable
         }
     }
 
-    protected function _addExample(PHPSpec_Runner_Example $example)
+    protected function _addExample(Example $example)
     {
         $this->_examples[] = $example;
     }
 
     protected function _verifyExampleClass($exampleClass)
     {
-        $class = new ReflectionClass($exampleClass);
-        if (!$class->isSubclassOf(new ReflectionClass('PHPSpec_Runner_Example'))) {
-            throw new PHPSpec_Exception('not a valid PHPSpec_Runner_Example subclass');
+        $class = new \ReflectionClass($exampleClass);
+        if (!$class->isSubclassOf(new \ReflectionClass('\PHPSpec\Runner\Example'))) {
+            throw new \PHPSpec\Exception('not a valid \PHPSpec\Runner\Example subclass');
         }
     }
 }

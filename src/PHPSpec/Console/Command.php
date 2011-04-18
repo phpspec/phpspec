@@ -14,33 +14,34 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 P‡draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Console;
 
-/** PHPSpec_Framework */
+/** @see PHPSpec\Framework */
 require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'Framework.php';
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 PÃ¡draic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 P‡draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Console_Command
+class Command
 {
 	/**
-	 * @var PHPSpec_Extensions_Autotest
+	 * @var PHPSpec\Extensions\Autotest
 	 */
 	protected $autotest;
 	
 	/**
-	 * @var PHPSpec_Runner
+	 * @var PHPSpec\Runner
 	 */
 	protected $runner;
 	
 	/**
-	 * PHPSpec_Console_Getopt
+	 * @var PHPSpec\Console\Getopt
 	 */
 	protected $options;
 	
@@ -51,10 +52,10 @@ class PHPSpec_Console_Command
     /**
      * @param PHPSpec_Console_Getopt $options
      */
-    public function __construct(PHPSpec_Console_Getopt $options = null)
+    public function __construct(\PHPSpec\Console\Getopt $options = null)
     {
         if (is_null($options)) {
-            $options = new PHPSpec_Console_Getopt;
+            $options = new \PHPSpec\Console\Getopt;
         }
         $this->options = $options;
     }
@@ -75,20 +76,20 @@ class PHPSpec_Console_Command
     }
     
     /**
-     * @return PHPSpec_Extensions_Autotest
+     * @return \PHPSpec\Extensions\Autotest
      */
     public function getAutotest()
     {
-        if (!$this->autotest instanceof PHPSpec_Extensions_Autotest) {
-            $this->autotest = new PHPSpec_Extensions_Autotest;
+        if (!$this->autotest instanceof \PHPSpec\Extensions\Autotest) {
+            $this->autotest = new \PHPSpec\Extensions\Autotest;
         }
         return $this->autotest;
     } 
     
 	/**
-	 * @param PHPSpec_Extensions_Autotest $autotest
+	 * @param \PHPSpec\Extensions\Autotest $autotest
 	 */
-    public function setAutotest(PHPSpec_Extensions_Autotest $autotest)
+    public function setAutotest(\PHPSpec\Extensions\Autotest $autotest)
     {
         $this->autotest = $autotest;
     }
@@ -98,8 +99,8 @@ class PHPSpec_Console_Command
      */ 
     public function getRunner()
     {
-        if (!$this->runner instanceof PHPSpec_Runner) {
-            $this->runner = new PHPSpec_Runner;
+        if (!$this->runner instanceof \PHPSpec\Runner) {
+            $this->runner = new \PHPSpec\Runner;
         }
         return $this->runner;
     } 
@@ -107,7 +108,7 @@ class PHPSpec_Console_Command
 	/**
 	 * @param PHPSpec_Runner $runner
 	 */
-    public function setRunner(PHPSpec_Runner $runner)
+    public function setRunner(\PHPSpec\Runner $runner)
     {
         $this->runner = $runner;
     }

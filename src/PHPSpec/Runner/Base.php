@@ -14,28 +14,28 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-
+namespace PHPSpec\Runner;
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Runner_Base implements Countable
+class Base implements \Countable
 {
 
     protected $_collection = null;
     protected $_result = null;
 
-    public function __construct(PHPSpec_Runner_Collection $collection)
+    public function __construct(Collection $collection)
     {
         $this->_collection = $collection;
     }
 
-    public static function execute(PHPSpec_Runner_Collection $collection, PHPSpec_Runner_Result $result = null)
+    public static function execute(Collection $collection, Result $result = null)
     {
         $exampleRunner = new self($collection);
         if (!is_null($result)) {
@@ -51,7 +51,7 @@ class PHPSpec_Runner_Base implements Countable
         $this->_collection->execute($result);
     }
 
-    public function setResult(PHPSpec_Runner_Result $result)
+    public function setResult(Result $result)
     {
         $this->_result = $result;
     }
@@ -64,7 +64,7 @@ class PHPSpec_Runner_Base implements Countable
     public function getResult()
     {
         if (is_null($this->_result)) {
-            $this->setResult( new PHPSpec_Runner_Result() );
+            $this->setResult( new Result() );
         }
         return $this->_result;
     }

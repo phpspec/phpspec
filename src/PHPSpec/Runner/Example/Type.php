@@ -17,6 +17,9 @@
  * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Runner\Example;
+
+use \PHPSpec\Runner\Example;
 
 /**
  * @category   PHPSpec
@@ -24,7 +27,7 @@
  * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Runner_Example_Type
+class Type
 {
 
     protected $_example = null;
@@ -35,7 +38,7 @@ class PHPSpec_Runner_Example_Type
     protected $_isPending = false;
     protected $_isDeliberateFail = false;
 
-    public function __construct(PHPSpec_Runner_Example $example)
+    public function __construct(Example $example)
     {
         $this->_example = $example;
     }

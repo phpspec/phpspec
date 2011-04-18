@@ -14,33 +14,32 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec;
+
+require_once 'PHPSpec/Exception.php';
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Framework
+class Framework
 {
-    public function __construct()
-    {
-
-    }
-
     public static function autoload($class)
     {
         // @todo consider speed implications
-        if (substr($class, 0, 8) != 'PHPSpec_') {
+        if (substr($class, 0, 7) != 'PHPSpec') {
             return false;
         }
         $path = dirname(dirname(__FILE__));
-        $file = $path . '/' . str_replace('_', '/', $class) . '.php';
+        $file = $path . '/' . str_replace('_', '/', $class);
+        $file = $path . '/' . str_replace("\\", '/', $class) . '.php';
         if (!file_exists($file)) {
-            throw new PHPSpec_Exception('include_once("' . $file . '"): file does not exist');
+            throw new \PHPSpec\Exception('include_once("' . $file . '"): file does not exist');
         } else {
             include_once $file;
         }
@@ -49,14 +48,14 @@ class PHPSpec_Framework
 }
 
 spl_autoload_register(array(
-    'PHPSpec_Framework',
+    "\\PHPSpec\\Framework",
     'autoload'
 ));
 
 function describe()
 {
     $args = func_get_args();
-    return call_user_func_array(array('PHPSpec_Specification','getSpec'), $args);
+    return call_user_func_array(array("\\PHPSpec\\Specification",'getSpec'), $args);
 }
 
 function PHPSpec_ErrorHandler($errno, $errstr, $errfile, $errline)
@@ -69,7 +68,7 @@ function PHPSpec_ErrorHandler($errno, $errstr, $errfile, $errline)
     array_shift($backtrace);
 
     include_once 'PHPSpec/Runner/ErrorException.php';
-    throw new PHPSpec_Runner_ErrorException($errstr, $errno, $errfile, $errline, $backtrace);
+    throw new \PHPSpec\Runner\ErrorException($errstr, $errno, $errfile, $errline, $backtrace);
 
     return true;
 }

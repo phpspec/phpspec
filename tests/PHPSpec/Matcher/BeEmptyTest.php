@@ -1,11 +1,11 @@
 <?php
 
-class PHPSpec_Matcher_BeEmptyTest extends PHPUnit_Framework_TestCase {
+class PHPSpec_Matcher_BeEmptyTest extends \PHPUnit_Framework_TestCase {
 	private $matcher;
 	const SOMETHING = 'something';
 	
 	public function setUp() {
-		$this->matcher = new PHPSpec_Matcher_BeEmpty(THIS_REQUIRED_ATTRIBUTE_IS_IGNORED_BY_CONSTRUCTOR);
+		$this->matcher = new \PHPSpec\Matcher\BeEmpty(THIS_REQUIRED_ATTRIBUTE_IS_IGNORED_BY_CONSTRUCTOR);
 		$this->matcher->matches(self::SOMETHING);
 	}
 	

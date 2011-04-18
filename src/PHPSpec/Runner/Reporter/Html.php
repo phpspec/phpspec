@@ -1,8 +1,11 @@
 <?php
+namespace PHPSpec\Runner\Reporter;
+
+use PHPSpec\Runner\Reporter;
 
 require_once 'Console/Color.php';
 
-class PHPSpec_Runner_Reporter_Html extends PHPSpec_Runner_Reporter {
+class Html extends Reporter {
 
     protected $_headerSent = false;
 

@@ -17,6 +17,9 @@
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Matcher;
+
+use \PHPSpec\Exception;
 
 /**
  * @category   PHPSpec
@@ -24,6 +27,6 @@
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Matcher_Exception extends PHPSpec_Exception
+class Exception extends Exception
 {
 }

@@ -14,24 +14,19 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-
+namespace PHPSpec\Runner;
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Runner_Phpt
+class Phpt
 {
-
-    public function __construct()
-    {
-    }
-
-    public function notify(PHPSpec_Specification $specification, PHPSpec_Expectation $expectation)
+    public function notify(\PHPSpec\Specification $specification, \PHPSpec\Expectation $expectation)
     {
         if ($specification->getMatcherResult() === $expectation->getExpectedMatcherResult()) {
             echo 'PASS';

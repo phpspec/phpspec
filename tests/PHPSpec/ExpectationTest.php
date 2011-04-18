@@ -1,10 +1,10 @@
 <?php
 
-class PHPSpec_ExpectationTest extends PHPUnit_Framework_TestCase {
+class PHPSpec_ExpectationTest extends \PHPUnit_Framework_TestCase {
 	private $expect;
 	
 	public function setUp() {
-		$this->expect = new PHPSpec_Expectation;
+		$this->expect = new \PHPSpec\Expectation;
 	}
 	
 	/**

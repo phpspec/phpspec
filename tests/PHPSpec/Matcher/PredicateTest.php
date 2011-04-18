@@ -1,10 +1,10 @@
 <?php
 
-class PHPSpec_Matcher_PredicateTest extends PHPUnit_Framework_TestCase {
+class PHPSpec_Matcher_PredicateTest extends \PHPUnit_Framework_TestCase {
 	private $predicate;
 	
 	public function setUp() {
-		$this->predicate = new PHPSpec_Matcher_Predicate(true);
+		$this->predicate = new \PHPSpec\Matcher\Predicate(true);
 		$this->predicate->setMethodName('hasArg1');
 		$this->predicate->setObject(new Foo);
 		$this->predicate->setPredicateCall('haveArg1');
@@ -48,7 +48,7 @@ class PHPSpec_Matcher_PredicateTest extends PHPUnit_Framework_TestCase {
 	 **/
 	public function itShouldReturnFalseIfPredicateDoesntReturnBoolean()
 	{
-		$this->predicate = new PHPSpec_Matcher_Predicate(true);
+		$this->predicate = new \PHPSpec\Matcher\Predicate(true);
 		$this->predicate->setMethodName('getArg1');
 		$this->predicate->setObject(new Foo('not boolean'));
 		$this->predicate->setPredicateCall('canGetArg1');
@@ -69,7 +69,7 @@ class PHPSpec_Matcher_PredicateTest extends PHPUnit_Framework_TestCase {
 	 **/
 	public function itShouldThrowAnExceptionWhenTryingToSetObjectWithSomethingElse()
 	{
-		$this->setExpectedException('PHPSpec_Exception');
+		$this->setExpectedException("\\PHPSpec\\Exception");
 		$this->predicate->setObject(null);
 	}
 }

@@ -17,6 +17,7 @@
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Runner;
 
 /**
  * @category   PHPSpec
@@ -25,7 +26,7 @@
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  * @todo       Needs a suite of updated tests, esp. addressing output being traced out
  */
-class PHPSpec_Runner_Result implements Countable
+class Result implements \Countable
 {
 
     protected $_examples = array();
@@ -50,51 +51,51 @@ class PHPSpec_Runner_Result implements Countable
     
     protected $_runtimeEnd = 0;
 
-    public function execute(PHPSpec_Runner_Collection $collection)
+    public function execute(Collection $collection)
     {
         $collection->execute($this);
     }
 
     public function addFailure(PHPSpec_Runner_Example $example, $line)
     {
-        $fail = new PHPSpec_Runner_Example_Fail($example);
+        $fail = new Example\Fail($example);
         $fail->setLine($line);
         $this->_examples[] = $fail;
         $this->_failCount++;
         $this->_reporter->outputStatus('F');
     }
 
-    public function addDeliberateFailure(PHPSpec_Runner_Example $example, Exception $e)
+    public function addDeliberateFailure(Example $example, \Exception $e)
     {
-        $this->_examples[] = new PHPSpec_Runner_Example_DeliberateFail($example, $e);
+        $this->_examples[] = new Example\DeliberateFail($example, $e);
         $this->_deliberateFailCount++;
         $this->_reporter->outputStatus('F');
     }
 
-    public function addException(PHPSpec_Runner_Example $example, Exception $e)
+    public function addException(Example $example, \Exception $e)
     {
-        $this->_examples[] = new PHPSpec_Runner_Example_Exception($example, $e);
+        $this->_examples[] = new Example\Exception($example, $e);
         $this->_exceptionCount++;
         $this->_reporter->outputStatus('E');
     }
 
-    public function addError(PHPSpec_Runner_Example $example, Exception $e)
+    public function addError(Example $example, \Exception $e)
     {
-        $this->_examples[] = new PHPSpec_Runner_Example_Error($example, $e);
+        $this->_examples[] = new Example\Error($example, $e);
         $this->_errorCount++;
         $this->_reporter->outputStatus('E');
     }
     
-    public function addPending(PHPSpec_Runner_Example $example, Exception $e)
+    public function addPending(Example $example, \Exception $e)
     {
-        $this->_examples[] = new PHPSpec_Runner_Example_Pending($example, $e);
+        $this->_examples[] = new Example\Pending($example, $e);
         $this->_pendingCount++;
         $this->_reporter->outputStatus('P');
     }
 
-    public function addPass(PHPSpec_Runner_Example $example)
+    public function addPass(Example $example)
     {
-        $this->_examples[] = new PHPSpec_Runner_Example_Pass($example);
+        $this->_examples[] = new Example\Pass($example);
         $this->_passCount++;
         $this->_reporter->outputStatus('.');
     }
@@ -110,14 +111,14 @@ class PHPSpec_Runner_Result implements Countable
      */
     public function getTypes($type)
     {
-        $class = 'PHPSpec_Runner_Example_' . ucfirst($type);
+        $class = "Example\\" . ucfirst($type);
         $types = array();
         foreach ($this->_examples as $example) {
-            if ($class == 'PHPSpec_Runner_Example_Exception') {
+            if ($class == "Example\\Exception") {
                 if ($example instanceof $class
-                    && !$example instanceof PHPSpec_Runner_Example_Error
-                    && !$example instanceof PHPSpec_Runner_Example_Pending
-                    && !$example instanceof PHPSpec_Runner_Example_DeliberateFail) {
+                    && !$example instanceof Example\Error
+                    && !$example instanceof Example\Pending
+                    && !$example instanceof Example\DeliberateFail) {
                     $types[] = $example;
                 }
             } elseif ($example instanceof $class) {
@@ -127,7 +128,7 @@ class PHPSpec_Runner_Result implements Countable
         return $types;
     }
     
-    public function setReporter(PHPSpec_Runner_Reporter $reporter)
+    public function setReporter(Reporter $reporter)
     {
         $this->_reporter = $reporter;
     }

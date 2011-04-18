@@ -17,6 +17,7 @@
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec;
 
 /**
  * @category   PHPSpec
@@ -24,7 +25,7 @@
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Context implements Countable
+class Context implements \Countable
 {
 
     /**
@@ -54,7 +55,7 @@ class PHPSpec_Context implements Countable
      * The Domain Specific Language object utilised to specify
      * expectations for behaviour
      *
-     * @var PHPSpec_Specification
+     * @var \PHPSpec\Specification
      */
     protected $_specificationDsl = null;
 
@@ -73,18 +74,18 @@ class PHPSpec_Context implements Countable
      * an object or scalar value.
      *
      * @param mixed $value
-     * @return PHPSpec_Specification
+     * @return \PHPSpec\Specification
      */
     public function spec($value)
     {
-        $this->_specificationDsl = PHPSpec_Specification::getSpec($value);
+        $this->_specificationDsl = \PHPSpec\Specification::getSpec($value);
         return $this->_specificationDsl;
     }
 
     /**
      * Return the last Specification (DSL) object utilised for this Context
      *
-     * @return PHPSpec_Specification
+     * @return \PHPSpec\Specification
      */
     public function getCurrentSpecification()
     {
@@ -150,7 +151,7 @@ class PHPSpec_Context implements Countable
      */
     public function getFileName()
     {
-        $reflected = new ReflectionObject($this);
+        $reflected = new \ReflectionObject($this);
         return $reflected->getFileName();
     }
     
@@ -166,7 +167,7 @@ class PHPSpec_Context implements Countable
         	$message = 'Incomplete';
         }
         
-    	throw new PHPSpec_Runner_PendingException($message);
+    	throw new \PHPSpec\Runner\PendingException($message);
     }
 
     public function fail($message = null)
@@ -175,7 +176,7 @@ class PHPSpec_Context implements Countable
         	$message = 'Deliberate Fail';
         }
 
-        throw new PHPSpec_Runner_DeliberateFailException($message);
+        throw new \PHPSpec\Runner\DeliberateFailException($message);
     }
 
     public function clearCurrentSpecification()
@@ -192,7 +193,7 @@ class PHPSpec_Context implements Countable
      */
     protected function _buildDetails()
     {
-        $object = new ReflectionObject($this);
+        $object = new \ReflectionObject($this);
         $class = $object->getName();
         if (!preg_match("/.*(spec)$/i", $class) && !preg_match("/^(describe).*/i", $class)) {
             throw new Exception('behaviour context did not end with \'Spec\' or \'spec\', or did not start with \'Describe\' or \'describe\'');

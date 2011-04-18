@@ -17,6 +17,7 @@
  * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Runner\Loader;
 
 /**
  * @category   PHPSpec
@@ -24,7 +25,7 @@
  * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Runner_Loader_DirectoryRecursive
+class DirectoryRecursive
 {
 
     protected $_loaded = array();
@@ -33,14 +34,14 @@ class PHPSpec_Runner_Loader_DirectoryRecursive
 
     protected $_filter = null;
 
-    protected $_filterName = 'PHPSpec_Runner_Filter_Standard';
+    protected $_filterName = '\PHPSpec\Runner\Filter\Standard';
 
     protected $_directory = null;
 
     public function load($directory)
     {
-        $this->_directory = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($directory)
+        $this->_directory = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory)
         );
 
         $filterIterator = $this->getFilter();
@@ -51,7 +52,7 @@ class PHPSpec_Runner_Loader_DirectoryRecursive
             
             $class = $this->_getClassName($file);
             if ($class && !in_array($class, $this->_loadedClasses)) {
-                $classReflected = new ReflectionClass($class);
+                $classReflected = new \ReflectionClass($class);
                 $this->_loaded[] = $classReflected;
             }
         }
@@ -73,9 +74,9 @@ class PHPSpec_Runner_Loader_DirectoryRecursive
     {
         if (is_null($this->_filter)) {
             if (is_null($this->_directory)) {
-                throw new Exception();
+                throw new \Exception();
             }
-            $reflection = new ReflectionClass($this->_filterName);
+            $reflection = new \ReflectionClass($this->_filterName);
             $this->_filter = $reflection->newInstance($this->_directory);
         }
         return $this->_filter;

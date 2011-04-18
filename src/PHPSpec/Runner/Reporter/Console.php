@@ -17,6 +17,7 @@
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Runner\Reporter;
 
 require_once 'Console/Color.php';
 
@@ -26,7 +27,7 @@ require_once 'Console/Color.php';
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Runner_Reporter_Console extends PHPSpec_Runner_Reporter_Text
+class Console extends Text
 {
     /**
      * Output a status symbol after each test run.
@@ -47,14 +48,14 @@ class PHPSpec_Runner_Reporter_Console extends PHPSpec_Runner_Reporter_Text
         }
         switch ($symbol) {
             case '.':
-                $symbol = $this->_showColors ? Console_Color::convert("%g$symbol%n") : $symbol;
+                $symbol = $this->_showColors ? \Console_Color::convert("%g$symbol%n") : $symbol;
                 break;
             case 'F':
             case 'E':
-                $symbol = $this->_showColors ? Console_Color::convert("%r$symbol%n") : $symbol;
+                $symbol = $this->_showColors ? \Console_Color::convert("%r$symbol%n") : $symbol;
                 break;
             case 'P':
-                $symbol = $this->_showColors ? Console_Color::convert("%y$symbol%n") : $symbol;
+                $symbol = $this->_showColors ? \Console_Color::convert("%y$symbol%n") : $symbol;
                 break;
             default:
         }
@@ -66,9 +67,9 @@ class PHPSpec_Runner_Reporter_Console extends PHPSpec_Runner_Reporter_Text
         $totals = parent::getTotals();
         if ($this->_showColors) {
             return $this->hasIssues() ?
-                Console_Color::convert("%r" . $totals . "%n") :
-                ($this->hasPending() ? Console_Color::convert("%y" . $totals . "%n") :
-                                       Console_Color::convert("%g" . $totals . "%n"));
+                \Console_Color::convert("%r" . $totals . "%n") :
+                ($this->hasPending() ? \Console_Color::convert("%y" . $totals . "%n") :
+                                       \Console_Color::convert("%g" . $totals . "%n"));
         }
         return $totals;
     }
@@ -78,9 +79,9 @@ class PHPSpec_Runner_Reporter_Console extends PHPSpec_Runner_Reporter_Text
         $issues = parent::formatReportedIssue(&$increment, $issue, $message, $issueType);
         if ($this->_showColors) {
             return $this->hasIssues() ?
-                Console_Color::convert("%r" . $issues . "%n") :
-                ($this->hasPending() ? Console_Color::convert("%y" . $issues . "%n") :
-                                       Console_Color::convert("%g" . $issues . "%n"));  
+                \Console_Color::convert("%r" . $issues . "%n") :
+                ($this->hasPending() ? \Console_Color::convert("%y" . $issues . "%n") :
+                                       \Console_Color::convert("%g" . $issues . "%n"));  
         }
         return $issues;
     }

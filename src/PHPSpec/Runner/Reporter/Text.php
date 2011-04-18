@@ -17,6 +17,9 @@
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Runner\Reporter;
+
+use PHPSpec\Runner\Reporter;
 
 /**
  * @category   PHPSpec
@@ -24,7 +27,7 @@
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
+class Text extends Reporter
 {
 
     public function output($specs = false)
@@ -181,7 +184,7 @@ class PHPSpec_Runner_Reporter_Text extends PHPSpec_Runner_Reporter
            $str .=  $this->_format($description) . PHP_EOL;
            foreach($arrayOfExamples as $example) {
                $str .= '  -' . $example->getSpecificationText();
-               if (!$example instanceof PHPSpec_Runner_Example_Pass) {
+               if (!$example instanceof \PHPSpec\Runner\Example\Pass) {
                     $class = get_class($example);
                     $parts = explode('_', $class);
                     $type = array_pop($parts);

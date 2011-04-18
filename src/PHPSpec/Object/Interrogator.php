@@ -17,6 +17,7 @@
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Object;
 
 /**
  * @category   PHPSpec
@@ -24,7 +25,7 @@
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Object_Interrogator
+class Interrogator
 {
 
     protected $_sourceObject = null;
@@ -35,14 +36,14 @@ class PHPSpec_Object_Interrogator
         $object = array_shift($args);
         if (!is_object($object)) {
             if (is_string($object) && class_exists($object, false)) {
-                $class = new ReflectionClass($object);
+                $class = new \ReflectionClass($object);
                 if ($class->isInstantiable()) {
                     $object = call_user_func_array(array($class, 'newInstance'), $args);
                 } else {
-                    throw new PHPSpec_Exception('class cannot be instantiated');
+                    throw new \PHPSpec\Exception('class cannot be instantiated');
                 }
             } else {
-                throw new PHPSpec_Exception('not a valid class type');
+                throw new \PHPSpec\Exception('not a valid class type');
             }
         }
         $this->_sourceObject = $object;

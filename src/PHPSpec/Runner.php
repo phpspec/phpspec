@@ -1,6 +1,8 @@
 <?php
 
-class PHPSpec_Runner
+namespace PHPSpec;
+
+class Runner
 {
 
     public function run($options)
@@ -16,17 +18,17 @@ class PHPSpec_Runner
 		        $options->specFile = basename($options->specFile);
 	        }
 	        if (is_dir(realpath($pathToFile . "/$options->specFile"))) {
-		        $loader = new PHPSpec_Runner_Loader_DirectoryRecursive;
+		        $loader = new Runner\Loader\DirectoryRecursive;
             	$runnable += $loader->load(realpath($pathToFile . "/$options->specFile"));
 	        } else {
-		        $loader = new PHPSpec_Runner_Loader_Classname;
+		        $loader = new Runner\Loader\Classname;
 				$runnable += $loader->load($options->specFile, $pathToFile);
 	        }
         }
     
         // should only recurse if not running a single spec
         if ((isset($options->r) || isset($options->recursive)) && !isset($options->specFile)) {
-            $loader = new PHPSpec_Runner_Loader_DirectoryRecursive;
+            $loader = new Runner\Loader\DirectoryRecursive;
             $runnable += $loader->load( getcwd() );
         }
 
@@ -39,7 +41,7 @@ class PHPSpec_Runner
             return;
         }
 
-        $result = new PHPSpec_Runner_Result;
+        $result = new Runner\Result;
         $result->setRuntimeStart(microtime(true));
         
         if (isset($options->reporter)) {
@@ -56,8 +58,8 @@ class PHPSpec_Runner
         
         foreach ($runnable as $behaviourContextReflection) {
             $contextObject = $behaviourContextReflection->newInstance();
-            $collection = new PHPSpec_Runner_Collection($contextObject);
-            $runner = PHPSpec_Runner_Base::execute($collection, $result);
+            $collection = new Runner\Collection($contextObject);
+            $runner = Runner\Base::execute($collection, $result);
         }
         
         $result->setRuntimeEnd(microtime(true));

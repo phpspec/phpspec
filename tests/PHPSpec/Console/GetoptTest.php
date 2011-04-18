@@ -10,7 +10,7 @@ class PHPSpec_Console_GetoptTest extends PHPUnit_Extensions_OutputTestCase {
     {
 	    $tmp = $_SERVER['argv']; 
 	    $_SERVER['argv'] = array(PHPSPEC_BIN, 'empty');
-		$getopt = new PHPSpec_Console_Getopt();
+		$getopt = new \PHPSpec\Console\Getopt();
 		$this->assertSame(
 			array(
 				'noneGiven' => false, 

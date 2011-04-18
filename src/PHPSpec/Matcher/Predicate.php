@@ -17,14 +17,16 @@
  * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Matcher;
 
+use \PHPSpec\Matcher\BeTrue;
 /**
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Matcher_Predicate extends PHPSpec_Matcher_BeTrue
+class Predicate extends BeTrue
 {
    
     protected $_object = null;
@@ -41,7 +43,7 @@ class PHPSpec_Matcher_Predicate extends PHPSpec_Matcher_BeTrue
     public function setObject($object)
     {
         if (!is_object($object)) {
-            throw new PHPSpec_Exception('not an object');
+            throw new \PHPSpec\Exception('not an object');
         }
         $this->_object = $object;
     }

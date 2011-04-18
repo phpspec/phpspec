@@ -1,11 +1,11 @@
 <?php
 
-class InterrogatorTest extends PHPUnit_Framework_TestCase {
+class InterrogatorTest extends \PHPUnit_Framework_TestCase {
 	private $interrogator;
 	
 	public function setUp() {
 		include_once 'PHPSpec/_files/Foo.php';
-		$this->interrogator = new PHPSpec_Object_Interrogator('Foo', 1);
+		$this->interrogator = new \PHPSpec\Object\Interrogator('Foo', 1);
 	}
 	
 	/**
@@ -13,7 +13,7 @@ class InterrogatorTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function itShouldAcceptExistingSourceObjectWhenInstantiated() {
 		$foo = new Foo;
-		$this->interrogator = new PHPSpec_Object_Interrogator($foo);
+		$this->interrogator = new \PHPSpec\Object\Interrogator($foo);
 		$this->assertTrue(is_a($this->interrogator->getSourceObject(), "Foo"));		
 	}
 	
@@ -21,7 +21,7 @@ class InterrogatorTest extends PHPUnit_Framework_TestCase {
 	 * @test
 	 */
 	public function itShouldAcceptStringNamingTheSourceObject() {
-		$this->interrogator = new PHPSpec_Object_Interrogator('Foo');
+		$this->interrogator = new \PHPSpec\Object\Interrogator('Foo');
 		$this->assertTrue(is_a($this->interrogator->getSourceObject(), "Foo"));		
 	}
 	
@@ -30,18 +30,18 @@ class InterrogatorTest extends PHPUnit_Framework_TestCase {
 	 */
 	public function itShouldRejectStringNamingNonExistingSourceObject() {
 		include_once 'PHPSpec/_files/NonInstantiable.php';
-		$this->setExpectedException('PHPSpec_Exception');
-		$this->interrogator = new PHPSpec_Object_Interrogator('NonInstantiable');
+		$this->setExpectedException("\\PHPSpec\\Exception");
+		$this->interrogator = new \PHPSpec\Object\Interrogator('NonInstantiable');
 	}
 	
 	/**
 	 * @test
 	 */
 	public function itShouldRejectAnythingElseApartFromStringOrObject() {
-		$this->setExpectedException('PHPSpec_Exception');
-		$this->interrogator = new PHPSpec_Object_Interrogator();
-		$this->interrogator = new PHPSpec_Object_Interrogator(1);
-		$this->interrogator = new PHPSpec_Object_Interrogator(TRUE);
+		$this->setExpectedException("\\PHPSpec\\Exception");
+		$this->interrogator = new \PHPSpec\Object\Interrogator();
+		$this->interrogator = new \PHPSpec\Object\Interrogator(1);
+		$this->interrogator = new \PHPSpec\Object\Interrogator(TRUE);
 	}
 	
 	/**

@@ -1,10 +1,10 @@
 <?php
 
-class PHPSpec_Matcher_MatchTest extends PHPUnit_Framework_TestCase {
+class PHPSpec_Matcher_MatchTest extends \PHPUnit_Framework_TestCase {
 	private $matcher;
 	
 	public function setUp() {
-		$this->matcher = new PHPSpec_Matcher_Match("/bar/");
+		$this->matcher = new \PHPSpec\Matcher\Match("/bar/");
 		$this->matcher->matches('bar');
 	}
 	/**

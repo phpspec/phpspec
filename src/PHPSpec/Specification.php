@@ -14,17 +14,22 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec;
+
+use \PHPSpec\Specification\Object;
+use \PHPSpec\Specification\Scalar;
+use \PHPSpec\Runner\FailedMatcherException;
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Specification
+class Specification
 {
 
     /**
@@ -83,12 +88,12 @@ class PHPSpec_Specification
         $args = func_get_args();
         $value = $args[0];
         if ((is_string($value) && class_exists($value, true)) || is_object($value)) {
-            $class = new ReflectionClass('PHPSpec_Object_Interrogator');
+            $class = new \ReflectionClass("\\PHPSpec\\Object\\Interrogator");
             $interrogator = $class->newInstanceArgs($args);
-            $spec = new PHPSpec_Specification_Object($interrogator);
+            $spec = new Object($interrogator);
         } else {
             $scalarValue = array_shift($args);
-            $spec = new PHPSpec_Specification_Scalar($scalarValue);
+            $spec = new Scalar($scalarValue);
         }
 
         return $spec;
@@ -135,7 +140,7 @@ class PHPSpec_Specification
 
         // check for any predicate style matching
         $result = preg_match("/^((?:be|have)(?:A|An)?)(.*)/", $method, $matches);
-        if ($result && empty($args) && $this instanceof PHPSpec_Specification_Object) {
+        if ($result && empty($args) && $this instanceof Object) {
             $predicate = $matches[1];
             $predicateSuffix = $matches[2];
 
@@ -151,7 +156,7 @@ class PHPSpec_Specification
 
             $predicateObject = $this->getInterrogator()
                 ->getSourceObject(); // it's buried deep ;)
-            $reflectedObject = new ReflectionObject($predicateObject);
+            $reflectedObject = new \ReflectionObject($predicateObject);
             $methods = $reflectedObject->getMethods();
             foreach ($predicatePossibleMatches as $possible) {
                 foreach ($methods as $m) {
@@ -344,13 +349,13 @@ class PHPSpec_Specification
      */
     protected function _createMatcher($method)
     {
-        $matcherClass = 'PHPSpec_Matcher_' . ucfirst($method);
+        $matcherClass = "\\PHPSpec\\Matcher\\" . ucfirst($method);
         try {
             if (class_exists($matcherClass, true)) {
                 $this->_matcher = new $matcherClass( $this->getExpectedValue() );
             }
-        } catch (PHPSpec_Exception $e) {
-            $matcherClass = 'PHPSpec_Context_Zend_Matcher_' . ucfirst($method);
+        } catch (\PHPSpec\Exception $e) {
+            $matcherClass = "\\PHPSpec\\Context\\Zend\\Matcher\\" . ucfirst($method);
             $this->_matcher = new $matcherClass( $this->getExpectedValue() );
         }
     }
@@ -372,7 +377,7 @@ class PHPSpec_Specification
         $result = call_user_func_array(array($this->_matcher, 'matches'), $matchArgs);
         $this->setMatcherResult($result);
         if (!$result) {
-            throw new PHPSpec_Runner_FailedMatcherException();
+            throw new FailedMatcherException();
         }
     }
 

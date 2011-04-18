@@ -17,14 +17,14 @@
  * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-
+namespace PHPSpec\Runner\Loader;
 /**
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Runner_Loader_Classname
+class Classname
 {
 
     protected $_loaded = array();
@@ -64,7 +64,7 @@ class PHPSpec_Runner_Loader_Classname
             $class = 'Describe' . $classPartial;
             $classFile = $className;
         } else {
-        	throw new PHPSpec_Exception('Invalid class or filename given for a spec; spec could not be found using "' . $className . '"');
+        	throw new \PHPSpec\Exception('Invalid class or filename given for a spec; spec could not be found using "' . $className . '"');
         }
         
         // existence test not implemented - let require call catch fatal error
@@ -72,10 +72,10 @@ class PHPSpec_Runner_Loader_Classname
         require_once $pathToFile . '/' . $classFile;
         
         if (!class_exists($class, false)) {
-            throw new PHPSpec_Exception('The class ' . $class . ' is not defined within the spec file ' . $classFile);
+            throw new \PHPSpec\Exception('The class ' . $class . ' is not defined within the spec file ' . $classFile);
         }
 
-        $classReflected = new ReflectionClass($class);
+        $classReflected = new \ReflectionClass($class);
 
         $this->_loaded = array($classReflected);
 

@@ -1,12 +1,12 @@
 <?php
 
-class PHPSpec_Matcher_BeAnInstanceOfTest extends PHPUnit_Framework_TestCase {
+class PHPSpec_Matcher_BeAnInstanceOfTest extends \PHPUnit_Framework_TestCase {
 	private $matcher;
 	
 	public function setUp() {
 		include_once 'PHPSpec/_files/Foo.php';
 		include_once 'PHPSpec/_files/Bar.php';
-		$this->matcher = new PHPSpec_Matcher_BeAnInstanceOf('Foo');
+		$this->matcher = new \PHPSpec\Matcher\BeAnInstanceOf('Foo');
 		$this->matcher->matches(new Bar);
 	}
 	

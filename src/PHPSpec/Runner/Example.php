@@ -17,14 +17,15 @@
  * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Runner;
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Runner_Example
+class Example
 {
 
     protected $_context = null;
@@ -32,7 +33,7 @@ class PHPSpec_Runner_Example
     protected $_specificationText = null;
     protected $_failedMessage = null;
 
-    public function __construct(PHPSpec_Context $context, $methodName)
+    public function __construct(\PHPSpec\Context $context, $methodName)
     {
         $this->_context = $context;
         $this->_methodName = $methodName;
@@ -57,7 +58,7 @@ class PHPSpec_Runner_Example
     public function getSpecificationBeingExecuted()
     {
         if (is_null($this->_specificationBeingExecuted)) {
-            throw new PHPSpec_Exception('cannot return a PHPSpec_Specification until the example is executed');
+            throw new \PHPSpec\Exception('cannot return a PHPSpec_Specification until the example is executed');
         }
         return $this->_specificationBeingExecuted;
     }
@@ -65,7 +66,7 @@ class PHPSpec_Runner_Example
     public function getFailedMessage()
     {
         if (is_null($this->_failedMessage)) {
-            throw new PHPSpec_Exception('cannot return a failure message until the example is executed');
+            throw new \PHPSpec\Exception('cannot return a failure message until the example is executed');
         }
         return $this->_failedMessage;
     }
@@ -88,7 +89,7 @@ class PHPSpec_Runner_Example
         $line = '';
         try {
             $this->_context->{$this->_methodName}();
-        } catch (PHPSpec_Runner_FailedMatcherException $e) {
+        } catch (FailedMatcherException $e) {
             $line = $e->getFormattedLine();
         }
 
@@ -115,7 +116,7 @@ class PHPSpec_Runner_Example
             } else {
                 $this->_failedMessage = $this->_specificationBeingExecuted->getMatcherNegativeFailureMessage();
             }
-            $e =  new PHPSpec_Runner_FailedMatcherException();
+            $e =  new FailedMatcherException();
             $e->setFormattedLine($line);
             throw $e; // add spec data later
         }

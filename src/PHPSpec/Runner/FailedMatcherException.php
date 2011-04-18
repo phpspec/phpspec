@@ -14,20 +14,21 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Runner;
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 PÃ¡draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Runner_FailedMatcherException extends PHPSpec_Exception
+class FailedMatcherException extends \PHPSpec\Exception
 {
     protected $formattedLine;
-    public function __construct($message = null, $code = 0, Exception $previous = null)
+    public function __construct($message = null, $code = 0, \Exception $previous = null)
     {
          parent::__construct($message, $code, $previous);
          $this->formattedLine = $this->formatFailureLine();
@@ -46,7 +47,9 @@ class PHPSpec_Runner_FailedMatcherException extends PHPSpec_Exception
     protected function formatFailureLine()
     {
         $trace = $this->getTrace();
-        while($step = next($trace)) {
+        $setp = null;
+        
+        while(($step = next($trace)) !== null) {
             if (strpos($step['class'], 'Describe') === 0 ||
                 strpos($step['class'], 'Spec') === strlen($step['class']) - 4) {
                 $failure = prev($trace);

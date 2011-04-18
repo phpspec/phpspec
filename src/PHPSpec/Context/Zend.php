@@ -18,11 +18,15 @@
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
+namespace PHPSpec\Context;
+
 require_once 'Zend/Controller/Front.php';
 
 require_once 'Zend/Controller/Request/Http.php';
 
 // require_once 'Zend/Di.php';
+
+use \PHPSpec\Context;
 
 /**
  * @category   PHPSpec
@@ -30,7 +34,7 @@ require_once 'Zend/Controller/Request/Http.php';
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Context_Zend extends PHPSpec_Context
+class Zend extends Context
 {
 
     const BASE_URL = 'http://www.example.com';
@@ -74,7 +78,7 @@ class PHPSpec_Context_Zend extends PHPSpec_Context
     {
         parent::__construct();
         $this->_setController();
-        $this->_frontController = Zend_Controller_Front::getInstance();
+        $this->_frontController = \Zend_Controller_Front::getInstance();
     }
 
     public static function setFrontControllerSetupCallback($callback)
@@ -160,7 +164,7 @@ class PHPSpec_Context_Zend extends PHPSpec_Context
     public function response()
     {
         if (!isset($this->_response)) {
-        	throw new PHPSpec_Exception('No response has been retrieved yet;
+        	throw new \PHPSpec\Exception('No response has been retrieved yet;
         	make a get or post request first');
         }
         return $this->_response;
@@ -169,7 +173,7 @@ class PHPSpec_Context_Zend extends PHPSpec_Context
     public function replaceClass()
     {
         $args = func_get_args();
-        $method = new ReflectionMethod('Zend_Di', 'replaceClass');
+        $method = new \ReflectionMethod("\\Zend_Di", 'replaceClass');
         $method->invokeArgs(null, $args);
     }
 
@@ -197,13 +201,13 @@ class PHPSpec_Context_Zend extends PHPSpec_Context
             $uri = self::BASE_URL . '/' . $this->getController()
             . (!empty($actionName) ? '/' . $actionName : '');
         }
-        $this->_request = new Zend_Controller_Request_Http($uri);
+        $this->_request = new \Zend_Controller_Request_Http($uri);
         if (!empty($paramArray)) {
         	$this->request()->setParams($paramArray);
         }
         $response = $this->_frontController->dispatch(
             $this->request(),
-            new PHPSpec_Context_Zend_Response
+            new \PHPSpec\Context\Zend\Response
         );
         $response->setContext($this);
         return $response;

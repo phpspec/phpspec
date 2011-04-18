@@ -17,6 +17,9 @@
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Context\Zend\Matcher;
+
+use \PHPSpec\Matcher\Match;
 
 /**
  * @category   PHPSpec
@@ -24,7 +27,7 @@
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Context_Zend_Matcher_HaveText extends PHPSpec_Matcher_Match
+class HaveText extends Match
 {
 
     public function __construct($expected)

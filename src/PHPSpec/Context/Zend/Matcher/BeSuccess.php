@@ -17,6 +17,9 @@
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Context\Zend\Matcher;
+
+use \PHPSpec\Matcher;
 
 /**
  * @category   PHPSpec
@@ -24,7 +27,7 @@
  * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Context_Zend_Matcher_BeSuccess implements PHPSpec_Matcher_Interface
+class BeSuccess implements Matcher
 {
 
     protected $_expected = null;
@@ -39,7 +42,7 @@ class PHPSpec_Context_Zend_Matcher_BeSuccess implements PHPSpec_Matcher_Interfac
     public function matches($actual)
     {
         $this->_actual = $actual;
-        if (!$actual instanceof PHPSpec_Context_Zend_Response) {
+        if (!$actual instanceof \PHPSpec\Context\Zend\Response) {
             return false;
         }
         return $this->_expected == $this->_actual->getHttpResponseCode();

@@ -1,10 +1,10 @@
 <?php
 
-class PHPSpec_Matcher_BeNullTest extends PHPUnit_Framework_TestCase {
+class PHPSpec_Matcher_BeNullTest extends \PHPUnit_Framework_TestCase {
 	private $matcher;
 	
 	public function setUp() {
-		$this->matcher = new PHPSpec_Matcher_BeNull(THIS_REQUIRED_ATTRIBUTE_IS_IGNORED_BY_CONSTRUCTOR);
+		$this->matcher = new \PHPSpec\Matcher\BeNull(THIS_REQUIRED_ATTRIBUTE_IS_IGNORED_BY_CONSTRUCTOR);
 		$this->matcher->matches(1);
 	}
 	

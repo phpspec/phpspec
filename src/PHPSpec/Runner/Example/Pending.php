@@ -17,6 +17,7 @@
  * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Runner\Example;
 
 /**
  * @category   PHPSpec
@@ -24,7 +25,7 @@
  * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Runner_Example_Pending extends PHPSpec_Runner_Example_Exception
+class Pending extends Exception
 {
 
     protected $_isException = false;

@@ -1,11 +1,11 @@
 <?php
 
-class PHPSpec_Matcher_BeLessThanTest extends PHPUnit_Framework_TestCase
+class PHPSpec_Matcher_BeLessThanTest extends \PHPUnit_Framework_TestCase
 {
 	private $matcher;
 	
 	public function setUp() {
-		$this->matcher = new PHPSpec_Matcher_BeLessThan(1);
+		$this->matcher = new \PHPSpec\Matcher\BeLessThan(1);
 		$this->matcher->matches(0);
 	}
 	

@@ -1,13 +1,15 @@
 <?php
 
+namespace PHPSpec\Context\Zend;
+
 require_once 'Zend/Controller/Response/Http.php';
 
-class PHPSpec_Context_Zend_Response extends Zend_Controller_Response_Http
+class Response extends \Zend_Controller_Response_Http
 {
 
     protected $_context = null;
 
-    public function setContext(PHPSpec_Context_Zend $context) 
+    public function setContext(\PHPSpec\Context\Zend $context) 
     {
         $this->_context = $context;
     }

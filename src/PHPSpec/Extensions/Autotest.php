@@ -1,6 +1,8 @@
 <?php
 
-class PHPSpec_Extensions_Autotest
+namespace PHPSpec\Extensions;
+
+class Autotest
 {
 	/**
      * The autotest() static method serves as PHPSpec's Autotester. It will
@@ -11,9 +13,9 @@ class PHPSpec_Extensions_Autotest
      * Use the CTRL+C key combination to trigger an exit from the console
      * running loop used for Autotesting.
      *
-     * @param PHPSpec_Console_Getopt $options
+     * @param \PHPSpec\Console\Getopt $options
      */   
-	public function run(PHPSpec_Console_Command $command)
+	public function run(\PHPSpec\Console\Command $command)
 	{
 		set_time_limit(0);
         

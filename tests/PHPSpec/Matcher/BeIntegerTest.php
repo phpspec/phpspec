@@ -1,10 +1,10 @@
 <?php
 
-class PHPSpec_Matcher_BeIntegerTest extends PHPUnit_Framework_TestCase {
+class PHPSpec_Matcher_BeIntegerTest extends \PHPUnit_Framework_TestCase {
 	private $matcher;
 	
 	public function setUp() {
-		$this->matcher = new PHPSpec_Matcher_BeInteger(THIS_REQUIRED_ATTRIBUTE_IS_IGNORED_BY_CONSTRUCTOR);
+		$this->matcher = new \PHPSpec\Matcher\BeInteger(THIS_REQUIRED_ATTRIBUTE_IS_IGNORED_BY_CONSTRUCTOR);
 		$this->matcher->matches("hello world");
 	}
 	
