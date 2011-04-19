@@ -45,9 +45,9 @@ class Runner
         $result->setRuntimeStart(microtime(true));
         
         if (isset($options->reporter)) {
-        	$reporterClass = 'PHPSpec_Runner_Reporter_' . ucfirst($options->reporter);
+        	$reporterClass = "\\PHPSpec\\Runner\\Reporter\\" . ucfirst($options->reporter);
         } else {
-        	$reporterClass = 'PHPSpec_Runner_Reporter_Text';
+        	$reporterClass = "\\PHPSpec\\Runner\\Reporter\\Text";
         }        
         $reporter = new $reporterClass($result);
         if ($options->c || $options->color || $options->colour) {

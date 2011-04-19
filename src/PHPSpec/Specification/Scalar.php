@@ -14,17 +14,18 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
+namespace PHPSpec\Specification;
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class PHPSpec_Specification_Scalar extends PHPSpec_Specification
+class Scalar extends \PHPSpec\Specification
 {
 
     protected $_scalarValue = null;
@@ -35,7 +36,7 @@ class PHPSpec_Specification_Scalar extends PHPSpec_Specification
             $this->_scalarValue = $scalarValue;
             $this->setActualValue($this->_scalarValue);
         }
-        $this->_expectation = new PHPSpec_Expectation;
+        $this->_expectation = new \PHPSpec\Expectation;
     }
 
     public function __call($method, $args)
@@ -45,7 +46,7 @@ class PHPSpec_Specification_Scalar extends PHPSpec_Specification
             return $dslResult;
         }
 
-        throw new PHPSpec_Exception('unknown method called');
+        throw new \PHPSpec\Exception('unknown method called');
     }
 
     public function __get($name)
@@ -55,13 +56,13 @@ class PHPSpec_Specification_Scalar extends PHPSpec_Specification
             return $dslResult;
         }
 
-        throw new PHPSpec_Exception('unknown property requested');
+        throw new \PHPSpec\Exception('unknown property requested');
     }
 
     public function getScalar()
     {
         if (is_null($this->_scalarValue)) {
-            throw new PHPSpec_Exception('a scalar value has not yet been initialised');
+            throw new \PHPSpec\Exception('a scalar value has not yet been initialised');
         }
         return $this->_scalarValue;
     }

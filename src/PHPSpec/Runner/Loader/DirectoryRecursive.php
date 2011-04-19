@@ -82,7 +82,7 @@ class DirectoryRecursive
         return $this->_filter;
     }
     
-    protected function _getClassName(splFileInfo $file)
+    protected function _getClassName(\SplFileInfo $file)
     {
         $fileName = $file->getFilename();
         $className = substr($fileName, 0, strlen($fileName) - 4);

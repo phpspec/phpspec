@@ -31,7 +31,7 @@ class Collection implements \Countable
     protected $_context = null;
     protected $_examples = array();
     protected $_description = null;
-    protected $_exampleClass = 'PHPSpec_Runner_Example';
+    protected $_exampleClass = "\\PHPSpec\\Runner\\Example";
 
     public function __construct(\PHPSpec\Context $context, $exampleClass = null)
     {
@@ -61,7 +61,7 @@ class Collection implements \Countable
 
     public function execute(Result $result)
     {
-        set_error_handler('PHPSpec_ErrorHandler');
+        set_error_handler("\\PHPSpec\\PHPSpec_ErrorHandler");
 
         if (method_exists($this->_context, 'beforeAll')) {
             $this->_context->beforeAll();
