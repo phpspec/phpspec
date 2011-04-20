@@ -169,4 +169,4 @@ REM Library.
 REM
 
 set PHPBIN="@php_bin@"
-"@php_bin@" "@php_dir@/PHPSpec/Console/Command.php" %*
+"@php_bin@" "@php_dir@/PHPSpec/Framework.php" %*

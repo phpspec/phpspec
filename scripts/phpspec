@@ -1,4 +1,4 @@
-#!@php_bin@
+#!/usr/bin/php
 <?php
 /**
  * PHPSpec
@@ -169,6 +169,8 @@
  * permanent authorization for you to choose that version for the
  * Library.
  */
+
+define('PHPSPEC_COMMAND_CALL', "phpspec");
 
 require_once 'PHPSpec/Framework.php';
 
