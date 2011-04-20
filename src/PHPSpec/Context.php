@@ -10,11 +10,13 @@
  * http://www.gnu.org/licenses/lgpl-3.0.txt
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@phpspec.org so we can send you a copy immediately.
+ * to license@phpspec.net so we can send you a copy immediately.
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 namespace PHPSpec;
@@ -22,7 +24,9 @@ namespace PHPSpec;
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class Context implements \Countable
@@ -60,9 +64,9 @@ class Context implements \Countable
     protected $_specificationDsl = null;
 
     /**
-     * Constructor; Create a new Context for behaviour examples with any relevant
-     * details built at run time concerning specification strings, context
-     * descriptions, and executable examples to run.
+     * Constructor; Creates a new Context for behaviour examples with any
+     * relevant details built at run time concerning specification strings,
+     * context descriptions, and executable examples to run.
      */
     public function __construct()
     {
@@ -70,7 +74,7 @@ class Context implements \Countable
     }
 
     /**
-     * Generate a Specification (DSL) object based on the passed value whether
+     * Generates a Specification (DSL) object based on the passed value whether
      * an object or scalar value.
      *
      * @param mixed $value
@@ -83,7 +87,7 @@ class Context implements \Countable
     }
 
     /**
-     * Return the last Specification (DSL) object utilised for this Context
+     * Returns the last Specification (DSL) object utilised for this Context
      *
      * @return \PHPSpec\Specification
      */
@@ -93,7 +97,7 @@ class Context implements \Countable
     }
 
     /**
-     * Set a textual description (specdox style) for this Context
+     * Sets a textual description (specdox style) for this Context
      *
      * @param string $description
      * @return null
@@ -104,7 +108,7 @@ class Context implements \Countable
     }
 
     /**
-     * Return the textual description (specdox style) for this Context
+     * Returns the textual description (specdox style) for this Context
      *
      * @return string
      */
@@ -114,7 +118,7 @@ class Context implements \Countable
     }
 
     /**
-     * Get an array of the methods available in this Context which qualify as
+     * Gets an array of the methods available in this Context which qualify as
      * executable examples for expected behaviour.
      *
      * @return array
@@ -145,7 +149,7 @@ class Context implements \Countable
     }
 
     /**
-     * Return the Context file path
+     * Returns the Context file path
      *
      * @return string The filepath to this Context class
      */
@@ -156,67 +160,87 @@ class Context implements \Countable
     }
     
     /**
-     * Set status of the current example from which called to Pending, i.e.
+     * Sets status of the current example from which called to Pending, i.e.
      * awaiting completion.
      * 
+     * @param string $message
      * @return null
+     * @throws \PHPSpec\Runner\PendingException
      */
     public function pending($message = null)
     {
         if (is_null($message)) {
-        	$message = 'Incomplete';
+            $message = 'Incomplete';
         }
         
-    	throw new \PHPSpec\Runner\PendingException($message);
+        throw new \PHPSpec\Runner\PendingException($message);
     }
 
+    /**
+     * Sets status of the current example from which called to Fail, i.e.
+     * doesn't satisfy expectations.
+     * 
+     * @param unknown_type $message
+     * @return null
+     * @throws \PHPSpec\Runner\DeliberateFailException
+     */
     public function fail($message = null)
     {
         if (is_null($message)) {
-        	$message = 'Deliberate Fail';
+            $message = 'Deliberate Fail';
         }
 
         throw new \PHPSpec\Runner\DeliberateFailException($message);
     }
 
+    /**
+     * Clears current specification
+     */
     public function clearCurrentSpecification()
     {
         $this->_specificationDsl = null;
     }
     
     /**
-     * Based on the Context object generate all necessary data required
-     * in order to count, retrieve and execute the specs/examples held
-     * in this context
-     *
+     * Generates all necessary data required in order to count, retrieve and
+     * execute the specs/examples held in this context based on the Context
+     * object
+     * 
      * @return null
      */
     protected function _buildDetails()
     {
         $object = new \ReflectionObject($this);
         $class = $object->getName();
-        if (!preg_match("/.*(spec)$/i", $class) && !preg_match("/^(describe).*/i", $class)) {
-            throw new Exception('behaviour context did not end with \'Spec\' or \'spec\', or did not start with \'Describe\' or \'describe\'');
+        if (!preg_match("/.*(spec)$/i", $class) &&
+            !preg_match("/^(describe).*/i", $class)) {
+            throw new Exception(
+                'behaviour context did not end with \'Spec\' or' .
+                ' \'spec\', or did not start with \'Describe\' or'.
+                ' \'describe\''
+            );
         }
         $this->_addSpecifications($object->getMethods());
         $this->_addDescription($class);
     }
 
     /**
-     * Generate and add a description for this Context. The description
+     * Generates and add a description for this Context. The description
      * is basically the Class name split and concatenated with spaces.
      *
      * @return null
      */
     protected function _addDescription($class)
     {
-        $terms = preg_split("/(?=[[:upper:]])/", $class, -1, PREG_SPLIT_NO_EMPTY);
+        $terms = preg_split(
+            "/(?=[[:upper:]])/", $class, -1, PREG_SPLIT_NO_EMPTY
+        );
         $termsLowercase = array_map('strtolower', $terms);
         $this->setDescription(implode(' ', $termsLowercase));
     }
 
     /**
-     * Locate and add qualifying method names which are intended as specs or
+     * Locates and add qualifying method names which are intended as specs or
      * executable examples.
      *
      * @return null
@@ -227,13 +251,15 @@ class Context implements \Countable
             $name = $method->getName();
             if (substr($name, 0, 2) == 'it') {
                 $this->_addSpecMethod($name);
-                $this->_setSpecificationCount( $this->getSpecificationCount() + 1 );
+                $this->_setSpecificationCount(
+                    $this->getSpecificationCount() + 1
+                );
             }
         }
     }
 
     /**
-     * Add a spec/example method to the list of qualifying methods
+     * Adds a spec/example method to the list of qualifying methods
      *
      * @return null
      */
@@ -243,7 +269,7 @@ class Context implements \Countable
     }
 
     /**
-     * Set the internal count of specs/examples
+     * Sets the internal count of specs/examples
      *
      * @return null
      */

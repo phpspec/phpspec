@@ -10,23 +10,38 @@
  * http://www.gnu.org/licenses/lgpl-3.0.txt
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@phpspec.org so we can send you a copy immediately.
+ * to license@phpspec.net so we can send you a copy immediately.
  *
- * @category   PHPSpec
- * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
- * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ * @category  PHPSpec
+ * @package   PHPSpec
+ * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                    Marcello Duarte
+ * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 namespace PHPSpec;
 
+/**
+ * @see \PHPSpec\Specification\Object
+ */
 use \PHPSpec\Specification\Object;
+
+/**
+ * @see \PHPSpec\Specification\Scalar
+ */
 use \PHPSpec\Specification\Scalar;
+
+/**
+ * @see \PHPSpec\Runner\FailedMatcherException
+ */
 use \PHPSpec\Runner\FailedMatcherException;
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class Specification
@@ -61,7 +76,7 @@ class Specification
      * The overall result of the Matcher operation as
      * a boolean
      *
-     * @var bool
+     * @var boolean
      */
     protected $_matcherResult = null;
 
@@ -87,7 +102,8 @@ class Specification
     {
         $args = func_get_args();
         $value = $args[0];
-        if ((is_string($value) && class_exists($value, true)) || is_object($value)) {
+        if ((is_string($value) && class_exists($value, true)) ||
+            is_object($value)) {
             $class = new \ReflectionClass("\\PHPSpec\\Object\\Interrogator");
             $interrogator = $class->newInstanceArgs($args);
             $spec = new Object($interrogator);
@@ -127,9 +143,11 @@ class Specification
 
         // check for Matcher references
         $matchers = array(
-            'equal', 'be', 'beEqualTo', 'beAnInstanceOf', 'beGreaterThan', 'beTrue', 'beFalse', 'beEmpty', 'beLessThan', 'beGreaterThanOrEqualTo', 'beLessThanOrEqualTo', 'beSet', 'beNull', 'beOfType', 'beIdenticalTo', 'match', 'throw',
-
-            'beSuccess', 'haveText'
+            'equal', 'be', 'beEqualTo', 'beAnInstanceOf', 'beGreaterThan',
+            'beTrue', 'beFalse', 'beEmpty', 'beLessThan',
+            'beGreaterThanOrEqualTo', 'beLessThanOrEqualTo', 'beSet', 'beNull',
+            'beOfType', 'beIdenticalTo', 'match', 'throwException', 'beSuccess',
+            'haveText'
         );
         if (in_array($method, $matchers)) {
             $this->setExpectedValue(array_shift($args));
@@ -139,7 +157,9 @@ class Specification
         }
 
         // check for any predicate style matching
-        $result = preg_match("/^((?:be|have)(?:A|An)?)(.*)/", $method, $matches);
+        $result = preg_match(
+            "/^((?:be|have)(?:A|An)?)(.*)/", $method, $matches
+        );
         if ($result && empty($args) && $this instanceof Object) {
             $predicate = $matches[1];
             $predicateSuffix = $matches[2];
@@ -180,16 +200,18 @@ class Specification
     }
 
     /**
-     * Very similar to __call(), simply diverts property requests to relevant
-     * methods (which allows the dropping of method braces) or returns an
-     * instance of self. So "$spec->be" equates to "$spec->be()".
+     * Diverts property requests to relevant methods similarly to __call()
+     * (which allows the dropping of method braces) or returns an instance of
+     * self. So "$spec->be" equates to "$spec->be()".
      *
      * @param string $name The method name to call (without braces)
      * @return \PHPSpec\Specification An instance of self
      */
     public function __get($name)
     {
-        if (in_array($name, array('should', 'shouldNot', 'a', 'an', 'of', 'be'))) {
+        if (in_array(
+            $name, array('should', 'shouldNot', 'a', 'an', 'of', 'be')
+        )) {
             if (in_array($name, array('should', 'shouldNot', 'be'))) {
                 switch ($name) {
                     case 'should':
@@ -208,7 +230,7 @@ class Specification
     }
 
     /**
-     * Return the Expectation object ruling how Matcher results are
+     * Returns the Expectation object ruling how Matcher results are
      * interpreted (whether a matcher boolean result counts as a pass
      * or a fail).
      *
@@ -220,7 +242,7 @@ class Specification
     }
 
     /**
-     * Set an Expected value with which to instantiate any new Matcher
+     * Sets an Expected value with which to instantiate any new Matcher
      *
      * @param mixed $value
      * @return null
@@ -231,7 +253,7 @@ class Specification
     }
 
     /**
-     * Get an Expected value with which to instantiate any new Matcher
+     * Gets an Expected value with which to instantiate any new Matcher
      *
      * @return mixed
      */
@@ -241,7 +263,7 @@ class Specification
     }
 
     /**
-     * Set an Actual value with which to call a Matcher operation
+     * Sets an Actual value with which to call a Matcher operation
      * and ascertain whether Expected and Actual values match.
      *
      * @param mixed $value
@@ -253,7 +275,7 @@ class Specification
     }
 
     /**
-     * Get an Actual value with which to call a Matcher operation
+     * Gets an Actual value with which to call a Matcher operation
      * and ascertain whether Expected and Actual values match.
      *
      * @param mixed $value
@@ -265,10 +287,10 @@ class Specification
     }
 
     /**
-     * A boolean return to indicate whether the DSL encountered
+     * Returns a boolean to indicate whether the DSL encountered
      * Matcher has been run yet to provide a result
      *
-     * @return bool
+     * @return boolean
      */
     public function hasMatcherResult()
     {
@@ -276,7 +298,7 @@ class Specification
     }
 
     /**
-     * Set the boolean result from running a Matcher
+     * Sets the boolean result from running a Matcher
      *
      * @param bool $result
      * @return null
@@ -287,7 +309,7 @@ class Specification
     }
 
     /**
-     * Get the boolean result from running a Matcher
+     * Gets the boolean result from running a Matcher
      *
      * @param bool $result
      * @return null
@@ -298,7 +320,7 @@ class Specification
     }
 
     /**
-     * Get the textual description of a failed Matcher where
+     * Gets the textual description of a failed Matcher where
      * we expected the result to be TRUE (i.e. matched) based
      * on a positive "should" Expectation.
      *
@@ -313,7 +335,7 @@ class Specification
     }
 
     /**
-     * Get the textual description of a failed Matcher where
+     * Gets the textual description of a failed Matcher where
      * we expected the result to be FALSE (i.e. unmatched) based
      * on a negative "should not" Expectation.
      *
@@ -328,7 +350,7 @@ class Specification
     }
 
     /**
-     * Set the overall class which manages the running of specs. The usual
+     * Sets the overall class which manages the running of specs. The usual
      * default here is assumed to be \PHPSpec\Runner\Base.
      *
      * @param object A runner object
@@ -340,8 +362,8 @@ class Specification
     }
 
     /**
-     * A factory method to create a new Matcher object based on calls
-     * to the DSL grammer.
+     * Creates a new Matcher object based on calls
+     * to the DSL grammer. (factory)
      *
      * @param DSL method call which was found to be a Matcher reference
      * @return null
@@ -352,16 +374,17 @@ class Specification
         $matcherClass = "\\PHPSpec\\Matcher\\" . ucfirst($method);
         try {
             if (class_exists($matcherClass, true)) {
-                $this->_matcher = new $matcherClass( $this->getExpectedValue() );
+                $this->_matcher = new $matcherClass($this->getExpectedValue());
             }
         } catch (\PHPSpec\Exception $e) {
-            $matcherClass = "\\PHPSpec\\Context\\Zend\\Matcher\\" . ucfirst($method);
-            $this->_matcher = new $matcherClass( $this->getExpectedValue() );
+            $matcherClass = "\\PHPSpec\\Context\\Zend\\Matcher\\" .
+                            ucfirst($method);
+            $this->_matcher = new $matcherClass($this->getExpectedValue());
         }
     }
 
     /**
-     * Perform a Matcher operation and set the returned boolean result for
+     * Performs a Matcher operation and set the returned boolean result for
      * further analysis, e.g. comparison to the boolean Expectation.
      *
      * @param array $args
@@ -374,7 +397,9 @@ class Specification
         } else {
             $matchArgs = array($this->getActualValue());
         }
-        $result = call_user_func_array(array($this->_matcher, 'matches'), $matchArgs);
+        $result = call_user_func_array(
+            array($this->_matcher, 'matches'), $matchArgs
+        );
         $this->setMatcherResult($result);
         if (!$result) {
             throw new FailedMatcherException();

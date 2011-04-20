@@ -10,19 +10,23 @@
  * http://www.gnu.org/licenses/lgpl-3.0.txt
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@phpspec.org so we can send you a copy immediately.
+ * to license@phpspec.net so we can send you a copy immediately.
  *
- * @category   PHPSpec
- * @package    PHPSpec
- * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
- * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ * @category  PHPSpec
+ * @package   PHPSpec
+ * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                    Marcello Duarte
+ * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 namespace PHPSpec;
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class Expectation
@@ -38,7 +42,7 @@ class Expectation
     protected $_expectedMatcherResult = true;
 
     /**
-     * Set a positive expectation that the attached Matcher will pass
+     * Sets a positive expectation that the attached Matcher will pass
      *
      * @return null
      */
@@ -49,7 +53,7 @@ class Expectation
     }
 
     /**
-     * Set a negative expectation that the attached Matcher will fail
+     * Sets a negative expectation that the attached Matcher will fail
      *
      * @return null
      */
@@ -60,7 +64,7 @@ class Expectation
     }
 
     /**
-     * Get the expectation in a boolean form
+     * Gets the expectation in a boolean form
      *
      * @return bool
      */
@@ -70,14 +74,17 @@ class Expectation
     }
 
     /**
-     * Return the string interpretation of the current expectation.
+     * Returns the string interpretation of the current expectation.
      * "should" for TRUE and "should not" for FALSE.
      *
      * @return string
      */
     public function __toString()
     {
-        return $this->getExpectedMatcherResult() === true ? 'should' : 'should not';
+        if ($this->getExpectedMatcherResult() === true) {
+            return  'should';
+        }
+        return 'should not';
     }
 
 }

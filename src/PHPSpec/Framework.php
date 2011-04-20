@@ -12,11 +12,12 @@
  * obtain it through the world-wide-web, please send an email
  * to license@phpspec.net so we can send you a copy immediately.
  *
- * @category   PHPSpec
- * @package    PHPSpec
- * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood, Marcello Duarte
- * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ * @category  PHPSpec
+ * @package   PHPSpec
+ * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                    Marcello Duarte
+ * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 namespace PHPSpec;
 
@@ -31,7 +32,8 @@ require_once 'PHPSpec/Describe/Functions.php';
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood, Marcello Duarte
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class Framework
@@ -53,7 +55,9 @@ class Framework
         $file = $path . '/' . str_replace('_', '/', $class);
         $file = $path . '/' . str_replace("\\", '/', $class) . '.php';
         if (!file_exists($file)) {
-            throw new \PHPSpec\Exception('include_once("' . $file . '"): file does not exist');
+            throw new \PHPSpec\Exception(
+                'include_once("' . $file . '"): file does not exist'
+            );
         } else {
             include_once $file;
         }
@@ -61,13 +65,15 @@ class Framework
 
 }
 
-spl_autoload_register(array(
-    "\\PHPSpec\\Framework",
-    'autoload'
-));
+spl_autoload_register(
+    array(
+        "\\PHPSpec\\Framework",
+        'autoload'
+    )
+);
 
 if (!defined('PHPSPEC_COMMAND_CALL')) {
-	$command = new \PHPSpec\Console\Command;
-	$command->run();
+    $command = new \PHPSpec\Console\Command;
+    $command->run();
 }
 
