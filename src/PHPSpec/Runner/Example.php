@@ -58,7 +58,7 @@ class Example
     public function getSpecificationBeingExecuted()
     {
         if (is_null($this->_specificationBeingExecuted)) {
-            throw new \PHPSpec\Exception('cannot return a PHPSpec_Specification until the example is executed');
+            throw new \PHPSpec\Exception("cannot return a \\PHPSpec\\Specification until the example is executed");
         }
         return $this->_specificationBeingExecuted;
     }

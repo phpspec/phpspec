@@ -8,4 +8,4 @@ $options->recursive = true;
 $options->specdoc = true;
 $options->reporter = 'html';
 
-PHPSpec_Runner::run($options);
+\PHPSpec\Runner::run($options);

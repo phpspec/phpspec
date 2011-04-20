@@ -36,7 +36,7 @@ class Object extends Specification
      * Interrogator object utilised to mediate between the DSL and an Object
      * value being specified.
      *
-     * @var PHPSpec_Object_Interrogator
+     * @var \PHPSpec\Object\Interrogator
      */
     protected $_interrogator = null;
 

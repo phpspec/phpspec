@@ -20,7 +20,7 @@
 namespace PHPSpec\Runner;
 
 /**
- * @see PHPSpec_Exception
+ * @see \PHPSpec\Exception
  */
  require_once 'PHPSpec/Exception.php';
  

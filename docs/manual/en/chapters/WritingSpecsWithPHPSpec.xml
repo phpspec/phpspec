@@ -84,7 +84,7 @@
     by creating a new Context class contain the examples demonstrating these
     behaviours.</para>
 
-    <programlisting role="php">class DescribeNewFilesystemLogger extends PHPSpec_Context
+    <programlisting role="php">class DescribeNewFilesystemLogger extends \PHPSpec\Context
 {
 
     public function itShouldCreateCreateNewLogFileIfNoneExists()
@@ -129,7 +129,7 @@ Finished in 0.0468921661377 seconds
     <example>
       <title>Specification for a New Filesystem Logger Context</title>
 
-      <programlisting role="php">class DescribeNewFilesystemLogger extends PHPSpec_Context
+      <programlisting role="php">class DescribeNewFilesystemLogger extends \PHPSpec\Context
 {
 
     public function itShouldCreateCreateNewLogFileIfNoneExists()
@@ -184,7 +184,7 @@ Finished in 0.0468921661377 seconds
 
       <orderedlist>
         <listitem>
-          <para>All Specs are aggregated within a PHPSpec_Context subclass
+          <para>All Specs are aggregated within a \PHPSpec\Context subclass
           based on the condition of the system being specified</para>
         </listitem>
 
@@ -201,7 +201,7 @@ Finished in 0.0468921661377 seconds
         </listitem>
 
         <listitem>
-          <para>A <classname>PHPSpec_Context::spec()</classname> method is
+          <para>A <classname>\PHPSpec\Context::spec()</classname> method is
           utilised to prepare any object or scalar value for expectations via
           the DSL.</para>
         </listitem>
@@ -324,7 +324,7 @@ $this-&gt;spec($bowling)-&gt;shouldNot-&gt;beAnInstanceOf('Logger');</programlis
       <title>The Actual Value Term</title>
 
       <para>In a PHPSpec Example method block, the DSL is instantiated using a
-      call to the <classname>PHPSpec_Context::spec()</classname>. This accepts
+      call to the <classname>\PHPSpec\Context::spec()</classname>. This accepts
       three possible parameter groupings.</para>
 
       <orderedlist>
@@ -397,7 +397,7 @@ $spec-&gt;(is_int('string'))-&gt;shouldNot-&gt;beTrue();</programlisting>
       is a simple object which compares an Actual Value Term with the expected
       value passed to the Matcher method in the DSL for a positive or negative
       match. The form of a Matcher is ruled by the
-      <classname>PHPSpec_Matcher_Interface</classname> interface so you can
+      <classname>\PHPSpec\Matcher</classname> interface so you can
       write custom Matchers (pending feature).</para>
 
       <para>An already expansive range of Matchers are provided by the PHPSpec
@@ -628,7 +628,7 @@ class Flea extends Insect {
 
 }
 
-class DescribeFlea extends PHPSpec_Context {
+class DescribeFlea extends \PHPSpec\Context {
 
     public function itShouldBeAnInsect()
     {

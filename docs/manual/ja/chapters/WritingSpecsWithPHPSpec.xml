@@ -114,7 +114,7 @@
       その振る舞いを表すサンプルを定義します。
     </para>
 
-    <programlisting role="php">class DescribeNewFilesystemLogger extends PHPSpec_Context
+    <programlisting role="php">class DescribeNewFilesystemLogger extends \PHPSpec\Context
 {
 
     public function itShouldCreateCreateNewLogFileIfNoneExists()
@@ -167,7 +167,7 @@ Finished in 0.0468921661377 seconds
     <example>
       <title>New Filesystem Logger コンテキストの仕様</title>
 
-      <programlisting role="php">class DescribeNewFilesystemLogger extends PHPSpec_Context
+      <programlisting role="php">class DescribeNewFilesystemLogger extends \PHPSpec\Context
 {
 
     public function itShouldCreateCreateNewLogFileIfNoneExists()
@@ -228,7 +228,7 @@ Finished in 0.0468921661377 seconds
       <orderedlist>
         <listitem>
           <para>
-            すべてのスペックは PHPSpec_Context のサブクラスに記述し、
+            すべてのスペックは \PHPSpec\Context のサブクラスに記述し、
             システムの仕様を表す条件をここに集約する
           </para>
         </listitem>
@@ -251,7 +251,7 @@ Finished in 0.0468921661377 seconds
 
         <listitem>
           <para>
-            <classname>PHPSpec_Context::spec()</classname> メソッドを使用して、
+            <classname>\PHPSpec\Context::spec()</classname> メソッドを使用して、
             DSL 経由で使用するオブジェクトやスカラー値を準備する
           </para>
         </listitem>
@@ -397,7 +397,7 @@ $this-&gt;spec($bowling)-&gt;shouldNot-&gt;beAnInstanceOf('Logger');</programlis
 
       <para>
         PHPSpec のサンプルメソッドで DSL のインスタンスを作成するには、
-        <classname>PHPSpec_Context::spec()</classname> を使用します。
+        <classname>\PHPSpec\Context::spec()</classname> を使用します。
         このメソッドには、次の 3 種類のパラメータを渡すことができます。
       </para>
 
@@ -470,7 +470,7 @@ $spec-&gt;(is_int('string'))-&gt;shouldNot-&gt;beTrue();</programlisting>
         PHPSpec は期待 (Expectation Term) と条件 (Matcher) に責任を分担させています。
         Matcher はシンプルなオブジェクトで、実際の値と期待内容を
         DSL のメソッドで比較します。そしてマッチしたか否かを返します。
-        Matcher の形式は <classname>PHPSpec_Matcher_Interface</classname>
+        Matcher の形式は <classname>\PHPSpec\Matcher</classname>
         インターフェイスで定義されているので、独自の Matchers
         を書くこともできます (現在この機能は未完成です)。
       </para>
@@ -736,7 +736,7 @@ class Flea extends Insect { // Flea ... ノミ
 
 }
 
-class DescribeFlea extends PHPSpec_Context {
+class DescribeFlea extends \PHPSpec\Context {
 
     public function itShouldBeAnInsect()
     {

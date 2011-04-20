@@ -71,6 +71,6 @@
     your system (*.bat refers to a Windows friendly version) from the
     "scripts" directory to a location on your system PATH. This script must be
     edited to provide the location of the PHP binary executable as well as the
-    path to the PHPSpec_Console_Command classfile.</para>
+    path to the \PHPSpec\Console\Command classfile.</para>
   </section>
 </section>

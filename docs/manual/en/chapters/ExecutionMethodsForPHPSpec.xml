@@ -101,9 +101,9 @@ $options-&gt;recursive = true;
 $options-&gt;specdocs = true;
 $options-&gt;reporter = 'html';
 
-PHPSpec_Runner::run($options);</programlisting>
+\PHPSpec\Runner::run($options);</programlisting>
 
-    <para>The <classname>PHPSpec_Runner</classname> class is actually used
+    <para>The <classname>\PHPSpec\Runner</classname> class is actually used
     internally by the default Console Runner so what we're doing here is
     pretty simple. All we're really doing is duplicating the internal work the
     Console Runner performs within a PHP file we can visit from a web

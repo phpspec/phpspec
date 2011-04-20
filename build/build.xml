@@ -247,7 +247,7 @@ Other Targets:
 				  several issues, include one reporting bug
 			    * Included Japanese translation of the manual courtesy
 				  of TAKAGI Masahiro
-				* Refactored Runner logic into PHPSpec_Runner class
+				* Refactored Runner logic into \PHPSpec\Runner class
 				* Added API Docs to documentation directory
 				* Cleaned up and documented Console and HTTP options in
 				  a new manual chapter

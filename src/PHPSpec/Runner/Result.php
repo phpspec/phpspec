@@ -56,7 +56,7 @@ class Result implements \Countable
         $collection->execute($this);
     }
 
-    public function addFailure(PHPSpec_Runner_Example $example, $line)
+    public function addFailure(Example $example, $line)
     {
         $fail = new Example\Fail($example);
         $fail->setLine($line);
@@ -106,7 +106,7 @@ class Result implements \Countable
      * even re-performance.
      * 
      * @todo Needs refactoring to remove these duplicate methods!
-     * @param string $type The PHPSpec_Runner_Example type being declared
+     * @param string $type The \PHPSpec\Runner\Example type being declared
      * @return array Array of all examples of this specific type
      */
     public function getTypes($type)

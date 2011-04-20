@@ -124,10 +124,10 @@ $options-&gt;recursive = true;
 $options-&gt;specdocs = true;
 $options-&gt;reporter = 'html';
 
-PHPSpec_Runner::run($options);</programlisting>
+\PHPSpec\Runner::run($options);</programlisting>
 
     <para>
-      <classname>PHPSpec_Runner</classname> クラスは、
+      <classname>\PHPSpec\Runner</classname> クラスは、
       実際にはデフォルトのコンソールランナーで内部的に使用されているものです。
       つまりここで行っているのは非常に単純なことです。
       この例で実際にやっていることは、
@@ -154,7 +154,7 @@ PHPSpec_Runner::run($options);</programlisting>
     </para>
 
     <para>
-      最後に、PHPSpec_Runner の static メソッド run() を実行します。
+      最後に、\PHPSpec\Runner の static メソッド run() を実行します。
       これで完了!
       特定のサブディレクトリのスペックだけを実行したいのなら、
       このファイルをそのサブディレクトリにコピーすればいいでしょう

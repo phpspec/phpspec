@@ -55,7 +55,7 @@
       このサンプルは、ボウリングゲームをはじめるにあたって守らなければならない決まりの一部を表すものです。
     </para>
 
-    <programlisting role="php">class DescribeNewBowlingGame extends PHPSpec_Context
+    <programlisting role="php">class DescribeNewBowlingGame extends \PHPSpec\Context
 {
 
     private $_bowling = null;

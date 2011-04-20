@@ -36,7 +36,7 @@ class Specification
      * An object representation of a expectation representing
      * "should" or "should not" states
      *
-     * @var PHPSpec_Expectation
+     * @var \PHPSpec\Expectation
      */
     protected $_expectation = null;
 
@@ -70,7 +70,7 @@ class Specification
      * and actual match for the given Matcher's criteria (e.g
      * equals, instanceof, greater then, etc.)
      *
-     * PHPSpec_Matcher_Interface
+     * \PHPSpec\Matcher\Interface
      */
     protected $_matcher = null;
 
@@ -81,7 +81,7 @@ class Specification
      * Accepts a variable number of parameters in the case of object
      * values for the classname and any constructor arguments.
      *
-     * @return PHPSpec_Specification
+     * @return \PHPSpec\Specification
      */
     public static function getSpec()
     {
@@ -185,7 +185,7 @@ class Specification
      * instance of self. So "$spec->be" equates to "$spec->be()".
      *
      * @param string $name The method name to call (without braces)
-     * @return PHPSpec_Specification An instance of self
+     * @return \PHPSpec\Specification An instance of self
      */
     public function __get($name)
     {
@@ -212,7 +212,7 @@ class Specification
      * interpreted (whether a matcher boolean result counts as a pass
      * or a fail).
      *
-     * @return PHPSpec_Expectation
+     * @return \PHPSpec\Expectation
      */
     public function getExpectation()
     {
@@ -329,7 +329,7 @@ class Specification
 
     /**
      * Set the overall class which manages the running of specs. The usual
-     * default here is assumed to be PHPSpec_Runner_Base.
+     * default here is assumed to be \PHPSpec\Runner\Base.
      *
      * @param object A runner object
      * @todo Do we not yet have a Runner interface to reference?

@@ -44,7 +44,7 @@
     <para>Start by writing a simple example that expresses a small part of the
     behaviour our new Bowling game should exhibit.</para>
 
-    <programlisting role="php">class DescribeNewBowlingGame extends PHPSpec_Context
+    <programlisting role="php">class DescribeNewBowlingGame extends \PHPSpec\Context
 {
 
     private $_bowling = null;

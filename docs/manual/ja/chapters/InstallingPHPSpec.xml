@@ -86,7 +86,7 @@
       また、"scripts" ディレクトリにあるスクリプト phpspec
       (Windows の場合は phpspec.bat)
       を、パスの通った場所にコピーします。必要に応じてこのスクリプトを編集し、
-      PHP バイナリ実行ファイルの場所や PHPSpec_Console_Command
+      PHP バイナリ実行ファイルの場所や \PHPSpec\Console\Command
       クラスファイルの場所を設定する必要があります。
     </para>
   </section>

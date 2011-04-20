@@ -14,7 +14,7 @@
  *
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 P‡draic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 namespace PHPSpec\Console;
@@ -25,7 +25,7 @@ require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'Framework.php';
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 P‡draic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007 Pï¿½draic Brady, Travis Swicegood
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class Command
@@ -50,7 +50,7 @@ class Command
     -a, --autospec                   Run all tests continually, every 10 seconds\r\n";
 
     /**
-     * @param PHPSpec_Console_Getopt $options
+     * @param \PHPSpec\Console\Getopt $options
      */
     public function __construct(\PHPSpec\Console\Getopt $options = null)
     {
@@ -95,7 +95,7 @@ class Command
     }
 
     /**
-     * @return PHPSpec_Runner
+     * @return \PHPSpec\Runner
      */ 
     public function getRunner()
     {
@@ -106,7 +106,7 @@ class Command
     } 
 
 	/**
-	 * @param PHPSpec_Runner $runner
+	 * @param \PHPSpec\Runner $runner
 	 */
     public function setRunner(\PHPSpec\Runner $runner)
     {
