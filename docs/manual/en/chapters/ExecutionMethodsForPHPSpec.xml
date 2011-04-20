@@ -122,7 +122,7 @@ $options-&gt;reporter = 'html';
     specifications in plain text along with the results, and it will use the
     HTML reporter to output HTML.</para>
 
-    <para>Finally we call PHPSpec_Runner's static run() method. And that's all
+    <para>Finally we call \PHPSpec\Runner's static run() method. And that's all
     there is to it! If you only want to execute a sub-directory of your specs,
     you can copy a similar file to that directory (recursive searching does
     not traverse parent directories).</para>
