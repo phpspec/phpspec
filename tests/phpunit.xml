@@ -1,4 +1,7 @@
-<phpunit bootstrap="bootstrap.php">
+<phpunit bootstrap="bootstrap.php" colors="true">
+ <php>
+  <ini name="date.timezone" value="Europe/London" />
+ </php>
  <testsuites>
   <testsuite name="src">
     <directory>./PHPSpec</directory>
