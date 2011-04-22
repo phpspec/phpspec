@@ -5,7 +5,7 @@ class PHPSpec_Console_CommandTest extends \PHPUnit_Extensions_OutputTestCase {
 	/** @test */
 	public function itCreatesAGetoptIfNoneIsGiven() {
 		$command = new \PHPSpec\Console\Command;
-		$this->assertTrue($this->readAttribute($command, 'options') instanceof \PHPSpec\Console\Getopt);
+		$this->assertTrue($this->readAttribute($command, '_options') instanceof \PHPSpec\Console\Getopt);
 	}
 	
 	/** @test */

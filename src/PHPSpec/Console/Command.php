@@ -10,12 +10,14 @@
  * http://www.gnu.org/licenses/lgpl-3.0.txt
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@phpspec.org so we can send you a copy immediately.
+ * to license@phpspec.net so we can send you a copy immediately.
  *
- * @category   PHPSpec
- * @package    PHPSpec
- * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
- * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ * @category  PHPSpec
+ * @package   PHPSpec
+ * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                    Marcello Duarte
+ * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 namespace PHPSpec\Console;
 
@@ -25,29 +27,35 @@ require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'Framework.php';
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class Command
 {
-	/**
-	 * @var PHPSpec\Extensions\Autotest
-	 */
-	protected $autotest;
-	
-	/**
-	 * @var PHPSpec\Runner
-	 */
-	protected $runner;
-	
-	/**
-	 * @var PHPSpec\Console\Getopt
-	 */
-	protected $options;
-	
+    /**
+     * @var \PHPSpec\Extensions\Autotest
+     */
+    protected $_autotest;
+    
+    /**
+     * @var \PHPSpec\Runner
+     */
+    protected $_runner;
+    
+    /**
+     * @var \PHPSpec\Console\Getopt
+     */
+    protected $_options;
+    
+    /**
+     * Usage message
+     */
     const USAGE = "Usage: phpspec (FILE|DIRECTORY) + [options]
     -c, --colour, --color            Show coloured (red/green) output
-    -a, --autospec                   Run all tests continually, every 10 seconds\r\n";
+    -a, --autospec                   Run all tests continually, every 10 seconds
+";
 
     /**
      * @param \PHPSpec\Console\Getopt $options
@@ -57,62 +65,77 @@ class Command
         if (is_null($options)) {
             $options = new \PHPSpec\Console\Getopt;
         }
-        $this->options = $options;
+        $this->_options = $options;
     }
 
+    /**
+     * Gets the cli options, passes it to the runner and runs
+     */
     public function run()
     {
-		if ($this->options->noneGiven()) {
-			$this->printUsage();
-			return;
-		}
-		
-	    if ($this->options->getOption('a') || $this->options->getOption('autotest')) {
+        if ($this->_options->noneGiven()) {
+            $this->printUsage();
+            return;
+        }
+        
+        if ($this->_options->getOption('a') ||
+            $this->_options->getOption('autotest')) {
             $this->getAutotest()->run($this);
             return;
         }
  
-		$this->getRunner()->run($this->options);
+        $this->getRunner()->run($this->_options);
     }
     
     /**
+     * Creates an autotest if none given (inline factory)
+     * 
      * @return \PHPSpec\Extensions\Autotest
      */
     public function getAutotest()
     {
-        if (!$this->autotest instanceof \PHPSpec\Extensions\Autotest) {
-            $this->autotest = new \PHPSpec\Extensions\Autotest;
+        if (!$this->_autotest instanceof \PHPSpec\Extensions\Autotest) {
+            $this->_autotest = new \PHPSpec\Extensions\Autotest;
         }
-        return $this->autotest;
+        return $this->_autotest;
     } 
     
-	/**
-	 * @param \PHPSpec\Extensions\Autotest $autotest
-	 */
+    /**
+     * Allows for autotest injection
+     * 
+     * @param \PHPSpec\Extensions\Autotest $autotest
+     */
     public function setAutotest(\PHPSpec\Extensions\Autotest $autotest)
     {
-        $this->autotest = $autotest;
+        $this->_autotest = $autotest;
     }
 
     /**
+     * Creates a runner if none given (inline factory)
+     * 
      * @return \PHPSpec\Runner
      */ 
     public function getRunner()
     {
-        if (!$this->runner instanceof \PHPSpec\Runner) {
-            $this->runner = new \PHPSpec\Runner;
+        if (!$this->_runner instanceof \PHPSpec\Runner) {
+            $this->_runner = new \PHPSpec\Runner;
         }
-        return $this->runner;
+        return $this->_runner;
     } 
 
-	/**
-	 * @param \PHPSpec\Runner $runner
-	 */
+    /**
+     * Allows for runner injection
+     * 
+     * @param \PHPSpec\Runner $runner
+     */
     public function setRunner(\PHPSpec\Runner $runner)
     {
-        $this->runner = $runner;
+        $this->_runner = $runner;
     }
 
+    /**
+     * Prints the cli usage help message
+     */
     public function printUsage()
     {
         echo self::USAGE;
