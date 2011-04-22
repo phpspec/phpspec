@@ -116,7 +116,7 @@ class Example
             } else {
                 $this->_failedMessage = $this->_specificationBeingExecuted->getMatcherNegativeFailureMessage();
             }
-            $e =  new FailedMatcherException();
+            
             $e->setFormattedLine($line);
             throw $e; // add spec data later
         }

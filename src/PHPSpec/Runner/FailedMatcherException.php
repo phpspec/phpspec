@@ -47,7 +47,7 @@ class FailedMatcherException extends \PHPSpec\Exception
     protected function formatFailureLine()
     {
         $trace = $this->getTrace();
-        $setp = null;
+        $step = null;
         
         while(($step = next($trace)) !== null) {
             if (strpos($step['class'], 'Describe') === 0 ||
