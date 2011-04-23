@@ -66,9 +66,9 @@ class Zend extends Context
     protected static $_controllerDirectories = array();
 
     /**
-     * Enter description here ...
+     * Callback invoked before each example when front controller is reset
      * 
-     * @var unknown_type
+     * @var string|array|Closure
      */
     protected static $_frontControllerSetupCallback = null;
 
@@ -83,26 +83,27 @@ class Zend extends Context
     /**
      * Zend Framework; instance of Front Controller
      *
-     * @var Zend_Controller_Front
+     * @var \Zend_Controller_Front
      */
     protected $_frontController = null;
 
     /**
      * Zend Framework; instance of HTTP Request
      *
-     * @var Zend_Controller_Request_Http
+     * @var \Zend_Controller_Request_Http
      */
     protected $_request = null;
 
     /**
      * Zend Framework; instance of HTTP Response
      *
-     * @var Zend_Controller_Response_Http
+     * @var \Zend_Controller_Response_Http
      */
     protected $_response = null;
 
     /**
-     * Enter description here ...
+     * Zend controller context is constructed and a front controller singleton
+     * is stored as context property
      */
     public function __construct()
     {
@@ -112,8 +113,9 @@ class Zend extends Context
     }
 
     /**
-     * Enter description here ...
-     * @param unknown_type $callback
+     * Sets the front controller callback
+     * 
+     * @param string|array|Closure $callback
      */
     public static function setFrontControllerSetupCallback($callback)
     {
@@ -121,7 +123,7 @@ class Zend extends Context
     }
 
     /**
-     * Enter description here ...
+     * Clears front controller setup callback
      */
     public static function clearFrontControllerSetupCallback()
     {
@@ -129,8 +131,9 @@ class Zend extends Context
     }
 
     /**
-     * Enter description here ...
-     * @param unknown_type $path
+     * Adds a path to modules directories
+     * 
+     * @param string $path
      */
     public static function addModuleDirectory($path)
     {
@@ -138,8 +141,9 @@ class Zend extends Context
     }
 
     /**
-     * Enter description here ...
-     * @return unknown_type
+     * Returns the module directories array
+     * 
+     * @return array
      */
     public static function getModuleDirectories()
     {
@@ -147,7 +151,7 @@ class Zend extends Context
     }
 
     /**
-     * Enter description here ...
+     * Clears the module directories property
      */
     public static function clearModuleDirectories()
     {
@@ -155,22 +159,25 @@ class Zend extends Context
     }
 
     /**
-     * Enter description here ...
-     * @param unknown_type $path
-     * @param unknown_type $module
+     * Add the controller directory of a given module. Default is the 'NULL'
+     * string value
+     * 
+     * @param string $path
+     * @param string $module
      */
     public static function addControllerDirectory($path, $module = null)
     {
         if (!isset($module)) {
-        	$module = 'NULL';
+            $module = 'NULL';
         }
 
         self::$_controllerDirectories[$module] = $path;
     }
 
     /**
-     * Enter description here ...
-     * @return unknown_type
+     * Returns the controller directories array
+     * 
+     * @return array
      */
     public static function getControllerDirectories()
     {
@@ -178,7 +185,7 @@ class Zend extends Context
     }
 
     /**
-     * Enter description here ...
+     * Clears the controller directories property
      */
     public static function clearControllerDirectories()
     {
@@ -186,7 +193,8 @@ class Zend extends Context
     }
 
     /**
-     * Enter description here ...
+     * Clears request super global variables and runs front controller setup
+     * callback
      */
     public function beforeEach()
     {
@@ -197,29 +205,35 @@ class Zend extends Context
     }
 
     /**
-     * Enter description here ...
-     * @param unknown_type $actionName
-     * @param array $getArray
-     * @param array $paramArray
-     * @return Zend_Controller_Response_Http
+     * Sends a get type request. Fills <code>$_GET</code> super global then
+     * makes a request
+     * 
+     * @param string $actionName
+     * @param array  $getArray
+     * @param array  $paramArray
+     * @return \Zend_Controller_Response_Http
      */
-    public function get($actionName, array $getArray = null, array $paramArray = null)
+    public function get($actionName, array $getArray = null,
+                        array $paramArray = null)
     {
         if (!empty($getArray)) {
-        	$_GET = $getArray;
+            $_GET = $getArray;
         }
         $this->_response = $this->_makeRequest($actionName, $paramArray);
         return $this->response();
     }
 
     /**
-     * Enter description here ...
-     * @param unknown_type $actionName
+     * Sends a post type request. Fills <code>$_POST</code> super global then
+     * makes a request
+     * 
+     * @param string $actionName
      * @param array $postArray
      * @param array $paramArray
-     * @return Zend_Controller_Response_Http
+     * @return \Zend_Controller_Response_Http
      */
-    public function post($actionName, array $postArray = null, array $paramArray = null)
+    public function post($actionName, array $postArray = null,
+                         array $paramArray = null)
     {
         if (!empty($postArray)) {
             $_POST = $postArray;
@@ -231,7 +245,7 @@ class Zend extends Context
     /**
      * Returns current Request_Http object
      *
-     * @return Zend_Controller_Request_Http
+     * @return \Zend_Controller_Request_Http
      */
     public function request()
     {
@@ -239,21 +253,26 @@ class Zend extends Context
     }
 
     /**
-     * Enter description here ...
-     * @throws \PHPSpec\Exception
+     * Returns the current response object
+     * 
      * @return Zend_Controller_Response_Http
+     * @throws \PHPSpec\Exception if not response has been retrieved yet
      */
     public function response()
     {
         if (!isset($this->_response)) {
-        	throw new \PHPSpec\Exception('No response has been retrieved yet;
-        	make a get or post request first');
+            throw new \PHPSpec\Exception(
+                'No response has been retrieved yet;
+                make a get or post request first'
+            );
         }
         return $this->_response;
     }
     
     /**
-     * Enter description here ...
+     * Injects an object
+     * 
+     * @deprecated as Zend_Di never left the incubator
      */
     public function replaceClass()
     {
@@ -263,8 +282,9 @@ class Zend extends Context
     }
 
     /**
-     * Enter description here ...
-     * @param unknown_type $controllerName
+     * Sets the controller name
+     * 
+     * @param string $controllerName
      */
     public function setController($controllerName)
     {
@@ -272,7 +292,8 @@ class Zend extends Context
     }
 
     /**
-     * Enter description here ...
+     * Gets the controller
+     * 
      * @return string
      */
     public function getController()
@@ -281,8 +302,9 @@ class Zend extends Context
     }
 
     /**
-     * Enter description here ...
-     * @return Ambiguous
+     * Gets the front controller
+     * 
+     * @return \Zend_Controller_Front
      */
     public function getFrontController()
     {
@@ -290,23 +312,25 @@ class Zend extends Context
     }
 
     /**
-     * Enter description here ...
-     * @param unknown_type $actionName
-     * @param array $paramArray
-     * @return Ambiguous
+     * Makes a request
+     * 
+     * @param string $actionName
+     * @param array  $paramArray
+     * @return \Zend_Controller_Response_Http
      */
     protected function _makeRequest($actionName, array $paramArray = null)
     {
         if (preg_match("%/%", $actionName)) {
-            $uri = self::BASE_URL
-                . (substr($actionName, 0, 1) == '/' ? $actionName : '/' . $actionName);
+            $uri = self::BASE_URL . (substr($actionName, 0, 1) == '/' ?
+                                     $actionName :
+                                     '/' . $actionName);
         } else {
             $uri = self::BASE_URL . '/' . $this->getController()
             . (!empty($actionName) ? '/' . $actionName : '');
         }
         $this->_request = new \Zend_Controller_Request_Http($uri);
         if (!empty($paramArray)) {
-        	$this->request()->setParams($paramArray);
+            $this->request()->setParams($paramArray);
         }
         $response = $this->_frontController->dispatch(
             $this->request(),
@@ -324,15 +348,15 @@ class Zend extends Context
      */
     private function callbackSize()
     {
-    	if (is_array(self::$_frontControllerSetupCallback)) {
-    		return count(self::$_frontControllerSetupCallback);
-    	}
-    	if ((is_string(self::$_frontControllerSetupCallback) &&
-    	    trim(self::$_frontControllerSetupCallback) !== '') ||
-    	    is_callable(self::$_frontControllerSetupCallback)) {
-    		return 1;
-    	}
-    	return 0;
+        if (is_array(self::$_frontControllerSetupCallback)) {
+            return count(self::$_frontControllerSetupCallback);
+        }
+        if ((is_string(self::$_frontControllerSetupCallback) &&
+            trim(self::$_frontControllerSetupCallback) !== '') ||
+            is_callable(self::$_frontControllerSetupCallback)) {
+            return 1;
+        }
+        return 0;
     }
 
     /**
@@ -340,19 +364,22 @@ class Zend extends Context
      * which sets <code>returnResponse</code>, <code>throwExceptions</code>,
      * <code>controllerDirectories</code> and <code>modulesDirectory</code>
      */
-    protected function _clearFrontController() {
+    protected function _clearFrontController()
+    {
         $this->_frontController->resetInstance();
  
         switch ($this->callbackSize()) {
         case 2:
-        	 call_user_func(array(
-	            self::$_frontControllerSetupCallback[0],
-	            self::$_frontControllerSetupCallback[1]
-	         ));
-	         break;
-	    case 1:
-        	 call_user_func(self::$_frontControllerSetupCallback);
-	         break;
+            call_user_func(
+                array(
+                    self::$_frontControllerSetupCallback[0],
+                    self::$_frontControllerSetupCallback[1]
+                )
+            );
+            break;
+        case 1:
+            call_user_func(self::$_frontControllerSetupCallback);
+            break;
         case 0:
             $this->_frontController->returnResponse(true);
             $this->_frontController->throwExceptions(true);
@@ -367,9 +394,9 @@ class Zend extends Context
             }
             break;
         default:
-        	throw new \RuntimeException(
-        	    'Invalid callback for front controller setup'
-        	);
+            throw new \RuntimeException(
+                'Invalid callback for front controller setup'
+            );
         }
 
     }
@@ -379,15 +406,15 @@ class Zend extends Context
      */
     protected function _setController()
     {
-    	if (strpos(strtolower(get_class($this)), 'describe') === 0) {
-    		$controllerClassName = substr(get_class($this), 8);
+        if (strpos(strtolower(get_class($this)), 'describe') === 0) {
+            $controllerClassName = substr(get_class($this), 8);
 
-    	} else { // ends with spec
-    		$controllerClassName = substr(
-    		    get_class($this), 0, strlen(get_class($this)) - 4
-    		);
-    	}
-    	
+        } else { // ends with spec
+            $controllerClassName = substr(
+                get_class($this), 0, strlen(get_class($this)) - 4
+            );
+        }
+        
         $this->_controller = substr(
             $controllerClassName, 0, strlen($controllerClassName)-10
         );

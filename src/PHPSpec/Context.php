@@ -67,6 +67,8 @@ class Context implements \Countable
      * Constructor; Creates a new Context for behaviour examples with any
      * relevant details built at run time concerning specification strings,
      * context descriptions, and executable examples to run.
+     * 
+     * @FIXME! Work in construction
      */
     public function __construct()
     {
