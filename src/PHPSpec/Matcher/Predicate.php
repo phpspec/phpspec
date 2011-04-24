@@ -10,20 +10,28 @@
  * http://www.gnu.org/licenses/lgpl-3.0.txt
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@phpspec.org so we can send you a copy immediately.
+ * to license@phpspec.net so we can send you a copy immediately.
  *
- * @category   PHPSpec
- * @package    PHPSpec
- * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
- * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ * @category  PHPSpec
+ * @package   PHPSpec
+ * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                    Marcello Duarte
+ * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 namespace PHPSpec\Matcher;
 
+/**
+ * @see \PHPSpec\Matcher\BeTrue
+ */
 use \PHPSpec\Matcher\BeTrue;
+
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class Predicate extends BeTrue
@@ -100,7 +108,7 @@ class Predicate extends BeTrue
      * @param mixed $actual
      * @return boolean
      */
-    public function matches($UnusedParamSoIgnore)
+    public function matches($unusedParamSoIgnore)
     {
         $this->_actual = $this->_object->{$this->_method}();
         return $this->_expected == $this->_actual;
@@ -113,7 +121,8 @@ class Predicate extends BeTrue
      */
     public function getFailureMessage()
     {
-        return 'expected TRUE, got FALSE or non-boolean (using ' . $this->_predicateCall . '())';
+        return 'expected TRUE, got FALSE or non-boolean (using ' .
+               $this->_predicateCall . '())';
     }
 
     /**
@@ -123,7 +132,8 @@ class Predicate extends BeTrue
      */
     public function getNegativeFailureMessage()
     {
-        return 'expected FALSE or non-boolean not TRUE (using ' . $this->_predicateCall . '())';
+        return 'expected FALSE or non-boolean not TRUE (using ' .
+               $this->_predicateCall . '())';
     }
 
     /**
@@ -134,7 +144,9 @@ class Predicate extends BeTrue
     public function getDescription()
     {
         $call = $this->_predicateCall;
-        $terms = preg_split("/(?=[[:upper:]])/", $call, -1, PREG_SPLIT_NO_EMPTY);
+        $terms = preg_split(
+            "/(?=[[:upper:]])/", $call, -1, PREG_SPLIT_NO_EMPTY
+        );
         $termsLowercase = array_map('strtolower', $terms);
         return implode(' ', $termsLowercase);
     }
