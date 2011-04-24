@@ -29,17 +29,43 @@ use \PHPSpec\Matcher\BeTrue;
 class Predicate extends BeTrue
 {
    
+    /**
+     * the object holding the method
+     * 
+     * @var object
+     */
     protected $_object = null;
 
+    /**
+     * The name of the method being inflected
+     * 
+     * @var string
+     */
     protected $_method = null;
 
+    /**
+     * The name used in the matching to verify the 
+     * 
+     * @var unknown_type
+     */
     protected $_predicateCall = null;
     
+    /**
+     * Matcher is usually constructed with the expected value
+     * 
+     * @param unused $expected
+     */
     public function __construct($expected)
     {
         parent::__construct($expected);
     }
 
+    /**
+     * Sets the object with the method's name being inflected as a matcher
+     * 
+     * @param object $object
+     * @throws \PHPSpec\Exception
+     */
     public function setObject($object)
     {
         if (!is_object($object)) {
@@ -48,35 +74,63 @@ class Predicate extends BeTrue
         $this->_object = $object;
     }
 
+    /**
+     * Sets the name of the method which is being inflected as a matcher
+     * 
+     * @param unknown_type $method
+     */
     public function setMethodName($method)
     {
         $this->_method = $method;
     }
 
+    /**
+     * Sets the inflected name
+     * 
+     * @param string $callName
+     */
     public function setPredicateCall($callName)
     {
         $this->_predicateCall = $callName;
     }
 
+    /**
+     * Checks whether the value returned by the method is true
+     * 
+     * @param mixed $actual
+     * @return boolean
+     */
     public function matches($UnusedParamSoIgnore)
     {
         $this->_actual = $this->_object->{$this->_method}();
-        if (!is_bool($this->_actual)) {
-            return false;
-        }
         return $this->_expected == $this->_actual;
     }
 
+    /**
+     * Returns failure message in case we are using should
+     * 
+     * @return string
+     */
     public function getFailureMessage()
     {
         return 'expected TRUE, got FALSE or non-boolean (using ' . $this->_predicateCall . '())';
     }
 
+    /**
+     * Returns failure message in case we are using should not
+     * 
+     * @return string
+     */
     public function getNegativeFailureMessage()
     {
         return 'expected FALSE or non-boolean not TRUE (using ' . $this->_predicateCall . '())';
     }
 
+    /**
+     * Returns the matcher description
+     * 
+     * @return string
+     */
     public function getDescription()
     {
         $call = $this->_predicateCall;

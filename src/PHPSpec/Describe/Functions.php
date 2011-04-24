@@ -15,7 +15,8 @@
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood, Marcello Duarte
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 
@@ -27,7 +28,9 @@
 function describe()
 {
     $args = func_get_args();
-    return call_user_func_array(array("\\PHPSpec\\Specification",'getSpec'), $args);
+    return call_user_func_array(
+        array("\\PHPSpec\\Specification",'getSpec'), $args
+    );
 }
 
 /**
@@ -50,7 +53,9 @@ function PHPSpec_ErrorHandler($errno, $errstr, $errfile, $errline)
     array_shift($backtrace);
 
     include_once 'PHPSpec/Runner/ErrorException.php';
-    throw new \PHPSpec\Runner\ErrorException($errstr, $errno, $errfile, $errline, $backtrace);
+    throw new \PHPSpec\Runner\ErrorException(
+        $errstr, $errno, $errfile, $errline, $backtrace
+    );
 
     return true;
 }

@@ -111,6 +111,16 @@ class Command
     }
 
     /**
+     * Returns the options
+     * 
+     * @return \PHPSpec\Console\Getopt
+     */ 
+    public function getOptions()
+    {
+        return $this->_options;
+    }
+
+    /**
      * Creates a runner if none given (inline factory)
      * 
      * @return \PHPSpec\Runner
