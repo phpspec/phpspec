@@ -10,26 +10,38 @@
  * http://www.gnu.org/licenses/lgpl-3.0.txt
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@phpspec.org so we can send you a copy immediately.
+ * to license@phpspec.net so we can send you a copy immediately.
  *
- * @category   PHPSpec
- * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
- * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ * @category  PHPSpec
+ * @package   PHPSpec
+ * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                    Marcello Duarte
+ * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 namespace PHPSpec\Runner\Reporter;
 
+/**
+ * @see \PHPSpec\Runner\Reporter
+ */
 use PHPSpec\Runner\Reporter;
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class Text extends Reporter
 {
 
+    /**
+     * Echoes the output of {@ling self::toString()}
+     * 
+     * @param boolean $specs
+     */
     public function output($specs = false)
     {
         echo $this->toString($specs);
@@ -46,6 +58,14 @@ class Text extends Reporter
         echo $symbol;
     }
     
+    /**
+     * Returns the result of all specs
+     * @see PHPSpec\Runner.Reporter::toString()
+     * 
+     * @param boolean $specs
+     * 
+     * @return string
+     */
     public function toString($specs = false)
     {
         $str = 'Finished in ' . $this->_result->getRuntime() . ' seconds';
@@ -57,18 +77,23 @@ class Text extends Reporter
         $str .= $this->getTotals();
         
         $reportedIssues = PHP_EOL . PHP_EOL;
-        if ($this->_result->countFailures() > 0 || $this->_result->countDeliberateFailures() > 0) {
+        if ($this->_result->countFailures() > 0 ||
+            $this->_result->countDeliberateFailures() > 0) {
             $reportedIssues .= 'Failures:' . PHP_EOL . PHP_EOL;
             $failed = $this->_result->getTypes('fail');
             $increment = 1;
             foreach ($failed as $failure) {
-                $reportedIssues .= $this->formatReportedIssue($increment, $failure, $failure->getFailedMessage());
+                $reportedIssues .= $this->formatReportedIssue(
+                    $increment, $failure, $failure->getFailedMessage()
+                );
                 $reportedIssues .= $failure->getLine() . PHP_EOL . PHP_EOL;
             }
             if ($this->_result->countDeliberateFailures() > 0) {
                 $failed = $this->_result->getTypes('deliberateFail');
                 foreach ($failed as $failure) {
-                    $reportedIssues .= $this->formatReportedIssue($increment, $failure, $failure->getMessage());
+                    $reportedIssues .= $this->formatReportedIssue(
+                        $increment, $failure, $failure->getMessage()
+                    );
                 }
             }
         }
@@ -78,7 +103,9 @@ class Text extends Reporter
             $reportedIssues .= 'Errors:' . PHP_EOL . PHP_EOL;
             $errors = $this->_result->getTypes('error');
             foreach ($errors as $error) { 
-                $reportedIssues .= $this->formatReportedIssue($increment, $error, $error->toString(), 'ERROR');
+                $reportedIssues .= $this->formatReportedIssue(
+                    $increment, $error, $error->toString(), 'ERROR'
+                );
                 if (method_exists($error, 'getPrettyTrace')) {
                      $reportedIssues .= $error->getPrettyTrace(3) . PHP_EOL;
                 }
@@ -90,7 +117,9 @@ class Text extends Reporter
             $reportedIssues .= 'Exceptions:' . PHP_EOL . PHP_EOL;
             $exceptions = $this->_result->getTypes('exception');
             foreach ($exceptions as $exception) { 
-                $reportedIssues .= $this->formatReportedIssue($increment, $exception, $exception->toString(), 'EXCEPTION');
+                $reportedIssues .= $this->formatReportedIssue(
+                    $increment, $exception, $exception->toString(), 'EXCEPTION'
+                );
             }
         }
 
@@ -99,34 +128,59 @@ class Text extends Reporter
             $reportedIssues .= 'Pending:' . PHP_EOL . PHP_EOL;
             $pendings = $this->_result->getTypes('pending');
             foreach ($pendings as $pending) {
-                $reportedIssues .= $this->formatReportedIssue($increment, $pending, $pending->getMessage(), 'PENDING');
+                $reportedIssues .= $this->formatReportedIssue(
+                    $increment, $pending, $pending->getMessage(), 'PENDING'
+                );
             }
         }
         
         return $reportedIssues . $str . PHP_EOL;
     }
 
+    /**
+     * Checks whether there are any pending specs
+     * 
+     * @return boolean
+     */
     public function hasPending()
     {
         return  $this->_result->countPending() > 0;
     }
 
-    public function formatReportedIssue(&$increment, $issue, $message, $issueType = 'FAILED')
+    /**
+     * Formats the reported issues line
+     * 
+     * @param integer                           $increment
+     * @param \PHPSpec\Runner\Example\Exception $issue
+     * @param string                            $message
+     * @param string                            $issueType
+     * @return string
+     */
+    public function formatReportedIssue(&$increment, $issue, $message,
+                                        $issueType = 'FAILED')
     {
         $reportedIssues = $increment . ')' . PHP_EOL;
-        $reportedIssues .= '\'' . $this->_format($issue->getContextDescription());
+        $reportedIssues .= '\'' .
+                           $this->_format($issue->getContextDescription());
         $reportedIssues .= $issue->getSpecificationText() . '\' ' . $issueType;
         $reportedIssues .= PHP_EOL . $message;
-        $reportedIssues .= PHP_EOL . ($issueType !== 'FAILED' && $issueType !== 'ERROR' ? PHP_EOL : '');
+        $reportedIssues .= PHP_EOL . ($issueType !== 'FAILED' &&
+                                      $issueType !== 'ERROR' ? PHP_EOL : '');
         $increment++;
         return $reportedIssues;
     }
 
+    /**
+     * Returns the totals for each of the issue types 
+     *
+     * @return string
+     */
     public function getTotals()
     {
         $str = PHP_EOL . PHP_EOL . count($this->_result) . ' examples';
         
-        $count = $this->_result->countFailures() + $this->_result->countDeliberateFailures();
+        $count = $this->_result->countFailures() +
+                 $this->_result->countDeliberateFailures();
         if ($count == 1) {
             $str .= ', ' . $count . ' failure';
         } else {
@@ -155,6 +209,11 @@ class Text extends Reporter
         return $str;
     }
 
+    /**
+     * Checks whether there are any issues
+     * 
+     * @return boolean
+     */
     public function hasIssues()
     {
           return ($this->_result->countFailures() +
@@ -164,11 +223,21 @@ class Text extends Reporter
           
     }
 
+    /**
+     * Returns the result of all specs. Alias of {@link self::toString()}
+     * 
+     * @see PHPSpec\Runner.Reporter::__toString()
+     */
     public function __toString()
     {
         return $this->toString();
     }
 
+    /**
+     * Gets the descriptions of all examples
+     * 
+     * @see PHPSpec\Runner.Reporter::getSpecdox()
+     */
     public function getSpecdox()
     {
         $examples = $this->_result->getExamples();
@@ -180,9 +249,9 @@ class Text extends Reporter
             }
             $contexts[$example->getContextDescription()][] = $example;
         }
-        foreach ($contexts as $description=>$arrayOfExamples) {
+        foreach ($contexts as $description => $arrayOfExamples) {
            $str .=  $this->_format($description) . PHP_EOL;
-           foreach($arrayOfExamples as $example) {
+           foreach ($arrayOfExamples as $example) {
                $str .= '  -' . $example->getSpecificationText();
                if (!$example instanceof \PHPSpec\Runner\Example\Pass) {
                     $class = get_class($example);
@@ -197,9 +266,17 @@ class Text extends Reporter
         return $str;
     }
 
+    /**
+     * Removes spec from the end or describe from the begining of a spec
+     * 
+     * @param string $description
+     * @return string
+     */
     protected function _format($description)
     {
-        $description = preg_replace('/spec$/', '', preg_replace('/^describe ?/', '', $description));
+        $description = preg_replace(
+            '/spec$/', '', preg_replace('/^describe ?/', '', $description)
+        );
         return $description . ' ';
     }
 
