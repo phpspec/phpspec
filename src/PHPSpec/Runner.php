@@ -44,24 +44,30 @@ class Runner
                                     
         // check for straight class to execute
         if (isset($options->specFile)) {
-	        $pathToFile = getcwd();
-	        if (false !== strpos($options->specFile, '/')) {
-		        $pathToFile = str_replace("/" . basename($options->specFile), '', $options->specFile);
-		        $options->specFile = basename($options->specFile);
-	        }
-	        if (is_dir(realpath($pathToFile . "/$options->specFile"))) {
-		        $loader = new Runner\Loader\DirectoryRecursive;
-            	$runnable += $loader->load(realpath($pathToFile . "/$options->specFile"));
-	        } else {
-		        $loader = new Runner\Loader\Classname;
-				$runnable += $loader->load($options->specFile, $pathToFile);
-	        }
+            $pathToFile = getcwd();
+            if (false !== strpos($options->specFile, '/')) {
+                $pathToFile = str_replace(
+                    "/" . basename($options->specFile), '', $options->specFile
+                );
+                $options->specFile = basename($options->specFile);
+            }
+            if (is_dir(realpath($pathToFile . "/$options->specFile"))) {
+                $loader = new Runner\Loader\DirectoryRecursive;
+                $runnable += $loader->load(
+                    realpath($pathToFile . "/$options->specFile")
+                );
+            } else {
+                $loader = new Runner\Loader\Classname;
+                $runnable += $loader->load($options->specFile, $pathToFile);
+            }
         }
     
         // should only recurse if not running a single spec
-        if ((isset($options->r) || isset($options->recursive)) && !isset($options->specFile)) {
+        if ((isset($options->r) ||
+            isset($options->recursive)) &&
+            !isset($options->specFile)) {
             $loader = new Runner\Loader\DirectoryRecursive;
-            $runnable += $loader->load( getcwd() );
+            $runnable += $loader->load(getcwd());
         }
 
         if (isset($options->s) || isset($options->specdoc)) {
@@ -77,14 +83,15 @@ class Runner
         $result->setRuntimeStart(microtime(true));
         
         if (isset($options->reporter)) {
-        	$reporterClass = "\\PHPSpec\\Runner\\Reporter\\" . ucfirst($options->reporter);
+            $reporterClass = "\\PHPSpec\\Runner\\Reporter\\" .
+                             ucfirst($options->reporter);
         } else {
-        	$reporterClass = "\\PHPSpec\\Runner\\Reporter\\Text";
+            $reporterClass = "\\PHPSpec\\Runner\\Reporter\\Text";
         }        
         $reporter = new $reporterClass($result);
         if ($options->c || $options->color || $options->colour) {
-			$reporter->showColors(true);
-		}
+            $reporter->showColors(true);
+        }
         
         $result->setReporter($reporter); 
         

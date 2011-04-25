@@ -37,7 +37,7 @@ use \PHPSpec\Matcher;
 class Match implements Matcher
 {
 
-	/**
+    /**
      * The expected value.
      * 
      * @var unused
@@ -80,7 +80,9 @@ class Match implements Matcher
      */
     public function getFailureMessage()
     {
-        return 'expected match for ' . var_export($this->_expected, true) . ' PCRE regular expression, got ' . var_export($this->_actual, true) . ' (using match())';
+        return 'expected match for ' . var_export($this->_expected, true) .
+               ' PCRE regular expression, got ' .
+               var_export($this->_actual, true) . ' (using match())';
     }
 
     /**
@@ -90,7 +92,9 @@ class Match implements Matcher
      */
     public function getNegativeFailureMessage()
     {
-        return 'expected no match for ' . var_export($this->_expected, true) . ' PCRE regular expression, got ' . var_export($this->_actual, true) . ' (using match())';
+        return 'expected no match for ' . var_export($this->_expected, true) .
+               ' PCRE regular expression, got ' .
+               var_export($this->_actual, true) . ' (using match())';
     }
 
     /**
@@ -100,6 +104,7 @@ class Match implements Matcher
      */
     public function getDescription()
     {
-        return 'match ' . var_export($this->_expected, true) . ' PCRE regular expression';
+        return 'match ' . var_export($this->_expected, true) .
+               ' PCRE regular expression';
     }
 }

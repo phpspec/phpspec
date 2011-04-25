@@ -51,14 +51,14 @@ class Object extends Specification
      * value being specified.
      *
      * @var \PHPSpec\Object\Interrogator
-    */
+     */
     protected $_interrogator = null;
 
     /**
      * Constructor; Specification is created using an interrogator
      * 
-     * * @param Interrogator $interrogator
-    */
+     * @param Interrogator $interrogator
+     */
     public function __construct(Interrogator $interrogator)
     {
         $this->_interrogator = $interrogator;
@@ -69,10 +69,13 @@ class Object extends Specification
     }
 
     /**
-     * @param mixed $method
-     * @param mixed $args
-     * @return mixed An instance of self or TRUE if a Matcher was run
-    */
+     * Proxies call to specification and if method is a dsl call than it calls
+     * the actual method via the interrogator
+     * 
+     * @param string $method
+     * @param array $args
+     * @return \PHPSpec\Specification|boolean
+     */
     public function __call($method, $args)
     {
         $dslResult = parent::__call($method, $args);
@@ -89,9 +92,12 @@ class Object extends Specification
     }
 
     /**
+     * Proxies property access to specification and if property is a dsl
+     * property than it invokes the actual property via the interrogator
+     * 
      * @param string $name
      * @return \PHPSpec\Specification\Object An instance of self
-    */
+     */
     public function __get($name)
     {
         $dslResult = parent::__get($name);
@@ -104,9 +110,11 @@ class Object extends Specification
     }
 
     /**
+     * Returns the interrogator
+     * 
      * @throws \PHPSpec\Exception
      * @return Interrogator
-    */
+     */
     public function getInterrogator()
     {
         if (is_null($this->_interrogator)) {
@@ -118,26 +126,32 @@ class Object extends Specification
     }
 
     /**
+     * Sets always via the interrogator, no dsl here
+     * 
      * @param string $name
      * @param mixed $value
-    */
+     */
     public function __set($name, $value)
     {
         $this->_interrogator->{$name} = $value;
     }
 
     /**
+     * Checks if property is set also via interrogator, no dsl here
+     * 
      * @param string $name
      * @return boolean
-    */
+     */
     public function __isset($name)
     {
         return isset($this->_interrogator->{$name});
     }
 
     /**
+     * Unsets property also via interrogator, no dsl here
+     * 
      * @param string $name
-    */
+     */
     public function __unset($name)
     {
         unset($this->_interrogator->{$name});

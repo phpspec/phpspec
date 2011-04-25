@@ -10,67 +10,144 @@
  * http://www.gnu.org/licenses/lgpl-3.0.txt
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@phpspec.org so we can send you a copy immediately.
+ * to license@phpspec.net so we can send you a copy immediately.
  *
- * @category   PHPSpec
- * @package    PHPSpec
- * @copyright  Copyright (c) 2007 P�draic Brady, Travis Swicegood
- * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ * @category  PHPSpec
+ * @package   PHPSpec
+ * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                    Marcello Duarte
+ * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 namespace PHPSpec\Runner;
 
 /**
  * @category   PHPSpec
  * @package    PHPSpec
- * @copyright  Copyright (c) 2007 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class Example
 {
 
-    protected $_context = null;
-    protected $_methodName = null;
-    protected $_specificationText = null;
-    protected $_failedMessage = null;
+    /**
+     * The context being ran
+     * 
+     * @var \PHPSpec\Context
+     */
+    protected $_context;
+    
+    /**
+     * The name of the example taken from the method name
+     * 
+     * @var string
+     */
+    protected $_methodName;
+    
+    /**
+     * The specification text
+     * 
+     * @var string
+     */
+    protected $_specificationText;
+    
+    /**
+     * @var \PHPSpec\Specification
+     */
+    protected $_specBeingExecuted;
+    
+    /**
+     * The failure message
+     * 
+     * @var string
+     */
+    protected $_failedMessage;
 
+    /**
+     * Example is constructed with the context and method name
+     * 
+     * @param \PHPSpec\Context $context
+     * @param string $methodName
+     */
     public function __construct(\PHPSpec\Context $context, $methodName)
     {
         $this->_context = $context;
         $this->_methodName = $methodName;
-        $this->_specificationText = $this->_setSpecificationText($this->_methodName);
+        $this->_specificationText = $this->_setSpecificationText(
+            $this->_methodName
+        );
     }
 
+    /**
+     * Gets the method name
+     * 
+     * @return string
+     */
     public function getMethodName()
     {
         return $this->_methodName;
     }
 
+    /**
+     * Returns the specification as text
+     * 
+     * @return string
+     */
     public function getSpecificationText()
     {
         return $this->_specificationText;
     }
 
+    /**
+     * Returns the context description
+     * 
+     * @return string
+     */
     public function getContextDescription()
     {
         return $this->_context->getDescription();
     }
 
+    /**
+     * Returns the specificantion being ran
+     * 
+     * @return \PHPSpec\Specification
+     * @throws \PHPSpec\Exception
+     */
     public function getSpecificationBeingExecuted()
     {
-        if (is_null($this->_specificationBeingExecuted)) {
-            throw new \PHPSpec\Exception("cannot return a \\PHPSpec\\Specification until the example is executed");
+        if (is_null($this->_specBeingExecuted)) {
+            throw new \PHPSpec\Exception(
+                "cannot return a \\PHPSpec\\Specification ".
+                "until the example is executed"
+            );
         }
-        return $this->_specificationBeingExecuted;
+        return $this->_specBeingExecuted;
     }
 
+    /**
+     * Returns a failure message
+     * 
+     * @return string
+     * @throws \PHPSpec\Exception
+     */
     public function getFailedMessage()
     {
         if (is_null($this->_failedMessage)) {
-            throw new \PHPSpec\Exception('cannot return a failure message until the example is executed');
+            throw new \PHPSpec\Exception(
+                'cannot return a failure message until the example is executed'
+            );
         }
         return $this->_failedMessage;
     }
 
+    /**
+     * Executes the example
+     * 
+     * @throws FailedMatcherException
+     */
     public function execute()
     {
         $this->_context->clearCurrentSpecification();
@@ -103,18 +180,24 @@ class Example
         /**
          * Result collection
          */
-        $this->_specificationBeingExecuted = $this->_context->getCurrentSpecification();
-        if (is_null($this->_specificationBeingExecuted)) {
+        $this->_specBeingExecuted = $this->_context
+                                         ->getCurrentSpecification();
+        if (is_null($this->_specBeingExecuted)) {
             return;
         }
 
-        $expected = $this->_specificationBeingExecuted->getExpectation()->getExpectedMatcherResult();
-        $actual = $this->_specificationBeingExecuted->getMatcherResult();
+        $expected = $this->_specBeingExecuted
+                         ->getExpectation()
+                         ->getExpectedMatcherResult();
+        $actual = $this->_specBeingExecuted->getMatcherResult();
         if ($expected !== $actual) { // ===
             if ($expected === true) {
-                $this->_failedMessage = $this->_specificationBeingExecuted->getMatcherFailureMessage();
+                $this->_failedMessage = $this->_specBeingExecuted
+                                             ->getMatcherFailureMessage();
             } else {
-                $this->_failedMessage = $this->_specificationBeingExecuted->getMatcherNegativeFailureMessage();
+                $this->_failedMessage =
+                    $this->_specBeingExecuted
+                         ->getMatcherNegativeFailureMessage();
             }
             
             $e->setFormattedLine($line);
@@ -122,10 +205,18 @@ class Example
         }
     }
 
+    /**
+     * Sets the specification text taken from method name
+     * 
+     * @param string $methodName
+     * @return string
+     */
     protected function _setSpecificationText($methodName)
     {
         $methodName = substr($methodName, 2);
-        $terms = preg_split("/(?=[[:upper:]])/", $methodName, -1, PREG_SPLIT_NO_EMPTY);
+        $terms = preg_split(
+            "/(?=[[:upper:]])/", $methodName, -1, PREG_SPLIT_NO_EMPTY
+        );
         $termsLowercase = array_map('strtolower', $terms);
         return implode(' ', $termsLowercase);
     }

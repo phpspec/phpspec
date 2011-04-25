@@ -32,9 +32,16 @@ namespace PHPSpec\Specification;
 class Scalar extends \PHPSpec\Specification
 {
 
+    /**
+     * The scalar value
+     * 
+     * @var scalar
+     */
     protected $_scalarValue = null;
 
     /**
+     * Scalar is constructed with its value
+     * 
      * @param $scalarValue
      */
     public function __construct($scalarValue = null)
@@ -45,12 +52,14 @@ class Scalar extends \PHPSpec\Specification
         }
         $this->_expectation = new \PHPSpec\Expectation;
     }
-
+    
     /**
+     * Adds DSL method calls to scalar values
+     * 
      * @throws \PHPSpec\Exception
-     * @param mixed $method
-     * @param mixed $args
-     * @return mixed An instance of self or TRUE if a Matcher was run
+     * @param string $method
+     * @param array  $args
+     * @return \PHPSpec\Specification|boolean
      */
     public function __call($method, $args)
     {
@@ -63,10 +72,12 @@ class Scalar extends \PHPSpec\Specification
     }
 
     /**
+     * Adds DSL properties to scalar values
+     * 
      * @throws \PHPSpec\Exception
      * @param string $name
      * @return \PHPSpec\Specification\Scalar An instance of self
-    */
+     */
     public function __get($name)
     {
         $dslResult = parent::__get($name);
@@ -78,9 +89,11 @@ class Scalar extends \PHPSpec\Specification
     }
 
     /**
+     * Gets the scalar value
+     * 
      * @throws \PHPSpec\Exception
-     * @return mixed
-    */
+     * @return scalar
+     */
     public function getScalar()
     {
         if (is_null($this->_scalarValue)) {
