@@ -111,7 +111,7 @@ class Predicate extends BeTrue
     public function matches($unusedParamSoIgnore)
     {
         $this->_actual = $this->_object->{$this->_method}();
-        return $this->_expected == $this->_actual;
+        return $this->_expected === $this->_actual;
     }
 
     /**
