@@ -81,14 +81,9 @@ class Runner
 
         $result = new Runner\Result;
         $result->setRuntimeStart(microtime(true));
-        
-        if (isset($options->reporter)) {
-            $reporterClass = "\\PHPSpec\\Runner\\Reporter\\" .
-                             ucfirst($options->reporter);
-        } else {
-            $reporterClass = "\\PHPSpec\\Runner\\Reporter\\Text";
-        }        
-        $reporter = new $reporterClass($result);
+                
+        $reporter = \PHPSpec\Runner\Reporter::create($result, $options->reporter);
+
         if ($options->c || $options->color || $options->colour) {
             $reporter->showColors(true);
         }
