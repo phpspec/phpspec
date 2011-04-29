@@ -38,6 +38,54 @@ abstract class Reporter
 {
 
     /**
+     * @see \PHPSpec\Runner\Reporter\Text
+     */
+    const TEXT = 'Text';
+
+    /**
+     * @see \PHPSpec\Runner\Reporter\Console
+     */
+    const CONSOLE = 'Console';
+    
+    /**
+     * @see \PHPSpec\Runner\Reporter\Html
+     */
+    const HTML = 'Html';
+    
+    /**
+     * Creates a reporter object.
+     * Attention: Constructing the object using the string like:
+     * <pre>
+     *     $reporterClass = "\\PHPSpec\\Runner\\Reporter\\" . $reporter;
+     *     return new $reporterClass($result);
+     * </pre>
+     * won't work in PHP 5.3.2
+     * @see [GH-6]
+     *
+     * @param string        $reporter
+     * @param Runner\Result $result
+     * @return \PHPSpec\Runner\Reporter
+     */
+    public static function create(Result $result, $reporter = null)
+    {
+        if ($reporter === null) {
+            $reporter = self::TEXT;
+        }
+        switch(ucfirst($reporter)) {
+            case self::TEXT :
+                $reporterClass = new \PHPSpec\Runner\Reporter\Text($result);
+                break;
+            case self::CONSOLE :
+                $reporterClass = new \PHPSpec\Runner\Reporter\Console($result);
+                break;
+            case self::HTML :
+                $reporterClass = new \PHPSpec\Runner\Reporter\Html($result);
+                break;
+        }
+        return $reporterClass;
+    }
+    
+    /**
      * The result
      * 
      * @var \PHPSpec\Runner\Result
