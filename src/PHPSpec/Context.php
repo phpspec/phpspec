@@ -251,7 +251,7 @@ class Context implements \Countable
     {
         foreach ($methods as $method) {
             $name = $method->getName();
-            if (substr($name, 0, 2) == 'it') {
+            if (strtolower(substr($name, 0, 2)) == 'it') {
                 $this->_addSpecMethod($name);
                 $this->_setSpecificationCount(
                     $this->getSpecificationCount() + 1
