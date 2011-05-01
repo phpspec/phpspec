@@ -371,15 +371,15 @@ class Specification
      */
     protected function _createMatcher($method)
     {
-        $matcherClass = "\\PHPSpec\\Matcher\\" . ucfirst($method);
+        $matcherClass = ucfirst($method);
         try {
-            if (class_exists($matcherClass, true)) {
-                $this->_matcher = new $matcherClass($this->getExpectedValue());
-            }
-        } catch (\PHPSpec\Exception $e) {
-            $matcherClass = "\\PHPSpec\\Context\\Zend\\Matcher\\" .
-                            ucfirst($method);
-            $this->_matcher = new $matcherClass($this->getExpectedValue());
+            $factory = '$this->_matcher = new \PHPSpec\Matcher\\' .
+                       $matcherClass . '($this->getExpectedValue());';
+            eval($factory);
+        } catch(\PHPSpec\Exception $e) {
+            $factory = '$this->_matcher = new \PHPSpec\Context\Zend\Matcher\\' .
+                       $matcherClass . '($this->getExpectedValue());';
+            eval($factory);
         }
     }
 
