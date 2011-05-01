@@ -55,6 +55,7 @@ class Command
     const USAGE = "Usage: phpspec (FILE|DIRECTORY) + [options]
     -c, --colour, --color            Show coloured (red/green) output
     -a, --autospec                   Run all tests continually, every 10 seconds
+    --version                        Show version
 ";
 
     /**
@@ -81,6 +82,11 @@ class Command
         if ($this->_options->getOption('a') ||
             $this->_options->getOption('autotest')) {
             $this->getAutotest()->run($this);
+            return;
+        }
+        
+        if ($this->_options->getOption('version')) {
+            $this->printVersion();
             return;
         }
  
@@ -149,6 +155,14 @@ class Command
     public function printUsage()
     {
         echo self::USAGE;
+    }
+
+    /**
+     * Prints the current version
+     */
+    public function printVersion()
+    {
+        echo \PHPSpec\Framework::VERSION . PHP_EOL;
     }
     
 }
