@@ -61,7 +61,7 @@ class PHPSpec_Console_CommandTest extends \PHPUnit_Extensions_OutputTestCase {
         $command = new \PHPSpec\Console\Command();
         
         $command->run();
-        $this->expectOutputString(\PHPSpec\Framework::VERSION);
+        $this->expectOutputString(\PHPSpec\Framework::VERSION . PHP_EOL);
     }
     
     /** @test */

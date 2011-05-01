@@ -162,7 +162,7 @@ class Command
      */
     public function printVersion()
     {
-        echo \PHPSpec\Framework::VERSION;
+        echo \PHPSpec\Framework::VERSION . PHP_EOL;
     }
     
 }
