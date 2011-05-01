@@ -209,10 +209,10 @@ class Result implements \Countable
      */
     public function getTypes($type)
     {
-        $class = "Example\\" . ucfirst($type);
+        $class = "\\PHPSpec\\Runner\\Example\\" . ucfirst($type);
         $types = array();
         foreach ($this->_examples as $example) {
-            if ($class == "Example\\Exception") {
+            if ($type === "Exception") {
                 if ($example instanceof $class
                     && !$example instanceof Example\Error
                     && !$example instanceof Example\Pending
