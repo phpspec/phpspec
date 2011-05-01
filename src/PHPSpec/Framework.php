@@ -38,6 +38,8 @@ require_once 'PHPSpec/Describe/Functions.php';
  */
 class Framework
 {
+    const VERSION = '1.0.1beta';
+    
     /**
      * Framework loader
      * 
