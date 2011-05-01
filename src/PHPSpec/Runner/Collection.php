@@ -50,13 +50,6 @@ class Collection implements \Countable
      * @var string
      */
     protected $_description = null;
-    
-    /**
-     * The example class used for each example
-     *
-     * @var string
-     */
-    protected $_exampleClass = "\\PHPSpec\\Runner\\Example";
 
     /**
      * Constructs the collection with the context object
@@ -64,13 +57,9 @@ class Collection implements \Countable
      * @param \PHPSpec\Context $context
      * @param string           $exampleClass
      */
-    public function __construct(\PHPSpec\Context $context, $exampleClass = null)
+    public function __construct(\PHPSpec\Context $context)
     {
         $this->_context = $context;
-        if (!is_null($exampleClass)) {
-            $this->_verifyExampleClass($exampleClass);
-            $this->_exampleClass = strval($exampleClass);
-        }
         $this->_buildExamples();
         $this->_description = $context->getDescription();
     }
@@ -160,7 +149,7 @@ class Collection implements \Countable
         $methods = $this->_context->getSpecMethods();
         foreach ($methods as $methodName) {
             $this->_addExample(
-                new $this->_exampleClass($this->_context, $methodName)
+                new \PHPSpec\Runner\Example($this->_context, $methodName)
             );
         }
     }
