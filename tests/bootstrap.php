@@ -4,6 +4,8 @@ set_include_path('.' . PATH_SEPARATOR . dirname(dirname(__FILE__)) .
                        '/src/' . PATH_SEPARATOR .
                        get_include_path());
 
+define('PHPSPEC_COMMAND_CALL', 'PHPSPEC_COMMAND_CALL');
+
 require_once 'PHPSpec/Framework.php';
  
 if (!defined('PHPSPEC_BIN')) {
