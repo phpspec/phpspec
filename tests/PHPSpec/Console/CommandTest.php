@@ -37,12 +37,8 @@ class PHPSpec_Console_CommandTest extends \PHPUnit_Extensions_OutputTestCase {
     /** @test */
     public function itCallsTheAutotestIfTheOptionIsPassed()
     {
-        $getopt = $this->getMock("\\PHPSpec\\Console\\Getopt");
-        $getopt->expects($this->any())
-            ->method('getOption')
-            ->with('a')
-            ->will($this->returnValue(true));
-        $command = new \PHPSpec\Console\Command($getopt);
+        $_SERVER['argv'] = array('phpspec', '--autotest');
+        $command = new \PHPSpec\Console\Command();
         
         $autotest = $this->getMock("\\PHPSpec\\Extensions\\Autotest");
         $autotest->expects($this->once())
@@ -51,8 +47,20 @@ class PHPSpec_Console_CommandTest extends \PHPUnit_Extensions_OutputTestCase {
         $command->setAutotest($autotest);
         $command->run();
     }
-    
-    
+
+    /** @test */
+    public function itCallsTheAutotestIfTheShortOptionIsPassed()
+    {
+        $_SERVER['argv'] = array('phpspec', '-a');
+        $command = new \PHPSpec\Console\Command();
+        
+        $autotest = $this->getMock("\\PHPSpec\\Extensions\\Autotest");
+        $autotest->expects($this->once())
+                 ->method('run');
+
+        $command->setAutotest($autotest);
+        $command->run();
+    }
 
     /** @test */
     public function itPrintsTheCurrentVersion()
@@ -62,6 +70,26 @@ class PHPSpec_Console_CommandTest extends \PHPUnit_Extensions_OutputTestCase {
         
         $command->run();
         $this->expectOutputString(\PHPSpec\Framework::VERSION . PHP_EOL);
+    }
+
+    /** @test */
+    public function itPrintsTheUsageWithTheHelpSwitch()
+    {
+        $_SERVER['argv'] = array('phpspec', '--help');
+        $command = new \PHPSpec\Console\Command();
+        
+        $command->run();
+        $this->expectOutputString(\PHPSpec\Console\Command::USAGE);
+    }
+
+    /** @test */
+    public function itPrintsTheUsageWithTheShortHelpSwitch()
+    {
+        $_SERVER['argv'] = array('phpspec', '-h');
+        $command = new \PHPSpec\Console\Command();
+        
+        $command->run();
+        $this->expectOutputString(\PHPSpec\Console\Command::USAGE);
     }
     
     /** @test */
