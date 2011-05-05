@@ -172,7 +172,7 @@ class Getopt
             if (substr($value, 0, 2) == '--') {
                 $encountered = substr($value, 2);
                 continue;
-            } else {
+            } elseif($value[0] === '-') {
                 $values = str_split(substr($value, 1));
                 foreach ($values as $letter) {
                     $this->_options[$letter] = true;
