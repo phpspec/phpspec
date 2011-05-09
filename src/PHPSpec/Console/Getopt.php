@@ -34,7 +34,24 @@ class Getopt
     /**
      * @var array
      */
-    protected $_options = array();
+    protected $_options = array(
+        'noneGiven' => false,
+        'c'         => false,
+        'color'     => false,
+        'colour'    => false,
+        'a'         => false,
+        'autotest'  => false,
+        'h'         => false,
+        'help'      => false,
+        'version'   => false,
+        'reporter'  => 'Console',
+        'specFile'  => null
+    );
+    
+    /**
+     * @var array
+     */
+    protected $_arguments = array();
 
     /**
      * Constructs the object with the argument variables. If none is given it
@@ -47,13 +64,12 @@ class Getopt
     {
         if (is_null($argv)) {
             $argv = $_SERVER['argv'];
-        }  
-        // FIXME! Work in constructor 
-        $this->_parse($argv);
-
-        if (!isset($this->_options['reporter'])) {
-            $this->_options['reporter'] = 'Console';
         }
+        
+        $this->_arguments = $argv;
+        
+        // FIXME! Work in constructor 
+        $this->_parse();
     }
 
     /**
@@ -86,6 +102,9 @@ class Getopt
      */
     public function setOption($name, $value)
     {
+        if (!isset($this->_options[$name])) {
+            throw new \PHPSpec\Console\Exception("Invalid option $name");
+        }
         $this->_options[$name] = $value;
     }
 
@@ -134,60 +153,89 @@ class Getopt
     }
 
     /**
-     * Enter description here ...
-     * @param array $argv
+     * Parses command line arguments
      */
-    protected function _parse(array $argv)
+    protected function _parse()
     { 
-      
-        // get rid of the Command.php reference
-        if (is_file($argv[0])) {
-            array_shift($argv);
+        $this->removeProgramNameFromArguments();
+        $this->checkIfArgumentsAreGiven();
+        $this->extractSpecFile();
+        $this->convertArgumentIntoOptions();
+    }
+    
+    /**
+     * Removes phpspec script name from command line argument list
+     */
+    private function removeProgramNameFromArguments()
+    {
+        if (is_file($this->_arguments[0])) {
+            array_shift($this->_arguments);
         }
-
-        $this->_options['noneGiven'] = false;
-        if (empty($argv)) {
-            $this->_options['noneGiven'] = true;
-            return;
-        }
-                                        
-        // if the first argument is not a - or -- option
-        // it should be a spec filename
-        if ($argv[0]{0} !== '-') {
-            $this->_options['specFile'] = $argv[0];
-            array_shift($argv);
-        }
-
-        $encountered = null;
-        foreach ($argv as $value) {
-            if (!is_null($encountered)) {
-                if ($value[0] != '-') {
-                    $this->_options[$encountered] = $value;
-                    $encountered = null;
-                    continue;
-                } else {
-                    $this->_options[$encountered] = true;
-                }
-            }
-            if (substr($value, 0, 2) == '--') {
-                $encountered = substr($value, 2);
-                continue;
-            } elseif($value[0] === '-') {
-                $values = str_split(substr($value, 1));
-                foreach ($values as $letter) {
-                    $this->_options[$letter] = true;
-                }
-            }
-        }
-        if (!is_null($encountered)) {
-            $parts = explode('=', $encountered);
-            if (count($parts) == 1) {
-                $this->_options[$encountered] = true;
-            } elseif (count($parts) == 2) {
-                $encountered = $parts[0];
-                $this->_options[$encountered] = $parts[1];
-            }
+    }
+    
+    /**
+     * Checks whether arguments were given
+     */
+    private function checkIfArgumentsAreGiven()
+    {
+        if (empty($this->_arguments)) {
+            throw new \PHPSpec\Console\Exception(
+                'No arguments given. Type phpspec -h for help'
+            );
         }
     }
 
+    /**
+     * Extracts spec file. If the first argument is not a - or -- option
+     * it should be a spec filename
+     */
+    private function extractSpecFile()
+    {
+        if ($this->_arguments[0]{0} !== '-') {
+            $this->_options['specFile'] = $this->_arguments[0];
+            array_shift($this->_arguments);
+        }
+    }
+    
+    /**
+     * Converts arguments into options
+     */
+    private function convertArgumentIntoOptions()
+    {
+        foreach ($this->_arguments as $argument) {
+            if (substr($argument, 0, 2) == '--') {
+                $this->convertLongArgumentstoOptions($argument);
+            } elseif ($argument[0] === '-') {
+                $this->convertShortArgumentsToOptions($argument);
+            }
+        }
+    }
+    
+    /**
+     * Converts long arguments, e.g. --argument=value, to options
+     * 
+     * @param string $argument
+     */
+    private function convertLongArgumentstoOptions($argument)
+    {
+        $parts = explode('=', substr($argument, 2));
+        if (count($parts) == 2) {
+            $this->setOption($parts[0], $parts[1]);
+        } elseif (count($parts) == 1) {
+            $this->setOption($parts[0], true);
+        }
+    }
+    
+    /**
+     * Converts short arguments, e.g. -chv, to options
+     * 
+     * @param string $argument
+     */
+    private function convertShortArgumentsToOptions($argument)
+    {
+        $values = str_split(substr($argument, 1));
+        foreach ($values as $letter) {
+            $this->setOption($letter, true);
+        }
+    }
 }

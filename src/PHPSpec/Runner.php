@@ -82,7 +82,9 @@ class Runner
         $result = new Runner\Result;
         $result->setRuntimeStart(microtime(true));
                 
-        $reporter = \PHPSpec\Runner\Reporter::create($result, $options->reporter);
+        $reporter = \PHPSpec\Runner\Reporter::create(
+            $result, $options->reporter
+        );
 
         if ($options->c || $options->color || $options->colour) {
             $reporter->showColors(true);

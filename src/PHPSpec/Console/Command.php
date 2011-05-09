@@ -75,8 +75,7 @@ class Command
      */
     public function run()
     {   
-        if ($this->_options->noneGiven() ||
-            $this->_options->getOption('h') ||
+        if ($this->_options->getOption('h') ||
             $this->_options->getOption('help')) {
             $this->printUsage();
             return;

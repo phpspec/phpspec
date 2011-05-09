@@ -14,10 +14,23 @@ class PHPSpec_Console_GetoptTest extends PHPUnit_Extensions_OutputTestCase {
 		$this->assertSame(
 			array(
 				'noneGiven' => false, 
-				'specFile' => 'empty', 
-				'reporter' => 'Console' // Console is the default reporter
+				'c' => false,
+                'color' => false,
+                'colour' => false,
+                'a' => false,
+                'autotest' => false,
+                'h' => false,
+                'help' => false,
+                'version' => false, 
+				'reporter' => 'Console', // Console is the default reporter
+			    'specFile' => 'empty'
 			),
 			$this->readAttribute($getopt, '_options')); 
 		$_SERVER['argv'] = $tmp;
      }  
 }
+
+array(
+                'noneGiven' => false,
+                
+    );

@@ -75,7 +75,12 @@ spl_autoload_register(
 );
 
 if (!defined('PHPSPEC_COMMAND_CALL')) {
-    $command = new \PHPSpec\Console\Command;
-    $command->run();
+    try {
+        $command = new \PHPSpec\Console\Command;
+        $command->run();
+    } catch (\PHPSpec\Console\Exception $e) {
+        $fp = fopen(STDERR, 'w+');
+        fwrite($fp, $e->getMessage());
+    }
 }
 
