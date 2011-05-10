@@ -45,7 +45,7 @@ class Getopt
         'help'      => false,
         'version'   => false,
         'reporter'  => 'Console',
-        'specFile'  => null
+        'specFile'  => ''
     );
     
     /**
@@ -102,10 +102,10 @@ class Getopt
      */
     public function setOption($name, $value)
     {
-        if (!isset($this->_options[$name])) {
+        if (!isset($this->_options[trim($name)])) {
             throw new \PHPSpec\Console\Exception("Invalid option $name");
         }
-        $this->_options[$name] = $value;
+        $this->_options[trim($name)] = $value;
     }
 
     /**
@@ -158,6 +158,7 @@ class Getopt
     protected function _parse()
     { 
         $this->removeProgramNameFromArguments();
+        $this->getArgumentsFromConfigFile();
         $this->checkIfArgumentsAreGiven();
         $this->extractSpecFile();
         $this->convertArgumentIntoOptions();
@@ -170,6 +171,26 @@ class Getopt
     {
         if (is_file($this->_arguments[0])) {
             array_shift($this->_arguments);
+        }
+    }
+    
+    /**
+     * Gets the arguments from config file, if any
+     */
+    private function getArgumentsFromConfigFile()
+    {
+        $currentDirConfig = getcwd() . DIRECTORY_SEPARATOR . '.phpspec';
+        $homeDirConfig    = '~' . DIRECTORY_SEPARATOR . '.phpspec';
+        $etcDirConfig = DIRECTORY_SEPARATOR . 'etc' .
+                        DIRECTORY_SEPARATOR . 'phpspec' .
+                        DIRECTORY_SEPARATOR . 'phpspec.conf';
+        
+        if (file_exists($currentDirConfig)) {
+            $this->_arguments = file($currentDirConfig);
+        } elseif (file_exists($homeDirConfig)) {
+            $this->_arguments = file($homeDirConfig);
+        } elseif (file_exists($etcDirConfig)) {
+            $this->_arguments = file($etcDirConfig);
         }
     }
     
