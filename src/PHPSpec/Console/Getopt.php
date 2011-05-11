@@ -176,22 +176,25 @@ class Getopt
     
     /**
      * Gets the arguments from config file, if any
+     * !FIXME Make this more OS agnostic
      */
     private function getArgumentsFromConfigFile()
     {
-        $currentDirConfig = getcwd() . DIRECTORY_SEPARATOR . '.phpspec';
-        $homeDirConfig    = '~' . DIRECTORY_SEPARATOR . '.phpspec';
-        $etcDirConfig = DIRECTORY_SEPARATOR . 'etc' .
-                        DIRECTORY_SEPARATOR . 'phpspec' .
-                        DIRECTORY_SEPARATOR . 'phpspec.conf';
+        $ds          = DIRECTORY_SEPARATOR;
+        $localConfig =       getcwd() . $ds . '.phpspec';
+        $homeConfig  = getenv('HOME') . $ds . '.phpspec';
+        $etcConfig   =    $ds . 'etc' . $ds . 'phpspec' . $ds . 'phpspec.conf';
+        $configArguments = array();
         
-        if (file_exists($currentDirConfig)) {
-            $this->_arguments = file($currentDirConfig);
-        } elseif (file_exists($homeDirConfig)) {
-            $this->_arguments = file($homeDirConfig);
-        } elseif (file_exists($etcDirConfig)) {
-            $this->_arguments = file($etcDirConfig);
+        if (file_exists($localConfig)) {
+            $configArguments = file($localConfig);
+        } elseif (file_exists($homeConfig)) {
+            $configArguments = file($homeConfig);
+        } elseif (file_exists($etcConfig)) {
+            $configArguments = file($etcConfig);
         }
+        
+        $this->_arguments = array_merge($this->_arguments, $configArguments);
     }
     
     /**
@@ -225,9 +228,9 @@ class Getopt
     {
         foreach ($this->_arguments as $argument) {
             if (substr($argument, 0, 2) == '--') {
-                $this->convertLongArgumentstoOptions($argument);
+                $this->convertLongArgumentstoOptions(trim($argument));
             } elseif ($argument[0] === '-') {
-                $this->convertShortArgumentsToOptions($argument);
+                $this->convertShortArgumentsToOptions(trim($argument));
             }
         }
     }
