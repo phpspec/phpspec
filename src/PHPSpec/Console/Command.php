@@ -74,9 +74,8 @@ class Command
      * Gets the cli options, passes it to the runner and runs
      */
     public function run()
-    {   
-        if ($this->_options->noneGiven() ||
-            $this->_options->getOption('h') ||
+    { 
+        if ($this->_options->getOption('h') ||
             $this->_options->getOption('help')) {
             $this->printUsage();
             return;
