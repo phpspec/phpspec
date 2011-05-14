@@ -155,6 +155,9 @@ class Result implements \Countable
      */
     public function addException(Example $example, \Exception $e)
     {
+        if ($e instanceof \PHPSpec\Runner\ErrorException) {
+            return;
+        }
         $this->_examples[] = new Example\Exception($example, $e);
         $this->_exceptionCount++;
         $this->_reporter->outputStatus('E');

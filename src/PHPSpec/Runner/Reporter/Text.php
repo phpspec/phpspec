@@ -34,7 +34,7 @@ use PHPSpec\Runner\Reporter;
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class Text extends Reporter
+abstract class Text extends Reporter
 {
 
     /**
@@ -77,6 +77,22 @@ class Text extends Reporter
         $str .= $this->getTotals();
         
         $reportedIssues = PHP_EOL . PHP_EOL;
+        
+        $increment = 1;
+        if ($this->hasPending()) {
+            $reportedIssues .= 'Pending:' . PHP_EOL;
+            $pendings = $this->_result->getTypes('pending');
+            foreach ($pendings as $pending) {
+                $reportedIssues .= $this->formatReportedIssue(
+                    $increment, $pending, $pending->getMessage(), 'PENDING'
+                );
+                $reportedIssues .= $this->formatLines(
+                    $this->getPrettyTrace($pending->getException(), 1)
+                );
+            }
+            $reportedIssues .= PHP_EOL;
+        }
+        
         if ($this->_result->countFailures() > 0 ||
             $this->_result->countDeliberateFailures() > 0) {
             $reportedIssues .= 'Failures:' . PHP_EOL . PHP_EOL;
@@ -86,7 +102,9 @@ class Text extends Reporter
                 $reportedIssues .= $this->formatReportedIssue(
                     $increment, $failure, $failure->getFailedMessage()
                 );
-                $reportedIssues .= $failure->getLine() . PHP_EOL . PHP_EOL;
+                $reportedIssues .= $this->formatLines(
+                    '     # ' . $failure->getLine()
+                ) . PHP_EOL . PHP_EOL;
             }
             if ($this->_result->countDeliberateFailures() > 0) {
                 $failed = $this->_result->getTypes('deliberateFail');
@@ -104,10 +122,15 @@ class Text extends Reporter
             $errors = $this->_result->getTypes('error');
             foreach ($errors as $error) { 
                 $reportedIssues .= $this->formatReportedIssue(
-                    $increment, $error, $error->toString(), 'ERROR'
+                    $increment,
+                    $error,
+                    $error->getException()->getErrorType() .
+                    ': ' . $error->toString(), 'ERROR'
                 );
                 if (method_exists($error, 'getPrettyTrace')) {
-                     $reportedIssues .= $error->getPrettyTrace(3) . PHP_EOL;
+                     $reportedIssues .= $this->formatLines(
+                         $error->getPrettyTrace(3)
+                     ). PHP_EOL;
                 }
             }
         }
@@ -116,20 +139,20 @@ class Text extends Reporter
         if ($this->_result->countExceptions() > 0) {
             $reportedIssues .= 'Exceptions:' . PHP_EOL . PHP_EOL;
             $exceptions = $this->_result->getTypes('exception');
-            foreach ($exceptions as $exception) { 
+            foreach ($exceptions as $exception) {
+                if ($exception instanceof \PHPSpec\Runner\Example\Pending ||
+                    $exception instanceof \PHPSpec\Runner\Example\Fail ||
+                    $exception instanceof \PHPSpec\Runner\Example\Error ||
+                    $exception instanceof 
+                    \PHPSpec\Runner\Example\DeliberateFail) {
+                    continue;
+                }
                 $reportedIssues .= $this->formatReportedIssue(
                     $increment, $exception, $exception->toString(), 'EXCEPTION'
                 );
-            }
-        }
-
-        $increment = 1;
-        if ($this->hasPending()) {
-            $reportedIssues .= 'Pending:' . PHP_EOL . PHP_EOL;
-            $pendings = $this->_result->getTypes('pending');
-            foreach ($pendings as $pending) {
-                $reportedIssues .= $this->formatReportedIssue(
-                    $increment, $pending, $pending->getMessage(), 'PENDING'
+                $reportedIssues .= $this->formatLines(
+                    $this->getPrettyTrace($exception->getException(), 3) .
+                    PHP_EOL
                 );
             }
         }
@@ -150,24 +173,41 @@ class Text extends Reporter
     /**
      * Formats the reported issues line
      * 
-     * @param integer                           $increment
      * @param \PHPSpec\Runner\Example\Exception $issue
      * @param string                            $message
      * @param string                            $issueType
      * @return string
      */
-    public function formatReportedIssue(&$increment, $issue, $message,
-                                        $issueType = 'FAILED')
+    public function formatReportedIssue($issue, $message, $issueType = 'FAILED')
     {
-        $reportedIssues = $increment . ')' . PHP_EOL;
-        $reportedIssues .= '\'' .
-                           $this->_format($issue->getContextDescription());
-        $reportedIssues .= $issue->getSpecificationText() . '\' ' . $issueType;
-        $reportedIssues .= PHP_EOL . $message;
+        $reportedIssues = '     ';
+        if ($issueType === 'PENDING') {
+            $reportedIssues .= '# ';
+        }
+        
+        if ($issueType === 'FAILED') {
+            $reportedIssues .= $this->formatFailedMessage($issue);
+        }
+        
+        $reportedIssues .= $message;
         $reportedIssues .= PHP_EOL . ($issueType !== 'FAILED' &&
-                                      $issueType !== 'ERROR' ? PHP_EOL : '');
-        $increment++;
+                                      $issueType !== 'ERROR' &&
+                                      $issueType !== 'PENDING' &&
+                                      $issueType !== 'EXCEPTION' ?
+                                      PHP_EOL : '');
         return $reportedIssues;
+    }
+    
+    public function formatFailedMessage($issue)
+    {
+        $failedMessage = 'Failure/Error: ';
+        list($path, $line) = explode(':', $issue->getLine());
+        $source = file($path);
+        $lineSource = $source[$line-1];
+        $failedMessage .= trim($lineSource);
+        $failedMessage .= PHP_EOL . '     ';
+        
+        return $failedMessage;
     }
 
     /**
@@ -177,7 +217,7 @@ class Text extends Reporter
      */
     public function getTotals()
     {
-        $str = PHP_EOL . PHP_EOL . count($this->_result) . ' examples';
+        $str = PHP_EOL . count($this->_result) . ' examples';
         
         $count = $this->_result->countFailures() +
                  $this->_result->countDeliberateFailures();
@@ -277,7 +317,15 @@ class Text extends Reporter
         $description = preg_replace(
             '/spec$/', '', preg_replace('/^describe ?/', '', $description)
         );
-        return $description . ' ';
+        return str_replace(' ', '', ucwords($description)) . ' ';
     }
+    
+    /**
+     * Formats the lines
+     * 
+     * @param string $lines
+     * @return string
+     */
+    abstract public function formatLines($lines);
 
 }

@@ -16,14 +16,20 @@
  * @package   PHPSpec
  * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
  * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
- * Marcello Duarte
+ *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-namespace PHPSpec\Runner;
+namespace PHPSpec\Specification;
+
 /**
- * @see \PHPSpec\Exception
+ * @see \PHPSpec\Specification.php
  */
-use PHPSpec\Exception;
+use PHPSpec\Specification;
+
+/**
+ * @see \PHPSpec\Runner\FailedMatcherException
+ */
+use \PHPSpec\Runner\FailedMatcherException;
 
 /**
  * @category   PHPSpec
@@ -33,51 +39,40 @@ use PHPSpec\Exception;
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class ErrorException extends \PHPSpec\Exception
+class Closure extends Specification
 {
     /**
-     * Gets the error type based on the error code
+     * The closure
      * 
-     * @return string
+     * @var Closure
      */
-    public function getErrorType()
+    protected $_closure = null;
+    
+    /**
+     * The closure
+     * 
+     * @var Closure
+     */
+    protected $_closureException = null;
+
+    /**
+     * Scalar is constructed with its value
+     * 
+     * @param $scalarValue
+     */
+    public function __construct(\Closure $closure = null)
     {
-        switch ($this->code) {
-            case E_ERROR:
-                return 'PHP Error';
-                break;
-        
-            case E_WARNING:
-                return 'PHP Warning';
-                break;
-        
-            case E_NOTICE:
-                return 'PHP Notice';
-                break;
-        
-            case E_DEPRECATED:
-                return 'PHP Deprecated';
-                break;
-                
-            case E_USER_ERROR:
-                return 'User Error';
-                break;
-        
-            case E_USER_WARNING:
-                return 'User Warning';
-                break;
-        
-            case E_USER_NOTICE:
-                return 'User Notice';
-                break;
-        
-            case E_USER_DEPRECATED:
-                return 'User Deprecated';
-                break;
-        
-            default:
-                return 'Unknown';
-                break;
+        if (!is_null($closure)) {
+            $this->_closure = $closure;
+            try {
+                $result = $closure();
+                $this->setActualValue($result);
+            } catch (\PHPSpec\Exception $e) {
+                throw $e;
+            } catch(\Exception $e) {
+                $this->setActualValue(array(get_class($e), $e->getMessage()));
+            }
         }
+        $this->_expectation = new \PHPSpec\Expectation;
     }
 }

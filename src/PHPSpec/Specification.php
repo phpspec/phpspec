@@ -32,6 +32,11 @@ use \PHPSpec\Specification\Object;
 use \PHPSpec\Specification\Scalar;
 
 /**
+ * @see \PHPSpec\Specification\Closure
+ */
+use \PHPSpec\Specification\Closure;
+
+/**
  * @see \PHPSpec\Runner\FailedMatcherException
  */
 use \PHPSpec\Runner\FailedMatcherException;
@@ -102,7 +107,9 @@ class Specification
     {
         $args = func_get_args();
         $value = $args[0];
-        if ((is_string($value) && class_exists($value, true)) ||
+        if (is_callable($value)) {
+            $spec = new Closure($value);
+        } elseif ((is_string($value) && class_exists($value, true)) ||
             is_object($value)) {
             $class = new \ReflectionClass("\\PHPSpec\\Object\\Interrogator");
             $interrogator = $class->newInstanceArgs($args);
@@ -150,9 +157,9 @@ class Specification
             'haveText'
         );
         if (in_array($method, $matchers)) {
-            $this->setExpectedValue(array_shift($args));
+            $this->setExpectedValue($args);
             $this->_createMatcher($method);
-            $this->_performMatching($args);
+            $this->_performMatching();
             return true;
         }
 
@@ -373,10 +380,17 @@ class Specification
     {
         $matcherClass = ucfirst($method);
         try {
-            $factory = '$this->_matcher = new \PHPSpec\Matcher\\' .
-                       $matcherClass . '($this->getExpectedValue());';
-            eval($factory);
+            // eval is here because of a bug in 5.3.2
+            eval(
+                '$matcher = new \PHPSpec\Matcher\\' . $matcherClass . '(null);'
+            );
+            $reflectedMatcher = new \ReflectionClass($matcher);
+            $expected = !is_array($this->getExpectedValue()) ?
+                        array($this->getExpectedValue()) :
+                        $this->getExpectedValue();            
+            $this->_matcher = $reflectedMatcher->newInstanceArgs($expected);
         } catch(\PHPSpec\Exception $e) {
+            die($e->getMessage());
             $factory = '$this->_matcher = new \PHPSpec\Context\Zend\Matcher\\' .
                        $matcherClass . '($this->getExpectedValue());';
             eval($factory);
@@ -390,15 +404,14 @@ class Specification
      * @param array $args
      * @return null
      */
-    protected function _performMatching($args = null)
+    protected function _performMatching()
     {
-        if (!is_null($args) && is_array($args)) {
-            $matchArgs = array($this->getActualValue()) + $args;
-        } else {
-            $matchArgs = array($this->getActualValue());
+        $args = $this->getActualValue();
+        if (!is_array($this->getActualValue())) {
+            $args = array($this->getActualValue());
         }
         $result = call_user_func_array(
-            array($this->_matcher, 'matches'), $matchArgs
+            array($this->_matcher, 'matches'), $args
         );
         $this->setMatcherResult($result);
         if (!$result) {

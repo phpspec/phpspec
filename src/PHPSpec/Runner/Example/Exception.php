@@ -72,7 +72,23 @@ class Exception extends Type
      */
     public function toString()
     {
-        return (string) $this->_exception->getMessage();
+        return 'Failure/Exception: ' . $this->getSourceFromLine() . PHP_EOL .
+               '     ' . get_class($this->_exception) . ': ' . 
+               (string) $this->_exception->getMessage();
+    }
+    
+    public function getSourceFromLine()
+    {
+        $exceptionMessage = '';
+        $line = array_slice(
+            $this->_exception->getTrace(), 0, 1
+        );
+        list($path, $line) = array($line[0]['file'], $line[0]['line']);
+        $source = file($path);
+        $lineSource = $source[$line-1];
+        $exceptionMessage .= trim($lineSource);
+        
+        return $exceptionMessage;
     }
 
     /**
@@ -89,7 +105,13 @@ class Exception extends Type
             if ($lines === 0) {
                  return $formatted;
             }
-            $formatted .= $line['file'] . ':' . $line['line'] . PHP_EOL;
+            $cwd = getcwd();
+            $pathToFile = $line['file'];
+            if (strpos($pathToFile, $cwd) === 0) {
+                $pathToFile = str_replace($cwd, '.', $pathToFile);
+            }
+            $formatted .= '     # ' .  $pathToFile . ':' . $line['line'] .
+                          PHP_EOL;
             $lines--;
         }
     }

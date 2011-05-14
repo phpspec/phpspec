@@ -69,12 +69,9 @@ abstract class Reporter
     public static function create(Result $result, $reporter = null)
     {
         if ($reporter === null) {
-            $reporter = self::TEXT;
+            $reporter = self::CONSOLE;
         }
         switch(ucfirst($reporter)) {
-            case self::TEXT :
-                $reporterClass = new \PHPSpec\Runner\Reporter\Text($result);
-                break;
             case self::CONSOLE :
                 $reporterClass = new \PHPSpec\Runner\Reporter\Console($result);
                 break;
@@ -134,6 +131,32 @@ abstract class Reporter
     public function showColors($show)
     {
         $this->_showColors = $show;
+    }
+    
+    /**
+     * Returns a slice of the exception trace formatted nicely. The size of the
+     * slice is determined by the argument <code>$lines</code> 
+     * 
+     * @param Exception $e
+     * @param integer   $lines
+     * @return string
+     */
+    public function getPrettyTrace(\Exception $e, $lines)
+    {
+        $formatted = '';
+        foreach ($e->getTrace() as $line) {
+            if ($lines === 0) {
+                 return $formatted;
+            }
+            $cwd = getcwd();
+            $pathToFile = $line['file'];
+            if (strpos($pathToFile, $cwd) === 0) {
+                $pathToFile = str_replace($cwd, '.', $pathToFile);
+            }
+            $formatted .= '     # ' .  $pathToFile . ':' . $line['line'] .
+                          PHP_EOL;
+            $lines--;
+        }
     }
 
     /**

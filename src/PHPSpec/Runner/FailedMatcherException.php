@@ -94,7 +94,12 @@ class FailedMatcherException extends Exception
             if (strpos($step['class'], 'Describe') === 0 ||
                 strpos($step['class'], 'Spec') === strlen($step['class']) - 4) {
                 $failure = prev($trace);
-                return $failure['file'] . ":" . $failure['line'];
+                $cwd = getcwd();
+                $pathToFile = $failure['file'];
+                if (strpos($pathToFile, $cwd) === 0) {
+                    $pathToFile = str_replace($cwd, '.', $pathToFile);
+                }
+                return $pathToFile . ":" . $failure['line'];
             }
         }
     }

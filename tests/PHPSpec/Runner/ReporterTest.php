@@ -4,21 +4,11 @@ class ReporterTest extends \PHPUnit_Framework_TestCase {
     /**
      * @test
      */
-	public function itCreatesATextResultByDefault()
+	public function itCreatesAConsoleResultByDefault()
 	{
 		$result = $this->getMock('\PHPSpec\Runner\Result');
 		$reporter = \PHPSpec\Runner\Reporter::create($result);
-		$this->assertTrue($reporter instanceof \PHPSpec\Runner\Reporter\Text);
-	}
-
-	/**
-	 * @test
-	 */
-	public function itCreatesATextResultWhenTextIsPassed()
-	{
-		$result = $this->getMock('\PHPSpec\Runner\Result');
-		$reporter = \PHPSpec\Runner\Reporter::create($result, 'Text');
-		$this->assertTrue($reporter instanceof \PHPSpec\Runner\Reporter\Text);
+		$this->assertTrue($reporter instanceof \PHPSpec\Runner\Reporter\Console);
 	}
 
 	/**
