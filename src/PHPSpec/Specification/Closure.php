@@ -70,6 +70,7 @@ class Closure extends Specification
             } catch (\PHPSpec\Exception $e) {
                 throw $e;
             } catch(\Exception $e) {
+                $this->_composedActual = true;
                 $this->setActualValue(array(get_class($e), $e->getMessage()));
             }
         }

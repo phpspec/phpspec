@@ -95,6 +95,13 @@ class Specification
     protected $_matcher = null;
 
     /**
+     * Whether actual value is a composed value
+     * 
+     * @var boolean
+     */
+    protected $_composedActual = false;
+    
+    /**
      * Public static factory method to create a new Specification (DSL)
      * object based on the given object or scalar value.
      *
@@ -406,9 +413,11 @@ class Specification
      */
     protected function _performMatching()
     {
-        $args = $this->getActualValue();
-        if (!is_array($this->getActualValue())) {
-            $args = array($this->getActualValue());
+        $actual = $this->getActualValue();
+        if (is_array($actual) && $this->_composedActual) {
+            $args = $actual;
+        } else {
+            $args = array($actual);
         }
         $result = call_user_func_array(
             array($this->_matcher, 'matches'), $args
