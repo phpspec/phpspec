@@ -149,12 +149,14 @@ abstract class Reporter
                  return $formatted;
             }
             $cwd = getcwd();
-            $pathToFile = $line['file'];
-            if (strpos($pathToFile, $cwd) === 0) {
-                $pathToFile = str_replace($cwd, '.', $pathToFile);
+            if (isset($line['file'])) {
+                $pathToFile = $line['file'];
+                if (strpos($pathToFile, $cwd) === 0) {
+                    $pathToFile = str_replace($cwd, '.', $pathToFile);
+                }
+                $formatted .= '     # ' .  $pathToFile . ':' . $line['line'] .
+                              PHP_EOL;
             }
-            $formatted .= '     # ' .  $pathToFile . ':' . $line['line'] .
-                          PHP_EOL;
             $lines--;
         }
     }

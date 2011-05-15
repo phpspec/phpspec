@@ -83,11 +83,12 @@ class Exception extends Type
         $line = array_slice(
             $this->_exception->getTrace(), 0, 1
         );
-        list($path, $line) = array($line[0]['file'], $line[0]['line']);
-        $source = file($path);
-        $lineSource = $source[$line-1];
-        $exceptionMessage .= trim($lineSource);
-        
+        if (isset($line[0]['file'])) {
+            list($path, $line) = array($line[0]['file'], $line[0]['line']);
+            $source = file($path);
+            $lineSource = $source[$line-1];
+            $exceptionMessage .= trim($lineSource);
+        }
         return $exceptionMessage;
     }
 
@@ -106,12 +107,14 @@ class Exception extends Type
                  return $formatted;
             }
             $cwd = getcwd();
-            $pathToFile = $line['file'];
-            if (strpos($pathToFile, $cwd) === 0) {
-                $pathToFile = str_replace($cwd, '.', $pathToFile);
+            if (isset($line['file'])) {
+                $pathToFile = $line['file'];
+                if (strpos($pathToFile, $cwd) === 0) {
+                    $pathToFile = str_replace($cwd, '.', $pathToFile);
+                }
+                $formatted .= '     # ' .  $pathToFile . ':' . $line['line'] .
+                              PHP_EOL;
             }
-            $formatted .= '     # ' .  $pathToFile . ':' . $line['line'] .
-                          PHP_EOL;
             $lines--;
         }
     }
