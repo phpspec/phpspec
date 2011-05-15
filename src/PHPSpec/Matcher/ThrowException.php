@@ -84,8 +84,11 @@ class ThrowException implements Matcher
     {
         $this->_actualException = $actualException;
         $this->_actualMessage = $actualMessage;
-        return $this->_actualException === $this->_expectedException &&
-               $this->_actualMessage === $this->_expectedMessage;
+        if (isset($this->_expectedMessage)) {
+            return $this->_actualException === $this->_expectedException &&
+                   $this->_actualMessage === $this->_expectedMessage;
+        }
+        return $this->_actualException === $this->_expectedException;
     }
 
     /**
