@@ -423,7 +423,8 @@ class Specification
             array($this->_matcher, 'matches'), $args
         );
         $this->setMatcherResult($result);
-        if (!$result) {
+        
+        if ($this->getExpectation()->getExpectedMatcherResult() !== $result) {
             throw new FailedMatcherException();
         }
     }
