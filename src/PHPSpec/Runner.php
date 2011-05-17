@@ -44,6 +44,7 @@ class Runner
                                     
         // check for straight class to execute
         if (isset($options->specFile)) {
+            $options->specFile = rtrim($options->specFile, DIRECTORY_SEPARATOR);
             $pathToFile = getcwd();
             if (false !== strpos($options->specFile, '/')) {
                 $pathToFile = str_replace(

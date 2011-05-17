@@ -64,7 +64,7 @@ class Classname
     public function load($className, $pathToFile)
     {
         $class = '';
-            
+        
         if (substr($className, strlen($className)-4, 4) !== '.php' &&
             strpos($className, 'Describe') == 0 &&
             substr($className, strlen($className)-4, 4) !== 'Spec') {
