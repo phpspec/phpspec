@@ -49,7 +49,6 @@ class Backtrace
     {
         $code = '';
         $traceLine = $trace[$index];
-        
         if (self::lineHasFileAndLine($traceLine)) {
 
             if (self::lineHasEval($traceLine)) {
@@ -57,6 +56,13 @@ class Backtrace
             }
 
             return self::readLine($traceLine['file'], $traceLine['line']);
+        } elseif (isset($traceLine['function']) &&
+                  $traceLine['function'] === 'PHPSpec_ErrorHandler') {
+            return self::readLine(
+                $traceLine['args'][2], $traceLine['args'][3]
+            );
+        } elseif (count($trace) > $index + 1) {
+            return self::code($trace, ++$index);
         }
         return $code;
     }
