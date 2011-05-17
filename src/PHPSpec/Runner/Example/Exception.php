@@ -79,12 +79,27 @@ class Exception extends Type
     
     public function getSourceFromLine()
     {
+        $trace = $this->_exception->getTrace();
+        return $this->removeEvalAndGetCodeFromFirstLine($trace);
+    }
+    
+    /**
+     * Removes eval()'d code from trace and return the code of the first line
+     * 
+     * @param string $trace
+     * @return string
+     */
+    private function removeEvalAndGetCodeFromFirstLine($trace)
+    {
         $exceptionMessage = '';
-        $line = array_slice(
-            $this->_exception->getTrace(), 0, 1
-        );
-        if (isset($line[0]['file'])) {
-            list($path, $line) = array($line[0]['file'], $line[0]['line']);
+        if (isset($trace[0]['file'])) {
+
+            if (strpos($trace[0]['file'], ': eval()\'d code') !== false) {
+                array_shift($trace);
+                return $this->removeEvalAndGetCodeFromFirstLine($trace);
+            }
+            
+            list($path, $line) = array($trace[0]['file'], $trace[0]['line']);
             $source = file($path);
             $lineSource = $source[$line-1];
             $exceptionMessage .= trim($lineSource);
