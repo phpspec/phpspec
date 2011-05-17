@@ -49,7 +49,7 @@ abstract class Text extends Reporter
     
     /**
      * Output a status symbol after each test run.
-     * . for Pass, E for error/exception, F for failure, and P for pending
+     * . for Pass, E for error/exception, F for failure, and * for pending
      *
      * @param string $symbol
      */
