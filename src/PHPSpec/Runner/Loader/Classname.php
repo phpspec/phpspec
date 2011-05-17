@@ -35,7 +35,7 @@ class Classname
     /**
      * Array with the instances of the loaded examples
      * 
-     * @var unknown_type
+     * @var array
      */
     protected $_loaded = array();
 
@@ -92,7 +92,12 @@ class Classname
         }
         
         // existence test not implemented - let require call catch fatal error
-        
+        if (!is_readable($pathToFile . '/' . $classFile)) {
+            die(
+                'phpspec: cannot open ' .
+                $pathToFile . '/' . $classFile . PHP_EOL
+            );
+        }
         require_once $pathToFile . '/' . $classFile;
         
         if (!class_exists($class, false)) {
