@@ -78,6 +78,22 @@ abstract class Text extends Reporter
         
         $reportedIssues = PHP_EOL . PHP_EOL;
         
+        $reportedIssues .= $this->getPendingReport();
+        $reportedIssues .= $this->getFailingReport();
+        $reportedIssues .= $this->getErrorReport();
+        $reportedIssues .= $this->getExceptionReport();
+        
+        return $reportedIssues . $str . PHP_EOL;
+    }
+    
+    /**
+     * Creates and return pending report
+     * 
+     * @return string
+     */
+    private function getPendingReport()
+    {
+        $reportedIssues = '';
         $increment = 1;
         if ($this->hasPending()) {
             $reportedIssues .= 'Pending:' . PHP_EOL;
@@ -92,7 +108,17 @@ abstract class Text extends Reporter
             }
             $reportedIssues .= PHP_EOL;
         }
-        
+        return $reportedIssues;
+    }
+    
+    /**
+     * Creates and return failing report
+     * 
+     * @return string
+     */
+    public function getFailingReport()
+    {
+        $reportedIssues = '';
         if ($this->_result->countFailures() > 0 ||
             $this->_result->countDeliberateFailures() > 0) {
             $reportedIssues .= 'Failures:' . PHP_EOL . PHP_EOL;
@@ -115,7 +141,17 @@ abstract class Text extends Reporter
                 }
             }
         }
-        
+        return $reportedIssues;
+    }
+
+    /**
+     * Creates and return error report
+     * 
+     * @return string
+     */
+    public function getErrorReport()
+    {
+        $reportedIssues = '';
         $increment = 1;
         if ($this->_result->countErrors() > 0) {
             $reportedIssues .= 'Errors:' . PHP_EOL . PHP_EOL;
@@ -134,7 +170,12 @@ abstract class Text extends Reporter
                 }
             }
         }
-
+        return $reportedIssues;
+    }
+    
+    public function getExceptionReport()
+    {
+        $reportedIssues = '';
         $increment = 1;
         if ($this->_result->countExceptions() > 0) {
             $reportedIssues .= 'Exceptions:' . PHP_EOL . PHP_EOL;
@@ -156,10 +197,9 @@ abstract class Text extends Reporter
                 );
             }
         }
-        
-        return $reportedIssues . $str . PHP_EOL;
+        return $reportedIssues;
     }
-
+    
     /**
      * Checks whether there are any pending specs
      * 

@@ -27,6 +27,11 @@ namespace PHPSpec\Runner;
 use PHPSpec\Runner\Result;
 
 /**
+ * @see \PHPSpec\Util\Backtrace
+ */
+use PHPSpec\Util\Backtrace;
+
+/**
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
@@ -143,22 +148,7 @@ abstract class Reporter
      */
     public function getPrettyTrace(\Exception $e, $lines)
     {
-        $formatted = '';
-        foreach ($e->getTrace() as $line) {
-            if ($lines === 0) {
-                 return $formatted;
-            }
-            $cwd = getcwd();
-            if (isset($line['file'])) {
-                $pathToFile = $line['file'];
-                if (strpos($pathToFile, $cwd) === 0) {
-                    $pathToFile = str_replace($cwd, '.', $pathToFile);
-                }
-                $formatted .= '     # ' .  $pathToFile . ':' . $line['line'] .
-                              PHP_EOL;
-            }
-            $lines--;
-        }
+        return Backtrace::pretty($e->getTrace(), $lines);
     }
 
     /**

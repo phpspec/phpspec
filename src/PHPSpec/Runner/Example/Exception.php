@@ -22,6 +22,11 @@
 namespace PHPSpec\Runner\Example;
 
 /**
+ * @see \PHPSpec\Util\Backtrace
+ */
+use PHPSpec\Util\Backtrace;
+
+/**
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
@@ -80,31 +85,7 @@ class Exception extends Type
     public function getSourceFromLine()
     {
         $trace = $this->_exception->getTrace();
-        return $this->removeEvalAndGetCodeFromFirstLine($trace);
-    }
-    
-    /**
-     * Removes eval()'d code from trace and return the code of the first line
-     * 
-     * @param string $trace
-     * @return string
-     */
-    private function removeEvalAndGetCodeFromFirstLine($trace)
-    {
-        $exceptionMessage = '';
-        if (isset($trace[0]['file'])) {
-
-            if (strpos($trace[0]['file'], ': eval()\'d code') !== false) {
-                array_shift($trace);
-                return $this->removeEvalAndGetCodeFromFirstLine($trace);
-            }
-            
-            list($path, $line) = array($trace[0]['file'], $trace[0]['line']);
-            $source = file($path);
-            $lineSource = $source[$line-1];
-            $exceptionMessage .= trim($lineSource);
-        }
-        return $exceptionMessage;
+        return Backtrace::code($trace);
     }
 
     /**
@@ -116,22 +97,7 @@ class Exception extends Type
      */
     public function getPrettyTrace($lines)
     {
-        $formatted = '';
-        foreach ($this->_exception->getTrace() as $line) {
-            if ($lines === 0) {
-                 return $formatted;
-            }
-            $cwd = getcwd();
-            if (isset($line['file'])) {
-                $pathToFile = $line['file'];
-                if (strpos($pathToFile, $cwd) === 0) {
-                    $pathToFile = str_replace($cwd, '.', $pathToFile);
-                }
-                $formatted .= '     # ' .  $pathToFile . ':' . $line['line'] .
-                              PHP_EOL;
-            }
-            $lines--;
-        }
+        return Backtrace::pretty($this->_exception->getTrace(), $lines);
     }
 
     /**
