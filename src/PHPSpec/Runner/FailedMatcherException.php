@@ -96,8 +96,10 @@ class FailedMatcherException extends Exception
         $step = null;
         
         while (($step = next($trace)) !== null) {
-            if (strpos($step['class'], 'Describe') === 0 ||
-                strpos($step['class'], 'Spec') === strlen($step['class']) - 4) {
+            if (isset($step['class']) &&
+                (strpos($step['class'], 'Describe') === 0 ||
+                strpos($step['class'], 'Spec') ===
+                strlen($step['class']) - 4)) {
                 $failure = prev($trace);
                 $pathToFile = Backtrace::shortenRelativePath($failure['file']);
                 return $pathToFile . ":" . $failure['line'];
