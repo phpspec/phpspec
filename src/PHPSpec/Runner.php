@@ -81,8 +81,7 @@ class Runner
         }
 
         $result = new Runner\Result;
-        $result->setRuntimeStart(microtime(true));
-                
+        
         $reporter = \PHPSpec\Runner\Reporter::create(
             $result, $options->reporter
         );
@@ -92,6 +91,8 @@ class Runner
         }
         
         $result->setReporter($reporter); 
+        
+        $result->setRuntimeStart(microtime(true));
         
         foreach ($runnable as $behaviourContextReflection) {
             $contextObject = $behaviourContextReflection->newInstance();
