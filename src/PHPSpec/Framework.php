@@ -27,6 +27,7 @@ namespace PHPSpec;
 require_once 'PHPSpec/Exception.php';
 
 require_once 'PHPSpec/Describe/Functions.php';
+require_once 'PHPSpec/Matcher/Functions.php';
 
 /**
  * @category   PHPSpec

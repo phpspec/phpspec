@@ -169,6 +169,16 @@ class Specification
             $this->_performMatching();
             return true;
         }
+        
+        if (\PHPSpec\Matcher\MatcherRepository::has($method)) {
+            $this->setExpectedValue($args);
+            $expected = !is_array($this->getExpectedValue()) ?
+                        array($this->getExpectedValue()) :
+                        $this->getExpectedValue();
+            $this->_matcher = new \PHPSpec\Matcher\UserDefined($method, $expected);
+            $this->_performMatching();
+            return true;
+        }
 
         // check for any predicate style matching
         $result = preg_match(
