@@ -127,6 +127,10 @@ class DirectoryRecursive
             if (is_null($this->_directory)) {
                 throw new \Exception();
             }
+            // hack for 5.3.2 bug
+            if ($this->_filterName === '\PHPSpec\Runner\Filter\Standard') {
+                return new \PHPSpec\Runner\Filter\Standard($this->_directory);
+            }
             $reflection = new \ReflectionClass($this->_filterName);
             $this->_filter = $reflection->newInstance($this->_directory);
         }
