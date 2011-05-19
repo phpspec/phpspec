@@ -27,6 +27,7 @@ namespace PHPSpec;
 require_once 'PHPSpec/Exception.php';
 
 require_once 'PHPSpec/Describe/Functions.php';
+require_once 'PHPSpec/Matcher/Functions.php';
 
 /**
  * @category   PHPSpec
@@ -38,6 +39,8 @@ require_once 'PHPSpec/Describe/Functions.php';
  */
 class Framework
 {
+    const VERSION = '1.0.1beta';
+    
     /**
      * Framework loader
      * 
@@ -73,7 +76,12 @@ spl_autoload_register(
 );
 
 if (!defined('PHPSPEC_COMMAND_CALL')) {
-    $command = new \PHPSpec\Console\Command;
-    $command->run();
+    try {
+        $command = new \PHPSpec\Console\Command;
+        $command->run();
+    } catch (\PHPSpec\Console\Exception $e) {
+        $fp = fopen(STDERR, 'w+');
+        fwrite($fp, $e->getMessage());
+    }
 }
 

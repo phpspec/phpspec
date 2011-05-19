@@ -65,7 +65,7 @@ class Console extends Text
                 break;
             case 'P':
                 $symbol = $this->_showColors ?
-                          \Console_Color::convert("%y$symbol%n") : $symbol;
+                          \Console_Color::convert("%y*%n") : $symbol;
                 break;
             default:
         }
@@ -104,16 +104,45 @@ class Console extends Text
     public function formatReportedIssue(&$increment, $issue, $message,
                                         $issueType = 'FAILED')
     {
-        $issues = parent::formatReportedIssue(
-            &$increment, $issue, $message, $issueType
-        );
-        if ($this->_showColors) {
-            return $this->hasIssues() ?
-                \Console_Color::convert("%r" . $issues . "%n") :
-                ($this->hasPending() ?
-                \Console_Color::convert("%y" . $issues . "%n") :
-                \Console_Color::convert("%g" . $issues . "%n"));  
+        $reportedIssues = '  ';
+        $header = $this->_format($issue->getContextDescription()) .
+                  $issue->getSpecificationText() . ' ' . PHP_EOL;
+        if ($issueType !== 'PENDING') {
+            $reportedIssues .= $increment++ . ') ' . $header;
+        } else {
+            if ($this->_showColors) {
+                $reportedIssues .= \Console_Color::convert(
+                    "%y" . $header . "%n"
+                );
+            } else {
+                $reportedIssues .= $header;
+            }
         }
-        return $issues;
+        $issues = parent::formatReportedIssue($issue, $message, $issueType);
+        if ($this->_showColors) {
+            switch(true) {
+                case $issue instanceof \PHPSpec\Runner\Example\Pending :
+                    return $reportedIssues . \Console_Color::convert(
+                        "%w" . $issues . "%n"
+                    );
+                case $issue instanceof \PHPSpec\Runner\Example\Error :
+                case $issue instanceof \PHPSpec\Runner\Example\Fail :
+                case $issue instanceof \PHPSpec\Runner\Example\Exception :
+                case $issue instanceof \PHPSpec\Runner\Example\DeliberateFail :
+                    return $reportedIssues . \Console_Color::convert(
+                        "%r" . $issues . "%n"
+                    );
+            }  
+        }
+        
+        return $reportedIssues . $issues;
+    }
+    
+    public function formatLines($lines)
+    {
+        if ($this->_showColors) {
+            return \Console_Color::convert("%w" . $lines . "%n");
+        }
+        return $lines;
     }
 }

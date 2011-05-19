@@ -27,6 +27,11 @@ namespace PHPSpec\Runner;
 use \PHPSpec\Exception;
 
 /**
+ * @see \PHPSpec\Util\Backtrace
+ */
+use PHPSpec\Util\Backtrace;
+
+/**
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
@@ -91,10 +96,13 @@ class FailedMatcherException extends Exception
         $step = null;
         
         while (($step = next($trace)) !== null) {
-            if (strpos($step['class'], 'Describe') === 0 ||
-                strpos($step['class'], 'Spec') === strlen($step['class']) - 4) {
+            if (isset($step['class']) &&
+                (strpos($step['class'], 'Describe') === 0 ||
+                strpos($step['class'], 'Spec') ===
+                strlen($step['class']) - 4)) {
                 $failure = prev($trace);
-                return $failure['file'] . ":" . $failure['line'];
+                $pathToFile = Backtrace::shortenRelativePath($failure['file']);
+                return $pathToFile . ":" . $failure['line'];
             }
         }
     }

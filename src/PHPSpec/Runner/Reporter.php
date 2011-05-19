@@ -27,6 +27,11 @@ namespace PHPSpec\Runner;
 use PHPSpec\Runner\Result;
 
 /**
+ * @see \PHPSpec\Util\Backtrace
+ */
+use PHPSpec\Util\Backtrace;
+
+/**
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
@@ -69,12 +74,9 @@ abstract class Reporter
     public static function create(Result $result, $reporter = null)
     {
         if ($reporter === null) {
-            $reporter = self::TEXT;
+            $reporter = self::CONSOLE;
         }
         switch(ucfirst($reporter)) {
-            case self::TEXT :
-                $reporterClass = new \PHPSpec\Runner\Reporter\Text($result);
-                break;
             case self::CONSOLE :
                 $reporterClass = new \PHPSpec\Runner\Reporter\Console($result);
                 break;
@@ -134,6 +136,19 @@ abstract class Reporter
     public function showColors($show)
     {
         $this->_showColors = $show;
+    }
+    
+    /**
+     * Returns a slice of the exception trace formatted nicely. The size of the
+     * slice is determined by the argument <code>$lines</code> 
+     * 
+     * @param Exception $e
+     * @param integer   $lines
+     * @return string
+     */
+    public function getPrettyTrace(\Exception $e, $lines)
+    {
+        return Backtrace::pretty($e->getTrace(), $lines);
     }
 
     /**
