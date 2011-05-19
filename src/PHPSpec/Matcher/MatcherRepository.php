@@ -50,8 +50,9 @@ class MatcherRepository
     }
     
     /**
-     * Enter description here ...
-     * @param unknown_type $matcher
+     * Checks if there is a matcher of a given name
+     * 
+     * @param string $matcher
      */
     public static function has($matcher)
     {
@@ -59,9 +60,10 @@ class MatcherRepository
     }
     
     /**
-     * Enter description here ...
-     * @param unknown_type $matcher
-     * @return unknown_type
+     * Returns the matcher identified by a given name
+     * 
+     * @param string $matcher
+     * @return Closure
      */
     public static function get($matcher)
     {
