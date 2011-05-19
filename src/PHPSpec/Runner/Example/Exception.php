@@ -22,6 +22,11 @@
 namespace PHPSpec\Runner\Example;
 
 /**
+ * @see \PHPSpec\Util\Backtrace
+ */
+use PHPSpec\Util\Backtrace;
+
+/**
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
@@ -72,7 +77,15 @@ class Exception extends Type
      */
     public function toString()
     {
-        return (string) $this->_exception->getMessage();
+        return 'Failure/Exception: ' . $this->getSourceFromLine() . PHP_EOL .
+               '     ' . get_class($this->_exception) . ': ' . 
+               (string) $this->_exception->getMessage();
+    }
+    
+    public function getSourceFromLine()
+    {
+        $trace = $this->_exception->getTrace();
+        return Backtrace::code($trace);
     }
 
     /**
@@ -84,14 +97,7 @@ class Exception extends Type
      */
     public function getPrettyTrace($lines)
     {
-        $formatted = '';
-        foreach ($this->_exception->getTrace() as $line) {
-            if ($lines === 0) {
-                 return $formatted;
-            }
-            $formatted .= $line['file'] . ':' . $line['line'] . PHP_EOL;
-            $lines--;
-        }
+        return Backtrace::pretty($this->_exception->getTrace(), $lines);
     }
 
     /**

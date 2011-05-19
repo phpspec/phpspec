@@ -172,7 +172,7 @@ class Context implements \Countable
     public function pending($message = null)
     {
         if (is_null($message)) {
-            $message = 'Incomplete';
+            $message = 'No reason given';
         }
         
         throw new \PHPSpec\Runner\PendingException($message);

@@ -44,6 +44,7 @@ class Runner
                                     
         // check for straight class to execute
         if (isset($options->specFile)) {
+            $options->specFile = rtrim($options->specFile, DIRECTORY_SEPARATOR);
             $pathToFile = getcwd();
             if (false !== strpos($options->specFile, '/')) {
                 $pathToFile = str_replace(
@@ -80,15 +81,18 @@ class Runner
         }
 
         $result = new Runner\Result;
-        $result->setRuntimeStart(microtime(true));
-                
-        $reporter = \PHPSpec\Runner\Reporter::create($result, $options->reporter);
+        
+        $reporter = \PHPSpec\Runner\Reporter::create(
+            $result, $options->reporter
+        );
 
         if ($options->c || $options->color || $options->colour) {
             $reporter->showColors(true);
         }
         
         $result->setReporter($reporter); 
+        
+        $result->setRuntimeStart(microtime(true));
         
         foreach ($runnable as $behaviourContextReflection) {
             $contextObject = $behaviourContextReflection->newInstance();
