@@ -119,38 +119,34 @@ abstract class Text extends Reporter
     public function getFailingReport()
     {
         $reportedIssues = '';
+        $issues = $this->_result->getExamples();
         if ($this->_result->countFailures() > 0 ||
             $this->_result->countDeliberateFailures() > 0) {
             $reportedIssues .= 'Failures:' . PHP_EOL . PHP_EOL;
-            $failed = $this->_result->getTypes('fail');
-            $increment = 1;
-            
-            if ($this->_result->countDeliberateFailures() > 0) {
-                $failed = $this->_result->getTypes('deliberateFail');
-                foreach ($failed as $failure) {
-                    $failedMessage = '';
-                    if ($failure->getMessage() !== 'fail') {
-                        $failedMessage .= 'fail "' .
-                                          $failure->getMessage() . '"';
-                    } else {
-                        $failedMessage .= 'fail';
-                    }
-                    $reportedIssues .= $this->formatReportedIssue(
-                        $increment, $failure, $failedMessage
-                    );
-                    $reportedIssues .= $this->formatLines(
-                        '     # ' . $failure->getLine()
-                    ) . PHP_EOL . PHP_EOL;
+        }
+        $increment = 1;
+        foreach ($issues as $failure) {
+            if ($failure instanceof \PHPSpec\Runner\Example\DeliberateFail) {
+                $failedMessage = '';
+                if ($failure->getMessage() !== 'fail') {
+                    $failedMessage .= 'fail "' . $failure->getMessage() . '"';
+                } else {
+                    $failedMessage .= 'fail';
                 }
-            } else {
-                foreach ($failed as $failure) {
-                    $reportedIssues .= $this->formatReportedIssue(
-                        $increment, $failure, $failure->getFailedMessage()
-                    );
-                    $reportedIssues .= $this->formatLines(
-                        '     # ' . $failure->getLine()
-                    ) . PHP_EOL . PHP_EOL;
-                }
+                $reportedIssues .= $this->formatReportedIssue(
+                    $increment, $failure, $failedMessage
+                );
+                $reportedIssues .= $this->formatLines(
+                    '     # ' . $failure->getLine()
+                ) . PHP_EOL . PHP_EOL;
+            }
+            if ($failure instanceof \PHPSpec\Runner\Example\Fail) {
+                $reportedIssues .= $this->formatReportedIssue(
+                    $increment, $failure, $failure->getFailedMessage()
+                );
+                $reportedIssues .= $this->formatLines(
+                    '     # ' . $failure->getLine()
+                ) . PHP_EOL . PHP_EOL;
             }
         }
         return $reportedIssues;
@@ -185,6 +181,11 @@ abstract class Text extends Reporter
         return $reportedIssues;
     }
     
+    /**
+     * Creates and return exception report
+     * 
+     * @return string
+     */
     public function getExceptionReport()
     {
         $reportedIssues = '';
