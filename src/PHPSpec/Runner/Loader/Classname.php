@@ -88,7 +88,7 @@ class Classname
      */
     public function load()
     {
-        $this->setClassAndClassFile($this->_spec);
+        $this->setClassAndClassFile();
         
         // existence test not implemented - let require call catch fatal error
         if (!is_readable($this->_pathToFile . '/' . $this->_classFile)) {
@@ -138,7 +138,7 @@ class Classname
 	        
 	        $this->_classFile = $this->_spec;
 	        
-	        if ($this->endsWithSpec()) {
+	        if ($this->endsWithExtensionAndSpec()) {
 	            $this->_class = 'Describe' . $this->stripExtensionAndSpec();
 	            
 	        } else {
@@ -193,6 +193,15 @@ class Classname
         }
 	}
 
+	/**
+	 * Checks whether spec ends with "Spec.php"
+	 * 
+	 * @return boolean
+	 */
+	private function endsWithExtensionAndSpec()
+	{
+	    return substr($this->_spec, -8) === 'Spec.php';
+	}
     
 	/**
 	 * Checks whether spec ends with "Spec"
