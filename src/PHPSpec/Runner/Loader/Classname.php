@@ -38,81 +38,240 @@ class Classname
      * @var array
      */
     protected $_loaded = array();
+    
+    /**
+     * The name of the spec class
+     * 
+     * @var string
+     */
+    protected $_class;
+    
+    /**
+     * The name of the spec file
+     * 
+     * @var string
+     */
+    protected $_classFile;
+    
+    /**
+     * The spec name passed in the command line
+     * 
+     * @var string
+     */
+    protected $_spec;
+    
+    /**
+     * Path in the FS where spec file is located
+     * 
+     * @var string
+     */
+    protected $_pathToFile;
+    
+    /**
+     * Creates the loader based on the spec given as argument and the path to
+     * file
+     * 
+     * @param string $spec
+     * @param string $pathToFile
+     */
+    public function __construct($spec, $pathToFile)
+    {
+        $this->_spec = $spec;
+        $this->_pathToFile = $pathToFile;
+    }
 
     /**
      * Loads classes
      * 
-     * Convention; For loading spec files and classes on command line
+     * @throws \PHPSpec\Exception
+     * @return array
+     */
+    public function load()
+    {
+        $this->setClassAndClassFile($this->_spec);
+        
+        // existence test not implemented - let require call catch fatal error
+        if (!is_readable($this->_pathToFile . '/' . $this->_classFile)) {
+            die(
+                'phpspec: cannot open ' .
+                $this->_pathToFile . '/' . $this->_classFile . PHP_EOL
+            );
+        }
+        require_once $this->_pathToFile . '/' . $this->_classFile;
+        
+        if (!class_exists($this->_class, false)) {
+            throw new \PHPSpec\Exception(
+                'The class ' . $this->_class .
+                ' is not defined within the spec file ' . $this->_classFile
+            );
+        }
+
+        $classReflected = new \ReflectionClass($this->_class);
+
+        $this->_loaded = array($classReflected);
+
+        return $this->_loaded;
+    }
+    
+	/**
+	 * Sets the class and class file based on the spec argument
+	 * 
+	 * Convention; For loading spec files and classes on command line
      * 
-     * Convention #1: Classnames are reflected in Filenames which follow the
+     * Convention #1: Specs are reflected in Filenames which follow the
      * format of "Describe*", e.g. "DescribeNewBowlingGame" defined in
      * "DescribeNewBowlingGame.php".
      * 
-     * Convention #2: Classnames are reflected in the Filename by removing
+     * Convention #2: Specs are reflected in the Filename by removing
      * the "Describe" prefix and appending a "Spec" suffix, e.g.
      * "DescribeNewBowlingGame" defined in "NewBowlingGameSpec.php".
      * 
      * Conventions are case sensitive. Both Spec and Describe are expected
      * to commence with a capital letter. On the command line, the .php
      * prefix is optional.
-     * 
-     * @param string $className
-     * @param string $pathToFile
-     * @throws \PHPSpec\Exception
-     * @return array
-     */
-    public function load($className, $pathToFile)
-    {
-        $class = '';
-        
-        if (substr($className, strlen($className)-4, 4) !== '.php' &&
-            strpos($className, 'Describe') == 0 &&
-            substr($className, strlen($className)-4, 4) !== 'Spec') {
-            $class = $className;
-            $classFile = $className . '.php';
-        } elseif (substr($className, strlen($className)-4, 4) !== '.php' &&
-                  substr($className, strlen($className)-4, 4) == 'Spec') {
-            $classPartial = substr($className, 0, strlen($className)-4);
-            $class = 'Describe' . $classPartial;
-            $classFile = $className . '.php';
-        } elseif (substr($className, strlen($className)-4, 4) == '.php' &&
-                  substr($className, 0, 8) == 'Describe') {
-            $class = substr($className, 0, strlen($className)-4);
-            $classFile = $className;
-        } elseif (substr($className, strlen($className)-4, 4) == '.php' &&
-                  substr($className, strlen($className)-8, 4) == 'Spec') {
-            $classPartial = substr($className, 0, strlen($className)-8);
-            $class = 'Describe' . $classPartial;
-            $classFile = $className;
-        } else {
+	 * 
+	 * @throws \PHPSpec\Exception
+	 */
+	private function setClassAndClassFile()
+	{
+	    if ($this->isPhpFile()) {
+	        
+	        $this->_classFile = $this->_spec;
+	        
+	        if ($this->endsWithSpec()) {
+	            $this->_class = 'Describe' . $this->stripExtensionAndSpec();
+	            
+	        } else {
+	            $this->_class = $this->stripExtension();
+	        }
+	        
+	    } else {
+	        
+	        $this->_classFile = $this->_spec . '.php';
+	        $this->_class     = $this->_spec;
+	        
+	        if ($this->endsWithSpec()) {
+	            $this->_class = 'Describe' . $this->stripSpec();
+	        }
+	    }
+	    
+	    $this->assertStartsWithDescribe();
+	}
+
+	/**
+	 * Checks whether spec starts with "Describe"
+	 * 
+	 * @return boolean
+	 */
+	private function startsWithDescribe()
+	{
+		return strpos($this->_spec, 'Describe') == 0;
+	}
+	
+	/**
+	 * Checks whether spec will not start with "Describe"
+	 * 
+	 * @return boolean
+	 */
+	private function doesNotStartWithDescribe()
+	{
+		return !$this->startsWithDescribe();
+	}
+	
+	/**
+	 * Checks whether spec starts with "Describe" and throw an exception if not
+	 * 
+	 * @throws \PHPSpec\Exception
+	 */
+	private function assertStartsWithDescribe()
+	{
+	    if ($this->doesNotStartWithDescribe()) {
             throw new \PHPSpec\Exception(
                 'Invalid class or filename given for a spec; ' .
-                'spec could not be found using "' . $className . '"'
+                'spec could not be found using "' . $this->_spec . '"'
             );
         }
-        
-        // existence test not implemented - let require call catch fatal error
-        if (!is_readable($pathToFile . '/' . $classFile)) {
-            die(
-                'phpspec: cannot open ' .
-                $pathToFile . '/' . $classFile . PHP_EOL
-            );
-        }
-        require_once $pathToFile . '/' . $classFile;
-        
-        if (!class_exists($class, false)) {
-            throw new \PHPSpec\Exception(
-                'The class ' . $class .
-                ' is not defined within the spec file ' . $classFile
-            );
-        }
+	}
 
-        $classReflected = new \ReflectionClass($class);
+    
+	/**
+	 * Checks whether spec ends with "Spec"
+	 * 
+	 * @return boolean
+	 */
+	private function endsWithSpec()
+	{
+		return substr($this->_spec, -4) === 'Spec';
+	}
+    
+	/**
+	 * Checks whether spec does not end with "Spec"
+	 * 
+	 * @return boolean
+	 */
+	private function doesNotEndWithSpec()
+	{
+		return !$this->endsWithSpec();
+	}
 
-        $this->_loaded = array($classReflected);
+	/**
+	 * Checks whether spec is a PHP file
+	 * 
+	 * @return boolean
+	 */
+	private function isPhpFile()
+	{
+		return substr($this->_spec, -4) === '.php';
+	}
 
-        return $this->_loaded;
-    }
+	/**
+	 * Checks whether spec is not a PHP file
+	 * 
+	 * @return boolean
+	 */
+	private function NotAPhpFile()
+	{
+		return !$this->isPhpFile();
+	}
+
+	/**
+	 * Removes the .php from the spec file
+	 * 
+	 * @return string
+	 */
+	private function stripExtension()
+	{
+	    if ($this->isPhpFile()) {
+	        return substr($this->_spec, 0, strlen($this->_spec) - 4);
+	    }
+	    return $this->_spec;
+	}
+	
+    /**
+	 * Removes the .php from the spec file
+	 * 
+	 * @return string
+	 */
+	private function stripExtensionAndSpec()
+	{
+	    if (substr($this->_spec, -8) === 'Spec.php') {
+	        return substr($this->_spec, 0, strlen($this->_spec) - 8);
+	    }
+	    return $this->_spec;
+	}
+
+	/**
+	 * Removes the Spec from the spec file
+	 * 
+	 * @return string
+	 */
+	private function stripSpec()
+	{
+	    if ($this->endsWithSpec()) {
+	        return substr($this->_spec, 0, strlen($this->_spec) - 4);
+	    }
+	    return $this->_spec;
+	}
 
     /**
      * Gets the loaded examples in array
