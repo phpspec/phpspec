@@ -113,10 +113,10 @@ class Classname
         return $this->_loaded;
     }
     
-	/**
-	 * Sets the class and class file based on the spec argument
-	 * 
-	 * Convention; For loading spec files and classes on command line
+    /**
+     * Sets the class and class file based on the spec argument
+     * 
+     * Convention; For loading spec files and classes on command line
      * 
      * Convention #1: Specs are reflected in Filenames which follow the
      * format of "Describe*", e.g. "DescribeNewBowlingGame" defined in
@@ -129,158 +129,158 @@ class Classname
      * Conventions are case sensitive. Both Spec and Describe are expected
      * to commence with a capital letter. On the command line, the .php
      * prefix is optional.
-	 * 
-	 * @throws \PHPSpec\Exception
-	 */
-	private function setClassAndClassFile()
-	{
-	    if ($this->isPhpFile()) {
-	        
-	        $this->_classFile = $this->_spec;
-	        
-	        if ($this->endsWithExtensionAndSpec()) {
-	            $this->_class = 'Describe' . $this->stripExtensionAndSpec();
-	            
-	        } else {
-	            $this->_class = $this->stripExtension();
-	        }
-	        
-	    } else {
-	        
-	        $this->_classFile = $this->_spec . '.php';
-	        $this->_class     = $this->_spec;
-	        
-	        if ($this->endsWithSpec()) {
-	            $this->_class = 'Describe' . $this->stripSpec();
-	        }
-	    }
-	    
-	    $this->assertStartsWithDescribe();
-	}
+     * 
+     * @throws \PHPSpec\Exception
+     */
+    private function setClassAndClassFile()
+    {
+        if ($this->isPhpFile()) {
+            
+            $this->_classFile = $this->_spec;
+            
+            if ($this->endsWithExtensionAndSpec()) {
+                $this->_class = 'Describe' . $this->stripExtensionAndSpec();
+                
+            } else {
+                $this->_class = $this->stripExtension();
+            }
+            
+        } else {
+            
+            $this->_classFile = $this->_spec . '.php';
+            $this->_class     = $this->_spec;
+            
+            if ($this->endsWithSpec()) {
+                $this->_class = 'Describe' . $this->stripSpec();
+            }
+        }
+        
+        $this->assertStartsWithDescribe();
+    }
 
-	/**
-	 * Checks whether spec starts with "Describe"
-	 * 
-	 * @return boolean
-	 */
-	private function startsWithDescribe()
-	{
-		return strpos($this->_spec, 'Describe') == 0;
-	}
-	
-	/**
-	 * Checks whether spec will not start with "Describe"
-	 * 
-	 * @return boolean
-	 */
-	private function doesNotStartWithDescribe()
-	{
-		return !$this->startsWithDescribe();
-	}
-	
-	/**
-	 * Checks whether spec starts with "Describe" and throw an exception if not
-	 * 
-	 * @throws \PHPSpec\Exception
-	 */
-	private function assertStartsWithDescribe()
-	{
-	    if ($this->doesNotStartWithDescribe()) {
+    /**
+     * Checks whether spec starts with "Describe"
+     * 
+     * @return boolean
+     */
+    private function startsWithDescribe()
+    {
+        return strpos($this->_spec, 'Describe') == 0;
+    }
+    
+    /**
+     * Checks whether spec will not start with "Describe"
+     * 
+     * @return boolean
+     */
+    private function doesNotStartWithDescribe()
+    {
+        return !$this->startsWithDescribe();
+    }
+    
+    /**
+     * Checks whether spec starts with "Describe" and throw an exception if not
+     * 
+     * @throws \PHPSpec\Exception
+     */
+    private function assertStartsWithDescribe()
+    {
+        if ($this->doesNotStartWithDescribe()) {
             throw new \PHPSpec\Exception(
                 'Invalid class or filename given for a spec; ' .
                 'spec could not be found using "' . $this->_spec . '"'
             );
         }
-	}
+    }
 
-	/**
-	 * Checks whether spec ends with "Spec.php"
-	 * 
-	 * @return boolean
-	 */
-	private function endsWithExtensionAndSpec()
-	{
-	    return substr($this->_spec, -8) === 'Spec.php';
-	}
-    
-	/**
-	 * Checks whether spec ends with "Spec"
-	 * 
-	 * @return boolean
-	 */
-	private function endsWithSpec()
-	{
-		return substr($this->_spec, -4) === 'Spec';
-	}
-    
-	/**
-	 * Checks whether spec does not end with "Spec"
-	 * 
-	 * @return boolean
-	 */
-	private function doesNotEndWithSpec()
-	{
-		return !$this->endsWithSpec();
-	}
-
-	/**
-	 * Checks whether spec is a PHP file
-	 * 
-	 * @return boolean
-	 */
-	private function isPhpFile()
-	{
-		return substr($this->_spec, -4) === '.php';
-	}
-
-	/**
-	 * Checks whether spec is not a PHP file
-	 * 
-	 * @return boolean
-	 */
-	private function NotAPhpFile()
-	{
-		return !$this->isPhpFile();
-	}
-
-	/**
-	 * Removes the .php from the spec file
-	 * 
-	 * @return string
-	 */
-	private function stripExtension()
-	{
-	    if ($this->isPhpFile()) {
-	        return substr($this->_spec, 0, strlen($this->_spec) - 4);
-	    }
-	    return $this->_spec;
-	}
-	
     /**
-	 * Removes the .php from the spec file
-	 * 
-	 * @return string
-	 */
-	private function stripExtensionAndSpec()
-	{
-	    if (substr($this->_spec, -8) === 'Spec.php') {
-	        return substr($this->_spec, 0, strlen($this->_spec) - 8);
-	    }
-	    return $this->_spec;
-	}
+     * Checks whether spec ends with "Spec.php"
+     * 
+     * @return boolean
+     */
+    private function endsWithExtensionAndSpec()
+    {
+        return substr($this->_spec, -8) === 'Spec.php';
+    }
+    
+    /**
+     * Checks whether spec ends with "Spec"
+     * 
+     * @return boolean
+     */
+    private function endsWithSpec()
+    {
+        return substr($this->_spec, -4) === 'Spec';
+    }
+    
+    /**
+     * Checks whether spec does not end with "Spec"
+     * 
+     * @return boolean
+     */
+    private function doesNotEndWithSpec()
+    {
+        return !$this->endsWithSpec();
+    }
 
-	/**
-	 * Removes the Spec from the spec file
-	 * 
-	 * @return string
-	 */
-	private function stripSpec()
-	{
-	    if ($this->endsWithSpec()) {
-	        return substr($this->_spec, 0, strlen($this->_spec) - 4);
-	    }
-	    return $this->_spec;
-	}
+    /**
+     * Checks whether spec is a PHP file
+     * 
+     * @return boolean
+     */
+    private function isPhpFile()
+    {
+        return substr($this->_spec, -4) === '.php';
+    }
+
+    /**
+     * Checks whether spec is not a PHP file
+     * 
+     * @return boolean
+     */
+    private function NotAPhpFile()
+    {
+        return !$this->isPhpFile();
+    }
+
+    /**
+     * Removes the .php from the spec file
+     * 
+     * @return string
+     */
+    private function stripExtension()
+    {
+        if ($this->isPhpFile()) {
+            return substr($this->_spec, 0, strlen($this->_spec) - 4);
+        }
+        return $this->_spec;
+    }
+    
+    /**
+     * Removes the .php from the spec file
+     * 
+     * @return string
+     */
+    private function stripExtensionAndSpec()
+    {
+        if (substr($this->_spec, -8) === 'Spec.php') {
+            return substr($this->_spec, 0, strlen($this->_spec) - 8);
+        }
+        return $this->_spec;
+    }
+
+    /**
+     * Removes the Spec from the spec file
+     * 
+     * @return string
+     */
+    private function stripSpec()
+    {
+        if ($this->endsWithSpec()) {
+            return substr($this->_spec, 0, strlen($this->_spec) - 4);
+        }
+        return $this->_spec;
+    }
 
     /**
      * Gets the loaded examples in array

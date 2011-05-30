@@ -36,7 +36,7 @@ class MatcherRepository
      * 
      * @var array
      */
-    protected static $matchers;
+    protected static $_matchers;
     
     /**
      * Adds matchers to the repository
@@ -46,7 +46,7 @@ class MatcherRepository
      */
     public static function add($matcher, $definition)
     {
-        self::$matchers[$matcher] = $definition;
+        self::$_matchers[$matcher] = $definition;
     }
     
     /**
@@ -56,7 +56,7 @@ class MatcherRepository
      */
     public static function has($matcher)
     {
-        return isset(self::$matchers[$matcher]);
+        return isset(self::$_matchers[$matcher]);
     }
     
     /**
@@ -67,6 +67,6 @@ class MatcherRepository
      */
     public static function get($matcher)
     {
-        return self::$matchers[$matcher];
+        return self::$_matchers[$matcher];
     }
 }

@@ -175,7 +175,9 @@ class Specification
             $expected = !is_array($this->getExpectedValue()) ?
                         array($this->getExpectedValue()) :
                         $this->getExpectedValue();
-            $this->_matcher = new \PHPSpec\Matcher\UserDefined($method, $expected);
+            $this->_matcher = new \PHPSpec\Matcher\UserDefined(
+                $method, $expected
+            );
             $this->_performMatching();
             return true;
         }
