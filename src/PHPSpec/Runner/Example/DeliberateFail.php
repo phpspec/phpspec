@@ -29,7 +29,7 @@ namespace PHPSpec\Runner\Example;
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class DeliberateFail extends Exception
+class DeliberateFail extends Type
 {
 
     /**
@@ -40,10 +40,65 @@ class DeliberateFail extends Exception
     protected $_isException = false;
     
     /**
+     * Not quite
+     * 
+     * @var bool
+     */
+    protected $_isFail = false;
+    
+    /**
      * Whether this exception result on deliberate fail() call
      * 
      * @var bool
      */
     protected $_isDeliberateFail = true;
+    
+    /**
+     * @var string
+     */
+    protected $_line = '';
+    
+    /**
+     * @var Exception
+     */
+    protected $_exception;
+    
+    /**
+     * The Exception is constructed with the example and the example thrown in
+     * it
+     * 
+     * @param \PHPSpec\Runner\Example $example
+     * @param \Exception $e
+     */
+    public function __construct(\PHPSpec\Runner\Example $example, \Exception $e)
+    {
+        parent::__construct($example);
+        $this->_exception = $e;
+    }
+    
+    /**
+     * Sets the line
+     * 
+     * @param string $line
+     */
+    public function setLine($line)
+    {
+        $this->_line = $line;
+    }
+    
+    /**
+     * Gets the line
+     * 
+     * @return string
+     */
+    public function getLine()
+    {
+        return $this->_line;
+    }
+    
+    public function getMessage()
+    {
+        return $this->_exception->getMessage();
+    }
 
 }

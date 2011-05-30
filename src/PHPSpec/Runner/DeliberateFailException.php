@@ -27,6 +27,11 @@ namespace PHPSpec\Runner;
 use \PHPSpec\Exception;
 
 /**
+ * @see \PHPSpec\Util\Backtrace
+ */
+use PHPSpec\Util\Backtrace;
+
+/**
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
@@ -36,5 +41,75 @@ use \PHPSpec\Exception;
  */
 class DeliberateFailException extends Exception
 {
-
+    /**
+     * The exception failure path to file and line like:
+     * Path/To/Exception:42
+     * Where 42 is the line where the failure happened
+     * 
+     * @var string
+     */
+    protected $_formattedLine;
+    
+    /**
+     * Failed Matcher Exception is constructed with message, code and exception
+     * 
+     * @param string $message
+     * @param integer $code
+     * @param \Exception $previous
+     */
+    public function __construct($message = null, $code = 0,
+                                \Exception $previous = null)
+    {
+         parent::__construct($message, $code, $previous);
+         $this->_formattedLine = $this->formatFailureLine();
+    }
+    
+    /**
+     * Gets the formattted line
+     * 
+     * @return string
+     */
+    public function getFormattedLine()
+    {
+        return $this->_formattedLine;
+    }
+    
+    /**
+     * Sets the formatted line
+     * 
+     * @param string $formattedLine
+     */
+    public function setFormattedLine($formattedLine)
+    {
+        $this->_formattedLine = $formattedLine;
+    }
+    
+    /**
+     * Formats and returns the failure line to format:
+     * Path/To/Exception:42
+     * 
+     * @return string
+     */
+    protected function formatFailureLine()
+    {
+        $trace = array_slice($this->getTrace(), 0, 10);
+        $step = null;
+        $x = 1;
+        while (($step = next($trace)) !== null) {
+            if (isset($step['class']) &&
+                (strpos($step['class'], 'Describe') === 0 ||
+                strpos($step['class'], 'Spec') ===
+                strlen($step['class']) - 4)) {
+                $failure = prev($trace);
+                $pathToFile = Backtrace::shortenRelativePath($failure['file']);
+                return $pathToFile . ":" . $failure['line'];
+            }
+            if ($x === 10) {
+                $failure = prev($trace);
+                return Backtrace::shortenRelativePath($failure['file']) . ":" .
+                $failure['line'];
+            }
+            $x++;
+        }
+    }
 }
