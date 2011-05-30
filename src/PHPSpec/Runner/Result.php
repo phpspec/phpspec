@@ -140,9 +140,12 @@ class Result implements \Countable
      * @param Example $example
      * @param \Exception $e
      */
-    public function addDeliberateFailure(Example $example, \Exception $e)
+    public function addDeliberateFailure(Example $example, $e)
     {
-        $this->_examples[] = new Example\DeliberateFail($example, $e);
+        $line = $e->getFormattedLine();
+        $fail = new Example\DeliberateFail($example, $e);
+        $fail->setLine($line);
+        $this->_examples[] = $fail;
         $this->_deliberateFailCount++;
         $this->_reporter->outputStatus('F');
     }

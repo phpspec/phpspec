@@ -58,8 +58,10 @@ class Runner
                     realpath($pathToFile . "/$options->specFile")
                 );
             } else {
-                $loader = new Runner\Loader\Classname;
-                $runnable += $loader->load($options->specFile, $pathToFile);
+                $loader = new Runner\Loader\Classname(
+                    $options->specFile, $pathToFile
+                );
+                $runnable += $loader->load();
             }
         }
     

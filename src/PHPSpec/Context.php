@@ -189,7 +189,7 @@ class Context implements \Countable
     public function fail($message = null)
     {
         if (is_null($message)) {
-            $message = 'Deliberate Fail';
+            $message = 'fail';
         }
 
         throw new \PHPSpec\Runner\DeliberateFailException($message);

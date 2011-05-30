@@ -36,6 +36,8 @@ require_once 'Console/Color.php';
  */
 class Console extends Text
 {
+    protected $_color;
+    
     /**
      * Outputs a status symbol after each test run.
      * . for Pass, E for error/exception, F for failure, and P for
@@ -56,16 +58,16 @@ class Console extends Text
         switch ($symbol) {
             case '.':
                 $symbol = $this->_showColors ?
-                          \Console_Color::convert("%g$symbol%n") : $symbol;
+                          $this->getColor()->convert("%g$symbol%n") : $symbol;
                 break;
             case 'F':
             case 'E':
                 $symbol = $this->_showColors ?
-                          \Console_Color::convert("%r$symbol%n") : $symbol;
+                          $this->getColor()->convert("%r$symbol%n") : $symbol;
                 break;
             case 'P':
                 $symbol = $this->_showColors ?
-                          \Console_Color::convert("%y*%n") : $symbol;
+                          $this->getColor()->convert("%y*%n") : $symbol;
                 break;
             default:
         }
@@ -83,10 +85,10 @@ class Console extends Text
         $totals = parent::getTotals();
         if ($this->_showColors) {
             return $this->hasIssues() ?
-                \Console_Color::convert("%r" . $totals . "%n") :
+                $this->getColor()->convert("%r" . $totals . "%n") :
                 ($this->hasPending() ?
-                \Console_Color::convert("%y" . $totals . "%n") :
-                \Console_Color::convert("%g" . $totals . "%n"));
+                $this->getColor()->convert("%y" . $totals . "%n") :
+                $this->getColor()->convert("%g" . $totals . "%n"));
         }
         return $totals;
     }
@@ -111,7 +113,7 @@ class Console extends Text
             $reportedIssues .= $increment++ . ') ' . $header;
         } else {
             if ($this->_showColors) {
-                $reportedIssues .= \Console_Color::convert(
+                $reportedIssues .= $this->getColor()->convert(
                     "%y" . $header . "%n"
                 );
             } else {
@@ -122,14 +124,14 @@ class Console extends Text
         if ($this->_showColors) {
             switch(true) {
                 case $issue instanceof \PHPSpec\Runner\Example\Pending :
-                    return $reportedIssues . \Console_Color::convert(
+                    return $reportedIssues . $this->getColor()->convert(
                         "%w" . $issues . "%n"
                     );
                 case $issue instanceof \PHPSpec\Runner\Example\Error :
                 case $issue instanceof \PHPSpec\Runner\Example\Fail :
                 case $issue instanceof \PHPSpec\Runner\Example\Exception :
                 case $issue instanceof \PHPSpec\Runner\Example\DeliberateFail :
-                    return $reportedIssues . \Console_Color::convert(
+                    return $reportedIssues . $this->getColor()->convert(
                         "%r" . $issues . "%n"
                     );
             }  
@@ -138,11 +140,25 @@ class Console extends Text
         return $reportedIssues . $issues;
     }
     
+    /**
+     * Formats the lines
+     * 
+     * @param string $lines
+     * @return string
+     */
     public function formatLines($lines)
     {
         if ($this->_showColors) {
-            return \Console_Color::convert("%w" . $lines . "%n");
+            return $this->getColor()->convert("%w" . $lines . "%n");
         }
         return $lines;
+    }
+    
+    protected function getColor()
+    {
+        if (!isset($this->_color)) {
+            $this->_color = new \Console_Color;
+        }
+        return $this->_color;
     }
 }
