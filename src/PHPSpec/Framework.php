@@ -39,7 +39,7 @@ require_once 'PHPSpec/Matcher/Functions.php';
  */
 class Framework
 {
-    const VERSION = '1.0.1beta';
+    const VERSION = '1.1.1beta';
     
     /**
      * Framework loader
