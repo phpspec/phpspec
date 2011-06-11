@@ -279,5 +279,50 @@ class Context implements \Countable
     {
         $this->_count = $i;
     }
+    
+    /**
+     * Wrapper for {@link \PHPSpec\Mocks\Mock} factory
+     * 
+     * @param string $class
+     * @param array  $stubs
+     * @return object
+     */
+    public function double($class = 'stdClass', $stubs = array())
+    {
+        if (is_dir(dirname(__FILE__) . '/Mocks')) {
+            $double = new \PHPSpec\Mocks\Mock($class);
+            $double = $double->create();
+            if (!empty($stubs)) {
+                foreach ($stubs as $stub => $value) {
+                    $double->stub($stub)->andReturn($value);
+                }
+            }
+            return $double;
+        }
+        throw new \PHPSpec\Exception('PHPSpec_Mocks is not installed');
+    }
 
+    /**
+     * Wrapper for {@link \PHPSpec\Mocks\Mock} factory
+     * 
+     * @param string $class
+     * @param array  $stubs
+     * @return object
+     */
+    public function mock($class = 'stdClass', $stubs = array())
+    {
+        return $this->double($class, $stubs);
+    }
+
+    /**
+     * Wrapper for {@link \PHPSpec\Mocks\Mock} factory
+     * 
+     * @param string $class
+     * @param array  $stubs
+     * @return object
+     */
+    public function stub($class = 'stdClass', $stubs = array())
+    {
+        return $this->double($class, $stubs);
+    }
 }
