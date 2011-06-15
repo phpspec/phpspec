@@ -155,25 +155,25 @@ class Classname
             }
         }
         
-        $this->assertStartsWithDescribe();
+        $this->assertClassStartsWithDescribe();
     }
 
     /**
-     * Checks whether spec starts with "Describe"
+     * Checks whether class starts with "Describe"
      * 
      * @return boolean
      */
-    private function startsWithDescribe()
+    private function classStartsWithDescribe()
     {
-        return strpos($this->_spec, 'Describe') == 0;
+        return strpos($this->_class, 'Describe') === 0;
     }
     
     /**
-     * Checks whether spec will not start with "Describe"
+     * Checks whether class will not start with "Describe"
      * 
      * @return boolean
      */
-    private function doesNotStartWithDescribe()
+    private function classDoesNotStartWithDescribe()
     {
         return !$this->startsWithDescribe();
     }
@@ -183,9 +183,9 @@ class Classname
      * 
      * @throws \PHPSpec\Exception
      */
-    private function assertStartsWithDescribe()
+    private function assertClassStartsWithDescribe()
     {
-        if ($this->doesNotStartWithDescribe()) {
+        if ($this->classDoesNotStartWithDescribe()) {
             throw new \PHPSpec\Exception(
                 'Invalid class or filename given for a spec; ' .
                 'spec could not be found using "' . $this->_spec . '"'
