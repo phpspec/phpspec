@@ -57,7 +57,7 @@ class BeTrue implements Matcher
      * 
      * @param unused $expected
      */
-    public function __construct($expected)
+    public function __construct($expected = true)
     {
         $this->_expected = true;
     }
