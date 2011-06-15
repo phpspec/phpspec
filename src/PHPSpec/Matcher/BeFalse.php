@@ -57,7 +57,7 @@ class BeFalse implements Matcher
      * 
      * @param unknown_type $expected
      */
-    public function __construct($expected)
+    public function __construct($expected = false)
     {
         $this->_expected = false;
     }
