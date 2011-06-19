@@ -80,4 +80,19 @@ class ErrorException extends \PHPSpec\Exception
                 break;
         }
     }
+    
+    public function setFile($file)
+    {
+        $this->file = $file;
+    }
+    
+    public function setLine($line)
+    {
+        $this->line = $line;
+    }
+    
+    public function setTrace($trace)
+    {
+        $this->trace = $trace;
+    }
 }
