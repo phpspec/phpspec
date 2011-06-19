@@ -53,9 +53,11 @@ function PHPSpec_ErrorHandler($errno, $errstr, $errfile, $errline)
     array_shift($backtrace);
 
     include_once 'PHPSpec/Runner/ErrorException.php';
-    throw new \PHPSpec\Runner\ErrorException(
-        $errstr, $errno, $errfile, $errline, $backtrace
-    );
+    $e = new \PHPSpec\Runner\ErrorException($errstr, $errno);
+    $e->setFile($errfile);
+    $e->setLine($errline);
+    $e->setTrace($backtrace);
+    throw $e;
 
     return true;
 }
