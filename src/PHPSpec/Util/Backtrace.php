@@ -21,6 +21,8 @@
  */
 namespace PHPSpec\Util;
 
+use \PHPSpec\PHPSpec;
+
 /**
  * @category   PHPSpec
  * @package    PHPSpec
@@ -67,6 +69,20 @@ class Backtrace
         return $code;
     }
     
+    public static function getFileAndLine($trace, $index = 0)
+    {
+        $traceLine = $trace[$index];
+        if (self::lineHasFileAndLine($traceLine)) {
+
+            if (self::lineHasEval($traceLine)) {
+                return self::getFileAndLine($trace, ++$index);
+            }
+
+            return array ('file' => $traceLine['file'], 'line' => $traceLine['line']);
+        }
+        return array();
+    }
+    
     /**
      * Returns nicely formatted backtrace
      * 
@@ -78,14 +94,32 @@ class Backtrace
     {
         $formatted = '';
         foreach ($trace as $line) {
-            if ($limit === 0) {
+            if ($limit !== null && $limit === 0) {
                  return $formatted;
             }
+            
+            $prettyLine = '';
             if (isset($line['file'])) {
                 $file = self::shortenRelativePath($line['file']);
-                $formatted .= self::prettyLine($file, $line['line']);
+                $prettyLine = self::prettyLine($file, $line['line']);
             }
-            $limit--;
+            
+            if ($formatted && $prettyLine &&
+                strpos($formatted, $prettyLine) !== false) {
+                continue;
+            }
+            
+            if (!PHPSpec::testingPHPSpec()) {
+                if (stristr($prettyLine, 'phpspec')) {
+                    continue;
+                }
+            }
+            
+            $formatted .= $prettyLine;
+            
+            if ($limit !== null && $prettyLine) {
+                $limit--;
+            }
         }
         return $formatted;
     }

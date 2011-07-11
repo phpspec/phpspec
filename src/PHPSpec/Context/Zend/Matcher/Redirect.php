@@ -1,4 +1,5 @@
 <?php
+
 /**
  * PHPSpec
  *
@@ -19,59 +20,38 @@
  *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-namespace PHPSpec\Matcher;
+namespace PHPSpec\Context\Zend\Matcher;
 
 /**
  * @see \PHPSpec\Matcher
  */
 use \PHPSpec\Matcher;
 
-/**
- * @category   PHPSpec
- * @package    PHPSpec
- * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
- *                                     Marcello Duarte
- * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
- */
-class BeFalse implements Matcher
+class Redirect implements Matcher
 {
-
-    /**
-     * The expected value.
-     * 
-     * @var bool
-     */
-    protected $_expected = false;
-
-    /**
-     * The actual value
-     * 
-     * @var mixed
-     */
-    protected $_actual = null;
-
     /**
      * Matcher is usually constructed with the expected value
-     * but beFalse() is itself the expectation
+     * but redirect() is itself the expectation
      * 
-     * @param unknown_type $expected
+     * @param unused $expected
      */
-    public function __construct($expected = false)
+    public function __construct($notUsed)
     {
-        $this->_expected = false;
     }
 
     /**
-     * Checks whether actual value is false
+     * Checks whether actual value is true
      * 
-     * @param mixed $actual
+     * @param Response $response
      * @return boolean
      */
-    public function matches($actual)
+    public function matches($response)
     {
-        $this->_actual = $actual;
-        return $this->_expected === $this->_actual;
+        $constraint = new \Zend_Test_PHPUnit_Constraint_Redirect();
+        if (!$constraint->evaluate($response, 'assertRedirect')) {
+            return false;
+        };
+        return true;
     }
 
     /**
@@ -81,8 +61,7 @@ class BeFalse implements Matcher
      */
     public function getFailureMessage()
     {
-        return 'expected FALSE, got ' . var_export($this->_actual, true) .
-               ' (using beFalse())';
+        return 'expected to redirect, got no redirection (using redirect())';
     }
 
     /**
@@ -92,7 +71,7 @@ class BeFalse implements Matcher
      */
     public function getNegativeFailureMessage()
     {
-        return 'expected TRUE or non-boolean not FALSE (using beFalse())';
+        return 'expected not to redirect, but redirected (using redirect())';
     }
 
     /**
@@ -102,6 +81,6 @@ class BeFalse implements Matcher
      */
     public function getDescription()
     {
-        return 'be FALSE';
+        return 'redirect';
     }
 }
