@@ -1,4 +1,5 @@
 #!/usr/bin/php
+#!/usr/bin/php
 <?php
 /**
  * PHPSpec
@@ -169,17 +170,13 @@
  * permanent authorization for you to choose that version for the
  * Library.
  */
+ini_set('display_errors', 1);
+error_reporting(E_ALL|E_STRICT);
 
-define('PHPSPEC_COMMAND_CALL', "phpspec");
+require_once 'PHPSpec/Loader/UniversalClassLoader.php';
+$loader = new \PHPSpec\Loader\UniversalClassLoader();
+$loader->registerNamespace('PHPSpec', '/usr/share/pear');
+$loader->register();
 
-require_once 'PHPSpec/Framework.php';
-
-require 'PHPSpec/Console/Command.php';
-
-try {
-    $command = new \PHPSpec\Console\Command;
-    $command->run();
-} catch (\PHPSpec\Console\Exception $e) {
-    fwrite(STDERR, "phpspec: " . $e->getMessage() . PHP_EOL);
-}
-?>
+$phpspec = new \PHPSpec\PHPSpec($argv);
+$phpspec->execute();
