@@ -1,343 +1,49 @@
-<?xml version="1.0"?>
+<project name="PHPSpec">
+  
+  <property name="version" value="1.2" />
+  <property name="stability" value="beta" />
+  <property name="pear" value="pear" />
+  <property name="source" value="/md/dev/php/phpspec" />
 
-<!--
+  <target name="clean" description="Clean build">
+    <delete dir="${pear}" />
+  </target>
 
-PHPSpec: A Behaviour-Driven Development Framework for PHP5
-
-Phing Usage:
-
-    phing [ <options> ] [ <targetnames> ]
-
-    example:
-
-    phing dist   ...where "dist" is the target for execution
-
-Phing Targets:
-
-    prepare: Creates any necessary staging directories (has .pear suffix option)
-
-    build: Prepares and stages files (has .pear suffix option)
-
-    stage: Stages files either copying or exporting to staging directory (has .pear suffix option)
-
-    dist: Stages and packages files to zip and gzip tarball and PEAR TGZ package
-
-    pearify: Create a pear package.xml and source code directory tree
-
-	docs: Generates the HTML manual only
-
-    clean: Cleans up, deletes staging directories, returns to state 0
-
-Other Targets:
-
-    src.check: Check for the existence of local source code
-
-    svn.export: Export the source code from subversion
-
--->
-
-<project name="PHPSpec" default="dist" basedir=".">
-
-    <taskdef classname="phing.tasks.ext.d51PearPkg2Task" name="d51pearpkg2" />
-    <taskdef classname="phing.tasks.ext.PhpDocbookHighlighterTask" name="phpdocbookhighlighter" />
-
-    <property name="spec.src.default" value="${project.basedir}/.." />
-    <property name="spec.src.classpath" value="/src" />
-    <property name="spec.name" value="PHPSpec" />
-    <property name="spec.version" value="0.3.0devel" /> <!-- VERSION FOR EDITING -->
-    <property name="spec.stability" value="stable" />
-    <property name="spec.svn.baseurl" value="http://phpspec.googlecode.com/svn/" />
-    <property name="spec.svn.url" value="${svn.url}/trunk" />
-    <property name="spec.svn.tag" value="HEAD" />
-    <property name="spec.svn.export" value="./${spec.name}-export-${spec.svn.tag}" />
-    <property name="spec.stage" value="${project.basedir}/stage" />
-    <property name="spec.pear" value="${project.basedir}/stage-pear" />
-    <property name="spec.stage.dir" value="${spec.stage}/${spec.name}-${spec.version}" />
-    <property name="spec.pear.dir" value="${spec.pear}/${spec.name}-${spec.version}" />
-    <property name="spec.pear.package" value="${spec.name}-${spec.version}.tgz" />
-    <property name="spec.dist" value="${project.basedir}/dist" />
-    <property name="spec.dist.pear" value="${spec.dist}/PEAR" />
-    <property name="spec.tarball" value="${spec.stage}/${spec.name}-${spec.version}.tar" />
-    <property name="spec.tarball.pear" value="${spec.stage}/${spec.name}-${spec.version}.tgz" />
-    <property name="spec.zipball" value="${spec.stage}/${spec.name}-${spec.version}.zip" />
-	<property name="spec.script.unix" value="phpspec" />
-	<property name="spec.script.windows" value="phpspec.bat" />
-    <property name="lang" value="en" />
-	<property name="languages" value="en,ja" /> <!-- Add additional manual languages here -->
-    <php expression="date('Y-m-d')" returnProperty="date"/>
-
-	<property name="spec.manual" value="${project.basedir}/stage-manual" />
-	<property name="spec.manual.dir" value="${spec.manual}/docbook" />
-	<property name="spec.dist.manual" value="${spec.dist}/manual" />
+  <target name="init" description="Create build directory" depends="clean">
+    <mkdir dir="${pear}" />
+    <copy toDir="${pear}" >
+      <fileset file="${source}/README.markdown" />
+      <fileset file="${source}/LICENSE" />
+      <fileset file="${source}/scripts/phpspec" />
+      <fileset file="${source}/scripts/phpspec.bat" />
+    </copy>
+    <exec executable="mv">
+      <arg line="${pear}/phpspec ${pear}/phpspec.php" />
+    </exec> 
     
-    <property name="docbookxslurl"  value="http://docbook.sourceforge.net/release/xsl/current/html/chunk.xsl" />
-    <property name="docbookdtdurl" value="http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" />
-    <property file="build.properties" override="true" />
+    <mkdir dir="${pear}/PHPSpec" />
+    <copy toDir="${pear}/PHPSpec" >
+      <fileset dir="${source}/src/PHPSpec" />
+    </copy>
+    
+    <delete dir="${pear}/PHPSpec/Mocks" />
+  </target>
+  
+  <target name="code-sniffer" description="Check standards" depends="init">
+    <exec executable="phpcs" dir="${pear}/PHPSpec" failonerror="on">
+      <arg line="--ignore=*Functions.php --standard=Zend ." />
+    </exec>
+  </target>
 
-    <target name="build" depends="prepare, prepare.pear, stage, stage.pear">
-    </target>
+  <target name="pearify" description="Create the package.xml" depends="code-sniffer">
+    <exec executable="pearify">
+      <arg line="${pear} ${version} ${stability}" />
+    </exec>
+  </target>
 
-    <target name="build.pear" depends="prepare.pear, stage.pear">
-    </target>
-
-	<target name="build.manual" depends="prepare.manual, stage.manual">
-    </target>
-
-    <target name="src.check">
-        <available file="${spec.src.default}/src/PHPSpec/Framework.php" property="spec.src" value="${spec.src.default}" />
-        <!--svnlastrevision svnpath="svn" repositoryurl="${spec.svn.url}" workingcopy="${project.basedir}" propertyname="spec.svn.revision" /-->
-    </target>
-
-    <target name="prepare" depends="src.check, prepare.dist">
-        <echo msg="Making directory ${spec.stage}" />
-        <mkdir dir="${spec.stage}" />
-        <echo msg="Making directory ${spec.stage.dir}" />
-        <mkdir dir="${spec.stage.dir}" />
-    </target>
-
-    <target name="prepare.pear" depends="src.check, prepare.dist">
-        <echo msg="Making directory ${spec.pear}" />
-        <mkdir dir="${spec.pear}" />
-        <echo msg="Making directory ${spec.pear.dir}" />
-        <mkdir dir="${spec.pear.dir}" />
-    </target>
-
-    <target name="prepare.dist">
-        <echo msg="Making Distribution Files directory ${spec.dist}" />
-        <mkdir dir="${spec.dist}" />
-        <mkdir dir="${spec.dist.pear}" />
-    </target>
-
-	<target name="prepare.manual" depends="src.check">
-        <echo msg="Making Manual directory ${spec.manual}" />
-        <mkdir dir="${spec.manual}" />
-		<echo msg="Making directory ${spec.manual.dir}" />
-        <mkdir dir="${spec.manual.dir}" />
-
-		<mkdir dir="${spec.dist.manual}" />
-    </target>
-
-    <target name="svn.export" unless="spec.src">
-        <svnexport svnpath="svn" repositoryurl="${spec.svn.url}" todir="${spec.svn.export}" />
-        <property name="spec.src" value="${spec.svn.export}" />
-    </target>
-
-    <target name="stage" depends="prepare, svn.export">
-        <echo msg="Staging files from ${spec.src} to ${spec.stage.dir} for Standard Packaging" />
-        <copy todir="${spec.stage.dir}">
-            <fileset dir="${spec.src}">
-                <exclude name="**/.**/**" />
-                <exclude name="build/**" />
-				<exclude name="docs/**" />
-            </fileset>
-        </copy>
-    </target>
-
-    <target name="stage.pear" depends="prepare.pear, svn.export">
-        <echo msg="Staging files from ${spec.src} to ${spec.pear.dir} for PEAR Packaging" />
-        <copy todir="${spec.pear.dir}">
-            <fileset dir="${spec.src}">
-                <exclude name="**/.**/**" />
-                <exclude name="build/**" />
-				<exclude name="docs/**" />
-                <exclude name="src/**" />
-            </fileset>
-        </copy>
-        <copy todir="${spec.pear.dir}">
-            <fileset dir="${spec.src}${spec.src.classpath}">
-                <exclude name="**/.**/**" />
-            </fileset>
-        </copy>
-    </target>
-
-	<target name="stage.manual" depends="prepare.manual, svn.export">
-        <echo msg="Staging files from ${spec.src} to ${spec.manual.dir} for DocBook > HTML generation" />
-        <copy todir="${spec.manual.dir}">
-            <filterchain>
-                <replacetokens>
-                    <token key="DOCBOOK_XSL" value="${docbookxslurl}" />
-                    <token key="DOCBOOK_DTD" value="${docbookdtdurl}" />
-                </replacetokens>
-            </filterchain>
-            <fileset dir="${spec.src}/docs/manual">
-            </fileset>
-        </copy>
-    </target>
-
-    <target name="pearify" depends="build.pear">
-        <d51pearpkg2 baseinstalldir="/" dir="${spec.pear.dir}">
-
-            <name>PHPSpec</name>
-            <summary>A Behaviour-Driven Development framework for PHP</summary>
-            <channel>pear.phpspec.org</channel>
-            <description>
-                Note: This is a beta release for testing and feedback.
-
-                PHPSpec is a Behaviour-Driven Development (BDD) framework
-                for PHP5. It provides a Domain Specific Language for describing
-                the behaviour of PHP code with executable, readable
-                specifications that guide you in designing source code. As well
-                as serving as documentation of your system's behaviour, these
-                specifications can be frequently executed as tests to verify
-                the behaviours being specified are being maintained.
-                
-                BDD is often described as what you are currently doing, if you are
-                doing TDD (Test-Driven Development) well. The purpose of
-                BDD is to make it easier to perform and understand by using
-                clear, unambiguous language driven by a user-friendly
-                Domain Specific Language (DSL).
-            </description>
-
-			<date>${date}</date>
-            
-            <lead user="padraic" name="Pádraic Brady" email="padraic@php.net" />
-            <lead user="tswicegood" name="Travis Swicegood" email="developer@domain51.com" />
-            <license>LGPL</license>
-            
-            <version release="${spec.version}" api="${spec.version}" />
-            <stability release="${spec.stability}" api="${spec.stability}" />
-            
-            <dependencies>
-                <php minimum_version="5.2.0" />
-                <pear minimum_version="1.6.0" />
-                <package name="Console_Color"
-                         channel="pear.php.net"
-                         minimum_version="1.0.2" />
-            </dependencies>
-            
-            <dirroles key="scripts">script</dirroles>
-            <dirroles key="tests">test</dirroles>
-			<dirroles key="specs">test</dirroles>
-			<dirroles key="docs">doc</dirroles>
-            <replacement path="scripts/phpspec" type="pear-config" from="@php_bin@" to="php_bin" />
-            <replacement path="scripts/phpspec.bat" type="pear-config" from="@php_bin@" to="php_bin" />
-            <replacement path="scripts/phpspec.bat" type="pear-config" from="@php_dir@" to="php_dir" />
-            <release>
-                <install as="phpspec" name="scripts/phpspec" />
-                <install as="phpspec.bat" name="scripts/phpspec.bat" />
-            </release>
-
-			<changelog version="0.3.0" date="${date}" license="LGPL">
-                * Added Zend Framework Context class to enable BDD
-				  application to ZF Controller development
-            </changelog>
-
-			<changelog version="0.2.3" date="2008-01-11" license="LGPL">
-                * Patched a Predicate issue courtesy KUBO Atsuhiro
-				* Reminder to self that no regression testing coupled with
-				  a busy day equals a bad time to make a release!
-            </changelog>
-
-			<changelog version="0.2.2" date="2008-01-11" license="LGPL">
-                * Patched a Predicate issue courtesy of Takagi Masahiro
-				  and Kubo
-				* Added new PCRE regular expression matcher "matches()"
-            </changelog>
-
-			<changelog version="0.2.1" date="2008-01-09" license="LGPL">
-                * Fixes a minor output bug missed in QA for HTML and TEXT
-				  reporters
-            </changelog>
-
-			<changelog version="0.2.0" date="2008-01-09" license="LGPL">
-                * Added support for HTML reporting output
-				* Added support for executing specs from a HTTP Runner
-				* Thanks to Modmac
-				* Committed three patches courtesy of KUBO Atsuhiro fixing
-				  several issues, include one reporting bug
-			    * Included Japanese translation of the manual courtesy
-				  of TAKAGI Masahiro
-				* Refactored Runner logic into \PHPSpec\Runner class
-				* Added API Docs to documentation directory
-				* Cleaned up and documented Console and HTTP options in
-				  a new manual chapter
-				* Added support for coloured console output when using
-				  a *nix console (not supported on Windows)
-            </changelog>
-            
-            <changelog version="0.2.0beta" date="2008-01-06" license="LGPL">
-                This is a BETA release for testing and
-                feedback only.
-            </changelog>
-            
-        </d51pearpkg2>
-    </target>
-
-    <target name="dist" depends="build, dist.docs, pearify">
-        <echo message="Creating tar and zip archives..." />
-        <tar destfile="${spec.tarball}.gz" basedir="${spec.stage.dir}" compression="gzip" />
-        <move file="${spec.tarball}.gz" todir="${spec.dist}" overwrite="true" />
-
-        <echo message="ZIP archive creation is disabled in build.xml file" />
-        <!--zip destfile="${spec.zipball}" basedir="${spec.stage.dir}" /-->
-        <!--move file="${spec.zipball}" todir="${spec.dist}" overwrite="true" /-->
-
-        <echo message="Creating PEAR Package..." />
-        <exec command="pear package" dir="${spec.pear.dir}" />
-        <move file="${spec.pear.dir}/${spec.pear.package}" todir="${spec.dist.pear}" overwrite="true" />
-    </target>
-
-    <target name="clean">
-        <delete dir="${spec.stage}" />
-        <delete dir="${spec.pear}" />
-        <delete dir="${spec.dist}" />
-		<delete dir="${spec.manual}" />
-    </target>
-
-    <target name="install" depends="dist">
-        <exec command="pear install ${spec.pear.package}" dir="${spec.dist.pear}" />
-    </target>
-
-    <target name="install.force" depends="dist">
-        <exec command="pear install --force ${spec.pear.package}" dir="${spec.dist.pear}" />
-    </target>
-
-	<target name="docs" depends="build.manual">
-		<echo msg="Rendering manual..." />
-        <foreach list="${languages}" param="lang" target="docs.lang" />
-		<echo msg="Manual has been rendered." />
-		<echo msg="Rendering API Docs..." />
-		<mkdir dir="${spec.dist.manual}/apidocs" />
-		<phpdoc title="PHPSpec API Documentation" 
-            destdir="${spec.dist.manual}/apidocs"
-            sourcecode="${spec.src}/src"
-            output="HTML:frames:DOM/earthli">
-            <fileset dir="${spec.src}/src">
-                <include name="**" />
-            </fileset>
-        </phpdoc>
-		<echo msg="API Docs have been rendered." />
-	</target>
-		
-	<target name="docs.lang">
-		<echo msg="Rendering ${lang} language manual." />
-        <copy file="${spec.manual.dir}/${lang}/html/style.css" todir="${spec.dist.manual}/${lang}" />
-		<mkdir dir="${spec.dist.manual}/${lang}/images" />
-		<copy file="${spec.manual.dir}/${lang}/images/note.png" todir="${spec.dist.manual}/${lang}/images" />
-		<copy todir="${spec.dist.manual}/${lang}/">
-		  <filterchain>
-			<xincludefilter basedir="${spec.manual.dir}/${lang}/" />
-			<xsltfilter style="${spec.manual.dir}/${lang}/html.xsl">
-			  <param name="base.dir" expression="${spec.dist.manual}/${lang}/" />
-			</xsltfilter>
-		  </filterchain>
-		  <fileset dir="${spec.manual.dir}/${lang}/">
-			<include name="manual.xml" />
-		  </fileset>
-		</copy>
-        <phpdocbookhighlighter dir="${spec.dist.manual}/${lang}/" />
-		<echo msg="Manual for ${lang} language has been rendered." />
-	</target>
-
-    <target name="dist.docs" depends="docs">
-        <copy todir="${spec.stage.dir}/docs/manual">
-            <fileset dir="${spec.dist.manual}">
-            </fileset>
-        </copy>
-        <copy todir="${spec.pear.dir}/docs/manual">
-            <fileset dir="${spec.dist.manual}">
-            </fileset>
-        </copy>
-    </target>
-
+  <target name="build" depends="pearify">
+    <exec executable="php" dir="${pear}">
+      <arg line="-d date.timezone=Europe/London /usr/share/pear/pearcmd.php package" />
+    </exec>
+  </target>
 </project>
