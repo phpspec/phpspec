@@ -21,9 +21,24 @@
  */
 namespace PHPSpec\Loader;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class DirectoryLoader extends ClassLoader
 {
     
+    /**
+     * Loads the directory recursively
+     * 
+     * @param string $specDir
+     * @param array  $ignore
+     * @return array
+     */
     public function load($specDir, $ignore = array())
     {
         $ignore = $this->lookForIgnoreConfig($specDir, $ignore);
@@ -37,7 +52,9 @@ class DirectoryLoader extends ClassLoader
             
             if ($this->fileIsNotInIgnoreList($file, $ignore)) {
                 if ($file->isDir()) {
-                    $loaded = array_merge($loaded, $this->load($file->getRealpath(), $ignore));
+                    $loaded = array_merge(
+                        $loaded, $this->load($file->getRealpath(), $ignore)
+                    );
                 } else {
                     $example = parent::load($file->getRealpath());
                     if ($example !== false && $example !== array(false)) {
@@ -53,11 +70,25 @@ class DirectoryLoader extends ClassLoader
         return $loaded;
     }
     
+    /**
+     * Whether the file is not in the .specignore
+     * 
+     * @param string $file
+     * @param array  $ignore
+     * @return boolean
+     */
     private function fileIsNotInIgnoreList($file, $ignore)
     {
         return !in_array($file->getRealpath(), $ignore);
     }
     
+    /**
+     * Looks for ignore configuration in the spec directory
+     * 
+     * @param unknown_type $specDir
+     * @param unknown_type $ignore
+     * @return multitype:
+     */
     private function lookForIgnoreConfig($specDir, $ignore = array())
     {
         if (empty($ignore) && file_exists($specDir . '/.specignore')) {

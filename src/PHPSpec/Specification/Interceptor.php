@@ -25,15 +25,52 @@ use \PHPSpec\Specification\Result\Failure,
     \PHPSpec\Specification\Result\Error,
     \PHPSpec\Specification\Interceptor\InterceptorFactory;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 abstract class Interceptor
 {
+    /**
+     * Expectation forces matcher result to fail if it returns false
+     */
     const SHOULD = 'should';
+    
+    /**
+     * Expectation forces matcher result to fail if it returns true
+     */
     const SHOULD_NOT = 'should not';
     
+    /**
+     * The actual value
+     *
+     * @var mixed
+     */
     protected $_actualValue;
+    
+    /**
+     * The expectation
+     *
+     * @var mixed
+     */
     protected $_expectation;
+    
+    /**
+     * The expected value
+     *
+     * @var mixed
+     */
     protected $_expectedValue;
     
+    /**
+     * List of valid matchers
+     * 
+     * @var array
+     */
     protected $_matchers = array(
         'be', 'beAnInstanceOf', 'beEmpty', 'beEqualTo', 'beFalse',
         'beGreaterThan', 'beGreaterThanOrEqualTo', 'beInteger',
@@ -41,18 +78,29 @@ abstract class Interceptor
         'equal', 'match', 'throwException'
     );
     
+    /**
+     * Creates an interceptor with the intercepted actual value
+     * 
+     * @param mixed $value
+     */
     public function __construct($value)
     {
         $this->_actualValue = $value;
     }
     
+    /**
+     * Checks whether a expectation is being invoked
+     * 
+     * @param string $attribute
+     * 
+     * @return \PHPSpec\Specification\Interceptor|mixed
+     */
     public function __get($attribute)
     {
         switch ($attribute) {
             case 'should' :
                 $this->_expectation = self::SHOULD;
                 return $this;
-                break;
             case 'shouldNot' :
                 $this->_expectation = self::SHOULD_NOT;
                 return $this;
@@ -68,6 +116,13 @@ abstract class Interceptor
         }
     }
     
+    /**
+     * Invokes a matcher
+     * 
+     * @param string $method
+     * @param array $args
+     * @return boolean|mixed
+     */
     public function __call($method, $args)
     {
         if (in_array($method, $this->_matchers)) {
@@ -87,6 +142,15 @@ abstract class Interceptor
             );
             $this->_performMatching();
             return true;
+        }
+        
+        if (method_exists($this->_actualValue, '__call')) {
+            $parentInterceptor = new \ReflectionMethod(
+                $this->_actualValue, '__call'
+            );
+            return $parentInterceptor->invokeArgs(
+                $this->_actualValue, $args
+            );
         }
     }
     
@@ -144,16 +208,31 @@ abstract class Interceptor
         return $this->_expectation;
     }
     
+    /**
+     * Adds a matcher
+     * 
+     * @param string $matcher
+     */
     public function addMatcher($matcher)
     {
         $this->_matchers[] = $matcher;
     }
     
+    /**
+     * Adds many matcher at once
+     * 
+     * @param array $matchers
+     */
     public function addMatchers(array $matchers)
     {
         $this->_matchers = array_merge($this->_matchers, $matchers);
     }
     
+    /**
+     * Sets the matchers. Replaces existing ones (!)
+     *
+     * @param array $matchers
+     */
     public function setMatchers(array $matchers)
     {
         $this->_matchers = $matchers;
@@ -164,7 +243,6 @@ abstract class Interceptor
      * to the DSL grammer. (factory)
      *
      * @param DSL method call which was found to be a Matcher reference
-     * @return null
      */
     protected function createMatcher($matcher)
     {
@@ -172,14 +250,16 @@ abstract class Interceptor
         $expected = $this->assertExpectedIsArray();
         
         try {
-            $matcherClass = "\PHPSpec\Matcher\\" . $matcher;
+            $matcherClass = '\PHPSpec\Matcher\\' . $matcher;
             $reflectedMatcher = new \ReflectionClass($matcherClass);
             $this->_matcher = $reflectedMatcher->newInstanceArgs($expected);
         } catch (\ReflectionException $e) {
             try {
-                $matcherClass = "\PHPSpec\Context\Zend\Matcher\\" . $matcher;
+                $matcherClass = '\PHPSpec\Context\Zend\Matcher\\' . $matcher;
                 $reflectedMatcher = new \ReflectionClass($matcherClass);
-                $this->_matcher = $reflectedMatcher->newInstanceArgs(array($this->getActualValue()));
+                $this->_matcher = $reflectedMatcher->newInstanceArgs(
+                    array($this->getActualValue())
+                );
             } catch(\ReflectionException $e) {
                 throw new \PHPSpec\Exception("Could not find matcher $matcher");
             }
@@ -187,6 +267,14 @@ abstract class Interceptor
         
     }
     
+    /**
+     * Asserts the expected value is in an array
+     * 
+     * !FIXME this is only being used because the way Closure specification
+     * and throwException matcher work
+     * 
+     * @return array
+     */
     protected function assertExpectedIsArray()
     {
         return !is_array($this->getExpectedValue()) ?
@@ -223,7 +311,10 @@ abstract class Interceptor
                 throw new Failure($this->_matcher->getNegativeFailureMessage());
             }
         } elseif (empty($this->_expectation)) {
-            throw new Error('Missing expectation "should" or "shouldNot"');
+            throw new Error(
+                'Missing expectation "should" or "shouldNot". ' .
+                'Make sure you use them as properties and not as methods.'
+            );
         }
     }
 }

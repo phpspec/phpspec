@@ -29,8 +29,21 @@ use \PHPSpec\World,
     \PHPSpec\Specification\ExampleRunner,
     \PHPSpec\Runner\Formatter\Factory as FormatterFactory;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class Runner implements \PHPSpec\Runner\Runner
 {
+    /**
+     * Version
+     * 
+     * @var string
+     */
     const VERSION = '1.2.0beta';
     
     /**
@@ -50,11 +63,34 @@ class Runner implements \PHPSpec\Runner\Runner
     --version                        Show version
 ";
     
+    
+    /**
+     * The loader
+     *
+     * @var \PHPSpec\Loader\Loader
+     */
     protected $_loader;
     
+    
+    /**
+     * The formatter factory
+     *
+     * @var \PHPSpec\Runner\Formatter\Factory
+     */
     protected $_formatterFactory;
+    
+    /**
+     * The example runner
+     *
+     * @var \PHPSpec\Specification\ExampleRunner
+     */
     protected $_exampleRunner;
     
+    /**
+     * Sets options and runs examples; or prints version/help
+     * 
+     * @param \PHPSpec\World $world
+     */
     public function run(World $world)
     {
         if ($this->printVersionOrHelp($world)) {
@@ -71,9 +107,13 @@ class Runner implements \PHPSpec\Runner\Runner
         
         $world->getReporter()->setRuntimeEnd();
         restore_error_handler();
-        
     }
     
+    /**
+     * Runs examples
+     * 
+     * @param \PHPSpec\World $world
+     */
     protected function runExamples(World $world)
     {
         $examples = $this->getExamples($world);
@@ -86,6 +126,11 @@ class Runner implements \PHPSpec\Runner\Runner
         }
     }
     
+    /**
+     * Sets the color into the formatter
+     * 
+     * @param \PHPSpec\World $world
+     */
     protected function setColor(World $world)
     {
         $formatter = $world->getReporter()->getFormatter();
@@ -95,6 +140,11 @@ class Runner implements \PHPSpec\Runner\Runner
         $world->getReporter()->attach($formatter);
     }
     
+    /**
+     * Sets the backtrace into the formatter
+     * 
+     * @param \PHPSpec\World $world
+     */
     protected function setBacktrace(World $world)
     {
         if ($world->getOption('b')) {
@@ -102,12 +152,21 @@ class Runner implements \PHPSpec\Runner\Runner
         }
     }
     
-    protected function setFailFast(World $world) {
-        if($world->getOption('failfast')) {
+    /**
+     * Sets fail fast into the reporter
+     * 
+     * @param \PHPSpec\World $world
+     */
+    protected function setFailFast(World $world)
+    {
+        if ($world->getOption('failfast')) {
             $world->getReporter()->setFailFast(true);
         }
     }
     
+    /**
+     * Starts error handler
+     */
     protected function startErrorHandler()
     {
         set_error_handler(
@@ -115,6 +174,13 @@ class Runner implements \PHPSpec\Runner\Runner
         );
     }
     
+    /**
+     * Sends a message to reporter to print help or version if needed.
+     * Returns true if message was sent and false otherwise
+     * 
+     * @param \PHPSpec\World $world
+     * @return boolean
+     */
     private function printVersionOrHelp(World $world)
     {
         if ($world->getOption('version')) {
@@ -130,6 +196,13 @@ class Runner implements \PHPSpec\Runner\Runner
         return false;
     }
     
+    /**
+     * Loads and returns example groups
+     * 
+     * @param \PHPSpec\World $world
+     * @throws \PHPSpec\Runner\Cli\Error if no spec file is given
+     * @return array<\PHPSpec\Specification\ExampleGroup>
+     */
     private function getExamples(World $world)
     {
         if ($world->getOption('specFile')) {
@@ -142,6 +215,13 @@ class Runner implements \PHPSpec\Runner\Runner
         return $exampleGroups;
     }
     
+    /**
+     * Loads example groups
+     * 
+     * @param string $spec
+     * @throws \PHPSpec\Runner\Cli\Error propagate cli errors up
+     * @return array<\PHPSpec\Specification\ExampleGroup>
+     */
     private function loadExampleGroups($spec)
     {
         try {
@@ -153,6 +233,11 @@ class Runner implements \PHPSpec\Runner\Runner
         }
     }
     
+    /**
+     * Gets formatter
+     * 
+     * @param \PHPSpec\World $world
+     */
     public function getFormatter(World $world)
     {
         return $this->getFormatterFactory()->create(
@@ -160,6 +245,11 @@ class Runner implements \PHPSpec\Runner\Runner
         );
     }
     
+    /**
+     * Gets the formatter factory
+     * 
+     * @return \PHPSpec\Runner\Formatter\Factory
+     */
     public function getFormatterFactory()
     {
         if ($this->_formatterFactory === null) {
@@ -168,11 +258,21 @@ class Runner implements \PHPSpec\Runner\Runner
         return $this->_formatterFactory;
     }
     
+    /**
+     * Sets the formatter factory
+     * 
+     * @param \PHPSpec\Runner\Formatter\Factory $factory
+     */
     public function setFormatterFactory(FormatterFactory $factory)
     {
         $this->_formatterFactory = $factory;
     }
     
+    /**
+     * Gets the example runner
+     * 
+     * @return \PHPSpec\Specification\ExampleRunner
+     */
     public function getExampleRunner()
     {
         if ($this->_exampleRunner === null) {
@@ -181,11 +281,21 @@ class Runner implements \PHPSpec\Runner\Runner
         return $this->_exampleRunner;
     }
     
+    /**
+     * Sets the example runner
+     * 
+     * @param \PHPSpec\Specification\ExampleRunner $factory
+     */
     public function setExampleRunner(ExampleRunner $factory)
     {
         $this->_exampleRunner = $factory;
     }
     
+    /**
+     * Gets the loader
+     * 
+     * @return \PHPSpec\Loader\Loader
+     */
     public function getLoader()
     {
         if ($this->_loader === null) {
@@ -194,16 +304,31 @@ class Runner implements \PHPSpec\Runner\Runner
         return $this->_loader;
     }
     
+    /**
+     * Sets the loader
+     *
+     * @param \PHPSpec\Loader\Loader $loader
+     */
     public function setLoader(Loader $loader)
     {
         $this->_loader = $loader;
     }
     
+    /**
+     * Gets usage
+     * 
+     * @return string
+     */
     public function getUsage()
     {
         return self::USAGE;
     }
     
+    /**
+     * Gets version
+     * 
+     * @return string
+     */
     public function getVersion()
     {
         return self::VERSION;

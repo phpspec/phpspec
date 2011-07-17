@@ -21,8 +21,21 @@
  */
 namespace PHPSpec\Runner\Cli;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class Error extends \PHPSpec\Runner\Error
 {
+    /**
+     * Creates a cli error by appending "phpspec: " to the message
+     * 
+     * @param string $message
+     */
     public function __construct($message = '')
     {
         $this->message = 'phpspec: ' . $message;

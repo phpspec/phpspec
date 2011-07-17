@@ -23,16 +23,40 @@ namespace PHPSpec\Specification\Result;
 
 use \PHPSpec\Specification\Result;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class Exception extends Result
 {
+    
+    /**
+     * The exception class
+     *
+     * @var string
+     */
     protected $_exceptionClass;
     
-    public function __construct($exception = '')
+    /**
+     * \PHPSpec\Specification\Resutl\Exception is created with an exception
+     * 
+     * @param \Exception $exception
+     */
+    public function __construct(\Exception $exception)
     {
         $this->_exceptionClass = get_class($exception);
         parent::__construct($exception->getMessage());
     }
     
+    /**
+     * Gets the exception class
+     * 
+     * @return string
+     */
     public function getExceptionClass()
     {
         return $this->_exceptionClass;

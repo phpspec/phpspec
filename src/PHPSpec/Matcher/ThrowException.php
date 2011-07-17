@@ -79,6 +79,7 @@ class ThrowException implements Matcher
      * Describes Matcher specific implementation 
      *
      * @param mixed $actualException
+     * @return boolean
      */
     public function matches($actualException, $actualMessage = null)
     {
@@ -95,6 +96,8 @@ class ThrowException implements Matcher
 
     /**
      * Returns the failure message to be displayed
+     * 
+     * @return string
      */
     public function getFailureMessage()
     {
@@ -126,6 +129,8 @@ class ThrowException implements Matcher
     /**
      * Returns the negative failure message in case
      * of using should not instead of should
+     * 
+     * @return string
      */
     public function getNegativeFailureMessage()
     {
@@ -156,6 +161,8 @@ class ThrowException implements Matcher
 
     /**
      * Describes the matching
+     * 
+     * @return string
      */
     public function getDescription()
     {
@@ -164,6 +171,12 @@ class ThrowException implements Matcher
                $this->_expectedMessage : '');
     }
     
+    /**
+     * Wrapps value cleanning it a bit
+     * 
+     * @param string $value
+     * @return string
+     */
     private function export($value)
     {
         return $value === null ?

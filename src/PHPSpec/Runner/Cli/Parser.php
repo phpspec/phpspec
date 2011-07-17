@@ -21,9 +21,19 @@
  */
 namespace PHPSpec\Runner\Cli;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class Parser implements \PHPSpec\Runner\Parser
 {
     /**
+     * Valid options
+     * 
      * @var array
      */
     protected $_options = array(
@@ -43,6 +53,8 @@ class Parser implements \PHPSpec\Runner\Parser
     );
     
     /**
+     * Aliases
+     * 
      * @var array
      */
      protected $_aliases = array(
@@ -53,26 +65,32 @@ class Parser implements \PHPSpec\Runner\Parser
      );
     
     /**
+     * Valid formatters
+     * 
      * @var array
      */
      protected $_validFormatters = array(
         'p',
         'd',
         'h',
-        't',
+     //   't',
         'progress',
         'documentation',
         'html',
-        'textmate'
+     //   'textmate'
      );
      
-     protected $_arguments;
+    /**
+     * 
+     *
+     * @var mixed
+     */
+    protected $_arguments;
     
     /**
      * Parses command line arguments
      *
      * @param array $arguments
-     *
      * @return array|null
      */
     public function parse(array $arguments)
@@ -112,12 +130,14 @@ class Parser implements \PHPSpec\Runner\Parser
     
     /**
      * Converts arguments into options
+     * 
+     * @return array
      */
     private function convertArgumentIntoOptions()
     {
         $arguments = new \ArrayIterator($this->getArguments());
 
-        while($arguments->valid()) {
+        while ($arguments->valid()) {
             $argument = $arguments->current();
             if ($this->isLongOption($argument)) {
                 $this->convertLongArgumentstoOptions($arguments, $argument);
@@ -158,7 +178,9 @@ class Parser implements \PHPSpec\Runner\Parser
             $flag = $shortOptions->current();
             if ($this->isFormatterOption($flag)) {
                 if ($this->formatterIsNextShortOption($shortOptions)) {
-                    $this->setFormatterAndAdvancePointer($shortOptions, $arguments);
+                    $this->setFormatterAndAdvancePointer(
+                        $shortOptions, $arguments
+                    );
                 } else {
                     $this->checkFormatterValueIsInNextArgument($arguments);
                 }
@@ -169,6 +191,12 @@ class Parser implements \PHPSpec\Runner\Parser
         }
     }
     
+    /**
+     * Checks if formatter value is the next argument
+     * 
+     * @param array $arguments
+     * @throws \PHPSpec\Runner\Cli\Error
+     */
     public function checkFormatterValueIsInNextArgument($arguments)
     {
         $arguments->next();
@@ -182,12 +210,24 @@ class Parser implements \PHPSpec\Runner\Parser
         $arguments->next();
     }
     
+    /**
+     * Whether formatter is next short option
+     * 
+     * @param array $shortOptions
+     * @return boolean
+     */
     protected function formatterIsNextShortOption($shortOptions)
     {
         $shortOptions->next();
         return in_array($shortOptions->current(), $this->_validFormatters);
     }
     
+    /**
+     * Sets formatter and advances the pointer
+     * 
+     * @param array $shortOptions
+     * @param array $arguments
+     */
     protected function setFormatterAndAdvancePointer($shortOptions, $arguments)
     {
         $this->setFormatter($shortOptions->current());
@@ -195,21 +235,43 @@ class Parser implements \PHPSpec\Runner\Parser
         $arguments->next();
     }
     
+    /**
+     * Whether this is a formatter option
+     * 
+     * @param string $option
+     * @return boolean
+     */
     protected function isFormatterOption($option)
     {
         return $option === 'f' || $option === 'formatter';
     }
     
+    /**
+     * Whether this is a long option
+     * 
+     * @param string $option
+     * @return boolean
+     */
     protected function isLongOption($option)
     {
         return substr($option, 0, 2) === '--';
     }
     
+    /**
+     * Whether this is a short option
+     * 
+     * @param string $option
+     * @return boolean
+     */
     protected function isShortOption($option)
     {
         return substr($option, 0, 1) === '-';
     }
     
+    /**
+     * Gets the arguments
+     * @return array
+     */
     public function getArguments()
     {
         return $this->_arguments;
@@ -257,6 +319,12 @@ class Parser implements \PHPSpec\Runner\Parser
         $this->$setter($value);
     }
     
+    /**
+     * Gets a long version of an option
+     * 
+     * @param string $name
+     * @return string
+     */
     protected function getOptionLongVersion($name)
     {
         if ($this->isOneLetterOption($name)) {
@@ -268,47 +336,93 @@ class Parser implements \PHPSpec\Runner\Parser
         return $name;
     }
     
+    /**
+     * Whether this is an one letter option
+     * 
+     * @param string $name
+     * @return boolean
+     */
     public function isOneLetterOption($name)
     {
         return strlen(trim($name)) === 1;
     }
     
+    /**
+     * Whether this has multiple aliases
+     * 
+     * @param string $name
+     * @return boolean
+     */
     public function hasMultipleAliases($name)
     {
         return is_array($this->_aliases[trim($name[0])]);
     }
     
+    /**
+     * Sets the formatter
+     * @param string $formatter
+     */
     public function setFormatter($formatter)
     {
         $this->_options['f'] = $this->_options['formatter'] = $formatter;
     }
     
+    /**
+     * Sets the colour
+     * 
+     * @param boolean $color
+     */
     public function setColor($color)
     {
         $this->_options['c'] = $this->_options['colour'] =
         $this->_options['color'] = $color;
     }
     
+    /**
+     * Sets the help option
+     * 
+     * @param boolean $help
+     */
     public function setHelp($help)
     {
         $this->_options['h'] = $this->_options['help'] = $help;
     }
     
+    /**
+     * Sets the version option
+     * 
+     * @param boolean $version
+     */
     public function setVersion($version)
     {
         $this->_options['version'] = $version;
     }
     
+    /**
+     * Sets the autospec option
+     * 
+     * @param boolean $autospec
+     */
     public function setAutospec($autospec)
     {
         $this->_options['a'] = $this->_options['autospec'] = $autospec;
     }
     
+    /**
+     * Sets the backtrace option
+     * 
+     * @param boolean $backtrace
+     */
     public function setBacktrace($backtrace)
     {
         $this->_options['b'] = $this->_options['backtrace'] = $backtrace;
     }
     
+    /**
+     * Sets a fail fast option
+     * 
+     * @param boolean $failfast
+     */
     public function setFailfast($failfast)
     {
         $this->_options['failfast'] = $failfast;

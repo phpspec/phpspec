@@ -69,7 +69,14 @@ class Backtrace
         return $code;
     }
     
-    public static function getFileAndLine($trace, $index = 0)
+    /**
+     * Gets a file and a line inside a trace
+     * 
+     * @param array   $trace
+     * @param integer $index
+     * @return array<'file' => string, 'line' => integer>
+     */
+    public static function getFileAndLine(array $trace, $index = 0)
     {
         $traceLine = $trace[$index];
         if (self::lineHasFileAndLine($traceLine)) {
@@ -78,7 +85,10 @@ class Backtrace
                 return self::getFileAndLine($trace, ++$index);
             }
 
-            return array ('file' => $traceLine['file'], 'line' => $traceLine['line']);
+            return array (
+                'file' => $traceLine['file'],
+                'line' => $traceLine['line']
+            );
         }
         return array();
     }

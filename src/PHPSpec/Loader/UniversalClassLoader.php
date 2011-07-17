@@ -1,34 +1,30 @@
 <?php
 /**
- * PHPSpec
- *
- * LICENSE
- *
- * This file is subject to the GNU Lesser General Public License Version 3
- * that is bundled with this package in the file LICENSE.
- * It is also available through the world-wide-web at this URL:
- * http://www.gnu.org/licenses/lgpl-3.0.txt
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@phpspec.net so we can send you a copy immediately.
- *
- * @category  PHPSpec
- * @package   PHPSpec
- * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
- *                                    Marcello Duarte
- * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
- */
-namespace PHPSpec\Loader;
-
-/*
  * This file is part of the Symfony package.
  *
  * (c) Fabien Potencier <fabien.potencier@symfony-project.com>
  *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
+ * Copyright (c) 2004-2011 Fabien Potencier
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
+namespace PHPSpec\Loader;
 
 /**
  * UniversalClassLoader implements a "universal" autoloader for PHP 5.3.
@@ -36,7 +32,8 @@ namespace PHPSpec\Loader;
  * It is able to load classes that use either:
  *
  *  * The technical interoperability standards for PHP 5.3 namespaces and
- *    class names (http://groups.google.com/group/php-standards/web/psr-0-final-proposal);
+ *    class names
+ *    (http://groups.google.com/group/php-standards/web/psr-0-final-proposal);
  *
  *  * The PEAR naming convention for classes (http://pear.php.net/).
  *
@@ -73,10 +70,10 @@ namespace PHPSpec\Loader;
  */
 class UniversalClassLoader
 {
-    protected $namespaces = array();
-    protected $prefixes = array();
-    protected $namespaceFallback = array();
-    protected $prefixFallback = array();
+    protected $_namespaces = array();
+    protected $_prefixes = array();
+    protected $_namespaceFallback = array();
+    protected $_prefixFallback = array();
 
     /**
      * Gets the configured namespaces.
@@ -85,17 +82,18 @@ class UniversalClassLoader
      */
     public function getNamespaces()
     {
-        return $this->namespaces;
+        return $this->_namespaces;
     }
 
     /**
      * Gets the configured class prefixes.
      *
-     * @return array A hash with class prefixes as keys and directories as values
+     * @return array A hash with class prefixes as keys and directories as
+     *               values
      */
     public function getPrefixes()
     {
-        return $this->prefixes;
+        return $this->_prefixes;
     }
 
     /**
@@ -105,7 +103,7 @@ class UniversalClassLoader
      */
     public function getNamespaceFallback()
     {
-        return $this->namespaceFallback;
+        return $this->_namespaceFallback;
     }
 
     /**
@@ -115,7 +113,7 @@ class UniversalClassLoader
      */
     public function getPrefixFallback()
     {
-        return $this->prefixFallback;
+        return $this->_prefixFallback;
     }
 
     /**
@@ -125,7 +123,7 @@ class UniversalClassLoader
      */
     public function registerNamespaceFallback($dirs)
     {
-        $this->namespaceFallback = (array) $dirs;
+        $this->_namespaceFallback = (array) $dirs;
     }
 
     /**
@@ -135,18 +133,19 @@ class UniversalClassLoader
      */
     public function registerPrefixFallback($dirs)
     {
-        $this->prefixFallback = (array) $dirs;
+        $this->_prefixFallback = (array) $dirs;
     }
 
     /**
      * Registers an array of namespaces
      *
-     * @param array $namespaces An array of namespaces (namespaces as keys and locations as values)
+     * @param array $namespaces An array of namespaces (namespaces as keys and
+     *                          locations as values)
      */
     public function registerNamespaces(array $namespaces)
     {
         foreach ($namespaces as $namespace => $locations) {
-            $this->namespaces[$namespace] = (array) $locations;
+            $this->_namespaces[$namespace] = (array) $locations;
         }
     }
 
@@ -158,18 +157,19 @@ class UniversalClassLoader
      */
     public function registerNamespace($namespace, $paths)
     {
-        $this->namespaces[$namespace] = (array) $paths;
+        $this->_namespaces[$namespace] = (array) $paths;
     }
 
     /**
      * Registers an array of classes using the PEAR naming convention.
      *
-     * @param array $classes An array of classes (prefixes as keys and locations as values)
+     * @param array $classes An array of classes (prefixes as keys and locations
+     *                       as values)
      */
     public function registerPrefixes(array $classes)
     {
         foreach ($classes as $prefix => $locations) {
-            $this->prefixes[$prefix] = (array) $locations;
+            $this->_prefixes[$prefix] = (array) $locations;
         }
     }
 
@@ -181,7 +181,7 @@ class UniversalClassLoader
      */
     public function registerPrefix($prefix, $paths)
     {
-        $this->prefixes[$prefix] = (array) $paths;
+        $this->_prefixes[$prefix] = (array) $paths;
     }
 
     /**
@@ -206,11 +206,16 @@ class UniversalClassLoader
         if (false !== ($pos = strrpos($class, '\\'))) {
             // namespaced class name
             $namespace = substr($class, 0, $pos);
-            foreach ($this->namespaces as $ns => $dirs) {
+            foreach ($this->_namespaces as $ns => $dirs) {
                 foreach ($dirs as $dir) {
                     if (0 === strpos($namespace, $ns)) {
                         $className = substr($class, $pos + 1);
-                        $file = $dir.DIRECTORY_SEPARATOR.str_replace('\\', DIRECTORY_SEPARATOR, $namespace).DIRECTORY_SEPARATOR.str_replace('_', DIRECTORY_SEPARATOR, $className).'.php';
+                        $file = $dir . DIRECTORY_SEPARATOR .
+                                str_replace(
+                                    '\\', DIRECTORY_SEPARATOR, $namespace
+                                ) . DIRECTORY_SEPARATOR . str_replace(
+                                    '_', DIRECTORY_SEPARATOR, $className
+                                ).'.php';
                         if (file_exists($file)) {
                             require $file;
                             return;
@@ -219,8 +224,10 @@ class UniversalClassLoader
                 }
             }
 
-            foreach ($this->namespaceFallback as $dir) {
-                $file = $dir.DIRECTORY_SEPARATOR.str_replace('\\', DIRECTORY_SEPARATOR, $class).'.php';
+            foreach ($this->_namespaceFallback as $dir) {
+                $file = $dir . DIRECTORY_SEPARATOR . str_replace(
+                    '\\', DIRECTORY_SEPARATOR, $class
+                ).'.php';
                 if (file_exists($file)) {
                     require $file;
                     return;
@@ -228,10 +235,12 @@ class UniversalClassLoader
             }
         } else {
             // PEAR-like class name
-            foreach ($this->prefixes as $prefix => $dirs) {
+            foreach ($this->_prefixes as $prefix => $dirs) {
                 foreach ($dirs as $dir) {
                     if (0 === strpos($class, $prefix)) {
-                        $file = $dir.DIRECTORY_SEPARATOR.str_replace('_', DIRECTORY_SEPARATOR, $class).'.php';
+                        $file = $dir . DIRECTORY_SEPARATOR . str_replace(
+                            '_', DIRECTORY_SEPARATOR, $class
+                        ) . '.php';
                         if (file_exists($file)) {
                             require $file;
                             return;
@@ -240,8 +249,10 @@ class UniversalClassLoader
                 }
             }
 
-            foreach ($this->prefixFallback as $dir) {
-                $file = $dir.DIRECTORY_SEPARATOR.str_replace('_', DIRECTORY_SEPARATOR, $class).'.php';
+            foreach ($this->_prefixFallback as $dir) {
+                $file = $dir . DIRECTORY_SEPARATOR . str_replace(
+                    '_', DIRECTORY_SEPARATOR, $class
+                ) . '.php';
                 if (file_exists($file)) {
                     require $file;
                     return;

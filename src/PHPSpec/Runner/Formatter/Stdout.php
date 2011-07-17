@@ -21,16 +21,24 @@
  */
 namespace PHPSpec\Runner\Formatter;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class Stdout extends \SplFileObject
 {
-    public function __construct($filename)
-    {
-        parent::__construct('php://stdout', 'w');
-    }
-    
+    /**
+     * Adds stream to the standard output
+     * 
+     * @param string $stream
+     */
     public static function put($stream)
     {
-        $stdout = new self('php://stdout');
+        $stdout = new self('php://stdout', 'w');
         $stdout->fwrite($stream);
     }
 }

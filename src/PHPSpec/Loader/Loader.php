@@ -25,8 +25,24 @@ use \PHPSpec\Loader\ClassLoader,
     \PHPSpec\Loader\DirectoryLoader,
     \PHPSpec\Runner\Error;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class Loader
 {
+    /**
+     * Creates an appropriate loader considering if path is a file or a
+     * directory
+     * 
+     * @param string $pathToSpecs
+     * @throws \PHPSpec\Runner\Error
+     * @return \PHPSpec\Loader\Loader
+     */
     public function factory($pathToSpecs)
     {
         if (is_dir($pathToSpecs)) {

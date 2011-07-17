@@ -26,29 +26,57 @@ use \PHPSpec\Runner\Reporter,
     \PHPSpec\Specification\Result\Pending,
     \PHPSpec\Specification\Result\DeliberateFailure;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class ExampleGroup
 {
     
+    /**
+     * Override for having it called once before all examples are ran in one
+     * group
+     */
     public function beforeAll()
     {
         
     }
     
+    /**
+     * Override for having it called before every example is called in a group
+     */
     public function before()
     {
         
     }
     
+    /**
+     * Override for having it called once after all examples are ran in one
+     * group
+     */
     public function afterAll()
     {
         
     }
     
+    /**
+     * Override for having it called after every example is called in a group
+     */
     public function after()
     {
         
     }
     
+    /**
+     * Encapsulate result with a interceptor to be able to add expectations
+     * to the values
+     * 
+     * @return \PHPSpec\Specification\Interceptor
+     */
     public function spec()
     {
         return call_user_func_array(
@@ -59,11 +87,23 @@ class ExampleGroup
         );
     }
     
+    /**
+     * Marks example as pending
+     * 
+     * @param string $message
+     * @throws \PHPSpec\Specification\Result\Pending
+     */
     public function pending($message = 'No reason given')
     {
         throw new Pending($message);
     }
     
+    /**
+     * Marks example as failure
+     * 
+     * @param string $message
+     * @throws \PHPSpec\Specification\Result\DeliberateFailure
+     */
     public function fail($message = '')
     {
         $message = empty($message) ? '' : PHP_EOL . '       ' . $message;
@@ -77,9 +117,11 @@ class ExampleGroup
      * 
      * @param string $class
      * @param array  $stubs
+     * @param array  $arguments
      * @return object
      */
-    public function double($class = 'stdClass', $stubs = array(), $arguments = array())
+    public function double($class = 'stdClass', $stubs = array(),
+                           $arguments = array())
     {
         if (is_dir(__DIR__ . '/../Mocks')) {
             $double = new \PHPSpec\Mocks\Mock();
@@ -99,9 +141,11 @@ class ExampleGroup
      * 
      * @param string $class
      * @param array  $stubs
+     * @param array  $arguments
      * @return object
      */
-    public function mock($class = 'stdClass', $stubs = array(), $arguments = array())
+    public function mock($class = 'stdClass', $stubs = array(),
+                         $arguments = array())
     {
         return $this->double($class, $stubs, $arguments);
     }
@@ -111,9 +155,11 @@ class ExampleGroup
      * 
      * @param string $class
      * @param array  $stubs
+     * @param array  $arguments
      * @return object
      */
-    public function stub($class = 'stdClass', $stubs = array(), $arguments = array())
+    public function stub($class = 'stdClass', $stubs = array(),
+                         $arguments = array())
     {
         return $this->double($class, $stubs, $arguments);
     }

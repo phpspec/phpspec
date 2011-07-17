@@ -23,20 +23,41 @@ namespace PHPSpec\Runner\Formatter;
 
 use \PHPSpec\Runner\Reporter;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class Factory
 {
+    /**
+     * Available formatters
+     * 
+     * @var array
+     */
     protected $_formatters = array(
         'p' => 'Progress',
         'd' => 'Documentation',
         'h' => 'Html'
     );
     
+    /**
+     * Creates a formatter class, looks for built in and returns custom one if
+     * one is not found
+     * 
+     * @param string                   $formatter
+     * @param \PHPSpec\Runner\Reporter $reporter
+     * @return \PHPSpec\Runner\Formatter
+     */
     public function create($formatter, Reporter $reporter)
     {
         if (in_array($formatter, array_keys($this->_formatters)) ||
             in_array(ucfirst($formatter), array_values($this->_formatters))) {
             $formatter = $this->_formatters[strtolower($formatter[0])];
-            $formatterClass = "\PHPSpec\Runner\Formatter\\" . $formatter;
+            $formatterClass = '\PHPSpec\Runner\Formatter\\' . $formatter;
             return new $formatterClass($reporter);
         }
         return new $formatter;

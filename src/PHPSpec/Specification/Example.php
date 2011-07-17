@@ -28,11 +28,38 @@ use \PHPSpec\Runner\Reporter,
     \PHPSpec\Specification\Result\DeliberateFailure,
     \PHPSpec\Specification\Result\Failure;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class Example
 {
+    
+    /**
+     * The example
+     *
+     * @var \ReflectionMethod
+     */
     protected $_example;
+    
+    /**
+     * The example group
+     *
+     * @var PHPSpec\Specification\ExampleGroup
+     */
     protected $_exampleGroup;
     
+    /**
+     * Example keeps a reference to the example group and is created with the
+     * example as a reflected method
+     * 
+     * @param PHPSpec\Specification\ExampleGroup $exampleGroup
+     * @param \ReflectionMethod                  $example
+     */
     public function __construct(ExampleGroup $exampleGroup,
                                 \ReflectionMethod $example)
     {
@@ -40,6 +67,11 @@ class Example
         $this->_exampleGroup = $exampleGroup;
     }
     
+    /**
+     * Runs the example
+     * 
+     * @param \PHPSpec\Runner\Reporter $reporter
+     */
     public function run(Reporter $reporter)
     {
         try {
@@ -63,6 +95,15 @@ class Example
         $reporter->addPass($this);
     }
     
+    /**
+     * Gets the description in the following format:
+     * 
+     * DescribeStringCalculator::itReturnZeroWithNoArguments
+     * becomes
+     * StringCalculator returns zero with no argument
+     * 
+     * @return string
+     */
     public function getDescription()
     {
         $class = str_replace('Describe', '', get_class($this->_exampleGroup));
@@ -70,7 +111,11 @@ class Example
     }
     
     /**
-     * Sets the specification text taken from method name
+     * Return the specification text taken from method name
+     * 
+     * itReturnZeroWithNoArguments
+     * becomes
+     * returns zero with no argument
      * 
      * @param string $methodName
      * @return string

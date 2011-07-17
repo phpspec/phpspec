@@ -23,11 +23,29 @@ namespace PHPSpec\Specification;
 
 use \PHPSpec\Runner\Reporter;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class ExampleRunner
 {
+    /**
+     * The example factory
+     *
+     * @var PHPSpec\Specification\ExampleFactory
+     */
     protected $_exampleFactory;
-    protected $_interceptorFactory;
     
+    /**
+     * Runs all examples inside an example group
+     * 
+     * @param PHPSpec\Specification\ExampleGroup $exampleGroup
+     * @param \PHPSpec\Runner\Reporter           $reporter
+     */
     public function run(ExampleGroup $exampleGroup, Reporter $reporter)
     {
         $reporter->exampleGroupStarted($exampleGroup);
@@ -35,7 +53,14 @@ class ExampleRunner
         $reporter->exampleGroupFinished($exampleGroup);
     }
     
-    protected function runExamples(ExampleGroup $exampleGroup, Reporter $reporter)
+    /**
+     * Creates and runs all examples (methods started with 'it')
+     * 
+     * @param PHPSpec\Specification\ExampleGroup $exampleGroup
+     * @param \PHPSpec\Runner\Reporter           $reporter
+     */
+    protected function runExamples(ExampleGroup $exampleGroup,
+                                   Reporter $reporter)
     {
         $object = new \ReflectionObject($exampleGroup);
         foreach ($object->getMethods() as $method) {
@@ -46,11 +71,24 @@ class ExampleRunner
         }
     }
     
-    protected function createExample(ExampleGroup $exampleGroup, \ReflectionMethod $example)
+    /**
+     * Creates an example
+     * 
+     * @param PHPSpec\Specification\ExampleGroup $exampleGroup
+     * @param \ReflectionMethod                  $example
+     * @return \PHPSpec\Specification\Example
+     */
+    protected function createExample(ExampleGroup $exampleGroup,
+                                     \ReflectionMethod $example)
     {
         return $this->getExampleFactory()->create($exampleGroup, $example);
     }
     
+    /**
+     * Gets the example factory
+     * 
+     * @return PHPSpec\Specification\ExampleFactory
+     */
     public function getExampleFactory()
     {
         if ($this->_exampleFactory === null) {
@@ -59,6 +97,11 @@ class ExampleRunner
         return $this->_exampleFactory;
     }
     
+    /**
+     * Sets the example factory
+     * 
+     * @param PHPSpec\Specification\ExampleFactory $factory
+     */
     public function setExampleFactory(ExampleFactory $factory)
     {
         $this->_exampleFactory = $factory;

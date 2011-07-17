@@ -21,32 +21,69 @@
  */
 namespace PHPSpec\Runner\Formatter;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class Color
 {
-    protected static $colors = array(
+    /**
+     * Existing colours in PHPSpec with the equivalent ansi escape code
+     * 
+     * @var unknown_type
+     */
+    protected static $_colors = array(
         'green' => "\033[32m%s\033[m",
         'red' => "\033[31m%s\033[m",
         'grey' => "\033[37m%s\033[m",
         'yellow' => "\033[33m%s\033[m",
     );
     
+    /**
+     * Decorates with green ansi colour
+     * @param string $output
+     * 
+     * @return string
+     */
     public static function green($output)
     {
-        return sprintf(self::$colors['green'], $output);
+        return sprintf(self::$_colors['green'], $output);
     }
     
+    /**
+     * Decorates with red ansi colour
+     * @param string $output
+     * 
+     * @return string
+     */
     public static function red($output)
     {
-        return sprintf(self::$colors['red'], $output);        
+        return sprintf(self::$_colors['red'], $output);        
     }
     
+    /**
+     * Decorates with yellow ansi colour
+     * @param string $output
+     * 
+     * @return string
+     */
     public static function yellow($output)
     {
-        return sprintf(self::$colors['yellow'], $output);        
+        return sprintf(self::$_colors['yellow'], $output);        
     }
     
+    /**
+     * Decorates with grey ansi colour
+     * @param string $output
+     * 
+     * @return string
+     */
     public static function grey($output)
     {
-        return sprintf(self::$colors['grey'], $output);
+        return sprintf(self::$_colors['grey'], $output);
     }
 }

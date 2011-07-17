@@ -21,6 +21,14 @@
  */
 namespace PHPSpec\Loader;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class ApplyConvention
 {
     /**
@@ -100,11 +108,21 @@ class ApplyConvention
         return $follow;
     }
     
+    /**
+     * Gets the class
+     * 
+     * @return string
+     */
     public function getClass()
     {
         return $this->_class;
     }
     
+    /**
+     * Gets the class file
+     * 
+     * @return string
+     */
     public function getClassFile()
     {
         return $this->_classFile;

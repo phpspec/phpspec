@@ -21,6 +21,12 @@
  */
 namespace PHPSpec\Matcher;
 
+/**
+ * Defines a custom matcher
+ * 
+ * @param string   $matcherName
+ * @param \Closure $matcherDefinition
+ */
 function define($matcherName, $matcherDefinition)
 {
     \PHPSpec\Matcher\MatcherRepository::add($matcherName, $matcherDefinition);

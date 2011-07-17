@@ -21,9 +21,20 @@
  */
 namespace PHPSpec\Runner\Formatter;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class Documentation extends Progress
 {
-    public function update(\SplSubject $method)
+    /**
+     * Implements observer events listener
+     */
+    public function update(\SplSubject $subject)
     {
         $args = func_get_args();
         
@@ -34,8 +45,9 @@ class Documentation extends Progress
                 break;
             case 'status':
                 $this->printLines(1);
-                $this->specdocx(
-                    $args[1][1], $args[1][2], isset($args[1][3]) ? $args[1][3] : ''
+                $this->specdox(
+                    $args[1][1], $args[1][2],
+                    isset($args[1][3]) ? $args[1][3] : ''
                 );
                 break;
             case 'exit':
@@ -45,7 +57,14 @@ class Documentation extends Progress
         }
     }
     
-    protected function specdocx($status, $example, $message = '')
+    /**
+     * Adds specdocx to the output
+     * 
+     * @param string $status
+     * @param string $example
+     * @param string $message
+     */
+    protected function specdox($status, $example, $message = '')
     {
         switch($status) {
             case '.':

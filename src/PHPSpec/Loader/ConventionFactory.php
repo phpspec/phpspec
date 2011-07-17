@@ -21,8 +21,24 @@
  */
 namespace PHPSpec\Loader;
 
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class ConventionFactory
 {
+    /**
+     * Creates a convention object. Apply convention is the default in PHPSpec
+     * The factory was created to give testing a way of injecting the convention
+     * into the loader
+     * 
+     * @param string $spec
+     * @return \PHPSpec\Loader\ApplyConvention
+     */
     public function create($spec)
     {
         return new ApplyConvention($spec);
