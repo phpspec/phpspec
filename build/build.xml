@@ -31,7 +31,7 @@
   
   <target name="code-sniffer" description="Check standards" depends="init">
     <exec executable="phpcs" dir="${pear}/PHPSpec" failonerror="on">
-      <arg line="--ignore=*Functions.php --standard=Zend ." />
+      <arg line="--standard=Zend ." />
     </exec>
   </target>
 
