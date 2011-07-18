@@ -100,6 +100,8 @@ class Runner implements \PHPSpec\Runner\Runner
         $this->setColor($world);
         $this->setBacktrace($world);
         $this->setFailFast($world);
+        $this->setExampleIntoRunner($world);
+        
         $this->startErrorHandler();
         $world->getReporter()->setRuntimeStart();
 
@@ -161,6 +163,18 @@ class Runner implements \PHPSpec\Runner\Runner
     {
         if ($world->getOption('failfast')) {
             $world->getReporter()->setFailFast(true);
+        }
+    }
+    
+    /**
+     * Sets one example into the example runner
+     * 
+     * @param \PHPSpec\World $world
+     */
+    protected function setExampleIntoRunner(World $world)
+    {
+        if ($world->getOption('example')) {
+            $this->getExampleRunner()->runOnly($world->getOption('example'));
         }
     }
     

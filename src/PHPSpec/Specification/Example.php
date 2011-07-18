@@ -80,6 +80,9 @@ class Example
             call_user_func(array($this->_exampleGroup, 'before'));
             call_user_func(array($this->_exampleGroup, $methodName));
             call_user_func(array($this->_exampleGroup, 'after'));
+            if (class_exists('Mockery')) {
+                \Mockery::close();
+            }
         } catch (Failure $failure) {
             $reporter->addFailure($this, $failure);
             return;

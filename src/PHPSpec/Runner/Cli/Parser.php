@@ -49,7 +49,21 @@ class Parser implements \PHPSpec\Runner\Parser
         'f'         => 'p',
         'formatter' => 'p',
         'specFile'  => '',
-        'fail-fast' => false
+        'fail-fast' => false,
+        'e'         => false,
+        'example'   => false
+    );
+    
+    /**
+     * Properties that takes values
+     *
+     * @var array
+     */
+    protected $_takesAValue = array(
+        'f',
+        'formatter',
+        'e',
+        'example'
     );
     
     /**
@@ -61,7 +75,8 @@ class Parser implements \PHPSpec\Runner\Parser
         'c' => array('color', 'colour'),
         'h' => 'help',
         'b' => 'backtrace',
-        'f' => 'formatter'
+        'f' => 'formatter',
+        'e' => 'example'
      );
     
     /**
@@ -157,8 +172,8 @@ class Parser implements \PHPSpec\Runner\Parser
      */
     private function convertLongArgumentstoOptions($arguments, $argument)
     {
-        if ($this->isFormatterOption(substr($argument, 2))) {
-            $this->checkFormatterValueIsInNextArgument($arguments);
+        if ($this->takesAValue(substr($argument, 2))) {
+            $this->checkValueIsInNextArgument($arguments);
         } else {
             $this->setOption(substr($argument, 2), true);
         }
@@ -176,14 +191,11 @@ class Parser implements \PHPSpec\Runner\Parser
         $shortOptions = new \ArrayIterator($options);
         while ($shortOptions->valid()) {
             $flag = $shortOptions->current();
-            if ($this->isFormatterOption($flag)) {
-                if ($this->formatterIsNextShortOption($shortOptions)) {
-                    $this->setFormatterAndAdvancePointer(
-                        $shortOptions, $arguments
-                    );
-                } else {
-                    $this->checkFormatterValueIsInNextArgument($arguments);
+            if ($this->takesAValue($flag)) {
+                if ($this->checkValueIsInNextOption($shortOptions)) {
+                    continue;
                 }
+                $this->checkValueIsInNextArgument($arguments);
             } else {
                 $this->setOption($flag, true);
                 $shortOptions->next();
@@ -192,58 +204,53 @@ class Parser implements \PHPSpec\Runner\Parser
     }
     
     /**
-     * Checks if formatter value is the next argument
+     * Checks if value is the next option
+     * 
+     * @param array $options
+     * @throws \PHPSpec\Runner\Cli\Error
+     */
+    public function checkValueIsInNextOption($options)
+    {
+        $option = $options->current();
+        $options->next();
+        $value = $options->current();
+        try {
+            if ($value === null) {
+                return false;
+            } 
+            $this->setOption($option, $value);
+            $options->next();
+        } catch (\Exception $e) {
+            if ($value) {
+                throw $e;
+            }
+            return false;
+        }
+        return true;
+    }
+    
+    /**
+     * Checks if value is the next argument
      * 
      * @param array $arguments
      * @throws \PHPSpec\Runner\Cli\Error
      */
-    public function checkFormatterValueIsInNextArgument($arguments)
+    public function checkValueIsInNextArgument($arguments)
     {
+        $option = ltrim($arguments->current(), '-');
         $arguments->next();
-        if (in_array($arguments->current(), $this->_validFormatters)) {
-            $this->setFormatter($arguments->current());
-        } else {
-            throw new \PHPSpec\Runner\Cli\Error(
-                'Invalid argument for formatter'
-            );
-        }
-        $arguments->next();
+        $this->setOption($option, $arguments->current());
     }
     
     /**
-     * Whether formatter is next short option
-     * 
-     * @param array $shortOptions
-     * @return boolean
-     */
-    protected function formatterIsNextShortOption($shortOptions)
-    {
-        $shortOptions->next();
-        return in_array($shortOptions->current(), $this->_validFormatters);
-    }
-    
-    /**
-     * Sets formatter and advances the pointer
-     * 
-     * @param array $shortOptions
-     * @param array $arguments
-     */
-    protected function setFormatterAndAdvancePointer($shortOptions, $arguments)
-    {
-        $this->setFormatter($shortOptions->current());
-        $shortOptions->next();
-        $arguments->next();
-    }
-    
-    /**
-     * Whether this is a formatter option
+     * Whether this parameter takes a value
      * 
      * @param string $option
      * @return boolean
      */
-    protected function isFormatterOption($option)
+    protected function takesAValue($option)
     {
-        return $option === 'f' || $option === 'formatter';
+        return in_array($option, $this->_takesAValue);
     }
     
     /**
@@ -364,7 +371,14 @@ class Parser implements \PHPSpec\Runner\Parser
      */
     public function setFormatter($formatter)
     {
-        $this->_options['f'] = $this->_options['formatter'] = $formatter;
+        if (in_array($formatter, $this->_validFormatters)) {
+            $this->_options['f'] = $this->_options['formatter'] = $formatter;
+        } else {
+            throw new \PHPSpec\Runner\Cli\Error(
+                'Invalid argument for formatter'
+            );
+        }
+        
     }
     
     /**
@@ -426,5 +440,15 @@ class Parser implements \PHPSpec\Runner\Parser
     public function setFailfast($failfast)
     {
         $this->_options['failfast'] = $failfast;
+    }
+    
+    /**
+     * Sets the example option
+     * 
+     * @param boolean $example
+     */
+    public function setExample($example)
+    {
+        $this->_options['e'] = $this->_options['example'] = $example;
     }
 }
