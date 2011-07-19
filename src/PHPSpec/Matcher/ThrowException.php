@@ -79,37 +79,48 @@ class ThrowException implements Matcher
      * Describes Matcher specific implementation 
      *
      * @param mixed $actualException
+     * @return boolean
      */
     public function matches($actualException, $actualMessage = null)
     {
         $this->_actualException = $actualException;
         $this->_actualMessage = $actualMessage;
         if (isset($this->_expectedMessage)) {
-            return $this->_actualException === $this->_expectedException &&
+            return ltrim($this->_actualException, '\\')  ===
+                   ltrim($this->_expectedException, '\\')  &&
                    $this->_actualMessage === $this->_expectedMessage;
         }
-        return $this->_actualException === $this->_expectedException;
+        return ltrim($this->_actualException, '\\') ===
+               ltrim($this->_expectedException, '\\');
     }
 
     /**
      * Returns the failure message to be displayed
+     * 
+     * @return string
      */
     public function getFailureMessage()
     {
         if (isset($this->_expectedException)) {
             if (isset($this->_expectedMessage)) {
-                if ($this->_expectedMessage !== $this->_actualMessage) {
-                    return 'expected to throw exception with message ' .
-                       var_export($this->_expectedMessage, true) .
-                       ', got ' . var_export($this->_actualMessage, true) .
-                       ' (using throwException())';
+                if ($this->_actualException === null) {
+                    return 'expected to throw exception ' .
+                       $this->_expectedException .
+                       ' with message "' . $this->_expectedMessage .
+                       '", got no exception (using throwException())';
+                } elseif ($this->_expectedMessage !== $this->_actualMessage) {
+                    return 'expected to throw exception ' .
+                       $this->_expectedException .
+                       ' with message "' . $this->_expectedMessage .
+                       '", got message "' . $this->_actualMessage .
+                       '" (using throwException())';
                 }
             }
             
             if ($this->_expectedException !== $this->_actualException) {
                 return 'expected to throw exception ' .
-                       var_export($this->_expectedException, true) .
-                       ', got ' . var_export($this->_actualException, true) .
+                       $this->export($this->_expectedException) .
+                       ', got ' . $this->export($this->_actualException) .
                        ' (using throwException())';
             }
         }        
@@ -118,36 +129,58 @@ class ThrowException implements Matcher
     /**
      * Returns the negative failure message in case
      * of using should not instead of should
+     * 
+     * @return string
      */
     public function getNegativeFailureMessage()
     {
         if (isset($this->_expectedException)) {
             if (isset($this->_expectedMessage)) {
-                if ($this->_expectedMessage !== $this->_actualMessage) {
-                    return 'expected ' .
-                           var_export($this->_actualException, true) .
-                           ' not for exception message but got ' .
-                           var_export($this->_expectedException, true) .
+                if ($this->_actualException === null) {
+                    return 'expected not to throw exception ' .
+                       $this->_expectedException .
+                       ' with message "' . $this->_expectedMessage .
+                       '", and got no exception (using throwException())';
+                } elseif ($this->_expectedMessage !== $this->_actualMessage) {
+                    return 'expected not to throw ' .
+                           $this->export($this->_actualException) .
+                           ' and got ' .
+                           $this->export($this->_expectedException) .
                            ' (using throwException())';
                 }
             }
         }
         
         if ($this->_expectedException !== $this->_actualException) {
-            return 'expected ' . var_export($this->_actualException, true) .
+            return 'expected ' . $this->export($this->_actualException) .
                    ' not to be thrown but got ' .
-                   var_export($this->_expectedException, true) .
+                   $this->export($this->_expectedException) .
                    ' (using throwException())';
         }
     }
 
     /**
      * Describes the matching
+     * 
+     * @return string
      */
     public function getDescription()
     {
-        return 'throw exception ' . strval($this->_expectedException) .
+        return 'throw exception ' . $this->_expectedException .
                (isset($this->_expectedMessage) ? ' with message ' .
                $this->_expectedMessage : '');
+    }
+    
+    /**
+     * Wrapps value cleanning it a bit
+     * 
+     * @param string $value
+     * @return string
+     */
+    private function export($value)
+    {
+        return $value === null ?
+               'no exception' :
+               str_replace('\\\\', '\\', var_export($value, true));
     }
 }

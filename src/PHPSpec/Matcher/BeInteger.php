@@ -57,7 +57,7 @@ class BeInteger implements Matcher
      * 
      * @param unused $expected
      */
-    public function __construct($expected)
+    public function __construct($expected = null)
     {
         $this->_expected = null;
     }

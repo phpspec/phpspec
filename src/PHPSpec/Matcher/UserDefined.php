@@ -22,9 +22,9 @@
 namespace PHPSpec\Matcher;
 
 /**
- * @see \PHPSpec\Runner\FailedMatcherException
+ * @see \PHPSpec\Specification\Result\Failure
  */
-use \PHPSpec\Runner\FailedMatcherException;
+use PHPSpec\Specification\Result\Failure as FailedMatcherException;
 
 /**
  * @see \PHPSpec\Matcher\MatcherRepository
@@ -79,7 +79,7 @@ class UserDefined
      * Performs the matching between expected and actual
      * 
      * @param mixed $actual
-     * @throws FailedMatcherException
+     * @throws PHPSpec\Specification\Result\Failure
      * @return boolean
      */
     public function matches($actual)

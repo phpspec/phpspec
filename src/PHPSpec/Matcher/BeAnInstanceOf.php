@@ -92,7 +92,7 @@ class BeAnInstanceOf implements Matcher
     public function getFailureMessage()
     {
         return 'expected ' . var_export($this->_expected, true) . ', got ' .
-               var_export($this->_actual, true) . ' (using beAnInstanceOf())';
+               $this->export($this->_actual) . ' (using beAnInstanceOf())';
     }
 
     /**
@@ -103,7 +103,7 @@ class BeAnInstanceOf implements Matcher
     public function getNegativeFailureMessage()
     {
         return 'expected ' . var_export($this->_actual, true) . ' not to be ' .
-               var_export($this->_expected, true) . ' (using beAnInstanceOf())';
+               $this->export($this->_expected) . ' (using beAnInstanceOf())';
     }
 
     /**
@@ -113,6 +113,11 @@ class BeAnInstanceOf implements Matcher
      */
     public function getDescription()
     {
-        return 'be an instance of ' . var_export($this->_expected, true);
+        return 'be an instance of ' . $this->export($this->_expected);
+    }
+    
+    private function export($value)
+    {
+        return str_replace('\\\\', '\\', var_export($value, true));
     }
 }

@@ -57,7 +57,7 @@ class BeFalse implements Matcher
      * 
      * @param unknown_type $expected
      */
-    public function __construct($expected)
+    public function __construct($expected = false)
     {
         $this->_expected = false;
     }
@@ -81,7 +81,8 @@ class BeFalse implements Matcher
      */
     public function getFailureMessage()
     {
-        return 'expected FALSE, got TRUE or non-boolean (using beFalse())';
+        return 'expected FALSE, got ' . var_export($this->_actual, true) .
+               ' (using beFalse())';
     }
 
     /**

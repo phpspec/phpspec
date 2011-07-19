@@ -31,27 +31,5 @@ namespace PHPSpec;
  */
 class Exception extends \Exception
 {
-
-    /**
-     * @param string  $message
-     * @param integer $code
-     * @param string  $file
-     * @param integer $line
-     * @param array   $backtrace
-     */
-    public function __construct($message = null, $code = 0, $file = null,
-                                $line = null, $backtrace = null)
-    {
-        parent::__construct($message, $code);
-        if (!is_null($file)) {
-            $this->file = $file;
-        }
-        if (!is_null($line)) {
-            $this->line = $line;
-        }
-        if (!is_null($backtrace)) {
-            $this->trace = $backtrace;
-        }
-    }
-
+    
 }
