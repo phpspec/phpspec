@@ -258,7 +258,7 @@ abstract class Interceptor
                 $matcherClass = '\PHPSpec\Context\Zend\Matcher\\' . $matcher;
                 $reflectedMatcher = new \ReflectionClass($matcherClass);
                 $this->_matcher = $reflectedMatcher->newInstanceArgs(
-                    array($this->getActualValue())
+                    $expected
                 );
             } catch(\ReflectionException $e) {
                 throw new \PHPSpec\Exception("Could not find matcher $matcher");
@@ -292,6 +292,7 @@ abstract class Interceptor
     protected function performMatching()
     {
         $actual = $this->getActualValue();
+
         if (is_array($actual) && $this->_composedActual) {
             $args = $actual;
         } else {

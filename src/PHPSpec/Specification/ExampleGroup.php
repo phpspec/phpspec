@@ -120,20 +120,13 @@ class ExampleGroup
      * @param array  $arguments
      * @return object
      */
-    public function double($class = 'stdClass', $stubs = array(),
-                           $arguments = array())
+    public function double($class = 'stdClass')
     {
-        if (is_dir(__DIR__ . '/../Mocks')) {
-            $double = new \PHPSpec\Mocks\Mock();
-            $double = $double->create($class, array(), $arguments);
-            if (!empty($stubs)) {
-                foreach ($stubs as $stub => $value) {
-                    $double->stub($stub)->andReturn($value);
-                }
-            }
+        if (class_exists('Mockery')) {
+            $double = \Mockery::mock($class);
             return $double;
         }
-        throw new \PHPSpec\Exception('PHPSpec_Mocks is not installed');
+        throw new \PHPSpec\Exception('Mockery is not installed');
     }
 
     /**
@@ -144,10 +137,9 @@ class ExampleGroup
      * @param array  $arguments
      * @return object
      */
-    public function mock($class = 'stdClass', $stubs = array(),
-                         $arguments = array())
+    public function mock($class = 'stdClass')
     {
-        return $this->double($class, $stubs, $arguments);
+        return $this->double($class);
     }
 
     /**
@@ -158,8 +150,7 @@ class ExampleGroup
      * @param array  $arguments
      * @return object
      */
-    public function stub($class = 'stdClass', $stubs = array(),
-                         $arguments = array())
+    public function stub($class = 'stdClass')
     {
         return $this->double($class, $stubs, $arguments);
     }

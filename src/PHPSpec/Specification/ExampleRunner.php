@@ -41,6 +41,13 @@ class ExampleRunner
     protected $_exampleFactory;
     
     /**
+     * Pattern of the name of the example to run
+     *
+     * @var string
+     */
+    protected $_runOnly = false;
+    
+    /**
      * Runs all examples inside an example group
      * 
      * @param PHPSpec\Specification\ExampleGroup $exampleGroup
@@ -66,7 +73,16 @@ class ExampleRunner
         foreach ($object->getMethods() as $method) {
             $name = $method->getName();
             if (strtolower(substr($name, 0, 2)) === 'it') {
-                $this->createExample($exampleGroup, $method)->run($reporter);
+                if ($this->_runOnly &&
+                    preg_match("/$this->_runOnly/", $name)) {
+                    $this->createExample($exampleGroup, $method)
+                         ->run($reporter);
+                    break;
+                }
+                if (!$this->_runOnly) {
+                    $this->createExample($exampleGroup, $method)
+                         ->run($reporter);
+                }
             }
         }
     }
@@ -105,5 +121,15 @@ class ExampleRunner
     public function setExampleFactory(ExampleFactory $factory)
     {
         $this->_exampleFactory = $factory;
+    }
+    
+    /**
+     * Sets the runner to run only a single example
+     *
+     * @param string $example
+     */
+    public function runOnly($example)
+    {
+        $this->_runOnly = $example;
     }
 }

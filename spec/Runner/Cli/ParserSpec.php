@@ -135,4 +135,18 @@ class DescribeParser extends \PHPSpec\Context
         })->should->throwException('\PHPSpec\Runner\Cli\Error',
             'phpspec: Invalid argument for formatter');
     }
+    
+    function itCanSpecifyShortOptionForExample()
+    {
+        $args = array('/usr/bin/phpspec', 'MySpec.php', '-e', 'itShouldDoSomething');
+        $this->parser->parse($args);
+        $this->parser->getOption('e')->should->be('itShouldDoSomething');
+    }
+
+    function itCanSpecifyLongOptionForExample()
+    {
+        $args = array('/usr/bin/phpspec', 'MySpec.php', '--example', 'itShouldDoSomething');
+        $this->parser->parse($args);
+        $this->parser->getOption('e')->should->be('itShouldDoSomething');
+    }
 }
