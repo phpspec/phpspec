@@ -14,12 +14,9 @@
     <copy toDir="${pear}" >
       <fileset file="${source}/README.markdown" />
       <fileset file="${source}/LICENSE" />
-      <fileset file="${source}/scripts/phpspec" />
+      <fileset file="${source}/scripts/phpspec.php" />
       <fileset file="${source}/scripts/phpspec.bat" />
     </copy>
-    <exec executable="mv">
-      <arg line="${pear}/phpspec ${pear}/phpspec.php" />
-    </exec> 
     
     <mkdir dir="${pear}/PHPSpec" />
     <copy toDir="${pear}/PHPSpec" >
@@ -27,6 +24,7 @@
     </copy>
     
     <delete dir="${pear}/PHPSpec/Mocks" />
+    <delete dir="${pear}/PHPSpec/Context" />
   </target>
   
   <target name="code-sniffer" description="Check standards" depends="init">
