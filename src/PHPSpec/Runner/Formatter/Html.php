@@ -295,4 +295,14 @@ class Html extends Progress
         );
         return $line->render();
     }
+    
+    /**
+     * Inhibits ansii colors in Html formatter
+     *
+     * @return boolean
+     */
+    public function showColors()
+    {
+        return false;
+    }
 }
