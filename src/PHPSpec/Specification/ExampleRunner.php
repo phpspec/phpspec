@@ -33,6 +33,8 @@ use \PHPSpec\Runner\Reporter;
  */
 class ExampleRunner
 {
+    const ALL_EXAMPLES = '.*';
+    
     /**
      * The example factory
      *
@@ -45,7 +47,21 @@ class ExampleRunner
      *
      * @var string
      */
-    protected $_runOnly = false;
+    protected $_examplesToRun = ExampleRunner::ALL_EXAMPLES;
+    
+    /**
+     * Example groups that have started (only when -e is used)
+     *
+     * @var array
+     */
+    protected $_groupsStarted = array();
+
+    /**
+     * Example groups that have finished (only when -e is used)
+     *
+     * @var array
+     */
+    protected $_groupsFinished = array();
     
     /**
      * Runs all examples inside an example group
@@ -55,9 +71,74 @@ class ExampleRunner
      */
     public function run(ExampleGroup $exampleGroup, Reporter $reporter)
     {
+        if ($this->_examplesToRun !== ExampleRunner::ALL_EXAMPLES) {
+            $this->checkGroupStarted($exampleGroup, $reporter);
+            $this->runExamples($exampleGroup, $reporter);
+            $this->checkGroupFinished($exampleGroup, $reporter);
+            return;
+        }
+
         $reporter->exampleGroupStarted($exampleGroup);
         $this->runExamples($exampleGroup, $reporter);
         $reporter->exampleGroupFinished($exampleGroup);
+    }
+    
+    /**
+     * Checks if example group has started, if it hasn't then it will notify
+     * the reporter that it has
+     */
+    private function checkGroupStarted(ExampleGroup $exampleGroup,
+                                       Reporter $reporter)
+    {
+        $groupName = get_class($exampleGroup);
+        foreach($this->getMethodNames($exampleGroup) as $method) {
+            if ($this->methodIsAnExample($method) &&
+                $this->filterExample($method) &&
+                $this->groupHasntStarted($groupName)) {
+                $reporter->exampleGroupStarted($exampleGroup);
+                $this->_groupsStarted[] = $groupName;
+            }
+        }
+    }
+    
+    /**
+     * Checks if example group has finished, if it hasn't then it will notify
+     * the reporter that it has
+     */
+    private function checkGroupFinished(ExampleGroup $exampleGroup,
+                                       Reporter $reporter)
+    {
+        $groupName = get_class($exampleGroup);
+        foreach($this->getMethodNames($exampleGroup) as $method) {
+            if ($this->methodIsAnExample($method) &&
+                $this->filterExample($method) &&
+                $this->groupHasntFinished($groupName)) {
+                $reporter->exampleGroupFinished($exampleGroup);
+                $this->_groupsFinished[] = $groupName;
+            }
+        }
+    }
+    
+    /**
+     * Whether the example group has had any example ran
+     *
+     * @param string $exampleGroup
+     * @return boolean
+     */
+    private function groupHasntStarted($exampleGroup)
+    {
+        return !in_array($exampleGroup, $this->_groupsStarted);
+    }
+    
+    /**
+     * Whether the example group has finished running the examples
+     *
+     * @param string $exampleGroup
+     * @return boolean
+     */
+    private function groupHasntFinished($exampleGroup)
+    {
+        return !in_array($exampleGroup, $this->_groupsFinished);
     }
     
     /**
@@ -69,33 +150,63 @@ class ExampleRunner
     protected function runExamples(ExampleGroup $exampleGroup,
                                    Reporter $reporter)
     {
-        $object = new \ReflectionObject($exampleGroup);
-        foreach ($object->getMethods() as $method) {
-            $name = $method->getName();
-            if (strtolower(substr($name, 0, 2)) === 'it') {
-                if ($this->_runOnly &&
-                    preg_match("/$this->_runOnly/", $name)) {
-                    $this->createExample($exampleGroup, $method)
-                         ->run($reporter);
-                    break;
-                }
-                if (!$this->_runOnly) {
-                    $this->createExample($exampleGroup, $method)
-                         ->run($reporter);
-                }
+        foreach ($this->getMethodNames($exampleGroup) as $methodName) {
+            if ($this->methodIsAnExample($methodName) &&
+                $this->filterExample($methodName)) {
+                $this->createExample($exampleGroup, $methodName)
+                     ->run($reporter);
             }
         }
+    }
+    
+    /**
+     * Gets the example group method names
+     *
+     * @param ExampleGroup $exampleGroup 
+     * @return array
+     */
+    private function getMethodNames(ExampleGroup $exampleGroup)
+    {
+        $object = new \ReflectionObject($exampleGroup);
+        $methodNames = array();
+        foreach ($object->getMethods() as $method) {
+            $methodNames[] = $method->getName();
+        }
+        return $methodNames;
+    }
+    
+    /**
+     * Whether the method name starts with it, indicating it is an example
+     *
+     * @param string $name 
+     * @return boolean
+     */
+    private function methodIsAnExample($name)
+    {
+        return strtolower(substr($name, 0, 2)) === 'it';
+    }
+    
+    /**
+     * If I am filtering examples with the -e|--example flag this will return
+     * true if the current example matches the filter, causing the example to
+     * run
+     *
+     * @param string $name 
+     * @return boolean
+     */
+    private function filterExample($name)
+    {
+        return preg_match("/$this->_examplesToRun/i", $name);
     }
     
     /**
      * Creates an example
      * 
      * @param PHPSpec\Specification\ExampleGroup $exampleGroup
-     * @param \ReflectionMethod                  $example
+     * @param string                             $example
      * @return \PHPSpec\Specification\Example
      */
-    protected function createExample(ExampleGroup $exampleGroup,
-                                     \ReflectionMethod $example)
+    protected function createExample(ExampleGroup $exampleGroup, $example)
     {
         return $this->getExampleFactory()->create($exampleGroup, $example);
     }
@@ -130,6 +241,6 @@ class ExampleRunner
      */
     public function runOnly($example)
     {
-        $this->_runOnly = $example;
+        $this->_examplesToRun = $example;
     }
 }
