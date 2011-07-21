@@ -53,6 +53,7 @@ class Runner implements \PHPSpec\Runner\Runner
     
     -b, --backtrace                  Enable full backtrace
     -c, --colour, --color            Enable color in the output
+    -e, --example STRING             Run examples whose full nested names include STRING
     -f, --formater FORMATTER         Choose a formatter
                                        [p]rogress (default - dots)
                                        [d]ocumentation (group and example names)
