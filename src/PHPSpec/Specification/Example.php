@@ -41,11 +41,11 @@ class Example
 {
     
     /**
-     * The example
+     * The example method name
      *
-     * @var \ReflectionMethod
+     * @var string
      */
-    protected $_example;
+    protected $_methodName;
     
     /**
      * The example group
@@ -59,12 +59,11 @@ class Example
      * example as a reflected method
      * 
      * @param PHPSpec\Specification\ExampleGroup $exampleGroup
-     * @param \ReflectionMethod                  $example
+     * @param string                             $methodName
      */
-    public function __construct(ExampleGroup $exampleGroup,
-                                \ReflectionMethod $example)
+    public function __construct(ExampleGroup $exampleGroup, $methodName)
     {
-        $this->_example = $example;
+        $this->_methodName = $methodName;
         $this->_exampleGroup = $exampleGroup;
     }
     
@@ -76,7 +75,7 @@ class Example
     public function run(Reporter $reporter)
     {
         try {
-            $methodName = $this->_example->getName();
+            $methodName = $this->_methodName;
             call_user_func(array($this->_exampleGroup, 'before'));
             call_user_func(array($this->_exampleGroup, $methodName));
             call_user_func(array($this->_exampleGroup, 'after'));
@@ -126,7 +125,7 @@ class Example
      */
     public function getSpecificationText()
     {
-        $methodName = substr($this->_example->getName(), 2);
+        $methodName = substr($this->_methodName, 2);
         return Filter::camelCaseToSpace($methodName);
     }
 }
