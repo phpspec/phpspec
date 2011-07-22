@@ -91,7 +91,7 @@ class ExampleRunner
                                        Reporter $reporter)
     {
         $groupName = get_class($exampleGroup);
-        foreach($this->getMethodNames($exampleGroup) as $method) {
+        foreach ($this->getMethodNames($exampleGroup) as $method) {
             if ($this->methodIsAnExample($method) &&
                 $this->filterExample($method) &&
                 $this->groupHasntStarted($groupName)) {
@@ -109,7 +109,7 @@ class ExampleRunner
                                        Reporter $reporter)
     {
         $groupName = get_class($exampleGroup);
-        foreach($this->getMethodNames($exampleGroup) as $method) {
+        foreach ($this->getMethodNames($exampleGroup) as $method) {
             if ($this->methodIsAnExample($method) &&
                 $this->filterExample($method) &&
                 $this->groupHasntFinished($groupName)) {
