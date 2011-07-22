@@ -44,24 +44,24 @@ class Runner implements \PHPSpec\Runner\Runner
      * 
      * @var string
      */
-    const VERSION = '1.2.0beta';
+    const VERSION = '1.2.1beta';
     
     /**
      * Usage message
      */
     const USAGE = "Usage: phpspec (FILE|DIRECTORY) + [options]
     
-    -b, --backtrace                  Enable full backtrace
-    -c, --colour, --color            Enable color in the output
-    -e, --example STRING             Run examples whose full nested names include STRING
-    -f, --formater FORMATTER         Choose a formatter
-                                       [p]rogress (default - dots)
-                                       [d]ocumentation (group and example names)
-                                       [h]tml
-                                       custom formatter class name
-    -h, --help                       You're looking at it
-    --fail-fast                      Abort the run on first failure.
-    --version                        Show version
+    -b, --backtrace          Enable full backtrace
+    -c, --colour, --color    Enable color in the output
+    -e, --example STRING     Run examples whose full nested names include STRING
+    -f, --formater FORMATTER Choose a formatter
+                              [p]rogress (default - dots)
+                              [d]ocumentation (group and example names)
+                              [h]tml
+                              custom formatter class name
+    -h, --help               You're looking at it
+    --fail-fast              Abort the run on first failure.
+    --version                Show version
 ";
     
     

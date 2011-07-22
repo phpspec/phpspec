@@ -1,6 +1,6 @@
 <project name="PHPSpec">
   
-  <property name="version" value="1.2" />
+  <property name="version" value="1.2.1" />
   <property name="stability" value="beta" />
   <property name="pear" value="pear" />
   <property name="source" value="/md/dev/php/phpspec" />
