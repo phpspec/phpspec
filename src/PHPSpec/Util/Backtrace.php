@@ -118,8 +118,8 @@ class Backtrace
                 strpos($formatted, $prettyLine) !== false) {
                 continue;
             }
-            
-            if (!PHPSpec::testingPHPSpec()) {
+                        
+            if ($limit !== null && !PHPSpec::testingPHPSpec()) {
                 if (stristr($prettyLine, 'phpspec')) {
                     continue;
                 }
