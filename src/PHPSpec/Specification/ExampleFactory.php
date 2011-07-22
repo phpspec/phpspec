@@ -35,12 +35,11 @@ class ExampleFactory
      * Creates an example
      * 
      * @param ExampleGroup $exampleGroup
-     * @param \ReflectionMethod $example
+     * @param string $example
      * 
      * @return \PHPSpec\Specification\Example
      */
-    public function create(ExampleGroup $exampleGroup,
-                           \ReflectionMethod $example)
+    public function create(ExampleGroup $exampleGroup, $example)
     {
         return new Example($exampleGroup, $example);
     }
