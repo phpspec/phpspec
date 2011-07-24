@@ -48,9 +48,23 @@ class Object extends Interceptor
             return $dslResult;
         }
         
-        $object = $this->getActualValue();;
+        $object = $this->getActualValue();
         return InterceptorFactory::create(
             call_user_func_array(array($object, $method), $args)
         );
+    }
+    
+    public function __get($attribute)
+    {
+        $dslResult = parent::__get($attribute);
+        if (!is_null($dslResult)) {
+            return $dslResult;
+        }
+        
+        if (isset($this->getActualValue()->$attribute)) {
+            return InterceptorFactory::create($this->getActualValue()
+                                                   ->$attribute);
+        }
+        trigger_error('Trying to get property of non-object', E_USER_NOTICE);
     }
 }
