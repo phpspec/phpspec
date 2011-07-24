@@ -34,6 +34,13 @@ use \PHPSpec\Specification\Interceptor;
 class Object extends Interceptor
 {
     /**
+     * Accepted predicantes
+     *
+     * @var array
+     */
+    protected $_predicate = array('be' => 'is', 'have' => 'has');
+    
+    /**
      * Proxies call to specification and if method is a dsl call than it calls
      * the interceptor factory for the returned value
      * 
@@ -48,10 +55,64 @@ class Object extends Interceptor
             return $dslResult;
         }
         
+        if ($this->isPredicate('have', $method, $args) ||
+            $this->isPredicate('be', $method, $args)) {
+            return true;
+        }
+        
         $object = $this->getActualValue();
         return InterceptorFactory::create(
             call_user_func_array(array($object, $method), $args)
         );
+    }
+    
+    /**
+     * Checks whether a method is a predicate
+     *
+     * @param string $type 
+     * @param string $method 
+     * @param array  $args 
+     * @return boolean
+     */
+    protected function isPredicate($type, $method, $args)
+    {
+        if (!in_array($type, array_keys($this->_predicate))) {
+            return false;
+        }
+        if (strpos($method, $type) !== 0) {
+            return false;
+        }
+        
+        $plain = $this->_predicate[$type] . substr($method, strlen($type));
+        $a = $this->_predicate[$type] . substr($method, strlen($type) + 1);
+        $an = $this->_predicate[$type] . substr($method, strlen($type) + 2);
+        
+        switch (true) {
+            case method_exists($this->_actualValue, $plain) :
+                $predicate = $plain;
+                break;
+            case method_exists($this->_actualValue, $a) :
+                if (strtolower(substr($method, strlen($type), 1)) !== 'a') {
+                    return false;
+                }
+                $predicate = $a;
+                break;
+            case method_exists($this->_actualValue, $an) :
+                if (strtolower(substr($method, strlen($type), 2)) !== 'an') {
+                    return false;
+                }
+                $predicate = $an;
+                break;
+            default:
+                return false;
+        }
+        
+        $this->setExpectedValue($args);
+        $this->createMatcher('beTrue');
+        $this->setActualValue(
+            call_user_func_array(array($this->_actualValue, $predicate), $args)
+        );
+        return true;
     }
     
     public function __get($attribute)
@@ -65,6 +126,9 @@ class Object extends Interceptor
             return InterceptorFactory::create($this->getActualValue()
                                                    ->$attribute);
         }
-        trigger_error('Trying to get property of non-object', E_USER_NOTICE);
+        trigger_error(
+            "Undefined property: " . get_class($this->getActualValue()) .
+            "::$attribute", E_USER_NOTICE
+        );
     }
 }
