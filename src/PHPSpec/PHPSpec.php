@@ -137,7 +137,7 @@ class PHPSpec
     }
 
     /**
-     * Sends message to Formatter so starts outputting
+     * Sends message to Formatter so it starts output
      */
     protected function output()
     {
