@@ -1,6 +1,25 @@
 PHPSpec 1.2
 ===========
 
+PHPSpec 1.2.2
+-------------
+
+* Restored predicates
+* Restored ability to intercept properties
+* Included the case where spec description may have more than one digit together
+* Added the RSpec MIT license in the HTML formatter template
+
+PHPSpec 1.2.1
+-------------
+
+* Fixed backtrace with phpspec file not being printed even if the -b flag was pass
+* Fixed -c creating ansii colour on html formatter
+* Fixed example runner not displaying group names with -e
+* Added -e, --example to the usage/help message
+
+PHPSpec 1.2.0
+-------------
+
 * Added the --example|-e EXAMPLE flag to run single examples
 * Added filter and validate utils
 * Moved from phing to ant
