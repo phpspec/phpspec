@@ -115,6 +115,13 @@ class Object extends Interceptor
         return true;
     }
     
+    /**
+     * Proxies call to specification and if argument is a dsl call than it calls
+     * the interceptor factory for the returned value
+     *
+     * @param string $attribute 
+     * @return mixed
+     */
     public function __get($attribute)
     {
         $dslResult = parent::__get($attribute);
@@ -123,8 +130,9 @@ class Object extends Interceptor
         }
         
         if (isset($this->getActualValue()->$attribute)) {
-            return InterceptorFactory::create($this->getActualValue()
-                                                   ->$attribute);
+            return InterceptorFactory::create(
+                $this->getActualValue()->$attribute
+            );
         }
         trigger_error(
             "Undefined property: " . get_class($this->getActualValue()) .
