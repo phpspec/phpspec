@@ -62,9 +62,36 @@ class Filter
     public static function camelCaseToSeparator($pattern, $sep)
     {
         $terms = preg_split(
-            "/(?=[[:upper:]])/", $pattern, -1, PREG_SPLIT_NO_EMPTY
+            "/(?=[[:upper:]]|[[:digit:]])/", $pattern, -1, PREG_SPLIT_NO_EMPTY
         );
-        $termsLowerCase = array_map('strtolower', $terms);
+
+        $termsLowerCase = array_map('strtolower', self::concatNumbers($terms));
         return implode($sep, $termsLowerCase);
+    }
+    
+    /**
+     * Concatenate separated numberic array elements into one numberic element
+     *
+     * ex.: array ('a', '1', '0', 'b') becomes array ('a', '10', 'b')
+     *
+     * @param array $terms 
+     * @return array
+     */
+    private static function concatNumbers(array $terms)
+    {
+        $newTerms = array();
+        $term = current($terms);
+        while ($term !== false) {
+            if (is_numeric($term)) {
+                while (isset($terms[key($terms) + 1]) &&
+                       is_numeric($terms[key($terms) + 1])) {
+                    $term = $term . $terms[key($terms) + 1];
+                    next($terms);
+                }
+            }
+            $newTerms[] = $term;
+            $term = next($terms);
+        }
+        return $newTerms;
     }
 }
