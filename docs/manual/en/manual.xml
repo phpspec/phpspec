@@ -9,7 +9,7 @@
     <bookinfo>
         <title>PHPSpec Reference Manual</title>
         <subtitle>A Behaviour-Driven Development Framework for PHP</subtitle>
-        <pubdate><?dbtimestamp format="Y-m-d"?></pubdate>
+        <pubdate>Published: <?dbtimestamp format="Y-m-d"?></pubdate>
         <copyright>
             <year><?dbtimestamp format="Y"?></year>
             <holder>
@@ -20,8 +20,28 @@
         <legalnotice>
             <para>
             This work is licensed under the Creative Commons Attribution 3.0 License. To view a copy of this license, visit <ulink url="http://creativecommons.org/licenses/by/3.0/" /> or send a letter to Creative Commons, 559 Nathan Abbott Way, Stanford, California 94305, USA.
-            </para> 	    
+            </para>
         </legalnotice>
+        <revhistory>
+            <revision>
+                <revnumber>1.0.2.20110726</revnumber>
+                <date>2011-07-26</date>
+                <author><personname><firstname>Rupert</firstname><surname>Jones</surname></personname></author>
+                <revremark>Backport diverged HTML version to docbook (in progress)</revremark>
+            </revision>
+            <revision>
+                <revnumber>1.0.1</revnumber>
+                <date>2011-07-24</date>
+                <author><personname><firstname>Marcello</firstname><surname>Duarte</surname></personname></author>
+                <revremark>Updated manual for current version</revremark>
+            </revision>
+            <revision>
+                <revnumber>1.0.0</revnumber>
+                <date>2008-01-08</date>
+                <author><personname><firstname>Pádraic</firstname><surname>Brady</surname></personname></author>
+                <revremark>Initial version</revremark>
+            </revision>
+        </revhistory>
     </bookinfo>
 
     <!-- Chapter List -->
