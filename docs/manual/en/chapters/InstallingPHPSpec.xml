@@ -16,29 +16,22 @@
     PEAR installation. Before commencing an installation, you first need to
     "discover" the PHPSpec channel using the command:</para>
 
-    <screen>pear channel-discover pear.phpspec.org</screen>
+    <screen>sudo pear channel-discover pear.phpspec.net</screen>
 
     <para>The newly discovered channel will have its details stored by
     PEAR.</para>
 
-    <para>Installing is dependent on the version, and preferred release state.
-    At the time of writing PHPSpec is released as beta so you would use a
-    command of the form:</para>
+    <para>To install the package simply execute the following command:</para>
 
-    <screen>pear install phpspec/PHPSpec-beta</screen>
+    <screen>sudo pear install phpspec/PHPSpec</screen>
 
     <note>
-      <para>If PHPSpec has any stable release, the suffix "-beta" is not
-      required.</para>
-    </note>
-
-    <note>
-      <para>Development snapshots of PHPSpec are regularly updated at <ulink
-      url="http://dev.phpspec.org">http://dev.phpspec.org</ulink>. These
-      snapshots are considered of dubious stability and should only be
-      utilised for testing and feedback purposes. The installation of
-      development snapshots is described in the "Installing PHPSpec Manually"
-      section below.</para>
+      <para>Development snapshots of PHPSpec are regularly updated in the
+        develop branch at <ulink url="http://github.com/phpspec/phpspec">
+        http://github.com/phpspec/phpspec</ulink>. These snapshots are
+        considered of dubious stability and should only be utilised for testing
+        and feedback purposes. The installation of development snapshots is
+        described in the "Installing PHPSpec Manually" section below.</para>
     </note>
   </section>
 
@@ -47,30 +40,24 @@
 
     <para>To install PHPSpec without using the PEAR channel system you can
     select a download of the PEAR archive from <ulink
-    url="http://pear.phpspec.org/get">http://pear.phpspec.org/get</ulink> and
+    url="http://pear.phpspec.net/get">http://pear.phpspec.net/get</ulink> and
     by running the following command:</para>
 
-    <screen>pear install -f PHPSpec-0.2.0devel.tgz</screen>
-
-    <para>PEAR will do all the hard work, including installing the
-    <classname>phpspec</classname> command line script. In the future we will
-    publish public releases using a dedicated PEAR channel. This installation
-    option is not much different than installing normally through PEAR. If you
-    require a fully manual installation process - the next section will
-    help.</para>
+    <screen>sudo pear install PHPSpec-&lt;version&gt;.tar.gz</screen>
   </section>
 
   <section id="installing.phpspec.manually">
     <title>Installing PHPSpec Manually</title>
 
     <para>To install PHPSpec manually, you can use the non-Pearified tarball
-    called "PHPSpec-0.2.0beta.tar.gz" available for download from <ulink
-    url="http://pear.phpspec.org/get/nonpear">http://pear.phpspec.org/get/nonpear</ulink>.
-    Extract to your preferred location, and add the "src" directory to your
-    php.ini include_path. You will also need to copy the phpspec script for
-    your system (*.bat refers to a Windows friendly version) from the
-    "scripts" directory to a location on your system PATH. This script must be
-    edited to provide the location of the PHP binary executable as well as the
-    path to the \PHPSpec\Console\Command classfile.</para>
+    called "PHPSpec-&lt;version&gt;.tar.gz" available for download from <ulink
+    url="http://pear.phpspec.net/get/nonpear">
+    http://pear.phpspec.net/get/nonpear</ulink>. Extract to your preferred
+    location, and add the "src" directory to your php.ini include_path. You
+    will also need to copy the phpspec script for your system (*.bat refers to
+    a Windows friendly version) from the "scripts" directory to a location on
+    your system PATH. This script must be edited to provide the location of the
+    PHP binary executable as well as the path to the PHPSpec class files.
+    </para>
   </section>
 </section>
