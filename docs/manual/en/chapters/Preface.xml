@@ -57,9 +57,8 @@
 	  <section id="requirements">
 		<title>Requirements</title>
 
-		<para>PHPSpec was designed for PHP5, specifically any version above PHP
-		5.2.0. It will also likely work just fine with PHP 5.1.4 and above but
-		this has not yet been formally tested.</para>
+		<para>PHPSpec was designed for PHP5, specifically any version above PHP 5.3.3.
+        It will not work with PHP 5.2 and below.</para>
 	  </section>
 
 	  <section id="this.book.is.free">
