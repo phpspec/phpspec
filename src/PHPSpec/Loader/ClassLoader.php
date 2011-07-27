@@ -55,7 +55,7 @@ class ClassLoader
     {
         $realPath   = realpath($fullPath);
         $specFile   = basename($realPath);
-        $pathToFile = str_replace("/$specFile", '', $realPath);
+        $pathToFile = str_replace(DIRECTORY_SEPARATOR."$specFile", '', $realPath);
         $convention = $this->getConventionFactory()->create($specFile);
         
         if ($realPath && !$convention->apply()) {
@@ -65,7 +65,7 @@ class ClassLoader
         }
         
         return array($this->loadExample(
-            $pathToFile . "/" . $convention->getClassFile(),
+            $pathToFile . DIRECTORY_SEPARATOR . $convention->getClassFile(),
             $convention->getClass()
         ));
     }
