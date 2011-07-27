@@ -172,9 +172,11 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL|E_STRICT);
 
-require_once 'PHPSpec/Loader/UniversalClassLoader.php';
+$dir = realpath(__DIR__) . '/../src/';
+
+require_once $dir . 'PHPSpec/Loader/UniversalClassLoader.php';
 $loader = new \PHPSpec\Loader\UniversalClassLoader();
-$loader->registerNamespace('PHPSpec', '/usr/share/pear');
+$loader->registerNamespace('PHPSpec', $dir);
 $loader->register();
 
 $phpspec = new \PHPSpec\PHPSpec($argv);
