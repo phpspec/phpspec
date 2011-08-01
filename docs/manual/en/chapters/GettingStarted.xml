@@ -34,8 +34,8 @@
     specification.</para>
 
     <para>A specification is a collection of examples specific to a particular
-    context. If you image a game of 10-pin Bowling, we can assume that the
-    game has a beginning. So our first context, is a game prior to it
+    context. If you imagine a game of 10-pin Bowling, we can assume that the
+    game has a beginning. So our first context is a game prior to it
     starting. Each example should describe some facet of behaviour. A Bowling
     game, for example, is subject to rules concerning scores. So writing an
     example showing how many pins hit relates to the resulting score would
@@ -51,15 +51,16 @@
 
     public function before()
     {
-        $this-&gt;_bowling = new Bowling;
+        $this-&gt;_bowling = $this-&gt;spec(new Bowling);
     }
 
     public function itShouldScore0ForGutterGame()
     {
         for ($i=1; $i&lt;=20; $i++) {
-            $this-&gt;_bowling-&gt;hit(0); // someone is really bad at bowling!
+            // someone is really bad at bowling!
+            $this-&gt;_bowling-&gt;hit(0);
         }
-        $this-&gt;spec($this-&gt;_bowling-&gt;score)-&gt;should-&gt;equal(0);
+        $this-&gt;_bowling-&gt;score-&gt;should&gt;-&gt;equal(0);
     }
 
 }</programlisting>
@@ -93,7 +94,7 @@
     public $score = 0;
 
     public function hit()
-    {     
+    {
     }
 
 }</programlisting>

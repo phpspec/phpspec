@@ -13,7 +13,7 @@
     <title>The Console Runner</title>
 
     <para>Using PHPSpec from the console is the default option which requires
-    no additional work from your perspective. Simple write your specs,
+    no additional work from your perspective. Simply write your specs,
     navigate to their location on the command line, and issue a command
     like:</para>
 
@@ -47,33 +47,55 @@
 
         <tbody>
           <row>
+            <entry>--backtrace</entry>
+            <entry>-b</entry>
+            <entry>Enable full backtrace</entry>
+          </row>
+
+          <row>
+            <entry>--colour, --color</entry>
+            <entry>-c</entry>
+            <entry>Enable color in the output</entry>
+          </row>
+
+          <row>
+            <entry>--example STRING</entry>
+            <entry>-e</entry>
+            <entry>Run examples whose full nested names include STRING</entry>
+          </row>
+
+          <row>
+            <entry>--formatter [progress/documentation/html]</entry>
+            <entry>-f [progress/documentation/html]</entry>
+            <entry>Use one of the available formatters to format output as
+            either Standard progress (default - dots), Specdox or HTML output.
+            </entry>
+          </row>
+
+          <row>
+            <entry>--help</entry>
+            <entry>-h</entry>
+            <entry>Print options</entry>
+          </row>
+
+          <row>
+            <entry>--fail-fast</entry>
+            <entry>None</entry>
+            <entry>Abort the run on the first failure</entry>
+          </row>
+
+          <row>
             <entry>--recursive</entry>
-
             <entry>-r</entry>
-
             <entry>Recursively search the current directory and all child
             directories for specs, and execute all spec files and their
             examples as found.</entry>
           </row>
 
           <row>
-            <entry>--reporter=[html/console/text]</entry>
-
-            <entry><emphasis>None</emphasis></entry>
-
-            <entry>Use one of the available reporters to format output as
-            either HTML, Text, or standard Console output. The default depends
-            on the scenario but always defaults to Console when PHPSpec is run
-            from the command line.</entry>
-          </row>
-
-          <row>
-            <entry>--specdoc</entry>
-
-            <entry>-s</entry>
-
-            <entry>Add specdoc output (i.e. a plain text list of all
-            specifications) to the results output for all reporters.</entry>
+            <entry>--version</entry>
+            <entry>None</entry>
+            <entry>Show version</entry>
           </row>
         </tbody>
       </tgroup>
@@ -94,37 +116,32 @@
 
     <programlisting role="php">&lt;?php
 
-require_once 'PHPSpec.php';
+require_once 'PHPSpec/Loader/UniversalClassLoader.php';
+$loader = new \PHPSpec\Loader\UniversalClassLoader();
+$loader-&gt;registerNamespace('PHPSpec', '/usr/share/pear');
+$loader-&gt;register();
 
-$options = new stdClass;
-$options-&gt;recursive = true;
-$options-&gt;specdocs = true;
-$options-&gt;reporter = 'html';
+$options = array('specsDir', '--formatter', 'html');
+$specs = new \PHPSpec\PHPSpec($options);
+$specs-&gt;execute();</programlisting>
 
-\PHPSpec\Runner::run($options);</programlisting>
-
-    <para>The <classname>\PHPSpec\Runner</classname> class is actually used
-    internally by the default Console Runner so what we're doing here is
-    pretty simple. All we're really doing is duplicating the internal work the
-    Console Runner performs within a PHP file we can visit from a web
-    browser.</para>
-
-    <para>First of all, we include the base PHPSpec.php file. Since PHPSpec
-    takes advantage of PHP5 autoloading, there's no need to include any other
-    PHPSpec files. Secondly, we setup the desired options in a
-    <classname>stdClass</classname> (a PHP5 standard class) as object
-    properties - optionally you can also use a plain array since it will just
-    be converted to a standard object internally anyway.</para>
-
-    <para>The options are typical for a complete execution of all specs.
-    PHPSpec will recursively search the current directory and all child
+    <para>The <classname>\PHPSpec\Runner\Cli\Runner</classname> class is
+    actually used internally by \PHPSpec\PHPSpec so what we're doing here
+    is pretty simple. All we're really doing is duplicating the internal work
+    the Cli Runner performs within a PHP file we can visit from a web browser.
+    First of all, we include the base
+    <classname>PHPSpec/Loader/UniversalClassLoader.php</classname> file. Since
+    PHPSpec takes advantage of Symfony universal autoloader, there's no need to
+    include any other PHPSpec files. Secondly, we setup the desired options in
+    an array as values. The options are typical for a complete execution of all
+    specs. PHPSpec will recursively search the given directory and all child
     directories for specs to execute, it will output specdoc formatted
     specifications in plain text along with the results, and it will use the
-    HTML reporter to output HTML.</para>
-
-    <para>Finally we call \PHPSpec\Runner's static run() method. And that's all
-    there is to it! If you only want to execute a sub-directory of your specs,
-    you can copy a similar file to that directory (recursive searching does
-    not traverse parent directories).</para>
+    HTML reporter to output HTML. Finally we call
+    <classname>PHPSpec\PHPSpec</classname> <classname>execute()</classname>
+    method. And that's all there is to it! If you only want to execute a
+    sub-directory of your specs, you can pass that directory as first element
+    in the <classname>$options</classname> array (recursive searching does not
+    traverse parent directories).</para>
   </section>
 </chapter>
