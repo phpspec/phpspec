@@ -58,7 +58,7 @@
         <secondary>example in PHPSpec</secondary>
       </indexterm> system, perhaps to store an audit trail. We're going to
     assume no current open source Logger library is sufficient for our needs
-    and we are required to develop one from scratch. before we can do anything
+    and we are required to develop one from scratch. Before we can do anything
     we need to start figuring out what it needs to do. In other words, how we
     want it to behave. After consulting with our colleagues we determine at
     least one fundamental requirement - to log messages to a
@@ -112,11 +112,25 @@
     alternate filename convention which utilises a "Spec" suffix and omits the
     "Describe" prefix), the output would look something like:</para>
 
-    <screen>PPP
+    <screen>
+***
 
-Finished in 0.0468921661377 seconds
+Pending:
+  NewFilesystemLogger should create create new log file if none exists
+     # No reason given
+     # ./NewFilesystemLoggerSpec.php:8
 
-3 examples, 0 failures, 3 pending</screen>
+  NewFilesystemLogger should use an existing log file if one exists without truncating it
+     # No reason given
+     # ./NewFilesystemLoggerSpec.php:13
+
+  NewFilesystemLogger should throw exception if existing log file not writeable
+     # No reason given
+     # ./NewFilesystemLoggerSpec.php:18
+
+Finished in 0.058379 seconds
+3 examples, 3 pendings
+</screen>
 
     <para>The relevant command line target to run PHPSpec would be something
     like:</para>
@@ -268,7 +282,7 @@ Finished in 0.0468921661377 seconds
         } elseif (file_exists($file) &amp;&amp; is_writeable($file)) {
             $this-&gt;_file = $file;
         } else {
-            throw new Exception('log file is not writeable'); 
+            throw new Exception('log file is not writeable');
         }
     }
 
@@ -307,7 +321,7 @@ Finished in 0.0468921661377 seconds
     <para>The basic form of the DSL is to attach an Expectation (should or
     should not) and a Matcher (be, beAnInstanceOf, equal, etc.) to the value
     or object passed to a new Spec. This approach leads to a relatively easy
-    to read sentance requiring minimal translation into the plain English (or
+    to read sentence requiring minimal translation into the plain English (or
     other language!) we normally think in. Since the translation effort is
     minimised, and is closer to how we really think, it's invariably easy to
     review, critique and modify.</para>
@@ -316,8 +330,8 @@ Finished in 0.0468921661377 seconds
       <title>Example Spec DSL: Bowling should not be an instance of
       Logger</title>
 
-      <programlisting role="php">$bowling = new Bowling;
-$this-&gt;spec($bowling)-&gt;shouldNot-&gt;beAnInstanceOf('Logger');</programlisting>
+      <programlisting role="php">$bowling = $this-&gt;spec(new Bowling);
+$bowling-&gt;shouldNot-&gt;beAnInstanceOf('Logger');</programlisting>
     </example>
 
     <section id="actual.value.term">
@@ -403,7 +417,7 @@ $spec-&gt;(is_int('string'))-&gt;shouldNot-&gt;beTrue();</programlisting>
       <para>An already expansive range of Matchers are provided by the PHPSpec
       framework. [Note: Some are still awaiting development.]</para>
 
-      <para>A Matcher is general appended as the last term to a Spec as
+      <para>A Matcher is generally appended as the last term to a Spec as
       demonstrated in earlier examples.</para>
 
       <section>
