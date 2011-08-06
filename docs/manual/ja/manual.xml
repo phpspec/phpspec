@@ -24,10 +24,10 @@
         </legalnotice>
         <revhistory>
             <revision>
-                <revnumber>1.0.2.20110726</revnumber>
-                <date>2011-07-26</date>
+                <revnumber>1.0.2</revnumber>
+                <date>2011-08-01</date>
                 <author><personname><firstname>Rupert</firstname><surname>Jones</surname></personname></author>
-                <revremark>HTML 版を docbook にバックポート (作業中)</revremark>
+                <revremark>HTML 版を docbook にバックポート</revremark>
             </revision>
             <revision>
                 <revnumber>1.0.1</revnumber>
