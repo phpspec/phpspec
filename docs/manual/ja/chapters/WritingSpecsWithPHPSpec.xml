@@ -147,11 +147,25 @@
       に保存してコマンドラインから実行すると、その出力は次のようになります。
     </para>
 
-    <screen>PPP
+    <screen>
+***
 
-Finished in 0.0468921661377 seconds
+Pending:
+  NewFilesystemLogger should create create new log file if none exists
+     # No reason given
+     # ./NewFilesystemLoggerSpec.php:8
 
-3 examples, 0 failures, 3 pending</screen>
+  NewFilesystemLogger should use an existing log file if one exists without truncating it
+     # No reason given
+     # ./NewFilesystemLoggerSpec.php:13
+
+  NewFilesystemLogger should throw exception if existing log file not writeable
+     # No reason given
+     # ./NewFilesystemLoggerSpec.php:18
+
+Finished in 0.058379 seconds
+3 examples, 3 pendings
+</screen>
 
     <para>
       PHPSpec を実行する際のコマンドラインは次のようになります。
@@ -329,7 +343,7 @@ Finished in 0.0468921661377 seconds
         } elseif (file_exists($file) &amp;&amp; is_writeable($file)) {
             $this-&gt;_file = $file;
         } else {
-            throw new Exception('ログファイルに書き込めません'); 
+            throw new Exception('ログファイルに書き込めません');
         }
     }
 
@@ -388,8 +402,8 @@ Finished in 0.0468921661377 seconds
     <example>
       <title>スペック DSL の例: Bowling は Logger のインスタンスであってはならない</title>
 
-      <programlisting role="php">$bowling = new Bowling;
-$this-&gt;spec($bowling)-&gt;shouldNot-&gt;beAnInstanceOf('Logger');</programlisting>
+      <programlisting role="php">$bowling = $this-&gt;spec(new Bowling);
+$bowling-&gt;shouldNot-&gt;beAnInstanceOf('Logger');</programlisting>
     </example>
 
     <section id="actual.value.term">

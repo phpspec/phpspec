@@ -58,10 +58,47 @@
 
         <tbody>
           <row>
+            <entry>--backtrace</entry>
+            <entry>-b</entry>
+            <entry>完全なバックトレースを有効にします。</entry>
+          </row>
+
+          <row>
+            <entry>--colour, --color</entry>
+            <entry>-c</entry>
+            <entry>出力に色をつけます。</entry>
+          </row>
+
+          <row>
+            <entry>--example STRING</entry>
+            <entry>-e</entry>
+            <entry>名前に STRING を含むサンプルを実行します。</entry>
+          </row>
+
+          <row>
+            <entry>--formatter [progress/documentation/html]</entry>
+            <entry>-f [progress/documentation/html]</entry>
+            <entry>
+              利用可能なフォーマッターのいずれかを指定します。出力書式を
+              標準の進捗形式 (デフォルトのドット表記) か Specdox、あるいは HTML にします。
+            </entry>
+          </row>
+
+          <row>
+            <entry>--help</entry>
+            <entry>-h</entry>
+            <entry>オプションを表示します。</entry>
+          </row>
+
+          <row>
+            <entry>--fail-fast</entry>
+            <entry>なし</entry>
+            <entry>最初に失敗した時点で実行を中止します。</entry>
+          </row>
+
+          <row>
             <entry>--recursive</entry>
-
             <entry>-r</entry>
-
             <entry>
               カレントディレクトリ以下を再帰的にスキャンします。
               そして、見つかったすべてのスペックファイルについて、
@@ -70,30 +107,9 @@
           </row>
 
           <row>
-            <entry>--reporter=[html/console/text]</entry>
-
-            <entry><emphasis>なし</emphasis></entry>
-
-            <entry>
-              いずれかのレポーターを使用して、出力形式を
-              HTML、プレーンテキスト、あるいは標準コンソール出力
-              のいずれかに指定します。
-              デフォルト設定は状況に依存しますが、
-              コマンドラインから PHPSpec を実行した場合のデフォルトは、
-              常に標準コンソール出力です。
-            </entry>
-          </row>
-
-          <row>
-            <entry>--specdoc</entry>
-
-            <entry>-s</entry>
-
-            <entry>
-              すべてのレポーターの出力結果に、specdoc
-              (すべてのスペックを普通の文章になおした一覧)
-              を追加します。
-            </entry>
+            <entry>--version</entry>
+            <entry>なし</entry>
+            <entry>バージョンを表示します。</entry>
           </row>
         </tbody>
       </tgroup>
@@ -117,47 +133,39 @@
 
     <programlisting role="php">&lt;?php
 
-require_once 'PHPSpec.php';
+require_once 'PHPSpec/Loader/UniversalClassLoader.php';
+$loader = new \PHPSpec\Loader\UniversalClassLoader();
+$loader-&gt;registerNamespace('PHPSpec', '/usr/share/pear');
+$loader-&gt;register();
 
-$options = new stdClass;
-$options-&gt;recursive = true;
-$options-&gt;specdocs = true;
-$options-&gt;reporter = 'html';
-
-\PHPSpec\Runner::run($options);</programlisting>
+$options = array('specsDir', '--formatter', 'html');
+$specs = new \PHPSpec\PHPSpec($options);
+$specs-&gt;execute();</programlisting>
 
     <para>
-      <classname>\PHPSpec\Runner</classname> クラスは、
-      実際にはデフォルトのコンソールランナーで内部的に使用されているものです。
+      <classname>\PHPSpec\Runner\Cli\Runner</classname> クラスは、
+      実際には \PHPSpec\PHPSpec が内部的に使用しているものです。
       つまりここで行っているのは非常に単純なことです。
       この例で実際にやっていることは、
-      コンソールランナーが内部で行っている作業を PHP ファイルに書き出しているだけで、
+      Cli ランナーが内部で行っている作業を PHP ファイルに書き出しているだけで、
       ウェブブラウザから呼び出されたときにもこれを実行できるようにしています。
-    </para>
 
-    <para>
-      まず、ベースとなるファイル PHPSpec.php をインクルードします。
-      PHPSpec は PHP5 の autoload 機能を使用しているので、
+      まず、ベースとなるファイル
+      <classname>PHPSpec/Loader/UniversalClassLoader.php</classname> をインクルードします。
+      PHPSpec は Symfony のユニバーサルオートローダーを使っているので、
       PHPSpec のその他のファイルをインクルードする必要はありません。
-      次に、必要なオプションを <classname>stdClass</classname>
-      (PHP5 の標準クラス) のプロパティとして設定します。
-      オプションとして、ふつうの配列を使用することもできます。
-      配列で指定しても、内部で自動的にオブジェクトに変換します。
-    </para>
-
-    <para>
+      次に、必要なオプションを配列の値として設定します。
       ここで指定しているオプションは、すべてのスペックを実行するためのごく一般的なものです。
-      PHPSpec はカレントディレクトリ以下を再帰的に検索し、
+      PHPSpec は指定したディレクトリ以下を再帰的に検索し、
       みつかったスペックのすべてのサンプルを実行します。
       出力結果には specdoc 形式のプレーンテキストが追加され、
-      実行結果は HTML 形式で出力されます。
-    </para>
-
-    <para>
-      最後に、\PHPSpec\Runner の static メソッド run() を実行します。
-      これで完了!
+      HTML レポーターを使って HTML を出力します。
+      最後に、
+      <classname>PHPSpec\PHPSpec</classname> <classname>execute()</classname>
+      メソッドを実行します。これで完了!
       特定のサブディレクトリのスペックだけを実行したいのなら、
-      このファイルをそのサブディレクトリにコピーすればいいでしょう
+      そのディレクトリを配列 <classname>$options</classname>
+      の最初の要素として渡します
       (再帰検索のオプションは、親ディレクトリは対象外となります)。
     </para>
   </section>
