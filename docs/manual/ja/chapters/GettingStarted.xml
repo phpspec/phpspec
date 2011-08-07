@@ -62,15 +62,16 @@
 
     public function before()
     {
-        $this-&gt;_bowling = new Bowling;
+        $this-&gt;_bowling = $this-&gt;spec(new Bowling);
     }
 
     public function itShouldScore0ForGutterGame() //「全部ガターなら、スコアはゼロでなければならない」
     {
         for ($i=1; $i&lt;=20; $i++) {
-            $this-&gt;_bowling-&gt;hit(0); // ボウリングがめちゃめちゃ下手な人だったのでしょう!
+            // ボウリングがめちゃめちゃ下手な人だったのでしょう!
+            $this-&gt;_bowling-&gt;hit(0);
         }
-        $this-&gt;spec($this-&gt;_bowling-&gt;score)-&gt;should-&gt;equal(0);
+        $this-&gt;_bowling-&gt;score-&gt;should&gt;-&gt;equal(0);
     }
 
 }</programlisting>
@@ -113,7 +114,7 @@
     public $score = 0;
 
     public function hit()
-    {     
+    {
     }
 
 }</programlisting>
