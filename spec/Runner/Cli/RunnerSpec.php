@@ -13,19 +13,28 @@ class DescribeRunner extends \PHPSpec\Context
         $this->runner = $this->spec(new CliRunner);
     }
     
-    function itSetsTheReporterToPrintVersionIfVersionOptionIsSet()
+    function itWillHaltTheRunAndSetVersionMessageIfVersionOptionIsSet()
     {
-        // $world = $this->mock('\PHPSpec\World');
-        // $world->stub('getVersion')->andReturn(true);
-        // 
-        // $reporter = $this->mock('\PHPSpec\Runner\Cli\Reporter');
-        // $reporter->stub('setMessage')->shouldReceive(CliRunner::VERSION)
-        //          ->exactly(1);
-        // $formatter = $this->stub('\SplObserver');
-        //         $reporter->stub('attach')->shouldReceive($formatter);
-        //                  
-        //         $world->setReporter($reporter);
-        //         
-        //         $this->runner->run($world);
+        $reporter = $this->mock('\PHPSpec\Runner\Reporter');
+        $reporter->shouldReceive('setMessage')->with(CliRunner::VERSION);
+        
+        $world = $this->mock('\PHPSpec\World');
+        $world->shouldReceive('getOption')->with('version')->andReturn(true);
+        $world->shouldReceive('getReporter')->andReturn($reporter);
+
+        $this->runner->run($world)->should->beNull();
+    }
+    
+    function itWillHaltTheRunAndSetHelpMessageIfHelpOptionIsSet()
+    {
+        $reporter = $this->mock('\PHPSpec\Runner\Reporter');
+        $reporter->shouldReceive('setMessage')->with(CliRunner::USAGE);
+        
+        $world = $this->mock('\PHPSpec\World');
+        $world->shouldReceive('getOption')->with('version')->andReturn(false);
+        $world->shouldReceive('getOption')->with('h')->andReturn(true);
+        $world->shouldReceive('getReporter')->andReturn($reporter);
+
+        $this->runner->run($world)->should->beNull();
     }
 }
