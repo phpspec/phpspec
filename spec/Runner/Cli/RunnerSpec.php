@@ -30,21 +30,16 @@ class DescribeRunner extends \PHPSpec\Context
     
     function itWillSetTheFormatterToDisplayColours()
     {
-        $formatter = $this->mock('\PHPSpec\Runner\Formatter');
-        $reporter = $this->mock('\PHPSpec\Runner\Cli\Reporter[getFormatter,attach,setRuntimeStart]');
-        $reporter->shouldReceive('getFormatter')->andReturn($formatter);
-        $reporter->shouldReceive('attach')->with($formatter);
-        $reporter->shouldReceive('setRuntimeStart');
-        $world = $this->mock('\PHPSpec\World[getReporter,getOption]');
-        $world->shouldReceive('getReporter')->andReturn($reporter);        
+        // set up
+        list ($formatter, $world) = $this->setupOptions(
+            array('c'),
+            array('version', 'h', 'help', 'b', 'failfast', 'example', 'specFile')
+        );
         
-        $this->setOptionsAsFalse($world, array('version', 'h', 'help', 'b', 'failfast', 'example', 'specFile'));
-        $this->setOptionsAsTrue($world, array('c'));
-        
-        $world->shouldReceive('getOption')->with('c')->andReturn(true);
-        
+        // expectation:
         $formatter->shouldReceive('setShowColors')->with(true)->times(1);
         
+        // exercise
         try {
             $this->runner->run($world);
         } catch (\PHPSpec\Runner\Cli\Error $e) {
@@ -55,6 +50,20 @@ class DescribeRunner extends \PHPSpec\Context
     function before()
     {
         $this->runner = $this->spec(new CliRunner);
+    }
+    
+    function setupOptions($show, $dontShow)
+    {
+        $formatter = $this->mock('\PHPSpec\Runner\Formatter');
+        $reporter = $this->mock('\PHPSpec\Runner\Cli\Reporter[getFormatter,attach,setRuntimeStart]');
+        $reporter->shouldReceive('getFormatter')->andReturn($formatter);
+        $reporter->shouldReceive('attach')->with($formatter);
+        $reporter->shouldReceive('setRuntimeStart');
+        $world = $this->mock('\PHPSpec\World[getReporter,getOption]');
+        $world->shouldReceive('getReporter')->andReturn($reporter);        
+        $this->setOptionsAsFalse($world, $dontShow);
+        $this->setOptionsAsTrue($world, $show);
+        return array($formatter, $world);
     }
     
     function setOptionsAsFalse($world, $options)
