@@ -174,7 +174,12 @@ error_reporting(E_ALL|E_STRICT);
 
 require_once 'PHPSpec/Loader/UniversalClassLoader.php';
 $loader = new \PHPSpec\Loader\UniversalClassLoader();
-$loader->registerNamespace('PHPSpec', '/usr/share/pear');
+//$loader->registerNamespace('PHPSpec', '/usr/share/pear');
+$loader->registerNamespaces(array(
+    'PHPSpec' => __DIR__.'/../src',
+    'PHPSpec\\Context' => __DIR__.'/../../phpspec-symfony2/src',
+    )
+);
 $loader->register();
 
 $phpspec = new \PHPSpec\PHPSpec($argv);
