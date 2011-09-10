@@ -64,7 +64,6 @@ class Runner implements \PHPSpec\Runner\Runner
     --version                Show version
 ";
     
-    
     /**
      * The loader
      *
@@ -86,6 +85,15 @@ class Runner implements \PHPSpec\Runner\Runner
      * @var \PHPSpec\Specification\ExampleRunner
      */
     protected $_exampleRunner;
+
+    /**
+     * The error handler callback
+     *
+     * @var array
+     */
+     protected $_errorHandler = array (
+         '\PHPSpec\Specification\Result', 'errorHandler'
+    );
     
     /**
      * Sets options and runs examples; or prints version/help
@@ -184,9 +192,17 @@ class Runner implements \PHPSpec\Runner\Runner
      */
     protected function startErrorHandler()
     {
-        set_error_handler(
-            array('\PHPSpec\Specification\Result', 'errorHandler')
-        );
+        set_error_handler($this->_errorHandler);
+    }
+    
+    /**
+     * Sets the error handler
+     *
+     * @param array|Closure|callback $errorHandler
+     */
+    public function setErrorHandler($errorHandler)
+    {
+        $this->_errorHandler = $errorHandler;
     }
     
     /**
@@ -299,11 +315,11 @@ class Runner implements \PHPSpec\Runner\Runner
     /**
      * Sets the example runner
      * 
-     * @param \PHPSpec\Specification\ExampleRunner $factory
+     * @param \PHPSpec\Specification\ExampleRunner $exampleRunner
      */
-    public function setExampleRunner(ExampleRunner $factory)
+    public function setExampleRunner(ExampleRunner $exampleRunner)
     {
-        $this->_exampleRunner = $factory;
+        $this->_exampleRunner = $exampleRunner;
     }
     
     /**

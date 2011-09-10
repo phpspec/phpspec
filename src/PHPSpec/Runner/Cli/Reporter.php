@@ -133,7 +133,7 @@ class Reporter extends \PHPSpec\Runner\Reporter
      */
     public function addException(Example $example, \Exception $e)
     {
-        $this->_exceptions->attach($e, $example);
+        $this->getExceptions()->attach($e, $example);
         $this->notify(
             'status', 'E', $example->getSpecificationText(),
             $e->getMessage(), Backtrace::pretty($e->getTrace()), $e
