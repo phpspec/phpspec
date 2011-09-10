@@ -3,19 +3,22 @@
 namespace Spec\PHPSpec\Runner\Cli;
 
 require_once __DIR__ . '/../../SpecHelper.php';
+require_once __DIR__ . '/../../WorldBuilder.php';
 require_once '/md/dev/php/phpspec/src/PHPSpec/Runner/Reporter.php';
 require_once '/md/dev/php/phpspec/src/PHPSpec/Runner/Cli/Reporter.php';
 
-use \PHPSpec\Runner\Cli\Runner as CliRunner;
+use \PHPSpec\Runner\Cli\Runner as CliRunner,
+    \Spec\PHPSpec\WorldBuilder;
 
 class DescribeRunner extends \PHPSpec\Context
 {
     function itHaltsTheRunAndSetsVersionMessageIfVersionOptionIsSet()
     {
-        $reporter = $this->getReporterStubWithMessage(CliRunner::VERSION);
-        $world = $this->getWorldStub(self::SHOW_VERSION);
-        $world->shouldReceive('getReporter')->andReturn($reporter);
-        $world->shouldReceive('getOption')->with('c')->times(0);
+        $worldBuilder = new WorldBuilder;
+        
+        $world = $worldBuilder->withVersion()
+                              ->withReporterAndMessage(CliRunner::VERSION)
+                              ->build();
 
         $this->runner->run($world);
     }
@@ -161,14 +164,14 @@ SPEC;
     
     function setOptionsAsFalse($world, $options)
     {
-        foreach($options as $option) {
+        foreach ($options as $option) {
             $world->shouldReceive('getOption')->with($option)->andReturn(false);
         }
     }
     
     function setOptionsAsTrue($world, $options)
     {
-        foreach($options as $option) {
+        foreach ($options as $option) {
             $world->shouldReceive('getOption')->with($option)->andReturn(true);
         }
     }
