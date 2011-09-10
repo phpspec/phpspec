@@ -25,10 +25,11 @@ class DescribeRunner extends \PHPSpec\Context
     
     function itHaltsTheRunAndSetsHelpMessageIfHelpOptionIsSet()
     {
-        $reporter = $this->getReporterStubWithMessage(CliRunner::USAGE);
-        $world = $this->getWorldStub(self::DONT_SHOW_VERSION, self::SHOW_HELP);
-        $world->shouldReceive('getReporter')->andReturn($reporter);
-        $world->shouldReceive('getOption')->with('c')->times(0);
+        $worldBuilder = new WorldBuilder;
+        
+        $world = $worldBuilder->withHelp()
+                              ->withReporterAndMessage(CliRunner::USAGE)
+                              ->build();
 
         $this->runner->run($world);
     }
