@@ -36,13 +36,9 @@ class DescribeRunner extends \PHPSpec\Context
     
     function itSetsTheFormatterToDisplayColours()
     {
-        list ($formatter, $world) = $this->setupOptions(array(
-            'show' => array('c'),
-            'dont show' => array('version', 'h', 'help', 'b', 'failfast', 'example', 'specFile')
-            )
-        );
-        
-        $formatter->shouldReceive('setShowColors')->with(true)->times(1);
+        $worldBuilder = new WorldBuilder;
+        $world = $worldBuilder->withColours()
+                              ->build();
         
         try {
             $this->runner->run($world);
