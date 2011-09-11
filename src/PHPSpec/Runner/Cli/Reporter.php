@@ -237,4 +237,14 @@ class Reporter extends \PHPSpec\Runner\Reporter
             $this->notify('exit');
         }
     }
+    
+    /**
+     * Get the formatters
+     * 
+     * @return SplObjectStorage
+     */
+    public function getFormatters()
+    {
+        return $this->_formatters;
+    }
 }

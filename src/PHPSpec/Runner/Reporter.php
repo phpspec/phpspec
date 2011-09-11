@@ -236,7 +236,7 @@ abstract class Reporter implements \SPLSubject
      */
     public function notify()
     {
-        foreach ($this->_formatters as $observer) {
+        foreach ($this->getFormatters() as $observer) {
             $observer->update($this, func_get_args());
         }
     }

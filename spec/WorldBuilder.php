@@ -12,7 +12,8 @@ class WorldBuilder
     
     public function __construct()
     {
-        $this->world = $this->mock('\PHPSpec\World');
+        $this->world = $this->mock('\PHPSpec\World[getReporter,getOption]');
+        $this->formatter = $this->mock('\PHPSpec\Runner\Formatter');
     }
     
     public function withVersion()
@@ -29,12 +30,21 @@ class WorldBuilder
     
     public function withColours()
     {
-        list ($this->formatter, $this->world) = $this->setupOptions(array(
+        $this->setupOptions(array(
             'show' => array('c'),
-            'dont show' => array('version', 'h', 'help', 'b', 'failfast', 'example', 'specFile')
+            'dont show' => array('version', 'h', 'help', 'b', 'failfast', 'example')
             )
         );
         $this->formatter->shouldReceive('setShowColors')->with(true)->times(1);
+        return $this;
+    }
+    
+    public function withReporter($reporterExtraMethods='')
+    {
+        $this->reporter = $this->mock("\PHPSpec\Runner\Cli\Reporter[getFormatter,attach,setRuntimeStart$reporterExtraMethods]");
+        $this->reporter->shouldReceive('getFormatter')->andReturn($this->formatter);
+        $this->reporter->shouldReceive('attach')->with($this->formatter);
+        $this->reporter->shouldReceive('setRuntimeStart');
         return $this;
     }
     
@@ -42,6 +52,15 @@ class WorldBuilder
     {
         $this->reporter = $this->mock('\PHPSpec\Runner\Reporter');
         $this->reporter->shouldReceive('setMessage')->with($message);
+        return $this;
+    }
+    
+    public function withSpecFile($specFile)
+    {
+        $specFile = realpath(__DIR__ . '/Runner/Cli/_files/' . $specFile);
+        $this->reporter->shouldReceive('getFormatters')->andReturn(array($this->formatter));
+        $this->formatter->shouldReceive('update');
+        $this->world->shouldReceive('getOption')->with('specFile')->andReturn($specFile);
         return $this;
     }
     
@@ -74,17 +93,9 @@ class WorldBuilder
     }
 
     private function setupOptions($options, $reporterExtraMethods = '')
-    {
-        $formatter = $this->mock('\PHPSpec\Runner\Formatter');
-        $reporter = $this->mock("\PHPSpec\Runner\Cli\Reporter[getFormatter,attach,setRuntimeStart$reporterExtraMethods]");
-        $reporter->shouldReceive('getFormatter')->andReturn($formatter);
-        $reporter->shouldReceive('attach')->with($formatter);
-        $reporter->shouldReceive('setRuntimeStart');
-        $world = $this->mock('\PHPSpec\World[getReporter,getOption]');
-        $world->shouldReceive('getReporter')->andReturn($reporter);        
-        $this->setOptionsAsFalse($world, $options['dont show']);
-        $this->setOptionsAsTrue($world, $options['show']);
-        return array($formatter, $world, $reporter);
+    {        
+        $this->setOptionsAsFalse($this->world, $options['dont show']);
+        $this->setOptionsAsTrue($this->world, $options['show']);
     }
     
     private function setOptionsAsFalse($world, $options)

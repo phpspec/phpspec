@@ -38,13 +38,11 @@ class DescribeRunner extends \PHPSpec\Context
     {
         $worldBuilder = new WorldBuilder;
         $world = $worldBuilder->withColours()
+                              ->withReporter(',getFormatters')
+                              ->withSpecFile('FooSpec.php')
                               ->build();
         
-        try {
-            $this->runner->run($world);
-        } catch (\PHPSpec\Runner\Cli\Error $e) {
-            
-        }
+        $this->runner->run($world);
     }
     
     function itSetsTheFormatterToDisplayBacktrace()
