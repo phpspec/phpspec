@@ -17,8 +17,10 @@ class DescribeRunner extends \PHPSpec\Context
         $worldBuilder = new WorldBuilder;
         
         $world = $worldBuilder->withVersion()
-                              ->withReporterAndMessage(CliRunner::VERSION)
                               ->build();
+                              
+        $worldBuilder->getReporter()->shouldReceive('setMessage')
+                                    ->with(CliRunner::VERSION);
 
         $this->runner->run($world);
     }
@@ -28,8 +30,10 @@ class DescribeRunner extends \PHPSpec\Context
         $worldBuilder = new WorldBuilder;
         
         $world = $worldBuilder->withHelp()
-                              ->withReporterAndMessage(CliRunner::USAGE)
                               ->build();
+
+        $worldBuilder->getReporter()->shouldReceive('setMessage')
+                                    ->with(CliRunner::USAGE);
 
         $this->runner->run($world);
     }
@@ -38,46 +42,41 @@ class DescribeRunner extends \PHPSpec\Context
     {
         $worldBuilder = new WorldBuilder;
         $world = $worldBuilder->withColours()
-                              ->withReporter(',getFormatters')
                               ->withSpecFile('FooSpec.php')
                               ->build();
+        
+        $worldBuilder->getFormatter()->shouldReceive('setShowColors')
+                                     ->with(true)->once();
+        
         
         $this->runner->run($world);
     }
     
     function itSetsTheFormatterToDisplayBacktrace()
     {
-        list ($formatter, $world) = $this->setupOptions(array(
-            'show' => array('b'),
-            'dont show' => array('version', 'h', 'help', 'c', 'failfast', 'example', 'specFile')
-            )
-        );
+        $worldBuilder = new WorldBuilder;
+        $world = $worldBuilder->withBacktrace()
+                              ->withSpecFile('FooSpec.php')
+                              ->build();
+                              
+        $worldBuilder->getFormatter()->shouldReceive('setEnableBacktrace')
+                                     ->with(true)->once();
         
-        $formatter->shouldReceive('setEnableBacktrace')->with(true)->times(1);
-        
-        try {
-            $this->runner->run($world);
-        } catch (\PHPSpec\Runner\Cli\Error $e) {
-            
-        }
+        $this->runner->run($world);
     }
     
     function itTellsTheReporterToFailFast()
     {
-        $reporterExtraMethod = ',setFailFast';
-        list (, $world, $reporter) = $this->setupOptions(array(
-            'show' => array('failfast'),
-            'dont show' => array('version', 'h', 'help', 'c', 'b', 'example', 'specFile')
-            ),
-            $reporterExtraMethod
-        );
-        $reporter->shouldReceive('setFailFast')->with(true)->times(1);
+        $worldBuilder = new WorldBuilder;
         
-        try {
-            $this->runner->run($world);
-        } catch (\PHPSpec\Runner\Cli\Error $e) {
-            
-        }
+        $world = $worldBuilder->withSpecFile('FooSpec.php')
+                              ->withFailFast()
+                              ->build();
+                              
+        $worldBuilder->getReporter()->shouldReceive('setFailFast')
+                                    ->with(true)->once();
+        
+        $this->runner->run($world);
     }
     
     function itSetsTheExampleToBeRunIntoTheRunner()

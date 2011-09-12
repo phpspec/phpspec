@@ -16,6 +16,16 @@ class WorldBuilder
         $this->formatter = $this->mock('\PHPSpec\Runner\Formatter');
     }
     
+    public function getFormatter()
+    {
+        return $this->formatter;
+    }
+    
+    public function getReporter()
+    {
+        return $this->reporter;
+    }
+    
     public function withVersion()
     {
         $this->version = true;
@@ -35,7 +45,6 @@ class WorldBuilder
             'dont show' => array('version', 'h', 'help', 'b', 'failfast', 'example')
             )
         );
-        $this->formatter->shouldReceive('setShowColors')->with(true)->times(1);
         return $this;
     }
     
@@ -57,10 +66,33 @@ class WorldBuilder
     
     public function withSpecFile($specFile)
     {
+        $this->withReporter(',getFormatters');
         $specFile = realpath(__DIR__ . '/Runner/Cli/_files/' . $specFile);
         $this->reporter->shouldReceive('getFormatters')->andReturn(array($this->formatter));
         $this->formatter->shouldReceive('update');
         $this->world->shouldReceive('getOption')->with('specFile')->andReturn($specFile);
+        return $this;
+    }
+    
+    public function withBacktrace()
+    {
+        $this->setupOptions(array(
+            'show' => array('b'),
+            'dont show' => array('version', 'h', 'help', 'c', 'failfast', 'example')
+            )
+        );
+        return $this;
+    }
+    
+    public function withFailFast()
+    {
+        $this->withReporter(',setFailFast,getFormatters');
+        $this->setupOptions(array(
+            'show' => array('failfast'),
+            'dont show' => array('version', 'h', 'help', 'c', 'b', 'example')
+            )
+        );
+        $this->reporter->shouldReceive('getFormatters')->andReturn(array($this->formatter));
         return $this;
     }
     
@@ -81,9 +113,10 @@ class WorldBuilder
     
     private function setReporter()
     {
-        if ($this->reporter !== null) {
-            $this->world->shouldReceive('getReporter')->andReturn($this->reporter);
+        if ($this->reporter === null) {
+            $this->reporter = $this->mock('\PHPSpec\Runner\Reporter');
         }
+        $this->world->shouldReceive('getReporter')->andReturn($this->reporter);
         return $this;
     }
     
