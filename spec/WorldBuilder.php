@@ -109,6 +109,19 @@ class WorldBuilder
         return $this;
     }
     
+    public function withErrorHandler()
+    {
+        $this->withReporter(',getExceptions');
+        $this->setupOptions(array(
+            'show' => array(),
+            'dont show' => array('version', 'h', 'help', 'c', 'b', 'failfast', 'example')
+            )
+        );
+        $this->reporter->shouldReceive('getExceptions')
+                       ->andReturn(new \SplObjectStorage);
+        return $this;
+    }
+    
     public function build()
     {
         $this->setVersionAndHelp($this->version, $this->help)
