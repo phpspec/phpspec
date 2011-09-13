@@ -81,22 +81,16 @@ class DescribeRunner extends \PHPSpec\Context
     
     function itSetsTheExampleToBeRunIntoTheRunner()
     {
-        list (, $world) = $this->setupOptions(array(
-            'show' => array(),
-            'dont show' => array('version', 'h', 'help', 'c', 'b', 'failfast', 'specFile')
-            )
-        );
-        $world->shouldReceive('getOption')->with('example')->andReturn('foo');
-        $exampleRunner = $this->mock('\PHPSpec\Specification\ExampleRunner');
-        $this->runner->setExampleRunner($exampleRunner);
+        $worldBuilder = new WorldBuilder;
+        $world = $worldBuilder->withExample('itDoesSomething')
+                              ->withSpecFile('FooSpec.php')
+                              ->build();
+        $this->runner->setExampleRunner($worldBuilder->exampleRunner);
         
-        $exampleRunner->shouldReceive('runOnly')->with('foo')->times(1);
+        $worldBuilder->exampleRunner->shouldReceive('runOnly')
+                                    ->with('itDoesSomething')->once();
         
-        try {
-            $this->runner->run($world);
-        } catch (\PHPSpec\Runner\Cli\Error $e) {
-            
-        }
+        $this->runner->run($world);
     }
     
     function itSetsTheErrorHandler()

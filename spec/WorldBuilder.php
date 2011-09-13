@@ -96,6 +96,19 @@ class WorldBuilder
         return $this;
     }
     
+    public function withExample($example)
+    {
+        $this->withReporter(',getFormatters');
+        $this->setupOptions(array(
+            'show' => array(),
+            'dont show' => array('version', 'h', 'help', 'c', 'b', 'failfast')
+            )
+        );
+        $this->world->shouldReceive('getOption')->with('example')->andReturn($example);
+        $this->exampleRunner = $this->mock('\PHPSpec\Specification\ExampleRunner[runOnly]');
+        return $this;
+    }
+    
     public function build()
     {
         $this->setVersionAndHelp($this->version, $this->help)
