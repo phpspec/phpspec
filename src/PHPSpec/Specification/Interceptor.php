@@ -255,7 +255,7 @@ abstract class Interceptor
             $this->_matcher = $reflectedMatcher->newInstanceArgs($expected);
         } catch (\ReflectionException $e) {
             try {
-                $matcherClass = '\PHPSpec\Context\Zend\Matcher\\' . $matcher;
+                $matcherClass = '\PHPSpec\Context\Symfony2\Matcher\\' . $matcher;
                 $reflectedMatcher = new \ReflectionClass($matcherClass);
                 $this->_matcher = $reflectedMatcher->newInstanceArgs(
                     $expected
