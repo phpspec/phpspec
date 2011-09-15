@@ -302,7 +302,7 @@ abstract class Interceptor
         $result = call_user_func_array(
             array($this->_matcher, 'matches'), $args
         );
-        
+
         if ($this->getExpectation() === self::SHOULD) {
             if ($result === false) {
                 throw new Failure($this->_matcher->getFailureMessage());
