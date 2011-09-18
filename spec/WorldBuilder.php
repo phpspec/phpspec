@@ -111,6 +111,12 @@ class WorldBuilder
     
     public function withErrorHandler()
     {
+        $this->withNoOptions();
+        return $this;
+    }
+    
+    public function withNoOptions()
+    {
         $this->withReporter(',getExceptions');
         $this->setupOptions(array(
             'show' => array(),
@@ -119,6 +125,7 @@ class WorldBuilder
         );
         $this->reporter->shouldReceive('getExceptions')
                        ->andReturn(new \SplObjectStorage);
+                       
         return $this;
     }
     

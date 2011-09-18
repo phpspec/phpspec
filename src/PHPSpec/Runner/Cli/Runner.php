@@ -27,7 +27,9 @@ use \PHPSpec\World,
     \PHPSpec\Runner\Cli\Error as CliError,
     \PHPSpec\Specification\ExampleGroup,
     \PHPSpec\Specification\ExampleRunner,
-    \PHPSpec\Runner\Formatter\Factory as FormatterFactory;
+    \PHPSpec\Specification\Example,
+    \PHPSpec\Runner\Formatter\Factory as FormatterFactory,
+    \PHPSpec\Specification\Result\Error as SpecificationError;
 
 /**
  * @category   PHPSpec
@@ -129,12 +131,46 @@ class Runner implements \PHPSpec\Runner\Runner
     {
         $examples = $this->getExamples($world);
         foreach ($examples as $exampleGroup) {
+            if (!$this->isExampleGroup($world, $exampleGroup)) {
+                continue;
+            }
             $exampleGroup->beforeAll();
             $this->getExampleRunner()->run(
                 $exampleGroup, $world->getReporter()
             );
             $exampleGroup->afterAll();
         }
+    }
+    
+    /**
+     * Checks if example group extends ExampleGroup
+     *
+     * @param object $exampleGroup
+     * @param World  $world
+     * @return boolean
+     */
+    private function isExampleGroup(World $world, $exampleGroup)
+    {
+        if (!$exampleGroup instanceof ExampleGroup) {
+            $this->tellUserClassMustExtendContext($world, $exampleGroup);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Adds the message "FooSpec must extend \PHPSpec\Context" to reporter
+     *
+     * @param object $exampleGroup
+     * @param World  $world 
+     */
+    private function tellUserClassMustExtendContext(World $world, $exampleGroup)
+    {
+        $class = get_class($exampleGroup);
+        $world->getReporter()->addError(
+            new Example(new ExampleGroup, "  class:$class"),
+            new SpecificationError("$class must extend \PHPSpec\Context")
+        );        
     }
     
     /**

@@ -111,4 +111,22 @@ class DescribeRunner extends \PHPSpec\Context
         
         $this->runner->run($world);
     }
+    
+    function itRunsAllSpecsReturnedByTheLoader()
+    {
+        $this->pending('Have to commit a hotfix and come back to this.');
+        $worldBuilder = new WorldBuilder;
+        $world = $worldBuilder->withSpecFile('.')
+                              ->withNoOptions()
+                              ->build();
+        
+        $loader = $this->mock(array('load' => array($this)));
+        
+        $loaderFactory = $this->mock('\PHPSpec\Loader\Loader');
+        $loaderFactory->shouldReceive('factory')
+                      ->with('.')
+                      ->andReturn($loader);
+        
+        $this->runner->run($world);
+    }
 }
