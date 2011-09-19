@@ -106,6 +106,8 @@ class Runner implements \PHPSpec\Runner\Runner
         $this->startErrorHandler();
         $world->getReporter()->setRuntimeStart();
 
+        $this->bootstrap($world);
+        
         $this->runExamples($world);
         
         $world->getReporter()->setRuntimeEnd();
@@ -327,6 +329,23 @@ class Runner implements \PHPSpec\Runner\Runner
     public function setLoader(Loader $loader)
     {
         $this->_loader = $loader;
+    }
+    
+    /**
+     * Loads the bootstrap file if specified in the options
+     */
+    public function bootstrap(\PHPSpec\World $world) {
+        $bootstrap_file = $world->getOption('bootstrap');
+        
+        if (empty($bootstrap_file)) {
+            return;
+        }
+        
+        if (!file_exists($bootstrap_file) || !is_readable($bootstrap_file)) {
+            throw new \PHPSpec\Exception('Cannot load specified bootstrap file: ' . $bootstrap_file);
+        }
+        
+        include $bootstrap_file;
     }
     
     /**
