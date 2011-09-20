@@ -51,7 +51,8 @@ class Parser implements \PHPSpec\Runner\Parser
         'specFile'  => '',
         'fail-fast' => false,
         'e'         => false,
-        'example'   => false
+        'example'   => false,
+        'bootstrap' => false
     );
     
     /**
@@ -63,7 +64,8 @@ class Parser implements \PHPSpec\Runner\Parser
         'f',
         'formatter',
         'e',
-        'example'
+        'example',
+        'bootstrap'
     );
     
     /**
@@ -450,5 +452,13 @@ class Parser implements \PHPSpec\Runner\Parser
     public function setExample($example)
     {
         $this->_options['e'] = $this->_options['example'] = $example;
+    }
+    
+    public function setBootstrap($filename) {
+        if (empty($filename) || is_null($filename)) {
+            throw new \PHPSpec\Runner\Cli\Error('Bootstrap file should be given for bootstrap option');
+        }
+        
+        $this->_options['bootstrap'] = $filename;
     }
 }

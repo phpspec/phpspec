@@ -149,4 +149,24 @@ class DescribeParser extends \PHPSpec\Context
         $this->parser->parse($args);
         $this->parser->getOption('e')->should->be('itShouldDoSomething');
     }
+    
+    function itAcceptsBootstrapFile() {
+        $args = array('/usr/bin/phpspec', 'MySpec.php', '--bootstrap', 'bootstrap.php');
+        $this->parser->parse($args);
+        $this->parser->getOption('bootstrap')->should->be('bootstrap.php');
+    }
+    
+    function itShouldComplainWhenBootstrapOptionIsSpecifiedWithoutFilename() {
+        $args = array('/usr/bin/phpspec', 'MySpec.php', '--bootstrap');
+        //$this->parser->parse($args);
+        $parser = $this->parser;
+        //$this->parser->getOption('bootstrap')->should->be('bootstrap.php');
+        $this->spec(
+            function() use ($parser, $args) {
+                $parser->parse($args);
+            }
+        )->should->throwException(
+            'PHPSpec\Runner\Cli\Error', 'phpspec: Bootstrap file should be given for bootstrap option'
+        );
+    }
 }

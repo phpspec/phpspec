@@ -59,6 +59,7 @@ class Runner implements \PHPSpec\Runner\Runner
                               [d]ocumentation (group and example names)
                               [h]tml
                               custom formatter class name
+    --bootstrap FILENAME     Specify a bootstrap file to run before the tests
     -h, --help               You're looking at it
     --fail-fast              Abort the run on first failure.
     --version                Show version
