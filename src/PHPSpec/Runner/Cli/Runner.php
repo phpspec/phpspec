@@ -58,6 +58,7 @@ class Runner implements \PHPSpec\Runner\Runner
                               [p]rogress (default - dots)
                               [d]ocumentation (group and example names)
                               [h]tml
+                              [j]unit
                               custom formatter class name
     -h, --help               You're looking at it
     --fail-fast              Abort the run on first failure.
