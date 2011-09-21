@@ -81,8 +81,8 @@ class BeFalse implements Matcher
      */
     public function getFailureMessage()
     {
-        return 'expected FALSE, got ' . var_export($this->_actual, true) .
-               ' (using beFalse())';
+        return 'expected false, got ' . var_export($this->_actual, true) .
+               ' or non-boolean (using beFalse())';
     }
 
     /**
@@ -92,7 +92,7 @@ class BeFalse implements Matcher
      */
     public function getNegativeFailureMessage()
     {
-        return 'expected TRUE or non-boolean not FALSE (using beFalse())';
+        return 'expected true or non-boolean not false (using beFalse())';
     }
 
     /**
@@ -102,6 +102,6 @@ class BeFalse implements Matcher
      */
     public function getDescription()
     {
-        return 'be FALSE';
+        return 'be false';
     }
 }
