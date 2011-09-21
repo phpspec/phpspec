@@ -1,5 +1,7 @@
 <?php
 
+namespace Spec\Runner\Cli\Files;
+
 class DescribeSomething extends \PHPSpec\Context
 {
     function itTriggersSomeError()

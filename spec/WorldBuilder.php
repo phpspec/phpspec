@@ -137,7 +137,7 @@ class WorldBuilder
             'dont show' => array('version', 'h', 'help', 'c', 'b', 'failfast', 'example')
             )
         );
-        $specFile = realpath(__DIR__ . '/Runner/Cli/_files/' . $specFile);
+        $specFile = realpath($specFile);
         $this->reporter->shouldReceive('getFormatters')->andReturn(array($this->formatter));
         $this->formatter->shouldReceive('update');
         $this->world->shouldReceive('getOption')->with('specFile')->andReturn($specFile);

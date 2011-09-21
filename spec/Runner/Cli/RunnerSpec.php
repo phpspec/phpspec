@@ -115,15 +115,25 @@ class DescribeRunner extends \PHPSpec\Context
     function itRunsAllSpecsReturnedByTheLoader()
     {
         $worldBuilder = new WorldBuilder;
-        $world = $worldBuilder->withNoOptionsAndSpecFile('.')
+        $files = __DIR__ . '/_files';
+        $world = $worldBuilder->withNoOptionsAndSpecFile($files)
                               ->build();
         
-        $loader = $this->mock(array('load' => array($this)));
+        include_once $files . '/FooSpec.php';
+        include_once $files . '/SomethingSpec.php';
+        
+        $loader = $this->mock();
+        $loader->shouldReceive('load')
+               ->andReturn(array(new \Spec\Runner\Cli\Files\DescribeFoo,
+                                 new \Spec\Runner\Cli\Files\DescribeSomething))
+               ->once();
         
         $loaderFactory = $this->mock('\PHPSpec\Loader\Loader');
         $loaderFactory->shouldReceive('factory')
-                      ->with('.')
+                      ->with($files)
                       ->andReturn($loader);
+        
+        $this->runner->setLoader($loaderFactory);
         
         $this->runner->run($world);
     }
