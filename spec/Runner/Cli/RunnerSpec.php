@@ -114,10 +114,8 @@ class DescribeRunner extends \PHPSpec\Context
     
     function itRunsAllSpecsReturnedByTheLoader()
     {
-        $this->pending('Have to commit a hotfix and come back to this.');
         $worldBuilder = new WorldBuilder;
-        $world = $worldBuilder->withSpecFile('.')
-                              ->withNoOptions()
+        $world = $worldBuilder->withNoOptionsAndSpecFile('.')
                               ->build();
         
         $loader = $this->mock(array('load' => array($this)));

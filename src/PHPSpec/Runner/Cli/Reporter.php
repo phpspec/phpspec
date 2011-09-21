@@ -116,7 +116,7 @@ class Reporter extends \PHPSpec\Runner\Reporter
      */
     public function addError(Example $example, Error $error)
     {
-        $this->_errors->attach($error, $example);
+        $this->getErrors()->attach($error, $example);
         $this->notify(
             'status', 'E', $example->getSpecificationText(),
             $error->getMessage(),

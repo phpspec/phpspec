@@ -129,6 +129,24 @@ class WorldBuilder
         return $this;
     }
     
+    public function withNoOptionsAndSpecFile($specFile)
+    {
+        $this->withReporter(',getFormatters,getErrors');
+        $this->setupOptions(array(
+            'show' => array(),
+            'dont show' => array('version', 'h', 'help', 'c', 'b', 'failfast', 'example')
+            )
+        );
+        $specFile = realpath(__DIR__ . '/Runner/Cli/_files/' . $specFile);
+        $this->reporter->shouldReceive('getFormatters')->andReturn(array($this->formatter));
+        $this->formatter->shouldReceive('update');
+        $this->world->shouldReceive('getOption')->with('specFile')->andReturn($specFile);
+        $this->reporter->shouldReceive('getErrors')
+                       ->andReturn(new \SplObjectStorage);
+                       
+        return $this;
+    }
+    
     public function build()
     {
         $this->setVersionAndHelp($this->version, $this->help)
