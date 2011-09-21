@@ -57,6 +57,7 @@ class Object extends Interceptor
         
         if ($this->isPredicate('have', $method, $args) ||
             $this->isPredicate('be', $method, $args)) {
+            $this->performMatching();
             return true;
         }
         
