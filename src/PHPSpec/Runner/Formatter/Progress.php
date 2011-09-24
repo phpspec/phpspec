@@ -76,7 +76,8 @@ class Progress implements Formatter
             return;
         }
         
-        $this->printLines(2);
+        $this->printLines(1);
+        $this->printLineInProgressFormatter();
         
         $this->printPending();
         $this->printFailures();
@@ -85,6 +86,13 @@ class Progress implements Formatter
         
         $this->printRuntime();
         $this->printTotals();
+    }
+    
+    public function printLineInProgressFormatter()
+    {
+        if (get_class($this) === 'PHPSpec\Runner\Formatter\Progress') {
+            $this->putln("");
+        }
     }
     
     /**
@@ -195,8 +203,7 @@ class Progress implements Formatter
             $message = $this->$method(
                 $increment, $item, $example, $this->_enableBacktrace
             );
-            $this->put($message);
-            $this->printLines(1);
+            $this->putln($message);
             $items->next();
             $increment++;
         } 
@@ -309,10 +316,9 @@ MESSAGE;
      */
     protected function printRuntime()
     {
-        $this->put(
+        $this->putln(
             "Finished in " . $this->_reporter->getRuntime() . " seconds"
         );
-        $this->printLines(1);
     }
     
     /**
@@ -320,8 +326,7 @@ MESSAGE;
      */
     protected function printTotals()
     {
-        $this->put($this->getTotals());
-        $this->printLines(1);
+        $this->putln($this->getTotals());
     }
     
     /**
@@ -369,17 +374,15 @@ MESSAGE;
     /**
      * Listens to event from reporter
      */
-    public function update(\SplSubject $method)
+    public function update(\SplSubject $method, $reporterEvent = null)
     {
-        $args = func_get_args();
-        
-        switch($args[1][0]) {
+        switch($reporterEvent->event) {
             case 'status':
-                $this->status($args[1][1]);
+                $this->status($reporterEvent->status);
                 break;
             case 'exit':
                 $this->output();
-                exit;
+                exit(0);
                 break;
         }
     }
@@ -469,5 +472,15 @@ MESSAGE;
     public function put($output)
     {
         Stdout::put($output);
+    }
+    
+    /**
+     * Outputs to standard output and adds a new line in the end
+     * 
+     * @param string $output
+     */
+    public function putln($output)
+    {
+        Stdout::put($output . PHP_EOL);
     }
 }

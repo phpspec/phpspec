@@ -34,20 +34,16 @@ class Documentation extends Progress
     /**
      * Implements observer events listener
      */
-    public function update(\SplSubject $subject)
+    public function update(\SplSubject $subject, $reporterEvent = null)
     {
-        $args = func_get_args();
-        
-        switch($args[1][0]) {
+        switch($reporterEvent->event) {
             case 'start':
-                $this->printLines(1);
-                $this->put($args[1][2]);
+                $this->putln($reporterEvent->example);
                 break;
             case 'status':
-                $this->printLines(1);
                 $this->specdox(
-                    $args[1][1], $args[1][2],
-                    isset($args[1][3]) ? $args[1][3] : ''
+                    $reporterEvent->status, $reporterEvent->example,
+                    $reporterEvent->message
                 );
                 break;
             case 'exit':
@@ -90,5 +86,6 @@ class Documentation extends Progress
                 );
                 break;
         }
+        $this->putln("");
     }
 }

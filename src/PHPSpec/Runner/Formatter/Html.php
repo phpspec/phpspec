@@ -76,7 +76,7 @@ class Html extends Progress
      * 
      * @return string
      */
-    public function getSummary()
+    protected function getSummary()
     {
         $template = new \Text_Template(
             $this->templateDir() . '/Totals.html.dist'
@@ -95,7 +95,7 @@ class Html extends Progress
      * 
      * @return string
      */
-    public function getResults()
+    protected function getResults()
     {
         return $this->_result;
     }
@@ -104,39 +104,17 @@ class Html extends Progress
      * Listens to events from the reporter to interact with the HTML report
      * as things happens
      */
-    public function update(\SplSubject $method)
+    public function update(\SplSubject $method, $reporterEvent = null)
     {
-        $args = func_get_args();
-        
-        switch ($args[1][0]) {
+        switch ($reporterEvent->event) {
             case 'start' :
-                static $groupIndex = 1;
-                $template = new \Text_Template(
-                    $this->templateDir() . '/GroupStart.html.dist'
-                );
-                $template->setVar(
-                    array(
-                        'index' => $groupIndex++,
-                        'name' => $args[1][2]
-                    )
-                );
-                $this->_result .= $template->render();
+                $this->startRenderingExampleGroup($reporterEvent);
                 break;
             case 'finish' :
-                $template = new \Text_Template(
-                    $this->templateDir() . '/GroupEnd.html.dist'
-                );
-                $template->setVar(array('examples' => $this->_examples));
-                $this->_result .= $template->render();
-                $this->_examples = '';
+                $this->finishRenderingExampleGroup();
                 break;
             case 'status' :
-                $this->_examples .= $this->specdox(
-                    $args[1][1], $args[1][2],
-                    isset($args[1][3]) ? $args[1][3] : '',
-                    isset($args[1][4]) ? $args[1][4] : '',
-                    isset($args[1][5]) ? $args[1][5] : ''
-                );
+                $this->rendersExamplesSpecdox($reporterEvent);
                 break;
             case 'exit':
                 $this->output();
@@ -144,7 +122,82 @@ class Html extends Progress
                 break;
         }
     }
+
+    /**
+     * Gets the template directory
+     * 
+     * @return string
+     */
+    protected function templateDir()
+    {
+        return realpath(dirname(__FILE__)) . '/Html/Template';
+    }
     
+    /**
+     * Inhibits ansii colors in Html formatter
+     *
+     * @return boolean
+     */
+    public function showColors()
+    {
+        return false;
+    }
+    
+    /**
+     * Outputs to the browser using echo
+     * 
+     * @param string $output
+     */
+    public function put($output)
+    {
+        echo $output;
+    }
+     
+     /**
+      * Starts rendering example group
+      *
+      * @param ReporterEvent $reporterEvent
+      */
+      private function startRenderingExampleGroup($reporterEvent)
+      {
+          static $groupIndex = 1;
+          $template = new \Text_Template(
+              $this->templateDir() . '/GroupStart.html.dist'
+          );
+          $template->setVar(array(
+              'index' => $groupIndex++,
+              'name'  => $reporterEvent->example
+          ));
+          $this->_result .= $template->render();
+      }
+      
+      /**
+       * Finishes rendering example group
+       */
+       private function finishRenderingExampleGroup()
+       {
+           $template = new \Text_Template(
+               $this->templateDir() . '/GroupEnd.html.dist'
+           );
+           $template->setVar(array('examples' => $this->_examples));
+           $this->_result .= $template->render();
+           $this->_examples = '';
+       }
+       
+       /**
+        * Renders examples specdox
+        *
+        * @param ReporterEvent $reporterEvent
+        */
+        private function rendersExamplesSpecdox($reporterEvent)
+        {
+            $this->_examples .= $this->specdox(
+                $reporterEvent->status, $reporterEvent->example,
+                $reporterEvent->message, $reporterEvent->backtrace,
+                $reporterEvent->exception
+            );
+        }
+        
     /**
      * Renders a specdox
      * 
@@ -215,16 +268,6 @@ class Html extends Progress
                 break;
         }
     }
-
-    /**
-     * Gets the template directory
-     * 
-     * @return string
-     */
-    protected function templateDir()
-    {
-        return realpath(dirname(__FILE__)) . '/Html/Template';
-    }
     
     /**
      * Gets the code based on the exception backtrace
@@ -232,7 +275,7 @@ class Html extends Progress
      * @param \Exception $e
      * @return string
      */
-    public function getCode($e)
+    protected function getCode($e)
     {
         if (!$e instanceof \Exception) {
             return '';
@@ -267,7 +310,7 @@ class Html extends Progress
      * @param unknown_type $style
      * @return Ambigous <string, mixed>
      */
-    public function getLine($traceline, $relativePosition, $style = 'normal')
+    protected function getLine($traceline, $relativePosition, $style = 'normal')
     {
         $line = new \Text_Template($this->templateDir() . '/Line.html.dist');
         $code = str_replace(
@@ -294,25 +337,5 @@ class Html extends Progress
             )
         );
         return $line->render();
-    }
-    
-    /**
-     * Inhibits ansii colors in Html formatter
-     *
-     * @return boolean
-     */
-    public function showColors()
-    {
-        return false;
-    }
-    
-    /**
-     * Outputs to the browser using echo
-     * 
-     * @param string $output
-     */
-    public function put($output)
-    {
-        echo $output;
     }
 }

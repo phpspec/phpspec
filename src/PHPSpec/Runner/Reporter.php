@@ -22,6 +22,7 @@
 namespace PHPSpec\Runner;
 
 use \PHPSpec\Runner\Formatter,
+    \PHPSpec\Runner\ReporterEvent,
     \PHPSpec\Specification\Result\Failure,
     \PHPSpec\Specification\Result\Error,
     \PHPSpec\Specification\Result\Exception,
@@ -214,7 +215,7 @@ abstract class Reporter implements \SPLSubject
             '/Describe(?!.*Describe)/', '', get_class($exampleGroup)
         );
         $time = microtime(true);
-        $this->notify('start', $time, $name);
+        $this->notify(ReporterEvent::newWithTimeAndName('start', $time, $name));
     }
     
     /**
@@ -228,7 +229,7 @@ abstract class Reporter implements \SPLSubject
             '/Describe(?!.*Describe)/', '', get_class($exampleGroup)
         );
         $time = microtime(true);
-        $this->notify('finish', $time, $name);
+        $this->notify(ReporterEvent::newWithTimeAndName('finish', $time, $name));
     }
     
     /**
@@ -237,7 +238,7 @@ abstract class Reporter implements \SPLSubject
     public function notify()
     {
         foreach ($this->getFormatters() as $observer) {
-            $observer->update($this, func_get_args());
+            $observer->update($this, func_get_arg(0));
         }
     }
     

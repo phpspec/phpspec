@@ -22,13 +22,17 @@
 namespace PHPSpec\Runner\Cli;
 
 use \PHPSpec\Runner\Formatter,
-    \PHPSpec\Specification\Result\Failure,
+    \PHPSpec\Runner\ReporterEvent,
+    \PHPSpec\Runner\Reporter as BaseReporter;
+
+use \PHPSpec\Specification\Result\Failure,
     \PHPSpec\Specification\Result\Error,
     \PHPSpec\Specification\Result\Exception,
     \PHPSpec\Specification\Result\Pending,
     \PHPSpec\Specification\Result\DeliberateFailure,
-    \PHPSpec\Specification\Example,
-    \PHPSpec\Util\Backtrace;
+    \PHPSpec\Specification\Example;
+
+use \PHPSpec\Util\Backtrace;
 
 /**
  * @category   PHPSpec
@@ -38,7 +42,7 @@ use \PHPSpec\Runner\Formatter,
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class Reporter extends \PHPSpec\Runner\Reporter
+class Reporter extends BaseReporter
 {
     /**
      * Message to be printed 
@@ -70,11 +74,11 @@ class Reporter extends \PHPSpec\Runner\Reporter
     public function addFailure(Example $example, Failure $failure)
     {
         $this->_failures->attach($failure, $example);
-        $this->notify(
+        $this->notify(new ReporterEvent(
             'status', 'F', $example->getSpecificationText(),
             $failure->getMessage(),
             Backtrace::pretty($failure->getTrace()), $failure
-        );
+        ));
         
         $this->_checkFailFast();
     }
@@ -87,7 +91,9 @@ class Reporter extends \PHPSpec\Runner\Reporter
     public function addPass(Example $example)
     {
         $this->_passing[] = $example;
-        $this->notify('status', '.', $example->getSpecificationText());
+        $this->notify(new ReporterEvent(
+            'status', '.', $example->getSpecificationText()
+        ));
     }
     
     /**
@@ -100,11 +106,11 @@ class Reporter extends \PHPSpec\Runner\Reporter
                                          DeliberateFailure $failure)
     {
         $this->_failures->attach($failure, $example);
-        $this->notify(
+        $this->notify(new ReporterEvent(
             'status', 'F', $example->getSpecificationText(),
             $failure->getMessage(),
             Backtrace::pretty($failure->getTrace()), $failure
-        );
+        ));
         $this->_checkFailFast();
     }
     
@@ -117,11 +123,11 @@ class Reporter extends \PHPSpec\Runner\Reporter
     public function addError(Example $example, Error $error)
     {
         $this->getErrors()->attach($error, $example);
-        $this->notify(
+        $this->notify(new ReporterEvent(
             'status', 'E', $example->getSpecificationText(),
             $error->getMessage(),
             Backtrace::pretty($error->getTrace()), $error
-        );
+        ));
         $this->_checkFailFast();
     }
     
@@ -134,10 +140,10 @@ class Reporter extends \PHPSpec\Runner\Reporter
     public function addException(Example $example, \Exception $e)
     {
         $this->getExceptions()->attach($e, $example);
-        $this->notify(
+        $this->notify(new ReporterEvent(
             'status', 'E', $example->getSpecificationText(),
             $e->getMessage(), Backtrace::pretty($e->getTrace()), $e
-        );
+        ));
         $this->_checkFailFast();
     }
     
@@ -150,10 +156,10 @@ class Reporter extends \PHPSpec\Runner\Reporter
     public function addPending(Example $example, Pending $pending)
     {
         $this->_pendingExamples->attach($pending, $example);
-        $this->notify(
+        $this->notify(new ReporterEvent(
             'status', '*', $example->getSpecificationText(),
             $pending->getMessage()
-        );
+        ));
     }
     
     /**
@@ -234,7 +240,7 @@ class Reporter extends \PHPSpec\Runner\Reporter
     private function _checkFailFast()
     {
         if ($this->getFailFast() === true) {
-            $this->notify('exit');
+            $this->notify(new ReporterEvent('exit', '', ''));
         }
     }
     
