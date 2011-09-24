@@ -80,7 +80,7 @@ class Reporter extends BaseReporter
             Backtrace::pretty($failure->getTrace()), $failure
         ));
         
-        $this->_checkFailFast();
+        $this->checkFailFast();
     }
     
     /**
@@ -111,7 +111,7 @@ class Reporter extends BaseReporter
             $failure->getMessage(),
             Backtrace::pretty($failure->getTrace()), $failure
         ));
-        $this->_checkFailFast();
+        $this->checkFailFast();
     }
     
     /**
@@ -128,7 +128,7 @@ class Reporter extends BaseReporter
             $error->getMessage(),
             Backtrace::pretty($error->getTrace()), $error
         ));
-        $this->_checkFailFast();
+        $this->checkFailFast();
     }
     
     /**
@@ -144,7 +144,7 @@ class Reporter extends BaseReporter
             'status', 'E', $example->getSpecificationText(),
             $e->getMessage(), Backtrace::pretty($e->getTrace()), $e
         ));
-        $this->_checkFailFast();
+        $this->checkFailFast();
     }
     
     /**
@@ -237,7 +237,7 @@ class Reporter extends BaseReporter
      * Checks whether fails fast is set, and sends a message to the formatter
      * to exit the output
      */
-    private function _checkFailFast()
+    private function checkFailFast()
     {
         if ($this->getFailFast() === true) {
             $this->notify(new ReporterEvent('exit', '', ''));
