@@ -40,6 +40,8 @@ class Junit extends Progress {
 	 */
 	private $_xml;
 
+	private $i = 0;
+
 	public function __construct(Reporter $reporter)
 	{
 		parent::__construct($reporter);
@@ -65,20 +67,74 @@ class Junit extends Progress {
 	 */
 	public function update(\SplSubject $subject)
 	{
-		/* @var $subject  */
-		if ($subject->hasPendingExamples())
+		$passed = $subject->getPassing();
+		$failes = $subject->getFailures();
+		$errors = $subject->getErrors();
+
+		$sumOfAllTests = sizeof($passed) + sizeof($failes) + sizeof($errors);
+
+		$suites = array();
+
+		foreach ($passed as $pass)
 		{
-			return;
+			/* @var $pass \PHPSpec\Specification\Example */
+			$exampleGroupName = get_class($pass->getExampleGroup());
+			if (!array_key_exists($exampleGroupName, $suites))
+			{
+				$suites[$exampleGroupName] = array();
+			}
+
+			print $pass->getSpecificationText() . PHP_EOL;
+			print $pass->getDescription() . PHP_EOL;
+			print PHP_EOL;
 		}
-		$subject->getRuntime()
+
+		foreach ($failes as $fail)
+		{
+			/* @var $pass \PHPSpec\Specification\Example */
+			$exampleGroupName = get_class($pass->getExampleGroup());
+			if (!array_key_exists($exampleGroupName, $suites))
+			{
+				$suites[$exampleGroupName] = array();
+			}
+
+			print $pass->getSpecificationText() . PHP_EOL;
+			print $pass->getDescription() . PHP_EOL;
+			print PHP_EOL;
+		}
+
+		foreach ($errors as $error)
+		{
+			/* @var $pass \PHPSpec\Specification\Example */
+			$exampleGroupName = get_class($pass->getExampleGroup());
+			if (!array_key_exists($exampleGroupName, $suites))
+			{
+				$suites[$exampleGroupName] = array();
+			}
+
+			print $pass->getSpecificationText() . PHP_EOL;
+			print $pass->getDescription() . PHP_EOL;
+			print PHP_EOL;
+		}
+
+
+
 	}
 
 	/**
 	 * @return SimpleXMLElement
+	 * <testcase name="testNothing" class="TestDummy" file="/home/mmueller/Development/Checkouts/trivago-php/tests/unit/TestDummy.php" line="12" assertions="1" time="0.005316"/>
 	 */
-	private function createCase($name, $class, $file, $line, $assertions, $executionTime)
+	private function createCase(\SimpleXMLElement $suite, $name, $class, $file, $line, $assertions, $executionTime)
 	{
-
+		$child = $suite->addChild('testcase');
+		$child->addAttribute('name', $name);
+		$child->addAttribute('class', $class);
+		$child->addAttribute('file', $file);
+		$child->addAttribute('line', $line);
+		$child->addAttribute('assertions', $assertions);
+		$child->addAttribute('executionTime', $executionTime);
+		return $child;
 	}
 
 	/**
@@ -90,10 +146,20 @@ class Junit extends Progress {
 	 * @param $errors
 	 * @param $executionTime
 	 * @return SimpleXMLElement
+	 * <testsuite name="TestDummy" file="/home/mmueller/Development/Checkouts/trivago-php/tests/unit/TestDummy.php" tests="1" assertions="1" failures="0" errors="0" time="0.005316">
 	 */
 	private function createSuite($name, $file, $testcount, $assertions, $failures, $errors, $executionTime)
 	{
+		$testSuite = $this->_xml->addChild("testsuite");
+		$testSuite->addAttribute("name", $name);
+		$testSuite->addAttribute("file", $file);
+		$testSuite->addAttribute("tests", $testcount);
+		$testSuite->addAttribute("assertions", $assertions);
+		$testSuite->addAttribute("failures", $failures);
+		$testSuite->addAttribute("errors", $errors);
+		$testSuite->addAttribute("time", $executionTime);
 
+		return $testSuite;
 	}
 
 }
