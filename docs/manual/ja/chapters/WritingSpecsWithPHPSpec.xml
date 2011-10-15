@@ -597,16 +597,6 @@ $spec-&gt;(is_int('string'))-&gt;shouldNot-&gt;beTrue();</programlisting>
               </row>
 
               <row>
-                <entry><para><classname>bool beOfType (string
-                $expected)</classname></para></entry>
-
-                <entry>
-                  実際の値の型が、文字列で指定した型 ('int'、'stdClass' など)
-                  と一致するかどうかを調べます。
-                </entry>
-              </row>
-
-              <row>
                 <entry><para><classname>bool beInt (null
                 $expected)</classname></para></entry>
 
