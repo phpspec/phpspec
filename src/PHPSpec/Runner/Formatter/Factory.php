@@ -41,7 +41,8 @@ class Factory
     protected $_formatters = array(
         'p' => 'Progress',
         'd' => 'Documentation',
-        'h' => 'Html'
+        'h' => 'Html',
+        'j' => 'Junit'
     );
     
     /**

@@ -13,12 +13,11 @@ class DescribeClassLoader extends \PHPSpec\Context
     
     function itReturnsAnEmptyArrayIfTheConventionDoesNotApply()
     {
-        $this->pending('mock seems to be broken');
         $convention = $this->mock('\PHPSpec\Loader\ApplyConvention', array(), array('spec'));
-        $convention->stub('apply')->andReturn(false);
+        $convention->shouldReceive('apply')->andReturn(false);
         
         $factory = $this->mock('\PHPSpec\Loader\ConventionFactory');
-        $factory->stub('create')->andReturn($convention);
+        $factory->shouldReceive('create')->andReturn($convention);
         
         $this->loader->setConventionFactory($factory);
         $loaded = $this->loader->load(__DIR__ . '/_files/NoConvention.php');

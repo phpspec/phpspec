@@ -1,0 +1,6 @@
+default:
+  context:
+    class: VersionContext
+version:
+  context:
+     class: VersionContext

@@ -81,7 +81,7 @@ class BeTrue implements Matcher
      */
     public function getFailureMessage()
     {
-        return 'expected TRUE, got FALSE or non-boolean (using beTrue())';
+        return 'expected true, got false or non-boolean (using beTrue())';
     }
 
     /**
@@ -91,7 +91,7 @@ class BeTrue implements Matcher
      */
     public function getNegativeFailureMessage()
     {
-        return 'expected FALSE or non-boolean not TRUE (using beTrue())';
+        return 'expected false or non-boolean not true (using beTrue())';
     }
 
     /**
@@ -101,6 +101,6 @@ class BeTrue implements Matcher
      */
     public function getDescription()
     {
-        return 'be TRUE';
+        return 'be true';
     }
 }
