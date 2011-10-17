@@ -25,10 +25,10 @@ class ArrayVal extends Interceptor implements \ArrayAccess
 	
 	public function offsetGet($offset) {
 		if (!isset($this[$offset])) {
-			return false;
+			return InterceptorFactory::create(false);
 		}
 		
-		return $this->_actualValue[$offset];
+		return InterceptorFactory::create($this->_actualValue[$offset]);
 	}
 	
 	public function offsetSet($offset, $value) {
