@@ -37,7 +37,8 @@ class HaveKey implements Matcher
     {
         if (!is_array($expected)) {
             throw new \InvalidArgumentException(
-                'Expected value for have key matcher should be array');
+                'Expected value for have key matcher should be array'
+            );
         }
         $this->_expected = $expected;
     }

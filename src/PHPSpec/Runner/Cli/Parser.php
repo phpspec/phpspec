@@ -90,12 +90,12 @@ class Parser implements \PHPSpec\Runner\Parser
         'p',
         'd',
         'h',
-		'j',
+        'j',
      //   't',
         'progress',
         'documentation',
         'html',
-		'junit'
+        'junit'
      //   'textmate'
      );
      
@@ -456,9 +456,12 @@ class Parser implements \PHPSpec\Runner\Parser
         $this->_options['e'] = $this->_options['example'] = $example;
     }
     
-    public function setBootstrap($filename) {
+    public function setBootstrap($filename)
+    {
         if (empty($filename) || is_null($filename)) {
-            throw new \PHPSpec\Runner\Cli\Error('Bootstrap file should be given for bootstrap option');
+            throw new \PHPSpec\Runner\Cli\Error(
+                'Bootstrap file should be given for bootstrap option'
+            );
         }
         
         $this->_options['bootstrap'] = $filename;

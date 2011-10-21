@@ -328,26 +328,24 @@ class Runner implements \PHPSpec\Runner\Runner
         }
         return $this->_formatterFactory;
     }
-    
     /**
      * Sets the formatter factory
      * 
      * @param \PHPSpec\Runner\Formatter\Factory $factory
      */
-    public function setFormatterFactory(FormatterFactory $factory)
+    public function setFormatterFactory (FormatterFactory $factory)
     {
         $this->_formatterFactory = $factory;
     }
-    
     /**
      * Gets the example runner
      * 
      * @return \PHPSpec\Specification\ExampleRunner
      */
-    public function getExampleRunner()
+    public function getExampleRunner ()
     {
         if ($this->_exampleRunner === null) {
-            $this->_exampleRunner = new ExampleRunner;
+            $this->_exampleRunner = new ExampleRunner();
         }
         return $this->_exampleRunner;
     }
@@ -388,18 +386,21 @@ class Runner implements \PHPSpec\Runner\Runner
     /**
      * Loads the bootstrap file if specified in the options
      */
-    public function bootstrap(\PHPSpec\World $world) {
-        $bootstrap_file = $world->getOption('bootstrap');
+    public function bootstrap(\PHPSpec\World $world)
+    {
+        $bootstrapFile = $world->getOption('bootstrap');
         
-        if (empty($bootstrap_file)) {
+        if (empty($bootstrapFile)) {
             return;
         }
         
-        if (!file_exists($bootstrap_file) || !is_readable($bootstrap_file)) {
-            throw new \PHPSpec\Exception('Cannot load specified bootstrap file: ' . $bootstrap_file);
+        if (!file_exists($bootstrapFile) || !is_readable($bootstrapFile)) {
+            throw new \PHPSpec\Exception(
+                'Cannot load specified bootstrap file: ' . $bootstrapFile
+            );
         }
         
-        include $bootstrap_file;
+        include $bootstrapFile;
     }
     
     /**

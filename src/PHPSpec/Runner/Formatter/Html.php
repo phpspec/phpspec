@@ -122,13 +122,12 @@ class Html extends Progress
                 break;
         }
     }
-
     /**
      * Gets the template directory
      * 
      * @return string
      */
-    protected function templateDir()
+    protected function templateDir ()
     {
         return realpath(dirname(__FILE__)) . '/Html/Template';
     }
@@ -164,10 +163,12 @@ class Html extends Progress
           $template = new \Text_Template(
               $this->templateDir() . '/GroupStart.html.dist'
           );
-          $template->setVar(array(
-              'index' => $groupIndex++,
-              'name'  => $reporterEvent->example
-          ));
+          $template->setVar(
+              array(
+                  'index' => $groupIndex++,
+                  'name'  => $reporterEvent->example
+              )
+          );
           $this->_result .= $template->render();
       }
       
