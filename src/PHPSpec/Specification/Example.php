@@ -53,6 +53,13 @@ class Example
      * @var PHPSpec\Specification\ExampleGroup
      */
     protected $_exampleGroup;
+
+	/**
+	 * Represents the execution time of the example
+	 * 
+	 * @var integer
+	 */
+	protected $_executionTime;
     
     /**
      * Example keeps a reference to the example group and is created with the
@@ -76,9 +83,15 @@ class Example
     {
         try {
             $methodName = $this->_methodName;
-            call_user_func(array($this->_exampleGroup, 'before'));
+			$startTime = microtime(true);
+
+			call_user_func(array($this->_exampleGroup, 'before'));
             call_user_func(array($this->_exampleGroup, $methodName));
             call_user_func(array($this->_exampleGroup, 'after'));
+
+			$endTime = microtime(true);
+			$this->_executionTime = $endTime - $startTime;
+			
             if (class_exists('Mockery')) {
                 \Mockery::close();
             }
@@ -128,4 +141,34 @@ class Example
         $methodName = substr($this->_methodName, 2);
         return Filter::camelCaseToSpace($methodName);
     }
+
+	/**
+	 * Returns the method name of the testcase. This method is used in the junit formatter.
+	 *
+	 * @return string
+	 */
+	public function getMethodName()
+	{
+		return $this->_methodName;
+	}
+
+	/**
+	 * Returns the example group. This method is used in the junit formatter.
+	 * 
+	 * @return ExampleGroup|PHPSpec\Specification\ExampleGroup
+	 */
+	public function getExampleGroup()
+	{
+		return $this->_exampleGroup;
+	}
+
+	/**
+	 * Returns the execution time for this example.
+	 *
+	 * @return float
+	 */
+	public function getExecutionTime()
+	{
+		return $this->_executionTime;
+	}
 }

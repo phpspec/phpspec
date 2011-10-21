@@ -60,6 +60,7 @@ class Runner implements \PHPSpec\Runner\Runner
                               [p]rogress (default - dots)
                               [d]ocumentation (group and example names)
                               [h]tml
+                              [j]unit
                               custom formatter class name
     --bootstrap FILENAME     Specify a bootstrap file to run before the tests
     -h, --help               You're looking at it
