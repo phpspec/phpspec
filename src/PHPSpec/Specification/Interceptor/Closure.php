@@ -63,6 +63,8 @@ class Closure extends Interceptor
                 if (!\PHPSpec\PHPSpec::testingPHPSpec()) {
                     throw $e;
                 }
+                $this->_composedActual = true;
+                $this->setActualValue(array(get_class($e), $e->getMessage()));
             } catch(\Exception $e) {
                 $this->_composedActual = true;
                 $this->setActualValue(array(get_class($e), $e->getMessage()));

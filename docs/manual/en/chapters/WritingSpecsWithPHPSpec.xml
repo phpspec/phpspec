@@ -516,14 +516,6 @@ $spec-&gt;(is_int('string'))-&gt;shouldNot-&gt;beTrue();</programlisting>
               </row>
 
               <row>
-                <entry><para><classname>bool beOfType (string
-                $expected)</classname></para></entry>
-
-                <entry>Checks the value type accepting a string decription of
-                the expected type (e.g. 'int', 'stdClass').</entry>
-              </row>
-
-              <row>
                 <entry><para><classname>bool beInt (null
                 $expected)</classname></para></entry>
 

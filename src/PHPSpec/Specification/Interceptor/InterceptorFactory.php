@@ -41,7 +41,10 @@ class InterceptorFactory
         $args = func_get_args();
         $value = array_shift($args);
         
-        if (is_callable($value)) {
+        if (is_array($value)) {
+            $spec = new Scalar($value);
+            
+        } elseif (is_callable($value)) {
             $spec = new Closure($value);
             
         } elseif ((is_string($value) && class_exists($value, true)) ||

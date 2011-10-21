@@ -16,7 +16,7 @@ class DescribeExampleRunner extends \PHPSpec\Context
         $this->exampleFactory = $this->getExampleFactory();
     }
     
-    function itWillCallCreateForEachExamplesOfTheGroup()
+    function itWillCallCreateForEachExampleOfTheGroup()
     {
         $this->exampleFactory->shouldReceive('create')
                              ->times(self::NUM_OF_METHODS_EXAMPLE_HAS)
