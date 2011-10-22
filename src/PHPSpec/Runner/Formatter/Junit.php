@@ -22,25 +22,35 @@
  *
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite
-  	name="TestDummy"
-  	file="/home/mmueller/Development/Checkouts/trivago-php/tests/unit/TestDummy.php"
-  	tests="1" assertions="1" failures="0" errors="0" time="0.005316">
-    <testcase name="testNothing" class="TestDummy"
-      file="/home/mmueller/Development/Checkouts/trivago-php/tests/unit/TestDummy.php"
-      line="12" assertions="1" time="0.005316"/>
-  </testsuite>
+<testsuite
+name="TestDummy"
+file="/home/mmueller/Development/Checkouts/trivago-php/tests/unit/TestDummy.php"
+tests="1" assertions="1" failures="0" errors="0" time="0.005316">
+<testcase name="testNothing" class="TestDummy"
+file="/home/mmueller/Development/Checkouts/trivago-php/tests/unit/TestDummy.php"
+line="12" assertions="1" time="0.005316"/>
+</testsuite>
 </testsuites>
- */
+*/
 namespace PHPSpec\Runner\Formatter;
 use PHPSpec\Util\Backtrace, PHPSpec\Specification\Result\DeliberateFailure, PHPSpec\Runner\Reporter;
 class Junit extends Progress
 {
+    
     /**
      * @var \SimpleXMLElement
      */
     private $_xml;
     private $_i = 0;
+    private $_result;
+    private $_examples;
+    private $_currentGroup;
+    private $_errors = 0;
+    private $_failures = 0;
+    private $_pending = 0;
+    private $_total = 0;
+    private $_complete = 0;
+    
     public function __construct (Reporter $reporter)
     {
         parent::__construct($reporter);
@@ -51,55 +61,152 @@ class Junit extends Progress
      */
     public function output ()
     {
-        $this->_xml->asXML('junit.xml');
+        $output = '<xml version="1.0">';
+        $output .= '<testsuites>' . PHP_EOL . $this->_result;
+        $output .= '</testsuites>' . PHP_EOL;
+        echo $output;
     }
+    
     /**
-     * (PHP 5 &gt;= 5.1.0)<br/>
-     * Receive update from subject
-     * @link http://php.net/manual/en/splobserver.update.php
-     * @param \PHPSpec\Runner\Reporter $subject <p>
-     * The SplSubject notifying the observer of an update.
-     * </p>
-     * @return void
+     * Opens the testsuite tag
+     * @see PHPSpec\Runner\Formatter\FormatterAbstract::_startRenderingExampleGroup()
      */
-    public function update (\SplSubject $subject)
+    protected function _startRenderingExampleGroup($reporterEvent)
     {
-        $passed = $subject->getPassing();
-        $failes = $subject->getFailures();
-        $errors = $subject->getErrors();
-        $sumOfAllTests = sizeof($passed) + sizeof($failes) + sizeof($errors);
-        $suites = array();
-        foreach ($passed as $pass) {
-            /* @var $pass \PHPSpec\Specification\Example */
-            $exampleGroupName = get_class($pass->getExampleGroup());
-            if (! array_key_exists($exampleGroupName, $suites)) {
-                $suites[$exampleGroupName] = array();
-            }
-            print $pass->getSpecificationText() . PHP_EOL;
-            print $pass->getDescription() . PHP_EOL;
-            print PHP_EOL;
-        }
-        foreach ($failes as $fail) {
-            /* @var $pass \PHPSpec\Specification\Example */
-            $exampleGroupName = get_class($pass->getExampleGroup());
-            if (! array_key_exists($exampleGroupName, $suites)) {
-                $suites[$exampleGroupName] = array();
-            }
-            print $pass->getSpecificationText() . PHP_EOL;
-            print $pass->getDescription() . PHP_EOL;
-            print PHP_EOL;
-        }
-        foreach ($errors as $error) {
-            /* @var $pass \PHPSpec\Specification\Example */
-            $exampleGroupName = get_class($pass->getExampleGroup());
-            if (! array_key_exists($exampleGroupName, $suites)) {
-                $suites[$exampleGroupName] = array();
-            }
-            print $pass->getSpecificationText() . PHP_EOL;
-            print $pass->getDescription() . PHP_EOL;
-            print PHP_EOL;
+        static $groupIndex = 1;
+        
+        $this->_currentGroup = $reporterEvent->example;
+    }
+    
+    protected function _finishRenderingExampleGroup()
+    {
+        $output = ' <testsuite tests="' . $this->_total . '" ';
+        $output .= 'failures="' . $this->_failures . '" ';
+        $output .= 'errors="' . $this->_errors . '">' . PHP_EOL;
+        $output .= $this->_examples;
+        $output .= ' </testsuite>' . PHP_EOL;
+        $this->_result .= $output;
+        $this->_examples = '';
+        
+        $this->_total = 0;
+        $this->_failures = 0;
+        $this->_errors = 0;
+        $this->_pending = 0;
+        $this->_complete = 0;
+    }
+    
+    protected function _renderExamples($reporterEvent)
+    {
+        $this->_total++;
+        
+        $status = $reporterEvent->status;
+        switch ($status) {
+            case '.':
+                $output = '  <testcase classname="'
+                    . $this->_currentGroup . '" name="' . $reporterEvent->example
+                    . '" />' . PHP_EOL;
+                $this->_examples .= $output;
+                
+                $this->_complete++;
+                break;
+            case '*':
+                $error = '   <error type="'.get_class($reporterEvent->exception).'">' . PHP_EOL;
+                $error .= '    Skipped Test: ' . $reporterEvent->example;
+                $error .= '    ' . $reporterEvent->message;
+                $error .= '   </error>';
+                
+                $output = '  <testcase classname="';
+                $output .= $this->_currentGroup . '" name="' . $reporterEvent->example;
+                $output .= '">' . PHP_EOL;
+                $output .= $error . PHP_EOL;
+                $this->_examples .= $output;
+                
+                $this->_errors++;
+                break;
+            case 'E':
+                $error = '   <error type="'.get_class($reporterEvent->exception).'">' . PHP_EOL;
+                $error .= '    ' . $reporterEvent->example . '(FAILED)' . PHP_EOL;
+                $error .= '    ' . $reporterEvent->message . PHP_EOL;
+                $error .= '    ' . $reporterEvent->backtrace . PHP_EOL;
+                $error .= $this->getCode($reporterEvent->exception) . PHP_EOL;
+                
+                $error .= '   </error>';
+                
+                $output = '  <testcase classname="';
+                $output .= $this->_currentGroup . '" name="' . $reporterEvent->example;
+                $output .= '">' . PHP_EOL;
+                $output .= $error . PHP_EOL;
+                $this->_examples .= $output;
+                
+                $this->_errors++;
+                break;
+            case 'F':
+                $error = '   <failure type"'.get_class($reporterEvent->exception).'">' . PHP_EOL;
+                
+                $error .= '    ' . $reporterEvent->example . '(FAILED)' . PHP_EOL;
+                $error .= '    ' . $reporterEvent->message . PHP_EOL;
+                $error .= '    ' . $reporterEvent->backtrace . PHP_EOL;
+                $error .= $this->getCode($reporterEvent->exception) . PHP_EOL;
+                
+                $error .= '   </failure>';
+                
+                $output = '  <testcase classname="';
+                $output .= $this->_currentGroup . '" name="' . $reporterEvent->example;
+                $output .= '">' . PHP_EOL;
+                $output .= $error . PHP_EOL;
+                $this->_examples .= $output;
+                
+                $this->_failures++;
+                break;
         }
     }
+    
+    /**
+     * Gets the code based on the exception backtrace
+     * 
+     * @param \Exception $e
+     * @return string
+     */
+    protected function getCode($e)
+    {
+        if (!$e instanceof \Exception) {
+            return '';
+        }
+        
+        if (!$e instanceof \PHPSpec\Specification\Result\DeliberateFailure) {
+            $traceline = Backtrace::getFileAndLine($e->getTrace(), 1);
+        } else {
+            $traceline = Backtrace::getFileAndLine($e->getTrace());
+        }
+        $lines = '';
+        if (!empty($traceline)) {
+            $lines .= $this->getLine($traceline, -2);
+            $lines .= $this->getLine($traceline, -1);
+            $lines .= $this->getLine($traceline, 0, 'offending');
+            $lines .= $this->getLine($traceline, 1);
+        }
+        
+        return $lines;
+    }
+
+    /**
+     * Cleans and returns a line. Removes php tag added to make highlight-string
+     * work
+     * 
+     * @param unknown_type $traceline
+     * @param unknown_type $relativePosition
+     * @param unknown_type $style
+     * @return Ambigous <string, mixed>
+     */
+    protected function getLine($traceline, $relativePosition, $style = 'normal')
+    {
+        $code = Backtrace::readLine(
+            $traceline['file'],
+            $traceline['line'] + $relativePosition
+        );
+        return '    ' . $code . PHP_EOL;
+    }
+    
     /**
      * @return SimpleXMLElement
      * <testcase name="testNothing" class="TestDummy"

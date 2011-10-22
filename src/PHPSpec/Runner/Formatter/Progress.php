@@ -33,7 +33,7 @@ use \PHPSpec\Runner\Formatter,
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class Progress implements Formatter
+class Progress extends FormatterAbstract
 {
     
     /**
@@ -372,19 +372,18 @@ MESSAGE;
     }
     
     /**
-     * Listens to event from reporter
+     * Not required for this formatter
+     * @param unknown_type $reporterEvent
      */
-    public function update(\SplSubject $method, $reporterEvent = null)
+    protected function _startRenderingExampleGroup($reporterEvent)
     {
-        switch($reporterEvent->event) {
-            case 'status':
-                $this->status($reporterEvent->status);
-                break;
-            case 'exit':
-                $this->output();
-                exit(0);
-                break;
-        }
+    }
+    
+    /**
+     * Not required for this formatter
+     */
+    protected function _finishRenderingExampleGroup()
+    {
     }
     
     /**
@@ -392,8 +391,10 @@ MESSAGE;
      * 
      * @param string $status
      */
-    protected function status($status)
+    protected function _renderExamples($reporterEvent)
     {
+        $status = $reporterEvent->status;
+        
         switch($status) {
             case '.':
                 $this->put($this->green($status));

@@ -101,28 +101,6 @@ class Html extends Progress
     }
     
     /**
-     * Listens to events from the reporter to interact with the HTML report
-     * as things happens
-     */
-    public function update(\SplSubject $method, $reporterEvent = null)
-    {
-        switch ($reporterEvent->event) {
-            case 'start' :
-                $this->startRenderingExampleGroup($reporterEvent);
-                break;
-            case 'finish' :
-                $this->finishRenderingExampleGroup();
-                break;
-            case 'status' :
-                $this->rendersExamplesSpecdox($reporterEvent);
-                break;
-            case 'exit':
-                $this->output();
-                exit;
-                break;
-        }
-    }
-    /**
      * Gets the template directory
      * 
      * @return string
@@ -157,7 +135,7 @@ class Html extends Progress
       *
       * @param ReporterEvent $reporterEvent
       */
-      private function startRenderingExampleGroup($reporterEvent)
+      protected function _startRenderingExampleGroup($reporterEvent)
       {
           static $groupIndex = 1;
           $template = new \Text_Template(
@@ -175,7 +153,7 @@ class Html extends Progress
       /**
        * Finishes rendering example group
        */
-       private function finishRenderingExampleGroup()
+       protected function _finishRenderingExampleGroup()
        {
            $template = new \Text_Template(
                $this->templateDir() . '/GroupEnd.html.dist'
@@ -190,7 +168,7 @@ class Html extends Progress
         *
         * @param ReporterEvent $reporterEvent
         */
-        private function rendersExamplesSpecdox($reporterEvent)
+        protected function _renderExamples($reporterEvent)
         {
             $this->_examples .= $this->specdox(
                 $reporterEvent->status, $reporterEvent->example,

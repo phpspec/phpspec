@@ -96,12 +96,20 @@ class Equal
         }
         if (is_object($this->_expected) && is_object($this->_actual) &&
             (get_class($this->_expected) === get_class($this->_actual))) {
-            return $this->_expected === $this->_actual;
+            if ($epsilon === true) {
+                return $this->_expected === $this->_actual;
+            } else {
+                return $this->_expected == $this->_actual;
+            }
         }
 
         if (is_array($this->_actual) && is_array($this->_expected)) {
             // compare arrays - we'll curently enforce key equality
-            return $this->_expected === $this->_actual;
+            if ($epsilon === true) {
+                return $this->_expected === $this->_actual;
+            } else {
+                return $this->_expected == $this->_actual;
+            }
         }
     
         if (!is_array($this->_expected) && !is_array($this->_actual) &&

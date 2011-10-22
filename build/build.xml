@@ -1,9 +1,10 @@
-<project name="PHPSpec">
+<project name="PHPSpec" default="pearify" basedir="..">
   
   <property name="version" value="1.2.2" />
   <property name="stability" value="beta" />
-  <property name="pear" value="pear" />
-  <property name="source" value="/md/dev/php/phpspec" />
+  <property name="source" value="src" />
+  <property name="build" value="build" />
+  <property name="pear" value="${build}/pear" />
 
   <target name="clean" description="Clean build">
     <delete dir="${pear}" />
@@ -12,15 +13,15 @@
   <target name="init" description="Create build directory" depends="clean">
     <mkdir dir="${pear}" />
     <copy toDir="${pear}" >
-      <fileset file="${source}/README.markdown" />
-      <fileset file="${source}/LICENSE" />
-      <fileset file="${source}/scripts/phpspec.php" />
-      <fileset file="${source}/scripts/phpspec.bat" />
+      <fileset file="README.markdown" />
+      <fileset file="LICENSE" />
+      <fileset file="scripts/phpspec.php" />
+      <fileset file="scripts/phpspec.bat" />
     </copy>
     
     <mkdir dir="${pear}/PHPSpec" />
     <copy toDir="${pear}/PHPSpec" >
-      <fileset dir="${source}/src/PHPSpec" />
+      <fileset dir="${source}/PHPSpec" />
     </copy>
     
     <delete dir="${pear}/PHPSpec/Mocks" />
@@ -29,12 +30,12 @@
   
   <target name="code-sniffer" description="Check standards" depends="init">
     <exec executable="phpcs" dir="${pear}/PHPSpec" failonerror="on">
-      <arg line="--standard=Zend --ignore=*Functions.php ." />
+      <arg line="--standard=Zend --ignore=*Functions.php -n ." />
     </exec>
   </target>
 
   <target name="pearify" description="Create the package.xml" depends="code-sniffer">
-    <exec executable="pearify">
+    <exec executable="build/pearify">
       <arg line="${pear} ${version} ${stability}" />
     </exec>
   </target>
