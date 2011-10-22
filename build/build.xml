@@ -13,10 +13,10 @@
   <target name="init" description="Create build directory" depends="clean">
     <mkdir dir="${pear}" />
     <copy toDir="${pear}" >
-      <fileset file="README.markdown" />
-      <fileset file="LICENSE" />
-      <fileset file="scripts/phpspec.php" />
-      <fileset file="scripts/phpspec.bat" />
+      <fileset file="${basedir}/README.markdown" />
+      <fileset file="${basedir}/LICENSE" />
+      <fileset file="${basedir}/scripts/phpspec.php" />
+      <fileset file="${basedir}/scripts/phpspec.bat" />
     </copy>
     
     <mkdir dir="${pear}/PHPSpec" />
