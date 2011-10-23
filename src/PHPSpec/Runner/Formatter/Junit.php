@@ -50,6 +50,7 @@ class Junit extends Progress
     private $_pending = 0;
     private $_total = 0;
     private $_complete = 0;
+    private $_errorOnExit = false;
     
     public function __construct (Reporter $reporter)
     {
@@ -87,6 +88,10 @@ class Junit extends Progress
         $output .= ' </testsuite>' . PHP_EOL;
         $this->_result .= $output;
         $this->_examples = '';
+        
+        if ($this->_errors > 0 || $this->_failures > 0) {
+            $this->_errorOnExit = true;
+        }
         
         $this->_total = 0;
         $this->_failures = 0;
@@ -206,6 +211,14 @@ class Junit extends Progress
         );
         return '    ' . $code . PHP_EOL;
     }
+    
+    protected function _onExit()
+    {
+        if ($this->_errorOnExit) {
+            exit(1);
+        }
+        exit(0);
+    } 
     
     /**
      * @return SimpleXMLElement

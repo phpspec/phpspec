@@ -55,7 +55,7 @@ abstract class FormatterAbstract implements Formatter
                 break;
             case 'exit':
                 $this->output();
-                exit(0);
+                $this->_onExit();
                 break;
         }
     }
@@ -63,5 +63,6 @@ abstract class FormatterAbstract implements Formatter
     abstract protected function _startRenderingExampleGroup($reporterEvent);
     abstract protected function _finishRenderingExampleGroup();
     abstract protected function _renderExamples($reporterEvent);
+    abstract protected function _onExit();
     
 } 

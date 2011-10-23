@@ -23,6 +23,7 @@ namespace PHPSpec;
 
 use \PHPSpec\Runner\Runner,
     \PHPSpec\Runner\Reporter,
+    \PHPSpec\Runner\ReporterEvent,
     \PHPSpec\Runner\Parser,
     \PHPSpec\World,
     \PHPSpec\Runner\Cli\Parser as CliParser,
@@ -142,7 +143,7 @@ class PHPSpec
     protected function output()
     {
         $this->makeSureWeHaveAFormatter();
-        $this->_reporter->getFormatter()->output();
+        $this->_reporter->notify(new ReporterEvent('exit', '', ''));
     }
     
     /**

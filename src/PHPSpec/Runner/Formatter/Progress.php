@@ -57,6 +57,8 @@ class Progress extends FormatterAbstract
     */
     protected $_enableBacktrace = false;
     
+    private $_errorOnExit = false;
+    
     /**
      * Creates a progress formatter, decorates a reporter
      * 
@@ -344,6 +346,10 @@ MESSAGE;
         
         $total = $failures + $errors + $pending + $exceptions + $passing;
         
+        if (($failures + $errors + $pending + $exceptions) > 0) {
+            $this->_errorOnExit = true;
+        }
+        
         $totals = "$total example" . ($total !== 1 ? "s" : "");
         if ($failures) {
             $plural = $failures !== 1 ? "s" : "";
@@ -463,6 +469,14 @@ MESSAGE;
             $output = Color::yellow($output);
         }
         return $output;
+    }
+    
+    protected function _onExit()
+    {
+        if ($this->_errorOnExit) {
+            exit(1);
+        }
+        exit(0);
     }
     
     /**
