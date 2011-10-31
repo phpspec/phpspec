@@ -62,7 +62,7 @@ class Junit extends Progress
      */
     public function output ()
     {
-        $output = '<xml version="1.0">';
+        $output = '<xml version="1.0">' . PHP_EOL;
         $output .= '<testsuites>' . PHP_EOL . $this->_result;
         $output .= '</testsuites>' . PHP_EOL;
         echo $output;
