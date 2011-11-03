@@ -81,11 +81,12 @@ class Junit extends Progress
     
     protected function _finishRenderingExampleGroup()
     {
-        $output = ' <testsuite name="'.$this->_currentGroup.'" tests="' . $this->_total . '" ';
-        $output .= 'assertions="' . $this->_total . '" ';
+        $output = ' <testsuite name="'.$this->_currentGroup.'" ';
+        $output .= 'tests="' . $this->_total . '" ';
+        // $output .= 'assertions="' . $this->_total . '" '; not available yet
         $output .= 'failures="' . $this->_failures . '" ';
         $output .= 'errors="' . $this->_errors . '" ';
-        $output .= 'time="0.01" ';
+        // $output .= 'time="0.01" '; not available yet
         $output .= '>' . PHP_EOL;
         $output .= $this->_examples;
         $output .= ' </testsuite>' . PHP_EOL;
@@ -111,10 +112,10 @@ class Junit extends Progress
         
         $output = '  <testcase class="' . $this->_currentGroup . '"';
         $output .= ' name="' . $reporterEvent->example . '"';
-        $output .= ' file="filename.php"';
-        $output .= ' assertions="1"';
-        $output .= ' time="0.01"';
-        $output .= ' line="30"';
+        // $output .= ' file="filename.php"'; not available yet
+        // $output .= ' assertions="1"'; not available yet
+        // $output .= ' time="0.01"'; not available yet
+        // $output .= ' line="30"'; not available yet
         
         switch ($status) {
             case '.':
