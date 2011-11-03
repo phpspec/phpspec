@@ -62,7 +62,7 @@ class Junit extends Progress
      */
     public function output ()
     {
-        $output = '<xml version="1.0">' . PHP_EOL;
+        $output = '<?xml version="1.0" encoding="UTF-8"?>' . PHP_EOL;
         $output .= '<testsuites>' . PHP_EOL . $this->_result;
         $output .= '</testsuites>' . PHP_EOL;
         echo $output;
@@ -81,9 +81,12 @@ class Junit extends Progress
     
     protected function _finishRenderingExampleGroup()
     {
-        $output = ' <testsuite tests="' . $this->_total . '" ';
+        $output = ' <testsuite name="'.$this->_currentGroup.'" tests="' . $this->_total . '" ';
+        $output .= 'assertions="' . $this->_total . '" ';
         $output .= 'failures="' . $this->_failures . '" ';
-        $output .= 'errors="' . $this->_errors . '">' . PHP_EOL;
+        $output .= 'errors="' . $this->_errors . '" ';
+        $output .= 'time="0.01" ';
+        $output .= '>' . PHP_EOL;
         $output .= $this->_examples;
         $output .= ' </testsuite>' . PHP_EOL;
         $this->_result .= $output;
@@ -105,11 +108,17 @@ class Junit extends Progress
         $this->_total++;
         
         $status = $reporterEvent->status;
+        
+        $output = '  <testcase class="' . $this->_currentGroup . '"';
+        $output .= ' name="' . $reporterEvent->example . '"';
+        $output .= ' file="filename.php"';
+        $output .= ' assertions="1"';
+        $output .= ' time="0.01"';
+        $output .= ' line="30"';
+        
         switch ($status) {
             case '.':
-                $output = '  <testcase classname="'
-                    . $this->_currentGroup . '" name="' . $reporterEvent->example
-                    . '" />' . PHP_EOL;
+                $output .= ' />' . PHP_EOL;
                 $this->_examples .= $output;
                 
                 $this->_complete++;
@@ -120,10 +129,9 @@ class Junit extends Progress
                 $error .= '    ' . $reporterEvent->message;
                 $error .= '   </error>';
                 
-                $output = '  <testcase classname="';
-                $output .= $this->_currentGroup . '" name="' . $reporterEvent->example;
-                $output .= '">' . PHP_EOL;
+                $output .= '>' . PHP_EOL;
                 $output .= $error . PHP_EOL;
+                $output .= '  </testcase>' . PHP_EOL;
                 $this->_examples .= $output;
                 
                 $this->_errors++;
@@ -137,16 +145,15 @@ class Junit extends Progress
                 
                 $error .= '   </error>';
                 
-                $output = '  <testcase classname="';
-                $output .= $this->_currentGroup . '" name="' . $reporterEvent->example;
-                $output .= '">' . PHP_EOL;
+                $output .= '>' . PHP_EOL;
                 $output .= $error . PHP_EOL;
+                $output .= '  </testcase>' . PHP_EOL;
                 $this->_examples .= $output;
                 
                 $this->_errors++;
                 break;
             case 'F':
-                $error = '   <failure type"'.get_class($reporterEvent->exception).'">' . PHP_EOL;
+                $error = '   <failure type="'.get_class($reporterEvent->exception).'">' . PHP_EOL;
                 
                 $error .= '    ' . $reporterEvent->example . '(FAILED)' . PHP_EOL;
                 $error .= '    ' . $reporterEvent->message . PHP_EOL;
@@ -155,10 +162,9 @@ class Junit extends Progress
                 
                 $error .= '   </failure>';
                 
-                $output = '  <testcase classname="';
-                $output .= $this->_currentGroup . '" name="' . $reporterEvent->example;
-                $output .= '">' . PHP_EOL;
+                $output .= '>' . PHP_EOL;
                 $output .= $error . PHP_EOL;
+                $output .= '  </testcase>' . PHP_EOL;
                 $this->_examples .= $output;
                 
                 $this->_failures++;
