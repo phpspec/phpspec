@@ -13,6 +13,7 @@ class WorldBuilder
     public function __construct()
     {
         $this->world = $this->mock('\PHPSpec\World[getReporter,getOption]');
+        $this->world->shouldReceive('getOption')->with('bootstrap')->andReturn(null);
         $this->formatter = $this->mock('\PHPSpec\Runner\Formatter');
     }
     
