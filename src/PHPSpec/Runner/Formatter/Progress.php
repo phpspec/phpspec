@@ -33,7 +33,7 @@ use \PHPSpec\Runner\Formatter,
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class Progress implements Formatter
+class Progress extends FormatterAbstract
 {
     
     /**
@@ -56,6 +56,8 @@ class Progress implements Formatter
     * @var boolean
     */
     protected $_enableBacktrace = false;
+    
+    private $_errorOnExit = false;
     
     /**
      * Creates a progress formatter, decorates a reporter
@@ -344,6 +346,10 @@ MESSAGE;
         
         $total = $failures + $errors + $pending + $exceptions + $passing;
         
+        if (($failures + $errors + $pending + $exceptions) > 0) {
+            $this->_errorOnExit = true;
+        }
+        
         $totals = "$total example" . ($total !== 1 ? "s" : "");
         if ($failures) {
             $plural = $failures !== 1 ? "s" : "";
@@ -372,19 +378,18 @@ MESSAGE;
     }
     
     /**
-     * Listens to event from reporter
+     * Not required for this formatter
+     * @param unknown_type $reporterEvent
      */
-    public function update(\SplSubject $method, $reporterEvent = null)
+    protected function _startRenderingExampleGroup($reporterEvent)
     {
-        switch($reporterEvent->event) {
-            case 'status':
-                $this->status($reporterEvent->status);
-                break;
-            case 'exit':
-                $this->output();
-                exit(0);
-                break;
-        }
+    }
+    
+    /**
+     * Not required for this formatter
+     */
+    protected function _finishRenderingExampleGroup()
+    {
     }
     
     /**
@@ -392,8 +397,10 @@ MESSAGE;
      * 
      * @param string $status
      */
-    protected function status($status)
+    protected function _renderExamples($reporterEvent)
     {
+        $status = $reporterEvent->status;
+        
         switch($status) {
             case '.':
                 $this->put($this->green($status));
@@ -462,6 +469,14 @@ MESSAGE;
             $output = Color::yellow($output);
         }
         return $output;
+    }
+    
+    protected function _onExit()
+    {
+        if ($this->_errorOnExit) {
+            exit(1);
+        }
+        exit(0);
     }
     
     /**

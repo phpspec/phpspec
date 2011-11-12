@@ -29,8 +29,8 @@
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
- class ReporterEvent
- {
+class ReporterEvent
+{
      /**
       * Event
       *
@@ -109,8 +109,8 @@
       * @param float      $time
       * @param string     $example
       */
-      public static function newWithTimeAndName($event, $time, $example)
+     public static function newWithTimeAndName($event, $time, $example)
      {
          return new self($event, '', $example, '', '', null, $time);
      }
- }
+}

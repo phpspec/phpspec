@@ -229,7 +229,9 @@ abstract class Reporter implements \SPLSubject
             '/Describe(?!.*Describe)/', '', get_class($exampleGroup)
         );
         $time = microtime(true);
-        $this->notify(ReporterEvent::newWithTimeAndName('finish', $time, $name));
+        $this->notify(
+            ReporterEvent::newWithTimeAndName('finish', $time, $name)
+        );
     }
     
     /**

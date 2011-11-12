@@ -60,7 +60,9 @@ class Runner implements \PHPSpec\Runner\Runner
                               [p]rogress (default - dots)
                               [d]ocumentation (group and example names)
                               [h]tml
+                              [j]unit
                               custom formatter class name
+    --bootstrap FILENAME     Specify a bootstrap file to run before the tests
     -h, --help               You're looking at it
     --fail-fast              Abort the run on first failure.
     --version                Show version
@@ -116,6 +118,8 @@ class Runner implements \PHPSpec\Runner\Runner
         $this->startErrorHandler();
         $world->getReporter()->setRuntimeStart();
 
+        $this->bootstrap($world);
+        
         $this->runExamples($world);
         
         $world->getReporter()->setRuntimeEnd();
@@ -324,26 +328,24 @@ class Runner implements \PHPSpec\Runner\Runner
         }
         return $this->_formatterFactory;
     }
-    
     /**
      * Sets the formatter factory
      * 
      * @param \PHPSpec\Runner\Formatter\Factory $factory
      */
-    public function setFormatterFactory(FormatterFactory $factory)
+    public function setFormatterFactory (FormatterFactory $factory)
     {
         $this->_formatterFactory = $factory;
     }
-    
     /**
      * Gets the example runner
      * 
      * @return \PHPSpec\Specification\ExampleRunner
      */
-    public function getExampleRunner()
+    public function getExampleRunner ()
     {
         if ($this->_exampleRunner === null) {
-            $this->_exampleRunner = new ExampleRunner;
+            $this->_exampleRunner = new ExampleRunner();
         }
         return $this->_exampleRunner;
     }
@@ -379,6 +381,26 @@ class Runner implements \PHPSpec\Runner\Runner
     public function setLoader(Loader $loader)
     {
         $this->_loader = $loader;
+    }
+    
+    /**
+     * Loads the bootstrap file if specified in the options
+     */
+    public function bootstrap(\PHPSpec\World $world)
+    {
+        $bootstrapFile = $world->getOption('bootstrap');
+        
+        if (empty($bootstrapFile)) {
+            return;
+        }
+        
+        if (!file_exists($bootstrapFile) || !is_readable($bootstrapFile)) {
+            throw new \PHPSpec\Exception(
+                'Cannot load specified bootstrap file: ' . $bootstrapFile
+            );
+        }
+        
+        include $bootstrapFile;
     }
     
     /**

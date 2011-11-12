@@ -19,7 +19,7 @@
  *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-namespace PHPSpec\Specification\Interceptor;
+namespace PHPSpec\Runner\Formatter;
 
 /**
  * @category   PHPSpec
@@ -29,33 +29,40 @@ namespace PHPSpec\Specification\Interceptor;
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class InterceptorFactory
-{
-    /**
-     * Creates an interceptor
-     * 
-     * @return \PHPSpec\Specification\Interceptor
-     */
-    public static function create()
-    {
-        $args = func_get_args();
-        $value = array_shift($args);
-        
-        if (is_array($value)) {
-            $spec = new Scalar($value);
-            
-        } elseif (is_callable($value)) {
-            $spec = new Closure($value);
-            
-        } elseif ((is_string($value) && class_exists($value, true)) ||
-                   is_object($value)) {
-            $spec = new Object($value);
-        } elseif (is_array($value)) {
-            $spec = new ArrayVal($value);
-        } else {
-            $spec = new Scalar($value);
-        }
+use PHPSpec\Runner\Formatter;
 
-        return $spec;
+abstract class FormatterAbstract implements Formatter
+{
+    
+    /**
+     * Listens to events from the reporter, and calls appropriate methods to
+     * update the output
+     * 
+     * @param SplSubject $method
+     * @param unknown $reporterEvent
+     */
+    public function update(\SplSubject $method, $reporterEvent = null)
+    {
+        switch ($reporterEvent->event) {
+            case 'start':
+                $this->_startRenderingExampleGroup($reporterEvent);
+                break;
+            case 'finish':
+                $this->_finishRenderingExampleGroup();
+                break;
+            case 'status':
+                $this->_renderExamples($reporterEvent);
+                break;
+            case 'exit':
+                $this->output();
+                $this->_onExit();
+                break;
+        }
     }
-}
+    
+    abstract protected function _startRenderingExampleGroup($reporterEvent);
+    abstract protected function _finishRenderingExampleGroup();
+    abstract protected function _renderExamples($reporterEvent);
+    abstract protected function _onExit();
+    
+} 

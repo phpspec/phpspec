@@ -31,8 +31,7 @@ use \PHPSpec\Specification\Result\Failure,
     \PHPSpec\Specification\Result\Pending,
     \PHPSpec\Specification\Result\DeliberateFailure,
     \PHPSpec\Specification\Example;
-
-use \PHPSpec\Util\Backtrace;
+use PHPSpec\Util\Backtrace;
 
 /**
  * @category   PHPSpec
@@ -74,11 +73,13 @@ class Reporter extends BaseReporter
     public function addFailure(Example $example, Failure $failure)
     {
         $this->_failures->attach($failure, $example);
-        $this->notify(new ReporterEvent(
-            'status', 'F', $example->getSpecificationText(),
-            $failure->getMessage(),
-            Backtrace::pretty($failure->getTrace()), $failure
-        ));
+        $this->notify(
+            new ReporterEvent(
+                'status', 'F', $example->getSpecificationText(),
+                $failure->getMessage(),
+                Backtrace::pretty($failure->getTrace()), $failure
+            )
+        );
         
         $this->checkFailFast();
     }
@@ -91,9 +92,11 @@ class Reporter extends BaseReporter
     public function addPass(Example $example)
     {
         $this->_passing[] = $example;
-        $this->notify(new ReporterEvent(
-            'status', '.', $example->getSpecificationText()
-        ));
+        $this->notify(
+            new ReporterEvent(
+                'status', '.', $example->getSpecificationText()
+            )
+        );
     }
     
     /**
@@ -106,11 +109,13 @@ class Reporter extends BaseReporter
                                          DeliberateFailure $failure)
     {
         $this->_failures->attach($failure, $example);
-        $this->notify(new ReporterEvent(
-            'status', 'F', $example->getSpecificationText(),
-            $failure->getMessage(),
-            Backtrace::pretty($failure->getTrace()), $failure
-        ));
+        $this->notify(
+            new ReporterEvent(
+                'status', 'F', $example->getSpecificationText(),
+                $failure->getMessage(),
+                Backtrace::pretty($failure->getTrace()), $failure
+            )
+        );
         $this->checkFailFast();
     }
     
@@ -123,11 +128,13 @@ class Reporter extends BaseReporter
     public function addError(Example $example, Error $error)
     {
         $this->getErrors()->attach($error, $example);
-        $this->notify(new ReporterEvent(
-            'status', 'E', $example->getSpecificationText(),
-            $error->getMessage(),
-            Backtrace::pretty($error->getTrace()), $error
-        ));
+        $this->notify(
+            new ReporterEvent(
+                'status', 'E', $example->getSpecificationText(),
+                $error->getMessage(),
+                Backtrace::pretty($error->getTrace()), $error
+            )
+        );
         $this->checkFailFast();
     }
     
@@ -140,10 +147,12 @@ class Reporter extends BaseReporter
     public function addException(Example $example, \Exception $e)
     {
         $this->getExceptions()->attach($e, $example);
-        $this->notify(new ReporterEvent(
-            'status', 'E', $example->getSpecificationText(),
-            $e->getMessage(), Backtrace::pretty($e->getTrace()), $e
-        ));
+        $this->notify(
+            new ReporterEvent(
+                'status', 'E', $example->getSpecificationText(),
+                $e->getMessage(), Backtrace::pretty($e->getTrace()), $e
+            )
+        );
         $this->checkFailFast();
     }
     
@@ -156,10 +165,12 @@ class Reporter extends BaseReporter
     public function addPending(Example $example, Pending $pending)
     {
         $this->_pendingExamples->attach($pending, $example);
-        $this->notify(new ReporterEvent(
-            'status', '*', $example->getSpecificationText(),
-            $pending->getMessage()
-        ));
+        $this->notify(
+            new ReporterEvent(
+                'status', '*', $example->getSpecificationText(),
+                $pending->getMessage()
+            )
+        );
     }
     
     /**
@@ -211,6 +222,7 @@ class Reporter extends BaseReporter
     public function setFormatter(Formatter $formatter)
     {
         $this->_formatter = $formatter;
+        $this->_formatters[] = $formatter;
     }
     
     /**
