@@ -222,6 +222,7 @@ class Reporter extends BaseReporter
     public function setFormatter(Formatter $formatter)
     {
         $this->_formatter = $formatter;
+        $this->_formatters[] = $formatter;
     }
     
     /**
