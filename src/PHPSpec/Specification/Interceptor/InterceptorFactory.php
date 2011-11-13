@@ -42,7 +42,7 @@ class InterceptorFactory
         $value = array_shift($args);
         
         if (is_array($value)) {
-            $spec = new Scalar($value);
+            $spec = new ArrayVal($value);
             
         } elseif (is_callable($value)) {
             $spec = new Closure($value);
@@ -50,8 +50,6 @@ class InterceptorFactory
         } elseif ((is_string($value) && class_exists($value, true)) ||
                    is_object($value)) {
             $spec = new Object($value);
-        } elseif (is_array($value)) {
-            $spec = new ArrayVal($value);
         } else {
             $spec = new Scalar($value);
         }
