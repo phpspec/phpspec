@@ -39,7 +39,7 @@ abstract class FormatterAbstract implements Formatter
      * update the output
      * 
      * @param SplSubject $method
-     * @param unknown $reporterEvent
+     * @param PHPSpec\Runnner\ReporterEvent $reporterEvent
      */
     public function update(\SplSubject $method, $reporterEvent = null)
     {

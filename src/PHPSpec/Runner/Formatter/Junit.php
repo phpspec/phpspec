@@ -16,24 +16,23 @@
  * @package   PHPSpec
  * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
  * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
- * Marcello Duarte
+ *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
- *
- *
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuites>
-<testsuite
-name="TestDummy"
-file="/home/mmueller/Development/Checkouts/trivago-php/tests/unit/TestDummy.php"
-tests="1" assertions="1" failures="0" errors="0" time="0.005316">
-<testcase name="testNothing" class="TestDummy"
-file="/home/mmueller/Development/Checkouts/trivago-php/tests/unit/TestDummy.php"
-line="12" assertions="1" time="0.005316"/>
-</testsuite>
-</testsuites>
-*/
+ */
 namespace PHPSpec\Runner\Formatter;
-use PHPSpec\Util\Backtrace, PHPSpec\Specification\Result\DeliberateFailure, PHPSpec\Runner\Reporter;
+
+use PHPSpec\Util\Backtrace,
+    PHPSpec\Specification\Result\DeliberateFailure,
+    PHPSpec\Runner\Reporter;
+
+/**
+ * @category   PHPSpec
+ * @package    PHPSpec
+ * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
+ * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ *                                     Marcello Duarte
+ * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ */
 class Junit extends Progress
 {
     
@@ -51,12 +50,16 @@ class Junit extends Progress
     private $_total = 0;
     private $_complete = 0;
     private $_errorOnExit = false;
-    
+
+    /**
+     * Creates the formatter adding a testsuites root to the xml
+     */
     public function __construct (Reporter $reporter)
     {
         parent::__construct($reporter);
         $this->_xml = new \SimpleXMLElement("<testsuites></testsuites>");
     }
+
     /**
      * Prints the report in a specific format
      */
@@ -70,7 +73,9 @@ class Junit extends Progress
     
     /**
      * Opens the testsuite tag
-     * @see PHPSpec\Runner\Formatter\FormatterAbstract::_startRenderingExampleGroup()
+     * @see FormatterAbstract::_startRenderingExampleGroup()
+     *
+     * @param PHPSpec\Runnner\ReporterEvent $reporterEvent
      */
     protected function _startRenderingExampleGroup($reporterEvent)
     {
@@ -79,6 +84,9 @@ class Junit extends Progress
         $this->_currentGroup = $reporterEvent->example;
     }
     
+    /**
+     * Finishes rendering an example group
+     */
     protected function _finishRenderingExampleGroup()
     {
         $output = ' <testsuite name="'.$this->_currentGroup.'" ';
@@ -104,6 +112,11 @@ class Junit extends Progress
         $this->_complete = 0;
     }
     
+    /**
+     * Render examples
+     *
+     * @param PHPSpec\Runnner\ReporterEvent $reporterEvent
+     */
     protected function _renderExamples($reporterEvent)
     {
         $this->_total++;
@@ -125,7 +138,9 @@ class Junit extends Progress
                 $this->_complete++;
                 break;
             case '*':
-                $error = '   <error type="'.get_class($reporterEvent->exception).'">' . PHP_EOL;
+                $error = '   <error type="';
+                $error .= get_class($reporterEvent->exception) . '">';
+                $error .= PHP_EOL;
                 $error .= '    Skipped Test: ' . $reporterEvent->example;
                 $error .= '    ' . $reporterEvent->message;
                 $error .= '   </error>';
@@ -138,8 +153,10 @@ class Junit extends Progress
                 $this->_errors++;
                 break;
             case 'E':
-                $error = '   <error type="'.get_class($reporterEvent->exception).'">' . PHP_EOL;
-                $error .= '    ' . $reporterEvent->example . '(FAILED)' . PHP_EOL;
+                $error = '   <error type="';
+                $error .= get_class($reporterEvent->exception).'">' . PHP_EOL;
+                $error .= '    ' . $reporterEvent->example . '(FAILED)';
+                $error .= PHP_EOL;
                 $error .= '    ' . $reporterEvent->message . PHP_EOL;
                 $error .= '    ' . $reporterEvent->backtrace . PHP_EOL;
                 $error .= $this->getCode($reporterEvent->exception) . PHP_EOL;
@@ -154,9 +171,11 @@ class Junit extends Progress
                 $this->_errors++;
                 break;
             case 'F':
-                $error = '   <failure type="'.get_class($reporterEvent->exception).'">' . PHP_EOL;
+                $error = '   <failure type="';
+                $error .= get_class($reporterEvent->exception).'">' . PHP_EOL;
                 
-                $error .= '    ' . $reporterEvent->example . '(FAILED)' . PHP_EOL;
+                $error .= '    ' . $reporterEvent->example . '(FAILED)';
+                $error .= PHP_EOL;
                 $error .= '    ' . $reporterEvent->message . PHP_EOL;
                 $error .= '    ' . $reporterEvent->backtrace . PHP_EOL;
                 $error .= $this->getCode($reporterEvent->exception) . PHP_EOL;
@@ -202,15 +221,16 @@ class Junit extends Progress
     }
 
     /**
-     * Cleans and returns a line. Removes php tag added to make highlight-string
-     * work
+     * Cleans and returns a line. Removes php tag added to make
+     * highlight-string work
      * 
-     * @param unknown_type $traceline
-     * @param unknown_type $relativePosition
-     * @param unknown_type $style
-     * @return Ambigous <string, mixed>
+     * @param array   $traceline
+     * @param integer $relativePosition
+     * @param string  $style
+     * @return string
      */
-    protected function getLine($traceline, $relativePosition, $style = 'normal')
+    protected function getLine($traceline, $relativePosition,
+                               $style = 'normal')
     {
         $code = Backtrace::readLine(
             $traceline['file'],
@@ -228,13 +248,23 @@ class Junit extends Progress
     } 
     
     /**
+     * Creates a testcase
+     *
+     * @param \SimpleXMLElement $suite
+     * @param string $name
+     * @param string $class
+     * @param string $file
+     * @param integer $line
+     * @param string $assertions
+     * @param integer $executionTime
+     *
      * @return SimpleXMLElement
      * <testcase name="testNothing" class="TestDummy"
-     * file="/home/mmueller/Development/Checkouts/trivago-php/tests/unit/TestDummy.php"
+     * file="/home/mmueller/dev/trivago-php/tests/unit/TestDummy.php"
      * line="12" assertions="1" time="0.005316"/>
      */
-    private function createCase (\SimpleXMLElement $suite, $name, $class, $file, 
-    $line, $assertions, $executionTime)
+    private function createCase (\SimpleXMLElement $suite, $name, $class,
+                                 $file, $line, $assertions, $executionTime)
     {
         $child = $suite->addChild('testcase');
         $child->addAttribute('name', $name);
@@ -245,7 +275,10 @@ class Junit extends Progress
         $child->addAttribute('executionTime', $executionTime);
         return $child;
     }
+
     /**
+     * Creates suite 
+     *
      * @param $name
      * @param $file
      * @param $testcount
@@ -253,13 +286,14 @@ class Junit extends Progress
      * @param $failures
      * @param $errors
      * @param $executionTime
+     *
      * @return SimpleXMLElement
      * <testsuite name="TestDummy"
-     *   file="/home/mmueller/Development/Checkouts/trivago-php/tests/unit/TestDummy.php"
+     *   file="/home/mmueller/dev/trivago-php/tests/unit/TestDummy.php"
      *   tests="1" assertions="1" failures="0" errors="0" time="0.005316">
      */
     private function createSuite ($name, $file, $testcount, $assertions, 
-    $failures, $errors, $executionTime)
+                                  $failures, $errors, $executionTime)
     {
         $testSuite = $this->_xml->addChild("testsuite");
         $testSuite->addAttribute("name", $name);

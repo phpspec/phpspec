@@ -32,7 +32,7 @@ use PHPSpec\Specification\Interceptor;
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class ArrayVal extends Interceptor implements \ArrayAccess
-{  
+{
     /**
      * Checks whether actual value has a key
      *
