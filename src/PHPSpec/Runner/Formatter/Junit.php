@@ -28,10 +28,13 @@ use PHPSpec\Util\Backtrace,
 /**
  * @category   PHPSpec
  * @package    PHPSpec
+ * @author     Mario Mueller <mario.mueller@xenji.com>
+ * @author     Amjad Mohamed <amjad@alliedinsure.net>
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
  * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ * @since      File available since release 1.3.0
  */
 class Junit extends Progress
 {
@@ -40,15 +43,61 @@ class Junit extends Progress
      * @var \SimpleXMLElement
      */
     private $_xml;
-    private $_i = 0;
+    
+    /**
+     * Final output
+     *
+     * @var string
+     */
     private $_result;
+    
+    /**
+     * Example elements
+     *
+     * @var string
+     */
     private $_examples;
+    
+    /**
+     * Current example group
+     *
+     * @var string
+     */
     private $_currentGroup;
+    
+    /**
+     * Number of errors
+     *
+     * @var integer
+     */
     private $_errors = 0;
+    
+    /**
+     * Number of failures
+     *
+     * @var integer
+     */
     private $_failures = 0;
+    
+    /**
+     * Number of pending
+     *
+     * @var integer
+     */
     private $_pending = 0;
+    
+    /**
+     * Total of examples
+     *
+     * @var string
+     */
     private $_total = 0;
-    private $_complete = 0;
+    
+    /**
+     * Tell building tool to error with status > 0
+     *
+     * @var boolean
+     */
     private $_errorOnExit = false;
 
     /**
@@ -109,7 +158,6 @@ class Junit extends Progress
         $this->_failures = 0;
         $this->_errors = 0;
         $this->_pending = 0;
-        $this->_complete = 0;
     }
     
     /**
@@ -134,8 +182,6 @@ class Junit extends Progress
             case '.':
                 $output .= ' />' . PHP_EOL;
                 $this->_examples .= $output;
-                
-                $this->_complete++;
                 break;
             case '*':
                 $error = '   <error type="';
@@ -210,6 +256,7 @@ class Junit extends Progress
             $traceline = Backtrace::getFileAndLine($e->getTrace());
         }
         $lines = '';
+        
         if (!empty($traceline)) {
             $lines .= $this->getLine($traceline, -2);
             $lines .= $this->getLine($traceline, -1);
@@ -239,6 +286,9 @@ class Junit extends Progress
         return '    ' . $code . PHP_EOL;
     }
     
+    /**
+     * Exits with status > 0 if there were errors in the specs 
+     */
     protected function _onExit()
     {
         if ($this->_errorOnExit) {
