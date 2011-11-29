@@ -31,7 +31,10 @@ use \PHPSpec\Specification\Result\Failure,
     \PHPSpec\Specification\Result\Pending,
     \PHPSpec\Specification\Result\DeliberateFailure,
     \PHPSpec\Specification\Example;
+
 use PHPSpec\Util\Backtrace;
+
+use \PHPSpec\DeprecatedNotice;
 
 /**
  * @category   PHPSpec
@@ -49,13 +52,6 @@ class Reporter extends BaseReporter
      * @var string
      */
     protected $_message = '';
-    
-    /**
-     * The formatter
-     *
-     * @var \PHPSpec\Runner\Formatter
-     */
-    protected $_formatter;
     
     /**
      * Whether to fail fast
@@ -205,24 +201,27 @@ class Reporter extends BaseReporter
     }
     
     /**
-     * Gets the formatter
+     * Adds a formatter
      * 
-     * @return \PHPSpec\Runner\Formatter
+     * @param \PHPSpec\Runner\Formatter $formatter
      */
-    public function getFormatter()
+    public function addFormatter(Formatter $formatter)
     {
-        return $this->_formatter;
+        $this->_formatters[] = $formatter;
     }
     
     /**
-     * Sets the formatter
+     * Set the formatter
      * 
+     * @deprecated
      * @param \PHPSpec\Runner\Formatter $formatter
      */
     public function setFormatter(Formatter $formatter)
     {
-        $this->_formatter = $formatter;
         $this->_formatters[] = $formatter;
+        throw new DeprecatedNotice(
+            "setFormatter is deprecate, please use addFormatter"
+        );
     }
     
     /**

@@ -152,8 +152,8 @@ class DescribeRunner extends \PHPSpec\Context
     	$reporter->shouldReceive('setMessage')->andReturn(CliRunner::VERSION);
         
         $formatter = $this->mock('\SplObserver');
-        $reporter->shouldReceive('attach')->andReturn($formatter);
-        $reporter->shouldReceive('getFormatter')->andReturn($formatter);
+        $reporter->shouldReceive('attach')->with($formatter);
+        $reporter->shouldReceive('getFormatters')->andReturn(array($formatter));
         $reporter->shouldReceive('setRuntimeStart');
         $reporter->shouldReceive('setRuntimeEnd');
     	

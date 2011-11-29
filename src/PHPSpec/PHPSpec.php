@@ -165,7 +165,7 @@ class PHPSpec
      */
     private function makeSureWeHaveAFormatter()
     {
-        if (!$this->_reporter->getFormatter() instanceof Formatter) {
+        if (!count($this->_reporter->getFormatters())) {
             $this->_world->setOptions(array('formatter' => 'p'));
             $this->setFormatter();
         }
@@ -280,7 +280,7 @@ class PHPSpec
         $formatter = $this->getFormatterFactory()->create(
             $formatterOption, $this->_world->getReporter()
         );
-        $this->_world->getReporter()->setFormatter($formatter);
+        $this->_world->getReporter()->addFormatter($formatter);
     }
     
     /**

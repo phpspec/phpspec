@@ -114,9 +114,9 @@ abstract class Reporter implements \SPLSubject
     /**
      * Gets the formatter
      * 
-     * @return \PHPSpec\Runner\Formatter
+     * @return array<\PHPSpec\Runner\Formatter>
      */
-    abstract public function getFormatter();
+    abstract public function getFormatters();
     
     /**
      * Adds a deliberate failure to the report
@@ -376,6 +376,9 @@ abstract class Reporter implements \SPLSubject
      */
     public function getExceptions()
     {
+        if ($this->_exceptions === null) {
+            return $this->_exceptions = new \SplObjectStorage;
+        }
         return $this->_exceptions;
     }
     

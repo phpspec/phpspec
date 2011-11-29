@@ -46,7 +46,7 @@ class Runner implements \PHPSpec\Runner\Runner
      * 
      * @var string
      */
-    const VERSION = '1.2.2beta';
+    const VERSION = '1.3.0';
     
     /**
      * Usage message
@@ -184,11 +184,12 @@ class Runner implements \PHPSpec\Runner\Runner
      */
     protected function setColor(World $world)
     {
-        $formatter = $world->getReporter()->getFormatter();
-        if ($world->getOption('c')) {
-            $formatter->setShowColors(true);
+        $formatters = $world->getReporter()->getFormatters();
+        foreach ($formatters as $formatter) {
+            if ($world->getOption('c')) {
+                $formatter->setShowColors(true);
+            }
         }
-        $world->getReporter()->attach($formatter);
     }
     
     /**
@@ -198,8 +199,10 @@ class Runner implements \PHPSpec\Runner\Runner
      */
     protected function setBacktrace(World $world)
     {
-        if ($world->getOption('b')) {
-            $world->getReporter()->getFormatter()->setEnableBacktrace(true);
+        foreach ($world->getReporter()->getFormatters() as $formatter) {
+            if ($world->getOption('b')) {
+                $formatter->setEnableBacktrace(true);
+            }
         }
     }
     
@@ -395,7 +398,7 @@ class Runner implements \PHPSpec\Runner\Runner
         }
         
         if (!file_exists($bootstrapFile) || !is_readable($bootstrapFile)) {
-            throw new \PHPSpec\Exception(
+            throw new CliError(
                 'Cannot load specified bootstrap file: ' . $bootstrapFile
             );
         }
