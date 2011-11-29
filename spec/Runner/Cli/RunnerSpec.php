@@ -2,7 +2,6 @@
 
 namespace Spec\PHPSpec\Runner\Cli;
 
-require_once __DIR__ . '/../../SpecHelper.php';
 require_once __DIR__ . '/../../WorldBuilder.php';
 require_once 'PHPSpec/Runner/Reporter.php';
 require_once 'PHPSpec/Runner/Cli/Reporter.php';

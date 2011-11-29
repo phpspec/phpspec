@@ -2,8 +2,6 @@
 
 namespace Spec\PHPSpec\Runner\Cli;
 
-require_once __DIR__ . '/../../SpecHelper.php';
-
 use \PHPSpec\Runner\Cli\Parser as CliParser;
 
 class DescribeParser extends \PHPSpec\Context
