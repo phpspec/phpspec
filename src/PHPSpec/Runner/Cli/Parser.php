@@ -456,6 +456,11 @@ class Parser implements \PHPSpec\Runner\Parser
         $this->_options['e'] = $this->_options['example'] = $example;
     }
     
+    /**
+     * Sets the bootstrap option
+     *
+     * @param string $filename
+     */
     public function setBootstrap($filename)
     {
         if (empty($filename) || is_null($filename)) {
