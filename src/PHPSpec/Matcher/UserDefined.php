@@ -86,12 +86,9 @@ class UserDefined
     {
         $userExpect = MatcherRepository::get($this->_matcher);
         $match = call_user_func_array($userExpect, $this->_expected);
-        $result = false;
-        if (($result = $match['match']($actual)) === true) {
-            return $result;
-        }
+        $result = $match['match']($actual);
         $this->_actual = $actual;
-        throw new FailedMatcherException();
+        return $result;
     }
     
     /**
