@@ -62,10 +62,7 @@ class Junit extends Progress
      */
     public function output ()
     {
-        $output = '<?xml version="1.0" encoding="UTF-8"?>' . PHP_EOL;
-        $output .= '<testsuites>' . PHP_EOL . $this->_result;
-        $output .= '</testsuites>' . PHP_EOL;
-        echo $output;
+        return $this->_xml;
     }
     
     /**
@@ -120,7 +117,9 @@ class Junit extends Progress
         switch ($status) {
             case '.':
                 $output .= ' />' . PHP_EOL;
-                $this->_examples .= $output;
+                $case = $this->_xml->addChild('testsuite');
+                $case->addAttribute('class', $this->_currentGroup);
+                $case->addAttribute('name', $reporterEvent->example);
                 
                 $this->_complete++;
                 break;
