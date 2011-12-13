@@ -73,11 +73,16 @@ class Junit extends Progress
     {
         static $groupIndex = 1;
         
+        $this->_testSuite = $this->_xml->addChild('testsuite');
+        $this->_testSuite->addAttribute('name', $reporterEvent->example);
+        
         $this->_currentGroup = $reporterEvent->example;
     }
     
     protected function _finishRenderingExampleGroup()
     {
+        $
+        
         $output = ' <testsuite name="'.$this->_currentGroup.'" ';
         $output .= 'tests="' . $this->_total . '" ';
         // $output .= 'assertions="' . $this->_total . '" '; not available yet
@@ -107,6 +112,10 @@ class Junit extends Progress
         
         $status = $reporterEvent->status;
         
+        $case = $this->_testSuite->addChild('testcase');
+        $case->addAttribute('class', $this->_currentGroup);
+        $case->addAttribute('name', $reporterEvent->example);
+        
         $output = '  <testcase class="' . $this->_currentGroup . '"';
         $output .= ' name="' . $reporterEvent->example . '"';
         // $output .= ' file="filename.php"'; not available yet
@@ -117,9 +126,6 @@ class Junit extends Progress
         switch ($status) {
             case '.':
                 $output .= ' />' . PHP_EOL;
-                $case = $this->_xml->addChild('testsuite');
-                $case->addAttribute('class', $this->_currentGroup);
-                $case->addAttribute('name', $reporterEvent->example);
                 
                 $this->_complete++;
                 break;
@@ -153,6 +159,13 @@ class Junit extends Progress
                 $this->_errors++;
                 break;
             case 'F':
+                $failure_msg = PHP_EOL . $reporterEvent->example . ' (FAILED)' . PHP_EOL;
+                $failure_msg .= $reporterEvent->message . PHP_EOL;
+                $failure_msg .= $reporterEvent->backtrace . PHP_EOL;
+                
+                $failure = $case->addChild('failure', $failure_msg);
+                $failure->addAttribute('type', get_class($reporterEvent->exception));
+                
                 $error = '   <failure type="'.get_class($reporterEvent->exception).'">' . PHP_EOL;
                 
                 $error .= '    ' . $reporterEvent->example . '(FAILED)' . PHP_EOL;
