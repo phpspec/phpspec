@@ -33,7 +33,9 @@ line="12" assertions="1" time="0.005316"/>
 </testsuites>
 */
 namespace PHPSpec\Runner\Formatter;
-use PHPSpec\Util\Backtrace, PHPSpec\Specification\Result\DeliberateFailure, PHPSpec\Runner\Reporter;
+use PHPSpec\Util\Backtrace,
+    PHPSpec\Specification\Result\DeliberateFailure,
+    PHPSpec\Runner\Reporter;
 class Junit extends Progress
 {
     
@@ -85,7 +87,8 @@ class Junit extends Progress
         $this->_testSuite->addAttribute('tests', $this->_total);
         $this->_testSuite->addAttribute('failures', $this->_failures);
         $this->_testSuite->addAttribute('errors', $this->_errors);
-        // $this->_testSuite->addAttribute('assertions', $this->_assertions);  not available yet
+        // not available yet
+        // $this->_testSuite->addAttribute('assertions', $this->_assertions);
         $this->_testSuite->addAttribute('time', $this->_suiteTime);
         
         if ($this->_errors > 0 || $this->_failures > 0) {
@@ -115,43 +118,50 @@ class Junit extends Progress
         // $case->addAttribute('line', '30'); not available yet
         
         switch ($status) {
-            case '.':
-                $this->_complete++;
-                break;
-            case '*':
-                $failure_msg = PHP_EOL . $reporterEvent->example . ' (PENDING)' . PHP_EOL;
-                $failure_msg .= $reporterEvent->message . PHP_EOL;
-                
-                $failure = $case->addChild('failure', $failure_msg);
-                $failure->addAttribute('type', get_class($reporterEvent->exception));
-                
-                $error = '   <error type="'.get_class($reporterEvent->exception).'">' . PHP_EOL;
-                $error .= '    Skipped Test: ' . $reporterEvent->example;
-                $error .= '    ' . $reporterEvent->message;
-                $error .= '   </error>';
-                
-                $this->_failures++;
-                break;
-            case 'E':
-                $failure_msg = PHP_EOL . $reporterEvent->example . ' (ERROR)' . PHP_EOL;
-                $failure_msg .= $reporterEvent->message . PHP_EOL;
-                $failure_msg .= $reporterEvent->backtrace . PHP_EOL;
-                
-                $error = $case->addChild('error', $failure_msg);
-                $error->addAttribute('type', get_class($reporterEvent->exception));
-                
-                $this->_errors++;
-                break;
-            case 'F':
-                $failure_msg = PHP_EOL . $reporterEvent->example . ' (FAILED)' . PHP_EOL;
-                $failure_msg .= $reporterEvent->message . PHP_EOL;
-                $failure_msg .= $reporterEvent->backtrace . PHP_EOL;
-                
-                $failure = $case->addChild('failure', $failure_msg);
-                $failure->addAttribute('type', get_class($reporterEvent->exception));
-                
-                $this->_failures++;
-                break;
+        case '.':
+            $this->_complete++;
+            break;
+        case '*':
+            $failureMsg = PHP_EOL . $reporterEvent->example
+                        . ' (PENDING)' . PHP_EOL;
+            $failureMsg .= $reporterEvent->message . PHP_EOL;
+            
+            $failure = $case->addChild('failure', $failureMsg);
+            $failure->addAttribute(
+                'type',
+                get_class($reporterEvent->exception)
+            );
+            
+            $this->_failures++;
+            break;
+        case 'E':
+            $failureMsg = PHP_EOL . $reporterEvent->example
+                        . ' (ERROR)' . PHP_EOL;
+            $failureMsg .= $reporterEvent->message . PHP_EOL;
+            $failureMsg .= $reporterEvent->backtrace . PHP_EOL;
+            
+            $error = $case->addChild('error', $failureMsg);
+            $error->addAttribute(
+                'type',
+                get_class($reporterEvent->exception)
+            );
+            
+            $this->_errors++;
+            break;
+        case 'F':
+            $failureMsg = PHP_EOL . $reporterEvent->example
+            . ' (FAILED)' . PHP_EOL;
+            $failureMsg .= $reporterEvent->message . PHP_EOL;
+            $failureMsg .= $reporterEvent->backtrace . PHP_EOL;
+            
+            $failure = $case->addChild('failure', $failureMsg);
+            $failure->addAttribute(
+                'type',
+                get_class($reporterEvent->exception)
+            );
+            
+            $this->_failures++;
+            break;
         }
     }
     
