@@ -140,7 +140,7 @@ abstract class Interceptor
             $this->_matcher = new \PHPSpec\Matcher\UserDefined(
                 $method, $expected
             );
-            $this->_performMatching();
+            $this->performMatching();
             return true;
         }
         
