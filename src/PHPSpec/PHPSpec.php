@@ -29,6 +29,7 @@ use \PHPSpec\Runner\Runner,
     \PHPSpec\Runner\Cli\Parser as CliParser,
     \PHPSpec\Runner\Cli\Runner as CliRunner,
     \PHPSpec\Runner\Cli\Reporter as CliReporter,
+    \PHPSpec\Runner\Cli\Configuration,
     \PHPSpec\Runner\Formatter\Factory as FormatterFactory,
     \PHPSpec\Runner\Formatter;
 
@@ -84,6 +85,13 @@ class PHPSpec
      * @var \PHPSpec\Runner\Formatter\Factory
      */
     protected $_formatterFactory;
+    
+    /**
+     * The configuration
+     *
+     * @var \PHPSpec\Runner\Cli\Configuration
+     */
+    protected $_configuration;
     
     /**
      * Whether we are testing PHPSpec itself
@@ -154,9 +162,10 @@ class PHPSpec
     protected function parseOptionsAndSetWorld()
     {
         $this->_world->setReporter($this->_reporter);
-        $options = $this->_parser->parse($this->_arguments);
+        $configOptions = $this->getConfiguration()->load();
+        $arguments = array_merge($this->_arguments, $configOptions);
+        $options = $this->getParser()->parse($arguments);
         $this->_world->setOptions($options);
-        $this->_world->loadConfig();
         return $options;
     }
     
@@ -229,6 +238,19 @@ class PHPSpec
             $this->_world = new World;
         }
         return $this->_world;
+    }
+    
+    /**
+     * Gets the configuration
+     * 
+     * @return \PHPSpec\Runner\Cli\Configuration
+     */
+    public function getConfiguration()
+    {
+        if ($this->_configuration === null) {
+            $this->_configuration = new Configuration;
+        }
+        return $this->_configuration;
     }
     
     /**
