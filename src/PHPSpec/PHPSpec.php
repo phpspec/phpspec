@@ -139,6 +139,7 @@ class PHPSpec
         $options = $this->parseOptionsAndSetWorld();
         $this->setFormatter($this->_world);
         if ($options !== null) {
+            $this->setDefaultBootstrap($this->_world);
             $this->_runner->run($this->_world);
         } else {
             $this->showUsage();
@@ -167,6 +168,23 @@ class PHPSpec
         $options = $this->getParser()->parse($arguments);
         $this->_world->setOptions($options);
         return $options;
+    }
+    
+    /**
+     * Looks for a SpecHelper.php in case the bootstrap option is empty and
+     * add that to world's options
+     *
+     * @param World $world 
+     */
+    protected function setDefaultBootstrap(World $world)
+    {
+        $specHelper = $world->getOption('specFile') . DIRECTORY_SEPARATOR .
+                      'SpecHelper.php';
+        if (!$world->getOption('bootstrap') &&
+            is_dir($world->getOption('specFile')) &&
+            file_exists($specHelper)) {
+            $world->setOption('bootstrap', $specHelper);
+        }
     }
     
     /**
