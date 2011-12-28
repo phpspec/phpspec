@@ -113,26 +113,4 @@ class World
     {
         $this->_reporter = $reporter;
     }
-    
-    /**
-     * Loads configuration from configuration file into options
-     */
-    public function loadConfig()
-    {
-        $ds          = DIRECTORY_SEPARATOR;
-        $localConfig =       getcwd() . $ds . '.phpspec';
-        $homeConfig  = getenv('HOME') . $ds . '.phpspec';
-        $etcConfig   =    $ds . 'etc' . $ds . 'phpspec' . $ds . 'phpspec.conf';
-        $configArguments = array();
-        
-        if (file_exists($localConfig)) {
-            $configArguments = file($localConfig);
-        } elseif (file_exists($homeConfig)) {
-            $configArguments = file($homeConfig);
-        } elseif (file_exists($etcConfig)) {
-            $configArguments = file($etcConfig);
-        }
-        
-        $this->_options = array_merge($this->_options, $configArguments);
-    }
 }
