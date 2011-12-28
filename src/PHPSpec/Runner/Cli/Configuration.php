@@ -31,6 +31,11 @@ namespace PHPSpec\Runner\Cli;
  */
 class Configuration
 {
+    /**
+     * Loads configuration from file
+     *
+     * @return array
+     */
     public function load()
     {
         $ds          = DIRECTORY_SEPARATOR;
