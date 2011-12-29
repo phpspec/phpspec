@@ -1,3 +1,22 @@
+PHPSpec 1.3
+===========
+
+PHPSpec 1.3.0
+-------------
+
+* SpecHelper.php is now the default bootstrap
+* Fixed loading from configuration
+* Fixed for broken custom matchers
+* Added Junit Formatter
+* Added haveKey matcher
+* Added the bootstrap option
+* Fixed predicate always passing
+* Added ArrayVal as an interceptor
+* Fixed #30 passing array to spec triggers autoloader
+* Updated Japanese version of documentation
+* Using DIRECTORY_SEPARATOR constant to take care of OS differences.
+* Missing put function in the Html formatter sends the output to the StdOut
+
 PHPSpec 1.2
 ===========
 
