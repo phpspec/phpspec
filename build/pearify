@@ -68,6 +68,7 @@ $package->addMaintainer('lead', 'MarcelloDuarte', 'Marcello Duarte', 'marcello.d
 $package->addIgnore(array('package.php', 'package.xml'));
 $package->addPackageDepWithChannel('required', 'Text_Template', 'pear.phpunit.de');
 $package->addPackageDepWithChannel('optional', 'PHPSpec_Zend', 'pear.phpspec.net');
+$package->addPackageDepWithChannel('optional', 'Mockery', 'pear.survivethedeepend.com');
 
 $package->generateContents();
 
