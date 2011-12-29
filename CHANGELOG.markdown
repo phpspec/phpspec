@@ -14,7 +14,7 @@ PHPSpec 1.3.0
 * Added ArrayVal as an interceptor
 * Fixed #30 passing array to spec triggers autoloader
 * Updated Japanese version of documentation
-* Using DIRECTORY_SEPARATOR constant to take care of OS differences.
+* Using DIRECTORY_SEPARATOR constant to take care of OS differences
 * Missing put function in the Html formatter sends the output to the StdOut
 
 PHPSpec 1.2
