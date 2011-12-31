@@ -44,16 +44,13 @@ PHPSpec Console Options
 +--------------------+--------------------------+----------------------------+
 | --example STRING   | -e                       | Run examples whose full nested names include STRING |
 +--------------------+--------------------------+----------------------------+
-| --formatter [progress/documentation/html]   | -f [progress/documentation/html]                       | Use one of the available formatters to format output as
-                                                                                                                     either Standard progress (default - dots), Specdox or HTML output. |
+| --formatter [progress/documentation/html]   | -f [progress/documentation/html]                       | Use one of the available formatters to format output as either Standard progress (default - dots), Specdox or HTML output. |
 +--------------------+--------------------------+----------------------------+
 | --help  | -h                       | Print options |
 +--------------------+--------------------------+----------------------------+
 | --fail-fast  | None                       | Abort the run on the first failure |
 +--------------------+--------------------------+----------------------------+
-| --recursive  | -r                       | Recursively search the current directory and all child
-                                                        directories for specs, and execute all spec files and their
-                                                        examples as found. |
+| --recursive  | -r                       | Recursively search the current directory and all child directories for specs, and execute all spec files and their examples as found. |
 +--------------------+--------------------------+----------------------------+
 | --version  | None                       | Show version |
 +--------------------+--------------------------+----------------------------+

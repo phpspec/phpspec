@@ -163,9 +163,9 @@ input, select {
   background: url(images/skel/logo.png);
 }
 body {
-  color: #b5b5b5;
+  color: #41411F;
   font-family: 'Trebuchet MS';
-  background: #000000 url(images/skel/bg.jpg) repeat-x top left;
+  background: #D3D1BA url(images/skel/bg.jpg) repeat-x top left;
 }
 body > header, body > section, body > footer {
   clear: left;
@@ -185,13 +185,13 @@ body > header > nav li {
 }
 body > header > nav li a {
   display: block;
-  color: #979797;
+  color: #CC6;
   font-family: 'Lobster', arial, serif;
   font-size: 20px;
   text-decoration: none;
 }
 body > header > nav li a:hover {
-  color: #ccc;
+  color: #CCC;
 }
 body > header > nav li.active {
   background: url(images/skel/menu-bg.png);

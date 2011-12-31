@@ -12,6 +12,7 @@ h1 a {
 }
 
 nav.toc {
+    color: #fff;
     float:right;
     padding:15px 20px;
     background:#1e1e1e;
@@ -54,7 +55,7 @@ nav.toc ul {
     margin:0px;
     padding:0px;
     margin-bottom:5px;
-
+    color: #CC6;
     font-size:12px;
 }
 
@@ -75,7 +76,7 @@ nav.toc ul li {
 }
 
 nav.toc a {
-    color:#fff;
+    color:#CC6;
     font-family:Arial;
     font-weight:normal;
     font-size:14px;
@@ -118,18 +119,18 @@ section.documentation {
     line-height:24px;
     width:560px;
     padding:10px 25px 25px 0px;
-    border-right:1px solid #2a2a2a;
+    border-right:1px dashed #97925b;
 }
 
 section.documentation h1 {
     font-size: 30px;
-    color:#fff;
+    color:#41411F;
     font-style: italic;
 }
 
 section.documentation h2 {
     font-size: 26px;
-    color:#fff;
+    color:#41411F;
     font-style: italic;
     margin:20px 0px;
     float:left;
