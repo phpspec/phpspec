@@ -1,0 +1,409 @@
+/* 
+html5doctor.com Reset Stylesheet
+v1.6.1
+Last Updated: 2010-09-17
+Author: Richard Clark - http://richclarkdesign.com 
+Twitter: @rich_clark
+*/
+html,
+body,
+div,
+span,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+abbr,
+address,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+samp,
+small,
+strong,
+sub,
+sup,
+var,
+b,
+i,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  font-size: 100%;
+  vertical-align: baseline;
+  background: transparent;
+}
+body {
+  line-height: 1;
+}
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section {
+  display: block;
+}
+nav ul {
+  list-style: none;
+}
+blockquote, q {
+  quotes: none;
+}
+blockquote:before,
+blockquote:after,
+q:before,
+q:after {
+  content: '';
+  content: none;
+}
+a {
+  margin: 0;
+  padding: 0;
+  font-size: 100%;
+  vertical-align: baseline;
+  background: transparent;
+}
+/* change colours to suit your needs */
+ins {
+  background-color: #ff9;
+  color: #000;
+  text-decoration: none;
+}
+/* change colours to suit your needs */
+mark {
+  background-color: #ff9;
+  color: #000;
+  font-style: italic;
+  font-weight: bold;
+}
+del {
+  text-decoration: line-through;
+}
+abbr[title], dfn[title] {
+  border-bottom: 1px dotted;
+  cursor: help;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+/* change border colour to suit your needs */
+hr {
+  display: block;
+  height: 1px;
+  border: 0;
+  border-top: 1px solid #cccccc;
+  margin: 1em 0;
+  padding: 0;
+}
+input, select {
+  vertical-align: middle;
+}
+#logo {
+  content: '';
+  text-indent: -9999px;
+  float: left;
+  width: 168px;
+  height: 57px;
+  background: url(images/skel/logo.png);
+}
+body {
+  color: #b5b5b5;
+  font-family: 'Trebuchet MS';
+  background: #000000 url(images/skel/bg.jpg) repeat-x top left;
+}
+body > header, body > section, body > footer {
+  clear: left;
+  width: 840px;
+  padding: 60px;
+  margin: 0px auto;
+}
+body > header > nav {
+  float: left;
+  margin-top: 34px;
+  margin-left: 20px;
+}
+body > header > nav li {
+  float: left;
+  margin: 0px 2px;
+  padding: 2px 7px;
+}
+body > header > nav li a {
+  display: block;
+  color: #979797;
+  font-family: 'Lobster', arial, serif;
+  font-size: 20px;
+  text-decoration: none;
+}
+body > header > nav li a:hover {
+  color: #ccc;
+}
+body > header > nav li.active {
+  background: url(images/skel/menu-bg.png);
+  -moz-transform: skew(-10deg);
+  -webkit-transform: skew(-10deg);
+}
+body > header > nav li.active a {
+  color: #fff;
+  -moz-transform: skew(10deg);
+  -webkit-transform: skew(10deg);
+}
+body > section.main > dl {
+  background: url(images/skel/content-splitter.png) 465px -30px no-repeat;
+  min-height: 228px;
+}
+body > section.main > dl p {
+  font-size: 15px;
+  line-height: 24px;
+}
+body > section.main > dl dt h1, body > section.main > dl dt h2 {
+  margin-bottom: 10px;
+  color: #b7b7b7;
+  font-size: 20px;
+  font-weight: normal;
+}
+body > section.main > dl dt h1 span, body > section.main > dl dt h2 span {
+  color: #fff;
+}
+body > section.main > dl dt h1 span.behat, body > section.main > dl dt h2 span.behat {
+  font-family: 'Lobster', arial, serif;
+  margin-right: 5px;
+  font-size: 28px;
+}
+body > section.main > dl .intro {
+  float: left;
+  width: 445px;
+  padding-right: 20px;
+}
+body > section.main > dl dt.install {
+  margin-top: -30px;
+}
+body > section.main > dl dd.install {
+  margin-bottom: 40px;
+}
+body > section.main > dl .install {
+  float: right;
+  width: 350px;
+}
+body > section.main > dl .install pre {
+  float: left;
+  width: 320px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  padding: 15px 10px;
+  font-family: Courier;
+  font-size: 12px;
+  color: #000;
+  -moz-border-radius: 0px 10px 0px 10px;
+  -webkit-border-radius: 0px 10px 0px 10px;
+  border-radius: 0px 10px 0px 10px;
+  background: #fff;
+}
+body > section.main > dl .install pre .prompt {
+  color: #d03e3c;
+}
+body > section.main > dl .install pre.pear {
+  background: #ffffff url(images/skel/install-pear.jpg) no-repeat left bottom;
+}
+body > section.main > dl .install pre.github {
+  background: #ffffff url(images/skel/install-github.jpg) no-repeat left bottom;
+}
+body > section.main > dl .preview {
+  float: left;
+  width: 100%;
+}
+body > section.main > dl .preview dl {
+  width: 830px;
+  background: red;
+  position: relative;
+  margin-top: 20px;
+}
+body > section.main > dl .preview dl dt {
+  position: relative;
+  float: left;
+  z-index: 3;
+  width: 180px;
+  cursor: pointer;
+  margin-right: 630px;
+  padding: 10px;
+}
+body > section.main > dl .preview dl dt h3 {
+  position: relative;
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+}
+body > section.main > dl .preview dl dt h3 span {
+  float: left;
+  width: 100%;
+  margin-top: 5px;
+  color: #8b8b8b;
+  font-size: 12px;
+  font-weight: normal;
+}
+body > section.main > dl .preview dl dt:hover {
+  background: #313131;
+}
+body > section.main > dl .preview dl dt.active {
+  background: #ccc;
+}
+body > section.main > dl .preview dl dt.active h3, body > section.main > dl .preview dl dt.active span {
+  color: #000 !important;
+}
+body > section.main > dl .preview dl dt.active:after {
+  content: '';
+  display: block;
+  position: absolute;
+  right: -11px;
+  top: 15px;
+  width: 20px;
+  height: 20px;
+  -moz-transform: rotate(45deg);
+  -webkit-transform: rotate(45deg);
+  transform: rotate(45deg);
+  background: #ccc;
+}
+body > section.main > dl .preview dl dd {
+  display: none;
+  position: absolute;
+  width: 570px;
+  height: 235px;
+  top: -10px;
+  right: 0px;
+  padding: 20px 30px;
+  background: #fff;
+  -moz-border-radius: 0px 10px 0px 10px;
+  -webkit-border-radius: 0px 10px 0px 10px;
+  border-radius: 0px 10px 0px 10px;
+}
+body > section.main > dl .preview dl dd pre {
+  color: #000;
+  font-size: 16px;
+}
+body > section.main > dl .preview dl dd.active {
+  display: block;
+}
+body > section.main > dl .preview dl dd .info {
+  float: right;
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  padding: 10px 15px;
+  color: #fff;
+  font-size: 18px;
+  background: #000;
+  opacity: 0.5;
+}
+body > footer {
+  position: relative;
+  padding-bottom: 0px;
+  padding-top:0px;
+
+  /*border-top:1px solid #2a2a2a;
+  padding-top:40px;*/
+}
+body > footer dl {
+  float: left;
+  margin-top: 10px;
+  margin-right: 50px;
+  margin-bottom: 20px;
+}
+body > footer dl dt {
+  color: #323232;
+  font-family: 'Lobster', arial, serif;
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+body > footer dl dd {
+  margin-bottom: 3px;
+}
+body > footer dl dd a {
+  color: #636363;
+  font-size: 14px;
+  font-weight: normal;
+  text-decoration: none;
+}
+body > footer dl dd a:hover {
+  text-decoration: underline;
+}
+body > footer .clear {
+  clear: both;
+}
+body > footer .sponsor {
+  position: absolute;
+  right: 70px;
+  bottom: 25px;
+  width: 170px;
+}
+body > footer .sponsor span {
+  color: #323232;
+  font-family: 'Lobster', arial, serif;
+  font-size: 18px;
+  position: absolute;
+  bottom: 0px;
+}
+body > footer .sponsor a.knp {
+  content: '';
+  opacity:0.3;
+  text-indent: -9999px;
+  float: right;
+  border: none;
+  width: 72px;
+  height: 71px;
+  background: url(images/skel/knp-logo.png);
+}

@@ -1,0 +1,78 @@
+{% extends "!layout.html" %}
+
+{% set css_files = css_files + ['_static/behat.css', 'http://fonts.googleapis.com/css?family=Lobster'] %}
+
+{% block content %}
+    <header>
+        <a id="logo" href="http://behat.org">Behat</a>
+        <nav>
+            <ul>
+                <li><a href="http://behat.org">main</a></li>
+                <li class="active"><a href="http://docs.behat.org">docs</a></li>
+                <li><a href="http://pear.behat.org">pear</a></li>
+                <li><a href="https://github.com/Behat">github</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="docs">
+
+        <nav class="toc">
+            <h3>Chapters</h3>
+            {{ toc }}
+        </nav>
+
+        <section class="documentation">
+            {% block body %}{% endblock %}
+        </section>
+
+        {% if pagename != 'index' %}
+            <footer>
+                <nav>
+                    {%- if prev %}
+                        &laquo; <a href="{{ prev.link|e }}">{{ prev.title }}</a> |
+                    {%- endif %}
+                        {{ title }}
+                    {%- if next %}
+                        | <a href="{{ next.link|e }}">{{ next.title }}</a> &raquo;
+                    {%- endif %}
+                </nav>
+            </footer>
+        {% endif %}
+
+    </section>
+
+    <footer>
+        <dl>
+            <dt>Docs</dt>
+            <dd><a href="http://docs.behat.org/quick_intro.html">Behat Intro</a></dd>
+            <dd><a href="http://docs.behat.org/index.html">Behat Guides</a></dd>
+            <dd><a href="http://mink.behat.org/index.html">Mink Guide</a></dd>
+        </dl>
+        <dl>
+            <dt>Plugins</dt>
+            <dd><a href="http://symfony2bundles.org/Behat/BehatBundle">BehatBundle</a></dd>
+            <dd><a href="http://symfony2bundles.org/Behat/MinkBundle">MinkBundle</a></dd>
+            <dd><a href="https://github.com/Behat/sfBehatPlugin">sfBehatPlugin</a></dd>
+        </dl>
+        <dl>
+            <dt>Pear</dt>
+            <dd><a href="http://pear.behat.org/">Behat</a></dd>
+            <dd><a href="http://pear.behat.org/">Mink</a></dd>
+        </dl>
+        <dl>
+            <dt>GitHub</dt>
+            <dd><a href="https://github.com/Behat/Behat">Behat</a></dd>
+            <dd><a href="https://github.com/Behat/Mink">Mink</a></dd>
+        </dl>
+
+        <div class="clear"></div>
+
+        <div class="sponsor">
+            <span>sponsored by</span>
+            <a class="knp" href="http://www.knplabs.com">knpLabs, Symfony developers</a>
+        </div>
+    </footer>
+{% endblock %}
+
+{% block footer %}{% endblock %}
