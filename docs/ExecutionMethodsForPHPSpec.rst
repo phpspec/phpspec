@@ -70,7 +70,7 @@ available for the Console Runner as outlined above.
 Here's a simple example of a HTTP Runner stored to a file called
 AllSpecs.php.
 
-.. code-block:: php
+.. code-block:: html+php
 
     <?php
 
