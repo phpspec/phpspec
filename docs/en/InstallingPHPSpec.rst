@@ -31,9 +31,8 @@ To install the package simply execute the following command:
 .. note::
 
     Development snapshots of PHPSpec are regularly updated in the
-    develop branch at <ulink url="http://github.com/phpspec/phpspec">
-    http://github.com/phpspec/phpspec</ulink>. These snapshots are
-    considered of dubious stability and should only be utilised for testing
+    develop branch at `http://github.com/phpspec/phpspec <http://github.com/phpspec/phpspec>`_.
+    These snapshots are considered of dubious stability and should only be utilised for testing
     and feedback purposes. The installation of development snapshots is
     described in the "Installing PHPSpec Manually" section below.
 
@@ -41,8 +40,7 @@ Installing PHPSpec from a PEAR download
 ---------------------------------------
 
 To install PHPSpec without using the PEAR channel system you can
-select a download of the PEAR archive from <ulink
-url="http://pear.phpspec.net/get">http://pear.phpspec.net/get</ulink> and
+select a download of the PEAR archive from `http://pear.phpspec.net/get <http://pear.phpspec.net/get>`_ and
 by running the following command:
 
 .. code-block:: bash
@@ -53,9 +51,8 @@ Installing PHPSpec Manually
 ---------------------------
 
 To install PHPSpec manually, you can use the non-Pearified tarball
-called "PHPSpec-<version>.tar.gz" available for download from <ulink
-url="http://pear.phpspec.net/get/nonpear">
-http://pear.phpspec.net/get/nonpear</ulink>. Extract to your preferred
+called "PHPSpec-<version>.tar.gz" available for download from `http://pear.phpspec.net/get/nonpear
+<http://pear.phpspec.net/get/nonpear>`_. Extract to your preferred
 location, and add the "src" directory to your php.ini include_path. You
 will also need to copy the phpspec script for your system (*.bat refers to
 a Windows friendly version) from the "scripts" directory to a location on
