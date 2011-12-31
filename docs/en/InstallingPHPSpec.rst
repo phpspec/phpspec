@@ -50,9 +50,7 @@ by running the following command:
 Installing PHPSpec Manually
 ---------------------------
 
-To install PHPSpec manually, you can use the non-Pearified tarball
-called "PHPSpec-<version>.tar.gz" available for download from `http://pear.phpspec.net/get/nonpear
-<http://pear.phpspec.net/get/nonpear>`_. Extract to your preferred
+To install PHPSpec manually, you can use the non pearified tarball called "PHPSpec-<version>.tar.gz" available for download from `http://pear.phpspec.net/get/nonpear <http://pear.phpspec.net/get/nonpear>`_. Extract to your preferred
 location, and add the "src" directory to your php.ini include_path. You
 will also need to copy the phpspec script for your system (*.bat refers to
 a Windows friendly version) from the "scripts" directory to a location on
