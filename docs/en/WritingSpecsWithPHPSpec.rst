@@ -369,170 +369,59 @@ ending the fluent interface of the Spec. Parameters marked
 ``NULL`` generally mean a parameter is not required
 (the expected value is implicit in the Matcher name).
 
-        <table>
-          <title>PHPSpec Matchers</title>
+PHPSpec Matchers
+----------------
 
-          <tgroup cols="2">
-            <thead>
-              <row>
-                <entry align="center">Matcher Method</entry>
-
-                <entry align="center">Explanation</entry>
-              </row>
-            </thead>
-
-            <tbody>
-              <row>
-                <entry>``bool be (mixed
-                $expected)``</entry>
-
-                <entry>Identical to using ``equal()`` and
-                reflects general English usage.</entry>
-              </row>
-
-              <row>
-                <entry>``bool beEqualTo (mixed
-                $expected)``</entry>
-
-                <entry>Identical to using ``equal()`` and
-                reflects general English usage.</entry>
-              </row>
-
-              <row>
-                <entry>``bool equal (mixed
-                $expected)``</entry>
-
-                <entry>Attempts to match the expected value on an equal basis
-                intelligently comparing scalar values, object class, array
-                content, or other metrics generally associated with two items
-                being equivelant.</entry>
-              </row>
-
-              <row>
-                <entry>``bool beTrue (null
-                $expected)``</entry>
-
-                <entry>Matches the actual value against
-                ``TRUE``.</entry>
-              </row>
-
-              <row>
-                <entry>``bool beFalse (null
-                $expected)``</entry>
-
-                <entry>Matches the actual value against
-                ``FALSE``.</entry>
-              </row>
-
-              <row>
-                <entry>``bool beNull (null
-                $expected)``</entry>
-
-                <entry>Checks if the actual value is
-                ``NULL``.</entry>
-              </row>
-
-              <row>
-                <entry>``bool beEmpty (mixed
-                $expected)``</entry>
-
-                <entry>Checks if the actual value is empty (using
-                ``empty()``).</entry>
-              </row>
-
-              <row>
-                <entry>``bool beSet (null
-                $expected)``</entry>
-
-                <entry>Checks if the actual value is set (using
-                ``isset()``).</entry>
-              </row>
-
-              <row>
-                <entry>``bool beAnInstanceOf (string
-                $expected)``</entry>
-
-                <entry>Determines if the actual value is both an object and an
-                instance of the class type provided.</entry>
-              </row>
-
-              <row>
-                <entry>``bool beInt (null
-                $expected)``</entry>
-
-                <entry>Checks if the actual value is an integer. This is a
-                precise check - the string form of an integer will not
-                match.</entry>
-              </row>
-
-              <row>
-                <entry>``bool beArray (null
-                $expected)``</entry>
-
-                <entry>Checks if the actual value is an array.</entry>
-              </row>
-
-              <row>
-                <entry>``bool beString (null
-                $expected)``</entry>
-
-                <entry>Checks if the actual value is a string.</entry>
-              </row>
-
-              <row>
-                <entry>``bool beFloat (null
-                $expected)``</entry>
-
-                <entry>Checks if the actual value is a float.</entry>
-              </row>
-
-              <row>
-                <entry>``bool beObject (null
-                $expected)``</entry>
-
-                <entry>Checks if the actual value is an object; does not
-                perform type comparison on class type.</entry>
-              </row>
-
-              <row>
-                <entry>``bool beGreaterThan (mixed
-                $expected)``</entry>
-
-                <entry>Checks if the actual value is greater than
-                (``>``) the expected value
-                provided.</entry>
-              </row>
-
-              <row>
-                <entry>``bool beLessThan (mixed
-                $expected)``</entry>
-
-                <entry>Checks if the actual value is less than
-                (``<``) the expected value
-                provided</entry>
-              </row>
-
-              <row>
-                <entry>``bool beGreaterThanOrEqualTo (mixed
-                $expected)``</entry>
-
-                <entry>Checks if the actual value is greater than or equal to
-                (``>=``) the expected value
-                provided</entry>
-              </row>
-
-              <row>
-                <entry>``bool beLessThanOrEqualTo (mixed
-                $expected)``</entry>
-
-                <entry>Checks if the actual value is less than or equal to
-                (``<=``) the expected value
-                provided</entry>
-              </row>
-            </tbody>
-          </tgroup>
-        </table>
-      </section>
++---------------------------------------+--------------------------------------------------------------------+
+| Matcher Method                        | Explanation                                                        |
++=======================================+====================================================================+
+| bool be (mixed $expected)             | Identical to using ``equal()`` and reflects general English usage. |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beEqualTo (mixed $expected)      | Identical to using ``equal()`` and reflects general English usage. |
++---------------------------------------+--------------------------------------------------------------------+
+| bool equal (mixed $expected)          | Attempts to match the expected value on an equal basis             |
+|                                       | intelligently comparing scalar values, object class, array         |
+|                                       | content, or other metrics generally associated with two items      |
+|                                       | being equivalent.                                                  |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beTrue (null $expected)          | Matches the actual value against TRUE.                             |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beFalse (null $expected)         | Matches the actual value against ``FALSE``.                        |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beNull (null $expected)          | Checks if the actual value is ``NULL``.                            |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beEmpty (mixed $expected)        | Checks if the actual value is empty (using ``empty()``).           |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beSet (null $expected)           | Checks if the actual value is set (using ``isset()``).             |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beAnInstanceOf (string $expected)| Determines if the actual value is both an object and an            |
+|                                       | instance of the class type provided.                               |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beInt (null $expected)           | Checks if the actual value is an integer. This is a                |
+|                                       | precise check - the string form of an integer will not             |
+|                                       | match.                                                             |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beArray (null $expected)         | Checks if the actual value is an array.                            |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beString (null $expected)        | Checks if the actual value is a string.                            |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beFloat (null $expected)         | Checks if the actual value is a float.                             |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beObject (null $expected)        | Checks if the actual value is an object; does not                  |
+|                                       | perform type comparison on class type.                             |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beGreaterThan (mixed $expected)  | Checks if the actual value is greater than (``>``)                 |
+|                                       | the expected value provided.                                       |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beLessThan (mixed $expected)     | Checks if the actual value is less than                            |
+|                                       | (``<``) the expected value provided                                |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beGreaterThanOrEqualTo           | Checks if the actual value is greater than or equal to             |
+| (mixed $expected)                     | (``>=``) the expected value provided                               |
++---------------------------------------+--------------------------------------------------------------------+
+| bool beLessThanOrEqualTo (mixed       | Checks if the actual value is less than or equal to                |
+| $expected)                            | (``<=``) the expected value provided                               |
++---------------------------------------+--------------------------------------------------------------------+
 
 Predicate Matchers
 ------------------
