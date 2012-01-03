@@ -66,6 +66,8 @@ abstract class Interceptor
      */
     protected $_expectedValue;
     
+    protected $_subInterceptors = array();
+    
     protected $_noOfAssertions = 0;
     
     /**
@@ -153,7 +155,9 @@ abstract class Interceptor
             $value = $parentInterceptor->invokeArgs(
                 $this->_actualValue, array($method, $args)
             );
-            return \PHPSpec\Specification\Interceptor\InterceptorFactory::create($value);
+            
+            return \PHPSpec\Specification\Interceptor
+                           \InterceptorFactory::create($value, $this);
         }
     }
     
@@ -217,7 +221,22 @@ abstract class Interceptor
      * @return integer
      */
     public function getNumberOfAssertions() {
-        return $this->_noOfAssertions;
+        $assertions = $this->_noOfAssertions;
+        
+        foreach ($this->_subInterceptors as $interceptors) {
+            $assertions += $interceptors->getNumberOfAssertions();
+        }
+        
+        return $assertions;
+    }
+    
+    /**
+     * Stores the interceptors sent from InterceptorFactory
+     * 
+     * @param Interceptor $interceptor 
+     */
+    public function addSubInterceptor(Interceptor $interceptor) {
+        $this->_subInterceptors[] = $interceptor;
     }
     
     /**

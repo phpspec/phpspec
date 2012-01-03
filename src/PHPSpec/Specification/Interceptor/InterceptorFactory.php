@@ -40,6 +40,7 @@ class InterceptorFactory
     {
         $args = func_get_args();
         $value = array_shift($args);
+        $interceptor = array_shift($args);
         
         if (is_array($value)) {
             $spec = new ArrayVal($value);
@@ -54,6 +55,10 @@ class InterceptorFactory
             $spec = new Scalar($value);
         }
 
+        if (!is_null($interceptor)) {
+            $interceptor->addSubInterceptor($spec);
+        }
+        
         return $spec;
     }
 }
