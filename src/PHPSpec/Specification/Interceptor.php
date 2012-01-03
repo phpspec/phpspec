@@ -66,6 +66,8 @@ abstract class Interceptor
      */
     protected $_expectedValue;
     
+    protected $_noOfAssertions = 0;
+    
     /**
      * List of valid matchers
      * 
@@ -210,6 +212,15 @@ abstract class Interceptor
     }
     
     /**
+     * Returns the number of assertions made in this spec
+     * 
+     * @return integer
+     */
+    public function getNumberOfAssertions() {
+        return $this->_noOfAssertions;
+    }
+    
+    /**
      * Adds a matcher
      * 
      * @param string $matcher
@@ -292,6 +303,8 @@ abstract class Interceptor
      */
     protected function performMatching()
     {
+        $this->_noOfAssertions++;
+        
         $actual = $this->getActualValue();
 
         if (is_array($actual) && $this->_composedActual) {

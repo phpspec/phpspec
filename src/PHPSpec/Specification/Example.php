@@ -58,6 +58,12 @@ class Example
      */
     protected $_executionTime;
     /**
+     * The number assertions made when the example is run
+     * 
+     * @var integer
+     */
+    protected $_noOfAssertions;
+    /**
      * Example keeps a reference to the example group and is created with the
      * example as a reflected method
      * 
@@ -100,6 +106,7 @@ class Example
             $reporter->addException($this, new Exception($e));
             return;
         }
+        $this->_noOfAssertions = $this->_exampleGroup->getNumberOfAssertions();
         $reporter->addPass($this);
     }
     /**
@@ -158,5 +165,14 @@ class Example
     public function getExecutionTime ()
     {
         return $this->_executionTime;
+    }
+    
+    /**
+     * Returns the number of assertions made in this run
+     * 
+     * @return integer
+     */
+    public function getNoOfAssertions() {
+        return $this->_noOfAssertions;
     }
 }

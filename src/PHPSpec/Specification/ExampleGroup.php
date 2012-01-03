@@ -37,6 +37,8 @@ use \PHPSpec\Runner\Reporter,
 class ExampleGroup
 {
     
+    protected $_specs = array();
+    
     /**
      * Override for having it called once before all examples are ran in one
      * group
@@ -79,12 +81,36 @@ class ExampleGroup
      */
     public function spec()
     {
-        return call_user_func_array(
+        $spec = call_user_func_array(
             array(
                 '\PHPSpec\Specification\Interceptor\InterceptorFactory',
                 'create'),
             func_get_args()
         );
+        
+        // keeping specs to inspect number of assertions
+        $this->_specs[] = $spec;
+        
+        return $spec;
+    }
+    
+    /**
+     * Returns the number of assertions made in the a single example
+     * 
+     * @return integer
+     */
+    public function getNumberOfAssertions()
+    {
+        $assertions = 0;
+        
+        foreach ($this->_specs as $spec) {
+            $assertions += $spec->getNumberOfAssertions();
+        }
+        
+        // clearing the specs for the next example
+        $this->_specs = array();
+        
+        return $assertions;
     }
     
     /**

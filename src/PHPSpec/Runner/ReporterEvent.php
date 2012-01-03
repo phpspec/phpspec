@@ -81,6 +81,13 @@ class ReporterEvent
      public $time;
      
      /**
+      * Number of assertions made in the example
+      * 
+      * @var integer
+      */
+     public $assertions;
+     
+     /**
       * Reporter event is constructed with:
       *
       * @param string     $event
@@ -91,15 +98,17 @@ class ReporterEvent
       * @param \Exception $exception (OPTIONAL)
       */
      public function __construct($event, $status, $example, $message = '',
-                                 $trace = '', $e = null, $time = 0.0)
+                                 $trace = '', $e = null, $time = 0.0,
+                                 $assertions = 0)
      {
-         $this->status    = $status;
-         $this->event     = $event;
-         $this->example   = $example;
-         $this->message   = $message;
-         $this->backtrace = $trace;
-         $this->exception = $e;
-         $this->time      = $time;
+         $this->status     = $status;
+         $this->event      = $event;
+         $this->example    = $example;
+         $this->message    = $message;
+         $this->backtrace  = $trace;
+         $this->exception  = $e;
+         $this->time       = $time;
+         $this->assertions = $assertions;
      }
      
      /**
