@@ -317,4 +317,14 @@ class Html extends Progress
         );
         return $line->render();
     }
+    
+    /**
+     * Outputs to the browser using echo
+     * 
+     * @param string $output
+     */
+    public function put($output)
+    {
+        echo $output;
+    }
 }
