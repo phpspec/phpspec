@@ -53,6 +53,7 @@ class Junit extends Progress
     private $_pending = 0;
     private $_total = 0;
     private $_complete = 0;
+    private $_assertions = 0;
     private $_errorOnExit = false;
     
     public function __construct (Reporter $reporter)
@@ -88,8 +89,8 @@ class Junit extends Progress
         $this->_testSuite->addAttribute('failures', $this->_failures);
         $this->_testSuite->addAttribute('errors', $this->_errors);
         // not available yet
-        // $this->_testSuite->addAttribute('assertions', $this->_assertions);
         $this->_testSuite->addAttribute('time', $this->_suiteTime);
+        $this->_testSuite->addAttribute('assertions', $this->_assertions);
         
         if ($this->_errors > 0 || $this->_failures > 0) {
             $this->_errorOnExit = true;
@@ -106,6 +107,7 @@ class Junit extends Progress
     {
         $this->_total++;
         $this->_suiteTime += $reporterEvent->time;
+        $this->_assertions += $reporterEvent->assertions;
         
         $status = $reporterEvent->status;
         
@@ -113,8 +115,8 @@ class Junit extends Progress
         $case->addAttribute('class', $this->_currentGroup);
         $case->addAttribute('name', $reporterEvent->example);
         // $case->addAttribute('file', 'filename.php'); not available yet
-        // $case->addAttribute('assertions', '1'); not available yet
         $case->addAttribute('time', $reporterEvent->time);
+        $case->addAttribute('assertions', $reporterEvent->assertions);
         // $case->addAttribute('line', '30'); not available yet
         
         switch ($status) {

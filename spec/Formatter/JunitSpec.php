@@ -35,7 +35,8 @@ class DescribeJunit extends \PHPSpec\Context {
             '',
             '',
             null,
-            '0.01'
+            '0.01',
+            '2'
         ));
         $formatter->update($this->_reporter, new ReporterEvent('finish', '', 'Dummy'));
         
@@ -49,11 +50,13 @@ class DescribeJunit extends \PHPSpec\Context {
         $suite->addAttribute('failures', '0');
         $suite->addAttribute('errors', '0');
         $suite->addAttribute('time', '0.01');
+        $suite->addAttribute('assertions', '2');
         
         $case = $suite->addChild('testcase');
         $case->addAttribute('class', 'Dummy');
         $case->addAttribute('name', 'example1');
         $case->addAttribute('time', '0.01');
+        $case->addAttribute('assertions', '2');
         
         $this->spec($actual->asXml())
             ->should->be($expected->asXml());
@@ -70,7 +73,8 @@ class DescribeJunit extends \PHPSpec\Context {
             $failure_e->getMessage(),
             $failure_e->getTraceAsString(),
             $failure_e,
-            '0.01'
+            '0.01',
+            '2'
         ));
         $formatter->update($this->_reporter, new ReporterEvent('finish', '', 'Dummy'));
         
@@ -84,11 +88,13 @@ class DescribeJunit extends \PHPSpec\Context {
         $suite->addAttribute('failures', '1');
         $suite->addAttribute('errors', '0');
         $suite->addAttribute('time', '0.01');
+        $suite->addAttribute('assertions', '2');
         
         $case = $suite->addChild('testcase');
         $case->addAttribute('class', 'Dummy');
         $case->addAttribute('name', 'example1');
         $case->addAttribute('time', '0.01');
+        $case->addAttribute('assertions', '2');
         
         $failure_msg = PHP_EOL . 'example1 (PENDING)' . PHP_EOL;
         $failure_msg .= $msg . PHP_EOL;
@@ -111,7 +117,8 @@ class DescribeJunit extends \PHPSpec\Context {
             $failure_e->getMessage(),
             $failure_e->getTraceAsString(),
             $failure_e,
-            '0.01'
+            '0.01',
+            '2'
         ));
         $formatter->update($this->_reporter, new ReporterEvent('finish', '', 'Dummy'));
         
@@ -125,11 +132,13 @@ class DescribeJunit extends \PHPSpec\Context {
         $suite->addAttribute('failures', '1');
         $suite->addAttribute('errors', '0');
         $suite->addAttribute('time', '0.01');
+        $suite->addAttribute('assertions', '2');
         
         $case = $suite->addChild('testcase');
         $case->addAttribute('class', 'Dummy');
         $case->addAttribute('name', 'example1');
         $case->addAttribute('time', '0.01');
+        $case->addAttribute('assertions', '2');
         
         $failure_msg = PHP_EOL . 'example1 (FAILED)' . PHP_EOL;
         $failure_msg .= $msg . PHP_EOL;
@@ -153,7 +162,8 @@ class DescribeJunit extends \PHPSpec\Context {
             $failure_e->getMessage(),
             $failure_e->getTraceAsString(),
             $failure_e,
-            '0.01'
+            '0.01',
+            '2'
         ));
         $formatter->update($this->_reporter, new ReporterEvent('finish', '', 'Dummy'));
         
@@ -167,11 +177,13 @@ class DescribeJunit extends \PHPSpec\Context {
         $suite->addAttribute('failures', '0');
         $suite->addAttribute('errors', '1');
         $suite->addAttribute('time', '0.01');
+        $suite->addAttribute('assertions', '2');
         
         $case = $suite->addChild('testcase');
         $case->addAttribute('class', 'Dummy');
         $case->addAttribute('name', 'example1');
         $case->addAttribute('time', '0.01');
+        $case->addAttribute('assertions', '2');
         
         $failure_msg = PHP_EOL . 'example1 (ERROR)' . PHP_EOL;
         $failure_msg .= $msg . PHP_EOL;
