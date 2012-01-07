@@ -8,7 +8,7 @@ class DescribeClassLoader extends \PHPSpec\Context
     
     function before()
     {
-        $this->loader = $this->spec(new \PHPSpec\Loader\ClassLoader);
+        $this->loader = $this->spec(new \PHPSpec\Loader\ClassLoader());
     }
     
     function itReturnsAnEmptyArrayIfTheConventionDoesNotApply()
@@ -24,14 +24,14 @@ class DescribeClassLoader extends \PHPSpec\Context
         
         $loaded->should->equal(array());
     }
-    
+
     function itReturnsTheLoadedExampleGroupIfConventionIsFollowed()
     {
         $loader = new \PHPSpec\Loader\ClassLoader;
         $loaded = $loader->load(__DIR__ . '/_files/FooSpec.php');
         $this->spec($loaded[0])->should->beAnInstanceOf('DescribeFoo');
     }
-    
+
     function itThrowsAnErrorIfFileDoesNotExist()
     {
         $loader = $this->loader;
