@@ -35,12 +35,12 @@ class DescribeContainText extends \PHPSpec\Context
    		);
    	}
 
-   	function itReturnsTrueIfKeyExists()
+   	function itReturnsTrueIfTextExists()
    	{
    	    $this->matcher->matches('foo')->should->beTrue();
    	}
 
-   	function itReturnsFalseIfKeyDoesNotExist()
+   	function itReturnsFalseIfTextDoesNotExist()
    	{
    	    $this->matcher->matches('zoo')->should->beFalse();
    	}

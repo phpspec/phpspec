@@ -79,9 +79,13 @@ class Example
         try {
             $methodName = $this->_methodName;
             $startTime = microtime(true);
-            call_user_func(array($this->_exampleGroup, 'before'));
+            if (method_exists($this->_exampleGroup, 'before')) {
+                call_user_func(array($this->_exampleGroup, 'before'));
+            }
             call_user_func(array($this->_exampleGroup, $methodName));
-            call_user_func(array($this->_exampleGroup, 'after'));
+            if (method_exists($this->_exampleGroup, 'after')) {
+                call_user_func(array($this->_exampleGroup, 'after'));
+            }
             $endTime = microtime(true);
             $this->_executionTime = $endTime - $startTime;
             if (class_exists('Mockery')) {

@@ -54,16 +54,7 @@ class ContainText implements Matcher
     {
         $this->_actual = $actual;
 
-        $pos = strpos($this->_expected, $actual);
-
-        if($pos === false) {
-            // string needle NOT found in haystack
-            return false;
-        }
-        else {
-            // string needle found in haystack
-            return true;
-        }
+        return $pos = strpos($this->_expected, $actual) !== false;
     }
 
     /**

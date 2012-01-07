@@ -7,11 +7,12 @@ use \PHPSpec\Loader\DirectoryLoader,
 
 class DescribeDirectoryLoader extends \PHPSpec\Context
 {
-    function itLoadsAllExampleGroupsUnderADirectory()
+    function xitLoadsAllExampleGroupsUnderADirectory()
     {
+        $this->pending('see github issue 26');
         $loader = new DirectoryLoader;
         $examples = $loader->load(__DIR__ . '/_files/Bar');
-        
+
         $examples = new SpecIterator($examples);
         
         $i = array('A', 'B', 'C');
