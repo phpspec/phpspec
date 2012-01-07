@@ -67,8 +67,7 @@ class ContainText implements Matcher
     public function matches($actual)
     {
         $this->_actual = $actual;
-
-        return strpos($this->_expected, $actual) !== false;
+        return strpos($actual, $this->_expected) !== false;
     }
 
     /**
