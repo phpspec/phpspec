@@ -29,6 +29,20 @@ use \PHPSpec\Matcher;
 
 class ContainText implements Matcher
 {
+   /**
+    * The expected value
+    *
+    * @var mixed
+    */
+    protected $_expected = null;
+
+   /**
+    * The actual value
+    *
+    * @var object
+    */
+    protected $_actual = null;
+
     /**
      * Matcher is usually constructed with the expected value
      *
