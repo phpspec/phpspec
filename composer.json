@@ -15,26 +15,6 @@
     },
     "require": {
         "php": ">=5.3.2",
-        "padraic/mockery": "master"
-    },
-    "repositories": {
-        "padraic/mockery": {
-            "package": {
-                "name": "padraic/mockery",
-                "version": "master",
-                "dist": {
-                    "url": "http://github.com/padraic/mockery/zipball/0.7.0",
-                    "type": "zip"
-                },
-                "source": {
-                    "url": "git://github.com/padraic/mockery.git",
-                    "type": "git",
-                    "reference": "master"
-                },
-                "autoload": {
-                    "psr-0": { "Mockery": "library/" }
-                }
-            }
-        }
+        "cordoval/mockery": "master-dev"
     }
 }
