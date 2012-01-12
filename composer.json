@@ -10,7 +10,7 @@
             "homepage": "https://github.com/phpspec/phpspec/contributors"
         }
     ],
-    "bin": ["phpspec-composer.php"],
+    "bin": ["scripts/phpspec-composer.php"],
     "autoload": {
         "psr-0": { "PHPSpec\\": "src/" }
     },
