@@ -156,9 +156,9 @@ class DescribeJunit extends \PHPSpec\Context {
         $failure_e = new \Exception($msg);
         $formatter = $this->_formatter;
         $formatter->update($this->_reporter, new ReporterEvent(
-        	'status',
-        	'E',
-        	'example1',
+            'status',
+            'E',
+            'example1',
             $failure_e->getMessage(),
             $failure_e->getTraceAsString(),
             $failure_e,
@@ -170,20 +170,8 @@ class DescribeJunit extends \PHPSpec\Context {
         $actual = $this->_formatter->output();
         
         $expected = $this->_doc;
-        $suite = $expected->addChild('testsuite');
-        $suite->addAttribute('name', 'Dummy');
-        
-        $suite->addAttribute('tests', '1');
-        $suite->addAttribute('failures', '0');
-        $suite->addAttribute('errors', '1');
-        $suite->addAttribute('time', '0.01');
-        $suite->addAttribute('assertions', '2');
-        
-        $case = $suite->addChild('testcase');
-        $case->addAttribute('class', 'Dummy');
-        $case->addAttribute('name', 'example1');
-        $case->addAttribute('time', '0.01');
-        $case->addAttribute('assertions', '2');
+        $suite = $this->_createSuite($expected, 'Dummy', 1, 0, 1, '0.01', 2);
+        $case = $this->_createCase($suite, 'Dummy', 'example1', '0.01', 2);
         
         $failure_msg = PHP_EOL . 'example1 (ERROR)' . PHP_EOL;
         $failure_msg .= $msg . PHP_EOL;
@@ -194,6 +182,32 @@ class DescribeJunit extends \PHPSpec\Context {
         
         $this->spec($actual->asXml())
             ->should->be($expected->asXml());
+    }
+    
+    private function _createSuite($doc, $name, $tests, $failures, $errors,
+                                  $time, $assertions)
+    {
+        $suite = $doc->addChild('testsuite');
+        $suite->addAttribute('name', $name);
+        
+        $suite->addAttribute('tests', $tests);
+        $suite->addAttribute('failures', $failures);
+        $suite->addAttribute('errors', $errors);
+        $suite->addAttribute('time', $time);
+        $suite->addAttribute('assertions', $assertions);
+        
+        return $suite;
+    }
+    
+    public function _createCase($suite, $class, $example, $time, $assertions)
+    {
+        $case = $suite->addChild('testcase');
+        $case->addAttribute('class', $class);
+        $case->addAttribute('name', $example);
+        $case->addAttribute('time', $time);
+        $case->addAttribute('assertions', $assertions);
+        
+        return $case;
     }
     
     private function _buildExpectation($expected) {
