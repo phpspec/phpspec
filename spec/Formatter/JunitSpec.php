@@ -13,6 +13,8 @@ class DescribeJunit extends \PHPSpec\Context {
     private $_reporter;
     private $_formatter;
     private $_doc;
+    private $_msg = 'The message. Doesn\'t matter what it is as long as it is
+                    shown in the failure';
     
     public function before() {
         $this->_reporter = $this->mock('PHPSpec\Runner\Cli\Reporter');
@@ -25,169 +27,173 @@ class DescribeJunit extends \PHPSpec\Context {
     }
     
     public function itFormatsPassesInJunitFormat() {
-        $msg = 'The message. Doesn\'t matter what it is as long as it is shown in the failure';
-        $failure_e = new \Exception($msg);
-        $formatter = $this->_formatter;
-        $formatter->update($this->_reporter, new ReporterEvent(
-        	'status',
-        	'.',
-        	'example1',
-            '',
-            '',
+        $this->_updateFormatterWithException(
+            '.',
+            'example1',
             null,
             '0.01',
             '2'
-        ));
-        $formatter->update($this->_reporter, new ReporterEvent('finish', '', 'Dummy'));
+        );
+        $this->_finishSuite();
         
-        $actual = $this->_formatter->output();
-        
-        $expected = $this->_doc;
-        $suite = $expected->addChild('testsuite');
-        $suite->addAttribute('name', 'Dummy');
-        
-        $suite->addAttribute('tests', '1');
-        $suite->addAttribute('failures', '0');
-        $suite->addAttribute('errors', '0');
-        $suite->addAttribute('time', '0.01');
-        $suite->addAttribute('assertions', '2');
-        
-        $case = $suite->addChild('testcase');
-        $case->addAttribute('class', 'Dummy');
-        $case->addAttribute('name', 'example1');
-        $case->addAttribute('time', '0.01');
-        $case->addAttribute('assertions', '2');
-        
-        $this->spec($actual->asXml())
-            ->should->be($expected->asXml());
+        $suite = $this->_createSuite('Dummy', 1, 0, 0, '0.01', 2);
+        $case = $this->_createCase($suite, 'Dummy', 'example1', '0.01', 2);
+
+        $this->_compare();
     }
     
     public function itFormatsPendingInJunitFormat() {
-        $msg = 'The message. Doesn\'t matter what it is as long as it is shown in the failure';
-        $failure_e = new \Exception($msg);
-        $formatter = $this->_formatter;
-        $formatter->update($this->_reporter, new ReporterEvent(
-        	'status',
-        	'*',
-        	'example1',
-            $failure_e->getMessage(),
-            $failure_e->getTraceAsString(),
+        $failure_e = $this->_getFailureException();
+
+        $this->_updateFormatterWithException(
+            '*',
+            'example1',
             $failure_e,
             '0.01',
             '2'
-        ));
-        $formatter->update($this->_reporter, new ReporterEvent('finish', '', 'Dummy'));
+        );
+        $this->_finishSuite();
         
-        $actual = $this->_formatter->output();
-        
-        $expected = $this->_doc;
-        $suite = $expected->addChild('testsuite');
-        $suite->addAttribute('name', 'Dummy');
-        
-        $suite->addAttribute('tests', '1');
-        $suite->addAttribute('failures', '1');
-        $suite->addAttribute('errors', '0');
-        $suite->addAttribute('time', '0.01');
-        $suite->addAttribute('assertions', '2');
-        
-        $case = $suite->addChild('testcase');
-        $case->addAttribute('class', 'Dummy');
-        $case->addAttribute('name', 'example1');
-        $case->addAttribute('time', '0.01');
-        $case->addAttribute('assertions', '2');
-        
-        $failure_msg = PHP_EOL . 'example1 (PENDING)' . PHP_EOL;
-        $failure_msg .= $msg . PHP_EOL;
-        
-        $fail = $case->addChild('failure', $failure_msg);
-        $fail->addAttribute('type', 'Exception');
-        
-        $this->spec($actual->asXml())
-            ->should->be($expected->asXml());
+        $suite = $this->_createSuite('Dummy', 1, 1, 0, '0.01', 2);
+        $case = $this->_createCase($suite, 'Dummy', 'example1', '0.01', 2);
+        // @todo try to change the type to Failure or something else
+        $fail = $this->_createFailure($case, 'example1', $failure_e, '*');
+
+        $this->_compare();
     }
     
     public function itFormatsFailuresInJunitFormat() {
-        $msg = 'The message. Doesn\'t matter what it is as long as it is shown in the failure';
-        $failure_e = new \Exception($msg);
-        $formatter = $this->_formatter;
-        $formatter->update($this->_reporter, new ReporterEvent(
-        	'status',
-        	'F',
-        	'example1',
-            $failure_e->getMessage(),
-            $failure_e->getTraceAsString(),
+        $failure_e = $this->_getFailureException();
+
+        $this->_updateFormatterWithException(
+            'F',
+            'example1',
             $failure_e,
             '0.01',
             '2'
-        ));
-        $formatter->update($this->_reporter, new ReporterEvent('finish', '', 'Dummy'));
+        );
+        $this->_finishSuite();
         
-        $actual = $this->_formatter->output();
-        
-        $expected = $this->_doc;
-        $suite = $expected->addChild('testsuite');
-        $suite->addAttribute('name', 'Dummy');
-        
-        $suite->addAttribute('tests', '1');
-        $suite->addAttribute('failures', '1');
-        $suite->addAttribute('errors', '0');
-        $suite->addAttribute('time', '0.01');
-        $suite->addAttribute('assertions', '2');
-        
-        $case = $suite->addChild('testcase');
-        $case->addAttribute('class', 'Dummy');
-        $case->addAttribute('name', 'example1');
-        $case->addAttribute('time', '0.01');
-        $case->addAttribute('assertions', '2');
-        
-        $failure_msg = PHP_EOL . 'example1 (FAILED)' . PHP_EOL;
-        $failure_msg .= $msg . PHP_EOL;
-        $failure_msg .= $failure_e->getTraceAsString() . PHP_EOL;
-        
-        $fail = $case->addChild('failure', $failure_msg);
-        $fail->addAttribute('type', 'Exception');
-        
-        $this->spec($actual->asXml())
-            ->should->be($expected->asXml());
+        $suite = $this->_createSuite('Dummy', 1, 1, 0, '0.01', 2);
+        $case = $this->_createCase($suite, 'Dummy', 'example1', '0.01', 2);
+        // @todo try to change the type to Failure or something else
+        $fail = $this->_createFailure($case, 'example1', $failure_e, 'F');
+
+        $this->_compare();
     }
     
     public function itFormatsErrorsInJunitFormat() {
-        $msg = 'The message. Doesn\'t matter what it is as long as it is shown in the failure';
-        $failure_e = new \Exception($msg);
-        $formatter = $this->_formatter;
-        $formatter->update($this->_reporter, new ReporterEvent(
-            'status',
+        $failure_e = $this->_getFailureException();
+        $this->_updateFormatterWithException(
             'E',
             'example1',
-            $failure_e->getMessage(),
-            $failure_e->getTraceAsString(),
             $failure_e,
             '0.01',
             '2'
-        ));
-        $formatter->update($this->_reporter, new ReporterEvent('finish', '', 'Dummy'));
+        );
+        $this->_finishSuite();
         
-        $actual = $this->_formatter->output();
-        
-        $expected = $this->_doc;
-        $suite = $this->_createSuite($expected, 'Dummy', 1, 0, 1, '0.01', 2);
+        $suite = $this->_createSuite('Dummy', 1, 0, 1, '0.01', 2);
         $case = $this->_createCase($suite, 'Dummy', 'example1', '0.01', 2);
-        
-        $failure_msg = PHP_EOL . 'example1 (ERROR)' . PHP_EOL;
-        $failure_msg .= $msg . PHP_EOL;
-        $failure_msg .= $failure_e->getTraceAsString() . PHP_EOL;
-        
-        $fail = $case->addChild('error', $failure_msg);
+        $fail = $this->_createFailure($case, 'example1', $failure_e, 'E');
+
+        $this->_compare();
+    }
+
+    private function _createFailure($case, $example, \Exception $e, $type) {
+        switch ($type) {
+        case 'E':
+            $error_type = 'ERROR';
+            $tag = 'error';
+            break;
+        case 'F':
+            $error_type = 'FAILED';
+            $tag = 'failure';
+            break;
+        case '*':
+            $error_type = 'PENDING';
+            $tag = 'failure';
+            break;
+        default:
+            throw new \Exception("Invalid type $type");
+        }
+        $failure_msg = $this->_generateFailureMessage('example1', $this->_msg, $e, $error_type);
+
+        $fail = $case->addChild($tag, $failure_msg);
         $fail->addAttribute('type', 'Exception');
-        
-        $this->spec($actual->asXml())
-            ->should->be($expected->asXml());
+    }
+
+    private function _getFailureException() {
+        $failure_e = new \Exception($this->_msg);
+
+        return $failure_e;
+    }
+
+    private function _generateFailureMessage($name, $msg, \Exception $exception, $type) {
+        $failure_msg = PHP_EOL . "$name ($type)" . PHP_EOL;
+        $failure_msg .= $msg . PHP_EOL;
+
+        if ($type != 'PENDING') {
+            $failure_msg .= $exception->getTraceAsString() . PHP_EOL;
+        }
+
+        return $failure_msg;
+    }
+
+    private function _updateFormatterWithException($status, $example,
+        $exception=null, $time, $assertions) {
+        if (is_null($exception)) {
+            $this->_formatter->update($this->_reporter, new ReporterEvent(
+                'status',
+                $status,
+                $example,
+                '',
+                '',
+                null,
+                $time,
+                $assertions
+            ));
+        } else {
+            $this->_formatter->update($this->_reporter, new ReporterEvent(
+                'status',
+                $status,
+                $example,
+                $exception->getMessage(),
+                $exception->getTraceAsString(),
+                $exception,
+                $time,
+                $assertions
+            ));
+        }
+    }
+
+    private function _updateFormatter($status, $example, $message,
+        $traceString, $exception, $time, $assertions) {
+        $this->_formatter->update($this->_reporter, new ReporterEvent(
+            'status',
+            $status,
+            $example,
+            $message,
+            $traceString,
+            $exception,
+            $time,
+            $assertions
+        ));
+    }
+
+    private function _compare() {
+        $this->spec($this->_formatter->output()->asXml())
+            ->should->be($this->_doc->asXml());
+    }
+
+    private function _finishSuite() {
+        $this->_formatter->update($this->_reporter, new ReporterEvent('finish', '', 'Dummy'));
     }
     
-    private function _createSuite($doc, $name, $tests, $failures, $errors,
+    private function _createSuite($name, $tests, $failures, $errors,
                                   $time, $assertions)
     {
-        $suite = $doc->addChild('testsuite');
+        $suite = $this->_doc->addChild('testsuite');
         $suite->addAttribute('name', $name);
         
         $suite->addAttribute('tests', $tests);
