@@ -88,6 +88,20 @@ class ReporterEvent
      public $assertions;
      
      /**
+      * The line number that the example method starts at
+      *
+      * @var integer
+      */
+     public $line;
+
+     /**
+      * The file in which the example is in
+      *
+      * @var string
+      */
+     public $file;
+
+     /**
       * Reporter event is constructed with:
       *
       * @param string     $event
@@ -97,9 +111,9 @@ class ReporterEvent
       * @param string     $trace (OPTIONAL)
       * @param \Exception $exception (OPTIONAL)
       */
-     public function __construct($event, $status, $example, $message = '',
-                                 $trace = '', $e = null, $time = 0.0,
-                                 $assertions = 0)
+     public function __construct($event, $status, $example, $time = 0.0, $file='',
+                                 $line=0, $assertions = 0, $message = '',
+                                 $trace = '', $e = null)
      {
          $this->status     = $status;
          $this->event      = $event;
@@ -109,6 +123,8 @@ class ReporterEvent
          $this->exception  = $e;
          $this->time       = $time;
          $this->assertions = $assertions;
+         $this->line       = $line;
+         $this->file       = $file;
      }
      
      /**

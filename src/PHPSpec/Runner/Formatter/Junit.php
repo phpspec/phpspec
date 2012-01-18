@@ -77,6 +77,7 @@ class Junit extends Progress
     {
         $this->_testSuite = $this->_xml->addChild('testsuite');
         $this->_testSuite->addAttribute('name', $reporterEvent->example);
+        $this->_testSuite->addAttribute('file', $reporterEvent->file);
         
         $this->_suiteTime = 0;
         
@@ -86,11 +87,10 @@ class Junit extends Progress
     protected function _finishRenderingExampleGroup()
     {
         $this->_testSuite->addAttribute('tests', $this->_total);
+        $this->_testSuite->addAttribute('assertions', $this->_assertions);
         $this->_testSuite->addAttribute('failures', $this->_failures);
         $this->_testSuite->addAttribute('errors', $this->_errors);
-        // not available yet
         $this->_testSuite->addAttribute('time', $this->_suiteTime);
-        $this->_testSuite->addAttribute('assertions', $this->_assertions);
         
         if ($this->_errors > 0 || $this->_failures > 0) {
             $this->_errorOnExit = true;
@@ -112,12 +112,12 @@ class Junit extends Progress
         $status = $reporterEvent->status;
         
         $case = $this->_testSuite->addChild('testcase');
-        $case->addAttribute('class', $this->_currentGroup);
         $case->addAttribute('name', $reporterEvent->example);
-        // $case->addAttribute('file', 'filename.php'); not available yet
-        $case->addAttribute('time', $reporterEvent->time);
+        $case->addAttribute('class', $this->_currentGroup);
+        $case->addAttribute('file', $reporterEvent->file);
+        $case->addAttribute('line', $reporterEvent->line);
         $case->addAttribute('assertions', $reporterEvent->assertions);
-        // $case->addAttribute('line', '30'); not available yet
+        $case->addAttribute('time', $reporterEvent->time);
         
         switch ($status) {
         case '.':
