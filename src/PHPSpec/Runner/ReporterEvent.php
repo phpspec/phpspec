@@ -111,9 +111,9 @@ class ReporterEvent
       * @param string     $trace (OPTIONAL)
       * @param \Exception $exception (OPTIONAL)
       */
-     public function __construct($event, $status, $example, $time = 0.0, $file='',
-                                 $line=0, $assertions = 0, $message = '',
-                                 $trace = '', $e = null)
+     public function __construct($event, $status, $example, $time = null, $file=null,
+                                 $line=null, $assertions = null, $message = null,
+                                 $trace = null, $e = null)
      {
          $this->status     = $status;
          $this->event      = $event;
