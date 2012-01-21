@@ -110,6 +110,8 @@ class Runner implements \PHPSpec\Runner\Runner
             return;
         }
         
+        $this->bootstrap($world);
+        
         $this->setColor($world);
         $this->setBacktrace($world);
         $this->setFailFast($world);
@@ -117,8 +119,6 @@ class Runner implements \PHPSpec\Runner\Runner
         
         $this->startErrorHandler();
         $world->getReporter()->setRuntimeStart();
-
-        $this->bootstrap($world);
         
         $this->runExamples($world);
         
@@ -389,9 +389,9 @@ class Runner implements \PHPSpec\Runner\Runner
     /**
      * Loads the bootstrap file if specified in the options
      */
-    public function bootstrap(\PHPSpec\World $world)
+    public function bootstrap(World $configure)
     {
-        $bootstrapFile = $world->getOption('bootstrap');
+        $bootstrapFile = $configure->getOption('bootstrap');
         
         if (empty($bootstrapFile)) {
             return;
