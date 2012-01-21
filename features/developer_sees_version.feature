@@ -5,4 +5,8 @@ Feature: Developer sees version
   
   Scenario: Long option
   When I use the command "phpspec --version"
-  Then I should see the current version
+  Then I should see
+  """
+  1.3.0beta
+  
+  """
