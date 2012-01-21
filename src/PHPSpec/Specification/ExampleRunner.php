@@ -156,6 +156,10 @@ class ExampleRunner
                 $this->createExample($exampleGroup, $methodName)
                      ->run($reporter);
             }
+
+            if ($reporter->checkFailFast()) {
+                break;
+            }
         }
     }
     

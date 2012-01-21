@@ -89,6 +89,13 @@ abstract class Reporter implements \SPLSubject
      * @var array
      */
     protected $_passing = array();
+
+    /**
+     * Whether to fail fast
+     *
+     * @var boolean
+     */
+    protected $_failFast = false;
     
     /**
      * Sets the message to be printed by the formatter
@@ -432,5 +439,25 @@ abstract class Reporter implements \SPLSubject
     public function getPassing()
     {
         return $this->_passing;
+    }
+
+    /**
+     * Set fail fast flag
+     *
+     * @param boolean $failFast
+     */
+    public function setFailFast($failFast)
+    {
+        $this->_failFast = $failFast;
+    }
+
+    /**
+     * Checks whether fails fast is set, and sends a message to the formatter
+     * to exit the output
+     */
+    public function checkFailFast()
+    {
+        return $this->_failFast
+            && ($this->getFailures()->count() + $this->getErrors()->count() + $this->getExceptions()->count() > 0);
     }
 }

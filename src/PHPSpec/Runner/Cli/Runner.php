@@ -143,6 +143,10 @@ class Runner implements \PHPSpec\Runner\Runner
                 $exampleGroup, $world->getReporter()
             );
             $exampleGroup->afterAll();
+
+            if ($world->getReporter()->checkFailFast()) {
+                break;
+            }
         }
     }
     

@@ -54,13 +54,6 @@ class Reporter extends BaseReporter
     protected $_message = '';
     
     /**
-     * Whether to fail fast
-     *
-     * @var boolean
-     */
-    protected $_failFast = false;
-    
-    /**
      * Adds a failure to the formatters
      * 
      * @param \PHPSpec\Specification\Example        $example
@@ -76,8 +69,6 @@ class Reporter extends BaseReporter
                 Backtrace::pretty($failure->getTrace()), $failure
             )
         );
-        
-        $this->checkFailFast();
     }
     
     /**
@@ -112,7 +103,6 @@ class Reporter extends BaseReporter
                 Backtrace::pretty($failure->getTrace()), $failure
             )
         );
-        $this->checkFailFast();
     }
     
     /**
@@ -131,7 +121,6 @@ class Reporter extends BaseReporter
                 Backtrace::pretty($error->getTrace()), $error
             )
         );
-        $this->checkFailFast();
     }
     
     /**
@@ -149,7 +138,6 @@ class Reporter extends BaseReporter
                 $e->getMessage(), Backtrace::pretty($e->getTrace()), $e
             )
         );
-        $this->checkFailFast();
     }
     
     /**
@@ -222,37 +210,6 @@ class Reporter extends BaseReporter
         throw new DeprecatedNotice(
             "setFormatter is deprecate, please use addFormatter"
         );
-    }
-    
-    /**
-     * Gets the fail fast flag value
-     * 
-     * @return boolean
-     */
-    public function getFailFast()
-    {
-        return $this->_failFast;
-    }
-    
-    /**
-     * Set fail fast flag
-     * 
-     * @param boolean $failFast
-     */
-    public function setFailFast($failFast)
-    {
-        $this->_failFast = $failFast;
-    }
-    
-    /**
-     * Checks whether fails fast is set, and sends a message to the formatter
-     * to exit the output
-     */
-    private function checkFailFast()
-    {
-        if ($this->getFailFast() === true) {
-            $this->notify(new ReporterEvent('exit', '', ''));
-        }
     }
     
     /**
