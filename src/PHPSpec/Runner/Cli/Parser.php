@@ -52,7 +52,8 @@ class Parser implements \PHPSpec\Runner\Parser
         'fail-fast' => false,
         'e'         => false,
         'example'   => false,
-        'bootstrap' => false
+        'bootstrap' => false,
+        'include'   => array()
     );
     
     /**
