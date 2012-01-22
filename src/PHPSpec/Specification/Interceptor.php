@@ -152,6 +152,13 @@ abstract class Interceptor
                 $this->_actualValue, $args
             );
         }
+        
+        if (!$this instanceof Interceptor\Object &&
+            $this->_expectation !== null) {
+            throw new \BadMethodCallException(
+                "Call to undefined method $method"
+            );
+        }
     }
     
     /**
