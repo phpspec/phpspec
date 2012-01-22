@@ -136,10 +136,7 @@ class PHPSpec
      */
     protected function loadAndRun()
     {
-        $options = $this->parseOptionsAndSetWorld();
-        $this->setFormatter($this->_world);
-        if ($options !== null) {
-            $this->setDefaultBootstrap($this->_world);
+        if ($this->parseOptionsAndSetWorld()) {
             $this->_runner->run($this->_world);
         } else {
             $this->showUsage();
@@ -162,11 +159,13 @@ class PHPSpec
      */
     protected function parseOptionsAndSetWorld()
     {
-        $this->_world->setReporter($this->_reporter);
         $configOptions = $this->getConfiguration()->load();
         $arguments = array_merge($this->_arguments, $configOptions);
         $options = $this->getParser()->parse($arguments);
+        $this->_world->setReporter($this->_reporter);
         $this->_world->setOptions($options);
+        $this->_world->attachFormatter($options['f']);
+        $this->setDefaultBootstrap($this->_world);
         return $options;
     }
     
@@ -309,41 +308,6 @@ class PHPSpec
     public function setWorld(World $world)
     {
         $this->_world = $world;
-    }
-    
-    /**
-     * Gets the formatter from world and register it into the reporter
-     */
-    protected function setFormatter()
-    {
-        $formatterOption = $this->_world->getOption('formatter');
-        $formatter = $this->getFormatterFactory()->create(
-            $formatterOption, $this->_world->getReporter()
-        );
-        $this->_world->getReporter()->addFormatter($formatter);
-    }
-    
-    /**
-     * Gets the formatter factory
-     * 
-     * @return \PHPSpec\Runner\Formatter\Factory
-     */
-    public function getFormatterFactory()
-    {
-        if ($this->_formatterFactory === null) {
-            $this->_formatterFactory = new FormatterFactory;
-        }
-        return $this->_formatterFactory;
-    }
-    
-    /**
-     * Sets the formatter factory
-     * 
-     * @param \PHPSpec\Runner\Formatter\Factory $factory
-     */
-    public function setFormatterFactory(FormatterFactory $factory)
-    {
-        $this->_formatterFactory = $factory;
     }
     
     /**
