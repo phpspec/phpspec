@@ -21,9 +21,11 @@
  */
 namespace PHPSpec\Specification;
 
-use \PHPSpec\Specification\Result\Failure,
-    \PHPSpec\Specification\Result\Error,
-    \PHPSpec\Specification\Interceptor\InterceptorFactory;
+use PHPSpec\Specification\Result\Failure,
+    PHPSpec\Specification\Result\Error,
+    PHPSpec\Specification\Interceptor\InterceptorFactory,
+    PHPSpec\Matcher\MatcherRepository,
+    PHPSpec\Matcher\UserDefined as UserDefinedMatcher;
 
 /**
  * @category   PHPSpec
@@ -117,7 +119,8 @@ abstract class Interceptor
     }
     
     /**
-     * Invokes a matcher
+     * Invokes a matcher or proxies the method call to the intercepted object
+     * magic call method, if one exists
      * 
      * @param string $method
      * @param array $args
@@ -125,39 +128,27 @@ abstract class Interceptor
      */
     public function __call($method, $args)
     {
-        if (in_array($method, $this->_matchers)) {
-            $this->setExpectedValue($args);
-            $this->createMatcher($method);
-            $this->performMatching();
+        if ($this->matcherIsRegistered($method)) {
+            $this->performMatchingWithRegisteredMatcher($method, $args);
             return true;
         }
         
-        if (\PHPSpec\Matcher\MatcherRepository::has($method)) {
-            $this->setExpectedValue($args);
-            $expected = !is_array($this->getExpectedValue()) ?
-                        array($this->getExpectedValue()) :
-                        $this->getExpectedValue();
-            $this->_matcher = new \PHPSpec\Matcher\UserDefined(
-                $method, $expected
-            );
-            $this->performMatching();
+        if (MatcherRepository::has($method)) {
+            $this->performMatchingWithUserDefinedMatcher($method, $args);
             return true;
         }
         
-        if (method_exists($this->_actualValue, '__call')) {
-            $parentInterceptor = new \ReflectionMethod(
-                $this->_actualValue, '__call'
-            );
-            return $parentInterceptor->invokeArgs(
-                $this->_actualValue, $args
-            );
+        if ($this->interceptedHasAMagicCall()) {
+            return $this->invokeInterceptedMagicCall($args);
         }
         
-        if (!$this instanceof Interceptor\Object &&
-            $this->_expectation !== null) {
-            throw new \BadMethodCallException(
-                "Call to undefined method $method"
-            );
+        if ($this->callingExpectationsAsMethods($method)) {
+            $this->throwErrorExpectationsAreProperties();
+        }
+        
+        if ($this->interceptedIsNotAnObject() &&
+            $this->anExpectationHasBeenUsed()) {
+            $this->throwNotAMatcherException($method);
         }
     }
     
@@ -243,6 +234,75 @@ abstract class Interceptor
     public function setMatchers(array $matchers)
     {
         $this->_matchers = $matchers;
+    }
+    
+    /**
+     * Checks whether a matcher is registered with the interceptor
+     *
+     * @param string $matcher 
+     * @return boolean
+     */
+    protected function matcherIsRegistered($matcher)
+    {
+        return in_array($matcher, $this->_matchers);
+    }
+    
+    protected function performMatchingWithRegisteredMatcher($matcher, $expected)
+    {
+        $this->setExpectedValue($expected);
+        $this->createMatcher($matcher);
+        $this->performMatching();
+    }
+    
+    protected function performMatchingWithUserDefinedMatcher($matcher, $expected)
+    {
+        $this->setExpectedValue($expected);
+        $expected = !is_array($this->getExpectedValue()) ?
+                    array($this->getExpectedValue()) :
+                    $this->getExpectedValue();
+        $this->_matcher = new UserDefinedMatcher($matcher, $expected);
+        $this->performMatching();
+    }
+    
+    protected function interceptedHasAMagicCall()
+    {
+        return method_exists($this->_actualValue, '__call');
+    }
+    
+    protected function invokeInterceptedMagicCall($args)
+    {
+        $intercepted = new \ReflectionMethod($this->_actualValue, '__call');
+        return $intercepted->invokeArgs($this->_actualValue, $args);
+    }
+    
+    protected function interceptedIsNotAnObject()
+    {
+        return !$this instanceof Interceptor\Object;
+    }
+    
+    protected function anExpectationHasBeenUsed()
+    {
+        return $this->_expectation !== null;
+    }
+    
+    protected function throwNotAMatcherException($method)
+    {
+        throw new \BadMethodCallException(
+            "Call to undefined method $method"
+        );
+    }
+    
+    protected function callingExpectationsAsMethods($method)
+    {
+        return $method === 'should' || $method === 'shouldNot';
+    }
+    
+    protected function throwErrorExpectationsAreProperties()
+    {
+        throw new Error(
+            'Missing expectation "should" or "shouldNot". ' .
+            'Make sure you use them as properties and not as methods.'
+        );
     }
     
     /**
