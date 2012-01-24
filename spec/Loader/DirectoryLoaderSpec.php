@@ -11,13 +11,14 @@ class DescribeDirectoryLoader extends \PHPSpec\Context
     {
         $loader = new DirectoryLoader;
         $examples = $loader->load(__DIR__ . '/_files/Bar');
-        
+
         $examples = new SpecIterator($examples);
-        
-        $i = array('A', 'B', 'C');
-        $examples -> withEach ( function ($example) use (&$i) {
-            $example->should->beAnInstanceOf('Describe' . current($i));
-            next($i);
+
+        $count = 0;
+        $examples->withEach( function ($example) use (&$count) {
+            $example->should->beAnInstanceOf('PHPSpec\\Context');
+            $count++;
         });
+        $this->spec($count)->should->be(sizeOf(array('A', 'B', 'C')));
     }
 }
