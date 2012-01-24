@@ -76,7 +76,7 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', 'F', $example->getSpecificationText(),
-                $example->getExecutionTime(), null, null,
+                $example->getExecutionTime(), $example->getFile(), null,
                 $example->getNoOfAssertions(), $failure->getMessage(),
                 Backtrace::pretty($failure->getTrace()), $failure
             )
@@ -96,7 +96,7 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', '.', $example->getSpecificationText(),
-                $example->getExecutionTime(), null, null,
+                $example->getExecutionTime(), $example->getFile(), null,
                 $example->getNoOfAssertions()
             )
         );
@@ -135,7 +135,7 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', 'E', $example->getSpecificationText(),
-                $example->getExecutionTime(), null, null,
+                $example->getExecutionTime(), $example->getFile(), null,
                 $example->getNoOfAssertions(), $error->getMessage(),
                 Backtrace::pretty($error->getTrace()), $error
             )
@@ -155,7 +155,7 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', 'E', $example->getSpecificationText(),
-                $example->getExecutionTime(), null, null,
+                $example->getExecutionTime(), $example->getFile(), null,
                 $example->getNoOfAssertions(), $e->getMessage(),
                 Backtrace::pretty($e->getTrace()), $e
             )
@@ -175,7 +175,7 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', '*', $example->getSpecificationText(),
-                $example->getExecutionTime(), null, null,
+                $example->getExecutionTime(), $example->getFile(), null,
                 $example->getNoOfAssertions(), $pending->getMessage(), null,
                 null
             )

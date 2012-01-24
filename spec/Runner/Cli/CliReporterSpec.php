@@ -23,6 +23,8 @@ class DescribeCliReporter extends \PHPSpec\Context {
 			->andReturn('0.01');
 		$this->_example->shouldReceive('getNoOfAssertions')
 			->andReturn(2);
+		$this->_example->shouldReceive('getFile')
+			->andReturn('DummySpec.php');
 
 		$this->_reporterEvent = new ReporterEvent(
 			'status',
@@ -36,6 +38,8 @@ class DescribeCliReporter extends \PHPSpec\Context {
 	}
 
 	public function itNotifiesFormattersOfPassingTests() {
+		$this->_reporterEvent->file = 'DummySpec.php';
+
 		$reporterEvent = new Mockery\Matcher\MustBe($this->_reporterEvent);
 
 		$this->_formatter->shouldReceive('update')
@@ -45,12 +49,13 @@ class DescribeCliReporter extends \PHPSpec\Context {
 	}
 
 	public function itNotifiesFormattersOfFailingTests() {
-                $e = new \PHPSpec\Specification\Result\Failure('Fake message');
-            
-                $this->_reporterEvent->status = 'F';
-                $this->_reporterEvent->exception = $e;
-                $this->_reporterEvent->message = $e->getMessage();
-                $this->_reporterEvent->backtrace = PHPSpec\Util\Backtrace::pretty($e->getTrace());
+        $e = new \PHPSpec\Specification\Result\Failure('Fake message');
+    
+        $this->_reporterEvent->status = 'F';
+        $this->_reporterEvent->exception = $e;
+        $this->_reporterEvent->message = $e->getMessage();
+        $this->_reporterEvent->backtrace = PHPSpec\Util\Backtrace::pretty($e->getTrace());
+        $this->_reporterEvent->file = 'DummySpec.php';
                 
 		$reporterEvent = new Mockery\Matcher\MustBe($this->_reporterEvent);
 
@@ -61,12 +66,13 @@ class DescribeCliReporter extends \PHPSpec\Context {
 	}
 
 	public function itNotifiesFormattersOfErrorsInTests() {
-                $e = new \PHPSpec\Specification\Result\Error('Fake message');
-            
-                $this->_reporterEvent->status = 'E';
-                $this->_reporterEvent->exception = $e;
-                $this->_reporterEvent->message = $e->getMessage();
-                $this->_reporterEvent->backtrace = PHPSpec\Util\Backtrace::pretty($e->getTrace());
+        $e = new \PHPSpec\Specification\Result\Error('Fake message');
+    
+        $this->_reporterEvent->status = 'E';
+        $this->_reporterEvent->exception = $e;
+        $this->_reporterEvent->message = $e->getMessage();
+        $this->_reporterEvent->backtrace = PHPSpec\Util\Backtrace::pretty($e->getTrace());
+        $this->_reporterEvent->file = 'DummySpec.php';
                 
 		$reporterEvent = new Mockery\Matcher\MustBe($this->_reporterEvent);
 
@@ -77,12 +83,13 @@ class DescribeCliReporter extends \PHPSpec\Context {
 	}
 
 	public function itNotifiesFormattersOfExceptionsInTests() {
-                $e = new \Exception('Fake message');
-            
-                $this->_reporterEvent->status = 'E';
-                $this->_reporterEvent->exception = $e;
-                $this->_reporterEvent->message = $e->getMessage();
-                $this->_reporterEvent->backtrace = PHPSpec\Util\Backtrace::pretty($e->getTrace());
+        $e = new \Exception('Fake message');
+    
+        $this->_reporterEvent->status = 'E';
+        $this->_reporterEvent->exception = $e;
+        $this->_reporterEvent->message = $e->getMessage();
+        $this->_reporterEvent->backtrace = PHPSpec\Util\Backtrace::pretty($e->getTrace());
+        $this->_reporterEvent->file = 'DummySpec.php';
                 
 		$reporterEvent = new Mockery\Matcher\MustBe($this->_reporterEvent);
 
@@ -93,10 +100,11 @@ class DescribeCliReporter extends \PHPSpec\Context {
 	}
 
 	public function itNotifiesFormattersOfPendingTests() {
-                $e = new \PHPSpec\Specification\Result\Pending('Fake message');
-            
-                $this->_reporterEvent->status = '*';
-                $this->_reporterEvent->message = $e->getMessage();
+        $e = new \PHPSpec\Specification\Result\Pending('Fake message');
+    
+        $this->_reporterEvent->status = '*';
+        $this->_reporterEvent->message = $e->getMessage();
+        $this->_reporterEvent->file = 'DummySpec.php';
                 
 		$reporterEvent = new Mockery\Matcher\MustBe($this->_reporterEvent);
 

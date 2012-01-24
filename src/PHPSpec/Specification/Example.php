@@ -175,4 +175,13 @@ class Example
     public function getNoOfAssertions() {
         return $this->_noOfAssertions;
     }
+
+    /**
+     * Returns the file name which contains the Spec
+     *
+     * @return string
+     */
+    public function getFile() {
+        return '';
+    }
 }
