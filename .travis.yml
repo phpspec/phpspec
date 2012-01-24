@@ -6,10 +6,11 @@ php:
 
 before_script: php vendor/vendors.php
 
-script: "./develop"
+script: "./scripts/phpspec-composer.php spec/"
 
 notifications:
   email:
+    - cordoval@gmail.com
     - phpspec-dev@googlegroups.com
   irc:
     - "irc.freenode.org#phpspec"

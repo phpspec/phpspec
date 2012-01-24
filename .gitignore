@@ -1,0 +1,4 @@
+composer.lock
+vendor/*
+!vendor/vendors.php
+
