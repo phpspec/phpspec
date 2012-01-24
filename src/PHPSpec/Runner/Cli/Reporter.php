@@ -76,8 +76,9 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', 'F', $example->getSpecificationText(),
-                $example->getExecutionTime(), $example->getFile(), null,
-                $example->getNoOfAssertions(), $failure->getMessage(),
+                $example->getExecutionTime(), $example->getFile(),
+                $example->getLine(), $example->getNoOfAssertions(),
+                $failure->getMessage(),
                 Backtrace::pretty($failure->getTrace()), $failure
             )
         );
@@ -96,7 +97,7 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', '.', $example->getSpecificationText(),
-                $example->getExecutionTime(), $example->getFile(), null,
+                $example->getExecutionTime(), $example->getFile(), $example->getLine(),
                 $example->getNoOfAssertions()
             )
         );
@@ -135,7 +136,7 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', 'E', $example->getSpecificationText(),
-                $example->getExecutionTime(), $example->getFile(), null,
+                $example->getExecutionTime(), $example->getFile(), $example->getLine(),
                 $example->getNoOfAssertions(), $error->getMessage(),
                 Backtrace::pretty($error->getTrace()), $error
             )
@@ -155,7 +156,7 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', 'E', $example->getSpecificationText(),
-                $example->getExecutionTime(), $example->getFile(), null,
+                $example->getExecutionTime(), $example->getFile(), $example->getLine(),
                 $example->getNoOfAssertions(), $e->getMessage(),
                 Backtrace::pretty($e->getTrace()), $e
             )
@@ -175,7 +176,7 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', '*', $example->getSpecificationText(),
-                $example->getExecutionTime(), $example->getFile(), null,
+                $example->getExecutionTime(), $example->getFile(), $example->getLine(),
                 $example->getNoOfAssertions(), $pending->getMessage(), null,
                 null
             )

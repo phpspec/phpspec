@@ -25,6 +25,8 @@ class DescribeCliReporter extends \PHPSpec\Context {
 			->andReturn(2);
 		$this->_example->shouldReceive('getFile')
 			->andReturn('DummySpec.php');
+		$this->_example->shouldReceive('getLine')
+			->andReturn(100);
 
 		$this->_reporterEvent = new ReporterEvent(
 			'status',
@@ -39,6 +41,7 @@ class DescribeCliReporter extends \PHPSpec\Context {
 
 	public function itNotifiesFormattersOfPassingTests() {
 		$this->_reporterEvent->file = 'DummySpec.php';
+        $this->_reporterEvent->line = 100;
 
 		$reporterEvent = new Mockery\Matcher\MustBe($this->_reporterEvent);
 
@@ -56,6 +59,7 @@ class DescribeCliReporter extends \PHPSpec\Context {
         $this->_reporterEvent->message = $e->getMessage();
         $this->_reporterEvent->backtrace = PHPSpec\Util\Backtrace::pretty($e->getTrace());
         $this->_reporterEvent->file = 'DummySpec.php';
+        $this->_reporterEvent->line = 100;
                 
 		$reporterEvent = new Mockery\Matcher\MustBe($this->_reporterEvent);
 
@@ -73,6 +77,7 @@ class DescribeCliReporter extends \PHPSpec\Context {
         $this->_reporterEvent->message = $e->getMessage();
         $this->_reporterEvent->backtrace = PHPSpec\Util\Backtrace::pretty($e->getTrace());
         $this->_reporterEvent->file = 'DummySpec.php';
+        $this->_reporterEvent->line = 100;
                 
 		$reporterEvent = new Mockery\Matcher\MustBe($this->_reporterEvent);
 
@@ -90,6 +95,7 @@ class DescribeCliReporter extends \PHPSpec\Context {
         $this->_reporterEvent->message = $e->getMessage();
         $this->_reporterEvent->backtrace = PHPSpec\Util\Backtrace::pretty($e->getTrace());
         $this->_reporterEvent->file = 'DummySpec.php';
+        $this->_reporterEvent->line = 100;
                 
 		$reporterEvent = new Mockery\Matcher\MustBe($this->_reporterEvent);
 
@@ -105,6 +111,7 @@ class DescribeCliReporter extends \PHPSpec\Context {
         $this->_reporterEvent->status = '*';
         $this->_reporterEvent->message = $e->getMessage();
         $this->_reporterEvent->file = 'DummySpec.php';
+        $this->_reporterEvent->line = 100;
                 
 		$reporterEvent = new Mockery\Matcher\MustBe($this->_reporterEvent);
 

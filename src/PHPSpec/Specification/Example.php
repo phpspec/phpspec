@@ -184,4 +184,13 @@ class Example
     public function getFile() {
         return '';
     }
+
+    /**
+     * Returns the line number at which the example starts
+     *
+     * @return int
+     */
+    public function getLine() {
+        return 0;
+    }
 }
