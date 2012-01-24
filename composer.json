@@ -1,5 +1,5 @@
 {
-    "name": "cordoval/phpspec",
+    "name": "phpspec/phpspec",
     "description": "PHPSpec: The BDD Specification Library",
     "keywords": ["bdd", "spec", "test"],
     "homepage": "http://phpspec.net",
