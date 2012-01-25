@@ -25,7 +25,8 @@ use PHPSpec\Specification\Result\Failure,
     PHPSpec\Specification\Result\Error,
     PHPSpec\Specification\Interceptor\InterceptorFactory,
     PHPSpec\Matcher\MatcherRepository,
-    PHPSpec\Matcher\UserDefined as UserDefinedMatcher;
+    PHPSpec\Matcher\UserDefined as UserDefinedMatcher,
+    PHPSpec\Matcher\InvalidMatcher;
 
 /**
  * @category   PHPSpec
@@ -287,7 +288,7 @@ abstract class Interceptor
     
     protected function throwNotAMatcherException($method)
     {
-        throw new \BadMethodCallException(
+        throw new InvalidMatcher(
             "Call to undefined method $method"
         );
     }

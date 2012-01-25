@@ -10,7 +10,7 @@ class DescribeInvalidMatcher extends \PHPSpec\Context
         $this->spec(function() use ($context) {
             $context->spec(42)->should->beChucksFavorite();    
         })->should->throwException(
-            '\BadMethodCallException',
+            'PHPSpec\Matcher\InvalidMatcher',
             'Call to undefined method beChucksFavorite'
         );
     }
@@ -21,7 +21,7 @@ class DescribeInvalidMatcher extends \PHPSpec\Context
         $this->spec(function() use ($context) {
              $context->spec(new \stdClass)->should->beAFunkyObject();   
         })->should->throwException(
-            '\BadMethodCallException',
+            'PHPSpec\Matcher\InvalidMatcher',
             'Call to undefined method stdClass::beAFunkyObject'
         );
     }
@@ -32,7 +32,7 @@ class DescribeInvalidMatcher extends \PHPSpec\Context
         $this->spec(function() use ($context) {
              $context->spec(function(){})->should->beAFunkyClosure();   
         })->should->throwException(
-            '\BadMethodCallException',
+            'PHPSpec\Matcher\InvalidMatcher',
             'Call to undefined method beAFunkyClosure'
         );
     }
@@ -43,7 +43,7 @@ class DescribeInvalidMatcher extends \PHPSpec\Context
         $this->spec(function() use ($context) {
              $context->spec(array())->should->beAFunkyArray();   
         })->should->throwException(
-            '\BadMethodCallException',
+            'PHPSpec\Matcher\InvalidMatcher',
             'Call to undefined method beAFunkyArray'
         );
     }

@@ -19,9 +19,10 @@
  *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-namespace PHPSpec\Specification\Result;
+namespace PHPSpec\Matcher;
 
-use \PHPSpec\Specification\Result;
+use PHPSpec\Specification\Result\Exception,
+    PHPSpec\Util\Backtrace;
 
 /**
  * @category   PHPSpec
@@ -31,42 +32,18 @@ use \PHPSpec\Specification\Result;
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class Exception extends Result
+class InvalidMatcher extends Exception
 {
-    
-    /**
-     * The exception class
-     *
-     * @var string
-     */
-    protected $_exceptionClass;
-    
-    /**
-     * The exception object
-     *
-     * @var \Exception
-     */
-    protected $_exceptionObject;
-    
-    /**
-     * \PHPSpec\Specification\Resutl\Exception is created with an exception
-     * 
-     * @param \Exception $exception
-     */
-    public function __construct(\Exception $exception)
+    public function __construct($message)
     {
-        $this->_exceptionClass = get_class($exception);
-        $this->_exceptionObject = $exception;
-        parent::__construct($exception->getMessage());
+        $caller = array_slice(debug_backtrace(), 1, 1);
+        parent::__construct(new \Exception ($message));
+        $this->_line = $caller[0]['line'];
+        $this->_file = $caller[0]['file'];
     }
     
-    /**
-     * Gets the exception class
-     * 
-     * @return string
-     */
-    public function getExceptionClass()
+    public function getSnippet($index = 0)
     {
-        return $this->_exceptionClass;
+        return Backtrace::readLine($this->_file, $this->_line);
     }
 }

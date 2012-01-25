@@ -21,7 +21,8 @@
  */
 namespace PHPSpec\Specification\Interceptor;
 
-use \PHPSpec\Specification\Interceptor;
+use PHPSpec\Specification\Interceptor,
+    PHPSpec\Matcher\InvalidMatcher;
 
 /**
  * @category   PHPSpec
@@ -68,7 +69,7 @@ class Object extends Interceptor
             );
         }
         $class = get_class($object);
-        throw new \BadMethodCallException(
+        throw new InvalidMatcher(
             "Call to undefined method {$class}::{$method}"
         );
     }
