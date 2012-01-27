@@ -115,7 +115,7 @@ class Junit extends Progress
      */
     public function output ()
     {
-        return $this->_xml;
+        echo $this->_xml->asXml();
     }
     
     /**

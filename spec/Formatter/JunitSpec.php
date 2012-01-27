@@ -247,7 +247,11 @@ class DescribeJunit extends \PHPSpec\Context {
     }
 
     private function _compare() {
-        $this->spec($this->_formatter->output()->asXml())
+        ob_start();
+        $this->_formatter->output();
+        $output = ob_get_clean();
+
+        $this->spec($output)
             ->should->be($this->_doc->asXml());
     }
 
