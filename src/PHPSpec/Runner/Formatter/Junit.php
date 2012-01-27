@@ -214,7 +214,6 @@ class Junit extends Progress
             . ' (FAILED)' . PHP_EOL;
             $failureMsg .= $reporterEvent->message . PHP_EOL;
             $failureMsg .= $reporterEvent->backtrace . PHP_EOL;
-                $error .= PHP_EOL;
             
             $failure = $case->addChild('failure', $failureMsg);
             $failure->addAttribute(
