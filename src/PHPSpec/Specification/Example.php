@@ -182,7 +182,8 @@ class Example
      * @return string
      */
     public function getFile() {
-        return '';
+        $classRefl = new \ReflectionClass($this->_exampleGroup);
+        return $classRefl->getFileName();
     }
 
     /**
@@ -191,6 +192,7 @@ class Example
      * @return int
      */
     public function getLine() {
-        return 0;
+        $methodRefl = new \ReflectionMethod($this->_exampleGroup, $this->_methodName);
+        return $methodRefl->getStartLine();
     }
 }
