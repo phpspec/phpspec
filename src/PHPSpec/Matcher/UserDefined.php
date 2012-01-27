@@ -15,7 +15,7 @@
  * @category  PHPSpec
  * @package   PHPSpec
  * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ * @copyright Copyright (c) 2010-2012 Pádraic Brady, Travis Swicegood,
  *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
@@ -35,7 +35,7 @@ use \PHPSpec\Matcher\MatcherRepository;
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ * @copyright  Copyright (c) 2010-2012 Pádraic Brady, Travis Swicegood,
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
@@ -86,12 +86,9 @@ class UserDefined
     {
         $userExpect = MatcherRepository::get($this->_matcher);
         $match = call_user_func_array($userExpect, $this->_expected);
-        $result = false;
-        if (($result = $match['match']($actual)) === true) {
-            return $result;
-        }
+        $result = $match['match']($actual);
         $this->_actual = $actual;
-        throw new FailedMatcherException();
+        return $result;
     }
     
     /**

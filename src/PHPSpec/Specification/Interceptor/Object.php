@@ -15,7 +15,7 @@
  * @category  PHPSpec
  * @package   PHPSpec
  * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ * @copyright Copyright (c) 2010-2012 Pádraic Brady, Travis Swicegood,
  *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
@@ -27,7 +27,7 @@ use \PHPSpec\Specification\Interceptor;
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ * @copyright  Copyright (c) 2010-2012 Pádraic Brady, Travis Swicegood,
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
@@ -62,8 +62,15 @@ class Object extends Interceptor
         }
         
         $object = $this->getActualValue();
-        return InterceptorFactory::create(
-            call_user_func_array(array($object, $method), $args), $this
+        if (method_exists($object, $method)) {
+            return InterceptorFactory::create(
+                call_user_func_array(array($object, $method), $args),
+                $this
+            );
+        }
+        $class = get_class($object);
+        throw new \BadMethodCallException(
+            "Call to undefined method {$class}::{$method}"
         );
     }
     

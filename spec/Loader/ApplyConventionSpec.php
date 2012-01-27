@@ -2,8 +2,6 @@
 
 namespace Spec\PHPSpec\Loader;
 
-require_once __DIR__ . '/../SpecHelper.php';
-
 use \PHPSpec\Loader\ApplyConvention;
 
 class DescribeApplyConvention extends \PHPSpec\Context

@@ -19,7 +19,7 @@
  *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-namespace PHPSpec;
+namespace PHPSpec\Runner\Cli;
 
 /**
  * @category   PHPSpec
@@ -29,7 +29,31 @@ namespace PHPSpec;
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class Exception extends \Exception
+class Configuration
 {
-    
+    /**
+     * Loads configuration from file
+     *
+     * @return array
+     */
+    public function load()
+    {
+        $ds          = DIRECTORY_SEPARATOR;
+        $localConfig = getcwd() . $ds . '.phpspec';
+        $homeConfig  = getenv('HOME') . $ds . '.phpspec';
+        $etcConfig   = $ds . 'etc' . $ds . 'phpspec' . $ds . 'phpspec.conf';
+        $configArguments = array();
+        
+        if (file_exists($localConfig)) {
+            $configArguments = file($localConfig);
+        } elseif (file_exists($homeConfig)) {
+            $configArguments = file($homeConfig);
+        } elseif (file_exists($etcConfig)) {
+            $configArguments = file($etcConfig);
+        }
+        
+        $configArguments = array_map('trim', $configArguments);
+        
+        return $configArguments;
+    }
 }

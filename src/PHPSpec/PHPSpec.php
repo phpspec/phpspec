@@ -15,7 +15,7 @@
  * @category  PHPSpec
  * @package   PHPSpec
  * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ * @copyright Copyright (c) 2010-2012 Pádraic Brady, Travis Swicegood,
  *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
@@ -29,6 +29,7 @@ use \PHPSpec\Runner\Runner,
     \PHPSpec\Runner\Cli\Parser as CliParser,
     \PHPSpec\Runner\Cli\Runner as CliRunner,
     \PHPSpec\Runner\Cli\Reporter as CliReporter,
+    \PHPSpec\Runner\Cli\Configuration,
     \PHPSpec\Runner\Formatter\Factory as FormatterFactory,
     \PHPSpec\Runner\Formatter;
 
@@ -36,7 +37,7 @@ use \PHPSpec\Runner\Runner,
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ * @copyright  Copyright (c) 2010-2012 Pádraic Brady, Travis Swicegood,
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
@@ -86,6 +87,13 @@ class PHPSpec
     protected $_formatterFactory;
     
     /**
+     * The configuration
+     *
+     * @var \PHPSpec\Runner\Cli\Configuration
+     */
+    protected $_configuration;
+    
+    /**
      * Whether we are testing PHPSpec itself
      * 
      * @var bool
@@ -131,6 +139,7 @@ class PHPSpec
         $options = $this->parseOptionsAndSetWorld();
         $this->setFormatter($this->_world);
         if ($options !== null) {
+            $this->setDefaultBootstrap($this->_world);
             $this->_runner->run($this->_world);
         } else {
             $this->showUsage();
@@ -154,10 +163,28 @@ class PHPSpec
     protected function parseOptionsAndSetWorld()
     {
         $this->_world->setReporter($this->_reporter);
-        $options = $this->_parser->parse($this->_arguments);
+        $configOptions = $this->getConfiguration()->load();
+        $arguments = array_merge($this->_arguments, $configOptions);
+        $options = $this->getParser()->parse($arguments);
         $this->_world->setOptions($options);
-        $this->_world->loadConfig();
         return $options;
+    }
+    
+    /**
+     * Looks for a SpecHelper.php in case the bootstrap option is empty and
+     * add that to world's options
+     *
+     * @param World $world 
+     */
+    protected function setDefaultBootstrap(World $world)
+    {
+        $specHelper = $world->getOption('specFile') . DIRECTORY_SEPARATOR .
+                      'SpecHelper.php';
+        if (!$world->getOption('bootstrap') &&
+            is_dir($world->getOption('specFile')) &&
+            file_exists($specHelper)) {
+            $world->setOption('bootstrap', $specHelper);
+        }
     }
     
     /**
@@ -165,7 +192,7 @@ class PHPSpec
      */
     private function makeSureWeHaveAFormatter()
     {
-        if (!$this->_reporter->getFormatter() instanceof Formatter) {
+        if (!count($this->_reporter->getFormatters())) {
             $this->_world->setOptions(array('formatter' => 'p'));
             $this->setFormatter();
         }
@@ -232,6 +259,19 @@ class PHPSpec
     }
     
     /**
+     * Gets the configuration
+     * 
+     * @return \PHPSpec\Runner\Cli\Configuration
+     */
+    public function getConfiguration()
+    {
+        if ($this->_configuration === null) {
+            $this->_configuration = new Configuration;
+        }
+        return $this->_configuration;
+    }
+    
+    /**
      * Sets the parser
      * 
      * @param \PHPSpec\Runner\Parser $parser
@@ -280,7 +320,7 @@ class PHPSpec
         $formatter = $this->getFormatterFactory()->create(
             $formatterOption, $this->_world->getReporter()
         );
-        $this->_world->getReporter()->setFormatter($formatter);
+        $this->_world->getReporter()->addFormatter($formatter);
     }
     
     /**

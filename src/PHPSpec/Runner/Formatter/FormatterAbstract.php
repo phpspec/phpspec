@@ -15,22 +15,24 @@
  * @category  PHPSpec
  * @package   PHPSpec
  * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ * @copyright Copyright (c) 2010-2012 Pádraic Brady, Travis Swicegood,
  *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 namespace PHPSpec\Runner\Formatter;
 
+use PHPSpec\Runner\Formatter;
+
 /**
  * @category   PHPSpec
  * @package    PHPSpec
+ * @author     Amjad Mohamed <amjad@alliedinsure.net>
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ * @copyright  Copyright (c) 2010-2012 Pádraic Brady, Travis Swicegood,
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
+ * @since      File available since release 1.3.0
  */
-use PHPSpec\Runner\Formatter;
-
 abstract class FormatterAbstract implements Formatter
 {
     
@@ -39,7 +41,7 @@ abstract class FormatterAbstract implements Formatter
      * update the output
      * 
      * @param SplSubject $method
-     * @param unknown $reporterEvent
+     * @param PHPSpec\Runnner\ReporterEvent $reporterEvent
      */
     public function update(\SplSubject $method, $reporterEvent = null)
     {

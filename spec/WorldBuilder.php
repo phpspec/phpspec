@@ -51,8 +51,8 @@ class WorldBuilder
     
     public function withReporter($reporterExtraMethods='')
     {
-        $this->reporter = $this->mock("\PHPSpec\Runner\Cli\Reporter[getFormatter,attach,setRuntimeStart$reporterExtraMethods]");
-        $this->reporter->shouldReceive('getFormatter')->andReturn($this->formatter);
+        $this->reporter = $this->mock("\PHPSpec\Runner\Cli\Reporter[getFormatters,attach,setRuntimeStart$reporterExtraMethods]");
+        $this->reporter->shouldReceive('getFormatters')->andReturn(array($this->formatter));
         $this->reporter->shouldReceive('attach')->with($this->formatter);
         $this->reporter->shouldReceive('setRuntimeStart');
         return $this;

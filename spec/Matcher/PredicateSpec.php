@@ -1,6 +1,6 @@
 <?php
 
-namespace Spec\PHPspec\Matcher;
+namespace Spec\PHPSpec\Matcher;
 
 use \PHPSpec\Matcher\Predicate;
 

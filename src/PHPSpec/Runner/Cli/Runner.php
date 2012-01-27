@@ -15,7 +15,7 @@
  * @category  PHPSpec
  * @package   PHPSpec
  * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ * @copyright Copyright (c) 2010-2012 Pádraic Brady, Travis Swicegood,
  *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
@@ -35,7 +35,7 @@ use \PHPSpec\World,
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ * @copyright  Copyright (c) 2010-2012 Pádraic Brady, Travis Swicegood,
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
@@ -46,7 +46,7 @@ class Runner implements \PHPSpec\Runner\Runner
      * 
      * @var string
      */
-    const VERSION = '1.2.2beta';
+    const VERSION = '1.3.0beta';
     
     /**
      * Usage message
@@ -184,11 +184,12 @@ class Runner implements \PHPSpec\Runner\Runner
      */
     protected function setColor(World $world)
     {
-        $formatter = $world->getReporter()->getFormatter();
-        if ($world->getOption('c')) {
-            $formatter->setShowColors(true);
+        $formatters = $world->getReporter()->getFormatters();
+        foreach ($formatters as $formatter) {
+            if ($world->getOption('c')) {
+                $formatter->setShowColors(true);
+            }
         }
-        $world->getReporter()->attach($formatter);
     }
     
     /**
@@ -198,8 +199,10 @@ class Runner implements \PHPSpec\Runner\Runner
      */
     protected function setBacktrace(World $world)
     {
-        if ($world->getOption('b')) {
-            $world->getReporter()->getFormatter()->setEnableBacktrace(true);
+        foreach ($world->getReporter()->getFormatters() as $formatter) {
+            if ($world->getOption('b')) {
+                $formatter->setEnableBacktrace(true);
+            }
         }
     }
     
@@ -395,7 +398,7 @@ class Runner implements \PHPSpec\Runner\Runner
         }
         
         if (!file_exists($bootstrapFile) || !is_readable($bootstrapFile)) {
-            throw new \PHPSpec\Exception(
+            throw new CliError(
                 'Cannot load specified bootstrap file: ' . $bootstrapFile
             );
         }

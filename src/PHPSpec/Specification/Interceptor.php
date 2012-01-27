@@ -15,7 +15,7 @@
  * @category  PHPSpec
  * @package   PHPSpec
  * @copyright Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ * @copyright Copyright (c) 2010-2012 Pádraic Brady, Travis Swicegood,
  *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
@@ -29,7 +29,7 @@ use \PHPSpec\Specification\Result\Failure,
  * @category   PHPSpec
  * @package    PHPSpec
  * @copyright  Copyright (c) 2007-2009 Pádraic Brady, Travis Swicegood
- * @copyright  Copyright (c) 2010-2011 Pádraic Brady, Travis Swicegood,
+ * @copyright  Copyright (c) 2010-2012 Pádraic Brady, Travis Swicegood,
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
@@ -144,7 +144,7 @@ abstract class Interceptor
             $this->_matcher = new \PHPSpec\Matcher\UserDefined(
                 $method, $expected
             );
-            $this->_performMatching();
+            $this->performMatching();
             return true;
         }
         
@@ -158,6 +158,13 @@ abstract class Interceptor
             
             return \PHPSpec\Specification\Interceptor
                            \InterceptorFactory::create($value, $this);
+        }
+        
+        if (!$this instanceof Interceptor\Object &&
+            $this->_expectation !== null) {
+            throw new \BadMethodCallException(
+                "Call to undefined method $method"
+            );
         }
     }
     

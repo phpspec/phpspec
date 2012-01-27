@@ -5,8 +5,6 @@ namespace Spec\PHPSpec\Loader;
 use \PHPSpec\Loader\DirectoryLoader,
     \PHPSpec\Util\SpecIterator;
 
-require_once __DIR__ . '/../SpecHelper.php';
-
 class DescribeDirectoryLoader extends \PHPSpec\Context
 {
     function itLoadsAllExampleGroupsUnderADirectory()
