@@ -115,7 +115,11 @@ class Junit extends Progress
      */
     public function output ()
     {
-        echo $this->_xml->asXml();
+        $dom = new \DOMDocument('1.0');
+        $dom->preserveWhitespace = false;
+        $dom->formatOutput = true;
+        $dom->loadXml($this->_xml->asXml());
+        echo $dom->saveXML();
     }
     
     /**

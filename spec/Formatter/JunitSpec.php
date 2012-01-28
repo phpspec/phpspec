@@ -251,8 +251,13 @@ class DescribeJunit extends \PHPSpec\Context {
         $this->_formatter->output();
         $output = ob_get_clean();
 
+        $dom = new \DOMDocument('1.0');
+        $dom->preserveWhitespace = false;
+        $dom->formatOutput = true;
+        $dom->loadXml($this->_doc->asXml());
+
         $this->spec($output)
-            ->should->be($this->_doc->asXml());
+            ->should->be($dom->saveXml());
     }
 
     private function _finishSuite() {
