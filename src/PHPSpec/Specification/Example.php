@@ -89,7 +89,7 @@ class Example
             call_user_func(array($this->_exampleGroup, $methodName));
             call_user_func(array($this->_exampleGroup, 'after'));
             $endTime = microtime(true);
-            $this->_executionTime = $endTime - $startTime;
+            $this->_executionTime = number_format($endTime - $startTime, 4);
             if (class_exists('Mockery')) {
                 \Mockery::close();
             }
