@@ -159,6 +159,7 @@ class Junit extends Progress
         $this->_errors = 0;
         $this->_pending = 0;
         $this->_complete = 0;
+        $this->_assertions = 0;
     }
     
     /**
