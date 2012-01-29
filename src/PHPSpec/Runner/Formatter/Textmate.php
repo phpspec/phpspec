@@ -31,5 +31,54 @@ namespace PHPSpec\Runner\Formatter;
  */
 class Textmate extends Html
 {
+     const TEXTMATE_URL = 'txmt://open?url=file://%s&line=%s';
+
+    /**
+     * Renders examples specdox
+     *
+     * @param ReporterEvent $reporterEvent
+     */
+    protected function _renderExamples($reporterEvent)
+    {
+        $this->_examples .= $this->specdox(
+            $reporterEvent->status, $reporterEvent->example,
+            $reporterEvent->message, $this->_addTextMateUrlToBacktrace(
+                $reporterEvent->backtrace
+            ), $reporterEvent->exception
+        );
+    }
+    
+    private function _addTextMateUrlToBacktrace($backtrace)
+    {
+        $backtraceLines = '';
+        
+        foreach ($this->_convertBacktraceToArray($backtrace) as $line) {
+            $backtraceLines .= $this->_addTextMateUrlToBacktraceLine($line);
+        }
+
+        return $backtraceLines;
+    }
+    
+    private function _convertBacktraceToArray($backtrace)
+    {
+        $asArray = explode(PHP_EOL, $backtrace);
+        
+        $asArrayWithNoEmptyElements = array_filter(
+            $asArray, function($each) {return !empty($each);}
+        );
+        
+        $asArrayWithNoEmptyElementsAndTrimmed = array_map(function($each) {
+            return ltrim($each, '    # ');
+        }, $asArrayWithNoEmptyElements);
+        
+        return $asArrayWithNoEmptyElementsAndTrimmed;
+    }
+    
+    private function _addTextMateUrlToBacktraceLine($backtraceLine)
+    {
+        list ($path, $line) = explode(':', $backtraceLine);
+        $url = sprintf(self::TEXTMATE_URL, realpath($path), $line);
+        return sprintf("<a href=\"%s\">%s</a>", $url, $backtraceLine);
+    }
 
 }
