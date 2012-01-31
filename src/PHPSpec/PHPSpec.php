@@ -193,7 +193,8 @@ class PHPSpec
     {
         if (!count($this->_reporter->getFormatters())) {
             $this->_world->setOptions(array('formatter' => 'p'));
-            $this->setFormatter();
+            $this->_world->setReporter($this->_reporter);
+            $this->_world->attachFormatter('p');
         }
     }
     
