@@ -236,7 +236,7 @@ class World
             );
         }
         
-        $paths = array_merge($this->getOption('include'), $matcherPaths);
-        $this->setOption('include', $paths);
+        $paths = array_merge($this->getOption('include-matchers'), $matcherPaths);
+        $this->setOption('include-matchers', $paths);
     }
 }
