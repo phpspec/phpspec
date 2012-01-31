@@ -92,12 +92,12 @@ class Parser implements \PHPSpec\Runner\Parser
         'd',
         'h',
         'j',
-     //   't',
+        't',
         'progress',
         'documentation',
         'html',
-        'junit'
-     //   'textmate'
+        'junit',
+        'textmate'
      );
      
     /**

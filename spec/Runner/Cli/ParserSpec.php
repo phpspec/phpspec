@@ -167,4 +167,16 @@ class DescribeParser extends \PHPSpec\Context
             'PHPSpec\Runner\Cli\Error', 'phpspec: Bootstrap file should be given for bootstrap option'
         );
     }
+    
+    function itShouldAcceptTextmateAsAValidFormatter()
+    {
+        $args = array('/usr/bin/phpspec', 'MySpec.php', '--formatter', 'textmate');
+        $parser = $this->parser;
+        
+        $this->spec(
+            function() use ($parser, $args) {
+                $parser->parse($args);
+            }
+        )->shouldNot->throwException('PHPSpec\Runner\Cli\Error', 'phpspec: Invalid argument for formatter');
+    }
 }
