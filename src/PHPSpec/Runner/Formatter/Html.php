@@ -130,52 +130,52 @@ class Html extends Progress
         echo $output;
     }
      
-     /**
-      * Starts rendering example group
-      *
-      * @param ReporterEvent $reporterEvent
-      */
-      protected function _startRenderingExampleGroup($reporterEvent)
-      {
-          static $groupIndex = 1;
-          $template = new \Text_Template(
-              $this->templateDir() . '/GroupStart.html.dist'
-          );
-          $template->setVar(
-              array(
-                  'index' => $groupIndex++,
-                  'name'  => $reporterEvent->example
-              )
-          );
-          $this->_result .= $template->render();
-      }
-      
-      /**
-       * Finishes rendering example group
-       */
-       protected function _finishRenderingExampleGroup()
-       {
-           $template = new \Text_Template(
-               $this->templateDir() . '/GroupEnd.html.dist'
-           );
-           $template->setVar(array('examples' => $this->_examples));
-           $this->_result .= $template->render();
-           $this->_examples = '';
-       }
+    /**
+     * Starts rendering example group
+     *
+     * @param ReporterEvent $reporterEvent
+     */
+    protected function _startRenderingExampleGroup($reporterEvent)
+    {
+        static $groupIndex = 1;
+        $template = new \Text_Template(
+            $this->templateDir() . '/GroupStart.html.dist'
+        );
+        $template->setVar(
+            array(
+                'index' => $groupIndex++,
+                'name'  => $reporterEvent->example
+            )
+        );
+        $this->_result .= $template->render();
+    }
+     
+    /**
+     * Finishes rendering example group
+     */
+    protected function _finishRenderingExampleGroup()
+    {
+        $template = new \Text_Template(
+            $this->templateDir() . '/GroupEnd.html.dist'
+        );
+        $template->setVar(array('examples' => $this->_examples));
+        $this->_result .= $template->render();
+        $this->_examples = '';
+    }
        
-       /**
-        * Renders examples specdox
-        *
-        * @param ReporterEvent $reporterEvent
-        */
-        protected function _renderExamples($reporterEvent)
-        {
-            $this->_examples .= $this->specdox(
-                $reporterEvent->status, $reporterEvent->example,
-                $reporterEvent->message, $reporterEvent->backtrace,
-                $reporterEvent->exception
-            );
-        }
+    /**
+     * Renders examples specdox
+     *
+     * @param ReporterEvent $reporterEvent
+     */
+    protected function _renderExamples($reporterEvent)
+    {
+        $this->_examples .= $this->specdox(
+            $reporterEvent->status, $reporterEvent->example,
+            $reporterEvent->message, $reporterEvent->backtrace,
+            $reporterEvent->exception
+        );
+    }
         
     /**
      * Renders a specdox
