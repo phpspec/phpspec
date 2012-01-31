@@ -1,0 +1,90 @@
+PHPSpec's Goals
+===============
+
+Goals!
+------
+
+As we've seen PHPSpec is a Behaviour-Driven Development framework
+which allows you to write code examples which can be executed time and
+time again. It also supports the practice of BDD by focusing its API on a
+readable Domain Specific Language modelled after Plain English.
+
+What goals does PHPSpec seek to fulfill?
+
+Focus attention on specifying behaviour instead of testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Behaviour-Driven Development is all about behaviour. How any
+class behaves can only be described accurately and efficiently by
+referring to its public interface and properties, its goals and
+specifications, its purpose in existing. In designing better code,
+writing examples of behaviour before implementing the code has
+proven a successful methodology.
+
+
+Offer a readable intuitive language for writing specifications
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An example is worth a thousand words, especially if the code
+it's written in is readable by a non-programmer. By offering a
+fluent interface API closely approximating grammatically correct
+English we make examples even more valuable. This "domain specific
+language" reduces the cost of translating between the natural
+language with which we think, and the syntax of PHP.
+
+Support the goals of Behaviour-Driven Development
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Behaviour-Driven Development is a progressive method of
+practising the true requirements of Test-Driven Development and
+avoids the common pitfalls that has made TDD difficult to adopt by
+many programmers. It shifts the focus from a viewpoint of Testing to
+the more valuable viewpoint of Specifying Behaviour. The change in
+language is accompanied by a shift in how we combine elements of TDD
+with Domain-Driven Design, Acceptance-Testing Driven Design and the
+concepts of User Stories and Scenarios.
+
+Easy to learn, comprehend and implement
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Although PHPSpec is formulated as a framework to support
+Behaviour-Driven Development it is not monumentally difference from
+existing Unit Testing frameworks. It's execution and reporting is
+similar to most xUnit style frameworks in any language. Its API is
+deliberately modelled on plain English and easy to
+comprehend.
+
+Work with the developer, not against
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PHPSpec is derived from existing BDD frameworks for Java,
+Smalltalk, .NET and Ruby. It's syntax borrows from these sources
+with a dash of PHP uniqueness. We endeavour to keep the framework as
+simple and flexible as possible. If it's not we encourage you to
+complain long and hard!
+
+Support practising BDD in an Agile/XP setting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+BDD is derived from several Agile and Extreme Programming
+practices. PHPSpec is more limited given it's relative youth but
+supporting features from Mock Objects (via Mockery) to mainstream
+Framework integration is already happening. For User story writing
+and scenario specification PHPSpec can used in conjunction with
+Behat.
+
+Have a simple execution method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PHPSpec operates from the command line using the phpspec
+command. It's operation is inspired by the simplicity of PEAR QA's
+phpt execution. We'll expand the command line features over time as
+required by the user base.
+
+Focus on automatically executing only necessary examples
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A near essential tool for any Ruby developer is the fabulous
+Autotest. Expect a PHP clone to emerge in the near future. For the
+moment have a look on github.com/MarcelloDuarte/autorun tool.
+

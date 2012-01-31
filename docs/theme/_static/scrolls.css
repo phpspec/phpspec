@@ -1,0 +1,420 @@
+h1 {
+    line-height:35px;
+    margin:0px 0px 24px 0px !important;
+}
+
+h1 a {
+    color:#fff;
+    font-family:Lobster;
+    font-size:32px;
+    font-weight:normal;
+    text-decoration:none;
+}
+
+nav.toc {
+    color: #fff;
+    float:right;
+    padding:15px 20px;
+    background:#1e1e1e;
+    -moz-border-radius: 0px 10px 10px 0px;
+    -webkit-border-radius: 0px 10px 10px 0px;
+    border-radius: 0px 10px 10px 0px;
+    margin:0px 0px 15px 15px;
+    width:214px;
+    font-size:14px;
+    padding-top:25px;
+}
+
+nav.toc h3,
+nav.rel h3 {
+    margin-bottom:20px;
+    font-style:italic;
+    text-transform:uppercase;
+    position:relative;
+    padding-left:25px;
+    font-size:22px;
+}
+
+nav.toc h3:before {
+    position:absolute;
+    display:block;
+    content:'';
+    width:48px;
+    height:48px;
+    left:-16px;
+    top:-13px;
+    background:url(images/chapters-light.png);
+}
+
+nav.toc > ul {
+    margin-top:25px !important;
+}
+
+nav.toc ul {
+    list-style:decimal;
+    margin:0px;
+    padding:0px;
+    margin-bottom:5px;
+    color: #CC6;
+    font-size:12px;
+}
+
+nav.toc > ul > li > ul > li > ul {
+    list-style:square;
+}
+
+nav.toc ul.nav {
+    margin-bottom:20px;
+}
+
+nav.toc ul li {
+    margin-left:15px;
+    padding-left:0px;
+
+    margin-top:10px;
+    margin-bottom:10px;
+}
+
+nav.toc a {
+    color:#CC6;
+    font-family:Arial;
+    font-weight:normal;
+    font-size:14px;
+    line-height:20px;
+    text-decoration:none;
+}
+
+nav.toc a:hover {
+    text-decoration:underline;
+}
+
+nav.toc > ul > li {
+    list-style:none;
+    margin-left:2px;
+}
+
+nav.toc > ul > li > a {
+    display:none;
+}
+
+#quick-intro > .toctree-wrapper > ul > li > ul {
+    margin-top:5px;
+}
+
+#quick-intro > .toctree-wrapper > ul > li > ul > li {
+    margin-bottom:5px;
+}
+
+#guides > .toctree-wrapper > ul > li,
+#cookbook > .toctree-wrapper > ul > li {
+    margin-bottom:5px;
+}
+#behat-documentation .simple > li {
+    margin-bottom:5px !important;
+}
+
+
+section.documentation {
+    font-size:16px;
+    line-height:24px;
+    width:560px;
+    padding:10px 25px 25px 0px;
+    border-right:1px dashed #97925b;
+}
+
+section.documentation h1 {
+    font-size: 30px;
+    color:#41411F;
+    font-style: italic;
+}
+
+section.documentation h2 {
+    font-size: 26px;
+    color:#41411F;
+    font-style: italic;
+    margin:20px 0px;
+    float:left;
+    width:100%;
+}
+
+section.documentation h1 .docutils.literal,
+section.documentation h2 .docutils.literal,
+section.documentation h3 .docutils.literal,
+section.documentation h4 .docutils.literal {
+    font-size:inherit;
+}
+
+section.documentation h3,
+section.documentation h4 {
+    font-size: 18px;
+    font-style: italic;
+    margin:15px 0px;
+    color:#fff;
+    float:left;
+    width:100%;
+}
+
+section.documentation h1 a,
+section.documentation h2 a,
+section.documentation h3 a,
+section.documentation h4 a {
+    font-family: Georgia, "Times New Roman", serif !important;
+    font-size:100%;
+    font-weight:normal;
+    color:#343434 !important;
+    display:none;
+    margin-left:5px;
+    text-align: left;
+    text-decoration:none;
+    line-height:10px;
+}
+
+section.documentation h1:hover a,
+section.documentation h2:hover a,
+section.documentation h3:hover a,
+section.documentation h4:hover a {
+    display:inline !important;
+}
+
+section.documentation ul,
+section.documentation ol {
+    margin-left:18px;
+}
+
+section.documentation ol {
+    padding-left:5px;
+}
+
+section.documentation p,
+section.documentation ul,
+section.documentation ol,
+section.documentation .highlight,
+section.documentation .note,
+section.documentation .tip,
+section.documentation img {
+    margin-bottom:20px;
+}
+
+section.documentation p,
+section.documentation ul,
+section.documentation ol {
+    font-size:15px;
+    line-height:20px;
+}
+
+section.documentation ul li,
+section.documentation ol li {
+    margin-bottom:10px;
+}
+
+section.documentation img {
+  display:block; 
+  margin-left:auto; 
+  margin-right:auto;
+}
+
+section.documentation a {
+    color:#fff;
+    font-style:default;
+    text-decoration:none;
+}
+
+section.documentation a:hover {
+    text-decoration:underline;
+}
+
+section.documentation .docutils.literal {
+    background:#343434;
+    color:#fff;
+    padding:1px 3px;
+    padding-bottom:2px;
+    font-size:14px;
+    font-family: monospace;
+    font-weight:normal;
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+}
+
+section.documentation .highlight {
+    margin-left:13px;
+    padding:0px;
+    font-size:13px !important;
+    font-family: monospace;
+    -moz-border-radius: 0px 10px 0px 10px;
+    -webkit-border-radius: 0px 10px 0px 10px;
+    border-radius: 0px 10px 10px 0px;
+    background:#fff;
+    color:#000;
+    position:relative;
+}
+
+section.documentation .highlight > pre {
+    line-height:18px;
+    padding-top:13px !important;
+    padding-bottom:13px !important;
+}
+
+section.documentation .highlight ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+section.documentation .highlight ::-webkit-scrollbar-track-piece  {
+    background-color: #e5e5e5;
+/*    -webkit-border-radius: 6px;*/
+}
+section.documentation .highlight ::-webkit-scrollbar-thumb:horizontal {
+    background-color: #cccccc;
+}
+
+section.documentation .highlight pre {
+    overflow-y:auto;
+    padding:10px;
+    padding-left:20px;
+}
+
+section.documentation .highlight:before {
+    position:absolute;
+    display:block;
+    content:'';
+    width:28px;
+    height:28px;
+    left:-15px;
+    top:8px;
+
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    background:#fff url(images/code-black.png) no-repeat 4px 4px;
+}
+
+section.documentation .note, section.documentation .tip {
+    margin-left:13px;
+    padding:10px;
+    padding-left:20px;
+    font-weight:normal !important;
+    -moz-border-radius: 0px 10px 0px 10px;
+    -webkit-border-radius: 0px 10px 0px 10px;
+    border-radius: 0px 10px 10px 0px;
+    background:#2f3030;
+    color:#ccc;
+    position:relative;
+}
+
+section.documentation .admonition-title {
+    display:none;
+}
+
+section.documentation .note p, section.documentation .tip p {
+    margin-bottom:15px;
+    font-size:13px;
+    line-height:20px;
+}
+
+section.documentation .note .docutils.literal {
+    background:#000;
+}
+
+section.documentation .tip .docutils.literal {
+    background:#7e7b6f;
+}
+
+section.documentation .tip a {
+    color:#000;
+    font-weight:bold;
+}
+
+section.documentation .note .docutils.literal, section.documentation .tip .docutils.literal {
+    font-size:13px;
+}
+
+section.documentation .note p:last-child, section.documentation .tip p:last-child {
+    margin-bottom:0px;
+}
+section.documentation .note .highlight:last-child, section.documentation .tip .highlight:last-child {
+    margin-bottom:0px;
+}
+
+section.documentation .note:before {
+    position:absolute;
+    display:block;
+    content:'';
+    width:28px;
+    height:28px;
+    left:-15px;
+    top:6px;
+
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    background:#2f3030 url(images/note-white.png) no-repeat 4px;
+}
+
+section.documentation .tip {
+    background:#fdf6e5;
+    color:#000;
+}
+
+section.documentation .tip:before {
+    position:absolute;
+    display:block;
+    content:'';
+    width:28px;
+    height:28px;
+    left:-15px;
+    top:6px;
+
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    background:#fdf6e5 url(images/tip-black.png) no-repeat 4px;
+}
+
+.docs footer nav {
+    margin-top:30px;
+    text-align:center;
+    color:#fff;
+    width:560px;
+    font-size:14px;
+    line-height:20px;
+}
+
+.docs footer nav a {
+    color:#fff;
+}
+
+.docs footer nav a:hover {
+    text-decoration:none;
+}
+
+
+.toctree-l2 > ul {
+    display:inline;
+    list-style:none;
+    margin:0px;
+    padding:0px;
+}
+
+.toctree-l2 > ul:before {
+    content:'(';
+}
+
+.toctree-l2 > ul:after {
+    content:')';
+}
+
+.toctree-l2 > ul > li {
+    display:inline;
+}
+
+.toctree-l2 > ul > li a {
+    font-size:14px;
+}
+
+.toctree-l2 > ul > li:after {
+    content:', ';
+}
+
+.toctree-l2 > ul > li:last-child:after {
+    content:'';
+}
