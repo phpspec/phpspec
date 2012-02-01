@@ -43,7 +43,8 @@ class WorldBuilder
     {
         $this->setupOptions(array(
             'show' => array('c'),
-            'dont show' => array('version', 'h', 'help', 'b', 'failfast', 'example')
+            'dont show' => array('version', 'h', 'help', 'b', 'failfast', 'example'),
+            'empty array' => array('include-matchers')
             )
         );
         return $this;
@@ -79,7 +80,8 @@ class WorldBuilder
     {
         $this->setupOptions(array(
             'show' => array('b'),
-            'dont show' => array('version', 'h', 'help', 'c', 'failfast', 'example')
+            'dont show' => array('version', 'h', 'help', 'c', 'failfast', 'example'),
+            'empty array' => array('include-matchers')
             )
         );
         return $this;
@@ -90,7 +92,8 @@ class WorldBuilder
         $this->withReporter(',setFailFast,getFormatters');
         $this->setupOptions(array(
             'show' => array('failfast'),
-            'dont show' => array('version', 'h', 'help', 'c', 'b', 'example')
+            'dont show' => array('version', 'h', 'help', 'c', 'b', 'example'),
+            'empty array' => array('include-matchers')
             )
         );
         $this->reporter->shouldReceive('getFormatters')->andReturn(array($this->formatter));
@@ -102,7 +105,8 @@ class WorldBuilder
         $this->withReporter(',getFormatters');
         $this->setupOptions(array(
             'show' => array(),
-            'dont show' => array('version', 'h', 'help', 'c', 'b', 'failfast')
+            'dont show' => array('version', 'h', 'help', 'c', 'b', 'failfast'),
+            'empty array' => array('include-matchers')
             )
         );
         $this->world->shouldReceive('getOption')->with('example')->andReturn($example);
@@ -121,7 +125,8 @@ class WorldBuilder
         $this->withReporter(',getExceptions');
         $this->setupOptions(array(
             'show' => array(),
-            'dont show' => array('version', 'h', 'help', 'c', 'b', 'failfast', 'example')
+            'dont show' => array('version', 'h', 'help', 'c', 'b', 'failfast', 'example'),
+            'empty array' => array('include-matchers')
             )
         );
         $this->reporter->shouldReceive('getExceptions')
@@ -135,7 +140,8 @@ class WorldBuilder
         $this->withReporter(',getFormatters,getErrors');
         $this->setupOptions(array(
             'show' => array(),
-            'dont show' => array('version', 'h', 'help', 'c', 'b', 'failfast', 'example')
+            'dont show' => array('version', 'h', 'help', 'c', 'b', 'failfast', 'example'),
+            'empty array' => array('include-matchers')
             )
         );
         $specFile = realpath($specFile);
@@ -181,6 +187,7 @@ class WorldBuilder
     {        
         $this->setOptionsAsFalse($this->world, $options['dont show']);
         $this->setOptionsAsTrue($this->world, $options['show']);
+        $this->setOptionsAsEmptyArray($this->world, $options['empty array']);
     }
     
     private function setOptionsAsFalse($world, $options)
@@ -194,6 +201,13 @@ class WorldBuilder
     {
         foreach ($options as $option) {
             $world->shouldReceive('getOption')->with($option)->andReturn(true);
+        }
+    }
+    
+    private function setOptionsAsEmptyArray($world, $options)
+    {
+        foreach ($options as $option) {
+            $world->shouldReceive('getOption')->with($option)->andReturn(array());
         }
     }
 }
