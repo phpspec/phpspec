@@ -147,12 +147,14 @@ class Object extends Interceptor
                 $this->getActualValue()->$attribute
             );
         }
+        
         trigger_error(
             "Undefined property: " . get_class($this->getActualValue()) .
             "::$attribute", E_USER_NOTICE
         );
     }
     
+<<<<<<< Updated upstream
     /**
      * Access the value of a unaccessible property and returns the
      * intercepted value
@@ -201,4 +203,7 @@ class Object extends Interceptor
         }
         return $classes;
     }
+=======
+    
+>>>>>>> Stashed changes
 }
