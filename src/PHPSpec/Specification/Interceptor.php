@@ -26,7 +26,8 @@ use PHPSpec\Specification\Result\Failure,
     PHPSpec\Specification\Interceptor\InterceptorFactory,
     PHPSpec\Matcher\MatcherRepository,
     PHPSpec\Matcher\UserDefined as UserDefinedMatcher,
-    PHPSpec\Matcher\InvalidMatcher;
+    PHPSpec\Matcher\InvalidMatcher,
+    PHPSpec\Matcher\MatcherFactory;
 
 /**
  * @category   PHPSpec
@@ -129,16 +130,16 @@ abstract class Interceptor
      */
     public function __call($method, $args)
     {
-        if ($this->matcherIsRegistered($method)) {
-            $this->performMatchingWithRegisteredMatcher($method, $args);
-            return true;
-        }
-        
         if (MatcherRepository::has($method)) {
             $this->performMatchingWithUserDefinedMatcher($method, $args);
             return true;
         }
         
+        if ($this->matcherIsRegistered($method)) {
+            $this->performMatchingWithRegisteredMatcher($method, $args);
+            return true;
+        }
+                
         if ($this->interceptedHasAMagicCall()) {
             return $this->invokeInterceptedMagicCall($args);
         }
@@ -386,4 +387,14 @@ abstract class Interceptor
             );
         }
     }
+    
+    /**
+     * Sets the matcher factory
+     *
+     * @param PHPSpec\Matcher\MatcherFactory
+     */
+     public function setMatcherFactory(MatcherFactory $matcherFactory)
+     {
+         $this->_matcherFactory = $matcherFactory;
+     }
 }

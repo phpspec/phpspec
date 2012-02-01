@@ -153,8 +153,7 @@ class Object extends Interceptor
             "::$attribute", E_USER_NOTICE
         );
     }
-    
-<<<<<<< Updated upstream
+
     /**
      * Access the value of a unaccessible property and returns the
      * intercepted value
@@ -203,7 +202,4 @@ class Object extends Interceptor
         }
         return $classes;
     }
-=======
-    
->>>>>>> Stashed changes
 }

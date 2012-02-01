@@ -65,6 +65,7 @@ class Runner implements \PHPSpec\Runner\Runner
     --bootstrap FILENAME     Specify a bootstrap file to run before the tests
     -h, --help               You're looking at it
     --fail-fast              Abort the run on first failure.
+    --include-matchers       Specify a : separated list of PATHS to matchers 
     --version                Show version
 ";
     
@@ -138,6 +139,7 @@ class Runner implements \PHPSpec\Runner\Runner
             if (!$this->isExampleGroup($world, $exampleGroup)) {
                 continue;
             }
+            $exampleGroup->setMatcherFactory($world->getMatcherFactory());
             $exampleGroup->beforeAll();
             $this->getExampleRunner()->run(
                 $exampleGroup, $world->getReporter()
