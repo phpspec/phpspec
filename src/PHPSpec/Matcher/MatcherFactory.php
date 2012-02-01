@@ -70,14 +70,22 @@ class MatcherFactory
      * @param string $expected 
      * @return \PHPSpec\Matcher
      */
-    public function create($matcherName, $expected)
+    public function create($matcherName, $expected = array())
     {
+        if(!is_array($expected)) {
+            $expected = array($expected);
+        }
+        
         if (!in_array($matcherName, $this->_matchers)) {
             throw new InvalidMatcher(
                 "Call to undefined method $matcherName"
             );
         }
-        $matcher = $this->_namespace . $matcherName;
-        return new $matcher($expected);
+        $matcherClass = $this->_namespace . $matcherName;
+        $reflectedMatcher = new \ReflectionClass($matcherClass);
+        $matcher = $reflectedMatcher->newInstanceArgs($expected);
+
+        return $matcher;
     }
+    
 }
