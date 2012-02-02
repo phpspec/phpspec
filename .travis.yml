@@ -1,0 +1,16 @@
+language: php
+
+php:
+  - 5.3
+  - 5.4
+
+before_script: php vendor/vendors.php
+
+script: "php ./scripts/phpspec-composer.php spec/"
+
+notifications:
+  email:
+    - cordoval@gmail.com
+    - phpspec-dev@googlegroups.com
+  irc:
+    - "irc.freenode.org#phpspec"
