@@ -42,7 +42,8 @@ class Factory
         'p' => 'Progress',
         'd' => 'Documentation',
         'h' => 'Html',
-        'j' => 'Junit'
+        'j' => 'Junit',
+        't' => 'Textmate'
     );
     
     /**
