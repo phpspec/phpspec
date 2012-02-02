@@ -45,12 +45,26 @@ class MatcherFactory
      * 
      * @var array
      */
-    protected $_matchers = array(
+    protected $_builtinMatchers = array(
         'be', 'beAnInstanceOf', 'beEmpty', 'beEqualTo', 'beFalse',
         'beGreaterThan', 'beGreaterThanOrEqualTo', 'beInteger',
         'beLessThan', 'beLessThanOrEqualTo', 'beNull', 'beString', 'beTrue',
         'equal', 'match', 'throwException'
     );
+    
+    /**
+     * Matchers registry
+     *
+     * @var associative array
+     */
+    protected $_matchers = array();
+    
+    /**
+     * Namespace for the builtin matchers
+     *
+     * @var string
+     */
+    protected $_buitinsNamespace;
     
     /**
      * Matcher factory is created with a path to matchers
@@ -60,7 +74,7 @@ class MatcherFactory
     public function __construct(array $pathsToMatchers = array())
     {
         $this->_pathsToMatchers = $pathsToMatchers;
-        $this->_namespace = '\PHPSpec\Matcher\\';
+        $this->_buitinsNamespace = '\PHPSpec\Matcher\\';
     }
     
     /**
@@ -76,12 +90,12 @@ class MatcherFactory
             $expected = array($expected);
         }
         
-        if (!in_array($matcherName, $this->_matchers)) {
+        if (!in_array($matcherName, $this->_builtinMatchers)) {
             throw new InvalidMatcher(
                 "Call to undefined method $matcherName"
             );
         }
-        $matcherClass = $this->_namespace . $matcherName;
+        $matcherClass = $this->_buitinsNamespace . $matcherName;
         $reflectedMatcher = new \ReflectionClass($matcherClass);
         $matcher = $reflectedMatcher->newInstanceArgs($expected);
 
