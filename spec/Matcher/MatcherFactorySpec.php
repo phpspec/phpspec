@@ -41,7 +41,17 @@ class DescribeMatcherFactory extends \PHPSpec\Context
     
     public function itCreatesATreeOfMatcherFilesConsistentWithTheFilesOnTheIncludeMatcherPath()
     {
+        $includePath = get_include_path();
+        $extraIncludePath = __DIR__ . DIRECTORY_SEPARATOR . "_files";
+        set_include_path($includePath . PATH_SEPARATOR . $extraIncludePath);
+        $this->_localMatcherFactory = $this->spec(new MatcherFactory(
+             array('CustomMatchers')));
         
+        $matchersArray = $this->_localMatcherFactory->property('_matchers');
+
+        $matchersArray['DummyMatcher']->should->be('CustomMatchers\\');
+
+        set_include_path($includePath);
     }
 
     public function itIsAbleToUseCustomMatchers()
