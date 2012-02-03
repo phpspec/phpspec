@@ -476,10 +476,10 @@ class Parser implements \PHPSpec\Runner\Parser
     /**
      * Sets the Include Matchers option
      *
-     * @author Marco Lopes
+     * @param string $matchersPaths 
      */
      public function setIncludeMatchers($matchersPaths)
      {
-         
+         $this->_options['include-matchers'] = $matchersPaths;
      }
 }

@@ -1,14 +1,10 @@
 <?php
-namespace CustomMatchers;
+namespace CustomMatchers\SubMatchers;
 
 use \PHPSpec\Matcher;
 
-/**
- * Dummy matcher for testing purposes
- *
- * @package default
- */
-class DummyMatcher implements Matcher {
+
+class SubDummyMatcher implements Matcher {
     /**
      * Returns failure message in case we are using should
      * 
@@ -16,7 +12,7 @@ class DummyMatcher implements Matcher {
      */
     public function getFailureMessage()
     {
-        return 'expected dummy, got dummer.';
+        return 'expected subdummy, got subdummer.';
     }
 
     /**
@@ -26,7 +22,7 @@ class DummyMatcher implements Matcher {
      */
     public function getNegativeFailureMessage()
     {
-        return 'expected not to be dummer, but it is not dummy';
+        return 'expected not to be subdummer, but it is not subdummy';
     }
 
     /**
@@ -36,12 +32,12 @@ class DummyMatcher implements Matcher {
      */
     public function getDescription()
     {
-        return 'dummy';
+        return 'subdummy';
     }
 
     /**
      * Checks whether actual value is equal to the expected
-     *
+     * 
      * @param mixed $actual
      * @return boolean
      */
