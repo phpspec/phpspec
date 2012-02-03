@@ -10,6 +10,11 @@ class DescribeMatcherFactory extends \PHPSpec\Context
     
     public function before()
     {
+        /*
+         * WARNING - The setup for these tests causes the builtin Be matcher
+         * to be replaced by a fake one for the purpose of the
+         * itAllowsACustomMatcherToOverrideABuiltinMatcher test.
+        */
         $this->_originalIncludePath = get_include_path();
         $extraIncludePath = __DIR__ . DIRECTORY_SEPARATOR . "_files";
         set_include_path($this->_originalIncludePath . PATH_SEPARATOR . $extraIncludePath);
@@ -60,12 +65,6 @@ class DescribeMatcherFactory extends \PHPSpec\Context
 
     public function itLoadsMatchersFromSubfolders()
     {
-        $includePath = get_include_path();
-        $extraIncludePath = __DIR__ . DIRECTORY_SEPARATOR . "_files";
-        set_include_path($includePath . PATH_SEPARATOR . $extraIncludePath);
-        $this->_localMatcherFactory = $this->spec(new MatcherFactory(
-             array('CustomMatchers')));
-
         $this->_localMatcherFactory->create('beAnInstanceOf', true);
 
         $matchersArray = $this->_localMatcherFactory->property('_matchers');
@@ -81,7 +80,8 @@ class DescribeMatcherFactory extends \PHPSpec\Context
 
     public function itAllowsACustomMatcherToOverrideABuiltinMatcher()
     {
-        
+        $matcher = $this->_localMatcherFactory->create('be', true);
+        $matcher->should->beAnInstanceOf('CustomMatchers\Be');
     }
 
     private function builtInMatchers()

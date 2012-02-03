@@ -1,10 +1,24 @@
 <?php
-namespace Spec\PHPSpec\Matcher\_files\CustomMatchers;
+namespace CustomMatchers;
 
 use \PHPSpec\Matcher;
 
-
+/**
+ * Fake be matcher for testing purposes
+ *
+ * @package default
+ */
 class Be implements Matcher {
+    /**
+     * Matcher is constructed with the value you are comparing with
+     *
+     * @param string $expected
+     */
+    public function __construct($expected)
+    {
+        $this->_expected = $expected;
+    }
+
     /**
      * Returns failure message in case we are using should
      * 
@@ -33,5 +47,16 @@ class Be implements Matcher {
     public function getDescription()
     {
         return 'Fake be.';
+    }
+
+    /**
+     * Checks whether actual value is equal to the expected
+     *
+     * @param mixed $actual
+     * @return boolean
+     */
+    public function matches($actual)
+    {
+        return true;
     }
 }

@@ -175,6 +175,12 @@ class MatcherFactory
         }
     }
 
+    /**
+     * Find a namespace based on the path for the file
+     *
+     * @param string $path
+     * @return string
+     */
     private function _fromPathToNamespace($path)
     {
         $nameSpace = str_replace(DIRECTORY_SEPARATOR, self::NAMESPACE_SEPARATOR, $path);
@@ -184,6 +190,12 @@ class MatcherFactory
         return $nameSpace;
     }
 
+    /**
+     * Find the path to a Matcher
+     *
+     * @param string $path
+     * @return string|false
+     */
     private function _findMatcherPath($path)
     {
         $includePaths = explode(PATH_SEPARATOR, get_include_path());
