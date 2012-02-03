@@ -8,19 +8,21 @@ class DescribeParser extends \PHPSpec\Context
 {
     function before()
     {
+        global $argv;
         $this->parser = $this->spec(new CliParser);
+        $this->executable = $argv[0];
     }
     
     function itRemovesTheProgramNameFromArguments()
     {
-        $args = array('/usr/bin/phpspec', '-h');
+        $args = array($this->executable, '-h');
         $this->parser->parse($args);
         $this->parser->getArguments()->should->be(array('-h'));
     }
     
     function itExtractsTheSpecFileOutOfTheFirstArgument()
     {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '-f', 'd', '-c');
+        $args = array($this->executable, 'MySpec.php', '-f', 'd', '-c');
         $this->parser->parse($args);
         $this->parser->getOption('specFile')->should->be('MySpec.php');
     }
@@ -28,8 +30,9 @@ class DescribeParser extends \PHPSpec\Context
     function itComplainsWhenCalledWithNoArgumentsApartFromProgramName()
     {
         $parser = $this->parser;
-        $this->spec( function() use ($parser) {
-            $parser->parse(array('/usr/bin/phpspec'));
+        $executable = $this->executable;
+        $this->spec( function() use ($parser, $executable) {
+            $parser->parse(array($executable));
         })->should->throwException(
             '\PHPSpec\Runner\Cli\Error',
             'phpspec: Invalid number of arguments. Type -h for help'
@@ -38,7 +41,7 @@ class DescribeParser extends \PHPSpec\Context
     
     function itConvertsOneLetterValidArgumentsIntoOptions()
     {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '-c', '-h');
+        $args = array($this->executable, 'MySpec.php', '-c', '-h');
         $this->parser->parse($args);
         $this->parser->getOption('c')->should->beTrue();
         $this->parser->getOption('h')->should->beTrue();
@@ -46,7 +49,7 @@ class DescribeParser extends \PHPSpec\Context
     
     function itSavesOneLetterValidArgumentsIntoOptionLongNameVersion()
     {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '-c', '-h');
+        $args = array($this->executable, 'MySpec.php', '-c', '-h');
         $this->parser->parse($args);
         $this->parser->getOption('color')->should->beTrue();
         $this->parser->getOption('colour')->should->beTrue();
@@ -56,7 +59,7 @@ class DescribeParser extends \PHPSpec\Context
     function itSavesLongVersionValidArgumentsIntoOptionOneLetterVersion()
     {
         $args = array(
-            '/usr/bin/phpspec',
+            $this->executable,
             'MySpec.php',
             '--color',
             '--help'
@@ -68,7 +71,7 @@ class DescribeParser extends \PHPSpec\Context
     
     function itConvertsUnseparatedOneLetterValidArgumentsIntoOptions()
     {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '-ch');
+        $args = array($this->executable, 'MySpec.php', '-ch');
         $this->parser->parse($args);
         $this->parser->getOption('c')->should->beTrue();
         $this->parser->getOption('h')->should->beTrue();
@@ -76,7 +79,7 @@ class DescribeParser extends \PHPSpec\Context
     
     function itConvertsSpaceSeparateFormatterOptionValueAppropriately()
     {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '-f', 'd');
+        $args = array($this->executable, 'MySpec.php', '-f', 'd');
         $this->parser->parse($args);
         $this->parser->getOption('f')->should->be('d');
         $this->parser->getOption('formatter')->should->be('d');
@@ -84,7 +87,7 @@ class DescribeParser extends \PHPSpec\Context
     
     function itConvertsEqualSignSeparateLongFormatterOptionValueAppropriately()
     {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '--formatter', 'd');
+        $args = array($this->executable, 'MySpec.php', '--formatter', 'd');
         $this->parser->parse($args);
         $this->parser->getOption('f')->should->be('d');
         $this->parser->getOption('formatter')->should->be('d');
@@ -92,7 +95,7 @@ class DescribeParser extends \PHPSpec\Context
     
     function itComplainsWhenFormatterIsNotGivenTheArgument()
     {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '-f');
+        $args = array($this->executable, 'MySpec.php', '-f');
         $parser = $this->parser;
         $this->spec(
             function() use ($parser, $args) {
@@ -105,7 +108,7 @@ class DescribeParser extends \PHPSpec\Context
     
     function itAcceptsFormatterToBePassedWithNoSpace()
     {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '-fd');
+        $args = array($this->executable, 'MySpec.php', '-fd');
         $this->parser->parse($args);
         $this->parser->getOption('f')->should->be('d');
         $this->parser->getOption('formatter')->should->be('d');
@@ -113,7 +116,7 @@ class DescribeParser extends \PHPSpec\Context
     
     function itRejectsInvalidFormatter()
     {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '-fx');
+        $args = array($this->executable, 'MySpec.php', '-fx');
         $parser = $this->parser;
         $this->spec(
             function() use ($parser, $args) {
@@ -126,7 +129,7 @@ class DescribeParser extends \PHPSpec\Context
     
     function itRejectsInvalidFormatterFromLongOption()
     {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '--formatter', 'x');
+        $args = array($this->executable, 'MySpec.php', '--formatter', 'x');
         $parser = $this->parser;
         $this->spec(function() use ($parser, $args) {
             $parser->parse($args);
@@ -136,26 +139,26 @@ class DescribeParser extends \PHPSpec\Context
     
     function itCanSpecifyShortOptionForExample()
     {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '-e', 'itShouldDoSomething');
+        $args = array($this->executable, 'MySpec.php', '-e', 'itShouldDoSomething');
         $this->parser->parse($args);
         $this->parser->getOption('e')->should->be('itShouldDoSomething');
     }
 
     function itCanSpecifyLongOptionForExample()
     {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '--example', 'itShouldDoSomething');
+        $args = array($this->executable, 'MySpec.php', '--example', 'itShouldDoSomething');
         $this->parser->parse($args);
         $this->parser->getOption('e')->should->be('itShouldDoSomething');
     }
     
     function itAcceptsBootstrapFile() {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '--bootstrap', 'bootstrap.php');
+        $args = array($this->executable, 'MySpec.php', '--bootstrap', 'bootstrap.php');
         $this->parser->parse($args);
         $this->parser->getOption('bootstrap')->should->be('bootstrap.php');
     }
     
     function itShouldComplainWhenBootstrapOptionIsSpecifiedWithoutFilename() {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '--bootstrap');
+        $args = array($this->executable, 'MySpec.php', '--bootstrap');
         //$this->parser->parse($args);
         $parser = $this->parser;
         //$this->parser->getOption('bootstrap')->should->be('bootstrap.php');
