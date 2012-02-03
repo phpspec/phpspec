@@ -51,7 +51,7 @@ class MatcherFactory
         'be', 'beAnInstanceOf', 'beEmpty', 'beEqualTo', 'beFalse',
         'beGreaterThan', 'beGreaterThanOrEqualTo', 'beInteger',
         'beLessThan', 'beLessThanOrEqualTo', 'beNull', 'beString', 'beTrue',
-        'equal', 'match', 'throwException'
+        'equal', 'match', 'throwException', 'beArray'
     );
 
     /**
