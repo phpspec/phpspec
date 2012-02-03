@@ -107,13 +107,17 @@ class ReporterEvent
       * @param string     $event
       * @param string     $status
       * @param string     $example
+      * @param float      $time (OPTIONAL)
+      * @param string     $file (OPTIONAL)
+      * @param integer    $line (OPTIONAL)
+      * @param integer    $assertions (OPTIONAL)
       * @param string     $message (OPTIONAL)
       * @param string     $trace (OPTIONAL)
       * @param \Exception $exception (OPTIONAL)
       */
-     public function __construct($event, $status, $example, $time = null, $file=null,
-                                 $line=null, $assertions = null, $message = null,
-                                 $trace = null, $e = null)
+     public function __construct($event, $status, $example, $time = null,
+                                 $file=null, $line=null, $assertions = null,
+                                 $message = null, $trace = null, $e = null)
      {
          $this->status     = $status;
          $this->event      = $event;

@@ -66,8 +66,18 @@ abstract class Interceptor
      */
     protected $_expectedValue;
     
+    /**
+     * Holds the interceptors created from within this Interceptor
+     *
+     * array <PHPSpec\Specification\Interceptor>
+     */
     protected $_subInterceptors = array();
     
+    /**
+     * Number of assertions made
+     *
+     * @var integer
+     */
     protected $_noOfAssertions = 0;
     
     /**
@@ -227,7 +237,8 @@ abstract class Interceptor
      * 
      * @return integer
      */
-    public function getNumberOfAssertions() {
+    public function getNumberOfAssertions()
+    {
         $assertions = $this->_noOfAssertions;
         
         foreach ($this->_subInterceptors as $interceptors) {
@@ -242,7 +253,8 @@ abstract class Interceptor
      * 
      * @param Interceptor $interceptor 
      */
-    public function addSubInterceptor(Interceptor $interceptor) {
+    public function addSubInterceptor(Interceptor $interceptor)
+    {
         $this->_subInterceptors[] = $interceptor;
     }
     

@@ -37,7 +37,12 @@ use \PHPSpec\Runner\Reporter,
 class ExampleGroup
 {
     
-    protected $_specs = array();
+    /**
+     * Containes the interceptors created from this example group
+     *
+     * @var array <PHPSpec\Specification\Interceptor>
+     */
+    private $_specs = array();
     
     /**
      * Override for having it called once before all examples are ran in one

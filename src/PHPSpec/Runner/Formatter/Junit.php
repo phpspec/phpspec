@@ -89,11 +89,24 @@ class Junit extends Progress
     /**
      * Total of examples
      *
-     * @var string
+     * @var integer
      */
     private $_total = 0;
+
+    /**
+     * Number of examples completed
+     *
+     * @var integer
+     */
     private $_complete = 0;
+
+    /**
+     * Number of assertions made
+     *
+     * @var integer
+     */
     private $_assertions = 0;
+    
     /**
      * Tell building tool to error with status > 0
      *

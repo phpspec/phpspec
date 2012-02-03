@@ -172,7 +172,8 @@ class Example
      * 
      * @return integer
      */
-    public function getNoOfAssertions() {
+    public function getNoOfAssertions()
+    {
         return $this->_noOfAssertions;
     }
 
@@ -181,7 +182,8 @@ class Example
      *
      * @return string
      */
-    public function getFile() {
+    public function getFile()
+    {
         $classRefl = new \ReflectionClass($this->_exampleGroup);
         return $classRefl->getFileName();
     }
@@ -191,8 +193,11 @@ class Example
      *
      * @return int
      */
-    public function getLine() {
-        $methodRefl = new \ReflectionMethod($this->_exampleGroup, $this->_methodName);
+    public function getLine()
+    {
+        $methodRefl = new \ReflectionMethod(
+            $this->_exampleGroup, $this->_methodName
+        );
         return $methodRefl->getStartLine();
     }
 }

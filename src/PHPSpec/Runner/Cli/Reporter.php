@@ -93,8 +93,8 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', '.', $example->getSpecificationText(),
-                $example->getExecutionTime(), $example->getFile(), $example->getLine(),
-                $example->getNoOfAssertions()
+                $example->getExecutionTime(), $example->getFile(),
+                $example->getLine(), $example->getNoOfAssertions()
             )
         );
     }
@@ -132,9 +132,10 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', 'E', $example->getSpecificationText(),
-                $example->getExecutionTime(), $example->getFile(), $example->getLine(),
-                $example->getNoOfAssertions(), $error->getMessage(),
-                Backtrace::pretty($error->getTrace()), $error
+                $example->getExecutionTime(), $example->getFile(),
+                $example->getLine(), $example->getNoOfAssertions(),
+                $error->getMessage(), Backtrace::pretty($error->getTrace()),
+                $error
             )
         );
         $this->checkFailFast();
@@ -152,9 +153,9 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', 'E', $example->getSpecificationText(),
-                $example->getExecutionTime(), $example->getFile(), $example->getLine(),
-                $example->getNoOfAssertions(), $e->getMessage(),
-                Backtrace::pretty($e->getTrace()), $e
+                $example->getExecutionTime(), $example->getFile(),
+                $example->getLine(), $example->getNoOfAssertions(),
+                $e->getMessage(), Backtrace::pretty($e->getTrace()), $e
             )
         );
         $this->checkFailFast();
@@ -172,9 +173,9 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', '*', $example->getSpecificationText(),
-                $example->getExecutionTime(), $example->getFile(), $example->getLine(),
-                $example->getNoOfAssertions(), $pending->getMessage(), null,
-                null
+                $example->getExecutionTime(), $example->getFile(),
+                $example->getLine(), $example->getNoOfAssertions(),
+                $pending->getMessage(), null, null
             )
         );
     }
