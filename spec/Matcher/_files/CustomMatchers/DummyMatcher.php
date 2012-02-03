@@ -10,6 +10,15 @@ use \PHPSpec\Matcher;
  */
 class DummyMatcher implements Matcher {
     /**
+     * Matcher is constructed with the value you are comparing with
+     *
+     * @param string $expected
+     */
+    public function __construct($expected)
+    {
+        $this->_expected = $expected;
+    }
+    /**
      * Returns failure message in case we are using should
      * 
      * @return string
@@ -45,7 +54,7 @@ class DummyMatcher implements Matcher {
      * @param mixed $actual
      * @return boolean
      */
-    public function matches($actual, $epsilon = null)
+    public function matches($actual)
     {
         return true;
     }

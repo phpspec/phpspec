@@ -6,17 +6,23 @@ class DescribeMatcherFactory extends \PHPSpec\Context
 {
     
     private $_localMatcherFactory;
+    private $_originalIncludePath;
     
     public function before()
     {
-        $this->_localMatcherFactory = $this->spec(new MatcherFactory);
+        $this->_originalIncludePath = get_include_path();
+        $extraIncludePath = __DIR__ . DIRECTORY_SEPARATOR . "_files";
+        set_include_path($this->_originalIncludePath . PATH_SEPARATOR . $extraIncludePath);
+        $this->_localMatcherFactory = $this->spec(new MatcherFactory(
+             array('CustomMatchers')));
     }
     
     
     public function itCreatesBuiltinMatchers()
     {
+        $matcherFactory = $this->spec(new MatcherFactory);
         foreach ($this->builtInMatchers() as $matcher) {
-            $this->_localMatcherFactory->create($matcher, true)
+            $matcherFactory->create($matcher, true)
                  ->should
                  ->beAnInstanceOf('PHPSpec\Matcher\\' . strtoupper($matcher[0]) . substr($matcher, 1));
         }
@@ -33,7 +39,8 @@ class DescribeMatcherFactory extends \PHPSpec\Context
     
     public function itForwardsArrayOfValuesAsListOfArgumentsForMatcher()
     {
-        $matcher = $this->_localMatcherFactory->create('throwException', array('\Exception', 'Does not work'));
+        $matcherFactory = $this->spec(new MatcherFactory);
+        $matcher = $matcherFactory->create('throwException', array('\Exception', 'Does not work'));
         $matcher->property('_expectedException')->should->be('\Exception');
         $matcher->property('_expectedMessage')->should->be('Does not work');
     }
@@ -41,20 +48,14 @@ class DescribeMatcherFactory extends \PHPSpec\Context
     
     public function itCreatesATreeOfMatcherFilesConsistentWithTheFilesOnTheIncludeMatcherPath()
     {
-        $includePath = get_include_path();
-        $extraIncludePath = __DIR__ . DIRECTORY_SEPARATOR . "_files";
-        set_include_path($includePath . PATH_SEPARATOR . $extraIncludePath);
-        $this->_localMatcherFactory = $this->spec(new MatcherFactory(
-             array('CustomMatchers')));
         
         $this->_localMatcherFactory->create('beAnInstanceOf', true);
 
         $matchersArray = $this->_localMatcherFactory->property('_matchers');
 
 
-        $matchersArray['DummyMatcher']->should->be('CustomMatchers\\');
+        $matchersArray['dummyMatcher']['namespace']->should->be('CustomMatchers\\');
 
-        set_include_path($includePath);
     }
 
     public function itLoadsMatchersFromSubfolders()
@@ -69,21 +70,20 @@ class DescribeMatcherFactory extends \PHPSpec\Context
 
         $matchersArray = $this->_localMatcherFactory->property('_matchers');
 
-        $matchersArray['SubDummyMatcher']->should->be('CustomMatchers\SubMatchers\\');
-
-        set_include_path($includePath);
+        $matchersArray['subDummyMatcher']['namespace']->should->be('CustomMatchers\SubMatchers\\');
     }
 
     public function itIsAbleToUseCustomMatchers()
     {
-        
+         $matcher = $this->_localMatcherFactory->create('dummyMatcher', true);
+         $matcher->should->beAnInstanceOf('CustomMatchers\DummyMatcher');
     }
-    
+
     public function itAllowsACustomMatcherToOverrideABuiltinMatcher()
     {
         
     }
-    
+
     private function builtInMatchers()
     {
         return array(
@@ -92,5 +92,10 @@ class DescribeMatcherFactory extends \PHPSpec\Context
             'beLessThan', 'beLessThanOrEqualTo', 'beNull', 'beString', 'beTrue',
             'equal', 'match', 'throwException'
         );
+    }
+
+    public function after()
+    {
+        set_include_path($this->_originalIncludePath);
     }
 }

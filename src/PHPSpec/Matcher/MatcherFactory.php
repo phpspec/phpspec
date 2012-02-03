@@ -96,13 +96,16 @@ class MatcherFactory
             $expected = array($expected);
         }
 
-        if (!in_array($matcherName, $this->_builtinMatchers)) {
+        if (!array_key_exists($matcherName, $this->_matchers)) {
             throw new InvalidMatcher(
                 "Call to undefined method $matcherName"
             );
         }
 
-        $matcherClass = $this->_buitinsNamespace . $matcherName;
+        if($this->_matchers[$matcherName]['path'] !== false) {
+            require_once($this->_matchers[$matcherName]['path']);
+        }
+        $matcherClass = $this->_matchers[$matcherName]['namespace'] . $matcherName;
         $reflectedMatcher = new \ReflectionClass($matcherClass);
         $matcher = $reflectedMatcher->newInstanceArgs($expected);
 
@@ -128,7 +131,10 @@ class MatcherFactory
     private function _addBuiltinMatchersToRegistry()
     {
         foreach ($this->_builtinMatchers as $buitinMatcher) {
-            $this->_matchers[$buitinMatcher] = $this->_buitinsNamespace;
+            $this->_matchers[$buitinMatcher] = array(
+                'namespace' => $this->_buitinsNamespace,
+                'path' => false
+            );
         }
     }
 
@@ -139,7 +145,7 @@ class MatcherFactory
      */
     private function _addCustomMatchersToRegistry()
     {
-        foreach ($this->_pathsToMatchers as $originalPath) {    
+        foreach ($this->_pathsToMatchers as $originalPath) {
             $this->_recursivelyRegisterMatchersOnFolder($originalPath);
         }
     }
@@ -154,12 +160,18 @@ class MatcherFactory
         $nameSpace = $this->_fromPathToNamespace($originalPath);
         $currentPath = $this->_findMatcherPath($originalPath);
 
-        foreach (glob($currentPath . DIRECTORY_SEPARATOR . "*.php") as $matcherFile) {
-            $this->_matchers[basename($matcherFile, ".php")] = $nameSpace;
-        }
+        if ($currentPath !== false) {
+            foreach (glob($currentPath . DIRECTORY_SEPARATOR . "*.php") as $matcherFile) {
+                $matcherName = basename($matcherFile, ".php");
+                $matcherName = strtolower($matcherName[0]) . substr($matcherName, 1);
+                $this->_matchers[$matcherName] = array(
+                    'namespace' => $nameSpace,
+                    'path' => $matcherFile);
+            }
 
-        foreach (glob($currentPath . DIRECTORY_SEPARATOR . "*", GLOB_ONLYDIR) as $appendPath) {
-            $this->_recursivelyRegisterMatchersOnFolder($originalPath . DIRECTORY_SEPARATOR . basename($appendPath));
+            foreach (glob($currentPath . DIRECTORY_SEPARATOR . "*", GLOB_ONLYDIR) as $appendPath) {
+                $this->_recursivelyRegisterMatchersOnFolder($originalPath . DIRECTORY_SEPARATOR . basename($appendPath));
+            }
         }
     }
 
@@ -180,5 +192,6 @@ class MatcherFactory
                 return $child . DIRECTORY_SEPARATOR . $path;
             }
         }
+        return false;
     }
 }
