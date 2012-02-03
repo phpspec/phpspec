@@ -121,7 +121,7 @@ class Object extends Interceptor
         }
         
         $this->setExpectedValue($args);
-        $this->createMatcher('beTrue');
+        $this->_matcher = $this->getMatcherFactory()->create('beTrue', array(true));
         $this->setActualValue(
             call_user_func_array(array($this->_actualValue, $predicate), $args)
         );

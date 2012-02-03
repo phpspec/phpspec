@@ -71,6 +71,13 @@ abstract class Interceptor
     protected $_expectedValue;
     
     /**
+     * The matcher factory
+     *
+     * @var PHPSpec\Matcher\MatcherFactory
+     */
+    protected $_matcherFactory;
+
+    /**
      * List of valid matchers
      * 
      * @var array
@@ -135,9 +142,13 @@ abstract class Interceptor
             return true;
         }
         
-        if ($this->matcherIsRegistered($method)) {
-            $this->performMatchingWithRegisteredMatcher($method, $args);
+        try {
+            $this->setExpectedValue($args);
+            $this->_matcher = $this->getMatcherFactory()->create($method, $args);
+            $this->performMatching();
             return true;
+        } catch (InvalidMatcher $e) {
+
         }
                 
         if ($this->interceptedHasAMagicCall()) {
@@ -308,50 +319,6 @@ abstract class Interceptor
     }
     
     /**
-     * Creates a new Matcher object based on calls
-     * to the DSL grammer. (factory)
-     *
-     * @param DSL method call which was found to be a Matcher reference
-     */
-    protected function createMatcher($matcher)
-    {
-        $matcher = strtoupper($matcher[0]) . substr($matcher, 1);
-        $expected = $this->assertExpectedIsArray();
-        
-        try {
-            $matcherClass = '\PHPSpec\Matcher\\' . $matcher;
-            $reflectedMatcher = new \ReflectionClass($matcherClass);
-            $this->_matcher = $reflectedMatcher->newInstanceArgs($expected);
-        } catch (\ReflectionException $e) {
-            try {
-                $matcherClass = '\PHPSpec\Context\Zend\Matcher\\' . $matcher;
-                $reflectedMatcher = new \ReflectionClass($matcherClass);
-                $this->_matcher = $reflectedMatcher->newInstanceArgs(
-                    $expected
-                );
-            } catch(\ReflectionException $e) {
-                throw new \PHPSpec\Exception("Could not find matcher $matcher");
-            }
-        }
-        
-    }
-    
-    /**
-     * Asserts the expected value is in an array
-     * 
-     * !FIXME this is only being used because the way Closure specification
-     * and throwException matcher work
-     * 
-     * @return array
-     */
-    protected function assertExpectedIsArray()
-    {
-        return !is_array($this->getExpectedValue()) ?
-               array($this->getExpectedValue()) :
-               $this->getExpectedValue();
-    }
-    
-    /**
      * Performs a Matcher operation and set the returned boolean result for
      * further analysis, e.g. comparison to the boolean Expectation.
      *
@@ -397,4 +364,18 @@ abstract class Interceptor
      {
          $this->_matcherFactory = $matcherFactory;
      }
+
+     /**
+      * Returns the Matcher Factory
+      *
+      *  @return PHPSpec\Matcher\MatcherFactory
+      */
+      public function getMatcherFactory()
+      {
+          if ($this->_matcherFactory === null) {
+              $this->_matcherFactory = new MatcherFactory;
+          }
+
+          return $this->_matcherFactory;
+      }
 }
