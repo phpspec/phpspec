@@ -109,9 +109,11 @@ abstract class Interceptor
                     $parentInterceptor = new \ReflectionMethod(
                         $this->_actualValue, '__get'
                     );
-                    return $parentInterceptor->invokeArgs(
+                    $value = $parentInterceptor->invokeArgs(
                         $this->_actualValue, array($attribute)
                     );
+
+                    return InterceptorFactory::create($value, $this);
                 }
         }
     }
