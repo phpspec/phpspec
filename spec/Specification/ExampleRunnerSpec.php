@@ -18,12 +18,14 @@ class DescribeExampleRunner extends \PHPSpec\Context
     
     function itWillCallCreateForEachExampleOfTheGroup()
     {
+        
         $this->exampleFactory->shouldReceive('create')
                              ->times(self::NUM_OF_METHODS_EXAMPLE_HAS)
                              ->andReturn($this->example);
         $this->exampleRunner->setExampleFactory($this->exampleFactory);
-        
-        $this->exampleRunner->run(new Fake, $this->reporter);
+        include_once __DIR__ . DIRECTORY_SEPARATOR . '_files'
+                             . DIRECTORY_SEPARATOR . 'Fake.php';
+        $this->exampleRunner->run(new \Fake, $this->reporter);
     }
     
     function getReporter()
@@ -45,9 +47,4 @@ class DescribeExampleRunner extends \PHPSpec\Context
     {
         return $this->mock('PHPSpec\Specification\ExampleFactory');
     }
-}
-
-class Fake extends \PHPSpec\Context {
-    function itShouldBeCalled() {}
-    function itShouldBeCalledTo() {}
 }
