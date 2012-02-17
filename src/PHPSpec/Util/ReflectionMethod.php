@@ -79,9 +79,9 @@ class ReflectionMethod
             $code .= Backtrace::readLine($path, $i);
         }
 
-        $methodBodyPattern = "/.*function.*({(.*)}|;)/sxU";
+        $methodBodyPattern = "/function.*(?:{(.*)}|;)/sxU";
         preg_match($methodBodyPattern, $code, $matches);
-        $extract = isset($matches[2]) ?: '';
+        $extract = isset($matches[1]) ?: '';
         return empty($extract);
     }
 }
