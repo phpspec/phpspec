@@ -78,10 +78,10 @@ class ReflectionMethod
         for ($i = $start; $i <= $end; $i++) {
             $code .= Backtrace::readLine($path, $i);
         }
-        
-        $methodBodyPattern = "/(function\s+)(\w+)(\()[^\)]?(\))({)([^}]?)/";
+
+        $methodBodyPattern = "/.*function.*({(.*)}|;)/sxU";
         preg_match($methodBodyPattern, $code, $matches);
-        $extract = isset($matches[6]) ?: '';
+        $extract = isset($matches[2]) ?: '';
         return empty($extract);
     }
 }
