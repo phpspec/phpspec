@@ -81,7 +81,7 @@ class ReflectionMethod
 
         $methodBodyPattern = "/function.*(?:{(.*)}|;)/sxU";
         preg_match($methodBodyPattern, $code, $matches);
-        $extract = isset($matches[1]) ?: '';
+        $extract = isset($matches[1]) ? $matches[1] : '';
         return empty($extract);
     }
 }
