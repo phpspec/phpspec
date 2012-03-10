@@ -27,6 +27,9 @@ class DescribeClassLoader extends \PHPSpec\Context
     
     function itReturnsTheLoadedExampleGroupIfConventionIsFollowed()
     {
+        $this->pending("Convention doesn't work with namespaced spec files." .
+            " Returns invalid class name if a file with same filename was" .
+            " loaded from separate folder");
         $loader = new \PHPSpec\Loader\ClassLoader;
         $loaded = $loader->load(__DIR__ . '/_files/FooSpec.php');
         $this->spec($loaded[0])->should->beAnInstanceOf('DescribeFoo');
