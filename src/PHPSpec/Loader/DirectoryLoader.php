@@ -95,7 +95,10 @@ class DirectoryLoader extends ClassLoader
             $ignore = array_merge($ignore, file($specDir . '/.specignore'));
             $cwd = getcwd();
             chdir($specDir);
-            $ignore = array_map('realpath', $ignore);
+            $ignore = array_map(function($path){
+                $path = trim($path);
+                return realpath($path);
+            }, $ignore);
             chdir($cwd);
         }
         return $ignore;
