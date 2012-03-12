@@ -64,4 +64,11 @@ class DescribeClassLoader extends \PHPSpec\Context
         })->should->throwException('\PHPSpec\Runner\Error', "Could not find class \"$class\" in file \"$file\"");
         unlink($file);
     }
+    
+    function after()
+    {
+        if (file_exists(realpath(__DIR__ . '/_files') . '/NoFooSpec.php')) {
+            unlink(realpath(__DIR__ . '/_files') . '/NoFooSpec.php');
+        }
+    }
 }

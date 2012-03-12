@@ -62,8 +62,14 @@ class Object extends Interceptor
         }
         
         $object = $this->getActualValue();
-        return InterceptorFactory::create(
-            call_user_func_array(array($object, $method), $args)
+        if (method_exists($object, $method)) {
+            return InterceptorFactory::create(
+                call_user_func_array(array($object, $method), $args)
+            );
+        }
+        $class = get_class($object);
+        throw new \BadMethodCallException(
+            "Call to undefined method {$class}::{$method}"
         );
     }
     
