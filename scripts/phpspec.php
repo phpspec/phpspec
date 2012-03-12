@@ -174,10 +174,16 @@ error_reporting(E_ALL|E_STRICT);
 
 require_once 'PHPSpec/Loader/UniversalClassLoader.php';
 include_once 'Mockery.php';
+
+$spec_source = __DIR__ . '/../src/';
+
 $paths = explode(':', ini_get('include_path'));
 $loader = new \PHPSpec\Loader\UniversalClassLoader();
-$loader->registerNamespace('PHPSpec', $paths);
+$loader->registerNamespace('PHPSpec', $spec_source);
 $loader->registerNamespace('Mockery', $paths);
+
+$loader->registerPrefix('Text_', $paths);
+
 $loader->register();
 
 $phpspec = new \PHPSpec\PHPSpec($argv);
