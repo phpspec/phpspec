@@ -150,9 +150,10 @@ abstract class Interceptor
             $parentInterceptor = new \ReflectionMethod(
                 $this->_actualValue, '__call'
             );
-            return $parentInterceptor->invokeArgs(
-                $this->_actualValue, $args
+            $value = $parentInterceptor->invokeArgs(
+                $this->_actualValue, array($method, $args)
             );
+            return \PHPSpec\Specification\Interceptor\InterceptorFactory::create($value);
         }
         
         if (!$this instanceof Interceptor\Object &&
