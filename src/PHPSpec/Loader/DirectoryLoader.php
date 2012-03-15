@@ -93,10 +93,10 @@ class DirectoryLoader extends ClassLoader
     {
         if (empty($ignore) && file_exists($specDir . '/.specignore')) {
             $ignore = array_merge($ignore, file($specDir . '/.specignore'));
-            $cwd = getcwd();
-            chdir($specDir);
-            $ignore = array_map('realpath', $ignore);
-            chdir($cwd);
+            $ignored = array();
+            foreach ($ignore as $path) {
+                $ignored[] = trim(realpath($specDir) . $path);
+            }
         }
         return $ignore;
     }
