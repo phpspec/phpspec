@@ -3,8 +3,6 @@
 namespace Spec\PHPSpec\Runner\Cli;
 
 require_once __DIR__ . '/../../WorldBuilder.php';
-require_once 'PHPSpec/Runner/Reporter.php';
-require_once 'PHPSpec/Runner/Cli/Reporter.php';
 
 use \PHPSpec\Runner\Cli\Runner as CliRunner,
     \Spec\PHPSpec\WorldBuilder;
