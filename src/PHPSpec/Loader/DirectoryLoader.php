@@ -91,9 +91,9 @@ class DirectoryLoader extends ClassLoader
      */
     private function lookForIgnoreConfig($specDir, $ignore = array())
     {
+        $ignored = array();
         if (empty($ignore) && file_exists($specDir . '/.specignore')) {
             $ignore = array_merge($ignore, file($specDir . '/.specignore'));
-            $ignored = array();
             foreach ($ignore as $path) {
                 $ignored[] = trim(realpath($specDir) . $path);
             }
