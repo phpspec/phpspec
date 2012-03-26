@@ -173,7 +173,7 @@ class DescribeParser extends \PHPSpec\Context
     
     function itShouldAcceptTextmateAsAValidFormatter()
     {
-        $args = array('/usr/bin/phpspec', 'MySpec.php', '--formatter', 'textmate');
+        $args = array($this->executable, 'MySpec.php', '--formatter', 'textmate');
         $parser = $this->parser;
         
         $this->spec(
