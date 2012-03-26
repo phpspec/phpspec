@@ -98,6 +98,6 @@ class DirectoryLoader extends ClassLoader
                 $ignored[] = trim(realpath($specDir) . $path);
             }
         }
-        return $ignore;
+        return $ignored;
     }
 }

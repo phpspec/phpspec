@@ -1,0 +1,38 @@
+{
+    "name": "phpspec/phpspec",
+    "description": "PHPSpec: The BDD Specification Library",
+    "keywords": ["bdd", "spec", "test"],
+    "homepage": "http://phpspec.net",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "PHPSpec Team",
+            "homepage": "https://github.com/phpspec/phpspec/contributors"
+        }
+    ],
+    "bin": ["scripts/phpspec-composer.php"],
+    "autoload": {
+        "psr-0": { "PHPSpec\\": "src/" }
+    },
+    "require": {
+        "php": ">=5.3.2",
+        "mockery/mockery": "0.7.*",
+        "phpunit/Text_Template": "*"
+    },
+    "repositories": [
+        {
+          "type": "package",
+          "package": {
+            "name": "phpunit/text_template",
+            "version": "1.1.1",
+            "dist": {
+              "url": "http://pear.phpunit.de/get/Text_Template-1.1.1.tgz",
+              "type": "pear"
+            },
+            "autoload": {
+              "psr-0": { "Text": "" }
+            }
+          }
+        }
+    ]
+}

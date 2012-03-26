@@ -21,8 +21,6 @@
  */
 namespace PHPSpec\Runner\Formatter;
 
-require_once 'Text/Template.php';
-
 use \PHPSpec\Util\Backtrace,
     \PHPSpec\Specification\Result\DeliberateFailure;
 

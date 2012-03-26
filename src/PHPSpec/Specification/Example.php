@@ -27,7 +27,8 @@ use \PHPSpec\Runner\Reporter,
     \PHPSpec\Specification\Result\Pending,
     \PHPSpec\Specification\Result\DeliberateFailure,
     \PHPSpec\Specification\Result\Failure,
-    \PHPSpec\Util\Filter;
+    \PHPSpec\Util\Filter,
+    \PHPSpec\Util\ReflectionMethod;
 
 /**
  * @category   PHPSpec
@@ -77,10 +78,10 @@ class Example
     public function run (Reporter $reporter)
     {
         try {
-            $methodName = $this->_methodName;
             $startTime = microtime(true);
             call_user_func(array($this->_exampleGroup, 'before'));
-            call_user_func(array($this->_exampleGroup, $methodName));
+            $this->markExampleAsPendingIfItIsEmpty();
+            call_user_func(array($this->_exampleGroup, $this->_methodName));
             $this->closeExample($startTime);
         } catch (Failure $failure) {
             $reporter->addFailure($this, $failure);
@@ -171,6 +172,19 @@ class Example
         $this->_executionTime = $endTime - $startTime;
         if (class_exists('Mockery')) {
             \Mockery::close();
+        }
+    }
+    
+    /**
+     * Marks example as pending if it is empty
+     */
+    private function markExampleAsPendingIfItIsEmpty()
+    {
+        $method = new ReflectionMethod(
+            $this->_exampleGroup, $this->_methodName
+        );
+        if ($method->isEmpty()) {
+            throw new Pending('empty example');
         }
     }
 }
