@@ -6,7 +6,7 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL|E_STRICT);
 
-if (is_dir(__DIR__ . '/../vendor')) {
+if (is_file(__DIR__ . '/../vendor/.composer/autoload.php')) {
     require_once __DIR__ . '/../vendor/.composer/autoload.php';
 } elseif (is_file(__DIR__ . '/../../../.composer/autoload.php')) {
     require_once __DIR__ . '/../../../.composer/autoload.php';
