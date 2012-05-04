@@ -44,13 +44,12 @@ class DirectoryLoader extends ClassLoader
         $ignore = $this->lookForIgnoreConfig($specDir, $ignore);
         $directory = new \DirectoryIterator($specDir);
         $loaded = array();
-        
+
         foreach ($directory as $file) {
             if ($file->isDot()) {
                 continue;
             }
-            
-            if ($this->fileIsNotInIgnoreList($file, $ignore)) {
+            if ($this->fileIsNotInIgnoreList($file, $ignore)) { 
                 if ($file->isDir()) {
                     $loaded = array_merge(
                         $loaded, $this->load($file->getRealpath(), $ignore)
@@ -91,11 +90,12 @@ class DirectoryLoader extends ClassLoader
      */
     private function lookForIgnoreConfig($specDir, $ignore = array())
     {
-        $ignored = array();
+        $ignored = $ignore;
         if (empty($ignore) && file_exists($specDir . '/.specignore')) {
+            $ignored = array();
             $ignore = array_merge($ignore, file($specDir . '/.specignore'));
             foreach ($ignore as $path) {
-                $ignored[] = trim(realpath($specDir) . $path);
+                $ignored[] = trim(realpath($specDir) . ltrim($path, '.'));
             }
         }
         return $ignored;
