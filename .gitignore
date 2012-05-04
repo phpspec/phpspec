@@ -1,3 +1,4 @@
 composer.lock
 vendor/*
 !vendor/vendors.php
+src/PHPSpec/Context
