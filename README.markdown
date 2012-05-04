@@ -1,7 +1,7 @@
 PHPSpec
 =======
 
-[![Build Status](https://secure.travis-ci.org/phpspec/phpspec.png)](http://travis-ci.org/phpspec/phpspec])
+[![Build Status](https://secure.travis-ci.org/phpspec/phpspec.png)](http://travis-ci.org/phpspec/phpspec)
 
 **PHPSpec** is a A Behaviour-Driven Development Framework for PHP.
 
