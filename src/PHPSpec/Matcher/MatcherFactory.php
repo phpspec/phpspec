@@ -107,6 +107,11 @@ class MatcherFactory
         }
         $matcherClass = $this->_matchers[$matcherName]['namespace'] . $matcherName;
         $reflectedMatcher = new \ReflectionClass($matcherClass);
+        if (!$reflectedMatcher->implementsInterface('PHPSpec\Matcher')) {
+            throw new InvalidMatcherType(
+                "Matcher must implement PHPSpec\Matcher"
+            );
+        }
         $matcher = $reflectedMatcher->newInstanceArgs($expected);
 
         return $matcher;

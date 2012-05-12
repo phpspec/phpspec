@@ -27,6 +27,7 @@ use PHPSpec\Specification\Result\Failure,
     PHPSpec\Matcher\MatcherRepository,
     PHPSpec\Matcher\UserDefined as UserDefinedMatcher,
     PHPSpec\Matcher\InvalidMatcher,
+    PHPSpec\Matcher\InvalidMatcherType,
     PHPSpec\Matcher\MatcherFactory;
 
 /**
@@ -149,6 +150,8 @@ abstract class Interceptor
             $this->_matcher = $this->getMatcherFactory()->create($method, $args);
             $this->performMatching();
             return true;
+        } catch (InvalidMatcherType $e) {
+            throw new InvalidMatcher($e->getMessage());
         } catch (InvalidMatcher $e) {
 
         }
