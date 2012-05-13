@@ -28,6 +28,7 @@ use PHPSpec\Specification\Result\Failure,
     PHPSpec\Matcher\UserDefined as UserDefinedMatcher,
     PHPSpec\Matcher\InvalidMatcher,
     PHPSpec\Matcher\InvalidMatcherType,
+    PHPSpec\Matcher\InvalidMatchingResult,
     PHPSpec\Matcher\MatcherFactory;
 
 /**
@@ -347,10 +348,16 @@ abstract class Interceptor
         if ($this->getExpectation() === self::SHOULD) {
             if ($result === false) {
                 throw new Failure($this->_matcher->getFailureMessage());
+            } elseif ($result !== true) {
+                $matcher = get_class($this->_matcher) . ":matches()";
+                throw new InvalidMatchingResult("$matcher must return boolean");
             }
         } elseif ($this->getExpectation() === self::SHOULD_NOT) {
             if ($result === true) {
                 throw new Failure($this->_matcher->getNegativeFailureMessage());
+            } elseif ($result !== false) {
+                $matcher = get_class($this->_matcher) . ":matches()";
+                throw new InvalidMatchingResult("$matcher must return boolean");
             }
         } elseif (empty($this->_expectation)) {
             throw new Error(
