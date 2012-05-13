@@ -109,7 +109,9 @@ class MatcherFactory
         $reflectedMatcher = new \ReflectionClass($matcherClass);
         if (!$reflectedMatcher->implementsInterface('PHPSpec\Matcher')) {
             throw new InvalidMatcherType(
-                "Matcher must implement PHPSpec\Matcher"
+                $this->_matchers[$matcherName]['namespace'] .
+                strtoupper($matcherName[0]) . substr($matcherName, 1) .
+                " must implement PHPSpec\Matcher"
             );
         }
         $matcher = $reflectedMatcher->newInstanceArgs($expected);
