@@ -38,8 +38,8 @@ class InvalidMatcher extends Exception
     {
         $caller = array_slice(debug_backtrace(), 1, 1);
         parent::__construct(new \Exception ($message));
-        $this->_line = isset($caller[0]['line']) ?: null;
-        $this->_file = isset($caller[0]['file']) ?: null;
+        $this->_line = isset($caller[0]['line']) ? $caller[0]['line'] : null;
+        $this->_file = isset($caller[0]['file']) ? $caller[0]['file'] : null;
     }
     
     public function getSnippet($index = 0)
