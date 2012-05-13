@@ -114,6 +114,8 @@ class MatcherFactory
                 " must implement PHPSpec\Matcher"
             );
         }
+        
+        $expected = $expected === array() ? array(null) : $expected;
         $matcher = $reflectedMatcher->newInstanceArgs($expected);
 
         return $matcher;
