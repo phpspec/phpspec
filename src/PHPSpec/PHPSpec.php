@@ -166,6 +166,7 @@ class PHPSpec
         $this->_world->setOptions($options);
         $this->_world->attachFormatter($options['f']);
         $this->setDefaultBootstrap($this->_world);
+        $this->setDefaultCustomMatchersFile($this->_world);
         return $options;
     }
     
@@ -183,6 +184,21 @@ class PHPSpec
             is_dir($world->getOption('specFile')) &&
             file_exists($specHelper)) {
             $world->setOption('bootstrap', $specHelper);
+        }
+    }
+    
+    /**
+     * Looks for a CustomMatchers.php and includes it, if it exists
+     *
+     * @param World $world 
+     */
+    public function setDefaultCustomMatchersFile(World $world)
+    {
+        $customMatchers = $world->getOption('specFile') . DIRECTORY_SEPARATOR .
+                          'CustomMatchers.php';
+        if (is_dir($world->getOption('specFile')) &&
+            file_exists($customMatchers)) {
+            include_once $customMatchers;
         }
     }
     
