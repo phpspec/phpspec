@@ -68,7 +68,7 @@ class ReflectionMethod
             $this->_objectOrClassName,
             $this->_methodName
         );
-        list(,$path,) = explode(PHP_EOL, (string)$method);
+        list(,$path,) = explode("\n", (string)$method);
         preg_match('/(@@ )(.*\.php)( )(\d+)(\D*)(\d+)/', $path, $matches);
         list ($path, $start, $end) = array(
             $matches[2], $matches[4], $matches[6]
