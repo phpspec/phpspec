@@ -21,7 +21,9 @@
  */
 namespace PHPSpec;
 
-use \PHPSpec\Runner\Reporter;
+use PHPSpec\Runner\Reporter,
+    PHPSpec\Runner\Formatter\Factory as FormatterFactory,
+    PHPSpec\Matcher\MatcherFactory;
 
 /**
  * @category   PHPSpec
@@ -47,6 +49,20 @@ class World
      * @var \PHPSpec\Runner\Reporter
      */
     protected $_reporter;
+    
+    /**
+     * The formatter factory
+     *
+     * @var \PHPSpec\Runner\Formatter\Factory
+     */
+    protected $_formatterFactory;
+    
+    /**
+     * The Matcher Factory
+     *
+     * @var PHPSpec\Matcher\MatcherFactory
+     */
+    private $_matcherFactory;
     
     /**
      * Gets a option
@@ -113,4 +129,137 @@ class World
     {
         $this->_reporter = $reporter;
     }
+    
+    /**
+     * Sets the backtrace to true so reporter will display a long backtrace
+     * when exceptions occur
+     */
+    public function showLongBacktrace()
+    {
+        $this->setOption('backtrace', true);
+    }
+    
+    /**
+     * Sets the backtrace to false so reporter will not display a long
+     * backtrace when exceptions occur
+     */
+    public function showShortBacktrace()
+    {
+        $this->setOption('backtrace', false);
+    }
+    
+    /**
+     * Sets the colour option to true so specific formatter will add colours
+     * to the report
+     */
+    public function showColours()
+    {
+        $this->setOption('c', true);
+        $this->setOption('colour', true);
+        $this->setOption('color', true);
+    }
+    
+    /**
+     * Sets the colour option to false so specific formatter will hide colours
+     * from the report
+     */
+    public function noColours()
+    {
+        $this->setOption('c', false);
+        $this->setOption('colour', false);
+        $this->setOption('color', false);
+    }
+    
+    /**
+     * Tells the runner to run a single example
+     *
+     * @param string $exampleToRun 
+     */
+    public function runExamplesWith($pattern)
+    {
+        $this->setOption('example', $pattern);
+    }
+    
+    /**
+     * Attaches a formatter to the reporter
+     *
+     * @param string $formatter 
+     */
+    public function attachFormatter($formatter)
+    {
+        $this->setOption('formatter', $formatter);
+        $formatterObject = $this->getFormatterFactory()->create(
+            $formatter, $this->getReporter()
+        );
+        $this->getReporter()->setFormatters(array($formatterObject));
+    }
+    
+    /**
+     * Gets the formatter factory
+     * 
+     * @return \PHPSpec\Runner\Formatter\Factory
+     */
+    public function getFormatterFactory()
+    {
+        if ($this->_formatterFactory === null) {
+            $this->_formatterFactory = new FormatterFactory;
+        }
+        return $this->_formatterFactory;
+    }
+    
+    /**
+     * Sets the formatter factory
+     * 
+     * @param \PHPSpec\Runner\Formatter\Factory $factory
+     */
+    public function setFormatterFactory(FormatterFactory $factory)
+    {
+        $this->_formatterFactory = $factory;
+    }
+    
+    /**
+     * Tells the reporter to abort when an error, failure or exception
+     * happens 
+     */
+    public function failFast()
+    {
+        $this->setOption('fail-fast', true);
+    }
+    
+    /**
+     * Tells the interceptor to look for matchers in the matcher paths passed
+     *
+     * @param string|array $matcherPaths
+     */
+    public function includeMatchers($matcherPaths)
+    {
+        if (is_string($matcherPaths)) {
+            $matcherPaths = explode(':', $matcherPaths);
+        }
+        
+        if (!is_array($matcherPaths)) {
+            throw new \InvalidArgumentException(
+                'includeMatchers expects a string or an array ' . 
+                gettype($matcherPaths) . ' found instead'
+            );
+        }
+        
+        $paths = array_merge($this->getOption('include-matchers'), $matcherPaths);
+        $this->setOption('include-matchers', $paths);
+    }
+    
+    /**
+     * Returns the Matcher Factory
+     *
+     *  @return PHPSpec\Matcher\MatcherFactory
+     */
+     public function getMatcherFactory()
+     {
+         if ($this->_matcherFactory === null) {
+             $this->_matcherFactory = new MatcherFactory(
+                 $this->getOption('include-matchers')
+            );
+         }
+         return $this->_matcherFactory;
+     }
 }

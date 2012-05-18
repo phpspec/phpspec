@@ -19,9 +19,12 @@
  *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-namespace PHPSpec\Specification\Result;
+namespace PHPSpec\Matcher;
 
-use \PHPSpec\Specification\Result;
+/**
+ * @see \PHPSpec\Matcher
+ */
+use \PHPSpec\Matcher;
 
 /**
  * @category   PHPSpec
@@ -31,42 +34,72 @@ use \PHPSpec\Specification\Result;
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class Exception extends Result
+class BeArray implements Matcher
 {
-    
+
     /**
-     * The exception class
-     *
-     * @var string
-     */
-    protected $_exceptionClass;
-    
-    /**
-     * The exception object
-     *
-     * @var \Exception
-     */
-    protected $_exceptionObject;
-    
-    /**
-     * \PHPSpec\Specification\Resutl\Exception is created with an exception
+     * The expected value.
      * 
-     * @param \Exception $exception
+     * @var unused
      */
-    public function __construct(\Exception $exception)
-    {
-        $this->_exceptionClass = get_class($exception);
-        $this->_exceptionObject = $exception;
-        parent::__construct($exception->getMessage());
-    }
-    
+    protected $_expected = null;
+
     /**
-     * Gets the exception class
+     * The actual value
+     * 
+     * @var mixed
+     */
+    protected $_actual = null;
+
+    /**
+     * Matcher is usually constructed with the expected value
+     * but beArray() is itself the expectation
+     * 
+     * @param unused $expected
+     */
+    public function __construct($expected = null)
+    {
+        $this->_expected = null;
+    }
+
+    /**
+     * Checks whether actual value is an array
+     * 
+     * @param mixed $actual
+     * @return boolean
+     */
+    public function matches($actual)
+    {
+        return is_array($actual);
+    }
+
+    /**
+     * Returns failure message in case we are using should
      * 
      * @return string
      */
-    public function getExceptionClass()
+    public function getFailureMessage()
     {
-        return $this->_exceptionClass;
+        return 'expected to be array, got a non array (using beArray())';
+    }
+
+    /**
+     * Returns failure message in case we are using should not
+     * 
+     * @return string
+     */
+    public function getNegativeFailureMessage()
+    {
+        return 'expected not to be an array got array(using beArray())';
+    }
+
+    /**
+     * Returns the matcher description
+     * 
+     * @return string
+     */
+    public function getDescription()
+    {
+        return 'be array';
     }
 }

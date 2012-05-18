@@ -37,22 +37,23 @@ class Parser implements \PHPSpec\Runner\Parser
      * @var array
      */
     protected $_options = array(
-        'noneGiven' => false,
-        'c'         => false,
-        'color'     => false,
-        'colour'    => false,
-        'h'         => false,
-        'help'      => false,
-        'b'         => false,
-        'backtrace' => false,
-        'version'   => false,
-        'f'         => 'p',
-        'formatter' => 'p',
-        'specFile'  => '',
-        'fail-fast' => false,
-        'e'         => false,
-        'example'   => false,
-        'bootstrap' => false
+        'noneGiven'        => false,
+        'c'                => false,
+        'color'            => false,
+        'colour'           => false,
+        'h'                => false,
+        'help'             => false,
+        'b'                => false,
+        'backtrace'        => false,
+        'version'          => false,
+        'f'                => 'p',
+        'formatter'        => 'p',
+        'specFile'         => '',
+        'fail-fast'        => false,
+        'e'                => false,
+        'example'          => false,
+        'bootstrap'        => false,
+        'include-matchers' => array()
     );
     
     /**
@@ -91,12 +92,12 @@ class Parser implements \PHPSpec\Runner\Parser
         'd',
         'h',
         'j',
-     //   't',
+        't',
         'progress',
         'documentation',
         'html',
-        'junit'
-     //   'textmate'
+        'junit',
+        'textmate'
      );
      
     /**
@@ -471,4 +472,14 @@ class Parser implements \PHPSpec\Runner\Parser
         
         $this->_options['bootstrap'] = $filename;
     }
+    
+    /**
+     * Sets the Include Matchers option
+     *
+     * @param string $matchersPaths 
+     */
+     public function setIncludeMatchers($matchersPaths)
+     {
+         $this->_options['include-matchers'] = $matchersPaths;
+     }
 }

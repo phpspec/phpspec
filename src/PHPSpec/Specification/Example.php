@@ -27,7 +27,8 @@ use \PHPSpec\Runner\Reporter,
     \PHPSpec\Specification\Result\Pending,
     \PHPSpec\Specification\Result\DeliberateFailure,
     \PHPSpec\Specification\Result\Failure,
-    \PHPSpec\Util\Filter;
+    \PHPSpec\Util\Filter,
+    \PHPSpec\Util\ReflectionMethod;
 
 /**
  * @category   PHPSpec
@@ -77,31 +78,31 @@ class Example
     public function run (Reporter $reporter)
     {
         try {
-            $methodName = $this->_methodName;
             $startTime = microtime(true);
             call_user_func(array($this->_exampleGroup, 'before'));
-            call_user_func(array($this->_exampleGroup, $methodName));
-            call_user_func(array($this->_exampleGroup, 'after'));
-            $endTime = microtime(true);
-            $this->_executionTime = $endTime - $startTime;
-            if (class_exists('Mockery')) {
-                \Mockery::close();
-            }
+            $this->markExampleAsPendingIfItIsEmpty();
+            call_user_func(array($this->_exampleGroup, $this->_methodName));
+            $this->closeExample($startTime);
         } catch (Failure $failure) {
             $reporter->addFailure($this, $failure);
+            $this->closeExample($startTime);
             return;
         } catch (Pending $pending) {
             $reporter->addPending($this, $pending);
+            $this->closeExample($startTime);
             return;
         } catch (Error $error) {
             $reporter->addError($this, $error);
+            $this->closeExample($startTime);
             return;
         } catch (\Exception $e) {
             $reporter->addException($this, new Exception($e));
+            $this->closeExample($startTime);
             return;
         }
         $reporter->addPass($this);
     }
+    
     /**
      * Gets the description in the following format:
      * 
@@ -158,5 +159,32 @@ class Example
     public function getExecutionTime ()
     {
         return $this->_executionTime;
+    }
+    
+    /**
+     * Closes example
+     *
+     */
+    private function closeExample($startTime)
+    {
+        call_user_func(array($this->_exampleGroup, 'after'));
+        $endTime = microtime(true);
+        $this->_executionTime = $endTime - $startTime;
+        if (class_exists('Mockery')) {
+            \Mockery::close();
+        }
+    }
+    
+    /**
+     * Marks example as pending if it is empty
+     */
+    private function markExampleAsPendingIfItIsEmpty()
+    {
+        $method = new ReflectionMethod(
+            $this->_exampleGroup, $this->_methodName
+        );
+        if ($method->isEmpty()) {
+            throw new Pending('empty example');
+        }
     }
 }

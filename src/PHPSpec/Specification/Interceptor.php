@@ -21,9 +21,15 @@
  */
 namespace PHPSpec\Specification;
 
-use \PHPSpec\Specification\Result\Failure,
-    \PHPSpec\Specification\Result\Error,
-    \PHPSpec\Specification\Interceptor\InterceptorFactory;
+use PHPSpec\Specification\Result\Failure,
+    PHPSpec\Specification\Result\Error,
+    PHPSpec\Specification\Interceptor\InterceptorFactory,
+    PHPSpec\Matcher\MatcherRepository,
+    PHPSpec\Matcher\UserDefined as UserDefinedMatcher,
+    PHPSpec\Matcher\InvalidMatcher,
+    PHPSpec\Matcher\InvalidMatcherType,
+    PHPSpec\Matcher\InvalidMatchingResult,
+    PHPSpec\Matcher\MatcherFactory;
 
 /**
  * @category   PHPSpec
@@ -67,6 +73,13 @@ abstract class Interceptor
     protected $_expectedValue;
     
     /**
+     * The matcher factory
+     *
+     * @var PHPSpec\Matcher\MatcherFactory
+     */
+    protected $_matcherFactory;
+
+    /**
      * List of valid matchers
      * 
      * @var array
@@ -75,7 +88,7 @@ abstract class Interceptor
         'be', 'beAnInstanceOf', 'beEmpty', 'beEqualTo', 'beFalse',
         'beGreaterThan', 'beGreaterThanOrEqualTo', 'beInteger',
         'beLessThan', 'beLessThanOrEqualTo', 'beNull', 'beString', 'beTrue',
-        'equal', 'match', 'throwException'
+        'equal', 'match', 'throwException', 'containText'
     );
     
     /**
@@ -119,7 +132,8 @@ abstract class Interceptor
     }
     
     /**
-     * Invokes a matcher
+     * Invokes a matcher or proxies the method call to the intercepted object
+     * magic call method, if one exists
      * 
      * @param string $method
      * @param array $args
@@ -127,39 +141,33 @@ abstract class Interceptor
      */
     public function __call($method, $args)
     {
-        if (in_array($method, $this->_matchers)) {
-            $this->setExpectedValue($args);
-            $this->createMatcher($method);
-            $this->performMatching();
+        if (MatcherRepository::has($method)) {
+            $this->performMatchingWithUserDefinedMatcher($method, $args);
             return true;
         }
         
-        if (\PHPSpec\Matcher\MatcherRepository::has($method)) {
+        try {
             $this->setExpectedValue($args);
-            $expected = !is_array($this->getExpectedValue()) ?
-                        array($this->getExpectedValue()) :
-                        $this->getExpectedValue();
-            $this->_matcher = new \PHPSpec\Matcher\UserDefined(
-                $method, $expected
-            );
+            $this->_matcher = $this->getMatcherFactory()->create($method, $args);
             $this->performMatching();
             return true;
+        } catch (InvalidMatcherType $e) {
+            throw new InvalidMatcher($e->getMessage());
+        } catch (InvalidMatcher $e) {
+
+        }
+                
+        if ($this->interceptedHasAMagicCall()) {
+            return $this->invokeInterceptedMagicCall($args);
         }
         
-        if (method_exists($this->_actualValue, '__call')) {
-            $parentInterceptor = new \ReflectionMethod(
-                $this->_actualValue, '__call'
-            );
-            return $parentInterceptor->invokeArgs(
-                $this->_actualValue, $args
-            );
+        if ($this->callingExpectationsAsMethods($method)) {
+            $this->throwErrorExpectationsAreProperties();
         }
         
-        if (!$this instanceof Interceptor\Object &&
-            $this->_expectation !== null) {
-            throw new \BadMethodCallException(
-                "Call to undefined method $method"
-            );
+        if ($this->interceptedIsNotAnObject() &&
+            $this->anExpectationHasBeenUsed()) {
+            $this->throwNotAMatcherException($method);
         }
     }
     
@@ -248,47 +256,72 @@ abstract class Interceptor
     }
     
     /**
-     * Creates a new Matcher object based on calls
-     * to the DSL grammer. (factory)
+     * Checks whether a matcher is registered with the interceptor
      *
-     * @param DSL method call which was found to be a Matcher reference
+     * @param string $matcher 
+     * @return boolean
      */
-    protected function createMatcher($matcher)
+    protected function matcherIsRegistered($matcher)
     {
-        $matcher = strtoupper($matcher[0]) . substr($matcher, 1);
-        $expected = $this->assertExpectedIsArray();
-        
-        try {
-            $matcherClass = '\PHPSpec\Matcher\\' . $matcher;
-            $reflectedMatcher = new \ReflectionClass($matcherClass);
-            $this->_matcher = $reflectedMatcher->newInstanceArgs($expected);
-        } catch (\ReflectionException $e) {
-            try {
-                $matcherClass = '\PHPSpec\Context\Zend\Matcher\\' . $matcher;
-                $reflectedMatcher = new \ReflectionClass($matcherClass);
-                $this->_matcher = $reflectedMatcher->newInstanceArgs(
-                    $expected
-                );
-            } catch(\ReflectionException $e) {
-                throw new \PHPSpec\Exception("Could not find matcher $matcher");
-            }
-        }
-        
+        return in_array($matcher, $this->_matchers);
     }
     
-    /**
-     * Asserts the expected value is in an array
-     * 
-     * !FIXME this is only being used because the way Closure specification
-     * and throwException matcher work
-     * 
-     * @return array
-     */
-    protected function assertExpectedIsArray()
+    protected function performMatchingWithRegisteredMatcher($matcher, $expected)
     {
-        return !is_array($this->getExpectedValue()) ?
-               array($this->getExpectedValue()) :
-               $this->getExpectedValue();
+        $this->setExpectedValue($expected);
+        $this->createMatcher($matcher);
+        $this->performMatching();
+    }
+    
+    protected function performMatchingWithUserDefinedMatcher($matcher, $expected)
+    {
+        $this->setExpectedValue($expected);
+        $expected = !is_array($this->getExpectedValue()) ?
+                    array($this->getExpectedValue()) :
+                    $this->getExpectedValue();
+        $this->_matcher = new UserDefinedMatcher($matcher, $expected);
+        $this->performMatching();
+    }
+    
+    protected function interceptedHasAMagicCall()
+    {
+        return method_exists($this->_actualValue, '__call');
+    }
+    
+    protected function invokeInterceptedMagicCall($args)
+    {
+        $intercepted = new \ReflectionMethod($this->_actualValue, '__call');
+        return $intercepted->invokeArgs($this->_actualValue, $args);
+    }
+    
+    protected function interceptedIsNotAnObject()
+    {
+        return !$this instanceof Interceptor\Object;
+    }
+    
+    protected function anExpectationHasBeenUsed()
+    {
+        return $this->_expectation !== null;
+    }
+    
+    protected function throwNotAMatcherException($method)
+    {
+        throw new InvalidMatcher(
+            "Call to undefined method $method"
+        );
+    }
+    
+    protected function callingExpectationsAsMethods($method)
+    {
+        return $method === 'should' || $method === 'shouldNot';
+    }
+    
+    protected function throwErrorExpectationsAreProperties()
+    {
+        throw new Error(
+            'Missing expectation "should" or "shouldNot". ' .
+            'Make sure you use them as properties and not as methods.'
+        );
     }
     
     /**
@@ -315,10 +348,16 @@ abstract class Interceptor
         if ($this->getExpectation() === self::SHOULD) {
             if ($result === false) {
                 throw new Failure($this->_matcher->getFailureMessage());
+            } elseif ($result !== true) {
+                $matcher = get_class($this->_matcher) . ":matches()";
+                throw new InvalidMatchingResult("$matcher must return boolean");
             }
         } elseif ($this->getExpectation() === self::SHOULD_NOT) {
             if ($result === true) {
                 throw new Failure($this->_matcher->getNegativeFailureMessage());
+            } elseif ($result !== false) {
+                $matcher = get_class($this->_matcher) . ":matches()";
+                throw new InvalidMatchingResult("$matcher must return boolean");
             }
         } elseif (empty($this->_expectation)) {
             throw new Error(
@@ -327,4 +366,28 @@ abstract class Interceptor
             );
         }
     }
+    
+    /**
+     * Sets the matcher factory
+     *
+     * @param PHPSpec\Matcher\MatcherFactory
+     */
+     public function setMatcherFactory(MatcherFactory $matcherFactory)
+     {
+         $this->_matcherFactory = $matcherFactory;
+     }
+
+     /**
+      * Returns the Matcher Factory
+      *
+      *  @return PHPSpec\Matcher\MatcherFactory
+      */
+      public function getMatcherFactory()
+      {
+          if ($this->_matcherFactory === null) {
+              $this->_matcherFactory = new MatcherFactory;
+          }
+
+          return $this->_matcherFactory;
+      }
 }

@@ -19,9 +19,10 @@
  *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-namespace PHPSpec\Runner\Formatter;
+namespace PHPSpec\Matcher;
 
-use \PHPSpec\Runner\Reporter;
+use PHPSpec\Specification\Result\Exception,
+    PHPSpec\Util\Backtrace;
 
 /**
  * @category   PHPSpec
@@ -31,37 +32,18 @@ use \PHPSpec\Runner\Reporter;
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class Factory
+class InvalidMatchingResult extends Exception
 {
-    /**
-     * Available formatters
-     * 
-     * @var array
-     */
-    protected $_formatters = array(
-        'p' => 'Progress',
-        'd' => 'Documentation',
-        'h' => 'Html',
-        'j' => 'Junit',
-        't' => 'Textmate'
-    );
-    
-    /**
-     * Creates a formatter class, looks for built in and returns custom one if
-     * one is not found
-     * 
-     * @param string                   $formatter
-     * @param \PHPSpec\Runner\Reporter $reporter
-     * @return \PHPSpec\Runner\Formatter
-     */
-    public function create($formatter, Reporter $reporter)
+    public function __construct($message)
     {
-        if (in_array($formatter, array_keys($this->_formatters)) ||
-            in_array(ucfirst($formatter), array_values($this->_formatters))) {
-            $formatter = $this->_formatters[strtolower($formatter[0])];
-            $formatterClass = '\PHPSpec\Runner\Formatter\\' . $formatter;
-            return new $formatterClass($reporter);
-        }
-        return new $formatter;
+        $caller = array_slice(debug_backtrace(), 2, 1);
+        parent::__construct(new \Exception ($message));
+        $this->_line = isset($caller[0]['line']) ? $caller[0]['line'] : null;
+        $this->_file = isset($caller[0]['file']) ? $caller[0]['file'] : null;
+    }
+    
+    public function getSnippet($index = 0)
+    {
+        return Backtrace::readLine($this->_file, $this->_line);
     }
 }

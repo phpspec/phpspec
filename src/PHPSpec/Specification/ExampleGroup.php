@@ -21,10 +21,11 @@
  */
 namespace PHPSpec\Specification;
 
-use \PHPSpec\Runner\Reporter,
-    \PHPSpec\Specification\Interceptor\InterceptorFactory,
-    \PHPSpec\Specification\Result\Pending,
-    \PHPSpec\Specification\Result\DeliberateFailure;
+use PHPSpec\Runner\Reporter,
+    PHPSpec\Specification\Interceptor\InterceptorFactory,
+    PHPSpec\Specification\Result\Pending,
+    PHPSpec\Specification\Result\DeliberateFailure,
+    PHPSpec\Matcher\MatcherFactory;
 
 /**
  * @category   PHPSpec
@@ -35,7 +36,13 @@ use \PHPSpec\Runner\Reporter,
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class ExampleGroup
-{
+{ 
+    /**
+     * The Matcher Factory
+     *
+     * @var PHPSpec\Matcher\MatcherFactory
+     */
+    private $_matcherFactory;
     
     /**
      * Override for having it called once before all examples are ran in one
@@ -79,12 +86,14 @@ class ExampleGroup
      */
     public function spec()
     {
-        return call_user_func_array(
+        $interceptor = call_user_func_array(
             array(
                 '\PHPSpec\Specification\Interceptor\InterceptorFactory',
                 'create'),
             func_get_args()
         );
+        $interceptor->setMatcherFactory($this->getMatcherFactory());
+        return $interceptor;
     }
     
     /**
@@ -154,4 +163,27 @@ class ExampleGroup
     {
         return $this->double($class, $stubs, $arguments);
     }
+    
+    /**
+     * Sets the matcher factory
+     *
+     * @param PHPSpec\Matcher\MatcherFactory
+     */
+     public function setMatcherFactory(MatcherFactory $matcherFactory)
+     {
+         $this->_matcherFactory = $matcherFactory;
+     }
+     
+     /**
+      * Returns the Matcher Factory
+      *
+      *  @return PHPSpec\Matcher\MatcherFactory
+      */
+      public function getMatcherFactory()
+      {
+          if ($this->_matcherFactory === null) {
+              $this->_matcherFactory = new MatcherFactory;
+          }
+          return $this->_matcherFactory;
+      }
 }

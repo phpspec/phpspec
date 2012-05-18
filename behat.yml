@@ -1,6 +1,6 @@
 default:
   context:
-    class: VersionContext
-version:
+    class: CommandContext
+command:
   context:
-     class: VersionContext
+     class: CommandContext

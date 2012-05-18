@@ -211,6 +211,16 @@ class Reporter extends BaseReporter
     }
     
     /**
+     * Sets the formatters
+     * 
+     * @param array $formatters
+     */
+    public function setFormatters(array $formatters)
+    {
+        $this->_formatters = $formatters;
+    }
+    
+    /**
      * Set the formatter
      * 
      * @deprecated
@@ -218,7 +228,7 @@ class Reporter extends BaseReporter
      */
     public function setFormatter(Formatter $formatter)
     {
-        $this->_formatters[] = $formatter;
+        $this->_formatters = array($formatter);
         throw new DeprecatedNotice(
             "setFormatter is deprecate, please use addFormatter"
         );
