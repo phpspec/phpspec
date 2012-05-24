@@ -48,10 +48,10 @@ class MatcherFactory
      * @var array
      */
     protected $_builtinMatchers = array(
-        'be', 'beAnInstanceOf', 'beEmpty', 'beEqualTo', 'beFalse',
+        'be', 'beAnInstanceOf', 'beArray', 'beEmpty', 'beEqualTo', 'beFalse',
         'beGreaterThan', 'beGreaterThanOrEqualTo', 'beInteger',
         'beLessThan', 'beLessThanOrEqualTo', 'beNull', 'beString', 'beTrue',
-        'equal', 'match', 'throwException', 'beArray'
+        'containText', 'equal', 'haveKey', 'match', 'throwException'
     );
 
     /**
