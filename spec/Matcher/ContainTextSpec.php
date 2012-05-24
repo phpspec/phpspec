@@ -23,7 +23,8 @@ class DescribeContainText extends \PHPSpec\Context
        {
    	    $this->matcher->matches('bar');
    	    $this->matcher->getFailureMessage()->should->be(
-   	        'expected to contain text \'bar\', gotten text does not exist (using containText())'
+   	        "expected to contain:" . PHP_EOL .
+   	        "'some foo text', got:" . PHP_EOL . "'bar' (using containText())"
    	    );
    	}
 
@@ -31,7 +32,9 @@ class DescribeContainText extends \PHPSpec\Context
        {
    	    $this->matcher->matches('foo');
    		$this->matcher->getNegativeFailureMessage()->should->be(
-   		    'expected text \'foo\' not to exist (using containText())'
+   		    "expected text:" . PHP_EOL .
+   		    "'some foo text' to not be contained in:" . PHP_EOL .
+   		    "'foo' (using containText())"
    		);
    	}
 

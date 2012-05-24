@@ -86,8 +86,9 @@ class ContainText implements Matcher
      */
     public function getFailureMessage()
     {
-        return 'expected to contain text ' . var_export($this->_actual, true) .
-               ', gotten text does not exist (using containText())';
+        return 'expected to contain:' . PHP_EOL . '\'' . $this->_expected .
+               '\', got:' . PHP_EOL . var_export($this->_actual, true) .
+               ' (using containText())';
     }
 
     /**
@@ -97,8 +98,9 @@ class ContainText implements Matcher
      */
     public function getNegativeFailureMessage()
     {
-        return 'expected text ' . var_export($this->_actual, true) .
-               ' not to exist (using containText())';
+        return 'expected text:' . PHP_EOL .  var_export($this->_expected, true) .
+               ' to not be contained in:' . PHP_EOL . var_export($this->_actual, true) .
+               ' (using containText())';
     }
 
     /**
