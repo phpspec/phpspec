@@ -1,6 +1,0 @@
-default:
-  context:
-    class: CommandContext
-command:
-  context:
-     class: CommandContext

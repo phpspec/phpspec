@@ -4,8 +4,8 @@ Feature: Developer sees version
   I want a command line option that allows just that
   
   Scenario: Long option
-  When I use the command "phpspec --version"
-  Then I should see
+  When I run "phpspec --version"
+  Then the output should contain:
   """
   1.3.0beta
   

@@ -4,8 +4,8 @@ Feature: Developer sees help
   I want a command line help option
   
   Scenario: Long option
-  When I use the command "phpspec --help"
-  Then I should see
+  When I run "phpspec --help"
+  Then the output should contain:
   """
   Usage: phpspec (FILE|DIRECTORY) + [options]
       
@@ -28,8 +28,8 @@ Feature: Developer sees help
   """
 
   Scenario: Short option
-  When I use the command "phpspec -h"
-  Then I should see
+  When I run "phpspec -h"
+  Then the output should contain:
   """
   Usage: phpspec (FILE|DIRECTORY) + [options]
       
@@ -52,8 +52,8 @@ Feature: Developer sees help
   """
   
   Scenario: No option
-  When I use the command "phpspec"
-  Then I should see
+  When I run "phpspec"
+  Then the output should contain:
   """
   phpspec: No spec file given
   
