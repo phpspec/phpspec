@@ -186,4 +186,9 @@ class ExampleGroup
           }
           return $this->_matcherFactory;
       }
+      
+      public function behavesLikeAnotherObject()
+      {
+          return false;
+      }
 }
