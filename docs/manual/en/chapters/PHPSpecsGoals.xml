@@ -61,10 +61,10 @@
 
         <listitem>
           <para>Although PHPSpec is formulated as a framework to support
-          Behaviour-Driven Development it is not monumentally difference from
-          existing Unit Testing frameworks. It's execution and reporting is
+          Behaviour-Driven Development it is not monumentally different from
+          existing Unit Testing frameworks. Its execution and reporting is
           similar to most xUnit style frameworks in any language. Its API is
-          deliberately modelled on plain English and easy to
+          deliberately modelled on plain English and is easy to
           comprehend.</para>
         </listitem>
       </varlistentry>
@@ -74,9 +74,9 @@
 
         <listitem>
           <para>PHPSpec is derived from existing BDD frameworks for Java,
-          Smalltalk, .NET and Ruby. It's syntax borrows from these sources
+          Smalltalk, .NET and Ruby. Its syntax borrows from these sources
           with a dash of PHP uniqueness. We endeavour to keep the framework as
-          simple and flexible as possible. If it's not we encourage you to
+          simple and flexible as possible. If it's not, we encourage you to
           complain long and hard!</para>
         </listitem>
       </varlistentry>
@@ -86,10 +86,10 @@
 
         <listitem>
             <para>BDD is derived from several Agile and Extreme Programming
-            practices. PHPSpec is more limited given it's relative youth but
+            practices. PHPSpec is more limited given its relative youth but
             supporting features from Mock Objects (via Mockery) to mainstream
             Framework integration is already happening. For User story writing
-            and scenario specification PHPSpec can used in conjunction with
+            and scenario specification, PHPSpec can used in conjunction with
             Behat.</para>
         </listitem>
       </varlistentry>
@@ -99,7 +99,7 @@
 
         <listitem>
           <para>PHPSpec operates from the command line using the phpspec
-          command. It's operation is inspired by the simplicity of PEAR QA's
+          command. Its operation is inspired by the simplicity of PEAR QA's
           phpt execution. We'll expand the command line features over time as
           required by the user base.</para>
         </listitem>
