@@ -78,6 +78,8 @@ abstract class Interceptor
      * @var PHPSpec\Matcher\MatcherFactory
      */
     protected $_matcherFactory;
+    
+    protected $_matcher;
 
     /**
      * List of valid matchers

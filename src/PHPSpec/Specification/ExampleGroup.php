@@ -189,6 +189,6 @@ class ExampleGroup
       
       public function behavesLikeAnotherObject()
       {
-          return false;
+          return isset($this->itBehavesLike);
       }
 }
