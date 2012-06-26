@@ -153,6 +153,13 @@ class Object extends Interceptor
             "::$attribute", E_USER_NOTICE
         );
     }
+    
+    public function __set($property, $value)
+    {
+        if (is_object($this->getActualValue())) {
+            $this->getActualValue()->$property = $value;
+        }
+    }
 
     /**
      * Access the value of a unaccessible property and returns the
