@@ -12,7 +12,7 @@
     ],
     "bin": ["scripts/phpspec-composer.php"],
     "autoload": {
-        "psr-0": { "PHPSpec\\": "src/" }
+        "psr-0": { "PHPSpec": "src/" }
     },
     "require": {
         "php": ">=5.3.2",
