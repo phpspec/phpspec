@@ -2,8 +2,6 @@
 
 namespace Spec\PHPSpec\Matcher;
 
-require_once "PHPSpec/Matcher/Functions.php";
-
 class ExampleCustomMatcherMatchSuccessful extends \Exception {}
 class ExampleCustomMatcherMatchFailed extends \Exception {}
 

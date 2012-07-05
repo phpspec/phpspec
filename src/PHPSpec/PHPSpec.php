@@ -33,6 +33,8 @@ use \PHPSpec\Runner\Runner,
     \PHPSpec\Runner\Formatter\Factory as FormatterFactory,
     \PHPSpec\Runner\Formatter;
 
+require_once __DIR__ . '/Matcher/Functions.php';
+
 /**
  * @category   PHPSpec
  * @package    PHPSpec
