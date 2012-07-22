@@ -21,11 +21,14 @@
  */
 namespace PHPSpec\Specification;
 
-use PHPSpec\Runner\Reporter,
-    PHPSpec\Specification\Interceptor\InterceptorFactory,
-    PHPSpec\Specification\Result\Pending,
-    PHPSpec\Specification\Result\DeliberateFailure,
-    PHPSpec\Matcher\MatcherFactory;
+use PHPSpec\Specification\Interceptor\InterceptorFactory;
+use PHPSpec\Specification\Result\Pending;
+use PHPSpec\Specification\Result\DeliberateFailure;
+use PHPSpec\Specification\Exception as SpecificationException;
+
+use PHPSpec\Matcher\MatcherFactory;
+
+use PHPSpec\Runner\Reporter;
 
 /**
  * @category   PHPSpec
@@ -43,6 +46,8 @@ class ExampleGroup
      * @var PHPSpec\Matcher\MatcherFactory
      */
     private $_matcherFactory;
+    
+    public $itBehavesLike;
     
     /**
      * Override for having it called once before all examples are ran in one
@@ -189,6 +194,17 @@ class ExampleGroup
       
       public function behavesLikeAnotherObject()
       {
-          return isset($this->itBehavesLike);
+          if (!empty($this->itBehavesLike)) {
+              if (!is_subclass_of(
+                      $this->itBehavesLike,
+                      '\PHPSpec\Specification\SharedExample'
+                  )) {
+                  throw new SpecificationException(
+                      "$this->itBehavesLike is not a SharedExample"
+                  );
+              }
+              return true;
+          }
+          return false;
       }
 }
