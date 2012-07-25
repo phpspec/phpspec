@@ -275,7 +275,8 @@ abstract class Interceptor
     
     protected function interceptedHasAMagicCall()
     {
-        return method_exists($this->_actualValue, '__call');
+        return !$this->_actualValue instanceof ExampleGroup &&
+               method_exists($this->_actualValue, '__call');
     }
     
     protected function invokeInterceptedMagicCall($args)
