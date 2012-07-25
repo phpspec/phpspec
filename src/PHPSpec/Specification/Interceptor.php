@@ -80,18 +80,6 @@ abstract class Interceptor
     protected $_matcherFactory;
     
     protected $_matcher;
-
-    /**
-     * List of valid matchers
-     * 
-     * @var array
-     */
-    protected $_matchers = array(
-        'be', 'beAnInstanceOf', 'beEmpty', 'beEqualTo', 'beFalse',
-        'beGreaterThan', 'beGreaterThanOrEqualTo', 'beInteger',
-        'beLessThan', 'beLessThanOrEqualTo', 'beNull', 'beString', 'beTrue',
-        'equal', 'match', 'throwException', 'containText'
-    );
     
     /**
      * Creates an interceptor with the intercepted actual value
@@ -392,4 +380,5 @@ abstract class Interceptor
 
           return $this->_matcherFactory;
       }
+
 }
