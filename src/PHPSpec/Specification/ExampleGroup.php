@@ -243,10 +243,11 @@ class ExampleGroup
        */
       public function addSharedExample(SharedExample $sharedExample, $method)
       {
-          $this->sharedExamples[$method]['closure'] = function() use ($sharedExample, $method) {
+          $shared = &$this->sharedExamples[$method];
+          $shared['closure'] = function() use ($sharedExample, $method) {
               $sharedExample->$method();
           };
-          $this->sharedExamples[$method]['sharedExample'] = $sharedExample;
+          $shared['sharedExample'] = $sharedExample;
       }
       
       /**

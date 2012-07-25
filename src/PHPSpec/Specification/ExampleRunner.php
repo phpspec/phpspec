@@ -64,38 +64,63 @@ class ExampleRunner
     protected $_groupsFinished = array();
     
     /**
+     * Example group
+     *
+     * @var ExampleGroup
+     */
+    protected $_exampleGroup;
+    
+    /**
+     * Creates the runners
+     *
+     * @param ExampleGroup $exampleGroup
+     */
+    public function __construct(ExampleGroup $exampleGroup)
+    {
+        $this->_exampleGroup = $exampleGroup;
+    }
+    
+    /**
+     * Sets the example group
+     *
+     * @param ExampleGroup $exampleGroup 
+     */
+    public function setExampleGroup(ExampleGroup $exampleGroup)
+    {
+        $this->_exampleGroup = $exampleGroup;
+    }
+    
+    /**
      * Runs all examples inside an example group
      * 
-     * @param PHPSpec\Specification\ExampleGroup $exampleGroup
      * @param \PHPSpec\Runner\Reporter           $reporter
      */
-    public function run(ExampleGroup $exampleGroup, Reporter $reporter)
+    public function run(Reporter $reporter)
     {
         if ($this->_examplesToRun !== ExampleRunner::ALL_EXAMPLES) {
-            $this->checkGroupStarted($exampleGroup, $reporter);
-            $this->runExamples($exampleGroup, $reporter);
-            $this->checkGroupFinished($exampleGroup, $reporter);
+            $this->checkGroupStarted($reporter);
+            $this->runExamples($reporter);
+            $this->checkGroupFinished($reporter);
             return;
         }
 
-        $reporter->exampleGroupStarted($exampleGroup);
-        $this->runExamples($exampleGroup, $reporter);
-        $reporter->exampleGroupFinished($exampleGroup);
+        $reporter->exampleGroupStarted($this->_exampleGroup);
+        $this->runExamples($reporter);
+        $reporter->exampleGroupFinished($this->_exampleGroup);
     }
     
     /**
      * Checks if example group has started, if it hasn't then it will notify
      * the reporter that it has
      */
-    private function checkGroupStarted(ExampleGroup $exampleGroup,
-                                       Reporter $reporter)
+    private function checkGroupStarted(Reporter $reporter)
     {
-        $groupName = get_class($exampleGroup);
-        foreach ($this->getMethodNames($exampleGroup) as $method) {
+        $groupName = get_class($this->_exampleGroup);
+        foreach ($this->getMethodNames($this->_exampleGroup) as $method) {
             if ($this->methodIsAnExample($method) &&
                 $this->filterExample($method) &&
                 $this->groupHasntStarted($groupName)) {
-                $reporter->exampleGroupStarted($exampleGroup);
+                $reporter->exampleGroupStarted($this->_exampleGroup);
                 $this->_groupsStarted[] = $groupName;
             }
         }
@@ -105,15 +130,14 @@ class ExampleRunner
      * Checks if example group has finished, if it hasn't then it will notify
      * the reporter that it has
      */
-    private function checkGroupFinished(ExampleGroup $exampleGroup,
-                                       Reporter $reporter)
+    private function checkGroupFinished(Reporter $reporter)
     {
-        $groupName = get_class($exampleGroup);
-        foreach ($this->getMethodNames($exampleGroup) as $method) {
+        $groupName = get_class($this->_exampleGroup);
+        foreach ($this->getMethodNames($this->_exampleGroup) as $method) {
             if ($this->methodIsAnExample($method) &&
                 $this->filterExample($method) &&
                 $this->groupHasntFinished($groupName)) {
-                $reporter->exampleGroupFinished($exampleGroup);
+                $reporter->exampleGroupFinished($this->_exampleGroup);
                 $this->_groupsFinished[] = $groupName;
             }
         }
@@ -122,38 +146,34 @@ class ExampleRunner
     /**
      * Whether the example group has had any example ran
      *
-     * @param string $exampleGroup
      * @return boolean
      */
-    private function groupHasntStarted($exampleGroup)
+    private function groupHasntStarted()
     {
-        return !in_array($exampleGroup, $this->_groupsStarted);
+        return !in_array($this->_exampleGroup, $this->_groupsStarted);
     }
     
     /**
      * Whether the example group has finished running the examples
      *
-     * @param string $exampleGroup
      * @return boolean
      */
-    private function groupHasntFinished($exampleGroup)
+    private function groupHasntFinished()
     {
-        return !in_array($exampleGroup, $this->_groupsFinished);
+        return !in_array($this->_exampleGroup, $this->_groupsFinished);
     }
     
     /**
      * Creates and runs all examples (methods started with 'it')
      * 
-     * @param PHPSpec\Specification\ExampleGroup $exampleGroup
      * @param \PHPSpec\Runner\Reporter           $reporter
      */
-    protected function runExamples(ExampleGroup $exampleGroup,
-                                   Reporter $reporter)
+    protected function runExamples(Reporter $reporter)
     {
-        foreach ($this->getMethodNames($exampleGroup) as $methodName) {
+        foreach ($this->getMethodNames($this->_exampleGroup) as $methodName) {
             if ($this->methodIsAnExample($methodName) &&
                 $this->filterExample($methodName)) {
-                $this->createExample($exampleGroup, $methodName)
+                $this->createExample($methodName)
                      ->run($reporter);
             }
         }
@@ -162,22 +182,23 @@ class ExampleRunner
     /**
      * Gets the example group method names
      *
-     * @param ExampleGroup $exampleGroup 
      * @return array
      */
-    private function getMethodNames($exampleGroup)
+    private function getMethodNames()
     {
-        $object = new \ReflectionObject($exampleGroup);
+        $object = new \ReflectionObject($this->_exampleGroup);
         $methodNames = array();
 
-        if ($exampleGroup->behavesLikeAnotherObject()) {
-            $behaveLike = $exampleGroup->getBehavesLike();
+        if ($this->_exampleGroup->behavesLikeAnotherObject()) {
+            $behaveLike = $this->_exampleGroup->getBehavesLike();
             $sharedExamples = new \ReflectionObject(
                 new $behaveLike
             );
             foreach ($sharedExamples->getMethods() as $method){
                 $methodNames[] = $method->getName();
-                $exampleGroup->addSharedExample($sharedExamples->newInstance(), $method->getName());                
+                $this->_exampleGroup->addSharedExample(
+                    $sharedExamples->newInstance(), $method->getName()
+                );
             }
         }
         
@@ -214,13 +235,14 @@ class ExampleRunner
     /**
      * Creates an example
      * 
-     * @param PHPSpec\Specification\ExampleGroup $exampleGroup
      * @param string                             $example
      * @return \PHPSpec\Specification\Example
      */
-    protected function createExample(ExampleGroup $exampleGroup, $example)
+    protected function createExample($example)
     {
-        return $this->getExampleFactory()->create($exampleGroup, $example);
+        return $this->getExampleFactory()->create(
+            $this->_exampleGroup, $example
+        );
     }
     
     /**

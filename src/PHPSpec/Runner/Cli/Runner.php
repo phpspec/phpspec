@@ -90,6 +90,8 @@ class Runner implements \PHPSpec\Runner\Runner
      * @var \PHPSpec\Specification\ExampleRunner
      */
     protected $_exampleRunner;
+    
+    protected $_runOnly;
 
     /**
      * The error handler callback
@@ -141,8 +143,8 @@ class Runner implements \PHPSpec\Runner\Runner
             }
             $exampleGroup->setMatcherFactory($world->getMatcherFactory());
             $exampleGroup->beforeAll();
-            $this->getExampleRunner()->run(
-                $exampleGroup, $world->getReporter()
+            $this->getExampleRunner($exampleGroup)->run(
+                $world->getReporter()
             );
             $exampleGroup->afterAll();
         }
@@ -228,7 +230,7 @@ class Runner implements \PHPSpec\Runner\Runner
     protected function setExampleIntoRunner(World $world)
     {
         if ($world->getOption('example')) {
-            $this->getExampleRunner()->runOnly($world->getOption('example'));
+            $this->_runOnly = $world->getOption('example');
         }
     }
     
@@ -345,13 +347,21 @@ class Runner implements \PHPSpec\Runner\Runner
     /**
      * Gets the example runner
      * 
+     * @param ExampleGroup $exampleGroups
      * @return \PHPSpec\Specification\ExampleRunner
      */
-    public function getExampleRunner ()
+    public function getExampleRunner (ExampleGroup $exampleGroup)
     {
-        if ($this->_exampleRunner === null) {
-            $this->_exampleRunner = new ExampleRunner();
+        if (!isset($this->_exampleRunner)) {
+            $this->_exampleRunner = new ExampleRunner($exampleGroup);
         }
+        
+        $this->_exampleRunner->setExampleGroup($exampleGroup);
+        
+        if ($this->_runOnly) {
+            $this->_exampleRunner->runOnly($this->_runOnly);
+        }
+        
         return $this->_exampleRunner;
     }
     
