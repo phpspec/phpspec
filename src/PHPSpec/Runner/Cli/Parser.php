@@ -66,7 +66,8 @@ class Parser implements \PHPSpec\Runner\Parser
         'formatter',
         'e',
         'example',
-        'bootstrap'
+        'bootstrap',
+        'include-matchers'
     );
     
     /**
@@ -480,6 +481,6 @@ class Parser implements \PHPSpec\Runner\Parser
      */
      public function setIncludeMatchers($matchersPaths)
      {
-         $this->_options['include-matchers'] = $matchersPaths;
+         $this->_options['include-matchers'] = explode(':', $matchersPaths);
      }
 }

@@ -154,6 +154,18 @@ class WorldBuilder
         return $this;
     }
     
+    public function withIncludeMatchers($path)
+    {
+        $this->setupOptions(array(
+            'show' => array(),
+            'dont show' => array('version', 'h', 'help', 'c', 'b', 'failfast', 'example'),
+            'empty array' => array(),
+            'array' => array('include-matchers' => $path)
+            )
+        );
+        return $this;
+    }
+    
     public function build()
     {
         $this->setVersionAndHelp($this->version, $this->help)
@@ -188,6 +200,9 @@ class WorldBuilder
         $this->setOptionsAsFalse($this->world, $options['dont show']);
         $this->setOptionsAsTrue($this->world, $options['show']);
         $this->setOptionsAsEmptyArray($this->world, $options['empty array']);
+        if (isset($options['array'])) {
+            $this->setOptionsAsArray($this->world, $options['array']);
+        }
     }
     
     private function setOptionsAsFalse($world, $options)
@@ -201,6 +216,13 @@ class WorldBuilder
     {
         foreach ($options as $option) {
             $world->shouldReceive('getOption')->with($option)->andReturn(true);
+        }
+    }
+    
+    private function setOptionsAsArray($world, $options)
+    {
+        foreach ($options as $option => $value) {
+            $world->shouldReceive('getOption')->with($option)->andReturn(array($value));
         }
     }
     
