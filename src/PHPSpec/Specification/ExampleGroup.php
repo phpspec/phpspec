@@ -47,6 +47,8 @@ class ExampleGroup
      */
     private $_matcherFactory;
     
+    private $_macros;
+    
     /**
      * Shared example a example group can behave like
      *
@@ -204,6 +206,16 @@ class ExampleGroup
           return $this->_matcherFactory;
       }
       
+      public function setMacros($macros)
+      {
+          $this->_macros = $macros;
+      }
+      
+      public function getMacros()
+      {
+          return $this->_macros;
+      }
+      
       /**
        * Checks if the example group behaves like a shared example
        *
@@ -289,5 +301,29 @@ class ExampleGroup
           if (method_exists($sharedExample, 'after')) {
               call_user_func(array($sharedExample, 'after'));
           }
+      }
+      
+      public function __call($method, $args)
+      {
+        if ($this->interceptedHasAMacro($method)) {
+            return $this->runMacro($method, $args);
+        }
+      }
+      
+      protected function interceptedHasAMacro($method)
+      {
+          include_once ($this->_macros);
+          $macro = basename($this->_macros, '.php');
+          $macro = new $macro;
+          return method_exists($macro, $method);
+      }
+      
+      protected function runMacro($method, $args)
+      {
+          include_once ($this->_macros);
+          $macro = basename($this->_macros, '.php');
+          $macro = new $macro;
+          $macro->setExampleGroup($this);
+          call_user_func_array(array($macro, $method), $args);
       }
 }

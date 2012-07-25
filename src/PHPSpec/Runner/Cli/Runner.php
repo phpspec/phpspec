@@ -142,6 +142,7 @@ class Runner implements \PHPSpec\Runner\Runner
                 continue;
             }
             $exampleGroup->setMatcherFactory($world->getMatcherFactory());
+            $exampleGroup->setMacros($world->getMacros());
             $exampleGroup->beforeAll();
             $this->getExampleRunner($exampleGroup)->run(
                 $world->getReporter()

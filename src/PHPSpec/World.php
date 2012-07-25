@@ -65,6 +65,13 @@ class World
     private $_matcherFactory;
     
     /**
+     * Macros file
+     *
+     * @var string
+     */
+    protected $_macrosFile;
+    
+    /**
      * Gets a option
      * 
      * @param string $name
@@ -264,5 +271,25 @@ class World
             );
          }
          return $this->_matcherFactory;
+     }
+     
+     /**
+      * Includes macros
+      *
+      * @param string $macrosFile
+      */
+     public function includeMacros($macrosFile)
+     {
+         $this->_macrosFile = $macrosFile;
+     }
+     
+     /**
+      * Retrieves the macros file
+      *
+      * @return string
+      */
+     public function getMacros()
+     {
+         return $this->_macrosFile;
      }
 }
