@@ -246,6 +246,9 @@ class World
         
         $paths = array_merge($this->getOption('include-matchers'), $matcherPaths);
         $this->setOption('include-matchers', $paths);
+        $this->_matcherFactory = new MatcherFactory(
+            $this->getOption('include-matchers')
+        );
     }
     
     /**

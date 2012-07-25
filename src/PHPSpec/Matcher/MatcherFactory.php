@@ -47,12 +47,7 @@ class MatcherFactory
      * 
      * @var array
      */
-    protected $_builtinMatchers = array(
-        'be', 'beAnInstanceOf', 'beArray', 'beEmpty', 'beEqualTo', 'beFalse',
-        'beGreaterThan', 'beGreaterThanOrEqualTo', 'beInteger',
-        'beLessThan', 'beLessThanOrEqualTo', 'beNull', 'beString', 'beTrue',
-        'containText', 'equal', 'haveKey', 'match', 'throwException'
-    );
+    protected $_builtinMatchers = array();
 
     /**
      * Matchers registry
@@ -66,7 +61,7 @@ class MatcherFactory
      *
      * @var string
      */
-    protected $_buitinsNamespace;
+    protected $_builtInNamespace;
 
     /**
      * Matcher factory is created with a path to matchers
@@ -76,7 +71,7 @@ class MatcherFactory
     public function __construct(array $pathsToMatchers = array())
     {
         $this->_pathsToMatchers = $pathsToMatchers;
-        $this->_buitinsNamespace = '\PHPSpec\Matcher\\';
+        $this->_builtInNamespace = '\PHPSpec\Matcher\\';
     }
 
     /**
@@ -139,12 +134,37 @@ class MatcherFactory
      */
     private function _addBuiltinMatchersToRegistry()
     {
-        foreach ($this->_builtinMatchers as $buitinMatcher) {
-            $this->_matchers[$buitinMatcher] = array(
-                'namespace' => $this->_buitinsNamespace,
+        if (empty($this->_builtInMatchers)) {
+            $this->_builtInMatchers = $this->loadBuiltInMatchers();
+        }
+        
+        foreach ($this->_builtInMatchers as $builtinMatcher) {
+            $this->_matchers[$builtinMatcher] = array(
+                'namespace' => $this->_builtInNamespace,
                 'path' => false
             );
         }
+    }
+    
+    protected function loadBuiltInMatchers()
+    {
+        $matchers = array();
+        $dir = __DIR__;
+        do {
+            $dir = realpath(dirname($dir));
+        } while (basename($dir) !== 'PHPSpec');
+        
+        $matcherDir = $dir . DIRECTORY_SEPARATOR . 'Matcher';
+        
+        $files = glob($matcherDir . DIRECTORY_SEPARATOR . '*.php');
+        foreach ($files as $file) {
+            $content = file_get_contents($file);
+            if (preg_match('/implements Matcher/', $content)) {
+                $fileName = basename($matcherDir . DIRECTORY_SEPARATOR . $file, '.php');
+                $matchers[] = strtolower($fileName[0]) . substr($fileName, 1);
+            }
+        }
+        return $matchers;
     }
 
     /**
