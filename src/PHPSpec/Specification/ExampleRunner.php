@@ -165,10 +165,22 @@ class ExampleRunner
      * @param ExampleGroup $exampleGroup 
      * @return array
      */
-    private function getMethodNames(ExampleGroup $exampleGroup)
+    private function getMethodNames($exampleGroup)
     {
         $object = new \ReflectionObject($exampleGroup);
         $methodNames = array();
+
+        if ($exampleGroup->behavesLikeAnotherObject()) {
+            $behaveLike = $exampleGroup->getBehavesLike();
+            $sharedExamples = new \ReflectionObject(
+                new $behaveLike
+            );
+            foreach ($sharedExamples->getMethods() as $method){
+                $methodNames[] = $method->getName();
+                $exampleGroup->addSharedExample($sharedExamples->newInstance(), $method->getName());                
+            }
+        }
+        
         foreach ($object->getMethods() as $method) {
             $methodNames[] = $method->getName();
         }

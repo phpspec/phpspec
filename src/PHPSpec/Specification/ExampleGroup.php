@@ -47,7 +47,19 @@ class ExampleGroup
      */
     private $_matcherFactory;
     
+    /**
+     * Shared example a example group can behave like
+     *
+     * @var string
+     */
     public $itBehavesLike;
+    
+    /**
+     * Shared Examples
+     *
+     * @var array[string name of the shared example]<Closure>
+     */
+    protected $sharedExamples = array();
     
     /**
      * Override for having it called once before all examples are ran in one
@@ -192,6 +204,11 @@ class ExampleGroup
           return $this->_matcherFactory;
       }
       
+      /**
+       * Checks if the example group behaves like a shared example
+       *
+       * @return boolean
+       */
       public function behavesLikeAnotherObject()
       {
           if (!empty($this->itBehavesLike)) {
@@ -206,5 +223,70 @@ class ExampleGroup
               return true;
           }
           return false;
+      }
+      
+      /**
+       * Returns the shared examples classes this example group behaves like
+       *
+       * @return string|array
+       */
+      public function getBehavesLike()
+      {
+          return $this->itBehavesLike;
+      }
+      
+      /**
+       * Adds a shared example to example group
+       *
+       * @param SharedExample $sharedExample 
+       * @param string $method
+       */
+      public function addSharedExample(SharedExample $sharedExample, $method)
+      {
+          $this->sharedExamples[$method]['closure'] = function() use ($sharedExample, $method) {
+              $sharedExample->$method();
+          };
+          $this->sharedExamples[$method]['sharedExample'] = $sharedExample;
+      }
+      
+      /**
+       * Checks to see an example exists in a shared example
+       *
+       * @param string $example 
+       * @return boolean
+       */
+      public function hasSharedExample($example)
+      {
+          return isset($this->sharedExamples[$example]);
+      }
+      
+      /**
+       * The the shared example for a example
+       *
+       * @param string $example 
+       * @return SharedExample
+       */
+      public function getSharedExample($example)
+      {
+          return $this->sharedExamples[$example]['sharedExample'];
+      }
+      
+      /**
+       * Runs the Shared Exammple
+       *
+       * @param string $example
+       */
+      public function runSharedExample($example)
+      {
+          $sharedExample = $this->getSharedExample($example);
+          if (method_exists($sharedExample, 'before')) {
+              call_user_func(array($sharedExample, 'before'));
+          }
+          
+          $this->sharedExamples[$example]['closure']();
+          
+          if (method_exists($sharedExample, 'after')) {
+              call_user_func(array($sharedExample, 'after'));
+          }
       }
 }

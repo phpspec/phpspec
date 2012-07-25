@@ -15,20 +15,20 @@ class DescribeExampleGroup extends \PHPSpec\Context
         $this->example = $this->spec(new \DescribeSomeContext);
     }
     
-    public function itDoesntBehaveLikeAnotherObjectByDefault()
+    function itDoesntBehaveLikeAnotherObjectByDefault()
     {
         
         $this->example->behavesLikeAnotherObject()->should->beFalse();
     }
     
-    public function itCanBehaveLikeAnotherObject()
+    function itCanBehaveLikeAnotherObject()
     {
         $this->example = $this->spec(clone $this);
         $this->example->itBehavesLike = '\SomeSharedExample';
         $this->example->behavesLikeAnotherObject()->should->beTrue();
     }
     
-    public function itCantBehaveLikeAnObjectThatIsNotASharedExample()
+    function itCantBehaveLikeAnObjectThatIsNotASharedExample()
     {
         $example = new \DescribeSomeContext;
         $example->itBehavesLike = '\SomethingElse';

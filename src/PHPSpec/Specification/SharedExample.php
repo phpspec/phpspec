@@ -29,6 +29,6 @@ namespace PHPSpec\Specification;
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class SharedExample
+abstract class SharedExample extends ExampleGroup
 {
 }
