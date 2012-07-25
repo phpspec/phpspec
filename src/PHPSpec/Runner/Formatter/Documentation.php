@@ -21,6 +21,8 @@
  */
 namespace PHPSpec\Runner\Formatter;
 
+use PHPSpec\Util\Filter;
+
 /**
  * @category   PHPSpec
  * @package    PHPSpec
@@ -31,12 +33,19 @@ namespace PHPSpec\Runner\Formatter;
  */
 class Documentation extends Progress
 {
+    protected $ident = '';
+    
     /**
      * Implements observer events listener
      */
     public function update(\SplSubject $subject, $reporterEvent = null)
     {
         switch($reporterEvent->event) {
+            case 'startShared':
+                $shared = Filter::camelCaseToSpace($reporterEvent->example);
+                $this->ident = '  ';
+                $this->putln("  behaves like " . $shared);
+                break;
             case 'start':
                 $this->putln($reporterEvent->example);
                 break;
@@ -45,6 +54,9 @@ class Documentation extends Progress
                     $reporterEvent->status, $reporterEvent->example,
                     $reporterEvent->message
                 );
+                break;
+            case 'finishShared':
+                $this->ident = '';
                 break;
             case 'exit':
                 $this->output();
@@ -64,23 +76,23 @@ class Documentation extends Progress
     {
         switch($status) {
             case '.':
-                $this->put("  " . $this->green($example));
+                $this->put("  " . $this->ident . $this->green($example));
                 break;
             case '*':
                 $this->put(
-                    "  " . $this->yellow($example . " (PENDING: $message)")
+                    "  " . $this->ident . $this->yellow($example . " (PENDING: $message)")
                 );
                 break;
             case 'E':
                 static $error = 1;
                 $this->put(
-                    "  " . $this->red($example . " (ERROR - " . ($error++) .")")
+                    "  " . $this->ident . $this->red($example . " (ERROR - " . ($error++) .")")
                 );
                 break;
             case 'F':
                 static $failure = 1;
                 $this->put(
-                    "  " . $this->red(
+                    "  " . $this->ident . $this->red(
                         $example . " (FAILED - " . ($failure++) .")"
                     )
                 );

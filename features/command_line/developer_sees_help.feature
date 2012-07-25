@@ -55,6 +55,6 @@ Feature: Developer sees help
   When I run "phpspec"
   Then the output should contain:
   """
-  phpspec: No spec file given
+  phpspec: Invalid number of arguments. Type -h for help
   
   """

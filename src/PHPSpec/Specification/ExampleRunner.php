@@ -21,7 +21,9 @@
  */
 namespace PHPSpec\Specification;
 
-use \PHPSpec\Runner\Reporter;
+use PHPSpec\Specification\SharedExample\Example as Shared;
+
+use PHPSpec\Runner\Reporter;
 
 /**
  * @category   PHPSpec
@@ -133,7 +135,7 @@ class ExampleRunner
     private function checkGroupFinished(Reporter $reporter)
     {
         $groupName = get_class($this->_exampleGroup);
-        foreach ($this->getMethodNames($this->_exampleGroup) as $method) {
+        foreach ($this->getMethodNames($reporter) as $method) {
             if ($this->methodIsAnExample($method) &&
                 $this->filterExample($method) &&
                 $this->groupHasntFinished($groupName)) {
@@ -170,11 +172,23 @@ class ExampleRunner
      */
     protected function runExamples(Reporter $reporter)
     {
-        foreach ($this->getMethodNames($this->_exampleGroup) as $methodName) {
+        foreach ($this->getMethodNames($reporter) as $methodName) {
             if ($this->methodIsAnExample($methodName) &&
                 $this->filterExample($methodName)) {
-                $this->createExample($methodName)
-                     ->run($reporter);
+                $example = $this->createExample($methodName);
+                
+                if ($this->_exampleGroup->behavesLikeAnotherObject()) {
+                    if (!$example instanceof Shared) {
+                        $reporter->sharedExampleFinished(new $sharedExample);
+                    }
+                }
+                
+                if ($this->_exampleGroup->behavesLikeAnotherObject()) {
+                    $sharedExample = $this->_exampleGroup->getBehavesLike();
+                    $reporter->sharedExampleStarted(new $sharedExample);
+                }
+                
+                $example->run($reporter);
             }
         }
     }
@@ -182,9 +196,10 @@ class ExampleRunner
     /**
      * Gets the example group method names
      *
+     * @param $reporter Reporter
      * @return array
      */
-    private function getMethodNames()
+    private function getMethodNames(Reporter $reporter)
     {
         $object = new \ReflectionObject($this->_exampleGroup);
         $methodNames = array();

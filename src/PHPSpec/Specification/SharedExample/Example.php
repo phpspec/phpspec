@@ -5,6 +5,8 @@ namespace PHPSpec\Specification\SharedExample;
 use PHPSpec\Specification\Example as SpecificationExample;
 use PHPSpec\Specification\Result\Pending;
 
+use PHPSpec\Runner\Reporter;
+
 use PHPSpec\Util\ReflectionMethod;
 
 class Example extends SpecificationExample
