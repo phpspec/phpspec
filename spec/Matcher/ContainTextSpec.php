@@ -10,41 +10,41 @@ class DescribeContainText extends \PHPSpec\Context
 
     function before()
     {
-        $this->matcher = $this->spec(new ContainText('some foo text'));
-        $this->matcher->matches('foo');
+        $this->matcher = $this->spec(new ContainText('foo'));
+        $this->matcher->matches('some text');
     }
 
     function itShouldReturnADescriptionWithExpectedValue()
     {
-        $this->matcher->getDescription()->should->be('contain text \'foo\'');
+        $this->matcher->getDescription()->should->be('contain text \'some text\'');
     }
 
     function itShouldReturnAMeaningfulFailureMessageIfRequested()
-       {
-   	    $this->matcher->matches('bar');
-   	    $this->matcher->getFailureMessage()->should->be(
-   	        "expected to contain:" . PHP_EOL .
-   	        "'some foo text', got:" . PHP_EOL . "'bar' (using containText())"
-   	    );
-   	}
+    {
+        $this->matcher->matches('bar');
+        $this->matcher->getFailureMessage()->should->be(
+            "expected to contain:" . PHP_EOL .
+            "'foo', got:" . PHP_EOL . "'bar' (using containText())"
+        );
+    }
 
-   	function itShouldReturnAMeaningulNegativeFailureMessageIfRequired()
-       {
-   	    $this->matcher->matches('foo');
-   		$this->matcher->getNegativeFailureMessage()->should->be(
-   		    "expected text:" . PHP_EOL .
-   		    "'some foo text' to not be contained in:" . PHP_EOL .
-   		    "'foo' (using containText())"
-   		);
-   	}
-
-   	function itReturnsTrueIfTextExists()
-   	{
-   	    $this->matcher->matches('foo')->should->beTrue();
-   	}
-
-   	function itReturnsFalseIfTextDoesNotExist()
-   	{
-   	    $this->matcher->matches('zoo')->should->beFalse();
-   	}
+    function itShouldReturnAMeaningulNegativeFailureMessageIfRequired()
+    {
+        $this->matcher->matches('some foo text');
+        $this->matcher->getNegativeFailureMessage()->should->be(
+            "expected text:" . PHP_EOL .
+            "'foo' to not be contained in:" . PHP_EOL .
+            "'some foo text' (using containText())"
+        );
+    }
+    
+    function itReturnsTrueIfTextExists()
+    {
+        $this->matcher->matches('foo')->should->beTrue();
+    }
+    
+    function itReturnsFalseIfTextDoesNotExist()
+    {
+        $this->matcher->matches('zoo')->should->beFalse();
+    }
 }
