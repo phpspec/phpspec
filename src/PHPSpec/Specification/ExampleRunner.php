@@ -118,7 +118,7 @@ class ExampleRunner
     private function checkGroupStarted(Reporter $reporter)
     {
         $groupName = get_class($this->_exampleGroup);
-        foreach ($this->getMethodNames($this->_exampleGroup) as $method) {
+        foreach ($this->getMethodNames($reporter) as $method) {
             if ($this->methodIsAnExample($method) &&
                 $this->filterExample($method) &&
                 $this->groupHasntStarted($groupName)) {
