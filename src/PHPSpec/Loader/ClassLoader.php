@@ -86,7 +86,7 @@ class ClassLoader
 
         $this->includeSpec($file, $class);
         $specClass = new \ReflectionClass($this->_namespace . $class);
-        
+
         $this->_namespace = '';
         $specObject = $specClass->newInstance();
         return $specObject;
@@ -122,7 +122,7 @@ class ClassLoader
         
         $classes = get_declared_classes();
         foreach ($classes as $declared) {
-            if ($this->foundClass($declared, $class)) {
+            if ($this->foundClass($declared, $class, $file)) {
                 return true;
             }
         }
@@ -139,11 +139,11 @@ class ClassLoader
      * @param string $class
      * @return boolean
      */
-    private function foundClass($declared, $class)
+    private function foundClass($declared, $class, $file)
     {
         return $this->declaredContainsClassName($declared, $class)
                && ($this->declaredAndClassNamesAreTheSame($declared, $class)
-               || $this->differenceIsANamespace($declared, $class));
+               || $this->differenceIsANamespace($declared, $class, $file));
     }
     
     /**
@@ -178,14 +178,14 @@ class ClassLoader
      * @param string $class
      * @return boolean
      */
-    private function differenceIsANamespace($declared, $class)
+    private function differenceIsANamespace($declared, $class, $file)
     {
         $differenceIsANamespace = substr(
             $declared, 0 - strlen($class)
         ) === $class;
         if ($differenceIsANamespace) {
             $this->_namespace = $this->extractNamespace(
-                $declared, $class
+                $declared, $class, $file
             );
         }
         return $differenceIsANamespace;
@@ -199,9 +199,11 @@ class ClassLoader
      * @param string $class
      * @return string
      */
-    private function extractNamespace($declared, $class)
+    private function extractNamespace($declared, $class, $file)
     {
-        return substr($declared, 0, strlen($declared) - strlen($class));
+        $source = file_get_contents($file);
+        preg_match('/namespace (.*);/', $source, $matches);
+        return isset($matches[1]) ? $matches[1] . "\\" : '';
     }
     
     /**
