@@ -150,9 +150,9 @@ class ExampleGroup
      */
     public function double($class = 'stdClass')
     {
+        $args = func_num_args() ? func_get_args() : array($class);
         if (class_exists('Mockery')) {
-            $double = \Mockery::mock($class);
-            return $double;
+            return call_user_func_array(array('\Mockery', 'mock'), $args);
         }
         throw new \PHPSpec\Exception('Mockery is not installed');
     }
@@ -167,7 +167,8 @@ class ExampleGroup
      */
     public function mock($class = 'stdClass')
     {
-        return $this->double($class);
+        $args = func_num_args() ? func_get_args() : array($class);
+        return call_user_func_array(array($this, 'double'), $args);
     }
 
     /**
@@ -180,7 +181,8 @@ class ExampleGroup
      */
     public function stub($class = 'stdClass')
     {
-        return $this->double($class, $stubs, $arguments);
+        $args = func_num_args() ? func_get_args() : array($class);
+        return call_user_func_array(array($this, 'double'), $args);
     }
     
     /**
@@ -206,11 +208,21 @@ class ExampleGroup
           return $this->_matcherFactory;
       }
       
+      /**
+       * Sets the macros path
+       *
+       * @param string $macros
+       */
       public function setMacros($macros)
       {
           $this->_macros = $macros;
       }
       
+      /**
+       * Gets the macros path
+       *
+       * @return string
+       */
       public function getMacros()
       {
           return $this->_macros;
@@ -303,6 +315,13 @@ class ExampleGroup
           }
       }
       
+      /**
+       * Proxies calls to macro
+       *
+       * @param string $method 
+       * @param string $args 
+       * @return mixed
+       */
       public function __call($method, $args)
       {
         if ($this->interceptedHasAMacro($method)) {
@@ -310,14 +329,31 @@ class ExampleGroup
         }
       }
       
+      /**
+       * Checks weather there are macros to be made available and that the
+       * macro with the name of the method exists
+       *
+       * @param string $method 
+       * @return boolean
+       */
       protected function interceptedHasAMacro($method)
       {
+          if (!file_exists($this->_macros) || !is_readable($this->_macros)) {
+              return false;
+          }
           include_once ($this->_macros);
           $macro = basename($this->_macros, '.php');
           $macro = new $macro;
           return method_exists($macro, $method);
       }
       
+      /**
+       * Runs the macro
+       *
+       * @param string $method 
+       * @param string $args 
+       * @return mixed
+       */
       protected function runMacro($method, $args)
       {
           include_once ($this->_macros);
