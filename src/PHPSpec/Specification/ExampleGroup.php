@@ -47,6 +47,11 @@ class ExampleGroup
      */
     private $_matcherFactory;
     
+    /**
+     * Path to macro file
+     *
+     * @var string
+     */
     private $_macros;
     
     /**
