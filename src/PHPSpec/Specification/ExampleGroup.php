@@ -332,6 +332,7 @@ class ExampleGroup
         if ($this->interceptedHasAMacro($method)) {
             return $this->runMacro($method, $args);
         }
+        throw new \PHPSpec\Exception("Invalid macro $method");
       }
       
       /**
