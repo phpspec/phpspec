@@ -148,7 +148,7 @@ abstract class Interceptor
         }
                 
         if ($this->interceptedHasAMagicCall()) {
-            return $this->invokeInterceptedMagicCall($args);
+            return $this->invokeInterceptedMagicCall($method, $args);
         }
         
         if ($this->callingExpectationsAsMethods($method)) {
@@ -279,10 +279,10 @@ abstract class Interceptor
                method_exists($this->_actualValue, '__call');
     }
     
-    protected function invokeInterceptedMagicCall($args)
+    protected function invokeInterceptedMagicCall($method, $args)
     {
         $intercepted = new \ReflectionMethod($this->_actualValue, '__call');
-        return $intercepted->invokeArgs($this->_actualValue, $args);
+        return $intercepted->invokeArgs($this->_actualValue, array($method, $args));
     }
     
     protected function interceptedIsNotAnObject()
