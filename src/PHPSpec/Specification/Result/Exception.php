@@ -42,6 +42,13 @@ class Exception extends Result
     protected $_exceptionClass;
     
     /**
+     * The exception object
+     *
+     * @var \Exception
+     */
+    protected $_exceptionObject;
+    
+    /**
      * \PHPSpec\Specification\Resutl\Exception is created with an exception
      * 
      * @param \Exception $exception
@@ -49,6 +56,7 @@ class Exception extends Result
     public function __construct(\Exception $exception)
     {
         $this->_exceptionClass = get_class($exception);
+        $this->_exceptionObject = $exception;
         parent::__construct($exception->getMessage());
     }
     

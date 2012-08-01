@@ -171,13 +171,18 @@
  */
 ini_set('display_errors', 1);
 error_reporting(E_ALL|E_STRICT);
+ini_set('xdebug.show_exception_trace', 'Off');
 
 require_once 'PHPSpec/Loader/UniversalClassLoader.php';
 include_once 'Mockery.php';
+
 $paths = explode(':', ini_get('include_path'));
 $loader = new \PHPSpec\Loader\UniversalClassLoader();
 $loader->registerNamespace('PHPSpec', $paths);
 $loader->registerNamespace('Mockery', $paths);
+
+$loader->registerPrefix('Text_', $paths);
+
 $loader->register();
 
 $phpspec = new \PHPSpec\PHPSpec($argv);

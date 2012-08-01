@@ -21,7 +21,8 @@
  */
 namespace PHPSpec\Specification\Interceptor;
 
-use \PHPSpec\Specification\Interceptor;
+use PHPSpec\Specification\Interceptor;
+use PHPSpec\Matcher\InvalidMatcher;
 
 /**
  * @category   PHPSpec
@@ -67,8 +68,13 @@ class Object extends Interceptor
                 call_user_func_array(array($object, $method), $args)
             );
         }
+        
+        if ($method === 'property') {
+            return $this->accessProperty($args[0]);
+        }
+        
         $class = get_class($object);
-        throw new \BadMethodCallException(
+        throw new InvalidMatcher(
             "Call to undefined method {$class}::{$method}"
         );
     }
@@ -115,7 +121,8 @@ class Object extends Interceptor
         }
         
         $this->setExpectedValue($args);
-        $this->createMatcher('beTrue');
+        $this->_matcher = $this->getMatcherFactory()
+                               ->create('beTrue', array(true));
         $this->setActualValue(
             call_user_func_array(array($this->_actualValue, $predicate), $args)
         );
@@ -141,9 +148,66 @@ class Object extends Interceptor
                 $this->getActualValue()->$attribute
             );
         }
+        
         trigger_error(
             "Undefined property: " . get_class($this->getActualValue()) .
             "::$attribute", E_USER_NOTICE
         );
+    }
+    
+    public function __set($property, $value)
+    {
+        if (is_object($this->getActualValue())) {
+            $this->getActualValue()->$property = $value;
+        }
+    }
+
+    /**
+     * Access the value of a unaccessible property and returns the
+     * intercepted value
+     *
+     * @param string $property 
+     * @return \PHPSpec\Specification\Interceptor 
+     */
+    private function accessProperty($property)
+    {
+        $classes = $this->getClassAndParents();
+        $objectAsArray = (array)$this->getActualValue();
+        $protected = "\0*\0" . $property;
+        
+        if (array_key_exists($protected, $objectAsArray)) {
+            return InterceptorFactory::create($objectAsArray[$protected]);
+        }
+        
+        foreach ($classes as $class) {
+            $private = sprintf("\0%s\0%s", $class, $property);
+            
+            if (array_key_exists($private, $objectAsArray)) {
+                return InterceptorFactory::create($objectAsArray[$private]);
+            }
+        }
+        
+        $class = get_class($this->getActualValue());
+        trigger_error(
+            "Undefined property: $class::\$$property", E_USER_NOTICE
+        );
+    }
+    
+    /**
+     * Scans all super classes of a class and returns them in an array
+     *
+     * @return array 
+     */
+    private function getClassAndParents()
+    {
+        $parents = array();
+        
+        $class = new \ReflectionClass($this->getActualValue());
+        $classes[] = $class->getName();
+        
+        while ($class = $class->getParentClass()) {
+            $classes[] = $class->getName();
+        }
+        return $classes;
     }
 }

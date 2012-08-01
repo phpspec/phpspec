@@ -21,7 +21,7 @@
  */
 namespace PHPSpec\Util;
 
-use \PHPSpec\Specification\Interceptor\InterceptorFactory;
+use PHPSpec\Specification\Interceptor\InterceptorFactory;
 
 /**
  * @category   PHPSpec

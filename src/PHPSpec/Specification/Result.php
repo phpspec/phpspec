@@ -21,8 +21,8 @@
  */
 namespace PHPSpec\Specification;
 
-use \PHPSpec\Exception,
-    \PHPSpec\Util\Backtrace;
+use PHPSpec\Exception;
+use PHPSpec\Util\Backtrace;
 
 /**
  * @category   PHPSpec
@@ -42,7 +42,18 @@ abstract class Result extends Exception
      */
     public function getSnippet($index = 0)
     {
-        return Backtrace::code($this->getTrace(), $index);
+        if (isset($this->_exceptionObject) &&
+            method_exists($this->_exceptionObject, 'getSnippet')) {
+            return $this->_exceptionObject->getSnippet($index);
+        }
+        // return Backtrace::code($this->getTrace(), $index);
+        $trace = trim($this->prettyTrace(1));
+        if (empty($trace)) {
+            return Backtrace::code($this->getTrace(), 0);
+        }
+        $trace = ltrim($trace, '#');
+        list ($file, $line) = explode(':', $trace);
+        return Backtrace::readLine(trim($file), trim($line));
     }
     
     /**

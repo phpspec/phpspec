@@ -21,13 +21,7 @@
  */
 namespace PHPSpec\Specification;
 
-use \PHPSpec\Runner\Reporter,
-    \PHPSpec\Specification\Result\Exception,
-    \PHPSpec\Specification\Result\Error,
-    \PHPSpec\Specification\Result\Pending,
-    \PHPSpec\Specification\Result\DeliberateFailure,
-    \PHPSpec\Specification\Result\Failure,
-    \PHPSpec\Util\Filter;
+use PHPSpec\Runner\Reporter;
 
 /**
  * @category   PHPSpec
@@ -37,140 +31,15 @@ use \PHPSpec\Runner\Reporter,
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class Example
+class Example extends BaseExample
 {
     /**
-     * The example method name
-     *
-     * @var string
-     */
-    protected $_methodName;
-    /**
-     * The example group
-     *
-     * @var PHPSpec\Specification\ExampleGroup
-     */
-    protected $_exampleGroup;
-    /**
-     * Represents the execution time of the example
-     * 
-     * @var integer
-     */
-    protected $_executionTime;
-    /**
-     * Example keeps a reference to the example group and is created with the
-     * example as a reflected method
-     * 
-     * @param PHPSpec\Specification\ExampleGroup $exampleGroup
-     * @param string                             $methodName
-     */
-    public function __construct (ExampleGroup $exampleGroup, $methodName)
-    {
-        $this->_methodName = $methodName;
-        $this->_exampleGroup = $exampleGroup;
-    }
-    /**
      * Runs the example
-     * 
-     * @param \PHPSpec\Runner\Reporter $reporter
-     */
-    public function run (Reporter $reporter)
-    {
-        try {
-            $methodName = $this->_methodName;
-            $startTime = microtime(true);
-            call_user_func(array($this->_exampleGroup, 'before'));
-            call_user_func(array($this->_exampleGroup, $methodName));
-            $this->closeExample($startTime);
-        } catch (Failure $failure) {
-            $reporter->addFailure($this, $failure);
-            $this->closeExample($startTime);
-            return;
-        } catch (Pending $pending) {
-            $reporter->addPending($this, $pending);
-            $this->closeExample($startTime);
-            return;
-        } catch (Error $error) {
-            $reporter->addError($this, $error);
-            $this->closeExample($startTime);
-            return;
-        } catch (\Exception $e) {
-            $reporter->addException($this, new Exception($e));
-            $this->closeExample($startTime);
-            return;
-        }
-        $reporter->addPass($this);
-    }
-    
-    /**
-     * Gets the description in the following format:
-     * 
-     * DescribeStringCalculator::itReturnZeroWithNoArguments
-     * becomes
-     * StringCalculator returns zero with no argument
-     * 
-     * @return string
-     */
-    public function getDescription ()
-    {
-        $class = str_replace('Describe', '', get_class($this->_exampleGroup));
-        return "$class " . $this->getSpecificationText();
-    }
-    /**
-     * Return the specification text taken from method name
-     * 
-     * itReturnZeroWithNoArguments
-     * becomes
-     * returns zero with no argument
-     * 
-     * @param string $methodName
-     * @return string
-     */
-    public function getSpecificationText ()
-    {
-        $methodName = substr($this->_methodName, 2);
-        return Filter::camelCaseToSpace($methodName);
-    }
-    /**
-     * Returns the method name of the testcase. This method is used in the
-     * junit formatter.
      *
-     * @return string
+     * @param Reporter $reporter Here for the Interface
      */
-    public function getMethodName ()
+    protected function runExample(Reporter $reporter)
     {
-        return $this->_methodName;
-    }
-    /**
-     * Returns the example group. This method is used in the junit formatter.
-     * 
-     * @return ExampleGroup|PHPSpec\Specification\ExampleGroup
-     */
-    public function getExampleGroup ()
-    {
-        return $this->_exampleGroup;
-    }
-    /**
-     * Returns the execution time for this example.
-     *
-     * @return float
-     */
-    public function getExecutionTime ()
-    {
-        return $this->_executionTime;
-    }
-    
-    /**
-     * Closes example
-     *
-     */
-    private function closeExample($startTime)
-    {
-        call_user_func(array($this->_exampleGroup, 'after'));
-        $endTime = microtime(true);
-        $this->_executionTime = $endTime - $startTime;
-        if (class_exists('Mockery')) {
-            \Mockery::close();
-        }
+        call_user_func(array($this->_exampleGroup, $this->_methodName));
     }
 }

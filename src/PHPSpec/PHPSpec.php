@@ -21,17 +21,18 @@
  */
 namespace PHPSpec;
 
-use \PHPSpec\Runner\Runner,
-    \PHPSpec\Runner\Reporter,
-    \PHPSpec\Runner\ReporterEvent,
-    \PHPSpec\Runner\Parser,
-    \PHPSpec\World,
-    \PHPSpec\Runner\Cli\Parser as CliParser,
-    \PHPSpec\Runner\Cli\Runner as CliRunner,
-    \PHPSpec\Runner\Cli\Reporter as CliReporter,
-    \PHPSpec\Runner\Cli\Configuration,
-    \PHPSpec\Runner\Formatter\Factory as FormatterFactory,
-    \PHPSpec\Runner\Formatter;
+use PHPSpec\Runner\Runner;
+use PHPSpec\Runner\Reporter;
+use PHPSpec\Runner\ReporterEvent;
+use PHPSpec\Runner\Parser;
+use PHPSpec\Runner\Cli\Parser as CliParser;
+use PHPSpec\Runner\Cli\Runner as CliRunner;
+use PHPSpec\Runner\Cli\Reporter as CliReporter;
+use PHPSpec\Runner\Cli\Configuration;
+use PHPSpec\Runner\Formatter\Factory as FormatterFactory;
+use PHPSpec\Runner\Formatter;
+
+use PHPSpec\World;
 
 /**
  * @category   PHPSpec
@@ -136,10 +137,7 @@ class PHPSpec
      */
     protected function loadAndRun()
     {
-        $options = $this->parseOptionsAndSetWorld();
-        $this->setFormatter($this->_world);
-        if ($options !== null) {
-            $this->setDefaultBootstrap($this->_world);
+        if ($this->parseOptionsAndSetWorld()) {
             $this->_runner->run($this->_world);
         } else {
             $this->showUsage();
@@ -162,11 +160,14 @@ class PHPSpec
      */
     protected function parseOptionsAndSetWorld()
     {
-        $this->_world->setReporter($this->_reporter);
         $configOptions = $this->getConfiguration()->load();
         $arguments = array_merge($this->_arguments, $configOptions);
         $options = $this->getParser()->parse($arguments);
+        $this->_world->setReporter($this->_reporter);
         $this->_world->setOptions($options);
+        $this->_world->attachFormatter($options['f']);
+        $this->setDefaultBootstrap($this->_world);
+        $this->setDefaultCustomMatchersFile($this->_world);
         return $options;
     }
     
@@ -188,13 +189,29 @@ class PHPSpec
     }
     
     /**
+     * Looks for a CustomMatchers.php and includes it, if it exists
+     *
+     * @param World $world 
+     */
+    public function setDefaultCustomMatchersFile(World $world)
+    {
+        $customMatchers = $world->getOption('specFile') . DIRECTORY_SEPARATOR .
+                          'CustomMatchers.php';
+        if (is_dir($world->getOption('specFile')) &&
+            file_exists($customMatchers)) {
+            include_once $customMatchers;
+        }
+    }
+    
+    /**
      * Asserts we have a formatter and create one if we don't 
      */
     private function makeSureWeHaveAFormatter()
     {
         if (!count($this->_reporter->getFormatters())) {
             $this->_world->setOptions(array('formatter' => 'p'));
-            $this->setFormatter();
+            $this->_world->setReporter($this->_reporter);
+            $this->_world->attachFormatter('p');
         }
     }
     
@@ -309,41 +326,6 @@ class PHPSpec
     public function setWorld(World $world)
     {
         $this->_world = $world;
-    }
-    
-    /**
-     * Gets the formatter from world and register it into the reporter
-     */
-    protected function setFormatter()
-    {
-        $formatterOption = $this->_world->getOption('formatter');
-        $formatter = $this->getFormatterFactory()->create(
-            $formatterOption, $this->_world->getReporter()
-        );
-        $this->_world->getReporter()->addFormatter($formatter);
-    }
-    
-    /**
-     * Gets the formatter factory
-     * 
-     * @return \PHPSpec\Runner\Formatter\Factory
-     */
-    public function getFormatterFactory()
-    {
-        if ($this->_formatterFactory === null) {
-            $this->_formatterFactory = new FormatterFactory;
-        }
-        return $this->_formatterFactory;
-    }
-    
-    /**
-     * Sets the formatter factory
-     * 
-     * @param \PHPSpec\Runner\Formatter\Factory $factory
-     */
-    public function setFormatterFactory(FormatterFactory $factory)
-    {
-        $this->_formatterFactory = $factory;
     }
     
     /**

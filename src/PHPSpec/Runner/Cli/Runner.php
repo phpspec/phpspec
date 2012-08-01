@@ -21,15 +21,18 @@
  */
 namespace PHPSpec\Runner\Cli;
 
-use \PHPSpec\World,
-    \PHPSpec\Loader\Loader,
-    \PHPSpec\Runner\Error,
-    \PHPSpec\Runner\Cli\Error as CliError,
-    \PHPSpec\Specification\ExampleGroup,
-    \PHPSpec\Specification\ExampleRunner,
-    \PHPSpec\Specification\Example,
-    \PHPSpec\Runner\Formatter\Factory as FormatterFactory,
-    \PHPSpec\Specification\Result\Error as SpecificationError;
+use PHPSpec\World;
+
+use PHPSpec\Loader\Loader;
+
+use PHPSpec\Runner\Error;
+use PHPSpec\Runner\Cli\Error as CliError;
+use PHPSpec\Runner\Formatter\Factory as FormatterFactory;
+
+use PHPSpec\Specification\ExampleGroup;
+use PHPSpec\Specification\ExampleRunner;
+use PHPSpec\Specification\Example;
+use PHPSpec\Specification\Result\Error as SpecificationError;
 
 /**
  * @category   PHPSpec
@@ -65,6 +68,7 @@ class Runner implements \PHPSpec\Runner\Runner
     --bootstrap FILENAME     Specify a bootstrap file to run before the tests
     -h, --help               You're looking at it
     --fail-fast              Abort the run on first failure.
+    --include-matchers PATHS Specify a : separated list of PATHS to matchers 
     --version                Show version
 ";
     
@@ -89,6 +93,13 @@ class Runner implements \PHPSpec\Runner\Runner
      * @var \PHPSpec\Specification\ExampleRunner
      */
     protected $_exampleRunner;
+    
+    /**
+     * The pattern of the example to run if -e or --example EXAMPLE is passed
+     *
+     * @var string
+     */
+    protected $_runOnly;
 
     /**
      * The error handler callback
@@ -110,6 +121,8 @@ class Runner implements \PHPSpec\Runner\Runner
             return;
         }
         
+        $this->bootstrap($world);
+        
         $this->setColor($world);
         $this->setBacktrace($world);
         $this->setFailFast($world);
@@ -117,8 +130,6 @@ class Runner implements \PHPSpec\Runner\Runner
         
         $this->startErrorHandler();
         $world->getReporter()->setRuntimeStart();
-
-        $this->bootstrap($world);
         
         $this->runExamples($world);
         
@@ -138,9 +149,11 @@ class Runner implements \PHPSpec\Runner\Runner
             if (!$this->isExampleGroup($world, $exampleGroup)) {
                 continue;
             }
+            $exampleGroup->setMatcherFactory($world->getMatcherFactory());
+            $exampleGroup->setMacros($world->getMacros());
             $exampleGroup->beforeAll();
-            $this->getExampleRunner()->run(
-                $exampleGroup, $world->getReporter()
+            $this->getExampleRunner($exampleGroup)->run(
+                $world->getReporter()
             );
             $exampleGroup->afterAll();
         }
@@ -226,7 +239,7 @@ class Runner implements \PHPSpec\Runner\Runner
     protected function setExampleIntoRunner(World $world)
     {
         if ($world->getOption('example')) {
-            $this->getExampleRunner()->runOnly($world->getOption('example'));
+            $this->_runOnly = $world->getOption('example');
         }
     }
     
@@ -343,13 +356,21 @@ class Runner implements \PHPSpec\Runner\Runner
     /**
      * Gets the example runner
      * 
+     * @param ExampleGroup $exampleGroups
      * @return \PHPSpec\Specification\ExampleRunner
      */
-    public function getExampleRunner ()
+    public function getExampleRunner (ExampleGroup $exampleGroup)
     {
-        if ($this->_exampleRunner === null) {
-            $this->_exampleRunner = new ExampleRunner();
+        if (!isset($this->_exampleRunner)) {
+            $this->_exampleRunner = new ExampleRunner($exampleGroup);
         }
+        
+        $this->_exampleRunner->setExampleGroup($exampleGroup);
+        
+        if ($this->_runOnly) {
+            $this->_exampleRunner->runOnly($this->_runOnly);
+        }
+        
         return $this->_exampleRunner;
     }
     
@@ -389,9 +410,9 @@ class Runner implements \PHPSpec\Runner\Runner
     /**
      * Loads the bootstrap file if specified in the options
      */
-    public function bootstrap(\PHPSpec\World $world)
+    public function bootstrap(World $configure)
     {
-        $bootstrapFile = $world->getOption('bootstrap');
+        $bootstrapFile = $configure->getOption('bootstrap');
         
         if (empty($bootstrapFile)) {
             return;

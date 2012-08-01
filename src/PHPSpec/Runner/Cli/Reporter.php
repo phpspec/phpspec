@@ -21,20 +21,20 @@
  */
 namespace PHPSpec\Runner\Cli;
 
-use \PHPSpec\Runner\Formatter,
-    \PHPSpec\Runner\ReporterEvent,
-    \PHPSpec\Runner\Reporter as BaseReporter;
-
-use \PHPSpec\Specification\Result\Failure,
-    \PHPSpec\Specification\Result\Error,
-    \PHPSpec\Specification\Result\Exception,
-    \PHPSpec\Specification\Result\Pending,
-    \PHPSpec\Specification\Result\DeliberateFailure,
-    \PHPSpec\Specification\Example;
+use PHPSpec\Runner\Formatter;
+use PHPSpec\Runner\ReporterEvent;
+use PHPSpec\Runner\Reporter as BaseReporter;
+ 
+use PHPSpec\Specification\Result\Failure;
+use PHPSpec\Specification\Result\Error;
+use PHPSpec\Specification\Result\Exception;
+use PHPSpec\Specification\Result\Pending;
+use PHPSpec\Specification\Result\DeliberateFailure;
+use PHPSpec\Example;
 
 use PHPSpec\Util\Backtrace;
 
-use \PHPSpec\DeprecatedNotice;
+use PHPSpec\DeprecatedNotice;
 
 /**
  * @category   PHPSpec
@@ -211,6 +211,16 @@ class Reporter extends BaseReporter
     }
     
     /**
+     * Sets the formatters
+     * 
+     * @param array $formatters
+     */
+    public function setFormatters(array $formatters)
+    {
+        $this->_formatters = $formatters;
+    }
+    
+    /**
      * Set the formatter
      * 
      * @deprecated
@@ -218,7 +228,7 @@ class Reporter extends BaseReporter
      */
     public function setFormatter(Formatter $formatter)
     {
-        $this->_formatters[] = $formatter;
+        $this->_formatters = array($formatter);
         throw new DeprecatedNotice(
             "setFormatter is deprecate, please use addFormatter"
         );

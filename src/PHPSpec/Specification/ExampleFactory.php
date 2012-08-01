@@ -21,6 +21,8 @@
  */
 namespace PHPSpec\Specification;
 
+use PHPSpec\Specification\SharedExample\Example as Shared;
+
 /**
  * @category   PHPSpec
  * @package    PHPSpec
@@ -41,6 +43,14 @@ class ExampleFactory
      */
     public function create(ExampleGroup $exampleGroup, $example)
     {
-        return new Example($exampleGroup, $example);
+        if (method_exists($exampleGroup, $example)) {
+            return new Example($exampleGroup, $example);
+        } elseif ($exampleGroup->hasSharedExample($example)) {
+            return new Shared(
+                $exampleGroup, $example,
+                $exampleGroup->getSharedExample($example)
+            );
+        }
+        die('hard');
     }
 }

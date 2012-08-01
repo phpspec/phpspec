@@ -21,15 +21,18 @@
  */
 namespace PHPSpec\Runner;
 
-use \PHPSpec\Runner\Formatter,
-    \PHPSpec\Runner\ReporterEvent,
-    \PHPSpec\Specification\Result\Failure,
-    \PHPSpec\Specification\Result\Error,
-    \PHPSpec\Specification\Result\Exception,
-    \PHPSpec\Specification\Result\Pending,
-    \PHPSpec\Specification\Result\DeliberateFailure,
-    \PHPSpec\Specification\Example,
-    \PHPSpec\Specification\ExampleGroup;
+use PHPSpec\Runner\Formatter;
+use PHPSpec\Runner\ReporterEvent;
+
+use PHPSpec\Specification\Result\Failure;
+use PHPSpec\Specification\Result\Error;
+use PHPSpec\Specification\Result\Exception;
+use PHPSpec\Specification\Result\Pending;
+use PHPSpec\Specification\Result\DeliberateFailure;
+
+use PHPSpec\Example;
+use PHPSpec\Specification\ExampleGroup;
+use PHPSpec\Specification\SharedExample;
 
 abstract class Reporter implements \SPLSubject
 {
@@ -89,6 +92,8 @@ abstract class Reporter implements \SPLSubject
      * @var array
      */
     protected $_passing = array();
+    
+    protected $_shared = array();
     
     /**
      * Sets the message to be printed by the formatter
@@ -232,6 +237,53 @@ abstract class Reporter implements \SPLSubject
         $this->notify(
             ReporterEvent::newWithTimeAndName('finish', $time, $name)
         );
+    }
+    
+    public function sharedExampleStarted(SharedExample $sharedExample)
+    {
+        $name = preg_replace(
+            '/SharedExample(s?)$/', '', get_class($sharedExample)
+        );
+        if (!$this->startedShared($name)) {
+            $this->startShared($name);
+            $time = microtime(true);
+            $this->notify(
+                ReporterEvent::newWithTimeAndName('startShared', $time, $name)
+            );
+        }
+    }
+    
+    public function sharedExampleFinished(SharedExample $sharedExample)
+    {
+        $name = preg_replace(
+            '/SharedExample(s?)$/', '', get_class($sharedExample)
+        );
+        $this->finishShared($name);
+        $time = microtime(true);
+        $this->notify(
+            ReporterEvent::newWithTimeAndName('finishShared', $time, $name)
+        );
+    }
+    
+    protected function startedShared($name)
+    {
+        return in_array($name, $this->_shared);
+    }
+    
+    protected function startShared($name)
+    {
+        $this->_shared[] = $name;
+    }
+    
+    protected function finishShared($name)
+    {
+        $sharedToKeep = array();
+        foreach ($this->_shared as $shared) {
+            if (!$shared !== $name) {
+                $sharedToKeep[] = $name;
+            }
+        }
+        $this->_shared = $sharedToKeep;
     }
     
     /**

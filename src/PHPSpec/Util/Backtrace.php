@@ -21,7 +21,7 @@
  */
 namespace PHPSpec\Util;
 
-use \PHPSpec\PHPSpec;
+use PHPSpec\PHPSpec;
 
 /**
  * @category   PHPSpec
@@ -163,7 +163,7 @@ class Backtrace
             $source = file($path);
             return trim($source[$line - 1]);
         }
-        throw new \OutOfBoundsException("No code at $path:$line");
+        return '';
     }
     
     /**

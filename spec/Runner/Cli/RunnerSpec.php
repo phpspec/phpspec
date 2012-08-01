@@ -138,9 +138,9 @@ class DescribeRunner extends \PHPSpec\Context
     }
     
     function itLoadsBootstrapFileIfSpecified() {
-    	
+        
         $tmp_dir = sys_get_temp_dir();
-    	$tmpfname = tempnam("/tmp", "phpspec_bootstrap.php");
+        $tmpfname = tempnam("/tmp", "phpspec_bootstrap.php");
         $str_bootstrap = '<?php class BootstrapTester {}';
         file_put_contents($tmpfname, $str_bootstrap);
         
@@ -148,26 +148,26 @@ class DescribeRunner extends \PHPSpec\Context
         $str_spec = '<?php class DescriveFake extends \PHPSpec\Context {}';
         file_put_contents($spec_file, $str_spec);
         
-    	$reporter = $this->mock('\PHPSpec\Runner\Cli\Reporter');
-    	$reporter->shouldReceive('setMessage')->andReturn(CliRunner::VERSION);
+        $reporter = $this->mock('\PHPSpec\Runner\Cli\Reporter');
+        $reporter->shouldReceive('setMessage')->andReturn(CliRunner::VERSION);
         
         $formatter = $this->mock('\SplObserver');
         $reporter->shouldReceive('attach')->with($formatter);
         $reporter->shouldReceive('getFormatters')->andReturn(array($formatter));
         $reporter->shouldReceive('setRuntimeStart');
         $reporter->shouldReceive('setRuntimeEnd');
-    	
-    	$world = $this->mock('\PHPSpec\World');
-    	$world->shouldReceive('getOption')->with('bootstrap')->andReturn($tmpfname);
-    	$world->shouldReceive('getOption')->with('specFile')->andReturn($spec_file);
-    	$world->shouldReceive('getOption')->andReturn();
-    	$world->shouldReceive('getReporter')->andReturn($reporter);
-    	
-    	$this->runner->run($world);
-    	
-    	$this->spec(class_exists('BootstrapTester'))->should->beTrue();
-    	
-    	unlink($tmpfname);
-    	unlink($spec_file);
+        
+        $world = $this->mock('\PHPSpec\World');
+        $world->shouldReceive('getOption')->with('bootstrap')->andReturn($tmpfname);
+        $world->shouldReceive('getOption')->with('specFile')->andReturn($spec_file);
+        $world->shouldReceive('getOption')->andReturn();
+        $world->shouldReceive('getReporter')->andReturn($reporter);
+        
+        $this->runner->run($world);
+        
+        $this->spec(class_exists('BootstrapTester'))->should->beTrue();
+        
+        unlink($tmpfname);
+        unlink($spec_file);
     }
 }
