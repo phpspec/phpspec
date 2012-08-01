@@ -17,21 +17,6 @@
     "require": {
         "php": ">=5.3.2",
         "mockery/mockery": "0.7.*",
-        "pear-pear.phpunit.de/Text_Template": "*"
-    },
-    "repositories": [
-        {
-          "type": "pear",
-          "url": "http://pear.phpunit.de",
-          "package": {
-            "dist": {
-              "url": "http://pear.phpunit.de/get/Text_Template-1.1.1.tgz",
-              "type": "pear"
-            },
-            "autoload": {
-              "psr-0": { "Text": "" }
-            }
-          }
-        }
-    ]
+        "sebastianbergmann/php-text-template": "1.1.1"
+    }
 }
