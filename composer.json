@@ -3,14 +3,14 @@
     "description": "PHPSpec: The BDD Specification Library",
     "keywords": ["bdd", "spec", "test"],
     "homepage": "http://phpspec.net",
-    "license": "MIT",
+    "license": "LGPL",
     "authors": [
         {
             "name": "PHPSpec Team",
             "homepage": "https://github.com/phpspec/phpspec/contributors"
         }
     ],
-    "bin": ["scripts/phpspec-composer.php"],
+    "bin": ["scripts/phpspec.php"],
     "autoload": {
         "psr-0": { "PHPSpec\\": "src/" }
     },
