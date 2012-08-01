@@ -19,9 +19,9 @@
  *                                    Marcello Duarte
  * @license   http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-namespace PHPSpec\Specification;
+namespace PHPSpec;
 
-use PHPSpec\Specification\SharedExample\Example as Shared;
+use PHPSpec\Runner\Reporter;
 
 /**
  * @category   PHPSpec
@@ -31,26 +31,12 @@ use PHPSpec\Specification\SharedExample\Example as Shared;
  *                                     Marcello Duarte
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
-class ExampleFactory
+interface Example
 {
     /**
-     * Creates an example
+     * Runs the example
      * 
-     * @param ExampleGroup $exampleGroup
-     * @param string $example
-     * 
-     * @return \PHPSpec\Specification\Example
+     * @param PHPSpec\Runner\Reporter $reporter
      */
-    public function create(ExampleGroup $exampleGroup, $example)
-    {
-        if (method_exists($exampleGroup, $example)) {
-            return new Example($exampleGroup, $example);
-        } elseif ($exampleGroup->hasSharedExample($example)) {
-            return new Shared(
-                $exampleGroup, $example,
-                $exampleGroup->getSharedExample($example)
-            );
-        }
-        die('hard');
-    }
+    public function run(Reporter $reporter);
 }

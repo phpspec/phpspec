@@ -30,7 +30,7 @@ use PHPSpec\Specification\Result\Exception;
 use PHPSpec\Specification\Result\Pending;
 use PHPSpec\Specification\Result\DeliberateFailure;
 
-use PHPSpec\Specification\Example;
+use PHPSpec\Example;
 use PHPSpec\Specification\ExampleGroup;
 use PHPSpec\Specification\SharedExample;
 
