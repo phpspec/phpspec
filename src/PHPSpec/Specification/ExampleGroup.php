@@ -39,7 +39,7 @@ use PHPSpec\Runner\Reporter;
  * @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU Lesser General Public Licence Version 3
  */
 class ExampleGroup
-{ 
+{
     /**
      * The Matcher Factory
      *
@@ -66,7 +66,7 @@ class ExampleGroup
      *
      * @var array[string name of the shared example]<Closure>
      */
-    protected $sharedExamples = array();
+    protected $_sharedExamples = array();
     
     /**
      * Override for having it called once before all examples are ran in one
@@ -241,10 +241,12 @@ class ExampleGroup
       public function behavesLikeAnotherObject()
       {
           if (!empty($this->itBehavesLike)) {
-              if (!is_subclass_of(
+              if (
+                  !is_subclass_of(
                       $this->itBehavesLike,
                       '\PHPSpec\Specification\SharedExample'
-                  )) {
+                  )
+              ) {
                   throw new SpecificationException(
                       "$this->itBehavesLike is not a SharedExample"
                   );
@@ -272,7 +274,7 @@ class ExampleGroup
        */
       public function addSharedExample(SharedExample $sharedExample, $method)
       {
-          $shared = &$this->sharedExamples[$method];
+          $shared = &$this->_sharedExamples[$method];
           $shared['closure'] = function() use ($sharedExample, $method) {
               $sharedExample->$method();
           };
@@ -287,7 +289,7 @@ class ExampleGroup
        */
       public function hasSharedExample($example)
       {
-          return isset($this->sharedExamples[$example]);
+          return isset($this->_sharedExamples[$example]);
       }
       
       /**
@@ -298,7 +300,7 @@ class ExampleGroup
        */
       public function getSharedExample($example)
       {
-          return $this->sharedExamples[$example]['sharedExample'];
+          return $this->_sharedExamples[$example]['sharedExample'];
       }
       
       /**
@@ -313,7 +315,7 @@ class ExampleGroup
               call_user_func(array($sharedExample, 'before'));
           }
           
-          $this->sharedExamples[$example]['closure']();
+          $this->_sharedExamples[$example]['closure']();
           
           if (method_exists($sharedExample, 'after')) {
               call_user_func(array($sharedExample, 'after'));

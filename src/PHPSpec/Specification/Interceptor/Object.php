@@ -21,8 +21,8 @@
  */
 namespace PHPSpec\Specification\Interceptor;
 
-use PHPSpec\Specification\Interceptor,
-    PHPSpec\Matcher\InvalidMatcher;
+use PHPSpec\Specification\Interceptor;
+use PHPSpec\Matcher\InvalidMatcher;
 
 /**
  * @category   PHPSpec
@@ -121,7 +121,8 @@ class Object extends Interceptor
         }
         
         $this->setExpectedValue($args);
-        $this->_matcher = $this->getMatcherFactory()->create('beTrue', array(true));
+        $this->_matcher = $this->getMatcherFactory()
+                               ->create('beTrue', array(true));
         $this->setActualValue(
             call_user_func_array(array($this->_actualValue, $predicate), $args)
         );

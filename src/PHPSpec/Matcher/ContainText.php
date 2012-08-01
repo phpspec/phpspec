@@ -98,8 +98,10 @@ class ContainText implements Matcher
      */
     public function getNegativeFailureMessage()
     {
-        return 'expected text:' . PHP_EOL .  var_export($this->_expected, true) .
-               ' to not be contained in:' . PHP_EOL . var_export($this->_actual, true) .
+        return 'expected text:' . PHP_EOL .
+               var_export($this->_expected, true) .
+               ' to not be contained in:' . PHP_EOL .
+               var_export($this->_actual, true) .
                ' (using containText())';
     }
 

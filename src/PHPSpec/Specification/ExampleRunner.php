@@ -209,7 +209,7 @@ class ExampleRunner
             $sharedExamples = new \ReflectionObject(
                 new $behaveLike
             );
-            foreach ($sharedExamples->getMethods() as $method){
+            foreach ($sharedExamples->getMethods() as $method) {
                 $methodNames[] = $method->getName();
                 $this->_exampleGroup->addSharedExample(
                     $sharedExamples->newInstance(), $method->getName()

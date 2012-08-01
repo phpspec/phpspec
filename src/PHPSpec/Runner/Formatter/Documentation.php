@@ -33,7 +33,13 @@ use PHPSpec\Util\Filter;
  */
 class Documentation extends Progress
 {
-    protected $ident = '';
+    /**
+     * Ident to apply to specdox lines. Allow for more identation in case
+     * of shared examples and in the future nested contexts
+     *
+     * @var string
+     */
+    protected $_ident = '';
     
     /**
      * Implements observer events listener
@@ -43,7 +49,7 @@ class Documentation extends Progress
         switch($reporterEvent->event) {
             case 'startShared':
                 $shared = Filter::camelCaseToSpace($reporterEvent->example);
-                $this->ident = '  ';
+                $this->_ident = '  ';
                 $this->putln("  behaves like " . $shared);
                 break;
             case 'start':
@@ -56,7 +62,7 @@ class Documentation extends Progress
                 );
                 break;
             case 'finishShared':
-                $this->ident = '';
+                $this->_ident = '';
                 break;
             case 'exit':
                 $this->output();
@@ -76,23 +82,25 @@ class Documentation extends Progress
     {
         switch($status) {
             case '.':
-                $this->put("  " . $this->ident . $this->green($example));
+                $this->put("  " . $this->_ident . $this->green($example));
                 break;
             case '*':
                 $this->put(
-                    "  " . $this->ident . $this->yellow($example . " (PENDING: $message)")
+                    "  " . $this->_ident .
+                    $this->yellow($example . " (PENDING: $message)")
                 );
                 break;
             case 'E':
                 static $error = 1;
                 $this->put(
-                    "  " . $this->ident . $this->red($example . " (ERROR - " . ($error++) .")")
+                    "  " . $this->_ident .
+                    $this->red($example . " (ERROR - " . ($error++) .")")
                 );
                 break;
             case 'F':
                 static $failure = 1;
                 $this->put(
-                    "  " . $this->ident . $this->red(
+                    "  " . $this->_ident . $this->red(
                         $example . " (FAILED - " . ($failure++) .")"
                     )
                 );

@@ -21,9 +21,7 @@
  */
 namespace PHPSpec\Loader;
 
-use \PHPSpec\Loader\ClassLoader,
-    \PHPSpec\Loader\DirectoryLoader,
-    \PHPSpec\Runner\Error;
+use PHPSpec\Runner\Error;
 
 /**
  * @category   PHPSpec

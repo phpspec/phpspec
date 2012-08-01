@@ -21,8 +21,8 @@
  */
 namespace PHPSpec\Matcher;
 
-use PHPSpec\Specification\Result\Exception,
-    PHPSpec\Util\Backtrace;
+use PHPSpec\Specification\Result\Exception;
+use PHPSpec\Util\Backtrace;
 
 /**
  * @category   PHPSpec
@@ -37,7 +37,7 @@ class InvalidMatchingResult extends Exception
     public function __construct($message)
     {
         $caller = array_slice(debug_backtrace(), 2, 1);
-        parent::__construct(new \Exception ($message));
+        parent::__construct(new \Exception($message));
         $this->_line = isset($caller[0]['line']) ? $caller[0]['line'] : null;
         $this->_file = isset($caller[0]['file']) ? $caller[0]['file'] : null;
     }

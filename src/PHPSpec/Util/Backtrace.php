@@ -21,7 +21,7 @@
  */
 namespace PHPSpec\Util;
 
-use \PHPSpec\PHPSpec;
+use PHPSpec\PHPSpec;
 
 /**
  * @category   PHPSpec

@@ -21,15 +21,18 @@
  */
 namespace PHPSpec\Runner\Cli;
 
-use \PHPSpec\World,
-    \PHPSpec\Loader\Loader,
-    \PHPSpec\Runner\Error,
-    \PHPSpec\Runner\Cli\Error as CliError,
-    \PHPSpec\Specification\ExampleGroup,
-    \PHPSpec\Specification\ExampleRunner,
-    \PHPSpec\Specification\Example,
-    \PHPSpec\Runner\Formatter\Factory as FormatterFactory,
-    \PHPSpec\Specification\Result\Error as SpecificationError;
+use PHPSpec\World;
+
+use PHPSpec\Loader\Loader;
+
+use PHPSpec\Runner\Error;
+use PHPSpec\Runner\Cli\Error as CliError;
+use PHPSpec\Runner\Formatter\Factory as FormatterFactory;
+
+use PHPSpec\Specification\ExampleGroup;
+use PHPSpec\Specification\ExampleRunner;
+use PHPSpec\Specification\Example;
+use PHPSpec\Specification\Result\Error as SpecificationError;
 
 /**
  * @category   PHPSpec
@@ -91,6 +94,11 @@ class Runner implements \PHPSpec\Runner\Runner
      */
     protected $_exampleRunner;
     
+    /**
+     * The pattern of the example to run if -e or --example EXAMPLE is passed
+     *
+     * @var string
+     */
     protected $_runOnly;
 
     /**

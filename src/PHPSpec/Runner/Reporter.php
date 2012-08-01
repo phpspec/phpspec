@@ -248,7 +248,7 @@ abstract class Reporter implements \SPLSubject
             $this->startShared($name);
             $time = microtime(true);
             $this->notify(
-            ReporterEvent::newWithTimeAndName('startShared', $time, $name)
+                ReporterEvent::newWithTimeAndName('startShared', $time, $name)
             );
         }
     }

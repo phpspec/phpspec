@@ -21,15 +21,15 @@
  */
 namespace PHPSpec\Specification;
 
-use PHPSpec\Specification\Result\Failure,
-    PHPSpec\Specification\Result\Error,
-    PHPSpec\Specification\Interceptor\InterceptorFactory,
-    PHPSpec\Matcher\MatcherRepository,
-    PHPSpec\Matcher\UserDefined as UserDefinedMatcher,
-    PHPSpec\Matcher\InvalidMatcher,
-    PHPSpec\Matcher\InvalidMatcherType,
-    PHPSpec\Matcher\InvalidMatchingResult,
-    PHPSpec\Matcher\MatcherFactory;
+use PHPSpec\Specification\Result\Failure;
+use PHPSpec\Specification\Result\Error;
+use PHPSpec\Specification\Interceptor\InterceptorFactory;
+use PHPSpec\Matcher\MatcherRepository;
+use PHPSpec\Matcher\UserDefined as UserDefinedMatcher;
+use PHPSpec\Matcher\InvalidMatcher;
+use PHPSpec\Matcher\InvalidMatcherType;
+use PHPSpec\Matcher\InvalidMatchingResult;
+use PHPSpec\Matcher\MatcherFactory;
 
 /**
  * @category   PHPSpec
@@ -138,7 +138,8 @@ abstract class Interceptor
         
         try {
             $this->setExpectedValue($args);
-            $this->_matcher = $this->getMatcherFactory()->create($method, $args);
+            $this->_matcher = $this->getMatcherFactory()
+                                   ->create($method, $args);
             $this->performMatching();
             return true;
         } catch (InvalidMatcherType $e) {
@@ -256,6 +257,12 @@ abstract class Interceptor
         return in_array($matcher, $this->_matchers);
     }
     
+    /**
+     * Performs matching against registered matcher
+     *
+     * @param string $matcher 
+     * @param mixed $expected 
+     */
     protected function performMatchingWithRegisteredMatcher($matcher, $expected)
     {
         $this->setExpectedValue($expected);
@@ -263,7 +270,14 @@ abstract class Interceptor
         $this->performMatching();
     }
     
-    protected function performMatchingWithUserDefinedMatcher($matcher, $expected)
+    /**
+     * Performs matching against user defined matcher
+     *
+     * @param string $matcher 
+     * @param mixed $expected 
+     */
+    protected function performMatchingWithUserDefinedMatcher($matcher,
+        $expected)
     {
         $this->setExpectedValue($expected);
         $expected = !is_array($this->getExpectedValue()) ?
@@ -273,28 +287,58 @@ abstract class Interceptor
         $this->performMatching();
     }
     
+    /**
+     * Checks if intercepted has a magic __call 
+     *
+     * @return boolean
+     */
     protected function interceptedHasAMagicCall()
     {
         return !$this->_actualValue instanceof ExampleGroup &&
                method_exists($this->_actualValue, '__call');
     }
     
+    /**
+     * Invokes intercepted magic call
+     *
+     * @param string $method 
+     * @param array  $args 
+     * @return mixed
+     */
     protected function invokeInterceptedMagicCall($method, $args)
     {
         $intercepted = new \ReflectionMethod($this->_actualValue, '__call');
-        return $intercepted->invokeArgs($this->_actualValue, array($method, $args));
+        return $intercepted->invokeArgs(
+            $this->_actualValue, array($method, $args)
+        );
     }
     
+    /**
+     * Checks if intercepted is an object
+     *
+     * @return boolean
+     */
     protected function interceptedIsNotAnObject()
     {
         return !$this instanceof Interceptor\Object;
     }
     
+    /**
+     * Checks if an expectation has been used
+     *
+     * @return boolean
+     */
     protected function anExpectationHasBeenUsed()
     {
         return $this->_expectation !== null;
     }
     
+    /**
+     * Throws an InvalidMatcher exception
+     *
+     * @param string $method 
+     * @throws InvalidMatcher
+     */
     protected function throwNotAMatcherException($method)
     {
         throw new InvalidMatcher(
@@ -302,16 +346,29 @@ abstract class Interceptor
         );
     }
     
+    /**
+     * Checks weather we are using should and shouldNot as methods
+     *
+     * @param string $method 
+     * @return boolean  
+     */
     protected function callingExpectationsAsMethods($method)
     {
         return $method === 'should' || $method === 'shouldNot';
     }
     
+    /**
+     * Informs the users should and shouldNot are used as properties not
+     * methods
+     *
+     * @throws Error
+     */
     protected function throwErrorExpectationsAreProperties()
     {
         throw new Error(
             'Missing expectation "should" or "shouldNot". ' .
-            'Make sure you use them as properties and not as methods.'
+            'Make sure you use them as properties and not as methods. ' .
+            'e.g. $result->should->be(42) and note $result->should()->be(42)'
         );
     }
     
@@ -361,7 +418,7 @@ abstract class Interceptor
     /**
      * Sets the matcher factory
      *
-     * @param PHPSpec\Matcher\MatcherFactory
+     * @param PHPSpec\Matcher\MatcherFactory $matcherFactory
      */
      public function setMatcherFactory(MatcherFactory $matcherFactory)
      {
@@ -378,7 +435,6 @@ abstract class Interceptor
           if ($this->_matcherFactory === null) {
               $this->_matcherFactory = new MatcherFactory;
           }
-
           return $this->_matcherFactory;
       }
 

@@ -97,10 +97,11 @@ class MatcherFactory
             );
         }
 
-        if($this->_matchers[$matcherName]['path'] !== false) {
+        if ($this->_matchers[$matcherName]['path'] !== false) {
             require_once($this->_matchers[$matcherName]['path']);
         }
-        $matcherClass = $this->_matchers[$matcherName]['namespace'] . $matcherName;
+        $matcherClass = $this->_matchers[$matcherName]['namespace'] .
+                        $matcherName;
         $reflectedMatcher = new \ReflectionClass($matcherClass);
         if (!$reflectedMatcher->implementsInterface('PHPSpec\Matcher')) {
             throw new InvalidMatcherType(
@@ -160,7 +161,9 @@ class MatcherFactory
         foreach ($files as $file) {
             $content = file_get_contents($file);
             if (preg_match('/implements Matcher/', $content)) {
-                $fileName = basename($matcherDir . DIRECTORY_SEPARATOR . $file, '.php');
+                $fileName = basename(
+                    $matcherDir . DIRECTORY_SEPARATOR . $file, '.php'
+                );
                 $matchers[] = strtolower($fileName[0]) . substr($fileName, 1);
             }
         }
@@ -190,16 +193,25 @@ class MatcherFactory
         $currentPath = $this->_findMatcherPath($originalPath);
 
         if ($currentPath !== false) {
-            foreach (glob($currentPath . DIRECTORY_SEPARATOR . "*.php") as $matcherFile) {
+            foreach (
+                glob($currentPath . DIRECTORY_SEPARATOR . "*.php") as
+                $matcherFile
+            ) {
                 $matcherName = basename($matcherFile, ".php");
-                $matcherName = strtolower($matcherName[0]) . substr($matcherName, 1);
+                $matcherName = strtolower($matcherName[0]) .
+                               substr($matcherName, 1);
                 $this->_matchers[$matcherName] = array(
                     'namespace' => $nameSpace,
                     'path' => $matcherFile);
             }
 
-            foreach (glob($currentPath . DIRECTORY_SEPARATOR . "*", GLOB_ONLYDIR) as $appendPath) {
-                $this->_recursivelyRegisterMatchersOnFolder($originalPath . DIRECTORY_SEPARATOR . basename($appendPath));
+            foreach (
+                glob($currentPath . DIRECTORY_SEPARATOR . "*", GLOB_ONLYDIR)
+                as $appendPath
+            ) {
+                $this->_recursivelyRegisterMatchersOnFolder(
+                    $originalPath . DIRECTORY_SEPARATOR . basename($appendPath)
+                );
             }
         }
     }
@@ -212,7 +224,10 @@ class MatcherFactory
      */
     private function _fromPathToNamespace($path)
     {
-        $nameSpace = str_replace(DIRECTORY_SEPARATOR, self::NAMESPACE_SEPARATOR, $path);
+        $nameSpace = str_replace(
+            DIRECTORY_SEPARATOR,
+            self::NAMESPACE_SEPARATOR, $path
+        );
         if (substr($nameSpace, -1) !== self::NAMESPACE_SEPARATOR) {
             $nameSpace .= self::NAMESPACE_SEPARATOR;
         }

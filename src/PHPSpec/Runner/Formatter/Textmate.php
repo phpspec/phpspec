@@ -64,12 +64,16 @@ class Textmate extends Html
         $asArray = explode(PHP_EOL, $backtrace);
         
         $asArrayWithNoEmptyElements = array_filter(
-            $asArray, function($each) {return !empty($each);}
+            $asArray, function($each) {
+                return !empty($each);
+            }
         );
         
-        $asArrayWithNoEmptyElementsAndTrimmed = array_map(function($each) {
-            return ltrim($each, '    # ');
-        }, $asArrayWithNoEmptyElements);
+        $asArrayWithNoEmptyElementsAndTrimmed = array_map(
+            function($each) {
+                return ltrim($each, '    # ');
+            }, $asArrayWithNoEmptyElements
+        );
         
         return $asArrayWithNoEmptyElementsAndTrimmed;
     }

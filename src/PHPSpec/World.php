@@ -21,9 +21,9 @@
  */
 namespace PHPSpec;
 
-use PHPSpec\Runner\Reporter,
-    PHPSpec\Runner\Formatter\Factory as FormatterFactory,
-    PHPSpec\Matcher\MatcherFactory;
+use PHPSpec\Runner\Reporter;
+use PHPSpec\Runner\Formatter\Factory as FormatterFactory;
+use PHPSpec\Matcher\MatcherFactory;
 
 /**
  * @category   PHPSpec
@@ -251,7 +251,10 @@ class World
             );
         }
         
-        $paths = array_merge($this->getOption('include-matchers'), $matcherPaths);
+        $paths = array_merge(
+            $this->getOption('include-matchers'),
+            $matcherPaths
+        );
         $this->setOption('include-matchers', $paths);
         $this->_matcherFactory = new MatcherFactory(
             $this->getOption('include-matchers')
@@ -268,7 +271,7 @@ class World
          if ($this->_matcherFactory === null) {
              $this->_matcherFactory = new MatcherFactory(
                  $this->getOption('include-matchers')
-            );
+             );
          }
          return $this->_matcherFactory;
      }

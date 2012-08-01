@@ -21,8 +21,8 @@
  */
 namespace PHPSpec\Runner\Formatter;
 
-use \PHPSpec\Util\Backtrace,
-    \PHPSpec\Specification\Result\DeliberateFailure;
+use PHPSpec\Util\Backtrace;
+use PHPSpec\Specification\Result\DeliberateFailure;
 
 /**
  * @category   PHPSpec

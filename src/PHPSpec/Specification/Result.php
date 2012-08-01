@@ -21,8 +21,8 @@
  */
 namespace PHPSpec\Specification;
 
-use \PHPSpec\Exception,
-    \PHPSpec\Util\Backtrace;
+use PHPSpec\Exception;
+use PHPSpec\Util\Backtrace;
 
 /**
  * @category   PHPSpec

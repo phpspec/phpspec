@@ -21,17 +21,18 @@
  */
 namespace PHPSpec;
 
-use \PHPSpec\Runner\Runner,
-    \PHPSpec\Runner\Reporter,
-    \PHPSpec\Runner\ReporterEvent,
-    \PHPSpec\Runner\Parser,
-    \PHPSpec\World,
-    \PHPSpec\Runner\Cli\Parser as CliParser,
-    \PHPSpec\Runner\Cli\Runner as CliRunner,
-    \PHPSpec\Runner\Cli\Reporter as CliReporter,
-    \PHPSpec\Runner\Cli\Configuration,
-    \PHPSpec\Runner\Formatter\Factory as FormatterFactory,
-    \PHPSpec\Runner\Formatter;
+use PHPSpec\Runner\Runner;
+use PHPSpec\Runner\Reporter;
+use PHPSpec\Runner\ReporterEvent;
+use PHPSpec\Runner\Parser;
+use PHPSpec\Runner\Cli\Parser as CliParser;
+use PHPSpec\Runner\Cli\Runner as CliRunner;
+use PHPSpec\Runner\Cli\Reporter as CliReporter;
+use PHPSpec\Runner\Cli\Configuration;
+use PHPSpec\Runner\Formatter\Factory as FormatterFactory;
+use PHPSpec\Runner\Formatter;
+
+use PHPSpec\World;
 
 /**
  * @category   PHPSpec

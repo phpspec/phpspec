@@ -24,7 +24,7 @@ namespace PHPSpec\Matcher;
 /**
  * @see \PHPSpec\Matcher\BeTrue
  */
-use \PHPSpec\Matcher\BeTrue;
+use PHPSpec\Matcher\BeTrue;
 
 /**
  * @category   PHPSpec

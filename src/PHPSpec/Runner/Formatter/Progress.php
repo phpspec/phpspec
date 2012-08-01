@@ -21,9 +21,10 @@
  */
 namespace PHPSpec\Runner\Formatter;
 
-use \PHPSpec\Runner\Formatter,
-    \PHPSpec\Runner\Reporter,
-    \PHPSpec\Specification\Result\DeliberateFailure;
+use PHPSpec\Runner\Formatter;
+use PHPSpec\Runner\Reporter;
+
+use PHPSpec\Specification\Result\DeliberateFailure;
 
 /**
  * @category   PHPSpec
@@ -90,6 +91,9 @@ class Progress extends FormatterAbstract
         $this->printTotals();
     }
     
+    /**
+     * Adds a new line to the output
+     */
     public function printLineInProgressFormatter()
     {
         if (get_class($this) === 'PHPSpec\Runner\Formatter\Progress') {
@@ -471,6 +475,9 @@ MESSAGE;
         return $output;
     }
     
+    /**
+     * Exists with the right status
+     */
     protected function _onExit()
     {
         if ($this->_errorOnExit) {
