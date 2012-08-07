@@ -1,6 +1,6 @@
 <project name="PHPSpec" default="pearify" basedir="..">
   
-  <property name="version" value="1.4.0" />
+  <property name="version" value="1.4.1" />
   <property name="stability" value="stable" />
   <property name="source" value="src" />
   <property name="build" value="build" />

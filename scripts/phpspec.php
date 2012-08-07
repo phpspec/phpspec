@@ -177,7 +177,7 @@ ini_set('xdebug.show_exception_trace', 'Off');
 $ds =  DIRECTORY_SEPARATOR;
 
 $installation = '';
-if (is_dir($vendor = __DIR__ . "{$ds}..{$ds}vendor")) {
+if (is_dir($vendor = __DIR__ . "{$ds}..{$ds}vendor")  && file_exists($vendor . "{$ds}autoload.php")) {
     require($vendor . "{$ds}autoload.php");
     $installation = COMPOSER_INSTALL;
 } elseif (is_dir($vendor = __DIR__ . "{$ds}..{$ds}..{$ds}..{$ds}..{$ds}vendor")) {
