@@ -49,7 +49,7 @@ class Runner implements \PHPSpec\Runner\Runner
      * 
      * @var string
      */
-    const VERSION = '1.4.0';
+    const VERSION = '1.4.1';
     
     /**
      * Usage message
