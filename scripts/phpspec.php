@@ -171,19 +171,47 @@
  */
 ini_set('display_errors', 1);
 error_reporting(E_ALL|E_STRICT);
+define('COMPOSER_INSTALL', 'composer_install');
+define('PEAR_INSTALL', 'pear_install');
 ini_set('xdebug.show_exception_trace', 'Off');
+$ds =  DIRECTORY_SEPARATOR;
 
-require_once 'PHPSpec/Loader/UniversalClassLoader.php';
-include_once 'Mockery.php';
+$installation = '';
+if (is_dir($vendor = __DIR__ . "{$ds}..{$ds}vendor")) {
+    require($vendor . "{$ds}autoload.php");
+    $installation = COMPOSER_INSTALL;
+} elseif (is_dir($vendor = __DIR__ . "{$ds}..{$ds}..{$ds}..{$ds}..{$ds}vendor")) {
+    require($vendor . "{$ds}autoload.php");
+    $installation = COMPOSER_INSTALL;
+} else {
+    $paths = explode(':', ini_get('include_path'));
+    @require_once 'PHPSpec/Loader/UniversalClassLoader.php';
+    if (class_exists('PHPSpec\Loader\UniversalClassLoader')) {
+        $installation = PEAR_INSTALL;
+        $loader = new PHPSpec\Loader\UniversalClassLoader();
+        $loader->registerNamespace('PHPSpec', $paths);
+        $loader->registerNamespace('Mockery', $paths);
+        $loader->registerPrefix('Text_', $paths);
+        $loader->register();
+    } else {
+        die(
+           'You must set up the project dependencies, run the following commands:' . PHP_EOL .
+           'curl -s http://getcomposer.org/installer | php' . PHP_EOL . 
+           'php composer.phar install' . PHP_EOL
+    );
 
-$paths = explode(':', ini_get('include_path'));
-$loader = new \PHPSpec\Loader\UniversalClassLoader();
-$loader->registerNamespace('PHPSpec', $paths);
-$loader->registerNamespace('Mockery', $paths);
+    }
+}
 
-$loader->registerPrefix('Text_', $paths);
-
-$loader->register();
+if ($installation === COMPOSER_INSTALL) {
+    if (is_dir($phpspecDir = dirname(__DIR__) . "{$ds}src{$ds}PHPSpec{$ds}")) {
+        require_once $phpspecDir . "Matcher{$ds}Functions.php";
+    } elseif (is_dir($phpspecDir = $vendor . "{$ds}phpspec{$ds}phpspec{$ds}src{$ds}PHPSpec{$ds}")) {
+        require_once $phpspecDir . "{$ds}Matcher{$ds}Functions.php";
+    } else {
+        die('hi');
+    }
+}
 
 $phpspec = new \PHPSpec\PHPSpec($argv);
 $phpspec->execute();
