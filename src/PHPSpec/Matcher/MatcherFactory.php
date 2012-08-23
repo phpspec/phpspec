@@ -44,7 +44,7 @@ class MatcherFactory
 
     /**
      * List of builtin matchers
-     * 
+     *
      * @var array
      */
     protected $_builtinMatchers = array();
@@ -55,7 +55,7 @@ class MatcherFactory
      * @var associative array
      */
     protected $_matchers = array();
-    
+
     /**
      * Namespace for the builtin matchers
      *
@@ -66,7 +66,7 @@ class MatcherFactory
     /**
      * Matcher factory is created with a path to matchers
      *
-     * @param array $pathsToMatchers 
+     * @param array $pathsToMatchers
      */
     public function __construct(array $pathsToMatchers = array())
     {
@@ -77,8 +77,8 @@ class MatcherFactory
     /**
      * Create the matcher
      *
-     * @param string $matcherName 
-     * @param string $expected 
+     * @param string $matcherName
+     * @param string $expected
      * @return \PHPSpec\Matcher
      */
     public function create($matcherName, $expected = array())
@@ -86,7 +86,7 @@ class MatcherFactory
         if (empty($this->_matchers)) {
             $this->_buildRegistry();
         }
-        
+
         if (!is_array($expected)) {
             $expected = array($expected);
         }
@@ -101,7 +101,7 @@ class MatcherFactory
             require_once($this->_matchers[$matcherName]['path']);
         }
         $matcherClass = $this->_matchers[$matcherName]['namespace'] .
-                        $matcherName;
+            strtoupper($matcherName[0]) . substr($matcherName, 1);
         $reflectedMatcher = new \ReflectionClass($matcherClass);
         if (!$reflectedMatcher->implementsInterface('PHPSpec\Matcher')) {
             throw new InvalidMatcherType(
@@ -110,7 +110,7 @@ class MatcherFactory
                 " must implement PHPSpec\Matcher"
             );
         }
-        
+
         $expected = $expected === array() ? array(null) : $expected;
         $matcher = $reflectedMatcher->newInstanceArgs($expected);
 
@@ -138,7 +138,7 @@ class MatcherFactory
         if (empty($this->_builtInMatchers)) {
             $this->_builtInMatchers = $this->loadBuiltInMatchers();
         }
-        
+
         foreach ($this->_builtInMatchers as $builtinMatcher) {
             $this->_matchers[$builtinMatcher] = array(
                 'namespace' => $this->_builtInNamespace,
@@ -146,7 +146,7 @@ class MatcherFactory
             );
         }
     }
-    
+
     protected function loadBuiltInMatchers()
     {
         $matchers = array();
@@ -154,9 +154,9 @@ class MatcherFactory
         do {
             $dir = realpath(dirname($dir));
         } while (basename($dir) !== 'PHPSpec');
-        
+
         $matcherDir = $dir . DIRECTORY_SEPARATOR . 'Matcher';
-        
+
         $files = glob($matcherDir . DIRECTORY_SEPARATOR . '*.php');
         foreach ($files as $file) {
             $content = file_get_contents($file);
@@ -185,7 +185,7 @@ class MatcherFactory
     /**
      * Recursively registers matchers found on folder
      *
-     * @param string $folder 
+     * @param string $folder
      */
     private function _recursivelyRegisterMatchersOnFolder($originalPath)
     {
