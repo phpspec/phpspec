@@ -6,7 +6,7 @@ php:
 
 before_script: php vendor/vendors.php
 
-script: "php ./scripts/phpspec-composer.php ./spec/"
+script: "php ./scripts/phpspec.php ./spec/"
 
 notifications:
   email:
