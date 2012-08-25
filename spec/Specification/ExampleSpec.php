@@ -1,5 +1,7 @@
 <?php
 
+namespace Spec\PHPSpec\Specification;
+
 use PHPSpec\Specification\Example;
 
 require_once __DIR__ . DIRECTORY_SEPARATOR . '_files'
@@ -9,7 +11,7 @@ class DescribeExample extends \PHPSpec\Context
 {
     public function itCallsAfterEvenIfAnExceptionIsThrown()
     {
-        $contextObject = new BreaksBeforeTheAfter;
+        $contextObject = new \BreaksBeforeTheAfter;
                      
         $example = new Example($contextObject, 'itThrowsException');
         $reporter = $this->mock('PHPSpec\Runner\Reporter');
@@ -23,7 +25,7 @@ class DescribeExample extends \PHPSpec\Context
     
     public function itCallsAfterEvenIfExampleFails()
     {
-        $contextObject = new BreaksBeforeTheAfter;
+        $contextObject = new \BreaksBeforeTheAfter;
                      
         $example = new Example($contextObject, 'itFails');
         $reporter = $this->mock('PHPSpec\Runner\Reporter');
@@ -37,7 +39,7 @@ class DescribeExample extends \PHPSpec\Context
     
     public function itCallsAfterEvenIfExampleIsPending()
     {
-        $contextObject = new BreaksBeforeTheAfter;
+        $contextObject = new \BreaksBeforeTheAfter;
                      
         $example = new Example($contextObject, 'itIsPending');
         $reporter = $this->mock('PHPSpec\Runner\Reporter');
@@ -51,7 +53,7 @@ class DescribeExample extends \PHPSpec\Context
     
     public function itCallsAfterEvenIfExampleRaisesError()
     {
-        $contextObject = new BreaksBeforeTheAfter;
+        $contextObject = new \BreaksBeforeTheAfter;
                      
         $example = new Example($contextObject, 'itHasError');
         $reporter = $this->mock('PHPSpec\Runner\Reporter');

@@ -1,5 +1,7 @@
 <?php
 
+namespace Spec\PHPSpec\Specification\Interceptor;
+
 use PHPSpec\Specification\Interceptor\Object as ObjectInterceptor,
     PHPSpec\Matcher\MatcherFactory;
 

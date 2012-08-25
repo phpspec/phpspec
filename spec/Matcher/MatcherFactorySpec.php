@@ -1,5 +1,7 @@
 <?php
 
+namespace Spec\PHPSpec\Matcher;
+
 use \PHPSpec\Matcher\MatcherFactory;
 
 class DescribeMatcherFactory extends \PHPSpec\Context
