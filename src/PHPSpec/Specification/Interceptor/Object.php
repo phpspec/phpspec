@@ -143,7 +143,7 @@ class Object extends Interceptor
             return $dslResult;
         }
         
-        if (isset($this->getActualValue()->$attribute)) {
+        if (property_exists($this->getActualValue(), $attribute)) {
             return InterceptorFactory::create(
                 $this->getActualValue()->$attribute
             );
@@ -187,10 +187,7 @@ class Object extends Interceptor
             }
         }
         
-        $class = get_class($this->getActualValue());
-        trigger_error(
-            "Undefined property: $class::\$$property", E_USER_NOTICE
-        );
+        return $this->__get($property);
     }
     
     /**
