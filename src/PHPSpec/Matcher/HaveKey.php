@@ -35,11 +35,6 @@ class HaveKey implements Matcher
      */
     public function __construct($expected)
     {
-        if (!is_array($expected)) {
-            throw new \InvalidArgumentException(
-                'Expected value for have key matcher should be array'
-            );
-        }
         $this->_expected = $expected;
     }
     
@@ -52,7 +47,12 @@ class HaveKey implements Matcher
     public function matches($actual)
     {
         $this->_actual = $actual;
-        return array_key_exists($actual, $this->_expected);
+        if (!is_array($actual)) {
+            throw new \InvalidArgumentException(
+                'Actual value for have key matcher should be array'
+            );
+        }
+        return array_key_exists($this->_expected, $actual);
     }
     
     /**
@@ -62,7 +62,7 @@ class HaveKey implements Matcher
      */
     public function getFailureMessage()
     {
-        return 'expected to have key ' . var_export($this->_actual, true) .
+        return 'expected to have key ' . var_export($this->_expected, true) .
                ', got key does not exist (using haveKey())';
     }
     
@@ -73,7 +73,7 @@ class HaveKey implements Matcher
      */
     public function getNegativeFailureMessage()
     {
-        return 'expected key ' . var_export($this->_actual, true) .
+        return 'expected key ' . var_export($this->_expected, true) .
                ' not to exist (using haveKey())';
     }
     
@@ -84,6 +84,6 @@ class HaveKey implements Matcher
      */
     public function getDescription()
     {
-        return 'have key ' . var_export($this->_actual, true);
+        return 'have key ' . var_export($this->_expected, true);
     }
 }
