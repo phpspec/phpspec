@@ -185,7 +185,8 @@ if (is_dir($vendor = __DIR__ . "{$ds}..{$ds}vendor")  && file_exists($vendor . "
     $installation = COMPOSER_INSTALL;
 } else {
     $paths = explode(PATH_SEPARATOR, ini_get('include_path'));
-    @require_once 'PHPSpec/Loader/UniversalClassLoader.php';
+    @require_once "PHPSpec{$ds}Loader{$ds}UniversalClassLoader.php";
+    @require_once "PHPSpec{$ds}Matcher{$ds}Functions.php";
     if (class_exists('PHPSpec\Loader\UniversalClassLoader')) {
         $installation = PEAR_INSTALL;
         $loader = new PHPSpec\Loader\UniversalClassLoader();
@@ -209,7 +210,7 @@ if ($installation === COMPOSER_INSTALL) {
     } elseif (is_dir($phpspecDir = $vendor . "{$ds}phpspec{$ds}phpspec{$ds}src{$ds}PHPSpec{$ds}")) {
         require_once $phpspecDir . "{$ds}Matcher{$ds}Functions.php";
     } else {
-        die('hi');
+        die('Cannot find custom matcher closure definitions' . PHP_EOL);
     }
 }
 
