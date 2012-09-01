@@ -184,7 +184,7 @@ if (is_dir($vendor = __DIR__ . "{$ds}..{$ds}vendor")  && file_exists($vendor . "
     require($vendor . "{$ds}autoload.php");
     $installation = COMPOSER_INSTALL;
 } else {
-    $paths = explode(':', ini_get('include_path'));
+    $paths = explode(PATH_SEPARATOR, ini_get('include_path'));
     @require_once 'PHPSpec/Loader/UniversalClassLoader.php';
     if (class_exists('PHPSpec\Loader\UniversalClassLoader')) {
         $installation = PEAR_INSTALL;
