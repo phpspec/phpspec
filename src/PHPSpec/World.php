@@ -283,6 +283,13 @@ class World
       */
      public function includeMacros($macrosFile)
      {
+         if (is_dir($this->_options['specFile'])) {
+             $macrosFile = $this->_options['specFile'] . DIRECTORY_SEPARATOR .
+                           $macrosFile;
+         }
+         if (!file_exists($macrosFile) || !is_readable($macrosFile)) {
+             throw new Exception("Macro file $macrosFile not found");
+         }
          $this->_macrosFile = $macrosFile;
      }
      
