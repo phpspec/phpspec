@@ -348,9 +348,9 @@ abstract class Interceptor
     protected function invokeInterceptedMagicCall($method, $args)
     {
         $intercepted = new \ReflectionMethod($this->_actualValue, '__call');
-        return $intercepted->invokeArgs(
+        return InterceptorFactory::create($intercepted->invokeArgs(
             $this->_actualValue, array($method, $args)
-        );
+        ));
     }
     
     /**
