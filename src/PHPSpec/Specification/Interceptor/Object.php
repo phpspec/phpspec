@@ -41,6 +41,8 @@ class Object extends Interceptor
      */
     protected $_predicate = array('be' => 'is', 'have' => 'has');
     
+    protected $_predicateActualValue;
+    
     /**
      * Proxies call to specification and if method is a dsl call than it calls
      * the interceptor factory for the returned value
@@ -58,7 +60,7 @@ class Object extends Interceptor
         
         if ($this->isPredicate('have', $method, $args) ||
             $this->isPredicate('be', $method, $args)) {
-            $this->performMatching();
+            $this->performPredicateMatching();
             return true;
         }
         
@@ -123,7 +125,7 @@ class Object extends Interceptor
         $this->setExpectedValue($args);
         $this->_matcher = $this->getMatcherFactory()
                                ->create('beTrue', array(true));
-        $this->setActualValue(
+        $this->setPredicateActualValue(
             call_user_func_array(array($this->_actualValue, $predicate), $args)
         );
         return true;
@@ -154,12 +156,50 @@ class Object extends Interceptor
             "::$attribute", E_USER_NOTICE
         );
     }
-    
+
+    /**
+     * Setting intercepted object public property
+     *
+     * @param string $property 
+     * @param mixed  $value
+     */
     public function __set($property, $value)
     {
         if (is_object($this->getActualValue())) {
             $this->getActualValue()->$property = $value;
         }
+    }
+
+    /**
+     * Performs predicate matching and restores actual value
+     */
+    protected function performPredicateMatching()
+    {
+        $actual = $this->getActualValue();
+        $this->setActualValue($this->getPredicateActualValue());
+        $this->performMatching();
+        
+        $this->setActualValue($actual);
+    }
+
+    /**
+     * Sets predicate actual value
+     *
+     * @param boolean $value 
+     */
+    protected function setPredicateActualValue($value)
+    {
+        $this->_predicateActualValue = $value;
+    }
+
+    /**
+     * Gets the predicate actual value
+     *
+     * @return boolean
+     */
+    protected function getPredicateActualValue()
+    {
+        return $this->_predicateActualValue;
     }
 
     /**
