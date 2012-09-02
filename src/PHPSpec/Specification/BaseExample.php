@@ -65,6 +65,12 @@ abstract class BaseExample implements ExampleInterface
      * @var integer
      */
     protected $_executionTime;
+    /**
+     * The number assertions made when the example is run
+     * 
+     * @var integer
+     */
+    protected $_noOfAssertions;
     
     /**
      * Example keeps a reference to the example group and is created with the
@@ -109,6 +115,7 @@ abstract class BaseExample implements ExampleInterface
             $this->closeExample($startTime, $reporter);
             return;
         }
+        $this->_noOfAssertions = $this->_exampleGroup->getNumberOfAssertions();
         $reporter->addPass($this);
     }
     
@@ -173,7 +180,41 @@ abstract class BaseExample implements ExampleInterface
     {
         return $this->_executionTime;
     }
-    
+        
+    /**
+     * Returns the number of assertions made in this run
+     * 
+     * @return integer
+     */
+    public function getNoOfAssertions()
+    {
+        return $this->_noOfAssertions;
+    }
+
+    /**
+     * Returns the file name which contains the Spec
+     *
+     * @return string
+     */
+    public function getFile()
+    {
+        $classRefl = new \ReflectionClass($this->_exampleGroup);
+        return $classRefl->getFileName();
+    }
+
+    /**
+     * Returns the line number at which the example starts
+     *
+     * @return int
+     */
+    public function getLine()
+    {
+        $methodRefl = new \ReflectionMethod(
+            $this->_exampleGroup, $this->_methodName
+        );
+        return $methodRefl->getStartLine();
+    }
+
     /**
      * Closes example
      *

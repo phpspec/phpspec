@@ -73,6 +73,20 @@ abstract class Interceptor
     protected $_expectedValue;
     
     /**
+     * Holds the interceptors created from within this Interceptor
+     *
+     * array <PHPSpec\Specification\Interceptor>
+     */
+    protected $_subInterceptors = array();
+    
+    /**
+     * Number of assertions made
+     *
+     * @var integer
+     */
+    protected $_noOfAssertions = 0;
+    
+    /**
      * The matcher factory
      *
      * @var PHPSpec\Matcher\MatcherFactory
@@ -214,6 +228,32 @@ abstract class Interceptor
     public function getExpectation()
     {
         return $this->_expectation;
+    }
+    
+    /**
+     * Returns the number of assertions made in this spec
+     * 
+     * @return integer
+     */
+    public function getNumberOfAssertions()
+    {
+        $assertions = $this->_noOfAssertions;
+        
+        foreach ($this->_subInterceptors as $interceptors) {
+            $assertions += $interceptors->getNumberOfAssertions();
+        }
+        
+        return $assertions;
+    }
+    
+    /**
+     * Stores the interceptors sent from InterceptorFactory
+     * 
+     * @param Interceptor $interceptor 
+     */
+    public function addSubInterceptor(Interceptor $interceptor)
+    {
+        $this->_subInterceptors[] = $interceptor;
     }
     
     /**
@@ -381,6 +421,8 @@ abstract class Interceptor
      */
     protected function performMatching()
     {
+        $this->_noOfAssertions++;
+        
         $actual = $this->getActualValue();
 
         if (is_array($actual) && $this->_composedActual) {

@@ -67,7 +67,8 @@ class Object extends Interceptor
         $object = $this->getActualValue();
         if (method_exists($object, $method)) {
             return InterceptorFactory::create(
-                call_user_func_array(array($object, $method), $args)
+                call_user_func_array(array($object, $method), $args),
+                $this
             );
         }
         

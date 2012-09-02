@@ -69,6 +69,13 @@ class ExampleGroup
     protected $_sharedExamples = array();
     
     /**
+     * Containes the interceptors created from this example group
+     *
+     * @var array <PHPSpec\Specification\Interceptor>
+     */
+    private $_specs = array();
+    
+    /**
      * Override for having it called once before all examples are ran in one
      * group
      */
@@ -117,7 +124,28 @@ class ExampleGroup
             func_get_args()
         );
         $interceptor->setMatcherFactory($this->getMatcherFactory());
+        $this->_specs[] = $interceptor;
+        
         return $interceptor;
+    }
+    
+    /**
+     * Returns the number of assertions made in the a single example
+     * 
+     * @return integer
+     */
+    public function getNumberOfAssertions()
+    {
+        $assertions = 0;
+        
+        foreach ($this->_specs as $spec) {
+            $assertions += $spec->getNumberOfAssertions();
+        }
+        
+        // clearing the specs for the next example
+        $this->_specs = array();
+        
+        return $assertions;
     }
     
     /**
