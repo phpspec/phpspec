@@ -2,8 +2,11 @@
 
 namespace Spec\PHPSpec\Specification\Interceptor;
 
+require_once __DIR__ . DIRECTORY_SEPARATOR . '_files/Calculator.php';
+
 use PHPSpec\Specification\Interceptor\Object as ObjectInterceptor,
-    PHPSpec\Matcher\MatcherFactory;
+    PHPSpec\Matcher\MatcherFactory,
+    spec\PHPSpec\Specification\Interceptor\Calculator;
 
 class DescribeObject extends \PHPSpec\Context
 {
@@ -18,4 +21,9 @@ class DescribeObject extends \PHPSpec\Context
                     ->should->be(42);
     }
     
+    public function itWIllInterceptTheResultOfInterceptedMagicCall()
+    {
+        $calculator = $this->spec(new Calculator);
+        $calculator->add(40, 2)->should->equal(42);
+    }
 }
