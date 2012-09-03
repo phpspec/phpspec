@@ -162,10 +162,6 @@ abstract class Interceptor
 
         }
                 
-        if ($this->interceptedHasAMagicCall()) {
-            return $this->invokeInterceptedMagicCall($method, $args);
-        }
-        
         if ($this->callingExpectationsAsMethods($method)) {
             $this->throwErrorExpectationsAreProperties();
         }
@@ -325,32 +321,6 @@ abstract class Interceptor
                     $this->getExpectedValue();
         $this->_matcher = new UserDefinedMatcher($matcher, $expected);
         $this->performMatching();
-    }
-    
-    /**
-     * Checks if intercepted has a magic __call 
-     *
-     * @return boolean
-     */
-    protected function interceptedHasAMagicCall()
-    {
-        return !$this->_actualValue instanceof ExampleGroup &&
-               method_exists($this->_actualValue, '__call');
-    }
-    
-    /**
-     * Invokes intercepted magic call
-     *
-     * @param string $method 
-     * @param array  $args 
-     * @return mixed
-     */
-    protected function invokeInterceptedMagicCall($method, $args)
-    {
-        $intercepted = new \ReflectionMethod($this->_actualValue, '__call');
-        return InterceptorFactory::create($intercepted->invokeArgs(
-            $this->_actualValue, array($method, $args)
-        ));
     }
     
     /**

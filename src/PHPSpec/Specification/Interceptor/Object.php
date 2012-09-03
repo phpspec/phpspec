@@ -22,6 +22,7 @@
 namespace PHPSpec\Specification\Interceptor;
 
 use PHPSpec\Specification\Interceptor;
+use PHPSpec\Specification\Interceptor\InterceptorFactory;
 use PHPSpec\Matcher\InvalidMatcher;
 
 /**
@@ -53,17 +54,6 @@ class Object extends Interceptor
      */
     public function __call($method, $args)
     {
-        $dslResult = parent::__call($method, $args);
-        if (!is_null($dslResult)) {
-            return $dslResult;
-        }
-        
-        if ($this->isPredicate('have', $method, $args) ||
-            $this->isPredicate('be', $method, $args)) {
-            $this->performPredicateMatching();
-            return true;
-        }
-        
         $object = $this->getActualValue();
         if (method_exists($object, $method)) {
             return InterceptorFactory::create(
@@ -74,6 +64,21 @@ class Object extends Interceptor
         
         if ($method === 'property') {
             return $this->accessProperty($args[0]);
+        }
+        
+        $dslResult = parent::__call($method, $args);
+        if (!is_null($dslResult)) {
+            return $dslResult;
+        }
+        
+        if ($this->interceptedHasAMagicCall()) {
+            return $this->invokeInterceptedMagicCall($method, $args);
+        }
+        
+        if ($this->isPredicate('have', $method, $args) ||
+            $this->isPredicate('be', $method, $args)) {
+            $this->performPredicateMatching();
+            return true;
         }
         
         $class = get_class($object);
@@ -219,7 +224,7 @@ class Object extends Interceptor
         if (array_key_exists($protected, $objectAsArray)) {
             return InterceptorFactory::create($objectAsArray[$protected]);
         }
-        
+
         foreach ($classes as $class) {
             $private = sprintf("\0%s\0%s", $class, $property);
             
@@ -248,4 +253,31 @@ class Object extends Interceptor
         }
         return $classes;
     }
+
+    /**
+     * Checks if intercepted has a magic __call 
+     *
+     * @return boolean
+     */
+    protected function interceptedHasAMagicCall()
+    {
+        return !$this->getActualValue() instanceof ExampleGroup &&
+               method_exists($this->getActualValue(), '__call');
+    }
+    
+    /**
+     * Invokes intercepted magic call
+     *
+     * @param string $method 
+     * @param array  $args 
+     * @return mixed
+     */
+    protected function invokeInterceptedMagicCall($method, $args)
+    {
+        $intercepted = new \ReflectionMethod($this->getActualValue(), '__call');
+        return InterceptorFactory::create($intercepted->invokeArgs(
+            $this->getActualValue(), array($method, $args)
+        ));
+    }
+
 }
