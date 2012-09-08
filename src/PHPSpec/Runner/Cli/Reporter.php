@@ -72,6 +72,8 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', 'F', $example->getSpecificationText(),
+                $example->getExecutionTime(), $example->getFile(),
+                $example->getLine(), $example->getNoOfAssertions(),
                 $failure->getMessage(),
                 Backtrace::pretty($failure->getTrace()), $failure
             )
@@ -90,7 +92,9 @@ class Reporter extends BaseReporter
         $this->_passing[] = $example;
         $this->notify(
             new ReporterEvent(
-                'status', '.', $example->getSpecificationText()
+                'status', '.', $example->getSpecificationText(),
+                $example->getExecutionTime(), $example->getFile(),
+                $example->getLine(), $example->getNoOfAssertions()
             )
         );
     }
@@ -109,7 +113,8 @@ class Reporter extends BaseReporter
             new ReporterEvent(
                 'status', 'F', $example->getSpecificationText(),
                 $failure->getMessage(),
-                Backtrace::pretty($failure->getTrace()), $failure
+                Backtrace::pretty($failure->getTrace()), $failure,
+                $example->getExecutionTime(), $example->getNoOfAssertions()
             )
         );
         $this->checkFailFast();
@@ -127,8 +132,10 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', 'E', $example->getSpecificationText(),
-                $error->getMessage(),
-                Backtrace::pretty($error->getTrace()), $error
+                $example->getExecutionTime(), $example->getFile(),
+                $example->getLine(), $example->getNoOfAssertions(),
+                $error->getMessage(), Backtrace::pretty($error->getTrace()),
+                $error
             )
         );
         $this->checkFailFast();
@@ -146,6 +153,8 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', 'E', $example->getSpecificationText(),
+                $example->getExecutionTime(), $example->getFile(),
+                $example->getLine(), $example->getNoOfAssertions(),
                 $e->getMessage(), Backtrace::pretty($e->getTrace()), $e
             )
         );
@@ -164,7 +173,9 @@ class Reporter extends BaseReporter
         $this->notify(
             new ReporterEvent(
                 'status', '*', $example->getSpecificationText(),
-                $pending->getMessage()
+                $example->getExecutionTime(), $example->getFile(),
+                $example->getLine(), $example->getNoOfAssertions(),
+                $pending->getMessage(), null, null
             )
         );
     }

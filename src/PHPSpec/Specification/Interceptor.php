@@ -73,6 +73,20 @@ abstract class Interceptor
     protected $_expectedValue;
     
     /**
+     * Holds the interceptors created from within this Interceptor
+     *
+     * array <PHPSpec\Specification\Interceptor>
+     */
+    protected $_subInterceptors = array();
+    
+    /**
+     * Number of assertions made
+     *
+     * @var integer
+     */
+    protected $_noOfAssertions = 0;
+    
+    /**
      * The matcher factory
      *
      * @var PHPSpec\Matcher\MatcherFactory
@@ -148,10 +162,6 @@ abstract class Interceptor
 
         }
                 
-        if ($this->interceptedHasAMagicCall()) {
-            return $this->invokeInterceptedMagicCall($method, $args);
-        }
-        
         if ($this->callingExpectationsAsMethods($method)) {
             $this->throwErrorExpectationsAreProperties();
         }
@@ -214,6 +224,32 @@ abstract class Interceptor
     public function getExpectation()
     {
         return $this->_expectation;
+    }
+    
+    /**
+     * Returns the number of assertions made in this spec
+     * 
+     * @return integer
+     */
+    public function getNumberOfAssertions()
+    {
+        $assertions = $this->_noOfAssertions;
+        
+        foreach ($this->_subInterceptors as $interceptors) {
+            $assertions += $interceptors->getNumberOfAssertions();
+        }
+        
+        return $assertions;
+    }
+    
+    /**
+     * Stores the interceptors sent from InterceptorFactory
+     * 
+     * @param Interceptor $interceptor 
+     */
+    public function addSubInterceptor(Interceptor $interceptor)
+    {
+        $this->_subInterceptors[] = $interceptor;
     }
     
     /**
@@ -288,32 +324,6 @@ abstract class Interceptor
     }
     
     /**
-     * Checks if intercepted has a magic __call 
-     *
-     * @return boolean
-     */
-    protected function interceptedHasAMagicCall()
-    {
-        return !$this->_actualValue instanceof ExampleGroup &&
-               method_exists($this->_actualValue, '__call');
-    }
-    
-    /**
-     * Invokes intercepted magic call
-     *
-     * @param string $method 
-     * @param array  $args 
-     * @return mixed
-     */
-    protected function invokeInterceptedMagicCall($method, $args)
-    {
-        $intercepted = new \ReflectionMethod($this->_actualValue, '__call');
-        return InterceptorFactory::create($intercepted->invokeArgs(
-            $this->_actualValue, array($method, $args)
-        ));
-    }
-    
-    /**
      * Checks if intercepted is an object
      *
      * @return boolean
@@ -381,6 +391,8 @@ abstract class Interceptor
      */
     protected function performMatching()
     {
+        $this->_noOfAssertions++;
+        
         $actual = $this->getActualValue();
 
         if (is_array($actual) && $this->_composedActual) {

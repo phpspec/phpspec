@@ -89,9 +89,23 @@ class Junit extends Progress
     /**
      * Total of examples
      *
-     * @var string
+     * @var integer
      */
     private $_total = 0;
+
+    /**
+     * Number of examples completed
+     *
+     * @var integer
+     */
+    private $_complete = 0;
+
+    /**
+     * Number of assertions made
+     *
+     * @var integer
+     */
+    private $_assertions = 0;
     
     /**
      * Tell building tool to error with status > 0
@@ -114,10 +128,11 @@ class Junit extends Progress
      */
     public function output ()
     {
-        $output = '<?xml version="1.0" encoding="UTF-8"?>' . PHP_EOL;
-        $output .= '<testsuites>' . PHP_EOL . $this->_result;
-        $output .= '</testsuites>' . PHP_EOL;
-        echo $output;
+        $dom = new \DOMDocument('1.0');
+        $dom->preserveWhitespace = false;
+        $dom->formatOutput = true;
+        $dom->loadXml($this->_xml->asXml());
+        echo $dom->saveXML();
     }
     
     /**
@@ -128,7 +143,11 @@ class Junit extends Progress
      */
     protected function _startRenderingExampleGroup($reporterEvent)
     {
-        static $groupIndex = 1;
+        $this->_testSuite = $this->_xml->addChild('testsuite');
+        $this->_testSuite->addAttribute('name', $reporterEvent->example);
+        $this->_testSuite->addAttribute('file', $reporterEvent->file);
+        
+        $this->_suiteTime = 0;
         
         $this->_currentGroup = $reporterEvent->example;
     }
@@ -138,17 +157,11 @@ class Junit extends Progress
      */
     protected function _finishRenderingExampleGroup()
     {
-        $output = ' <testsuite name="'.$this->_currentGroup.'" ';
-        $output .= 'tests="' . $this->_total . '" ';
-        // $output .= 'assertions="' . $this->_total . '" '; not available yet
-        $output .= 'failures="' . $this->_failures . '" ';
-        $output .= 'errors="' . $this->_errors . '" ';
-        // $output .= 'time="0.01" '; not available yet
-        $output .= '>' . PHP_EOL;
-        $output .= $this->_examples;
-        $output .= ' </testsuite>' . PHP_EOL;
-        $this->_result .= $output;
-        $this->_examples = '';
+        $this->_testSuite->addAttribute('tests', $this->_total);
+        $this->_testSuite->addAttribute('assertions', $this->_assertions);
+        $this->_testSuite->addAttribute('failures', $this->_failures);
+        $this->_testSuite->addAttribute('errors', $this->_errors);
+        $this->_testSuite->addAttribute('time', $this->_suiteTime);
         
         if ($this->_errors > 0 || $this->_failures > 0) {
             $this->_errorOnExit = true;
@@ -158,6 +171,8 @@ class Junit extends Progress
         $this->_failures = 0;
         $this->_errors = 0;
         $this->_pending = 0;
+        $this->_complete = 0;
+        $this->_assertions = 0;
     }
     
     /**
@@ -168,73 +183,64 @@ class Junit extends Progress
     protected function _renderExamples($reporterEvent)
     {
         $this->_total++;
+        $this->_suiteTime += $reporterEvent->time;
+        $this->_assertions += $reporterEvent->assertions;
         
         $status = $reporterEvent->status;
         
-        $output = '  <testcase class="' . $this->_currentGroup . '"';
-        $output .= ' name="' . $reporterEvent->example . '"';
-        // $output .= ' file="filename.php"'; not available yet
-        // $output .= ' assertions="1"'; not available yet
-        // $output .= ' time="0.01"'; not available yet
-        // $output .= ' line="30"'; not available yet
+        $case = $this->_testSuite->addChild('testcase');
+        $case->addAttribute('name', $reporterEvent->example);
+        $case->addAttribute('class', $this->_currentGroup);
+        $case->addAttribute('file', $reporterEvent->file);
+        $case->addAttribute('line', $reporterEvent->line);
+        $case->addAttribute('assertions', $reporterEvent->assertions);
+        $case->addAttribute('time', $reporterEvent->time);
         
         switch ($status) {
-            case '.':
-                $output .= ' />' . PHP_EOL;
-                $this->_examples .= $output;
-                break;
-            case '*':
-                $error = '   <error type="';
-                $error .= get_class($reporterEvent->exception) . '">';
-                $error .= PHP_EOL;
-                $error .= '    Skipped Test: ' . $reporterEvent->example;
-                $error .= '    ' . $reporterEvent->message;
-                $error .= '   </error>';
-                
-                $output .= '>' . PHP_EOL;
-                $output .= $error . PHP_EOL;
-                $output .= '  </testcase>' . PHP_EOL;
-                $this->_examples .= $output;
-                
-                $this->_errors++;
-                break;
-            case 'E':
-                $error = '   <error type="';
-                $error .= get_class($reporterEvent->exception).'">' . PHP_EOL;
-                $error .= '    ' . $reporterEvent->example . '(FAILED)';
-                $error .= PHP_EOL;
-                $error .= '    ' . $reporterEvent->message . PHP_EOL;
-                $error .= '    ' . $reporterEvent->backtrace . PHP_EOL;
-                $error .= $this->getCode($reporterEvent->exception) . PHP_EOL;
-                
-                $error .= '   </error>';
-                
-                $output .= '>' . PHP_EOL;
-                $output .= $error . PHP_EOL;
-                $output .= '  </testcase>' . PHP_EOL;
-                $this->_examples .= $output;
-                
-                $this->_errors++;
-                break;
-            case 'F':
-                $error = '   <failure type="';
-                $error .= get_class($reporterEvent->exception).'">' . PHP_EOL;
-                
-                $error .= '    ' . $reporterEvent->example . '(FAILED)';
-                $error .= PHP_EOL;
-                $error .= '    ' . $reporterEvent->message . PHP_EOL;
-                $error .= '    ' . $reporterEvent->backtrace . PHP_EOL;
-                $error .= $this->getCode($reporterEvent->exception) . PHP_EOL;
-                
-                $error .= '   </failure>';
-                
-                $output .= '>' . PHP_EOL;
-                $output .= $error . PHP_EOL;
-                $output .= '  </testcase>' . PHP_EOL;
-                $this->_examples .= $output;
-                
-                $this->_failures++;
-                break;
+        case '.':
+            $this->_complete++;
+            break;
+        case '*':
+            $failureMsg = PHP_EOL . $reporterEvent->example
+                        . ' (PENDING)' . PHP_EOL;
+            $failureMsg .= $reporterEvent->message . PHP_EOL;
+            
+            $failure = $case->addChild('failure', $failureMsg);
+            $failure->addAttribute(
+                'type',
+                get_class($reporterEvent->exception)
+            );
+            
+            $this->_failures++;
+            break;
+        case 'E':
+            $failureMsg = PHP_EOL . $reporterEvent->example
+                        . ' (ERROR)' . PHP_EOL;
+            $failureMsg .= $reporterEvent->message . PHP_EOL;
+            $failureMsg .= $reporterEvent->backtrace . PHP_EOL;
+            
+            $error = $case->addChild('error', $failureMsg);
+            $error->addAttribute(
+                'type',
+                get_class($reporterEvent->exception)
+            );
+            
+            $this->_errors++;
+            break;
+        case 'F':
+            $failureMsg = PHP_EOL . $reporterEvent->example
+            . ' (FAILED)' . PHP_EOL;
+            $failureMsg .= $reporterEvent->message . PHP_EOL;
+            $failureMsg .= $reporterEvent->backtrace . PHP_EOL;
+            
+            $failure = $case->addChild('failure', $failureMsg);
+            $failure->addAttribute(
+                'type',
+                get_class($reporterEvent->exception)
+            );
+            
+            $this->_failures++;
+            break;
         }
     }
     

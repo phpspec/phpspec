@@ -219,8 +219,12 @@ abstract class Reporter implements \SPLSubject
         $name = preg_replace(
             '/Describe(?!.*Describe)/', '', get_class($exampleGroup)
         );
+        $classRefl = new \ReflectionClass($exampleGroup);
+        $filename = $classRefl->getFileName();
         $time = microtime(true);
-        $this->notify(ReporterEvent::newWithTimeAndName('start', $time, $name));
+        $this->notify(
+            new ReporterEvent('start', '', $name, $time, $filename)
+        );
     }
     
     /**
