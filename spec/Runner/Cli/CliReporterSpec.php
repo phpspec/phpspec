@@ -122,7 +122,30 @@ class DescribeCliReporter extends \PHPSpec\Context {
 	}
 
 	public function itNotifiesFormattersToExitIfFailFastIsOnAndATestFails() {
-		
+        $e = new \Exception('Fake message');
+    
+        $this->_reporterEvent->status = 'E';
+        $this->_reporterEvent->exception = $e;
+        $this->_reporterEvent->message = $e->getMessage();
+        $this->_reporterEvent->backtrace = PHPSpec\Util\Backtrace::pretty($e->getTrace());
+        $this->_reporterEvent->file = 'DummySpec.php';
+        $this->_reporterEvent->line = 100;
+                
+		$reporterEvent = new Mockery\Matcher\MustBe($this->_reporterEvent);
+		$exitEvent = new Mockery\Matcher\MustBe( new ReporterEvent(
+			'exit',
+			'',
+			''
+		));
+
+		$this->_reporter->setFailFast(true);
+
+		$this->_formatter->shouldReceive('update')
+			->with($this->_reporter, $reporterEvent)->once();
+		$this->_formatter->shouldReceive('update')
+			->with($this->_reporter, $exitEvent)->once();
+
+		$this->_reporter->addException($this->_example, $e);
 	}
 
 }
