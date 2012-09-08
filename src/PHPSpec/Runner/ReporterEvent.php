@@ -81,25 +81,54 @@ class ReporterEvent
      public $time;
      
      /**
+      * Number of assertions made in the example
+      * 
+      * @var integer
+      */
+     public $assertions;
+     
+     /**
+      * The line number that the example method starts at
+      *
+      * @var integer
+      */
+     public $line;
+
+     /**
+      * The file in which the example is in
+      *
+      * @var string
+      */
+     public $file;
+
+     /**
       * Reporter event is constructed with:
       *
       * @param string     $event
       * @param string     $status
       * @param string     $example
+      * @param float      $time (OPTIONAL)
+      * @param string     $file (OPTIONAL)
+      * @param integer    $line (OPTIONAL)
+      * @param integer    $assertions (OPTIONAL)
       * @param string     $message (OPTIONAL)
       * @param string     $trace (OPTIONAL)
       * @param \Exception $exception (OPTIONAL)
       */
-     public function __construct($event, $status, $example, $message = '',
-                                 $trace = '', $e = null, $time = 0.0)
+     public function __construct($event, $status, $example, $time = null,
+                                 $file=null, $line=null, $assertions = null,
+                                 $message = null, $trace = null, $e = null)
      {
-         $this->status    = $status;
-         $this->event     = $event;
-         $this->example   = $example;
-         $this->message   = $message;
-         $this->backtrace = $trace;
-         $this->exception = $e;
-         $this->time      = $time;
+         $this->status     = $status;
+         $this->event      = $event;
+         $this->example    = $example;
+         $this->message    = $message;
+         $this->backtrace  = $trace;
+         $this->exception  = $e;
+         $this->time       = $time;
+         $this->assertions = $assertions;
+         $this->line       = $line;
+         $this->file       = $file;
      }
      
      /**
