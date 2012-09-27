@@ -68,8 +68,8 @@ class ReflectionMethod
             $this->_objectOrClassName,
             $this->_methodName
         );
-        list(,$path,) = explode("\n", (string)$method);
-        preg_match('/(@@ )(.*\.php)( )(\d+)(\D*)(\d+)/', $path, $matches);
+        $methodString = explode("\n", (string)$method);
+        preg_match('/(@@ )(.*\.php)( )(\d+)(\D*)(\d+)/', $methodString[ count($methodString) - 3 ], $matches);
         list ($path, $start, $end) = array(
             $matches[2], $matches[4], $matches[6]
         );
