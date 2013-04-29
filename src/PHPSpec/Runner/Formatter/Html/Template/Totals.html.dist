@@ -1,2 +1,0 @@
- <script type="text/javascript">document.getElementById('duration').innerHTML = "Finished in <strong>{time}</strong> seconds";</script>
- <script type="text/javascript">document.getElementById('totals').innerHTML = "{totals}";</script>
