@@ -1,7 +1,7 @@
 PhpSpec
 =======
 
-- [Travis CI](https://github.com/phpspec/phpspec) ([![Master Build Status](https://secure.travis-ci.org/phpspec/phpspec.png?branch=master)](http://travis-ci.org/phpspec/phpspec))
+- [![Master Build Status](https://secure.travis-ci.org/phpspec/phpspec.png?branch=master)](http://travis-ci.org/phpspec/phpspec)
 
 Useful Links
 ------------
