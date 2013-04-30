@@ -68,7 +68,7 @@ class StringPresenter implements PresenterInterface
         }
 
         if ($exception instanceof ProphecyException) {
-            $presentation = trim($exception->getMessage());
+            $presentation = $exception->getMessage();
         }
 
         if (!$verbose || $exception instanceof PendingException) {
