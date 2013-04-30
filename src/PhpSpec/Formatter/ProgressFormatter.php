@@ -79,7 +79,7 @@ class ProgressFormatter implements FormatterInterface
         if ($this->io->isDecorated()) {
             $this->io->writeTemp(implode('', $progress).' '.$total);
         } else {
-            $this->io->writeTemp('/'.implode('/', $progress).'/  '.$total.' exampes');
+            $this->io->writeTemp('/'.implode('/', $progress).'/  '.$total.' examples');
         }
     }
 
