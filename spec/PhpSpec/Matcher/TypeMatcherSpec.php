@@ -66,12 +66,12 @@ class TypeMatcherSpec extends ObjectBehavior
         ))->duringPositiveMatch('haveType', $object, array('SessionHandlerInterface'));
     }
 
-    function it_mismatches_matches_wrong_class(ArrayObject $object)
+    function it_matches_other_class(ArrayObject $object)
     {
         $this->shouldNotThrow()->duringNegativeMatch('haveType', $object, array('stdClass'));
     }
 
-    function it_mismatches_matches_wrong_interface()
+    function it_matches_other_interface()
     {
         $this->shouldNotThrow()
             ->duringNegativeMatch('haveType', $this, array('SessionHandlerInterface'));
