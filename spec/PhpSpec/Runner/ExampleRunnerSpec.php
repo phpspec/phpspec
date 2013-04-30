@@ -44,11 +44,12 @@ class ExampleRunnerSpec extends ObjectBehavior
     function it_dispatches_ExampleEvent_with_pending_status_if_example_is_pending(
         EventDispatcherInterface $dispatcher,
         ExampleNode $example, SpecificationNode $specification, ReflectionClass $specReflection,
-        SpecificationInterface $context
+        SpecificationInterface $context, ReflectionMethod $exampReflection
     )
     {
         $example->isPending()->willReturn(true);
         $example->getSpecification()->willReturn($specification);
+        $example->getFunctionReflection()->willReturn($exampReflection);
         $specification->getClassReflection()->willReturn($specReflection);
         $specReflection->newInstanceArgs(array())->willReturn($context);
 
