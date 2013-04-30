@@ -81,7 +81,7 @@ class StringPresenter implements PresenterInterface
             }
         }
 
-        if ($exception instanceof PhpSpecException) {
+        if ($exception instanceof PhpSpecException && !$exception instanceof ErrorException) {
             list($file, $line) = $this->getExceptionExamplePosition($exception);
 
             return $presentation."\n".$this->presentFileCode($file, $line);

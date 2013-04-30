@@ -124,9 +124,6 @@ class PrettyFormatter implements FormatterInterface
             return;
         }
 
-        if ($exception instanceof PhpSpecException) {
-            $exception->setCause($event->getExample()->getFunctionReflection());
-        }
         $depth = $depth ?: 8;
         $message = $this->presenter->presentException($exception, $this->io->isVerbose());
 

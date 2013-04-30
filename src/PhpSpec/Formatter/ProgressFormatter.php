@@ -10,7 +10,6 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\PendingException;
-use PhpSpec\Exception\Exception as PHPSpec2Exception;
 
 class ProgressFormatter implements FormatterInterface
 {
@@ -113,9 +112,6 @@ class ProgressFormatter implements FormatterInterface
 
         $title = str_replace('\\', DIRECTORY_SEPARATOR, $event->getSpecification()->getTitle());
         $title = str_pad($title, 50, ' ', STR_PAD_RIGHT);
-        if ($exception instanceof PhpSpecException) {
-            $exception->setCause($event->getExample()->getFunctionReflection());
-        }
         $message = $this->presenter->presentException($exception, $this->io->isVerbose());
 
         if ($exception instanceof PendingException) {

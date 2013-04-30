@@ -9,6 +9,7 @@ use PhpSpec\SpecificationInterface;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Loader\Node\ExampleNode;
 
+use PhpSpec\Exception\Exception as PhpSpecException;
 use PhpSpec\Exception\Example as ExampleException;
 use Prophecy\Exception as ProphecyException;
 use Exception;
@@ -61,6 +62,10 @@ class ExampleRunner
         } catch (Exception $e) {
             $status    = ExampleEvent::BROKEN;
             $exception = $e;
+        }
+
+        if ($exception instanceof PhpSpecException) {
+            $exception->setCause($example->getFunctionReflection());
         }
 
         $runTime = microtime(true) - $startTime;
