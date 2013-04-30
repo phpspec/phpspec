@@ -52,31 +52,31 @@ class IdentityMatcherSpec extends ObjectBehavior
         $this->shouldNotThrow()->duringPositiveMatch('be', 'chuck', array('chuck'));
     }
 
-    function it_does_not_matches_empty_string_with_emptish_values()
+    function it_does_not_match_empty_string_with_emptish_values()
     {
         $this->shouldThrow(new FailureException('Expected val1, but got val2.'))
             ->duringPositiveMatch('be', '', array(false));
     }
 
-    function it_does_not_matches_zero_with_emptish_values()
+    function it_does_not_match_zero_with_emptish_values()
     {
         $this->shouldThrow(new FailureException('Expected val1, but got val2.'))
             ->duringPositiveMatch('be', 0, array(false));
     }
 
-    function it_does_not_matches_null_with_emptish_values()
+    function it_does_not_match_null_with_emptish_values()
     {
         $this->shouldThrow(new FailureException('Expected val1, but got val2.'))
             ->duringPositiveMatch('be', null, array(false));
     }
 
-    function it_does_not_matches_false_with_emptish_values()
+    function it_does_not_match_false_with_emptish_values()
     {
         $this->shouldThrow(new FailureException('Expected val1, but got val2.'))
             ->duringPositiveMatch('be', false, array(''));
     }
 
-    function it_does_not_matches_non_empty_different_value()
+    function it_does_not_match_non_empty_different_value()
     {
         $this->shouldThrow(new FailureException('Expected val1, but got val2.'))
             ->duringPositiveMatch('be', 'one', array('two'));
