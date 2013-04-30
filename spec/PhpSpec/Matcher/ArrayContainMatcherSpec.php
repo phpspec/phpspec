@@ -36,6 +36,7 @@ class ArrayContainMatcherSpec extends ObjectBehavior
     function it_does_not_match_array_without_specified_value()
     {
         $this->shouldThrow()->duringPositiveMatch('contain', array(1,2,3), array('abc'));
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')->duringPositiveMatch('contain', array(1,2,3), array(new \stdClass()));
     }
 
     function it_matches_array_without_specified_value()
