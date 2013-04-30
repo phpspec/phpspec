@@ -25,7 +25,7 @@ class ArrayContainMatcher extends BasicMatcher
 
     protected function matches($subject, array $arguments)
     {
-        return in_array($arguments[0], $subject);
+        return in_array($arguments[0], $subject, true);
     }
 
     protected function getFailureException($name, $subject, array $arguments)
@@ -33,7 +33,7 @@ class ArrayContainMatcher extends BasicMatcher
         return new FailureException(sprintf(
             'Expected %s to contain %s, but it does not.',
             $this->presenter->presentValue($subject),
-            $this->presenter->presentString($arguments[0])
+            $this->presenter->presentValue($arguments[0])
         ));
     }
 
@@ -42,7 +42,7 @@ class ArrayContainMatcher extends BasicMatcher
         return new FailureException(sprintf(
             'Not expected %s to contain %s, but it does.',
             $this->presenter->presentValue($subject),
-            $this->presenter->presentString($arguments[0])
+            $this->presenter->presentValue($arguments[0])
         ));
     }
 }
