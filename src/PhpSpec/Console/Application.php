@@ -216,16 +216,22 @@ class Application extends BaseApplication
             $suites = $c->getParam('suites', array('main' => ''));
 
             foreach ($suites as $name => $suite) {
-                $suite = is_array($suite) ? $suite : array('namespace' => $suite);
+                $suite      = is_array($suite) ? $suite : array('namespace' => $suite);
+                $srcNS      = $suite['namespace'];
+                $specPrefix = isset($suite['spec_prefix']) ? $suite['spec_prefix'] : 'spec';
+                $srcPath    = isset($suite['src_path']) ? $suite['src_path'] : 'src';
+                $specPath   = isset($suite['spec_path']) ? $suite['spec_path'] : '.';
+
+                if (!is_dir($srcPath)) {
+                    mkdir($srcPath, 0777, true);
+                }
+                if (!is_dir($specPath)) {
+                    mkdir($specPath, 0777, true);
+                }
 
                 $c->set(sprintf('locator.locators.%s_suite', $name),
-                    function($c) use($suite) {
-                        return new Locator\PSR0\PSR0Locator(
-                            $suite['namespace'],
-                            isset($suite['spec_prefix']) ? $suite['spec_prefix'] : 'spec',
-                            isset($suite['src_path']) ? $suite['src_path'] : 'src',
-                            isset($suite['spec_path']) ? $suite['spec_path'] : '.'
-                        );
+                    function($c) use($srcNS, $specPrefix, $srcPath, $specPath) {
+                        return new Locator\PSR0\PSR0Locator($srcNS, $specPrefix, $srcPath, $specPath);
                     }
                 );
             }
