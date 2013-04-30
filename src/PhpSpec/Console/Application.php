@@ -249,11 +249,12 @@ class Application extends BaseApplication
     {
         $container->addConfigurator(function($c) {
             switch ($c->getParam('formatter.name', 'progress')) {
-                case 'progress':
-                    $formatter = new Formatter\ProgressFormatter;
-                    break;
                 case 'pretty':
                     $formatter = new Formatter\PrettyFormatter;
+                    break;
+                case 'progress':
+                default:
+                    $formatter = new Formatter\ProgressFormatter;
                     break;
             }
 
