@@ -20,7 +20,7 @@ class ResourceLoader
     {
         $specs = array();
         foreach ($this->manager->locateResources($locator) as $resource) {
-            if (!class_exists($resource->getSpecClassname())) {
+            if (!class_exists($resource->getSpecClassname()) && is_file($resource->getSpecFilename())) {
                 require_once $resource->getSpecFilename();
             }
             if (!class_exists($resource->getSpecClassname())) {
