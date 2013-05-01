@@ -3,6 +3,7 @@
 namespace PhpSpec;
 
 use PhpSpec\Matcher\MatchersProviderInterface;
+use PhpSpec\Wrapper\WrapperInterface;
 use PhpSpec\Wrapper\SubjectContainerInterface;
 use PhpSpec\Wrapper\Subject;
 
@@ -11,6 +12,7 @@ use ArrayAccess;
 class ObjectBehavior implements ArrayAccess,
                                 MatchersProviderInterface,
                                 SubjectContainerInterface,
+                                WrapperInterface,
                                 SpecificationInterface
 {
     protected $object;
