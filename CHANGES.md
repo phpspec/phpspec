@@ -1,3 +1,9 @@
+1.0.0beta3 / 2013-05-01
+=======================
+
+  * Prevent loading of unexisting PHP files
+  * Fix typos in the error messages
+
 1.0.0beta2 / 2013-04-30
 =======================
 
