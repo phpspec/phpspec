@@ -45,7 +45,7 @@ class ResourceManager
         }
 
         throw new RuntimeException(sprintf(
-            'Can not find apropriate suite scope for class `%s`.', $classname
+            'Can not find appropriate suite scope for class `%s`.', $classname
         ));
     }
 }
