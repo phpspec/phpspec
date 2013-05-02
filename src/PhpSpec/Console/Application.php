@@ -252,6 +252,9 @@ class Application extends BaseApplication
                 case 'pretty':
                     $formatter = new Formatter\PrettyFormatter;
                     break;
+                case 'dot':
+                    $formatter = new Formatter\DotFormatter;
+                    break;
                 case 'progress':
                 default:
                     $formatter = new Formatter\ProgressFormatter;
