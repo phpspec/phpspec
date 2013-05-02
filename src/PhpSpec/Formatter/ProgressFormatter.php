@@ -95,7 +95,7 @@ class ProgressFormatter implements FormatterInterface
             }
         }
         $count = $this->stats->getEventsCount();
-        $plural = $count ==! 1 ? 's' : '';
+        $plural = $count !== 1 ? 's' : '';
         $this->io->write(sprintf("\n%d example%s ", $count, $plural));
         if (count($counts)) {
             $this->io->write(sprintf("(%s)", implode(', ', $counts)));
