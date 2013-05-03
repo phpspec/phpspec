@@ -2,15 +2,17 @@
 
 namespace PhpSpec\Loader\Node;
 
+use PhpSpec\Loader\Suite;
 use PhpSpec\Locator\ResourceInterface;
 
 use ReflectionClass;
 
-class SpecificationNode
+class SpecificationNode implements \Countable
 {
     private $title;
     private $class;
     private $resource;
+    private $suite;
     private $examples = array();
 
     public function __construct($title, ReflectionClass $class, ResourceInterface $resource)
@@ -44,5 +46,20 @@ class SpecificationNode
     public function getExamples()
     {
         return $this->examples;
+    }
+
+    public function setSuite(Suite $suite)
+    {
+        $this->suite = $suite;
+    }
+
+    public function getSuite()
+    {
+        return $this->suite;
+    }
+
+    public function count()
+    {
+        return count($this->examples);
     }
 }
