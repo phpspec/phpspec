@@ -24,6 +24,11 @@ class Collaborator implements WrapperInterface
         }
     }
 
+    public function implement($interface)
+    {
+        $this->prophecy->willImplement($interface);
+    }
+
     public function __call($method, array $arguments)
     {
         return call_user_func_array(array($this->prophecy, '__call'), array($method, $arguments));
