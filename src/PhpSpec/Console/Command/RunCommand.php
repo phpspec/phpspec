@@ -36,20 +36,20 @@ class RunCommand extends Command
             list($_, $locator, $linenum) = $matches;
         }
 
-        $specs      = $container->get('loader.resource_loader')->load($locator, $linenum);
+        $suite      = $container->get('loader.resource_loader')->load($locator, $linenum);
         $runner     = $container->get('runner.specification');
         $dispatcher = $container->get('event_dispatcher');
         $startTime  = microtime(true);
         $result     = 0;
 
-        $dispatcher->dispatch('beforeSuite', new Event\SuiteEvent);
+        $dispatcher->dispatch('beforeSuite', new Event\SuiteEvent($suite));
 
-        foreach ($specs as $spec) {
+        foreach ($suite->getSpecifications() as $spec) {
             $result = max($result, $runner->run($spec));
         }
 
         $dispatcher->dispatch('afterSuite', new Event\SuiteEvent(
-            microtime(true) - $startTime, $result
+            $suite, microtime(true) - $startTime, $result
         ));
 
         return $result;

@@ -6,16 +6,18 @@ use PhpSpec\ObjectBehavior;
 
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Loader\Node\SpecificationNode;
+use PhpSpec\Loader\Suite;
 
 use Exception;
 
 class ExampleEventSpec extends ObjectBehavior
 {
-    function let(SpecificationNode $specification, ExampleNode $example, Exception $exception)
+    function let(Suite $suite, SpecificationNode $specification, ExampleNode $example, Exception $exception)
     {
         $this->beConstructedWith($example, 10, $this->FAILED, $exception);
 
         $example->getSpecification()->willReturn($specification);
+        $specification->getSuite()->willReturn($suite);
     }
 
     function it_is_an_event()
@@ -32,6 +34,11 @@ class ExampleEventSpec extends ObjectBehavior
     function it_provides_a_link_to_specification($specification)
     {
         $this->getSpecification()->shouldReturn($specification);
+    }
+
+    function it_provides_a_link_to_suite($suite)
+    {
+        $this->getSuite()->shouldReturn($suite);
     }
 
     function it_provides_a_link_to_time()

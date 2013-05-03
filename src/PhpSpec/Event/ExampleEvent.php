@@ -37,6 +37,11 @@ class ExampleEvent extends Event implements EventInterface
         return $this->example->getSpecification();
     }
 
+    public function getSuite()
+    {
+        return $this->getSpecification()->getSuite();
+    }
+
     public function getTime()
     {
         return $this->time;
