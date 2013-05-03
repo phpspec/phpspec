@@ -19,7 +19,11 @@ abstract class BasicFormatter implements FormatterInterface
 
     public static function getSubscribedEvents()
     {
-        $events = array('afterExample', 'afterSuite');
+        $events = array(
+            'beforeSuite', 'afterSuite',
+            'beforeExample', 'afterExample',
+            'beforeSpecification', 'afterSpecification'
+        );
 
         return array_combine($events, $events);
     }
@@ -93,6 +97,27 @@ abstract class BasicFormatter implements FormatterInterface
         $this->io->writeln();
     }
 
-    abstract public function afterExample(ExampleEvent $event);
-    abstract public function afterSuite(SuiteEvent $event);
+    public function beforeSuite(SuiteEvent $event)
+    {
+    }
+
+    public function afterSuite(SuiteEvent $event)
+    {
+    }
+
+    public function beforeExample(ExampleEvent $event)
+    {
+    }
+
+    public function afterExample(ExampleEvent $event)
+    {
+    }
+
+    public function beforeSpecification(SpecificationEvent $event)
+    {
+    }
+
+    public function afterSpecification(SpecificationEvent $event)
+    {
+    }
 }

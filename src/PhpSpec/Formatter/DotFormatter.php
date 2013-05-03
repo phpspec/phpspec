@@ -13,25 +13,45 @@ use PhpSpec\Exception\Example\PendingException;
 
 class DotFormatter extends BasicFormatter
 {
+    private $examplesCount = 0;
+
+    public function beforeSuite(SuiteEvent $event)
+    {
+        $this->examplesCount = count($event->getSuite());
+    }
+
     public function afterExample(ExampleEvent $event)
     {
-        if($this->getStatisticsCollector()->getEventsCount() % 50 === 1) {
-            $this->getIO()->writeln();
+        $io = $this->getIO();
+
+        $eventsCount = $this->getStatisticsCollector()->getEventsCount();
+        if($eventsCount === 1) {
+            $io->writeln();
         }
 
         switch ($event->getResult()) {
             case ExampleEvent::PASSED:
-                $this->getIO()->write('<passed>.</passed>');
+                $io->write('<passed>.</passed>');
                 break;
             case ExampleEvent::PENDING:
-                $this->getIO()->write('<pending>P</pending>');
+                $io->write('<pending>P</pending>');
                 break;
             case ExampleEvent::FAILED:
-                $this->getIO()->write('<failed>F</failed>');
+                $io->write('<failed>F</failed>');
                 break;
             case ExampleEvent::BROKEN:
-                $this->getIO()->write('<broken>B</broken>');
+                $io->write('<broken>B</broken>');
                 break;
+        }
+
+        if($eventsCount % 50 === 0) {
+            $length = strlen((string)$this->examplesCount);
+            $format = sprintf(' %%%dd / %%%dd', $length, $length);
+            $io->write(sprintf($format, $eventsCount, $this->examplesCount));
+
+            if($eventsCount !== $this->examplesCount) {
+                $io->writeLn();
+            }
         }
     }
 
