@@ -18,7 +18,7 @@ class ResourceLoader
 
     public function load($locator, $line = null)
     {
-        $specs = array();
+        $suite = new Suite;
         foreach ($this->manager->locateResources($locator) as $resource) {
             if (!class_exists($resource->getSpecClassname()) && is_file($resource->getSpecFilename())) {
                 require_once $resource->getSpecFilename();
@@ -54,10 +54,10 @@ class ResourceLoader
                 $spec->addExample($example);
             }
 
-            $specs[] = $spec;
+            $suite->addSpecification($spec);
         }
 
-        return $specs;
+        return $suite;
     }
 
     private function lineIsInsideMethod($line, ReflectionMethod $method)

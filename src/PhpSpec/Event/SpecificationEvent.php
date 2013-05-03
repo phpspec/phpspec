@@ -24,6 +24,11 @@ class SpecificationEvent extends Event implements EventInterface
         return $this->specification;
     }
 
+    public function getSuite()
+    {
+        return $this->specification->getSuite();
+    }
+
     public function getTime()
     {
         return $this->time;
