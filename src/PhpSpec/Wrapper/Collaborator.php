@@ -28,7 +28,7 @@ class Collaborator implements WrapperInterface
     {
         $arguments = $this->unwrapper->unwrapAll($arguments);
 
-        return call_user_func_array(array($this->prophecy, $method), $arguments);
+        return call_user_func_array(array($this->prophecy, '__call'), array($method, $arguments));
     }
 
     public function __set($parameter, $value)
