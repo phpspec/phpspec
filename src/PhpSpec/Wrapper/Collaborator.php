@@ -24,6 +24,11 @@ class Collaborator implements WrapperInterface
         }
     }
 
+    public function beConstructedWith(array $arguments = null)
+    {
+        $this->prophecy->willBeConstructedWith($arguments);
+    }
+
     public function implement($interface)
     {
         $this->prophecy->willImplement($interface);
