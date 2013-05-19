@@ -1,3 +1,10 @@
+1.0.0beta4 / 2013-05-19
+=======================
+
+  * Add collaborator constructor setter
+  * Fix couple of bugs in Prophecy integration layer
+  * New (old) dot formatter
+
 1.0.0beta3 / 2013-05-01
 =======================
 
