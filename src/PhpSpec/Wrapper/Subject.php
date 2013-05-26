@@ -180,7 +180,7 @@ class Subject implements ArrayAccess, WrapperInterface
 
         if (!class_exists($this->classname)) {
             throw new ClassNotFoundException(sprintf(
-                'Class %s does not exists.', $this->presenter->presentString($this->classname)
+                'Class %s does not exist.', $this->presenter->presentString($this->classname)
             ), $this->classname);
         }
 

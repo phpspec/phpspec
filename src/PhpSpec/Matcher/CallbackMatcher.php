@@ -44,7 +44,7 @@ class CallbackMatcher extends BasicMatcher
     protected function getNegativeFailureException($name, $subject, array $arguments)
     {
         return new FailureException(sprintf(
-            '%s not expected to %s(%s), but it is.',
+            '%s not expected to %s(%s), but it did.',
             $this->presenter->presentValue($subject),
             $this->presenter->presentString($name),
             implode(', ', array_map(array($this->presenter, 'presentValue'), $arguments))

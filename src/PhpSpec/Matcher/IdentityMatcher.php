@@ -46,7 +46,7 @@ class IdentityMatcher extends BasicMatcher
     protected function getNegativeFailureException($name, $subject, array $arguments)
     {
         return new FailureException(sprintf(
-            'Not expected %s, but got one.',
+            'Did not expect %s, but got one.',
             $this->presenter->presentValue($subject)
         ));
     }

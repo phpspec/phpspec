@@ -65,37 +65,37 @@ class ComparisonMatcherSpec extends ObjectBehavior
 
     function it_mismatches_empty_string_using_comparison_operator()
     {
-        $this->shouldThrow(new FailureException('Not expected val1, but got one.'))
+        $this->shouldThrow(new FailureException('Did not expect val1, but got one.'))
             ->duringNegativeMatch('beLike', '', array(''));
     }
 
     function it_mismatches_not_empty_string_using_comparison_operator($matcher)
     {
-        $this->shouldThrow(new FailureException('Not expected val1, but got one.'))
+        $this->shouldThrow(new FailureException('Did not expect val1, but got one.'))
             ->duringNegativeMatch('beLike', 'chuck', array('chuck'));
     }
 
     function it_mismatches_empty_string_with_emptish_values_using_comparison_operator()
     {
-        $this->shouldThrow(new FailureException('Not expected val1, but got one.'))
+        $this->shouldThrow(new FailureException('Did not expect val1, but got one.'))
             ->duringNegativeMatch('beLike', '', array(''));
     }
 
     function it_mismatches_zero_with_emptish_values_using_comparison_operator()
     {
-        $this->shouldThrow(new FailureException('Not expected val1, but got one.'))
+        $this->shouldThrow(new FailureException('Did not expect val1, but got one.'))
             ->duringNegativeMatch('beLike', 0, array(''));
     }
 
     function it_mismatches_null_with_emptish_values_using_comparison_operator()
     {
-        $this->shouldThrow(new FailureException('Not expected val1, but got one.'))
+        $this->shouldThrow(new FailureException('Did not expect val1, but got one.'))
             ->duringNegativeMatch('beLike', null, array(''));
     }
 
     function it_mismatches_false_with_emptish_values_using_comparison_operator()
     {
-        $this->shouldThrow(new FailureException('Not expected val1, but got one.'))
+        $this->shouldThrow(new FailureException('Did not expect val1, but got one.'))
             ->duringNegativeMatch('beLike', false, array(''));
     }
 

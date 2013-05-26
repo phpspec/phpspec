@@ -41,7 +41,7 @@ class ArrayCountMatcher extends BasicMatcher
     protected function getNegativeFailureException($name, $subject, array $arguments)
     {
         return new FailureException(sprintf(
-            'Not expected %s to have %s items, but got it.',
+            'Expected %s not to have %s items, but got it.',
             $this->presenter->presentValue($subject),
             $this->presenter->presentString(intval($arguments[0]))
         ));
