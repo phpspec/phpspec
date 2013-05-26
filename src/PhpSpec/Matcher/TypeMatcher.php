@@ -45,7 +45,7 @@ class TypeMatcher extends BasicMatcher
     protected function getNegativeFailureException($name, $subject, array $arguments)
     {
         return new FailureException(sprintf(
-            'Not expected instance of %s, but got %s.',
+            'Did not expect instance of %s, but got %s.',
             $this->presenter->presentString($arguments[0]),
             $this->presenter->presentValue($subject)
         ));

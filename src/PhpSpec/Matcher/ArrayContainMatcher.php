@@ -40,7 +40,7 @@ class ArrayContainMatcher extends BasicMatcher
     protected function getNegativeFailureException($name, $subject, array $arguments)
     {
         return new FailureException(sprintf(
-            'Not expected %s to contain %s, but it does.',
+            'Expected %s not to contain %s, but it does.',
             $this->presenter->presentValue($subject),
             $this->presenter->presentValue($arguments[0])
         ));
