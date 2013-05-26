@@ -40,7 +40,7 @@ class StringStartMatcher extends BasicMatcher
     protected function getNegativeFailureException($name, $subject, array $arguments)
     {
         return new FailureException(sprintf(
-            'Not expected %s to start with %s, but it does.',
+            'Expected %s not to start with %s, but it does.',
             $this->presenter->presentString($subject),
             $this->presenter->presentString($arguments[0])
         ));

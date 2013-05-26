@@ -40,7 +40,7 @@ class StringRegexMatcher extends BasicMatcher
     protected function getNegativeFailureException($name, $subject, array $arguments)
     {
         return new FailureException(sprintf(
-            'Not expected %s to match %s regex, but it does.',
+            'Expected %s not to match %s regex, but it does.',
             $this->presenter->presentString($subject),
             $this->presenter->presentString($arguments[0])
         ));

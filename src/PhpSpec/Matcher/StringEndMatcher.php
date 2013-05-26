@@ -40,7 +40,7 @@ class StringEndMatcher extends BasicMatcher
     protected function getNegativeFailureException($name, $subject, array $arguments)
     {
         return new FailureException(sprintf(
-            'Not expected %s to end with %s, but it does.',
+            'Expected %s not to end with %s, but it does.',
             $this->presenter->presentString($subject),
             $this->presenter->presentString($arguments[0])
         ));

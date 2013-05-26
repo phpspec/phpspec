@@ -42,7 +42,7 @@ class ArrayKeyMatcher extends BasicMatcher
     protected function getNegativeFailureException($name, $subject, array $arguments)
     {
         return new FailureException(sprintf(
-            'Not expected %s to have %s key, but it does.',
+            'Expected %s not to have %s key, but it does.',
             $this->presenter->presentValue($subject),
             $this->presenter->presentString($arguments[0])
         ));
