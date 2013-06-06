@@ -255,6 +255,9 @@ class Application extends BaseApplication
                 case 'dot':
                     $formatter = new Formatter\DotFormatter;
                     break;
+                case 'nyan':
+                    $formatter = new Formatter\NyanFormatter;
+                    break;
                 case 'progress':
                 default:
                     $formatter = new Formatter\ProgressFormatter;
