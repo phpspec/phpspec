@@ -255,6 +255,15 @@ class Application extends BaseApplication
                 case 'dot':
                     $formatter = new Formatter\DotFormatter;
                     break;
+                case 'nyan':
+                    if (class_exists('NyanCat\Scoreboard')) {
+                        $formatter = new Formatter\NyanFormatter;
+                    } else {
+                        throw new RuntimeException(
+                            'The Nyan Cat formatter requires whatthejeff/nyancat-scoreboard:~1.1'
+                        );
+                    }
+                    break;
                 case 'progress':
                 default:
                     $formatter = new Formatter\ProgressFormatter;
