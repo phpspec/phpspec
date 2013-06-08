@@ -27,6 +27,10 @@
         "symfony/yaml":             "~2.1"
     },
 
+    "suggest": {
+        "whatthejeff/nyancat-scoreboard": "~1.1 – Enables the Nyan Cat formatter"
+    },
+
     "autoload": {
         "psr-0": {
             "PhpSpec": "src/"
