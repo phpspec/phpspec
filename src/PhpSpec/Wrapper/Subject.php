@@ -189,7 +189,17 @@ class Subject implements ArrayAccess, WrapperInterface
         $reflection = new ReflectionClass($this->classname);
 
         if (!empty($this->arguments)) {
-            return $this->subject = $reflection->newInstanceArgs($this->arguments);
+            try {
+                return $this->subject = $reflection->newInstanceArgs($this->arguments);
+            } catch (\ReflectionException $e) {
+                if (strpos($e->getMessage(), 'does not have a constructor') !== 0) {
+                    throw new MethodNotFoundException(sprintf(
+                       'Method %s not found.',
+                       $this->presenter->presentString($this->classname.'::__construct()')
+                   ), new $this->classname, '__construct', $this->arguments);
+                }
+                throw $e;
+            }
         }
 
         return $this->subject = $reflection->newInstance();
