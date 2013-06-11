@@ -47,6 +47,16 @@ class ExampleEvent extends Event implements EventInterface
         return $this->example->getTitle();
     }
 
+    public function getMessage()
+    {
+        return $this->exception->getMessage();
+    }
+
+    public function getBacktrace()
+    {
+        return $this->exception->getTrace();
+    }
+
     public function getTime()
     {
         return $this->time;

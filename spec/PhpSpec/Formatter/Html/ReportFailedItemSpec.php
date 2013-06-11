@@ -5,10 +5,47 @@ namespace spec\PhpSpec\Formatter\Html;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
+use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Console\IO;
+use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
+
 class ReportFailedItemSpec extends ObjectBehavior
 {
-    function it_is_initializable()
+    const EVENT_TITLE = 'it does not works';
+    const EVENT_MESSAGE = 'oops';
+    const BACKTRACE = 'backtrace';
+    const CODE = 'code';
+
+    function let(IO $io, ExampleEvent $event, Presenter $presenter)
     {
-        $this->shouldHaveType('PhpSpec\Formatter\Html\ReportFailedItem');
+        $this->beConstructedWith($io, $event, $presenter);
+    }
+
+    function it_writes_a_fail_message_for_a_failing_example(IO $io, ExampleEvent $event, Presenter $presenter)
+    {
+        $event->getTitle()->willReturn(self::EVENT_TITLE);
+        $event->getMessage()->willReturn(self::EVENT_MESSAGE);
+        $event->getBacktrace()->willReturn(self::BACKTRACE);
+        $event->getException()->willReturn(new \Exception);
+        $io->isVerbose()->willReturn(false);
+        $io->write($this->failingTemplate())->shouldBeCalled();
+        $presenter->presentException(Argument::cetera())->willReturn(self::CODE);
+        
+        $this->write();
+    }
+
+    function failingTemplate()
+    {
+        return '          <script type="text/javascript">makeRed(\'phpspec-header\');</script>
+          <script type="text/javascript">makeRed(\'div_group_1\');</script>
+          <script type="text/javascript">makeRed(\'example_group_1\');</script>
+          <dd class="example failed">
+            <span class="failed_spec_name">' . self::EVENT_TITLE . '</span>
+              <div class="failure" id="failure_1">
+                <div class="message"><pre>' . self::EVENT_MESSAGE . '</pre></div>
+                <div class="backtrace"><pre>' . self::BACKTRACE . '</pre></div>
+                <pre class="php">' . self::CODE . '</pre>
+              </div>
+          </dd>';
     }
 }

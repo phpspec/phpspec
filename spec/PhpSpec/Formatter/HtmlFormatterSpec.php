@@ -9,6 +9,7 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Console\IO;
 use PhpSpec\Formatter\Html\ReportItem;
 use PhpSpec\Formatter\Html\ReportItemFactory;
+use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
 
 class HtmlFormatterSpec extends ObjectBehavior
 {
@@ -23,11 +24,13 @@ class HtmlFormatterSpec extends ObjectBehavior
         IO $io,
         ExampleEvent $event,
         ReportItem $item,
-        ReportItemFactory $factory
+        ReportItemFactory $factory,
+        Presenter $presenter
     )
     {
+        $this->setPresenter($presenter);
         $this->setIo($io);
-        $factory->create($io, $event)->willReturn($item);
+        $factory->create($io, $event, $presenter)->willReturn($item);
         $item->write()->shouldBeCalled();
         $this->afterExample($event);
     }

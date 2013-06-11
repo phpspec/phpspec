@@ -7,31 +7,32 @@ use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Console\IO;
+use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
 
 class ReportItemFactorySpec extends ObjectBehavior
 {
-    function it_creates_a_ReportPassedItem(IO $io, ExampleEvent $event)
+    function it_creates_a_ReportPassedItem(IO $io, ExampleEvent $event, Presenter $presenter)
     {
         $event->getResult()->willReturn(ExampleEvent::PASSED);
-        $this->create($io, $event)->shouldHaveType('PhpSpec\Formatter\Html\ReportPassedItem');
+        $this->create($io, $event, $presenter)->shouldHaveType('PhpSpec\Formatter\Html\ReportPassedItem');
     }
 
-    function it_creates_a_ReportPendingItem(IO $io, ExampleEvent $event)
+    function it_creates_a_ReportPendingItem(IO $io, ExampleEvent $event, Presenter $presenter)
     {
         $event->getResult()->willReturn(ExampleEvent::PENDING);
-        $this->create($io, $event)->shouldHaveType('PhpSpec\Formatter\Html\ReportPendingItem');
+        $this->create($io, $event, $presenter)->shouldHaveType('PhpSpec\Formatter\Html\ReportPendingItem');
     }
 
-    function it_creates_a_ReportFailedItem(IO $io, ExampleEvent $event)
+    function it_creates_a_ReportFailedItem(IO $io, ExampleEvent $event, Presenter $presenter)
     {
         $event->getResult()->willReturn(ExampleEvent::FAILED);
-        $this->create($io, $event)->shouldHaveType('PhpSpec\Formatter\Html\ReportFailedItem');
+        $this->create($io, $event, $presenter)->shouldHaveType('PhpSpec\Formatter\Html\ReportFailedItem');
     }
 
-    function it_creates_a_ReportBrokenItem(IO $io, ExampleEvent $event)
+    function it_creates_a_ReportBrokenItem(IO $io, ExampleEvent $event, Presenter $presenter)
     {
         $event->getResult()->willReturn(ExampleEvent::BROKEN);
-        $this->create($io, $event)->shouldHaveType('PhpSpec\Formatter\Html\ReportBrokenItem');
+        $this->create($io, $event, $presenter)->shouldHaveType('PhpSpec\Formatter\Html\ReportBrokenItem');
     }
 
 }

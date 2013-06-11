@@ -4,11 +4,12 @@ namespace PhpSpec\Formatter\Html;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Console\IO;
+use PhpSpec\Formatter\Presenter\PresenterInterface;
 
 class ReportItemFactory
 {
 
-    public function create(IO $io, ExampleEvent $event)
+    public function create(IO $io, ExampleEvent $event, PresenterInterface $presenter = null)
     {
         switch(true) {
             case $event->getResult() === ExampleEvent::PASSED:
@@ -16,7 +17,7 @@ class ReportItemFactory
             case $event->getResult() === ExampleEvent::PENDING:
                 return new ReportPendingItem($io, $event);
             case $event->getResult() === ExampleEvent::FAILED:
-                return new ReportFailedItem($io, $event);
+                return new ReportFailedItem($io, $event, $presenter);
             case $event->getResult() === ExampleEvent::BROKEN:
                 return new ReportBrokenItem($io, $event);
             default:

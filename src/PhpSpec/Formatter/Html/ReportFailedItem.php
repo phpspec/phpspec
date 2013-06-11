@@ -2,6 +2,37 @@
 
 namespace PhpSpec\Formatter\Html;
 
+use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Console\IO;
+use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
+
 class ReportFailedItem
 {
+    private $io;
+    private $event;
+    static private $failingExamplesCount = 1;
+    private $presenter;
+
+    public function __construct(IO $io, ExampleEvent $event, Presenter $presenter)
+    {
+        $this->io = $io;
+        $this->event = $event;
+        $this->presenter = $presenter;
+    }
+
+    public function write()
+    {
+        $code = $this->presenter->presentException($this->event->getException(), $this->io->isVerbose());
+        $this->io->write('          <script type="text/javascript">makeRed(\'phpspec-header\');</script>
+          <script type="text/javascript">makeRed(\'div_group_' . self::$failingExamplesCount . '\');</script>
+          <script type="text/javascript">makeRed(\'example_group_' . self::$failingExamplesCount . '\');</script>
+          <dd class="example failed">
+            <span class="failed_spec_name">' . $this->event->getTitle() . '</span>
+              <div class="failure" id="failure_' . self::$failingExamplesCount++ . '">
+                <div class="message"><pre>' . $this->event->getMessage() . '</pre></div>
+                <div class="backtrace"><pre>' . $this->event->getBacktrace() . '</pre></div>
+                <pre class="php">' . $code  . '</pre>
+              </div>
+          </dd>');
+    }
 }
