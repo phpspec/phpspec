@@ -39,7 +39,7 @@ class MethodGenerator implements GeneratorInterface
         $values = array('%name%' => $name, '%arguments%' => $argString);
         if (!$content = $this->templates->render('method', $values)) {
             $content = $this->templates->renderString(
-                file_get_contents(__FILE__, null, null, __COMPILER_HALT_OFFSET__), $values
+                $this->getTemplate(), $values
             );
         }
 
@@ -56,6 +56,11 @@ class MethodGenerator implements GeneratorInterface
     public function getPriority()
     {
         return 0;
+    }
+
+    protected function getTemplate()
+    {
+        return file_get_contents(__FILE__, null, null, __COMPILER_HALT_OFFSET__);
     }
 }
 __halt_compiler();

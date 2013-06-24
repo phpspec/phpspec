@@ -42,18 +42,7 @@ class SpecificationGenerator implements GeneratorInterface
             $this->filesystem->makeDirectory($path);
         }
 
-        $values = array(
-            '%filepath%'  => $filepath,
-            '%name%'      => $resource->getSpecName(),
-            '%namespace%' => $resource->getSpecNamespace(),
-            '%subject%'   => $resource->getSrcClassname()
-        );
-
-        if (!$content = $this->templates->render('specification', $values)) {
-            $content = $this->templates->renderString(
-                file_get_contents(__FILE__, null, null, __COMPILER_HALT_OFFSET__), $values
-            );
-        }
+        $content = $this->renderTemplate($resource, $filepath);
 
         $this->filesystem->putFileContents($filepath, $content);
         $this->io->writeln(sprintf(
@@ -65,6 +54,27 @@ class SpecificationGenerator implements GeneratorInterface
     public function getPriority()
     {
         return 0;
+    }
+
+    protected function renderTemplate(ResourceInterface $resource, $filepath)
+    {
+        $values = array(
+            '%filepath%'  => $filepath,
+            '%name%'      => $resource->getSpecName(),
+            '%namespace%' => $resource->getSpecNamespace(),
+            '%subject%'   => $resource->getSrcClassname()
+        );
+
+        if (!$content = $this->templates->render('specification', $values)) {
+            $content = $this->templates->renderString($this->getTemplate(), $values);
+        }
+
+        return $content;
+    }
+
+    protected function getTemplate()
+    {
+        return file_get_contents(__FILE__, null, null, __COMPILER_HALT_OFFSET__);
     }
 }
 __halt_compiler();<?php
