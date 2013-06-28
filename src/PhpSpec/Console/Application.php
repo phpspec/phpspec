@@ -264,6 +264,10 @@ class Application extends BaseApplication
                         );
                     }
                     break;
+                case 'html':
+                case 'h':
+                    $formatter = new Formatter\HtmlFormatter;
+                    break;
                 case 'progress':
                 default:
                     $formatter = new Formatter\ProgressFormatter;
