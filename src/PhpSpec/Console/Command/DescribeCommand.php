@@ -25,9 +25,9 @@ class DescribeCommand extends Command
         $container->configure();
 
         $classname = $input->getArgument('class');
-        $pattern   = "/^[a-zA-Z_\/]+$/";
+        $pattern   = "/^[a-zA-Z0-9_\/]+$/";
 
-        if (0 == preg_match($pattern, $classname)) {
+        if (1 !== preg_match($pattern, $classname)) {
             throw new \InvalidArgumentException('Passed value is not a valid class path. Please see reference document: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md');
         }
 
