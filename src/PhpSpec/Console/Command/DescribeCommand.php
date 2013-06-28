@@ -28,10 +28,11 @@ class DescribeCommand extends Command
         $pattern   = '/^[a-zA-Z_\/\\\\][a-zA-Z0-9_\/\\\\]*$/';
 
         if (!preg_match($pattern, $classname)) {
-            throw new \InvalidArgumentException(sprintf(
-                "String \"%s\" is not a valid class name.\nPlease see reference document: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md",
-                $classname
-            ));
+            throw new \InvalidArgumentException(
+                sprintf('String "%s" is not a valid class name.', $classname) . PHP_EOL .
+                'Please see reference document:' .
+                'https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
+            );
         }
 
         $resource = $container->get('locator.resource_manager')->createResource($classname);
