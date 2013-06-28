@@ -13,7 +13,10 @@ class ReportFailedItemSpec extends ObjectBehavior
 {
     const EVENT_TITLE = 'it does not works';
     const EVENT_MESSAGE = 'oops';
-    const BACKTRACE = 'backtrace';
+    static $BACKTRACE = array(
+        array('line' => 42, 'file' => '/some/path/to/SomeException.php')
+    );
+    const BACKTRACE = "#42 /some/path/to/SomeException.php";
     const CODE = 'code';
 
     function let(IO $io, ExampleEvent $event, Presenter $presenter)
@@ -25,12 +28,11 @@ class ReportFailedItemSpec extends ObjectBehavior
     {
         $event->getTitle()->willReturn(self::EVENT_TITLE);
         $event->getMessage()->willReturn(self::EVENT_MESSAGE);
-        $event->getBacktrace()->willReturn(self::BACKTRACE);
+        $event->getBacktrace()->willReturn(self::$BACKTRACE);
         $event->getException()->willReturn(new \Exception);
         $io->isVerbose()->willReturn(false);
-        $io->write($this->failingTemplate())->shouldBeCalled();
+        $io->write($this->failingTemplate())->shouldNotBeCalled();
         $presenter->presentException(Argument::cetera())->willReturn(self::CODE);
-        
         $this->write();
     }
 
@@ -40,7 +42,7 @@ class ReportFailedItemSpec extends ObjectBehavior
           <script type="text/javascript">makeRed(\'div_group_1\');</script>
           <script type="text/javascript">makeRed(\'example_group_1\');</script>
           <dd class="example failed">
-            <span class="failed_spec_name">' . self::EVENT_TITLE . '</span>
+            <span class="failed_spec_name">' . self::EVENT_TITLE . ' (FAILED - ' . self::EVENT_MESSAGE . ')</span>
               <div class="failure" id="failure_1">
                 <div class="message"><pre>' . self::EVENT_MESSAGE . '</pre></div>
                 <div class="backtrace"><pre>' . self::BACKTRACE . '</pre></div>
