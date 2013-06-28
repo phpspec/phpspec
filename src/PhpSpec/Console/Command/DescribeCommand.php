@@ -25,7 +25,7 @@ class DescribeCommand extends Command
         $container->configure();
 
         $classname = $input->getArgument('class');
-        $pattern   = "/^[a-zA-Z_\/\\\\][a-zA-Z0-9_\/\\\\]*$/";
+        $pattern   = '/^[a-zA-Z_\/\\\\][a-zA-Z0-9_\/\\\\]*$/';
 
         if (!preg_match($pattern, $classname)) {
             throw new \InvalidArgumentException(sprintf(
