@@ -35,7 +35,7 @@ class HtmlFormatter extends BasicFormatter
 
     public function afterSuite(SuiteEvent $suite)
     {
-        include __DIR__ . "/Html/ReportSummary.html";
-        include __DIR__ . "/Html/ReportFooter.html";
+        include __DIR__ . "/Html/Template/ReportSummary.html";
+        include __DIR__ . "/Html/Template/ReportFooter.html";
     }
 }
