@@ -25,7 +25,13 @@ class DescribeCommand extends Command
         $container->configure();
 
         $classname = $input->getArgument('class');
-        $resource  = $container->get('locator.resource_manager')->createResource($classname);
+        $pattern   = "/^[a-zA-Z_\/]+$/";
+
+        if (0 == preg_match($pattern, $classname)) {
+            throw new \InvalidArgumentException('Passed value is not a valid class path. Please see reference document: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md');
+        }
+
+        $resource = $container->get('locator.resource_manager')->createResource($classname);
 
         $container->get('code_generator')->generate($resource, 'specification');
     }
