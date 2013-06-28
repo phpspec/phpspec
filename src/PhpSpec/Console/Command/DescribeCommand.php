@@ -25,10 +25,15 @@ class DescribeCommand extends Command
         $container->configure();
 
         $classname = $input->getArgument('class');
-        $pattern   = "/^[a-zA-Z0-9_\/]+$/";
+        $pattern   = "/^[a-zA-Z0-9_\/\\\\]+$/";
 
-        if (1 !== preg_match($pattern, $classname)) {
-            throw new \InvalidArgumentException('Passed value is not a valid class path. Please see reference document: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md');
+        if (!preg_match($pattern, $classname)) {
+            $output->writeln(sprintf(
+                "\n<error>String \"%s\" is not a valid class path.</error>\n\n<info>Please see reference document: <value>https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md</value>.</info>",
+                $classname
+            ));
+
+            return 1;
         }
 
         $resource = $container->get('locator.resource_manager')->createResource($classname);
