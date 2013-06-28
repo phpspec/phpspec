@@ -30,7 +30,7 @@ class DescribeCommand extends Command
         if (!preg_match($pattern, $classname)) {
             throw new \InvalidArgumentException(
                 sprintf('String "%s" is not a valid class name.', $classname) . PHP_EOL .
-                'Please see reference document:' .
+                'Please see reference document: ' .
                 'https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
             );
         }
