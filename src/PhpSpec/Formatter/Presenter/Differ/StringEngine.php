@@ -20,7 +20,7 @@ class StringEngine implements EngineInterface
         $text = $diff->render($renderer);
 
         $lines = array();
-        foreach (explode(PHP_EOL, $text) as $line) {
+        foreach (explode("\n", $text) as $line) {
             if (0 === strpos($line, '-')) {
                 $lines[] = sprintf('<diff-del>%s</diff-del>', $line);
             } elseif (0 === strpos($line, '+')) {
@@ -30,6 +30,6 @@ class StringEngine implements EngineInterface
             }
         }
 
-        return sprintf("<code>\n%s</code>", implode(PHP_EOL, $lines));
+        return sprintf("<code>%s%s</code>", PHP_EOL, implode(PHP_EOL, $lines));
     }
 }
