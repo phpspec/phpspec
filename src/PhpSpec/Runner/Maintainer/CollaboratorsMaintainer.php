@@ -56,8 +56,8 @@ class CollaboratorsMaintainer implements MaintainerInterface
     private function generateCollaborators(CollaboratorManager $collaborators, $function)
     {
         if ($comment = $function->getDocComment()) {
-            $comment = str_replace("\r\n", PHP_EOL, $comment);
-            foreach (explode(PHP_EOL, trim($comment)) as $line) {
+            $comment = str_replace("\r\n", "\n", $comment);
+            foreach (explode("\n", trim($comment)) as $line) {
                 if (preg_match(self::$docex, $line, $match)) {
                     $collaborator = $this->getOrCreateCollaborator($collaborators, $match[2]);
                     $collaborator->beADoubleOf($match[1]);
