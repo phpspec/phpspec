@@ -6,7 +6,7 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Console\IO;
+use PhpSpec\Formatter\Html\IO;
 use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
 
 class ReportFailedItemSpec extends ObjectBehavior
@@ -31,7 +31,7 @@ class ReportFailedItemSpec extends ObjectBehavior
         $event->getBacktrace()->willReturn(self::$BACKTRACE);
         $event->getException()->willReturn(new \Exception);
         $io->isVerbose()->willReturn(false);
-        $io->write($this->failingTemplate())->shouldNotBeCalled();
+        $io->write($this->failingTemplate())->shouldBeCalled();
         $presenter->presentException(Argument::cetera())->willReturn(self::CODE);
         $this->write();
     }

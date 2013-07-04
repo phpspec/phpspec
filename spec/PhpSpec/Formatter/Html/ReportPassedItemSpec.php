@@ -6,7 +6,7 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Console\IO;
+use PhpSpec\Formatter\Html\IO;
 
 class ReportPassedItemSpec extends ObjectBehavior
 {

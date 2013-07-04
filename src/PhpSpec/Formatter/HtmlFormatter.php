@@ -23,7 +23,7 @@ class HtmlFormatter extends BasicFormatter
 
     public function beforeSuite(SuiteEvent $suite)
     {
-        include __DIR__ . "/Html/ReportHeader.html";
+        include __DIR__ . "/Html/Template/ReportHeader.html";
     }
 
     public function afterExample(ExampleEvent $event)

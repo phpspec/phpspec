@@ -3,7 +3,6 @@
 namespace PhpSpec\Formatter\Html;
 
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Console\IO;
 use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
 
 class ReportBrokenItem
@@ -27,11 +26,11 @@ class ReportBrokenItem
           <script type="text/javascript">makeRed(\'div_group_' . self::$brokenExamplesCount . '\');</script>
           <script type="text/javascript">makeRed(\'example_group_' . self::$brokenExamplesCount . '\');</script>
           <dd class="example failed">
-            <span class="failed_spec_name">' . $this->event->getTitle() . ' (BROKEN - ' . $this->event->getMessage() . ')</span>
+            <span class="failed_spec_name">' . htmlentities($this->event->getTitle()) . ' (BROKEN - ' . $this->event->getMessage() . ')</span>
               <div class="failure" id="failure_' . self::$brokenExamplesCount++ . '">
-                <div class="message"><pre>' . $this->event->getMessage() . '</pre></div>
+                <div class="message"><pre>' . htmlentities($this->event->getMessage()) . '</pre></div>
                 <div class="backtrace"><pre>' . $this->formatBacktrace() . '</pre></div>
-                <pre class="php">' . $code  . '</pre>
+                <pre class="php">' . htmlentities($code)  . '</pre>
               </div>
           </dd>');
     }
@@ -42,8 +41,10 @@ class ReportBrokenItem
         foreach ($this->event->getBacktrace() as $step) {
             if (isset($step['line']) && isset($step['file'])) {
                 $backtrace .= "#{$step['line']} {$step['file']}";
+                $backtrace .= "<br />";
+                $backtrace .= PHP_EOL;
             }
         }
-        return $backtrace;
+        return rtrim($backtrace, "<br />" . PHP_EOL);
     }
 }

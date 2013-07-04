@@ -6,7 +6,7 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Console\IO;
+use PhpSpec\Formatter\Html\IO;
 use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
 
 class ReportBrokenItemSpec extends ObjectBehavior
@@ -33,7 +33,6 @@ class ReportBrokenItemSpec extends ObjectBehavior
         $io->isVerbose()->willReturn(false);
         $io->write($this->brokenSpecTemplate())->shouldBeCalled();
         $presenter->presentException(Argument::cetera())->willReturn(self::CODE);
-        
         $this->write();
     }
 

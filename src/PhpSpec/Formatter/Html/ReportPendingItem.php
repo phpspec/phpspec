@@ -3,7 +3,7 @@
 namespace PhpSpec\Formatter\Html;
 
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Console\IO;
+use PhpSpec\Formatter\Html\IO;
 
 class ReportPendingItem
 {

@@ -88,6 +88,10 @@ class Application extends BaseApplication
             );
         });
 
+        $container->setShared('html.io', function($c) {
+            return new Formatter\Html\IO;
+        });
+
         $container->setShared('console.commands.run', function($c) {
             return new Console\Command\RunCommand;
         });
@@ -274,7 +278,11 @@ class Application extends BaseApplication
                     break;
             }
 
-            $formatter->setIO($c->get('console.io'));
+            if ($formatter instanceof Formatter\HtmlFormatter) {
+                $formatter->setIO($c->get('html.io'));
+            } else {
+                $formatter->setIO($c->get('console.io'));
+            }
             $formatter->setPresenter($c->get('formatter.presenter'));
             $formatter->setStatisticsCollector($c->get('event_dispatcher.listeners.stats'));
 

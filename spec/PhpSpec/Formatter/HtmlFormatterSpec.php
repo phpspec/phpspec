@@ -6,7 +6,7 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Console\IO;
+use PhpSpec\Formatter\Html\IO;
 use PhpSpec\Formatter\Html\ReportItem;
 use PhpSpec\Formatter\Html\ReportItemFactory;
 use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
