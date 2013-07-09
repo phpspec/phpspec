@@ -13,3 +13,13 @@ Installing Dependencies
 
     wget -nc http://getcomposer.org/composer.phar
     php composer.phar install
+
+Questions
+---------
+
+#phpspec or the mailing list
+
+Developer's mailing list
+------------------------
+
+phpspec-dev@googlegroups.com
