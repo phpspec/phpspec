@@ -1,25 +1,20 @@
-PhpSpec
-=======
+#PhpSpec
 
 - [![Master Build Status](https://secure.travis-ci.org/phpspec/phpspec.png?branch=master)](http://travis-ci.org/phpspec/phpspec)
 
-Useful Links
-------------
+##Useful Links
 
 - The main website with documentation is at [http://phpspec.net](http://phpspec.net)
 
-Installing Dependencies
------------------------
+##Installing Dependencies
 
     wget -nc http://getcomposer.org/composer.phar
     php composer.phar install
 
-Questions
----------
+##Developer's mailing list
 
-#phpspec or the mailing list
+For development discussion subscribe to phpspec-dev@googlegroups.com
 
-Developer's mailing list
-------------------------
+## Community
 
-phpspec-dev@googlegroups.com
+Check out #silex-php on irc.freenode.net.
