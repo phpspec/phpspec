@@ -17,4 +17,4 @@ For development discussion subscribe to phpspec-dev@googlegroups.com
 
 ## Community
 
-Check out #silex-php on irc.freenode.net.
+Check out #phpspec on irc.freenode.net.
