@@ -68,6 +68,8 @@ class ProgressFormatter extends BasicFormatter
         $io->freezeTemp();
         $io->writeln();
 
+        $io->writeln(sprintf("%d specs", $stats->getTotalSpecs()));
+
         $counts = array();
         foreach ($stats->getCountsHash() as $type => $count) {
             if ($count) {
@@ -76,7 +78,7 @@ class ProgressFormatter extends BasicFormatter
         }
         $count = $stats->getEventsCount();
         $plural = $count !== 1 ? 's' : '';
-        $io->write(sprintf("\n%d example%s ", $count, $plural));
+        $io->write(sprintf("%d example%s ", $count, $plural));
         if (count($counts)) {
             $io->write(sprintf("(%s)", implode(', ', $counts)));
         }
