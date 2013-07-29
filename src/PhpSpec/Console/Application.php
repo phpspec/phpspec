@@ -184,6 +184,10 @@ class Application extends BaseApplication
             return new Formatter\Presenter\TaggedPresenter($c->get('formatter.presenter.differ'));
         });
 
+        $container->setShared('formatter.html.presenter', function($c) {
+            return new Formatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
+        });
+
         $container->setShared('formatter.presenter.differ', function($c) {
             $differ = new Formatter\Presenter\Differ\Differ;
 
@@ -280,10 +284,12 @@ class Application extends BaseApplication
 
             if ($formatter instanceof Formatter\HtmlFormatter) {
                 $formatter->setIO($c->get('html.io'));
+                $formatter->setPresenter($c->get('formatter.html.presenter'));
             } else {
                 $formatter->setIO($c->get('console.io'));
+                $formatter->setPresenter($c->get('formatter.presenter'));
             }
-            $formatter->setPresenter($c->get('formatter.presenter'));
+
             $formatter->setStatisticsCollector($c->get('event_dispatcher.listeners.stats'));
 
             $c->set('event_dispatcher.listeners.formatter', $formatter);
