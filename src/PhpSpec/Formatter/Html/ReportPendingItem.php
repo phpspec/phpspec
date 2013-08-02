@@ -4,6 +4,7 @@ namespace PhpSpec\Formatter\Html;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Formatter\Html\IO;
+use PhpSpec\Formatter\Template as TemplateInterface;
 
 class ReportPendingItem
 {
@@ -11,8 +12,9 @@ class ReportPendingItem
     private $event;
     static private $pendingExamplesCount = 1;
 
-    public function __construct(IO $io, ExampleEvent $event)
+    public function __construct(TemplateInterface $template, IO $io, ExampleEvent $event)
     {
+        $this->template = $template;
         $this->io = $io;
         $this->event = $event;
     }

@@ -22,7 +22,7 @@ class ReportItemFactory
             case $event->getResult() === ExampleEvent::PASSED:
                 return new ReportPassedItem($this->template, $io, $event);
             case $event->getResult() === ExampleEvent::PENDING:
-                return new ReportPendingItem($io, $event);
+                return new ReportPendingItem($this->template, $io, $event);
             case $event->getResult() === ExampleEvent::FAILED:
                 return new ReportFailedItem($io, $event, $presenter);
             case $event->getResult() === ExampleEvent::BROKEN:
