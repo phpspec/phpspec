@@ -7,10 +7,16 @@ use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Formatter\Html\IO;
+use PhpSpec\Formatter\Template;
 use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
 
 class ReportItemFactorySpec extends ObjectBehavior
 {
+    function let(Template $template)
+    {
+        $this->beConstructedWith($template);
+    }
+
     function it_creates_a_ReportPassedItem(IO $io, ExampleEvent $event, Presenter $presenter)
     {
         $event->getResult()->willReturn(ExampleEvent::PASSED);

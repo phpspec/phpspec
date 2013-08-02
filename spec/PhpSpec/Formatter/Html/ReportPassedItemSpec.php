@@ -7,14 +7,15 @@ use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Formatter\Html\IO;
+use PhpSpec\Formatter\Html\Template;
 
 class ReportPassedItemSpec extends ObjectBehavior
 {
     const EVENT_TITLE = 'it works';
 
-    function let(IO $io, ExampleEvent $event)
+    function let(Template $template, IO $io, ExampleEvent $event)
     {
-        $this->beConstructedWith($io, $event);
+        $this->beConstructedWith($template, $io, $event);
     }
 
     function it_writes_a_pass_message_for_a_passing_example(IO $io, ExampleEvent $event)
