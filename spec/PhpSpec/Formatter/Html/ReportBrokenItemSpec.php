@@ -8,6 +8,7 @@ use Prophecy\Argument;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Formatter\Html\IO;
 use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
+use PhpSpec\Formatter\Template;
 
 class ReportBrokenItemSpec extends ObjectBehavior
 {
@@ -19,9 +20,9 @@ class ReportBrokenItemSpec extends ObjectBehavior
     const BACKTRACE = "#42 /some/path/to/SomeException.php";
     const CODE = 'code';
 
-    function let(IO $io, ExampleEvent $event, Presenter $presenter)
+    function let(Template $template, IO $io, ExampleEvent $event, Presenter $presenter)
     {
-        $this->beConstructedWith($io, $event, $presenter);
+        $this->beConstructedWith($template, $io, $event, $presenter);
     }
 
     function it_writes_a_fail_message_for_a_failing_example(IO $io, ExampleEvent $event, Presenter $presenter)

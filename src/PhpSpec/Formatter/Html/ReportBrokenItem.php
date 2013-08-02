@@ -4,6 +4,7 @@ namespace PhpSpec\Formatter\Html;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
+use PhpSpec\Formatter\Template as TemplateInterface;
 
 class ReportBrokenItem
 {
@@ -12,7 +13,7 @@ class ReportBrokenItem
     static private $brokenExamplesCount = 1;
     private $presenter;
 
-    public function __construct(IO $io, ExampleEvent $event, Presenter $presenter)
+    public function __construct(TemplateInterface $template, IO $io, ExampleEvent $event, Presenter $presenter)
     {
         $this->io = $io;
         $this->event = $event;

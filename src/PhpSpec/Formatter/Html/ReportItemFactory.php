@@ -26,7 +26,7 @@ class ReportItemFactory
             case $event->getResult() === ExampleEvent::FAILED:
                 return new ReportFailedItem($io, $event, $presenter);
             case $event->getResult() === ExampleEvent::BROKEN:
-                return new ReportBrokenItem($io, $event, $presenter);
+                return new ReportBrokenItem($this->template, $io, $event, $presenter);
             default:
                 throw $this->invalidResultException($event->getResult());
         }
