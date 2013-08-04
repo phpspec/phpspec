@@ -8,32 +8,30 @@ use PhpSpec\Formatter\Template as TemplateInterface;
 
 class ReportBrokenItem
 {
-    private $io;
+    private $template;
     private $event;
     static private $brokenExamplesCount = 1;
     private $presenter;
 
-    public function __construct(TemplateInterface $template, IO $io, ExampleEvent $event, Presenter $presenter)
+    public function __construct(TemplateInterface $template, ExampleEvent $event, Presenter $presenter)
     {
-        $this->io = $io;
+        $this->template = $template;
         $this->event = $event;
         $this->presenter = $presenter;
     }
 
     public function write()
     {
-        $code = $this->presenter->presentException($this->event->getException(), $this->io->isVerbose());
-        $this->io->write('          <script type="text/javascript">makeRed(\'phpspec-header\');</script>
-          <script type="text/javascript">makeRed(\'div_group_' . self::$brokenExamplesCount . '\');</script>
-          <script type="text/javascript">makeRed(\'example_group_' . self::$brokenExamplesCount . '\');</script>
-          <dd class="example failed">
-            <span class="failed_spec_name">' . htmlentities($this->event->getTitle()) . ' (BROKEN - ' . $this->event->getMessage() . ')</span>
-              <div class="failure" id="failure_' . self::$brokenExamplesCount++ . '">
-                <div class="message"><pre>' . htmlentities($this->event->getMessage()) . '</pre></div>
-                <div class="backtrace"><pre>' . $this->formatBacktrace() . '</pre></div>
-                <pre class="php">' . htmlentities($code)  . '</pre>
-              </div>
-          </dd>');
+        $code = $this->presenter->presentException($this->event->getException());
+        $this->template->render(Template::DIR . '/Template/ReportFailed.html',
+            array(
+                'title' => htmlentities($this->event->getTitle()),
+                'message' => htmlentities($this->event->getMessage()),
+                'backtrace' => $this->formatBacktrace(),
+                'code' => htmlentities($code),
+                'index' => self::$brokenExamplesCount++
+            )
+        );
     }
     
     private function formatBacktrace()

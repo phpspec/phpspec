@@ -274,7 +274,9 @@ class Application extends BaseApplication
                     break;
                 case 'html':
                 case 'h':
-                    $formatter = new Formatter\HtmlFormatter;
+                    $template = new Formatter\Html\Template($c->get('html.io'));
+                    $factory = new Formatter\Html\ReportItemFactory($template);
+                    $formatter = new Formatter\HtmlFormatter($factory);
                     break;
                 case 'progress':
                 default:

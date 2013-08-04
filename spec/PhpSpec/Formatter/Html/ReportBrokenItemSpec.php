@@ -6,9 +6,8 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Formatter\Html\IO;
 use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
-use PhpSpec\Formatter\Template;
+use PhpSpec\Formatter\Html\Template;
 
 class ReportBrokenItemSpec extends ObjectBehavior
 {
@@ -20,35 +19,25 @@ class ReportBrokenItemSpec extends ObjectBehavior
     const BACKTRACE = "#42 /some/path/to/SomeException.php";
     const CODE = 'code';
 
-    function let(Template $template, IO $io, ExampleEvent $event, Presenter $presenter)
+    function let(Template $template, ExampleEvent $event, Presenter $presenter)
     {
-        $this->beConstructedWith($template, $io, $event, $presenter);
+        $this->beConstructedWith($template, $event, $presenter);
     }
 
-    function it_writes_a_fail_message_for_a_failing_example(IO $io, ExampleEvent $event, Presenter $presenter)
+    function it_writes_a_fail_message_for_a_failing_example(Template $template, ExampleEvent $event, Presenter $presenter)
     {
         $event->getTitle()->willReturn(self::EVENT_TITLE);
         $event->getMessage()->willReturn(self::EVENT_MESSAGE);
         $event->getBacktrace()->willReturn(self::$BACKTRACE);
         $event->getException()->willReturn(new \Exception);
-        $io->isVerbose()->willReturn(false);
-        $io->write($this->brokenSpecTemplate())->shouldBeCalled();
+        $template->render(Template::DIR . '/Template/ReportFailed.html', array(
+            'title' => self::EVENT_TITLE,
+            'message' => self::EVENT_MESSAGE,
+            'backtrace' => self::BACKTRACE,
+            'code' => self::CODE,
+            'index' => 1
+        ))->shouldBeCalled();
         $presenter->presentException(Argument::cetera())->willReturn(self::CODE);
         $this->write();
-    }
-
-    function brokenSpecTemplate()
-    {
-        return '          <script type="text/javascript">makeRed(\'phpspec-header\');</script>
-          <script type="text/javascript">makeRed(\'div_group_1\');</script>
-          <script type="text/javascript">makeRed(\'example_group_1\');</script>
-          <dd class="example failed">
-            <span class="failed_spec_name">' . self::EVENT_TITLE . ' (BROKEN - ' . self::EVENT_MESSAGE . ')</span>
-              <div class="failure" id="failure_1">
-                <div class="message"><pre>' . self::EVENT_MESSAGE . '</pre></div>
-                <div class="backtrace"><pre>' . self::BACKTRACE . '</pre></div>
-                <pre class="php">' . self::CODE . '</pre>
-              </div>
-          </dd>';
     }
 }

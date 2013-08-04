@@ -22,7 +22,7 @@ class HtmlFormatter extends BasicFormatter
 
     public function afterExample(ExampleEvent $event)
     {
-        $reportLine = $this->reportItemFactory->create($this->getIO(), $event, $this->getPresenter());
+        $reportLine = $this->reportItemFactory->create($event, $this->getPresenter());
         $reportLine->write();
         $this->getIO()->write(PHP_EOL);
     }
