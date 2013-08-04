@@ -37,7 +37,7 @@ class ReportItemFactorySpec extends ObjectBehavior
     function it_creates_a_ReportBrokenItem(ExampleEvent $event, Presenter $presenter)
     {
         $event->getResult()->willReturn(ExampleEvent::BROKEN);
-        $this->create($event, $presenter)->shouldHaveType('PhpSpec\Formatter\Html\ReportBrokenItem');
+        $this->create($event, $presenter)->shouldHaveType('PhpSpec\Formatter\Html\ReportFailedItem');
     }
 
 }
