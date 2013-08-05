@@ -5,10 +5,13 @@ namespace PhpSpec\Listener;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Event\SpecificationEvent;
 
 class StatisticsCollector implements EventSubscriberInterface
 {
     private $globalResult  = 0;
+    private $totalSpecs    = 0;
+
     private $passedEvents  = array();
     private $pendingEvents = array();
     private $failedEvents  = array();
@@ -16,7 +19,15 @@ class StatisticsCollector implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        return array('afterExample' => array('afterExample', 10));
+        return array(
+            'afterSpecification' => array('afterSpecification', 10),
+            'afterExample'       => array('afterExample', 10)
+        );
+    }
+
+    public function afterSpecification(SpecificationEvent $event)
+    {
+        $this->totalSpecs++;
     }
 
     public function afterExample(ExampleEvent $event)
@@ -82,6 +93,11 @@ class StatisticsCollector implements EventSubscriberInterface
             'failed'  => count($this->getFailedEvents()),
             'broken'  => count($this->getBrokenEvents()),
         );
+    }
+
+    public function getTotalSpecs()
+    {
+        return $this->totalSpecs;
     }
 
     public function getEventsCount()
