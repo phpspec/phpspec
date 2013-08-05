@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\Wrapper;
 
 use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Wrapper\Subject;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\ObjectBehavior;
@@ -16,7 +17,7 @@ class SubjectSpec extends ObjectBehavior
     function let(MatcherManager $matchers, Unwrapper $unwrapper,
         PresenterInterface $presenter, EventDispatcherInterface $dispatcher, ExampleNode $example)
     {
-        $this->beConstructedWith(null, $matchers, $unwrapper, $presenter, $dispatcher, $example);
+        $this->beConstructedWith(new \Exception(), $matchers, $unwrapper, $presenter, $dispatcher, $example);
     }
 
     function it_dispatches_before_expectation_event_for_should(MatcherManager $matchers,
@@ -97,5 +98,23 @@ class SubjectSpec extends ObjectBehavior
         )->shouldBeCalled();
 
         $this->callOnWrappedObject('shouldNot', array('beBoolean'));
+    }
+
+    function it_dispatches_method_call_events(EventDispatcherInterface $dispatcher, Unwrapper $unwrapper)
+    {
+        $unwrapper->unwrapOne(Argument::any())->willReturn(new \Exception);
+        $unwrapper->unwrapAll(Argument::any())->willReturn(array());
+
+        $dispatcher->dispatch(
+            'beforeMethodCall',
+            Argument::type('PhpSpec\Event\MethodCallEvent')
+        )->shouldBeCalled();
+
+        $dispatcher->dispatch(
+            'afterMethodCall',
+            Argument::type('PhpSpec\Event\MethodCallEvent')
+        )->shouldBeCalled();
+
+        $this->callOnWrappedObject('callOnWrappedObject', array('getMessage'));
     }
 }

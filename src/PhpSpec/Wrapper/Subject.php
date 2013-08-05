@@ -3,6 +3,7 @@
 namespace PhpSpec\Wrapper;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use PhpSpec\Event\MethodCallEvent;
 use PhpSpec\Event\ExpectationEvent;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Loader\Node\ExampleNode;
@@ -133,7 +134,16 @@ class Subject implements ArrayAccess, WrapperInterface
 
         // if subject is an instance with provided method - call it and stub the result
         if ($this->isObjectMethodAccessible($method)) {
+
+            $this->dispatcher->dispatch('beforeMethodCall',
+                new MethodCallEvent($this->example, $subject, $method, $arguments)
+            );
+
             $returnValue = call_user_func_array(array($subject, $method), $arguments);
+
+            $this->dispatcher->dispatch('afterMethodCall',
+                new MethodCallEvent($this->example, $subject, $method, $arguments)
+            );
 
             return new static($returnValue, $this->matchers, $this->unwrapper, $this->presenter, $this->dispatcher, $this->example);
         }
@@ -328,7 +338,7 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function __call($method, array $arguments = array())
     {
-        // if user calls function with should prefix - call matcher
+        // if user calls function with should prefix - call m2atcher
         if (0 === strpos($method, 'shouldNot')) {
             return $this->shouldNot(lcfirst(substr($method, 9)), $arguments);
         }
