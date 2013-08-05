@@ -31,7 +31,7 @@ class HtmlFormatterSpec extends ObjectBehavior
         $this->setPresenter($presenter);
         $this->setIo($io);
         $factory->create($event, $presenter)->willReturn($item);
-        $item->write()->shouldBeCalled();
+        $item->write(Argument::any())->shouldBeCalled();
         $this->afterExample($event);
     }
 }

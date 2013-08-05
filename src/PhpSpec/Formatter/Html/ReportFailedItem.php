@@ -20,16 +20,17 @@ class ReportFailedItem
         $this->presenter = $presenter;
     }
 
-    public function write()
+    public function write($index)
     {
-        $code = $this->presenter->presentException($this->event->getException());
+        $code = $this->presenter->presentException($this->event->getException(), true);
         $this->template->render(Template::DIR . '/Template/ReportFailed.html',
             array(
-                'title' => htmlentities($this->event->getTitle()),
-                'message' => htmlentities($this->event->getMessage()),
+                'title' => htmlentities(strip_tags($this->event->getTitle())),
+                'message' => htmlentities(strip_tags($this->event->getMessage())),
                 'backtrace' => $this->formatBacktrace(),
-                'code' => htmlentities($code),
-                'index' => self::$failingExamplesCount++
+                'code' => $code,
+                'index' => self::$failingExamplesCount++,
+                'specification' => $index
             )
         );
     }

@@ -35,9 +35,10 @@ class ReportFailedItemSpec extends ObjectBehavior
             'message' => self::EVENT_MESSAGE,
             'backtrace' => self::BACKTRACE,
             'code' => self::CODE,
-            'index' => 1
+            'index' => 1,
+            'specification' => 1
         ))->shouldBeCalled();
         $presenter->presentException(Argument::cetera())->willReturn(self::CODE);
-        $this->write();
+        $this->write(1);
     }
 }

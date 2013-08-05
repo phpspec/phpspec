@@ -19,7 +19,7 @@ body {
 .phpspec-report h1 {
   margin: 0px 10px 0px 10px;
   padding: 10px;
-  font-family: "Lucida Grande", Helvetica, sans-serif;
+  font-family: "Georgia", Times, serif;
   font-size: 1.8em;
   position: absolute;
 }
@@ -31,7 +31,7 @@ body {
 #summary {
   float:right;
   padding: 5px 10px;
-  font-family: "Lucida Grande", Helvetica, sans-serif;
+  font-family: "Georgia", Times, serif;
   text-align: right;
 }
 
@@ -50,14 +50,15 @@ body {
 
 dl {
   margin: 0; padding: 0 0 5px;
-  font: normal 11px "Lucida Grande", Helvetica, sans-serif;
+  font: normal 11px "Georgia", Times, serif;
 }
 
 dt {
   padding: 3px;
-  background: #65C400;
-  color: #fff;
+  background-color: #fff;
+  color: #65C400;
   font-weight: bold;
+  font: normal 17px "Georgia", Times, serif;
 }
 
 dd {
@@ -90,15 +91,18 @@ dd.example.failed {
 }
 
 dt.not_implemented {
-  color: #000000; background: #FAF834;
+  color: #FAF834;
+  background-color:#ffffff;
 }
 
 dt.pending_fixed {
-  color: #FFFFFF; background: #C40D0D;
+  color: #C40D0D;
+  background-color:#ffffff;
 }
 
 dt.failed {
-  color: #FFFFFF; background: #C40D0D;
+  color: #C40D0D;
+  background-color:#ffffff;
 }
 
 #phpspec-header.not_implemented {
@@ -116,6 +120,7 @@ dt.failed {
 .backtrace {
   color: #000;
   font-size: 12px;
+  line-height:70%;
 }
 
 a {
