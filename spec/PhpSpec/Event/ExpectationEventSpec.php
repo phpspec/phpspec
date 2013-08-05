@@ -11,9 +11,13 @@ use Prophecy\Argument;
 
 class ExpectationEventSpec extends ObjectBehavior
 {
-    function let(Suite $suite, SpecificationNode $specification, ExampleNode $example, MatcherInterface $matcher)
+    function let(Suite $suite, SpecificationNode $specification, ExampleNode $example,
+                 MatcherInterface $matcher, $subject)
     {
-        $this->beConstructedWith($example, $matcher);
+        $method = 'calledMethod';
+        $arguments = array('methodArguments');
+
+        $this->beConstructedWith($example, $matcher, $subject, $method, $arguments);
 
         $example->getSpecification()->willReturn($specification);
         $specification->getSuite()->willReturn($suite);
@@ -43,5 +47,20 @@ class ExpectationEventSpec extends ObjectBehavior
     function it_provides_a_link_to_suite($suite)
     {
         $this->getSuite()->shouldReturn($suite);
+    }
+
+    function it_provides_a_link_to_subject($subject)
+    {
+        $this->getSubject()->shouldReturn($subject);
+    }
+
+    function it_provides_a_link_to_method()
+    {
+        $this->getMethod()->shouldReturn('calledMethod');
+    }
+
+    function it_provides_a_link_to_arguments()
+    {
+        $this->getArguments()->shouldReturn(array('methodArguments'));
     }
 }

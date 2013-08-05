@@ -10,11 +10,17 @@ class ExpectationEvent extends Event implements EventInterface
 {
     private $example;
     private $matcher;
+    private $subject;
+    private $method;
+    private $arguments;
 
-    public function __construct(ExampleNode $example, MatcherInterface $matcher)
+    public function __construct(ExampleNode $example, MatcherInterface $matcher, $subject, $method, $arguments)
     {
         $this->example = $example;
         $this->matcher = $matcher;
+        $this->subject = $subject;
+        $this->method = $method;
+        $this->arguments = $arguments;
     }
 
     public function getMatcher()
@@ -35,5 +41,20 @@ class ExpectationEvent extends Event implements EventInterface
     public function getSuite()
     {
         return $this->example->getSpecification()->getSuite();
+    }
+
+    public function getSubject()
+    {
+        return $this->subject;
+    }
+
+    public function getMethod()
+    {
+        return $this->method;
+    }
+
+    public function getArguments()
+    {
+        return $this->arguments;
     }
 }

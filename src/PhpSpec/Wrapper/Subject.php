@@ -84,13 +84,13 @@ class Subject implements ArrayAccess, WrapperInterface
         $matcher   = $this->matchers->find($name, $subject, $arguments);
 
         $this->dispatcher->dispatch('beforeExpectation',
-            new ExpectationEvent($this->example, $matcher)
+            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
         );
 
         $matchResult =  $matcher->positiveMatch($name, $subject, $arguments);
 
         $this->dispatcher->dispatch('afterExpectation',
-            new ExpectationEvent($this->example, $matcher)
+            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
         );
 
         return $matchResult;
@@ -107,13 +107,13 @@ class Subject implements ArrayAccess, WrapperInterface
         $matcher   = $this->matchers->find($name, $subject, $arguments);
 
         $this->dispatcher->dispatch('beforeExpectation',
-            new ExpectationEvent($this->example, $matcher)
+            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
         );
 
         $matchResult = $matcher->negativeMatch($name, $subject, $arguments);
 
         $this->dispatcher->dispatch('afterExpectation',
-            new ExpectationEvent($this->example, $matcher)
+            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
         );
 
         return $matchResult;
