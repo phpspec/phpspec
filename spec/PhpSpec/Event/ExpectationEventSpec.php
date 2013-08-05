@@ -8,16 +8,17 @@ use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Matcher\MatcherInterface;
 use Prophecy\Argument;
+use Exception;
 
 class ExpectationEventSpec extends ObjectBehavior
 {
     function let(Suite $suite, SpecificationNode $specification, ExampleNode $example,
-                 MatcherInterface $matcher, $subject)
+                 MatcherInterface $matcher, $subject, Exception $exception)
     {
         $method = 'calledMethod';
         $arguments = array('methodArguments');
 
-        $this->beConstructedWith($example, $matcher, $subject, $method, $arguments);
+        $this->beConstructedWith($example, $matcher, $subject, $method, $arguments, $this->FAILED, $exception);
 
         $example->getSpecification()->willReturn($specification);
         $specification->getSuite()->willReturn($suite);
@@ -62,5 +63,15 @@ class ExpectationEventSpec extends ObjectBehavior
     function it_provides_a_link_to_arguments()
     {
         $this->getArguments()->shouldReturn(array('methodArguments'));
+    }
+
+    function it_provides_a_link_to_result()
+    {
+        $this->getResult()->shouldReturn($this->FAILED);
+    }
+
+    function it_provides_a_link_to_exception($exception)
+    {
+        $this->getException()->shouldReturn($exception);
     }
 }

@@ -3,6 +3,7 @@
 namespace PhpSpec\Wrapper;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Event\MethodCallEvent;
 use PhpSpec\Event\ExpectationEvent;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
@@ -21,6 +22,7 @@ use ArrayAccess;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
+use RuntimeException;
 
 class Subject implements ArrayAccess, WrapperInterface
 {
@@ -87,10 +89,24 @@ class Subject implements ArrayAccess, WrapperInterface
             new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
         );
 
-        $matchResult =  $matcher->positiveMatch($name, $subject, $arguments);
+        try {
+            $matchResult = $matcher->positiveMatch($name, $subject, $arguments);
+        } catch (FailureException $exception) {
+            $this->dispatcher->dispatch('afterExpectation',
+                new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::FAILED, $exception)
+            );
+
+            throw $exception;
+        } catch (RuntimeException $exception) {
+            $this->dispatcher->dispatch('afterExpectation',
+                new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::BROKEN, $exception)
+            );
+
+            throw $exception;
+        }
 
         $this->dispatcher->dispatch('afterExpectation',
-            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
+            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::PASSED)
         );
 
         return $matchResult;
@@ -110,7 +126,21 @@ class Subject implements ArrayAccess, WrapperInterface
             new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
         );
 
-        $matchResult = $matcher->negativeMatch($name, $subject, $arguments);
+        try {
+            $matchResult = $matcher->negativeMatch($name, $subject, $arguments);
+        } catch (FailureException $exception) {
+            $this->dispatcher->dispatch('afterExpectation',
+                new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::FAILED, $exception)
+            );
+
+            throw $exception;
+        } catch (RuntimeException $exception) {
+            $this->dispatcher->dispatch('afterExpectation',
+                new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::BROKEN, $exception)
+            );
+
+            throw $exception;
+        }
 
         $this->dispatcher->dispatch('afterExpectation',
             new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
