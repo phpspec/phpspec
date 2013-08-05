@@ -2,8 +2,11 @@
 
 namespace PhpSpec\Wrapper;
 
-use PhpSpec\Runner\MatcherManager;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use PhpSpec\Event\ExpectationEvent;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Loader\Node\ExampleNode;
+use PhpSpec\Runner\MatcherManager;
 
 use PhpSpec\Exception\Exception;
 use PhpSpec\Exception\Wrapper\SubjectException;
@@ -25,16 +28,21 @@ class Subject implements ArrayAccess, WrapperInterface
     private $matchers;
     private $unwrapper;
     private $presenter;
+    private $dispatcher;
+    private $example;
     private $subject;
     private $isInstantiated = false;
 
     public function __construct($subject, MatcherManager $matchers, Unwrapper $unwrapper,
-                                PresenterInterface $presenter)
+                                PresenterInterface $presenter, EventDispatcherInterface $dispatcher,
+                                ExampleNode $example)
     {
         $this->subject        = $subject;
         $this->matchers       = $matchers;
         $this->unwrapper      = $unwrapper;
         $this->presenter      = $presenter;
+        $this->dispatcher     = $dispatcher;
+        $this->example        = $example;
         $this->isInstantiated = true;
     }
 
@@ -74,7 +82,17 @@ class Subject implements ArrayAccess, WrapperInterface
         $arguments = $this->unwrapper->unwrapAll($arguments);
         $matcher   = $this->matchers->find($name, $subject, $arguments);
 
-        return $matcher->positiveMatch($name, $subject, $arguments);
+        $this->dispatcher->dispatch('beforeExpectation',
+            new ExpectationEvent($this->example, $matcher)
+        );
+
+        $matchResult =  $matcher->positiveMatch($name, $subject, $arguments);
+
+        $this->dispatcher->dispatch('afterExpectation',
+            new ExpectationEvent($this->example, $matcher)
+        );
+
+        return $matchResult;
     }
 
     public function shouldNot($name = null, array $arguments = array())
@@ -87,7 +105,17 @@ class Subject implements ArrayAccess, WrapperInterface
         $arguments = $this->unwrapper->unwrapAll($arguments);
         $matcher   = $this->matchers->find($name, $subject, $arguments);
 
-        return $matcher->negativeMatch($name, $subject, $arguments);
+        $this->dispatcher->dispatch('beforeExpectation',
+            new ExpectationEvent($this->example, $matcher)
+        );
+
+        $matchResult = $matcher->negativeMatch($name, $subject, $arguments);
+
+        $this->dispatcher->dispatch('afterExpectation',
+            new ExpectationEvent($this->example, $matcher)
+        );
+
+        return $matchResult;
     }
 
     public function callOnWrappedObject($method, array $arguments = array())
@@ -107,7 +135,7 @@ class Subject implements ArrayAccess, WrapperInterface
         if ($this->isObjectMethodAccessible($method)) {
             $returnValue = call_user_func_array(array($subject, $method), $arguments);
 
-            return new static($returnValue, $this->matchers, $this->unwrapper, $this->presenter);
+            return new static($returnValue, $this->matchers, $this->unwrapper, $this->presenter, $this->dispatcher, $this->example);
         }
 
         throw new MethodNotFoundException(sprintf(
@@ -156,7 +184,7 @@ class Subject implements ArrayAccess, WrapperInterface
         if ($this->isObjectPropertyAccessible($property)) {
             $returnValue = $this->getWrappedObject()->$property;
 
-            return new static($returnValue, $this->matchers, $this->unwrapper, $this->presenter);
+            return new static($returnValue, $this->matchers, $this->unwrapper, $this->presenter, $this->dispatcher, $this->example);
         }
 
         throw new PropertyNotFoundException(sprintf(
@@ -248,7 +276,7 @@ class Subject implements ArrayAccess, WrapperInterface
             ));
         }
 
-        return new static($subject[$key], $this->matchers, $this->unwrapper, $this->presenter);
+        return new static($subject[$key], $this->matchers, $this->unwrapper, $this->presenter, $this->dispatcher, $this->example);
     }
 
     public function offsetSet($key, $value)

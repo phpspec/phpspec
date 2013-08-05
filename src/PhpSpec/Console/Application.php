@@ -324,7 +324,8 @@ class Application extends BaseApplication
         $container->set('runner.maintainers.subject', function($c) {
             return new Runner\Maintainer\SubjectMaintainer(
                 $c->get('formatter.presenter'),
-                $c->get('unwrapper')
+                $c->get('unwrapper'),
+                $c->get('event_dispatcher')
             );
         });
 
