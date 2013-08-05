@@ -17,13 +17,13 @@ class ReportItemFactory
 
     public function create(ExampleEvent $event, PresenterInterface $presenter = null)
     {
-        switch(true) {
-            case $event->getResult() === ExampleEvent::PASSED:
+        switch($event->getResult()) {
+            case ExampleEvent::PASSED:
                 return new ReportPassedItem($this->template, $event);
-            case $event->getResult() === ExampleEvent::PENDING:
+            case ExampleEvent::PENDING:
                 return new ReportPendingItem($this->template, $event);
-            case $event->getResult() === ExampleEvent::FAILED:
-            case $event->getResult() === ExampleEvent::BROKEN:
+            case ExampleEvent::FAILED:
+            case ExampleEvent::BROKEN:
                 return new ReportFailedItem($this->template, $event, $presenter);
             default:
                 throw $this->invalidResultException($event->getResult());
