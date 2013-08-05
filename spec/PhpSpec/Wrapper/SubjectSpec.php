@@ -27,7 +27,7 @@ class SubjectSpec extends ObjectBehavior
     {
         $unwrapper->unwrapOne(Argument::any())->willReturn(null);
         $unwrapper->unwrapAll(Argument::any())->willReturn(array());
-        $matchers->find(Argument::any(), Argument::any(), Argument::any())->shouldBeCalled()->WillReturn($matcher);
+        $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
 
         $dispatcher->dispatch(
             'beforeExpectation',
@@ -48,8 +48,8 @@ class SubjectSpec extends ObjectBehavior
     {
         $unwrapper->unwrapOne(Argument::any())->willReturn(null);
         $unwrapper->unwrapAll(Argument::any())->willReturn(array());
-        $matchers->find(Argument::any(), Argument::any(), Argument::any())->shouldBeCalled()->WillReturn($matcher);
-        $matcher->positiveMatch(Argument::any(), Argument::any(), Argument::any())
+        $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
+        $matcher->positiveMatch(Argument::cetera())
             ->willThrow('PhpSpec\Exception\Example\FailureException');
 
         $dispatcher->dispatch(
@@ -75,8 +75,8 @@ class SubjectSpec extends ObjectBehavior
     {
         $unwrapper->unwrapOne(Argument::any())->willReturn(null);
         $unwrapper->unwrapAll(Argument::any())->willReturn(array());
-        $matchers->find(Argument::any(), Argument::any(), Argument::any())->shouldBeCalled()->WillReturn($matcher);
-        $matcher->positiveMatch(Argument::any(), Argument::any(), Argument::any())
+        $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
+        $matcher->positiveMatch(Argument::cetera())
             ->willThrow('RuntimeException');
 
         $dispatcher->dispatch(
@@ -101,7 +101,7 @@ class SubjectSpec extends ObjectBehavior
     {
         $unwrapper->unwrapOne(Argument::any())->willReturn(null);
         $unwrapper->unwrapAll(Argument::any())->willReturn(array());
-        $matchers->find(Argument::any(), Argument::any(), Argument::any())->shouldBeCalled()->WillReturn($matcher);
+        $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
 
         $dispatcher->dispatch(
             'beforeExpectation',
@@ -122,9 +122,8 @@ class SubjectSpec extends ObjectBehavior
     {
         $unwrapper->unwrapOne(Argument::any())->willReturn(null);
         $unwrapper->unwrapAll(Argument::any())->willReturn(array());
-        $matchers->find(Argument::any(), Argument::any(), Argument::any())->shouldBeCalled()->WillReturn($matcher);
-        $matcher->negativeMatch(Argument::any(), Argument::any(), Argument::any())
-            ->willThrow('PhpSpec\Exception\Example\FailureException');
+        $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
+        $matcher->negativeMatch(Argument::cetera())->willThrow('PhpSpec\Exception\Example\FailureException');
 
         $dispatcher->dispatch(
             'beforeExpectation',
@@ -149,8 +148,8 @@ class SubjectSpec extends ObjectBehavior
     {
         $unwrapper->unwrapOne(Argument::any())->willReturn(null);
         $unwrapper->unwrapAll(Argument::any())->willReturn(array());
-        $matchers->find(Argument::any(), Argument::any(), Argument::any())->shouldBeCalled()->WillReturn($matcher);
-        $matcher->negativeMatch(Argument::any(), Argument::any(), Argument::any())
+        $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
+        $matcher->negativeMatch(Argument::cetera())
             ->willThrow('RuntimeException');
 
         $dispatcher->dispatch(
