@@ -4,12 +4,13 @@ namespace PhpSpec\Formatter\Html;
 
 use PhpSpec\Formatter\Presenter\StringPresenter;
 use Exception;
+use PhpSpec\Exception\Exception as PhpSpecException;
 
 class HtmlPresenter extends StringPresenter
 {
     public function presentException(Exception $exception, $verbose = false)
     {
-        if (method_exists($exception, 'getCause')) {
+        if ($exception instanceof PhpSpecException) {
             list($file, $line) = $this->getExceptionExamplePosition($exception);
             return $this->presentFileCode($file, $line);
         }
