@@ -2,8 +2,13 @@
 
 namespace PhpSpec\Wrapper;
 
-use PhpSpec\Runner\MatcherManager;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Event\MethodCallEvent;
+use PhpSpec\Event\ExpectationEvent;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Loader\Node\ExampleNode;
+use PhpSpec\Runner\MatcherManager;
 
 use PhpSpec\Exception\Exception;
 use PhpSpec\Exception\Wrapper\SubjectException;
@@ -17,6 +22,7 @@ use ArrayAccess;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
+use RuntimeException;
 
 class Subject implements ArrayAccess, WrapperInterface
 {
@@ -25,16 +31,21 @@ class Subject implements ArrayAccess, WrapperInterface
     private $matchers;
     private $unwrapper;
     private $presenter;
+    private $dispatcher;
+    private $example;
     private $subject;
     private $isInstantiated = false;
 
     public function __construct($subject, MatcherManager $matchers, Unwrapper $unwrapper,
-                                PresenterInterface $presenter)
+                                PresenterInterface $presenter, EventDispatcherInterface $dispatcher,
+                                ExampleNode $example)
     {
         $this->subject        = $subject;
         $this->matchers       = $matchers;
         $this->unwrapper      = $unwrapper;
         $this->presenter      = $presenter;
+        $this->dispatcher     = $dispatcher;
+        $this->example        = $example;
         $this->isInstantiated = true;
     }
 
@@ -74,7 +85,31 @@ class Subject implements ArrayAccess, WrapperInterface
         $arguments = $this->unwrapper->unwrapAll($arguments);
         $matcher   = $this->matchers->find($name, $subject, $arguments);
 
-        return $matcher->positiveMatch($name, $subject, $arguments);
+        $this->dispatcher->dispatch('beforeExpectation',
+            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
+        );
+
+        try {
+            $matchResult = $matcher->positiveMatch($name, $subject, $arguments);
+        } catch (FailureException $exception) {
+            $this->dispatcher->dispatch('afterExpectation',
+                new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::FAILED, $exception)
+            );
+
+            throw $exception;
+        } catch (RuntimeException $exception) {
+            $this->dispatcher->dispatch('afterExpectation',
+                new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::BROKEN, $exception)
+            );
+
+            throw $exception;
+        }
+
+        $this->dispatcher->dispatch('afterExpectation',
+            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::PASSED)
+        );
+
+        return $matchResult;
     }
 
     public function shouldNot($name = null, array $arguments = array())
@@ -87,7 +122,31 @@ class Subject implements ArrayAccess, WrapperInterface
         $arguments = $this->unwrapper->unwrapAll($arguments);
         $matcher   = $this->matchers->find($name, $subject, $arguments);
 
-        return $matcher->negativeMatch($name, $subject, $arguments);
+        $this->dispatcher->dispatch('beforeExpectation',
+            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
+        );
+
+        try {
+            $matchResult = $matcher->negativeMatch($name, $subject, $arguments);
+        } catch (FailureException $exception) {
+            $this->dispatcher->dispatch('afterExpectation',
+                new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::FAILED, $exception)
+            );
+
+            throw $exception;
+        } catch (RuntimeException $exception) {
+            $this->dispatcher->dispatch('afterExpectation',
+                new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::BROKEN, $exception)
+            );
+
+            throw $exception;
+        }
+
+        $this->dispatcher->dispatch('afterExpectation',
+            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
+        );
+
+        return $matchResult;
     }
 
     public function callOnWrappedObject($method, array $arguments = array())
@@ -105,9 +164,18 @@ class Subject implements ArrayAccess, WrapperInterface
 
         // if subject is an instance with provided method - call it and stub the result
         if ($this->isObjectMethodAccessible($method)) {
+
+            $this->dispatcher->dispatch('beforeMethodCall',
+                new MethodCallEvent($this->example, $subject, $method, $arguments)
+            );
+
             $returnValue = call_user_func_array(array($subject, $method), $arguments);
 
-            return new static($returnValue, $this->matchers, $this->unwrapper, $this->presenter);
+            $this->dispatcher->dispatch('afterMethodCall',
+                new MethodCallEvent($this->example, $subject, $method, $arguments)
+            );
+
+            return new static($returnValue, $this->matchers, $this->unwrapper, $this->presenter, $this->dispatcher, $this->example);
         }
 
         throw new MethodNotFoundException(sprintf(
@@ -156,7 +224,7 @@ class Subject implements ArrayAccess, WrapperInterface
         if ($this->isObjectPropertyAccessible($property)) {
             $returnValue = $this->getWrappedObject()->$property;
 
-            return new static($returnValue, $this->matchers, $this->unwrapper, $this->presenter);
+            return new static($returnValue, $this->matchers, $this->unwrapper, $this->presenter, $this->dispatcher, $this->example);
         }
 
         throw new PropertyNotFoundException(sprintf(
@@ -248,7 +316,7 @@ class Subject implements ArrayAccess, WrapperInterface
             ));
         }
 
-        return new static($subject[$key], $this->matchers, $this->unwrapper, $this->presenter);
+        return new static($subject[$key], $this->matchers, $this->unwrapper, $this->presenter, $this->dispatcher, $this->example);
     }
 
     public function offsetSet($key, $value)
@@ -300,7 +368,7 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function __call($method, array $arguments = array())
     {
-        // if user calls function with should prefix - call matcher
+        // if user calls function with should prefix - call m2atcher
         if (0 === strpos($method, 'shouldNot')) {
             return $this->shouldNot(lcfirst(substr($method, 9)), $arguments);
         }
