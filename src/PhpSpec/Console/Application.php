@@ -88,6 +88,10 @@ class Application extends BaseApplication
             );
         });
 
+        $container->setShared('html.io', function($c) {
+            return new Formatter\Html\IO;
+        });
+
         $container->setShared('console.commands.run', function($c) {
             return new Console\Command\RunCommand;
         });
@@ -180,6 +184,10 @@ class Application extends BaseApplication
             return new Formatter\Presenter\TaggedPresenter($c->get('formatter.presenter.differ'));
         });
 
+        $container->setShared('formatter.html.presenter', function($c) {
+            return new Formatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
+        });
+
         $container->setShared('formatter.presenter.differ', function($c) {
             $differ = new Formatter\Presenter\Differ\Differ;
 
@@ -264,14 +272,26 @@ class Application extends BaseApplication
                         );
                     }
                     break;
+                case 'html':
+                case 'h':
+                    $template = new Formatter\Html\Template($c->get('html.io'));
+                    $factory = new Formatter\Html\ReportItemFactory($template);
+                    $formatter = new Formatter\HtmlFormatter($factory);
+                    break;
                 case 'progress':
                 default:
                     $formatter = new Formatter\ProgressFormatter;
                     break;
             }
 
-            $formatter->setIO($c->get('console.io'));
-            $formatter->setPresenter($c->get('formatter.presenter'));
+            if ($formatter instanceof Formatter\HtmlFormatter) {
+                $formatter->setIO($c->get('html.io'));
+                $formatter->setPresenter($c->get('formatter.html.presenter'));
+            } else {
+                $formatter->setIO($c->get('console.io'));
+                $formatter->setPresenter($c->get('formatter.presenter'));
+            }
+
             $formatter->setStatisticsCollector($c->get('event_dispatcher.listeners.stats'));
 
             $c->set('event_dispatcher.listeners.formatter', $formatter);

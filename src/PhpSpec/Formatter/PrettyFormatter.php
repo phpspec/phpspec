@@ -2,7 +2,7 @@
 
 namespace PhpSpec\Formatter;
 
-use PhpSpec\Console\IO;
+use PhpSpec\IO\IOInterface as IO;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Listener\StatisticsCollector;
 

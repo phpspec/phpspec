@@ -4,7 +4,7 @@ namespace PhpSpec\Formatter;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-use PhpSpec\Console\IO;
+use PhpSpec\IO\IOInterface as IO;
 use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
 use PhpSpec\Listener\StatisticsCollector;
 
