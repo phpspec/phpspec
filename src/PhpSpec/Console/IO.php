@@ -2,11 +2,13 @@
 
 namespace PhpSpec\Console;
 
+use PhpSpec\IO\IOInterface;
+
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\HelperSet;
 
-class IO
+class IO implements IOInterface
 {
     private $input;
     private $output;
