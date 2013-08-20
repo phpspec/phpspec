@@ -356,12 +356,13 @@ class Application extends BaseApplication
 
     protected function loadConfigurationFile(ServiceContainer $container)
     {
-        $config = array();
         if (file_exists($path = 'phpspec.yml')) {
             $config = Yaml::parse(file_get_contents($path));
         } elseif (file_exists($path = 'phpspec.yml.dist')) {
             $config = Yaml::parse(file_get_contents($path));
         }
+
+        $config = $config ?: array();
 
         foreach ($config as $key => $val) {
             if ('extensions' === $key) {
