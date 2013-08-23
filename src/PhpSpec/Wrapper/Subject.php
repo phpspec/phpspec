@@ -23,15 +23,13 @@ use ReflectionProperty;
 
 class Subject implements ArrayAccess, WrapperInterface
 {
-    private $classname;
-    private $arguments = array();
+    private $configuration;
     private $matchers;
     private $unwrapper;
     private $presenter;
     private $dispatcher;
     private $example;
     private $subject;
-    private $isInstantiated = false;
 
     public function __construct($subject, MatcherManager $matchers, Unwrapper $unwrapper,
                                 PresenterInterface $presenter, EventDispatcherInterface $dispatcher,
@@ -43,33 +41,17 @@ class Subject implements ArrayAccess, WrapperInterface
         $this->presenter      = $presenter;
         $this->dispatcher     = $dispatcher;
         $this->example        = $example;
-        $this->isInstantiated = true;
+        $this->configuration  = new Subject\Configuration($this, $presenter, $unwrapper);
     }
 
-    public function beAnInstanceOf($classname, array $arguments = array())
+    public function beAnInstanceOf($className, array $arguments = array())
     {
-        if (!is_string($classname)) {
-            throw new SubjectException(sprintf(
-                'Behavior subject classname should be a string, %s given.',
-                $this->presenter->presentValue($classname)
-            ));
-        }
-
-        $this->classname      = $classname;
-        $this->arguments      = $this->unwrapper->unwrapAll($arguments);
-        $this->isInstantiated = false;
+        $this->configuration->beAnInstanceOf($className, $arguments);
     }
 
     public function beConstructedWith()
     {
-        if (null === $this->classname) {
-            throw new SubjectException(sprintf(
-                'You can not set object arguments. Behavior subject is %s.',
-                $this->presenter->presentValue(null)
-            ));
-        }
-
-        $this->beAnInstanceOf($this->classname, func_get_args());
+        $this->configuration->beConstructedWith(func_get_args());
     }
 
     public function should($name = null, array $arguments = array())
@@ -143,9 +125,9 @@ class Subject implements ArrayAccess, WrapperInterface
     public function getFromWrappedObject($property)
     {
         // transform camel-cased properties to constant lookups
-        if (null !== $this->classname && $property === strtoupper($property)) {
-            if (defined($this->classname.'::'.$property)) {
-                return constant($this->classname.'::'.$property);
+        if (null !== $this->configuration->getClassName() && $property === strtoupper($property)) {
+            if (defined($this->configuration->getClassName() . '::'.$property)) {
+                return constant($this->configuration->getClassName() . '::' . $property);
             }
         }
 
@@ -170,36 +152,37 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function getWrappedObject()
     {
-        if ($this->isInstantiated) {
+        if ($this->configuration->isInstantiated()) {
             return $this->subject;
         }
 
-        if (null === $this->classname || !is_string($this->classname)) {
+        if (null === $this->configuration->getClassName() || !is_string($this->configuration->getClassName())) {
             throw new Exception(sprintf(
                 'Instantiator expects class name, got %s.',
-                $this->presenter->presentValue($this->classname)
+                $this->presenter->presentValue($this->configuration->getClassName())
             ));
         }
 
-        if (!class_exists($this->classname)) {
+        if (!class_exists($this->configuration->getClassName())) {
             throw new ClassNotFoundException(sprintf(
-                'Class %s does not exist.', $this->presenter->presentString($this->classname)
-            ), $this->classname);
+                'Class %s does not exist.', $this->presenter->presentString($this->configuration->getClassName())
+            ), $this->configuration->getClassName());
         }
 
-        $this->isInstantiated = true;
+        $this->configuration->setInstantiated(true);
 
-        $reflection = new ReflectionClass($this->classname);
+        $reflection = new ReflectionClass($this->configuration->getClassName());
 
-        if (!empty($this->arguments)) {
+        if (count($this->configuration->getArguments())) {
             try {
-                return $this->subject = $reflection->newInstanceArgs($this->arguments);
+                return $this->subject = $reflection->newInstanceArgs($this->configuration->getArguments());
             } catch (\ReflectionException $e) {
                 if (strpos($e->getMessage(), 'does not have a constructor') !== 0) {
+                    $className = $this->configuration->getClassName();
                     throw new MethodNotFoundException(sprintf(
                        'Method %s not found.',
-                       $this->presenter->presentString($this->classname.'::__construct()')
-                   ), new $this->classname, '__construct', $this->arguments);
+                       $this->presenter->presentString($this->configuration->getClassName().'::__construct()')
+                   ), new $className, '__construct', $this->configuration->getArguments());
                 }
                 throw $e;
             }
