@@ -77,76 +77,14 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function should($name = null, array $arguments = array())
     {
-        if (null === $name) {
-            return new DelayedCall(array($this, __METHOD__));
-        }
-
-        $subject   = $this->unwrapper->unwrapOne($this);
-        $arguments = $this->unwrapper->unwrapAll($arguments);
-        $matcher   = $this->matchers->find($name, $subject, $arguments);
-
-        $this->dispatcher->dispatch('beforeExpectation',
-            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
-        );
-
-        try {
-            $matchResult = $matcher->positiveMatch($name, $subject, $arguments);
-        } catch (FailureException $exception) {
-            $this->dispatcher->dispatch('afterExpectation',
-                new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::FAILED, $exception)
-            );
-
-            throw $exception;
-        } catch (RuntimeException $exception) {
-            $this->dispatcher->dispatch('afterExpectation',
-                new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::BROKEN, $exception)
-            );
-
-            throw $exception;
-        }
-
-        $this->dispatcher->dispatch('afterExpectation',
-            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::PASSED)
-        );
-
-        return $matchResult;
+        return (new Subject\Expectation($this, $this->matchers, $this->example, $this->unwrapper, $this->dispatcher))
+            ->should($name, $arguments);
     }
 
     public function shouldNot($name = null, array $arguments = array())
     {
-        if (null === $name) {
-            return new DelayedCall(array($this, __METHOD__));
-        }
-
-        $subject   = $this->unwrapper->unwrapOne($this);
-        $arguments = $this->unwrapper->unwrapAll($arguments);
-        $matcher   = $this->matchers->find($name, $subject, $arguments);
-
-        $this->dispatcher->dispatch('beforeExpectation',
-            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
-        );
-
-        try {
-            $matchResult = $matcher->negativeMatch($name, $subject, $arguments);
-        } catch (FailureException $exception) {
-            $this->dispatcher->dispatch('afterExpectation',
-                new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::FAILED, $exception)
-            );
-
-            throw $exception;
-        } catch (RuntimeException $exception) {
-            $this->dispatcher->dispatch('afterExpectation',
-                new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::BROKEN, $exception)
-            );
-
-            throw $exception;
-        }
-
-        $this->dispatcher->dispatch('afterExpectation',
-            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
-        );
-
-        return $matchResult;
+        return (new Subject\Expectation($this, $this->matchers, $this->example, $this->unwrapper, $this->dispatcher))
+            ->shouldNot($name, $arguments);
     }
 
     public function callOnWrappedObject($method, array $arguments = array())
