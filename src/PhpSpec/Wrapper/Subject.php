@@ -134,7 +134,7 @@ class Subject implements ArrayAccess, WrapperInterface
         if (null === $this->getWrappedObject()) {
             throw new SubjectException(sprintf(
                 'Getting property %s from a non-object.',
-                $this->presentString($property)
+                $this->presenter->presentString($property)
             ));
         }
 
