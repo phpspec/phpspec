@@ -3,9 +3,7 @@
 namespace PhpSpec\Wrapper;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Event\MethodCallEvent;
-use PhpSpec\Event\ExpectationEvent;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Runner\MatcherManager;
@@ -22,7 +20,6 @@ use ArrayAccess;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
-use RuntimeException;
 
 class Subject implements ArrayAccess, WrapperInterface
 {
