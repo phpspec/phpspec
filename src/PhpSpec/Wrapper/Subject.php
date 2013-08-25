@@ -29,7 +29,7 @@ class Subject implements ArrayAccess, WrapperInterface
     private $dispatcher;
     private $example;
     private $subject;
-    private $configuration;
+    private $wrappedObject;
     private $caller;
 
     public function __construct($subject, MatcherManager $matchers, Unwrapper $unwrapper,
@@ -42,18 +42,18 @@ class Subject implements ArrayAccess, WrapperInterface
         $this->presenter      = $presenter;
         $this->dispatcher     = $dispatcher;
         $this->example        = $example;
-        $this->configuration  = new Subject\Configuration($subject, $presenter, $unwrapper);
-        $this->caller         = new Subject\Caller($matchers, $unwrapper, $presenter, $dispatcher, $example, $this->configuration);
+        $this->wrappedObject  = new Subject\WrappedObject($subject, $presenter, $unwrapper);
+        $this->caller         = new Subject\Caller($matchers, $unwrapper, $presenter, $dispatcher, $example, $this->wrappedObject);
     }
 
     public function beAnInstanceOf($className, array $arguments = array())
     {
-        $this->configuration->beAnInstanceOf($className, $arguments);
+        $this->wrappedObject->beAnInstanceOf($className, $arguments);
     }
 
     public function beConstructedWith()
     {
-        $this->configuration->beConstructedWith(func_get_args());
+        $this->wrappedObject->beConstructedWith(func_get_args());
     }
 
     public function should($name = null, array $arguments = array())

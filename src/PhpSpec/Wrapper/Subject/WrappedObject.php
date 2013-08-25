@@ -6,7 +6,7 @@ use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Exception\Wrapper\SubjectException;
 
-class Configuration
+class WrappedObject
 {
     private $instance;
     private $presenter;

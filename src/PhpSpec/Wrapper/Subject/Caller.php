@@ -27,18 +27,18 @@ class Caller
     private $presenter;
     private $dispatcher;
     private $example;
-    private $configuration;
+    private $wrappedObject;
 
     public function __construct(MatcherManager $matchers, Unwrapper $unwrapper,
                                 PresenterInterface $presenter, EventDispatcherInterface $dispatcher,
-                                ExampleNode $example, Configuration $configuration)
+                                ExampleNode $example, WrappedObject $wrappedObject)
     {
         $this->matchers      = $matchers;
         $this->unwrapper     = $unwrapper;
         $this->presenter     = $presenter;
         $this->dispatcher    = $dispatcher;
         $this->example       = $example;
-        $this->configuration = $configuration;
+        $this->wrappedObject = $wrappedObject;
     }
     
     public function callOnWrappedObject(Subject $subject, $method, array $arguments = array())
@@ -51,7 +51,7 @@ class Caller
         }
 
         // resolve arguments
-        $subject   = $this->configuration->getInstance();
+        $subject   = $this->wrappedObject->getInstance();
         $arguments = $this->unwrapper->unwrapAll($arguments);
 
         // if subject is an instance with provided method - call it and stub the result
@@ -100,9 +100,9 @@ class Caller
     public function getFromWrappedObject($property)
     {
         // transform camel-cased properties to constant lookups
-        if (null !== $this->configuration->getClassName() && $property === strtoupper($property)) {
-            if (defined($this->configuration->getClassName().'::'.$property)) {
-                return constant($this->configuration->getClassName().'::'.$property);
+        if (null !== $this->wrappedObject->getClassName() && $property === strtoupper($property)) {
+            if (defined($this->wrappedObject->getClassName().'::'.$property)) {
+                return constant($this->wrappedObject->getClassName().'::'.$property);
             }
         }
 
@@ -127,32 +127,32 @@ class Caller
 
     public function getWrappedObject()
     {
-        if ($this->configuration->isInstantiated()) {
-            return $this->configuration->getInstance();
+        if ($this->wrappedObject->isInstantiated()) {
+            return $this->wrappedObject->getInstance();
         }
 
-        if (null === $this->configuration->getClassName() || !is_string($this->configuration->getClassName())) {
-            return $this->configuration->getInstance();
+        if (null === $this->wrappedObject->getClassName() || !is_string($this->wrappedObject->getClassName())) {
+            return $this->wrappedObject->getInstance();
         }
 
-        if (!class_exists($this->configuration->getClassName())) {
+        if (!class_exists($this->wrappedObject->getClassName())) {
             throw new ClassNotFoundException(sprintf(
-                'Class %s does not exist.', $this->presenter->presentString($this->configuration->getClassName())
-            ), $this->configuration->getClassName());
+                'Class %s does not exist.', $this->presenter->presentString($this->wrappedObject->getClassName())
+            ), $this->wrappedObject->getClassName());
         }
 
-        $reflection = new ReflectionClass($this->configuration->getClassName());
+        $reflection = new ReflectionClass($this->wrappedObject->getClassName());
 
-        if (count($this->configuration->getArguments())) {
+        if (count($this->wrappedObject->getArguments())) {
             try {
-                $instance = $reflection->newInstanceArgs($this->configuration->getArguments());
+                $instance = $reflection->newInstanceArgs($this->wrappedObject->getArguments());
             } catch (\ReflectionException $e) {
                 if (strpos($e->getMessage(), 'does not have a constructor') !== 0) {
-                    $className = $this->configuration->getClassName();
+                    $className = $this->wrappedObject->getClassName();
                     throw new MethodNotFoundException(sprintf(
                        'Method %s not found.',
-                       $this->presenter->presentString($this->configuration->getClassName().'::__construct()')
-                   ), new $className , '__construct', $this->configuration->getArguments());
+                       $this->presenter->presentString($this->wrappedObject->getClassName().'::__construct()')
+                   ), new $className , '__construct', $this->wrappedObject->getArguments());
                 }
                 throw $e;
             }
@@ -160,8 +160,8 @@ class Caller
             $instance = $reflection->newInstance();
         }
 
-        $this->configuration->setInstance($instance);
-        $this->configuration->setInstantiated(true);
+        $this->wrappedObject->setInstance($instance);
+        $this->wrappedObject->setInstantiated(true);
 
         return $instance;
     }
