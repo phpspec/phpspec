@@ -3,22 +3,21 @@
 namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Wrapper\Subject;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Exception\Wrapper\SubjectException;
 
 class Configuration
 {
-    private $subject;
+    private $instance;
     private $presenter;
     private $unwrapper;
     private $classname;
     private $arguments = array();
-    private $isInstantiated = true;
+    private $isInstantiated = false;
 
-    public function __construct(Subject $subject, PresenterInterface $presenter, Unwrapper $unwrapper)
+    public function __construct($instance, PresenterInterface $presenter, Unwrapper $unwrapper)
     {
-        $this->subject = $subject;
+        $this->instance = $instance;
         $this->presenter = $presenter;
         $this->unwrapper = $unwrapper;
     }
@@ -64,8 +63,23 @@ class Configuration
         return $this->classname;
     }
 
+    public function setClassName($classname)
+    {
+        $this->classname = $classname;
+    }
+
     public function getArguments()
     {
         return $this->arguments;
+    }
+
+    public function getInstance()
+    {
+        return $this->instance;
+    }
+
+    public function setInstance($instance)
+    {
+        $this->instance = $instance;
     }
 }

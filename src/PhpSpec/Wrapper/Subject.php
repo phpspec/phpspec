@@ -23,13 +23,14 @@ use ReflectionProperty;
 
 class Subject implements ArrayAccess, WrapperInterface
 {
-    private $configuration;
     private $matchers;
     private $unwrapper;
     private $presenter;
     private $dispatcher;
     private $example;
     private $subject;
+    private $configuration;
+    private $caller;
 
     public function __construct($subject, MatcherManager $matchers, Unwrapper $unwrapper,
                                 PresenterInterface $presenter, EventDispatcherInterface $dispatcher,
@@ -41,7 +42,8 @@ class Subject implements ArrayAccess, WrapperInterface
         $this->presenter      = $presenter;
         $this->dispatcher     = $dispatcher;
         $this->example        = $example;
-        $this->configuration  = new Subject\Configuration($this, $presenter, $unwrapper);
+        $this->configuration  = new Subject\Configuration($subject, $presenter, $unwrapper);
+        $this->caller         = new Subject\Caller($matchers, $unwrapper, $presenter, $dispatcher, $example, $this->configuration);
     }
 
     public function beAnInstanceOf($className, array $arguments = array())
@@ -56,139 +58,50 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function should($name = null, array $arguments = array())
     {
-        return (new Subject\Expectation($this, $this->matchers, $this->example, $this->unwrapper, $this->dispatcher))
-            ->should($name, $arguments);
+        if ($this->subject === null) {
+            $this->subject = $this->unwrapper->unwrapOne($this);
+        }
+        $expectation = new Subject\Expectation(
+            $this->subject, $this->matchers, $this->example, $this->unwrapper,
+            $this->dispatcher
+        );
+        return $expectation->should($name, $arguments);
     }
 
     public function shouldNot($name = null, array $arguments = array())
     {
-        return (new Subject\Expectation($this, $this->matchers, $this->example, $this->unwrapper, $this->dispatcher))
-            ->shouldNot($name, $arguments);
+        if ($this->subject === null) {
+            $this->subject = $this->unwrapper->unwrapOne($this);
+        }
+        $expectation = new Subject\Expectation(
+            $this->subject, $this->matchers, $this->example, $this->unwrapper,
+            $this->dispatcher
+        );
+        return $expectation->shouldNot($name, $arguments);
     }
 
     public function callOnWrappedObject($method, array $arguments = array())
     {
-        if (null === $this->getWrappedObject()) {
-            throw new SubjectException(sprintf(
-                'Call to a member function %s on a non-object.',
-                $this->presenter->presentString($method.'()')
-            ));
-        }
-
-        // resolve arguments
-        $subject   = $this->unwrapper->unwrapOne($this);
-        $arguments = $this->unwrapper->unwrapAll($arguments);
-
-        // if subject is an instance with provided method - call it and stub the result
-        if ($this->isObjectMethodAccessible($method)) {
-
-            $this->dispatcher->dispatch('beforeMethodCall',
-                new MethodCallEvent($this->example, $subject, $method, $arguments)
-            );
-
-            $returnValue = call_user_func_array(array($subject, $method), $arguments);
-
-            $this->dispatcher->dispatch('afterMethodCall',
-                new MethodCallEvent($this->example, $subject, $method, $arguments)
-            );
-
-            return new static($returnValue, $this->matchers, $this->unwrapper, $this->presenter, $this->dispatcher, $this->example);
-        }
-
-        throw new MethodNotFoundException(sprintf(
-            'Method %s not found.',
-            $this->presenter->presentString(get_class($subject).'::'.$method.'()')
-        ), $subject, $method, $arguments);
+        return $this->caller->callOnWrappedObject($this, $method, $arguments);
     }
 
     public function setToWrappedObject($property, $value = null)
     {
-        if (null === $this->getWrappedObject()) {
-            throw new SubjectException(sprintf(
-                'Setting property %s on a non-object.',
-                $this->presenter->presentString($property)
-            ));
-        }
-
-        $value = $this->unwrapper->unwrapAll($value);
-
-        if ($this->isObjectPropertyAccessible($property, true)) {
-            return $this->getWrappedObject()->$property = $value;
-        }
-
-        throw new PropertyNotFoundException(sprintf(
-            'Property %s not found.',
-            $this->presenter->presentString(get_class($this->getWrappedObject()).'::'.$property)
-        ), $this->getWrappedObject(), $property);
+        return $this->caller->setToWrappedObject($property, $value);
     }
 
     public function getFromWrappedObject($property)
     {
-        // transform camel-cased properties to constant lookups
-        if (null !== $this->configuration->getClassName() && $property === strtoupper($property)) {
-            if (defined($this->configuration->getClassName() . '::'.$property)) {
-                return constant($this->configuration->getClassName() . '::' . $property);
-            }
-        }
-
-        if (null === $this->getWrappedObject()) {
-            throw new SubjectException(sprintf(
-                'Getting property %s from a non-object.',
-                $this->presenter->presentString($property)
-            ));
-        }
-
-        if ($this->isObjectPropertyAccessible($property)) {
-            $returnValue = $this->getWrappedObject()->$property;
-
-            return new static($returnValue, $this->matchers, $this->unwrapper, $this->presenter, $this->dispatcher, $this->example);
-        }
-
-        throw new PropertyNotFoundException(sprintf(
-            'Property %s not found.',
-            $this->presenter->presentString(get_class($this->getWrappedObject()).'::'.$property)
-        ), $this->getWrappedObject(), $property);
+        return $this->caller->getFromWrappedObject($property);
     }
 
     public function getWrappedObject()
     {
-        if ($this->configuration->isInstantiated()) {
+        if ($this->subject) {
             return $this->subject;
         }
 
-        if (null === $this->configuration->getClassName() || !is_string($this->configuration->getClassName())) {
-            throw new Exception(sprintf(
-                'Instantiator expects class name, got %s.',
-                $this->presenter->presentValue($this->configuration->getClassName())
-            ));
-        }
-
-        if (!class_exists($this->configuration->getClassName())) {
-            throw new ClassNotFoundException(sprintf(
-                'Class %s does not exist.', $this->presenter->presentString($this->configuration->getClassName())
-            ), $this->configuration->getClassName());
-        }
-
-        $this->configuration->setInstantiated(true);
-
-        $reflection = new ReflectionClass($this->configuration->getClassName());
-
-        if (count($this->configuration->getArguments())) {
-            try {
-                return $this->subject = $reflection->newInstanceArgs($this->configuration->getArguments());
-            } catch (\ReflectionException $e) {
-                if (strpos($e->getMessage(), 'does not have a constructor') !== 0) {
-                    $className = $this->configuration->getClassName();
-                    throw new MethodNotFoundException(sprintf(
-                       'Method %s not found.',
-                       $this->presenter->presentString($this->configuration->getClassName().'::__construct()')
-                   ), new $className, '__construct', $this->configuration->getArguments());
-                }
-                throw $e;
-            }
-        }
-
-        return $this->subject = $reflection->newInstance();
+        return $this->subject = $this->caller->getWrappedObject();
     }
 
     public function offsetExists($key)
@@ -286,7 +199,7 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function __call($method, array $arguments = array())
     {
-        // if user calls function with should prefix - call m2atcher
+        // if user calls function with should prefix - call matcher
         if (0 === strpos($method, 'shouldNot')) {
             return $this->shouldNot(lcfirst(substr($method, 9)), $arguments);
         }
@@ -310,43 +223,5 @@ class Subject implements ArrayAccess, WrapperInterface
     public function __get($property)
     {
         return $this->getFromWrappedObject($property);
-    }
-
-    private function isObjectMethodAccessible($method)
-    {
-        if (!is_object($this->getWrappedObject())) {
-            return false;
-        }
-
-        if (method_exists($this->getWrappedObject(), '__call')) {
-            return true;
-        }
-
-        if (!method_exists($this->getWrappedObject(), $method)) {
-            return false;
-        }
-
-        $methodReflection = new ReflectionMethod($this->getWrappedObject(), $method);
-
-        return $methodReflection->isPublic();
-    }
-
-    private function isObjectPropertyAccessible($property, $withValue = false)
-    {
-        if (!is_object($this->getWrappedObject())) {
-            return false;
-        }
-
-        if (method_exists($this->getWrappedObject(), $withValue ? '__set' : '__get')) {
-            return true;
-        }
-
-        if (!property_exists($this->getWrappedObject(), $property)) {
-            return false;
-        }
-
-        $propertyReflection = new ReflectionProperty($this->getWrappedObject(), $property);
-
-        return $propertyReflection->isPublic();
     }
 }

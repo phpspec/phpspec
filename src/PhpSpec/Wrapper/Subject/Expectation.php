@@ -22,7 +22,7 @@ class Expectation
     private $example;
     private $dispatcher;
 
-    public function __construct(Subject $subject, MatcherManager $matchers, ExampleNode $example, Unwrapper $unwrapper, EventDispatcherInterface $dispatcher)
+    public function __construct($subject, MatcherManager $matchers, ExampleNode $example, Unwrapper $unwrapper, EventDispatcherInterface $dispatcher)
     {
         $this->subject   = $subject;
         $this->unwrapper = $unwrapper;
@@ -37,7 +37,7 @@ class Expectation
             return new DelayedCall(array($this, __METHOD__));
         }
 
-        $subject   = $this->unwrapper->unwrapOne($this->subject);
+        $subject   = $this->subject;
         $arguments = $this->unwrapper->unwrapAll($arguments);
         $matcher   = $this->matchers->find($name, $subject, $arguments);
 
