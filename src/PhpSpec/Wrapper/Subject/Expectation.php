@@ -6,7 +6,6 @@ use PhpSpec\Wrapper\DelayedCall;
 
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Runner\MatcherManager;
-use PhpSpec\Wrapper\Subject;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Event\ExpectationEvent;
 
@@ -16,6 +15,9 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class Expectation
 {
+    const POSITIVE = 'positive';
+    const NEGATIVE = 'negative';
+
     private $subject;
     private $unwrapper;
     private $matchers;
@@ -33,20 +35,55 @@ class Expectation
 
     public function should($name = null, array $arguments = array())
     {
+        return $this->findMatcherAndMatch(
+            __METHOD__, self::POSITIVE, $name, $arguments
+        );
+    }
+
+    public function shouldNot($name = null, array $arguments = array())
+    {
+        return $this->findMatcherAndMatch(
+            __METHOD__, self::NEGATIVE, $name, $arguments
+        );
+    }
+
+    private function findMatcherAndMatch($method, $matchingType, $name, $arguments)
+    {
         if (null === $name) {
-            return new DelayedCall(array($this, __METHOD__));
+            return new DelayedCall(array($this, $method));
         }
 
-        $subject   = $this->subject;
+        $expectationMatch = $this->createExpectationMatch($matchingType);
+        $matcher = $this->findMatcher($name, $arguments);
+
+        return $this->performMatch($expectationMatch, $matcher, $name, $arguments);
+    }
+
+    private function createExpectationMatch($expectation)
+    {
+        $matches = array(
+            self::POSITIVE => function ($name, $arguments, $subject, $matcher) {
+                return $matcher->positiveMatch($name, $subject, $arguments);
+            },
+            self::NEGATIVE => function ($name, $arguments, $subject, $matcher) {
+                return $matcher->negativeMatch($name, $subject, $arguments);
+            }
+        );
+
+        return $matches[$expectation];
+    }
+
+    private function performMatch($expectationMatch, $matcher, $name, array $arguments = array())
+    {
+        $subject = $this->subject;
         $arguments = $this->unwrapper->unwrapAll($arguments);
-        $matcher   = $this->matchers->find($name, $subject, $arguments);
 
         $this->dispatcher->dispatch('beforeExpectation',
             new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
         );
 
         try {
-            $matchResult = $matcher->positiveMatch($name, $subject, $arguments);
+            $matchResult = $expectationMatch($name, $arguments, $subject, $matcher);
         } catch (FailureException $exception) {
             $this->dispatcher->dispatch('afterExpectation',
                 new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::FAILED, $exception)
@@ -68,40 +105,9 @@ class Expectation
         return $matchResult;
     }
 
-    public function shouldNot($name, array $arguments = array())
+    private function findMatcher($name, array $arguments = array())
     {
-        if (null === $name) {
-            return new DelayedCall(array($this, __METHOD__));
-        }
-
-        $subject   = $this->unwrapper->unwrapOne($this->subject);
         $arguments = $this->unwrapper->unwrapAll($arguments);
-        $matcher   = $this->matchers->find($name, $subject, $arguments);
-
-        $this->dispatcher->dispatch('beforeExpectation',
-            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
-        );
-
-        try {
-            $matchResult = $matcher->negativeMatch($name, $subject, $arguments);
-        } catch (FailureException $exception) {
-            $this->dispatcher->dispatch('afterExpectation',
-                new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::FAILED, $exception)
-            );
-
-            throw $exception;
-        } catch (RuntimeException $exception) {
-            $this->dispatcher->dispatch('afterExpectation',
-                new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments, ExpectationEvent::BROKEN, $exception)
-            );
-
-            throw $exception;
-        }
-
-        $this->dispatcher->dispatch('afterExpectation',
-            new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
-        );
-
-        return $matchResult;
+        return $this->matchers->find($name, $this->subject, $arguments);
     }
 }
