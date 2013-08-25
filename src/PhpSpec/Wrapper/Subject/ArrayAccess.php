@@ -34,7 +34,7 @@ class ArrayAccess
         $subject = $this->caller->getWrappedObject();
         $key     = $this->unwrapper->unwrapOne($key);
 
-        $this->validateInterface($subject);
+        $this->checkIfSubjectImplementsArrayAccess($subject);
 
         return isset($subject[$key]);
     }
@@ -44,7 +44,7 @@ class ArrayAccess
         $subject = $this->caller->getWrappedObject();
         $key     = $this->unwrapper->unwrapOne($key);
 
-        $this->validateInterface($subject);
+        $this->checkIfSubjectImplementsArrayAccess($subject);
 
         return $subject[$key];
     }
@@ -55,7 +55,7 @@ class ArrayAccess
         $key     = $this->unwrapper->unwrapOne($key);
         $value   = $this->unwrapper->unwrapOne($value);
 
-        $this->validateInterface($subject);
+        $this->checkIfSubjectImplementsArrayAccess($subject);
 
         $subject[$key] = $value;
     }
@@ -65,12 +65,12 @@ class ArrayAccess
         $subject = $this->caller->getWrappedObject();
         $key     = $this->unwrapper->unwrapOne($key);
 
-        $this->validateInterface($subject);
+        $this->checkIfSubjectImplementsArrayAccess($subject);
 
         unset($subject[$key]);
     }
 
-    private function validateInterface($subject)
+    private function checkIfSubjectImplementsArrayAccess($subject)
     {
         if (is_object($subject) && !($subject instanceof ArrayAccess)) {
             throw $this->interfaceNotImplemented();
