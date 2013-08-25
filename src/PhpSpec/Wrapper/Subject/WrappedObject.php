@@ -15,11 +15,11 @@ class WrappedObject
     private $arguments = array();
     private $isInstantiated = false;
 
-    public function __construct($instance, PresenterInterface $presenter, Unwrapper $unwrapper)
+    public function __construct($instance, PresenterInterface $presenter, Unwrapper $unwrapper = null)
     {
         $this->instance = $instance;
         $this->presenter = $presenter;
-        $this->unwrapper = $unwrapper;
+        $this->unwrapper = $unwrapper ?: new Unwrapper;
     }
 
     public function beAnInstanceOf($classname, array $arguments = array())

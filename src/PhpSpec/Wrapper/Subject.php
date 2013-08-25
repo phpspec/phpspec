@@ -15,6 +15,11 @@ use PhpSpec\Exception\Fracture\MethodNotFoundException;
 use PhpSpec\Exception\Fracture\PropertyNotFoundException;
 use PhpSpec\Exception\Fracture\InterfaceNotImplementedException;
 
+use PhpSpec\Wrapper\Subject\WrappedObject;
+use PhpSpec\Wrapper\Subject\Caller;
+use PhpSpec\Wrapper\Subject\ArrayAccess as SubjectArrayAccess;
+use PhpSpec\Wrapper\Subject\Expectation;
+
 use ArrayAccess;
 
 use ReflectionClass;
@@ -31,10 +36,12 @@ class Subject implements ArrayAccess, WrapperInterface
     private $subject;
     private $wrappedObject;
     private $caller;
+    private $arrayAccess;
 
     public function __construct($subject, MatcherManager $matchers, Unwrapper $unwrapper,
                                 PresenterInterface $presenter, EventDispatcherInterface $dispatcher,
-                                ExampleNode $example)
+                                ExampleNode $example, WrappedObject $wrappedObject = null,
+                                Caller $caller = null, SubjectArrayAccess $arrayAccess = null)
     {
         $this->subject        = $subject;
         $this->matchers       = $matchers;
@@ -42,8 +49,9 @@ class Subject implements ArrayAccess, WrapperInterface
         $this->presenter      = $presenter;
         $this->dispatcher     = $dispatcher;
         $this->example        = $example;
-        $this->wrappedObject  = new Subject\WrappedObject($subject, $presenter, $unwrapper);
-        $this->caller         = new Subject\Caller($matchers, $unwrapper, $presenter, $dispatcher, $example, $this->wrappedObject);
+        $this->wrappedObject  = $wrappedObject ?: new WrappedObject($subject, $presenter, $unwrapper);
+        $this->caller         = $caller ?: new Caller($this->wrappedObject, $example, $dispatcher, $presenter, $matchers, $unwrapper);
+        $this->arrayAccess    = $arrayAccess ?: new SubjectArrayAccess($this->caller, $unwrapper, $presenter, $matchers, $dispatcher);
     }
 
     public function beAnInstanceOf($className, array $arguments = array())
@@ -58,26 +66,12 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function should($name = null, array $arguments = array())
     {
-        if ($this->subject === null) {
-            $this->subject = $this->unwrapper->unwrapOne($this);
-        }
-        $expectation = new Subject\Expectation(
-            $this->subject, $this->matchers, $this->example, $this->unwrapper,
-            $this->dispatcher
-        );
-        return $expectation->should($name, $arguments);
+        return $this->createExpectation()->should($name, $arguments);
     }
 
     public function shouldNot($name = null, array $arguments = array())
     {
-        if ($this->subject === null) {
-            $this->subject = $this->unwrapper->unwrapOne($this);
-        }
-        $expectation = new Subject\Expectation(
-            $this->subject, $this->matchers, $this->example, $this->unwrapper,
-            $this->dispatcher
-        );
-        return $expectation->shouldNot($name, $arguments);
+        return $this->createExpectation()->shouldNot($name, $arguments);
     }
 
     public function callOnWrappedObject($method, array $arguments = array())
@@ -106,103 +100,30 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function offsetExists($key)
     {
-        $subject = $this->getWrappedObject();
-        $key     = $this->unwrapper->unwrapOne($key);
-
-        if (is_object($subject) && !($subject instanceof ArrayAccess)) {
-            throw new InterfaceNotImplementedException(
-                sprintf('%s does not implement %s interface, but should.',
-                    $this->presenter->presentValue($this->getWrappedObject()),
-                    $this->presenter->presentString('ArrayAccess')
-                ),
-                $this->getWrappedObject(),
-                'ArrayAccess'
-            );
-        } elseif (!($subject instanceof ArrayAccess) && !is_array($subject)) {
-            throw new SubjectException(sprintf(
-                'Can not use %s as array.', $this->presenter->presentValue($subject)
-            ));
-        }
-
-        return isset($subject[$key]);
+        return $this->arrayAccess->offSetExists($key);
     }
 
     public function offsetGet($key)
     {
-        $subject = $this->getWrappedObject();
-        $key     = $this->unwrapper->unwrapOne($key);
-
-        if (is_object($subject) && !($subject instanceof ArrayAccess)) {
-            throw new InterfaceNotImplementedException(
-                sprintf('%s does not implement %s interface, but should.',
-                    $this->presenter->presentValue($this->getWrappedObject()),
-                    $this->presenter->presentString('ArrayAccess')
-                ),
-                $this->getWrappedObject(),
-                'ArrayAccess'
-            );
-        } elseif (!($subject instanceof ArrayAccess) && !is_array($subject)) {
-            throw new SubjectException(sprintf(
-                'Can not use %s as array.', $this->presenter->presentValue($subject)
-            ));
-        }
-
-        return new static($subject[$key], $this->matchers, $this->unwrapper, $this->presenter, $this->dispatcher, $this->example);
+        return $this->wrap($this->arrayAccess->offsetGet($key));
     }
 
     public function offsetSet($key, $value)
     {
-        $subject = $this->getWrappedObject();
-        $key     = $this->unwrapper->unwrapOne($key);
-        $value   = $this->unwrapper->unwrapOne($value);
-
-        if (is_object($subject) && !($subject instanceof ArrayAccess)) {
-            throw new InterfaceNotImplementedException(
-                sprintf('%s does not implement %s interface, but should.',
-                    $this->presenter->presentValue($this->getWrappedObject()),
-                    $this->presenter->presentString('ArrayAccess')
-                ),
-                $this->getWrappedObject(),
-                'ArrayAccess'
-            );
-        } elseif (!($subject instanceof ArrayAccess) && !is_array($subject)) {
-            throw new SubjectException(sprintf(
-                'Can not use %s as array.', $this->presenter->presentValue($subject)
-            ));
-        }
-
-        $subject[$key] = $value;
+        return $this->arrayAccess->offsetSet($key, $value);
     }
 
     public function offsetUnset($key)
     {
-        $subject = $this->getWrappedObject();
-        $key     = $this->unwrapper->unwrapOne($key);
-
-        if (is_object($subject) && !($subject instanceof ArrayAccess)) {
-            throw new InterfaceNotImplementedException(
-                sprintf('%s does not implement %s interface, but should.',
-                    $this->presenter->presentValue($this->getWrappedObject()),
-                    $this->presenter->presentString('ArrayAccess')
-                ),
-                $this->getWrappedObject(),
-                'ArrayAccess'
-            );
-        } elseif (!($subject instanceof ArrayAccess) && !is_array($subject)) {
-            throw new SubjectException(sprintf(
-                'Can not use %s as array.', $this->presenter->presentValue($subject)
-            ));
-        }
-
-        unset($subject[$key]);
+        $this->arrayAccess->offsetUnset($key);;
     }
 
     public function __call($method, array $arguments = array())
     {
-        // if user calls function with should prefix - call matcher
         if (0 === strpos($method, 'shouldNot')) {
             return $this->shouldNot(lcfirst(substr($method, 9)), $arguments);
         }
+
         if (0 === strpos($method, 'should')) {
             return $this->should(lcfirst(substr($method, 6)), $arguments);
         }
@@ -223,5 +144,21 @@ class Subject implements ArrayAccess, WrapperInterface
     public function __get($property)
     {
         return $this->getFromWrappedObject($property);
+    }
+
+    private function wrap($value)
+    {
+        return new static($value, $this->matchers, $this->unwrapper, $this->presenter, $this->dispatcher, $this->example);
+    }
+
+    public function createExpectation()
+    {
+        if ($this->subject === null) {
+            $this->subject = $this->unwrapper->unwrapOne($this);
+        }
+
+        return new Expectation(
+            $this->subject, $this->example, $this->dispatcher, $this->matchers
+        );
     }
 }

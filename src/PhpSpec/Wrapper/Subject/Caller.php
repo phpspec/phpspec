@@ -23,23 +23,23 @@ use ReflectionException;
 
 class Caller
 {
+    private $wrappedObject;
+    private $example;
+    private $dispatcher;
+    private $presenter;
     private $matchers;
     private $unwrapper;
-    private $presenter;
-    private $dispatcher;
-    private $example;
-    private $wrappedObject;
 
-    public function __construct(MatcherManager $matchers, Unwrapper $unwrapper,
-                                PresenterInterface $presenter, EventDispatcherInterface $dispatcher,
-                                ExampleNode $example, WrappedObject $wrappedObject)
+    public function __construct(WrappedObject $wrappedObject, ExampleNode $example,
+                                EventDispatcherInterface $dispatcher, PresenterInterface $presenter,
+                                MatcherManager $matchers, Unwrapper $unwrapper = null)
     {
-        $this->matchers      = $matchers;
-        $this->unwrapper     = $unwrapper;
-        $this->presenter     = $presenter;
-        $this->dispatcher    = $dispatcher;
-        $this->example       = $example;
         $this->wrappedObject = $wrappedObject;
+        $this->example       = $example;
+        $this->dispatcher    = $dispatcher;
+        $this->presenter     = $presenter;
+        $this->matchers      = $matchers;
+        $this->unwrapper     = $unwrapper ?: new Unwrapper;
     }
     
     public function callOnWrappedObject(Subject $subject, $method, array $arguments = array())

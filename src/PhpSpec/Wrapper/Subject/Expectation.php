@@ -19,18 +19,18 @@ class Expectation
     const NEGATIVE = 'negative';
 
     private $subject;
-    private $unwrapper;
-    private $matchers;
     private $example;
     private $dispatcher;
+    private $matchers;
+    private $unwrapper;
 
-    public function __construct($subject, MatcherManager $matchers, ExampleNode $example, Unwrapper $unwrapper, EventDispatcherInterface $dispatcher)
+    public function __construct($subject, ExampleNode $example, EventDispatcherInterface $dispatcher, MatcherManager $matchers, Unwrapper $unwrapper = null)
     {
-        $this->subject   = $subject;
-        $this->unwrapper = $unwrapper;
-        $this->matchers  = $matchers;
-        $this->example   = $example;
+        $this->subject    = $subject;
+        $this->example    = $example;
         $this->dispatcher = $dispatcher;
+        $this->matchers   = $matchers;
+        $this->unwrapper  = $unwrapper ?: new Unwrapper;
     }
 
     public function should($name = null, array $arguments = array())
