@@ -2,6 +2,13 @@
 
 namespace spec\PhpSpec\Wrapper;
 
+use PhpSpec\Wrapper\Wrapper;
+use PhpSpec\Wrapper\Subject\WrappedObject;
+use PhpSpec\Wrapper\Subject\Caller;
+use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
+use PhpSpec\Wrapper\Subject\Expectation;
+use PhpSpec\Wrapper\Subject\ExpectationFactory;
+
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Event\ExpectationEvent;
@@ -16,159 +23,9 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class SubjectSpec extends ObjectBehavior
 {
-    function let(MatcherManager $matchers, PresenterInterface $presenter,
-        EventDispatcherInterface $dispatcher, ExampleNode $example)
+    function let(Wrapper $wrapper, WrappedObject $wrappedObject, Caller $caller,
+                 SubjectWithArrayAccess $arrayAccess, ExpectationFactory $expectationFactory)
     {
-        $this->beConstructedWith(new \Exception(), $matchers, $presenter, $dispatcher, $example);
-    }
-
-    function it_dispatches_expectation_events_for_should(MatcherManager $matchers,
-        EventDispatcherInterface $dispatcher, MatcherInterface $matcher)
-    {
-        $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
-
-        $dispatcher->dispatch(
-            'beforeExpectation',
-            Argument::type('PhpSpec\Event\ExpectationEvent')
-        )->shouldBeCalled();
-
-        $dispatcher->dispatch(
-            'afterExpectation',
-            Argument::which('getResult', ExpectationEvent::PASSED)
-        )->shouldBeCalled();
-
-        $this->callOnWrappedObject('should', array('beBoolean'));
-    }
-
-    function it_dispatches_after_expectation_event_with_failed_status_if_matcher_throws_exception_for_should(
-        MatcherManager $matchers, EventDispatcherInterface $dispatcher,
-        MatcherInterface $matcher)
-    {
-        $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
-        $matcher->positiveMatch(Argument::cetera())
-            ->willThrow('PhpSpec\Exception\Example\FailureException');
-
-        $dispatcher->dispatch(
-            'beforeExpectation',
-            Argument::type('PhpSpec\Event\ExpectationEvent')
-        )->shouldBeCalled();
-
-        $dispatcher->dispatch(
-            'afterExpectation',
-            Argument::which('getResult', ExpectationEvent::FAILED)
-        )->shouldBeCalled();
-
-        try {
-            $this->callOnWrappedObject('should', array('beBoolean'));
-        } catch (FailureException $e) {
-
-        }
-    }
-
-    function it_dispatches_after_expectation_event_with_broken_status_if_throws_exception_for_should(
-        MatcherManager $matchers, EventDispatcherInterface $dispatcher,
-        MatcherInterface $matcher)
-    {
-        $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
-        $matcher->positiveMatch(Argument::cetera())
-            ->willThrow('RuntimeException');
-
-        $dispatcher->dispatch(
-            'beforeExpectation',
-            Argument::type('PhpSpec\Event\ExpectationEvent')
-        )->shouldBeCalled();
-
-        $dispatcher->dispatch(
-            'afterExpectation',
-            Argument::which('getResult', ExpectationEvent::BROKEN)
-        )->shouldBeCalled();
-
-        try {
-            $this->callOnWrappedObject('should', array('beBoolean'));
-        } catch (RuntimeException $e) {
-
-        }
-    }
-
-    function it_dispatches_expectation_events_for_should_not(MatcherManager $matchers,
-        EventDispatcherInterface $dispatcher, MatcherInterface $matcher)
-    {
-        $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
-
-        $dispatcher->dispatch(
-            'beforeExpectation',
-            Argument::type('PhpSpec\Event\ExpectationEvent')
-        )->shouldBeCalled();
-
-        $dispatcher->dispatch(
-            'afterExpectation',
-            Argument::which('getResult', ExpectationEvent::PASSED)
-        )->shouldBeCalled();
-
-        $this->callOnWrappedObject('shouldNot', array('beBoolean'));
-    }
-
-    function it_dispatches_after_expectation_event_with_failed_status_if_matcher_throws_exception_for_should_not(
-        MatcherManager $matchers, EventDispatcherInterface $dispatcher,
-        MatcherInterface $matcher)
-    {
-        $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
-        $matcher->negativeMatch(Argument::cetera())->willThrow('PhpSpec\Exception\Example\FailureException');
-
-        $dispatcher->dispatch(
-            'beforeExpectation',
-            Argument::type('PhpSpec\Event\ExpectationEvent')
-        )->shouldBeCalled();
-
-        $dispatcher->dispatch(
-            'afterExpectation',
-            Argument::which('getResult', ExpectationEvent::FAILED)
-        )->shouldBeCalled();
-
-        try {
-            $this->callOnWrappedObject('shouldNot', array('beBoolean'));
-        } catch (FailureException $e) {
-
-        }
-    }
-
-    function it_dispatches_after_expectation_event_with_broken_status_if_throws_exception_for_should_not(
-        MatcherManager $matchers, EventDispatcherInterface $dispatcher,
-        MatcherInterface $matcher)
-    {
-        $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
-        $matcher->negativeMatch(Argument::cetera())
-            ->willThrow('RuntimeException');
-
-        $dispatcher->dispatch(
-            'beforeExpectation',
-            Argument::type('PhpSpec\Event\ExpectationEvent')
-        )->shouldBeCalled();
-
-        $dispatcher->dispatch(
-            'afterExpectation',
-            Argument::which('getResult', ExpectationEvent::BROKEN)
-        )->shouldBeCalled();
-
-        try {
-            $this->callOnWrappedObject('shouldNot', array('beBoolean'));
-        } catch (RuntimeException $e) {
-
-        }
-    }
-
-    function it_dispatches_method_call_events(EventDispatcherInterface $dispatcher, Unwrapper $unwrapper)
-    {
-        $dispatcher->dispatch(
-            'beforeMethodCall',
-            Argument::type('PhpSpec\Event\MethodCallEvent')
-        )->shouldBeCalled();
-
-        $dispatcher->dispatch(
-            'afterMethodCall',
-            Argument::type('PhpSpec\Event\MethodCallEvent')
-        )->shouldBeCalled();
-
-        $this->callOnWrappedObject('callOnWrappedObject', array('getMessage'));
+        $this->beConstructedWith(new \Exception(), $wrapper, $wrappedObject, $caller, $arrayAccess, $expectationFactory);
     }
 }

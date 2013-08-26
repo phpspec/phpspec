@@ -2,55 +2,32 @@
 
 namespace PhpSpec\Wrapper;
 
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use PhpSpec\Event\MethodCallEvent;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Loader\Node\ExampleNode;
-use PhpSpec\Runner\MatcherManager;
-
-use PhpSpec\Exception\Exception;
-use PhpSpec\Exception\Wrapper\SubjectException;
-use PhpSpec\Exception\Fracture\ClassNotFoundException;
-use PhpSpec\Exception\Fracture\MethodNotFoundException;
-use PhpSpec\Exception\Fracture\PropertyNotFoundException;
-use PhpSpec\Exception\Fracture\InterfaceNotImplementedException;
-
 use PhpSpec\Wrapper\Subject\WrappedObject;
 use PhpSpec\Wrapper\Subject\Caller;
 use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
 use PhpSpec\Wrapper\Subject\Expectation;
+use PhpSpec\Wrapper\Subject\ExpectationFactory;
 
 use ArrayAccess;
 
-use ReflectionClass;
-use ReflectionMethod;
-use ReflectionProperty;
-
 class Subject implements ArrayAccess, WrapperInterface
 {
-    private $matchers;
-    private $unwrapper;
-    private $presenter;
-    private $dispatcher;
-    private $example;
     private $subject;
     private $wrappedObject;
     private $caller;
     private $arrayAccess;
+    private $wrapper;
+    private $expectationFactory;
 
-    public function __construct($subject, MatcherManager $matchers, PresenterInterface $presenter,
-                                EventDispatcherInterface $dispatcher, ExampleNode $example,
-                                WrappedObject $wrappedObject = null, Caller $caller = null,
-                                SubjectWithArrayAccess $arrayAccess = null)
+    public function __construct($subject, Wrapper $wrapper, WrappedObject $wrappedObject, Caller $caller,
+                                SubjectWithArrayAccess $arrayAccess, ExpectationFactory $expectationFactory)
     {
-        $this->subject        = $subject;
-        $this->matchers       = $matchers;
-        $this->presenter      = $presenter;
-        $this->dispatcher     = $dispatcher;
-        $this->example        = $example;
-        $this->wrappedObject  = $wrappedObject ?: new WrappedObject($subject, $presenter);
-        $this->caller         = $caller ?: new Caller($this->wrappedObject, $example, $dispatcher, $presenter, $matchers);
-        $this->arrayAccess    = $arrayAccess ?: new SubjectWithArrayAccess($this->caller, $presenter, $matchers, $dispatcher);
+        $this->subject            = $subject;
+        $this->wrapper            = $wrapper;
+        $this->wrappedObject      = $wrappedObject;
+        $this->caller             = $caller;
+        $this->arrayAccess        = $arrayAccess;
+        $this->expectationFactory = $expectationFactory;
     }
 
     public function beAnInstanceOf($className, array $arguments = array())
@@ -65,27 +42,27 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function should($name = null, array $arguments = array())
     {
-        return $this->createExpectation()->should($name, $arguments);
+        return $this->createExpectation()->positive($name, $arguments);
     }
 
     public function shouldNot($name = null, array $arguments = array())
     {
-        return $this->createExpectation()->shouldNot($name, $arguments);
+        return $this->createExpectation()->negative($name, $arguments);
     }
 
     public function callOnWrappedObject($method, array $arguments = array())
     {
-        return $this->caller->callOnWrappedObject($this, $method, $arguments);
+        return $this->caller->call($method, $arguments);
     }
 
     public function setToWrappedObject($property, $value = null)
     {
-        return $this->caller->setToWrappedObject($property, $value);
+        return $this->caller->set($property, $value);
     }
 
     public function getFromWrappedObject($property)
     {
-        return $this->caller->getFromWrappedObject($property);
+        return $this->caller->get($property);
     }
 
     public function getWrappedObject()
@@ -147,8 +124,7 @@ class Subject implements ArrayAccess, WrapperInterface
 
     private function wrap($value)
     {
-        $wrapper = new Wrapper($this->matchers, $this->presenter, $this->dispatcher);
-        return $wrapper->wrap($value, $this->example);
+        return $this->wrapper->wrap($value);
     }
 
     public function createExpectation()
@@ -158,8 +134,6 @@ class Subject implements ArrayAccess, WrapperInterface
             $this->subject = $unwrapper->unwrapOne($this);
         }
 
-        return new Expectation(
-            $this->subject, $this->example, $this->dispatcher, $this->matchers
-        );
+        return $this->expectationFactory->create($this->subject);
     }
 }

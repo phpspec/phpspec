@@ -32,14 +32,14 @@ class Expectation
         $this->matchers   = $matchers;
     }
 
-    public function should($name = null, array $arguments = array())
+    public function positive($name = null, array $arguments = array())
     {
         return $this->findMatcherAndMatch(
             __METHOD__, self::POSITIVE, $name, $arguments
         );
     }
 
-    public function shouldNot($name = null, array $arguments = array())
+    public function negative($name = null, array $arguments = array())
     {
         return $this->findMatcherAndMatch(
             __METHOD__, self::NEGATIVE, $name, $arguments

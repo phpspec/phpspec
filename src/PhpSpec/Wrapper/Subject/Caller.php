@@ -4,15 +4,18 @@ namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Runner\MatcherManager;
+
 use PhpSpec\Wrapper\Subject;
 use PhpSpec\Wrapper\Wrapper;
 use PhpSpec\Wrapper\Unwrapper;
+
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Exception\Exception;
 use PhpSpec\Exception\Wrapper\SubjectException;
 use PhpSpec\Exception\Fracture\ClassNotFoundException;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
 use PhpSpec\Exception\Fracture\PropertyNotFoundException;
+
 use PhpSpec\Event\MethodCallEvent;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -29,23 +32,24 @@ class Caller
     private $dispatcher;
     private $presenter;
     private $matchers;
-    private $unwrapper;
+    private $wrapper;
 
     public function __construct(WrappedObject $wrappedObject, ExampleNode $example,
                                 EventDispatcherInterface $dispatcher, PresenterInterface $presenter,
-                                MatcherManager $matchers)
+                                MatcherManager $matchers, Wrapper $wrapper)
     {
         $this->wrappedObject = $wrappedObject;
         $this->example       = $example;
         $this->dispatcher    = $dispatcher;
         $this->presenter     = $presenter;
         $this->matchers      = $matchers;
+        $this->wrapper       = $wrapper;
     }
     
-    public function callOnWrappedObject(Subject $subject, $method, array $arguments = array())
+    public function call($method, array $arguments = array())
     {
         if (null === $this->getWrappedObject()) {
-            throw callingMethodOnNonObject($method);
+            throw $this->callingMethodOnNonObject($method);
         }
 
         $subject   = $this->wrappedObject->getInstance();
@@ -59,7 +63,7 @@ class Caller
         throw $this->methodNotFound($method, $arguments);
     }
 
-    public function setToWrappedObject($property, $value = null)
+    public function set($property, $value = null)
     {
         if (null === $this->getWrappedObject()) {
             throw $this->settingPropertyOnNonObject($property);
@@ -75,7 +79,7 @@ class Caller
         throw $this->propertyNotFound($property);
     }
 
-    public function getFromWrappedObject($property)
+    public function get($property)
     {
         if ($this->lookingForConstants($property) && $this->constantDefined($property)) {
             return constant($this->wrappedObject->getClassName().'::'.$property);
@@ -179,8 +183,7 @@ class Caller
 
     private function wrap($value)
     {
-        $wrapper = new Wrapper($this->matchers, $this->presenter, $this->dispatcher);
-        return $wrapper->wrap($value, $this->example);
+        return $this->wrapper->wrap($value);
     }
 
     private function newInstanceWithArguments(ReflectionClass $reflection)

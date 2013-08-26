@@ -35,8 +35,8 @@ class SubjectMaintainer implements MaintainerInterface
     public function prepare(ExampleNode $example, SpecificationInterface $context,
                             MatcherManager $matchers, CollaboratorManager $collaborators)
     {
-        $subjectFactory = new Wrapper($matchers, $this->presenter, $this->dispatcher);
-        $subject = $subjectFactory->wrap(null, $example);
+        $subjectFactory = new Wrapper($matchers, $this->presenter, $this->dispatcher, $example);
+        $subject = $subjectFactory->wrap(null);
         $subject->beAnInstanceOf(
             $example->getSpecification()->getResource()->getSrcClassname()
         );
