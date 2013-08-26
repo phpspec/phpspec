@@ -17,7 +17,7 @@ use PhpSpec\Exception\Fracture\InterfaceNotImplementedException;
 
 use PhpSpec\Wrapper\Subject\WrappedObject;
 use PhpSpec\Wrapper\Subject\Caller;
-use PhpSpec\Wrapper\Subject\ArrayAccess as SubjectArrayAccess;
+use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
 use PhpSpec\Wrapper\Subject\Expectation;
 
 use ArrayAccess;
@@ -41,7 +41,7 @@ class Subject implements ArrayAccess, WrapperInterface
     public function __construct($subject, MatcherManager $matchers, Unwrapper $unwrapper,
                                 PresenterInterface $presenter, EventDispatcherInterface $dispatcher,
                                 ExampleNode $example, WrappedObject $wrappedObject = null,
-                                Caller $caller = null, SubjectArrayAccess $arrayAccess = null)
+                                Caller $caller = null, SubjectWithArrayAccess $arrayAccess = null)
     {
         $this->subject        = $subject;
         $this->matchers       = $matchers;
@@ -51,7 +51,7 @@ class Subject implements ArrayAccess, WrapperInterface
         $this->example        = $example;
         $this->wrappedObject  = $wrappedObject ?: new WrappedObject($subject, $presenter, $unwrapper);
         $this->caller         = $caller ?: new Caller($this->wrappedObject, $example, $dispatcher, $presenter, $matchers, $unwrapper);
-        $this->arrayAccess    = $arrayAccess ?: new SubjectArrayAccess($this->caller, $unwrapper, $presenter, $matchers, $dispatcher);
+        $this->arrayAccess    = $arrayAccess ?: new SubjectWithArrayAccess($this->caller, $unwrapper, $presenter, $matchers, $dispatcher);
     }
 
     public function beAnInstanceOf($className, array $arguments = array())

@@ -12,7 +12,7 @@ use PhpSpec\Exception\Wrapper\SubjectException;
 use PhpSpec\Exception\Fracture\InterfaceNotImplementedException;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
-class ArrayAccess
+class SubjectWithArrayAccess
 {
     private $caller;
     private $unwrapper;
@@ -28,7 +28,7 @@ class ArrayAccess
         $this->matchers   = $matchers;
         $this->dispatcher = $dispatcher;
     }
-    
+
     public function offsetExists($key)
     {
         $subject = $this->caller->getWrappedObject();
