@@ -15,15 +15,13 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 class SubjectWithArrayAccess
 {
     private $caller;
-    private $unwrapper;
     private $presenter;
     private $matchers;
     private $dispatcher;
 
-    public function __construct(Caller $caller, Unwrapper $unwrapper, PresenterInterface $presenter, MatcherManager $matchers, EventDispatcherInterface $dispatcher)
+    public function __construct(Caller $caller, PresenterInterface $presenter, MatcherManager $matchers, EventDispatcherInterface $dispatcher)
     {
         $this->caller     = $caller;
-        $this->unwrapper  = $unwrapper;
         $this->presenter  = $presenter;
         $this->matchers   = $matchers;
         $this->dispatcher = $dispatcher;
@@ -31,8 +29,9 @@ class SubjectWithArrayAccess
 
     public function offsetExists($key)
     {
+        $unwrapper = new Unwrapper;
         $subject = $this->caller->getWrappedObject();
-        $key     = $this->unwrapper->unwrapOne($key);
+        $key     = $unwrapper->unwrapOne($key);
 
         $this->checkIfSubjectImplementsArrayAccess($subject);
 
@@ -41,8 +40,9 @@ class SubjectWithArrayAccess
 
     public function offsetGet($key)
     {
+        $unwrapper = new Unwrapper;
         $subject = $this->caller->getWrappedObject();
-        $key     = $this->unwrapper->unwrapOne($key);
+        $key     = $unwrapper->unwrapOne($key);
 
         $this->checkIfSubjectImplementsArrayAccess($subject);
 
@@ -51,8 +51,9 @@ class SubjectWithArrayAccess
 
     public function offsetSet($key, $value)
     {
+        $unwrapper = new Unwrapper;
         $subject = $this->caller->getWrappedObject();
-        $key     = $this->unwrapper->unwrapOne($key);
+        $key     = $unwrapper->unwrapOne($key);
         $value   = $this->unwrapper->unwrapOne($value);
 
         $this->checkIfSubjectImplementsArrayAccess($subject);
@@ -62,8 +63,9 @@ class SubjectWithArrayAccess
 
     public function offsetUnset($key)
     {
+        $unwrapper = new Unwrapper;
         $subject = $this->caller->getWrappedObject();
-        $key     = $this->unwrapper->unwrapOne($key);
+        $key     = $unwrapper->unwrapOne($key);
 
         $this->checkIfSubjectImplementsArrayAccess($subject);
 

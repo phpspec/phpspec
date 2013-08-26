@@ -9,7 +9,7 @@ use PhpSpec\Runner\CollaboratorManager;
 
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Wrapper\Unwrapper;
-use PhpSpec\Wrapper\Subject;
+use PhpSpec\Wrapper\SubjectFactory;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class SubjectMaintainer implements MaintainerInterface
@@ -35,7 +35,8 @@ class SubjectMaintainer implements MaintainerInterface
     public function prepare(ExampleNode $example, SpecificationInterface $context,
                             MatcherManager $matchers, CollaboratorManager $collaborators)
     {
-        $subject = new Subject(null, $matchers, $this->unwrapper, $this->presenter, $this->dispatcher, $example);
+        $subjectFactory = new SubjectFactory($matchers, $this->presenter, $this->dispatcher);
+        $subject = $subjectFactory->create(null, $example);
         $subject->beAnInstanceOf(
             $example->getSpecification()->getResource()->getSrcClassname()
         );

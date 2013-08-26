@@ -16,17 +16,15 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class SubjectSpec extends ObjectBehavior
 {
-    function let(MatcherManager $matchers, Unwrapper $unwrapper,
-        PresenterInterface $presenter, EventDispatcherInterface $dispatcher, ExampleNode $example)
+    function let(MatcherManager $matchers, PresenterInterface $presenter,
+        EventDispatcherInterface $dispatcher, ExampleNode $example)
     {
-        $this->beConstructedWith(new \Exception(), $matchers, $unwrapper, $presenter, $dispatcher, $example);
+        $this->beConstructedWith(new \Exception(), $matchers, $presenter, $dispatcher, $example);
     }
 
     function it_dispatches_expectation_events_for_should(MatcherManager $matchers,
-        Unwrapper $unwrapper, EventDispatcherInterface $dispatcher, MatcherInterface $matcher)
+        EventDispatcherInterface $dispatcher, MatcherInterface $matcher)
     {
-        $unwrapper->unwrapOne(Argument::any())->willReturn(null);
-        $unwrapper->unwrapAll(Argument::any())->willReturn(array());
         $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
 
         $dispatcher->dispatch(
@@ -43,11 +41,9 @@ class SubjectSpec extends ObjectBehavior
     }
 
     function it_dispatches_after_expectation_event_with_failed_status_if_matcher_throws_exception_for_should(
-        MatcherManager $matchers, Unwrapper $unwrapper, EventDispatcherInterface $dispatcher,
+        MatcherManager $matchers, EventDispatcherInterface $dispatcher,
         MatcherInterface $matcher)
     {
-        $unwrapper->unwrapOne(Argument::any())->willReturn(null);
-        $unwrapper->unwrapAll(Argument::any())->willReturn(array());
         $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
         $matcher->positiveMatch(Argument::cetera())
             ->willThrow('PhpSpec\Exception\Example\FailureException');
@@ -70,11 +66,9 @@ class SubjectSpec extends ObjectBehavior
     }
 
     function it_dispatches_after_expectation_event_with_broken_status_if_throws_exception_for_should(
-        MatcherManager $matchers, Unwrapper $unwrapper, EventDispatcherInterface $dispatcher,
+        MatcherManager $matchers, EventDispatcherInterface $dispatcher,
         MatcherInterface $matcher)
     {
-        $unwrapper->unwrapOne(Argument::any())->willReturn(null);
-        $unwrapper->unwrapAll(Argument::any())->willReturn(array());
         $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
         $matcher->positiveMatch(Argument::cetera())
             ->willThrow('RuntimeException');
@@ -97,10 +91,8 @@ class SubjectSpec extends ObjectBehavior
     }
 
     function it_dispatches_expectation_events_for_should_not(MatcherManager $matchers,
-        Unwrapper $unwrapper, EventDispatcherInterface $dispatcher, MatcherInterface $matcher)
+        EventDispatcherInterface $dispatcher, MatcherInterface $matcher)
     {
-        $unwrapper->unwrapOne(Argument::any())->willReturn(null);
-        $unwrapper->unwrapAll(Argument::any())->willReturn(array());
         $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
 
         $dispatcher->dispatch(
@@ -117,11 +109,9 @@ class SubjectSpec extends ObjectBehavior
     }
 
     function it_dispatches_after_expectation_event_with_failed_status_if_matcher_throws_exception_for_should_not(
-        MatcherManager $matchers, Unwrapper $unwrapper, EventDispatcherInterface $dispatcher,
+        MatcherManager $matchers, EventDispatcherInterface $dispatcher,
         MatcherInterface $matcher)
     {
-        $unwrapper->unwrapOne(Argument::any())->willReturn(null);
-        $unwrapper->unwrapAll(Argument::any())->willReturn(array());
         $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
         $matcher->negativeMatch(Argument::cetera())->willThrow('PhpSpec\Exception\Example\FailureException');
 
@@ -143,11 +133,9 @@ class SubjectSpec extends ObjectBehavior
     }
 
     function it_dispatches_after_expectation_event_with_broken_status_if_throws_exception_for_should_not(
-        MatcherManager $matchers, Unwrapper $unwrapper, EventDispatcherInterface $dispatcher,
+        MatcherManager $matchers, EventDispatcherInterface $dispatcher,
         MatcherInterface $matcher)
     {
-        $unwrapper->unwrapOne(Argument::any())->willReturn(null);
-        $unwrapper->unwrapAll(Argument::any())->willReturn(array());
         $matchers->find(Argument::cetera())->shouldBeCalled()->WillReturn($matcher);
         $matcher->negativeMatch(Argument::cetera())
             ->willThrow('RuntimeException');
@@ -171,9 +159,6 @@ class SubjectSpec extends ObjectBehavior
 
     function it_dispatches_method_call_events(EventDispatcherInterface $dispatcher, Unwrapper $unwrapper)
     {
-        $unwrapper->unwrapOne(Argument::any())->willReturn(new \Exception);
-        $unwrapper->unwrapAll(Argument::any())->willReturn(array());
-
         $dispatcher->dispatch(
             'beforeMethodCall',
             Argument::type('PhpSpec\Event\MethodCallEvent')

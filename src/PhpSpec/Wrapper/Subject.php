@@ -38,20 +38,19 @@ class Subject implements ArrayAccess, WrapperInterface
     private $caller;
     private $arrayAccess;
 
-    public function __construct($subject, MatcherManager $matchers, Unwrapper $unwrapper,
-                                PresenterInterface $presenter, EventDispatcherInterface $dispatcher,
-                                ExampleNode $example, WrappedObject $wrappedObject = null,
-                                Caller $caller = null, SubjectWithArrayAccess $arrayAccess = null)
+    public function __construct($subject, MatcherManager $matchers, PresenterInterface $presenter,
+                                EventDispatcherInterface $dispatcher, ExampleNode $example,
+                                WrappedObject $wrappedObject = null, Caller $caller = null,
+                                SubjectWithArrayAccess $arrayAccess = null)
     {
         $this->subject        = $subject;
         $this->matchers       = $matchers;
-        $this->unwrapper      = $unwrapper;
         $this->presenter      = $presenter;
         $this->dispatcher     = $dispatcher;
         $this->example        = $example;
-        $this->wrappedObject  = $wrappedObject ?: new WrappedObject($subject, $presenter, $unwrapper);
-        $this->caller         = $caller ?: new Caller($this->wrappedObject, $example, $dispatcher, $presenter, $matchers, $unwrapper);
-        $this->arrayAccess    = $arrayAccess ?: new SubjectWithArrayAccess($this->caller, $unwrapper, $presenter, $matchers, $dispatcher);
+        $this->wrappedObject  = $wrappedObject ?: new WrappedObject($subject, $presenter);
+        $this->caller         = $caller ?: new Caller($this->wrappedObject, $example, $dispatcher, $presenter, $matchers);
+        $this->arrayAccess    = $arrayAccess ?: new SubjectWithArrayAccess($this->caller, $presenter, $matchers, $dispatcher);
     }
 
     public function beAnInstanceOf($className, array $arguments = array())
@@ -148,13 +147,14 @@ class Subject implements ArrayAccess, WrapperInterface
 
     private function wrap($value)
     {
-        return new static($value, $this->matchers, $this->unwrapper, $this->presenter, $this->dispatcher, $this->example);
+        return new static($value, $this->matchers, $this->presenter, $this->dispatcher, $this->example);
     }
 
     public function createExpectation()
     {
         if ($this->subject === null) {
-            $this->subject = $this->unwrapper->unwrapOne($this);
+            $unwrapper = new Unwrapper;
+            $this->subject = $unwrapper->unwrapOne($this);
         }
 
         return new Expectation(

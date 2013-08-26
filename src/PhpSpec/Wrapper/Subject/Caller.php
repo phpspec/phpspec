@@ -5,6 +5,7 @@ namespace PhpSpec\Wrapper\Subject;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Wrapper\Subject;
+use PhpSpec\Wrapper\SubjectFactory;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Exception\Exception;
@@ -32,14 +33,13 @@ class Caller
 
     public function __construct(WrappedObject $wrappedObject, ExampleNode $example,
                                 EventDispatcherInterface $dispatcher, PresenterInterface $presenter,
-                                MatcherManager $matchers, Unwrapper $unwrapper = null)
+                                MatcherManager $matchers)
     {
         $this->wrappedObject = $wrappedObject;
         $this->example       = $example;
         $this->dispatcher    = $dispatcher;
         $this->presenter     = $presenter;
         $this->matchers      = $matchers;
-        $this->unwrapper     = $unwrapper ?: new Unwrapper;
     }
     
     public function callOnWrappedObject(Subject $subject, $method, array $arguments = array())
@@ -49,7 +49,8 @@ class Caller
         }
 
         $subject   = $this->wrappedObject->getInstance();
-        $arguments = $this->unwrapper->unwrapAll($arguments);
+        $unwrapper = new Unwrapper;
+        $arguments = $unwrapper->unwrapAll($arguments);
 
         if ($this->isObjectMethodAccessible($method)) {
             return $this->invokeAndWrapMethodResult($subject, $method, $arguments);
@@ -64,7 +65,8 @@ class Caller
             throw $this->settingPropertyOnNonObject($property);
         }
 
-        $value = $this->unwrapper->unwrapAll($value);
+        $unwrapper = new Unwrapper;
+        $value = $unwrapper->unwrapAll($value);
 
         if ($this->isObjectPropertyAccessible($property, true)) {
             return $this->getWrappedObject()->$property = $value;
@@ -177,7 +179,8 @@ class Caller
 
     private function wrap($value)
     {
-        return new Subject($value, $this->matchers, $this->unwrapper, $this->presenter, $this->dispatcher, $this->example);
+        $factory = new SubjectFactory($this->matchers, $this->presenter, $this->dispatcher);
+        return $factory->create($value, $this->example);
     }
 
     private function newInstanceWithArguments(ReflectionClass $reflection)

@@ -24,13 +24,12 @@ class Expectation
     private $matchers;
     private $unwrapper;
 
-    public function __construct($subject, ExampleNode $example, EventDispatcherInterface $dispatcher, MatcherManager $matchers, Unwrapper $unwrapper = null)
+    public function __construct($subject, ExampleNode $example, EventDispatcherInterface $dispatcher, MatcherManager $matchers)
     {
         $this->subject    = $subject;
         $this->example    = $example;
         $this->dispatcher = $dispatcher;
         $this->matchers   = $matchers;
-        $this->unwrapper  = $unwrapper ?: new Unwrapper;
     }
 
     public function should($name = null, array $arguments = array())
@@ -76,7 +75,8 @@ class Expectation
     private function performMatch($expectationMatch, $matcher, $name, array $arguments = array())
     {
         $subject = $this->subject;
-        $arguments = $this->unwrapper->unwrapAll($arguments);
+        $unwrapper = new Unwrapper;
+        $arguments = $unwrapper->unwrapAll($arguments);
 
         $this->dispatcher->dispatch('beforeExpectation',
             new ExpectationEvent($this->example, $matcher, $subject, $name, $arguments)
@@ -107,7 +107,8 @@ class Expectation
 
     private function findMatcher($name, array $arguments = array())
     {
-        $arguments = $this->unwrapper->unwrapAll($arguments);
+        $unwrapper = new Unwrapper;
+        $arguments = $unwrapper->unwrapAll($arguments);
         return $this->matchers->find($name, $this->subject, $arguments);
     }
 }
