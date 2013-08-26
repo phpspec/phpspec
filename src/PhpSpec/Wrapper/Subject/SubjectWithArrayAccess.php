@@ -2,7 +2,6 @@
 
 namespace PhpSpec\Wrapper\Subject;
 
-use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Wrapper\Subject;
@@ -16,14 +15,13 @@ class SubjectWithArrayAccess
 {
     private $caller;
     private $presenter;
-    private $matchers;
     private $dispatcher;
 
-    public function __construct(Caller $caller, PresenterInterface $presenter, MatcherManager $matchers, EventDispatcherInterface $dispatcher)
+    public function __construct(Caller $caller, PresenterInterface $presenter,
+        EventDispatcherInterface $dispatcher)
     {
         $this->caller     = $caller;
         $this->presenter  = $presenter;
-        $this->matchers   = $matchers;
         $this->dispatcher = $dispatcher;
     }
 

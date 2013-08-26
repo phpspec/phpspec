@@ -26,7 +26,7 @@ class Wrapper
     {
         $wrappedObject      = new WrappedObject($value, $this->presenter);
         $caller             = new Caller($wrappedObject, $this->example, $this->dispatcher, $this->presenter, $this->matchers, $this);
-        $arrayAccess        = new SubjectWithArrayAccess($caller, $this->presenter, $this->matchers, $this->dispatcher);
+        $arrayAccess        = new SubjectWithArrayAccess($caller, $this->presenter, $this->dispatcher);
         $expectationFactory = new ExpectationFactory($this->example, $this->dispatcher, $this->matchers);
 
         return new Subject(
