@@ -2,7 +2,7 @@
 
 namespace PhpSpec\Wrapper;
 
-class SubjectFactory
+class Wrapper
 {
     private $matchers;
     private $presenter;
@@ -15,7 +15,7 @@ class SubjectFactory
         $this->dispatcher = $dispatcher;
     }
 
-    public function create($value = null, $example)
+    public function wrap($value = null, $example)
     {
         return new Subject(
             $value, $this->matchers, $this->presenter, $this->dispatcher, $example

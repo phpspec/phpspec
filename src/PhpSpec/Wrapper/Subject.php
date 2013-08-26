@@ -147,7 +147,8 @@ class Subject implements ArrayAccess, WrapperInterface
 
     private function wrap($value)
     {
-        return new static($value, $this->matchers, $this->presenter, $this->dispatcher, $this->example);
+        $wrapper = new Wrapper($this->matchers, $this->presenter, $this->dispatcher);
+        return $wrapper->wrap($value, $this->example);
     }
 
     public function createExpectation()

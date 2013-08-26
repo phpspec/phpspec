@@ -5,7 +5,7 @@ namespace PhpSpec\Wrapper\Subject;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Wrapper\Subject;
-use PhpSpec\Wrapper\SubjectFactory;
+use PhpSpec\Wrapper\Wrapper;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Exception\Exception;
@@ -179,8 +179,8 @@ class Caller
 
     private function wrap($value)
     {
-        $factory = new SubjectFactory($this->matchers, $this->presenter, $this->dispatcher);
-        return $factory->create($value, $this->example);
+        $wrapper = new Wrapper($this->matchers, $this->presenter, $this->dispatcher);
+        return $wrapper->wrap($value, $this->example);
     }
 
     private function newInstanceWithArguments(ReflectionClass $reflection)
