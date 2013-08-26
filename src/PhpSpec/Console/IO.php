@@ -124,6 +124,10 @@ class IO implements IOInterface
 
     public function askConfirmation($question, $default = true)
     {
+        if (!$this->input->isInteractive()) {
+            return $default;
+        }
+
         $lines   = array();
         $lines[] = '<question>'.str_repeat(' ', 70)."</question>";
         foreach (explode("\n", wordwrap($question), 50) as $line) {
