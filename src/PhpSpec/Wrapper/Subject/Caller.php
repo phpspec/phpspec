@@ -70,7 +70,7 @@ class Caller
         }
 
         $unwrapper = new Unwrapper;
-        $value = $unwrapper->unwrapAll($value);
+        $value = $unwrapper->unwrapOne($value);
 
         if ($this->isObjectPropertyAccessible($property, true)) {
             return $this->getWrappedObject()->$property = $value;
