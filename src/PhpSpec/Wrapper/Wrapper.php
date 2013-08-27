@@ -2,6 +2,11 @@
 
 namespace PhpSpec\Wrapper;
 
+use PhpSpec\Runner\MatcherManager;
+use PhpSpec\Formatter\Presenter\PresenterInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use PhpSpec\Loader\Node\ExampleNode;
+
 use PhpSpec\Wrapper\Subject\WrappedObject;
 use PhpSpec\Wrapper\Subject\Caller;
 use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
@@ -14,7 +19,8 @@ class Wrapper
     private $dispatcher;
     private $example;
 
-    public function __construct($matchers, $presenter, $dispatcher, $example)
+    public function __construct(MatcherManager $matchers, PresenterInterface $presenter,
+        EventDispatcherInterface $dispatcher, ExampleNode $example)
     {
         $this->matchers = $matchers;
         $this->presenter = $presenter;
