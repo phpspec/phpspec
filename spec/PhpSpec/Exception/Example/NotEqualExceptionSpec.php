@@ -12,7 +12,7 @@ class NotEqualExceptionSpec extends ObjectBehavior
     }
 
     function it_is_failure()
-    {
+    { 
         $this->shouldBeAnInstanceOf('PhpSpec\Exception\Example\FailureException');
     }
 

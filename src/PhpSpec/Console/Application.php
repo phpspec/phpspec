@@ -131,6 +131,11 @@ class Application extends BaseApplication
                 $c->get('code_generator')
             );
         });
+        $container->setShared('event_dispatcher.listeners.stop_on_failure', function($c) {
+            return new Listener\StopOnFailureListener(
+                $c->get('console.input')
+            );
+        });
     }
 
     protected function setupGenerators(ServiceContainer $container)

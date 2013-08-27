@@ -19,6 +19,7 @@ class RunCommand extends Command
         $this->setDefinition(array(
             new InputArgument('spec', InputArgument::OPTIONAL, 'Specs to run'),
             new InputOption('format', 'f', InputOption::VALUE_REQUIRED, 'Formatter'),
+            new InputOption('stop-on-failure', null , InputOption::VALUE_NONE, 'Stop on failure'),
         ));
     }
 
@@ -45,7 +46,12 @@ class RunCommand extends Command
         $dispatcher->dispatch('beforeSuite', new Event\SuiteEvent($suite));
 
         foreach ($suite->getSpecifications() as $spec) {
-            $result = max($result, $runner->run($spec));
+            try {
+                $result = max($result, $runner->run($spec));
+            }
+            catch (\PhpSpec\Exception\Example\StopOnFailureException $e) {
+                break;
+            }
         }
 
         $dispatcher->dispatch('afterSuite', new Event\SuiteEvent(
