@@ -28,9 +28,9 @@ class Application extends BaseApplication
 
     public function __construct($version)
     {
-        parent::__construct('phpspec', $version);
-
         $this->setupContainer($this->container = new ServiceContainer);
+        
+        parent::__construct('phpspec', $version);
     }
 
     public function getContainer()
@@ -40,28 +40,29 @@ class Application extends BaseApplication
 
     public function doRun(InputInterface $input, OutputInterface $output)
     {
-        array_map(
-            array($this, 'add'),
-            $this->container->getByPrefix('console.commands')
-        );
-
         $this->container->set('console.input', $input);
         $this->container->set('console.output', $output);
         $this->container->set('console.helpers', $this->getHelperSet());
 
-        if (!($name = $this->getCommandName($input))
-         && !$input->hasParameterOption('-h')
-         && !$input->hasParameterOption('--help')) {
-            $argv = $_SERVER['argv'];
-
-            $binstub = array_shift($argv);
-            array_unshift($argv, 'run');
-            array_unshift($argv, $binstub);
-
-            $input = new ArgvInput($argv);
-        }
-
         return parent::doRun($input, $output);
+    }
+    
+    protected function getCommandName(InputInterface $input)
+    {
+        $name = parent::getCommandName($input);
+        
+        if (!$name) {
+            $name = 'run';
+            parent::getDefinition()->setArguments();
+        }
+        
+        return $name;
+    }
+    
+    public function getDefaultCommands()
+    {
+        $commands = $this->container->getByPrefix('console.commands');
+        return array_merge(parent::getDefaultCommands(), $commands);
     }
 
     protected function setupContainer(ServiceContainer $container)
