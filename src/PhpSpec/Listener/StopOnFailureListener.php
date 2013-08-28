@@ -32,8 +32,8 @@ class StopOnFailureListener implements EventSubscriberInterface
             return;
         }
         
-        if ($event->getResult() == ExampleEvent::FAILED
-         || $event->getResult() == ExampleEvent::BROKEN)
+        if ($event->getResult() === ExampleEvent::FAILED
+         || $event->getResult() === ExampleEvent::BROKEN)
         {
             throw new StopOnFailureException('Example failed');
         }
