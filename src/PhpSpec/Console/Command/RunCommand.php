@@ -9,6 +9,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 use PhpSpec\Event;
+use PhpSpec\Exception\Example\StopOnFailureException;
 
 class RunCommand extends Command
 {
@@ -48,8 +49,7 @@ class RunCommand extends Command
         foreach ($suite->getSpecifications() as $spec) {
             try {
                 $result = max($result, $runner->run($spec));
-            }
-            catch (\PhpSpec\Exception\Example\StopOnFailureException $e) {
+            } catch (StopOnFailureException $e) {
                 break;
             }
         }
