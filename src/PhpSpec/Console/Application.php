@@ -5,6 +5,7 @@ namespace PhpSpec\Console;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -44,7 +45,30 @@ class Application extends BaseApplication
         $this->container->set('console.output', $output);
         $this->container->set('console.helpers', $this->getHelperSet());
 
+        $this->fixDefinitions();
+
         return parent::doRun($input, $output);
+    }
+    
+    protected function fixDefinitions()
+    {
+        $description = 'Do not ask any interactive question (disables code generation).';
+        
+        $definition = $this->getDefaultInputDefinition();
+        $options = $definition->getOptions();
+
+        if (array_key_exists('no-interaction', $options)) {
+            $option = $options['no-interaction'];
+            $options['no-interaction'] = new InputOption(
+                $option->getName(),
+                $option->getShortcut(),
+                InputOption::VALUE_NONE,
+                $description
+            );
+        }
+         
+        $definition->setOptions($options);
+        $this->setDefinition($definition);
     }
     
     protected function getCommandName(InputInterface $input)
