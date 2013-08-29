@@ -72,9 +72,9 @@ class SubjectWithArrayAccess
 
     private function checkIfSubjectImplementsArrayAccess($subject)
     {
-        if (is_object($subject) && !($subject instanceof ArrayAccess)) {
+        if (is_object($subject) && !($subject instanceof \ArrayAccess)) {
             throw $this->interfaceNotImplemented();
-        } elseif (!($subject instanceof ArrayAccess) && !is_array($subject)) {
+        } elseif (!($subject instanceof \ArrayAccess) && !is_array($subject)) {
             throw $this->cantUseAsArray($subject);
         }
     }
