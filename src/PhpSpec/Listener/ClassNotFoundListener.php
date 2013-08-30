@@ -52,7 +52,7 @@ class ClassNotFoundListener implements EventSubscriberInterface
 
     public function afterSuite(SuiteEvent $event)
     {
-        if (!$this->io->isInteractive()) {
+        if (!$this->io->isCodeGenerationEnabled()) {
             return;
         }
         

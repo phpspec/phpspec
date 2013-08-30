@@ -25,7 +25,7 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
     
     function it_does_not_prompt_for_method_generation_if_no_exception_was_thrown($exampleEvent, $suiteEvent, $io)
     {
-        $io->isInteractive()->willReturn(true);
+        $io->isCodeGenerationEnabled()->willReturn(true);
         
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
@@ -36,7 +36,7 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
     function it_does_not_prompt_for_method_generation_if_non_methodnotfoundexception_was_thrown($exampleEvent, $suiteEvent, $io, \InvalidArgumentException $exception)
     {
         $exampleEvent->getException()->willReturn($exception);
-        $io->isInteractive()->willReturn(true);
+        $io->isCodeGenerationEnabled()->willReturn(true);
         
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
@@ -47,7 +47,7 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
     function it_prompts_for_method_generation_if_methodnotfoundexception_was_thrown_and_input_is_interactive($exampleEvent, $suiteEvent, $io, MethodNotFoundException $exception)
     {
         $exampleEvent->getException()->willReturn($exception);
-        $io->isInteractive()->willReturn(true);
+        $io->isCodeGenerationEnabled()->willReturn(true);
         
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
@@ -58,7 +58,7 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
     function it_does_not_prompt_for_method_generation_if_input_is_not_interactive($exampleEvent, $suiteEvent, $io, MethodNotFoundException $exception)
     {
         $exampleEvent->getException()->willReturn($exception);
-        $io->isInteractive()->willReturn(false);
+        $io->isCodeGenerationEnabled()->willReturn(false);
         
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
