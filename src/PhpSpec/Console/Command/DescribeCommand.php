@@ -25,7 +25,17 @@ class DescribeCommand extends Command
         $container->configure();
 
         $classname = $input->getArgument('class');
-        $resource  = $container->get('locator.resource_manager')->createResource($classname);
+        $pattern   = '/^[a-zA-Z_\/\\\\][a-zA-Z0-9_\/\\\\]*$/';
+
+        if (!preg_match($pattern, $classname)) {
+            throw new \InvalidArgumentException(
+                sprintf('String "%s" is not a valid class name.', $classname) . PHP_EOL .
+                'Please see reference document: ' .
+                'https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
+            );
+        }
+
+        $resource = $container->get('locator.resource_manager')->createResource($classname);
 
         $container->get('code_generator')->generate($resource, 'specification');
     }
