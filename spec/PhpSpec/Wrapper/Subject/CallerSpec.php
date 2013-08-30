@@ -31,7 +31,7 @@ class CallerSpec extends ObjectBehavior
     function it_dispatches_method_call_events(EventDispatcherInterface $dispatcher, WrappedObject $wrappedObject)
     {
         $wrappedObject->isInstantiated()->willReturn(true);
-        $wrappedObject->getInstance()->willReturn(new \SplFileInfo(__FILE__));
+        $wrappedObject->getInstance()->willReturn(new \ArrayObject());
 
         $dispatcher->dispatch(
             'beforeMethodCall',
@@ -43,6 +43,17 @@ class CallerSpec extends ObjectBehavior
             Argument::type('PhpSpec\Event\MethodCallEvent')
         )->shouldBeCalled();
 
-        $this->call('getPathname');
+        $this->call('count');
+    }
+
+    function it_sets_a_property_on_the_wrapped_object(WrappedObject $wrappedObject)
+    {
+        $obj = new \stdClass;
+        $obj->id = 1;
+
+        $wrappedObject->isInstantiated()->willReturn(true);
+        $wrappedObject->getInstance()->willReturn($obj);
+
+        $this->set('id', 2)->shouldReturn(2);
     }
 }

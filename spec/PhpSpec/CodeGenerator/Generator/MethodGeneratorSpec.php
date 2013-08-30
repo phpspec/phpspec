@@ -47,6 +47,7 @@ namespace Acme;
 class App
 {
 }
+
 CODE;
         $codeWithMethod = <<<CODE
 <?php
@@ -57,6 +58,7 @@ class App
 {
 METHOD
 }
+
 CODE;
         $values = array(
             '%name%'      => 'setName',

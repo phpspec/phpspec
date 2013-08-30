@@ -9,6 +9,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 use PhpSpec\Event;
+use PhpSpec\Exception\Example\StopOnFailureException;
 
 class RunCommand extends Command
 {
@@ -19,6 +20,7 @@ class RunCommand extends Command
         $this->setDefinition(array(
             new InputArgument('spec', InputArgument::OPTIONAL, 'Specs to run'),
             new InputOption('format', 'f', InputOption::VALUE_REQUIRED, 'Formatter'),
+            new InputOption('stop-on-failure', null , InputOption::VALUE_NONE, 'Stop on failure'),
         ));
     }
 
@@ -45,7 +47,11 @@ class RunCommand extends Command
         $dispatcher->dispatch('beforeSuite', new Event\SuiteEvent($suite));
 
         foreach ($suite->getSpecifications() as $spec) {
-            $result = max($result, $runner->run($spec));
+            try {
+                $result = max($result, $runner->run($spec));
+            } catch (StopOnFailureException $e) {
+                break;
+            }
         }
 
         $dispatcher->dispatch('afterSuite', new Event\SuiteEvent(

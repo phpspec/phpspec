@@ -70,7 +70,7 @@ class Caller
         }
 
         $unwrapper = new Unwrapper;
-        $value = $unwrapper->unwrapAll($value);
+        $value = $unwrapper->unwrapOne($value);
 
         if ($this->isObjectPropertyAccessible($property, true)) {
             return $this->getWrappedObject()->$property = $value;
@@ -214,13 +214,12 @@ class Caller
         ), $this->wrappedObject->getClassName());
     }
 
-    private function methodNotfound($method, array $arguments = array())
+    private function methodNotFound($method, array $arguments = array())
     {
-        $className = $this->wrappedObject->getClassName();
         return new MethodNotFoundException(sprintf(
             'Method %s not found.',
-            $this->presenter->presentString($this->wrappedObject->getClassName().'::' . $method)
-        ), new $className , $method, $arguments);
+            $this->presenter->presentString($this->wrappedObject->getClassName().'::'.$method)
+        ), $this->getWrappedObject(), $method, $arguments);
     }
 
     private function propertyNotFound($property)
