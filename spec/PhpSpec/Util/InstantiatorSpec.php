@@ -18,7 +18,6 @@ class InstantiatorSpec extends ObjectBehavior
         $this->instantiate('spec\PhpSpec\Util\WithConstructor')
             ->shouldBeAnInstanceOf('spec\PhpSpec\Util\WithConstructor');
     }
-    
 }
 
 class NoConstructor
