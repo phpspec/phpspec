@@ -17,6 +17,7 @@ use PhpSpec\Exception\Fracture\MethodNotFoundException;
 use PhpSpec\Exception\Fracture\PropertyNotFoundException;
 
 use PhpSpec\Event\MethodCallEvent;
+use PhpSpec\Util\Instantiator;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -216,10 +217,12 @@ class Caller
 
     private function methodNotFound($method, array $arguments = array())
     {
+        $instantiator = new Instantiator;
+        $wrappedObject = $instantiator->instantiate($this->wrappedObject->getClassName());
         return new MethodNotFoundException(sprintf(
             'Method %s not found.',
             $this->presenter->presentString($this->wrappedObject->getClassName().'::'.$method)
-        ), $this->getWrappedObject(), $method, $arguments);
+        ), $wrappedObject, $method, $arguments);
     }
 
     private function propertyNotFound($property)
