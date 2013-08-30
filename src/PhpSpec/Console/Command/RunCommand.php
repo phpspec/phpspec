@@ -21,6 +21,7 @@ class RunCommand extends Command
             new InputArgument('spec', InputArgument::OPTIONAL, 'Specs to run'),
             new InputOption('format', 'f', InputOption::VALUE_REQUIRED, 'Formatter'),
             new InputOption('stop-on-failure', null , InputOption::VALUE_NONE, 'Stop on failure'),
+            new InputOption('no-code-generation', null , InputOption::VALUE_NONE, 'Do not prompt for missing method/class generation'),
         ));
     }
 

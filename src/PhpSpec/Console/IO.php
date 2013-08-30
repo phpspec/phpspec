@@ -33,6 +33,12 @@ class IO implements IOInterface
         return $this->output->isDecorated();
     }
 
+    public function isCodeGenerationEnabled()
+    {
+        return $this->input->isInteractive()
+            && !$this->input->getOption('no-code-generation');
+    }
+    
     public function isVerbose()
     {
         return OutputInterface::VERBOSITY_VERBOSE === $this->output->getVerbosity();
