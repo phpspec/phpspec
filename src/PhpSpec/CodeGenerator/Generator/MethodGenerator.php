@@ -44,8 +44,8 @@ class MethodGenerator implements GeneratorInterface
         }
 
         $code = $this->filesystem->getFileContents($filepath);
-        $code = preg_replace('/}[ \n]*$/', rtrim($content) ."\n}\n", $code);
-        $this->filesystem->putFileContents($filepath, trim($code));
+        $code = preg_replace('/}[ \n]*$/', rtrim($content) ."\n}\n", trim($code));
+        $this->filesystem->putFileContents($filepath, $code);
 
         $this->io->writeln(sprintf(
             "\n<info>Method <value>%s::%s()</value> has been created.</info>",
