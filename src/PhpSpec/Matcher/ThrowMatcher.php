@@ -10,6 +10,7 @@ use PhpSpec\Factory\ReflectionFactory;
 use PhpSpec\Exception\Example\MatcherException;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\Example\NotEqualException;
+use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
 class ThrowMatcher implements MatcherInterface
 {
@@ -161,6 +162,14 @@ class ThrowMatcher implements MatcherInterface
                 }
 
                 $callable = is_string($callable) ? array($subject, $callable) : $callable;
+                
+                list($class, $methodName) = $callable;
+                if (!method_exists($class, $methodName) && !method_exists($class, '__call')) {
+                    throw new MethodNotFoundException(
+                        sprintf('Method %s::%s not found.', get_class($class), $methodName), 
+                        $class, $methodName, $arguments
+                    );
+                }
 
                 return call_user_func($check, $callable, $arguments, $exception);
             }
