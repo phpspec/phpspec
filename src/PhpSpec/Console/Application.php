@@ -333,6 +333,13 @@ class Application extends BaseApplication
 
     protected function setupRunner(ServiceContainer $container)
     {
+        $container->setShared('runner.suite', function($c) {
+            return new Runner\SuiteRunner(
+                $c->get('event_dispatcher'),
+                $c->get('runner.specification')
+            );
+        });
+        
         $container->setShared('runner.specification', function($c) {
             return new Runner\SpecificationRunner(
                 $c->get('event_dispatcher'),
