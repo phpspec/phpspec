@@ -8,9 +8,6 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-use PhpSpec\Event;
-use PhpSpec\Exception\Example\StopOnFailureException;
-
 class RunCommand extends Command
 {
     public function __construct()
@@ -39,26 +36,9 @@ class RunCommand extends Command
             list($_, $locator, $linenum) = $matches;
         }
 
-        $suite      = $container->get('loader.resource_loader')->load($locator, $linenum);
-        $runner     = $container->get('runner.specification');
-        $dispatcher = $container->get('event_dispatcher');
-        $startTime  = microtime(true);
-        $result     = 0;
+        $suite       = $container->get('loader.resource_loader')->load($locator, $linenum);
+        $suiteRunner = $container->get('runner.suite');
 
-        $dispatcher->dispatch('beforeSuite', new Event\SuiteEvent($suite));
-
-        foreach ($suite->getSpecifications() as $spec) {
-            try {
-                $result = max($result, $runner->run($spec));
-            } catch (StopOnFailureException $e) {
-                break;
-            }
-        }
-
-        $dispatcher->dispatch('afterSuite', new Event\SuiteEvent(
-            $suite, microtime(true) - $startTime, $result
-        ));
-
-        return $result;
+        return $suiteRunner->run($suite);
     }
 }
