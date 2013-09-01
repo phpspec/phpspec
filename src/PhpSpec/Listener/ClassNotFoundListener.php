@@ -52,6 +52,10 @@ class ClassNotFoundListener implements EventSubscriberInterface
 
     public function afterSuite(SuiteEvent $event)
     {
+        if (!$this->io->isCodeGenerationEnabled()) {
+            return;
+        }
+        
         foreach ($this->classes as $classname => $_) {
             $message = sprintf('Do you want me to create `%s` for you?', $classname);
 
