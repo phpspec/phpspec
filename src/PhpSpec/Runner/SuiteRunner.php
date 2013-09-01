@@ -30,8 +30,7 @@ class SuiteRunner
         foreach ($suite->getSpecifications() as $specification) {
             try {
                 $result = max($result, $this->specRunner->run($specification));
-            }
-            catch (StopOnFailureException $e) {
+            } catch (StopOnFailureException $e) {
                 break;
             }
         }
