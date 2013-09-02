@@ -26,14 +26,14 @@ class Instantiator
         $serializedProperties = '';
 
         foreach ($properties as $property) {
-            $serializedProperties .= $this->serializePropertyName($property);
+            $serializedProperties .= $this->serializePropertyName($reflection, $property);
             $serializedProperties .= $this->serializePropertyValue($reflection, $property);
         }
 
         return $serializedProperties;
     }
 
-    private function serializePropertyName(ReflectionProperty $property)
+    private function serializePropertyName(ReflectionClass $class, ReflectionProperty $property)
     {
         $propertyName = $property->getName();
 
@@ -45,10 +45,12 @@ class Instantiator
 
         return serialize($propertyName);
     }
-    
+
     private function serializePropertyValue(ReflectionClass $class, ReflectionProperty $property)
     {
-        if (array_key_exists($property->getName(), $class->getDefaultProperties())) {
+        $defaults = $class->getDefaultProperties();
+
+        if (array_key_exists($property->getName(), $defaults)) {
             return serialize($defaults[$property->getName()]);
         }
 
