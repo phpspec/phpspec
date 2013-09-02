@@ -18,6 +18,12 @@ class InstantiatorSpec extends ObjectBehavior
         $this->instantiate('spec\PhpSpec\Util\WithConstructor')
             ->shouldBeAnInstanceOf('spec\PhpSpec\Util\WithConstructor');
     }
+
+    function it_creates_an_instance_with_properties()
+    {
+        $this->instantiate('spec\PhpSpec\Util\WithProperties')
+            ->shouldBeAnInstanceOf('spec\PhpSpec\Util\WithProperties');
+    }
 }
 
 class NoConstructor
@@ -30,4 +36,13 @@ class WithConstructor
     public function __construct($requiredArgument)
     {
     }
+}
+
+class WithProperties
+{
+    private $foo;
+
+    protected $bar;
+
+    public $baz;
 }
