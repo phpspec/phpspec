@@ -40,7 +40,7 @@ class Instantiator
         if ($property->isProtected()) {
             $propertyName = chr(0) . '*' . chr(0) . $propertyName;
         } elseif ($property->isPrivate()) {
-            $propertyName = chr(0) . $class . chr(0) . $propertyName;
+            $propertyName = chr(0) . $class->getName() . chr(0) . $propertyName;
         }
 
         return serialize($propertyName);
