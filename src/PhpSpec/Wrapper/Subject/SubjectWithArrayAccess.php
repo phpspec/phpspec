@@ -52,7 +52,7 @@ class SubjectWithArrayAccess
         $unwrapper = new Unwrapper;
         $subject = $this->caller->getWrappedObject();
         $key     = $unwrapper->unwrapOne($key);
-        $value   = $this->unwrapper->unwrapOne($value);
+        $value   = $unwrapper->unwrapOne($value);
 
         $this->checkIfSubjectImplementsArrayAccess($subject);
 
