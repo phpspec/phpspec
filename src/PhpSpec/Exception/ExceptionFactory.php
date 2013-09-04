@@ -22,6 +22,11 @@ class ExceptionFactory
 
     public function classNotFound($message, $classname)
     {
-        return new Fracture\ClassNotFoundException($message, $classname);
+        return new Fracture\ClassNotFoundException($message, $this->presenter->presentString($classname));
+    }
+
+    public function propertyNotFound($message, $subject, $property)
+    {
+        return new Fracture\PropertyNotFoundException($message, $subject, $this->presenter->presentString($property));
     }
 }

@@ -20,6 +20,7 @@ class ExceptionFactorySpec extends ObjectBehavior
         $this->fixture->method    = 'foo';
         $this->fixture->arguments = array('bar');
         $this->fixture->classname = '\ArrayObject';
+        $this->fixture->property = 'zoo';
     }
 
     function it_creates_a_method_not_found_exception(PresenterInterface $presenter)
@@ -39,8 +40,11 @@ class ExceptionFactorySpec extends ObjectBehavior
         $this->shouldCreateMethodNotFoundException();
     }
 
-    function it_creates_a_class_not_found_exception()
+    function it_creates_a_class_not_found_exception(PresenterInterface $presenter)
     {
+        $presenter->presentString("{$this->fixture->classname}")
+            ->shouldBeCalled()
+            ->willReturn("\"{$this->fixture->classname}\"");
         $this->fixture->message = 'Class "Foo" not found';
         $this->createdException = $this->classNotFound(
             $this->fixture->message,
@@ -48,6 +52,21 @@ class ExceptionFactorySpec extends ObjectBehavior
         );
 
         $this->shouldCreateClassNotFoundException();
+    }
+
+    function it_creates_a_property_not_found_exception(PresenterInterface $presenter)
+    {
+        $presenter->presentString("{$this->fixture->property}")
+            ->shouldBeCalled()
+            ->willReturn("\"{$this->fixture->property}\"");
+        $this->fixture->message = 'Property "zoo" not found';
+        $this->createdException = $this->propertyNotFound(
+            $this->fixture->message,
+            $this->fixture->subject,
+            $this->fixture->property
+        );
+
+        $this->shouldCreatePropertyNotFoundException();
     }
 
     function shouldCreateMethodNotFoundException()
@@ -63,6 +82,14 @@ class ExceptionFactorySpec extends ObjectBehavior
     {
         $this->createdException->shouldHaveType("PhpSpec\Exception\Fracture\ClassNotFoundException");
         $this->createdException->getMessage()->shouldReturn($this->fixture->message);
-        $this->createdException->getClassname()->shouldReturn($this->fixture->classname);
+        $this->createdException->getClassname()->shouldReturn("\"{$this->fixture->classname}\"");
+    }
+
+    function shouldCreatePropertyNotFoundException()
+    {
+        $this->createdException->shouldHaveType("PhpSpec\Exception\Fracture\PropertyNotFoundException");
+        $this->createdException->getMessage()->shouldReturn($this->fixture->message);
+        $this->createdException->getSubject()->shouldReturn($this->fixture->subject);
+        $this->createdException->getProperty()->shouldReturn("\"{$this->fixture->property}\"");
     }
 }
