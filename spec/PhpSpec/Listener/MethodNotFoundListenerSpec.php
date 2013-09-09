@@ -24,12 +24,16 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         $exception->getMethodName()->willReturn('someMethod');
         $exception->getArguments()->willReturn(array());
         
+        $exampleEvent->getException()->willReturn($exception);
+        
+        $io->isCodeGenerationEnabled()->willReturn(true);
+        
         $this->beConstructedWith($io, $resourceManager, $generatorManager);
     }
     
     function it_does_not_prompt_for_method_generation_if_no_exception_was_thrown($exampleEvent, $suiteEvent, $io)
     {
-        $io->isCodeGenerationEnabled()->willReturn(true);
+        $exampleEvent->getException()->willReturn(null);
         
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
@@ -40,7 +44,6 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
     function it_does_not_prompt_for_method_generation_if_non_methodnotfoundexception_was_thrown($exampleEvent, $suiteEvent, $io, \InvalidArgumentException $otherException)
     {
         $exampleEvent->getException()->willReturn($otherException);
-        $io->isCodeGenerationEnabled()->willReturn(true);
         
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
@@ -50,9 +53,6 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
       
     function it_prompts_for_method_generation_if_methodnotfoundexception_was_thrown_and_input_is_interactive($exampleEvent, $suiteEvent, $io, $exception)
     {
-        $exampleEvent->getException()->willReturn($exception);
-        $io->isCodeGenerationEnabled()->willReturn(true);
-        
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
         
@@ -69,13 +69,10 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         $io->askConfirmation(Argument::any())->shouldNotBeenCalled();
     }
 	
-    function it_does_not_prompt_for_method_generation_if_flags_are_set_but_method_exists_and_is_private($exampleEvent, $suiteEvent, $io, $exception)
+    function it_does_not_prompt_for_method_generation_if_method_exists_and_is_private($exampleEvent, $suiteEvent, $io, $exception)
     {	
         $exception->getSubject()->willReturn(new ClassWithPrivateMethod());
         $exception->getMethodName()->willReturn('privateMethod');
-
-        $exampleEvent->getException()->willReturn($exception);
-        $io->isCodeGenerationEnabled()->willReturn(true);
 
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
