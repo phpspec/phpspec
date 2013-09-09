@@ -45,7 +45,15 @@ class MethodNotFoundListener implements EventSubscriberInterface
             return;
         }
 
-        $this->methods[get_class($exception->getSubject()).'::'.$exception->getMethodName()] = $exception->getArguments();
+        $subject = $exception->getSubject();
+        $method = $exception->getMethodName();
+
+        $reflectedClass = new \ReflectionObject($subject);
+
+        if (!$reflectedClass->hasMethod($method)) {
+            $this->methods[$reflectedClass->getName().'::'.$method] = $exception->getArguments();
+        }
+		
     }
 
     public function afterSuite(SuiteEvent $event)
