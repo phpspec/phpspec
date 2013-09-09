@@ -45,14 +45,14 @@ class MethodNotFoundListener implements EventSubscriberInterface
             return;
         }
 
-		$subject = $exception->getSubject();
-		$method = $exception->getMethodName();
+        $subject = $exception->getSubject();
+        $method = $exception->getMethodName();
 
-		$reflectedClass = new \ReflectionObject($subject);
+        $reflectedClass = new \ReflectionObject($subject);
 
-		if (!$reflectedClass->hasMethod($method)) {
-			$this->methods[$reflectedClass->getName().'::'.$method] = $exception->getArguments();
-		}
+        if (!$reflectedClass->hasMethod($method)) {
+            $this->methods[$reflectedClass->getName().'::'.$method] = $exception->getArguments();
+        }
 		
     }
 
