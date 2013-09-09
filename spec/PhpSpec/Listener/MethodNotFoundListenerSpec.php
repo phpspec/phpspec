@@ -69,19 +69,19 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         $io->askConfirmation(Argument::any())->shouldNotBeenCalled();
     }
 	
-	function it_does_not_prompt_for_method_generation_if_flags_are_set_but_method_exists_and_is_private($exampleEvent, $suiteEvent, $io, $exception)
-	{	
-		$exception->getSubject()->willReturn(new ClassWithPrivateMethod());
-		$exception->getMethodName()->willReturn('privateMethod');
-		
+    function it_does_not_prompt_for_method_generation_if_flags_are_set_but_method_exists_and_is_private($exampleEvent, $suiteEvent, $io, $exception)
+    {	
+        $exception->getSubject()->willReturn(new ClassWithPrivateMethod());
+        $exception->getMethodName()->willReturn('privateMethod');
+
         $exampleEvent->getException()->willReturn($exception);
         $io->isCodeGenerationEnabled()->willReturn(true);
-        
+
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
-        
+
         $io->askConfirmation(Argument::any())->shouldNotBeenCalled();
-	}
+    }
 }
 
 class ClassWithPrivateMethod
