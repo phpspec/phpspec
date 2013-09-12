@@ -23,7 +23,7 @@ class JunitFormatter extends BasicFormatter
     private $failCount = 0;
     private $brokenCount = 0;
 
-    public function __construct()
+    public function beforeSuite(SuiteEvent $event)
     {
         $this->xml = new \SimpleXMLElement("<testsuites></testsuites>");
     }
