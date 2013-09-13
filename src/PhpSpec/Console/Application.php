@@ -120,22 +120,41 @@ class Application extends BaseApplication
 
         foreach ($config as $key => $val) {
             if ('extensions' === $key && is_array($val)) {
-                foreach ($val as $class) {
-                    $extension = new $class();
-
-                    if (!$extension instanceof Extension\ExtensionInterface) {
-                        throw new RuntimeException(sprintf(
-                            'Extension class must implement ExtensionInterface. But `%s` is not.',
-                            $class
-                        ));
-                    }
-
-                    $extension->load($container);
+                foreach ($val as $class => $extensionConfig) {
+                    $this->loadExtension($container, $class, $extensionConfig);
                 }
             } else {
                 $container->setParam($key, $val);
             }
         }
+    }
+
+    private function loadExtension(ServiceContainer $container, $class, $extensionConfig)
+    {
+        if (is_integer($class)) {
+            $class = $extensionConfig;
+            $extensionConfig = array();
+        }
+
+        if (!class_exists($class)) {
+            throw new RuntimeException(sprintf('`%s` must be an existent class.', $class));
+        }
+
+        if (!is_array($extensionConfig) && null !== $extensionConfig) {
+            throw new RuntimeException('Extension configuration must be an array or null.');
+        }
+
+        if (is_a($class, 'PhpSpec\Extension\ExtensionInterface', true)) {
+            $extension = new $class;
+            return $extension->load($container);
+        }
+
+        if (is_a($class, 'PhpSpec\Extension\ParametrizedExtensionInterface', true)) {
+            $extension = new $class;
+            return $extension->load($container, $extensionConfig ?: array());
+        }
+
+        throw new RuntimeException(sprintf('`%s` class must implement ExtensionInterface or ParametrizedExtensionInterface.', $class));
     }
 
     /**
