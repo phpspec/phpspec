@@ -11,17 +11,19 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec;
+namespace PhpSpec\Extension;
+
+use PhpSpec\ServiceContainer;
 
 /**
- * Interface Extension is used for PhpSpec extensions to interface with PhpSpec
- * through the service container
+ * Interface ExtensionInterface is used for PhpSpec extensions to interface
+ * with PhpSpec through the service container
  */
-interface Extension
+interface ParametrizedExtensionInterface
 {
     /**
      * @param ServiceContainer $container
      * @param array            $params
      */
-    public function load(ServiceContainer $container);
+    public function load(ServiceContainer $container, array $params);
 }
