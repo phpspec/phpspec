@@ -30,7 +30,7 @@ class Application extends BaseApplication
     public function __construct($version)
     {
         $this->setupContainer($this->container = new ServiceContainer);
-        
+
         parent::__construct('phpspec', $version);
     }
 
@@ -49,11 +49,11 @@ class Application extends BaseApplication
 
         return parent::doRun($input, $output);
     }
-    
+
     protected function fixDefinitions()
     {
         $description = 'Do not ask any interactive question (disables code generation).';
-        
+
         $definition = $this->getDefaultInputDefinition();
         $options = $definition->getOptions();
 
@@ -66,23 +66,23 @@ class Application extends BaseApplication
                 $description
             );
         }
-         
+
         $definition->setOptions($options);
         $this->setDefinition($definition);
     }
-    
+
     protected function getCommandName(InputInterface $input)
     {
         $name = parent::getCommandName($input);
-        
+
         if (!$name) {
             $name = 'run';
             parent::getDefinition()->setArguments();
         }
-        
+
         return $name;
     }
-    
+
     public function getDefaultCommands()
     {
         $commands = $this->container->getByPrefix('console.commands');
@@ -235,6 +235,11 @@ class Application extends BaseApplication
         $container->set('formatter.presenter.differ.engines.array', function($c) {
             return new Formatter\Presenter\Differ\ArrayEngine;
         });
+        $container->set('formatter.presenter.differ.engines.object', function($c) {
+            return new Formatter\Presenter\Differ\ObjectEngine(
+                $c->get('formatter.presenter.differ.engines.string')
+            );
+        });
     }
 
     protected function setupLocator(ServiceContainer $container)
@@ -339,7 +344,7 @@ class Application extends BaseApplication
                 $c->get('runner.specification')
             );
         });
-        
+
         $container->setShared('runner.specification', function($c) {
             return new Runner\SpecificationRunner(
                 $c->get('event_dispatcher'),
