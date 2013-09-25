@@ -22,6 +22,7 @@ class NyanFormatter extends DotFormatter
 {
     private $examplesCount = 0;
     private $scoreboard;
+    protected $characterDefinition = null;
 
     public function beforeSuite(SuiteEvent $event)
     {
@@ -34,7 +35,7 @@ class NyanFormatter extends DotFormatter
         $length = strlen((string)$this->examplesCount) + 1;
 
         $this->scoreboard = new Scoreboard(
-            new Cat(),
+            new Cat($this->characterDefinition),
             new Rainbow(
                 FabFactory::getFab(
                     empty($_SERVER['TERM']) ? 'unknown' : $_SERVER['TERM']
