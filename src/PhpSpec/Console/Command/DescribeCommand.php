@@ -25,7 +25,7 @@ class DescribeCommand extends Command
         $container->configure();
 
         $classname = $input->getArgument('class');
-        $resource = $container->get('locator.resource_manager')->createResource($classname);
+        $resource  = $container->get('locator.resource_manager')->createResource($classname);
 
         $container->get('code_generator')->generate($resource, 'specification');
     }
