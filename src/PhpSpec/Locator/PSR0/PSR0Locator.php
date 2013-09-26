@@ -43,16 +43,6 @@ class PSR0Locator implements ResourceLocatorInterface
                 $specPath
             ));
         }
-
-        $namespacePattern = '/^[a-zA-Z_\/\\\\][a-zA-Z0-9_\/\\\\]*$/';
-
-        if (strlen($this->srcNamespace) && !preg_match($namespacePattern, $this->srcNamespace)) {
-            throw new InvalidArgumentException(
-                sprintf('String "%s" is not a valid class name.', rtrim($this->srcNamespace, '\/')) . PHP_EOL .
-                'Please see reference document: ' .
-                'https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
-            );
-        }
     }
 
     public function getFullSrcPath()
@@ -136,6 +126,8 @@ class PSR0Locator implements ResourceLocatorInterface
 
     public function createResource($classname)
     {
+        $this->validatePsr0Classname($classname);
+
         $classname = str_replace('/', '\\', $classname);
 
         if (0 === strpos($classname, $this->specNamespace)) {
@@ -183,5 +175,18 @@ class PSR0Locator implements ResourceLocatorInterface
         $relative = preg_replace('/Spec$/', '', $relative);
 
         return new PSR0Resource(explode(DIRECTORY_SEPARATOR, $relative), $this);
+    }
+
+    private function validatePsr0Classname($classname)
+    {
+        $namespacePattern = '/^[a-zA-Z_\/\\\\][a-zA-Z0-9_\/\\\\]*$/';
+
+        if (!preg_match($namespacePattern, $classname)) {
+            throw new InvalidArgumentException(
+                sprintf('String "%s" is not a valid class name.', $classname) . PHP_EOL .
+                'Please see reference document: ' .
+                'https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
+            );
+        }
     }
 }
