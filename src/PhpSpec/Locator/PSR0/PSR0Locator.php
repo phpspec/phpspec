@@ -179,9 +179,9 @@ class PSR0Locator implements ResourceLocatorInterface
 
     private function validatePsr0Classname($classname)
     {
-        $namespacePattern = '/^[a-zA-Z_\/\\\\][a-zA-Z0-9_\/\\\\]*$/';
+        $classnamePattern = '/^[a-zA-Z_\/\\\\][a-zA-Z0-9_\/\\\\]*$/';
 
-        if (!preg_match($namespacePattern, $classname)) {
+        if (!preg_match($classnamePattern, $classname)) {
             throw new InvalidArgumentException(
                 sprintf('String "%s" is not a valid class name.', $classname) . PHP_EOL .
                 'Please see reference document: ' .
