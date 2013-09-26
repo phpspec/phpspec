@@ -347,6 +347,18 @@ class PSR0LocatorSpec extends ObjectBehavior
         $resource->getSpecClassname()->shouldReturn('spec\Console\ApplicationSpec');
     }
 
+    function it_throws_an_exception_on_non_PSR0_srcNamespace()
+    {
+        $this->beConstructedWith();
+
+        $exception = new \InvalidArgumentException(
+            'String "Non-PSR0/Namespace" is not a valid class name.' . PHP_EOL .
+            'Please see reference document: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
+        );
+
+        $this->shouldThrow($exception)->during('__construct', array('Non-PSR0/Namespace'));
+    }
+
     private function convert_to_path($path)
     {
         if ('/' === DIRECTORY_SEPARATOR) {

@@ -43,6 +43,16 @@ class PSR0Locator implements ResourceLocatorInterface
                 $specPath
             ));
         }
+
+        $namespacePattern = '/^[a-zA-Z_\/\\\\][a-zA-Z0-9_\/\\\\]*$/';
+
+        if (strlen($this->srcNamespace) && !preg_match($namespacePattern, $this->srcNamespace)) {
+            throw new InvalidArgumentException(
+                sprintf('String "%s" is not a valid class name.', rtrim($this->srcNamespace, '\/')) . PHP_EOL .
+                'Please see reference document: ' .
+                'https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
+            );
+        }
     }
 
     public function getFullSrcPath()
