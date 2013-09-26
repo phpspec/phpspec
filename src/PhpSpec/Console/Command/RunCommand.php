@@ -8,8 +8,6 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-use PhpSpec\Event;
-
 class RunCommand extends Command
 {
     public function __construct()
@@ -19,6 +17,8 @@ class RunCommand extends Command
         $this->setDefinition(array(
             new InputArgument('spec', InputArgument::OPTIONAL, 'Specs to run'),
             new InputOption('format', 'f', InputOption::VALUE_REQUIRED, 'Formatter'),
+            new InputOption('stop-on-failure', null , InputOption::VALUE_NONE, 'Stop on failure'),
+            new InputOption('no-code-generation', null , InputOption::VALUE_NONE, 'Do not prompt for missing method/class generation'),
         ));
     }
 
@@ -36,22 +36,9 @@ class RunCommand extends Command
             list($_, $locator, $linenum) = $matches;
         }
 
-        $suite      = $container->get('loader.resource_loader')->load($locator, $linenum);
-        $runner     = $container->get('runner.specification');
-        $dispatcher = $container->get('event_dispatcher');
-        $startTime  = microtime(true);
-        $result     = 0;
+        $suite       = $container->get('loader.resource_loader')->load($locator, $linenum);
+        $suiteRunner = $container->get('runner.suite');
 
-        $dispatcher->dispatch('beforeSuite', new Event\SuiteEvent($suite));
-
-        foreach ($suite->getSpecifications() as $spec) {
-            $result = max($result, $runner->run($spec));
-        }
-
-        $dispatcher->dispatch('afterSuite', new Event\SuiteEvent(
-            $suite, microtime(true) - $startTime, $result
-        ));
-
-        return $result;
+        return $suiteRunner->run($suite);
     }
 }

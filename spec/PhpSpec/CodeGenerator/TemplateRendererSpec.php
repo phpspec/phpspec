@@ -46,7 +46,7 @@ class TemplateRendererSpec extends ObjectBehavior
         $this->setLocations(array('lo/ca\\tion', '\\location', 'location\\'));
         $this->getLocations()->shouldReturn(array(
             'lo'.DIRECTORY_SEPARATOR.'ca'.DIRECTORY_SEPARATOR.'tion',
-            '/location',
+            DIRECTORY_SEPARATOR.'location',
             'location'
         ));
     }

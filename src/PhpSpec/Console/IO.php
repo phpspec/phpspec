@@ -2,11 +2,13 @@
 
 namespace PhpSpec\Console;
 
+use PhpSpec\IO\IOInterface;
+
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\HelperSet;
 
-class IO
+class IO implements IOInterface
 {
     private $input;
     private $output;
@@ -31,6 +33,12 @@ class IO
         return $this->output->isDecorated();
     }
 
+    public function isCodeGenerationEnabled()
+    {
+        return $this->input->isInteractive()
+            && !$this->input->getOption('no-code-generation');
+    }
+    
     public function isVerbose()
     {
         return OutputInterface::VERBOSITY_VERBOSE === $this->output->getVerbosity();

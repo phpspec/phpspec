@@ -2,7 +2,7 @@
 
 namespace PhpSpec\Formatter;
 
-use PhpSpec\Console\IO;
+use PhpSpec\IO\IOInterface as IO;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Listener\StatisticsCollector;
 
@@ -93,6 +93,8 @@ class PrettyFormatter implements FormatterInterface
             }
         }
 
+        $this->io->writeln(sprintf("\n%d specs", $this->stats->getTotalSpecs()));
+
         $counts = array();
         foreach ($this->stats->getCountsHash() as $type => $count) {
             if ($count) {
@@ -100,7 +102,7 @@ class PrettyFormatter implements FormatterInterface
             }
         }
 
-        $this->io->write(sprintf("\n%d examples ", $this->stats->getEventsCount()));
+        $this->io->write(sprintf("%d examples ", $this->stats->getEventsCount()));
         if (count($counts)) {
             $this->io->write(sprintf("(%s)", implode(', ', $counts)));
         }

@@ -111,7 +111,7 @@ class PSR0LocatorSpec extends ObjectBehavior
 
         $fs->pathExists($path)->willReturn(true);
         $fs->findPhpFilesIn($path)->willReturn(array($file));
-        $file->getRealPath()->willReturn(__DIR__.'/spec/Some/ClassSpec.php');
+        $file->getRealPath()->willReturn(__DIR__.$this->convert_to_path('/spec/Some/ClassSpec.php'));
 
         $resources = $this->getAllResources();
         $resources->shouldHaveCount(1);
@@ -186,9 +186,9 @@ class PSR0LocatorSpec extends ObjectBehavior
     {
         $this->beConstructedWith('PhpSpec', 'spec', $this->srcPath, $this->specPath, $fs);
 
-        $fs->pathExists($this->specPath.'/spec/PhpSpec/')->willReturn(true);
-        $fs->findPhpFilesIn($this->specPath.'/spec/PhpSpec/')->willReturn(array($file));
-        $file->getRealPath()->willReturn($this->specPath.'/spec/PhpSpec/ContainerSpec.php');
+        $fs->pathExists($this->specPath.$this->convert_to_path('/spec/PhpSpec/'))->willReturn(true);
+        $fs->findPhpFilesIn($this->specPath.$this->convert_to_path('/spec/PhpSpec/'))->willReturn(array($file));
+        $file->getRealPath()->willReturn($this->specPath.$this->convert_to_path('/spec/PhpSpec/ContainerSpec.php'));
 
         $resources = $this->findResources($this->srcPath);
         $resources->shouldHaveCount(1);
@@ -199,11 +199,11 @@ class PSR0LocatorSpec extends ObjectBehavior
     {
         $this->beConstructedWith('PhpSpec', 'spec', $this->srcPath, $this->specPath, $fs);
 
-        $fs->pathExists($this->specPath.'/spec/PhpSpec/Console/')->willReturn(true);
-        $fs->findPhpFilesIn($this->specPath.'/spec/PhpSpec/Console/')->willReturn(array($file));
-        $file->getRealPath()->willReturn($this->specPath.'/spec/PhpSpec/Console/AppSpec.php');
+        $fs->pathExists($this->specPath.$this->convert_to_path('/spec/PhpSpec/Console/'))->willReturn(true);
+        $fs->findPhpFilesIn($this->specPath.$this->convert_to_path('/spec/PhpSpec/Console/'))->willReturn(array($file));
+        $file->getRealPath()->willReturn($this->specPath.$this->convert_to_path('/spec/PhpSpec/Console/AppSpec.php'));
 
-        $resources = $this->findResources($this->srcPath.'/PhpSpec/Console');
+        $resources = $this->findResources($this->srcPath.$this->convert_to_path('/PhpSpec/Console'));
         $resources->shouldHaveCount(1);
         $resources[0]->getSrcClassname()->shouldReturn('PhpSpec\Console\App');
     }
@@ -212,11 +212,11 @@ class PSR0LocatorSpec extends ObjectBehavior
     {
         $this->beConstructedWith('PhpSpec', 'spec', $this->srcPath, $this->specPath, $fs);
 
-        $fs->pathExists($this->specPath.'/spec/PhpSpec/Runner/')->willReturn(true);
-        $fs->findPhpFilesIn($this->specPath.'/spec/PhpSpec/Runner/')->willReturn(array($file));
-        $file->getRealPath()->willReturn($this->specPath.'/spec/PhpSpec/Runner/ExampleRunnerSpec.php');
+        $fs->pathExists($this->specPath.$this->convert_to_path('/spec/PhpSpec/Runner/'))->willReturn(true);
+        $fs->findPhpFilesIn($this->specPath.$this->convert_to_path('/spec/PhpSpec/Runner/'))->willReturn(array($file));
+        $file->getRealPath()->willReturn($this->specPath.$this->convert_to_path('/spec/PhpSpec/Runner/ExampleRunnerSpec.php'));
 
-        $resources = $this->findResources($this->specPath.'/spec/PhpSpec/Runner');
+        $resources = $this->findResources($this->specPath.$this->convert_to_path('/spec/PhpSpec/Runner'));
         $resources->shouldHaveCount(1);
         $resources[0]->getSrcClassname()->shouldReturn('PhpSpec\Runner\ExampleRunner');
     }
@@ -225,10 +225,10 @@ class PSR0LocatorSpec extends ObjectBehavior
     {
         $this->beConstructedWith('PhpSpec', 'spec', $this->srcPath, $this->specPath, $fs);
 
-        $fs->pathExists($this->specPath.'/spec/PhpSpec/ServiceContainerSpec.php')->willReturn(true);
-        $file->getRealPath()->willReturn($this->specPath.'/spec/PhpSpec/ServiceContainerSpec.php');
+        $fs->pathExists($this->specPath.$this->convert_to_path('/spec/PhpSpec/ServiceContainerSpec.php'))->willReturn(true);
+        $file->getRealPath()->willReturn($this->specPath.$this->convert_to_path('/spec/PhpSpec/ServiceContainerSpec.php'));
 
-        $resources = $this->findResources($this->srcPath.'/PhpSpec/ServiceContainer.php');
+        $resources = $this->findResources($this->srcPath.$this->convert_to_path('/PhpSpec/ServiceContainer.php'));
         $resources->shouldHaveCount(1);
         $resources[0]->getSrcClassname()->shouldReturn('PhpSpec\ServiceContainer');
     }
@@ -237,10 +237,10 @@ class PSR0LocatorSpec extends ObjectBehavior
     {
         $this->beConstructedWith('PhpSpec', 'spec', $this->srcPath, $this->specPath, $fs);
 
-        $fs->pathExists($this->specPath.'/spec/PhpSpec/ServiceContainerSpec.php')->willReturn(true);
-        $file->getRealPath()->willReturn($this->specPath.'/spec/PhpSpec/ServiceContainerSpec.php');
+        $fs->pathExists($this->specPath.$this->convert_to_path('/spec/PhpSpec/ServiceContainerSpec.php'))->willReturn(true);
+        $file->getRealPath()->willReturn($this->specPath.$this->convert_to_path('/spec/PhpSpec/ServiceContainerSpec.php'));
 
-        $resources = $this->findResources($this->specPath.'/spec/PhpSpec/ServiceContainerSpec.php');
+        $resources = $this->findResources($this->specPath.$this->convert_to_path('/spec/PhpSpec/ServiceContainerSpec.php'));
         $resources->shouldHaveCount(1);
         $resources[0]->getSrcClassname()->shouldReturn('PhpSpec\ServiceContainer');
     }
@@ -345,5 +345,14 @@ class PSR0LocatorSpec extends ObjectBehavior
 
         $resource->getSrcClassname()->shouldReturn('Console\Application');
         $resource->getSpecClassname()->shouldReturn('spec\Console\ApplicationSpec');
+    }
+
+    private function convert_to_path($path)
+    {
+        if ('/' === DIRECTORY_SEPARATOR) {
+            return $path;
+        }
+
+        return str_replace('/', DIRECTORY_SEPARATOR, $path);
     }
 }

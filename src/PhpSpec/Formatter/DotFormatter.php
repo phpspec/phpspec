@@ -76,6 +76,9 @@ class DotFormatter extends BasicFormatter
             }
         }
 
+        $plural = $stats->getTotalSpecs() !== 1 ? 's' : '';
+        $io->writeln(sprintf("%d spec%s", $stats->getTotalSpecs(), $plural));
+
         $counts = array();
         foreach ($stats->getCountsHash() as $type => $count) {
             if ($count) {

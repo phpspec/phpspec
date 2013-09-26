@@ -5,6 +5,7 @@ namespace PhpSpec\Console;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -28,9 +29,9 @@ class Application extends BaseApplication
 
     public function __construct($version)
     {
-        parent::__construct('phpspec', $version);
-
         $this->setupContainer($this->container = new ServiceContainer);
+        
+        parent::__construct('phpspec', $version);
     }
 
     public function getContainer()
@@ -40,28 +41,52 @@ class Application extends BaseApplication
 
     public function doRun(InputInterface $input, OutputInterface $output)
     {
-        array_map(
-            array($this, 'add'),
-            $this->container->getByPrefix('console.commands')
-        );
-
         $this->container->set('console.input', $input);
         $this->container->set('console.output', $output);
         $this->container->set('console.helpers', $this->getHelperSet());
 
-        if (!($name = $this->getCommandName($input))
-         && !$input->hasParameterOption('-h')
-         && !$input->hasParameterOption('--help')) {
-            $argv = $_SERVER['argv'];
-
-            $binstub = array_shift($argv);
-            array_unshift($argv, 'run');
-            array_unshift($argv, $binstub);
-
-            $input = new ArgvInput($argv);
-        }
+        $this->fixDefinitions();
 
         return parent::doRun($input, $output);
+    }
+    
+    protected function fixDefinitions()
+    {
+        $description = 'Do not ask any interactive question (disables code generation).';
+        
+        $definition = $this->getDefaultInputDefinition();
+        $options = $definition->getOptions();
+
+        if (array_key_exists('no-interaction', $options)) {
+            $option = $options['no-interaction'];
+            $options['no-interaction'] = new InputOption(
+                $option->getName(),
+                $option->getShortcut(),
+                InputOption::VALUE_NONE,
+                $description
+            );
+        }
+         
+        $definition->setOptions($options);
+        $this->setDefinition($definition);
+    }
+    
+    protected function getCommandName(InputInterface $input)
+    {
+        $name = parent::getCommandName($input);
+        
+        if (!$name) {
+            $name = 'run';
+            parent::getDefinition()->setArguments();
+        }
+        
+        return $name;
+    }
+    
+    public function getDefaultCommands()
+    {
+        $commands = $this->container->getByPrefix('console.commands');
+        return array_merge(parent::getDefaultCommands(), $commands);
     }
 
     protected function setupContainer(ServiceContainer $container)
@@ -86,6 +111,10 @@ class Application extends BaseApplication
                 $c->get('console.output'),
                 $c->get('console.helpers')
             );
+        });
+
+        $container->setShared('html.io', function($c) {
+            return new Formatter\Html\IO;
         });
 
         $container->setShared('console.commands.run', function($c) {
@@ -125,6 +154,11 @@ class Application extends BaseApplication
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator')
+            );
+        });
+        $container->setShared('event_dispatcher.listeners.stop_on_failure', function($c) {
+            return new Listener\StopOnFailureListener(
+                $c->get('console.input')
             );
         });
     }
@@ -178,6 +212,10 @@ class Application extends BaseApplication
     {
         $container->setShared('formatter.presenter', function($c) {
             return new Formatter\Presenter\TaggedPresenter($c->get('formatter.presenter.differ'));
+        });
+
+        $container->setShared('formatter.html.presenter', function($c) {
+            return new Formatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
         });
 
         $container->setShared('formatter.presenter.differ', function($c) {
@@ -264,14 +302,26 @@ class Application extends BaseApplication
                         );
                     }
                     break;
+                case 'html':
+                case 'h':
+                    $template = new Formatter\Html\Template($c->get('html.io'));
+                    $factory = new Formatter\Html\ReportItemFactory($template);
+                    $formatter = new Formatter\HtmlFormatter($factory);
+                    break;
                 case 'progress':
                 default:
                     $formatter = new Formatter\ProgressFormatter;
                     break;
             }
 
-            $formatter->setIO($c->get('console.io'));
-            $formatter->setPresenter($c->get('formatter.presenter'));
+            if ($formatter instanceof Formatter\HtmlFormatter) {
+                $formatter->setIO($c->get('html.io'));
+                $formatter->setPresenter($c->get('formatter.html.presenter'));
+            } else {
+                $formatter->setIO($c->get('console.io'));
+                $formatter->setPresenter($c->get('formatter.presenter'));
+            }
+
             $formatter->setStatisticsCollector($c->get('event_dispatcher.listeners.stats'));
 
             $c->set('event_dispatcher.listeners.formatter', $formatter);
@@ -283,6 +333,13 @@ class Application extends BaseApplication
 
     protected function setupRunner(ServiceContainer $container)
     {
+        $container->setShared('runner.suite', function($c) {
+            return new Runner\SuiteRunner(
+                $c->get('event_dispatcher'),
+                $c->get('runner.specification')
+            );
+        });
+        
         $container->setShared('runner.specification', function($c) {
             return new Runner\SpecificationRunner(
                 $c->get('event_dispatcher'),
@@ -324,7 +381,8 @@ class Application extends BaseApplication
         $container->set('runner.maintainers.subject', function($c) {
             return new Runner\Maintainer\SubjectMaintainer(
                 $c->get('formatter.presenter'),
-                $c->get('unwrapper')
+                $c->get('unwrapper'),
+                $c->get('event_dispatcher')
             );
         });
 
@@ -341,6 +399,8 @@ class Application extends BaseApplication
         } elseif (file_exists($path = 'phpspec.yml.dist')) {
             $config = Yaml::parse(file_get_contents($path));
         }
+
+        $config = $config ?: array();
 
         foreach ($config as $key => $val) {
             if ('extensions' === $key) {
