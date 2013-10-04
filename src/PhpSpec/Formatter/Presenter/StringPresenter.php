@@ -28,6 +28,8 @@ class StringPresenter implements PresenterInterface
                 ));
             } elseif ($value instanceof \Closure) {
                 return $this->presentString('[closure]');
+            } elseif (is_object($value)) {
+                return $this->presentString(sprintf('[obj:%s]', get_class($value)));
             } else {
                 return $this->presentString(sprintf('[%s()]', $value));
             }
