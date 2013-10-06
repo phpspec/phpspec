@@ -143,6 +143,10 @@ class PSR0Locator implements ResourceLocatorInterface
             return false;
         }
 
+        if ('.php' !== substr($path, -4)) {
+            $path .= $sepr;
+        }
+
         return 0 === strpos($path, $this->srcPath)
             || 0 === strpos($path, $this->specPath)
         ;
