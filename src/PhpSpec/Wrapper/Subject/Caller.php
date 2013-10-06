@@ -10,7 +10,6 @@ use PhpSpec\Wrapper\Wrapper;
 use PhpSpec\Wrapper\Unwrapper;
 
 use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Exception\Exception;
 use PhpSpec\Exception\Wrapper\SubjectException;
 use PhpSpec\Exception\Fracture\ClassNotFoundException;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
