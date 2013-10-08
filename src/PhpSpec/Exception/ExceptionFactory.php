@@ -46,4 +46,12 @@ class ExceptionFactory
             $this->presenter->presentString($property)
         ));
     }
+
+    public function gettingPropertyOnNonObject($property)
+    {
+        return new SubjectException(sprintf(
+            'Getting property %s on a non-object.',
+            $this->presenter->presentString($property)
+        ));
+    }
 }

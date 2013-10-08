@@ -93,6 +93,17 @@ class ExceptionFactorySpec extends ObjectBehavior
         $exception->getMessage()->shouldBe($fixtureMessage);
     }
 
+    function it_creates_an_accessing_property_on_non_object_exception(PresenterInterface $presenter)
+    {
+        $presenter->presentString("{$this->fixture->property}")
+            ->shouldBeCalled()
+            ->willReturn("\"{$this->fixture->property}\"");
+        $fixtureMessage = "Getting property \"{$this->fixture->property}\" on a non-object.";
+        $exception = $this->gettingPropertyOnNonObject($this->fixture->property);
+        $exception->shouldHaveType('PhpSpec\Exception\Wrapper\SubjectException');
+        $exception->getMessage()->shouldBe($fixtureMessage);
+    }
+
     function shouldCreateMethodNotFoundException()
     {
         $this->createdException->shouldHaveType("PhpSpec\Exception\Fracture\MethodNotFoundException");
