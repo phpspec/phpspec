@@ -2,6 +2,7 @@
 
 namespace PhpSpec\Exception;
 
+use PhpSpec\Exception\Wrapper\SubjectException;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 
 class ExceptionFactory
@@ -28,5 +29,21 @@ class ExceptionFactory
     public function propertyNotFound($message, $subject, $property)
     {
         return new Fracture\PropertyNotFoundException($message, $subject, $this->presenter->presentString($property));
+    }
+
+    public function callingMethodOnNonObject($method)
+    {
+        return new SubjectException(sprintf(
+            'Call to a member function %s on a non-object.',
+            $this->presenter->presentString($method.'()')
+        ));
+    }
+
+    public function settingPropertyOnNonObject($property)
+    {
+        return new SubjectException(sprintf(
+            'Setting property %s on a non-object.',
+            $this->presenter->presentString($property)
+        ));
     }
 }

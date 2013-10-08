@@ -2,6 +2,8 @@
 
 namespace spec\PhpSpec\Exception;
 
+use PhpSpec\Exception\Wrapper\SubjectException;
+
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
@@ -67,6 +69,28 @@ class ExceptionFactorySpec extends ObjectBehavior
         );
 
         $this->shouldCreatePropertyNotFoundException();
+    }
+
+    function it_creates_a_calling_method_on_non_object_exception(PresenterInterface $presenter)
+    {
+        $presenter->presentString("{$this->fixture->method}()")
+            ->shouldBeCalled()
+            ->willReturn("\"{$this->fixture->method}()\"");
+        $fixtureMessage = "Call to a member function \"{$this->fixture->method}()\" on a non-object.";
+        $exception = $this->callingMethodOnNonObject($this->fixture->method);
+        $exception->shouldHaveType('PhpSpec\Exception\Wrapper\SubjectException');
+        $exception->getMessage()->shouldBe($fixtureMessage);
+    }
+
+    function it_creates_a_setting_property_on_non_object_exception(PresenterInterface $presenter)
+    {
+        $presenter->presentString("{$this->fixture->property}")
+            ->shouldBeCalled()
+            ->willReturn("\"{$this->fixture->property}\"");
+        $fixtureMessage = "Setting property \"{$this->fixture->property}\" on a non-object.";
+        $exception = $this->settingPropertyOnNonObject($this->fixture->property);
+        $exception->shouldHaveType('PhpSpec\Exception\Wrapper\SubjectException');
+        $exception->getMessage()->shouldBe($fixtureMessage);
     }
 
     function shouldCreateMethodNotFoundException()
