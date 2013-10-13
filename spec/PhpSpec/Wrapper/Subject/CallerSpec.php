@@ -3,16 +3,13 @@
 namespace spec\PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Wrapper\Subject\WrappedObject;
-use PhpSpec\Wrapper\Subject\Caller;
 use PhpSpec\Wrapper\Wrapper;
 use PhpSpec\Wrapper\Subject;
 
-use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 
-use PhpSpec\Event\ExpectationEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 use PhpSpec\ObjectBehavior;
