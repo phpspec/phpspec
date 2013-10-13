@@ -2,6 +2,7 @@
 
 namespace PhpSpec\Wrapper;
 
+use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -30,8 +31,9 @@ class Wrapper
 
     public function wrap($value = null)
     {
+        $exceptionFactory   = new ExceptionFactory($this->presenter);
         $wrappedObject      = new WrappedObject($value, $this->presenter);
-        $caller             = new Caller($wrappedObject, $this->example, $this->dispatcher, $this->presenter, $this->matchers, $this);
+        $caller             = new Caller($wrappedObject, $this->example, $this->dispatcher, $this->presenter, $exceptionFactory, $this->matchers, $this);
         $arrayAccess        = new SubjectWithArrayAccess($caller, $this->presenter, $this->dispatcher);
         $expectationFactory = new ExpectationFactory($this->example, $this->dispatcher, $this->matchers);
 

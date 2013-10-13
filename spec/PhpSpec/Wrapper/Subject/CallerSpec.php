@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\Wrapper\Subject;
 
+use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 use PhpSpec\Wrapper\Wrapper;
 use PhpSpec\Wrapper\Subject;
@@ -19,10 +20,10 @@ class CallerSpec extends ObjectBehavior
 {
     function let(WrappedObject $wrappedObject, ExampleNode $example,
         EventDispatcherInterface $dispatcher, PresenterInterface $presenter,
-        MatcherManager $matchers, Wrapper $wrapper)
+        ExceptionFactory $exceptions, MatcherManager $matchers, Wrapper $wrapper)
     {
         $this->beConstructedWith($wrappedObject, $example, $dispatcher,
-            $presenter,$matchers, $wrapper);
+            $presenter, $exceptions, $matchers, $wrapper);
     }
 
     function it_dispatches_method_call_events(EventDispatcherInterface $dispatcher, WrappedObject $wrappedObject)

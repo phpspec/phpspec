@@ -2,6 +2,7 @@
 
 namespace PhpSpec\Wrapper\Subject;
 
+use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Runner\MatcherManager;
 
@@ -33,17 +34,19 @@ class Caller
     private $presenter;
     private $matchers;
     private $wrapper;
+    private $exceptionFactory;
 
     public function __construct(WrappedObject $wrappedObject, ExampleNode $example,
                                 EventDispatcherInterface $dispatcher, PresenterInterface $presenter,
-                                MatcherManager $matchers, Wrapper $wrapper)
+                                ExceptionFactory $exceptions, MatcherManager $matchers, Wrapper $wrapper)
     {
-        $this->wrappedObject = $wrappedObject;
-        $this->example       = $example;
-        $this->dispatcher    = $dispatcher;
-        $this->presenter     = $presenter;
-        $this->matchers      = $matchers;
-        $this->wrapper       = $wrapper;
+        $this->wrappedObject    = $wrappedObject;
+        $this->example          = $example;
+        $this->dispatcher       = $dispatcher;
+        $this->presenter        = $presenter;
+        $this->matchers         = $matchers;
+        $this->wrapper          = $wrapper;
+        $this->exceptionFactory = $exceptions;
     }
     
     public function call($method, array $arguments = array())
