@@ -221,10 +221,7 @@ class Caller
     {
         $instantiator = new Instantiator;
         $wrappedObject = $instantiator->instantiate($this->wrappedObject->getClassName());
-        return new MethodNotFoundException(sprintf(
-            'Method %s not found.',
-            $this->presenter->presentString($this->wrappedObject->getClassName().'::'.$method)
-        ), $wrappedObject, $method, $arguments);
+        return $this->exceptionFactory->methodNotFound(sprintf('Method %s not found.', $this->presenter->presentString($this->wrappedObject->getClassName().'::'.$method)),$wrappedObject, $this->wrappedObject->getClassName(), $method, $arguments);
     }
 
     private function propertyNotFound($property)
