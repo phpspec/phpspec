@@ -14,8 +14,9 @@ class ExceptionFactory
         $this->presenter = $presenter;
     }
 
-    public function methodNotFound($message, $subject, $classname, $method, array $arguments = array())
+    public function methodNotFound($subject, $classname, $method, array $arguments = array())
     {
+        $message = sprintf('Method %s not found.', $this->presenter->presentString($classname . '::' . $method));
         return new Fracture\MethodNotFoundException(
             $message, $subject, $this->presenter->presentString("{$classname}::{$method}"), $arguments
         );

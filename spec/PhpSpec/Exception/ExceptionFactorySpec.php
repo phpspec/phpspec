@@ -30,9 +30,8 @@ class ExceptionFactorySpec extends ObjectBehavior
         $presenter->presentString("{$this->fixture->classname}::{$this->fixture->method}")
             ->shouldBeCalled()
             ->willReturn("\"{$this->fixture->classname}::{$this->fixture->method}\"");
-        $this->fixture->message = 'Method "\Array::foo" not found';
+        $this->fixture->message = 'Method "\ArrayObject::foo" not found.';
         $this->createdException = $this->methodNotFound(
-            $this->fixture->message,
             $this->fixture->subject,
             $this->fixture->classname,
             $this->fixture->method,
