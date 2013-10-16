@@ -32,7 +32,6 @@ class ExceptionFactorySpec extends ObjectBehavior
             ->willReturn("\"{$this->fixture->classname}::{$this->fixture->method}\"");
         $this->fixture->message = 'Method "\ArrayObject::foo" not found.';
         $this->createdException = $this->methodNotFound(
-            $this->fixture->subject,
             $this->fixture->classname,
             $this->fixture->method,
             $this->fixture->arguments
@@ -46,9 +45,8 @@ class ExceptionFactorySpec extends ObjectBehavior
         $presenter->presentString("{$this->fixture->classname}")
             ->shouldBeCalled()
             ->willReturn("\"{$this->fixture->classname}\"");
-        $this->fixture->message = 'Class "Foo" not found';
+        $this->fixture->message = 'Class "\ArrayObject" does not exist.';
         $this->createdException = $this->classNotFound(
-            $this->fixture->message,
             $this->fixture->classname
         );
 
@@ -107,7 +105,7 @@ class ExceptionFactorySpec extends ObjectBehavior
     {
         $this->createdException->shouldHaveType("PhpSpec\Exception\Fracture\MethodNotFoundException");
         $this->createdException->getMessage()->shouldReturn($this->fixture->message);
-        $this->createdException->getSubject()->shouldReturn($this->fixture->subject);
+        $this->createdException->getSubject()->shouldBeLike($this->fixture->subject);
         $this->createdException->getMethodName()->shouldReturn("\"{$this->fixture->classname}::{$this->fixture->method}\"");
         $this->createdException->getArguments()->shouldReturn($this->fixture->arguments);
     }

@@ -12,12 +12,9 @@ use PhpSpec\Wrapper\Unwrapper;
 
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Exception\Wrapper\SubjectException;
-use PhpSpec\Exception\Fracture\ClassNotFoundException;
-use PhpSpec\Exception\Fracture\MethodNotFoundException;
 use PhpSpec\Exception\Fracture\PropertyNotFoundException;
 
 use PhpSpec\Event\MethodCallEvent;
-use PhpSpec\Util\Instantiator;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -212,16 +209,13 @@ class Caller
 
     private function classNotFound()
     {
-        return new ClassNotFoundException(sprintf(
-            'Class %s does not exist.', $this->presenter->presentString($this->wrappedObject->getClassName())
-        ), $this->wrappedObject->getClassName());
+        return $this->exceptionFactory->classNotFound($this->wrappedObject->getClassName());
     }
 
     private function methodNotFound($method, array $arguments = array())
     {
-        $instantiator = new Instantiator;
-        $wrappedObject = $instantiator->instantiate($this->wrappedObject->getClassName());
-        return $this->exceptionFactory->methodNotFound($wrappedObject, $this->wrappedObject->getClassName(), $method, $arguments);
+        $className = $this->wrappedObject->getClassName();
+        return $this->exceptionFactory->methodNotFound($className, $method, $arguments);
     }
 
     private function propertyNotFound($property)

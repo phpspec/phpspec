@@ -4,6 +4,7 @@ namespace PhpSpec\Exception;
 
 use PhpSpec\Exception\Wrapper\SubjectException;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Util\Instantiator;
 
 class ExceptionFactory
 {
@@ -14,16 +15,19 @@ class ExceptionFactory
         $this->presenter = $presenter;
     }
 
-    public function methodNotFound($subject, $classname, $method, array $arguments = array())
+    public function methodNotFound($classname, $method, array $arguments = array())
     {
+        $instantiator = new Instantiator();
+        $subject = $instantiator->instantiate($classname);
         $message = sprintf('Method %s not found.', $this->presenter->presentString($classname . '::' . $method));
         return new Fracture\MethodNotFoundException(
             $message, $subject, $this->presenter->presentString("{$classname}::{$method}"), $arguments
         );
     }
 
-    public function classNotFound($message, $classname)
+    public function classNotFound($classname)
     {
+        $message = sprintf('Class %s does not exist.', $this->presenter->presentString($classname));
         return new Fracture\ClassNotFoundException($message, $this->presenter->presentString($classname));
     }
 
