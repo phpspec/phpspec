@@ -336,7 +336,8 @@ class Application extends BaseApplication
         $container->setShared('runner.suite', function($c) {
             return new Runner\SuiteRunner(
                 $c->get('event_dispatcher'),
-                $c->get('runner.specification')
+                $c->get('runner.specification'),
+                $c->get('loader.resource_loader')
             );
         });
         

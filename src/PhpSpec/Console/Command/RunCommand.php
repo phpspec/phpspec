@@ -36,9 +36,8 @@ class RunCommand extends Command
             list($_, $locator, $linenum) = $matches;
         }
 
-        $suite       = $container->get('loader.resource_loader')->load($locator, $linenum);
         $suiteRunner = $container->get('runner.suite');
 
-        return $suiteRunner->run($suite);
+        return $suiteRunner->run($locator, $linenum);
     }
 }
