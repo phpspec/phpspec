@@ -31,8 +31,9 @@ class ExceptionFactory
         return new Fracture\ClassNotFoundException($message, $this->presenter->presentString($classname));
     }
 
-    public function propertyNotFound($message, $subject, $property)
+    public function propertyNotFound($subject, $property)
     {
+        $message = sprintf('Property %s not found.', $this->presenter->presentString($property));
         return new Fracture\PropertyNotFoundException($message, $subject, $this->presenter->presentString($property));
     }
 

@@ -58,9 +58,8 @@ class ExceptionFactorySpec extends ObjectBehavior
         $presenter->presentString("{$this->fixture->property}")
             ->shouldBeCalled()
             ->willReturn("\"{$this->fixture->property}\"");
-        $this->fixture->message = 'Property "zoo" not found';
+        $this->fixture->message = 'Property "zoo" not found.';
         $this->createdException = $this->propertyNotFound(
-            $this->fixture->message,
             $this->fixture->subject,
             $this->fixture->property
         );

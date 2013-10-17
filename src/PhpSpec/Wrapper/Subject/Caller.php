@@ -220,10 +220,7 @@ class Caller
 
     private function propertyNotFound($property)
     {
-        return new PropertyNotFoundException(sprintf(
-            'Property %s not found.',
-            $this->presenter->presentString(get_class($this->getWrappedObject()).'::'.$property)
-        ), $this->getWrappedObject(), $property);
+        return $this->exceptionFactory->propertyNotFound($this->getWrappedObject(), $property);
     }
 
     private function callingMethodOnNonObject($method)

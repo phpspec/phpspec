@@ -54,4 +54,22 @@ class CallerSpec extends ObjectBehavior
 
         $this->set('id', 2)->shouldReturn(2);
     }
+
+    function it_delegates_throwing_property_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
+    {
+        $obj = new \ArrayObject;
+
+        $wrappedObject->isInstantiated()->willReturn(true);
+        $wrappedObject->getInstance()->willReturn($obj);
+
+        $exceptions->propertyNotFound(Argument::cetera())
+            ->willReturn(new \PhpSpec\Exception\Fracture\PropertyNotFoundException(
+                'Property "nonExistentProperty" not found.',
+                $obj,
+                'nonExistentProperty'
+            ))
+            ->shouldBeCalled();
+        $this->shouldThrow('\PhpSpec\Exception\Fracture\PropertyNotFoundException')
+            ->duringSet('nonExistentProperty', 'any value');
+    }
 }
