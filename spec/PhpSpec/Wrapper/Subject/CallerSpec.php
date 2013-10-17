@@ -55,6 +55,21 @@ class CallerSpec extends ObjectBehavior
         $this->set('id', 2)->shouldReturn(2);
     }
 
+    function it_delegates_throwing_class_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
+    {
+        $wrappedObject->isInstantiated()->willReturn(false);
+        $wrappedObject->getClassName()->willReturn('Foo');
+
+        $exceptions->classNotFound(Argument::cetera())
+            ->willReturn(new \PhpSpec\Exception\Fracture\ClassNotFoundException(
+                'Class "foo" does not exist.',
+                '"Foo"'
+            ))
+            ->shouldBeCalled();
+        $this->shouldThrow('\PhpSpec\Exception\Fracture\ClassNotFoundException')
+            ->duringGetWrappedObject();
+    }
+
     function it_delegates_throwing_method_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
     {
         $obj = new \ArrayObject;
