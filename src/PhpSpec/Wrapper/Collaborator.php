@@ -7,12 +7,10 @@ use Prophecy\Prophecy\ObjectProphecy;
 class Collaborator implements WrapperInterface
 {
     private $prophecy;
-    private $unwrapper;
 
-    public function __construct(ObjectProphecy $prophecy, Unwrapper $unwrapper)
+    public function __construct(ObjectProphecy $prophecy)
     {
         $this->prophecy  = $prophecy;
-        $this->unwrapper = $unwrapper;
     }
 
     public function beADoubleOf($classOrInterface)
