@@ -35,6 +35,11 @@ class ArrayKeyMatcherSpec extends ObjectBehavior
         $this->shouldNotThrow()->duringPositiveMatch('haveKey', array('abc' => 123), array('abc'));
     }
 
+    function it_matches_array_with_specified_key_even_if_there_is_no_value()
+    {
+        $this->shouldNotThrow()->duringPositiveMatch('haveKey', array('abc' => null), array('abc'));
+    }
+
     function it_matches_ArrayObject_with_provided_offset(ArrayObject $array)
     {
         $array->offsetExists('abc')->willReturn(true);

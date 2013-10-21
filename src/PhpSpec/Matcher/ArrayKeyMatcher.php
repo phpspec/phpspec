@@ -27,7 +27,7 @@ class ArrayKeyMatcher extends BasicMatcher
 
     protected function matches($subject, array $arguments)
     {
-        return isset($subject[$arguments[0]]);
+        return isset($subject[$arguments[0]]) || array_key_exists($arguments[0], $subject);
     }
 
     protected function getFailureException($name, $subject, array $arguments)
