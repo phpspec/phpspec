@@ -4,18 +4,14 @@ namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Loader\Node\ExampleNode;
-use PhpSpec\Runner\MatcherManager;
 
 use PhpSpec\Wrapper\Subject;
 use PhpSpec\Wrapper\Wrapper;
 use PhpSpec\Wrapper\Unwrapper;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Exception\Wrapper\SubjectException;
-
 use PhpSpec\Event\MethodCallEvent;
 
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface as Dispatcher;
 
 use ReflectionClass;
 use ReflectionMethod;
@@ -27,18 +23,15 @@ class Caller
     private $wrappedObject;
     private $example;
     private $dispatcher;
-    private $presenter;
     private $wrapper;
     private $exceptionFactory;
 
-    public function __construct(WrappedObject $wrappedObject, ExampleNode $example,
-                                EventDispatcherInterface $dispatcher, PresenterInterface $presenter,
+    public function __construct(WrappedObject $wrappedObject, ExampleNode $example, Dispatcher $dispatcher,
                                 ExceptionFactory $exceptions, Wrapper $wrapper)
     {
         $this->wrappedObject    = $wrappedObject;
         $this->example          = $example;
         $this->dispatcher       = $dispatcher;
-        $this->presenter        = $presenter;
         $this->wrapper          = $wrapper;
         $this->exceptionFactory = $exceptions;
     }

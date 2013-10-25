@@ -8,9 +8,8 @@ use PhpSpec\Wrapper\Wrapper;
 use PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Loader\Node\ExampleNode;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
 
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface as Dispatcher;
 
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
@@ -18,14 +17,13 @@ use Prophecy\Argument;
 class CallerSpec extends ObjectBehavior
 {
     function let(WrappedObject $wrappedObject, ExampleNode $example,
-        EventDispatcherInterface $dispatcher, PresenterInterface $presenter,
-        ExceptionFactory $exceptions, Wrapper $wrapper)
+                 Dispatcher $dispatcher, ExceptionFactory $exceptions, Wrapper $wrapper)
     {
         $this->beConstructedWith($wrappedObject, $example, $dispatcher,
-            $presenter, $exceptions, $wrapper);
+            $exceptions, $wrapper);
     }
 
-    function it_dispatches_method_call_events(EventDispatcherInterface $dispatcher, WrappedObject $wrappedObject)
+    function it_dispatches_method_call_events(Dispatcher $dispatcher, WrappedObject $wrappedObject)
     {
         $wrappedObject->isInstantiated()->willReturn(true);
         $wrappedObject->getInstance()->willReturn(new \ArrayObject());
