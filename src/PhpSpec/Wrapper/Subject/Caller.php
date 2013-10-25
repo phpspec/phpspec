@@ -229,10 +229,7 @@ class Caller
 
     private function settingPropertyOnNonObject($property)
     {
-        return new SubjectException(sprintf(
-            'Setting property %s on a non-object.',
-            $this->presenter->presentString($property)
-        ));
+        return $this->exceptionFactory->settingPropertyOnNonObject($property);
     }
 
     private function accessingPropertyOnNonObject($property)

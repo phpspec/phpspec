@@ -126,4 +126,15 @@ class CallerSpec extends ObjectBehavior
         $this->shouldThrow('\PhpSpec\Exception\Wrapper\SubjectException')
             ->duringCall('foo');
     }
+
+    function it_delegates_throwing_setting_property_on_non_object_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
+    {
+        $exceptions->settingPropertyOnNonObject('foo')
+            ->willReturn(new \PhpSpec\Exception\Wrapper\SubjectException(
+                'Setting property "foo" on a non-object.'
+            ))
+            ->shouldBeCalled();
+        $this->shouldThrow('\PhpSpec\Exception\Wrapper\SubjectException')
+            ->duringSet('foo');
+    }
 }
