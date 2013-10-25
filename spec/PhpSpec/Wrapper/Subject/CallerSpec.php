@@ -55,14 +55,22 @@ class CallerSpec extends ObjectBehavior
         $this->set('id', 2)->shouldReturn(2);
     }
 
+    function it_proxies_method_calls_to_wrapped_object(\ArrayObject $obj, WrappedObject $wrappedObject)
+    {
+        $obj->asort()->shouldBeCalled();
+        $wrappedObject->isInstantiated()->willReturn(true);
+        $wrappedObject->getInstance()->willReturn($obj);
+        $this->call('asort');
+    }
+
     function it_delegates_throwing_class_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
     {
         $wrappedObject->isInstantiated()->willReturn(false);
         $wrappedObject->getClassName()->willReturn('Foo');
 
-        $exceptions->classNotFound(Argument::cetera())
+        $exceptions->classNotFound('Foo')
             ->willReturn(new \PhpSpec\Exception\Fracture\ClassNotFoundException(
-                'Class "foo" does not exist.',
+                'Class "Foo" does not exist.',
                 '"Foo"'
             ))
             ->shouldBeCalled();
@@ -78,7 +86,7 @@ class CallerSpec extends ObjectBehavior
         $wrappedObject->getInstance()->willReturn($obj);
         $wrappedObject->getClassName()->willReturn('ArrayObject');
 
-        $exceptions->methodNotFound(Argument::cetera())
+        $exceptions->methodNotFound('ArrayObject', 'foo', array())
             ->willReturn(new \PhpSpec\Exception\Fracture\MethodNotFoundException(
                 'Method "foo" not found.',
                 $obj,
@@ -97,7 +105,7 @@ class CallerSpec extends ObjectBehavior
         $wrappedObject->isInstantiated()->willReturn(true);
         $wrappedObject->getInstance()->willReturn($obj);
 
-        $exceptions->propertyNotFound(Argument::cetera())
+        $exceptions->propertyNotFound($obj, 'nonExistentProperty')
             ->willReturn(new \PhpSpec\Exception\Fracture\PropertyNotFoundException(
                 'Property "nonExistentProperty" not found.',
                 $obj,
@@ -106,5 +114,16 @@ class CallerSpec extends ObjectBehavior
             ->shouldBeCalled();
         $this->shouldThrow('\PhpSpec\Exception\Fracture\PropertyNotFoundException')
             ->duringSet('nonExistentProperty', 'any value');
+    }
+
+    function it_delegates_throwing_calling_method_on_non_object_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
+    {
+        $exceptions->callingMethodOnNonObject('foo')
+            ->willReturn(new \PhpSpec\Exception\Wrapper\SubjectException(
+                'Call to a member function "foo()" on a non-object.'
+            ))
+            ->shouldBeCalled();
+        $this->shouldThrow('\PhpSpec\Exception\Wrapper\SubjectException')
+            ->duringCall('foo');
     }
 }

@@ -12,7 +12,6 @@ use PhpSpec\Wrapper\Unwrapper;
 
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Exception\Wrapper\SubjectException;
-use PhpSpec\Exception\Fracture\PropertyNotFoundException;
 
 use PhpSpec\Event\MethodCallEvent;
 
@@ -225,10 +224,7 @@ class Caller
 
     private function callingMethodOnNonObject($method)
     {
-        return new SubjectException(sprintf(
-            'Call to a member function %s on a non-object.',
-            $this->presenter->presentString($method.'()')
-        ));
+        return $this->exceptionFactory->callingMethodOnNonObject($method);
     }
 
     private function settingPropertyOnNonObject($property)
