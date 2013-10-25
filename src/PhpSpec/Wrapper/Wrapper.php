@@ -33,7 +33,7 @@ class Wrapper
     {
         $exceptionFactory   = new ExceptionFactory($this->presenter);
         $wrappedObject      = new WrappedObject($value, $this->presenter);
-        $caller             = new Caller($wrappedObject, $this->example, $this->dispatcher, $this->presenter, $exceptionFactory, $this->matchers, $this);
+        $caller             = new Caller($wrappedObject, $this->example, $this->dispatcher, $this->presenter, $exceptionFactory, $this);
         $arrayAccess        = new SubjectWithArrayAccess($caller, $this->presenter, $this->dispatcher);
         $expectationFactory = new ExpectationFactory($this->example, $this->dispatcher, $this->matchers);
 

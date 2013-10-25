@@ -8,7 +8,6 @@ use PhpSpec\Wrapper\Wrapper;
 use PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Loader\Node\ExampleNode;
-use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -20,10 +19,10 @@ class CallerSpec extends ObjectBehavior
 {
     function let(WrappedObject $wrappedObject, ExampleNode $example,
         EventDispatcherInterface $dispatcher, PresenterInterface $presenter,
-        ExceptionFactory $exceptions, MatcherManager $matchers, Wrapper $wrapper)
+        ExceptionFactory $exceptions, Wrapper $wrapper)
     {
         $this->beConstructedWith($wrappedObject, $example, $dispatcher,
-            $presenter, $exceptions, $matchers, $wrapper);
+            $presenter, $exceptions, $wrapper);
     }
 
     function it_dispatches_method_call_events(EventDispatcherInterface $dispatcher, WrappedObject $wrappedObject)
