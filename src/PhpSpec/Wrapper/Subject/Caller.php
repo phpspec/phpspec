@@ -234,10 +234,7 @@ class Caller
 
     private function accessingPropertyOnNonObject($property)
     {
-        return new SubjectException(sprintf(
-                'Getting property %s from a non-object.',
-                $this->presenter->presentString($property)
-        ));
+        return $this->exceptionFactory->gettingPropertyOnNonObject($property);
     }
 
     private function lookingForConstants($property)
