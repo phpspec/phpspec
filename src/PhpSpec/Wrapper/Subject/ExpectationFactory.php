@@ -23,4 +23,9 @@ class ExpectationFactory
     {
         return new Expectation($subject, $this->example, $this->dispatcher, $this->matchers);
     }
+
+    public function createPositive()
+    {
+        // TODO: write logic here
+    }
 }

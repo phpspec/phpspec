@@ -20,21 +20,22 @@ class ExceptionFactory
         $instantiator = new Instantiator();
         $subject = $instantiator->instantiate($classname);
         $message = sprintf('Method %s not found.', $this->presenter->presentString($classname . '::' . $method));
+
         return new Fracture\MethodNotFoundException(
-            $message, $subject, $this->presenter->presentString("{$classname}::{$method}"), $arguments
+            $message, $subject, $method, $arguments
         );
     }
 
     public function classNotFound($classname)
     {
         $message = sprintf('Class %s does not exist.', $this->presenter->presentString($classname));
-        return new Fracture\ClassNotFoundException($message, $this->presenter->presentString($classname));
+        return new Fracture\ClassNotFoundException($message, $classname);
     }
 
     public function propertyNotFound($subject, $property)
     {
         $message = sprintf('Property %s not found.', $this->presenter->presentString($property));
-        return new Fracture\PropertyNotFoundException($message, $subject, $this->presenter->presentString($property));
+        return new Fracture\PropertyNotFoundException($message, $subject, $property);
     }
 
     public function callingMethodOnNonObject($method)
