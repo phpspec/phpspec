@@ -40,31 +40,6 @@ class Subject implements ArrayAccess, WrapperInterface
         $this->wrappedObject->beConstructedWith(func_get_args());
     }
 
-    public function should($name = null, array $arguments = array())
-    {
-        return $this->createExpectation()->positive($name, $arguments);
-    }
-
-    public function shouldNot($name = null, array $arguments = array())
-    {
-        return $this->createExpectation()->negative($name, $arguments);
-    }
-
-    public function callOnWrappedObject($method, array $arguments = array())
-    {
-        return $this->caller->call($method, $arguments);
-    }
-
-    public function setToWrappedObject($property, $value = null)
-    {
-        return $this->caller->set($property, $value);
-    }
-
-    public function getFromWrappedObject($property)
-    {
-        return $this->caller->get($property);
-    }
-
     public function getWrappedObject()
     {
         if ($this->subject) {
@@ -97,11 +72,11 @@ class Subject implements ArrayAccess, WrapperInterface
     public function __call($method, array $arguments = array())
     {
         if (0 === strpos($method, 'shouldNot')) {
-            return $this->shouldNot(lcfirst(substr($method, 9)), $arguments);
+            return $this->createExpectation()->negative(lcfirst(substr($method, 9)), $arguments);
         }
 
         if (0 === strpos($method, 'should')) {
-            return $this->should(lcfirst(substr($method, 6)), $arguments);
+            return $this->createExpectation()->positive(lcfirst(substr($method, 6)), $arguments);
         }
 
         return $this->callOnWrappedObject($method, $arguments);
@@ -120,6 +95,21 @@ class Subject implements ArrayAccess, WrapperInterface
     public function __get($property)
     {
         return $this->getFromWrappedObject($property);
+    }
+
+    private function callOnWrappedObject($method, array $arguments = array())
+    {
+        return $this->caller->call($method, $arguments);
+    }
+
+    private function setToWrappedObject($property, $value = null)
+    {
+        return $this->caller->set($property, $value);
+    }
+
+    private function getFromWrappedObject($property)
+    {
+        return $this->caller->get($property);
     }
 
     private function wrap($value)
