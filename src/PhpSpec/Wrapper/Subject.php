@@ -127,7 +127,7 @@ class Subject implements ArrayAccess, WrapperInterface
         return $this->wrapper->wrap($value);
     }
 
-    public function createExpectation()
+    private function createExpectation()
     {
         if ($this->subject === null) {
             $unwrapper = new Unwrapper;
