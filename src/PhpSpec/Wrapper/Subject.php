@@ -71,12 +71,14 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function __call($method, array $arguments = array())
     {
-        if (0 === strpos($method, 'shouldNot')) {
-            return $this->createExpectation()->negative(lcfirst(substr($method, 9)), $arguments);
-        }
+        $subject = $this->caller->getWrappedObject();
 
         if (0 === strpos($method, 'should')) {
-            return $this->createExpectation()->positive(lcfirst(substr($method, 6)), $arguments);
+            $unwraper = new Unwrapper();
+            $unwrapped = $unwraper->unwrapAll($arguments);
+            $expectation = $this->expectationFactory->create($method, $subject, $arguments);
+
+            return $expectation->match(lcfirst(substr($method, 6)), $subject, $unwrapped);
         }
 
         return $this->callOnWrappedObject($method, $arguments);
