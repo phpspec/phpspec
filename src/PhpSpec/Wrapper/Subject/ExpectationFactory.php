@@ -37,25 +37,25 @@ class ExpectationFactory
         }
     }
 
-    public function createPositive($name, $subject, array $arguments = array())
+    private function createPositive($name, $subject, array $arguments = array())
     {
         $matcher = $this->findMatcher($name, $subject, $arguments);
         return new Expectation\Positive($matcher);
     }
 
-    public function createNegative($name, $subject, array $arguments = array())
+    private function createNegative($name, $subject, array $arguments = array())
     {
         $matcher = $this->findMatcher($name, $subject, $arguments);
         return new Expectation\Negative($matcher);
     }
 
-    public function createPositiveException($subject, array $arguments = array())
+    private function createPositiveException($subject, array $arguments = array())
     {
         $matcher = $this->findMatcher('throw', $subject, $arguments);
         return new Expectation\PositiveException($matcher);
     }
 
-    public function createNegativeException($subject, array $arguments = array())
+    private function createNegativeException($subject, array $arguments = array())
     {
         $matcher = $this->findMatcher('throw', $subject, $arguments);
         return new Expectation\NegativeException($matcher);

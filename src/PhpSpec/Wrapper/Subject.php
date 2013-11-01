@@ -118,14 +118,4 @@ class Subject implements ArrayAccess, WrapperInterface
     {
         return $this->wrapper->wrap($value);
     }
-
-    private function createExpectation()
-    {
-        if ($this->subject === null) {
-            $unwrapper = new Unwrapper;
-            $this->subject = $unwrapper->unwrapOne($this);
-        }
-
-        return $this->expectationFactory->create($this->subject);
-    }
 }
