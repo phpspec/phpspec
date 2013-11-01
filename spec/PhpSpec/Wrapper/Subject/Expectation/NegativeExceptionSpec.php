@@ -2,13 +2,24 @@
 
 namespace spec\PhpSpec\Wrapper\Subject\Expectation;
 
+use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 class NegativeExceptionSpec extends ObjectBehavior
 {
-    function it_is_initializable()
+    function let(MatcherInterface $matcher)
     {
-        $this->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\NegativeException');
+        $this->beConstructedWith($matcher);
+    }
+
+    function it_calls_a_positive_match_on_matcher(MatcherInterface $matcher)
+    {
+        $alias = 'throw';
+        $subject = 'subject';
+        $arguments = array();
+
+        $matcher->negativeMatch($alias, $subject, $arguments)->shouldBeCalled();
+        $this->match($alias, $subject, $arguments);
     }
 }

@@ -23,10 +23,16 @@ class ExpectationFactory
     public function create($expectaction, $subject, array $arguments = array())
     {
         if (0 === strpos($expectaction, 'shouldNot')) {
+            if (0 === strpos($expectaction, 'shouldNotThrow')) {
+                return $this->createNegativeException($subject, $arguments);
+            }
             return $this->createNegative(lcfirst(substr($expectaction, 9)), $subject, $arguments);
         }
 
         if (0 === strpos($expectaction, 'should')) {
+            if (0 === strpos($expectaction, 'shouldThrow')) {
+                return $this->createPositiveException($subject, $arguments);
+            }
             return $this->createPositive(lcfirst(substr($expectaction, 6)), $subject, $arguments);
         }
     }

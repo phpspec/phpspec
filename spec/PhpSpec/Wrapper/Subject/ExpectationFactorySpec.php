@@ -35,13 +35,13 @@ class ExpectationFactorySpec extends ObjectBehavior
     {
         $matchers->find(Argument::cetera())->willReturn($matcher);
 
-        $this->createPositiveException(new \stdClass())->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\PositiveException');
+        $this->create('shouldThrow', new \stdClass())->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\PositiveException');
     }
 
     function it_creates_negative_exceptions_expectations(MatcherManager $matchers, MatcherInterface $matcher)
     {
         $matchers->find(Argument::cetera())->willReturn($matcher);
 
-        $this->createNegativeException(new \stdClass())->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\NegativeException');
+        $this->create('shouldNotThrow', new \stdClass())->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\NegativeException');
     }
 }
