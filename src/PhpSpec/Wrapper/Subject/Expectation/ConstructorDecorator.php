@@ -3,6 +3,7 @@
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use Exception;
+use PhpSpec\Exception\Example\ErrorException;
 use PhpSpec\Util\Instantiator;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 use PhpSpec\Wrapper\Unwrapper;
@@ -21,6 +22,8 @@ class ConstructorDecorator extends Decorator implements ExpectationInterface
     {
         try {
             $wrapped = $subject->getWrappedObject();
+        } catch (ErrorException $e) {
+            throw $e;
         } catch (Exception $e) {
             if ($wrappedObject->getClassName()) {
                 $instantiator = new Instantiator();
