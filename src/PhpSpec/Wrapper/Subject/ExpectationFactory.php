@@ -4,6 +4,7 @@ namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Matcher\MatcherInterface;
+use PhpSpec\Wrapper\Subject\Expectation\ConstructorDecorator;
 use PhpSpec\Wrapper\Subject\Expectation\DispatcherDecorator;
 use PhpSpec\Wrapper\Subject\Expectation\ExpectationInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -55,7 +56,8 @@ class ExpectationFactory
     private function createPositiveException($subject, array $arguments = array())
     {
         $matcher = $this->findMatcher('throw', $subject, $arguments);
-        return $this->decorateWithDispatcher(new Expectation\PositiveException($matcher), $matcher);
+        $dispatcherDecorator = $this->decorateWithDispatcher(new Expectation\PositiveException($matcher), $matcher);
+        return new ConstructorDecorator($dispatcherDecorator);
     }
 
     private function createNegativeException($subject, array $arguments = array())

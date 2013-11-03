@@ -43,7 +43,7 @@ class ExpectationFactorySpec extends ObjectBehavior
 
         $decoratedExpecation = $this->create('shouldThrow', new \stdClass());
 
-        $decoratedExpecation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\DispatcherDecorator');
+        $decoratedExpecation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\ConstructorDecorator');
         $decoratedExpecation->getExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\PositiveException');
     }
 

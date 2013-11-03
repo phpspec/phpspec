@@ -10,16 +10,15 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 use RuntimeException;
 
-class DispatcherDecorator implements ExpectationInterface
+class DispatcherDecorator extends Decorator implements ExpectationInterface
 {
-    private $expectation;
     private $dispatcher;
     private $matcher;
     private $example;
 
     public function __construct(ExpectationInterface $expectation, EventDispatcherInterface $dispatcher, MatcherInterface $matcher, ExampleNode $example)
     {
-        $this->expectation = $expectation;
+        $this->setExpectation($expectation);
         $this->dispatcher = $dispatcher;
         $this->matcher = $matcher;
         $this->example = $example;
@@ -55,10 +54,5 @@ class DispatcherDecorator implements ExpectationInterface
         }
 
         return $result;
-    }
-
-    public function getExpectation()
-    {
-        return $this->expectation;
     }
 }
