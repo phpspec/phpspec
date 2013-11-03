@@ -80,7 +80,7 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function __invoke()
     {
-        return $this->callOnWrappedObject('__invoke', func_get_args());
+        return $this->caller->call('__invoke', func_get_args());
     }
 
     public function __set($property, $value = null)
