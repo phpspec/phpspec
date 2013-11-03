@@ -2,11 +2,32 @@
 
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
+use Exception;
+use PhpSpec\Util\Instantiator;
+use PhpSpec\Wrapper\Subject\WrappedObject;
+use PhpSpec\Wrapper\Unwrapper;
+
 class ConstructorDecorator extends Decorator implements ExpectationInterface
 {
+    private $unwrapper;
 
-    public function match($alias, $subject, array $arguments = array())
+    public function __construct(ExpectationInterface $expectation, Unwrapper $unwrapper)
     {
-        return $this->getExpectation()->match($alias, $subject, $arguments);
+        $this->setExpectation($expectation);
+        $this->unwrapper = $unwrapper;
+    }
+
+    public function match($alias, $subject, array $arguments = array(), WrappedObject $wrappedObject = null)
+    {
+        try {
+            $wrapped = $subject->getWrappedObject();
+        } catch (Exception $e) {
+            if ($wrappedObject->getClassName()) {
+                $instantiator = new Instantiator();
+                $wrapped = $instantiator->instantiate($wrappedObject->getClassName());
+            }
+        }
+
+        return $this->getExpectation()->match($alias, $wrapped, $arguments);
     }
 }

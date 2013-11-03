@@ -17,7 +17,6 @@ class UnwrapDecorator extends Decorator implements ExpectationInterface
     public function match($alias, $subject, array $arguments = array())
     {
         $arguments = $this->unwrapper->unwrapAll($arguments);
-        $subject = $subject->getWrappedObject();
 
         return $this->getExpectation()->match($alias, $subject, $arguments);
     }

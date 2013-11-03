@@ -27,8 +27,6 @@ class ExpectationFactory
 
     public function create($expectation, $subject, array $arguments = array())
     {
-        $subject = $subject->getWrappedObject();
-
         if (0 === strpos($expectation, 'shouldNot')) {
             if (0 === strpos($expectation, 'shouldNotThrow')) {
                 return $this->createNegativeException($subject, $arguments);
@@ -82,7 +80,7 @@ class ExpectationFactory
     {
         $dispatcherDecorator = new DispatcherDecorator($expectation, $this->dispatcher, $matcher, $this->example);
         $unwrapperDecorator = new UnwrapDecorator($dispatcherDecorator, new Unwrapper);
-        $constructorDecorator = new ConstructorDecorator($unwrapperDecorator);
+        $constructorDecorator = new ConstructorDecorator($unwrapperDecorator, new Unwrapper);
 
         return $constructorDecorator;
     }

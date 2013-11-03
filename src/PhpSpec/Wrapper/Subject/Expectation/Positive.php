@@ -13,7 +13,6 @@ class Positive implements ExpectationInterface
         $this->matcher = $matcher;
     }
 
-
     public function match($alias, $subject, array $arguments = array())
     {
         return $this->matcher->positiveMatch($alias, $subject, $arguments);
