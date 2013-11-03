@@ -40,31 +40,6 @@ class Subject implements ArrayAccess, WrapperInterface
         $this->wrappedObject->beConstructedWith(func_get_args());
     }
 
-    public function should($name = null, array $arguments = array())
-    {
-        return $this->createExpectation()->positive($name, $arguments);
-    }
-
-    public function shouldNot($name = null, array $arguments = array())
-    {
-        return $this->createExpectation()->negative($name, $arguments);
-    }
-
-    public function callOnWrappedObject($method, array $arguments = array())
-    {
-        return $this->caller->call($method, $arguments);
-    }
-
-    public function setToWrappedObject($property, $value = null)
-    {
-        return $this->caller->set($property, $value);
-    }
-
-    public function getFromWrappedObject($property)
-    {
-        return $this->caller->get($property);
-    }
-
     public function getWrappedObject()
     {
         if ($this->subject) {
@@ -96,15 +71,11 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function __call($method, array $arguments = array())
     {
-        if (0 === strpos($method, 'shouldNot')) {
-            return $this->shouldNot(lcfirst(substr($method, 9)), $arguments);
-        }
-
         if (0 === strpos($method, 'should')) {
-            return $this->should(lcfirst(substr($method, 6)), $arguments);
+            return $this->callExpectation($method, $arguments);
         }
 
-        return $this->callOnWrappedObject($method, $arguments);
+        return $this->caller->call($method, $arguments);
     }
 
     public function __invoke()
@@ -114,12 +85,12 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function __set($property, $value = null)
     {
-        return $this->setToWrappedObject($property, $value);
+        return $this->caller->set($property, $value);
     }
 
     public function __get($property)
     {
-        return $this->getFromWrappedObject($property);
+        return $this->caller->get($property);
     }
 
     private function wrap($value)
@@ -127,13 +98,9 @@ class Subject implements ArrayAccess, WrapperInterface
         return $this->wrapper->wrap($value);
     }
 
-    public function createExpectation()
+    private function callExpectation($method, array $arguments)
     {
-        if ($this->subject === null) {
-            $unwrapper = new Unwrapper;
-            $this->subject = $unwrapper->unwrapOne($this);
-        }
-
-        return $this->expectationFactory->create($this->subject);
+        $expectation = $this->expectationFactory->create($method, $this->subject, $arguments);
+        return $expectation->match(lcfirst(substr($method, 6)), $this, $arguments, $this->wrappedObject);
     }
 }
