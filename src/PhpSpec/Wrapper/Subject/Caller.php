@@ -100,9 +100,14 @@ class Caller
             throw $this->classNotFound();
         }
 
-        $instance = $this->instantiateWrappedObject();
-        $this->wrappedObject->setInstance($instance);
-        $this->wrappedObject->setInstantiated(true);
+        if (is_object($this->wrappedObject->getInstance())) {
+            $this->wrappedObject->setInstantiated(true);
+            $instance = $this->wrappedObject->getInstance();
+        } else {
+            $instance = $this->instantiateWrappedObject();
+            $this->wrappedObject->setInstance($instance);
+            $this->wrappedObject->setInstantiated(true);
+        }
 
         return $instance;
     }
