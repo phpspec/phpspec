@@ -4,7 +4,7 @@ namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Wrapper\Unwrapper;
 
-class UnwrapDecorator extends Decorator
+class UnwrapDecorator extends Decorator implements ExpectationInterface
 {
     private $unwrapper;
 

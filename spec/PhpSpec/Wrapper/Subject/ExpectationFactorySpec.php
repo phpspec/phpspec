@@ -26,7 +26,7 @@ class ExpectationFactorySpec extends ObjectBehavior
         $decoratedExpecation = $this->create('shouldBe', $subject);
 
         $decoratedExpecation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Decorator');
-        $decoratedExpecation->getExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Positive');
+        $decoratedExpecation->getNestedExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Positive');
     }
 
     function it_creates_negative_expectations(MatcherManager $matchers, MatcherInterface $matcher, Subject $subject)
@@ -37,7 +37,7 @@ class ExpectationFactorySpec extends ObjectBehavior
         $decoratedExpecation = $this->create('shouldNotbe', $subject);
 
         $decoratedExpecation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Decorator');
-        $decoratedExpecation->getExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Negative');
+        $decoratedExpecation->getNestedExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Negative');
     }
 
     function it_creates_positive_exceptions_expectations(MatcherManager $matchers, MatcherInterface $matcher, Subject $subject)
@@ -48,7 +48,7 @@ class ExpectationFactorySpec extends ObjectBehavior
         $decoratedExpecation = $this->create('shouldThrow', $subject);
 
         $decoratedExpecation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Decorator');
-        $decoratedExpecation->getExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\PositiveException');
+        $decoratedExpecation->getNestedExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\PositiveException');
     }
 
     function it_creates_negative_exceptions_expectations(MatcherManager $matchers, MatcherInterface $matcher, Subject $subject)
@@ -59,6 +59,6 @@ class ExpectationFactorySpec extends ObjectBehavior
         $decoratedExpecation = $this->create('shouldNotThrow', $subject);
 
         $decoratedExpecation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Decorator');
-        $decoratedExpecation->getExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\NegativeException');
+        $decoratedExpecation->getNestedExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\NegativeException');
     }
 }

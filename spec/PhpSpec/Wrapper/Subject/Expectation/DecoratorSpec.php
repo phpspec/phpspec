@@ -27,7 +27,7 @@ class DecoratorSpec extends ObjectBehavior
         $this->beAnInstanceOf('spec\PhpSpec\Wrapper\Subject\Expectation\Decorator');
         $this->beConstructedWith($decorator);
 
-        $this->getExpectation()->shouldReturn($expectation);
+        $this->getNestedExpectation()->shouldReturn($expectation);
     }
 }
 
