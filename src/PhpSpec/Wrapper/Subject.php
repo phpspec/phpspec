@@ -75,7 +75,7 @@ class Subject implements ArrayAccess, WrapperInterface
             return $this->callExpectation($method, $arguments);
         }
 
-        return $this->callOnWrappedObject($method, $arguments);
+        return $this->caller->call($method, $arguments);
     }
 
     public function __invoke()
@@ -85,25 +85,10 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function __set($property, $value = null)
     {
-        return $this->setToWrappedObject($property, $value);
-    }
-
-    public function __get($property)
-    {
-        return $this->getFromWrappedObject($property);
-    }
-
-    private function callOnWrappedObject($method, array $arguments = array())
-    {
-        return $this->caller->call($method, $arguments);
-    }
-
-    private function setToWrappedObject($property, $value = null)
-    {
         return $this->caller->set($property, $value);
     }
 
-    private function getFromWrappedObject($property)
+    public function __get($property)
     {
         return $this->caller->get($property);
     }
