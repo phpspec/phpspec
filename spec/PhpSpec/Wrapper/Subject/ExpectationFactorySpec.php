@@ -21,27 +21,39 @@ class ExpectationFactorySpec extends ObjectBehavior
     {
         $matchers->find(Argument::cetera())->willReturn($matcher);
 
-        $this->create('shouldBe', new \stdClass())->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Positive');
+        $decoratedExpecation = $this->create('shouldBe', new \stdClass());
+
+        $decoratedExpecation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\DispatcherDecorator');
+        $decoratedExpecation->getExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Positive');
     }
 
     function it_creates_negative_expectations(MatcherManager $matchers, MatcherInterface $matcher)
     {
         $matchers->find(Argument::cetera())->willReturn($matcher);
 
-        $this->create('shouldNotbe', new \stdClass())->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Negative');
+        $decoratedExpecation = $this->create('shouldNotbe', new \stdClass());
+
+        $decoratedExpecation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\DispatcherDecorator');
+        $decoratedExpecation->getExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Negative');
     }
 
     function it_creates_positive_exceptions_expectations(MatcherManager $matchers, MatcherInterface $matcher)
     {
         $matchers->find(Argument::cetera())->willReturn($matcher);
 
-        $this->create('shouldThrow', new \stdClass())->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\PositiveException');
+        $decoratedExpecation = $this->create('shouldThrow', new \stdClass());
+
+        $decoratedExpecation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\DispatcherDecorator');
+        $decoratedExpecation->getExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\PositiveException');
     }
 
     function it_creates_negative_exceptions_expectations(MatcherManager $matchers, MatcherInterface $matcher)
     {
         $matchers->find(Argument::cetera())->willReturn($matcher);
 
-        $this->create('shouldNotThrow', new \stdClass())->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\NegativeException');
+        $decoratedExpecation = $this->create('shouldNotThrow', new \stdClass());
+
+        $decoratedExpecation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\DispatcherDecorator');
+        $decoratedExpecation->getExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\NegativeException');
     }
 }

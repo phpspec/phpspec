@@ -4,7 +4,7 @@ namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Matcher\MatcherInterface;
 
-class Negative
+class Negative implements ExpectationInterface
 {
     private $matcher;
 

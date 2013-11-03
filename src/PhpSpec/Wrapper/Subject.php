@@ -74,11 +74,7 @@ class Subject implements ArrayAccess, WrapperInterface
         $subject = $this->caller->getWrappedObject();
 
         if (0 === strpos($method, 'should')) {
-            $unwraper = new Unwrapper();
-            $unwrapped = $unwraper->unwrapAll($arguments);
-            $expectation = $this->expectationFactory->create($method, $subject, $arguments);
-
-            return $expectation->match(lcfirst(substr($method, 6)), $subject, $unwrapped);
+            return $this->callExpectation($method, $arguments, $subject);
         }
 
         return $this->callOnWrappedObject($method, $arguments);
@@ -117,5 +113,14 @@ class Subject implements ArrayAccess, WrapperInterface
     private function wrap($value)
     {
         return $this->wrapper->wrap($value);
+    }
+
+    private function callExpectation($method, array $arguments, $subject)
+    {
+        $unwraper = new Unwrapper();
+        $unwrapped = $unwraper->unwrapAll($arguments);
+        $expectation = $this->expectationFactory->create($method, $subject, $arguments);
+
+        return $expectation->match(lcfirst(substr($method, 6)), $subject, $unwrapped);
     }
 }

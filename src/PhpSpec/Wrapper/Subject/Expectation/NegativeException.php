@@ -4,7 +4,7 @@ namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Matcher\MatcherInterface;
 
-class NegativeException
+class NegativeException implements ExpectationInterface
 {
     private $matcher;
 
@@ -15,6 +15,6 @@ class NegativeException
 
     public function match($alias, $subject, array $arguments = array())
     {
-        return $this->matcher->negativeMatch($alias, $subject, $arguments);
+        return $this->matcher->negativeMatch('throw', $subject, $arguments);
     }
 }

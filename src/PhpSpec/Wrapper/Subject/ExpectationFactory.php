@@ -3,6 +3,9 @@
 namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Loader\Node\ExampleNode;
+use PhpSpec\Matcher\MatcherInterface;
+use PhpSpec\Wrapper\Subject\Expectation\DispatcherDecorator;
+use PhpSpec\Wrapper\Subject\Expectation\ExpectationInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Wrapper\Unwrapper;
@@ -40,25 +43,25 @@ class ExpectationFactory
     private function createPositive($name, $subject, array $arguments = array())
     {
         $matcher = $this->findMatcher($name, $subject, $arguments);
-        return new Expectation\Positive($matcher);
+        return $this->decorateWithDispatcher(new Expectation\Positive($matcher), $matcher);
     }
 
     private function createNegative($name, $subject, array $arguments = array())
     {
         $matcher = $this->findMatcher($name, $subject, $arguments);
-        return new Expectation\Negative($matcher);
+        return $this->decorateWithDispatcher(new Expectation\Negative($matcher), $matcher);
     }
 
     private function createPositiveException($subject, array $arguments = array())
     {
         $matcher = $this->findMatcher('throw', $subject, $arguments);
-        return new Expectation\PositiveException($matcher);
+        return $this->decorateWithDispatcher(new Expectation\PositiveException($matcher), $matcher);
     }
 
     private function createNegativeException($subject, array $arguments = array())
     {
         $matcher = $this->findMatcher('throw', $subject, $arguments);
-        return new Expectation\NegativeException($matcher);
+        return $this->decorateWithDispatcher(new Expectation\NegativeException($matcher), $matcher);
     }
 
     private function findMatcher($name, $subject, array $arguments = array())
@@ -66,5 +69,10 @@ class ExpectationFactory
         $unwrapper = new Unwrapper;
         $arguments = $unwrapper->unwrapAll($arguments);
         return $this->matchers->find($name, $subject, $arguments);
+    }
+
+    private function decorateWithDispatcher(ExpectationInterface $expectation, MatcherInterface $matcher)
+    {
+        return new DispatcherDecorator($expectation, $this->dispatcher, $matcher, $this->example);
     }
 }
