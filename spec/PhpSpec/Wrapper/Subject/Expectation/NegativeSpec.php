@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Wrapper\Subject;
 use Prophecy\Argument;
 
 use PhpSpec\Matcher\MatcherInterface;

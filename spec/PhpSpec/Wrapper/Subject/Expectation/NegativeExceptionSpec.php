@@ -4,6 +4,7 @@ namespace spec\PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Wrapper\Subject;
 use Prophecy\Argument;
 
 class NegativeExceptionSpec extends ObjectBehavior
@@ -19,7 +20,7 @@ class NegativeExceptionSpec extends ObjectBehavior
         $subject = 'subject';
         $arguments = array();
 
-        $matcher->negativeMatch($alias, $subject, $arguments)->shouldBeCalled();
+        $matcher->negativeMatch($alias, 'subject', $arguments)->shouldBeCalled();
         $this->match($alias, $subject, $arguments);
     }
 }

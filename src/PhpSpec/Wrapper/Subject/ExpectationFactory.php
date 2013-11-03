@@ -7,6 +7,7 @@ use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\Wrapper\Subject\Expectation\ConstructorDecorator;
 use PhpSpec\Wrapper\Subject\Expectation\DispatcherDecorator;
 use PhpSpec\Wrapper\Subject\Expectation\ExpectationInterface;
+use PhpSpec\Wrapper\Subject\Expectation\UnwrapDecorator;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Wrapper\Unwrapper;
@@ -26,6 +27,8 @@ class ExpectationFactory
 
     public function create($expectaction, $subject, array $arguments = array())
     {
+        $subject = $subject->getWrappedObject();
+
         if (0 === strpos($expectaction, 'shouldNot')) {
             if (0 === strpos($expectaction, 'shouldNotThrow')) {
                 return $this->createNegativeException($subject, $arguments);
@@ -44,26 +47,44 @@ class ExpectationFactory
     private function createPositive($name, $subject, array $arguments = array())
     {
         $matcher = $this->findMatcher($name, $subject, $arguments);
-        return $this->decorateWithDispatcher(new Expectation\Positive($matcher), $matcher);
+
+        $dispatcherDecorator = $this->decorateWithDispatcher(new Expectation\Positive($matcher), $matcher);
+        $constructorDecorator = new ConstructorDecorator($dispatcherDecorator);
+        $expectation = new UnwrapDecorator($constructorDecorator, new Unwrapper);
+
+        return $expectation;
     }
 
     private function createNegative($name, $subject, array $arguments = array())
     {
         $matcher = $this->findMatcher($name, $subject, $arguments);
-        return $this->decorateWithDispatcher(new Expectation\Negative($matcher), $matcher);
+
+        $dispatcherDecorator = $this->decorateWithDispatcher(new Expectation\Negative($matcher), $matcher);
+        $constructorDecorator = new ConstructorDecorator($dispatcherDecorator);
+        $expectation = new UnwrapDecorator($constructorDecorator, new Unwrapper);
+
+        return $expectation;
     }
 
     private function createPositiveException($subject, array $arguments = array())
     {
         $matcher = $this->findMatcher('throw', $subject, $arguments);
+
         $dispatcherDecorator = $this->decorateWithDispatcher(new Expectation\PositiveException($matcher), $matcher);
-        return new ConstructorDecorator($dispatcherDecorator);
+        $constructorDecorator = new ConstructorDecorator($dispatcherDecorator);
+        $expectaction = new UnwrapDecorator($constructorDecorator, new Unwrapper);
+
+        return $expectaction;
     }
 
     private function createNegativeException($subject, array $arguments = array())
     {
         $matcher = $this->findMatcher('throw', $subject, $arguments);
-        return $this->decorateWithDispatcher(new Expectation\NegativeException($matcher), $matcher);
+
+        $dispatcherDecorator = $this->decorateWithDispatcher(new Expectation\NegativeException($matcher), $matcher);
+        $constructorDecorator = new ConstructorDecorator($dispatcherDecorator);
+        $expectation = new UnwrapDecorator($constructorDecorator, new Unwrapper);
+        return $expectation;
     }
 
     private function findMatcher($name, $subject, array $arguments = array())
