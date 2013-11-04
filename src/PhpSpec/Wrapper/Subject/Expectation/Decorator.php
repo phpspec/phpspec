@@ -16,7 +16,7 @@ abstract class Decorator implements ExpectationInterface
         return $this->expectation;
     }
 
-    protected function setExpectation($expectation)
+    protected function setExpectation(ExpectationInterface $expectation)
     {
         $this->expectation = $expectation;
     }
