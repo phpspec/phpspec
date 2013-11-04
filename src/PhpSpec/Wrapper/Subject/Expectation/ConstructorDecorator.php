@@ -6,16 +6,12 @@ use Exception;
 use PhpSpec\Exception\Example\ErrorException;
 use PhpSpec\Util\Instantiator;
 use PhpSpec\Wrapper\Subject\WrappedObject;
-use PhpSpec\Wrapper\Unwrapper;
 
 class ConstructorDecorator extends Decorator implements ExpectationInterface
 {
-    private $unwrapper;
-
-    public function __construct(ExpectationInterface $expectation, Unwrapper $unwrapper)
+    public function __construct(ExpectationInterface $expectation)
     {
         $this->setExpectation($expectation);
-        $this->unwrapper = $unwrapper;
     }
 
     public function match($alias, $subject, array $arguments = array(), WrappedObject $wrappedObject = null)
