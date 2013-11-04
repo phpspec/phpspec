@@ -49,6 +49,21 @@ class Subject implements ArrayAccess, WrapperInterface
         return $this->subject = $this->caller->getWrappedObject();
     }
 
+    public function callOnWrappedObject($method, array $arguments = array())
+    {
+        return $this->caller->call($method, $arguments);
+    }
+
+    public function setToWrappedObject($property, $value = null)
+    {
+        return $this->caller->set($property, $value);
+    }
+
+    public function getFromWrappedObject($property)
+    {
+        return $this->caller->get($property);
+    }
+
     public function offsetExists($key)
     {
         return $this->arrayAccess->offSetExists($key);
