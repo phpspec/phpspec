@@ -7,26 +7,31 @@ use PhpSpec\Event\SuiteEvent,
     PhpSpec\Loader\Suite,
     PhpSpec\Runner\SpecificationRunner;
 
+use PhpSpec\Loader\ResourceLoader;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class SuiteRunner
 {
     private $dispatcher;
     private $specRunner;
+    private $loader;
 
-    public function __construct(EventDispatcher $dispatcher, SpecificationRunner $specRunner)
+    public function __construct(EventDispatcher $dispatcher, SpecificationRunner $specRunner, ResourceLoader $loader)
     {
         $this->dispatcher = $dispatcher;
         $this->specRunner = $specRunner;
+        $this->loader = $loader;
     }
 
-    public function run(Suite $suite)
+    public function run($locator, $linenum)
     {
+        $suite = $this->loader->load($locator, $linenum);
+
         $this->dispatcher->dispatch('beforeSuite', new SuiteEvent($suite));
 
         $result = 0;
         $startTime = microtime(true);
-        
+
         foreach ($suite->getSpecifications() as $specification) {
             try {
                 $result = max($result, $this->specRunner->run($specification));
