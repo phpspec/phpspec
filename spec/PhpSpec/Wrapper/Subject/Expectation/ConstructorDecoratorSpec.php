@@ -21,13 +21,13 @@ class ConstructorDecoratorSpec extends ObjectBehavior
         // calling $subject->getWrappedObject() actually breaks Collaborator
         // as there is a method with that name on it.
         // One of the odds of testing a framework with itself
-        $subject->__call('getWrappedObject', array())->willThrow('PhpSpec\Exception\Example\ErrorException');
+        $subject->callOnWrappedObject('getWrappedObject', array())->willThrow('PhpSpec\Exception\Example\ErrorException');
         $this->shouldThrow('PhpSpec\Exception\Example\ErrorException')->duringMatch('be', $subject, array(), $wrapped);
     }
 
     function it_ignores_any_other_exception(Subject $subject, WrappedObject $wrapped)
     {
-        $subject->__call('getWrappedObject', array())->willThrow('\Exception');
+        $subject->callOnWrappedObject('getWrappedObject', array())->willThrow('\Exception');
         $wrapped->getClassName()->willReturn('\ArrayObject');
         $this->shouldNotThrow('\Exception')->duringMatch('be', $subject, array(), $wrapped);
     }
