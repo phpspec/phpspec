@@ -8,7 +8,7 @@ use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Matcher\MatcherInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
-use RuntimeException;
+use Exception;
 
 class DispatcherDecorator extends Decorator implements ExpectationInterface
 {
@@ -44,7 +44,7 @@ class DispatcherDecorator extends Decorator implements ExpectationInterface
             );
 
             throw $e;
-        } catch (RuntimeException $e) {
+        } catch (Exception $e) {
             $this->dispatcher->dispatch(
                 'afterExpectation',
                 new ExpectationEvent($this->example, $this->matcher, $subject, $alias, $arguments, ExpectationEvent::BROKEN, $e)
