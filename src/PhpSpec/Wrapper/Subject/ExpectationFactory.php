@@ -28,16 +28,10 @@ class ExpectationFactory
     public function create($expectation, $subject, array $arguments = array())
     {
         if (0 === strpos($expectation, 'shouldNot')) {
-            if (0 === strpos($expectation, 'shouldNotThrow')) {
-                return $this->createNegativeException($subject, $arguments);
-            }
             return $this->createNegative(lcfirst(substr($expectation, 9)), $subject, $arguments);
         }
 
         if (0 === strpos($expectation, 'should')) {
-            if (0 === strpos($expectation, 'shouldThrow')) {
-                return $this->createPositiveException($subject, $arguments);
-            }
             return $this->createPositive(lcfirst(substr($expectation, 6)), $subject, $arguments);
         }
     }
@@ -50,16 +44,6 @@ class ExpectationFactory
     private function createNegative($name, $subject, array $arguments = array())
     {
         return $this->createDecoratedExpectation("Negative", $name, $subject, $arguments);
-    }
-
-    private function createPositiveException($subject, array $arguments = array())
-    {
-        return $this->createDecoratedExpectation("PositiveException", 'throw', $subject, $arguments);
-    }
-
-    private function createNegativeException($subject, array $arguments = array())
-    {
-        return $this->createDecoratedExpectation("NegativeException", 'throw', $subject, $arguments);
     }
 
     private function createDecoratedExpectation($expectation, $name, $subject, array $arguments)

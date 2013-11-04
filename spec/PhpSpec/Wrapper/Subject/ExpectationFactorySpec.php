@@ -39,26 +39,4 @@ class ExpectationFactorySpec extends ObjectBehavior
         $decoratedExpecation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Decorator');
         $decoratedExpecation->getNestedExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Negative');
     }
-
-    function it_creates_positive_exceptions_expectations(MatcherManager $matchers, MatcherInterface $matcher, Subject $subject)
-    {
-        $matchers->find(Argument::cetera())->willReturn($matcher);
-
-        $subject->__call('getWrappedObject', array())->willReturn(new \stdClass());
-        $decoratedExpecation = $this->create('shouldThrow', $subject);
-
-        $decoratedExpecation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Decorator');
-        $decoratedExpecation->getNestedExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\PositiveException');
-    }
-
-    function it_creates_negative_exceptions_expectations(MatcherManager $matchers, MatcherInterface $matcher, Subject $subject)
-    {
-        $matchers->find(Argument::cetera())->willReturn($matcher);
-
-        $subject->__call('getWrappedObject', array())->willReturn(new \stdClass());
-        $decoratedExpecation = $this->create('shouldNotThrow', $subject);
-
-        $decoratedExpecation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\Decorator');
-        $decoratedExpecation->getNestedExpectation()->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\NegativeException');
-    }
 }
