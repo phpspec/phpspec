@@ -21,7 +21,7 @@ class ConstructorDecorator extends Decorator implements ExpectationInterface
         } catch (ErrorException $e) {
             throw $e;
         } catch (Exception $e) {
-            if ($wrappedObject->getClassName()) {
+            if (null !== $wrappedObject && $wrappedObject->getClassName()) {
                 $instantiator = new Instantiator();
                 $wrapped = $instantiator->instantiate($wrappedObject->getClassName());
             }
