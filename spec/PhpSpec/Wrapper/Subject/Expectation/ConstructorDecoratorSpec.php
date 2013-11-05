@@ -22,6 +22,12 @@ class ConstructorDecoratorSpec extends ObjectBehavior
         $this->shouldThrow('PhpSpec\Exception\Example\ErrorException')->duringMatch('be', $subject, array(), $wrapped);
     }
 
+    function it_rethrows_fracture_errors_as_phpspec_error_exceptions(Subject $subject, WrappedObject $wrapped)
+    {
+        $subject->__call('getWrappedObject', array())->willThrow('PhpSpec\Exception\Fracture\FractureException');
+        $this->shouldThrow('PhpSpec\Exception\Fracture\FractureException')->duringMatch('be', $subject, array(), $wrapped);
+    }
+
     function it_ignores_any_other_exception(Subject $subject, WrappedObject $wrapped)
     {
         $subject->callOnWrappedObject('getWrappedObject', array())->willThrow('\Exception');
