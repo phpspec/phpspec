@@ -66,7 +66,7 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function offsetExists($key)
     {
-        return $this->arrayAccess->offSetExists($key);
+        return $this->wrap($this->arrayAccess->offSetExists($key));
     }
 
     public function offsetGet($key)
@@ -76,7 +76,7 @@ class Subject implements ArrayAccess, WrapperInterface
 
     public function offsetSet($key, $value)
     {
-        return $this->arrayAccess->offsetSet($key, $value);
+        return $this->wrap($this->arrayAccess->offsetSet($key, $value));
     }
 
     public function offsetUnset($key)
