@@ -11,8 +11,7 @@ class TypeMatcher extends BasicMatcher
     private static $keywords = array(
         'beAnInstanceOf',
         'returnAnInstanceOf',
-        'haveType',
-        'implement'
+        'haveType'
     );
     private $presenter;
 

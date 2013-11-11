@@ -34,6 +34,7 @@ class MatchersMaintainer implements MaintainerInterface
         $matchers->add(new Matcher\ComparisonMatcher($this->presenter));
         $matchers->add(new Matcher\ThrowMatcher($this->unwrapper, $this->presenter));
         $matchers->add(new Matcher\TypeMatcher($this->presenter));
+        $matchers->add(new Matcher\InterfaceMatcher($this->presenter));
         $matchers->add(new Matcher\ObjectStateMatcher($this->presenter));
         $matchers->add(new Matcher\ScalarMatcher($this->presenter));
         $matchers->add(new Matcher\ArrayCountMatcher($this->presenter));
