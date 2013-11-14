@@ -286,32 +286,12 @@ class Application extends BaseApplication
     protected function setupFormatter(ServiceContainer $container)
     {
         $container->addConfigurator(function($c) {
-            switch ($c->getParam('formatter.name', 'progress')) {
-                case 'pretty':
-                    $formatter = new Formatter\PrettyFormatter;
-                    break;
-                case 'dot':
-                    $formatter = new Formatter\DotFormatter;
-                    break;
-                case 'nyan':
-                    if (class_exists('NyanCat\Scoreboard')) {
-                        $formatter = new Formatter\NyanFormatter;
-                    } else {
-                        throw new RuntimeException(
-                            'The Nyan Cat formatter requires whatthejeff/nyancat-scoreboard:~1.1'
-                        );
-                    }
-                    break;
-                case 'html':
-                case 'h':
-                    $template = new Formatter\Html\Template($c->get('html.io'));
-                    $factory = new Formatter\Html\ReportItemFactory($template);
-                    $formatter = new Formatter\HtmlFormatter($factory);
-                    break;
-                case 'progress':
-                default:
-                    $formatter = new Formatter\ProgressFormatter;
-                    break;
+            $formatterName = $c->getParam('formatter.name', 'progress');
+
+            try {
+                $formatter = $c->get('formatter.formatters.'.$formatterName);
+            } catch (\InvalidArgumentException $e) {
+                throw new RuntimeException(sprintf('Formatter not recongised: "%s"', $formatterName));
             }
 
             if ($formatter instanceof Formatter\HtmlFormatter) {
@@ -328,6 +308,31 @@ class Application extends BaseApplication
             $c->get('console.output')->setFormatter(new Console\Formatter(
                 $c->get('console.output')->isDecorated()
             ));
+        });
+
+        $container->set('formatter.formatters.progress', function($c) {
+            return new Formatter\ProgressFormatter;
+        });
+        $container->set('formatter.formatters.pretty', function($c) {
+            return new Formatter\PrettyFormatter;
+        });
+        $container->set('formatter.formatters.dot', function($c) {
+            return new Formatter\DotFormatter;
+        });
+        $container->set('formatter.formatters.nyan', function($c) {
+            if (class_exists('NyanCat\Scoreboard')) {
+                return new Formatter\NyanFormatter;
+            } else {
+                throw new RuntimeException(
+                    'The Nyan Cat formatter requires whatthejeff/nyancat-scoreboard:~1.1'
+                );
+            }
+        });
+        $container->set('formatter.formatters.html', function($c) {
+            $template = new Formatter\Html\Template($c->get('html.io'));
+            $factory = new Formatter\Html\ReportItemFactory($template);
+
+            return new Formatter\HtmlFormatter($factory);
         });
     }
 
