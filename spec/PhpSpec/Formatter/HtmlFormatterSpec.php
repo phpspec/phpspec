@@ -15,21 +15,15 @@ class HtmlFormatterSpec extends ObjectBehavior
 {
     const EVENT_TITLE = 'it works';
     
-    function let(ReportItemFactory $factory)
+    function let(ReportItemFactory $factory, Presenter $presenter, IO $io)
     {
-        $this->beConstructedWith($factory);
+        $this->beConstructedWith($factory, $presenter, $io);
     }
     
-    function it_delegates_the_reporting_to_the_event_type_line_reporter(
-        IO $io,
-        ExampleEvent $event,
-        ReportItem $item,
-        ReportItemFactory $factory,
-        Presenter $presenter
-    )
+    function it_delegates_the_reporting_to_the_event_type_line_reporter(IO $io,
+        ExampleEvent $event, ReportItem $item, ReportItemFactory $factory,
+        Presenter $presenter)
     {
-        $this->setPresenter($presenter);
-        $this->setIo($io);
         $factory->create($event, $presenter)->willReturn($item);
         $item->write(Argument::any())->shouldBeCalled();
         $this->afterExample($event);

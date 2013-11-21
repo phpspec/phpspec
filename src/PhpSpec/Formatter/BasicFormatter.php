@@ -17,6 +17,12 @@ abstract class BasicFormatter implements FormatterInterface
     private $presenter;
     private $stats;
 
+    public function __construct(PresenterInterface $presenter, IO $io)
+    {
+        $this->presenter = $presenter;
+        $this->io = $io;
+    }
+
     public static function getSubscribedEvents()
     {
         $events = array(

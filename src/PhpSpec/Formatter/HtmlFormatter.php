@@ -6,15 +6,20 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Html\ReportItemFactory;
+use PhpSpec\IO\IOInterface;
 
 class HtmlFormatter extends BasicFormatter
 {
     private $reportItemFactory;
     private $index = 1;
 
-    public function __construct(Html\ReportItemFactory $reportItemFactory = null)
+    public function __construct(ReportItemFactory $reportItemFactory = null,
+        PresenterInterface $presenter, IOInterface $io)
     {
         $this->reportItemFactory = $reportItemFactory ?: new Html\ReportItemFactory();
+        $this->setIO($io);
+        $this->setPresenter($presenter);
     }
 
     public function beforeSuite(SuiteEvent $suite)
