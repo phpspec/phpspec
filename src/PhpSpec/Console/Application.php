@@ -4,21 +4,11 @@ namespace PhpSpec\Console;
 
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 
 use PhpSpec\ServiceContainer;
-use PhpSpec\Console;
-use PhpSpec\Locator;
-use PhpSpec\Loader;
-use PhpSpec\Wrapper;
-use PhpSpec\Listener;
-use PhpSpec\Formatter;
-use PhpSpec\Runner;
-use PhpSpec\CodeGenerator;
 use PhpSpec\Extension;
 
 use PhpSpec\ServiceContainer\Assembler;
