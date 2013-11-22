@@ -18,8 +18,7 @@ class HtmlFormatter extends BasicFormatter
         PresenterInterface $presenter, IOInterface $io)
     {
         $this->reportItemFactory = $reportItemFactory ?: new Html\ReportItemFactory();
-        $this->setIO($io);
-        $this->setPresenter($presenter);
+        parent::__construct($presenter, $io);
     }
 
     public function beforeSuite(SuiteEvent $suite)
