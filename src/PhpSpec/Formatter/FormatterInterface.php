@@ -10,7 +10,5 @@ use PhpSpec\Listener\StatisticsCollector;
 
 interface FormatterInterface extends EventSubscriberInterface
 {
-    public function setIO(IO $io);
-    public function setPresenter(Presenter $presenter);
     public function setStatisticsCollector(StatisticsCollector $stats);
 }
