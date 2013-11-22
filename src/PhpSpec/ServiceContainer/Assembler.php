@@ -46,10 +46,6 @@ class Assembler
                 $c->get('console.helpers')
             );
         });
-
-        $container->setShared('html.io', function($c) {
-            return new Formatter\Html\IO;
-        });
     }
 
     protected function setupConsole(ServiceContainer $container)
@@ -149,10 +145,6 @@ class Assembler
     {
         $container->setShared('formatter.presenter', function($c) {
             return new Formatter\Presenter\TaggedPresenter($c->get('formatter.presenter.differ'));
-        });
-
-        $container->setShared('formatter.html.presenter', function($c) {
-            return new Formatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
         });
 
         $container->setShared('formatter.presenter.differ', function($c) {
@@ -259,10 +251,9 @@ class Assembler
         });
         $container->set('formatter.formatters.html', function($c) {
             $io = new Formatter\Html\IO;
-            $presenter = new Formatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
             $template = new Formatter\Html\Template($io);
             $factory = new Formatter\Html\ReportItemFactory($template);
-
+            $presenter = new Formatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
             return new Formatter\HtmlFormatter($factory, $presenter, $io);
         });
     }
