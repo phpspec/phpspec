@@ -34,16 +34,6 @@ abstract class BasicFormatter implements FormatterInterface
         return array_combine($events, $events);
     }
 
-    protected function setIO(IO $io)
-    {
-        $this->io = $io;
-    }
-
-    protected function setPresenter(PresenterInterface $presenter)
-    {
-        $this->presenter = $presenter;
-    }
-
     public function setStatisticsCollector(StatisticsCollector $stats)
     {
         $this->stats = $stats;
