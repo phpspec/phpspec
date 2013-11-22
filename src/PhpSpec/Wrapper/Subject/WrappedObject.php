@@ -10,7 +10,6 @@ class WrappedObject
 {
     private $instance;
     private $presenter;
-    private $unwrapper;
     private $classname;
     private $arguments = array();
     private $isInstantiated = false;
@@ -19,6 +18,10 @@ class WrappedObject
     {
         $this->instance = $instance;
         $this->presenter = $presenter;
+        if (is_object($this->instance)) {
+            $this->classname = get_class($this->instance);
+            $this->isInstantiated = true;
+        }
     }
 
     public function beAnInstanceOf($classname, array $arguments = array())

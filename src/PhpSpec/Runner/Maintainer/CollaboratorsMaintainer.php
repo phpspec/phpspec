@@ -76,7 +76,7 @@ class CollaboratorsMaintainer implements MaintainerInterface
     private function getOrCreateCollaborator(CollaboratorManager $collaborators, $name)
     {
         if (!$collaborators->has($name)) {
-            $collaborator = new Collaborator($this->prophet->prophesize(), $this->unwrapper);
+            $collaborator = new Collaborator($this->prophet->prophesize());
             $collaborators->set($name, $collaborator);
         }
 

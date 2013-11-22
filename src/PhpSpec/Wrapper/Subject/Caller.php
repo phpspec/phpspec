@@ -2,24 +2,16 @@
 
 namespace PhpSpec\Wrapper\Subject;
 
+use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Loader\Node\ExampleNode;
-use PhpSpec\Runner\MatcherManager;
 
 use PhpSpec\Wrapper\Subject;
 use PhpSpec\Wrapper\Wrapper;
 use PhpSpec\Wrapper\Unwrapper;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Exception\Exception;
-use PhpSpec\Exception\Wrapper\SubjectException;
-use PhpSpec\Exception\Fracture\ClassNotFoundException;
-use PhpSpec\Exception\Fracture\MethodNotFoundException;
-use PhpSpec\Exception\Fracture\PropertyNotFoundException;
-
 use PhpSpec\Event\MethodCallEvent;
-use PhpSpec\Util\Instantiator;
 
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface as Dispatcher;
 
 use ReflectionClass;
 use ReflectionMethod;
@@ -31,20 +23,17 @@ class Caller
     private $wrappedObject;
     private $example;
     private $dispatcher;
-    private $presenter;
-    private $matchers;
     private $wrapper;
+    private $exceptionFactory;
 
-    public function __construct(WrappedObject $wrappedObject, ExampleNode $example,
-                                EventDispatcherInterface $dispatcher, PresenterInterface $presenter,
-                                MatcherManager $matchers, Wrapper $wrapper)
+    public function __construct(WrappedObject $wrappedObject, ExampleNode $example, Dispatcher $dispatcher,
+                                ExceptionFactory $exceptions, Wrapper $wrapper)
     {
-        $this->wrappedObject = $wrappedObject;
-        $this->example       = $example;
-        $this->dispatcher    = $dispatcher;
-        $this->presenter     = $presenter;
-        $this->matchers      = $matchers;
-        $this->wrapper       = $wrapper;
+        $this->wrappedObject    = $wrappedObject;
+        $this->example          = $example;
+        $this->dispatcher       = $dispatcher;
+        $this->wrapper          = $wrapper;
+        $this->exceptionFactory = $exceptions;
     }
     
     public function call($method, array $arguments = array())
@@ -111,9 +100,14 @@ class Caller
             throw $this->classNotFound();
         }
 
-        $instance = $this->instantiateWrappedObject();
-        $this->wrappedObject->setInstance($instance);
-        $this->wrappedObject->setInstantiated(true);
+        if (is_object($this->wrappedObject->getInstance())) {
+            $this->wrappedObject->setInstantiated(true);
+            $instance = $this->wrappedObject->getInstance();
+        } else {
+            $instance = $this->instantiateWrappedObject();
+            $this->wrappedObject->setInstance($instance);
+            $this->wrappedObject->setInstantiated(true);
+        }
 
         return $instance;
     }
@@ -210,51 +204,33 @@ class Caller
 
     private function classNotFound()
     {
-        return new ClassNotFoundException(sprintf(
-            'Class %s does not exist.', $this->presenter->presentString($this->wrappedObject->getClassName())
-        ), $this->wrappedObject->getClassName());
+        return $this->exceptionFactory->classNotFound($this->wrappedObject->getClassName());
     }
 
     private function methodNotFound($method, array $arguments = array())
     {
-        $instantiator = new Instantiator;
-        $wrappedObject = $instantiator->instantiate($this->wrappedObject->getClassName());
-        return new MethodNotFoundException(sprintf(
-            'Method %s not found.',
-            $this->presenter->presentString($this->wrappedObject->getClassName().'::'.$method)
-        ), $wrappedObject, $method, $arguments);
+        $className = $this->wrappedObject->getClassName();
+        return $this->exceptionFactory->methodNotFound($className, $method, $arguments);
     }
 
     private function propertyNotFound($property)
     {
-        return new PropertyNotFoundException(sprintf(
-            'Property %s not found.',
-            $this->presenter->presentString(get_class($this->getWrappedObject()).'::'.$property)
-        ), $this->getWrappedObject(), $property);
+        return $this->exceptionFactory->propertyNotFound($this->getWrappedObject(), $property);
     }
 
     private function callingMethodOnNonObject($method)
     {
-        return new SubjectException(sprintf(
-            'Call to a member function %s on a non-object.',
-            $this->presenter->presentString($method.'()')
-        ));
+        return $this->exceptionFactory->callingMethodOnNonObject($method);
     }
 
     private function settingPropertyOnNonObject($property)
     {
-        return new SubjectException(sprintf(
-            'Setting property %s on a non-object.',
-            $this->presenter->presentString($property)
-        ));
+        return $this->exceptionFactory->settingPropertyOnNonObject($property);
     }
 
     private function accessingPropertyOnNonObject($property)
     {
-        return new SubjectException(sprintf(
-                'Getting property %s from a non-object.',
-                $this->presenter->presentString($property)
-        ));
+        return $this->exceptionFactory->gettingPropertyOnNonObject($property);
     }
 
     private function lookingForConstants($property)
