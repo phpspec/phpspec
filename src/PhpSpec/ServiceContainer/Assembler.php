@@ -220,7 +220,7 @@ class Assembler
             try {
                 $formatter = $c->get('formatter.formatters.'.$formatterName);
             } catch (\InvalidArgumentException $e) {
-                throw new \RuntimeException(sprintf('Formatter not recongised: "%s"', $formatterName), 0, $e);
+                throw new \RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName), 0, $e);
             }
 
             $formatter->setStatisticsCollector($c->get('event_dispatcher.listeners.stats'));
