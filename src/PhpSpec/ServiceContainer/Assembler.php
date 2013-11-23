@@ -220,7 +220,7 @@ class Assembler
             try {
                 $formatter = $c->get('formatter.formatters.'.$formatterName);
             } catch (\InvalidArgumentException $e) {
-                throw new RuntimeException(sprintf('Formatter not recongised: "%s"', $formatterName));
+                throw new \RuntimeException(sprintf('Formatter not recongised: "%s"', $formatterName), 0, $e);
             }
 
             $formatter->setStatisticsCollector($c->get('event_dispatcher.listeners.stats'));
@@ -244,7 +244,7 @@ class Assembler
             if (class_exists('NyanCat\Scoreboard')) {
                 return new Formatter\NyanFormatter($c->get('formatter.presenter'), $c->get('console.io'));
             } else {
-                throw new RuntimeException(
+                throw new \RuntimeException(
                     'The Nyan Cat formatter requires whatthejeff/nyancat-scoreboard:~1.1'
                 );
             }
