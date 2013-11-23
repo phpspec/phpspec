@@ -243,11 +243,9 @@ class Assembler
         $container->set('formatter.formatters.nyan', function($c) {
             if (class_exists('NyanCat\Scoreboard')) {
                 return new Formatter\NyanFormatter($c->get('formatter.presenter'), $c->get('console.io'));
-            } else {
-                throw new \RuntimeException(
-                    'The Nyan Cat formatter requires whatthejeff/nyancat-scoreboard:~1.1'
-                );
             }
+
+            throw new \RuntimeException('The Nyan Cat formatter requires whatthejeff/nyancat-scoreboard:~1.1');
         });
         $container->set('formatter.formatters.html', function($c) {
             $io = new Formatter\Html\IO;
