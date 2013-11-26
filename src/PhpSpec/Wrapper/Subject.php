@@ -129,13 +129,11 @@ class Subject implements ArrayAccess, WrapperInterface
 
     private function makeSureWeHaveASubject()
     {
-        $subject = $this->subject;
-
         if (null === $this->subject && $this->wrappedObject->getClassname()) {
             $instantiator = new Instantiator;
-            $subject = $instantiator->instantiate($this->wrappedObject->getClassname());
+            return $instantiator->instantiate($this->wrappedObject->getClassname());
         }
 
-        return $subject;
+        return $this->subject;
     }
 }
