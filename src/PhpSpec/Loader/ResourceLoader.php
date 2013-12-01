@@ -38,14 +38,27 @@ class ResourceLoader
 
             $spec = new Node\SpecificationNode($resource->getSrcClassname(), $reflection, $resource);
             foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-                if (!preg_match('/^(it|its)[^a-zA-Z]/', $method->getName())) {
+                $specAnnotation = str_replace('_', ' ', $method->getName());
+
+                foreach (explode(PHP_EOL, $method->getDocComment()) as $docLine) {
+                    $docLine = trim($docLine);
+                    if (preg_match('/^\*\s*@((it|its)\s*.*)$/', $docLine, $m)) {
+                        $specAnnotation = $m[1];
+                        break(1);
+                    }
+                }
+
+                // it's wrong (save this for compatibility) 
+                // it1HelloWorldFunction will be approved 
+                if (!preg_match('/^(it|its)[^a-zA-Z]/', $specAnnotation)) {
                     continue;
                 }
+
                 if (null !== $line && !$this->lineIsInsideMethod($line, $method)) {
                     continue;
                 }
 
-                $example = new Node\ExampleNode(str_replace('_', ' ', $method->getName()), $method);
+                $example = new Node\ExampleNode($specAnnotation, $method);
 
                 if ($this->methodIsEmpty($method)) {
                     $example->markAsPending();
