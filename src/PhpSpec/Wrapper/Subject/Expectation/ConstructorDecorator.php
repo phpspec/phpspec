@@ -20,6 +20,10 @@ class ConstructorDecorator extends Decorator implements ExpectationInterface
 
     public function match($alias, $subject, array $arguments = array(), WrappedObject $wrappedObject = null)
     {
+        if ($alias === 'throw') {
+            $subject->beConstructedWith($arguments);
+        }
+
         try {
             $wrapped = $subject->getWrappedObject();
         } catch (ErrorException $e) {
