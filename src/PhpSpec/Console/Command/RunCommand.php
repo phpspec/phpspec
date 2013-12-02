@@ -40,9 +40,9 @@ The <info>%command.name%</info> command runs specifications:
 
   <info>php %command.full_name%</info>
 
-Will run all the specifications in the specs directory.
+Will run all the specifications in the spec directory.
 
-  <info>php %command.full_name% specs/ClassNameSpec.php</info>
+  <info>php %command.full_name% spec/ClassNameSpec.php</info>
 
 Will run only the ClassNameSpec.
 
@@ -52,12 +52,12 @@ to generate code with:
 
   <info>php %command.full_name% --no-code-generation</info>
 
-You can choose to stop of failure and not attempt to run the remaining
+You can choose to stop on failure and not attempt to run the remaining
 specs with:
 
   <info>php %command.full_name% --stop-on-failure</info>
 
-You can choose te output format with the format option e.g.:
+You can choose the output format with the format option e.g.:
 
   <info>php %command.full_name% --format=dot</info>
 

@@ -27,7 +27,7 @@ The <info>%command.name%</info> command creates a specification for a class:
 
   <info>php %command.full_name% ClassName</info>
 
-Will generate a specification ClassNameSpec in the specs directory.
+Will generate a specification ClassNameSpec in the spec directory.
 
   <info>php %command.full_name% Namespace/ClassName</info>
 
