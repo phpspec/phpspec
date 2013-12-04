@@ -210,7 +210,12 @@ class Caller
     private function methodNotFound($method, array $arguments = array())
     {
         $className = $this->wrappedObject->getClassName();
-        return $this->exceptionFactory->methodNotFound($className, $method, $arguments);
+
+        if (!method_exists($this->getWrappedObject(), $method)) {
+            return $this->exceptionFactory->methodNotFound($className, $method, $arguments);
+        }
+
+        return $this->exceptionFactory->methodNotVisible($className, $method, $arguments);
     }
 
     private function propertyNotFound($property)
