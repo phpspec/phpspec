@@ -7,6 +7,7 @@ use PhpSpec\Wrapper\Subject\Caller;
 use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
 use PhpSpec\Wrapper\Subject\Expectation;
 use PhpSpec\Wrapper\Subject\ExpectationFactory;
+use PhpSpec\Util\Instantiator;
 
 use ArrayAccess;
 
@@ -115,12 +116,24 @@ class Subject implements ArrayAccess, WrapperInterface
 
     private function callExpectation($method, array $arguments)
     {
-        $expectation = $this->expectationFactory->create($method, $this->subject, $arguments);
+        $subject = $this->makeSureWeHaveASubject();
+
+        $expectation = $this->expectationFactory->create($method, $subject, $arguments);
 
         if (0 === strpos($method, 'shouldNot')) {
             return $expectation->match(lcfirst(substr($method, 9)), $this, $arguments, $this->wrappedObject);
         }
 
         return $expectation->match(lcfirst(substr($method, 6)), $this, $arguments, $this->wrappedObject);
+    }
+
+    private function makeSureWeHaveASubject()
+    {
+        if (null === $this->subject && $this->wrappedObject->getClassname()) {
+            $instantiator = new Instantiator;
+            return $instantiator->instantiate($this->wrappedObject->getClassname());
+        }
+
+        return $this->subject;
     }
 }
