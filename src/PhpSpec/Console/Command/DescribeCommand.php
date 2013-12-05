@@ -1,11 +1,21 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Console\Command;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -31,7 +41,7 @@ Will generate a specification ClassNameSpec in the spec directory.
 
   <info>php %command.full_name% Namespace/ClassName</info>
 
-Will generate a namespaced specification Namespace\ClassName.
+Will generate a namespaced specification Namespace\ClassNameSpec.
 Note that / is used as the separator. To use \ it must be quoted:
 
   <info>php %command.full_name% "Namespace\ClassName"</info>
