@@ -24,6 +24,12 @@ class InstantiatorSpec extends ObjectBehavior
         $this->instantiate('spec\PhpSpec\Util\WithProperties')
             ->shouldBeAnInstanceOf('spec\PhpSpec\Util\WithProperties');
     }
+
+    function it_complains_if_class_does_not_exist()
+    {
+        $this->shouldThrow('PhpSpec\Exception\Fracture\ClassNotFoundException')
+            ->duringInstantiate('NonExistingClass');
+    }
 }
 
 class NoConstructor

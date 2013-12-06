@@ -2,6 +2,8 @@
 
 namespace PhpSpec\Util;
 
+use PhpSpec\Exception\Fracture\ClassNotFoundException;
+
 use ReflectionClass;
 use ReflectionProperty;
 
@@ -14,6 +16,10 @@ class Instantiator
 
     private function createSerializedObject($className)
     {
+        if (!class_exists($className)) {
+            throw new ClassNotFoundException("Class $className does not exist.", $className);
+        }
+
         $reflection = new ReflectionClass($className);
         $properties = $reflection->getProperties();
 
