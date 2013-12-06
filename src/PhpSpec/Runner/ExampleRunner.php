@@ -44,7 +44,7 @@ class ExampleRunner
 
         try {
             $this->executeExample(
-                $example->getSpecification()->getClassReflection()->newInstanceArgs(array()),
+                $example->getSpecification()->getClassReflection()->newInstanceArgs(),
                 $example
             );
 
