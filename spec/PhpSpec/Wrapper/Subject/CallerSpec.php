@@ -105,17 +105,17 @@ class CallerSpec extends ObjectBehavior
         $wrappedObject->getInstance()->willReturn($obj);
         $wrappedObject->getClassName()->willReturn('ExampleClass');
 
-        $exceptions->methodNotFound('ExampleClass', 'foo', array())
+        $exceptions->methodNotVisible('ExampleClass', 'privateMethod', array())
             ->willReturn(new \PhpSpec\Exception\Fracture\MethodNotVisibleException(
-                'Method "foo" not visible.',
+                'Method "privateMethod" not visible.',
                 $obj,
-                '"ExampleClass::foo"',
+                '"ExampleClass::privateMethod"',
                 array()
             ))
             ->shouldBeCalled();
 
         $this->shouldThrow('\PhpSpec\Exception\Fracture\MethodNotVisibleException')
-            ->duringCall('foo');
+            ->duringCall('privateMethod');
     }
 
     function it_delegates_throwing_property_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
