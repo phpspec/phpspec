@@ -202,9 +202,15 @@ class Application extends BaseApplication
             return $renderer;
         });
 
+        if(!empty($_SERVER['HOMEDRIVE']) && !empty($_SERVER['HOMEPATH'])) {
+            $home = $_SERVER['HOMEDRIVE'] . $_SERVER['HOMEPATH'];
+        } else {
+            $home = $_SERVER['HOME'];
+        }
+
         $container->setParam('code_generator.templates.paths', array(
             rtrim(getcwd(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
-            rtrim($_SERVER['HOME'], DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
+            rtrim($home, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
         ));
     }
 
