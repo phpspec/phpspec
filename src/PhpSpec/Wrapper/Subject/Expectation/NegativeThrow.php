@@ -21,7 +21,10 @@ class NegativeThrow extends Negative implements ThrowExpectation
             $this->subject->beAnInstanceOf($this->wrappedObject->getClassname(), $arguments);            
         }
 
-        return parent::match('throw', $this->subject->getWrappedObject(), $this->arguments)
+        $instantiator = new Instantiator;
+        $object = $instantiator->instantiate($this->wrappedObject->getClassname());
+
+        return parent::match('throw', $object, $this->arguments)
             ->during($method, $arguments);
     }
 
