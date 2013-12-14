@@ -38,11 +38,17 @@ class ExpectationFactory
 
     private function createPositive($name, $subject, array $arguments = array())
     {
+        if (strtolower($name) === 'throw') {
+            return $this->createDecoratedExpectation("PositiveThrow", $name, $subject, $arguments);
+        }
         return $this->createDecoratedExpectation("Positive", $name, $subject, $arguments);
     }
 
     private function createNegative($name, $subject, array $arguments = array())
     {
+        if (strtolower($name) === 'throw') {
+            return $this->createDecoratedExpectation("NegativeThrow", $name, $subject, $arguments);
+        }
         return $this->createDecoratedExpectation("Negative", $name, $subject, $arguments);
     }
 
@@ -50,6 +56,12 @@ class ExpectationFactory
     {
         $matcher = $this->findMatcher($name, $subject, $arguments);
         $expectation = "\\PhpSpec\\Wrapper\\Subject\\Expectation\\" . $expectation;
+
+        $expectation = new $expectation($matcher);
+
+        if ($expectation instanceof Expectation\ThrowExpectation) {
+            return $expectation;
+        }
         return $this->decoratedExpectation(new $expectation($matcher), $matcher);
     }
 
