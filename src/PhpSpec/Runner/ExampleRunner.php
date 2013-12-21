@@ -43,10 +43,20 @@ class ExampleRunner
         );
 
         try {
-            $this->executeExample(
-                $example->getSpecification()->getClassReflection()->newInstanceArgs(),
-                $example
-            );
+
+            if (version_compare(phpversion(), '5.3.3', '==')) {
+                // ref: https://github.com/phpspec/phpspec/pull/226
+                // php 5.3.3 does not like it if you give newInstanceArgs an empty array
+                $this->executeExample(
+                    $example->getSpecification()->getClassReflection()->newInstanceArgs(),
+                    $example
+                );
+            } else {
+                $this->executeExample(
+                    $example->getSpecification()->getClassReflection()->newInstanceArgs(array()),
+                    $example
+                );
+            }
 
             $status    = ExampleEvent::PASSED;
             $exception = null;

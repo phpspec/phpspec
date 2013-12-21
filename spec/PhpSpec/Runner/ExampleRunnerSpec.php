@@ -33,7 +33,7 @@ class ExampleRunnerSpec extends ObjectBehavior
         $example->getFunctionReflection()->willReturn($exampReflection);
         $example->getSpecification()->willReturn($specification);
         $specification->getClassReflection()->willReturn($specReflection);
-        $specReflection->newInstanceArgs()->willReturn($context);
+        $specReflection->newInstanceArgs(Argument::any())->willReturn($context);
 
         $exampReflection->getParameters()->willReturn(array());
         $exampReflection->invokeArgs($context, array())->shouldBeCalled();
@@ -51,7 +51,7 @@ class ExampleRunnerSpec extends ObjectBehavior
         $example->getSpecification()->willReturn($specification);
         $example->getFunctionReflection()->willReturn($exampReflection);
         $specification->getClassReflection()->willReturn($specReflection);
-        $specReflection->newInstanceArgs()->willReturn($context);
+        $specReflection->newInstanceArgs(Argument::any())->willReturn($context);
 
         $dispatcher->dispatch('beforeExample', Argument::any())->shouldBeCalled();
         $dispatcher->dispatch('afterExample',
@@ -71,7 +71,7 @@ class ExampleRunnerSpec extends ObjectBehavior
         $example->getFunctionReflection()->willReturn($exampReflection);
         $example->getSpecification()->willReturn($specification);
         $specification->getClassReflection()->willReturn($specReflection);
-        $specReflection->newInstanceArgs()->willReturn($context);
+        $specReflection->newInstanceArgs(Argument::any())->willReturn($context);
 
         $exampReflection->getParameters()->willReturn(array());
         $exampReflection->invokeArgs($context, array())
@@ -95,7 +95,7 @@ class ExampleRunnerSpec extends ObjectBehavior
         $example->getFunctionReflection()->willReturn($exampReflection);
         $example->getSpecification()->willReturn($specification);
         $specification->getClassReflection()->willReturn($specReflection);
-        $specReflection->newInstanceArgs()->willReturn($context);
+        $specReflection->newInstanceArgs(Argument::any())->willReturn($context);
 
         $exampReflection->getParameters()->willReturn(array());
         $exampReflection->invokeArgs($context, array())->willThrow('RuntimeException');
@@ -118,7 +118,7 @@ class ExampleRunnerSpec extends ObjectBehavior
         $example->getFunctionReflection()->willReturn($exampReflection);
         $example->getSpecification()->willReturn($specification);
         $specification->getClassReflection()->willReturn($specReflection);
-        $specReflection->newInstanceArgs()->willReturn($context);
+        $specReflection->newInstanceArgs(Argument::any())->willReturn($context);
 
         $exampReflection->getParameters()->willReturn(array());
         $exampReflection->invokeArgs(Argument::cetera())->willReturn(null);
