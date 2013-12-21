@@ -19,21 +19,22 @@ use ReflectionMethod;
 
 class ExampleRunnerSpec extends ObjectBehavior
 {
-    function let(EventDispatcherInterface $dispatcher, PresenterInterface $presenter)
+    function let(EventDispatcherInterface $dispatcher, PresenterInterface $presenter, ExampleNode $example, SpecificationNode $specification, ReflectionClass $specReflection,
+        ReflectionMethod $exampReflection, SpecificationInterface $context)
     {
         $this->beConstructedWith($dispatcher, $presenter);
+
+        $example->getSpecification()->willReturn($specification);
+        $example->getFunctionReflection()->willReturn($exampReflection);
+        $specification->getClassReflection()->willReturn($specReflection);
+        $specReflection->newInstance()->willReturn($context);
     }
 
     function it_executes_example_in_newly_created_context(
-        ExampleNode $example, SpecificationNode $specification, ReflectionClass $specReflection,
-        ReflectionMethod $exampReflection, SpecificationInterface $context
+        ExampleNode $example, ReflectionMethod $exampReflection, SpecificationInterface $context
     )
     {
         $example->isPending()->willReturn(false);
-        $example->getFunctionReflection()->willReturn($exampReflection);
-        $example->getSpecification()->willReturn($specification);
-        $specification->getClassReflection()->willReturn($specReflection);
-        $specReflection->newInstanceArgs()->willReturn($context);
 
         $exampReflection->getParameters()->willReturn(array());
         $exampReflection->invokeArgs($context, array())->shouldBeCalled();
@@ -43,15 +44,10 @@ class ExampleRunnerSpec extends ObjectBehavior
 
     function it_dispatches_ExampleEvent_with_pending_status_if_example_is_pending(
         EventDispatcherInterface $dispatcher,
-        ExampleNode $example, SpecificationNode $specification, ReflectionClass $specReflection,
-        SpecificationInterface $context, ReflectionMethod $exampReflection
+        ExampleNode $example, SpecificationInterface $context
     )
     {
         $example->isPending()->willReturn(true);
-        $example->getSpecification()->willReturn($specification);
-        $example->getFunctionReflection()->willReturn($exampReflection);
-        $specification->getClassReflection()->willReturn($specReflection);
-        $specReflection->newInstanceArgs()->willReturn($context);
 
         $dispatcher->dispatch('beforeExample', Argument::any())->shouldBeCalled();
         $dispatcher->dispatch('afterExample',
@@ -63,15 +59,10 @@ class ExampleRunnerSpec extends ObjectBehavior
 
     function it_dispatches_ExampleEvent_with_failed_status_if_matcher_throws_exception(
         EventDispatcherInterface $dispatcher,
-        ExampleNode $example, SpecificationNode $specification, ReflectionClass $specReflection,
-        ReflectionMethod $exampReflection, SpecificationInterface $context
+        ExampleNode $example, ReflectionMethod $exampReflection, SpecificationInterface $context
     )
     {
         $example->isPending()->willReturn(false);
-        $example->getFunctionReflection()->willReturn($exampReflection);
-        $example->getSpecification()->willReturn($specification);
-        $specification->getClassReflection()->willReturn($specReflection);
-        $specReflection->newInstanceArgs()->willReturn($context);
 
         $exampReflection->getParameters()->willReturn(array());
         $exampReflection->invokeArgs($context, array())
@@ -87,15 +78,10 @@ class ExampleRunnerSpec extends ObjectBehavior
 
     function it_dispatches_ExampleEvent_with_failed_status_if_example_throws_exception(
         EventDispatcherInterface $dispatcher,
-        ExampleNode $example, SpecificationNode $specification, ReflectionClass $specReflection,
-        ReflectionMethod $exampReflection, SpecificationInterface $context
+        ExampleNode $example, ReflectionMethod $exampReflection, SpecificationInterface $context
     )
     {
         $example->isPending()->willReturn(false);
-        $example->getFunctionReflection()->willReturn($exampReflection);
-        $example->getSpecification()->willReturn($specification);
-        $specification->getClassReflection()->willReturn($specReflection);
-        $specReflection->newInstanceArgs()->willReturn($context);
 
         $exampReflection->getParameters()->willReturn(array());
         $exampReflection->invokeArgs($context, array())->willThrow('RuntimeException');
@@ -109,16 +95,10 @@ class ExampleRunnerSpec extends ObjectBehavior
     }
 
     function it_runs_all_supported_maintainers_before_and_after_each_example(
-        ExampleNode $example, SpecificationNode $specification, ReflectionClass $specReflection,
-        $context, ReflectionMethod $exampReflection, MaintainerInterface $maintainer,
-        SpecificationInterface $context
+        ExampleNode $example, ReflectionMethod $exampReflection, MaintainerInterface $maintainer
     )
     {
         $example->isPending()->willReturn(false);
-        $example->getFunctionReflection()->willReturn($exampReflection);
-        $example->getSpecification()->willReturn($specification);
-        $specification->getClassReflection()->willReturn($specReflection);
-        $specReflection->newInstanceArgs()->willReturn($context);
 
         $exampReflection->getParameters()->willReturn(array());
         $exampReflection->invokeArgs(Argument::cetera())->willReturn(null);

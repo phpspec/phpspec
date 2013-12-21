@@ -24,8 +24,7 @@ class HtmlPresenterSpec extends ObjectBehavior
     function it_presents_the_code_around_where_exception_was_thrown(Exception $e)
     {
         $e->getCause()->willReturn(new \ReflectionClass($this));
-        $e->getTrace()->willReturn(array(array('file' => __FILE__, 'line' => __LINE__)));
         $this->presentException($e, true);
     }
-    
+
 }
