@@ -79,7 +79,7 @@ class ExampleRunner
 
         try {
             $this->executeExample(
-                $example->getSpecification()->getClassReflection()->newInstanceArgs(),
+                $example->getSpecification()->getClassReflection()->newInstance(),
                 $example
             );
 
