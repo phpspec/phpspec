@@ -37,21 +37,39 @@ class ResourceLoader
             }
 
             $spec = new Node\SpecificationNode($resource->getSrcClassname(), $reflection, $resource);
-            foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-                $specAnnotation = str_replace('_', ' ', $method->getName());
 
-                foreach (explode(PHP_EOL, $method->getDocComment()) as $docLine) {
-                    $docLine = trim($docLine);
-                    if (preg_match('/^\*\s*@((it|its)\s*.*)$/', $docLine, $m)) {
-                        $specAnnotation = $m[1];
-                        break(1);
+            foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+                $specAnnotation = null;
+
+                $methodDocComment = $method->getDocComment();
+
+                if (!empty($methodDocComment)) {
+                    foreach (preg_split('/\R[^*]*/', $methodDocComment) as $docLine) {
+                        if (
+                            0 !== strpos($docLine, '* @it ')
+                            && 0 !== strpos($docLine, '* @its ')
+                        ) {
+                            continue;
+                        }
+
+                        $specAnnotation = str_replace('* @', '', $docLine);
+                        break;
                     }
                 }
 
-                // it's wrong (save this for compatibility) 
-                // it1HelloWorldFunction will be approved 
-                if (!preg_match('/^(it|its)[^a-zA-Z]/', $specAnnotation)) {
-                    continue;
+
+
+                if (null === $specAnnotation) {
+                    $specAnnotation = $method->getName();
+
+                    if (
+                        0 !== strpos($specAnnotation, 'it_') 
+                        && 0 !== strpos($specAnnotation, 'its_')
+                    ) {
+                        continue;
+                    }
+
+                    $specAnnotation = str_replace('_', ' ', $specAnnotation);
                 }
 
                 if (null !== $line && !$this->lineIsInsideMethod($line, $method)) {
