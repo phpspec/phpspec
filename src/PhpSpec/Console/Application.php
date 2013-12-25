@@ -137,6 +137,20 @@ class Application extends BaseApplication
                 $c->get('code_generator')
             );
         });
+        $container->setShared('event_dispatcher.listeners.interface_not_found', function($c) {
+            return new Listener\InterfaceNotFoundListener(
+                $c->get('console.io'),
+                $c->get('locator.resource_manager'),
+                $c->get('code_generator')
+            );
+        });
+        $container->setShared('event_dispatcher.listeners.interface_not_implemented', function($c) {
+            return new Listener\InterfaceNotImplementedListener(
+                $c->get('console.io'),
+                $c->get('locator.resource_manager'),
+                $c->get('code_generator')
+            );
+        });
         $container->setShared('event_dispatcher.listeners.method_not_found', function($c) {
             return new Listener\MethodNotFoundListener(
                 $c->get('console.io'),
@@ -174,6 +188,17 @@ class Application extends BaseApplication
             return new CodeGenerator\Generator\ClassGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates')
+            );
+        });
+        $container->set('code_generator.generators.interface', function($c) {
+            return new CodeGenerator\Generator\InterfaceGenerator(
+                $c->get('console.io'),
+                $c->get('code_generator.templates')
+            );
+        });
+        $container->set('code_generator.generators.implementation', function($c) {
+            return new CodeGenerator\Generator\InterfaceImplementationGenerator(
+                $c->get('console.io')
             );
         });
         $container->set('code_generator.generators.method', function($c) {

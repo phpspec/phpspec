@@ -4,24 +4,24 @@ namespace PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\Locator\ResourceInterface;
 
-class ClassGenerator extends FileGenerator
+class InterfaceGenerator extends FileGenerator
 {
     public function supports(ResourceInterface $resource, $generation, array $data)
     {
-        return 'class' === $generation;
+        return 'interface' === $generation;
     }
 
     protected function getGenerationOutputMessage(ResourceInterface $resource)
     {
         return sprintf(
-            "<info>Class <value>%s</value> created in <value>%s</value>.</info>\n",
+            "<info>Interface <value>%s</value> created in <value>%s</value>.</info>\n",
             $resource->getSrcClassname(), $resource->getSrcFilename()
         );
     }
 
     protected function getContent(array $values)
     {
-        return $this->templates->render('class', $values);
+        return $this->templates->render('interface', $values);
     }
 
     protected function getTemplate()
@@ -31,6 +31,7 @@ class ClassGenerator extends FileGenerator
 }
 __halt_compiler();<?php%namespace_block%
 
-class %name%
+interface %name%
 {
 }
+
