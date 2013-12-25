@@ -71,6 +71,7 @@ class CallerSpec extends ObjectBehavior
                 '"Foo"'
             ))
             ->shouldBeCalled();
+
         $this->shouldThrow('\PhpSpec\Exception\Fracture\ClassNotFoundException')
             ->duringGetWrappedObject();
     }
@@ -91,8 +92,30 @@ class CallerSpec extends ObjectBehavior
                 array()
             ))
             ->shouldBeCalled();
+
         $this->shouldThrow('\PhpSpec\Exception\Fracture\MethodNotFoundException')
             ->duringCall('foo');
+    }
+
+    function it_delegates_throwing_method_not_visible_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
+    {
+        $obj = new ExampleClass;
+
+        $wrappedObject->isInstantiated()->willReturn(true);
+        $wrappedObject->getInstance()->willReturn($obj);
+        $wrappedObject->getClassName()->willReturn('ExampleClass');
+
+        $exceptions->methodNotVisible('ExampleClass', 'privateMethod', array())
+            ->willReturn(new \PhpSpec\Exception\Fracture\MethodNotVisibleException(
+                'Method "privateMethod" not visible.',
+                $obj,
+                '"ExampleClass::privateMethod"',
+                array()
+            ))
+            ->shouldBeCalled();
+
+        $this->shouldThrow('\PhpSpec\Exception\Fracture\MethodNotVisibleException')
+            ->duringCall('privateMethod');
     }
 
     function it_delegates_throwing_property_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
@@ -109,6 +132,7 @@ class CallerSpec extends ObjectBehavior
                 'nonExistentProperty'
             ))
             ->shouldBeCalled();
+
         $this->shouldThrow('\PhpSpec\Exception\Fracture\PropertyNotFoundException')
             ->duringSet('nonExistentProperty', 'any value');
     }
@@ -120,6 +144,7 @@ class CallerSpec extends ObjectBehavior
                 'Call to a member function "foo()" on a non-object.'
             ))
             ->shouldBeCalled();
+
         $this->shouldThrow('\PhpSpec\Exception\Wrapper\SubjectException')
             ->duringCall('foo');
     }
@@ -142,7 +167,13 @@ class CallerSpec extends ObjectBehavior
                 'Getting property "foo" on a non-object.'
             ))
             ->shouldBeCalled();
+
         $this->shouldThrow('\PhpSpec\Exception\Wrapper\SubjectException')
             ->duringGet('foo');
     }
+}
+
+class ExampleClass
+{
+    private function privateMethod(){}
 }

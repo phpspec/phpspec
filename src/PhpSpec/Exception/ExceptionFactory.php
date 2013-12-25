@@ -26,6 +26,17 @@ class ExceptionFactory
         );
     }
 
+    public function methodNotVisible($classname, $method, array $arguments = array())
+    {
+        $instantiator = new Instantiator();
+        $subject = $instantiator->instantiate($classname);
+        $message = sprintf('Method %s not visible.', $this->presenter->presentString($classname . '::' . $method));
+
+        return new Fracture\MethodNotVisibleException(
+            $message, $subject, $method, $arguments
+        );
+    }
+
     public function classNotFound($classname)
     {
         $message = sprintf('Class %s does not exist.', $this->presenter->presentString($classname));
