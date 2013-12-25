@@ -62,7 +62,7 @@ class ExpectationFactory
         if ($expectation instanceof Expectation\ThrowExpectation) {
             return $expectation;
         }
-        return $this->decoratedExpectation(new $expectation($matcher), $matcher);
+        return $this->decoratedExpectation($expectation, $matcher);
     }
 
     private function findMatcher($name, $subject, array $arguments = array())
