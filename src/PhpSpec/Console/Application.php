@@ -78,7 +78,7 @@ class Application extends BaseApplication
 
     protected function setupContainer(ServiceContainer $container)
     {
-        $this->setupIo($container);
+        $this->setupIO($container);
         $this->setupConsole($container);
         $this->setupEventDispatcher($container);
         $this->setupGenerators($container);
