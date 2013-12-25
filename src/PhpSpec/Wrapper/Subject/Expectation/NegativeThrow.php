@@ -3,9 +3,21 @@
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Exception\Example\MatcherException;
+use PhpSpec\Matcher\MatcherInterface;
+use PhpSpec\Util\Instantiator;
 
-class NegativeThrow extends Negative implements ThrowExpectation
+class NegativeThrow implements ThrowExpectation
 {
+    private $matcher;
+    private $subject;
+    private $arguments;
+    private $wrappedObject;
+
+    public function __construct(MatcherInterface $matcher)
+    {
+        $this->matcher = $matcher;
+    }
+
     public function match($alias, $subject, array $arguments = array(), $wrappedObject = null)
     {
         $this->subject = $subject;
@@ -18,13 +30,22 @@ class NegativeThrow extends Negative implements ThrowExpectation
     public function during($method, array $arguments = array())
     {
         if ($method === '__construct') {
-            $this->subject->beAnInstanceOf($this->wrappedObject->getClassname(), $arguments);            
+            $this->subject->beAnInstanceOf($this->wrappedObject->getClassname(), $arguments);
+            $instantiator = new Instantiator;
+            $object = $instantiator->instantiate($this->wrappedObject->getClassname());
+        } else {
+            $class = $this->wrappedObject->getClassname();
+            $constructionArguments = $this->wrappedObject->getArguments();
+            $reflection = new \ReflectionClass($class);
+
+            if (!empty($constructionArguments)) {
+                $object = $reflection->newInstanceArgs($constructionArguments);
+            } else {
+                $object = $reflection->newInstance();
+            }
         }
 
-        $instantiator = new Instantiator;
-        $object = $instantiator->instantiate($this->wrappedObject->getClassname());
-
-        return parent::match('throw', $object, $this->arguments)
+        return $this->matcher->negativeMatch('throw', $object, $this->arguments)
             ->during($method, $arguments);
     }
 
