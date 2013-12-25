@@ -249,7 +249,7 @@ class Application extends BaseApplication
 
             foreach ($suites as $name => $suite) {
                 $suite      = is_array($suite) ? $suite : array('namespace' => $suite);
-                $srcNS      = $suite['namespace'];
+                $srcNS      = isset($suite['namespace']) ? $suite['namespace'] : '';
                 $specPrefix = isset($suite['spec_prefix']) ? $suite['spec_prefix'] : 'spec';
                 $srcPath    = isset($suite['src_path']) ? $suite['src_path'] : 'src';
                 $specPath   = isset($suite['spec_path']) ? $suite['spec_path'] : '.';
