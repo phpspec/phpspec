@@ -149,21 +149,11 @@ class ThrowMatcher implements MatcherInterface
             function ($method, $arguments) use($check, $subject, $exception, $unwrapper) {
                 $arguments = $unwrapper->unwrapAll($arguments);
 
-                if (preg_match('/^during(.+)$/', $method, $matches)) {
-                    $callable = lcfirst($matches[1]);
-                } elseif (isset($arguments[0])) {
-                    if (strpos($method, 'during') === false) {
-                        throw new MatcherException('Incorrect usage of matcher Throw, either prefix the method with "during" and capitalize the first character of the method or use ->during(\'callable\', array(arguments)).' .PHP_EOL. 'E.g.'.PHP_EOL.'->during' . ucfirst($method) . '(arguments)'.PHP_EOL.'or'.PHP_EOL.'->during(\'' . $method . '\', array(arguments))');
-                    }
-                    $callable  = $arguments[0];
-                    $arguments = isset($arguments[1]) ? $arguments[1] : array();
-                } else {
-                    throw new MatcherException('Provide callable to be checked for throwing.');
-                }
+                $methodName  = $arguments[0];
+                $arguments = isset($arguments[1]) ? $arguments[1] : array();
+                $callable = array($subject, $methodName);
 
-                $callable = is_string($callable) ? array($subject, $callable) : $callable;
-                
-                list($class, $methodName) = $callable;
+                list($class, $methodName) = array($subject, $methodName);
                 if (!method_exists($class, $methodName) && !method_exists($class, '__call')) {
                     throw new MethodNotFoundException(
                         sprintf('Method %s::%s not found.', get_class($class), $methodName), 
