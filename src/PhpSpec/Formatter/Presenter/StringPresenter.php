@@ -179,13 +179,11 @@ class StringPresenter implements PresenterInterface
 
             if (isset($call['class'])) {
                 $text .= $this->presentExceptionTraceMethod(
-                    $call['class'], $call['type'], $call['function'], $call['args']
+                    $call['class'], $call['type'], $call['function'], isset($call['args']) ? $call['args'] : array()
                 );
             } elseif (isset($call['function'])) {
-                $args = array_map(array($this, 'presentValue'), $call['args']);
-
                 $text .= $this->presentExceptionTraceFunction(
-                    $call['function'], $call['args']
+                    $call['function'], isset($call['args']) ? $call['args'] : array()
                 );
             }
         }
