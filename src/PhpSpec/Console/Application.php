@@ -284,6 +284,9 @@ class Application extends BaseApplication
                 case 'pretty':
                     $formatter = new Formatter\PrettyFormatter;
                     break;
+                case 'junit':
+                    $formatter = new Formatter\JunitFormatter;
+                    break;
                 case 'dot':
                     $formatter = new Formatter\DotFormatter;
                     break;
