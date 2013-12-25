@@ -95,9 +95,19 @@ class ExampleRunner
 
         // execute example
         $reflection = $example->getFunctionReflection();
-        $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
 
-        // run maintainers teardown
+        try {
+            $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
+        } catch (\Exception $e) {
+            $this->runMaintainersTeardown($maintainers, $example, $context, $matchers, $collaborators);
+            throw $e;
+        }
+
+        $this->runMaintainersTeardown($maintainers, $example, $context, $matchers, $collaborators);
+    }
+
+    private function runMaintainersTeardown($maintainers, $example, $context, $matchers, $collaborators)
+    {
         foreach (array_reverse($maintainers) as $maintainer) {
             $maintainer->teardown($example, $context, $matchers, $collaborators);
         }
