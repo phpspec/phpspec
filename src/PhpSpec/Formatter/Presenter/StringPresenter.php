@@ -90,18 +90,18 @@ class StringPresenter implements PresenterInterface
 
         if ($exception instanceof NotEqualException) {
             if ($diff = $this->presentExceptionDifference($exception)) {
-                return $presentation."\n".$diff;
+                $presentation .= "\n".$diff;
             }
         }
 
         if ($exception instanceof PhpSpecException && !$exception instanceof ErrorException) {
             list($file, $line) = $this->getExceptionExamplePosition($exception);
 
-            return $presentation."\n".$this->presentFileCode($file, $line);
+            $presentation .= "\n".$this->presentFileCode($file, $line);
         }
 
         if (trim($trace = $this->presentExceptionStackTrace($exception))) {
-            return $presentation."\n".$trace;
+            $presentation .= "\n".$trace;
         }
 
         return $presentation;
