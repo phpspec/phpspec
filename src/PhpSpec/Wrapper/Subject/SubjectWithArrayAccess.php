@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Wrapper\Unwrapper;
@@ -11,12 +22,30 @@ use PhpSpec\Exception\Wrapper\SubjectException;
 use PhpSpec\Exception\Fracture\InterfaceNotImplementedException;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
+/**
+ * Class SubjectWithArrayAccess
+ * @package PhpSpec\Wrapper\Subject
+ */
 class SubjectWithArrayAccess
 {
+    /**
+     * @var Caller
+     */
     private $caller;
+    /**
+     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     */
     private $presenter;
+    /**
+     * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+     */
     private $dispatcher;
 
+    /**
+     * @param Caller $caller
+     * @param PresenterInterface $presenter
+     * @param EventDispatcherInterface $dispatcher
+     */
     public function __construct(Caller $caller, PresenterInterface $presenter,
         EventDispatcherInterface $dispatcher)
     {
@@ -25,6 +54,10 @@ class SubjectWithArrayAccess
         $this->dispatcher = $dispatcher;
     }
 
+    /**
+     * @param $key
+     * @return bool
+     */
     public function offsetExists($key)
     {
         $unwrapper = new Unwrapper;
@@ -36,6 +69,10 @@ class SubjectWithArrayAccess
         return isset($subject[$key]);
     }
 
+    /**
+     * @param $key
+     * @return mixed
+     */
     public function offsetGet($key)
     {
         $unwrapper = new Unwrapper;
@@ -47,6 +84,10 @@ class SubjectWithArrayAccess
         return $subject[$key];
     }
 
+    /**
+     * @param $key
+     * @param $value
+     */
     public function offsetSet($key, $value)
     {
         $unwrapper = new Unwrapper;
@@ -59,6 +100,9 @@ class SubjectWithArrayAccess
         $subject[$key] = $value;
     }
 
+    /**
+     * @param $key
+     */
     public function offsetUnset($key)
     {
         $unwrapper = new Unwrapper;
@@ -70,6 +114,11 @@ class SubjectWithArrayAccess
         unset($subject[$key]);
     }
 
+    /**
+     * @param $subject
+     * @throws \PhpSpec\Exception\Wrapper\SubjectException
+     * @throws \PhpSpec\Exception\Fracture\InterfaceNotImplementedException
+     */
     private function checkIfSubjectImplementsArrayAccess($subject)
     {
         if (is_object($subject) && !($subject instanceof \ArrayAccess)) {
@@ -79,6 +128,9 @@ class SubjectWithArrayAccess
         }
     }
 
+    /**
+     * @return InterfaceNotImplementedException
+     */
     private function interfaceNotImplemented()
     {
         return new InterfaceNotImplementedException(
@@ -91,6 +143,10 @@ class SubjectWithArrayAccess
         );
     }
 
+    /**
+     * @param $subject
+     * @return SubjectException
+     */
     private function cantUseAsArray($subject)
     {
         return new SubjectException(sprintf(

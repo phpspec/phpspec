@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Loader;
 
 use PhpSpec\Locator\ResourceManager;
@@ -7,15 +18,30 @@ use PhpSpec\Locator\ResourceManager;
 use ReflectionClass;
 use ReflectionMethod;
 
+/**
+ * Class ResourceLoader
+ * @package PhpSpec\Loader
+ */
 class ResourceLoader
 {
+    /**
+     * @var \PhpSpec\Locator\ResourceManager
+     */
     private $manager;
 
+    /**
+     * @param ResourceManager $manager
+     */
     public function __construct(ResourceManager $manager)
     {
         $this->manager = $manager;
     }
 
+    /**
+     * @param $locator
+     * @param null $line
+     * @return Suite
+     */
     public function load($locator, $line = null)
     {
         $suite = new Suite;
@@ -60,6 +86,11 @@ class ResourceLoader
         return $suite;
     }
 
+    /**
+     * @param $line
+     * @param ReflectionMethod $method
+     * @return bool
+     */
     private function lineIsInsideMethod($line, ReflectionMethod $method)
     {
         $line = intval($line);
@@ -67,6 +98,10 @@ class ResourceLoader
         return $line >= $method->getStartLine() && $line <= $method->getEndLine();
     }
 
+    /**
+     * @param ReflectionMethod $method
+     * @return bool
+     */
     private function methodIsEmpty(ReflectionMethod $method)
     {
         $filename = $method->getFileName();

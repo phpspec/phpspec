@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Formatter;
 
 use PhpSpec\Event\ExampleEvent;
@@ -7,21 +18,40 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 
+/**
+ * Class HtmlFormatter
+ * @package PhpSpec\Formatter
+ */
 class HtmlFormatter extends BasicFormatter
 {
+    /**
+     * @var Html\ReportItemFactory
+     */
     private $reportItemFactory;
+    /**
+     * @var int
+     */
     private $index = 1;
 
+    /**
+     * @param Html\ReportItemFactory $reportItemFactory
+     */
     public function __construct(Html\ReportItemFactory $reportItemFactory = null)
     {
         $this->reportItemFactory = $reportItemFactory ?: new Html\ReportItemFactory();
     }
 
+    /**
+     * @param SuiteEvent $suite
+     */
     public function beforeSuite(SuiteEvent $suite)
     {
         include __DIR__ . "/Html/Template/ReportHeader.html";
     }
 
+    /**
+     * @param SpecificationEvent $specification
+     */
     public function beforeSpecification(SpecificationEvent $specification)
     {
         $index = $this->index++;
@@ -29,11 +59,17 @@ class HtmlFormatter extends BasicFormatter
         include __DIR__ . "/Html/Template/ReportSpecificationStarts.html";
     }
 
+    /**
+     * @param SpecificationEvent $specification
+     */
     public function afterSpecification(SpecificationEvent $specification)
     {
         include __DIR__ . "/Html/Template/ReportSpecificationEnds.html";
     }
 
+    /**
+     * @param ExampleEvent $event
+     */
     public function afterExample(ExampleEvent $event)
     {
         $reportLine = $this->reportItemFactory->create($event, $this->getPresenter());
@@ -41,6 +77,9 @@ class HtmlFormatter extends BasicFormatter
         $this->getIO()->write(PHP_EOL);
     }
 
+    /**
+     * @param SuiteEvent $suite
+     */
     public function afterSuite(SuiteEvent $suite)
     {
         include __DIR__ . "/Html/Template/ReportSummary.html";

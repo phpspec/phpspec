@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Locator\PSR0;
 
 use PhpSpec\Locator\ResourceLocatorInterface;
@@ -7,16 +18,48 @@ use PhpSpec\Util\Filesystem;
 
 use InvalidArgumentException;
 
+/**
+ * Class PSR0Locator
+ * @package PhpSpec\Locator\PSR0
+ */
 class PSR0Locator implements ResourceLocatorInterface
 {
+    /**
+     * @var string
+     */
     private $srcPath;
+    /**
+     * @var string
+     */
     private $specPath;
+    /**
+     * @var string
+     */
     private $srcNamespace;
+    /**
+     * @var string
+     */
     private $specNamespace;
+    /**
+     * @var string
+     */
     private $fullSrcPath;
+    /**
+     * @var string
+     */
     private $fullSpecPath;
+    /**
+     * @var \PhpSpec\Util\Filesystem
+     */
     private $filesystem;
 
+    /**
+     * @param string $srcNamespace
+     * @param string $specNamespacePrefix
+     * @param string $srcPath
+     * @param string $specPath
+     * @param Filesystem $filesystem
+     */
     public function __construct($srcNamespace = '', $specNamespacePrefix = 'spec',
                                 $srcPath = 'src', $specPath = '.', Filesystem $filesystem = null)
     {
@@ -45,31 +88,50 @@ class PSR0Locator implements ResourceLocatorInterface
         }
     }
 
+    /**
+     * @return string
+     */
     public function getFullSrcPath()
     {
         return $this->fullSrcPath;
     }
 
+    /**
+     * @return string
+     */
     public function getFullSpecPath()
     {
         return $this->fullSpecPath;
     }
 
+    /**
+     * @return string
+     */
     public function getSrcNamespace()
     {
         return $this->srcNamespace;
     }
 
+    /**
+     * @return string
+     */
     public function getSpecNamespace()
     {
         return $this->specNamespace;
     }
 
+    /**
+     * @return array
+     */
     public function getAllResources()
     {
         return $this->findSpecResources($this->fullSpecPath);
     }
 
+    /**
+     * @param $query
+     * @return bool
+     */
     public function supportsQuery($query)
     {
         $sepr = DIRECTORY_SEPARATOR;
@@ -84,6 +146,10 @@ class PSR0Locator implements ResourceLocatorInterface
         ;
     }
 
+    /**
+     * @param $query
+     * @return array
+     */
     public function findResources($query)
     {
         $sepr = DIRECTORY_SEPARATOR;
@@ -114,6 +180,10 @@ class PSR0Locator implements ResourceLocatorInterface
         return array();
     }
 
+    /**
+     * @param $classname
+     * @return bool
+     */
     public function supportsClass($classname)
     {
         $classname = str_replace('/', '\\', $classname);
@@ -124,6 +194,10 @@ class PSR0Locator implements ResourceLocatorInterface
         ;
     }
 
+    /**
+     * @param $classname
+     * @return null|PSR0Resource
+     */
     public function createResource($classname)
     {
         $classname = str_replace('/', '\\', $classname);
@@ -143,11 +217,18 @@ class PSR0Locator implements ResourceLocatorInterface
         return null;
     }
 
+    /**
+     * @return int
+     */
     public function getPriority()
     {
         return 0;
     }
 
+    /**
+     * @param $path
+     * @return array
+     */
     protected function findSpecResources($path)
     {
         if (!$this->filesystem->pathExists($path)) {
@@ -166,6 +247,10 @@ class PSR0Locator implements ResourceLocatorInterface
         return $resources;
     }
 
+    /**
+     * @param $path
+     * @return PSR0Resource
+     */
     private function createResourceFromSpecFile($path)
     {
         // cut "Spec.php" from the end

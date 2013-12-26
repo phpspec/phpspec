@@ -1,13 +1,32 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Console;
 
 use Symfony\Component\Console\Output\Output;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 
+/**
+ * Class Formatter is responsible for configuring the console output formatting
+ * style
+ */
 class Formatter extends OutputFormatter
 {
+    /**
+     * @param null $decorated
+     * @param array $styles
+     */
     public function __construct($decorated = null, array $styles = array())
     {
         parent::__construct($decorated, $styles);

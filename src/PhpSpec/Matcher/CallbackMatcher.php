@@ -1,17 +1,46 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Matcher;
 
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 
 use PhpSpec\Exception\Example\FailureException;
 
+/**
+ * Class CallbackMatcher
+ * @package PhpSpec\Matcher
+ */
 class CallbackMatcher extends BasicMatcher
 {
+    /**
+     * @var
+     */
     private $name;
+    /**
+     * @var
+     */
     private $callback;
+    /**
+     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     */
     private $presenter;
 
+    /**
+     * @param $name
+     * @param $callback
+     * @param PresenterInterface $presenter
+     */
     public function __construct($name, $callback, PresenterInterface $presenter)
     {
         $this->name      = $name;
@@ -19,11 +48,22 @@ class CallbackMatcher extends BasicMatcher
         $this->presenter = $presenter;
     }
 
+    /**
+     * @param string $name
+     * @param mixed $subject
+     * @param array $arguments
+     * @return bool
+     */
     public function supports($name, $subject, array $arguments)
     {
         return $name === $this->name;
     }
 
+    /**
+     * @param $subject
+     * @param array $arguments
+     * @return bool
+     */
     protected function matches($subject, array $arguments)
     {
         array_unshift($arguments, $subject);
@@ -31,6 +71,12 @@ class CallbackMatcher extends BasicMatcher
         return (Boolean) call_user_func_array($this->callback, $arguments);
     }
 
+    /**
+     * @param $name
+     * @param $subject
+     * @param array $arguments
+     * @return FailureException
+     */
     protected function getFailureException($name, $subject, array $arguments)
     {
         return new FailureException(sprintf(
@@ -41,6 +87,12 @@ class CallbackMatcher extends BasicMatcher
         ));
     }
 
+    /**
+     * @param $name
+     * @param $subject
+     * @param array $arguments
+     * @return FailureException
+     */
     protected function getNegativeFailureException($name, $subject, array $arguments)
     {
         return new FailureException(sprintf(

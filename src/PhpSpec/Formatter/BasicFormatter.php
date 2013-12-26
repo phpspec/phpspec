@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Formatter;
 
 use PhpSpec\IO\IOInterface as IO;
@@ -11,12 +22,28 @@ use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\PendingException;
 
+/**
+ * Class BasicFormatter
+ * @package PhpSpec\Formatter
+ */
 abstract class BasicFormatter implements FormatterInterface
 {
+    /**
+     * @var
+     */
     private $io;
+    /**
+     * @var
+     */
     private $presenter;
+    /**
+     * @var
+     */
     private $stats;
 
+    /**
+     * @return array
+     */
     public static function getSubscribedEvents()
     {
         $events = array(
@@ -28,36 +55,57 @@ abstract class BasicFormatter implements FormatterInterface
         return array_combine($events, $events);
     }
 
+    /**
+     * @param IO $io
+     */
     public function setIO(IO $io)
     {
         $this->io = $io;
     }
 
+    /**
+     * @param PresenterInterface $presenter
+     */
     public function setPresenter(PresenterInterface $presenter)
     {
         $this->presenter = $presenter;
     }
 
+    /**
+     * @param StatisticsCollector $stats
+     */
     public function setStatisticsCollector(StatisticsCollector $stats)
     {
         $this->stats = $stats;
     }
 
+    /**
+     * @return mixed
+     */
     protected function getIO()
     {
         return $this->io;
     }
 
+    /**
+     * @return mixed
+     */
     protected function getPresenter()
     {
         return $this->presenter;
     }
 
+    /**
+     * @return mixed
+     */
     protected function getStatisticsCollector()
     {
         return $this->stats;
     }
 
+    /**
+     * @param ExampleEvent $event
+     */
     protected function printException(ExampleEvent $event)
     {
         if (null === $exception = $event->getException()) {
@@ -97,26 +145,44 @@ abstract class BasicFormatter implements FormatterInterface
         $this->io->writeln();
     }
 
+    /**
+     * @param SuiteEvent $event
+     */
     public function beforeSuite(SuiteEvent $event)
     {
     }
 
+    /**
+     * @param SuiteEvent $event
+     */
     public function afterSuite(SuiteEvent $event)
     {
     }
 
+    /**
+     * @param ExampleEvent $event
+     */
     public function beforeExample(ExampleEvent $event)
     {
     }
 
+    /**
+     * @param ExampleEvent $event
+     */
     public function afterExample(ExampleEvent $event)
     {
     }
 
+    /**
+     * @param SpecificationEvent $event
+     */
     public function beforeSpecification(SpecificationEvent $event)
     {
     }
 
+    /**
+     * @param SpecificationEvent $event
+     */
     public function afterSpecification(SpecificationEvent $event)
     {
     }

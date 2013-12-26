@@ -1,13 +1,34 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Locator;
 
 use RuntimeException;
 
+/**
+ * Class ResourceManager
+ * @package PhpSpec\Locator
+ */
 class ResourceManager
 {
+    /**
+     * @var array
+     */
     private $locators = array();
 
+    /**
+     * @param ResourceLocatorInterface $locator
+     */
     public function registerLocator(ResourceLocatorInterface $locator)
     {
         $this->locators[] = $locator;
@@ -17,6 +38,10 @@ class ResourceManager
         });
     }
 
+    /**
+     * @param $query
+     * @return array
+     */
     public function locateResources($query)
     {
         $resources = array();
@@ -36,6 +61,11 @@ class ResourceManager
         return array_values($resources);
     }
 
+    /**
+     * @param $classname
+     * @return mixed
+     * @throws \RuntimeException
+     */
     public function createResource($classname)
     {
         foreach ($this->locators as $locator) {

@@ -1,61 +1,50 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\Console\IO;
-use PhpSpec\CodeGenerator\TemplateRenderer;
-use PhpSpec\Util\Filesystem;
 use PhpSpec\Locator\ResourceInterface;
 
-class ClassGenerator implements GeneratorInterface
+/**
+ * The Class Generator is responsible for generating the classes from a resource
+ * in the appropriate folder using the template provided
+ */
+class ClassGenerator extends PromptingGenerator implements GeneratorInterface
 {
-    private $io;
-    private $templates;
-    private $filesystem;
-
-    public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null)
-    {
-        $this->io         = $io;
-        $this->templates  = $templates;
-        $this->filesystem = $filesystem ?: new Filesystem;
-    }
-
+    /**
+     * @param ResourceInterface $resource
+     * @param string $generation
+     * @param array $data
+     * @return bool
+     */
     public function supports(ResourceInterface $resource, $generation, array $data)
     {
         return 'class' === $generation;
     }
 
-    public function generate(ResourceInterface $resource, array $data = array())
-    {
-        $filepath = $resource->getSrcFilename();
-        if ($this->filesystem->pathExists($filepath)) {
-            $message = sprintf('File "%s" already exists. Overwrite?', basename($filepath));
-            if (!$this->io->askConfirmation($message, false)) {
-                return;
-            }
-
-            $this->io->writeln();
-        }
-
-        $path = dirname($filepath);
-        if (!$this->filesystem->isDirectory($path)) {
-            $this->filesystem->makeDirectory($path);
-        }
-
-        $content = $this->renderTemplate($resource, $filepath);
-
-        $this->filesystem->putFileContents($filepath, $content);
-        $this->io->writeln(sprintf(
-            "<info>Class <value>%s</value> created in <value>%s</value>.</info>\n",
-            $resource->getSrcClassname(), $filepath
-        ));
-    }
-
+    /**
+     * @return int
+     */
     public function getPriority()
     {
         return 0;
     }
 
+    /**
+     * @param ResourceInterface $resource
+     * @param $filepath
+     * @return mixed
+     */
     protected function renderTemplate(ResourceInterface $resource, $filepath)
     {
         $values = array(
@@ -67,8 +56,8 @@ class ClassGenerator implements GeneratorInterface
                                 : '',
         );
 
-        if (!$content = $this->templates->render('class', $values)) {
-            $content = $this->templates->renderString(
+        if (!$content = $this->getTemplateRenderer()->render('class', $values)) {
+            $content = $this->getTemplateRenderer()->renderString(
                 $this->getTemplate(), $values
             );
         }
@@ -76,9 +65,34 @@ class ClassGenerator implements GeneratorInterface
         return $content;
     }
 
+    /**
+     * @return string
+     */
     protected function getTemplate()
     {
         return file_get_contents(__FILE__, null, null, __COMPILER_HALT_OFFSET__);
+    }
+
+    /**
+     * @param ResourceInterface $resource
+     * @return mixed
+     */
+    protected function getFilePath(ResourceInterface $resource)
+    {
+        return $resource->getSrcFilename();
+    }
+
+    /**
+     * @param ResourceInterface $resource
+     * @param string $filepath
+     * @return string
+     */
+    protected function getGeneratedMessage(ResourceInterface $resource, $filepath)
+    {
+        return sprintf(
+            "<info>Class <value>%s</value> created in <value>%s</value>.</info>\n",
+            $resource->getSrcClassname(), $filepath
+        );
     }
 }
 __halt_compiler();<?php%namespace_block%

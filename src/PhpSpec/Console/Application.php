@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Console;
 
 use Symfony\Component\Console\Application as BaseApplication;
@@ -23,10 +34,19 @@ use PhpSpec\Extension;
 
 use RuntimeException;
 
+/**
+ * The command line application entry point
+ */
 class Application extends BaseApplication
 {
+    /**
+     * @var \PhpSpec\ServiceContainer
+     */
     private $container;
 
+    /**
+     * @param string $version
+     */
     public function __construct($version)
     {
         $this->setupContainer($this->container = new ServiceContainer);
@@ -34,11 +54,19 @@ class Application extends BaseApplication
         parent::__construct('phpspec', $version);
     }
 
+    /**
+     * @return ServiceContainer
+     */
     public function getContainer()
     {
         return $this->container;
     }
 
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return int
+     */
     public function doRun(InputInterface $input, OutputInterface $output)
     {
         $this->container->set('console.input', $input);
@@ -50,6 +78,10 @@ class Application extends BaseApplication
         return parent::doRun($input, $output);
     }
 
+    /**
+     * Fixes an issue with definitions of the no-interaction option not being
+     * completely shown in some cases
+     */
     protected function fixDefinitions()
     {
         $description = 'Do not ask any interactive question (disables code generation).';
@@ -71,12 +103,18 @@ class Application extends BaseApplication
         $this->setDefinition($definition);
     }
 
+    /**
+     * @return array
+     */
     public function getDefaultCommands()
     {
         $commands = $this->container->getByPrefix('console.commands');
         return array_merge(parent::getDefaultCommands(), $commands);
     }
 
+    /**
+     * @param ServiceContainer $container
+     */
     protected function setupContainer(ServiceContainer $container)
     {
         $this->setupConsole($container);
@@ -91,6 +129,9 @@ class Application extends BaseApplication
         $this->loadConfigurationFile($container);
     }
 
+    /**
+     * @param ServiceContainer $container
+     */
     protected function setupConsole(ServiceContainer $container)
     {
         $container->setShared('console.io', function($c) {
@@ -114,6 +155,9 @@ class Application extends BaseApplication
         });
     }
 
+    /**
+     * @param ServiceContainer $container
+     */
     protected function setupEventDispatcher(ServiceContainer $container)
     {
         $container->setShared('event_dispatcher', function($c) {
@@ -151,6 +195,9 @@ class Application extends BaseApplication
         });
     }
 
+    /**
+     * @param ServiceContainer $container
+     */
     protected function setupGenerators(ServiceContainer $container)
     {
         $container->setShared('code_generator', function($c) {
@@ -202,6 +249,9 @@ class Application extends BaseApplication
         ));
     }
 
+    /**
+     * @param ServiceContainer $container
+     */
     protected function setupPresenter(ServiceContainer $container)
     {
         $container->setShared('formatter.presenter', function($c) {
@@ -231,6 +281,9 @@ class Application extends BaseApplication
         });
     }
 
+    /**
+     * @param ServiceContainer $container
+     */
     protected function setupLocator(ServiceContainer $container)
     {
         $container->setShared('locator.resource_manager', function($c) {
@@ -270,6 +323,9 @@ class Application extends BaseApplication
         });
     }
 
+    /**
+     * @param ServiceContainer $container
+     */
     protected function setupLoader(ServiceContainer $container)
     {
         $container->setShared('loader.resource_loader', function($c) {
@@ -277,6 +333,9 @@ class Application extends BaseApplication
         });
     }
 
+    /**
+     * @param ServiceContainer $container
+     */
     protected function setupFormatter(ServiceContainer $container)
     {
         $container->addConfigurator(function($c) {
@@ -328,6 +387,9 @@ class Application extends BaseApplication
         });
     }
 
+    /**
+     * @param ServiceContainer $container
+     */
     protected function setupRunner(ServiceContainer $container)
     {
         $container->setShared('runner.suite', function($c) {
@@ -388,6 +450,10 @@ class Application extends BaseApplication
         });
     }
 
+    /**
+     * @param ServiceContainer $container
+     * @throws \RuntimeException
+     */
     protected function loadConfigurationFile(ServiceContainer $container)
     {
         $config = array();

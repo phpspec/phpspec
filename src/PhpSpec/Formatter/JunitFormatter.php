@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Formatter;
 
 use PhpSpec\Event\ExampleEvent;
@@ -12,22 +23,58 @@ use PhpSpec\Formatter\Presenter\PresenterInterface;
  */
 class JunitFormatter extends BasicFormatter
 {
+    /**
+     * @var
+     */
     private $xml;
+    /**
+     * @var
+     */
     private $testSuite;
+    /**
+     * @var
+     */
     private $currentGroup;
+    /**
+     * @var
+     */
     private $currentFile;
+    /**
+     * @var int
+     */
     private $suiteTime = 0;
+    /**
+     * @var int
+     */
     private $assertionCount = 0;
+    /**
+     * @var int
+     */
     private $passCount = 0;
+    /**
+     * @var int
+     */
     private $pendingCount = 0;
+    /**
+     * @var int
+     */
     private $failCount = 0;
+    /**
+     * @var int
+     */
     private $brokenCount = 0;
 
+    /**
+     * @param SuiteEvent $event
+     */
     public function beforeSuite(SuiteEvent $event)
     {
         $this->xml = new \SimpleXMLElement("<testsuites></testsuites>");
     }
 
+    /**
+     * @param SpecificationEvent $event
+     */
     public function beforeSpecification(SpecificationEvent $event)
     {
         $this->currentGroup = $event->getTitle();
@@ -45,6 +92,14 @@ class JunitFormatter extends BasicFormatter
         $this->brokenCount = 0;
     }
 
+    /**
+     * @param \SimpleXMLElement $case
+     * @param ExampleEvent $event
+     * @param $exampleTitle
+     * @param $failureType
+     * @param $failureString
+     * @param bool $backtrace
+     */
     private function addFailedTestcase(\SimpleXMLElement $case, ExampleEvent $event, $exampleTitle, $failureType, $failureString, $backtrace = true)
     {
         $failureMsg = PHP_EOL . $exampleTitle
@@ -61,6 +116,9 @@ class JunitFormatter extends BasicFormatter
         );
     }
 
+    /**
+     * @param ExampleEvent $event
+     */
     public function afterExample(ExampleEvent $event)
     {
         $title = preg_replace('/^it /', '', $event->getTitle());
@@ -98,6 +156,9 @@ class JunitFormatter extends BasicFormatter
         $this->suiteTime += $time;
     }
 
+    /**
+     * @param SpecificationEvent $event
+     */
     public function afterSpecification(SpecificationEvent $event)
     {
         $this->testSuite->addAttribute('tests', $event->getSpecification()->count());
@@ -107,6 +168,9 @@ class JunitFormatter extends BasicFormatter
         $this->testSuite->addAttribute('time', $this->suiteTime);
     }
 
+    /**
+     * @param SuiteEvent $event
+     */
     public function afterSuite(SuiteEvent $event)
     {
         $dom = new \DOMDocument('1.0');

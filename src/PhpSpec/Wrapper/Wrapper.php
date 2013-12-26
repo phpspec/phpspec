@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Wrapper;
 
 use PhpSpec\Exception\ExceptionFactory;
@@ -13,13 +24,35 @@ use PhpSpec\Wrapper\Subject\Caller;
 use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
 use PhpSpec\Wrapper\Subject\ExpectationFactory;
 
+/**
+ * Class Wrapper
+ * @package PhpSpec\Wrapper
+ */
 class Wrapper
 {
+    /**
+     * @var \PhpSpec\Runner\MatcherManager
+     */
     private $matchers;
+    /**
+     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     */
     private $presenter;
+    /**
+     * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+     */
     private $dispatcher;
+    /**
+     * @var \PhpSpec\Loader\Node\ExampleNode
+     */
     private $example;
 
+    /**
+     * @param MatcherManager $matchers
+     * @param PresenterInterface $presenter
+     * @param EventDispatcherInterface $dispatcher
+     * @param ExampleNode $example
+     */
     public function __construct(MatcherManager $matchers, PresenterInterface $presenter,
         EventDispatcherInterface $dispatcher, ExampleNode $example)
     {
@@ -29,6 +62,10 @@ class Wrapper
         $this->example = $example;
     }
 
+    /**
+     * @param null $value
+     * @return Subject
+     */
     public function wrap($value = null)
     {
         $exceptionFactory   = new ExceptionFactory($this->presenter);

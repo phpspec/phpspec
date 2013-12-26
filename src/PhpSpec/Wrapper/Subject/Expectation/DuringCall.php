@@ -1,22 +1,59 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\Util\Instantiator;
 
+/**
+ * Class DuringCall
+ * @package PhpSpec\Wrapper\Subject\Expectation
+ */
 abstract class DuringCall
 {
+    /**
+     * @var \PhpSpec\Matcher\MatcherInterface
+     */
     private $matcher;
+    /**
+     * @var
+     */
     private $subject;
+    /**
+     * @var
+     */
     private $arguments;
+    /**
+     * @var
+     */
     private $wrappedObject;
 
+    /**
+     * @param MatcherInterface $matcher
+     */
     public function __construct(MatcherInterface $matcher)
     {
         $this->matcher = $matcher;
     }
 
+    /**
+     * @param $alias
+     * @param $subject
+     * @param array $arguments
+     * @param null $wrappedObject
+     * @return $this
+     */
     public function match($alias, $subject, array $arguments = array(), $wrappedObject = null)
     {
         $this->subject = $subject;
@@ -25,7 +62,12 @@ abstract class DuringCall
 
         return $this;
     }
-    
+
+    /**
+     * @param $method
+     * @param array $arguments
+     * @return mixed
+     */
     public function during($method, array $arguments = array())
     {
         if ($method === '__construct') {
@@ -47,7 +89,13 @@ abstract class DuringCall
 
         return $this->runDuring($object, $method, $arguments);
     }
-    
+
+    /**
+     * @param $method
+     * @param array $arguments
+     * @return mixed
+     * @throws MatcherException
+     */
     public function __call($method, array $arguments = array())
     {
         if (preg_match('/^during(.+)$/', $method, $matches)) {
@@ -62,15 +110,27 @@ abstract class DuringCall
             '->during(\'' . $method . '\', array(arguments))');
     }
 
+    /**
+     * @return mixed
+     */
     protected function getArguments()
     {
         return $this->arguments;
     }
 
+    /**
+     * @return MatcherInterface
+     */
     protected function getMatcher()
     {
         return $this->matcher;
     }
 
+    /**
+     * @param $object
+     * @param $method
+     * @param array $arguments
+     * @return mixed
+     */
     abstract protected function runDuring($object, $method, array $arguments = array());
 }

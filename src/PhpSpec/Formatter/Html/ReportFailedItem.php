@@ -1,18 +1,50 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Formatter\Html;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
 use PhpSpec\Formatter\Template as TemplateInterface;
 
+/**
+ * Class ReportFailedItem
+ * @package PhpSpec\Formatter\Html
+ */
 class ReportFailedItem
 {
+    /**
+     * @var \PhpSpec\Formatter\Template
+     */
     private $template;
+    /**
+     * @var \PhpSpec\Event\ExampleEvent
+     */
     private $event;
+    /**
+     * @var int
+     */
     static private $failingExamplesCount = 1;
+    /**
+     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     */
     private $presenter;
 
+    /**
+     * @param TemplateInterface $template
+     * @param ExampleEvent $event
+     * @param Presenter $presenter
+     */
     public function __construct(TemplateInterface $template, ExampleEvent $event, Presenter $presenter)
     {
         $this->template = $template;
@@ -20,6 +52,9 @@ class ReportFailedItem
         $this->presenter = $presenter;
     }
 
+    /**
+     * @param $index
+     */
     public function write($index)
     {
         $code = $this->presenter->presentException($this->event->getException(), true);
@@ -35,6 +70,9 @@ class ReportFailedItem
         );
     }
 
+    /**
+     * @return string
+     */
     private function formatBacktrace()
     {
         $backtrace = '';
