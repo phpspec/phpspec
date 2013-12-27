@@ -176,7 +176,7 @@ class CallerSpec extends ObjectBehavior
     {
         $testObj = new PassByReferenceTestClass();
 
-        $value = ['this is an array'];
+        $value = array('this is an array');
 
         $wrappedObject->isInstantiated()->willReturn(true);
         $wrappedObject->getInstance()->willReturn($testObj);
