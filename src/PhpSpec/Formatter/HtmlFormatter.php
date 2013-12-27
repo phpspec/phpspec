@@ -18,7 +18,7 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Formatter\Html\ReportItemFactory;
-use PhpSpec\IO\IOInterface;
+use PhpSpec\IO\IOInterface as IO;
 
 /**
  * Class HtmlFormatter
@@ -30,6 +30,7 @@ class HtmlFormatter extends BasicFormatter
      * @var Html\ReportItemFactory
      */
     private $reportItemFactory;
+
     /**
      * @var int
      */
@@ -38,9 +39,11 @@ class HtmlFormatter extends BasicFormatter
     /**
      * @param Html\ReportItemFactory $reportItemFactory
      */
-    public function __construct(Html\ReportItemFactory $reportItemFactory = null)
+    public function __construct(Html\ReportItemFactory $reportItemFactory = null, PresenterInterface $presenter, IO $io)
     {
         $this->reportItemFactory = $reportItemFactory ?: new Html\ReportItemFactory();
+
+        parent::__construct($presenter, $io);
     }
 
     /**

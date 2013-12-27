@@ -9,13 +9,12 @@ use PhpSpec\Formatter\BasicFormatter;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\IO\IOInterface;
 
-use PhpSpec\Event\ExampleEvent;
-
 class BasicFormatterSpec extends ObjectBehavior
 {
     function let(PresenterInterface $presenter, IOInterface $io)
     {
         $this->beAnInstanceOf('spec\PhpSpec\Formatter\TestableBasicFormatter');
+        $this->beConstructedWith($presenter, $io);
     }
 
     function it_returns_a_list_of_subscribed_events()
@@ -35,5 +34,4 @@ class BasicFormatterSpec extends ObjectBehavior
 
 class TestableBasicFormatter extends BasicFormatter
 {
-    
 }

@@ -354,13 +354,13 @@ class Application extends BaseApplication
                 $template = new Formatter\Html\Template($io);
                 $factory = new Formatter\Html\ReportItemFactory($template);
                 $presenter = new Formatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
+
                 return new Formatter\HtmlFormatter($factory, $presenter, $io);
             });
 
             try {
                 $formatter = $c->get('formatter.formatters.'.$formatterName);
             } catch (\InvalidArgumentException $e) {
-                die($e->getMessage());
                 throw new RuntimeException(sprintf('Formatter not recongised: "%s"', $formatterName));
             }
 

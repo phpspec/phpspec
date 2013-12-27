@@ -29,17 +29,25 @@ use PhpSpec\Exception\Example\PendingException;
 abstract class BasicFormatter implements FormatterInterface
 {
     /**
-     * @var
+     * @var IO
      */
     private $io;
+
     /**
-     * @var
+     * @var PresenterInterface
      */
     private $presenter;
+
     /**
-     * @var
+     * @var StatisticsCollector
      */
     private $stats;
+
+    public function __construct(PresenterInterface $presenter, IO $io)
+    {
+        $this->presenter = $presenter;
+        $this->io = $io;
+    }
 
     /**
      * @return array
@@ -53,22 +61,6 @@ abstract class BasicFormatter implements FormatterInterface
         );
 
         return array_combine($events, $events);
-    }
-
-    /**
-     * @param IO $io
-     */
-    public function setIO(IO $io)
-    {
-        $this->io = $io;
-    }
-
-    /**
-     * @param PresenterInterface $presenter
-     */
-    public function setPresenter(PresenterInterface $presenter)
-    {
-        $this->presenter = $presenter;
     }
 
     /**
