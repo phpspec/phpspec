@@ -247,37 +247,13 @@ class Caller
             new MethodCallEvent($this->example, $subject, $method, $arguments)
         );
 
-        $returnValue = $this->invokeActualMethodCall($subject, $method, $arguments);
+        $returnValue = call_user_func_array(array($subject, $method), $arguments);
 
         $this->dispatcher->dispatch('afterMethodCall',
             new MethodCallEvent($this->example, $subject, $method, $arguments)
         );
 
         return $this->wrap($returnValue);
-    }
-
-    /**
-     * Alternative for call_user_func_array so that pass-by-reference calls are
-     * handled correctly. See issue #239.
-     * 
-     * @param $subject
-     * @param $method
-     * @param array $arguments
-     * @return mixed
-     */
-    private function invokeActualMethodCall($subject, $method, array $arguments = array())
-    {
-        try {
-            $refMethod = new \ReflectionMethod($subject, $method);
-        } catch (\ReflectionException $e) {
-            if (method_exists($subject, '__call')) {
-                return call_user_func_array(array($subject, '__call'), array($method, $arguments));
-            }
-
-            return false;
-        }
-
-        return $refMethod->invokeArgs($subject, $arguments);
     }
 
     /**
