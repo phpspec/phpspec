@@ -171,9 +171,35 @@ class CallerSpec extends ObjectBehavior
         $this->shouldThrow('\PhpSpec\Exception\Wrapper\SubjectException')
             ->duringGet('foo');
     }
+
+    function it_does_not_complain_when_test_method_has_pass_by_reference_parameter(WrappedObject $wrappedObject)
+    {
+        $testObj = new PassByReferenceTestClass();
+
+        $value = ['this is an array'];
+
+        $wrappedObject->isInstantiated()->willReturn(true);
+        $wrappedObject->getInstance()->willReturn($testObj);
+
+        $this->call('test', array($value));
+    }
+
 }
 
 class ExampleClass
 {
     private function privateMethod() {}
+}
+
+class PassByReferenceTestClass
+{
+    public function test(&$value)
+    {
+        if (!is_array($value)) {
+            throw new \Exception('value must be an array');
+        }
+
+        $value[0] = 'changed array';
+        return $value;
+    }
 }
