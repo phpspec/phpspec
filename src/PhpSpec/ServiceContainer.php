@@ -1,32 +1,82 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec;
 
 use InvalidArgumentException;
-use RuntimeException;
 
+/**
+ * The Service Container is a lightweight container based on Pimpl to handle
+ * object creation of PhpSpec services.
+ */
 class ServiceContainer
 {
-    private $parameters    = array();
-    private $services      = array();
-    private $prefixed      = array();
+    /**
+     * @var array
+     */
+    private $parameters = array();
+
+    /**
+     * @var array
+     */
+    private $services = array();
+
+    /**
+     * @var array
+     */
+    private $prefixed = array();
+
+    /**
+     * @var array
+     */
     private $configurators = array();
 
+    /**
+     * Sets a param in the container
+     *
+     * @param string $id
+     * @param mixed $value
+     */
     public function setParam($id, $value)
     {
         $this->parameters[$id] = $value;
     }
 
+    /**
+     * Gets a param from the container or a default value.
+     *
+     * @param string $id
+     * @param mixed $default
+     * @return mixed
+     */
     public function getParam($id, $default = null)
     {
         return isset($this->parameters[$id]) ? $this->parameters[$id] : $default;
     }
 
+    /**
+     * Sets a object or a callback for the object creation. A new object will
+     * be created every time
+     *
+     * @param string $id
+     * @param object|callable $value
+     * @throws \InvalidArgumentException if service is not an object or callback
+     */
     public function set($id, $value)
     {
         if (!is_object($value)) {
             throw new InvalidArgumentException(sprintf(
-                'Service should be callback or object, but %s given.', gettype($value)
+                'Service should be callback or object, but %s given.',gettype($value)
             ));
         }
 
@@ -42,6 +92,14 @@ class ServiceContainer
         $this->services[$id] = $value;
     }
 
+    /**
+     * Sets a object or a callback for the object creation. The same object will
+     * be returned every time
+     *
+     * @param $id
+     * @param $callable
+     * @throws \InvalidArgumentException if service is not an object or callback
+     */
     public function setShared($id, $callable)
     {
         if (!is_object($callable)) {
@@ -61,6 +119,13 @@ class ServiceContainer
         });
     }
 
+    /**
+     * Retrieves a service from the container
+     *
+     * @param string $id
+     * @return mixed
+     * @throws \InvalidArgumentException if service is not defined
+     */
     public function get($id)
     {
         if (!array_key_exists($id, $this->services)) {
@@ -75,6 +140,12 @@ class ServiceContainer
         return $value;
     }
 
+    /**
+     * Retrieves a list of services of a given prefix
+     *
+     * @param string $prefix
+     * @return array
+     */
     public function getByPrefix($prefix)
     {
         if (!array_key_exists($prefix, $this->prefixed)) {
@@ -89,6 +160,12 @@ class ServiceContainer
         return $services;
     }
 
+    /**
+     * Removes a service from the container
+     *
+     * @param string $id
+     * @throws \InvalidArgumentException if service is not defined
+     */
     public function remove($id)
     {
         if (!array_key_exists($id, $this->services)) {
@@ -103,6 +180,12 @@ class ServiceContainer
         unset($this->services[$id]);
     }
 
+    /**
+     * Adds a configurator, that can configure many services in one callback
+     *
+     * @param $configurator
+     * @throws \InvalidArgumentException if configurator is not a callback
+     */
     public function addConfigurator($configurator)
     {
         if (!is_object($configurator)) {
@@ -114,6 +197,9 @@ class ServiceContainer
         $this->configurators[] = $configurator;
     }
 
+    /**
+     * Loop through all configurators and invoke them
+     */
     public function configure()
     {
         foreach ($this->configurators as $configurator) {
@@ -121,6 +207,12 @@ class ServiceContainer
         }
     }
 
+    /**
+     * Retrieves the prefix and sid of a given service
+     *
+     * @param string $id
+     * @return array
+     */
     private function getPrefixAndSid($id)
     {
         if (count($parts = explode('.', $id)) < 2) {

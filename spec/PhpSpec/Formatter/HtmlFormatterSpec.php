@@ -17,7 +17,9 @@ class HtmlFormatterSpec extends ObjectBehavior
     
     function let(ReportItemFactory $factory, Presenter $presenter, IO $io)
     {
-        $this->beConstructedWith($factory, $presenter, $io);
+        $this->beConstructedWith($factory);
+        $this->setPresenter($presenter);
+        $this->setIO($io);
     }
     
     function it_delegates_the_reporting_to_the_event_type_line_reporter(IO $io,

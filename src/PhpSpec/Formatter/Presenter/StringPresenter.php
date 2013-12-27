@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Formatter\Presenter;
 
 use Exception;
@@ -10,15 +21,29 @@ use PhpSpec\Exception\Example\PendingException;
 
 use Prophecy\Exception\Exception as ProphecyException;
 
+/**
+ * Class StringPresenter
+ * @package PhpSpec\Formatter\Presenter
+ */
 class StringPresenter implements PresenterInterface
 {
+    /**
+     * @var Differ\Differ
+     */
     private $differ;
 
+    /**
+     * @param Differ\Differ $differ
+     */
     public function __construct(Differ\Differ $differ)
     {
         $this->differ = $differ;
     }
 
+    /**
+     * @param $value
+     * @return mixed
+     */
     public function presentValue($value)
     {
         if (is_callable($value)) {
@@ -62,6 +87,11 @@ class StringPresenter implements PresenterInterface
         }
     }
 
+    /**
+     * @param Exception $exception
+     * @param bool $verbose
+     * @return string
+     */
     public function presentException(Exception $exception, $verbose = false)
     {
         $presentation = sprintf('Exception %s has been thrown.', $this->presentValue($exception));
@@ -79,28 +109,38 @@ class StringPresenter implements PresenterInterface
 
         if ($exception instanceof NotEqualException) {
             if ($diff = $this->presentExceptionDifference($exception)) {
-                return $presentation."\n".$diff;
+                $presentation .= "\n".$diff;
             }
         }
 
         if ($exception instanceof PhpSpecException && !$exception instanceof ErrorException) {
             list($file, $line) = $this->getExceptionExamplePosition($exception);
 
-            return $presentation."\n".$this->presentFileCode($file, $line);
+            $presentation .= "\n".$this->presentFileCode($file, $line);
         }
 
         if (trim($trace = $this->presentExceptionStackTrace($exception))) {
-            return $presentation."\n".$trace;
+            $presentation .= "\n".$trace;
         }
 
         return $presentation;
     }
 
+    /**
+     * @param $string
+     * @return mixed
+     */
     public function presentString($string)
     {
         return $string;
     }
 
+    /**
+     * @param $file
+     * @param $lineno
+     * @param int $context
+     * @return string
+     */
     protected function presentFileCode($file, $lineno, $context = 6)
     {
         $lines  = explode("\n", file_get_contents($file));
@@ -123,21 +163,38 @@ class StringPresenter implements PresenterInterface
         return $text;
     }
 
+    /**
+     * @param $number
+     * @param $line
+     * @return string
+     */
     protected function presentCodeLine($number, $line)
     {
         return $number.' '.$line;
     }
 
+    /**
+     * @param $line
+     * @return mixed
+     */
     protected function presentHighlight($line)
     {
         return $line;
     }
 
+    /**
+     * @param Exception $exception
+     * @return string
+     */
     protected function presentExceptionDifference(Exception $exception)
     {
         return $this->differ->compare($exception->getExpected(), $exception->getActual());
     }
 
+    /**
+     * @param Exception $exception
+     * @return string
+     */
     protected function presentExceptionStackTrace(Exception $exception)
     {
         $phpspecPath = dirname(dirname(__DIR__));
@@ -179,13 +236,11 @@ class StringPresenter implements PresenterInterface
 
             if (isset($call['class'])) {
                 $text .= $this->presentExceptionTraceMethod(
-                    $call['class'], $call['type'], $call['function'], $call['args']
+                    $call['class'], $call['type'], $call['function'], isset($call['args']) ? $call['args'] : array()
                 );
             } elseif (isset($call['function'])) {
-                $args = array_map(array($this, 'presentValue'), $call['args']);
-
                 $text .= $this->presentExceptionTraceFunction(
-                    $call['function'], $call['args']
+                    $call['function'], isset($call['args']) ? $call['args'] : array()
                 );
             }
         }
@@ -193,11 +248,22 @@ class StringPresenter implements PresenterInterface
         return $text;
     }
 
+    /**
+     * @param $header
+     * @return string
+     */
     protected function presentExceptionTraceHeader($header)
     {
         return $header."\n";
     }
 
+    /**
+     * @param $class
+     * @param $type
+     * @param $method
+     * @param array $args
+     * @return string
+     */
     protected function presentExceptionTraceMethod($class, $type, $method, array $args)
     {
         $args = array_map(array($this, 'presentValue'), $args);
@@ -205,6 +271,11 @@ class StringPresenter implements PresenterInterface
         return sprintf("   %s%s%s(%s)\n", $class, $type, $method, implode(', ', $args));
     }
 
+    /**
+     * @param $function
+     * @param array $args
+     * @return string
+     */
     protected function presentExceptionTraceFunction($function, array $args)
     {
         $args = array_map(array($this, 'presentValue'), $args);
@@ -212,6 +283,10 @@ class StringPresenter implements PresenterInterface
         return sprintf("   %s(%s)\n", $function, implode(', ', $args));
     }
 
+    /**
+     * @param Exception $exception
+     * @return array
+     */
     protected function getExceptionExamplePosition(Exception $exception)
     {
         $refl = $exception->getCause();

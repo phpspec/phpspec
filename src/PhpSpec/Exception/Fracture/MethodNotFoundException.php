@@ -1,34 +1,20 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Exception\Fracture;
 
-class MethodNotFoundException extends FractureException
-{
-    private $subject;
-    private $method;
-    private $arguments;
-
-    public function __construct($message, $subject, $method, array $arguments = array())
-    {
-        parent::__construct($message);
-
-        $this->subject   = $subject;
-        $this->method    = $method;
-        $this->arguments = $arguments;
-    }
-
-    public function getSubject()
-    {
-        return $this->subject;
-    }
-
-    public function getMethodName()
-    {
-        return $this->method;
-    }
-
-    public function getArguments()
-    {
-        return $this->arguments;
-    }
-}
+/**
+ * Class MethodNotFoundException holds information about method not found
+ * exception
+ */
+class MethodNotFoundException extends MethodInvocationException {}

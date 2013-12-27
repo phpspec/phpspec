@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Runner;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -14,18 +25,38 @@ use PhpSpec\Exception\Example as ExampleException;
 use Prophecy\Exception as ProphecyException;
 use Exception;
 
+/**
+ * Class ExampleRunner
+ * @package PhpSpec\Runner
+ */
 class ExampleRunner
 {
+    /**
+     * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+     */
     private $dispatcher;
+    /**
+     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     */
     private $presenter;
+    /**
+     * @var array
+     */
     private $maintainers = array();
 
+    /**
+     * @param EventDispatcherInterface $dispatcher
+     * @param PresenterInterface $presenter
+     */
     public function __construct(EventDispatcherInterface $dispatcher, PresenterInterface $presenter)
     {
         $this->dispatcher = $dispatcher;
         $this->presenter  = $presenter;
     }
 
+    /**
+     * @param Maintainer\MaintainerInterface $maintainer
+     */
     public function registerMaintainer(Maintainer\MaintainerInterface $maintainer)
     {
         $this->maintainers[] = $maintainer;
@@ -35,6 +66,10 @@ class ExampleRunner
         });
     }
 
+    /**
+     * @param ExampleNode $example
+     * @return null
+     */
     public function run(ExampleNode $example)
     {
         $startTime = microtime(true);
@@ -76,6 +111,12 @@ class ExampleRunner
         return $event->getResult();
     }
 
+    /**
+     * @param SpecificationInterface $context
+     * @param ExampleNode $example
+     * @throws \PhpSpec\Exception\Example\PendingException
+     * @throws \Exception
+     */
     protected function executeExample(SpecificationInterface $context, ExampleNode $example)
     {
         if ($example->isPending()) {
@@ -95,9 +136,26 @@ class ExampleRunner
 
         // execute example
         $reflection = $example->getFunctionReflection();
-        $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
 
-        // run maintainers teardown
+        try {
+            $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
+        } catch (\Exception $e) {
+            $this->runMaintainersTeardown($maintainers, $example, $context, $matchers, $collaborators);
+            throw $e;
+        }
+
+        $this->runMaintainersTeardown($maintainers, $example, $context, $matchers, $collaborators);
+    }
+
+    /**
+     * @param $maintainers
+     * @param $example
+     * @param $context
+     * @param $matchers
+     * @param $collaborators
+     */
+    private function runMaintainersTeardown($maintainers, $example, $context, $matchers, $collaborators)
+    {
         foreach (array_reverse($maintainers) as $maintainer) {
             $maintainer->teardown($example, $context, $matchers, $collaborators);
         }

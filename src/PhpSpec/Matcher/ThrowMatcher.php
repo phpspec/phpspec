@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Matcher;
 
 use PhpSpec\Formatter\Presenter\PresenterInterface;
@@ -12,12 +23,30 @@ use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
+/**
+ * Class ThrowMatcher
+ * @package PhpSpec\Matcher
+ */
 class ThrowMatcher implements MatcherInterface
 {
+    /**
+     * @var array
+     */
     private static $ignoredProperties = array('file', 'line', 'string', 'trace', 'previous');
+    /**
+     * @var \PhpSpec\Wrapper\Unwrapper
+     */
     private $unwrapper;
+    /**
+     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     */
     private $presenter;
 
+    /**
+     * @param Unwrapper $unwrapper
+     * @param PresenterInterface $presenter
+     * @param ReflectionFactory $factory
+     */
     public function __construct(Unwrapper $unwrapper, PresenterInterface $presenter, ReflectionFactory $factory = null)
     {
         $this->unwrapper = $unwrapper;
@@ -25,21 +54,46 @@ class ThrowMatcher implements MatcherInterface
         $this->factory   = $factory ?: new ReflectionFactory;
     }
 
+    /**
+     * @param string $name
+     * @param mixed $subject
+     * @param array $arguments
+     * @return bool
+     */
     public function supports($name, $subject, array $arguments)
     {
         return 'throw' === $name;
     }
 
+    /**
+     * @param string $name
+     * @param mixed $subject
+     * @param array $arguments
+     * @return DelayedCall
+     */
     public function positiveMatch($name, $subject, array $arguments)
     {
         return $this->getDelayedCall(array($this, 'verifyPositive'), $subject, $arguments);
     }
 
+    /**
+     * @param string $name
+     * @param mixed $subject
+     * @param array $arguments
+     * @return DelayedCall
+     */
     public function negativeMatch($name, $subject, array $arguments)
     {
         return $this->getDelayedCall(array($this, 'verifyNegative'), $subject, $arguments);
     }
 
+    /**
+     * @param $callable
+     * @param array $arguments
+     * @param null $exception
+     * @throws \PhpSpec\Exception\Example\FailureException
+     * @throws \PhpSpec\Exception\Example\NotEqualException
+     */
     public function verifyPositive($callable, array $arguments, $exception = null)
     {
         try {
@@ -85,6 +139,12 @@ class ThrowMatcher implements MatcherInterface
         throw new FailureException('Expected to get exception, none got.');
     }
 
+    /**
+     * @param $callable
+     * @param array $arguments
+     * @param null $exception
+     * @throws \PhpSpec\Exception\Example\FailureException
+     */
     public function verifyNegative($callable, array $arguments, $exception = null)
     {
         try {
@@ -135,11 +195,20 @@ class ThrowMatcher implements MatcherInterface
         }
     }
 
+    /**
+     * @return int
+     */
     public function getPriority()
     {
         return 1;
     }
 
+    /**
+     * @param $check
+     * @param $subject
+     * @param array $arguments
+     * @return DelayedCall
+     */
     private function getDelayedCall($check, $subject, array $arguments)
     {
         $exception = $this->getException($arguments);
@@ -149,21 +218,11 @@ class ThrowMatcher implements MatcherInterface
             function ($method, $arguments) use($check, $subject, $exception, $unwrapper) {
                 $arguments = $unwrapper->unwrapAll($arguments);
 
-                if (preg_match('/^during(.+)$/', $method, $matches)) {
-                    $callable = lcfirst($matches[1]);
-                } elseif (isset($arguments[0])) {
-                    if (strpos($method, 'during') === false) {
-                        throw new MatcherException('Incorrect usage of matcher Throw, either prefix the method with "during" and capitalize the first character of the method or use ->during(\'callable\', array(arguments)).' .PHP_EOL. 'E.g.'.PHP_EOL.'->during' . ucfirst($method) . '(arguments)'.PHP_EOL.'or'.PHP_EOL.'->during(\'' . $method . '\', array(arguments))');
-                    }
-                    $callable  = $arguments[0];
-                    $arguments = isset($arguments[1]) ? $arguments[1] : array();
-                } else {
-                    throw new MatcherException('Provide callable to be checked for throwing.');
-                }
+                $methodName  = $arguments[0];
+                $arguments = isset($arguments[1]) ? $arguments[1] : array();
+                $callable = array($subject, $methodName);
 
-                $callable = is_string($callable) ? array($subject, $callable) : $callable;
-                
-                list($class, $methodName) = $callable;
+                list($class, $methodName) = array($subject, $methodName);
                 if (!method_exists($class, $methodName) && !method_exists($class, '__call')) {
                     throw new MethodNotFoundException(
                         sprintf('Method %s::%s not found.', get_class($class), $methodName), 
@@ -176,6 +235,11 @@ class ThrowMatcher implements MatcherInterface
         );
     }
 
+    /**
+     * @param array $arguments
+     * @return null|string
+     * @throws \PhpSpec\Exception\Example\MatcherException
+     */
     private function getException(array $arguments)
     {
         if (0 == count($arguments)) {

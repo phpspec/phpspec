@@ -1,19 +1,49 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Util;
+
+use PhpSpec\Exception\Fracture\ClassNotFoundException;
 
 use ReflectionClass;
 use ReflectionProperty;
 
+/**
+ * Class Instantiator
+ * @package PhpSpec\Util
+ */
 class Instantiator
 {
+    /**
+     * @param $className
+     * @return mixed
+     */
     public function instantiate($className)
     {
         return unserialize($this->createSerializedObject($className));
     }
 
+    /**
+     * @param $className
+     * @return string
+     * @throws \PhpSpec\Exception\Fracture\ClassNotFoundException
+     */
     private function createSerializedObject($className)
     {
+        if (!class_exists($className)) {
+            throw new ClassNotFoundException("Class $className does not exist.", $className);
+        }
+
         $reflection = new ReflectionClass($className);
         $properties = $reflection->getProperties();
 
@@ -21,6 +51,11 @@ class Instantiator
             ':{' . $this->serializeProperties($reflection, $properties) ."}";
     }
 
+    /**
+     * @param ReflectionClass $reflection
+     * @param array $properties
+     * @return string
+     */
     private function serializeProperties(ReflectionClass $reflection, array $properties)
     {
         $serializedProperties = '';
@@ -33,6 +68,11 @@ class Instantiator
         return $serializedProperties;
     }
 
+    /**
+     * @param ReflectionClass $class
+     * @param ReflectionProperty $property
+     * @return string
+     */
     private function serializePropertyName(ReflectionClass $class, ReflectionProperty $property)
     {
         $propertyName = $property->getName();
@@ -46,6 +86,11 @@ class Instantiator
         return serialize($propertyName);
     }
 
+    /**
+     * @param ReflectionClass $class
+     * @param ReflectionProperty $property
+     * @return string
+     */
     private function serializePropertyValue(ReflectionClass $class, ReflectionProperty $property)
     {
         $defaults = $class->getDefaultProperties();

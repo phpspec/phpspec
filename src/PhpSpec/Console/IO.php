@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Console;
 
 use PhpSpec\IO\IOInterface;
@@ -8,14 +19,41 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\HelperSet;
 
+/**
+ * Class IO deals with input and output from the command line interaction
+ */
 class IO implements IOInterface
 {
+    /**
+     * @var \Symfony\Component\Console\Input\InputInterface
+     */
     private $input;
+
+    /**
+     * @var \Symfony\Component\Console\Output\OutputInterface
+     */
     private $output;
+
+    /**
+     * @var \Symfony\Component\Console\Helper\HelperSet
+     */
     private $helpers;
+
+    /**
+     * @var string
+     */
     private $lastMessage;
+
+    /**
+     * @var bool
+     */
     private $hasTempString = false;
 
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @param HelperSet $helpers
+     */
     public function __construct(InputInterface $input, OutputInterface $output, HelperSet $helpers)
     {
         $this->input   = $input;
@@ -23,43 +61,69 @@ class IO implements IOInterface
         $this->helpers = $helpers;
     }
 
+    /**
+     * @return bool
+     */
     public function isInteractive()
     {
         return $this->input->isInteractive();
     }
 
+    /**
+     * @return bool
+     */
     public function isDecorated()
     {
         return $this->output->isDecorated();
     }
 
+    /**
+     * @return bool
+     */
     public function isCodeGenerationEnabled()
     {
         return $this->input->isInteractive()
             && !$this->input->getOption('no-code-generation');
     }
-    
+
+    /**
+     * @return bool
+     */
     public function isVerbose()
     {
         return OutputInterface::VERBOSITY_VERBOSE === $this->output->getVerbosity();
     }
 
+    /**
+     * @return mixed
+     */
     public function getLastWrittenMessage()
     {
         return $this->lastMessage;
     }
 
+    /**
+     * @param string $message
+     * @param null $indent
+     */
     public function writeln($message = '', $indent = null)
     {
         $this->write($message, $indent, true);
     }
 
+    /**
+     * @param string $message
+     * @param null $indent
+     */
     public function writeTemp($message, $indent = null)
     {
         $this->write($message, $indent);
         $this->hasTempString = true;
     }
 
+    /**
+     * @return void|string
+     */
     public function cutTemp()
     {
         if (false === $this->hasTempString) {
@@ -72,11 +136,19 @@ class IO implements IOInterface
         return $message;
     }
 
+    /**
+     *
+     */
     public function freezeTemp()
     {
         $this->write($this->lastMessage);
     }
 
+    /**
+     * @param string $message
+     * @param null $indent
+     * @param bool $newline
+     */
     public function write($message, $indent = null, $newline = false)
     {
         if ($this->hasTempString) {
@@ -94,11 +166,20 @@ class IO implements IOInterface
         $this->lastMessage = $message.($newline ? "\n" : '');
     }
 
+    /**
+     * @param string $message
+     * @param null $indent
+     */
     public function overwriteln($message = '', $indent = null)
     {
         $this->overwrite($message, $indent, true);
     }
 
+    /**
+     * @param string $message
+     * @param null $indent
+     * @param bool $newline
+     */
     public function overwrite($message, $indent = null, $newline = false)
     {
         if (null !== $indent) {
@@ -123,11 +204,21 @@ class IO implements IOInterface
         $this->lastMessage = $message.($newline ? "\n" : '');
     }
 
+    /**
+     * @param string $question
+     * @param null $default
+     * @return mixed
+     */
     public function ask($question, $default = null)
     {
         return $this->helpers->get('dialog')->ask($this->output, $question, $default);
     }
 
+    /**
+     * @param string $question
+     * @param bool $default
+     * @return mixed
+     */
     public function askConfirmation($question, $default = true)
     {
         $lines   = array();
@@ -143,11 +234,23 @@ class IO implements IOInterface
         );
     }
 
+    /**
+     * @param string $question
+     * @param $validator
+     * @param bool $attempts
+     * @param null $default
+     * @return mixed
+     */
     public function askAndValidate($question, $validator, $attempts = false, $default = null)
     {
         return $this->helpers->get('dialog')->askAndValidate($this->output, $question, $validator, $attempts, $default);
     }
 
+    /**
+     * @param string $text
+     * @param integer $indent
+     * @return string
+     */
     private function indentText($text, $indent)
     {
         return implode("\n", array_map(

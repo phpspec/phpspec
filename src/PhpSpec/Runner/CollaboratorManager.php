@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Runner;
 
 use PhpSpec\Exception\Wrapper\CollaboratorException;
@@ -7,26 +18,52 @@ use PhpSpec\Formatter\Presenter\PresenterInterface;
 
 use ReflectionFunctionAbstract;
 
+/**
+ * Class CollaboratorManager
+ * @package PhpSpec\Runner
+ */
 class CollaboratorManager
 {
+    /**
+     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     */
     private $presenter;
+    /**
+     * @var array
+     */
     private $collaborators = array();
 
+    /**
+     * @param PresenterInterface $presenter
+     */
     public function __construct(PresenterInterface $presenter)
     {
         $this->presenter = $presenter;
     }
 
+    /**
+     * @param $name
+     * @param $collaborator
+     */
     public function set($name, $collaborator)
     {
         $this->collaborators[$name] = $collaborator;
     }
 
+    /**
+     * @param $name
+     * @return bool
+     */
     public function has($name)
     {
         return isset($this->collaborators[$name]);
     }
 
+    /**
+     * @param $name
+     * @return mixed
+     * @throws \PhpSpec\Exception\Wrapper\CollaboratorException
+     */
     public function get($name)
     {
         if (!$this->has($name)) {
@@ -38,6 +75,10 @@ class CollaboratorManager
         return $this->collaborators[$name];
     }
 
+    /**
+     * @param ReflectionFunctionAbstract $function
+     * @return array
+     */
     public function getArgumentsFor(ReflectionFunctionAbstract $function)
     {
         $parameters = array();

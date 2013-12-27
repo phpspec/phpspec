@@ -16,7 +16,6 @@ class BasicFormatterSpec extends ObjectBehavior
     function let(PresenterInterface $presenter, IOInterface $io)
     {
         $this->beAnInstanceOf('spec\PhpSpec\Formatter\TestableBasicFormatter');
-        $this->beConstructedWith($presenter, $io);
     }
 
     function it_returns_a_list_of_subscribed_events()

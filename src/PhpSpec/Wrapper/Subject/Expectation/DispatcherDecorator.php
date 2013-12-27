@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Event\ExpectationEvent;
@@ -10,12 +21,31 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 use Exception;
 
+/**
+ * Class DispatcherDecorator
+ * @package PhpSpec\Wrapper\Subject\Expectation
+ */
 class DispatcherDecorator extends Decorator implements ExpectationInterface
 {
+    /**
+     * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+     */
     private $dispatcher;
+    /**
+     * @var \PhpSpec\Matcher\MatcherInterface
+     */
     private $matcher;
+    /**
+     * @var \PhpSpec\Loader\Node\ExampleNode
+     */
     private $example;
 
+    /**
+     * @param ExpectationInterface $expectation
+     * @param EventDispatcherInterface $dispatcher
+     * @param MatcherInterface $matcher
+     * @param ExampleNode $example
+     */
     public function __construct(ExpectationInterface $expectation, EventDispatcherInterface $dispatcher, MatcherInterface $matcher, ExampleNode $example)
     {
         $this->setExpectation($expectation);
@@ -24,6 +54,15 @@ class DispatcherDecorator extends Decorator implements ExpectationInterface
         $this->example = $example;
     }
 
+    /**
+     * @param $alias
+     * @param $subject
+     * @param array $arguments
+     * @return mixed
+     * @throws \Exception
+     * @throws \PhpSpec\Exception\Example\FailureException
+     * @throws \Exception
+     */
     public function match($alias, $subject, array $arguments = array())
     {
         $this->dispatcher->dispatch(

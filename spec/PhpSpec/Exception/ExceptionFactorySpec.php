@@ -40,6 +40,22 @@ class ExceptionFactorySpec extends ObjectBehavior
         $this->shouldCreateMethodNotFoundException();
     }
 
+    function it_creates_a_method_not_visible_exception(PresenterInterface $presenter)
+    {
+        $presenter->presentString("{$this->fixture->classname}::{$this->fixture->method}")
+            ->shouldBeCalled()
+            ->willReturn("\"{$this->fixture->classname}::{$this->fixture->method}\"");
+        $this->fixture->message = 'Method "\ArrayObject::foo" not visible.';
+
+        $this->createdException = $this->methodNotVisible(
+            $this->fixture->classname,
+            $this->fixture->method,
+            $this->fixture->arguments
+        );
+
+        $this->shouldCreateMethodNotVisibleException();
+    }
+
     function it_creates_a_class_not_found_exception(PresenterInterface $presenter)
     {
         $presenter->presentString("{$this->fixture->classname}")
@@ -103,6 +119,15 @@ class ExceptionFactorySpec extends ObjectBehavior
     function shouldCreateMethodNotFoundException()
     {
         $this->createdException->shouldHaveType("PhpSpec\Exception\Fracture\MethodNotFoundException");
+        $this->createdException->getMessage()->shouldReturn($this->fixture->message);
+        $this->createdException->getSubject()->shouldBeLike($this->fixture->subject);
+        $this->createdException->getMethodName()->shouldReturn($this->fixture->method);
+        $this->createdException->getArguments()->shouldReturn($this->fixture->arguments);
+    }
+
+    function shouldCreateMethodNotVisibleException()
+    {
+        $this->createdException->shouldHaveType("PhpSpec\Exception\Fracture\MethodNotVisibleException");
         $this->createdException->getMessage()->shouldReturn($this->fixture->message);
         $this->createdException->getSubject()->shouldBeLike($this->fixture->subject);
         $this->createdException->getMethodName()->shouldReturn($this->fixture->method);

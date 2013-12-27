@@ -14,14 +14,7 @@ class ThrowMatcherSpec extends ObjectBehavior
 {
     function let(Unwrapper $unwrapper, PresenterInterface $presenter)
     {
-        $unwrapper->unwrapAll(Argument::any())->will(function($arguments) {
-            if (!is_array($arguments[0])) {
-                $arguments[0] = $arguments[0]->getWrappedSubject();
-            }
-
-            return $arguments;
-        });
-
+        $unwrapper->unwrapAll(Argument::any())->willReturnArgument();
         $presenter->presentValue(Argument::any())->willReturn('val1', 'val2');
 
         $this->beConstructedWith($unwrapper, $presenter);
@@ -36,11 +29,11 @@ class ThrowMatcherSpec extends ObjectBehavior
     {
         $arr->ksort()->willThrow('\Exception');
 
-        $this->positiveMatch('throw', $arr, array('\Exception'))->duringKsort(array());
+        $this->positiveMatch('throw', $arr, array('\Exception'))->during('ksort', array());
     }
 
     function it_accepts_a_method_during_which_an_exception_should_not_be_thrown(ArrayObject $arr)
     {
-        $this->negativeMatch('throw', $arr, array('\Exception'))->duringKsort(array());
+        $this->negativeMatch('throw', $arr, array('\Exception'))->during('ksort', array());
     }
 }
