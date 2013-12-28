@@ -14,6 +14,7 @@
 namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Util\Instantiator;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Exception\Wrapper\SubjectException;
 
@@ -148,5 +149,15 @@ class WrappedObject
     public function setInstance($instance)
     {
         $this->instance = $instance;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function instantiate()
+    {
+        $classname = $this->classname;
+        $this->instance = new $classname;
+        return $this->instance;
     }
 }
