@@ -152,7 +152,6 @@ class WrappedObject
 
 
     /**
-     * @param array $arguments
      * @return object
      */
     public function instantiate()
