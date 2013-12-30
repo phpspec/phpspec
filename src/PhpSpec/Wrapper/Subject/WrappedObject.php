@@ -149,4 +149,28 @@ class WrappedObject
     {
         $this->instance = $instance;
     }
+
+
+    /**
+     * @return object
+     */
+    public function instantiate()
+    {
+        if ($this->isInstantiated()) {
+            return $this->instance;
+        }
+
+        $reflection = new \ReflectionClass($this->classname);
+
+        if (empty($this->arguments)) {
+            $this->instance = $reflection->newInstance();
+        } else {
+            $this->instance = $reflection->newInstanceArgs($this->arguments);
+        }
+
+        $this->isInstantiated = true;
+
+        return $this->instance;
+
+    }
 }
