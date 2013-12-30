@@ -15,19 +15,10 @@ namespace PhpSpec\Formatter;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-use PhpSpec\IO\IOInterface as IO;
-use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
-use PhpSpec\Listener\StatisticsCollector;
-
 /**
  * Interface FormatterInterface
  * @package PhpSpec\Formatter
  */
 interface FormatterInterface extends EventSubscriberInterface
 {
-    /**
-     * @param StatisticsCollector $stats
-     * @return mixed
-     */
-    public function setStatisticsCollector(StatisticsCollector $stats);
 }

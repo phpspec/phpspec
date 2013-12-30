@@ -16,7 +16,6 @@ namespace PhpSpec\Formatter;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
 
 /**
  * @author Nick Peirson <nickpeirson@gmail.com>

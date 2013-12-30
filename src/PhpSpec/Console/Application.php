@@ -330,6 +330,39 @@ class Application extends BaseApplication
      */
     protected function setupFormatter(ServiceContainer $container)
     {
+        $container->set('formatter.formatters.progress', function($c) {
+            return new Formatter\ProgressFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+        });
+        $container->set('formatter.formatters.pretty', function($c) {
+            return new Formatter\PrettyFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+        });
+        $container->set('formatter.formatters.junit', function($c) {
+            return new Formatter\JunitFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+        });
+        $container->set('formatter.formatters.dot', function($c) {
+            return new Formatter\DotFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+        });
+        $container->set('formatter.formatters.nyan', function($c) {
+            if (class_exists('NyanCat\Scoreboard')) {
+                return new Formatter\NyanFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+            }
+
+            throw new RuntimeException(
+                'The Nyan Cat formatter requires whatthejeff/nyancat-scoreboard:~1.1'
+            );
+        });
+        $container->set('formatter.formatters.html', function($c) {
+            $io = new Formatter\Html\IO;
+            $template = new Formatter\Html\Template($io);
+            $factory = new Formatter\Html\ReportItemFactory($template);
+            $presenter = new Formatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
+
+            return new Formatter\HtmlFormatter($factory, $presenter, $io, $c->get('event_dispatcher.listeners.stats'));
+        });
+        $container->set('formatter.formatters.h', function ($c) {
+            return $c->get('formatter.formatters.html');
+        });
+
         $container->addConfigurator(function($c) {
             $formatterName = $c->getParam('formatter.name', 'progress');
 
@@ -337,40 +370,11 @@ class Application extends BaseApplication
                 $c->get('console.output')->isDecorated()
             ));
 
-            $c->set('formatter.formatters.progress', function($c) {
-                return new Formatter\ProgressFormatter($c->get('formatter.presenter'), $c->get('console.io'));
-            });
-            $c->set('formatter.formatters.pretty', function($c) {
-                return new Formatter\PrettyFormatter($c->get('formatter.presenter'), $c->get('console.io'));
-            });
-            $c->set('formatter.formatters.dot', function($c) {
-                return new Formatter\DotFormatter($c->get('formatter.presenter'), $c->get('console.io'));
-            });
-            $c->set('formatter.formatters.nyan', function($c) {
-                if (class_exists('NyanCat\Scoreboard')) {
-                    return new Formatter\NyanFormatter($c->get('formatter.presenter'), $c->get('console.io'));
-                } else {
-                    throw new RuntimeException(
-                        'The Nyan Cat formatter requires whatthejeff/nyancat-scoreboard:~1.1'
-                    );
-                }
-            });
-            $c->set('formatter.formatters.html', function($c) {
-                $io = new Formatter\Html\IO;
-                $template = new Formatter\Html\Template($io);
-                $factory = new Formatter\Html\ReportItemFactory($template);
-                $presenter = new Formatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
-
-                return new Formatter\HtmlFormatter($factory, $presenter, $io);
-            });
-
             try {
                 $formatter = $c->get('formatter.formatters.'.$formatterName);
             } catch (\InvalidArgumentException $e) {
-                throw new RuntimeException(sprintf('Formatter not recongised: "%s"', $formatterName));
+                throw new RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
             }
-
-            $formatter->setStatisticsCollector($c->get('event_dispatcher.listeners.stats'));
 
             $c->set('event_dispatcher.listeners.formatter', $formatter);
         });

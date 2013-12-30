@@ -43,10 +43,11 @@ abstract class BasicFormatter implements FormatterInterface
      */
     private $stats;
 
-    public function __construct(PresenterInterface $presenter, IO $io)
+    public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
     {
         $this->presenter = $presenter;
         $this->io = $io;
+        $this->stats = $stats;
     }
 
     /**
@@ -61,14 +62,6 @@ abstract class BasicFormatter implements FormatterInterface
         );
 
         return array_combine($events, $events);
-    }
-
-    /**
-     * @param StatisticsCollector $stats
-     */
-    public function setStatisticsCollector(StatisticsCollector $stats)
-    {
-        $this->stats = $stats;
     }
 
     /**
