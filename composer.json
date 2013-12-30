@@ -27,6 +27,10 @@
         "symfony/yaml":             "~2.1"
     },
 
+    "require-dev": {
+        "behat/behat": "~2.5"
+    },
+
     "suggest": {
         "whatthejeff/nyancat-scoreboard": "~1.1 – Enables the Nyan Cat formatter"
     },
@@ -38,6 +42,10 @@
     },
 
     "bin": ["bin/phpspec"],
+
+    "config": {
+        "bin-dir": "bin"
+    },
 
     "extra": {
         "branch-alias": {
