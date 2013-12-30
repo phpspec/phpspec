@@ -14,7 +14,6 @@
 namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Util\Instantiator;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Exception\Wrapper\SubjectException;
 
@@ -156,21 +155,20 @@ class WrappedObject
      * @param array $arguments
      * @return object
      */
-    public function instantiate(array $arguments = null)
+    public function instantiate()
     {
-        if (is_object($this->instance)) {
+        if ($this->isInstantiated()) {
             return $this->instance;
         }
 
-        $this->arguments = $arguments;
         $reflection = new \ReflectionClass($this->classname);
 
         if (empty($this->arguments)) {
             $this->instance = $reflection->newInstance();
         } else {
-
             $this->instance = $reflection->newInstanceArgs($this->arguments);
         }
+
         $this->isInstantiated = true;
 
         return $this->instance;

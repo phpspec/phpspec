@@ -25,10 +25,4 @@ class WrappedObjectSpec extends ObjectBehavior
         $this->callOnWrappedObject('beAnInstanceOf', array('ArrayObject'));
         $this->instantiate()->shouldBeEqualTo($this->getInstance());
     }
-
-    function it_instantiate_object_with_arguments()
-    {
-        $this->callOnWrappedObject('beAnInstanceOf', array('ArrayObject'));
-        $this->instantiate(array(array(1,2,3)))->shouldBeLike(new \ArrayObject(array(1,2,3)));
-    }
 }
