@@ -21,7 +21,12 @@ class HtmlFormatterSpec extends ObjectBehavior
         $this->beConstructedWith($factory, $presenter, $io, $stats);
     }
 
-    function it_delegates_the_reporting_to_the_event_type_line_reporter(IO $io,
+    function it_is_an_event_subscriber()
+    {
+        $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
+    }
+
+    function it_delegates_the_reporting_to_the_event_type_line_reporter(
         ExampleEvent $event, ReportItem $item, ReportItemFactory $factory,
         Presenter $presenter)
     {

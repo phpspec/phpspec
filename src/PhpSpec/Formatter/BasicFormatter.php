@@ -21,12 +21,13 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\PendingException;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Class BasicFormatter
  * @package PhpSpec\Formatter
  */
-abstract class BasicFormatter implements FormatterInterface
+abstract class BasicFormatter implements EventSubscriberInterface
 {
     /**
      * @var IO

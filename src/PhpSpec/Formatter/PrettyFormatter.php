@@ -20,8 +20,9 @@ use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class PrettyFormatter implements FormatterInterface
+class PrettyFormatter implements EventSubscriberInterface
 {
     private $io;
     private $presenter;

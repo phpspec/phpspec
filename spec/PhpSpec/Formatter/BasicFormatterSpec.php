@@ -18,6 +18,11 @@ class BasicFormatterSpec extends ObjectBehavior
         $this->beConstructedWith($presenter, $io, $stats);
     }
 
+    function it_is_an_event_subscriber()
+    {
+        $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
+    }
+
     function it_returns_a_list_of_subscribed_events()
     {
         $this::getSubscribedEvents()->shouldBe(
