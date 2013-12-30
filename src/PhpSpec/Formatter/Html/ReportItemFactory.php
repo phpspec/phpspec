@@ -33,7 +33,7 @@ class ReportItemFactory
      */
     public function __construct(TemplateInterface $template)
     {
-        $this->template = $template ?: new Template;
+        $this->template = $template;
     }
 
     /**
