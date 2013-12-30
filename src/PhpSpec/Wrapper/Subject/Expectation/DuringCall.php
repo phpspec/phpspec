@@ -75,16 +75,7 @@ abstract class DuringCall
             $instantiator = new Instantiator;
             $object = $instantiator->instantiate($this->wrappedObject->getClassname());
         } else {
-            $class = $this->wrappedObject->getClassname();
-            $constructionArguments = $this->wrappedObject->getArguments();
-
-            $reflection = new \ReflectionClass($class);
-
-            if (!empty($constructionArguments)) {
-                $object = $reflection->newInstanceArgs($constructionArguments);
-            } else {
-                $object = $reflection->newInstance();
-            }
+            $object = $this->wrappedObject->instantiate($this->wrappedObject->getArguments());
         }
 
         return $this->runDuring($object, $method, $arguments);
