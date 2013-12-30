@@ -154,10 +154,17 @@ class WrappedObject
     /**
      * @return mixed
      */
-    public function instantiate()
+    public function instantiate(array $arguments = null)
     {
-        $classname = $this->classname;
-        $this->instance = new $classname;
+        if (empty($arguments)) {
+            $classname = $this->classname;
+            $this->instance = new $classname;
+        } else {
+            $reflection = new \ReflectionClass($this->classname);
+            $this->instance = $reflection->newInstanceArgs($arguments);
+        }
+
         return $this->instance;
+
     }
 }
