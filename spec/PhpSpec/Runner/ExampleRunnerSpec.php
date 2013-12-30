@@ -43,8 +43,7 @@ class ExampleRunnerSpec extends ObjectBehavior
     }
 
     function it_dispatches_ExampleEvent_with_pending_status_if_example_is_pending(
-        EventDispatcherInterface $dispatcher,
-        ExampleNode $example, SpecificationInterface $context
+        EventDispatcherInterface $dispatcher, ExampleNode $example
     )
     {
         $example->isPending()->willReturn(true);

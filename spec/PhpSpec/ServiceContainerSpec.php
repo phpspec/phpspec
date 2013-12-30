@@ -35,7 +35,7 @@ class ServiceContainerSpec extends ObjectBehavior
 
     function it_evaluates_factory_function_set_as_service()
     {
-        $this->set('random_number', function(){ return rand(); });
+        $this->set('random_number', function () { return rand(); });
         $number1 = $this->get('random_number');
         $number2 = $this->get('random_number');
 
@@ -47,7 +47,7 @@ class ServiceContainerSpec extends ObjectBehavior
 
     function it_evaluates_factory_function_only_once_for_shared_services()
     {
-        $this->setShared('random_number', function(){ return rand(); });
+        $this->setShared('random_number', function () { return rand(); });
         $number1 = $this->get('random_number');
         $number2 = $this->get('random_number');
 
@@ -74,7 +74,7 @@ class ServiceContainerSpec extends ObjectBehavior
 
     function it_supports_custom_service_configurators()
     {
-        $this->addConfigurator(function($c) {
+        $this->addConfigurator(function ($c) {
             $c->setParam('name', 'Jim');
         });
         $this->configure();

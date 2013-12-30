@@ -2,8 +2,6 @@
 
 namespace spec\PhpSpec\Exception;
 
-use PhpSpec\Exception\Wrapper\SubjectException;
-
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
@@ -118,7 +116,7 @@ class ExceptionFactorySpec extends ObjectBehavior
 
     function shouldCreateMethodNotFoundException()
     {
-        $this->createdException->shouldHaveType("PhpSpec\Exception\Fracture\MethodNotFoundException");
+        $this->createdException->shouldHaveType('PhpSpec\Exception\Fracture\MethodNotFoundException');
         $this->createdException->getMessage()->shouldReturn($this->fixture->message);
         $this->createdException->getSubject()->shouldBeLike($this->fixture->subject);
         $this->createdException->getMethodName()->shouldReturn($this->fixture->method);
@@ -127,7 +125,7 @@ class ExceptionFactorySpec extends ObjectBehavior
 
     function shouldCreateMethodNotVisibleException()
     {
-        $this->createdException->shouldHaveType("PhpSpec\Exception\Fracture\MethodNotVisibleException");
+        $this->createdException->shouldHaveType('PhpSpec\Exception\Fracture\MethodNotVisibleException');
         $this->createdException->getMessage()->shouldReturn($this->fixture->message);
         $this->createdException->getSubject()->shouldBeLike($this->fixture->subject);
         $this->createdException->getMethodName()->shouldReturn($this->fixture->method);
@@ -136,14 +134,14 @@ class ExceptionFactorySpec extends ObjectBehavior
 
     function shouldCreateClassNotFoundException()
     {
-        $this->createdException->shouldHaveType("PhpSpec\Exception\Fracture\ClassNotFoundException");
+        $this->createdException->shouldHaveType('PhpSpec\Exception\Fracture\ClassNotFoundException');
         $this->createdException->getMessage()->shouldReturn($this->fixture->message);
         $this->createdException->getClassname()->shouldReturn($this->fixture->classname);
     }
 
     function shouldCreatePropertyNotFoundException()
     {
-        $this->createdException->shouldHaveType("PhpSpec\Exception\Fracture\PropertyNotFoundException");
+        $this->createdException->shouldHaveType('PhpSpec\Exception\Fracture\PropertyNotFoundException');
         $this->createdException->getMessage()->shouldReturn($this->fixture->message);
         $this->createdException->getSubject()->shouldReturn($this->fixture->subject);
         $this->createdException->getProperty()->shouldReturn($this->fixture->property);

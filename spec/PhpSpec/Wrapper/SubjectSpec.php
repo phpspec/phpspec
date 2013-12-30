@@ -36,7 +36,7 @@ class SubjectSpec extends ObjectBehavior
     {
         $existingSubject = new \ArrayObject;
         $this->beConstructedWith($existingSubject, $wrapper, $wrappedObject, $caller, $arrayAccess, $expectationFactory);
-        
+
         $expectation->match(Argument::cetera())->willReturn(true);
         $wrappedObject->getClassName()->willReturn('\ArrayObject');
         $expectationFactory->create(Argument::cetera())->willReturn($expectation);
