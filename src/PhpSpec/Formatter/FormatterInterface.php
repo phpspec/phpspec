@@ -26,18 +26,6 @@ use PhpSpec\Listener\StatisticsCollector;
 interface FormatterInterface extends EventSubscriberInterface
 {
     /**
-     * @param IO $io
-     * @return mixed
-     */
-    public function setIO(IO $io);
-
-    /**
-     * @param Presenter $presenter
-     * @return mixed
-     */
-    public function setPresenter(Presenter $presenter);
-
-    /**
      * @param StatisticsCollector $stats
      * @return mixed
      */
