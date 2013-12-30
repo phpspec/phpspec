@@ -21,7 +21,6 @@ interface SubjectContainerInterface
 {
     /**
      * @param Subject $subject
-     * @return mixed
      */
     public function setSpecificationSubject(Subject $subject);
 }

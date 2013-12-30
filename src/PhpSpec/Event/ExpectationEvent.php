@@ -48,7 +48,7 @@ class ExpectationEvent extends Event implements EventInterface
     private $matcher;
 
     /**
-     * @var \PhpSpec\Wrapper\Subject
+     * @var mixed
      */
     private $subject;
 
@@ -73,13 +73,13 @@ class ExpectationEvent extends Event implements EventInterface
     private $exception;
 
     /**
-     * @param ExampleNode $example
+     * @param ExampleNode      $example
      * @param MatcherInterface $matcher
-     * @param $subject
-     * @param string $method
-     * @param array $arguments
-     * @param integer $result
-     * @param \Exception $exception
+     * @param mixed            $subject
+     * @param string           $method
+     * @param array            $arguments
+     * @param integer          $result
+     * @param \Exception       $exception
      */
     public function __construct(ExampleNode $example, MatcherInterface $matcher, $subject,
                                 $method, $arguments, $result = null, $exception = null)

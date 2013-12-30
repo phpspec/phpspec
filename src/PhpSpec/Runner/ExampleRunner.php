@@ -40,13 +40,13 @@ class ExampleRunner
      */
     private $presenter;
     /**
-     * @var array
+     * @var Maintainer\MaintainerInterface[]
      */
     private $maintainers = array();
 
     /**
      * @param EventDispatcherInterface $dispatcher
-     * @param PresenterInterface $presenter
+     * @param PresenterInterface       $presenter
      */
     public function __construct(EventDispatcherInterface $dispatcher, PresenterInterface $presenter)
     {
@@ -61,13 +61,13 @@ class ExampleRunner
     {
         $this->maintainers[] = $maintainer;
 
-        @usort($this->maintainers, function($maintainer1, $maintainer2) {
+        @usort($this->maintainers, function ($maintainer1, $maintainer2) {
             return $maintainer2->getPriority() - $maintainer1->getPriority();
         });
     }
 
     /**
-     * @param ExampleNode $example
+     * @param  ExampleNode $example
      * @return null
      */
     public function run(ExampleNode $example)
@@ -113,7 +113,8 @@ class ExampleRunner
 
     /**
      * @param SpecificationInterface $context
-     * @param ExampleNode $example
+     * @param ExampleNode            $example
+     *
      * @throws \PhpSpec\Exception\Example\PendingException
      * @throws \Exception
      */
@@ -125,7 +126,7 @@ class ExampleRunner
 
         $matchers      = new MatcherManager($this->presenter);
         $collaborators = new CollaboratorManager($this->presenter);
-        $maintainers   = array_filter($this->maintainers, function($maintainer) use($example) {
+        $maintainers   = array_filter($this->maintainers, function ($maintainer) use ($example) {
             return $maintainer->supports($example);
         });
 

@@ -28,7 +28,7 @@ class UnwrapDecorator extends Decorator implements ExpectationInterface
 
     /**
      * @param ExpectationInterface $expectation
-     * @param Unwrapper $unwrapper
+     * @param Unwrapper            $unwrapper
      */
     public function __construct(ExpectationInterface $expectation, Unwrapper $unwrapper)
     {
@@ -37,9 +37,10 @@ class UnwrapDecorator extends Decorator implements ExpectationInterface
     }
 
     /**
-     * @param $alias
-     * @param $subject
-     * @param array $arguments
+     * @param string $alias
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @return mixed
      */
     public function match($alias, $subject, array $arguments = array())
@@ -48,4 +49,4 @@ class UnwrapDecorator extends Decorator implements ExpectationInterface
 
         return $this->getExpectation()->match($alias, $subject, $arguments);
     }
-} 
+}

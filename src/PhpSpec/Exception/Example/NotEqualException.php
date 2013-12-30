@@ -30,8 +30,8 @@ class NotEqualException extends FailureException
 
     /**
      * @param string $message
-     * @param mixed $expected
-     * @param mixed $actual
+     * @param mixed  $expected
+     * @param mixed  $actual
      */
     public function __construct($message, $expected, $actual)
     {

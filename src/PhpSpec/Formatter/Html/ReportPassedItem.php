@@ -33,7 +33,7 @@ class ReportPassedItem
 
     /**
      * @param TemplateInterface $template
-     * @param ExampleEvent $event
+     * @param ExampleEvent      $event
      */
     public function __construct(TemplateInterface $template, ExampleEvent $event)
     {

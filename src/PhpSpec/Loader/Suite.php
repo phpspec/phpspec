@@ -34,7 +34,7 @@ class Suite implements \Countable
     }
 
     /**
-     * @return array
+     * @return Node\SpecificationNode[]
      */
     public function getSpecifications()
     {

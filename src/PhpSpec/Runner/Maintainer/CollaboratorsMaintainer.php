@@ -38,7 +38,7 @@ class CollaboratorsMaintainer implements MaintainerInterface
      */
     private $unwrapper;
     /**
-     * @var
+     * @var Prophet
      */
     private $prophet;
 
@@ -52,6 +52,7 @@ class CollaboratorsMaintainer implements MaintainerInterface
 
     /**
      * @param ExampleNode $example
+     *
      * @return bool
      */
     public function supports(ExampleNode $example)
@@ -60,10 +61,10 @@ class CollaboratorsMaintainer implements MaintainerInterface
     }
 
     /**
-     * @param ExampleNode $example
+     * @param ExampleNode            $example
      * @param SpecificationInterface $context
-     * @param MatcherManager $matchers
-     * @param CollaboratorManager $collaborators
+     * @param MatcherManager         $matchers
+     * @param CollaboratorManager    $collaborators
      */
     public function prepare(ExampleNode $example, SpecificationInterface $context,
                             MatcherManager $matchers, CollaboratorManager $collaborators)
@@ -80,10 +81,10 @@ class CollaboratorsMaintainer implements MaintainerInterface
     }
 
     /**
-     * @param ExampleNode $example
+     * @param ExampleNode            $example
      * @param SpecificationInterface $context
-     * @param MatcherManager $matchers
-     * @param CollaboratorManager $collaborators
+     * @param MatcherManager         $matchers
+     * @param CollaboratorManager    $collaborators
      */
     public function teardown(ExampleNode $example, SpecificationInterface $context,
                              MatcherManager $matchers, CollaboratorManager $collaborators)
@@ -100,10 +101,10 @@ class CollaboratorsMaintainer implements MaintainerInterface
     }
 
     /**
-     * @param CollaboratorManager $collaborators
-     * @param $function
+     * @param CollaboratorManager         $collaborators
+     * @param \ReflectionFunctionAbstract $function
      */
-    private function generateCollaborators(CollaboratorManager $collaborators, $function)
+    private function generateCollaborators(CollaboratorManager $collaborators, \ReflectionFunctionAbstract $function)
     {
         if ($comment = $function->getDocComment()) {
             $comment = str_replace("\r\n", "\n", $comment);
@@ -125,8 +126,9 @@ class CollaboratorsMaintainer implements MaintainerInterface
 
     /**
      * @param CollaboratorManager $collaborators
-     * @param $name
-     * @return mixed
+     * @param string              $name
+     *
+     * @return Collaborator
      */
     private function getOrCreateCollaborator(CollaboratorManager $collaborators, $name)
     {

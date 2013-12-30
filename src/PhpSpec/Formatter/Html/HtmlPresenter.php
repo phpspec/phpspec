@@ -25,21 +25,24 @@ class HtmlPresenter extends StringPresenter
 {
     /**
      * @param Exception $exception
-     * @param bool $verbose
+     * @param bool      $verbose
+     *
      * @return string
      */
     public function presentException(Exception $exception, $verbose = false)
     {
         if ($exception instanceof PhpSpecException) {
             list($file, $line) = $this->getExceptionExamplePosition($exception);
+
             return $this->presentFileCode($file, $line);
         }
     }
 
     /**
-     * @param $file
-     * @param $lineno
-     * @param int $context
+     * @param string  $file
+     * @param integer $lineno
+     * @param integer $context
+     *
      * @return string
      */
     protected function presentFileCode($file, $lineno, $context = 6)

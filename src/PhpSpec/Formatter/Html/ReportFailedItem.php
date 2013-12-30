@@ -34,7 +34,7 @@ class ReportFailedItem
     /**
      * @var int
      */
-    static private $failingExamplesCount = 1;
+    private static $failingExamplesCount = 1;
     /**
      * @var \PhpSpec\Formatter\Presenter\PresenterInterface
      */
@@ -42,8 +42,8 @@ class ReportFailedItem
 
     /**
      * @param TemplateInterface $template
-     * @param ExampleEvent $event
-     * @param Presenter $presenter
+     * @param ExampleEvent      $event
+     * @param Presenter         $presenter
      */
     public function __construct(TemplateInterface $template, ExampleEvent $event, Presenter $presenter)
     {
@@ -83,6 +83,7 @@ class ReportFailedItem
                 $backtrace .= PHP_EOL;
             }
         }
+
         return rtrim($backtrace, "<br />" . PHP_EOL);
     }
 }

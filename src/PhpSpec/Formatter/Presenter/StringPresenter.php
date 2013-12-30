@@ -41,7 +41,8 @@ class StringPresenter implements PresenterInterface
     }
 
     /**
-     * @param $value
+     * @param mixed $value
+     *
      * @return mixed
      */
     public function presentValue($value)
@@ -81,6 +82,7 @@ class StringPresenter implements PresenterInterface
                 }
 
                 $lines = explode("\n", $value);
+
                 return $this->presentString(sprintf('"%s"...', substr($lines[0], 0, 25)));
             default:
                 return $this->presentString(sprintf('[%s:%s]', $type, $value));
@@ -89,7 +91,8 @@ class StringPresenter implements PresenterInterface
 
     /**
      * @param Exception $exception
-     * @param bool $verbose
+     * @param bool      $verbose
+     *
      * @return string
      */
     public function presentException(Exception $exception, $verbose = false)
@@ -127,8 +130,9 @@ class StringPresenter implements PresenterInterface
     }
 
     /**
-     * @param $string
-     * @return mixed
+     * @param string $string
+     *
+     * @return string
      */
     public function presentString($string)
     {
@@ -136,9 +140,10 @@ class StringPresenter implements PresenterInterface
     }
 
     /**
-     * @param $file
-     * @param $lineno
-     * @param int $context
+     * @param string  $file
+     * @param integer $lineno
+     * @param integer $context
+     *
      * @return string
      */
     protected function presentFileCode($file, $lineno, $context = 6)
@@ -164,8 +169,9 @@ class StringPresenter implements PresenterInterface
     }
 
     /**
-     * @param $number
-     * @param $line
+     * @param integer $number
+     * @param integer $line
+     *
      * @return string
      */
     protected function presentCodeLine($number, $line)
@@ -174,8 +180,9 @@ class StringPresenter implements PresenterInterface
     }
 
     /**
-     * @param $line
-     * @return mixed
+     * @param string $line
+     *
+     * @return string
      */
     protected function presentHighlight($line)
     {
@@ -184,6 +191,7 @@ class StringPresenter implements PresenterInterface
 
     /**
      * @param Exception $exception
+     *
      * @return string
      */
     protected function presentExceptionDifference(Exception $exception)
@@ -193,6 +201,7 @@ class StringPresenter implements PresenterInterface
 
     /**
      * @param Exception $exception
+     *
      * @return string
      */
     protected function presentExceptionStackTrace(Exception $exception)
@@ -249,7 +258,8 @@ class StringPresenter implements PresenterInterface
     }
 
     /**
-     * @param $header
+     * @param string $header
+     *
      * @return string
      */
     protected function presentExceptionTraceHeader($header)
@@ -258,10 +268,11 @@ class StringPresenter implements PresenterInterface
     }
 
     /**
-     * @param $class
-     * @param $type
-     * @param $method
-     * @param array $args
+     * @param string $class
+     * @param string $type
+     * @param string $method
+     * @param array  $args
+     *
      * @return string
      */
     protected function presentExceptionTraceMethod($class, $type, $method, array $args)
@@ -272,8 +283,9 @@ class StringPresenter implements PresenterInterface
     }
 
     /**
-     * @param $function
-     * @param array $args
+     * @param string $function
+     * @param array  $args
+     *
      * @return string
      */
     protected function presentExceptionTraceFunction($function, array $args)
@@ -285,6 +297,7 @@ class StringPresenter implements PresenterInterface
 
     /**
      * @param Exception $exception
+     *
      * @return array
      */
     protected function getExceptionExamplePosition(Exception $exception)

@@ -13,7 +13,6 @@
 
 namespace PhpSpec\Console;
 
-use Symfony\Component\Console\Output\Output;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 
@@ -24,7 +23,8 @@ use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 class Formatter extends OutputFormatter
 {
     /**
-     * @param null $decorated
+     * @param boolean|null $decorated
+     *
      * @param array $styles
      */
     public function __construct($decorated = null, array $styles = array())

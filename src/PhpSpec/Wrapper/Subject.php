@@ -29,7 +29,7 @@ use ArrayAccess;
 class Subject implements ArrayAccess, WrapperInterface
 {
     /**
-     * @var
+     * @var mixed
      */
     private $subject;
     /**
@@ -54,12 +54,12 @@ class Subject implements ArrayAccess, WrapperInterface
     private $expectationFactory;
 
     /**
-     * @param $subject
-     * @param Wrapper $wrapper
-     * @param WrappedObject $wrappedObject
-     * @param Caller $caller
+     * @param object                 $subject
+     * @param Wrapper                $wrapper
+     * @param WrappedObject          $wrappedObject
+     * @param Caller                 $caller
      * @param SubjectWithArrayAccess $arrayAccess
-     * @param ExpectationFactory $expectationFactory
+     * @param ExpectationFactory     $expectationFactory
      */
     public function __construct($subject, Wrapper $wrapper, WrappedObject $wrappedObject, Caller $caller,
                                 SubjectWithArrayAccess $arrayAccess, ExpectationFactory $expectationFactory)
@@ -73,8 +73,8 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @param $className
-     * @param array $arguments
+     * @param string $className
+     * @param array  $arguments
      */
     public function beAnInstanceOf($className, array $arguments = array())
     {
@@ -102,8 +102,9 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @param $method
-     * @param array $arguments
+     * @param string $method
+     * @param array  $arguments
+     *
      * @return Subject
      */
     public function callOnWrappedObject($method, array $arguments = array())
@@ -112,9 +113,10 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @param $property
-     * @param null $value
-     * @return array|object
+     * @param string $property
+     * @param mixed  $value
+     *
+     * @return mixed
      */
     public function setToWrappedObject($property, $value = null)
     {
@@ -122,8 +124,9 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @param $property
-     * @return mixed|Subject
+     * @param string $property
+     *
+     * @return string|Subject
      */
     public function getFromWrappedObject($property)
     {
@@ -131,7 +134,8 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @param mixed $key
+     * @param string|integer $key
+     *
      * @return Subject
      */
     public function offsetExists($key)
@@ -140,7 +144,8 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @param mixed $key
+     * @param string|integer $key
+     *
      * @return Subject
      */
     public function offsetGet($key)
@@ -149,8 +154,9 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @param mixed $key
-     * @param mixed $value
+     * @param string|integer $key
+     * @param mixed          $value
+     *
      * @return Subject
      */
     public function offsetSet($key, $value)
@@ -159,7 +165,7 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @param mixed $key
+     * @param string|integer $key
      */
     public function offsetUnset($key)
     {
@@ -167,8 +173,9 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @param $method
-     * @param array $arguments
+     * @param string $method
+     * @param array  $arguments
+     *
      * @return mixed|Subject
      */
     public function __call($method, array $arguments = array())
@@ -189,9 +196,10 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @param $property
-     * @param null $value
-     * @return array|object
+     * @param string $property
+     * @param mixed  $value
+     *
+     * @return mixed
      */
     public function __set($property, $value = null)
     {
@@ -199,8 +207,9 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @param $property
-     * @return mixed|Subject
+     * @param string $property
+     *
+     * @return string|Subject
      */
     public function __get($property)
     {
@@ -208,7 +217,8 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @param $value
+     * @param string $value
+     *
      * @return Subject
      */
     private function wrap($value)
@@ -217,8 +227,9 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @param $method
-     * @param array $arguments
+     * @param string $method
+     * @param array  $arguments
+     *
      * @return mixed
      */
     private function callExpectation($method, array $arguments)
@@ -235,12 +246,13 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @return mixed
+     * @return object
      */
     private function makeSureWeHaveASubject()
     {
         if (null === $this->subject && $this->wrappedObject->getClassname()) {
             $instantiator = new Instantiator;
+
             return $instantiator->instantiate($this->wrappedObject->getClassname());
         }
 

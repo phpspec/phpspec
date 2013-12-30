@@ -33,15 +33,16 @@ class GeneratorManager
     public function registerGenerator(Generator\GeneratorInterface $generator)
     {
         $this->generators[] = $generator;
-        @usort($this->generators, function($generator1, $generator2) {
+        @usort($this->generators, function ($generator1, $generator2) {
             return $generator2->getPriority() - $generator1->getPriority();
         });
     }
 
     /**
      * @param ResourceInterface $resource
-     * @param $name
-     * @param array $data
+     * @param string            $name
+     * @param array             $data
+     *
      * @return mixed
      * @throws \InvalidArgumentException
      */

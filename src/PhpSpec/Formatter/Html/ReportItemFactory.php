@@ -37,14 +37,14 @@ class ReportItemFactory
     }
 
     /**
-     * @param ExampleEvent $event
+     * @param ExampleEvent       $event
      * @param PresenterInterface $presenter
+     *
      * @return ReportFailedItem|ReportPassedItem|ReportPendingItem
-     * @throws void
      */
     public function create(ExampleEvent $event, PresenterInterface $presenter = null)
     {
-        switch($event->getResult()) {
+        switch ($event->getResult()) {
             case ExampleEvent::PASSED:
                 return new ReportPassedItem($this->template, $event);
             case ExampleEvent::PENDING:
@@ -53,12 +53,13 @@ class ReportItemFactory
             case ExampleEvent::BROKEN:
                 return new ReportFailedItem($this->template, $event, $presenter);
             default:
-                throw $this->invalidResultException($event->getResult());
+                $this->invalidResultException($event->getResult());
         }
     }
 
     /**
-     * @param $result
+     * @param integer $result
+     *
      * @throws InvalidExampleResultException
      */
     private function invalidResultException($result)

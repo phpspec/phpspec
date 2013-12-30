@@ -34,9 +34,9 @@ abstract class PromptingGenerator
     private $filesystem;
 
     /**
-     * @param IO $io
+     * @param IO               $io
      * @param TemplateRenderer $templates
-     * @param Filesystem $filesystem
+     * @param Filesystem       $filesystem
      */
     public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null)
     {
@@ -47,8 +47,7 @@ abstract class PromptingGenerator
 
     /**
      * @param ResourceInterface $resource
-     * @param array $data
-     * @return void
+     * @param array             $data
      */
     public function generate(ResourceInterface $resource, array $data = array())
     {
@@ -76,19 +75,30 @@ abstract class PromptingGenerator
 
     /**
      * @param ResourceInterface $resource
-     * @return mixed
+     *
+     * @return string
      */
     abstract protected function getFilePath(ResourceInterface $resource);
 
     /**
      * @param ResourceInterface $resource
-     * @param $filepath
-     * @return mixed
+     * @param string            $filepath
+     *
+     * @return string
+     */
+    abstract protected function renderTemplate(ResourceInterface $resource, $filepath);
+
+    /**
+     * @param ResourceInterface $resource
+     * @param string            $filepath
+     *
+     * @return string
      */
     abstract protected function getGeneratedMessage(ResourceInterface $resource, $filepath);
 
     /**
      * @param string $filepath
+     *
      * @return bool
      */
     private function ifFileAlreadyExists($filepath)
@@ -98,16 +108,18 @@ abstract class PromptingGenerator
 
     /**
      * @param string $filepath
+     *
      * @return bool
      */
     private function userAborts($filepath)
     {
         $message = sprintf('File "%s" already exists. Overwrite?', basename($filepath));
+
         return !$this->io->askConfirmation($message, false);
     }
 
     /**
-     * @param $filepath
+     * @param string $filepath
      */
     private function createDirectoryIfItDoesExist($filepath)
     {
@@ -119,7 +131,7 @@ abstract class PromptingGenerator
 
     /**
      * @param ResourceInterface $resource
-     * @param string $filepath
+     * @param string            $filepath
      */
     private function generateFileAndRenderTemplate(ResourceInterface $resource, $filepath)
     {
@@ -128,4 +140,4 @@ abstract class PromptingGenerator
         $this->filesystem->putFileContents($filepath, $content);
         $this->io->writeln($this->getGeneratedMessage($resource, $filepath));
     }
-} 
+}

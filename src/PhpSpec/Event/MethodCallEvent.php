@@ -49,10 +49,10 @@ class MethodCallEvent extends Event implements EventInterface
 
     /**
      * @param ExampleNode $example
-     * @param mixed $subject
-     * @param string $method
-     * @param array $arguments
-     * @param mixed $returnValue
+     * @param mixed       $subject
+     * @param string      $method
+     * @param array       $arguments
+     * @param mixed       $returnValue
      */
     public function __construct(ExampleNode $example, $subject, $method, $arguments, $returnValue = null)
     {

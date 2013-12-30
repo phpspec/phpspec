@@ -27,16 +27,16 @@ use PhpSpec\Exception\Example as ExampleException;
 class ErrorMaintainer implements MaintainerInterface
 {
     /**
-     * @var
+     * @var integer
      */
     private $errorLevel;
     /**
-     * @var
+     * @var callable|null
      */
     private $errorHandler;
 
     /**
-     * @param $errorLevel
+     * @param integer $errorLevel
      */
     public function __construct($errorLevel)
     {
@@ -45,6 +45,7 @@ class ErrorMaintainer implements MaintainerInterface
 
     /**
      * @param ExampleNode $example
+     *
      * @return bool
      */
     public function supports(ExampleNode $example)
@@ -53,10 +54,10 @@ class ErrorMaintainer implements MaintainerInterface
     }
 
     /**
-     * @param ExampleNode $example
+     * @param ExampleNode            $example
      * @param SpecificationInterface $context
-     * @param MatcherManager $matchers
-     * @param CollaboratorManager $collaborators
+     * @param MatcherManager         $matchers
+     * @param CollaboratorManager    $collaborators
      */
     public function prepare(ExampleNode $example, SpecificationInterface $context,
                             MatcherManager $matchers, CollaboratorManager $collaborators)
@@ -65,10 +66,10 @@ class ErrorMaintainer implements MaintainerInterface
     }
 
     /**
-     * @param ExampleNode $example
+     * @param ExampleNode            $example
      * @param SpecificationInterface $context
-     * @param MatcherManager $matchers
-     * @param CollaboratorManager $collaborators
+     * @param MatcherManager         $matchers
+     * @param CollaboratorManager    $collaborators
      */
     public function teardown(ExampleNode $example, SpecificationInterface $context,
                              MatcherManager $matchers, CollaboratorManager $collaborators)
@@ -100,7 +101,7 @@ class ErrorMaintainer implements MaintainerInterface
      *
      * @return Boolean
      *
-     * @throws ErrorException
+     * @throws ExampleException\ErrorException
      */
     final public function errorHandler($level, $message, $file, $line)
     {

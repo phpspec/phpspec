@@ -16,6 +16,7 @@ namespace PhpSpec\Runner;
 use PhpSpec\Exception\Wrapper\CollaboratorException;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 
+use PhpSpec\Wrapper\Collaborator;
 use ReflectionFunctionAbstract;
 
 /**
@@ -42,8 +43,8 @@ class CollaboratorManager
     }
 
     /**
-     * @param $name
-     * @param $collaborator
+     * @param string       $name
+     * @param Collaborator $collaborator
      */
     public function set($name, $collaborator)
     {
@@ -51,7 +52,8 @@ class CollaboratorManager
     }
 
     /**
-     * @param $name
+     * @param string $name
+     *
      * @return bool
      */
     public function has($name)
@@ -60,8 +62,10 @@ class CollaboratorManager
     }
 
     /**
-     * @param $name
-     * @return mixed
+     * @param string $name
+     *
+     * @return Collaborator
+     *
      * @throws \PhpSpec\Exception\Wrapper\CollaboratorException
      */
     public function get($name)
@@ -77,6 +81,7 @@ class CollaboratorManager
 
     /**
      * @param ReflectionFunctionAbstract $function
+     *
      * @return array
      */
     public function getArgumentsFor(ReflectionFunctionAbstract $function)

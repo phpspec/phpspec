@@ -20,7 +20,7 @@ namespace PhpSpec\Matcher;
 interface MatchersProviderInterface
 {
     /**
-     * @return mixed
+     * @return array
      */
     public function getMatchers();
 }

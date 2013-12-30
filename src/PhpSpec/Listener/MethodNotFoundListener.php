@@ -64,7 +64,7 @@ class MethodNotFoundListener implements EventSubscriberInterface
         if (!$this->io->isCodeGenerationEnabled()) {
             return;
         }
-        
+
         foreach ($this->methods as $call => $arguments) {
             list($classname, $method) = explode('::', $call);
             $message = sprintf('Do you want me to create `%s()` for you?', $call);

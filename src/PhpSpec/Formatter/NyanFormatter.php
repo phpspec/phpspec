@@ -36,7 +36,7 @@ class NyanFormatter extends DotFormatter
         }
 
         $this->examplesCount = count($event->getSuite());
-        $length = strlen((string)$this->examplesCount) + 1;
+        $length = strlen((string) $this->examplesCount) + 1;
 
         $this->scoreboard = new Scoreboard(
             new Cat(),
@@ -106,7 +106,7 @@ class NyanFormatter extends DotFormatter
             'failed' => $stats->getFailedEvents(),
             'broken' => $stats->getBrokenEvents(),
             'pending' => $stats->getPendingEvents()
-        ) as $status => $events) {
+        ) as $events) {
             if (!count($events)) {
                 continue;
             }

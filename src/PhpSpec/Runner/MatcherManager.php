@@ -47,7 +47,7 @@ class MatcherManager
     public function add(MatcherInterface $matcher)
     {
         $this->matchers[] = $matcher;
-        @usort($this->matchers, function($matcher1, $matcher2) {
+        @usort($this->matchers, function ($matcher1, $matcher2) {
             return $matcher2->getPriority() - $matcher1->getPriority();
         });
     }
@@ -55,7 +55,7 @@ class MatcherManager
     /**
      * @param $keyword
      * @param $subject
-     * @param array $arguments
+     * @param  array                                               $arguments
      * @return mixed
      * @throws \PhpSpec\Exception\Wrapper\MatcherNotFoundException
      */

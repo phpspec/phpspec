@@ -48,8 +48,9 @@ class IdentityMatcher extends BasicMatcher
 
     /**
      * @param string $name
-     * @param mixed $subject
-     * @param array $arguments
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @return bool
      */
     public function supports($name, $subject, array $arguments)
@@ -60,8 +61,9 @@ class IdentityMatcher extends BasicMatcher
     }
 
     /**
-     * @param $subject
+     * @param mixed $subject
      * @param array $arguments
+     *
      * @return bool
      */
     protected function matches($subject, array $arguments)
@@ -70,9 +72,10 @@ class IdentityMatcher extends BasicMatcher
     }
 
     /**
-     * @param $name
-     * @param $subject
-     * @param array $arguments
+     * @param string $name
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @return NotEqualException
      */
     protected function getFailureException($name, $subject, array $arguments)
@@ -85,9 +88,10 @@ class IdentityMatcher extends BasicMatcher
     }
 
     /**
-     * @param $name
-     * @param $subject
-     * @param array $arguments
+     * @param string $name
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @return FailureException
      */
     protected function getNegativeFailureException($name, $subject, array $arguments)

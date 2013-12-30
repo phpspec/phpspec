@@ -39,7 +39,7 @@ class MatchersMaintainer implements MaintainerInterface
 
     /**
      * @param PresenterInterface $presenter
-     * @param Unwrapper $unwrapper
+     * @param Unwrapper          $unwrapper
      */
     public function __construct(PresenterInterface $presenter, Unwrapper $unwrapper)
     {
@@ -49,6 +49,7 @@ class MatchersMaintainer implements MaintainerInterface
 
     /**
      * @param ExampleNode $example
+     *
      * @return bool
      */
     public function supports(ExampleNode $example)
@@ -57,10 +58,10 @@ class MatchersMaintainer implements MaintainerInterface
     }
 
     /**
-     * @param ExampleNode $example
+     * @param ExampleNode            $example
      * @param SpecificationInterface $context
-     * @param MatcherManager $matchers
-     * @param CollaboratorManager $collaborators
+     * @param MatcherManager         $matchers
+     * @param CollaboratorManager    $collaborators
      */
     public function prepare(ExampleNode $example, SpecificationInterface $context,
                             MatcherManager $matchers, CollaboratorManager $collaborators)
@@ -94,10 +95,10 @@ class MatchersMaintainer implements MaintainerInterface
     }
 
     /**
-     * @param ExampleNode $example
+     * @param ExampleNode            $example
      * @param SpecificationInterface $context
-     * @param MatcherManager $matchers
-     * @param CollaboratorManager $collaborators
+     * @param MatcherManager         $matchers
+     * @param CollaboratorManager    $collaborators
      */
     public function teardown(ExampleNode $example, SpecificationInterface $context,
                              MatcherManager $matchers, CollaboratorManager $collaborators)

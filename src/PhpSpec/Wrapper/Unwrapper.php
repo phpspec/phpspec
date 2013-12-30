@@ -24,6 +24,7 @@ class Unwrapper implements RevealerInterface
 {
     /**
      * @param array $arguments
+     *
      * @return array
      */
     public function unwrapAll(array $arguments)
@@ -36,8 +37,9 @@ class Unwrapper implements RevealerInterface
     }
 
     /**
-     * @param $argument
-     * @return array|object
+     * @param mixed $argument
+     *
+     * @return mixed
      */
     public function unwrapOne($argument)
     {
@@ -62,7 +64,8 @@ class Unwrapper implements RevealerInterface
 
     /**
      * @param mixed $value
-     * @return array|object
+     *
+     * @return mixed
      */
     public function reveal($value)
     {

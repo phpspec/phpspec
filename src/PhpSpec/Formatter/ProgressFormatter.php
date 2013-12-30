@@ -26,10 +26,10 @@ class ProgressFormatter extends BasicFormatter
         $total  = $stats->getEventsCount();
         $counts = $stats->getCountsHash();
 
-        $percents = array_map(function($count) use($total) {
+        $percents = array_map(function ($count) use ($total) {
             return round($count / ($total / 100), 0);
         }, $counts);
-        $lengths  = array_map(function($percent) {
+        $lengths  = array_map(function ($percent) {
             return round($percent / 2, 0);
         }, $percents);
 

@@ -38,7 +38,8 @@ class ExceptionFactory
     /**
      * @param string $classname
      * @param string $method
-     * @param array $arguments
+     * @param array  $arguments
+     *
      * @return Fracture\MethodNotFoundException
      */
     public function methodNotFound($classname, $method, array $arguments = array())
@@ -55,7 +56,8 @@ class ExceptionFactory
     /**
      * @param string $classname
      * @param string $method
-     * @param array $arguments
+     * @param array  $arguments
+     *
      * @return Fracture\MethodNotVisibleException
      */
     public function methodNotVisible($classname, $method, array $arguments = array())
@@ -71,27 +73,32 @@ class ExceptionFactory
 
     /**
      * @param string $classname
+     *
      * @return Fracture\ClassNotFoundException
      */
     public function classNotFound($classname)
     {
         $message = sprintf('Class %s does not exist.', $this->presenter->presentString($classname));
+
         return new Fracture\ClassNotFoundException($message, $classname);
     }
 
     /**
-     * @param mixed $subject
+     * @param mixed  $subject
      * @param string $property
+     *
      * @return Fracture\PropertyNotFoundException
      */
     public function propertyNotFound($subject, $property)
     {
         $message = sprintf('Property %s not found.', $this->presenter->presentString($property));
+
         return new Fracture\PropertyNotFoundException($message, $subject, $property);
     }
 
     /**
      * @param string $method
+     *
      * @return SubjectException
      */
     public function callingMethodOnNonObject($method)
@@ -104,6 +111,7 @@ class ExceptionFactory
 
     /**
      * @param string $property
+     *
      * @return SubjectException
      */
     public function settingPropertyOnNonObject($property)
@@ -116,6 +124,7 @@ class ExceptionFactory
 
     /**
      * @param string $property
+     *
      * @return SubjectException
      */
     public function gettingPropertyOnNonObject($property)

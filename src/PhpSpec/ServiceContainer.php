@@ -45,7 +45,7 @@ class ServiceContainer
      * Sets a param in the container
      *
      * @param string $id
-     * @param mixed $value
+     * @param mixed  $value
      */
     public function setParam($id, $value)
     {
@@ -56,7 +56,8 @@ class ServiceContainer
      * Gets a param from the container or a default value.
      *
      * @param string $id
-     * @param mixed $default
+     * @param mixed  $default
+     *
      * @return mixed
      */
     public function getParam($id, $default = null)
@@ -68,8 +69,9 @@ class ServiceContainer
      * Sets a object or a callback for the object creation. A new object will
      * be created every time
      *
-     * @param string $id
+     * @param string          $id
      * @param object|callable $value
+     *
      * @throws \InvalidArgumentException if service is not an object or callback
      */
     public function set($id, $value)
@@ -96,8 +98,9 @@ class ServiceContainer
      * Sets a object or a callback for the object creation. The same object will
      * be returned every time
      *
-     * @param $id
-     * @param $callable
+     * @param string   $id
+     * @param callable $callable
+     *
      * @throws \InvalidArgumentException if service is not an object or callback
      */
     public function setShared($id, $callable)
@@ -108,7 +111,7 @@ class ServiceContainer
             ));
         }
 
-        $this->set($id, function($container) use ($callable) {
+        $this->set($id, function ($container) use ($callable) {
             static $instance;
 
             if (null === $instance) {
@@ -123,7 +126,9 @@ class ServiceContainer
      * Retrieves a service from the container
      *
      * @param string $id
+     *
      * @return mixed
+     *
      * @throws \InvalidArgumentException if service is not defined
      */
     public function get($id)
@@ -144,6 +149,7 @@ class ServiceContainer
      * Retrieves a list of services of a given prefix
      *
      * @param string $prefix
+     *
      * @return array
      */
     public function getByPrefix($prefix)
@@ -164,6 +170,7 @@ class ServiceContainer
      * Removes a service from the container
      *
      * @param string $id
+     *
      * @throws \InvalidArgumentException if service is not defined
      */
     public function remove($id)
@@ -183,7 +190,8 @@ class ServiceContainer
     /**
      * Adds a configurator, that can configure many services in one callback
      *
-     * @param $configurator
+     * @param callable $configurator
+     *
      * @throws \InvalidArgumentException if configurator is not a callback
      */
     public function addConfigurator($configurator)
@@ -211,6 +219,7 @@ class ServiceContainer
      * Retrieves the prefix and sid of a given service
      *
      * @param string $id
+     *
      * @return array
      */
     private function getPrefixAndSid($id)

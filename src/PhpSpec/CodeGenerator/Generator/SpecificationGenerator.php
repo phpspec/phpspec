@@ -23,8 +23,9 @@ class SpecificationGenerator extends PromptingGenerator implements GeneratorInte
 {
     /**
      * @param ResourceInterface $resource
-     * @param string $generation
-     * @param array $data
+     * @param string            $generation
+     * @param array             $data
+     *
      * @return bool
      */
     public function supports(ResourceInterface $resource, $generation, array $data)
@@ -42,7 +43,8 @@ class SpecificationGenerator extends PromptingGenerator implements GeneratorInte
 
     /**
      * @param ResourceInterface $resource
-     * @param $filepath
+     * @param string            $filepath
+     *
      * @return string
      */
     protected function renderTemplate(ResourceInterface $resource, $filepath)
@@ -70,7 +72,7 @@ class SpecificationGenerator extends PromptingGenerator implements GeneratorInte
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param  ResourceInterface $resource
      * @return mixed
      */
     protected function getFilePath(ResourceInterface $resource)
@@ -80,7 +82,8 @@ class SpecificationGenerator extends PromptingGenerator implements GeneratorInte
 
     /**
      * @param ResourceInterface $resource
-     * @param string $filepath
+     * @param string            $filepath
+     *
      * @return string
      */
     protected function getGeneratedMessage(ResourceInterface $resource, $filepath)
