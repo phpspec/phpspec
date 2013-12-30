@@ -78,7 +78,11 @@ class SuiteRunnerSpec extends ObjectBehavior
 
     function it_dispatches_afterSuite_event_with_result_and_time($suite, $specRunner, $dispatcher)
     {
-        $specRunner->run(Argument::any())->willReturn(ExampleEvent::FAILED);
+        $specRunner->run(Argument::any())->will(function () {
+            // Wait a few microseconds to ensure that the spec passes even on fast machines
+            usleep(10);
+            return ExampleEvent::FAILED;
+        });
 
         $this->run($suite);
 
