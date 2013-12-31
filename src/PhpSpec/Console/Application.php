@@ -15,22 +15,21 @@ namespace PhpSpec\Console;
 
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 use PhpSpec\ServiceContainer;
-use PhpSpec\Console;
-use PhpSpec\Locator;
-use PhpSpec\Loader;
-use PhpSpec\Wrapper;
-use PhpSpec\Listener;
+use PhpSpec\Extension;
+
 use PhpSpec\Formatter;
+use PhpSpec\Listener;
+use PhpSpec\Loader;
+use PhpSpec\Locator;
 use PhpSpec\Runner;
 use PhpSpec\CodeGenerator;
-use PhpSpec\Extension;
+use PhpSpec\Wrapper;
 
 use RuntimeException;
 
@@ -117,6 +116,7 @@ class Application extends BaseApplication
      */
     protected function setupContainer(ServiceContainer $container)
     {
+        $this->setupIO($container);
         $this->setupConsole($container);
         $this->setupEventDispatcher($container);
         $this->setupGenerators($container);
@@ -129,29 +129,25 @@ class Application extends BaseApplication
         $this->loadConfigurationFile($container);
     }
 
-    /**
-     * @param ServiceContainer $container
-     */
-    protected function setupConsole(ServiceContainer $container)
+    protected function setupIO(ServiceContainer $container)
     {
         $container->setShared('console.io', function($c) {
-            return new Console\IO(
+            return new IO(
                 $c->get('console.input'),
                 $c->get('console.output'),
                 $c->get('console.helpers')
             );
         });
+    }
 
-        $container->setShared('html.io', function($c) {
-            return new Formatter\Html\IO;
-        });
-
+    protected function setupConsole(ServiceContainer $container)
+    {
         $container->setShared('console.commands.run', function($c) {
-            return new Console\Command\RunCommand;
+            return new Command\RunCommand;
         });
 
         $container->setShared('console.commands.describe', function($c) {
-            return new Console\Command\DescribeCommand;
+            return new Command\DescribeCommand;
         });
     }
 
@@ -258,10 +254,6 @@ class Application extends BaseApplication
             return new Formatter\Presenter\TaggedPresenter($c->get('formatter.presenter.differ'));
         });
 
-        $container->setShared('formatter.html.presenter', function($c) {
-            return new Formatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
-        });
-
         $container->setShared('formatter.presenter.differ', function($c) {
             $differ = new Formatter\Presenter\Differ\Differ;
 
@@ -338,52 +330,53 @@ class Application extends BaseApplication
      */
     protected function setupFormatter(ServiceContainer $container)
     {
+        $container->set('formatter.formatters.progress', function($c) {
+            return new Formatter\ProgressFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+        });
+        $container->set('formatter.formatters.pretty', function($c) {
+            return new Formatter\PrettyFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+        });
+        $container->set('formatter.formatters.junit', function($c) {
+            return new Formatter\JunitFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+        });
+        $container->set('formatter.formatters.dot', function($c) {
+            return new Formatter\DotFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+        });
+        $container->set('formatter.formatters.nyan', function($c) {
+            if (class_exists('NyanCat\Scoreboard')) {
+                return new Formatter\NyanFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+            }
+
+            throw new RuntimeException(
+                'The Nyan Cat formatter requires whatthejeff/nyancat-scoreboard:~1.1'
+            );
+        });
+        $container->set('formatter.formatters.html', function($c) {
+            $io = new Formatter\Html\IO;
+            $template = new Formatter\Html\Template($io);
+            $factory = new Formatter\Html\ReportItemFactory($template);
+            $presenter = new Formatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
+
+            return new Formatter\HtmlFormatter($factory, $presenter, $io, $c->get('event_dispatcher.listeners.stats'));
+        });
+        $container->set('formatter.formatters.h', function ($c) {
+            return $c->get('formatter.formatters.html');
+        });
+
         $container->addConfigurator(function($c) {
-            switch ($c->getParam('formatter.name', 'progress')) {
-                case 'pretty':
-                    $formatter = new Formatter\PrettyFormatter;
-                    break;
-                case 'junit':
-                    $formatter = new Formatter\JunitFormatter;
-                    break;
-                case 'dot':
-                    $formatter = new Formatter\DotFormatter;
-                    break;
-                case 'nyan':
-                    if (class_exists('NyanCat\Scoreboard')) {
-                        $formatter = new Formatter\NyanFormatter;
-                    } else {
-                        throw new RuntimeException(
-                            'The Nyan Cat formatter requires whatthejeff/nyancat-scoreboard:~1.1'
-                        );
-                    }
-                    break;
-                case 'html':
-                case 'h':
-                    $template = new Formatter\Html\Template($c->get('html.io'));
-                    $factory = new Formatter\Html\ReportItemFactory($template);
-                    $formatter = new Formatter\HtmlFormatter($factory);
-                    break;
-                case 'progress':
-                default:
-                    $formatter = new Formatter\ProgressFormatter;
-                    break;
-            }
+            $formatterName = $c->getParam('formatter.name', 'progress');
 
-            if ($formatter instanceof Formatter\HtmlFormatter) {
-                $formatter->setIO($c->get('html.io'));
-                $formatter->setPresenter($c->get('formatter.html.presenter'));
-            } else {
-                $formatter->setIO($c->get('console.io'));
-                $formatter->setPresenter($c->get('formatter.presenter'));
-            }
-
-            $formatter->setStatisticsCollector($c->get('event_dispatcher.listeners.stats'));
-
-            $c->set('event_dispatcher.listeners.formatter', $formatter);
-            $c->get('console.output')->setFormatter(new Console\Formatter(
+            $c->get('console.output')->setFormatter(new \PhpSpec\Console\Formatter(
                 $c->get('console.output')->isDecorated()
             ));
+
+            try {
+                $formatter = $c->get('formatter.formatters.'.$formatterName);
+            } catch (\InvalidArgumentException $e) {
+                throw new RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
+            }
+
+            $c->set('event_dispatcher.listeners.formatter', $formatter);
         });
     }
 

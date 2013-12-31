@@ -20,12 +20,20 @@ use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class PrettyFormatter implements FormatterInterface
+class PrettyFormatter implements EventSubscriberInterface
 {
     private $io;
     private $presenter;
     private $stats;
+
+    public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
+    {
+        $this->presenter = $presenter;
+        $this->io = $io;
+        $this->stats = $stats;
+    }
 
     public static function getSubscribedEvents()
     {
@@ -42,11 +50,6 @@ class PrettyFormatter implements FormatterInterface
     public function setPresenter(PresenterInterface $presenter)
     {
         $this->presenter = $presenter;
-    }
-
-    public function setStatisticsCollector(StatisticsCollector $stats)
-    {
-        $this->stats = $stats;
     }
 
     public function beforeSpecification(SpecificationEvent $event)

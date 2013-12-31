@@ -21,25 +21,35 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\PendingException;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Class BasicFormatter
  * @package PhpSpec\Formatter
  */
-abstract class BasicFormatter implements FormatterInterface
+abstract class BasicFormatter implements EventSubscriberInterface
 {
     /**
-     * @var
+     * @var IO
      */
     private $io;
+
     /**
-     * @var
+     * @var PresenterInterface
      */
     private $presenter;
+
     /**
-     * @var
+     * @var StatisticsCollector
      */
     private $stats;
+
+    public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
+    {
+        $this->presenter = $presenter;
+        $this->io = $io;
+        $this->stats = $stats;
+    }
 
     /**
      * @return array
@@ -53,30 +63,6 @@ abstract class BasicFormatter implements FormatterInterface
         );
 
         return array_combine($events, $events);
-    }
-
-    /**
-     * @param IO $io
-     */
-    public function setIO(IO $io)
-    {
-        $this->io = $io;
-    }
-
-    /**
-     * @param PresenterInterface $presenter
-     */
-    public function setPresenter(PresenterInterface $presenter)
-    {
-        $this->presenter = $presenter;
-    }
-
-    /**
-     * @param StatisticsCollector $stats
-     */
-    public function setStatisticsCollector(StatisticsCollector $stats)
-    {
-        $this->stats = $stats;
     }
 
     /**

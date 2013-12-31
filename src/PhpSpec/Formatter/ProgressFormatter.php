@@ -13,14 +13,8 @@
 
 namespace PhpSpec\Formatter;
 
-use PhpSpec\Console\IO;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Listener\StatisticsCollector;
-
 use PhpSpec\Event\SuiteEvent;
-use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Exception\Example\PendingException;
 
 class ProgressFormatter extends BasicFormatter
 {
