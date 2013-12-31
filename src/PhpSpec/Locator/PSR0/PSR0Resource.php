@@ -31,7 +31,7 @@ class PSR0Resource implements ResourceInterface
     private $locator;
 
     /**
-     * @param array $parts
+     * @param array       $parts
      * @param PSR0Locator $locator
      */
     public function __construct(array $parts, PSR0Locator $locator)

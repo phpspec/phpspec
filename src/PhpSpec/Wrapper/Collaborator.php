@@ -35,7 +35,7 @@ class Collaborator implements WrapperInterface
     }
 
     /**
-     * @param $classOrInterface
+     * @param string $classOrInterface
      */
     public function beADoubleOf($classOrInterface)
     {
@@ -55,7 +55,7 @@ class Collaborator implements WrapperInterface
     }
 
     /**
-     * @param $interface
+     * @param string $interface
      */
     public function implement($interface)
     {
@@ -63,8 +63,9 @@ class Collaborator implements WrapperInterface
     }
 
     /**
-     * @param $method
-     * @param array $arguments
+     * @param string $method
+     * @param array  $arguments
+     *
      * @return mixed
      */
     public function __call($method, array $arguments)
@@ -73,8 +74,8 @@ class Collaborator implements WrapperInterface
     }
 
     /**
-     * @param $parameter
-     * @param $value
+     * @param string $parameter
+     * @param mixed  $value
      */
     public function __set($parameter, $value)
     {
@@ -82,7 +83,8 @@ class Collaborator implements WrapperInterface
     }
 
     /**
-     * @param $parameter
+     * @param string $parameter
+     *
      * @return mixed
      */
     public function __get($parameter)

@@ -16,7 +16,6 @@ namespace PhpSpec\Matcher;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 
 use PhpSpec\Exception\Example\FailureException;
-use PhpSpec\Exception\FunctionNotFoundException;
 
 /**
  * Class ScalarMatcher
@@ -60,7 +59,6 @@ class ScalarMatcher implements MatcherInterface
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @throws \PhpSpec\Exception\FunctionNotFoundException
      * @throws \PhpSpec\Exception\Example\FailureException
      * @return boolean
      */
@@ -86,7 +84,6 @@ class ScalarMatcher implements MatcherInterface
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @throws \PhpSpec\Exception\FunctionNotFoundException
      * @throws \PhpSpec\Exception\Example\FailureException
      * @return boolean
      */

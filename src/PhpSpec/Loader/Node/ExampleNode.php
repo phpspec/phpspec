@@ -22,7 +22,7 @@ use ReflectionFunctionAbstract;
 class ExampleNode
 {
     /**
-     * @var
+     * @var string
      */
     private $title;
     /**
@@ -30,7 +30,7 @@ class ExampleNode
      */
     private $function;
     /**
-     * @var
+     * @var SpecificationNode|null
      */
     private $specification;
     /**
@@ -39,7 +39,7 @@ class ExampleNode
     private $isPending = false;
 
     /**
-     * @param $title
+     * @param string                     $title
      * @param ReflectionFunctionAbstract $function
      */
     public function __construct($title, ReflectionFunctionAbstract $function)
@@ -49,7 +49,7 @@ class ExampleNode
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getTitle()
     {
@@ -89,7 +89,7 @@ class ExampleNode
     }
 
     /**
-     * @return mixed
+     * @return SpecificationNode|null
      */
     public function getSpecification()
     {

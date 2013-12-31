@@ -25,8 +25,9 @@ use ReflectionProperty;
 class Instantiator
 {
     /**
-     * @param $className
-     * @return mixed
+     * @param string $className
+     *
+     * @return object
      */
     public function instantiate($className)
     {
@@ -34,8 +35,10 @@ class Instantiator
     }
 
     /**
-     * @param $className
+     * @param string $className
+     *
      * @return string
+     *
      * @throws \PhpSpec\Exception\Fracture\ClassNotFoundException
      */
     private function createSerializedObject($className)
@@ -52,8 +55,9 @@ class Instantiator
     }
 
     /**
-     * @param ReflectionClass $reflection
-     * @param array $properties
+     * @param ReflectionClass      $reflection
+     * @param ReflectionProperty[] $properties
+     *
      * @return string
      */
     private function serializeProperties(ReflectionClass $reflection, array $properties)
@@ -69,8 +73,9 @@ class Instantiator
     }
 
     /**
-     * @param ReflectionClass $class
+     * @param ReflectionClass    $class
      * @param ReflectionProperty $property
+     *
      * @return string
      */
     private function serializePropertyName(ReflectionClass $class, ReflectionProperty $property)
@@ -87,8 +92,9 @@ class Instantiator
     }
 
     /**
-     * @param ReflectionClass $class
+     * @param ReflectionClass    $class
      * @param ReflectionProperty $property
+     *
      * @return string
      */
     private function serializePropertyValue(ReflectionClass $class, ReflectionProperty $property)

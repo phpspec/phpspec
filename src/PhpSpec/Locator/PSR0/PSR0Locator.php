@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Locator\PSR0;
 
+use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Locator\ResourceLocatorInterface;
 use PhpSpec\Util\Filesystem;
 
@@ -54,10 +55,10 @@ class PSR0Locator implements ResourceLocatorInterface
     private $filesystem;
 
     /**
-     * @param string $srcNamespace
-     * @param string $specNamespacePrefix
-     * @param string $srcPath
-     * @param string $specPath
+     * @param string     $srcNamespace
+     * @param string     $specNamespacePrefix
+     * @param string     $srcPath
+     * @param string     $specPath
      * @param Filesystem $filesystem
      */
     public function __construct($srcNamespace = '', $specNamespacePrefix = 'spec',
@@ -121,7 +122,7 @@ class PSR0Locator implements ResourceLocatorInterface
     }
 
     /**
-     * @return array
+     * @return ResourceInterface[]
      */
     public function getAllResources()
     {
@@ -129,7 +130,8 @@ class PSR0Locator implements ResourceLocatorInterface
     }
 
     /**
-     * @param $query
+     * @param string $query
+     *
      * @return bool
      */
     public function supportsQuery($query)
@@ -147,8 +149,9 @@ class PSR0Locator implements ResourceLocatorInterface
     }
 
     /**
-     * @param $query
-     * @return array
+     * @param string $query
+     *
+     * @return ResourceInterface[]
      */
     public function findResources($query)
     {
@@ -181,7 +184,8 @@ class PSR0Locator implements ResourceLocatorInterface
     }
 
     /**
-     * @param $classname
+     * @param string $classname
+     *
      * @return bool
      */
     public function supportsClass($classname)
@@ -195,7 +199,8 @@ class PSR0Locator implements ResourceLocatorInterface
     }
 
     /**
-     * @param $classname
+     * @param string $classname
+     *
      * @return null|PSR0Resource
      */
     public function createResource($classname)
@@ -226,8 +231,9 @@ class PSR0Locator implements ResourceLocatorInterface
     }
 
     /**
-     * @param $path
-     * @return array
+     * @param string $path
+     *
+     * @return PSR0Resource[]
      */
     protected function findSpecResources($path)
     {
@@ -248,7 +254,8 @@ class PSR0Locator implements ResourceLocatorInterface
     }
 
     /**
-     * @param $path
+     * @param string $path
+     *
      * @return PSR0Resource
      */
     private function createResourceFromSpecFile($path)

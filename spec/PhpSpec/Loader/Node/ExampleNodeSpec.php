@@ -32,7 +32,7 @@ class ExampleNodeSpec extends ObjectBehavior
         $this->getSpecification()->shouldReturn($specification);
     }
 
-    function it_is_not_pending_by_default($function)
+    function it_is_not_pending_by_default()
     {
         $this->isPending()->shouldReturn(false);
     }

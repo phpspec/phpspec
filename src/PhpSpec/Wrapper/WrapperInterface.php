@@ -20,7 +20,7 @@ namespace PhpSpec\Wrapper;
 interface WrapperInterface
 {
     /**
-     * @return mixed
+     * @return object
      */
     public function getWrappedObject();
 }

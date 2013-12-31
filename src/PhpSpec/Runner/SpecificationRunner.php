@@ -35,7 +35,7 @@ class SpecificationRunner
 
     /**
      * @param EventDispatcherInterface $dispatcher
-     * @param ExampleRunner $exampleRunner
+     * @param ExampleRunner            $exampleRunner
      */
     public function __construct(EventDispatcherInterface $dispatcher, ExampleRunner $exampleRunner)
     {
@@ -44,7 +44,7 @@ class SpecificationRunner
     }
 
     /**
-     * @param SpecificationNode $specification
+     * @param  SpecificationNode $specification
      * @return int|mixed
      */
     public function run(SpecificationNode $specification)

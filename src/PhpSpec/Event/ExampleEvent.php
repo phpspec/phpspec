@@ -63,10 +63,10 @@ class ExampleEvent extends Event implements EventInterface
     private $exception;
 
     /**
-     * @param ExampleNode $example
-     * @param null $time
-     * @param null $result
-     * @param \Exception $exception
+     * @param ExampleNode  $example
+     * @param float|null   $time
+     * @param integer|null $result
+     * @param \Exception   $exception
      */
     public function __construct(ExampleNode $example, $time = null, $result = null,
                                 \Exception $exception = null)

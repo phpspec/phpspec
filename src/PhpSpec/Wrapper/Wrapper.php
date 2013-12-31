@@ -48,10 +48,10 @@ class Wrapper
     private $example;
 
     /**
-     * @param MatcherManager $matchers
-     * @param PresenterInterface $presenter
+     * @param MatcherManager           $matchers
+     * @param PresenterInterface       $presenter
      * @param EventDispatcherInterface $dispatcher
-     * @param ExampleNode $example
+     * @param ExampleNode              $example
      */
     public function __construct(MatcherManager $matchers, PresenterInterface $presenter,
         EventDispatcherInterface $dispatcher, ExampleNode $example)
@@ -63,7 +63,8 @@ class Wrapper
     }
 
     /**
-     * @param null $value
+     * @param object $value
+     *
      * @return Subject
      */
     public function wrap($value = null)

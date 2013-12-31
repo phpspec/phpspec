@@ -31,7 +31,7 @@ class PropertyNotFoundException extends FractureException
 
     /**
      * @param string $message
-     * @param mixed $subject
+     * @param mixed  $subject
      * @param string $property
      */
     public function __construct($message, $subject, $property)

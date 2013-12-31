@@ -66,7 +66,7 @@ class ObjectBehavior implements ArrayAccess,
     /**
      * Gets the unwrapped proxied object from PhpSpec subject
      *
-     * @return mixed
+     * @return object
      */
     public function getWrappedObject()
     {
@@ -77,6 +77,7 @@ class ObjectBehavior implements ArrayAccess,
      * Checks if a key exists in case object implements ArrayAccess
      *
      * @param string|integer $key
+     *
      * @return bool
      */
     public function offsetExists($key)
@@ -88,6 +89,7 @@ class ObjectBehavior implements ArrayAccess,
      * Gets the value in a particular position in the ArrayAccess object
      *
      * @param string|integer $key
+     *
      * @return mixed
      */
     public function offsetGet($key)
@@ -99,7 +101,7 @@ class ObjectBehavior implements ArrayAccess,
      * Sets the value in a particular position in the ArrayAccess object
      *
      * @param string|integer $key
-     * @param mixed $value
+     * @param mixed          $value
      */
     public function offsetSet($key, $value)
     {
@@ -120,7 +122,8 @@ class ObjectBehavior implements ArrayAccess,
      * Proxies all call to the PhpSpec subject
      *
      * @param string $method
-     * @param array $arguments
+     * @param array  $arguments
+     *
      * @return mixed
      */
     public function __call($method, array $arguments = array())
@@ -132,7 +135,7 @@ class ObjectBehavior implements ArrayAccess,
      * Proxies setting to the PhpSpec subject
      *
      * @param string $property
-     * @param mixed $value
+     * @param mixed  $value
      */
     public function __set($property, $value)
     {
@@ -143,6 +146,7 @@ class ObjectBehavior implements ArrayAccess,
      * Proxies getting to the PhpSpec subject
      *
      * @param string $property
+     *
      * @return mixed
      */
     public function __get($property)

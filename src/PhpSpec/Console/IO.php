@@ -50,9 +50,9 @@ class IO implements IOInterface
     private $hasTempString = false;
 
     /**
-     * @param InputInterface $input
+     * @param InputInterface  $input
      * @param OutputInterface $output
-     * @param HelperSet $helpers
+     * @param HelperSet       $helpers
      */
     public function __construct(InputInterface $input, OutputInterface $output, HelperSet $helpers)
     {
@@ -103,8 +103,8 @@ class IO implements IOInterface
     }
 
     /**
-     * @param string $message
-     * @param null $indent
+     * @param string       $message
+     * @param integer|null $indent
      */
     public function writeln($message = '', $indent = null)
     {
@@ -112,8 +112,8 @@ class IO implements IOInterface
     }
 
     /**
-     * @param string $message
-     * @param null $indent
+     * @param string       $message
+     * @param integer|null $indent
      */
     public function writeTemp($message, $indent = null)
     {
@@ -145,9 +145,9 @@ class IO implements IOInterface
     }
 
     /**
-     * @param string $message
-     * @param null $indent
-     * @param bool $newline
+     * @param string       $message
+     * @param integer|null $indent
+     * @param bool         $newline
      */
     public function write($message, $indent = null, $newline = false)
     {
@@ -167,8 +167,8 @@ class IO implements IOInterface
     }
 
     /**
-     * @param string $message
-     * @param null $indent
+     * @param string       $message
+     * @param integer|null $indent
      */
     public function overwriteln($message = '', $indent = null)
     {
@@ -176,9 +176,9 @@ class IO implements IOInterface
     }
 
     /**
-     * @param string $message
-     * @param null $indent
-     * @param bool $newline
+     * @param string       $message
+     * @param integer|null $indent
+     * @param bool         $newline
      */
     public function overwrite($message, $indent = null, $newline = false)
     {
@@ -205,9 +205,10 @@ class IO implements IOInterface
     }
 
     /**
-     * @param string $question
-     * @param null $default
-     * @return mixed
+     * @param string      $question
+     * @param string|null $default
+     *
+     * @return string
      */
     public function ask($question, $default = null)
     {
@@ -216,8 +217,9 @@ class IO implements IOInterface
 
     /**
      * @param string $question
-     * @param bool $default
-     * @return mixed
+     * @param bool   $default
+     *
+     * @return Boolean
      */
     public function askConfirmation($question, $default = true)
     {
@@ -235,11 +237,12 @@ class IO implements IOInterface
     }
 
     /**
-     * @param string $question
-     * @param $validator
-     * @param bool $attempts
-     * @param null $default
-     * @return mixed
+     * @param string       $question
+     * @param callable     $validator
+     * @param bool         $attempts
+     * @param Boolean|null $default
+     *
+     * @return Boolean
      */
     public function askAndValidate($question, $validator, $attempts = false, $default = null)
     {
@@ -247,14 +250,15 @@ class IO implements IOInterface
     }
 
     /**
-     * @param string $text
+     * @param string  $text
      * @param integer $indent
+     *
      * @return string
      */
     private function indentText($text, $indent)
     {
         return implode("\n", array_map(
-            function($line) use($indent) {
+            function ($line) use ($indent) {
                 return str_repeat(' ', $indent).$line;
             },
             explode("\n", $text)

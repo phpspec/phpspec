@@ -38,8 +38,9 @@ class ResourceLoader
     }
 
     /**
-     * @param $locator
-     * @param null $line
+     * @param string       $locator
+     * @param integer|null $line
+     *
      * @return Suite
      */
     public function load($locator, $line = null)
@@ -88,7 +89,7 @@ class ResourceLoader
 
     /**
      * @param $line
-     * @param ReflectionMethod $method
+     * @param  ReflectionMethod $method
      * @return bool
      */
     private function lineIsInsideMethod($line, ReflectionMethod $method)
@@ -99,7 +100,7 @@ class ResourceLoader
     }
 
     /**
-     * @param ReflectionMethod $method
+     * @param  ReflectionMethod $method
      * @return bool
      */
     private function methodIsEmpty(ReflectionMethod $method)

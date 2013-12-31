@@ -22,7 +22,7 @@ use RuntimeException;
 class ResourceManager
 {
     /**
-     * @var array
+     * @var ResourceLocatorInterface[]
      */
     private $locators = array();
 
@@ -33,14 +33,15 @@ class ResourceManager
     {
         $this->locators[] = $locator;
 
-        @usort($this->locators, function($locator1, $locator2) {
+        @usort($this->locators, function ($locator1, $locator2) {
             return $locator2->getPriority() - $locator1->getPriority();
         });
     }
 
     /**
-     * @param $query
-     * @return array
+     * @param string $query
+     *
+     * @return ResourceInterface[]
      */
     public function locateResources($query)
     {
@@ -62,8 +63,10 @@ class ResourceManager
     }
 
     /**
-     * @param $classname
-     * @return mixed
+     * @param string $classname
+     *
+     * @return ResourceInterface
+     *
      * @throws \RuntimeException
      */
     public function createResource($classname)

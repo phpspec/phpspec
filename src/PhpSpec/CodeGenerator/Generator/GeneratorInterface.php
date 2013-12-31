@@ -22,15 +22,17 @@ interface GeneratorInterface
 {
     /**
      * @param ResourceInterface $resource
-     * @param string $generation
-     * @param array $data
+     * @param string            $generation
+     * @param array             $data
+     *
      * @return mixed
      */
     public function supports(ResourceInterface $resource, $generation, array $data);
 
     /**
      * @param ResourceInterface $resource
-     * @param array $data
+     * @param array             $data
+     *
      * @return mixed
      */
     public function generate(ResourceInterface $resource, array $data);

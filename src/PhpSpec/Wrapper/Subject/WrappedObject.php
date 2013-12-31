@@ -24,7 +24,7 @@ use PhpSpec\Exception\Wrapper\SubjectException;
 class WrappedObject
 {
     /**
-     * @var
+     * @var object
      */
     private $instance;
     /**
@@ -45,7 +45,7 @@ class WrappedObject
     private $isInstantiated = false;
 
     /**
-     * @param $instance
+     * @param object|null        $instance
      * @param PresenterInterface $presenter
      */
     public function __construct($instance, PresenterInterface $presenter)
@@ -59,8 +59,9 @@ class WrappedObject
     }
 
     /**
-     * @param $classname
-     * @param array $arguments
+     * @param string $classname
+     * @param array  $arguments
+     *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      */
     public function beAnInstanceOf($classname, array $arguments = array())
@@ -79,7 +80,8 @@ class WrappedObject
     }
 
     /**
-     * @param $args
+     * @param array $args
+     *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      */
     public function beConstructedWith($args)
@@ -103,7 +105,7 @@ class WrappedObject
     }
 
     /**
-     * @param $instantiated
+     * @param boolean $instantiated
      */
     public function setInstantiated($instantiated)
     {
@@ -119,7 +121,7 @@ class WrappedObject
     }
 
     /**
-     * @param $classname
+     * @param string $classname
      */
     public function setClassName($classname)
     {
@@ -135,7 +137,7 @@ class WrappedObject
     }
 
     /**
-     * @return mixed
+     * @return object|null
      */
     public function getInstance()
     {
@@ -143,13 +145,12 @@ class WrappedObject
     }
 
     /**
-     * @param $instance
+     * @param object $instance
      */
     public function setInstance($instance)
     {
         $this->instance = $instance;
     }
-
 
     /**
      * @return object
@@ -171,6 +172,5 @@ class WrappedObject
         $this->isInstantiated = true;
 
         return $this->instance;
-
     }
 }

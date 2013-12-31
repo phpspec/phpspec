@@ -20,8 +20,9 @@ namespace PhpSpec\Wrapper\Subject\Expectation;
 interface ThrowExpectation
 {
     /**
-     * @param $method
-     * @param array $arguments
+     * @param string $method
+     * @param array  $arguments
+     *
      * @return mixed
      */
     public function during($method, array $arguments = array());

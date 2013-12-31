@@ -68,7 +68,8 @@ class TemplateRenderer
 
     /**
      * @param string $name
-     * @param array $values
+     * @param array  $values
+     *
      * @return string
      */
     public function render($name, array $values = array())
@@ -84,7 +85,8 @@ class TemplateRenderer
 
     /**
      * @param string $template
-     * @param array $values
+     * @param array  $values
+     *
      * @return string
      */
     public function renderString($template, array $values = array())
@@ -94,7 +96,8 @@ class TemplateRenderer
 
     /**
      * @param string $location
-     * @param bool $trimLeft
+     * @param bool   $trimLeft
+     *
      * @return string
      */
     private function normalizeLocation($location, $trimLeft = false)

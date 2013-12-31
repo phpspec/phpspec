@@ -51,7 +51,7 @@ class TemplateSpec extends ObjectBehavior
     {
         if (file_exists(__DIR__ . "/_files/TemplateRenderFixture.tpl")) {
             unlink(__DIR__ . "/_files/TemplateRenderFixture.tpl");
-            rmdir(__DIR__ . "/_files");            
+            rmdir(__DIR__ . "/_files");
         }
     }
 }

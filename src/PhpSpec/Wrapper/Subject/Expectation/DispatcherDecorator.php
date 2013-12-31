@@ -41,10 +41,10 @@ class DispatcherDecorator extends Decorator implements ExpectationInterface
     private $example;
 
     /**
-     * @param ExpectationInterface $expectation
+     * @param ExpectationInterface     $expectation
      * @param EventDispatcherInterface $dispatcher
-     * @param MatcherInterface $matcher
-     * @param ExampleNode $example
+     * @param MatcherInterface         $matcher
+     * @param ExampleNode              $example
      */
     public function __construct(ExpectationInterface $expectation, EventDispatcherInterface $dispatcher, MatcherInterface $matcher, ExampleNode $example)
     {
@@ -55,10 +55,11 @@ class DispatcherDecorator extends Decorator implements ExpectationInterface
     }
 
     /**
-     * @param $alias
-     * @param $subject
-     * @param array $arguments
-     * @return mixed
+     * @param  string  $alias
+     * @param  mixed   $subject
+     * @param  array   $arguments
+     * @return boolean
+     *
      * @throws \Exception
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \Exception

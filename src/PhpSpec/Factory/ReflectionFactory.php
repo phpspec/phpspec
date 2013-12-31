@@ -28,4 +28,3 @@ class ReflectionFactory
         return new \ReflectionClass($class);
     }
 }
-

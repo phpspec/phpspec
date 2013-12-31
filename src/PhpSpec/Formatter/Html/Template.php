@@ -56,7 +56,7 @@ class Template implements TemplateInterface
      */
     private function extractKeys($templateVars)
     {
-        return array_map(function($e) {
+        return array_map(function ($e) {
             return '{' . $e . '}';
         }, array_keys($templateVars));
     }

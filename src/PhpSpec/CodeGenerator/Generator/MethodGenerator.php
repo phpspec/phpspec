@@ -39,9 +39,9 @@ class MethodGenerator implements GeneratorInterface
     private $filesystem;
 
     /**
-     * @param IO $io
+     * @param IO               $io
      * @param TemplateRenderer $templates
-     * @param Filesystem $filesystem
+     * @param Filesystem       $filesystem
      */
     public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null)
     {
@@ -52,8 +52,9 @@ class MethodGenerator implements GeneratorInterface
 
     /**
      * @param ResourceInterface $resource
-     * @param string $generation
-     * @param array $data
+     * @param string            $generation
+     * @param array             $data
+     *
      * @return bool
      */
     public function supports(ResourceInterface $resource, $generation, array $data)
@@ -63,7 +64,7 @@ class MethodGenerator implements GeneratorInterface
 
     /**
      * @param ResourceInterface $resource
-     * @param array $data
+     * @param array             $data
      */
     public function generate(ResourceInterface $resource, array $data = array())
     {

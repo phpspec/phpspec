@@ -43,7 +43,7 @@ class DotFormatter extends BasicFormatter
         $io = $this->getIO();
 
         $eventsCount = $this->getStatisticsCollector()->getEventsCount();
-        if($eventsCount === 1) {
+        if ($eventsCount === 1) {
             $io->writeln();
         }
 
@@ -62,12 +62,12 @@ class DotFormatter extends BasicFormatter
                 break;
         }
 
-        if($eventsCount % 50 === 0) {
-            $length = strlen((string)$this->examplesCount);
+        if ($eventsCount % 50 === 0) {
+            $length = strlen((string) $this->examplesCount);
             $format = sprintf(' %%%dd / %%%dd', $length, $length);
             $io->write(sprintf($format, $eventsCount, $this->examplesCount));
 
-            if($eventsCount !== $this->examplesCount) {
+            if ($eventsCount !== $this->examplesCount) {
                 $io->writeLn();
             }
         }

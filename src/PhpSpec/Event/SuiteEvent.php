@@ -27,8 +27,8 @@ class SuiteEvent extends Event implements EventInterface
     private $time;
 
     /**
-     * @param Suite $suite
-     * @param float $time
+     * @param Suite   $suite
+     * @param float   $time
      * @param integer $result
      */
     public function __construct(Suite $suite, $time = null, $result = null)

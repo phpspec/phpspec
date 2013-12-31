@@ -23,7 +23,6 @@ interface ExtensionInterface
 {
     /**
      * @param ServiceContainer $container
-     * @return mixed
      */
     public function load(ServiceContainer $container);
 }

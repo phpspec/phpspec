@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Matcher;
 
+use PhpSpec\Exception\Example\FailureException;
+
 /**
  * Class BasicMatcher
  * @package PhpSpec\Matcher
@@ -21,10 +23,12 @@ abstract class BasicMatcher implements MatcherInterface
 {
     /**
      * @param string $name
-     * @param mixed $subject
-     * @param array $arguments
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @return mixed
-     * @throws
+     *
+     *   @throws FailureException
      */
     final public function positiveMatch($name, $subject, array $arguments)
     {
@@ -37,10 +41,12 @@ abstract class BasicMatcher implements MatcherInterface
 
     /**
      * @param string $name
-     * @param mixed $subject
-     * @param array $arguments
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @return mixed
-     * @throws
+     *
+     * @throws FailureException
      */
     final public function negativeMatch($name, $subject, array $arguments)
     {
@@ -60,25 +66,28 @@ abstract class BasicMatcher implements MatcherInterface
     }
 
     /**
-     * @param $subject
+     * @param mixed $subject
      * @param array $arguments
-     * @return mixed
+     *
+     * @return boolean
      */
     abstract protected function matches($subject, array $arguments);
 
     /**
-     * @param $name
-     * @param $subject
-     * @param array $arguments
-     * @return mixed
+     * @param string $name
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
+     * @return FailureException
      */
     abstract protected function getFailureException($name, $subject, array $arguments);
 
     /**
-     * @param $name
-     * @param $subject
-     * @param array $arguments
-     * @return mixed
+     * @param string $name
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
+     * @return FailureException
      */
     abstract protected function getNegativeFailureException($name, $subject, array $arguments);
 }

@@ -42,8 +42,8 @@ class SubjectWithArrayAccess
     private $dispatcher;
 
     /**
-     * @param Caller $caller
-     * @param PresenterInterface $presenter
+     * @param Caller                   $caller
+     * @param PresenterInterface       $presenter
      * @param EventDispatcherInterface $dispatcher
      */
     public function __construct(Caller $caller, PresenterInterface $presenter,
@@ -55,7 +55,8 @@ class SubjectWithArrayAccess
     }
 
     /**
-     * @param $key
+     * @param string|integer $key
+     *
      * @return bool
      */
     public function offsetExists($key)
@@ -70,7 +71,8 @@ class SubjectWithArrayAccess
     }
 
     /**
-     * @param $key
+     * @param string|integer $key
+     *
      * @return mixed
      */
     public function offsetGet($key)
@@ -85,8 +87,8 @@ class SubjectWithArrayAccess
     }
 
     /**
-     * @param $key
-     * @param $value
+     * @param string|integer $key
+     * @param mixed          $value
      */
     public function offsetSet($key, $value)
     {
@@ -101,7 +103,7 @@ class SubjectWithArrayAccess
     }
 
     /**
-     * @param $key
+     * @param string|integer $key
      */
     public function offsetUnset($key)
     {
@@ -115,7 +117,8 @@ class SubjectWithArrayAccess
     }
 
     /**
-     * @param $subject
+     * @param mixed $subject
+     *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      * @throws \PhpSpec\Exception\Fracture\InterfaceNotImplementedException
      */
@@ -144,7 +147,8 @@ class SubjectWithArrayAccess
     }
 
     /**
-     * @param $subject
+     * @param mixed $subject
+     *
      * @return SubjectException
      */
     private function cantUseAsArray($subject)

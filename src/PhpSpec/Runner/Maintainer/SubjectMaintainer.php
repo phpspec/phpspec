@@ -43,8 +43,8 @@ class SubjectMaintainer implements MaintainerInterface
     private $dispatcher;
 
     /**
-     * @param PresenterInterface $presenter
-     * @param Unwrapper $unwrapper
+     * @param PresenterInterface       $presenter
+     * @param Unwrapper                $unwrapper
      * @param EventDispatcherInterface $dispatcher
      */
     public function __construct(PresenterInterface $presenter, Unwrapper $unwrapper, EventDispatcherInterface $dispatcher)
@@ -56,7 +56,8 @@ class SubjectMaintainer implements MaintainerInterface
 
     /**
      * @param ExampleNode $example
-     * @return mixed
+     *
+     * @return boolean
      */
     public function supports(ExampleNode $example)
     {
@@ -66,10 +67,10 @@ class SubjectMaintainer implements MaintainerInterface
     }
 
     /**
-     * @param ExampleNode $example
+     * @param ExampleNode            $example
      * @param SpecificationInterface $context
-     * @param MatcherManager $matchers
-     * @param CollaboratorManager $collaborators
+     * @param MatcherManager         $matchers
+     * @param CollaboratorManager    $collaborators
      */
     public function prepare(ExampleNode $example, SpecificationInterface $context,
                             MatcherManager $matchers, CollaboratorManager $collaborators)
@@ -84,10 +85,10 @@ class SubjectMaintainer implements MaintainerInterface
     }
 
     /**
-     * @param ExampleNode $example
+     * @param ExampleNode            $example
      * @param SpecificationInterface $context
-     * @param MatcherManager $matchers
-     * @param CollaboratorManager $collaborators
+     * @param MatcherManager         $matchers
+     * @param CollaboratorManager    $collaborators
      */
     public function teardown(ExampleNode $example, SpecificationInterface $context,
                              MatcherManager $matchers, CollaboratorManager $collaborators)

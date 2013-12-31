@@ -23,8 +23,9 @@ class ClassGenerator extends PromptingGenerator implements GeneratorInterface
 {
     /**
      * @param ResourceInterface $resource
-     * @param string $generation
-     * @param array $data
+     * @param string            $generation
+     * @param array             $data
+     *
      * @return bool
      */
     public function supports(ResourceInterface $resource, $generation, array $data)
@@ -42,8 +43,9 @@ class ClassGenerator extends PromptingGenerator implements GeneratorInterface
 
     /**
      * @param ResourceInterface $resource
-     * @param $filepath
-     * @return mixed
+     * @param string            $filepath
+     *
+     * @return string
      */
     protected function renderTemplate(ResourceInterface $resource, $filepath)
     {
@@ -75,7 +77,8 @@ class ClassGenerator extends PromptingGenerator implements GeneratorInterface
 
     /**
      * @param ResourceInterface $resource
-     * @return mixed
+     *
+     * @return string
      */
     protected function getFilePath(ResourceInterface $resource)
     {
@@ -84,7 +87,8 @@ class ClassGenerator extends PromptingGenerator implements GeneratorInterface
 
     /**
      * @param ResourceInterface $resource
-     * @param string $filepath
+     * @param string            $filepath
+     *
      * @return string
      */
     protected function getGeneratedMessage(ResourceInterface $resource, $filepath)

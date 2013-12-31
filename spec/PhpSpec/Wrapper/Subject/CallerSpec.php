@@ -137,7 +137,7 @@ class CallerSpec extends ObjectBehavior
             ->duringSet('nonExistentProperty', 'any value');
     }
 
-    function it_delegates_throwing_calling_method_on_non_object_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
+    function it_delegates_throwing_calling_method_on_non_object_exception(ExceptionFactory $exceptions)
     {
         $exceptions->callingMethodOnNonObject('foo')
             ->willReturn(new \PhpSpec\Exception\Wrapper\SubjectException(
@@ -149,7 +149,7 @@ class CallerSpec extends ObjectBehavior
             ->duringCall('foo');
     }
 
-    function it_delegates_throwing_setting_property_on_non_object_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
+    function it_delegates_throwing_setting_property_on_non_object_exception(ExceptionFactory $exceptions)
     {
         $exceptions->settingPropertyOnNonObject('foo')
             ->willReturn(new \PhpSpec\Exception\Wrapper\SubjectException(
@@ -160,7 +160,7 @@ class CallerSpec extends ObjectBehavior
             ->duringSet('foo');
     }
 
-    function it_delegates_throwing_getting_property_on_non_object_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
+    function it_delegates_throwing_getting_property_on_non_object_exception(ExceptionFactory $exceptions)
     {
         $exceptions->gettingPropertyOnNonObject('foo')
             ->willReturn(new \PhpSpec\Exception\Wrapper\SubjectException(
@@ -175,5 +175,5 @@ class CallerSpec extends ObjectBehavior
 
 class ExampleClass
 {
-    private function privateMethod(){}
+    private function privateMethod() {}
 }

@@ -24,11 +24,11 @@ use PhpSpec\Exception\Example\FailureException;
 class CallbackMatcher extends BasicMatcher
 {
     /**
-     * @var
+     * @var string
      */
     private $name;
     /**
-     * @var
+     * @var callable
      */
     private $callback;
     /**
@@ -37,8 +37,8 @@ class CallbackMatcher extends BasicMatcher
     private $presenter;
 
     /**
-     * @param $name
-     * @param $callback
+     * @param string             $name
+     * @param callable           $callback
      * @param PresenterInterface $presenter
      */
     public function __construct($name, $callback, PresenterInterface $presenter)
@@ -50,8 +50,9 @@ class CallbackMatcher extends BasicMatcher
 
     /**
      * @param string $name
-     * @param mixed $subject
-     * @param array $arguments
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @return bool
      */
     public function supports($name, $subject, array $arguments)
@@ -60,8 +61,9 @@ class CallbackMatcher extends BasicMatcher
     }
 
     /**
-     * @param $subject
-     * @param array $arguments
+     * @param string $subject
+     * @param array  $arguments
+     *
      * @return bool
      */
     protected function matches($subject, array $arguments)
@@ -72,9 +74,10 @@ class CallbackMatcher extends BasicMatcher
     }
 
     /**
-     * @param $name
-     * @param $subject
-     * @param array $arguments
+     * @param string $name
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @return FailureException
      */
     protected function getFailureException($name, $subject, array $arguments)
@@ -88,9 +91,10 @@ class CallbackMatcher extends BasicMatcher
     }
 
     /**
-     * @param $name
-     * @param $subject
-     * @param array $arguments
+     * @param string $name
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @return FailureException
      */
     protected function getNegativeFailureException($name, $subject, array $arguments)

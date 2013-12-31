@@ -43,9 +43,9 @@ class ThrowMatcher implements MatcherInterface
     private $presenter;
 
     /**
-     * @param Unwrapper $unwrapper
+     * @param Unwrapper          $unwrapper
      * @param PresenterInterface $presenter
-     * @param ReflectionFactory $factory
+     * @param ReflectionFactory  $factory
      */
     public function __construct(Unwrapper $unwrapper, PresenterInterface $presenter, ReflectionFactory $factory = null)
     {
@@ -56,8 +56,9 @@ class ThrowMatcher implements MatcherInterface
 
     /**
      * @param string $name
-     * @param mixed $subject
-     * @param array $arguments
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @return bool
      */
     public function supports($name, $subject, array $arguments)
@@ -67,8 +68,9 @@ class ThrowMatcher implements MatcherInterface
 
     /**
      * @param string $name
-     * @param mixed $subject
-     * @param array $arguments
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @return DelayedCall
      */
     public function positiveMatch($name, $subject, array $arguments)
@@ -78,8 +80,9 @@ class ThrowMatcher implements MatcherInterface
 
     /**
      * @param string $name
-     * @param mixed $subject
-     * @param array $arguments
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @return DelayedCall
      */
     public function negativeMatch($name, $subject, array $arguments)
@@ -88,9 +91,10 @@ class ThrowMatcher implements MatcherInterface
     }
 
     /**
-     * @param $callable
-     * @param array $arguments
-     * @param null $exception
+     * @param callable $callable
+     * @param array    $arguments
+     * @param null     $exception
+     *
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \PhpSpec\Exception\Example\NotEqualException
      */
@@ -140,9 +144,10 @@ class ThrowMatcher implements MatcherInterface
     }
 
     /**
-     * @param $callable
-     * @param array $arguments
-     * @param null $exception
+     * @param callable    $callable
+     * @param array       $arguments
+     * @param string|null $exception
+     *
      * @throws \PhpSpec\Exception\Example\FailureException
      */
     public function verifyNegative($callable, array $arguments, $exception = null)
@@ -204,9 +209,10 @@ class ThrowMatcher implements MatcherInterface
     }
 
     /**
-     * @param $check
-     * @param $subject
-     * @param array $arguments
+     * @param callable $check
+     * @param mixed    $subject
+     * @param array    $arguments
+     *
      * @return DelayedCall
      */
     private function getDelayedCall($check, $subject, array $arguments)
@@ -215,7 +221,7 @@ class ThrowMatcher implements MatcherInterface
         $unwrapper = $this->unwrapper;
 
         return new DelayedCall(
-            function ($method, $arguments) use($check, $subject, $exception, $unwrapper) {
+            function ($method, $arguments) use ($check, $subject, $exception, $unwrapper) {
                 $arguments = $unwrapper->unwrapAll($arguments);
 
                 $methodName  = $arguments[0];
@@ -225,7 +231,7 @@ class ThrowMatcher implements MatcherInterface
                 list($class, $methodName) = array($subject, $methodName);
                 if (!method_exists($class, $methodName) && !method_exists($class, '__call')) {
                     throw new MethodNotFoundException(
-                        sprintf('Method %s::%s not found.', get_class($class), $methodName), 
+                        sprintf('Method %s::%s not found.', get_class($class), $methodName),
                         $class, $methodName, $arguments
                     );
                 }
@@ -237,6 +243,7 @@ class ThrowMatcher implements MatcherInterface
 
     /**
      * @param array $arguments
+     *
      * @return null|string
      * @throws \PhpSpec\Exception\Example\MatcherException
      */

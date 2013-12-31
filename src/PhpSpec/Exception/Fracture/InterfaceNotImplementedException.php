@@ -31,7 +31,7 @@ class InterfaceNotImplementedException extends FractureException
 
     /**
      * @param string $message
-     * @param mixed $subject
+     * @param mixed  $subject
      * @param string $interface
      */
     public function __construct($message, $subject, $interface)

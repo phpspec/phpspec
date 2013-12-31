@@ -43,8 +43,9 @@ class ObjectStateMatcher implements MatcherInterface
 
     /**
      * @param string $name
-     * @param mixed $subject
-     * @param array $arguments
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @return bool
      */
     public function supports($name, $subject, array $arguments)
@@ -56,8 +57,9 @@ class ObjectStateMatcher implements MatcherInterface
 
     /**
      * @param string $name
-     * @param mixed $subject
-     * @param array $arguments
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      */
@@ -81,8 +83,9 @@ class ObjectStateMatcher implements MatcherInterface
 
     /**
      * @param string $name
-     * @param mixed $subject
-     * @param array $arguments
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      */
@@ -113,9 +116,10 @@ class ObjectStateMatcher implements MatcherInterface
     }
 
     /**
-     * @param $callable
-     * @param $expectedBool
-     * @param $result
+     * @param callable $callable
+     * @param Boolean  $expectedBool
+     * @param Boolean  $result
+     *
      * @return FailureException
      */
     private function getFailureExceptionFor($callable, $expectedBool, $result)

@@ -4,7 +4,6 @@ namespace spec\PhpSpec\Formatter\Presenter;
 
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Formatter\Presenter\Differ\Differ;
-use PhpSpec\Formatter\Presenter\StringPresenter;
 
 class StringPresenterSpec extends ObjectBehavior
 {
@@ -53,7 +52,7 @@ class StringPresenterSpec extends ObjectBehavior
 
     function it_presents_closure_as_type()
     {
-        $this->presentValue(function(){})->shouldReturn('[closure]');
+        $this->presentValue(function () {})->shouldReturn('[closure]');
     }
 
     function it_presents_exception_as_class_with_constructor()
@@ -67,7 +66,7 @@ class StringPresenterSpec extends ObjectBehavior
         $this->presentString('some string')->shouldReturn('some string');
     }
 
-    function its_presentValue_displays_invokable_objects_as_objects(ObjectBehavior $invokable)
+    function its_presentValue_displays_invokable_objects_as_objects()
     {
         $invokable = new ObjectBehavior;
         $invokable->setSpecificationSubject($this);

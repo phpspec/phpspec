@@ -13,8 +13,10 @@
 
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
+use PhpSpec\Exception\Example\MatcherException;
 use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\Util\Instantiator;
+use PhpSpec\Wrapper\Subject\WrappedObject;
 
 /**
  * Class DuringCall
@@ -27,15 +29,15 @@ abstract class DuringCall
      */
     private $matcher;
     /**
-     * @var
+     * @var mixed
      */
     private $subject;
     /**
-     * @var
+     * @var array
      */
     private $arguments;
     /**
-     * @var
+     * @var WrappedObject
      */
     private $wrappedObject;
 
@@ -48,10 +50,12 @@ abstract class DuringCall
     }
 
     /**
-     * @param $alias
-     * @param $subject
-     * @param array $arguments
-     * @param null $wrappedObject
+     * @param string $alias
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
+     * @param WrappedObject|null $wrappedObject
+     *
      * @return $this
      */
     public function match($alias, $subject, array $arguments = array(), $wrappedObject = null)
@@ -64,8 +68,9 @@ abstract class DuringCall
     }
 
     /**
-     * @param $method
-     * @param array $arguments
+     * @param string $method
+     * @param array  $arguments
+     *
      * @return mixed
      */
     public function during($method, array $arguments = array())
@@ -82,9 +87,11 @@ abstract class DuringCall
     }
 
     /**
-     * @param $method
-     * @param array $arguments
+     * @param string $method
+     * @param array  $arguments
+     *
      * @return mixed
+     *
      * @throws MatcherException
      */
     public function __call($method, array $arguments = array())
@@ -102,7 +109,7 @@ abstract class DuringCall
     }
 
     /**
-     * @return mixed
+     * @return array
      */
     protected function getArguments()
     {
@@ -118,9 +125,10 @@ abstract class DuringCall
     }
 
     /**
-     * @param $object
-     * @param $method
-     * @param array $arguments
+     * @param object $object
+     * @param string $method
+     * @param array  $arguments
+     *
      * @return mixed
      */
     abstract protected function runDuring($object, $method, array $arguments = array());

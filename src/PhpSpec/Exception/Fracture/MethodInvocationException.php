@@ -36,9 +36,9 @@ abstract class MethodInvocationException extends FractureException
 
     /**
      * @param string $message
-     * @param mixed $subject
+     * @param mixed  $subject
      * @param string $method
-     * @param array $arguments
+     * @param array  $arguments
      */
     public function __construct($message, $subject, $method, array $arguments = array())
     {

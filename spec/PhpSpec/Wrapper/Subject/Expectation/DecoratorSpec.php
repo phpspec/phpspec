@@ -35,6 +35,5 @@ class Decorator extends AbstractDecorator
 {
     public function match($alias, $subject, array $arguments = array())
     {
-        // TODO: Implement match() method.
     }
 }

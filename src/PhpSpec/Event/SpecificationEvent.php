@@ -39,8 +39,8 @@ class SpecificationEvent extends Event implements EventInterface
 
     /**
      * @param SpecificationNode $specification
-     * @param float $time
-     * @param integer $result
+     * @param float             $time
+     * @param integer           $result
      */
     public function __construct(SpecificationNode $specification, $time = null, $result = null)
     {

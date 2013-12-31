@@ -93,11 +93,11 @@ class JunitFormatter extends BasicFormatter
 
     /**
      * @param \SimpleXMLElement $case
-     * @param ExampleEvent $event
-     * @param $exampleTitle
-     * @param $failureType
-     * @param $failureString
-     * @param bool $backtrace
+     * @param ExampleEvent      $event
+     * @param string            $exampleTitle
+     * @param string            $failureType
+     * @param string            $failureString
+     * @param bool              $backtrace
      */
     private function addFailedTestcase(\SimpleXMLElement $case, ExampleEvent $event, $exampleTitle, $failureType, $failureString, $backtrace = true)
     {
@@ -133,7 +133,7 @@ class JunitFormatter extends BasicFormatter
         $case->addAttribute('assertions', $assertions);
         $case->addAttribute('time', $time);
 
-        switch($event->getResult()) {
+        switch ($event->getResult()) {
             case ExampleEvent::PASSED:
                 $this->passCount++;
                 break;

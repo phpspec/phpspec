@@ -57,11 +57,11 @@ class Caller
     private $exceptionFactory;
 
     /**
-     * @param WrappedObject $wrappedObject
-     * @param ExampleNode $example
-     * @param Dispatcher $dispatcher
+     * @param WrappedObject    $wrappedObject
+     * @param ExampleNode      $example
+     * @param Dispatcher       $dispatcher
      * @param ExceptionFactory $exceptions
-     * @param Wrapper $wrapper
+     * @param Wrapper          $wrapper
      */
     public function __construct(WrappedObject $wrappedObject, ExampleNode $example, Dispatcher $dispatcher,
                                 ExceptionFactory $exceptions, Wrapper $wrapper)
@@ -74,9 +74,11 @@ class Caller
     }
 
     /**
-     * @param $method
-     * @param array $arguments
+     * @param string $method
+     * @param array  $arguments
+     *
      * @return Subject
+     *
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      * @throws \PhpSpec\Exception\Fracture\MethodNotVisibleException
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
@@ -99,9 +101,11 @@ class Caller
     }
 
     /**
-     * @param $property
-     * @param null $value
-     * @return array|object
+     * @param string $property
+     * @param mixed  $value
+     *
+     * @return mixed
+     *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      * @throws \PhpSpec\Exception\Fracture\PropertyNotFoundException
      */
@@ -122,8 +126,10 @@ class Caller
     }
 
     /**
-     * @param $property
-     * @return mixed|Subject
+     * @param string $property
+     *
+     * @return Subject|string
+     *
      * @throws \PhpSpec\Exception\Fracture\PropertyNotFoundException
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      */
@@ -146,6 +152,7 @@ class Caller
 
     /**
      * @return object
+     *
      * @throws \PhpSpec\Exception\Fracture\ClassNotFoundException
      */
     public function getWrappedObject()
@@ -175,8 +182,9 @@ class Caller
     }
 
     /**
-     * @param $property
-     * @param bool $withValue
+     * @param string $property
+     * @param bool   $withValue
+     *
      * @return bool
      */
     private function isObjectPropertyAccessible($property, $withValue = false)
@@ -199,7 +207,8 @@ class Caller
     }
 
     /**
-     * @param $method
+     * @param string $method
+     *
      * @return bool
      */
     private function isObjectMethodAccessible($method)
@@ -231,14 +240,15 @@ class Caller
         if (count($this->wrappedObject->getArguments())) {
             return $this->newInstanceWithArguments($reflection);
         }
-        
+
         return $reflection->newInstance();
     }
 
     /**
-     * @param $subject
-     * @param $method
-     * @param array $arguments
+     * @param object $subject
+     * @param string $method
+     * @param array  $arguments
+     *
      * @return Subject
      */
     private function invokeAndWrapMethodResult($subject, $method, array $arguments = array())
@@ -257,7 +267,8 @@ class Caller
     }
 
     /**
-     * @param $value
+     * @param mixed $value
+     *
      * @return Subject
      */
     private function wrap($value)
@@ -266,7 +277,7 @@ class Caller
     }
 
     /**
-     * @param ReflectionClass $reflection
+     * @param  ReflectionClass                                       $reflection
      * @return object
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      * @throws \PhpSpec\Exception\Fracture\MethodNotVisibleException
@@ -288,7 +299,7 @@ class Caller
     }
 
     /**
-     * @param ReflectionException $exception
+     * @param  ReflectionException $exception
      * @return bool
      */
     private function detectMissingConstructorMessage(ReflectionException $exception)
@@ -308,7 +319,7 @@ class Caller
 
     /**
      * @param $method
-     * @param array $arguments
+     * @param  array                                                                                                     $arguments
      * @return \PhpSpec\Exception\Fracture\MethodNotFoundException|\PhpSpec\Exception\Fracture\MethodNotVisibleException
      */
     private function methodNotFound($method, array $arguments = array())

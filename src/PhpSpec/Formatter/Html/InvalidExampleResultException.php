@@ -21,5 +21,4 @@ use PhpSpec\Exception\Exception;
  */
 class InvalidExampleResultException extends Exception
 {
-    
 }

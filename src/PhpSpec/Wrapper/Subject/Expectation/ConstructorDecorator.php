@@ -34,11 +34,13 @@ class ConstructorDecorator extends Decorator implements ExpectationInterface
     }
 
     /**
-     * @param $alias
-     * @param $subject
-     * @param array $arguments
+     * @param string        $alias
+     * @param mixed         $subject
+     * @param array         $arguments
      * @param WrappedObject $wrappedObject
-     * @return mixed
+     *
+     * @return boolean
+     *
      * @throws \Exception
      * @throws \PhpSpec\Exception\Example\ErrorException
      * @throws \Exception

@@ -50,16 +50,17 @@ class StopOnFailureListener implements EventSubscriberInterface
 
     /**
      * @param ExampleEvent $event
+     *
      * @throws \PhpSpec\Exception\Example\StopOnFailureException
      */
     public function afterExample(ExampleEvent $event)
-    {        
+    {
         if (!$this->input->hasOption('stop-on-failure')
          || !$this->input->getOption('stop-on-failure'))
         {
             return;
         }
-        
+
         if ($event->getResult() === ExampleEvent::FAILED
          || $event->getResult() === ExampleEvent::BROKEN)
         {

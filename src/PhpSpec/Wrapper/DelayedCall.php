@@ -20,7 +20,7 @@ namespace PhpSpec\Wrapper;
 class DelayedCall
 {
     /**
-     * @var
+     * @var callable
      */
     private $callable;
 
@@ -33,8 +33,9 @@ class DelayedCall
     }
 
     /**
-     * @param $method
-     * @param array $arguments
+     * @param string $method
+     * @param array  $arguments
+     *
      * @return mixed
      */
     public function __call($method, array $arguments)
