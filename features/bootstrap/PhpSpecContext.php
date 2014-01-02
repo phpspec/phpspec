@@ -50,9 +50,9 @@ class PhpSpecContext extends BehatContext
     }
 
     /**
-     * @When /^(?:|I )run phpspec and answer "(?P<answer>[^"]*)" to (?:|the )first question$/
+     * @When /^(?:|I )run phpspec and answer "(?P<answer>[^"]*)" when asked if I want to generate the code$/
      */
-    public function iRunPhpspecAndAnswerToTheFirstQuestion($answer)
+    public function iRunPhpspecAndAnswer($answer)
     {
         $this->applicationTester = $this->createApplicationTester();
         $this->applicationTester->putToInputStream(sprintf("%s\n", $answer));
@@ -60,19 +60,18 @@ class PhpSpecContext extends BehatContext
     }
 
     /**
-     * @When /^(?:|I )describe(?:|d) (?:|the )"(?P<class>[^"]*)" class$/
+     * @When /^(?:|I )start(?:|ed) describing (?:|the )"(?P<class>[^"]*)" class$/
      */
-    public function iDescribeThe($class)
+    public function iStartDescribing($class)
     {
         $this->applicationTester = $this->createApplicationTester();
         $this->applicationTester->run(sprintf('describe %s --no-interaction', $class));
     }
 
     /**
-     * @Given /^(?:|I )wrote (?:|a )spec in (?:|the )"(?P<file>[^"]+)":$/
-     * @Given /^(?:|I )wrote (?:|a )class in (?:|the )"(?P<file>[^"]+)":$/
+     * @Given /^(?:|the )(?:spec |class )file "(?P<file>[^"]+)" contains:$/
      */
-    public function iWroteSpecInThe($file, PyStringNode $string)
+    public function theFileContains($file, PyStringNode $string)
     {
         mkdir(dirname($file), 0777, true);
 

@@ -4,7 +4,7 @@ Feature: Describing a class
   In order to avoid repetitive tasks and interruptions in development flow
 
   Scenario: Generating a spec
-    When I describe the "Scenario1/Markdown" class
+    When I start describing the "Scenario1/Markdown" class
     Then a new spec should be generated in the "spec/Scenario1/MarkdownSpec.php":
     """
     <?php
@@ -24,14 +24,14 @@ Feature: Describing a class
 
     """
 
-  Scenario: Running a spec
-    Given I described the "Scenario2/Markdown" class
+  Scenario: Running a spec with a class that doesn't exist
+    Given I started describing the "Scenario2/Markdown" class
     When I run phpspec
     Then I should see "class Scenario2\Markdown does not exist"
 
   Scenario: Generating a class
-    Given I described the "Scenario3/Markdown" class
-    When I run phpspec and answer "y" to the first question
+    Given I started describing the "Scenario3/Markdown" class
+    When I run phpspec and answer "y" when asked if I want to generate the code
     Then a new class should be generated in the "src/Scenario3/Markdown.php":
     """
     <?php
@@ -45,7 +45,7 @@ Feature: Describing a class
     """
 
   Scenario: Executing a spec
-    Given I wrote a spec in the "spec/Scenario4/MarkdownSpec.php":
+    Given the spec file "spec/Scenario4/MarkdownSpec.php" contains:
     """
     <?php
 
@@ -63,7 +63,7 @@ Feature: Describing a class
     }
 
     """
-    And I wrote a class in the "src/Scenario4/Markdown.php":
+    And the class file "src/Scenario4/Markdown.php" contains:
     """
     <?php
 
