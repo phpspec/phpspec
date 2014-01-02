@@ -99,6 +99,14 @@ class PhpSpecContext extends BehatContext
     }
 
     /**
+     * @Then /^(?:|the )example should pass$/
+     */
+    public function theExampleShouldPass()
+    {
+        $this->iShouldSee('1 example (1 passed)');
+    }
+
+    /**
      * @return ApplicationTester
      */
     private function createApplicationTester()
