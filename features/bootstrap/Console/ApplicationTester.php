@@ -5,7 +5,7 @@ use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\StreamOutput;
 
 /**
- * A console application testser heavily inspired by/proudly stolen from \Symfony\Component\Console\Tester\ApplicationTester.
+ * A console application tester heavily inspired by/proudly stolen from \Symfony\Component\Console\Tester\ApplicationTester.
  */
 class ApplicationTester
 {
