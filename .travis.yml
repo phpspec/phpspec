@@ -11,4 +11,4 @@ before_script:
 
 script:
   - bin/phpspec run
-  - bin/behat --format=pretty
+  - ./vendor/bin/behat --format=pretty
