@@ -23,10 +23,7 @@ class PhpSpecContext extends BehatContext
      */
     public function createWorkDir()
     {
-        // Unfortunately we cannot make the directory name unique.
-        // Since scenarios might be using the same class names, we cannot change
-        // paths between scenarios.
-        $this->workDir = sys_get_temp_dir().'/PhpSpecFeatures/';
+        $this->workDir = sys_get_temp_dir().'/'.uniqid('PhpSpecContext_').'/';
 
         mkdir($this->workDir, 0777, true);
         chdir($this->workDir);
