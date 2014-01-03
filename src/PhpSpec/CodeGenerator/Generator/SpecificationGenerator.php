@@ -16,7 +16,7 @@ namespace PhpSpec\CodeGenerator\Generator;
 use PhpSpec\Locator\ResourceInterface;
 
 /**
- * Generates spec classes from resources and puts it into the appropriate
+ * Generates spec classes from resources and puts them into the appropriate
  * folder using the appropriate template.
  */
 class SpecificationGenerator extends PromptingGenerator implements GeneratorInterface

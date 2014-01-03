@@ -20,7 +20,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\HelperSet;
 
 /**
- * Class IO deals with input and output from the command line interaction
+ * Class IO deals with input and output from command line interaction
  */
 class IO implements IOInterface
 {
