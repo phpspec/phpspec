@@ -24,16 +24,55 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class RunCommand extends Command
 {
-    public function __construct()
+    protected function configure()
     {
-        parent::__construct('run');
+        $this
+            ->setName('run')
+            ->setDefinition(array(
+                    new InputArgument('spec', InputArgument::OPTIONAL, 'Specs to run'),
+                    new InputOption('format', 'f', InputOption::VALUE_REQUIRED, 'Formatter'),
+                    new InputOption('stop-on-failure', null , InputOption::VALUE_NONE, 'Stop on failure'),
+                    new InputOption('no-code-generation', null , InputOption::VALUE_NONE, 'Do not prompt for missing method/class generation'),
+                ))
+            ->setDescription('Runs specifications')
+            ->setHelp(<<<EOF
+The <info>%command.name%</info> command runs specifications:
 
-        $this->setDefinition(array(
-            new InputArgument('spec', InputArgument::OPTIONAL, 'Specs to run'),
-            new InputOption('format', 'f', InputOption::VALUE_REQUIRED, 'Formatter'),
-            new InputOption('stop-on-failure', null , InputOption::VALUE_NONE, 'Stop on failure'),
-            new InputOption('no-code-generation', null , InputOption::VALUE_NONE, 'Do not prompt for missing method/class generation'),
-        ));
+  <info>php %command.full_name%</info>
+
+Will run all the specifications in the spec directory.
+
+  <info>php %command.full_name% spec/ClassNameSpec.php</info>
+
+Will run only the ClassNameSpec.
+
+By default, you will be asked whether missing methods and classes should
+be generated. You can suppress these prompts and automatically choose not
+to generate code with:
+
+  <info>php %command.full_name% --no-code-generation</info>
+
+You can choose to stop on failure and not attempt to run the remaining
+specs with:
+
+  <info>php %command.full_name% --stop-on-failure</info>
+
+You can choose the output format with the format option e.g.:
+
+  <info>php %command.full_name% --format=dot</info>
+
+The available formatters are:
+
+   progress (default)
+   html
+   pretty
+   junit
+   dot
+   nyan (requires whatthejeff/nyancat-scoreboard:~1.1)
+
+EOF
+            )
+        ;
     }
 
     /**
