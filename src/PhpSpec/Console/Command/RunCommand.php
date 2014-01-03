@@ -66,6 +66,7 @@ The available formatters are:
    progress (default)
    html
    pretty
+   junit
    dot
    nyan (requires whatthejeff/nyancat-scoreboard:~1.1)
 
