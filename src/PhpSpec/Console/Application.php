@@ -18,6 +18,7 @@ use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -49,10 +50,7 @@ class Application extends BaseApplication
      */
     public function __construct($version)
     {
-        $this->container = new ServiceContainer;
-
-        $this->setupCommands($this->container);
-
+        $this->setupCommands($this->container = new ServiceContainer);
         parent::__construct('phpspec', $version);
     }
 
@@ -490,14 +488,15 @@ class Application extends BaseApplication
      */
     protected function parseConfigurationFile()
     {
-        $input = new ArgvInput();
-        $option = $input->getParameterOption(array('-c','--config-file'));
+        $paths = array('phpspec.yml','phpspec.dist.yml');
 
-        $paths = array(
-            $option,
-            'phpspec.yml',
-            'phpspec.dist.yml'
-        );
+        $input = new ArgvInput();
+        if ($custom_path = $input->getParameterOption(array('-c','--config-file'))) {
+            if (!file_exists($custom_path)) {
+                throw new FileNotFoundException('Custom configuration file not found at '.$custom_path);
+            }
+            $paths = array($custom_path);
+        }
 
         foreach ($paths as $path) {
             if ($path && file_exists($path) && $config = Yaml::parse(file_get_contents($path))) {
