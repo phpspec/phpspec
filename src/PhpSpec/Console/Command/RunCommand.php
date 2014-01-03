@@ -20,7 +20,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Main command, responsible to run the specs
+ * Main command, responsible for running the specs
  */
 class RunCommand extends Command
 {
