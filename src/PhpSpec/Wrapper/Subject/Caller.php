@@ -326,7 +326,7 @@ class Caller
     {
         $className = $this->wrappedObject->getClassName();
 
-        if (!method_exists($this->getWrappedObject(), $method)) {
+        if (!method_exists($className, $method)) {
             return $this->exceptionFactory->methodNotFound($className, $method, $arguments);
         }
 

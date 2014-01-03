@@ -97,15 +97,37 @@ class CallerSpec extends ObjectBehavior
             ->duringCall('foo');
     }
 
+    function it_delegates_throwing_method_not_found_exception_for_constructor(WrappedObject $wrappedObject, ExceptionFactory $exceptions, \stdClass $argument)
+    {
+        $obj = new ExampleClass;
+
+        $wrappedObject->isInstantiated()->willReturn(false);
+        $wrappedObject->getInstance()->willReturn(null);
+        $wrappedObject->getArguments()->willReturn(array($argument));
+        $wrappedObject->getClassName()->willReturn('spec\PhpSpec\Wrapper\Subject\ExampleClass');
+
+        $exceptions->methodNotFound('spec\PhpSpec\Wrapper\Subject\ExampleClass', '__construct', array($argument))
+            ->willReturn(new \PhpSpec\Exception\Fracture\MethodNotFoundException(
+                    'Method "__construct" not found.',
+                    $obj,
+                    '"ExampleClass::__construct"',
+                    array()
+                ))
+            ->shouldBeCalled();
+
+        $this->shouldThrow('\PhpSpec\Exception\Fracture\MethodNotFoundException')
+            ->duringCall('__construct');
+    }
+
     function it_delegates_throwing_method_not_visible_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
     {
         $obj = new ExampleClass;
 
         $wrappedObject->isInstantiated()->willReturn(true);
         $wrappedObject->getInstance()->willReturn($obj);
-        $wrappedObject->getClassName()->willReturn('ExampleClass');
+        $wrappedObject->getClassName()->willReturn('spec\PhpSpec\Wrapper\Subject\ExampleClass');
 
-        $exceptions->methodNotVisible('ExampleClass', 'privateMethod', array())
+        $exceptions->methodNotVisible('spec\PhpSpec\Wrapper\Subject\ExampleClass', 'privateMethod', array())
             ->willReturn(new \PhpSpec\Exception\Fracture\MethodNotVisibleException(
                 'Method "privateMethod" not visible.',
                 $obj,
