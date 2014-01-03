@@ -48,7 +48,9 @@ class Application extends BaseApplication
      */
     public function __construct($version)
     {
-        $this->setupContainer($this->container = new ServiceContainer);
+        $this->container = new ServiceContainer;
+
+        $this->setupCommands($this->container);
 
         parent::__construct('phpspec', $version);
     }
@@ -72,6 +74,8 @@ class Application extends BaseApplication
         $this->container->set('console.input', $input);
         $this->container->set('console.output', $output);
         $this->container->set('console.helpers', $this->getHelperSet());
+
+        $this->setupContainer($this->container);
 
         return parent::doRun($input, $output);
     }
@@ -117,7 +121,6 @@ class Application extends BaseApplication
     protected function setupContainer(ServiceContainer $container)
     {
         $this->setupIO($container);
-        $this->setupConsole($container);
         $this->setupEventDispatcher($container);
         $this->setupGenerators($container);
         $this->setupPresenter($container);
@@ -140,7 +143,7 @@ class Application extends BaseApplication
         });
     }
 
-    protected function setupConsole(ServiceContainer $container)
+    protected function setupCommands(ServiceContainer $container)
     {
         $container->setShared('console.commands.run', function ($c) {
             return new Command\RunCommand;
