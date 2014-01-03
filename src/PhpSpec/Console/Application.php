@@ -14,6 +14,7 @@
 namespace PhpSpec\Console;
 
 use Symfony\Component\Console\Application as BaseApplication;
+use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -100,6 +101,13 @@ class Application extends BaseApplication
                 $description
             );
         }
+
+        $options['config-file'] = new InputOption(
+            'config-file',
+            'c',
+            InputOption::VALUE_REQUIRED,
+            'Specify a custom location for the configuration file'
+        );
 
         $definition->setOptions($options);
         return $definition;
@@ -453,14 +461,7 @@ class Application extends BaseApplication
      */
     protected function loadConfigurationFile(ServiceContainer $container)
     {
-        $config = array();
-        if (file_exists($path = 'phpspec.yml')) {
-            $config = Yaml::parse(file_get_contents($path));
-        } elseif (file_exists($path = 'phpspec.yml.dist')) {
-            $config = Yaml::parse(file_get_contents($path));
-        }
-
-        $config = $config ?: array();
+        $config = $this->parseConfigurationFile();
 
         foreach ($config as $key => $val) {
             if ('extensions' === $key) {
@@ -482,5 +483,28 @@ class Application extends BaseApplication
 
             $container->setParam($key, $val);
         }
+    }
+
+    /**
+     * @return array
+     */
+    protected function parseConfigurationFile()
+    {
+        $input = new ArgvInput();
+        $option = $input->getParameterOption(array('-c','--config-file'));
+
+        $paths = array(
+            $option,
+            'phpspec.yml',
+            'phpspec.dist.yml'
+        );
+
+        foreach ($paths as $path) {
+            if ($path && file_exists($path) && $config = Yaml::parse(file_get_contents($path))) {
+                return $config;
+            }
+        }
+
+        return array();
     }
 }
