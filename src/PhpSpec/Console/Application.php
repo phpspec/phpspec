@@ -73,8 +73,6 @@ class Application extends BaseApplication
         $this->container->set('console.output', $output);
         $this->container->set('console.helpers', $this->getHelperSet());
 
-        $this->fixDefinitions();
-
         return parent::doRun($input, $output);
     }
 
@@ -82,11 +80,11 @@ class Application extends BaseApplication
      * Fixes an issue with definitions of the no-interaction option not being
      * completely shown in some cases
      */
-    protected function fixDefinitions()
+    protected function getDefaultInputDefinition()
     {
         $description = 'Do not ask any interactive question (disables code generation).';
 
-        $definition = $this->getDefaultInputDefinition();
+        $definition = parent::getDefaultInputDefinition();
         $options = $definition->getOptions();
 
         if (array_key_exists('no-interaction', $options)) {
@@ -100,7 +98,7 @@ class Application extends BaseApplication
         }
 
         $definition->setOptions($options);
-        $this->setDefinition($definition);
+        return $definition;
     }
 
     /**
