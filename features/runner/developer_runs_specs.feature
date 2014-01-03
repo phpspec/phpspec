@@ -4,7 +4,7 @@ Feature: Developer runs the specs
   In order to get feedback on a state of my application
 
   Scenario: Running a spec with a class that doesn't exist
-    Given I started describing the "Runner/SpecExample1/Markdown" class
+    Given I have started describing the "Runner/SpecExample1/Markdown" class
     When I run phpspec
     Then I should see "class Runner\SpecExample1\Markdown does not exist"
 

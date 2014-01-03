@@ -57,7 +57,8 @@ class PhpSpecContext extends BehatContext
     }
 
     /**
-     * @When /^(?:|I )start(?:|ed) describing (?:|the )"(?P<class>[^"]*)" class$/
+     * @When /^(?:|I )start describing (?:|the )"(?P<class>[^"]*)" class$/
+     * @When /^(?:|I )have started describing (?:|the )"(?P<class>[^"]*)" class$/
      */
     public function iStartDescribing($class)
     {
