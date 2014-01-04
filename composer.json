@@ -27,6 +27,10 @@
         "symfony/yaml":             "~2.1"
     },
 
+    "require-dev": {
+        "fabpot/php-cs-fixer": "v0.3.0"
+    },
+
     "suggest": {
         "whatthejeff/nyancat-scoreboard": "~1.1 – Enables the Nyan Cat formatter"
     },
