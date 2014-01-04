@@ -9,4 +9,6 @@ matrix:
 before_script:
   - composer install --dev --prefer-source
 
-script: bin/phpspec run
+script:
+  - bin/phpspec run
+  - output=$(vendor/fabpot/php-cs-fixer fix -v --dry-run --level=all .); if [[ $output ]]; then while read -r line; do echo -e "\e[00;31m$line\e[00m"; done <<< "$output"; false; fi;
