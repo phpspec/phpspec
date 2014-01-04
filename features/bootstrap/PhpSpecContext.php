@@ -101,11 +101,46 @@ class PhpSpecContext extends BehatContext
     }
 
     /**
-     * @Then /^(?:|the )example should pass$/
+     * @Then /^(?:|the )suite should pass$/
      */
-    public function theExampleShouldPass()
+    public function theSuiteShouldPass()
     {
-        $this->iShouldSee('1 example (1 passed)');
+        $stats = $this->getRunStats();
+
+        expect($stats['examples'] > 0)->toBe(true);
+        expect($stats['examples'])->toBe($stats['passed']);
+    }
+
+    /**
+     * @return array
+     *
+     * @throws \LogicException
+     */
+    private function getRunStats()
+    {
+        $output = $this->applicationTester->getDisplay();
+        $matches = array();
+
+        $regexp =
+            '/.*'.
+            '(?P<examples>\d+) examples?.*'.
+            '\('.
+            '(?:(?P<passed>\d+) passed)?.*?'.
+            '(?:(?P<broken>\d+) broken)?.*?'.
+            '(?:(?P<failed>\d+) failed)?'.
+            '\)'.
+            '.*/sm';
+
+        if(!preg_match($regexp, $output, $matches)) {
+            throw new \LogicException(sprintf('Could not determine the run result based on the output: %s', $output));
+        }
+
+        return array(
+            'examples' => (int) $matches['examples'],
+            'passed' => isset($matches['passed']) ? (int) $matches['passed'] : 0,
+            'broken' => isset($matches['broken']) ? (int) $matches['broken'] : 0,
+            'failed' => isset($matches['failed']) ? (int) $matches['failed'] : 0,
+        );
     }
 
     /**

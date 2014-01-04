@@ -8,7 +8,7 @@ Feature: Developer runs the specs
     When I run phpspec
     Then I should see "class Runner\SpecExample1\Markdown does not exist"
 
-  Scenario: Running a spec with an implemented class
+  Scenario: Reporting success when running a spec with correctly implemented class
     Given the spec file "spec/Runner/SpecExample2/MarkdownSpec.php" contains:
       """
       <?php
@@ -43,4 +43,4 @@ Feature: Developer runs the specs
 
       """
     When I run phpspec
-    Then the example should pass
+    Then the suite should pass
