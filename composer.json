@@ -27,6 +27,11 @@
         "symfony/yaml":             "~2.1"
     },
 
+    "require-dev": {
+        "behat/behat": "~2.5",
+        "bossa/phpspec2-expect": "dev-master"
+    },
+
     "suggest": {
         "whatthejeff/nyancat-scoreboard": "~1.1 – Enables the Nyan Cat formatter"
     },
