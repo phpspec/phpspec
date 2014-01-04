@@ -5,48 +5,48 @@ Feature: Developer generates a method
 
   Scenario: Generating a method
     Given the spec file "spec/CodeGeneration/MethodExample1/MarkdownSpec.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace spec\CodeGeneration\MethodExample1;
+      namespace spec\CodeGeneration\MethodExample1;
 
-    use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
 
-    class MarkdownSpec extends ObjectBehavior
-    {
-        function it_converts_plain_text_to_html_paragraphs()
-        {
-            $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
-        }
-    }
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_converts_plain_text_to_html_paragraphs()
+          {
+              $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
+          }
+      }
 
-    """
+      """
     And the class file "src/CodeGeneration/MethodExample1/Markdown.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace CodeGeneration\MethodExample1;
+      namespace CodeGeneration\MethodExample1;
 
-    class Markdown
-    {
-    }
+      class Markdown
+      {
+      }
 
-    """
+      """
     When I run phpspec and answer "y" when asked if I want to generate the code
     Then the class in "src/CodeGeneration/MethodExample1/Markdown.php" should contain:
-    """
-    <?php
+      """
+      <?php
 
-    namespace CodeGeneration\MethodExample1;
+      namespace CodeGeneration\MethodExample1;
 
-    class Markdown
-    {
+      class Markdown
+      {
 
-        public function toHtml($argument1)
-        {
-            // TODO: write logic here
-        }
-    }
+          public function toHtml($argument1)
+          {
+              // TODO: write logic here
+          }
+      }
 
-    """
+      """

@@ -10,37 +10,37 @@ Feature: Developer runs the specs
 
   Scenario: Running a spec with an implemented class
     Given the spec file "spec/Runner/SpecExample2/MarkdownSpec.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace spec\Runner\SpecExample2;
+      namespace spec\Runner\SpecExample2;
 
-    use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
 
-    class MarkdownSpec extends ObjectBehavior
-    {
-        function it_converts_plain_text_to_html_paragraphs()
-        {
-            $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
-        }
-    }
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_converts_plain_text_to_html_paragraphs()
+          {
+              $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
+          }
+      }
 
-    """
+      """
     And the class file "src/Runner/SpecExample2/Markdown.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace Runner\SpecExample2;
+      namespace Runner\SpecExample2;
 
-    class Markdown
-    {
-        public function toHtml($text)
-        {
-            return sprintf('<p>%s</p>', $text);
-        }
-    }
+      class Markdown
+      {
+          public function toHtml($text)
+          {
+              return sprintf('<p>%s</p>', $text);
+          }
+      }
 
-    """
+      """
     When I run phpspec
     Then the example should pass

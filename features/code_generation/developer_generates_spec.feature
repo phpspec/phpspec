@@ -6,20 +6,20 @@ Feature: Developer generates a spec
   Scenario: Generating a spec
     When I start describing the "CodeGeneration/SpecExample1/Markdown" class
     Then a new spec should be generated in the "spec/CodeGeneration/SpecExample1/MarkdownSpec.php":
-    """
-    <?php
+      """
+      <?php
 
-    namespace spec\CodeGeneration\SpecExample1;
+      namespace spec\CodeGeneration\SpecExample1;
 
-    use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
 
-    class MarkdownSpec extends ObjectBehavior
-    {
-        function it_is_initializable()
-        {
-            $this->shouldHaveType('CodeGeneration\SpecExample1\Markdown');
-        }
-    }
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_is_initializable()
+          {
+              $this->shouldHaveType('CodeGeneration\SpecExample1\Markdown');
+          }
+      }
 
-    """
+      """

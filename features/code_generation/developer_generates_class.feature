@@ -7,13 +7,13 @@ Feature: Developer generates a class
     Given I have started describing the "CodeGeneration/ClassExample1/Markdown" class
     When I run phpspec and answer "y" when asked if I want to generate the code
     Then a new class should be generated in the "src/CodeGeneration/ClassExample1/Markdown.php":
-    """
-    <?php
+      """
+      <?php
 
-    namespace CodeGeneration\ClassExample1;
+      namespace CodeGeneration\ClassExample1;
 
-    class Markdown
-    {
-    }
+      class Markdown
+      {
+      }
 
-    """
+      """
