@@ -28,6 +28,11 @@ use ArrayAccess;
  * Its responsibility is to proxy method calls to PhpSpec caller which will
  * wrap the results into PhpSpec subjects. This results will then be able to
  * be matched against expectations.
+ *
+ * @method void beConstructedWith($constructorArguments,...)
+ * @method void beAnInstanceOf($class)
+ * @method void shouldHaveType($type)
+ * @method \PhpSpec\Wrapper\Subject\Expectation\DuringCall shouldThrow($exception = null)
  */
 class ObjectBehavior implements ArrayAccess,
                                 MatchersProviderInterface,
