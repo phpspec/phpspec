@@ -29,10 +29,10 @@ use ArrayAccess;
  * wrap the results into PhpSpec subjects. This results will then be able to
  * be matched against expectations.
  *
- * @method void beConstructedWith(\mixed $constructorArguments,...)
- * @method void beAnInstanceOf(\string $class)
- * @method void shouldHaveType(\string $type)
- * @method \PhpSpec\Wrapper\Subject\Expectation\DuringCall shouldThrow($exception)
+ * @method void beConstructedWith($constructorArguments,...)
+ * @method void beAnInstanceOf($class)
+ * @method void shouldHaveType($type)
+ * @method \PhpSpec\Wrapper\Subject\Expectation\DuringCall shouldThrow($exception = null)
  */
 class ObjectBehavior implements ArrayAccess,
                                 MatchersProviderInterface,
