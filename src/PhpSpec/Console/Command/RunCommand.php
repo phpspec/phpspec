@@ -68,7 +68,6 @@ The available formatters are:
    pretty
    junit
    dot
-   nyan (requires whatthejeff/nyancat-scoreboard:~1.1)
 
 EOF
             )
