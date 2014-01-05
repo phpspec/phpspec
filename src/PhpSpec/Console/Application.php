@@ -344,15 +344,6 @@ class Application extends BaseApplication
         $container->set('formatter.formatters.dot', function ($c) {
             return new Formatter\DotFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
         });
-        $container->set('formatter.formatters.nyan', function ($c) {
-            if (class_exists('NyanCat\Scoreboard')) {
-                return new Formatter\NyanFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
-            }
-
-            throw new RuntimeException(
-                'The Nyan Cat formatter requires whatthejeff/nyancat-scoreboard:~1.1'
-            );
-        });
         $container->set('formatter.formatters.html', function ($c) {
             $io = new Formatter\Html\IO;
             $template = new Formatter\Html\Template($io);
