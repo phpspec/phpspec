@@ -347,6 +347,42 @@ class PSR0LocatorSpec extends ObjectBehavior
         $resource->getSpecClassname()->shouldReturn('spec\Console\ApplicationSpec');
     }
 
+    function it_throws_an_exception_on_non_PSR0_resource()
+    {
+        $this->beConstructedWith('', 'spec', $this->srcPath, $this->specPath);
+
+        $exception = new \InvalidArgumentException(
+            'String "Non-PSR0/Namespace" is not a valid class name.' . PHP_EOL .
+            'Please see reference document: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
+        );
+
+        $this->shouldThrow($exception)->duringCreateResource('Non-PSR0/Namespace');
+    }
+
+    function it_throws_an_exception_on_PSR0_resource_with_double_backslash()
+    {
+        $this->beConstructedWith('', 'spec', $this->srcPath, $this->specPath);
+
+        $exception = new \InvalidArgumentException(
+            'String "NonPSR0\\\\Namespace" is not a valid class name.' . PHP_EOL .
+            'Please see reference document: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
+        );
+
+        $this->shouldThrow($exception)->duringCreateResource('NonPSR0\\\\Namespace');
+    }
+
+    function it_throws_an_exception_on_PSR0_resource_with_slash_on_the_end()
+    {
+        $this->beConstructedWith('', 'spec', $this->srcPath, $this->specPath);
+
+        $exception = new \InvalidArgumentException(
+            'String "Namespace/" is not a valid class name.' . PHP_EOL .
+            'Please see reference document: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
+        );
+
+        $this->shouldThrow($exception)->duringCreateResource('Namespace/');
+    }
+
     private function convert_to_path($path)
     {
         if ('/' === DIRECTORY_SEPARATOR) {
