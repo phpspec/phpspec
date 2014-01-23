@@ -3,8 +3,6 @@
 use Behat\Behat\Context\BehatContext;
 use Behat\Gherkin\Node\PyStringNode;
 use PhpSpec\Console\Application;
-use Symfony\Component\Console\Input\StringInput;
-use Symfony\Component\Console\Output\StreamOutput;
 
 class PhpSpecContext extends BehatContext
 {
@@ -43,7 +41,7 @@ class PhpSpecContext extends BehatContext
     public function iRunPhpspec()
     {
         $this->applicationTester = $this->createApplicationTester();
-        $this->applicationTester->run('run --no-interaction');
+        $this->applicationTester->run('run --no-interaction', array('decorated' => false));
     }
 
     /**
@@ -53,7 +51,7 @@ class PhpSpecContext extends BehatContext
     {
         $this->applicationTester = $this->createApplicationTester();
         $this->applicationTester->putToInputStream(sprintf("%s\n", $answer));
-        $this->applicationTester->run('run', array('interactive' => true));
+        $this->applicationTester->run('run', array('interactive' => true, 'decorated' => false));
     }
 
     /**
@@ -63,7 +61,7 @@ class PhpSpecContext extends BehatContext
     public function iStartDescribing($class)
     {
         $this->applicationTester = $this->createApplicationTester();
-        $this->applicationTester->run(sprintf('describe %s --no-interaction', $class));
+        $this->applicationTester->run(sprintf('describe %s --no-interaction', $class), array('decorated' => false));
     }
 
     /**
