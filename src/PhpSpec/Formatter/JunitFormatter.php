@@ -105,7 +105,7 @@ class JunitFormatter extends BasicFormatter
             . ' ('.$failureString.')' . PHP_EOL;
         $failureMsg .= $event->getMessage() . PHP_EOL;
         if ($backtrace) {
-            $failureMsg .= $event->getBacktrace() . PHP_EOL;
+            $failureMsg .= $event->getException()->getTraceAsString() . PHP_EOL;
         }
 
         $error = $case->addChild($failureType, $failureMsg);
