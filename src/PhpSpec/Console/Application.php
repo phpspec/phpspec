@@ -100,17 +100,21 @@ class Application extends BaseApplication
         }
 
         $definition->setOptions($options);
+        $definition->setArguments(array()); // Remove the 'command' argument
         $this->setDefinition($definition);
     }
 
     /**
      * @return array
      */
-    public function getDefaultCommands()
+    protected function getDefaultCommands()
     {
-        $commands = $this->container->getByPrefix('console.commands');
+        return array_merge(parent::getDefaultCommands(), array(new PhpSpecCommand()));
+    }
 
-        return array_merge(parent::getDefaultCommands(), $commands);
+    protected function getCommandName(InputInterface $input)
+    {
+        return 'phpspec';
     }
 
     /**
@@ -119,7 +123,6 @@ class Application extends BaseApplication
     protected function setupContainer(ServiceContainer $container)
     {
         $this->setupIO($container);
-        $this->setupConsole($container);
         $this->setupEventDispatcher($container);
         $this->setupGenerators($container);
         $this->setupPresenter($container);
@@ -139,17 +142,6 @@ class Application extends BaseApplication
                 $c->get('console.output'),
                 $c->get('console.helpers')
             );
-        });
-    }
-
-    protected function setupConsole(ServiceContainer $container)
-    {
-        $container->setShared('console.commands.run', function ($c) {
-            return new Command\RunCommand;
-        });
-
-        $container->setShared('console.commands.describe', function ($c) {
-            return new Command\DescribeCommand;
         });
     }
 
