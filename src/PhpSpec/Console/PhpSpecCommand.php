@@ -30,6 +30,7 @@ class PhpSpecCommand extends Command
             ->setName('phpspec')
             ->setDefinition(array(
                     new InputArgument('spec', InputArgument::OPTIONAL, 'Specs to run'),
+                    new InputArgument('bc_layer', InputArgument::OPTIONAL, 'BC layer to allow using "phpspec run"'),
                     new InputOption('format', 'f', InputOption::VALUE_REQUIRED, 'Formatter'),
                     new InputOption('stop-on-failure', null , InputOption::VALUE_NONE, 'Stop on failure'),
                     new InputOption('no-code-generation', null , InputOption::VALUE_NONE, 'Do not prompt for missing method/class generation'),
@@ -85,6 +86,30 @@ Note that / is used as the separator. To use \ it must be quoted:
 EOF
             )
         ;
+    }
+
+    protected function initialize(InputInterface $input, OutputInterface $output)
+    {
+        $bcLayer = $input->getArgument('bc_layer');
+
+        if ('describe' === $input->getArgument('spec') && $bcLayer) {
+            $input->setOption('describe', $bcLayer);
+            $input->setArgument('bc_layer', null);
+            $input->setArgument('spec', null);
+
+            $output->writeln('<error>The command <comment>phpspec describe ClassName</comment> is deprecated and support will be removed.</error>');
+            $output->writeln('<error>Please use <info>phpspec --describe ClassName</info> instead.</error>');
+
+            return;
+        }
+
+        if ('run' === $input->getArgument('spec')) {
+            $input->setArgument('spec', $bcLayer);
+            $input->setArgument('bc_layer', null);
+
+            $output->writeln('<error>The command <comment>phpspec run</comment> is deprecated and support will be removed.</error>');
+            $output->writeln('<error>Please use <info>phpspec</info> instead.</error>');
+        }
     }
 
     /**
