@@ -6,5 +6,5 @@ before_script:
   - composer install --prefer-source
 
 script:
-  - bin/phpspec run
+  - bin/phpspec
   - ./vendor/bin/behat --format=pretty

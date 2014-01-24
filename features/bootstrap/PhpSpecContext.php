@@ -41,7 +41,7 @@ class PhpSpecContext extends BehatContext
     public function iRunPhpspec()
     {
         $this->applicationTester = $this->createApplicationTester();
-        $this->applicationTester->run('run --no-interaction', array('decorated' => false));
+        $this->applicationTester->run('--no-interaction', array('decorated' => false));
     }
 
     /**
@@ -51,7 +51,7 @@ class PhpSpecContext extends BehatContext
     {
         $this->applicationTester = $this->createApplicationTester();
         $this->applicationTester->putToInputStream(sprintf("%s\n", $answer));
-        $this->applicationTester->run('run', array('interactive' => true, 'decorated' => false));
+        $this->applicationTester->run('', array('interactive' => true, 'decorated' => false));
     }
 
     /**
@@ -61,7 +61,7 @@ class PhpSpecContext extends BehatContext
     public function iStartDescribing($class)
     {
         $this->applicationTester = $this->createApplicationTester();
-        $this->applicationTester->run(sprintf('describe %s --no-interaction', $class), array('decorated' => false));
+        $this->applicationTester->run(sprintf('--describe %s --no-interaction', $class), array('decorated' => false));
     }
 
     /**
