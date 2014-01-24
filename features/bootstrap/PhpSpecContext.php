@@ -17,6 +17,11 @@ class PhpSpecContext extends BehatContext
     private $applicationTester = null;
 
     /**
+     * @var integer
+     */
+    private $uniqueTokenCounter = 0;
+
+    /**
      * @BeforeScenario
      */
     public function createWorkDir()
@@ -69,11 +74,68 @@ class PhpSpecContext extends BehatContext
      */
     public function theFileContains($file, PyStringNode $string)
     {
+        $this->writeNewClassFile($file, (string)$string);
+    }
+
+    /**
+     * @param string $file
+     * @param string $string
+     */
+    private function writeNewClassFile($file, $string)
+    {
         mkdir(dirname($file), 0777, true);
 
-        file_put_contents($file, $string->getRaw());
+        file_put_contents($file, $string);
 
         require_once($file);
+    }
+
+    /**
+     * @Given /^I have an example that contains:$/
+     */
+    public function iHaveAnExampleThatContains(PyStringNode $string)
+    {
+        $uniqueToken = ++$this->uniqueTokenCounter;
+        $className = 'Class' . $uniqueToken . 'Spec';
+        $file = 'spec' . DIRECTORY_SEPARATOR . $className . '.php';
+
+        $template = <<<EOF
+<?php
+
+namespace spec;
+
+use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
+
+class $className extends ObjectBehavior
+{
+$string
+}
+
+EOF;
+
+        $this->writeNewClassFile($file, $template);
+    }
+
+    /**
+     * @Given /^the object being specified contains:$/
+     */
+    public function theObjectBeingSpecifiedContains(PyStringNode $string)
+    {
+        $uniqueToken = $this->uniqueTokenCounter;
+        $className = 'Class' . $uniqueToken;
+        $file = 'src' . DIRECTORY_SEPARATOR . $className . '.php';
+
+        $template = <<<EOF
+<?php
+class $className
+{
+$string
+}
+
+EOF;
+
+        $this->writeNewClassFile($file, $template);
     }
 
     /**
@@ -100,6 +162,7 @@ class PhpSpecContext extends BehatContext
 
     /**
      * @Then /^(?:|the )suite should pass$/
+     * @Then /^(?:|the )example should pass$/
      */
     public function theSuiteShouldPass()
     {
