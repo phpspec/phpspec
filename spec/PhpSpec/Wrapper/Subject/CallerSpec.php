@@ -142,7 +142,7 @@ class CallerSpec extends ObjectBehavior
 
     function it_delegates_throwing_property_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
     {
-        $obj = new \ArrayObject;
+        $obj = new ExampleClass;
 
         $wrappedObject->isInstantiated()->willReturn(true);
         $wrappedObject->getInstance()->willReturn($obj);
