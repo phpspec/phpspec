@@ -20,7 +20,7 @@ use PhpSpec\Event\SpecificationEvent;
 /**
  * @author Nick Peirson <nickpeirson@gmail.com>
  */
-class JunitFormatter extends BasicFormatter
+class JUnitFormatter extends BasicFormatter
 {
     /**
      * @var

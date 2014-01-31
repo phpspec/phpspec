@@ -339,7 +339,7 @@ class Application extends BaseApplication
             return new Formatter\PrettyFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
         });
         $container->set('formatter.formatters.junit', function ($c) {
-            return new Formatter\JunitFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+            return new Formatter\JUnitFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
         });
         $container->set('formatter.formatters.dot', function ($c) {
             return new Formatter\DotFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
