@@ -143,12 +143,7 @@ class ExampleRunner
             $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
         } catch (\Exception $e) {
             $this->runMaintainersTeardown(
-                array_filter(
-                    $maintainers,
-                    function ($maintainer) {
-                        return $maintainer instanceof LetAndLetgoMaintainer;
-                    }
-                ),
+                $this->searchExceptionMaintainers($maintainers),
                 $example,
                 $context,
                 $matchers,
@@ -172,5 +167,19 @@ class ExampleRunner
         foreach (array_reverse($maintainers) as $maintainer) {
             $maintainer->teardown($example, $context, $matchers, $collaborators);
         }
+    }
+
+    /**
+     * @param Maintainer\MaintainerInterface[] $maintainers
+     * @return Maintainer\MaintainerInterface[]
+     */
+    private function searchExceptionMaintainers($maintainers)
+    {
+        return array_filter(
+            $maintainers,
+            function ($maintainer) {
+                return $maintainer instanceof LetAndLetgoMaintainer;
+            }
+        );
     }
 }

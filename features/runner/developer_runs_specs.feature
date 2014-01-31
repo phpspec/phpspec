@@ -89,7 +89,7 @@ Feature: Developer runs the specs
     Then I should see "Letgo is called"
 
     @issue214
-  Scenario: Executes letgo method after exception is throwed
+  Scenario: Executes letgo method after exception is thrown
     Given the spec file "spec/Runner/SpecExample4/MarkdownSpec.php" contains:
       """
       <?php
