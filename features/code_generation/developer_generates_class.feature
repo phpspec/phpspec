@@ -17,3 +17,62 @@ Feature: Developer generates a class
       }
 
       """
+
+    @issue269
+  Scenario: Generating a class when expectations on collaborator are defined
+    Given the spec file "spec/CodeGeneration/MethodExample2/ForgotPasswordSpec.php" contains:
+    """
+    <?php
+
+    namespace spec\CodeGeneration\MethodExample2;
+
+    use CodeGeneration\MethodExample2\UserRepository;
+    use CodeGeneration\MethodExample2\User;
+    use PhpSpec\ObjectBehavior;
+    use Prophecy\Argument;
+
+    class ForgotPasswordSpec extends ObjectBehavior
+    {
+        function it_changes_password_for_user(UserRepository $repository, User $user)
+        {
+            $repository->findOneByEmail('leszek.prabucki@gmail.com')->willReturn($user);
+            $user->changePassword('123')->shouldBeCalled();
+
+            $this->changePassword('leszek.prabucki@gmail.com', '123');
+        }
+    }
+    """
+    And the class file "src/CodeGeneration/MethodExample2/User.php" contains:
+    """
+    <?php
+
+    namespace CodeGeneration\MethodExample2;
+
+    interface User
+    {
+        public function changePassword($newPassword);
+    }
+    """
+    And the class file "src/CodeGeneration/MethodExample2/UserRepository.php" contains:
+    """
+    <?php
+
+    namespace CodeGeneration\MethodExample2;
+
+    interface UserRepository
+    {
+        public function findOneByEmail($email);
+    }
+    """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/MethodExample2/ForgotPassword.php" should contain:
+    """
+    <?php
+
+    namespace CodeGeneration\MethodExample2;
+
+    class ForgotPassword
+    {
+    }
+
+    """

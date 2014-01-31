@@ -69,7 +69,10 @@ class PhpSpecContext extends BehatContext
      */
     public function theFileContains($file, PyStringNode $string)
     {
-        mkdir(dirname($file), 0777, true);
+        $dirname = dirname($file);
+        if (!file_exists($dirname)) {
+            mkdir($dirname, 0777, true);
+        }
 
         file_put_contents($file, $string->getRaw());
 
