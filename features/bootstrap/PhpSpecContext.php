@@ -45,6 +45,15 @@ class PhpSpecContext extends BehatContext
     }
 
     /**
+     * @When /^I run phpspec using the "([^"]*)" format$/
+     */
+    public function iRunPhpspecUsingTheFormat($format)
+    {
+        $this->applicationTester = $this->createApplicationTester();
+        $this->applicationTester->run(sprintf('run --no-interaction -f%s', $format), array('decorated' => false));
+    }
+
+    /**
      * @When /^(?:|I )run phpspec and answer "(?P<answer>[^"]*)" when asked if I want to generate the code$/
      */
     public function iRunPhpspecAndAnswer($answer)
@@ -96,6 +105,16 @@ class PhpSpecContext extends BehatContext
     public function iShouldSee($message)
     {
         expect($this->applicationTester->getDisplay())->toMatch('/'.preg_quote($message, '/').'/sm');
+    }
+
+    /**
+     * @Then /^I should see valid junit output$/
+     */
+    public function iShouldSeeValidJunitOutput()
+    {
+        $dom = new \DOMDocument();
+        $dom->loadXML($this->applicationTester->getDisplay());
+        expect($dom->schemaValidate(__DIR__ . '/../../src/PhpSpec/Resources/schema/junit.xsd'))->toBe(true);
     }
 
     /**

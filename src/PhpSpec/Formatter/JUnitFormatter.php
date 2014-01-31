@@ -18,164 +18,93 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 
 /**
- * @author Nick Peirson <nickpeirson@gmail.com>
+ * The JUnit Formatter
+ *
+ * @author Gildas Quemener <gildas.quemener@gmail.com>
  */
 class JUnitFormatter extends BasicFormatter
 {
-    /**
-     * @var
-     */
-    private $xml;
-    /**
-     * @var
-     */
-    private $testSuite;
-    /**
-     * @var
-     */
-    private $currentGroup;
-    /**
-     * @var
-     */
-    private $currentFile;
-    /**
-     * @var int
-     */
-    private $suiteTime = 0;
-    /**
-     * @var int
-     */
-    private $assertionCount = 0;
-    /**
-     * @var int
-     */
-    private $passCount = 0;
-    /**
-     * @var int
-     */
-    private $pendingCount = 0;
-    /**
-     * @var int
-     */
-    private $failCount = 0;
-    /**
-     * @var int
-     */
-    private $brokenCount = 0;
+    /** @var array */
+    protected $testCaseNodes = array();
+
+    /** @var array */
+    protected $testSuiteNodes = array();
 
     /**
-     * @param SuiteEvent $event
+     * Set testcase nodes
+     *
+     * @param array $testCaseNodes
      */
-    public function beforeSuite(SuiteEvent $event)
+    public function setTestCaseNodes(array $testCaseNodes)
     {
-        $this->xml = new \SimpleXMLElement("<testsuites></testsuites>");
+        $this->testCaseNodes = $testCaseNodes;
     }
 
     /**
-     * @param SpecificationEvent $event
+     * Get testcase nodes
+     *
+     * @return array
      */
-    public function beforeSpecification(SpecificationEvent $event)
+    public function getTestCaseNodes()
     {
-        $this->currentGroup = $event->getTitle();
-        $this->currentFile = $event->getSpecification()->getClassReflection()->getFileName();
-
-        $this->testSuite = $this->xml->addChild('testsuite');
-        $this->testSuite->addAttribute('name', $this->currentGroup);
-        $this->testSuite->addAttribute('file', $this->currentFile);
-
-        $this->suiteTime = 0;
-        $this->assertionCount = 0;
-        $this->passCount = 0;
-        $this->pendingCount = 0;
-        $this->failCount = 0;
-        $this->brokenCount = 0;
+        return $this->testCaseNodes;
     }
 
     /**
-     * @param \SimpleXMLElement $case
-     * @param ExampleEvent      $event
-     * @param string            $exampleTitle
-     * @param string            $failureType
-     * @param string            $failureString
-     * @param bool              $backtrace
+     * Set testsuite nodes
+     *
+     * @param array $testSuiteNodes
      */
-    private function addFailedTestcase(\SimpleXMLElement $case, ExampleEvent $event, $exampleTitle, $failureType, $failureString, $backtrace = true)
+    public function setTestSuiteNodes(array $testSuiteNodes)
     {
-        $failureMsg = PHP_EOL . $exampleTitle
-            . ' ('.$failureString.')' . PHP_EOL;
-        $failureMsg .= $event->getMessage() . PHP_EOL;
-        if ($backtrace) {
-            $failureMsg .= $event->getException()->getTraceAsString() . PHP_EOL;
-        }
-
-        $error = $case->addChild($failureType, $failureMsg);
-        $error->addAttribute(
-            'type',
-            get_class($event->getException())
-        );
+        $this->testSuiteNodes = $testSuiteNodes;
     }
 
     /**
-     * @param ExampleEvent $event
+     * Get testsuite nodes
+     *
+     * @return array
+     */
+    public function getTestSuiteNodes()
+    {
+        return $this->testSuiteNodes;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function afterExample(ExampleEvent $event)
     {
-        $title = preg_replace('/^it /', '', $event->getTitle());
-        $line  = $event->getExample()->getFunctionReflection()->getStartLine();
-        $time = $event->getTime();
-        $assertions = 0;
-
-        $case = $this->testSuite->addChild('testcase');
-        $case->addAttribute('name', $title);
-        $case->addAttribute('class', $this->currentGroup);
-        $case->addAttribute('file', $this->currentFile);
-        $case->addAttribute('line', $line);
-        $case->addAttribute('assertions', $assertions);
-        $case->addAttribute('time', $time);
-
-        switch ($event->getResult()) {
-            case ExampleEvent::PASSED:
-                $this->passCount++;
-                break;
-            case ExampleEvent::PENDING:
-                $this->addFailedTestcase($case, $event, $title, 'failure', 'PENDING', false);
-                $this->pendingCount++;
-                break;
-            case ExampleEvent::FAILED:
-                $this->addFailedTestcase($case, $event, $title, 'failure', 'FAILED');
-                $this->failCount++;
-                break;
-            case ExampleEvent::BROKEN:
-                $this->addFailedTestcase($case, $event, $title, 'error', 'ERROR');
-                $this->brokenCount++;
-                break;
-        }
-
-        $this->assertionCount += $assertions;
-        $this->suiteTime += $time;
+        $this->testCaseNodes[] = sprintf('<testcase name="%s" />', $event->getTitle());
     }
 
     /**
-     * @param SpecificationEvent $event
+     * {@inheritdoc}
      */
     public function afterSpecification(SpecificationEvent $event)
     {
-        $this->testSuite->addAttribute('tests', $event->getSpecification()->count());
-        $this->testSuite->addAttribute('assertions', $this->assertionCount);
-        $this->testSuite->addAttribute('failures', $this->failCount);
-        $this->testSuite->addAttribute('errors', $this->brokenCount);
-        $this->testSuite->addAttribute('time', $this->suiteTime);
+        $this->testSuiteNodes[] = sprintf(
+            '<testsuite name="%s" tests="%s">' . "\n" .
+            '%s' . "\n" .
+            '</testsuite>',
+            $event->getTitle(),
+            count($this->testCaseNodes),
+            implode("\n", $this->testCaseNodes)
+        );
+
+        $this->testCaseNodes = array();
     }
 
     /**
-     * @param SuiteEvent $event
+     * {@inheritdoc}
      */
     public function afterSuite(SuiteEvent $event)
     {
-        $dom = new \DOMDocument('1.0');
-        $dom->preserveWhitespace = false;
-        $dom->formatOutput = true;
-        $dom->loadXml($this->xml->asXml());
-        $this->getIO()->write($dom->saveXML());
+        $this->getIo()->write(sprintf(
+            '<testsuites>' . "\n" .
+            '%s' . "\n" .
+            '</testsuites>',
+            implode("\n", $this->testSuiteNodes)
+        ));
     }
 }
