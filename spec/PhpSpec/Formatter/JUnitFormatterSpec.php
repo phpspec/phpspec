@@ -22,7 +22,7 @@ class JUnitFormatterSpec extends ObjectBehavior
         $this->beConstructedWith($presenter, $io, $stats);
     }
 
-    function it_stores_a_testcase_node_after_example_run(
+    function it_stores_a_testcase_node_after_passed_example_run(
         ExampleEvent $event,
         SpecificationNode $specification,
         \ReflectionClass $refClass
@@ -38,6 +38,30 @@ class JUnitFormatterSpec extends ObjectBehavior
 
         $this->getTestCaseNodes()->shouldReturn([
             '<testcase name="example title" time="1337" classname="Acme\Foo\Bar" status="passed" />'
+        ]);
+    }
+
+    function it_stores_a_testcase_node_after_broken_example_run(
+        ExampleEvent $event,
+        SpecificationNode $specification,
+        \ReflectionClass $refClass
+    ) {
+        $event->getResult()->willReturn(ExampleEvent::BROKEN);
+        $event->getTitle()->willReturn('example title');
+        $event->getTime()->willReturn(1337);
+
+        $event->getException()->willReturn(new \RuntimeException('Something went wrong'));
+
+        $event->getSpecification()->willReturn($specification);
+        $specification->getClassReflection()->willReturn($refClass);
+        $refClass->getName()->willReturn('Acme\Foo\Bar');
+
+        $this->afterExample($event);
+
+        $this->getTestCaseNodes()->shouldReturn([
+            '<testcase name="example title" time="1337" classname="Acme\Foo\Bar" status="broken">' . "\n" .
+                '<error type="RuntimeException" message="Something went wrong" />' . "\n" .
+            '</testcase>'
         ]);
     }
 

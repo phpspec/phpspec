@@ -83,13 +83,28 @@ class JUnitFormatter extends BasicFormatter
      */
     public function afterExample(ExampleEvent $event)
     {
-        $this->testCaseNodes[] = sprintf(
-            '<testcase name="%s" time="%s" classname="%s" status="%s" />',
+        $testCaseNode = sprintf(
+            '<testcase name="%s" time="%s" classname="%s" status="%s"',
             $event->getTitle(),
             $event->getTime(),
             $event->getSpecification()->getClassReflection()->getName(),
             $this->jUnitStatuses[$event->getResult()]
         );
+
+        if (ExampleEvent::BROKEN === $event->getResult()) {
+            $exception = $event->getException();
+            $testCaseNode .= sprintf(
+                '>' . "\n" .
+                    '<error type="%s" message="%s" />' . "\n" .
+                '</testcase>',
+                get_class($exception),
+                $exception->getMessage()
+            );
+        } else {
+            $testCaseNode .= ' />';
+        }
+
+        $this->testCaseNodes[] = $testCaseNode;
     }
 
     /**

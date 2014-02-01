@@ -15,18 +15,27 @@ Feature: Use the JUnit formatter
 
       class MarkdownSpec extends ObjectBehavior
       {
+          // passed
           function it_converts_plain_text_to_html_paragraphs()
           {
               $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
           }
 
+          // pending
           function it_converts_html_paragraph_to_plain_text()
           {
           }
 
+          // failed
           function it_formats_asterik_surrounding_text_in_italic()
           {
               $this->toHtml('*How are you?*')->shouldReturn('<i>How are you?</i>');
+          }
+
+          // broken
+          function it_formats_empty_text()
+          {
+              $this->toHtml('')->shouldReturn('<p></p>');
           }
       }
 
@@ -41,6 +50,9 @@ Feature: Use the JUnit formatter
       {
           public function toHtml($text)
           {
+              if (empty($text)) {
+                  throw new \InvalidArgumentException('Text cannot be empty');
+              }
               return sprintf('<p>%s</p>', $text);
           }
       }
