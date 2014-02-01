@@ -62,7 +62,38 @@ class JUnitFormatterSpec extends ObjectBehavior
             '<testcase name="example title" time="1337" classname="Acme\Foo\Bar" status="broken">' . "\n" .
                 '<error type="spec\PhpSpec\Formatter\ExceptionStub" message="Something went wrong" />' . "\n" .
                 '<system-err>' . "\n" .
-                    'Exception trace' . "\n" .
+                    '<![CDATA[' . "\n" .
+                        'Exception trace' . "\n" .
+                    ']]>' . "\n" .
+                '</system-err>' . "\n" .
+            '</testcase>'
+        ));
+    }
+
+    function it_stores_a_testcase_node_after_failed_example_run(
+        ExampleEvent $event,
+        SpecificationNode $specification,
+        \ReflectionClass $refClass
+    ) {
+        $event->getResult()->willReturn(ExampleEvent::FAILED);
+        $event->getTitle()->willReturn('example title');
+        $event->getTime()->willReturn(1337);
+
+        $event->getException()->willReturn(new ExceptionStub('Something went wrong', 'Exception trace'));
+
+        $event->getSpecification()->willReturn($specification);
+        $specification->getClassReflection()->willReturn($refClass);
+        $refClass->getName()->willReturn('Acme\Foo\Bar');
+
+        $this->afterExample($event);
+
+        $this->getTestCaseNodes()->shouldReturn(array(
+            '<testcase name="example title" time="1337" classname="Acme\Foo\Bar" status="failed">' . "\n" .
+                '<failure type="spec\PhpSpec\Formatter\ExceptionStub" message="Something went wrong" />' . "\n" .
+                '<system-err>' . "\n" .
+                    '<![CDATA[' . "\n" .
+                        'Exception trace' . "\n" .
+                    ']]>' . "\n" .
                 '</system-err>' . "\n" .
             '</testcase>'
         ));

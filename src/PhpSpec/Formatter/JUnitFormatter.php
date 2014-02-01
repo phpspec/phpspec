@@ -38,6 +38,12 @@ class JUnitFormatter extends BasicFormatter
         ExampleEvent::BROKEN  => 'broken',
     );
 
+    /** @var array */
+    protected $resultTags = array(
+        ExampleEvent::FAILED  => 'failure',
+        ExampleEvent::BROKEN  => 'error',
+    );
+
     /**
      * Set testcase nodes
      *
@@ -91,17 +97,20 @@ class JUnitFormatter extends BasicFormatter
             $this->jUnitStatuses[$event->getResult()]
         );
 
-        if (ExampleEvent::BROKEN === $event->getResult()) {
+        if (in_array($event->getResult(), array(ExampleEvent::BROKEN, ExampleEvent::FAILED))) {
             $exception = $event->getException();
             $testCaseNode .= sprintf(
                 '>' . "\n" .
-                    '<error type="%s" message="%s" />' . "\n" .
+                    '<%s type="%s" message="%s" />' . "\n" .
                     '<system-err>' . "\n" .
-                        '%s' . "\n" .
+                        '<![CDATA[' . "\n" .
+                            '%s' . "\n" .
+                        ']]>' . "\n" .
                     '</system-err>' . "\n" .
                 '</testcase>',
+                $this->resultTags[$event->getResult()],
                 get_class($exception),
-                $exception->getMessage(),
+                htmlentities($exception->getMessage()),
                 $exception->getTraceAsString()
             );
         } else {
