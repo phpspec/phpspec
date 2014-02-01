@@ -25,15 +25,19 @@ class JUnitFormatterSpec extends ObjectBehavior
     function it_stores_a_testcase_node_after_example_run(
         ExampleEvent $event,
         SpecificationNode $specification,
-        \ReflectionClass $class
+        \ReflectionClass $refClass
     ) {
         $event->getResult()->willReturn(ExampleEvent::PASSED);
         $event->getTitle()->willReturn('example title');
+        $event->getTime()->willReturn(1337);
+        $event->getSpecification()->willReturn($specification);
+        $specification->getClassReflection()->willReturn($refClass);
+        $refClass->getName()->willReturn('Acme\Foo\Bar');
 
         $this->afterExample($event);
 
         $this->getTestCaseNodes()->shouldReturn([
-            '<testcase name="example title" />'
+            '<testcase name="example title" time="1337" classname="Acme\Foo\Bar" status="passed" />'
         ]);
     }
 

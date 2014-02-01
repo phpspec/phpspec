@@ -19,6 +19,15 @@ Feature: Use the JUnit formatter
           {
               $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
           }
+
+          function it_converts_html_paragraph_to_plain_text()
+          {
+          }
+
+          function it_formats_asterik_surrounding_text_in_italic()
+          {
+              $this->toHtml('*How are you?*')->shouldReturn('<i>How are you?</i>');
+          }
       }
 
       """

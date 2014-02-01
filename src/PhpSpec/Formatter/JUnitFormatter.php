@@ -30,6 +30,14 @@ class JUnitFormatter extends BasicFormatter
     /** @var array */
     protected $testSuiteNodes = array();
 
+    /** @var array */
+    protected $jUnitStatuses = array(
+        ExampleEvent::PASSED  => 'passed',
+        ExampleEvent::PENDING => 'pending',
+        ExampleEvent::FAILED  => 'failed',
+        ExampleEvent::BROKEN  => 'broken',
+    );
+
     /**
      * Set testcase nodes
      *
@@ -75,7 +83,13 @@ class JUnitFormatter extends BasicFormatter
      */
     public function afterExample(ExampleEvent $event)
     {
-        $this->testCaseNodes[] = sprintf('<testcase name="%s" />', $event->getTitle());
+        $this->testCaseNodes[] = sprintf(
+            '<testcase name="%s" time="%s" classname="%s" status="%s" />',
+            $event->getTitle(),
+            $event->getTime(),
+            $event->getSpecification()->getClassReflection()->getName(),
+            $this->jUnitStatuses[$event->getResult()]
+        );
     }
 
     /**
