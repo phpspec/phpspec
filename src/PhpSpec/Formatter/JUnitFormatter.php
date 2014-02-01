@@ -96,9 +96,13 @@ class JUnitFormatter extends BasicFormatter
             $testCaseNode .= sprintf(
                 '>' . "\n" .
                     '<error type="%s" message="%s" />' . "\n" .
+                    '<system-err>' . "\n" .
+                        '%s' . "\n" .
+                    '</system-err>' . "\n" .
                 '</testcase>',
                 get_class($exception),
-                $exception->getMessage()
+                $exception->getMessage(),
+                $exception->getTraceAsString()
             );
         } else {
             $testCaseNode .= ' />';

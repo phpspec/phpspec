@@ -50,7 +50,7 @@ class JUnitFormatterSpec extends ObjectBehavior
         $event->getTitle()->willReturn('example title');
         $event->getTime()->willReturn(1337);
 
-        $event->getException()->willReturn(new \RuntimeException('Something went wrong'));
+        $event->getException()->willReturn(new ExceptionStub('Something went wrong', 'Exception trace'));
 
         $event->getSpecification()->willReturn($specification);
         $specification->getClassReflection()->willReturn($refClass);
@@ -58,11 +58,14 @@ class JUnitFormatterSpec extends ObjectBehavior
 
         $this->afterExample($event);
 
-        $this->getTestCaseNodes()->shouldReturn([
+        $this->getTestCaseNodes()->shouldReturn(array(
             '<testcase name="example title" time="1337" classname="Acme\Foo\Bar" status="broken">' . "\n" .
-                '<error type="RuntimeException" message="Something went wrong" />' . "\n" .
+                '<error type="spec\PhpSpec\Formatter\ExceptionStub" message="Something went wrong" />' . "\n" .
+                '<system-err>' . "\n" .
+                    'Exception trace' . "\n" .
+                '</system-err>' . "\n" .
             '</testcase>'
-        ]);
+        ));
     }
 
     function it_aggregates_testcase_nodes_and_store_them_after_specification_run(SpecificationEvent $event)
@@ -76,13 +79,13 @@ class JUnitFormatterSpec extends ObjectBehavior
         ));
         $this->afterSpecification($event);
 
-        $this->getTestSuiteNodes()->shouldReturn([
+        $this->getTestSuiteNodes()->shouldReturn(array(
             '<testsuite name="specification title" tests="3">' . "\n" .
                 '<testcase name="example1" />' . "\n" .
                 '<testcase name="example2" />' . "\n" .
                 '<testcase name="example3" />' . "\n" .
             '</testsuite>'
-        ]);
+        ));
         $this->getTestCaseNodes()->shouldHaveCount(0);
     }
 
@@ -113,5 +116,27 @@ class JUnitFormatterSpec extends ObjectBehavior
                 '</testsuite>' . "\n" .
             '</testsuites>'
         )->shouldBeCalled();
+    }
+}
+
+class ExceptionStub
+{
+    protected $trace;
+    protected $message;
+
+    public function __construct($message, $trace)
+    {
+        $this->message = $message;
+        $this->trace   = $trace;
+    }
+
+    public function getMessage()
+    {
+        return $this->message;
+    }
+
+    public function getTraceAsString()
+    {
+        return $this->trace;
     }
 }
