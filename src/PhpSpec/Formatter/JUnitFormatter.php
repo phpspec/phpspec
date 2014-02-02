@@ -173,6 +173,7 @@ class JUnitFormatter extends BasicFormatter
     public function afterSuite(SuiteEvent $event)
     {
         $this->getIo()->write(sprintf(
+            '<?xml version="1.0" encoding="UTF-8" ?>' . "\n" .
             '<testsuites>' . "\n" .
             '%s' . "\n" .
             '</testsuites>',
