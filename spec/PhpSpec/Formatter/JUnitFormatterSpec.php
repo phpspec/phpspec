@@ -147,7 +147,9 @@ class JUnitFormatterSpec extends ObjectBehavior
             '</testsuite>'
         ));
         $this->afterSuite($event);
+
         $io->write(
+            '<?xml version="1.0" encoding="UTF-8" ?>' . "\n" .
             '<testsuites>' . "\n" .
                 '<testsuite name="specification1" tests="3">' . "\n" .
                     '<testcase name="example1" />' . "\n" .
