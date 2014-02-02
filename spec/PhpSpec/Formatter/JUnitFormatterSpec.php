@@ -102,22 +102,35 @@ class JUnitFormatterSpec extends ObjectBehavior
     function it_aggregates_testcase_nodes_and_store_them_after_specification_run(SpecificationEvent $event)
     {
         $event->getTitle()->willReturn('specification title');
+        $event->getTime()->willReturn(42);
 
         $this->setTestCaseNodes(array(
             '<testcase name="example1" />',
             '<testcase name="example2" />',
             '<testcase name="example3" />',
         ));
+
+        $this->setExampleStatusCounts(array(
+            ExampleEvent::FAILED  => 1,
+            ExampleEvent::BROKEN  => 2,
+            ExampleEvent::PENDING => 5,
+        ));
         $this->afterSpecification($event);
 
         $this->getTestSuiteNodes()->shouldReturn(array(
-            '<testsuite name="specification title" tests="3">' . "\n" .
+            '<testsuite name="specification title" time="42" tests="3" failures="1" errors="2" skipped="5">' . "\n" .
                 '<testcase name="example1" />' . "\n" .
                 '<testcase name="example2" />' . "\n" .
                 '<testcase name="example3" />' . "\n" .
             '</testsuite>'
         ));
         $this->getTestCaseNodes()->shouldHaveCount(0);
+        $this->getExampleStatusCounts()->shouldReturn(array(
+            ExampleEvent::PASSED  => 0,
+            ExampleEvent::PENDING => 0,
+            ExampleEvent::FAILED  => 0,
+            ExampleEvent::BROKEN  => 0,
+        ));
     }
 
     function it_aggregates_testsuite_nodes_and_display_them_after_suite_run(SuiteEvent $event, $io)
