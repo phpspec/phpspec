@@ -136,7 +136,7 @@ class JUnitFormatter extends BasicFormatter
                 '</testcase>',
                 $this->resultTags[$event->getResult()],
                 get_class($exception),
-                htmlentities($exception->getMessage()),
+                htmlspecialchars($exception->getMessage(), ENT_COMPAT | ENT_XML1),
                 $exception->getTraceAsString()
             );
         } else {
