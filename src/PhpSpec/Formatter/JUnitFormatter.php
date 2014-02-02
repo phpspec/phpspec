@@ -98,11 +98,21 @@ class JUnitFormatter extends BasicFormatter
         return $this->testSuiteNodes;
     }
 
+    /**
+     * Set example status counts
+     *
+     * @param array $exampleStatusCounts
+     */
     public function setExampleStatusCounts(array $exampleStatusCounts)
     {
         $this->exampleStatusCounts = $exampleStatusCounts;
     }
 
+    /**
+     * Get example status counts
+     *
+     * @return array
+     */
     public function getExampleStatusCounts()
     {
         return $this->exampleStatusCounts;
