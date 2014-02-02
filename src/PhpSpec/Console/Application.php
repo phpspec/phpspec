@@ -491,11 +491,11 @@ class Application extends BaseApplication
         $paths = array('phpspec.yml','phpspec.dist.yml');
 
         $input = new ArgvInput();
-        if ($custom_path = $input->getParameterOption(array('-c','--config-file'))) {
-            if (!file_exists($custom_path)) {
-                throw new FileNotFoundException('Custom configuration file not found at '.$custom_path);
+        if ($customPath = $input->getParameterOption(array('-c','--config-file'))) {
+            if (!file_exists($customPath)) {
+                throw new FileNotFoundException('Custom configuration file not found at '.$customPath);
             }
-            $paths = array($custom_path);
+            $paths = array($customPath);
         }
 
         foreach ($paths as $path) {
