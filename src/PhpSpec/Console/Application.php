@@ -100,8 +100,8 @@ class Application extends BaseApplication
             );
         }
 
-        $options['config-file'] = new InputOption(
-            'config-file',
+        $options['config'] = new InputOption(
+            'config',
             'c',
             InputOption::VALUE_REQUIRED,
             'Specify a custom location for the configuration file'
@@ -491,7 +491,7 @@ class Application extends BaseApplication
         $paths = array('phpspec.yml','phpspec.dist.yml');
 
         $input = new ArgvInput();
-        if ($customPath = $input->getParameterOption(array('-c','--config-file'))) {
+        if ($customPath = $input->getParameterOption(array('-c','--config'))) {
             if (!file_exists($customPath)) {
                 throw new FileNotFoundException('Custom configuration file not found at '.$customPath);
             }
