@@ -172,11 +172,17 @@ class JUnitFormatter extends BasicFormatter
      */
     public function afterSuite(SuiteEvent $event)
     {
+        $stats = $this->getStatisticsCollector();
+
         $this->getIo()->write(sprintf(
             '<?xml version="1.0" encoding="UTF-8" ?>' . "\n" .
-            '<testsuites>' . "\n" .
+            '<testsuites time="%s" tests="%s" failures="%s" errors="%s">' . "\n" .
             '%s' . "\n" .
             '</testsuites>',
+            $event->getTime(),
+            $stats->getEventsCount(),
+            count($stats->getFailedEvents()),
+            count($stats->getBrokenEvents()),
             implode("\n", $this->testSuiteNodes)
         ));
     }

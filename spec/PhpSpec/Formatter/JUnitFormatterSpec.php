@@ -133,8 +133,13 @@ class JUnitFormatterSpec extends ObjectBehavior
         ));
     }
 
-    function it_aggregates_testsuite_nodes_and_display_them_after_suite_run(SuiteEvent $event, $io)
+    function it_aggregates_testsuite_nodes_and_display_them_after_suite_run(SuiteEvent $event, $io, $stats)
     {
+        $event->getTime()->willReturn(48151.62342);
+        $stats->getFailedEvents()->willReturn(range(1, 12));
+        $stats->getBrokenEvents()->willReturn(range(1, 3));
+        $stats->getEventsCount()->willReturn(100);
+
         $this->setTestSuiteNodes(array(
             '<testsuite name="specification1" tests="3">' . "\n" .
                 '<testcase name="example1" />' . "\n" .
@@ -150,7 +155,7 @@ class JUnitFormatterSpec extends ObjectBehavior
 
         $io->write(
             '<?xml version="1.0" encoding="UTF-8" ?>' . "\n" .
-            '<testsuites>' . "\n" .
+            '<testsuites time="48151.62342" tests="100" failures="12" errors="3">' . "\n" .
                 '<testsuite name="specification1" tests="3">' . "\n" .
                     '<testcase name="example1" />' . "\n" .
                     '<testcase name="example2" />' . "\n" .
