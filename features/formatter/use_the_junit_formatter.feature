@@ -51,7 +51,7 @@ Feature: Use the JUnit formatter
           public function toHtml($text)
           {
               if (empty($text)) {
-                  throw new \InvalidArgumentException('Text cannot be empty');
+                  throw new \InvalidArgumentException('Text cannot be empty: &$£€<>"');
               }
               return sprintf('<p>%s</p>', $text);
           }
