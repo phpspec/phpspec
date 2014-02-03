@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\Runner;
 
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Runner\Maintainer\LetAndLetgoMaintainer;
 use Prophecy\Argument;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -112,9 +113,9 @@ class ExampleRunnerSpec extends ObjectBehavior
         $this->run($example);
     }
 
-    function it_runs_all_supported_maintainers_before_and_after_each_example_if_the_example_throws_an_exception(
+    function it_runs_let_and_letgo_maintainer_before_and_after_each_example_if_the_example_throws_an_exception(
         ExampleNode $example, SpecificationNode $specification, ReflectionClass $specReflection,
-        $context, ReflectionMethod $exampReflection, MaintainerInterface $maintainer,
+        $context, ReflectionMethod $exampReflection, LetAndLetgoMaintainer $maintainer,
         SpecificationInterface $context
     )
     {

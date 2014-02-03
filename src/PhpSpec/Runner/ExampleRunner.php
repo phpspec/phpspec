@@ -15,6 +15,7 @@ namespace PhpSpec\Runner;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
+use PhpSpec\Runner\Maintainer\LetAndLetgoMaintainer;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\SpecificationInterface;
 use PhpSpec\Event\ExampleEvent;
@@ -141,7 +142,13 @@ class ExampleRunner
         try {
             $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
         } catch (\Exception $e) {
-            $this->runMaintainersTeardown($maintainers, $example, $context, $matchers, $collaborators);
+            $this->runMaintainersTeardown(
+                $this->searchExceptionMaintainers($maintainers),
+                $example,
+                $context,
+                $matchers,
+                $collaborators
+            );
             throw $e;
         }
 
@@ -160,5 +167,19 @@ class ExampleRunner
         foreach (array_reverse($maintainers) as $maintainer) {
             $maintainer->teardown($example, $context, $matchers, $collaborators);
         }
+    }
+
+    /**
+     * @param Maintainer\MaintainerInterface[] $maintainers
+     * @return Maintainer\MaintainerInterface[]
+     */
+    private function searchExceptionMaintainers($maintainers)
+    {
+        return array_filter(
+            $maintainers,
+            function ($maintainer) {
+                return $maintainer instanceof LetAndLetgoMaintainer;
+            }
+        );
     }
 }
