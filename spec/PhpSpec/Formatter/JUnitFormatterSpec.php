@@ -36,7 +36,7 @@ class JUnitFormatterSpec extends ObjectBehavior
 
         $this->afterExample($event);
 
-        $this->getTestCaseNodes()->shouldReturn(array
+        $this->getTestCaseNodes()->shouldReturn(array(
             '<testcase name="example title" time="1337" classname="Acme\Foo\Bar" status="passed" />'
         ));
     }
