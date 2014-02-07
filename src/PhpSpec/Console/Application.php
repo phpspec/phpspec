@@ -14,9 +14,11 @@
 namespace PhpSpec\Console;
 
 use Symfony\Component\Console\Application as BaseApplication;
+use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -48,8 +50,7 @@ class Application extends BaseApplication
      */
     public function __construct($version)
     {
-        $this->setupContainer($this->container = new ServiceContainer);
-
+        $this->setupCommands($this->container = new ServiceContainer);
         parent::__construct('phpspec', $version);
     }
 
@@ -73,7 +74,7 @@ class Application extends BaseApplication
         $this->container->set('console.output', $output);
         $this->container->set('console.helpers', $this->getHelperSet());
 
-        $this->fixDefinitions();
+        $this->setupContainer($this->container);
 
         return parent::doRun($input, $output);
     }
@@ -82,11 +83,11 @@ class Application extends BaseApplication
      * Fixes an issue with definitions of the no-interaction option not being
      * completely shown in some cases
      */
-    protected function fixDefinitions()
+    protected function getDefaultInputDefinition()
     {
         $description = 'Do not ask any interactive question (disables code generation).';
 
-        $definition = $this->getDefaultInputDefinition();
+        $definition = parent::getDefaultInputDefinition();
         $options = $definition->getOptions();
 
         if (array_key_exists('no-interaction', $options)) {
@@ -99,8 +100,15 @@ class Application extends BaseApplication
             );
         }
 
+        $options['config'] = new InputOption(
+            'config',
+            'c',
+            InputOption::VALUE_REQUIRED,
+            'Specify a custom location for the configuration file'
+        );
+
         $definition->setOptions($options);
-        $this->setDefinition($definition);
+        return $definition;
     }
 
     /**
@@ -119,7 +127,6 @@ class Application extends BaseApplication
     protected function setupContainer(ServiceContainer $container)
     {
         $this->setupIO($container);
-        $this->setupConsole($container);
         $this->setupEventDispatcher($container);
         $this->setupGenerators($container);
         $this->setupPresenter($container);
@@ -142,7 +149,7 @@ class Application extends BaseApplication
         });
     }
 
-    protected function setupConsole(ServiceContainer $container)
+    protected function setupCommands(ServiceContainer $container)
     {
         $container->setShared('console.commands.run', function ($c) {
             return new Command\RunCommand;
@@ -443,14 +450,7 @@ class Application extends BaseApplication
      */
     protected function loadConfigurationFile(ServiceContainer $container)
     {
-        $config = array();
-        if (file_exists($path = 'phpspec.yml')) {
-            $config = Yaml::parse(file_get_contents($path));
-        } elseif (file_exists($path = 'phpspec.yml.dist')) {
-            $config = Yaml::parse(file_get_contents($path));
-        }
-
-        $config = $config ?: array();
+        $config = $this->parseConfigurationFile();
 
         foreach ($config as $key => $val) {
             if ('extensions' === $key) {
@@ -472,5 +472,29 @@ class Application extends BaseApplication
 
             $container->setParam($key, $val);
         }
+    }
+
+    /**
+     * @return array
+     */
+    protected function parseConfigurationFile()
+    {
+        $paths = array('phpspec.yml','phpspec.dist.yml');
+
+        $input = new ArgvInput();
+        if ($customPath = $input->getParameterOption(array('-c','--config'))) {
+            if (!file_exists($customPath)) {
+                throw new FileNotFoundException('Custom configuration file not found at '.$customPath);
+            }
+            $paths = array($customPath);
+        }
+
+        foreach ($paths as $path) {
+            if ($path && file_exists($path) && $config = Yaml::parse(file_get_contents($path))) {
+                return $config;
+            }
+        }
+
+        return array();
     }
 }
