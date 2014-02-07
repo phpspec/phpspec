@@ -16,7 +16,7 @@ namespace PhpSpec;
 use InvalidArgumentException;
 
 /**
- * The Service Container is a lightweight container based on Pimpl to handle
+ * The Service Container is a lightweight container based on Pimple to handle
  * object creation of PhpSpec services.
  */
 class ServiceContainer
