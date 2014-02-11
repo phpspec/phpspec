@@ -33,6 +33,7 @@ class RunCommand extends Command
                     new InputOption('format', 'f', InputOption::VALUE_REQUIRED, 'Formatter'),
                     new InputOption('stop-on-failure', null , InputOption::VALUE_NONE, 'Stop on failure'),
                     new InputOption('no-code-generation', null , InputOption::VALUE_NONE, 'Do not prompt for missing method/class generation'),
+                    new InputOption('bootstrap', "b", InputOption::VALUE_OPTIONAL, 'bootstrap php file that is run before the tests', "SpecHelper.php"),
                 ))
             ->setDescription('Runs specifications')
             ->setHelp(<<<EOF
@@ -83,6 +84,11 @@ EOF
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $container = $this->getApplication()->getContainer();
+        $bootstrap_file = getcwd() . DIRECTORY_SEPARATOR . $input->getOption("bootstrap");
+        if (is_file($bootstrap_file)) {
+            require $bootstrap_file;
+        }
+
         $container->setParam('formatter.name',
             $input->getOption('format') ?: $container->getParam('formatter.name')
         );
