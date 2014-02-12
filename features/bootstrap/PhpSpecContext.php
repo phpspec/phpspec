@@ -99,7 +99,7 @@ class PhpSpecContext extends BehatContext
             throw new \LogicException(sprintf('"%s" file was not created', $file));
         }
 
-        expect(file_get_contents($file))->toBe($string->getRaw());
+        $this->assertEqual(file_get_contents($file), $string->getRaw());
     }
 
     /**
@@ -107,7 +107,7 @@ class PhpSpecContext extends BehatContext
      */
     public function iShouldSee($message)
     {
-        expect($this->applicationTester->getDisplay())->toMatch('/'.preg_quote($message, '/').'/sm');
+        $this->assertMatches($this->applicationTester->getDisplay(), '/'.preg_quote($message, '/').'/sm');
     }
 
     /**
@@ -117,7 +117,8 @@ class PhpSpecContext extends BehatContext
     {
         $dom = new \DOMDocument();
         $dom->loadXML($this->applicationTester->getDisplay());
-        expect($dom->schemaValidate(__DIR__ . '/../../src/PhpSpec/Resources/schema/junit.xsd'))->toBe(true);
+
+        $this->assertEqual($dom->schemaValidate(__DIR__ . '/../../src/PhpSpec/Resources/schema/junit.xsd'), true);
     }
 
     /**
@@ -127,8 +128,8 @@ class PhpSpecContext extends BehatContext
     {
         $stats = $this->getRunStats();
 
-        expect($stats['examples'] > 0)->toBe(true);
-        expect($stats['examples'])->toBe($stats['passed']);
+        $this->assertEqual($stats['examples'] > 0, true);
+        $this->assertEqual($stats['examples'], $stats['passed']);
     }
 
     /**
@@ -172,5 +173,27 @@ class PhpSpecContext extends BehatContext
         $application->setAutoExit(false);
 
         return new ApplicationTester($application);
+    }
+
+    /**
+     * @param $actual
+     * @param $expected
+     * @throws RuntimeException
+     */
+    private function assertEqual($actual, $expected) {
+        if ($expected !== $actual) {
+            throw new RuntimeException(sprintf('Provided value "%s" does not equal expected "%s"', $actual, $expected));
+        }
+    }
+
+    /**
+     * @param $string
+     * @param $pattern
+     * @throws RuntimeException
+     */
+    private function assertMatches($string, $pattern) {
+        if (!preg_match($pattern, $string)) {
+            throw new RuntimeException(sprintf('Provided value "%s" does not match the pattern "%s"', $string, $pattern));
+        }
     }
 }
