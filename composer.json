@@ -28,8 +28,7 @@
     },
 
     "require-dev": {
-        "behat/behat": "~2.5",
-        "bossa/phpspec2-expect": "dev-master"
+        "behat/behat": "~2.5"
     },
 
     "suggest": {
