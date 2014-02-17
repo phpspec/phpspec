@@ -453,7 +453,7 @@ class Application extends BaseApplication
         $config = $this->parseConfigurationFile();
 
         foreach ($config as $key => $val) {
-            if ('extensions' === $key) {
+            if ('extensions' === $key && is_array($val)) {
                 foreach ($val as $class) {
                     $extension = new $class;
 
