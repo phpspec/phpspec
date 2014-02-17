@@ -4,6 +4,7 @@ php: [5.3.3, 5.3, 5.4, 5.5, hhvm]
 
 before_script:
   - composer selfupdate
+  - export COMPOSER_ROOT_VERSION=2.0.0-RC3
   - composer install --prefer-source
 
 script:
