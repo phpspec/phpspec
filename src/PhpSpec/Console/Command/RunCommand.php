@@ -88,8 +88,14 @@ EOF
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $container = $this->getApplication()->getContainer();
-        $bootstrap_file = getcwd() . DIRECTORY_SEPARATOR . $input->getOption("bootstrap");
-        if (is_file($bootstrap_file)) {
+        $bootstrap = $input->getOption("bootstrap");
+
+        if (!empty($bootstrap)) {
+            $bootstrap_file = getcwd() . DIRECTORY_SEPARATOR . $input->getOption("bootstrap");
+            if (!is_file($bootstrap_file)) {
+                throw new \InvalidArgumentException(sprintf("bootstrap file `%s` does not exist", $bootstrap));
+            }
+
             require $bootstrap_file;
         }
 

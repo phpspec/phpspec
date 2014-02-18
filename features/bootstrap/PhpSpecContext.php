@@ -55,6 +55,21 @@ class PhpSpecContext extends BehatContext
     }
 
     /**
+     * @When /^(?:|I )run phpspec with option (?P<key>--[a-z]+)=(?P<value>.+)$/
+     */
+    public function iRunPhpspecWithOption($key, $value)
+    {
+        $options = array(
+            "--no-interaction",
+            sprintf("%s=%s", $key, $value)
+        );
+
+        $command = sprintf("run %s", join(" ", $options));
+        $this->applicationTester = $this->createApplicationTester();
+        $this->applicationTester->run($command, array('decorated' => false));
+    }
+
+    /**
      * @When /^(?:|I )start describing (?:|the )"(?P<class>[^"]*)" class$/
      * @When /^(?:|I )have started describing (?:|the )"(?P<class>[^"]*)" class$/
      */
@@ -69,14 +84,16 @@ class PhpSpecContext extends BehatContext
      */
     public function theFileContains($file, PyStringNode $string)
     {
-        $dirname = dirname($file);
-        if (!file_exists($dirname)) {
-            mkdir($dirname, 0777, true);
-        }
-
-        file_put_contents($file, $string->getRaw());
-
+        $this->saveFile($file, $string);
         require_once($file);
+    }
+
+    /**
+     * @Given /^(?:|the )(?:bootstrap )file "(?P<file>[^"]+)" contains:$/
+     */
+    public function theBootstrapContains($file, PyStringNode $string)
+    {
+        $this->saveFile($file, $string);
     }
 
     /**
@@ -153,5 +170,20 @@ class PhpSpecContext extends BehatContext
         $application->setAutoExit(false);
 
         return new ApplicationTester($application);
+    }
+
+    /**
+     * @param $file
+     * @param PyStringNode $string
+     * @return void
+     */
+    private function saveFile($file, PyStringNode $string)
+    {
+        $dirname = dirname($file);
+        if (!file_exists($dirname)) {
+            mkdir($dirname, 0777, true);
+        }
+
+        file_put_contents($file, $string->getRaw());
     }
 }
