@@ -49,6 +49,10 @@ Will run all the specifications in the spec directory.
 
 Will run only the ClassNameSpec.
 
+You can choose the bootstrap file with the bootstrap option e.g.:
+
+  <info>php %command.full_name% --bootstrap=bootstrap.php</info>
+
 By default, you will be asked whether missing methods and classes should
 be generated. You can suppress these prompts and automatically choose not
 to generate code with:
