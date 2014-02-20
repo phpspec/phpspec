@@ -130,14 +130,3 @@ Feature: Developer runs the specs
       """
     When I run phpspec
     Then I should see "Letgo is called"
-  Scenario: Running a spec with --bootstrap option
-    Given the bootstrap file "bootstrap.php" contains:
-      """
-      <?php
-      throw new \Exception('bootstrap file is loaded');
-      """
-    When I run phpspec with option --bootstrap=bootstrap.php
-    Then I should see "bootstrap file is loaded"
-  Scenario: Running a spec with --bootstrap option and bootstrap file is missing.
-    When I run phpspec with option --bootstrap=missing.php
-    Then I should see "bootstrap file `missing.php` does not exist"
