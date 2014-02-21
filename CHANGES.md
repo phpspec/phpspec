@@ -1,3 +1,16 @@
+2.0.0-RC4 / 2014-02-21
+======================
+
+  * Revamped junit formatter
+  * Fixed #269 Problem with exception masking and generation for not found class
+  * HHVM is officially supported
+  * Add psr0 validator
+  * Remove Nyan from core
+  * Added an exception if the specified config file does not exist
+  * Fixed a problem with generating a constructor when it is first time added
+  * Improved help
+  * Fixed the suite runner in fast machines
+
 2.0.0-RC3 / 2014-01-01
 ======================
 
