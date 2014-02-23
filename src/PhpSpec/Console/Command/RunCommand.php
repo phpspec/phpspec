@@ -99,7 +99,7 @@ EOF
         if (!empty($bootstrap)) {
             $bootstrap_file = getcwd() . DIRECTORY_SEPARATOR . $input->getOption("bootstrap");
             if (!is_file($bootstrap_file)) {
-                throw new \InvalidArgumentException(sprintf("bootstrap file `%s` does not exist", $bootstrap));
+                throw new \InvalidArgumentException(sprintf("Bootstrap file `%s` does not exist", $bootstrap));
             }
 
             require $bootstrap_file;
