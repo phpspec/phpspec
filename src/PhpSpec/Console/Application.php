@@ -479,7 +479,7 @@ class Application extends BaseApplication
      */
     protected function parseConfigurationFile()
     {
-        $paths = array('phpspec.yml','phpspec.dist.yml');
+        $paths = array('phpspec.yml','phpspec.yml.dist');
 
         $input = new ArgvInput();
         if ($customPath = $input->getParameterOption(array('-c','--config'))) {
