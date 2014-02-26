@@ -97,6 +97,16 @@ class PhpSpecContext extends BehatContext
     }
 
     /**
+     * @Given /^there is no file (?P<file>missing.php)$/
+     */
+    public function thereIsNoFile($file)
+    {
+        if (file_exists($file)) {
+            throw new \LogicException(sprintf('"%s" file already exists', $file));
+        }
+    }
+
+    /**
      * @Then /^(?:|a )new spec should be generated in (?:|the )"(?P<file>[^"]*Spec.php)":$/
      * @Then /^(?:|a )new class should be generated in (?:|the )"(?P<file>[^"]+)":$/
      * @Then /^(?:|the )class in (?:|the )"(?P<file>[^"]+)" should contain:$/
