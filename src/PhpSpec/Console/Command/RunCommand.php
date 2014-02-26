@@ -91,12 +91,12 @@ EOF
         $bootstrap = $input->getOption("bootstrap");
 
         if (!empty($bootstrap)) {
-            $bootstrap_file = getcwd() . DIRECTORY_SEPARATOR . $input->getOption("bootstrap");
-            if (!is_file($bootstrap_file)) {
-                throw new \InvalidArgumentException(sprintf("Bootstrap file `%s` does not exist", $bootstrap));
+            $bootstrapFile = getcwd() . DIRECTORY_SEPARATOR . $bootstrap;
+            if (!is_file($bootstrapFile)) {
+                throw new \InvalidArgumentException(sprintf("Bootstrap file '%s' does not exist", $bootstrap));
             }
 
-            require $bootstrap_file;
+            require $bootstrapFile;
         }
 
         $container->setParam('formatter.name',
