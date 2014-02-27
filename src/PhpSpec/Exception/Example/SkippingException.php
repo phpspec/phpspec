@@ -7,7 +7,7 @@ class SkippingException extends ExampleException
     /**
      * @param string $text
      */
-    public function __construct($text = 'this example is skipped')
+    public function __construct($text)
     {
         parent::__construct(sprintf('skipped: %s', $text));
     }
