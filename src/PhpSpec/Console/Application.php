@@ -112,16 +112,6 @@ class Application extends BaseApplication
     }
 
     /**
-     * @return array
-     */
-    public function getDefaultCommands()
-    {
-        $commands = $this->container->getByPrefix('console.commands');
-
-        return array_merge(parent::getDefaultCommands(), $commands);
-    }
-
-    /**
      * @param ServiceContainer $container
      */
     protected function setupContainer(ServiceContainer $container)
@@ -136,6 +126,10 @@ class Application extends BaseApplication
         $this->setupRunner($container);
 
         $this->loadConfigurationFile($container);
+
+        foreach ($this->container->getByPrefix('console.commands') as $command) {
+            $this->add($command);
+        }
     }
 
     protected function setupIO(ServiceContainer $container)
