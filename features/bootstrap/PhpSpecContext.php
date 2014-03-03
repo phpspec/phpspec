@@ -3,6 +3,7 @@
 use Behat\Behat\Context\BehatContext;
 use Behat\Gherkin\Node\PyStringNode;
 use PhpSpec\Console\Application;
+use Symfony\Component\Filesystem\Filesystem;
 
 class PhpSpecContext extends BehatContext
 {
@@ -23,13 +24,12 @@ class PhpSpecContext extends BehatContext
     {
 
         $this->workDir = sprintf(
-            '%s%s%s%S',
+            '%s/%s/',
             sys_get_temp_dir(),
-            DIRECTORY_SEPARATOR,
-            uniqid('PhpSpecContext_'),
-            DIRECTORY_SEPARATOR
+            uniqid('PhpSpecContext_')
         );
-        mkdir($this->workDir, 0777, true);
+        $fs = new Filesystem();
+        $fs->mkdir($this->workDir, 0777);
         chdir($this->workDir);
     }
 
@@ -38,16 +38,8 @@ class PhpSpecContext extends BehatContext
      */
     public function removeWorkDir()
     {
-        $workDir = new RecursiveDirectoryIterator($this->workDir, FilesystemIterator::SKIP_DOTS);
-        $iterator = new RecursiveIteratorIterator($workDir, RecursiveIteratorIterator::CHILD_FIRST);
-        foreach ($iterator as $file) {
-            if ($file->isDir()) {
-                rmdir($file->getPathname());
-            } else {
-                unlink($file->getPathname());
-            }
-        }
-        rmdir($this->workDir);
+        $fs = new Filesystem();
+        $fs->remove($this->workDir);
     }
 
     /**
