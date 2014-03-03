@@ -21,8 +21,14 @@ class PhpSpecContext extends BehatContext
      */
     public function createWorkDir()
     {
-        $this->workDir = sys_get_temp_dir().'/' . uniqid('PhpSpecContext_') . '/';
 
+        $this->workDir = sprintf(
+            '%s%s%s%S',
+            sys_get_temp_dir(),
+            DIRECTORY_SEPARATOR,
+            uniqid('PhpSpecContext_'),
+            DIRECTORY_SEPARATOR
+        );
         mkdir($this->workDir, 0777, true);
         chdir($this->workDir);
     }
