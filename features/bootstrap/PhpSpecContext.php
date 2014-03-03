@@ -21,7 +21,7 @@ class PhpSpecContext extends BehatContext
      */
     public function createWorkDir()
     {
-        $this->workDir = sys_get_temp_dir().'/'.uniqid('PhpSpecContext_').'/';
+        $this->workDir = sys_get_temp_dir().'/' . uniqid('PhpSpecContext_') . '/';
 
         mkdir($this->workDir, 0777, true);
         chdir($this->workDir);
@@ -32,7 +32,16 @@ class PhpSpecContext extends BehatContext
      */
     public function removeWorkDir()
     {
-        system('rm -rf '.$this->workDir);
+        $workDir = new RecursiveDirectoryIterator($this->workDir, FilesystemIterator::SKIP_DOTS);
+        $iterator = new RecursiveIteratorIterator($workDir, RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($iterator as $file) {
+            if ($file->isDir()) {
+                rmdir($file->getPathname());
+            } else {
+                unlink($file->getPathname());
+            }
+        }
+        rmdir($this->workDir);
     }
 
     /**
