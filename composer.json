@@ -29,7 +29,8 @@
 
     "require-dev": {
         "behat/behat": "~2.5",
-        "bossa/phpspec2-expect": "dev-master"
+        "bossa/phpspec2-expect": "dev-master",
+        "symfony/filesystem":    "~2.1"
     },
 
     "suggest": {
