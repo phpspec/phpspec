@@ -50,7 +50,7 @@ class Application extends BaseApplication
      */
     public function __construct($version)
     {
-        $this->setupCommands($this->container = new ServiceContainer);
+        $this->container = new ServiceContainer;
         parent::__construct('phpspec', $version);
     }
 
@@ -76,6 +76,10 @@ class Application extends BaseApplication
 
         $this->setupContainer($this->container);
 
+        foreach ($this->container->getByPrefix('console.commands') as $command) {
+            $this->add($command);
+        }
+        
         return parent::doRun($input, $output);
     }
 
@@ -124,12 +128,9 @@ class Application extends BaseApplication
         $this->setupLoader($container);
         $this->setupFormatter($container);
         $this->setupRunner($container);
+        $this->setupCommands($container);
 
         $this->loadConfigurationFile($container);
-
-        foreach ($this->container->getByPrefix('console.commands') as $command) {
-            $this->add($command);
-        }
     }
 
     protected function setupIO(ServiceContainer $container)
