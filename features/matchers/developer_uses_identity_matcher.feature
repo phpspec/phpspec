@@ -337,11 +337,11 @@ Feature: Developer uses identity matcher
     Then the suite should pass
 
   Scenario: "BeEqualTo" alias matching using identity operator
-    Given the spec file "spec/Matchers/IdentityExample7/CalculatorSpec.php" contains:
+    Given the spec file "spec/Matchers/IdentityExample10/CalculatorSpec.php" contains:
       """
       <?php
 
-      namespace spec\Matchers\IdentityExample7;
+      namespace spec\Matchers\IdentityExample10;
 
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
@@ -355,11 +355,11 @@ Feature: Developer uses identity matcher
       }
 
       """
-    And the class file "src/Matchers/IdentityExample7/Calculator.php" contains:
+    And the class file "src/Matchers/IdentityExample10/Calculator.php" contains:
       """
       <?php
 
-      namespace Matchers\IdentityExample7;
+      namespace Matchers\IdentityExample10;
 
       class Calculator
       {
@@ -374,11 +374,11 @@ Feature: Developer uses identity matcher
     Then the suite should pass
 
   Scenario: "Equal" alias not matching using identity operator
-    Given the spec file "spec/Matchers/IdentityExample8/CalculatorSpec.php" contains:
+    Given the spec file "spec/Matchers/IdentityExample11/CalculatorSpec.php" contains:
       """
       <?php
 
-      namespace spec\Matchers\IdentityExample8;
+      namespace spec\Matchers\IdentityExample11;
 
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
@@ -392,11 +392,11 @@ Feature: Developer uses identity matcher
       }
 
       """
-    And the class file "src/Matchers/IdentityExample8/Calculator.php" contains:
+    And the class file "src/Matchers/IdentityExample11/Calculator.php" contains:
       """
       <?php
 
-      namespace Matchers\IdentityExample8;
+      namespace Matchers\IdentityExample11;
 
       class Calculator
       {
@@ -411,11 +411,11 @@ Feature: Developer uses identity matcher
     Then the suite should pass
 
   Scenario: "Equal" alias not matching type using identity operator
-    Given the spec file "spec/Matchers/IdentityExample9/CalculatorSpec.php" contains:
+    Given the spec file "spec/Matchers/IdentityExample12/CalculatorSpec.php" contains:
       """
       <?php
 
-      namespace spec\Matchers\IdentityExample9;
+      namespace spec\Matchers\IdentityExample12;
 
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
@@ -429,11 +429,11 @@ Feature: Developer uses identity matcher
       }
 
       """
-    And the class file "src/Matchers/IdentityExample9/Calculator.php" contains:
+    And the class file "src/Matchers/IdentityExample12/Calculator.php" contains:
       """
       <?php
 
-      namespace Matchers\IdentityExample9;
+      namespace Matchers\IdentityExample12;
 
       class Calculator
       {
