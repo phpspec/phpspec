@@ -34,6 +34,9 @@ class Formatter extends OutputFormatter
         $this->setStyle('pending', new OutputFormatterStyle('yellow'));
         $this->setStyle('pending-bg', new OutputFormatterStyle('black', 'yellow', array('bold')));
 
+        $this->setStyle('skipped', new OutputFormatterStyle('cyan'));
+        $this->setStyle('skipped-bg', new OutputFormatterStyle('white', 'cyan', array('bold')));
+
         $this->setStyle('failed', new OutputFormatterStyle('red'));
         $this->setStyle('failed-bg', new OutputFormatterStyle('white', 'red', array('bold')));
 

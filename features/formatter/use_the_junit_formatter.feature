@@ -37,6 +37,12 @@ Feature: Use the JUnit formatter
           {
               $this->toHtml('')->shouldReturn('<p></p>');
           }
+
+          // skipped
+          function it_does_some_incompatible_things()
+          {
+             throw new \PhpSpec\Exception\Example\SkippingException();
+          }
       }
 
       """
