@@ -15,11 +15,6 @@ Feature: Developer uses comparison matcher
 
     class CarSpec extends ObjectBehavior
     {
-        function let()
-        {
-            $this->beConstructedWith();
-        }
-
         function it_should_be_a_car()
         {
             $this->shouldHaveType('Matchers\TypeExample1\Car');
@@ -35,9 +30,6 @@ Feature: Developer uses comparison matcher
 
     class Car
     {
-        public function __construct()
-        {
-        }
     }
     """
 
@@ -46,38 +38,139 @@ Feature: Developer uses comparison matcher
 
 
   Scenario: "ReturnAnInstanceOf" alias matches using the type matcher
-    Given the spec file "spec/Matchers/TypeExample1/BigCarSpec.php" contains:
+    Given the spec file "spec/Matchers/TypeExample2/CarSpec.php" contains:
     """
     <?php
 
-    namespace spec\Matchers\TypeExample1;
+    namespace spec\Matchers\TypeExample2;
 
     use PhpSpec\ObjectBehavior;
     use Prophecy\Argument;
 
-    class BigCarSpec extends ObjectBehavior
+    class CarSpec extends ObjectBehavior
     {
         function it_should_be_a_car()
         {
-            $this->shouldReturnAnInstanceOf('Matchers\TypeExample1\BigCar');
+            $this->get()->shouldReturnAnInstanceOf('Matchers\TypeExample2\Car');
         }
     }
     """
 
-    And the class file "src/Matchers/TypeExample1/BigCar.php" contains:
+    And the class file "src/Matchers/TypeExample2/Car.php" contains:
     """
     <?php
 
-    namespace Matchers\TypeExample1;
+    namespace Matchers\TypeExample2;
 
-    class BigCar
+    class Car
     {
         public function get()
         {
             return $this;
         }
+    }
+    """
 
+    When I run phpspec
+    Then the suite should pass
 
+  Scenario: "BeAnInstanceOf" alias matches using the type matcher
+    Given the spec file "spec/Matchers/TypeExample3/CarSpec.php" contains:
+    """
+    <?php
+
+    namespace spec\Matchers\TypeExample3;
+
+    use PhpSpec\ObjectBehavior;
+    use Prophecy\Argument;
+
+    class CarSpec extends ObjectBehavior
+    {
+        function it_should_be_a_car()
+        {
+            $this->get()->shouldBeAnInstanceOf('Matchers\TypeExample3\Car');
+        }
+    }
+    """
+
+    And the class file "src/Matchers/TypeExample3/Car.php" contains:
+    """
+    <?php
+
+    namespace Matchers\TypeExample3;
+
+    class Car
+    {
+        public function get()
+        {
+            return $this;
+        }
+    }
+    """
+
+    When I run phpspec
+    Then the suite should pass
+
+  Scenario: "Implement" alias matches using the type matcher
+    Given the spec file "spec/Matchers/TypeExample4/CarSpec.php" contains:
+    """
+    <?php
+
+    namespace spec\Matchers\TypeExample4;
+
+    use PhpSpec\ObjectBehavior;
+    use Prophecy\Argument;
+
+    class CarSpec extends ObjectBehavior
+    {
+        function it_should_be_a_car()
+        {
+            $this->shouldImplement('Matchers\TypeExample4\Car');
+        }
+    }
+    """
+
+    And the class file "src/Matchers/TypeExample4/Car.php" contains:
+    """
+    <?php
+
+    namespace Matchers\TypeExample4;
+
+    class Car
+    {
+    }
+    """
+
+    When I run phpspec
+    Then the suite should pass
+
+  Scenario: "Implement" alias matches using the type matcher
+    Given the spec file "spec/Matchers/TypeExample4/CarSpec.php" contains:
+    """
+    <?php
+
+    namespace spec\Matchers\TypeExample4;
+
+    use PhpSpec\ObjectBehavior;
+    use Prophecy\Argument;
+
+    class CarSpec extends ObjectBehavior
+    {
+        function it_should_be_a_car()
+        {
+            $this->shouldImplement('Matchers\TypeExample4\Car');
+        }
+    }
+    """
+
+    And the class file "src/Matchers/TypeExample4/Car.php" contains:
+    """
+    <?php
+
+    namespace Matchers\TypeExample4;
+
+    class Car
+    {
     }
     """
 
