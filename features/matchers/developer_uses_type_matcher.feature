@@ -1,4 +1,4 @@
-Feature: Developer uses comparison matcher
+Feature: Developer uses type matcher
   As a Developer
   I want a type matcher
   In order to confirm that my object is of a given type
@@ -105,39 +105,6 @@ Feature: Developer uses comparison matcher
         {
             return $this;
         }
-    }
-    """
-
-    When I run phpspec
-    Then the suite should pass
-
-  Scenario: "Implement" alias matches using the type matcher
-    Given the spec file "spec/Matchers/TypeExample4/CarSpec.php" contains:
-    """
-    <?php
-
-    namespace spec\Matchers\TypeExample4;
-
-    use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
-
-    class CarSpec extends ObjectBehavior
-    {
-        function it_should_be_a_car()
-        {
-            $this->shouldImplement('Matchers\TypeExample4\Car');
-        }
-    }
-    """
-
-    And the class file "src/Matchers/TypeExample4/Car.php" contains:
-    """
-    <?php
-
-    namespace Matchers\TypeExample4;
-
-    class Car
-    {
     }
     """
 
