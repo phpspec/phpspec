@@ -25,6 +25,7 @@ class StatisticsCollector implements EventSubscriberInterface
 
     private $passedEvents  = array();
     private $pendingEvents = array();
+    private $skippedEvents = array();
     private $failedEvents  = array();
     private $brokenEvents  = array();
 
@@ -52,6 +53,9 @@ class StatisticsCollector implements EventSubscriberInterface
             case ExampleEvent::PENDING:
                 $this->pendingEvents[] = $event;
                 break;
+            case ExampleEvent::SKIPPED:
+                $this->skippedEvents[] = $event;
+                break;
             case ExampleEvent::FAILED:
                 $this->failedEvents[] = $event;
                 break;
@@ -71,6 +75,7 @@ class StatisticsCollector implements EventSubscriberInterface
         return array_merge(
             $this->passedEvents,
             $this->pendingEvents,
+            $this->skippedEvents,
             $this->failedEvents,
             $this->brokenEvents
         );
@@ -84,6 +89,11 @@ class StatisticsCollector implements EventSubscriberInterface
     public function getPendingEvents()
     {
         return $this->pendingEvents;
+    }
+
+    public function getSkippedEvents()
+    {
+        return $this->skippedEvents;
     }
 
     public function getFailedEvents()
@@ -101,6 +111,7 @@ class StatisticsCollector implements EventSubscriberInterface
         return array(
             'passed'  => count($this->getPassedEvents()),
             'pending' => count($this->getPendingEvents()),
+            'skipped' => count($this->getSkippedEvents()),
             'failed'  => count($this->getFailedEvents()),
             'broken'  => count($this->getBrokenEvents()),
         );
