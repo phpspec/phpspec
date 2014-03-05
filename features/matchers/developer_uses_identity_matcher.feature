@@ -15,7 +15,7 @@ Feature: Developer uses identity matcher
 
       class CalculatorSpec extends ObjectBehavior
       {
-          function it_converts_plain_text_to_html_paragraphs()
+          function it_calculates_the_sum_of_two_addends()
           {
               $this->sum(1, 2)->shouldReturn(3);
           }
@@ -52,7 +52,7 @@ Feature: Developer uses identity matcher
 
       class CalculatorSpec extends ObjectBehavior
       {
-          function it_converts_plain_text_to_html_paragraphs()
+          function it_calculates_the_sum_of_two_addends()
           {
               $this->sum(1, 2)->shouldNotReturn(4);
           }
@@ -89,7 +89,7 @@ Feature: Developer uses identity matcher
 
       class CalculatorSpec extends ObjectBehavior
       {
-          function it_converts_plain_text_to_html_paragraphs()
+          function it_calculates_the_sum_of_two_addends()
           {
               $this->sum(1, 2)->shouldNotReturn("3");
           }
@@ -126,7 +126,7 @@ Feature: Developer uses identity matcher
 
       class CalculatorSpec extends ObjectBehavior
       {
-          function it_converts_plain_text_to_html_paragraphs()
+          function it_calculates_the_sum_of_two_addends()
           {
               $this->sum(1, 2)->shouldBe(3);
           }
@@ -163,7 +163,7 @@ Feature: Developer uses identity matcher
 
       class CalculatorSpec extends ObjectBehavior
       {
-          function it_converts_plain_text_to_html_paragraphs()
+          function it_calculates_the_sum_of_two_addends()
           {
               $this->sum(1, 2)->shouldNotBe(4);
           }
@@ -200,7 +200,7 @@ Feature: Developer uses identity matcher
 
       class CalculatorSpec extends ObjectBehavior
       {
-          function it_converts_plain_text_to_html_paragraphs()
+          function it_calculates_the_sum_of_two_addends()
           {
               $this->sum(1, 2)->shouldNotBe("3");
           }
@@ -237,7 +237,7 @@ Feature: Developer uses identity matcher
 
       class CalculatorSpec extends ObjectBehavior
       {
-          function it_converts_plain_text_to_html_paragraphs()
+          function it_calculates_the_sum_of_two_addends()
           {
               $this->sum(1, 2)->shouldEqual(3);
           }
@@ -274,7 +274,7 @@ Feature: Developer uses identity matcher
 
       class CalculatorSpec extends ObjectBehavior
       {
-          function it_converts_plain_text_to_html_paragraphs()
+          function it_calculates_the_sum_of_two_addends()
           {
               $this->sum(1, 2)->shouldNotEqual(4);
           }
@@ -311,7 +311,7 @@ Feature: Developer uses identity matcher
 
       class CalculatorSpec extends ObjectBehavior
       {
-          function it_converts_plain_text_to_html_paragraphs()
+          function it_calculates_the_sum_of_two_addends()
           {
               $this->sum(1, 2)->shouldNotEqual("3");
           }
@@ -348,7 +348,7 @@ Feature: Developer uses identity matcher
 
       class CalculatorSpec extends ObjectBehavior
       {
-          function it_converts_plain_text_to_html_paragraphs()
+          function it_calculates_the_sum_of_two_addends()
           {
               $this->sum(1, 2)->shouldEqual(3);
           }
@@ -385,7 +385,7 @@ Feature: Developer uses identity matcher
 
       class CalculatorSpec extends ObjectBehavior
       {
-          function it_converts_plain_text_to_html_paragraphs()
+          function it_calculates_the_sum_of_two_addends()
           {
               $this->sum(1, 2)->shouldNotEqual(4);
           }
@@ -422,7 +422,7 @@ Feature: Developer uses identity matcher
 
       class CalculatorSpec extends ObjectBehavior
       {
-          function it_converts_plain_text_to_html_paragraphs()
+          function it_calculates_the_sum_of_two_addends()
           {
               $this->sum(1, 2)->shouldNotEqual("3");
           }
