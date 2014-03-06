@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Wrapper;
 
+use PhpSpec\Wrapper\Subject\TraversableSubject;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 use PhpSpec\Wrapper\Subject\Caller;
 use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
@@ -45,6 +46,10 @@ class Subject implements ArrayAccess, WrapperInterface
      */
     private $arrayAccess;
     /**
+     * @var Subject\TraversableSubject
+     */
+    private $traversable;
+    /**
      * @var Wrapper
      */
     private $wrapper;
@@ -59,16 +64,18 @@ class Subject implements ArrayAccess, WrapperInterface
      * @param WrappedObject          $wrappedObject
      * @param Caller                 $caller
      * @param SubjectWithArrayAccess $arrayAccess
+     * @param TraversableSubject     $traversable
      * @param ExpectationFactory     $expectationFactory
      */
     public function __construct($subject, Wrapper $wrapper, WrappedObject $wrappedObject, Caller $caller,
-                                SubjectWithArrayAccess $arrayAccess, ExpectationFactory $expectationFactory)
+                                SubjectWithArrayAccess $arrayAccess, TraversableSubject $traversable, ExpectationFactory $expectationFactory)
     {
         $this->subject            = $subject;
         $this->wrapper            = $wrapper;
         $this->wrappedObject      = $wrappedObject;
         $this->caller             = $caller;
         $this->arrayAccess        = $arrayAccess;
+        $this->traversable        = $traversable;
         $this->expectationFactory = $expectationFactory;
     }
 
