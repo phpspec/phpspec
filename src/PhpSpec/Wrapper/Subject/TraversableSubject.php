@@ -27,7 +27,7 @@ class TraversableSubject implements \Iterator
     /**
      * @var PresenterInterface
      */
-    private $presenter;
+    protected $presenter;
     /**
      * @var mixed
      */

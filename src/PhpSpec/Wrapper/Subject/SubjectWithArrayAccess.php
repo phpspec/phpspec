@@ -35,10 +35,6 @@ class SubjectWithArrayAccess extends TraversableSubject
     /**
      * @var \PhpSpec\Formatter\Presenter\PresenterInterface
      */
-    private $presenter;
-    /**
-     * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
-     */
     private $dispatcher;
 
     /**
@@ -50,7 +46,6 @@ class SubjectWithArrayAccess extends TraversableSubject
         EventDispatcherInterface $dispatcher)
     {
         $this->caller     = $caller;
-        $this->presenter  = $presenter;
         $this->dispatcher = $dispatcher;
 
         parent::__construct($caller->getWrappedObject(), $presenter);
