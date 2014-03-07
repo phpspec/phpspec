@@ -16,9 +16,9 @@ use PhpSpec\Wrapper\Subject\Expectation\ExpectationInterface;
 class SubjectSpec extends ObjectBehavior
 {
     function let(Wrapper $wrapper, WrappedObject $wrappedObject, Caller $caller,
-                 SubjectWithArrayAccess $arrayAccess, TraversableSubject $traversable, ExpectationFactory $expectationFactory)
+                 SubjectWithArrayAccess $arrayAccess, ExpectationFactory $expectationFactory)
     {
-        $this->beConstructedWith(null, $wrapper, $wrappedObject, $caller, $arrayAccess, $traversable, $expectationFactory);
+        $this->beConstructedWith(null, $wrapper, $wrappedObject, $caller, $arrayAccess, $expectationFactory);
     }
 
     function it_passes_the_created_subject_to_expectation(WrappedObject $wrappedObject,
@@ -33,10 +33,10 @@ class SubjectSpec extends ObjectBehavior
     }
 
     function it_passes_the_existing_subject_to_expectation(Wrapper $wrapper, WrappedObject $wrappedObject, Caller $caller,
-        SubjectWithArrayAccess $arrayAccess, TraversableSubject $traversable, ExpectationFactory $expectationFactory, ExpectationInterface $expectation)
+        SubjectWithArrayAccess $arrayAccess, ExpectationFactory $expectationFactory, ExpectationInterface $expectation)
     {
         $existingSubject = new \ArrayObject;
-        $this->beConstructedWith($existingSubject, $wrapper, $wrappedObject, $caller, $arrayAccess, $traversable, $expectationFactory);
+        $this->beConstructedWith($existingSubject, $wrapper, $wrappedObject, $caller, $arrayAccess, $expectationFactory);
 
         $expectation->match(Argument::cetera())->willReturn(true);
         $wrappedObject->getClassName()->willReturn('\ArrayObject');

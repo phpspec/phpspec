@@ -74,11 +74,10 @@ class Wrapper
         $wrappedObject      = new WrappedObject($value, $this->presenter);
         $caller             = new Caller($wrappedObject, $this->example, $this->dispatcher, $exceptionFactory, $this);
         $arrayAccess        = new SubjectWithArrayAccess($caller, $this->presenter, $this->dispatcher);
-        $traversable        = new TraversableSubject($caller->getWrappedObject(), $this->presenter);
         $expectationFactory = new ExpectationFactory($this->example, $this->dispatcher, $this->matchers);
 
         return new Subject(
-            $value, $this, $wrappedObject, $caller, $arrayAccess, $traversable, $expectationFactory
+            $value, $this, $wrappedObject, $caller, $arrayAccess, $expectationFactory
         );
     }
 }

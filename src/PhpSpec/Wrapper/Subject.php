@@ -22,12 +22,13 @@ use PhpSpec\Wrapper\Subject\ExpectationFactory;
 use PhpSpec\Util\Instantiator;
 
 use ArrayAccess;
+use Iterator;
 
 /**
  * Class Subject
  * @package PhpSpec\Wrapper
  */
-class Subject implements ArrayAccess, WrapperInterface
+class Subject implements ArrayAccess, WrapperInterface, Iterator
 {
     /**
      * @var mixed
@@ -46,10 +47,6 @@ class Subject implements ArrayAccess, WrapperInterface
      */
     private $arrayAccess;
     /**
-     * @var Subject\TraversableSubject
-     */
-    private $traversable;
-    /**
      * @var Wrapper
      */
     private $wrapper;
@@ -64,18 +61,16 @@ class Subject implements ArrayAccess, WrapperInterface
      * @param WrappedObject          $wrappedObject
      * @param Caller                 $caller
      * @param SubjectWithArrayAccess $arrayAccess
-     * @param TraversableSubject     $traversable
      * @param ExpectationFactory     $expectationFactory
      */
     public function __construct($subject, Wrapper $wrapper, WrappedObject $wrappedObject, Caller $caller,
-                                SubjectWithArrayAccess $arrayAccess, TraversableSubject $traversable, ExpectationFactory $expectationFactory)
+                                SubjectWithArrayAccess $arrayAccess, ExpectationFactory $expectationFactory)
     {
         $this->subject            = $subject;
         $this->wrapper            = $wrapper;
         $this->wrappedObject      = $wrappedObject;
         $this->caller             = $caller;
         $this->arrayAccess        = $arrayAccess;
-        $this->traversable        = $traversable;
         $this->expectationFactory = $expectationFactory;
     }
 
@@ -177,6 +172,47 @@ class Subject implements ArrayAccess, WrapperInterface
     public function offsetUnset($key)
     {
         $this->arrayAccess->offsetUnset($key);;
+    }
+
+
+    /**
+     * @return mixed
+     */
+    public function current()
+    {
+        return $this->wrap($this->arrayAccess->current());
+    }
+
+    /**
+     * @return void
+     */
+    public function next()
+    {
+        $this->arrayAccess->next();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function key()
+    {
+        return $this->arrayAccess->key();
+    }
+
+    /**
+     * @return boolean
+     */
+    public function valid()
+    {
+        return $this->arrayAccess->valid();
+    }
+
+    /**
+     * @return void
+     */
+    public function rewind()
+    {
+        $this->arrayAccess->rewind();
     }
 
     /**
