@@ -130,7 +130,7 @@ class TraversableSubject implements \Iterator
      *
      * @return InterfaceNotImplementedException
      */
-    private function interfaceNotImplemented($interfaceName)
+    protected function interfaceNotImplemented($interfaceName)
     {
         return new InterfaceNotImplementedException(
             sprintf('%s does not implement %s interface, but should.',

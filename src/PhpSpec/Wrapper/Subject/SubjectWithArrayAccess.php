@@ -132,7 +132,7 @@ class SubjectWithArrayAccess extends TraversableSubject
             throw $this->cantUseAsArray($subject);
         }
     }
-    
+
     /**
      * @param mixed $subject
      *
