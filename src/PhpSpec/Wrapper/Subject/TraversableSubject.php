@@ -59,7 +59,6 @@ class TraversableSubject implements \Iterator
     }
 
     /**
-
      * @return void
      */
     public function next()
