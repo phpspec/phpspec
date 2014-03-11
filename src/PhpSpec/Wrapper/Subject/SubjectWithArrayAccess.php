@@ -26,7 +26,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * Class SubjectWithArrayAccess
  * @package PhpSpec\Wrapper\Subject
  */
-class SubjectWithArrayAccess
+class SubjectWithArrayAccess extends TraversableSubject
 {
     /**
      * @var Caller
@@ -34,10 +34,6 @@ class SubjectWithArrayAccess
     private $caller;
     /**
      * @var \PhpSpec\Formatter\Presenter\PresenterInterface
-     */
-    private $presenter;
-    /**
-     * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
      */
     private $dispatcher;
 
@@ -50,8 +46,9 @@ class SubjectWithArrayAccess
         EventDispatcherInterface $dispatcher)
     {
         $this->caller     = $caller;
-        $this->presenter  = $presenter;
         $this->dispatcher = $dispatcher;
+
+        parent::__construct($caller->getWrappedObject(), $presenter);
     }
 
     /**
@@ -125,25 +122,10 @@ class SubjectWithArrayAccess
     private function checkIfSubjectImplementsArrayAccess($subject)
     {
         if (is_object($subject) && !($subject instanceof \ArrayAccess)) {
-            throw $this->interfaceNotImplemented();
+            throw $this->interfaceNotImplemented('ArrayAccess');
         } elseif (!($subject instanceof \ArrayAccess) && !is_array($subject)) {
             throw $this->cantUseAsArray($subject);
         }
-    }
-
-    /**
-     * @return InterfaceNotImplementedException
-     */
-    private function interfaceNotImplemented()
-    {
-        return new InterfaceNotImplementedException(
-            sprintf('%s does not implement %s interface, but should.',
-                $this->presenter->presentValue($this->caller->getWrappedObject()),
-                $this->presenter->presentString('ArrayAccess')
-            ),
-            $this->caller->getWrappedObject(),
-            'ArrayAccess'
-        );
     }
 
     /**

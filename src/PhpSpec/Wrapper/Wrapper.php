@@ -16,6 +16,7 @@ namespace PhpSpec\Wrapper;
 use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Wrapper\Subject\TraversableSubject;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Loader\Node\ExampleNode;
 

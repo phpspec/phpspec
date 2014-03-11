@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Wrapper;
 
+use PhpSpec\Wrapper\Subject\TraversableSubject;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 use PhpSpec\Wrapper\Subject\Caller;
 use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
@@ -21,12 +22,13 @@ use PhpSpec\Wrapper\Subject\ExpectationFactory;
 use PhpSpec\Util\Instantiator;
 
 use ArrayAccess;
+use Iterator;
 
 /**
  * Class Subject
  * @package PhpSpec\Wrapper
  */
-class Subject implements ArrayAccess, WrapperInterface
+class Subject implements ArrayAccess, WrapperInterface, Iterator
 {
     /**
      * @var mixed
@@ -170,6 +172,47 @@ class Subject implements ArrayAccess, WrapperInterface
     public function offsetUnset($key)
     {
         $this->arrayAccess->offsetUnset($key);;
+    }
+
+
+    /**
+     * @return mixed
+     */
+    public function current()
+    {
+        return $this->wrap($this->arrayAccess->current());
+    }
+
+    /**
+     * @return void
+     */
+    public function next()
+    {
+        $this->arrayAccess->next();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function key()
+    {
+        return $this->arrayAccess->key();
+    }
+
+    /**
+     * @return boolean
+     */
+    public function valid()
+    {
+        return $this->arrayAccess->valid();
+    }
+
+    /**
+     * @return void
+     */
+    public function rewind()
+    {
+        $this->arrayAccess->rewind();
     }
 
     /**

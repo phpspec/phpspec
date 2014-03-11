@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\Wrapper;
 
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Wrapper\Subject\TraversableSubject;
 use Prophecy\Argument;
 
 use PhpSpec\Wrapper\Wrapper;
