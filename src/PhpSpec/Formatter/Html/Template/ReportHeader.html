@@ -84,6 +84,12 @@ dd.example.pending_fixed {
   color: #0000C2; background: #D3FBFF;
 }
 
+dd.example.skipped {
+    border-left: 5px solid #35DAFA;
+    border-bottom: 1px solid #35DAFA;
+    background: #98EFFC; color: #131313;
+}
+
 dd.example.failed {
   border-left: 5px solid #C20000;
   border-bottom: 1px solid #C20000;
@@ -163,7 +169,7 @@ function makeRed(element_id) {
 
 function makeYellow(element_id) {
   var elem = document.getElementById(element_id);
-  if (elem.className.indexOf("failed") == -1) { 
+  if (elem.className.indexOf("failed") == -1) {
     if (elem.className.indexOf("not_implemented") == -1) {
       removeClass(element_id, 'passed');
       addClass(element_id,'not_implemented');
@@ -175,7 +181,7 @@ function makeYellow(element_id) {
 </head>
 <body>
  <div class="phpspec-report">
- 
+
   <div id="phpspec-header">
     <div id="label">
       <h1>PHPSpec Code Examples</h1>
@@ -186,5 +192,5 @@ function makeYellow(element_id) {
       <p id="duration">&nbsp;</p>
     </div>
   </div>
-  
+
   <div class="results">

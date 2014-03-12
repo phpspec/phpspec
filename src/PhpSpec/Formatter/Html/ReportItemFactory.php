@@ -49,6 +49,8 @@ class ReportItemFactory
                 return new ReportPassedItem($this->template, $event);
             case ExampleEvent::PENDING:
                 return new ReportPendingItem($this->template, $event);
+            case ExampleEvent::SKIPPED:
+                return new ReportSkippedItem($this->template, $event);
             case ExampleEvent::FAILED:
             case ExampleEvent::BROKEN:
                 return new ReportFailedItem($this->template, $event, $presenter);
