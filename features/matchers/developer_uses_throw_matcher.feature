@@ -120,3 +120,99 @@ Feature: Developer uses throw matcher
 
     When I run phpspec
     Then the suite should pass
+
+  @issue134
+  Scenario: Throwing an exception during object construction
+    Given the spec file "spec/Runner/ThrowExample4/MarkdownSpec.php" contains:
+    """
+    <?php
+
+    namespace spec\Runner\ThrowExample4;
+
+    use PhpSpec\ObjectBehavior;
+    use Prophecy\Argument;
+
+    class MarkdownSpec extends ObjectBehavior
+    {
+        function it_throws_an_exception_using_during_syntax()
+        {
+            $this->shouldThrow('Exception')->during('__construct', array(1,2));
+        }
+
+        function it_throws_an_exception_using_magic_syntax()
+        {
+            $this->shouldThrow('Exception')->during__construct(1,2);
+        }
+    }
+
+    """
+    And the class file "src/Runner/ThrowExample4/Markdown.php" contains:
+    """
+    <?php
+
+    namespace Runner\ThrowExample4;
+
+    class Markdown
+    {
+        public function __construct($num1, $num2)
+        {
+            throw new \Exception();
+        }
+    }
+
+    """
+    When I run phpspec
+    Then the suite should pass
+
+  Scenario: Not throwing an exception during construction when beConstructedWith specifies "valid" parameters
+    Given the spec file "spec/Runner/ExceptionExample5/MarkdownSpec.php" contains:
+    """
+    <?php
+
+    namespace spec\Runner\ExceptionExample5;
+
+    use PhpSpec\ObjectBehavior;
+    use Prophecy\Argument;
+
+    class MarkdownSpec extends ObjectBehavior
+    {
+        function let()
+        {
+            $this->beConstructedWith('nothrow');
+        }
+
+        function it_throws_an_exception_using_magic_syntax()
+        {
+            $this->shouldBeValid();
+        }
+    }
+
+    """
+    And the class file "src/Runner/ExceptionExample5/Markdown.php" contains:
+    """
+    <?php
+
+    namespace Runner\ExceptionExample5;
+
+    class Markdown
+    {
+        private $valid = false;
+
+        public function __construct($param)
+        {
+            if ($param == 'throw') {
+                throw new \Exception();
+            }
+
+            $this->valid = true;
+        }
+
+        public function isValid()
+        {
+            return $this->valid;
+        }
+    }
+
+    """
+    When I run phpspec
+    Then the suite should pass
