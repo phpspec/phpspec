@@ -136,6 +136,7 @@ class PhpSpecContext extends BehatContext
 
         expect($stats['examples'] > 0)->toBe(true);
         expect($stats['examples'])->toBe($stats['passed'] + $stats['skipped']);
+        expect($this->applicationTester->getStatusCode())->toBe(0);
     }
 
     /**

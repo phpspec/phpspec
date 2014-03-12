@@ -30,6 +30,11 @@ class ApplicationTester
     private $inputStream;
 
     /**
+     * @var int $statusCode
+     */
+    private $statusCode;
+
+    /**
      * @param Application $application
      */
     public function __construct(Application $application)
@@ -66,7 +71,9 @@ class ApplicationTester
             ->get('dialog')
             ->setInputStream($inputStream);
 
-        return $this->application->run($this->input, $this->output);
+        $this->statusCode = $this->application->run($this->input, $this->output);
+
+        return $this->statusCode;
     }
 
     /**
@@ -121,5 +128,13 @@ class ApplicationTester
         }
 
         return $this->inputStream;
+    }
+
+    /**
+     * @return int
+     */
+    public function getStatusCode()
+    {
+        return $this->statusCode;
     }
 }
