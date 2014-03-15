@@ -33,14 +33,19 @@ class ExampleEvent extends Event implements EventInterface
     const PENDING = 1;
 
     /**
+     * Spec is skipped
+     */
+    const SKIPPED = 2;
+
+    /**
      * Spec failed
      */
-    const FAILED  = 2;
+    const FAILED  = 3;
 
     /**
      * Spec is broken
      */
-    const BROKEN  = 3;
+    const BROKEN  = 4;
 
     /**
      * @var \PhpSpec\Loader\Node\ExampleNode
