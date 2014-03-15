@@ -61,7 +61,11 @@ class PSR0Resource implements ResourceInterface
      */
     public function getSrcFilename()
     {
-        return $this->locator->getFullSrcPath().implode(DIRECTORY_SEPARATOR, $this->parts).'.php';
+        $nsParts   = $this->parts;
+        $classname = array_pop($nsParts);
+        $parts     = array_merge($nsParts, explode('_', $classname));
+
+        return $this->locator->getFullSrcPath().implode(DIRECTORY_SEPARATOR, $parts).'.php';
     }
 
     /**
