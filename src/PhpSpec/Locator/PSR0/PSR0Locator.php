@@ -258,50 +258,32 @@ class PSR0Locator implements ResourceLocatorInterface
     private function findSpecClassname($path)
     {
         // Find namespace and class name
-        $class     = '';
         $namespace = '';
-        $buffer    = '';
-        $i         = 0;
-        $fp        = fopen($path, 'r');
+        $content   = $this->filesystem->getFileContents($path);
+        $tokens    = token_get_all($content);
 
-        while (!$class) {
-            if (feof($fp)) {
-                break;
-            }
-
-            $buffer .= fread($fp, 512);
-            $tokens = token_get_all($buffer);
-
-            if (strpos($buffer, '{') === false) {
-                continue;
-            }
-
-            for (;$i<count($tokens);$i++) {
-                if ($tokens[$i][0] === T_NAMESPACE) {
-                    for ($j=$i+1;$j<count($tokens); $j++) {
-                        if ($tokens[$j][0] === T_STRING) {
-                             $namespace .= '\\'.$tokens[$j][1];
-                        } else if ($tokens[$j] === '{' || $tokens[$j] === ';') {
-                             break;
-                        }
+        for ($i=0; $i<count($tokens); $i++) {
+            if ($tokens[$i][0] === T_NAMESPACE) {
+                for ($j=$i+1; $j<count($tokens); $j++) {
+                    if ($tokens[$j][0] === T_STRING) {
+                         $namespace .= $tokens[$j][1].'\\';
+                    } elseif ($tokens[$j] === '{' || $tokens[$j] === ';') {
+                         break;
                     }
                 }
+            }
 
-                if ($tokens[$i][0] === T_CLASS) {
-                    for ($j=$i+1;$j<count($tokens);$j++) {
-                        if ($tokens[$j] === '{') {
-                            $class = $tokens[$i+2][1];
-                        }
+            if ($tokens[$i][0] === T_CLASS) {
+                for ($j=$i+1; $j<count($tokens); $j++) {
+                    if ($tokens[$j] === '{') {
+                        return $namespace.$tokens[$i+2][1];
                     }
                 }
             }
         }
 
-        // Build the classname
-        $classname  = $namespace !== '' ? trim($namespace, '\\').'\\' : '';
-        $classname .= $class;
-
-        return $classname;
+        // No class found
+        return null;
     }
 
     /**
@@ -313,11 +295,15 @@ class PSR0Locator implements ResourceLocatorInterface
     {
         $classname = $this->findSpecClassname($path);
 
+        if (null === $classname) {
+            throw new \RuntimeException('Spec file does not contains any class definition.');
+        }
+
         // Remove spec namespace from the begining of the classname.
         $specNamespace = trim($this->getSpecNamespace(), '\\').'\\';
 
         if (0 !== strpos($classname, $specNamespace)) {
-            throw new RuntimeException(sprintf(
+            throw new \RuntimeException(sprintf(
                 'Spec class must be in the base spec namespace `%s`.',
                 $this->getSpecNamespace()
             ));
