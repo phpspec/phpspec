@@ -26,7 +26,6 @@ Feature: Developer uses scalar matcher
             $result['class']->shouldBeObject();
             $result['callback']->shouldBeCallable();
             $result['licence']->shouldBeNull();
-            $result['wheels']->shouldBeArray();
         }
     }
     """
@@ -48,8 +47,7 @@ Feature: Developer uses scalar matcher
                 'sale' => true,
                 'class'  => new \stdClass(),
                 'callback' => function() {},
-                'licence' => null,
-                'wheels' => array('w1', 'w2', 'w3', 'w4')
+                'licence' => null
             );
         }
     }
