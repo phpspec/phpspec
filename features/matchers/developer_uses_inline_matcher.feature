@@ -23,9 +23,9 @@ Feature: Developer uses identity matcher
 
           function getMatchers()
           {
-              return ['bePositive' => function($subject) {
+              return array ('bePositive' => function($subject) {
                   return $subject->getTotal() > 0;
-              }];
+              });
           }
 
       }
@@ -55,3 +55,57 @@ Feature: Developer uses identity matcher
       """
     When I run phpspec
     Then the suite should pass
+
+  Scenario: Inline matcher with an argument
+    Given the spec file "spec/Matchers/InlineExample2/CalculatorSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Matchers\InlineExample2;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class CalculatorSpec extends ObjectBehavior
+      {
+          function it_calculates_the_sum_of_two_addends()
+          {
+              $this->sum(1, 2);
+              $this->shouldTotal(3);
+          }
+
+          function getMatchers()
+          {
+              return array ('total' => function($subject, $result) {
+                  return $subject->getTotal() === $result;
+              });
+          }
+
+      }
+
+      """
+    And the class file "src/Matchers/InlineExample2/Calculator.php" contains:
+      """
+      <?php
+
+      namespace Matchers\InlineExample2;
+
+      class Calculator
+      {
+          private $total;
+
+          public function sum($x, $y)
+          {
+              $this->total = $x + $y;
+          }
+
+          public function getTotal()
+          {
+              return $this->total;
+          }
+      }
+
+      """
+    When I run phpspec
+    Then the suite should pass
+
