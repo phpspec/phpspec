@@ -25,7 +25,6 @@ Feature: Developer uses scalar matcher
             $result['sale']->shouldBeBool();
             $result['class']->shouldBeObject();
             $result['callback']->shouldBeCallable();
-            $result['wheels']->shouldBeArray();
         }
     }
     """
@@ -46,8 +45,7 @@ Feature: Developer uses scalar matcher
                 'price' => 10.99,
                 'sale' => true,
                 'class'  => new \stdClass(),
-                'callback' => function() {},
-                'wheels' => array('w1', 'w2', 'w3', 'w4')
+                'callback' => function() {}
             );
         }
     }
