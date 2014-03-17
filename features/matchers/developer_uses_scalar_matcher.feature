@@ -23,7 +23,6 @@ Feature: Developer uses scalar matcher
             $result['age']->shouldBeInteger();
             $result['price']->shouldBeFloat();
             $result['sale']->shouldBeBool();
-            $result['class']->shouldBeObject();
         }
     }
     """
@@ -42,8 +41,7 @@ Feature: Developer uses scalar matcher
                 'name' => 'astra',
                 'age' => 34,
                 'price' => 10.99,
-                'sale' => true,
-                'class'  => new \stdClass()
+                'sale' => true
             );
         }
     }
