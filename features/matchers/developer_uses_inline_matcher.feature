@@ -76,8 +76,8 @@ Feature: Developer uses identity matcher
 
           function getMatchers()
           {
-              return array ('total' => function($subject, $result) {
-                  return $subject->getTotal() === $result;
+              return array ('total' => function($subject, $total) {
+                  return $subject->getTotal() === $total;
               });
           }
 
