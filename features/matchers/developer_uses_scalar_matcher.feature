@@ -17,14 +17,16 @@ Feature: Developer uses scalar matcher
     {
         function it_returns_the_result()
         {
-            $result = $this->getResult();
+            $result = $this->getDetails();
 
             $result['name']->shouldBeString();
             $result['age']->shouldBeInteger();
             $result['price']->shouldBeFloat();
-            $result['active']->shouldBeBool();
+            $result['sale']->shouldBeBool();
             $result['class']->shouldBeObject();
             $result['callback']->shouldBeCallable();
+            $result['licence']->shouldBeNull();
+            $result['wheels']->shouldBeArray();
         }
     }
     """
@@ -37,15 +39,17 @@ Feature: Developer uses scalar matcher
 
     class Car
     {
-        public function getResult()
+        public function getDetails()
         {
             return array(
-                'name' => 'mark',
+                'name' => 'astra',
                 'age' => 34,
                 'price' => 10.99,
-                'active' => true,
+                'sale' => true,
                 'class'  => new \stdClass(),
-                'callback' => function() {}
+                'callback' => function() {},
+                'licence' => null,
+                'wheels' => array('w1', 'w2', 'w3', 'w4')
             );
         }
     }
