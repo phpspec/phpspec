@@ -23,6 +23,7 @@ Feature: Developer uses scalar matcher
             $result['age']->shouldBeInteger();
             $result['price']->shouldBeFloat();
             $result['sale']->shouldBeBool();
+            $result['callback']->shouldBeCallable();
         }
     }
     """
@@ -41,7 +42,8 @@ Feature: Developer uses scalar matcher
                 'name' => 'astra',
                 'age' => 34,
                 'price' => 10.99,
-                'sale' => true
+                'sale' => true,
+                'callback' => function() {}
             );
         }
     }
