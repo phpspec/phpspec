@@ -50,7 +50,7 @@ class ObjectStateMatcher implements MatcherInterface
      */
     public function supports($name, $subject, array $arguments)
     {
-        return is_object($subject)
+        return is_object($subject) && !is_callable($subject)
             && (0 === strpos($name, 'be') || 0 === strpos($name, 'have'))
         ;
     }
