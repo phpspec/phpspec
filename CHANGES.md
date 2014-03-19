@@ -1,3 +1,9 @@
+2.0.0-stable
+============
+  * Improve support to windows
+  * Improve support to hhvm
+  * Improve acceptance tests coverage with Behat
+
 2.0.0-RC4 / 2014-02-21
 ======================
 
