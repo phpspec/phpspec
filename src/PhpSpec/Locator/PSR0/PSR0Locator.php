@@ -60,6 +60,8 @@ class PSR0Locator implements ResourceLocatorInterface
      * @param string     $srcPath
      * @param string     $specPath
      * @param Filesystem $filesystem
+     *
+     * @throws \InvalidArgumentException
      */
     public function __construct($srcNamespace = '', $specNamespacePrefix = 'spec',
                                 $srcPath = 'src', $specPath = '.', Filesystem $filesystem = null)
