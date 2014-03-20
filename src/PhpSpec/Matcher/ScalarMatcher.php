@@ -43,7 +43,7 @@ class ScalarMatcher implements MatcherInterface
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return Boolean
+     * @return boolean
      */
     public function supports($name, $subject, array $arguments)
     {
@@ -64,16 +64,8 @@ class ScalarMatcher implements MatcherInterface
      */
     public function positiveMatch($name, $subject, array $arguments)
     {
-        $checker = $this->getCheckerName($name);
-
-        if (!call_user_func($checker, $subject)) {
-            throw new FailureException(sprintf(
-                '%s expected to return %s, but it did not.',
-                $this->presenter->presentString(sprintf('%s(%s)',
-                    $checker, $this->presenter->presentValue($subject)
-                )),
-                $this->presenter->presentValue(true)
-            ));
+        if (!$this->checkerMatchesSubject($name, $subject)) {
+            $this->throwFailureException($name, $subject, '%s expected to return %s, but it did not.');
         }
     }
 
@@ -89,16 +81,8 @@ class ScalarMatcher implements MatcherInterface
      */
     public function negativeMatch($name, $subject, array $arguments)
     {
-        $checker = $this->getCheckerName($name);
-
-        if (call_user_func($checker, $subject)) {
-            throw new FailureException(sprintf(
-                '%s not expected to return %s, but it did.',
-                $this->presenter->presentString(sprintf('%s(%s)',
-                    $checker, $this->presenter->presentValue($subject)
-                )),
-                $this->presenter->presentValue(true)
-            ));
+        if ($this->checkerMatchesSubject($name, $subject)) {
+            $this->throwFailureException($name, $subject, '%s not expected to return %s, but it did.');
         }
     }
 
@@ -129,5 +113,38 @@ class ScalarMatcher implements MatcherInterface
         }
 
         return 'is_' . $expected;
+    }
+
+    /**
+     * @param string $name
+     * @param mixed  $subject
+     *
+     * @return mixed
+     */
+    private function checkerMatchesSubject($name, $subject)
+    {
+        return call_user_func($this->getCheckerName($name), $subject);
+    }
+
+    /**
+     * @param string $name
+     * @param mixed  $subject
+     * @param string $exceptionMessage
+     *
+     * @throws \PhpSpec\Exception\Example\FailureException
+     */
+    private function throwFailureException($name, $subject, $exceptionMessage)
+    {
+        throw new FailureException(sprintf(
+            $exceptionMessage,
+            $this->presenter->presentString(
+                sprintf(
+                    '%s(%s)',
+                    $this->getCheckerName($name),
+                    $this->presenter->presentValue($subject)
+                )
+            ),
+            $this->presenter->presentValue(true)
+        ));
     }
 }
