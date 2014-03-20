@@ -65,7 +65,7 @@ class ScalarMatcher implements MatcherInterface
     public function positiveMatch($name, $subject, array $arguments)
     {
         if (!$this->checkerMatchesSubject($name, $subject)) {
-            $this->throwFailureException($name, $subject, '%s expected to return %s, but it did not.');
+            throw $this->getFailureExceptionFor($name, $subject, '%s expected to return %s, but it did not.');
         }
     }
 
@@ -82,7 +82,7 @@ class ScalarMatcher implements MatcherInterface
     public function negativeMatch($name, $subject, array $arguments)
     {
         if ($this->checkerMatchesSubject($name, $subject)) {
-            $this->throwFailureException($name, $subject, '%s not expected to return %s, but it did.');
+            throw $this->getFailureExceptionFor($name, $subject, '%s not expected to return %s, but it did.');
         }
     }
 
@@ -131,11 +131,11 @@ class ScalarMatcher implements MatcherInterface
      * @param mixed  $subject
      * @param string $exceptionMessage
      *
-     * @throws \PhpSpec\Exception\Example\FailureException
+     * @return \PhpSpec\Exception\Example\FailureException
      */
-    private function throwFailureException($name, $subject, $exceptionMessage)
+    private function getFailureExceptionFor($name, $subject, $exceptionMessage)
     {
-        throw new FailureException(sprintf(
+        return new FailureException(sprintf(
             $exceptionMessage,
             $this->presenter->presentString(
                 sprintf(
