@@ -65,16 +65,7 @@ class ObjectStateMatcher implements MatcherInterface
      */
     public function positiveMatch($name, $subject, array $arguments)
     {
-        preg_match(self::$regex, $name, $matches);
-        $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);
-        $callable = array($subject, $method);
-
-        if (!method_exists($subject, $method)) {
-            throw new MethodNotFoundException(sprintf(
-                'Method %s not found.',
-                $this->presenter->presentValue($callable)
-            ), $subject, $method, $arguments);
-        }
+        $callable = $this->getCallableMethod($name, $subject, $arguments);
 
         if (true !== $result = call_user_func_array($callable, $arguments)) {
             throw $this->getFailureExceptionFor($callable, true, $result);
@@ -91,16 +82,7 @@ class ObjectStateMatcher implements MatcherInterface
      */
     public function negativeMatch($name, $subject, array $arguments)
     {
-        preg_match(self::$regex, $name, $matches);
-        $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);
-        $callable = array($subject, $method);
-
-        if (!method_exists($subject, $method)) {
-            throw new MethodNotFoundException(sprintf(
-                'Method %s not found.',
-                $this->presenter->presentValue($callable)
-            ), $subject, $method, $arguments);
-        }
+        $callable = $this->getCallableMethod($name, $subject, $arguments);
 
         if (false !== $result = call_user_func_array($callable, $arguments)) {
             throw $this->getFailureExceptionFor($callable, false, $result);
@@ -130,5 +112,29 @@ class ObjectStateMatcher implements MatcherInterface
             $this->presenter->presentValue($expectedBool),
             $this->presenter->presentValue($result)
         ));
+    }
+
+    /**
+     * @param string $name
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
+     * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
+     * @return array
+     */
+    private function getCallableMethod($name, $subject, array $arguments)
+    {
+        preg_match(self::$regex, $name, $matches);
+        $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);
+        $callable = array($subject, $method);
+
+        if (!method_exists($subject, $method)) {
+            throw new MethodNotFoundException(sprintf(
+                'Method %s not found.',
+                $this->presenter->presentValue($callable)
+            ), $subject, $method, $arguments);
+        }
+
+        return $callable;
     }
 }
