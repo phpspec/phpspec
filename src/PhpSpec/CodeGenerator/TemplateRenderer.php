@@ -31,7 +31,7 @@ class TemplateRenderer
      */
     public function __construct(Filesystem $filesystem = null)
     {
-        $this->filesystem = $filesystem ?: new Filesystem;
+        $this->filesystem = $filesystem ? : new Filesystem;
     }
 
     /**
@@ -75,7 +75,7 @@ class TemplateRenderer
     public function render($name, array $values = array())
     {
         foreach ($this->locations as $location) {
-            $path = $location.DIRECTORY_SEPARATOR.$this->normalizeLocation($name, true).'.tpl';
+            $path = $location . DIRECTORY_SEPARATOR . $this->normalizeLocation($name, true) . '.tpl';
 
             if ($this->filesystem->pathExists($path)) {
                 return $this->renderString($this->filesystem->getFileContents($path), $values);
@@ -95,8 +95,8 @@ class TemplateRenderer
     }
 
     /**
-     * @param string $location
-     * @param bool   $trimLeft
+     * @param string  $location
+     * @param boolean $trimLeft
      *
      * @return string
      */

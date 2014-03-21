@@ -57,7 +57,7 @@ class SubjectWithArrayAccess
     /**
      * @param string|integer $key
      *
-     * @return bool
+     * @return boolean
      */
     public function offsetExists($key)
     {

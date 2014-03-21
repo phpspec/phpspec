@@ -50,7 +50,7 @@ class MatchersMaintainer implements MaintainerInterface
     /**
      * @param ExampleNode $example
      *
-     * @return bool
+     * @return boolean
      */
     public function supports(ExampleNode $example)
     {

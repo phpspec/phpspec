@@ -30,7 +30,7 @@ class IO implements IOInterface
     }
 
     /**
-     * @return bool
+     * @return boolean
      */
     public function isVerbose()
     {

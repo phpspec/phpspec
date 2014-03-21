@@ -90,7 +90,7 @@ class ResourceLoader
     /**
      * @param $line
      * @param  ReflectionMethod $method
-     * @return bool
+     * @return boolean
      */
     private function lineIsInsideMethod($line, ReflectionMethod $method)
     {
@@ -101,7 +101,7 @@ class ResourceLoader
 
     /**
      * @param  ReflectionMethod $method
-     * @return bool
+     * @return boolean
      */
     private function methodIsEmpty(ReflectionMethod $method)
     {

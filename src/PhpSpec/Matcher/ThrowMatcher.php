@@ -59,7 +59,7 @@ class ThrowMatcher implements MatcherInterface
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return bool
+     * @return boolean
      */
     public function supports($name, $subject, array $arguments)
     {

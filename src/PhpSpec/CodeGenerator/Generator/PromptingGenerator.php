@@ -99,7 +99,7 @@ abstract class PromptingGenerator
     /**
      * @param string $filepath
      *
-     * @return bool
+     * @return boolean
      */
     private function ifFileAlreadyExists($filepath)
     {
@@ -109,7 +109,7 @@ abstract class PromptingGenerator
     /**
      * @param string $filepath
      *
-     * @return bool
+     * @return boolean
      */
     private function userAborts($filepath)
     {
