@@ -132,7 +132,7 @@ class PSR0Locator implements ResourceLocatorInterface
     /**
      * @param string $query
      *
-     * @return bool
+     * @return boolean
      */
     public function supportsQuery($query)
     {
@@ -186,7 +186,7 @@ class PSR0Locator implements ResourceLocatorInterface
     /**
      * @param string $classname
      *
-     * @return bool
+     * @return boolean
      */
     public function supportsClass($classname)
     {

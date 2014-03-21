@@ -26,7 +26,7 @@ interface MatcherInterface
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return Boolean
+     * @return boolean
      */
     public function supports($name, $subject, array $arguments);
 

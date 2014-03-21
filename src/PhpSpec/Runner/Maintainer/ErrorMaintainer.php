@@ -46,7 +46,7 @@ class ErrorMaintainer implements MaintainerInterface
     /**
      * @param ExampleNode $example
      *
-     * @return bool
+     * @return boolean
      */
     public function supports(ExampleNode $example)
     {
@@ -99,7 +99,7 @@ class ErrorMaintainer implements MaintainerInterface
      * @param string  $file
      * @param integer $line
      *
-     * @return Boolean
+     * @return boolean
      *
      * @throws ExampleException\ErrorException
      */

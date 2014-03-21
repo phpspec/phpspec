@@ -41,7 +41,7 @@ class StringRegexMatcher extends BasicMatcher
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return bool
+     * @return boolean
      */
     public function supports($name, $subject, array $arguments)
     {
@@ -55,11 +55,11 @@ class StringRegexMatcher extends BasicMatcher
      * @param mixed $subject
      * @param array $arguments
      *
-     * @return bool
+     * @return boolean
      */
     protected function matches($subject, array $arguments)
     {
-        return (Boolean) preg_match($arguments[0], $subject);
+        return (boolean) preg_match($arguments[0], $subject);
     }
 
     /**

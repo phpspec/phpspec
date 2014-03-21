@@ -40,7 +40,7 @@ class WrappedObject
      */
     private $arguments = array();
     /**
-     * @var bool
+     * @var boolean
      */
     private $isInstantiated = false;
 
@@ -97,7 +97,7 @@ class WrappedObject
     }
 
     /**
-     * @return bool
+     * @return boolean
      */
     public function isInstantiated()
     {

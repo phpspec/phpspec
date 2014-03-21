@@ -34,7 +34,7 @@ class ExampleNode
      */
     private $specification;
     /**
-     * @var bool
+     * @var boolean
      */
     private $isPending = false;
 
@@ -44,7 +44,7 @@ class ExampleNode
      */
     public function __construct($title, ReflectionFunctionAbstract $function)
     {
-        $this->title    = $title;
+        $this->title = $title;
         $this->function = $function;
     }
 
@@ -57,7 +57,7 @@ class ExampleNode
     }
 
     /**
-     * @param bool $isPending
+     * @param boolean $isPending
      */
     public function markAsPending($isPending = true)
     {
@@ -65,7 +65,7 @@ class ExampleNode
     }
 
     /**
-     * @return bool
+     * @return boolean
      */
     public function isPending()
     {

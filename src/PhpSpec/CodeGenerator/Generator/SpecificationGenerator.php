@@ -26,7 +26,7 @@ class SpecificationGenerator extends PromptingGenerator implements GeneratorInte
      * @param string            $generation
      * @param array             $data
      *
-     * @return bool
+     * @return boolean
      */
     public function supports(ResourceInterface $resource, $generation, array $data)
     {

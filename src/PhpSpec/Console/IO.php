@@ -45,7 +45,7 @@ class IO implements IOInterface
     private $lastMessage;
 
     /**
-     * @var bool
+     * @var boolean
      */
     private $hasTempString = false;
 
@@ -56,13 +56,13 @@ class IO implements IOInterface
      */
     public function __construct(InputInterface $input, OutputInterface $output, HelperSet $helpers)
     {
-        $this->input   = $input;
-        $this->output  = $output;
+        $this->input = $input;
+        $this->output = $output;
         $this->helpers = $helpers;
     }
 
     /**
-     * @return bool
+     * @return boolean
      */
     public function isInteractive()
     {
@@ -70,7 +70,7 @@ class IO implements IOInterface
     }
 
     /**
-     * @return bool
+     * @return boolean
      */
     public function isDecorated()
     {
@@ -78,16 +78,16 @@ class IO implements IOInterface
     }
 
     /**
-     * @return bool
+     * @return boolean
      */
     public function isCodeGenerationEnabled()
     {
         return $this->input->isInteractive()
-            && !$this->input->getOption('no-code-generation');
+        && !$this->input->getOption('no-code-generation');
     }
 
     /**
-     * @return bool
+     * @return boolean
      */
     public function isVerbose()
     {
@@ -147,7 +147,7 @@ class IO implements IOInterface
     /**
      * @param string       $message
      * @param integer|null $indent
-     * @param bool         $newline
+     * @param boolean      $newline
      */
     public function write($message, $indent = null, $newline = false)
     {
@@ -163,7 +163,7 @@ class IO implements IOInterface
         }
 
         $this->output->write($message, $newline);
-        $this->lastMessage = $message.($newline ? "\n" : '');
+        $this->lastMessage = $message . ($newline ? "\n" : '');
     }
 
     /**
@@ -178,7 +178,7 @@ class IO implements IOInterface
     /**
      * @param string       $message
      * @param integer|null $indent
-     * @param bool         $newline
+     * @param boolean      $newline
      */
     public function overwrite($message, $indent = null, $newline = false)
     {
@@ -201,7 +201,7 @@ class IO implements IOInterface
             $this->writeln();
         }
 
-        $this->lastMessage = $message.($newline ? "\n" : '');
+        $this->lastMessage = $message . ($newline ? "\n" : '');
     }
 
     /**
@@ -216,33 +216,35 @@ class IO implements IOInterface
     }
 
     /**
-     * @param string $question
-     * @param bool   $default
+     * @param string  $question
+     * @param boolean $default
      *
-     * @return Boolean
+     * @return boolean
      */
     public function askConfirmation($question, $default = true)
     {
-        $lines   = array();
-        $lines[] = '<question>'.str_repeat(' ', 70)."</question>";
+        $lines = array();
+        $lines[] = '<question>' . str_repeat(' ', 70) . "</question>";
         foreach (explode("\n", wordwrap($question), 50) as $line) {
-            $lines[] = '<question>  '.str_pad($line, 68).'</question>';
+            $lines[] = '<question>  ' . str_pad($line, 68) . '</question>';
         }
-        $lines[] = '<question>'.str_repeat(' ', 62).'</question> <value>'.
-            ($default ? '[Y/n]' : '[y/N]').'</value> ';
+        $lines[] = '<question>' . str_repeat(' ', 62) . '</question> <value>' .
+            ($default ? '[Y/n]' : '[y/N]') . '</value> ';
 
         return $this->helpers->get('dialog')->askConfirmation(
-            $this->output, implode("\n", $lines), $default
+            $this->output,
+            implode("\n", $lines),
+            $default
         );
     }
 
     /**
      * @param string       $question
      * @param callable     $validator
-     * @param bool         $attempts
-     * @param Boolean|null $default
+     * @param boolean      $attempts
+     * @param boolean|null $default
      *
-     * @return Boolean
+     * @return boolean
      */
     public function askAndValidate($question, $validator, $attempts = false, $default = null)
     {
@@ -257,11 +259,14 @@ class IO implements IOInterface
      */
     private function indentText($text, $indent)
     {
-        return implode("\n", array_map(
-            function ($line) use ($indent) {
-                return str_repeat(' ', $indent).$line;
-            },
-            explode("\n", $text)
-        ));
+        return implode(
+            "\n",
+            array_map(
+                function ($line) use ($indent) {
+                    return str_repeat(' ', $indent) . $line;
+                },
+                explode("\n", $text)
+            )
+        );
     }
 }

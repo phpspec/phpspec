@@ -23,7 +23,7 @@ class Filesystem
 {
     /**
      * @param $path
-     * @return bool
+     * @return boolean
      */
     public function pathExists($path)
     {
@@ -50,7 +50,7 @@ class Filesystem
 
     /**
      * @param $path
-     * @return bool
+     * @return boolean
      */
     public function isDirectory($path)
     {

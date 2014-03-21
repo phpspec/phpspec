@@ -46,7 +46,7 @@ class ObjectStateMatcher implements MatcherInterface
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return bool
+     * @return boolean
      */
     public function supports($name, $subject, array $arguments)
     {
@@ -117,17 +117,17 @@ class ObjectStateMatcher implements MatcherInterface
 
     /**
      * @param callable $callable
-     * @param Boolean  $expectedBool
-     * @param Boolean  $result
+     * @param boolean  $expectedBoolean
+     * @param boolean  $result
      *
      * @return FailureException
      */
-    private function getFailureExceptionFor($callable, $expectedBool, $result)
+    private function getFailureExceptionFor($callable, $expectedBoolean, $result)
     {
         return new FailureException(sprintf(
             "Expected %s to return %s, but got %s.",
             $this->presenter->presentValue($callable),
-            $this->presenter->presentValue($expectedBool),
+            $this->presenter->presentValue($expectedBoolean),
             $this->presenter->presentValue($result)
         ));
     }
