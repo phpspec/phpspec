@@ -83,4 +83,11 @@ class ObjectStateMatcherSpec extends ObjectBehavior
         $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
             ->duringPositiveMatch('haveProperty', $subject, array('other'));
     }
+
+    function it_does_not_match_if_subject_is_callable()
+    {
+        $subject = function() {};
+
+        $this->supports('beCallable', $subject, array())->shouldReturn(false);
+    }
 }
