@@ -36,7 +36,7 @@ class WrappedObject
      */
     private $classname;
     /**
-     * @var callable
+     * @var array|string
      */
     private $factoryMethod;
     /**
@@ -101,17 +101,17 @@ class WrappedObject
     }
 
     /**
-     * @param callable $factoryMethod
-     * @param array    $arguments
+     * @param array|string $factoryMethod
+     * @param array        $arguments
      */
-    public function beConstructedThrough(callable $factoryMethod, array $arguments = array())
+    public function beConstructedThrough($factoryMethod, array $arguments = array())
     {
         $this->factoryMethod = $factoryMethod;
         $this->arguments = $arguments;
     }
 
     /**
-     * @return callable
+     * @return array|string
      */
     public function getFactoryMethod()
     {
