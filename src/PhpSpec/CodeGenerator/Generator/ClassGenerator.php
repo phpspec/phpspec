@@ -101,6 +101,6 @@ class ClassGenerator extends PromptingGenerator implements GeneratorInterface
 }
 __halt_compiler();<?php%namespace_block%
 
-class %name%
+final class %name%
 {
 }
