@@ -36,6 +36,10 @@ class WrappedObject
      */
     private $classname;
     /**
+     * @var callable
+     */
+    private $factoryMethod;
+    /**
      * @var array
      */
     private $arguments = array();
@@ -94,6 +98,24 @@ class WrappedObject
         }
 
         $this->beAnInstanceOf($this->classname, $args);
+    }
+
+    /**
+     * @param callable $factoryMethod
+     * @param array    $arguments
+     */
+    public function beConstructedThrough(callable $factoryMethod, array $arguments = array())
+    {
+        $this->factoryMethod = $factoryMethod;
+        $this->arguments = $arguments;
+    }
+
+    /**
+     * @return callable
+     */
+    public function getFactoryMethod()
+    {
+        return $this->factoryMethod;
     }
 
     /**
