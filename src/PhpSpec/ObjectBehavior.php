@@ -30,6 +30,7 @@ use ArrayAccess;
  * be matched against expectations.
  *
  * @method void beConstructedWith($constructorArguments,...)
+ * @method void beConstructedThrough(callable $factoryMethod, array $constructorArguments)
  * @method void beAnInstanceOf($class)
  * @method void shouldHaveType($type)
  * @method \PhpSpec\Wrapper\Subject\Expectation\DuringCall shouldThrow($exception = null)
