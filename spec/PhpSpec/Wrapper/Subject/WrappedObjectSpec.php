@@ -40,7 +40,7 @@ class WrappedObjectSpec extends ObjectBehavior
 
     function it_can_be_instantiated_with_a_factory_method_with_method_name_only()
     {
-        $this->callOnWrappedObject('beAnInstanceOf', ['\DateTime']);
+        $this->callOnWrappedObject('beAnInstanceOf', array('\DateTime'));
         $this->callOnWrappedObject(
             'beConstructedThrough',
             array(
