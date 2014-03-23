@@ -37,4 +37,17 @@ class WrappedObjectSpec extends ObjectBehavior
         );
         $this->instantiate()->shouldHaveType('\DateTime');
     }
+
+    function it_can_be_instantiated_with_a_factory_method_with_method_name_only()
+    {
+        $this->callOnWrappedObject('beAnInstanceOf', ['\DateTime']);
+        $this->callOnWrappedObject(
+            'beConstructedThrough',
+            array(
+                'createFromFormat',
+                array('d-m-Y', '01-01-1970')
+            )
+        );
+        $this->instantiate()->shouldHaveType('\DateTime');
+    }
 }
