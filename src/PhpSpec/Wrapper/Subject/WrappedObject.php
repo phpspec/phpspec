@@ -106,6 +106,14 @@ class WrappedObject
      */
     public function beConstructedThrough($factoryMethod, array $arguments = array())
     {
+        if (
+            is_string($factoryMethod) &&
+            false === strpos($factoryMethod, '::') &&
+            method_exists($this->classname, $factoryMethod)
+        ) {
+            $factoryMethod = array($this->classname, $factoryMethod);
+        }
+
         $this->factoryMethod = $factoryMethod;
         $this->arguments = $arguments;
     }
