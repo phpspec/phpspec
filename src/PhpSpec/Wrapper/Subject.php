@@ -95,6 +95,14 @@ class Subject implements ArrayAccess, WrapperInterface
      */
     public function beConstructedThrough($factoryMethod, array $arguments = array())
     {
+        if (
+            is_string($factoryMethod) &&
+            false === strpos($factoryMethod, '::') &&
+            method_exists($this->wrappedObject->getClassName(), $factoryMethod)
+        ) {
+            $factoryMethod = array($this->wrappedObject->getClassName(), $factoryMethod);
+        }
+
         $this->wrappedObject->beConstructedThrough($factoryMethod, $arguments);
     }
 
