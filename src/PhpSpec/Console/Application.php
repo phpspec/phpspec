@@ -79,7 +79,7 @@ class Application extends BaseApplication
         foreach ($this->container->getByPrefix('console.commands') as $command) {
             $this->add($command);
         }
-        
+
         return parent::doRun($input, $output);
     }
 
@@ -218,9 +218,13 @@ class Application extends BaseApplication
             );
         });
         $container->set('code_generator.generators.class', function ($c) {
+            $generateFinalClasses = (bool) $c->getParam('generator.final_classes', false);
+
             return new CodeGenerator\Generator\ClassGenerator(
                 $c->get('console.io'),
-                $c->get('code_generator.templates')
+                $c->get('code_generator.templates'),
+                null,
+                array('generator.final_classes' => $generateFinalClasses)
             );
         });
         $container->set('code_generator.generators.method', function ($c) {
