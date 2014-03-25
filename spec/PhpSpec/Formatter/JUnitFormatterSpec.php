@@ -11,6 +11,7 @@ use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Event\SuiteEvent;
+use PhpSpec\Exception\Example\SkippingException;
 
 class JUnitFormatterSpec extends ObjectBehavior
 {
@@ -99,6 +100,31 @@ class JUnitFormatterSpec extends ObjectBehavior
         ));
     }
 
+    function it_stores_a_testcase_node_after_skipped_example_run(
+        ExampleEvent $event,
+        SpecificationNode $specification,
+        \ReflectionClass $refClass
+    ) {
+        $event->getResult()->willReturn(ExampleEvent::SKIPPED);
+        $event->getTitle()->willReturn('example title');
+        $event->getTime()->willReturn(1337);
+
+        $event->getException()->willReturn(new SkippingException('zog zog'));
+
+        $event->getSpecification()->willReturn($specification);
+        $specification->getClassReflection()->willReturn($refClass);
+        $refClass->getName()->willReturn('Acme\Foo\Bar');
+
+        $this->afterExample($event);
+
+        // skipped tag is escaped because a skipped tag is also registered in the console formatter
+        $this->getTestCaseNodes()->shouldReturn(array(
+            '<testcase name="example title" time="1337" classname="Acme\Foo\Bar" status="skipped">' . "\n" .
+                '\<skipped><![CDATA[ skipped: zog zog ]]>\</skipped>' . "\n" .
+            '</testcase>'
+        ));
+    }
+
     function it_aggregates_testcase_nodes_and_store_them_after_specification_run(SpecificationEvent $event)
     {
         $event->getTitle()->willReturn('specification title');
@@ -114,11 +140,12 @@ class JUnitFormatterSpec extends ObjectBehavior
             ExampleEvent::FAILED  => 1,
             ExampleEvent::BROKEN  => 2,
             ExampleEvent::PENDING => 5,
+            ExampleEvent::SKIPPED => 3,
         ));
         $this->afterSpecification($event);
 
         $this->getTestSuiteNodes()->shouldReturn(array(
-            '<testsuite name="specification title" time="42" tests="3" failures="1" errors="2" skipped="5">' . "\n" .
+            '<testsuite name="specification title" time="42" tests="3" failures="1" errors="2" skipped="8">' . "\n" .
                 '<testcase name="example1" />' . "\n" .
                 '<testcase name="example2" />' . "\n" .
                 '<testcase name="example3" />' . "\n" .
@@ -128,6 +155,7 @@ class JUnitFormatterSpec extends ObjectBehavior
         $this->getExampleStatusCounts()->shouldReturn(array(
             ExampleEvent::PASSED  => 0,
             ExampleEvent::PENDING => 0,
+            ExampleEvent::SKIPPED => 0,
             ExampleEvent::FAILED  => 0,
             ExampleEvent::BROKEN  => 0,
         ));

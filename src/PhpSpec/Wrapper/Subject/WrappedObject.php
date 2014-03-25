@@ -36,6 +36,10 @@ class WrappedObject
      */
     private $classname;
     /**
+     * @var array|string
+     */
+    private $factoryMethod;
+    /**
      * @var array
      */
     private $arguments = array();
@@ -94,6 +98,32 @@ class WrappedObject
         }
 
         $this->beAnInstanceOf($this->classname, $args);
+    }
+
+    /**
+     * @param array|string $factoryMethod
+     * @param array        $arguments
+     */
+    public function beConstructedThrough($factoryMethod, array $arguments = array())
+    {
+        if (
+            is_string($factoryMethod) &&
+            false === strpos($factoryMethod, '::') &&
+            method_exists($this->classname, $factoryMethod)
+        ) {
+            $factoryMethod = array($this->classname, $factoryMethod);
+        }
+
+        $this->factoryMethod = $factoryMethod;
+        $this->arguments = $arguments;
+    }
+
+    /**
+     * @return array|string
+     */
+    public function getFactoryMethod()
+    {
+        return $this->factoryMethod;
     }
 
     /**
@@ -161,12 +191,14 @@ class WrappedObject
             return $this->instance;
         }
 
-        $reflection = new \ReflectionClass($this->classname);
-
-        if (empty($this->arguments)) {
-            $this->instance = $reflection->newInstance();
+        if ($this->factoryMethod) {
+            $this->instance = call_user_func_array($this->factoryMethod, $this->arguments);
         } else {
-            $this->instance = $reflection->newInstanceArgs($this->arguments);
+            $reflection = new \ReflectionClass($this->classname);
+
+            $this->instance = empty($this->arguments) ?
+                $reflection->newInstance() :
+                $reflection->newInstanceArgs($this->arguments);
         }
 
         $this->isInstantiated = true;

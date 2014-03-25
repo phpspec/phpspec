@@ -51,6 +51,7 @@ class ClassGeneratorSpec extends ObjectBehavior
             '%name%'            => 'App',
             '%namespace%'       => 'Acme',
             '%namespace_block%' => "\n\nnamespace Acme;",
+            '%final_mark%'      => '',
         );
 
         $tpl->render('class', $values)->willReturn(null);
@@ -77,6 +78,7 @@ class ClassGeneratorSpec extends ObjectBehavior
             '%name%'            => 'App',
             '%namespace%'       => 'Acme',
             '%namespace_block%' => "\n\nnamespace Acme;",
+            '%final_mark%'      => ''
         );
 
         $tpl->render('class', $values)->willReturn('template code');

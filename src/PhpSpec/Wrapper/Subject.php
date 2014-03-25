@@ -90,6 +90,15 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
+     * @param array|string $factoryMethod
+     * @param array        $arguments
+     */
+    public function beConstructedThrough($factoryMethod, array $arguments = array())
+    {
+        $this->wrappedObject->beConstructedThrough($factoryMethod, $arguments);
+    }
+
+    /**
      * @return object
      */
     public function getWrappedObject()
