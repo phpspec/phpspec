@@ -80,6 +80,7 @@ class WrappedObject
         $this->classname      = $classname;
         $unwrapper            = new Unwrapper;
         $this->arguments      = $unwrapper->unwrapAll($arguments);
+        $this->instance       = null;
         $this->isInstantiated = false;
     }
 
