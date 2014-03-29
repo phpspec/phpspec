@@ -79,7 +79,7 @@ class Application extends BaseApplication
         foreach ($this->container->getByPrefix('console.commands') as $command) {
             $this->add($command);
         }
-        
+
         return parent::doRun($input, $output);
     }
 
@@ -414,7 +414,7 @@ class Application extends BaseApplication
             );
         });
         $container->set('runner.maintainers.collaborators', function ($c) {
-            return new Runner\Maintainer\CollaboratorsMaintainer($c->get('unwrapper'));
+            return new Runner\Maintainer\CollaboratorsMaintainer($c->get('prophecy.prophet.factory'));
         });
         $container->set('runner.maintainers.let_letgo', function ($c) {
             return new Runner\Maintainer\LetAndLetgoMaintainer;
@@ -435,6 +435,14 @@ class Application extends BaseApplication
 
         $container->setShared('unwrapper', function ($c) {
             return new Wrapper\Unwrapper;
+        });
+
+        $container->set('prophecy.doubler.factory', function ($c) {
+            return new \Prophecy\Doubler\Factory($c->getByPrefix('prophecy.doubler.class_patch'));
+        });
+
+        $container->set('prophecy.prophet.factory', function ($c) {
+            return new \Prophecy\Prophet\Factory($c->get('prophecy.doubler.factory'), $c->get('unwrapper'));
         });
     }
 

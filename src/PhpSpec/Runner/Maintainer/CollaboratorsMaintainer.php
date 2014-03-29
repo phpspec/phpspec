@@ -19,8 +19,6 @@ use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
 
 use PhpSpec\Wrapper\Collaborator;
-use PhpSpec\Wrapper\Unwrapper;
-
 use Prophecy\Prophet;
 
 /**
@@ -34,9 +32,9 @@ class CollaboratorsMaintainer implements MaintainerInterface
      */
     private static $docex = '#@param *([^ ]*) *\$([^ ]*)#';
     /**
-     * @var \PhpSpec\Wrapper\Unwrapper
+     * @var \Prophecy\Prophet\Factory
      */
-    private $unwrapper;
+    private $prophets;
     /**
      * @var Prophet
      */
@@ -45,9 +43,9 @@ class CollaboratorsMaintainer implements MaintainerInterface
     /**
      * @param Unwrapper $unwrapper
      */
-    public function __construct(Unwrapper $unwrapper)
+    public function __construct(Prophet\Factory $prophets)
     {
-        $this->unwrapper = $unwrapper;
+        $this->prophets = $prophets;
     }
 
     /**
@@ -69,7 +67,7 @@ class CollaboratorsMaintainer implements MaintainerInterface
     public function prepare(ExampleNode $example, SpecificationInterface $context,
                             MatcherManager $matchers, CollaboratorManager $collaborators)
     {
-        $this->prophet = new Prophet(null, $this->unwrapper, null);
+        $this->prophet = $this->prophets->create();
 
         $classRefl = $example->getSpecification()->getClassReflection();
 
