@@ -312,6 +312,7 @@ class Application extends BaseApplication
                 $specPrefix = isset($suite['spec_prefix']) ? $suite['spec_prefix'] : 'spec';
                 $srcPath    = isset($suite['src_path']) ? $suite['src_path'] : 'src';
                 $specPath   = isset($suite['spec_path']) ? $suite['spec_path'] : '.';
+                $psr4prefix   = isset($suite['psr4_prefix']) ? $suite['psr4_prefix'] : null;
 
                 if (!is_dir($srcPath)) {
                     mkdir($srcPath, 0777, true);
@@ -321,8 +322,8 @@ class Application extends BaseApplication
                 }
 
                 $c->set(sprintf('locator.locators.%s_suite', $name),
-                    function ($c) use ($srcNS, $specPrefix, $srcPath, $specPath) {
-                        return new Locator\PSR0\PSR0Locator($srcNS, $specPrefix, $srcPath, $specPath);
+                    function ($c) use ($srcNS, $specPrefix, $srcPath, $specPath, $psr4prefix) {
+                        return new Locator\PSR0\PSR0Locator($srcNS, $specPrefix, $srcPath, $specPath, null, $psr4prefix);
                     }
                 );
             }
