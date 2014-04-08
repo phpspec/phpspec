@@ -96,6 +96,14 @@ class PhpSpecContext extends BehatContext
     }
 
     /**
+     * @Given /^the config file contains:$/
+     */
+    public function theConfigFileContains(PyStringNode $string)
+    {
+        file_put_contents('phpspec.yml', $string->getRaw());
+    }
+
+    /**
      * @Then /^(?:|a )new spec should be generated in (?:|the )"(?P<file>[^"]*Spec.php)":$/
      * @Then /^(?:|a )new class should be generated in (?:|the )"(?P<file>[^"]+)":$/
      * @Then /^(?:|the )class in (?:|the )"(?P<file>[^"]+)" should contain:$/
