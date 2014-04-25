@@ -75,6 +75,7 @@ class Application extends BaseApplication
         $this->container->set('console.helpers', $this->getHelperSet());
 
         $this->setupContainer($this->container);
+        $this->loadConfigurationFile($input, $this->container);
 
         foreach ($this->container->getByPrefix('console.commands') as $command) {
             $this->add($command);
@@ -130,7 +131,6 @@ class Application extends BaseApplication
         $this->setupRunner($container);
         $this->setupCommands($container);
 
-        $this->loadConfigurationFile($container);
     }
 
     protected function setupIO(ServiceContainer $container)
@@ -443,9 +443,9 @@ class Application extends BaseApplication
      *
      * @throws \RuntimeException
      */
-    protected function loadConfigurationFile(ServiceContainer $container)
+    protected function loadConfigurationFile(InputInterface $input, ServiceContainer $container)
     {
-        $config = $this->parseConfigurationFile();
+        $config = $this->parseConfigurationFile($input);
 
         foreach ($config as $key => $val) {
             if ('extensions' === $key && is_array($val)) {
@@ -472,11 +472,10 @@ class Application extends BaseApplication
     /**
      * @return array
      */
-    protected function parseConfigurationFile()
+    protected function parseConfigurationFile(InputInterface $input)
     {
         $paths = array('phpspec.yml','phpspec.yml.dist');
 
-        $input = new ArgvInput();
         if ($customPath = $input->getParameterOption(array('-c','--config'))) {
             if (!file_exists($customPath)) {
                 throw new FileNotFoundException('Custom configuration file not found at '.$customPath);
