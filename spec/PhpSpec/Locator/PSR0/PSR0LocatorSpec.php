@@ -37,6 +37,15 @@ class PSR0LocatorSpec extends ObjectBehavior
         );
     }
 
+    function it_generates_fullSrcPath_from_srcPath_plus_namespace_cutting_psr4_prefix()
+    {
+        $this->beConstructedWith('psr4\prefix\Cust\Ns', 'spec', dirname(__DIR__), __DIR__, null, 'psr4\prefix');
+
+        $this->getFullSrcPath()->shouldReturn(
+            dirname(__DIR__).DIRECTORY_SEPARATOR.'Cust'.DIRECTORY_SEPARATOR.'Ns'.DIRECTORY_SEPARATOR
+        );
+    }
+
     function it_generates_proper_fullSrcPath_even_from_empty_namespace()
     {
         $this->beConstructedWith('', 'spec', dirname(__DIR__), __DIR__);
@@ -50,6 +59,15 @@ class PSR0LocatorSpec extends ObjectBehavior
 
         $this->getFullSpecPath()->shouldReturn(
             __DIR__.DIRECTORY_SEPARATOR.'spec'.DIRECTORY_SEPARATOR.'C'.DIRECTORY_SEPARATOR.'N'.DIRECTORY_SEPARATOR
+        );
+    }
+
+    function it_generates_fullSpecPath_from_specPath_plus_namespace_not_cutting_psr4_prefix()
+    {
+        $this->beConstructedWith('p\pf\C\N', 'spec', dirname(__DIR__), __DIR__, null, 'p\pf');
+
+        $this->getFullSpecPath()->shouldReturn(
+            __DIR__.DIRECTORY_SEPARATOR.'spec'.DIRECTORY_SEPARATOR.'p'.DIRECTORY_SEPARATOR.'pf'.DIRECTORY_SEPARATOR.'C'.DIRECTORY_SEPARATOR.'N'.DIRECTORY_SEPARATOR
         );
     }
 
@@ -381,6 +399,15 @@ class PSR0LocatorSpec extends ObjectBehavior
         );
 
         $this->shouldThrow($exception)->duringCreateResource('Namespace/');
+    }
+
+    function it_throws_an_exception_on_PSR4_prefix_not_matching_namespace()
+    {
+        $exception = new \InvalidArgumentException(
+            'PSR4 prefix doesn\'t match given class namespace.' . PHP_EOL
+        );
+
+        $this->shouldThrow($exception)->during('__construct', array('p\pf\N\S', 'spec', $this->srcPath, $this->specPath, null, 'wrong\prefix'));
     }
 
     private function convert_to_path($path)

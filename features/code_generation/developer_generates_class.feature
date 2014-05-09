@@ -19,6 +19,28 @@ Feature: Developer generates a class
       """
 
     @issue269
+  Scenario: Generating a class with psr4 prefix
+    Given the config file contains:
+    """
+    suites:
+      behat_suite:
+        namespace: Behat\Tests\MyNamespace
+        psr4_prefix: Behat\Tests
+    """
+    And I have started describing the "Behat/Tests/MyNamespace/Markdown" class
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then a new class should be generated in the "src/MyNamespace/Markdown.php":
+    """
+    <?php
+
+    namespace Behat\Tests\MyNamespace;
+
+    class Markdown
+    {
+    }
+
+    """
+
   Scenario: Generating a class when expectations on collaborator are defined
     Given the spec file "spec/CodeGeneration/MethodExample2/ForgotPasswordSpec.php" contains:
     """

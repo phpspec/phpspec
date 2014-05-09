@@ -62,7 +62,7 @@ class PSR0Locator implements ResourceLocatorInterface
      * @param Filesystem $filesystem
      */
     public function __construct($srcNamespace = '', $specNamespacePrefix = 'spec',
-                                $srcPath = 'src', $specPath = '.', Filesystem $filesystem = null)
+                                $srcPath = 'src', $specPath = '.', Filesystem $filesystem = null, $psr4Prefix = null)
     {
         $this->filesystem = $filesystem ?: new Filesystem;
         $sepr = DIRECTORY_SEPARATOR;
@@ -70,8 +70,13 @@ class PSR0Locator implements ResourceLocatorInterface
         $this->srcPath       = rtrim(realpath($srcPath), '/\\').$sepr;
         $this->specPath      = rtrim(realpath($specPath), '/\\').$sepr;
         $this->srcNamespace  = ltrim(trim($srcNamespace, ' \\').'\\', '\\');
+        $this->psr4Prefix    = (null === $psr4Prefix) ? null : ltrim(trim($psr4Prefix, ' \\').'\\', '\\');
+        if(null !== $this->psr4Prefix  && substr($this->srcNamespace, 0, strlen($psr4Prefix)) !== $psr4Prefix){
+            throw new InvalidArgumentException('PSR4 prefix doesn\'t match given class namespace.' . PHP_EOL);
+        }
+        $srcNamespacePath = null === $this->psr4Prefix ? $this->srcNamespace : substr($this->srcNamespace, strlen($this->psr4Prefix));
         $this->specNamespace = trim($specNamespacePrefix, ' \\').'\\'.$this->srcNamespace;
-        $this->fullSrcPath   = $this->srcPath.str_replace('\\', $sepr, $this->srcNamespace);
+        $this->fullSrcPath   = $this->srcPath.str_replace('\\', $sepr, $srcNamespacePath);
         $this->fullSpecPath  = $this->specPath.str_replace('\\', $sepr, $this->specNamespace);
 
         if ($sepr === $this->srcPath) {
