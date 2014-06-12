@@ -43,6 +43,10 @@ Feature: Developer generates a method
       class Markdown
       {
 
+          /**
+           * [Description for toHtml function]
+           * @param string $string1
+           */
           public function toHtml($string1)
           {
               // TODO: write logic here
@@ -90,6 +94,11 @@ Feature: Developer generates a method
       class Markdown
       {
 
+          /**
+           * [Description for toHtml function]
+           * @param string  $string1
+           * @param integer $integer2
+           */
           public function toHtml($string1, $integer2)
           {
               // TODO: write logic here
@@ -155,6 +164,10 @@ Feature: Developer generates a method
       class Markdown
       {
 
+          /**
+           * [Description for toHtml function]
+           * @param Greet $greet1
+           */
           public function toHtml(Greet $greet1)
           {
               // TODO: write logic here
@@ -222,6 +235,10 @@ Feature: Developer generates a method
       class Markdown
       {
 
+          /**
+           * [Description for toHtml function]
+           * @param Greet $greet1
+           */
           public function toHtml(Greet $greet1)
           {
               // TODO: write logic here
@@ -269,6 +286,10 @@ Feature: Developer generates a method
       class Markdown
       {
 
+          /**
+           * [Description for toHtml function]
+           * @param string[] $array1
+           */
           public function toHtml(array $array1)
           {
               // TODO: write logic here
@@ -324,6 +345,10 @@ Feature: Developer generates a method
     class Prefix
     {
 
+        /**
+         * [Description for toHtml function]
+         * @param string $string1
+         */
         public function toHtml($string1)
         {
             // TODO: write logic here
