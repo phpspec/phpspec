@@ -62,7 +62,7 @@ METHOD
 CODE;
         $values = array(
             '%name%'      => 'setName',
-            '%arguments%' => '$argument1',
+            '%arguments%' => '$string1',
         );
 
         $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');

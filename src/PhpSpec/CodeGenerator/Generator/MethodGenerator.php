@@ -72,10 +72,17 @@ class MethodGenerator implements GeneratorInterface
         $name      = $data['name'];
         $arguments = $data['arguments'];
 
-        $argString = count($arguments)
-            ? '$argument'.implode(', $argument',  range(1, count($arguments)))
-            : ''
-        ;
+        $argsArray = array();
+
+        $total = count($arguments);
+        for ($i = 0; $i < $total; $i++) {
+            $argument     = $arguments[$i];
+            $argumentType = gettype($argument);
+
+            $argsArray[] = '$' . $argumentType . ($i + 1);
+        }
+
+        $argString = implode(', ', $argsArray);
 
         $values = array('%name%' => $name, '%arguments%' => $argString);
         if (!$content = $this->templates->render('method', $values)) {
