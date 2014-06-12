@@ -50,6 +50,53 @@ Feature: Developer generates a method
       }
 
       """
+  Scenario: Generating a method with more arguments and types
+    Given the spec file "spec/CodeGeneration/MethodExample2/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\MethodExample2;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_converts_plain_text_to_html_paragraphs_and_repeats_it()
+          {
+              $this->toHtml('Hi, there', 2)->shouldReturn('<p>Hi, there</p><p>Hi, there</p>');
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/MethodExample2/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\MethodExample2;
+
+      class Markdown
+      {
+      }
+
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/MethodExample2/Markdown.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\MethodExample2;
+
+      class Markdown
+      {
+
+          public function toHtml($string1, $integer2)
+          {
+              // TODO: write logic here
+          }
+      }
+
+      """
   Scenario: Generating a method in a class with psr4 prefix
     Given the spec file "spec/Behat/Tests/MyNamespace/PrefixSpec.php" contains:
     """
