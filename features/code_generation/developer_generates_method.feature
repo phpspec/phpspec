@@ -97,6 +97,71 @@ Feature: Developer generates a method
       }
 
       """
+  Scenario: Generating a method with an object as argument
+    Given the spec file "spec/CodeGeneration/MethodExample3/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\MethodExample3;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use CodeGeneration\MethodExample3\Greet;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_gets_a_greeting_and_converts_it_to_html_paragraphs(
+            Greet $greet
+          ) {
+              $greet->getGreetings()->willReturn('Hi, there');
+              $this->toHtml($greet)->shouldReturn('<p>Hi, there</p>');
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/MethodExample3/Greet.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\MethodExample3;
+
+      class Greet
+      {
+          public function getGreetings()
+          {
+            return 'Hello!';
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/MethodExample3/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\MethodExample3;
+
+      class Markdown
+      {
+      }
+
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/MethodExample3/Markdown.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\MethodExample3;
+
+      class Markdown
+      {
+
+          public function toHtml(Greet $greet1)
+          {
+              // TODO: write logic here
+          }
+      }
+
+      """
   Scenario: Generating a method in a class with psr4 prefix
     Given the spec file "spec/Behat/Tests/MyNamespace/PrefixSpec.php" contains:
     """
