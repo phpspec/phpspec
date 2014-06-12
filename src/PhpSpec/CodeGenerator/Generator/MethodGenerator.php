@@ -72,7 +72,8 @@ class MethodGenerator implements GeneratorInterface
         $name      = $data['name'];
         $arguments = $data['arguments'];
 
-        $argsArray = array();
+        $argsArray  = array();
+        $namespaces = array();
 
         $total = count($arguments);
         for ($i = 0; $i < $total; $i++) {
@@ -82,6 +83,10 @@ class MethodGenerator implements GeneratorInterface
             if ($argumentType === 'object') {
                 $className   = $this->getClassName($argument);
                 $argsArray[] = $className . ' $' . lcfirst($className) . ($i + 1);
+
+                if ($namespace = $this->getNamespace($argument)) {
+                    $namespaces[] = $namespace . '\\' . $className;
+                }
             } else {
                 $argsArray[] = '$' . $argumentType . ($i + 1);
             }
@@ -97,6 +102,34 @@ class MethodGenerator implements GeneratorInterface
         }
 
         $code = $this->filesystem->getFileContents($filepath);
+
+        $matches = array();
+        if (preg_match('/^\s*namespace\s+(?<namespace>[^;]+);\s*$/m', $code, $matches)) {
+            $fileNamespace = $matches['namespace'];
+
+            $matches = array();
+            preg_match_all('/^\s*use\s+(?<namespace>[^;]+);\s*$/m', $code, $matches);
+            $knownNamespaces = array_unique($matches['namespace']);
+
+            $missingNamespaces = array();
+            $namespaces = array_unique($namespaces);
+            foreach ($namespaces as $namespace) {
+                if (strpos($namespace, $fileNamespace . '\\') !== 0) {
+                    if (!in_array($namespace, $knownNamespaces)) {
+                        $missingNamespaces[] = $namespace;
+                    }
+                }
+            }
+
+            if (count($missingNamespaces) > 0) {
+                $namespacesString = "\n" . implode("\n", array_map(function ($namespace) {
+                    return 'use ' . $namespace . ';';
+                }, $missingNamespaces));
+
+                $code = preg_replace('/\nclass/', $namespacesString."\n\nclass", trim($code));
+            }
+        }
+
         $code = preg_replace('/}[ \n]*$/', rtrim($content) ."\n}\n", trim($code));
         $this->filesystem->putFileContents($filepath, $code);
 
