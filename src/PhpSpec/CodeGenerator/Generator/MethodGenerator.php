@@ -100,8 +100,14 @@ class MethodGenerator implements GeneratorInterface
                 case 'array':
                     $arg              = '$array' . ($i + 1);
                     $argsArray[]      = 'array ' . $arg;
-                    $phpdocArray[]    = array('type' => 'string[]', 'arg' => $arg);
-                    $phpdocTypeMaxLen = max($phpdocTypeMaxLen, strlen('string[]'));
+
+                    $realType = 'unknown';
+                    if (count($argument) > 0) {
+                        $realType = 'string';
+                    }
+
+                    $phpdocArray[]    = array('type' => $realType . '[]', 'arg' => $arg);
+                    $phpdocTypeMaxLen = max($phpdocTypeMaxLen, strlen($realType . '[]'));
                 break;
 
                 default:
