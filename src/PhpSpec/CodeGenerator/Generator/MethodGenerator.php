@@ -100,7 +100,17 @@ class MethodGenerator implements GeneratorInterface
                 case 'array':
                     $types = array();
                     foreach ($argument as $item) {
-                        $types[] = gettype($item);
+                        $itemType = gettype($item);
+                        if ($itemType === 'object') {
+                            $type = $this->getClassName($item);
+
+                            if ($namespace = $this->getNamespace($item)) {
+                                $namespaces[] = $namespace . '\\' . $type;
+                            }
+                        } else {
+                            $type = $itemType;
+                        }
+                        $types[] = $type;
                     }
                     $types = array_unique($types);
 
