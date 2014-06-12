@@ -109,8 +109,10 @@ class MethodGenerator implements GeneratorInterface
                         $realType   = 'unknown';
                     } elseif ($numOfTypes === 1) {
                         $realType = $types[0];
-                    } else {
+                    } elseif ($numOfTypes === 2) {
                         $realType = '(' . implode('|', $types) . ')';
+                    } else {
+                        $realType = 'mixed';
                     }
                     $realType .= '[]';
 
