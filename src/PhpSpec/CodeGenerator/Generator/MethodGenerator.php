@@ -76,7 +76,7 @@ class MethodGenerator implements GeneratorInterface
 
         $argsArray        = array();
         $namespaces       = array();
-        $phpdocArray      = [];
+        $phpdocArray      = array();
         $phpdocTypeMaxLen = 0;
 
         $total = count($arguments);
