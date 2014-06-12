@@ -77,9 +77,14 @@ class MethodGenerator implements GeneratorInterface
         $total = count($arguments);
         for ($i = 0; $i < $total; $i++) {
             $argument     = $arguments[$i];
-            $argumentType = gettype($argument);
 
-            $argsArray[] = '$' . $argumentType . ($i + 1);
+            $argumentType = gettype($argument);
+            if ($argumentType === 'object') {
+                $className   = $this->getClassName($argument);
+                $argsArray[] = $className . ' $' . lcfirst($className) . ($i + 1);
+            } else {
+                $argsArray[] = '$' . $argumentType . ($i + 1);
+            }
         }
 
         $argString = implode(', ', $argsArray);
@@ -99,6 +104,30 @@ class MethodGenerator implements GeneratorInterface
             "\n<info>Method <value>%s::%s()</value> has been created.</info>",
             $resource->getSrcClassname(), $name
         ), 2);
+    }
+
+    /**
+     * @param  mixed $object
+     * @return string
+     */
+    private function getClassName($object)
+    {
+        $spaces = array_slice(explode('\\', get_class($object)), 1, -1);
+        return array_slice($spaces, -1)[0];
+    }
+
+    /**
+     * @param  mixed       $object
+     * @return string|null
+     */
+    private function getNamespace($object)
+    {
+        $spaces = array_slice(explode('\\', get_class($object)), 1, -1);
+        if (count($spaces) > 1) {
+            return implode('\\', array_slice($spaces, 0, -1));
+        } else {
+            return null;
+        }
     }
 
     /**
