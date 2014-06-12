@@ -80,15 +80,23 @@ class MethodGenerator implements GeneratorInterface
             $argument     = $arguments[$i];
 
             $argumentType = gettype($argument);
-            if ($argumentType === 'object') {
-                $className   = $this->getClassName($argument);
-                $argsArray[] = $className . ' $' . lcfirst($className) . ($i + 1);
+            switch ($argumentType) {
+                case 'object':
+                    $className   = $this->getClassName($argument);
+                    $argsArray[] = $className . ' $' . lcfirst($className) . ($i + 1);
 
-                if ($namespace = $this->getNamespace($argument)) {
-                    $namespaces[] = $namespace . '\\' . $className;
-                }
-            } else {
-                $argsArray[] = '$' . $argumentType . ($i + 1);
+                    if ($namespace = $this->getNamespace($argument)) {
+                        $namespaces[] = $namespace . '\\' . $className;
+                    }
+                break;
+
+                case 'array':
+                    $argsArray[] = 'array $array' . ($i + 1);
+                break;
+
+                default:
+                    $argsArray[] = '$' . $argumentType . ($i + 1);
+                break;
             }
         }
 
