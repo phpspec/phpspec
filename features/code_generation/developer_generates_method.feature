@@ -43,7 +43,7 @@ Feature: Developer generates a method
       class Markdown
       {
 
-          public function toHtml($argument1)
+          public function toHtml($string1)
           {
               // TODO: write logic here
           }
@@ -98,7 +98,7 @@ Feature: Developer generates a method
     class Prefix
     {
 
-        public function toHtml($argument1)
+        public function toHtml($string1)
         {
             // TODO: write logic here
         }
