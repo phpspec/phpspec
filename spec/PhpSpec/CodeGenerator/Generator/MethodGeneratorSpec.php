@@ -12,6 +12,8 @@ use PhpSpec\Locator\ResourceInterface;
 
 class MethodGeneratorSpec extends ObjectBehavior
 {
+    const PHPDOC_PREFIX = "\n     * @param ";
+
     function let(IO $io, TemplateRenderer $tpl, Filesystem $fs)
     {
         $this->beConstructedWith($io, $tpl, $fs);
@@ -63,6 +65,7 @@ CODE;
         $values = array(
             '%name%'      => 'setName',
             '%arguments%' => '$string1',
+            '%phpdoc%'    => self::PHPDOC_PREFIX . 'string $string1'
         );
 
         $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');

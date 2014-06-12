@@ -23,6 +23,8 @@ use PhpSpec\Locator\ResourceInterface;
  */
 class MethodGenerator implements GeneratorInterface
 {
+    const PHPDOC_PREFIX = "\n     * @param ";
+
     /**
      * @var \PhpSpec\Console\IO
      */
@@ -72,8 +74,10 @@ class MethodGenerator implements GeneratorInterface
         $name      = $data['name'];
         $arguments = $data['arguments'];
 
-        $argsArray  = array();
-        $namespaces = array();
+        $argsArray        = array();
+        $namespaces       = array();
+        $phpdocArray      = [];
+        $phpdocTypeMaxLen = 0;
 
         $total = count($arguments);
         for ($i = 0; $i < $total; $i++) {
@@ -82,8 +86,11 @@ class MethodGenerator implements GeneratorInterface
             $argumentType = gettype($argument);
             switch ($argumentType) {
                 case 'object':
-                    $className   = $this->getClassName($argument);
-                    $argsArray[] = $className . ' $' . lcfirst($className) . ($i + 1);
+                    $className        = $this->getClassName($argument);
+                    $arg              = '$' . lcfirst($className) . ($i + 1);
+                    $argsArray[]      = $className . ' ' . $arg;
+                    $phpdocArray[]    = array('type' => $className, 'arg' => $arg);
+                    $phpdocTypeMaxLen = max($phpdocTypeMaxLen, strlen($className));
 
                     if ($namespace = $this->getNamespace($argument)) {
                         $namespaces[] = $namespace . '\\' . $className;
@@ -91,18 +98,31 @@ class MethodGenerator implements GeneratorInterface
                 break;
 
                 case 'array':
-                    $argsArray[] = 'array $array' . ($i + 1);
+                    $arg              = '$array' . ($i + 1);
+                    $argsArray[]      = 'array ' . $arg;
+                    $phpdocArray[]    = array('type' => 'string[]', 'arg' => $arg);
+                    $phpdocTypeMaxLen = max($phpdocTypeMaxLen, strlen('string[]'));
                 break;
 
                 default:
-                    $argsArray[] = '$' . $argumentType . ($i + 1);
+                    $arg              = '$' . $argumentType . ($i + 1);
+                    $argsArray[]      = $arg;
+                    $phpdocArray[]    = array('type' => $argumentType, 'arg' => $arg);
+                    $phpdocTypeMaxLen = max($phpdocTypeMaxLen, strlen($argumentType));
                 break;
             }
         }
 
         $argString = implode(', ', $argsArray);
 
-        $values = array('%name%' => $name, '%arguments%' => $argString);
+        $phpdocString = implode('', array_map(function ($phpdocChunk) use ($phpdocTypeMaxLen) {
+            return self::PHPDOC_PREFIX
+                        . str_pad($phpdocChunk['type'], $phpdocTypeMaxLen)
+                        . ' '
+                        . $phpdocChunk['arg'];
+        }, $phpdocArray));
+
+        $values = array('%name%' => $name, '%arguments%' => $argString, '%phpdoc%' => $phpdocString);
         if (!$content = $this->templates->render('method', $values)) {
             $content = $this->templates->renderString(
                 $this->getTemplate(), $values
@@ -188,6 +208,9 @@ class MethodGenerator implements GeneratorInterface
     }
 }
 __halt_compiler();
+    /**
+     * [Description for %name% function]%phpdoc%
+     */
     public function %name%(%arguments%)
     {
         // TODO: write logic here
