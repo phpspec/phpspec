@@ -98,16 +98,26 @@ class MethodGenerator implements GeneratorInterface
                 break;
 
                 case 'array':
+                    $types = array();
+                    foreach ($argument as $item) {
+                        $types[] = gettype($item);
+                    }
+                    $types = array_unique($types);
+
+                    $numOfTypes = count($types);
+                    if ($numOfTypes === 0) {
+                        $realType   = 'unknown';
+                    } elseif ($numOfTypes === 1) {
+                        $realType = $types[0];
+                    } else {
+                        $realType = '(' . implode('|', $types) . ')';
+                    }
+                    $realType .= '[]';
+
                     $arg              = '$array' . ($i + 1);
                     $argsArray[]      = 'array ' . $arg;
-
-                    $realType = 'unknown';
-                    if (count($argument) > 0) {
-                        $realType = 'string';
-                    }
-
-                    $phpdocArray[]    = array('type' => $realType . '[]', 'arg' => $arg);
-                    $phpdocTypeMaxLen = max($phpdocTypeMaxLen, strlen($realType . '[]'));
+                    $phpdocArray[]    = array('type' => $realType, 'arg' => $arg);
+                    $phpdocTypeMaxLen = max($phpdocTypeMaxLen, strlen($realType));
                 break;
 
                 default:
