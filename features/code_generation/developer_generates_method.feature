@@ -501,6 +501,77 @@ Feature: Developer generates a method
       }
 
       """
+  Scenario: Generating a method with an array containing a class from outside the current namespace
+    Given the spec file "spec/CodeGeneration/MethodExample11/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\MethodExample11;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use CodeGeneration\MethodExample12\Greet;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_gets_a_greeting_and_converts_it_to_html_paragraphs(
+            Greet $greet
+          ) {
+              $greet->getGreetings()->willReturn('Hi, there');
+              $this->toHtml(array($greet))->shouldReturn('<p>Hi, there</p>');
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/MethodExample12/Greet.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\MethodExample12;
+
+      class Greet
+      {
+          public function getGreetings()
+          {
+            return 'Hello!';
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/MethodExample11/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\MethodExample11;
+
+      class Markdown
+      {
+      }
+
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/MethodExample11/Markdown.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\MethodExample11;
+
+      use CodeGeneration\MethodExample12\Greet;
+
+      class Markdown
+      {
+
+          /**
+           * [Description for toHtml function]
+           * @param Greet[] $array1
+           */
+          public function toHtml(array $array1)
+          {
+              // TODO: write logic here
+          }
+      }
+
+      """
   Scenario: Generating a method in a class with psr4 prefix
     Given the spec file "spec/Behat/Tests/MyNamespace/PrefixSpec.php" contains:
     """
