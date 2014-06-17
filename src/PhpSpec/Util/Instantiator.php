@@ -31,6 +31,12 @@ class Instantiator
      */
     public function instantiate($className)
     {
+        if (PHP_VERSION_ID >= 50400) {
+            $reflection = new ReflectionClass($className);
+
+            return $reflection->newInstanceWithoutConstructor();
+        }
+
         return unserialize($this->createSerializedObject($className));
     }
 
