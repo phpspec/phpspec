@@ -3,8 +3,8 @@
 
 define('PHPSPEC_VERSION', '2.0.0-RC4');
 
-if (is_dir($vendor = getcwd() . '/vendor')) {
-    require $vendor . '/autoload.php';
+if (is_file($autoload = getcwd() . '/vendor/autoload.php')) {
+    require $autoload;
 }
 
 if (is_dir($vendor = __DIR__ . '/../vendor')) {
