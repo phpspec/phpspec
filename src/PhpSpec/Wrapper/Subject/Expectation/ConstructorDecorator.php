@@ -13,10 +13,11 @@
 
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
+use Instantiator\Instantiator;
+
 use Exception;
 use PhpSpec\Exception\Example\ErrorException;
 use PhpSpec\Exception\Fracture\FractureException;
-use PhpSpec\Util\Instantiator;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 
 /**

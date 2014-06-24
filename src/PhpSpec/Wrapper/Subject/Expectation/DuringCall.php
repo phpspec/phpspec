@@ -13,9 +13,10 @@
 
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
+use Instantiator\Instantiator;
+
 use PhpSpec\Exception\Example\MatcherException;
 use PhpSpec\Matcher\MatcherInterface;
-use PhpSpec\Util\Instantiator;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 
 /**
