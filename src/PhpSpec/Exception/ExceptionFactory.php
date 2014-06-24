@@ -15,7 +15,7 @@ namespace PhpSpec\Exception;
 
 use PhpSpec\Exception\Wrapper\SubjectException;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Util\Instantiator;
+use Instantiator\Instantiator;
 
 /**
  * ExceptionFactory is responsible for creating various exceptions
