@@ -18,7 +18,7 @@ use PhpSpec\Wrapper\Subject\Caller;
 use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
 use PhpSpec\Wrapper\Subject\Expectation;
 use PhpSpec\Wrapper\Subject\ExpectationFactory;
-use PhpSpec\Util\Instantiator;
+use Instantiator\Instantiator;
 
 use ArrayAccess;
 
