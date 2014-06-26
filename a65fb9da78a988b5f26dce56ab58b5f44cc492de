@@ -1,0 +1,25 @@
+---------------------------------------------------------------------------
+
+by stof at 2014-06-24T15:02:24Z
+
+@MarcelloDuarte this should be applied on master when merging as it is a bugfix
+
+---------------------------------------------------------------------------
+
+by walterdolce at 2014-06-26T13:58:06Z
+
+It looks like this way we may have two `autoload.php` files included if one of the `is_dir()` conditions will be `true` though. @mdavis1982 is that intentional?
+
+---------------------------------------------------------------------------
+
+by stof at 2014-06-26T14:17:41Z
+
+@walterdolce is it already possible, and intended. When you install phpspec in a global location, you want to load the global autoloader to autoload PhpSpec, but you also want to load the project's autoloader to autoload the specified classes.
+
+This PR does not introduce a new feature. It fixes an edge case where the existing feature is broken
+
+---------------------------------------------------------------------------
+
+by walterdolce at 2014-06-26T14:20:04Z
+
+Thanks @stof :thumbsup: . I will redirect @mdavis1982's commit to master then.
