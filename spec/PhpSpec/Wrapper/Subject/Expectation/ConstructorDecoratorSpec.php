@@ -31,7 +31,7 @@ class ConstructorDecoratorSpec extends ObjectBehavior
     function it_ignores_any_other_exception(Subject $subject, WrappedObject $wrapped)
     {
         $subject->callOnWrappedObject('getWrappedObject', array())->willThrow('\Exception');
-        $wrapped->getClassName()->willReturn('\ArrayObject');
+        $wrapped->getClassName()->willReturn('\stdClass');
         $this->shouldNotThrow('\Exception')->duringMatch('be', $subject, array(), $wrapped);
     }
 
