@@ -27,10 +27,13 @@ class ProgressFormatter extends BasicFormatter
         $counts = $stats->getCountsHash();
 
         $percents = array_map(function ($count) use ($total) {
-            return round($count / ($total / 100), 0);
+            $percent = $count / ($total / 100);
+            return $percent == 0 || $percent > 1 ? floor($percent) : 1;
         }, $counts);
         $lengths  = array_map(function ($percent) {
-            return round($percent / 2, 0);
+            $length = $percent / 2;
+            $res = $length == 0 || $length > 1 ? floor($length) : 1;
+            return $res;
         }, $percents);
 
         $size = 50;
