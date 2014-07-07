@@ -23,6 +23,8 @@ use PhpSpec\Locator\ResourceInterface;
  */
 class MethodGenerator implements GeneratorInterface
 {
+    const PHPDOC_PREFIX = "\n     * @param ";
+
     /**
      * @var \PhpSpec\Console\IO
      */
@@ -72,12 +74,83 @@ class MethodGenerator implements GeneratorInterface
         $name      = $data['name'];
         $arguments = $data['arguments'];
 
-        $argString = count($arguments)
-            ? '$argument'.implode(', $argument',  range(1, count($arguments)))
-            : ''
-        ;
+        $argsArray        = array();
+        $namespaces       = array();
+        $phpdocArray      = array();
+        $phpdocTypeMaxLen = 0;
 
-        $values = array('%name%' => $name, '%arguments%' => $argString);
+        $total = count($arguments);
+        for ($i = 0; $i < $total; $i++) {
+            $argument     = $arguments[$i];
+
+            $argumentType = gettype($argument);
+            switch ($argumentType) {
+                case 'object':
+                    $className        = $this->getClassName($argument);
+                    $arg              = '$' . lcfirst($className) . ($i + 1);
+                    $argsArray[]      = $className . ' ' . $arg;
+                    $phpdocArray[]    = array('type' => $className, 'arg' => $arg);
+                    $phpdocTypeMaxLen = max($phpdocTypeMaxLen, strlen($className));
+
+                    if ($namespace = $this->getNamespace($argument)) {
+                        $namespaces[] = $namespace . '\\' . $className;
+                    }
+                break;
+
+                case 'array':
+                    $types = array();
+                    foreach ($argument as $item) {
+                        $itemType = gettype($item);
+                        if ($itemType === 'object') {
+                            $type = $this->getClassName($item);
+
+                            if ($namespace = $this->getNamespace($item)) {
+                                $namespaces[] = $namespace . '\\' . $type;
+                            }
+                        } else {
+                            $type = $itemType;
+                        }
+                        $types[] = $type;
+                    }
+                    $types = array_unique($types);
+
+                    $numOfTypes = count($types);
+                    if ($numOfTypes === 0) {
+                        $realType   = 'unknown';
+                    } elseif ($numOfTypes === 1) {
+                        $realType = $types[0];
+                    } elseif ($numOfTypes === 2) {
+                        $realType = '(' . implode('|', $types) . ')';
+                    } else {
+                        $realType = 'mixed';
+                    }
+                    $realType .= '[]';
+
+                    $arg              = '$array' . ($i + 1);
+                    $argsArray[]      = 'array ' . $arg;
+                    $phpdocArray[]    = array('type' => $realType, 'arg' => $arg);
+                    $phpdocTypeMaxLen = max($phpdocTypeMaxLen, strlen($realType));
+                break;
+
+                default:
+                    $arg              = '$' . $argumentType . ($i + 1);
+                    $argsArray[]      = $arg;
+                    $phpdocArray[]    = array('type' => $argumentType, 'arg' => $arg);
+                    $phpdocTypeMaxLen = max($phpdocTypeMaxLen, strlen($argumentType));
+                break;
+            }
+        }
+
+        $argString = implode(', ', $argsArray);
+
+        $phpdocString = implode('', array_map(function ($phpdocChunk) use ($phpdocTypeMaxLen) {
+            return self::PHPDOC_PREFIX
+                        . str_pad($phpdocChunk['type'], $phpdocTypeMaxLen)
+                        . ' '
+                        . $phpdocChunk['arg'];
+        }, $phpdocArray));
+
+        $values = array('%name%' => $name, '%arguments%' => $argString, '%phpdoc%' => $phpdocString);
         if (!$content = $this->templates->render('method', $values)) {
             $content = $this->templates->renderString(
                 $this->getTemplate(), $values
@@ -85,6 +158,34 @@ class MethodGenerator implements GeneratorInterface
         }
 
         $code = $this->filesystem->getFileContents($filepath);
+
+        $matches = array();
+        if (preg_match('/^\s*namespace\s+(?<namespace>[^;]+);\s*$/m', $code, $matches)) {
+            $fileNamespace = $matches['namespace'];
+
+            $matches = array();
+            preg_match_all('/^\s*use\s+(?<namespace>[^;]+);\s*$/m', $code, $matches);
+            $knownNamespaces = array_unique($matches['namespace']);
+
+            $missingNamespaces = array();
+            $namespaces = array_unique($namespaces);
+            foreach ($namespaces as $namespace) {
+                if (strpos($namespace, $fileNamespace . '\\') !== 0) {
+                    if (!in_array($namespace, $knownNamespaces)) {
+                        $missingNamespaces[] = $namespace;
+                    }
+                }
+            }
+
+            if (count($missingNamespaces) > 0) {
+                $namespacesString = "\n" . implode("\n", array_map(function ($namespace) {
+                    return 'use ' . $namespace . ';';
+                }, $missingNamespaces));
+
+                $code = preg_replace('/\nclass/', $namespacesString."\n\nclass", trim($code));
+            }
+        }
+
         $code = preg_replace('/}[ \n]*$/', rtrim($content) ."\n}\n", trim($code));
         $this->filesystem->putFileContents($filepath, $code);
 
@@ -92,6 +193,30 @@ class MethodGenerator implements GeneratorInterface
             "\n<info>Method <value>%s::%s()</value> has been created.</info>",
             $resource->getSrcClassname(), $name
         ), 2);
+    }
+
+    /**
+     * @param  mixed $object
+     * @return string
+     */
+    private function getClassName($object)
+    {
+        $spaces = array_slice(explode('\\', get_class($object)), 1, -1);
+        return array_slice($spaces, -1)[0];
+    }
+
+    /**
+     * @param  mixed       $object
+     * @return string|null
+     */
+    private function getNamespace($object)
+    {
+        $spaces = array_slice(explode('\\', get_class($object)), 1, -1);
+        if (count($spaces) > 1) {
+            return implode('\\', array_slice($spaces, 0, -1));
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -111,6 +236,9 @@ class MethodGenerator implements GeneratorInterface
     }
 }
 __halt_compiler();
+    /**
+     * [Description for %name% function]%phpdoc%
+     */
     public function %name%(%arguments%)
     {
         // TODO: write logic here
