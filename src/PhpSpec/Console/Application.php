@@ -79,6 +79,8 @@ class Application extends BaseApplication
         foreach ($this->container->getByPrefix('console.commands') as $command) {
             $this->add($command);
         }
+
+        $this->addEventsToDispatcher();
         
         return parent::doRun($input, $output);
     }
@@ -161,14 +163,7 @@ class Application extends BaseApplication
     protected function setupEventDispatcher(ServiceContainer $container)
     {
         $container->setShared('event_dispatcher', function ($c) {
-            $dispatcher = new EventDispatcher;
-
-            array_map(
-                array($dispatcher, 'addSubscriber'),
-                $c->getByPrefix('event_dispatcher.listeners')
-            );
-
-            return $dispatcher;
+            return new EventDispatcher;
         });
 
         $container->setShared('event_dispatcher.listeners.stats', function ($c) {
@@ -492,5 +487,14 @@ class Application extends BaseApplication
         }
 
         return array();
+    }
+
+    protected function addEventsToDispatcher()
+    {
+        $dispatcher = $this->container->get('event_dispatcher');
+        array_map(
+            array($dispatcher, 'addSubscriber'),
+            $this->container->getByPrefix('event_dispatcher.listeners')
+        );
     }
 }
