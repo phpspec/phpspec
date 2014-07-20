@@ -133,6 +133,8 @@ class Application extends BaseApplication
         $this->setupCommands($container);
 
         $this->loadConfigurationFile($container);
+
+        $container->configure();
     }
 
     protected function setupIO(ServiceContainer $container)
