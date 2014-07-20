@@ -70,6 +70,7 @@ class Application extends BaseApplication
      */
     public function doRun(InputInterface $input, OutputInterface $output)
     {
+        var_dump('do run');
         $this->container->set('console.input', $input);
         $this->container->set('console.output', $output);
         $this->container->set('console.helpers', $this->getHelperSet());
@@ -79,8 +80,6 @@ class Application extends BaseApplication
         foreach ($this->container->getByPrefix('console.commands') as $command) {
             $this->add($command);
         }
-
-        $this->addEventsToDispatcher();
         
         return parent::doRun($input, $output);
     }
@@ -133,8 +132,6 @@ class Application extends BaseApplication
         $this->setupCommands($container);
 
         $this->loadConfigurationFile($container);
-
-        $container->configure();
     }
 
     protected function setupIO(ServiceContainer $container)
@@ -368,7 +365,7 @@ class Application extends BaseApplication
             } catch (\InvalidArgumentException $e) {
                 throw new RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
             }
-
+var_dump('add formatter listener');
             $c->set('event_dispatcher.listeners.formatter', $formatter);
         });
     }
@@ -491,8 +488,10 @@ class Application extends BaseApplication
         return array();
     }
 
-    protected function addEventsToDispatcher()
+    public function configure()
     {
+        $this->container->configure();
+
         $dispatcher = $this->container->get('event_dispatcher');
         array_map(
             array($dispatcher, 'addSubscriber'),
