@@ -21,7 +21,7 @@ class IOSpec extends ObjectBehavior
         $this->shouldHaveType('PhpSpec\IO\IOInterface');
     }
 
-    function it_is_not_code_generation_ready_if_no_input_options_say_otherwise($input)
+    function it_is_code_generation_ready_if_no_input_options_say_otherwise($input)
     {
         $input->getOption('no-code-generation')->willReturn(false);
         $input->isInteractive()->willReturn(true);
