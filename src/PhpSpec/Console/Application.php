@@ -79,8 +79,10 @@ class Application extends BaseApplication
         foreach ($this->container->getByPrefix('console.commands') as $command) {
             $this->add($command);
         }
-        
-        return parent::doRun($input, $output);
+
+        return $this->container->get('console.result_converter')->convert(
+            parent::doRun($input, $output)
+        );
     }
 
     /**
@@ -129,6 +131,7 @@ class Application extends BaseApplication
         $this->setupFormatter($container);
         $this->setupRunner($container);
         $this->setupCommands($container);
+        $this->setupResultConverter($container);
 
         $this->loadConfigurationFile($container);
     }
@@ -141,6 +144,13 @@ class Application extends BaseApplication
                 $c->get('console.output'),
                 $c->get('console.helpers')
             );
+        });
+    }
+
+    protected function setupResultConverter(ServiceContainer $container)
+    {
+        $container->setShared('console.result_converter', function ($c) {
+            return new ResultConverter;
         });
     }
 
