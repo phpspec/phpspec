@@ -29,7 +29,8 @@ class SuiteSpec extends ObjectBehavior
         $this->addSpecification($spec);
         $this->addSpecification($spec);
 
-        $spec->count()->willReturn(5);
+        $spec->count(Argument::any())->willReturn(5);
+
         $this->count()->shouldReturn(15);
     }
 }
