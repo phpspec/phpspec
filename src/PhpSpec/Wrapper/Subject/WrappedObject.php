@@ -115,7 +115,8 @@ class WrappedObject
         }
 
         $this->factoryMethod = $factoryMethod;
-        $this->arguments = $arguments;
+        $unwrapper           = new Unwrapper;
+        $this->arguments     = $unwrapper->unwrapAll($arguments);
     }
 
     /**
