@@ -81,7 +81,7 @@ class PhpSpecContext extends BehatContext
     }
 
     /**
-     * @Given /^(?:|the )(?:spec |class )file "(?P<file>[^"]+)" contains:$/
+     * @Given /^(?:|the )(?:spec |class )?file "(?P<file>[^"]+)" contains:$/
      */
     public function theFileContains($file, PyStringNode $string)
     {
@@ -136,6 +136,17 @@ class PhpSpecContext extends BehatContext
 
         expect($stats['examples'] > 0)->toBe(true);
         expect($stats['examples'])->toBe($stats['passed']);
+    }
+
+    /**
+     * @Then /^(?:|the )suite should fail$/
+     */
+    public function theSuiteShouldFail()
+    {
+        $stats = $this->getRunStats();
+
+        expect($stats['examples'] > 1)->toBe(true);
+        expect($stats['examples'])->toBe($stats['failed']);
     }
 
     /**
