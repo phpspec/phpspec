@@ -235,6 +235,10 @@ class Caller
      */
     private function instantiateWrappedObject()
     {
+        if ($this->wrappedObject->getFactoryMethod()) {
+            return $this->newInstanceWithFactoryMethod();
+        }
+
         $reflection = new ReflectionClass($this->wrappedObject->getClassName());
 
         if (count($this->wrappedObject->getArguments())) {
@@ -296,6 +300,17 @@ class Caller
             }
             throw $e;
         }
+    }
+
+    /**
+     * @return object
+     */
+    private function newInstanceWithFactoryMethod()
+    {
+        return call_user_func_array(
+            $this->wrappedObject->getFactoryMethod(),
+            $this->wrappedObject->getArguments()
+        );
     }
 
     /**
