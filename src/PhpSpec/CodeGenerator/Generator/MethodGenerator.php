@@ -85,7 +85,14 @@ class MethodGenerator implements GeneratorInterface
         }
 
         $code = $this->filesystem->getFileContents($filepath);
-        $code = preg_replace('/}[ \n]*$/', rtrim($content) ."\n}\n", trim($code));
+
+        if (7 >= substr_count($code, "\n")) {
+            $contentInsert = "    " . trim($content);
+        } else {
+            $contentInsert = rtrim($content);
+        }
+        $code = preg_replace('/}[ \n]*$/', $contentInsert . "\n}\n", trim($code));
+
         $this->filesystem->putFileContents($filepath, $code);
 
         $this->io->writeln(sprintf(

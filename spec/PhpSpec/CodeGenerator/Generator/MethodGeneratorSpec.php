@@ -56,7 +56,7 @@ namespace Acme;
 
 class App
 {
-METHOD
+    METHOD
 }
 
 CODE;
