@@ -41,6 +41,7 @@ class JUnitFormatter extends BasicFormatter
     protected $jUnitStatuses = array(
         ExampleEvent::PASSED  => 'passed',
         ExampleEvent::PENDING => 'pending',
+        ExampleEvent::SKIPPED => 'skipped',
         ExampleEvent::FAILED  => 'failed',
         ExampleEvent::BROKEN  => 'broken',
     );
@@ -49,6 +50,7 @@ class JUnitFormatter extends BasicFormatter
     protected $resultTags = array(
         ExampleEvent::FAILED  => 'failure',
         ExampleEvent::BROKEN  => 'error',
+        ExampleEvent::SKIPPED => 'skipped',
     );
 
     public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
@@ -149,6 +151,13 @@ class JUnitFormatter extends BasicFormatter
                 htmlspecialchars($exception->getMessage()),
                 $exception->getTraceAsString()
             );
+        } elseif (ExampleEvent::SKIPPED === $event->getResult()) {
+            $testCaseNode .= sprintf(
+                '>' . "\n" .
+                    '\<skipped><![CDATA[ %s ]]>\</skipped>' . "\n" .
+                '</testcase>',
+                htmlspecialchars($event->getException()->getMessage())
+            );
         } else {
             $testCaseNode .= ' />';
         }
@@ -170,7 +179,7 @@ class JUnitFormatter extends BasicFormatter
             count($this->testCaseNodes),
             $this->exampleStatusCounts[ExampleEvent::FAILED],
             $this->exampleStatusCounts[ExampleEvent::BROKEN],
-            $this->exampleStatusCounts[ExampleEvent::PENDING],
+            $this->exampleStatusCounts[ExampleEvent::PENDING] + $this->exampleStatusCounts[ExampleEvent::SKIPPED],
             implode("\n", $this->testCaseNodes)
         );
 
@@ -206,6 +215,7 @@ class JUnitFormatter extends BasicFormatter
         $this->exampleStatusCounts = array(
             ExampleEvent::PASSED  => 0,
             ExampleEvent::PENDING => 0,
+            ExampleEvent::SKIPPED => 0,
             ExampleEvent::FAILED  => 0,
             ExampleEvent::BROKEN  => 0,
         );

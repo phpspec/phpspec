@@ -89,6 +89,9 @@ class ExampleRunner
         } catch (ExampleException\PendingException $e) {
             $status    = ExampleEvent::PENDING;
             $exception = $e;
+        } catch (ExampleException\SkippingException $e) {
+            $status    = ExampleEvent::SKIPPED;
+            $exception = $e;
         } catch (ProphecyException\Prediction\PredictionException $e) {
             $status    = ExampleEvent::FAILED;
             $exception = $e;

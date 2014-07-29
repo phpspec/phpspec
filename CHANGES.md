@@ -1,5 +1,11 @@
-2.0.0-stable
-============
+2.0.1 / 2014-07-01
+==================
+
+  * Fixed the loading of the autoloader for projects using a custom composer vendor folder
+
+2.0.0 / 2014-03-19
+==================
+
   * Improve support to windows
   * Improve support to hhvm
   * Improve acceptance tests coverage with Behat

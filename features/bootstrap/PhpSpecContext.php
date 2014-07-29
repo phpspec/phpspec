@@ -96,6 +96,14 @@ class PhpSpecContext extends BehatContext
     }
 
     /**
+     * @Given /^the config file contains:$/
+     */
+    public function theConfigFileContains(PyStringNode $string)
+    {
+        file_put_contents('phpspec.yml', $string->getRaw());
+    }
+
+    /**
      * @Then /^(?:|a )new spec should be generated in (?:|the )"(?P<file>[^"]*Spec.php)":$/
      * @Then /^(?:|a )new class should be generated in (?:|the )"(?P<file>[^"]+)":$/
      * @Then /^(?:|the )class in (?:|the )"(?P<file>[^"]+)" should contain:$/
@@ -135,7 +143,18 @@ class PhpSpecContext extends BehatContext
         $stats = $this->getRunStats();
 
         expect($stats['examples'] > 0)->toBe(true);
-        expect($stats['examples'])->toBe($stats['passed']);
+        expect($stats['examples'])->toBe($stats['passed'] + $stats['skipped']);
+        expect($this->applicationTester->getStatusCode())->toBe(0);
+    }
+
+    /**
+     * @Then /^(\d+) examples? should have been skipped$/
+     */
+    public function exampleShouldHaveBeenSkipped($count)
+    {
+        $stats = $this->getRunStats();
+
+        expect($stats['skipped'])->toBe(intval($count));
     }
 
     /**
@@ -153,6 +172,7 @@ class PhpSpecContext extends BehatContext
             '(?P<examples>\d+) examples?.*'.
             '\('.
             '(?:(?P<passed>\d+) passed)?.*?'.
+            '(?:(?P<skipped>\d+) skipped)?.*?'.
             '(?:(?P<broken>\d+) broken)?.*?'.
             '(?:(?P<failed>\d+) failed)?'.
             '\)'.
@@ -165,6 +185,7 @@ class PhpSpecContext extends BehatContext
         return array(
             'examples' => (int) $matches['examples'],
             'passed' => isset($matches['passed']) ? (int) $matches['passed'] : 0,
+            'skipped' => isset($matches['skipped']) ? (int) $matches['skipped'] : 0,
             'broken' => isset($matches['broken']) ? (int) $matches['broken'] : 0,
             'failed' => isset($matches['failed']) ? (int) $matches['failed'] : 0,
         );

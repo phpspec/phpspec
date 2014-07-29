@@ -1,10 +1,10 @@
 #!/usr/bin/env php
 <?php
 
-define('PHPSPEC_VERSION', '2.0.0-RC4');
+define('PHPSPEC_VERSION', '2.1-dev');
 
-if (is_dir($vendor = getcwd() . '/vendor')) {
-    require $vendor . '/autoload.php';
+if (is_file($autoload = getcwd() . '/vendor/autoload.php')) {
+    require $autoload;
 }
 
 if (is_dir($vendor = __DIR__ . '/../vendor')) {
@@ -14,7 +14,7 @@ if (is_dir($vendor = __DIR__ . '/../vendor')) {
 } else {
     die(
         'You must set up the project dependencies, run the following commands:' . PHP_EOL .
-        'curl -s http://getcomposer.org/installer | php' . PHP_EOL . 
+        'curl -s http://getcomposer.org/installer | php' . PHP_EOL .
         'php composer.phar install' . PHP_EOL
     );
 }

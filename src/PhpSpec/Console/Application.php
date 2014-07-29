@@ -79,8 +79,10 @@ class Application extends BaseApplication
         foreach ($this->container->getByPrefix('console.commands') as $command) {
             $this->add($command);
         }
-        
-        return parent::doRun($input, $output);
+
+        return $this->container->get('console.result_converter')->convert(
+            parent::doRun($input, $output)
+        );
     }
 
     /**
@@ -129,6 +131,7 @@ class Application extends BaseApplication
         $this->setupFormatter($container);
         $this->setupRunner($container);
         $this->setupCommands($container);
+        $this->setupResultConverter($container);
 
         $this->loadConfigurationFile($container);
     }
@@ -141,6 +144,13 @@ class Application extends BaseApplication
                 $c->get('console.output'),
                 $c->get('console.helpers')
             );
+        });
+    }
+
+    protected function setupResultConverter(ServiceContainer $container)
+    {
+        $container->setShared('console.result_converter', function ($c) {
+            return new ResultConverter;
         });
     }
 
@@ -302,6 +312,7 @@ class Application extends BaseApplication
                 $specPrefix = isset($suite['spec_prefix']) ? $suite['spec_prefix'] : 'spec';
                 $srcPath    = isset($suite['src_path']) ? $suite['src_path'] : 'src';
                 $specPath   = isset($suite['spec_path']) ? $suite['spec_path'] : '.';
+                $psr4prefix   = isset($suite['psr4_prefix']) ? $suite['psr4_prefix'] : null;
 
                 if (!is_dir($srcPath)) {
                     mkdir($srcPath, 0777, true);
@@ -311,8 +322,8 @@ class Application extends BaseApplication
                 }
 
                 $c->set(sprintf('locator.locators.%s_suite', $name),
-                    function ($c) use ($srcNS, $specPrefix, $srcPath, $specPath) {
-                        return new Locator\PSR0\PSR0Locator($srcNS, $specPrefix, $srcPath, $specPath);
+                    function ($c) use ($srcNS, $specPrefix, $srcPath, $specPath, $psr4prefix) {
+                        return new Locator\PSR0\PSR0Locator($srcNS, $specPrefix, $srcPath, $specPath, null, $psr4prefix);
                     }
                 );
             }

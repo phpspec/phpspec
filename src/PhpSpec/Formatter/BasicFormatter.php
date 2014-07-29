@@ -22,6 +22,7 @@ use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\PendingException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use PhpSpec\Exception\Example\SkippingException;
 
 /**
  * Class BasicFormatter
@@ -110,6 +111,18 @@ abstract class BasicFormatter implements EventSubscriberInterface
                 $event->getExample()->getTitle()
             ));
             $this->io->writeln(sprintf('<pending>%s</pending>', lcfirst($message)), 6);
+            $this->io->writeln();
+        } elseif ($exception instanceof SkippingException) {
+            if ($this->io->isVerbose()) {
+                $this->io->writeln(sprintf('<skipped-bg>%s</skipped-bg>', $title));
+                $this->io->writeln(sprintf(
+                    '<lineno>%4d</lineno>  <skipped>? %s</skipped>',
+                    $event->getExample()->getFunctionReflection()->getStartLine(),
+                    $event->getExample()->getTitle()
+                ));
+                $this->io->writeln(sprintf('<skipped>%s</skipped>', lcfirst($message)), 6);
+                $this->io->writeln();
+            }
         } elseif (ExampleEvent::FAILED === $event->getResult()) {
             $this->io->writeln(sprintf('<failed-bg>%s</failed-bg>', $title));
             $this->io->writeln(sprintf(
@@ -118,6 +131,7 @@ abstract class BasicFormatter implements EventSubscriberInterface
                 $event->getExample()->getTitle()
             ));
             $this->io->writeln(sprintf('<failed>%s</failed>', lcfirst($message)), 6);
+            $this->io->writeln();
         } else {
             $this->io->writeln(sprintf('<broken-bg>%s</broken-bg>', $title));
             $this->io->writeln(sprintf(
@@ -126,9 +140,8 @@ abstract class BasicFormatter implements EventSubscriberInterface
                 $event->getExample()->getTitle()
             ));
             $this->io->writeln(sprintf('<broken>%s</broken>', lcfirst($message)), 6);
+            $this->io->writeln();
         }
-
-        $this->io->writeln();
     }
 
     /**

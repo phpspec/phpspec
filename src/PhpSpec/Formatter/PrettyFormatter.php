@@ -72,6 +72,9 @@ class PrettyFormatter implements EventSubscriberInterface
             case ExampleEvent::PENDING:
                 $this->io->write(sprintf('<pending>- %s</pending>', $title), $depth - 1);
                 break;
+            case ExampleEvent::SKIPPED:
+                $this->io->write(sprintf('<skipped>? %s</skipped>', $title), $depth - 1);
+                break;
             case ExampleEvent::FAILED:
                 $this->io->write(sprintf('<failed>✘ %s</failed>', $title), $depth - 1);
                 break;
@@ -91,7 +94,8 @@ class PrettyFormatter implements EventSubscriberInterface
 
         foreach (array(
             'failed' => $this->stats->getFailedEvents(),
-            'broken' => $this->stats->getBrokenEvents()
+            'broken' => $this->stats->getBrokenEvents(),
+            'skipped' => $this->stats->getSkippedEvents(),
         ) as $status => $events) {
             if (!count($events)) {
                 continue;
@@ -147,6 +151,8 @@ class PrettyFormatter implements EventSubscriberInterface
             $this->io->writeln(sprintf('<failed>%s</failed>', lcfirst($message)), $depth);
         } elseif (ExampleEvent::PENDING === $event->getResult()) {
             $this->io->writeln(sprintf('<pending>%s</pending>', lcfirst($message)), $depth);
+        } elseif (ExampleEvent::SKIPPED === $event->getResult()) {
+            $this->io->writeln(sprintf('<skipped>%s</skipped>', lcfirst($message)), $depth);
         } else {
             $this->io->writeln(sprintf('<broken>%s</broken>', lcfirst($message)), $depth);
         }
