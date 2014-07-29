@@ -2,3 +2,4 @@
 *.phar
 vendor
 composer.lock
+docs/_build
