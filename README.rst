@@ -1,4 +1,4 @@
-phpSpec
+phpspec
 =======
 .. image:: https://secure.travis-ci.org/phpspec/phpspec.png?branch=master
    :target: http://travis-ci.org/phpspec/phpspec
