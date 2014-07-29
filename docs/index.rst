@@ -5,8 +5,6 @@
 
 .. include:: ./../README.rst
 
-Welcome to phpSpec's documentation!
-===================================
 
 Contents:
 
