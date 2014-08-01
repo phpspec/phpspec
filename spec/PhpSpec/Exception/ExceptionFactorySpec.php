@@ -16,10 +16,10 @@ class ExceptionFactorySpec extends ObjectBehavior
     {
         $this->beConstructedWith($presenter);
         $this->fixture = new \stdClass;
-        $this->fixture->subject   = new \ArrayObject;
+        $this->fixture->subject   = new \stdClass;
         $this->fixture->method    = 'foo';
         $this->fixture->arguments = array('bar');
-        $this->fixture->classname = '\ArrayObject';
+        $this->fixture->classname = '\stdClass';
         $this->fixture->property = 'zoo';
     }
 
@@ -28,7 +28,7 @@ class ExceptionFactorySpec extends ObjectBehavior
         $presenter->presentString("{$this->fixture->classname}::{$this->fixture->method}")
             ->shouldBeCalled()
             ->willReturn("\"{$this->fixture->classname}::{$this->fixture->method}\"");
-        $this->fixture->message = 'Method "\ArrayObject::foo" not found.';
+        $this->fixture->message = 'Method "\stdClass::foo" not found.';
         $this->createdException = $this->methodNotFound(
             $this->fixture->classname,
             $this->fixture->method,
@@ -43,7 +43,7 @@ class ExceptionFactorySpec extends ObjectBehavior
         $presenter->presentString("{$this->fixture->classname}::{$this->fixture->method}")
             ->shouldBeCalled()
             ->willReturn("\"{$this->fixture->classname}::{$this->fixture->method}\"");
-        $this->fixture->message = 'Method "\ArrayObject::foo" not visible.';
+        $this->fixture->message = 'Method "\stdClass::foo" not visible.';
 
         $this->createdException = $this->methodNotVisible(
             $this->fixture->classname,
@@ -59,7 +59,7 @@ class ExceptionFactorySpec extends ObjectBehavior
         $presenter->presentString("{$this->fixture->classname}")
             ->shouldBeCalled()
             ->willReturn("\"{$this->fixture->classname}\"");
-        $this->fixture->message = 'Class "\ArrayObject" does not exist.';
+        $this->fixture->message = 'Class "\stdClass" does not exist.';
         $this->createdException = $this->classNotFound(
             $this->fixture->classname
         );
