@@ -130,3 +130,53 @@ Feature: Developer runs the specs
       """
     When I run phpspec
     Then I should see "Letgo is called"
+
+    @issue389
+  Scenario: Class is initialized using a static factory method and a collaborator as argument
+    Given the spec file "spec/Runner/SpecExample5/ClassWithStaticFactoryMethodSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Runner\SpecExample5;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class ClassWithStaticFactoryMethodSpec extends ObjectBehavior
+      {
+          function let(\DateTime $date)
+          {
+              $this->beConstructedThrough('getInstance', array($date));
+          }
+
+          function it_is_initializable()
+          {
+              $this->shouldHaveType('Runner\SpecExample5\ClassWithStaticFactoryMethod');
+          }
+      }
+
+      """
+    And the class file "src/Runner/SpecExample5/ClassWithStaticFactoryMethod.php" contains:
+      """
+      <?php
+
+      namespace Runner\SpecExample5;
+
+      class ClassWithStaticFactoryMethod
+      {
+          private $date;
+
+          public static function getInstance(\DateTime $date)
+          {
+              return new ClassWithStaticFactoryMethod($date);
+          }
+
+          private function __construct(\DateTime $date)
+          {
+              $this->date = $date;
+          }
+      }
+
+      """
+    When I run phpspec
+    Then the suite should pass
