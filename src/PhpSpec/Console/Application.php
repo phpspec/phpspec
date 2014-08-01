@@ -18,7 +18,6 @@ use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -32,8 +31,6 @@ use PhpSpec\Locator;
 use PhpSpec\Runner;
 use PhpSpec\CodeGenerator;
 use PhpSpec\Wrapper;
-
-use RuntimeException;
 
 /**
  * The command line application entry point
@@ -490,7 +487,7 @@ class Application extends BaseApplication
         $input = new ArgvInput();
         if ($customPath = $input->getParameterOption(array('-c','--config'))) {
             if (!file_exists($customPath)) {
-                throw new FileNotFoundException('Custom configuration file not found at '.$customPath);
+                throw new \RuntimeException('Custom configuration file not found at '.$customPath);
             }
             $paths = array($customPath);
         }
