@@ -105,3 +105,59 @@ Feature: Developer generates a method
     }
 
     """
+
+  Scenario: Generating a static constructor method
+    Given the spec file "spec/CodeGeneration/StaticConstructor/UserSpec.php" contains:
+    """
+    <?php
+
+    namespace spec\CodeGeneration\StaticConstructor;
+
+    use PhpSpec\ObjectBehavior;
+    use Prophecy\Argument;
+
+    class UserSpec extends ObjectBehavior
+    {
+        function it_registers_a_user()
+        {
+            $this->beConstructedThrough('register', ['firstname', 'lastname']);
+            $this->getFirstname()->shouldBe('firstname');
+        }
+    }
+
+    """
+    And the class file "src/CodeGeneration/StaticConstructor/User.php" contains:
+    """
+    <?php
+
+    namespace CodeGeneration\StaticConstructor;
+
+    class User
+    {
+    }
+
+    """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/StaticConstructor/User.php" should contain:
+    """
+    <?php
+
+    namespace CodeGeneration\StaticConstructor;
+
+    class User
+    {
+        private function __construct()
+        {
+        }
+
+        public static function register($argument1, $argument2)
+        {
+            $user = new User();
+
+            // TODO: write logic here
+
+            return $user;
+        }
+    }
+
+    """
