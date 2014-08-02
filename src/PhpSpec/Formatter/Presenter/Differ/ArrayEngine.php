@@ -58,7 +58,7 @@ class ArrayEngine extends StringEngine
                     }
 
                     $lines = explode(PHP_EOL, $val);
-                    $val = sprintf('"%s"...', substr($lines[0], 0, 25));
+                    $val = sprintf('"%s..."', substr($lines[0], 0, 25));
 
                     $line = sprintf('%s => %s,', $key, $val);
                     break;
