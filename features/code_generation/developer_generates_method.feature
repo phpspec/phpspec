@@ -106,12 +106,12 @@ Feature: Developer generates a method
 
     """
 
-  Scenario: Generating a static constructor method
-    Given the spec file "spec/CodeGeneration/StaticConstructor/UserSpec.php" contains:
+  Scenario: Generating a named constructor
+    Given the spec file "spec/CodeGeneration/NamedConstructor/UserSpec.php" contains:
     """
     <?php
 
-    namespace spec\CodeGeneration\StaticConstructor;
+    namespace spec\CodeGeneration\NamedConstructor;
 
     use PhpSpec\ObjectBehavior;
     use Prophecy\Argument;
@@ -126,11 +126,11 @@ Feature: Developer generates a method
     }
 
     """
-    And the class file "src/CodeGeneration/StaticConstructor/User.php" contains:
+    And the class file "src/CodeGeneration/NamedConstructor/User.php" contains:
     """
     <?php
 
-    namespace CodeGeneration\StaticConstructor;
+    namespace CodeGeneration\NamedConstructor;
 
     class User
     {
@@ -138,11 +138,11 @@ Feature: Developer generates a method
 
     """
     When I run phpspec and answer "y" when asked if I want to generate the code
-    Then the class in "src/CodeGeneration/StaticConstructor/User.php" should contain:
+    Then the class in "src/CodeGeneration/NamedConstructor/User.php" should contain:
     """
     <?php
 
-    namespace CodeGeneration\StaticConstructor;
+    namespace CodeGeneration\NamedConstructor;
 
     class User
     {
