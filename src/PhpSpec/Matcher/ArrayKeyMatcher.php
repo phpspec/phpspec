@@ -61,7 +61,13 @@ class ArrayKeyMatcher extends BasicMatcher
      */
     protected function matches($subject, array $arguments)
     {
-        return isset($subject[$arguments[0]]) || array_key_exists($arguments[0], $subject);
+        $key = $arguments[0];
+
+        if ($subject instanceof ArrayAccess) {
+            return $subject->offsetExists($key);
+        }
+
+        return isset($subject[$key]) || array_key_exists($arguments[0], $subject);
     }
 
     /**
