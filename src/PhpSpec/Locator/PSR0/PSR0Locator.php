@@ -260,6 +260,37 @@ class PSR0Locator implements ResourceLocatorInterface
         return $resources;
     }
 
+    private function findSpecClassname($path)
+    {
+        // Find namespace and class name
+        $namespace = '';
+        $content   = $this->filesystem->getFileContents($path);
+        $tokens    = token_get_all($content);
+
+        for ($i=0; $i<count($tokens); $i++) {
+            if ($tokens[$i][0] === T_NAMESPACE) {
+                for ($j=$i+1; $j<count($tokens); $j++) {
+                    if ($tokens[$j][0] === T_STRING) {
+                         $namespace .= $tokens[$j][1].'\\';
+                    } elseif ($tokens[$j] === '{' || $tokens[$j] === ';') {
+                         break;
+                    }
+                }
+            }
+
+            if ($tokens[$i][0] === T_CLASS) {
+                for ($j=$i+1; $j<count($tokens); $j++) {
+                    if ($tokens[$j] === '{') {
+                        return $namespace.$tokens[$i+2][1];
+                    }
+                }
+            }
+        }
+
+        // No class found
+        return null;
+    }
+
     /**
      * @param string $path
      *
@@ -267,11 +298,29 @@ class PSR0Locator implements ResourceLocatorInterface
      */
     private function createResourceFromSpecFile($path)
     {
-        // cut "Spec.php" from the end
-        $relative = substr($path, strlen($this->fullSpecPath), -4);
-        $relative = preg_replace('/Spec$/', '', $relative);
+        $classname = $this->findSpecClassname($path);
 
-        return new PSR0Resource(explode(DIRECTORY_SEPARATOR, $relative), $this);
+        if (null === $classname) {
+            throw new \RuntimeException('Spec file does not contains any class definition.');
+        }
+
+        // Remove spec namespace from the begining of the classname.
+        $specNamespace = trim($this->getSpecNamespace(), '\\').'\\';
+
+        if (0 !== strpos($classname, $specNamespace)) {
+            throw new \RuntimeException(sprintf(
+                'Spec class must be in the base spec namespace `%s`.',
+                $this->getSpecNamespace()
+            ));
+        }
+
+        $classname = substr($classname, strlen($specNamespace));
+
+        // cut "Spec" from the end
+        $classname = preg_replace('/Spec$/', '', $classname);
+
+        // Create the resource
+        return new PSR0Resource(explode('\\', $classname), $this);
     }
 
     private function validatePsr0Classname($classname)
