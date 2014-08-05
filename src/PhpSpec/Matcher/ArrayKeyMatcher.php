@@ -61,7 +61,7 @@ class ArrayKeyMatcher extends BasicMatcher
      */
     protected function matches($subject, array $arguments)
     {
-        return isset($subject[$arguments[0]]) || array_key_exists($arguments[0], $subject);
+        return array_key_exists($arguments[0], $subject) || isset($subject[$arguments[0]]);
     }
 
     /**
