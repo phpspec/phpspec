@@ -83,7 +83,7 @@ class StringPresenter implements PresenterInterface
 
                 $lines = explode("\n", $value);
 
-                return $this->presentString(sprintf('"%s"...', substr($lines[0], 0, 25)));
+                return $this->presentString(sprintf('"%s..."', substr($lines[0], 0, 25)));
             default:
                 return $this->presentString(sprintf('[%s:%s]', $type, $value));
         }

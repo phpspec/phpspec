@@ -20,12 +20,12 @@ class StringPresenterSpec extends ObjectBehavior
     function it_presents_long_string_in_quotes_but_trimmed()
     {
         $this->presentValue('some_string_longer_than_twenty_five_chars')
-            ->shouldReturn('"some_string_longer_than_t"...');
+            ->shouldReturn('"some_string_longer_than_t..."');
     }
 
     function it_presents_only_first_line_of_multiline_string()
     {
-        $this->presentValue("some\nmultiline\nvalue")->shouldReturn('"some"...');
+        $this->presentValue("some\nmultiline\nvalue")->shouldReturn('"some..."');
     }
 
     function it_presents_simple_type_as_typed_value()
