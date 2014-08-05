@@ -52,6 +52,33 @@ class PhpSpecContext extends BehatContext
     }
 
     /**
+     * @When /^(?:|I )run phpspec interactively$/
+     */
+    public function iRunPhpspecInteractively()
+    {
+        $this->applicationTester = $this->createApplicationTester();
+        $this->applicationTester->run('run', array('interactive' => true, 'decorated' => false));
+    }
+
+    /**
+     * @When /^(?:|I )run phpspec interactively with the "([^"]*)" option$/
+     */
+    public function iRunPhpspecInteractivelyWithTheOption($option)
+    {
+        $this->applicationTester = $this->createApplicationTester();
+        $this->applicationTester->run('run --' . $option, array('interactive' => true, 'decorated' => false));
+    }
+
+    /**
+     * @When /^(?:|I )run phpspec with the "([^"]*)" option$/
+     */
+    public function iRunPhpspecWithTheOption($option)
+    {
+        $this->applicationTester = $this->createApplicationTester();
+        $this->applicationTester->run('run --no-interaction --' . $option);
+    }
+
+    /**
      * @When /^I run phpspec using the "([^"]*)" format$/
      */
     public function iRunPhpspecUsingTheFormat($format)
@@ -126,6 +153,14 @@ class PhpSpecContext extends BehatContext
     }
 
     /**
+     * @Then /^(?:|I )should not see "(?P<message>[^"]*)"$/
+     */
+    public function iShouldNotSee($message)
+    {
+        expect($this->applicationTester->getDisplay())->notToMatch('/'.preg_quote($message, '/').'/sm');
+    }
+
+    /**
      * @Then /^I should see valid junit output$/
      */
     public function iShouldSeeValidJunitOutput()
@@ -155,6 +190,16 @@ class PhpSpecContext extends BehatContext
         $stats = $this->getRunStats();
 
         expect($stats['skipped'])->toBe(intval($count));
+    }
+
+    /**
+     * @Then /^(\d+) examples? should have been run$/
+     */
+    public function exampleShouldHaveBeenRun($count)
+    {
+        $stats = $this->getRunStats();
+
+        expect($stats['examples'])->toBe(intval($count));
     }
 
     /**

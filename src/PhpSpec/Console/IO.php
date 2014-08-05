@@ -18,6 +18,7 @@ use PhpSpec\IO\IOInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\HelperSet;
+use PhpSpec\Config\OptionsConfig;
 
 /**
  * Class IO deals with input and output from command line interaction
@@ -50,15 +51,22 @@ class IO implements IOInterface
     private $hasTempString = false;
 
     /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     * @param HelperSet       $helpers
+      * @var OptionsConfig
+      */
+    private $config;
+
+    /**
+     * @param InputInterface   $input
+     * @param OutputInterface  $output
+     * @param HelperSet        $helpers
+     * @param ServiceContainer $config
      */
-    public function __construct(InputInterface $input, OutputInterface $output, HelperSet $helpers)
+    public function __construct(InputInterface $input, OutputInterface $output, HelperSet $helpers, OptionsConfig $config)
     {
         $this->input   = $input;
         $this->output  = $output;
         $this->helpers = $helpers;
+        $this->config  = $config;
     }
 
     /**
@@ -82,8 +90,21 @@ class IO implements IOInterface
      */
     public function isCodeGenerationEnabled()
     {
-        return $this->input->isInteractive()
+        if (!$this->isInteractive()) {
+            return false;
+        }
+
+        return $this->config->isCodeGenerationEnabled()
             && !$this->input->getOption('no-code-generation');
+    }
+
+    /**
+     * @return bool
+     */
+    public function isStopOnFailureEnabled()
+    {
+        return $this->config->isStopOnFailureEnabled()
+            || $this->input->getOption('stop-on-failure');
     }
 
     /**

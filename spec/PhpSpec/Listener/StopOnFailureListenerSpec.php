@@ -6,16 +6,14 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
-use Symfony\Component\Console\Input\InputInterface;
+use PhpSpec\Console\IO;
 
 class StopOnFailureListenerSpec extends ObjectBehavior
 {
-
-    function let(InputInterface $input)
+    function let(IO $io)
     {
-        $input->hasOption('stop-on-failure')->willReturn(true);
-        $input->getOption('stop-on-failure')->willReturn(false);
-        $this->beConstructedWith($input);
+        $io->isStopOnFailureEnabled()->willReturn(false);
+        $this->beConstructedWith($io);
     }
 
     function it_is_an_event_subscriber()
@@ -37,9 +35,9 @@ class StopOnFailureListenerSpec extends ObjectBehavior
         $this->afterExample($event);
     }
 
-    function it_throws_an_exception_when_an_example_fails_and_option_is_set(ExampleEvent $event, $input)
+    function it_throws_an_exception_when_an_example_fails_and_option_is_set(ExampleEvent $event, $io)
     {
-        $input->getOption('stop-on-failure')->willReturn(true);
+        $io->isStopOnFailureEnabled()->willReturn(true);
         $event->getResult()->willReturn(ExampleEvent::FAILED);
 
         $this->shouldThrow('\PhpSpec\Exception\Example\StopOnFailureException')->duringAfterExample($event);
@@ -52,9 +50,9 @@ class StopOnFailureListenerSpec extends ObjectBehavior
         $this->afterExample($event);
     }
 
-    function it_throws_an_exception_when_an_example_breaks_and_option_is_set(ExampleEvent $event, $input)
+    function it_throws_an_exception_when_an_example_breaks_and_option_is_set(ExampleEvent $event, $io)
     {
-        $input->getOption('stop-on-failure')->willReturn(true);
+        $io->isStopOnFailureEnabled()->willReturn(true);
         $event->getResult()->willReturn(ExampleEvent::BROKEN);
 
         $this->shouldThrow('\PhpSpec\Exception\Example\StopOnFailureException')->duringAfterExample($event);
