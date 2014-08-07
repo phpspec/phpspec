@@ -120,7 +120,7 @@ Feature: Developer generates a method
     {
         function it_registers_a_user()
         {
-            $this->beConstructedThrough('register', ['firstname', 'lastname']);
+            $this->beConstructedThrough('register', array('firstname', 'lastname'));
             $this->getFirstname()->shouldBe('firstname');
         }
     }

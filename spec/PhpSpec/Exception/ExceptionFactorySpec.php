@@ -28,7 +28,7 @@ class ExceptionFactorySpec extends ObjectBehavior
         $presenter->presentString("{$this->fixture->classname}::{$this->fixture->method}")
             ->shouldBeCalled()
             ->willReturn("\"{$this->fixture->classname}::{$this->fixture->method}\"");
-        $this->fixture->message = 'Named constructor "\ArrayObject::foo" not found.';
+        $this->fixture->message = 'Named constructor "\stdClass::foo" not found.';
         $this->createdException = $this->namedConstructorNotFound(
             $this->fixture->classname,
             $this->fixture->method,

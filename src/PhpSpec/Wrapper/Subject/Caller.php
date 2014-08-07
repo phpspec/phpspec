@@ -307,16 +307,19 @@ class Caller
      */
     private function newInstanceWithFactoryMethod()
     {
-        if (!is_array($this->wrappedObject->getFactoryMethod())) {
-            throw $this->namedConstructorNotFound(
-                $this->wrappedObject->getFactoryMethod(), $this->wrappedObject->getArguments()
-            );
+        $method = $this->wrappedObject->getFactoryMethod();
+
+        if (!is_array($method)) {
+            $className = $this->wrappedObject->getClassName();
+
+            if (!method_exists($className, $method)) {
+                throw $this->namedConstructorNotFound(
+                    $method, $this->wrappedObject->getArguments()
+                );
+            }
         }
 
-        return call_user_func_array(
-            $this->wrappedObject->getFactoryMethod(),
-            $this->wrappedObject->getArguments()
-        );
+        return call_user_func_array($method, $this->wrappedObject->getArguments());
     }
 
     /**

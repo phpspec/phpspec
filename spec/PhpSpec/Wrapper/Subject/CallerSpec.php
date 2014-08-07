@@ -123,7 +123,7 @@ class CallerSpec extends ObjectBehavior
     function it_delegates_throwing_static_constructor_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
     {
         $obj = new \ArrayObject;
-        $arguments = ['firstname', 'lastname'];
+        $arguments = array('firstname', 'lastname');
 
         $wrappedObject->isInstantiated()->willReturn(false);
         $wrappedObject->getInstance()->willReturn(null);

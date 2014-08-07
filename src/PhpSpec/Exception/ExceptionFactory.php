@@ -40,7 +40,7 @@ class ExceptionFactory
      * @param string $method
      * @param array  $arguments
      *
-     * @return Fracture\MethodNotFoundException
+     * @return Fracture\NamedConstructorNotFoundException
      */
     public function namedConstructorNotFound($classname, $method, array $arguments = array())
     {
