@@ -106,7 +106,7 @@ Feature: Developer generates a method
 
     """
 
-  Scenario: Generating a named constructor
+  Scenario: Generating a named constructor in an empty class
     Given the spec file "spec/CodeGeneration/NamedConstructor/UserSpec.php" contains:
     """
     <?php
@@ -147,6 +147,65 @@ Feature: Developer generates a method
     class User
     {
         private function __construct()
+        {
+        }
+
+        public static function register($argument1, $argument2)
+        {
+            $user = new User();
+
+            // TODO: write logic here
+
+            return $user;
+        }
+    }
+
+    """
+
+  Scenario: Generating a named constructor with an existing constructor
+    Given the spec file "spec/CodeGeneration/ExistingConstructor/UserSpec.php" contains:
+    """
+    <?php
+
+    namespace spec\CodeGeneration\ExistingConstructor;
+
+    use PhpSpec\ObjectBehavior;
+    use Prophecy\Argument;
+
+    class UserSpec extends ObjectBehavior
+    {
+        function it_registers_a_user()
+        {
+            $this->beConstructedThrough('register', array('firstname', 'lastname'));
+            $this->getFirstname()->shouldBe('firstname');
+        }
+    }
+
+    """
+    And the class file "src/CodeGeneration/ExistingConstructor/User.php" contains:
+    """
+    <?php
+
+    namespace CodeGeneration\ExistingConstructor;
+
+    class User
+    {
+        public function __construct()
+        {
+        }
+    }
+
+    """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/ExistingConstructor/User.php" should contain:
+    """
+    <?php
+
+    namespace CodeGeneration\ExistingConstructor;
+
+    class User
+    {
+        public function __construct()
         {
         }
 
