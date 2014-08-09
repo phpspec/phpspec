@@ -31,4 +31,4 @@ Feature: Developer loads suite
     """
 
     When I run phpspec
-    Then I should see "spec\Loader\SpecExample1\BadNameSpec was not defined."
+    Then I should see "spec\Loader\SpecExample1\IncorrectlyNamedSpec is a badly named spec"

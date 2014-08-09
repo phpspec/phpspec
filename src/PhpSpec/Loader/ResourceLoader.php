@@ -13,14 +13,11 @@
 
 namespace PhpSpec\Loader;
 
-<<<<<<< HEAD
 use PhpSpec\Util\MethodAnalyser;
 use PhpSpec\Locator\ResourceManagerInterface;
-=======
 use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Locator\ResourceManager;
 
->>>>>>> Trigger an error when expected spec class is not found in file
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -67,30 +64,58 @@ class ResourceLoader
      */
     private function loadResouceIntoSuite(ResourceInterface $resource, $line, Suite $suite)
     {
-        if (!class_exists($resource->getSpecClassname()) && is_file($resource->getSpecFilename())) {
-            require_once $resource->getSpecFilename();
+        $specClasses = $this->loadSpecClasses($resource->getSpecFilename());
+
+        foreach ($specClasses as $specClassname => $reflection) {
+            $spec = new Node\SpecificationNode($resource->getSrcClassname($specClassname), $reflection, $resource);
+
+            if ($resource->getSpecClassname() != $specClassname) {
+                $spec->addWarning(sprintf(
+                    '%s is a badly named spec in %s',
+                    $specClassname,
+                    $resource->getSpecFilename()
+                ));
+            }
+
+            foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+                $this->addExampleToSpecification($method, $line, $spec);
+            }
+
+            $suite->addSpecification($spec);
+        }
+    }
+
+    /**
+     * @param string $filename
+     *
+     * @return ReflectionClass[string]
+     */
+    private function loadSpecClasses($filename)
+    {
+        $classesBefore = get_declared_classes();
+        require_once $filename;
+        $classesLoaded = array_diff(get_declared_classes(), $classesBefore);
+        $specs = array();
+
+        foreach ($classesLoaded as $specClassname) {
+            if ($specClassname === 'PhpSpec\ObjectBehavior') {
+                continue;
+            }
+
+            $reflection = new ReflectionClass($specClassname);
+
+            if ($reflection->isAbstract()) {
+                continue;
+            }
+
+            if (!$reflection->implementsInterface('PhpSpec\SpecificationInterface')) {
+                continue;
+            }
+
+            $specs[$specClassname] = $reflection;
         }
 
-        if (!class_exists($resource->getSpecClassname())) {
-            return;
-        }
-
-        $reflection = new ReflectionClass($resource->getSpecClassname());
-
-        if ($reflection->isAbstract()) {
-            return;
-        }
-
-        if (!$reflection->implementsInterface('PhpSpec\SpecificationInterface')) {
-            return;
-        }
-
-        $spec = new Node\SpecificationNode($resource->getSrcClassname(), $reflection, $resource);
-        foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-            $this->addExampleToSpecification($method, $line, $spec);
-        }
-
-        $suite->addSpecification($spec);
+        return $specs;
     }
 
     /**
@@ -110,7 +135,7 @@ class ResourceLoader
 
         $example = new Node\ExampleNode(str_replace('_', ' ', $method->getName()), $method);
 
-        if ($this->methodIsEmpty($method)) {
+        if ($this->methodAnalyser->reflectionMethodIsEmpty($method)) {
             $example->markAsPending();
         }
 

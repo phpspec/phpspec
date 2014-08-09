@@ -112,18 +112,21 @@ class PhpSpecContext implements Context
     }
 
     /**
-     * @Given /^(?:|the )(?:spec |class )file "(?P<file>[^"]+)" contains:$/
+     * @Given /^(?:|the )class file "(?P<file>[^"]+)" contains:$/
      */
     public function theFileContains($file, PyStringNode $string)
     {
-        $dirname = dirname($file);
-        if (!file_exists($dirname)) {
-            mkdir($dirname, 0777, true);
-        }
-
-        file_put_contents($file, $string->getRaw());
+        $this->writeTestFile($file, $string->getRaw());
 
         require_once($file);
+    }
+
+    /**
+     * @Given /^(?:|the )spec file "(?P<file>[^"]+)" contains:$/
+     */
+    public function theSpecFileContains($file, PyStringNode $string)
+    {
+        $this->writeTestFile($file, $string->getRaw());
     }
 
     /**
@@ -275,6 +278,20 @@ class PhpSpecContext implements Context
         $application->setAutoExit(false);
 
         return new ApplicationTester($application);
+    }
+
+    /**
+     * @param string $file
+     * @param string $content
+     */
+    private function writeTestFile($file, $content)
+    {
+        $dirname = dirname($file);
+        if (!file_exists($dirname)) {
+            mkdir($dirname, 0777, true);
+        }
+
+        file_put_contents($file, $content);
     }
 
     /**

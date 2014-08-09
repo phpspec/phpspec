@@ -321,7 +321,7 @@ class PSR0Locator implements ResourceLocatorInterface
         $classname = preg_replace('/Spec$/', '', $classname);
 
         // Create the resource
-        return new PSR0Resource(explode('\\', $classname), $this);
+        return new PSR0Resource(explode('\\', $classname), $this, $path);
     }
 
     private function validatePsr0Classname($classname)
