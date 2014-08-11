@@ -1,9 +1,8 @@
 phpspec
 =======
-.. image:: https://secure.travis-ci.org/phpspec/phpspec.png?branch=master
-   :target: http://travis-ci.org/phpspec/phpspec
+.. image:: https://scrutinizer-ci.com/g/phpspec/phpspec/badges/build.png?b=master
+   :target: https://scrutinizer-ci.com/g/phpspec/phpspec/build-status/master
    :alt: Master Build Status
-
 
 The main website with documentation is at `http://phpspec.net <http://phpspec.net>`_.
 
