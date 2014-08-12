@@ -6,6 +6,7 @@ before_script:
   - composer selfupdate
   - export COMPOSER_ROOT_VERSION=2.0.0-RC3
   - composer install --prefer-source
+  - if [[ "$TRAVIS_PHP_VERSION" == hhvm* ]]; then echo -e '\nhhvm.libxml.ext_entity_whitelist = "file"' | sudo tee -a /etc/hhvm/php.ini; fi
 
 script:
   - bin/phpspec run
