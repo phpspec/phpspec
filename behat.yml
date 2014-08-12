@@ -2,7 +2,8 @@ default:
   suites:
     phpspec:
       contexts: [ PhpSpecContext ]
-      filters:
-        tags: ~@wip
+  gherkin:
+    filters:
+      tags: ~@wip
   formatters:
     progress : ~
