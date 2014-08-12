@@ -1,8 +1,8 @@
 default:
   suites:
-     phpspec:
-       contexts: [ PhpSpecContext ]
-       filters:
-         tags: ~@wip
-  autoload:
-    '': %paths.base%/features/bootstrap
+    phpspec:
+      contexts: [ PhpSpecContext ]
+      filters:
+        tags: ~@wip
+  formatters:
+    progress : ~
