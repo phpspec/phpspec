@@ -1,5 +1,7 @@
 <?php
 
+namespace Console;
+
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\StreamOutput;
