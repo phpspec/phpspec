@@ -125,7 +125,7 @@ class ObjectBehavior implements ArrayAccess,
     }
 
     /**
-     * Proxies all call to the PhpSpec subject
+     * Proxies all calls to the PhpSpec subject
      *
      * @param string $method
      * @param array  $arguments
