@@ -1,5 +1,7 @@
 <?php
 
+namespace Console;
+
 use Symfony\Component\Console\Input\StringInput;
 
 class InteractiveStringInput extends StringInput

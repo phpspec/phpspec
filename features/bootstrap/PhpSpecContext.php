@@ -1,11 +1,12 @@
 <?php
 
-use Behat\Behat\Context\BehatContext;
+use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
+use Console\ApplicationTester;
 use PhpSpec\Console\Application;
 use Symfony\Component\Filesystem\Filesystem;
 
-class PhpSpecContext extends BehatContext
+class PhpSpecContext implements Context
 {
     /**
      * @var string|null
