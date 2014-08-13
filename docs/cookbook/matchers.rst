@@ -4,7 +4,7 @@ Matchers
 Matchers are much like assertions in xUnit, except the fact that matchers
 concentrate on telling how the object should behave instead of verifying how it
 works. It just expresses better the focus on behaviour and fits better in the
-test-first cycle. There are 5 matchers in phpspec currently, but almost each
+test-first cycle. There are 13 matchers in phpspec currently, but almost each
 one of them has aliases to make your examples read more fluid.
 
 Identity Matcher
@@ -259,6 +259,123 @@ e.g, ``is_bool``, ``is_integer``, ``is_decimal``, etc ..
             $this->getCast()->shouldBeArray();
         }
     }
+
+
+ArrayContain Matcher
+--------------------
+
+Use the ArrayContain matcher to specify that a method should return an array that
+contains a given value. Be aware that this value is matched by identity
+(``===``).
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_contain_jane_smith_in_the_cast()
+        {
+            $this->getCast()->shouldContain('Jane Smith');
+        }
+    }
+
+
+ArrayKey Matcher
+----------------
+
+Use the ArrayKey matcher to specify that a method should return an array (or an
+object implementing ``ArrayAccess``) that has a given key.
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_have_a_release_date_for_france()
+        {
+            $this->getReleaseDates()->shouldHaveKey('France');
+        }
+    }
+
+
+StringStart Matcher
+-------------------
+
+Use the StringStarts matcher to specify that a method should return a string that
+starts with a given substring.
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_have_a_title_that_starts_with_the_wizard()
+        {
+            $this->getTitle()->shouldStartWith('The Wizard');
+        }
+    }
+
+
+StringEnd Matcher
+-----------------
+
+Use the StringEnd matcher to specify that a method should return a string that
+ends with a given substring.
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_have_a_title_that_ends_with_of_oz()
+        {
+            $this->getTitle()->shouldEndWith('of Oz');
+        }
+    }
+
+
+StringRegex Matcher
+-------------------
+
+Use the StringRegex matcher to specify that a method should return a string that
+matches a given regular expression.
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_have_a_title_that_contains_wizard()
+        {
+            $this->getTitle()->shouldMatch('/wizard/i');
+        }
+    }
+
 
 Inline Matcher
 --------------
