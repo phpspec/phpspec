@@ -5,8 +5,13 @@ imports:
 tools:
   php_code_sniffer:
     filter:
-      excluded-paths: [ spec/*, vendor/* ]
+      excluded-paths: [ spec/* ]
 
   php_analyzer:
     filter:
-      excluded-paths: [ spec/*, vendor/* ]
+      excluded-paths: [ spec/* ]
+
+filter:
+  excluded_paths:
+    - vendor/*
+    - src/PhpSpec/CodeGenerator/Generator/*Generator.php # fatal bug in analyzer
