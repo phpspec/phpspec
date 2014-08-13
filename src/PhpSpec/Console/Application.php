@@ -71,7 +71,7 @@ class Application extends BaseApplication
     {
         $this->container->set('console.input', $input);
         $this->container->set('console.output', $output);
-        $this->container->set('console.helpers', $this->getHelperSet());
+        $this->container->set('console.helper.dialog', $this->getHelperSet()->get('dialog'));
 
         $this->setupContainer($this->container);
         $this->loadConfigurationFile($input, $this->container);
@@ -141,7 +141,7 @@ class Application extends BaseApplication
             return new IO(
                 $c->get('console.input'),
                 $c->get('console.output'),
-                $c->get('console.helpers'),
+                $c->get('console.helper.dialog'),
                 new OptionsConfig(
                     $c->getParam('stop_on_failure', false),
                     $c->getParam('code_generation', true)
