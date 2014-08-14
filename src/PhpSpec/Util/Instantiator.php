@@ -35,7 +35,7 @@ class Instantiator
             throw new ClassNotFoundException("Class $className does not exist.", $className);
         }
 
-        $instantiator = new \Instantiator\Instantiator();
+        $instantiator = new \Doctrine\Instantiator\Instantiator();
         return $instantiator->instantiate($className);
     }
 }
