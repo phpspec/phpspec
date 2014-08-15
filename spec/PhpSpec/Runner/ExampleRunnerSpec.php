@@ -94,6 +94,23 @@ class ExampleRunnerSpec extends ObjectBehavior
         $this->run($example);
     }
 
+    function it_dispatches_ExampleEvent_with_failed_status_if_example_returns_truthy(
+        EventDispatcherInterface $dispatcher,
+        ExampleNode $example, ReflectionMethod $exampReflection, SpecificationInterface $context)
+    {
+        $example->isPending()->willReturn(false);
+
+        $exampReflection->getParameters()->willReturn(array());
+        $exampReflection->invokeArgs($context, array())->willReturn('hello, world');
+
+        $dispatcher->dispatch('beforeExample', Argument::any())->shouldBeCalled();
+        $dispatcher->dispatch('afterExample',
+            Argument::which('getResult', ExampleEvent::FAILED)
+        )->shouldBeCalled();
+
+        $this->run($example);
+    }
+
     function it_runs_all_supported_maintainers_before_and_after_each_example(
         ExampleNode $example, ReflectionMethod $exampReflection, MaintainerInterface $maintainer
     )
