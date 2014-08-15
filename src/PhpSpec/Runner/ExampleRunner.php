@@ -143,7 +143,8 @@ class ExampleRunner
         $reflection = $example->getFunctionReflection();
 
         try {
-            $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
+            $result = $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
+            if ($result) throw new ExampleException\FailureException($result);
         } catch (\Exception $e) {
             $this->runMaintainersTeardown(
                 $this->searchExceptionMaintainers($maintainers),
