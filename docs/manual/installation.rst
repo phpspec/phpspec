@@ -295,93 +295,238 @@ Prophet Objects
 Stubs
 ~~~~~
 
-When you're describing an object, you want your focus to be just there, in the
-object. You don't want to wander off to start describing collaborators. You
-can very easily tell **phpspec** that there will be collaborators and stub
-their behaviour so you can describe your object message exchange with them.
+You also need your `Markdown` parser to be able to format text fetched from
+an external source such as a file. You decide to create an interface so that
+you can have different implementations for different types of source.
 
 .. code-block:: php
 
     <?php
 
-    namespace spec\Markdown\Formatter;
+    namespace Markdown;
+
+    interface Reader
+    {
+        public function getMarkdown();
+    }
+
+
+You want to describe a method which has an instance of a `Reader` as an
+argument. It will call ``Markdown\Reader::getMarkdown()`` to get the markdown
+to format. You have not you written any implementations of Reader to pass
+into the method though. You do want to get distracted by creating an implementation
+before you can carry on writing the parser. Instead we can create a fake
+version of Reader called a stub and tell **phpspec** what ``Markdown\Reader::getMarkdown()``
+should return.
+
+You can create a stub by telling **phpspec** that you want it to be a
+double of the `Markdown\Reader` interface:
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
 
     use PhpSpec\ObjectBehavior;
-    use Markdown\Stream;
 
-    class EndOfListFormatterSpec extends ObjectBehavior
+    class MarkdownSpec extends ObjectBehavior
     {
-        function it_adds_a_end_of_list_to_markup(Stream $stream)
+        function it_converts_text_from_an_external_source($reader)
         {
-            $stream->getNextLine()->willReturn("");
-            $this->format(" * Hi, there", $stream)->shouldReturn("</li></ul>");
+            $reader->beADoubleOf('Markdown\Reader');
+            $this->toHtmlFromReader($reader)->shouldReturn("<p>Hi, there</p>");
         }
     }
 
-To stub the behaviour of ``Markdown\Stream::getNextLine()`` we just need to
-pass it to the example using a type hint, and configuring
-the stub is merely stating what it should return: ``->willReturn("")``.
+At the moment calling ``Markdown\Reader::getMarkdown()`` will return null.
+We can tell **phpspec** what we want it to return though.
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MarkdownSpec extends ObjectBehavior
+    {
+        function it_converts_text_from_an_external_source($reader)
+        {
+            $reader->beADoubleOf('Markdown\Reader');
+            $reader->getMarkdown()->willReturn("Hi, there");
+
+            $this->toHtmlFromReader($reader)->shouldReturn("<p>Hi, there</p>");
+        }
+    }
+
+Now you can write the code that will get this example to pass. As well as
+refactoring your implementation you should see if you can refactor your specs
+once they are passing. In this case we can tidy it up a bit as **phpspec**
+lets you create the stub in an easier way. You can pass in a variable to
+the example and use an `@param` docblock to tell it what type it should have:
+
+ <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MarkdownSpec extends ObjectBehavior
+    {
+        /**
+         * @param Markdown\Reader $reader
+         */
+        function it_converts_text_from_an_external_source($reader)
+        {
+            $reader->getMarkdown()->willReturn("Hi, there");
+
+            $this->toHtmlFromReader($reader)->shouldReturn("<p>Hi, there</p>");
+        }
+    }
+
+We can improve this further by instead using a type hint which **phpspec**
+will use to determine the type of the stub:
+
+<?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+    use Markdown\Reader;
+
+    class MarkdownSpec extends ObjectBehavior
+    {
+        function it_converts_text_from_an_external_source(Reader $reader)
+        {
+            $reader->getMarkdown()->willReturn("Hi, there");
+
+            $this->toHtmlFromReader($reader)->shouldReturn("<p>Hi, there</p>");
+        }
+    }
 
 Mocks
 ~~~~~
 
-In addition you will need to verify a message was sent to a collaborator
-during the normal execution of a method. You can specify a mock expectation with ``->shouldBeCalled()``
+You also need to be able to get your parser to output to somewhere instead
+of just returning the formatted text. Again you create an interface:
 
 .. code-block:: php
 
     <?php
 
+    namespace Markdown;
+
+    interface Writer
+    {
+        public function writeText($text);
+    }
+
+You again pass it to to the method but this time the ``Markdown\Writer::writeText($text)``
+method does not return something to your parser class. The new method you
+are going to create on the parser will not return anything either. Instead
+it is going to give the formatted text to the `Markdown\Writer` so you want
+to be able to give an example of what that formatted text should be. You
+can do this using a mock, the mock gets created in the same way as the stub.
+This this time you tell it to expect ``Markdown\Writer::writeText($text)``
+to get called with a particular value:
+
+<?php
+
     namespace spec;
 
     use PhpSpec\ObjectBehavior;
+    use Markdown\Writer;
 
-    class MyObjectSpec extends ObjectBehavior
+    class MarkdownSpec extends ObjectBehavior
     {
-        function it_formats_the_string_as_a_header_if_underline_with_single_dashes(
-            SomeEvent $event, SomeSubscriber $subscriber
-        ) {
-            $subscriber->onChange($event)->shouldBeCalled();
+        function it_outputs_converted_text(Writer $writer)
+        {
+            $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
 
-            // when
-            $this->addSubscriber($subscriber);
-            $this->doWhatever($event);
+            $this->outputHtml("Hi, there", $writer);
         }
     }
+
+Now if the method is not called with that value then the example will
+fail.
 
 Let and Let Go
 --------------
 
-**phpspec** implements the symmetric setup and tear down using the `let` and
-`letgo` methods.
+If you need to pass the object into the constructor instead of a method
+then you can do it like this:
 
-.. code-block:: php
-
-    <?php
+<?php
 
     namespace spec;
 
     use PhpSpec\ObjectBehavior;
+    use Markdown\Writer;
 
-    class EverChangingWorldSpec extends ObjectBehavior
+    class MarkdownSpec extends ObjectBehavior
     {
-        function let($die)
+        function it_outputs_converted_text(Writer $writer)
         {
-            $die->beADoubleOf('Die');
-            $this->beConstructedWith($die);
-        }
+            $this->beConstructedWith($writer);
+            $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
 
-        function it_live_and_let_die($die)
-        {
-            $this->liveAndLet()->shouldReturn($die);
-        }
-
-        function letgo()
-        {
-            // release any resource
-            // put the system back into the state it was before the example
+            $this->outputHtml("Hi, there");
         }
     }
+
+If you have many examples then writing this in each example will get
+tiresome. You can instead move this to a `let` method. The `let` method
+gets run before each example so each time the parser gets constructed with
+a fresh mock object.
+
+<?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+    use Markdown\Writer;
+
+    class MarkdownSpec extends ObjectBehavior
+    {
+        function let(Writer $writer)
+        {
+            $this->beConstructedWith($writer);
+        }
+    }
+
+There is also a `letGo` method which runs after each example if you need
+to clean up after the examples.
+
+It looks like you will now have difficulty getting hold of the instance
+of the mock object in the examples. This is easier to deal with than it looks
+though. Providing you use the same variable name for both, **phpspec** will
+inject the same instance into the `let` method and the example. The following
+will work:
+
+<?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+    use Markdown\Writer;
+
+    class MarkdownSpec extends ObjectBehavior
+    {
+        function let(Writer $writer)
+        {
+            $this->beConstructedWith($writer);
+        }
+
+        function it_outputs_converted_text($writer)
+        {
+            $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
+
+            $this->outputHtml("Hi, there");
+        }
+    }
+
 
 Cookbook
 --------
