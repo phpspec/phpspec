@@ -4,15 +4,14 @@ Installation
 Spec BDD with phpspec
 ---------------------
 
-**phpspec** is a development tool, designed to help you achieve clean and
-working PHP code by using a technique derived from test-first development
-called (spec) behaviour driven development, or SpecBDD.
+**phpspec** is a tool which can help you write clean and working PHP code using
+behaviour driven development or BDD. BDD is a technique derived from test-first
+development.
 
-The technique consists of describing the next object behaviour (spec) you are about
-to implement, using a tool like **phpspec**, then writing just enough code
-to quickly satisfy that specification and finally stopping to refactor the last increment,
-allowing the emergent design to guide the direction. This is done in small iterative steps.
-
+BDD is a technique used at story level and spec level. **phpspec** is a tool for
+use at the spec level or SpecBDD.  The technique is to first use a tool like **phpspec**
+to describe the behaviour of an object you are about to write. Next you write just
+enough code to meet that specification and finally you refactor this code.
 Requirements
 ------------
 
@@ -54,55 +53,43 @@ SpecBDD and TDD
 ---------------
 
 There is no real difference between SpecBDD and TDD. The value of using
-an xSpec tool instead of a regular xUnit tool for TDD is **the language**.
-The concepts and features of the tool will keep your focus on the "right"
-things. The focus on verification and structure as opposed to behaviour and
-design is, of course, a valid one. We happen to find that the latter is more
-valuable in the long run. It was also the intention of early adopters of TDD.
+an xSpec tool instead of a regular xUnit tool for TDD is **the language**. The early
+adopters of TDD focused on behaviour and design of code. Over time the focus has
+shifted towards verification and structure. BDD aims to shift the focus back by
+removing the language of testing. The concepts and features of the tool will keep your
+focus on the "right" things.
 
 SpecBDD and StoryBDD
 --------------------
 
-While with StoryBDD tools like `Behat <http://behat.org>`_ are used to
-understand and clarify the domain - specifying feature narratives, its need, and
-what do we mean by them - with SpecBDD we are only focused on the how: the
-implementation. You are specifying how your classes will achieve those
-features.
+StoryBDD tools like `Behat <http://behat.org>`_ help to understand and clarify the
+domain. They help specify feature narratives, their needs, and what we mean by them.
+With SpecBDD we are only focused on the how, in other words, the implementation.
+You are specifying how your classes will achieve those features.
 
-A good StoryBDD tool will let the business talk the domain language and drive the
-development by putting the focus on what really matters first.
+Only using story level BDD will not do enough to help you write the code for
+the features well. Each feature is likely to need quite a lot of code. If
+you only confirm that the whole feature works and also only refactor at that
+point then you are working in large steps. SpecBDD tools guide you in the process
+by letting you write the code in small steps. You only need to write the spec
+and then the code for the next small part you want to work on and not the whole
+feature.
 
-Once you know why you are adding a feature and what it will be, it's almost time to write code.
-But not yet! Adding code without a way to validate that it serves the specs just
-means you will have to go back and rework it, so that it does match the spec. And the later you
-find out you missed the requirement or added a bug, the harder and more expensive
-it is to fix. Kent Beck also adds that describing the code before you
-actually write it is a fear management technique. You don't have to write all
-the code, just the spec of the next thing you want to work on. That executable
-spec will then guide you to what code you need to write. Once you do that,
-then what you have is a chance to refactor. Because if you change the
-behaviour of your code the specs will go red. So you spec so that you can
-refactor, or allow the design of your code to emerge in a sustainable way. SpecBDD tools are
-designed to guide you in the process, or at least not stand on the way.
-
-It's valid to assume that StoryBDD and SpecBDD used together are a very
-effective way to achieve highly customer-focused software.
+StoryBDD and SpecBDD used together are an effective way to achieve customer-focused software.
 
 Getting Started
 ---------------
 
-Say we are building a tool that converts
+Say you are building a tool that converts
 `Markdown <http://en.wikipedia.org/wiki/Markdown>`_ into HTML. Well, that's a large
-task. But I will work on simple things first and a design will emerge that will reach all
-the necessary features. Even though I have all the specs from the customer
-(we have done all our Behat feature files nicely), I know I will discover new things I
-will need, as soon as I sit down to write my classes.
+task. But you can work on simple things first and a design will emerge that will reach all
+the necessary features.
 
-What is the simplest thing I want to add? It should convert a string line into a
+What is the simplest thing you could add? It should convert a string line into a
 paragraph with HTML markup, i.e. `"Hi, there"` would become `"<p>Hi, there</p>"`.
 
-So let's do this. Well, not the boring bits. Let **phpspec** take care of the
-boring stuff for us. We just need to tell **phpspec** we will be working on
+So you can start by doing this. Well, not the boring bits. Let **phpspec** take care of the
+boring stuff for you. You just need to tell **phpspec** you will be working on
 the `Markdown` class.
 
 .. code-block:: bash
@@ -115,7 +102,7 @@ use backslashes you need to pass the class name inside double quotes.
 Alternatively you could use forward slashes and skip the quotes. **phpspec**
 will create the folder structure following PSR standards.
 
-Ok. What have we just done? **phpspec** has created the spec for us. You can
+Ok. What have you just done? **phpspec** has created the spec for you! You can
 navigate to the spec folder and see the spec there:
 
 .. code-block:: php
@@ -135,32 +122,28 @@ navigate to the spec folder and see the spec there:
         }
     }
 
-That's awesome! **phpspec** created the spec for me.
-
-But first, let's see what we have here. Our spec extends the special
-``ObjectBehavior`` class.
-This class is special, because it gives you ability to call all the methods of the
+So what do you have here? Your spec extends the special ``ObjectBehavior`` class.
+This class is special, because it gives you the ability to call all the methods of the
 class you are describing and match the result of the operations against your
 expectations.
 
 Examples
 ~~~~~~~~
 
-The object behavior is made of examples. Examples are encased in public methods,
+The object behavior is made up of examples. Examples are encased in public methods,
 started with ``it_``.
 or ``its_``.
-**phpspec** searches for such methods in your specification to run.
-Why underscores for example names? ``just_because_its_much_easier_to_read``
+**phpspec** searches for these methods in your specification to run.
+Why are underscores used in example names? ``just_because_its_much_easier_to_read``
 than ``someLongCamelCasingLikeThat``.
 
 Matchers
 ~~~~~~~~
 
-Matchers are much like assertions in xUnit, except the fact that matchers
+Matchers are much like assertions in xUnit, except that matchers
 concentrate on telling how the object **should** behave instead of verifying how
-it works. It just expresses better the focus on behaviour and fits better in the test-first cycle.
-There are 5 matchers in **phpspec** currently, but almost each
-one of them has aliases to make your examples read more fluid:
+it works. There are 5 matchers in **phpspec** currently, but most of them have aliases
+to help make your examples easier to read:
 
 * Identity (return, be, equal, beEqualTo) - it's like checking ``===``
 * Comparison (beLike) - it's like checking ``==``
@@ -168,10 +151,10 @@ one of them has aliases to make your examples read more fluid:
 * Type (beAnInstanceOf, returnAnInstanceOf, haveType) - checks object type
 * ObjectState (have**) - checks object ``is**`` method return value
 
-How do you use those? You're just prefixing them with ``should`` or ``shouldNot``
+How do you use these? By prefixing them with ``should`` or ``shouldNot``
 depending on what you expect and call them on subject of interest.
 
-Now we are ready to move on. Let's update that first example to express my next intention:
+Now we are ready to move on. Let's update that first example to express your next intention:
 
 .. code-block:: php
 
@@ -189,8 +172,8 @@ Now we are ready to move on. Let's update that first example to express my next 
         }
     }
 
-Now what? We run the specs. You may not believe this, but **phpspec** will
-understand we are describing a class that doesn't exist and offer to create it!
+Now what? Run the specs. You may not believe this, but **phpspec** will
+understand you are describing a class that doesn't exist and offer to create it!
 
 .. code-block:: bash
 
@@ -203,7 +186,7 @@ understand we are describing a class that doesn't exist and offer to create it!
 
              Do you want me to create it for you? [Y/n]
 
-**phpspec** will then place the empty class in the directory. You run your
+**phpspec** will then place the empty class in the directory. Run your
 spec again and... OK, you guessed:
 
 .. code-block:: bash
@@ -217,7 +200,7 @@ spec again and... OK, you guessed:
 
              Do you want me to create it for you? [Y/n]
 
-What we just did was moving fast through the amber state into the red.
+What you just did was moving fast through the amber state into the red.
 
 .. code-block:: php
 
@@ -231,7 +214,7 @@ What we just did was moving fast through the amber state into the red.
         }
     }
 
-We got rid of the fatal errors and ugly messages that resulted from nonnexistent
+You got rid of the fatal errors and ugly messages that resulted from non-existent
 classes and methods and went straight into a real failed spec:
 
 .. code-block:: bash
@@ -247,8 +230,8 @@ classes and methods and went straight into a real failed spec:
     1 examples (1 failed)
     284ms
 
-According to the TDD rules we now have full permission to write code. Red
-means "time to add code"; red is great! Now we add just enough code to make
+According to the TDD rules you now have full permission to write code. Red
+means "time to add code"; red is great! Now you can add just enough code to make
 the spec green, quickly. There will be time to get it right, but first just
 get it green.
 
@@ -277,8 +260,8 @@ And voilà:
     1 examples (1 passed)
     247ms
 
-I will leave the explanation of the whole TDD/SpecBDD cycle for a blog post.
-There are heaps of resources out there already. Here are just a couple for you look at:
+There are heaps of resources out there already if you would like to read more about
+the TDD/SpecBDD cycle. Here are just a couple for you look at:
 
 
 1. `The Rspec Book <http://www.amazon.com/RSpec-Book-Behaviour-Development-Cucumber/dp/1934356379>`_
