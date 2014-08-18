@@ -43,6 +43,11 @@ class ThrowMatcher implements MatcherInterface
     private $presenter;
 
     /**
+     * @var ReflectionFactory
+     */
+    private $factory;
+
+    /**
      * @param Unwrapper          $unwrapper
      * @param PresenterInterface $presenter
      * @param ReflectionFactory  $factory
