@@ -13,5 +13,6 @@ tools:
 
 filter:
   excluded_paths:
+    - docs/*
     - vendor/*
     - src/PhpSpec/CodeGenerator/Generator/*Generator.php # fatal bug in analyzer
