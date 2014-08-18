@@ -1,0 +1,55 @@
+{%- extends "scrolls/layout.html" %}
+
+{%- block doctype -%}<!DOCTYPE html>{%- endblock -%}
+
+{% set css_files = css_files + ['_static/scrolls.css', '_static/pygments.css', '_static/main.css', 'http://fonts.googleapis.com/css?family=Lobster', '_static/print.css'] %}
+
+{%- block header %}
+<header>
+    <ul class="main-menu">
+        <li{% if pagename == 'index' %} class="active"{% endif %}><a href="/">home</a></li>
+        <li class="right"><a href="http://github.com/phpspec/prophecy">prophecy repo</a></li>
+        <li class="right"><a href="http://github.com/phpspec/phpspec">phpspec repo</a></li>
+    </ul>
+</header>
+{% endblock %}
+
+{% block content %}
+<section class="docs" id="manual">
+    <nav class="toc">
+        <h3>Chapters</h3>
+        {{ toc }}
+    </nav>
+
+    <section class="documentation">
+        {% block body %}{% endblock %}
+    </section>
+</section>
+{% endblock %}
+
+{% block footer %}
+<footer>
+    <dl>
+        <dt>Resources</dt>
+        <dd><a href="http://behat.org">Behat</a></dd>
+    </dl>
+    <dl>
+        <dt>GitHub</dt>
+        <dd><a href="https://github.com/phpspec/phpspec">phpspec</a></dd>
+    </dl>
+
+    <div class="clear"></div>
+</footer>
+<script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-34229660-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+
+</script>
+{% endblock %}
