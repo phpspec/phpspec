@@ -341,6 +341,8 @@ class Application extends BaseApplication
 
     /**
      * @param ServiceContainer $container
+     *
+     * @throws \RuntimeException
      */
     protected function setupFormatter(ServiceContainer $container)
     {
@@ -481,6 +483,8 @@ class Application extends BaseApplication
 
     /**
      * @return array
+     *
+     * @throws \RuntimeException
      */
     protected function parseConfigurationFile(InputInterface $input)
     {
