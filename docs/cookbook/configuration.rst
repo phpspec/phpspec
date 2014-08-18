@@ -61,6 +61,21 @@ Available formatters are:
 * junit
 * dot
 
+Options
+-------
+
+You can turn off code generation in your config file by setting ``code_generation``:
+
+.. code-block:: yaml
+
+    code_generation: false
+
+You can also set your tests to stop on failure by setting ``stop_on_failure``:
+
+.. code-block:: yaml
+
+    stop_on_failure: true
+
 Extensions
 ----------
 

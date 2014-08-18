@@ -24,13 +24,14 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 use PhpSpec\ServiceContainer;
 use PhpSpec\Extension;
 
+use PhpSpec\CodeGenerator;
 use PhpSpec\Formatter;
 use PhpSpec\Listener;
 use PhpSpec\Loader;
 use PhpSpec\Locator;
 use PhpSpec\Runner;
-use PhpSpec\CodeGenerator;
 use PhpSpec\Wrapper;
+use PhpSpec\Config\OptionsConfig;
 
 use RuntimeException;
 
@@ -141,7 +142,11 @@ class Application extends BaseApplication
             return new IO(
                 $c->get('console.input'),
                 $c->get('console.output'),
-                $c->get('console.helpers')
+                $c->get('console.helpers'),
+                new OptionsConfig(
+                    $c->getParam('stop_on_failure', false),
+                    $c->getParam('code_generation', true)
+                )
             );
         });
     }
@@ -199,7 +204,7 @@ class Application extends BaseApplication
         });
         $container->setShared('event_dispatcher.listeners.stop_on_failure', function ($c) {
             return new Listener\StopOnFailureListener(
-                $c->get('console.input')
+                $c->get('console.io')
             );
         });
     }
@@ -380,7 +385,7 @@ class Application extends BaseApplication
             try {
                 $formatter = $c->get('formatter.formatters.'.$formatterName);
             } catch (\InvalidArgumentException $e) {
-                throw new RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
+                throw new \RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
             }
 
             $c->set('event_dispatcher.listeners.formatter', $formatter);
@@ -451,6 +456,7 @@ class Application extends BaseApplication
     }
 
     /**
+     * @param InputInterface   $input
      * @param ServiceContainer $container
      *
      * @throws \RuntimeException
@@ -471,13 +477,11 @@ class Application extends BaseApplication
                         ));
                     }
 
-                    $extension->load($container);
+                    $extension->load($this->container);
                 }
-
-                continue;
+            } else {
+                $container->setParam($key, $val);
             }
-
-            $container->setParam($key, $val);
         }
     }
 

@@ -18,6 +18,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\StopOnFailureException;
 use Symfony\Component\Console\Input\InputInterface;
+use PhpSpec\Console\IO;
 
 /**
  * Class StopOnFailureListener
@@ -26,16 +27,16 @@ use Symfony\Component\Console\Input\InputInterface;
 class StopOnFailureListener implements EventSubscriberInterface
 {
     /**
-     * @var \Symfony\Component\Console\Input\InputInterface
+     * @var IO
      */
-    private $input;
+    private $io;
 
     /**
-     * @param InputInterface $input
+     * @param boolean $stopOnFailure
      */
-    public function __construct(InputInterface $input)
+    public function __construct(IO $io)
     {
-        $this->input = $input;
+        $this->io = $io;
     }
 
     /**
@@ -55,9 +56,7 @@ class StopOnFailureListener implements EventSubscriberInterface
      */
     public function afterExample(ExampleEvent $event)
     {
-        if (!$this->input->hasOption('stop-on-failure')
-         || !$this->input->getOption('stop-on-failure'))
-        {
+        if (!$this->io->isStopOnFailureEnabled()) {
             return;
         }
 
