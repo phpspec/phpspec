@@ -350,44 +350,48 @@ once they are passing. In this case we can tidy it up a bit as **phpspec**
 lets you create the stub in an easier way. You can pass in a variable to
 the example and use an `@param` docblock to tell it what type it should have:
 
- <?php
+.. code-block:: php
 
-    namespace spec;
+     <?php
 
-    use PhpSpec\ObjectBehavior;
+        namespace spec;
 
-    class MarkdownSpec extends ObjectBehavior
-    {
-        /**
-         * @param Markdown\Reader $reader
-         */
-        function it_converts_text_from_an_external_source($reader)
+        use PhpSpec\ObjectBehavior;
+
+        class MarkdownSpec extends ObjectBehavior
         {
-            $reader->getMarkdown()->willReturn("Hi, there");
+            /**
+             * @param Markdown\Reader $reader
+             */
+            function it_converts_text_from_an_external_source($reader)
+            {
+                $reader->getMarkdown()->willReturn("Hi, there");
 
-            $this->toHtmlFromReader($reader)->shouldReturn("<p>Hi, there</p>");
+                $this->toHtmlFromReader($reader)->shouldReturn("<p>Hi, there</p>");
+            }
         }
-    }
 
 We can improve this further by instead using a type hint which **phpspec**
 will use to determine the type of the stub:
 
-<?php
+.. code-block:: php
 
-    namespace spec;
+    <?php
 
-    use PhpSpec\ObjectBehavior;
-    use Markdown\Reader;
+        namespace spec;
 
-    class MarkdownSpec extends ObjectBehavior
-    {
-        function it_converts_text_from_an_external_source(Reader $reader)
+        use PhpSpec\ObjectBehavior;
+        use Markdown\Reader;
+
+        class MarkdownSpec extends ObjectBehavior
         {
-            $reader->getMarkdown()->willReturn("Hi, there");
+            function it_converts_text_from_an_external_source(Reader $reader)
+            {
+                $reader->getMarkdown()->willReturn("Hi, there");
 
-            $this->toHtmlFromReader($reader)->shouldReturn("<p>Hi, there</p>");
+                $this->toHtmlFromReader($reader)->shouldReturn("<p>Hi, there</p>");
+            }
         }
-    }
 
 Mocks
 ~~~~~
@@ -415,22 +419,24 @@ can do this using a mock, the mock gets created in the same way as the stub.
 This this time you tell it to expect ``Markdown\Writer::writeText($text)``
 to get called with a particular value:
 
-<?php
+.. code-block:: php
 
-    namespace spec;
+    <?php
 
-    use PhpSpec\ObjectBehavior;
-    use Markdown\Writer;
+        namespace spec;
 
-    class MarkdownSpec extends ObjectBehavior
-    {
-        function it_outputs_converted_text(Writer $writer)
+        use PhpSpec\ObjectBehavior;
+        use Markdown\Writer;
+
+        class MarkdownSpec extends ObjectBehavior
         {
-            $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
+            function it_outputs_converted_text(Writer $writer)
+            {
+                $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
 
-            $this->outputHtml("Hi, there", $writer);
+                $this->outputHtml("Hi, there", $writer);
+            }
         }
-    }
 
 Now if the method is not called with that value then the example will
 fail.
@@ -441,43 +447,46 @@ Let and Let Go
 If you need to pass the object into the constructor instead of a method
 then you can do it like this:
 
-<?php
+.. code-block:: php
 
-    namespace spec;
+    <?php
 
-    use PhpSpec\ObjectBehavior;
-    use Markdown\Writer;
+        namespace spec;
 
-    class MarkdownSpec extends ObjectBehavior
-    {
-        function it_outputs_converted_text(Writer $writer)
+        use PhpSpec\ObjectBehavior;
+        use Markdown\Writer;
+
+        class MarkdownSpec extends ObjectBehavior
         {
-            $this->beConstructedWith($writer);
-            $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
+            function it_outputs_converted_text(Writer $writer)
+            {
+                $this->beConstructedWith($writer);
+                $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
 
-            $this->outputHtml("Hi, there");
+                $this->outputHtml("Hi, there");
+            }
         }
-    }
 
 If you have many examples then writing this in each example will get
 tiresome. You can instead move this to a `let` method. The `let` method
 gets run before each example so each time the parser gets constructed with
 a fresh mock object.
 
-<?php
+.. code-block:: php
+    <?php
 
-    namespace spec;
+        namespace spec;
 
-    use PhpSpec\ObjectBehavior;
-    use Markdown\Writer;
+        use PhpSpec\ObjectBehavior;
+        use Markdown\Writer;
 
-    class MarkdownSpec extends ObjectBehavior
-    {
-        function let(Writer $writer)
+        class MarkdownSpec extends ObjectBehavior
         {
-            $this->beConstructedWith($writer);
+            function let(Writer $writer)
+            {
+                $this->beConstructedWith($writer);
+            }
         }
-    }
 
 There is also a `letGo` method which runs after each example if you need
 to clean up after the examples.
@@ -488,27 +497,29 @@ though. Providing you use the same variable name for both, **phpspec** will
 inject the same instance into the `let` method and the example. The following
 will work:
 
-<?php
+.. code-block:: php
 
-    namespace spec;
+    <?php
 
-    use PhpSpec\ObjectBehavior;
-    use Markdown\Writer;
+        namespace spec;
 
-    class MarkdownSpec extends ObjectBehavior
-    {
-        function let(Writer $writer)
+        use PhpSpec\ObjectBehavior;
+        use Markdown\Writer;
+
+        class MarkdownSpec extends ObjectBehavior
         {
-            $this->beConstructedWith($writer);
-        }
+            function let(Writer $writer)
+            {
+                $this->beConstructedWith($writer);
+            }
 
-        function it_outputs_converted_text($writer)
-        {
-            $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
+            function it_outputs_converted_text($writer)
+            {
+                $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
 
-            $this->outputHtml("Hi, there");
+                $this->outputHtml("Hi, there");
+            }
         }
-    }
 
 
 Cookbook
