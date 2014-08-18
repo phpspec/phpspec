@@ -115,9 +115,11 @@ class WrappedObject
             $factoryMethod = array($this->classname, $factoryMethod);
         }
 
-        $this->factoryMethod = $factoryMethod;
-        $unwrapper           = new Unwrapper;
-        $this->arguments     = $unwrapper->unwrapAll($arguments);
+        $this->factoryMethod  = $factoryMethod;
+        $unwrapper            = new Unwrapper;
+        $this->arguments      = $unwrapper->unwrapAll($arguments);
+        $this->instance       = null;
+        $this->isInstantiated = false;
     }
 
     /**

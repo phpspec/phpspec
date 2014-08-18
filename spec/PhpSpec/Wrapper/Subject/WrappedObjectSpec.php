@@ -50,4 +50,36 @@ class WrappedObjectSpec extends ObjectBehavior
         );
         $this->instantiate()->shouldHaveType('\DateTime');
     }
+    
+    function it_can_reset_construct_arguments()
+    {
+        $this->callOnWrappedObject('beAnInstanceOf', array('\DateTime'));
+        $this->callOnWrappedObject('beConstructedWith', array(array('07-09-1983')));
+        $this->instantiate()->format('Y-m-d')->shouldBe('1983-09-07');
+        
+        $this->callOnWrappedObject('beConstructedWith', array(array('07-06-1983')));
+        $this->instantiate()->format('Y-m-d')->shouldBe('1983-06-07');
+    }
+
+    function it_can_reset_construct_arguments_with_a_factory_method()
+    {
+        $this->callOnWrappedObject('beAnInstanceOf', array('\DateTime'));
+        $this->callOnWrappedObject(
+            'beConstructedThrough',
+            array(
+                'createFromFormat',
+                array('d-m-Y', '07-09-1983')
+            )
+        );
+        $this->instantiate()->format('Y-m-d')->shouldBe('1983-09-07');
+        
+        $this->callOnWrappedObject(
+            'beConstructedThrough',
+            array(
+                'createFromFormat',
+                array('d-m-Y', '07-06-1983')
+            )
+        );
+        $this->instantiate()->format('Y-m-d')->shouldBe('1983-06-07');
+    }
 }
