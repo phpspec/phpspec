@@ -32,6 +32,8 @@ use PhpSpec\Runner;
 use PhpSpec\CodeGenerator;
 use PhpSpec\Wrapper;
 
+use RuntimeException;
+
 /**
  * The command line application entry point
  */
@@ -486,7 +488,7 @@ class Application extends BaseApplication
 
         if ($customPath = $input->getParameterOption(array('-c','--config'))) {
             if (!file_exists($customPath)) {
-                throw new \RuntimeException('Custom configuration file not found at '.$customPath);
+                throw new RuntimeException('Custom configuration file not found at '.$customPath);
             }
             $paths = array($customPath);
         }
