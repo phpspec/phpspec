@@ -53,23 +53,25 @@ Using the Constructor
 
 You can tell phpspec to pass values to the constructor when it constructs the object:
 
-<?php
+.. code-block:: php
 
-    namespace spec;
+    <?php
 
-    use PhpSpec\ObjectBehavior;
-    use Markdown\Writer;
+        namespace spec;
 
-    class MarkdownSpec extends ObjectBehavior
-    {
-        function it_outputs_converted_text(Writer $writer)
+        use PhpSpec\ObjectBehavior;
+        use Markdown\Writer;
+
+        class MarkdownSpec extends ObjectBehavior
         {
-            $this->beConstructedWith($writer);
-            $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
+            function it_outputs_converted_text(Writer $writer)
+            {
+                $this->beConstructedWith($writer);
+                $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
 
-            $this->outputHtml("Hi, there");
+                $this->outputHtml("Hi, there");
+            }
         }
-    }
 
 Using a Factory Method
 ----------------------
@@ -78,40 +80,44 @@ You may not want to use the constructor but use static factory methods to create
 This allows you to create it in different ways for different use cases since you can
 only have a single constructor in PHP.
 
-<?php
+.. code-block:: php
 
-    use Markdown\Writer;
+    <?php
 
-    class Markdown
-    {
-        static public function createForWriting(Writer $writer)
+        use Markdown\Writer;
+
+        class Markdown
         {
-            $markdown = new Self();
-            $markdown->writer = $writer;
+            static public function createForWriting(Writer $writer)
+            {
+                $markdown = new Self();
+                $markdown->writer = $writer;
 
-            return $markdown;
+                return $markdown;
+            }
         }
-    }
 
 You can tell **phpspec** this is how you want to construct the object as follows:
 
-<?php
+.. code-block:: php
 
-    namespace spec;
+    <?php
 
-    use PhpSpec\ObjectBehavior;
-    use Markdown\Writer;
+        namespace spec;
 
-    class MarkdownSpec extends ObjectBehavior
-    {
-        function it_outputs_converted_text(Writer $writer)
+        use PhpSpec\ObjectBehavior;
+        use Markdown\Writer;
+
+        class MarkdownSpec extends ObjectBehavior
         {
-            $this->beConstructedThrough('createForWriting', [$writer]);
-            $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
+            function it_outputs_converted_text(Writer $writer)
+            {
+                $this->beConstructedThrough('createForWriting', [$writer]);
+                $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
 
-            $this->outputHtml("Hi, there");
+                $this->outputHtml("Hi, there");
+            }
         }
-    }
 
 Where the first argument is the method name and the second an array of the values
 to pass to that method.
@@ -124,31 +130,32 @@ However, you may have a single example that needs constructing in a different wa
 You can do this by calling ``beConstructedWith`` again in the example. The last time you
 call ``beConstructedWith`` will determine how **phpspec** constructs the object:
 
+.. code-block:: php
 
-<?php
+    <?php
 
-    namespace spec;
+        namespace spec;
 
-    use PhpSpec\ObjectBehavior;
-    use Markdown\Writer;
+        use PhpSpec\ObjectBehavior;
+        use Markdown\Writer;
 
-    class MarkdownSpec extends ObjectBehavior
-    {
-        function let(Writer $writer)
+        class MarkdownSpec extends ObjectBehavior
         {
-            $this->beConstructedWith($writer, true);
-        }
+            function let(Writer $writer)
+            {
+                $this->beConstructedWith($writer, true);
+            }
 
-        function it_outputs_converted_text(Writer $writer)
-        {
-            //constructed with second argument set to true
-            //...
-        }
+            function it_outputs_converted_text(Writer $writer)
+            {
+                //constructed with second argument set to true
+                //...
+            }
 
-        function it_does_something_if_argument_is_false(Writer $writer)
-        {
-            $this->beConstructedWith($writer, false);
-            //constructed with second argument set to false
-            //...
+            function it_does_something_if_argument_is_false(Writer $writer)
+            {
+                $this->beConstructedWith($writer, false);
+                //constructed with second argument set to false
+                //...
+            }
         }
-    }
