@@ -43,8 +43,8 @@ One thing this means is that you do not construct the object you are
 describing in the examples. **phpspec** instead handles creating the
 object you are describing when you run the specs.
 
-The default way **phpspec** does this is the same as you doing ``new Markdown()``.
-If it does not need any values or dependencies passing to it the this is
+The default way **phpspec** does this is the same as ``new Markdown()``.
+If it does not need any values or dependencies passing to it then this is
 fine but for many objects this will not be good enough. You can tell **phpspec**
 how you want it to create the object though.
 
@@ -120,8 +120,8 @@ Overriding
 ----------
 
 To avoid repetition you can tell **phpspec** how to construct the object in `let`.
-You may have a single example that needs constructing in a different way. You can
-do this by calling ``beConstructedWith`` again in the example. The last time you
+However, you may have a single example that needs constructing in a different way.
+You can do this by calling ``beConstructedWith`` again in the example. The last time you
 call ``beConstructedWith`` will determine how the **phpspec** constructs the object:
 
 
