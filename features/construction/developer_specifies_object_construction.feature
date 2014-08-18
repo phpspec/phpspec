@@ -201,3 +201,134 @@ Feature: Developer specifies object construction
       """
     When I run phpspec
     Then the suite should pass
+
+  Scenario: Static constructor set in example used instead factory method set in let
+    Given the spec file "spec/Runner/ConstructorExample7/ClassWithStaticFactoryMethodAndConstructorSpec.php" contains:
+    """
+    <?php
+
+    namespace spec\Runner\ConstructorExample7;
+
+    use PhpSpec\ObjectBehavior;
+    use Prophecy\Argument;
+
+    class ClassWithStaticFactoryMethodAndConstructorSpec extends ObjectBehavior
+    {
+        function let()
+        {
+            $this->beConstructedThrough('getInstanceOfType', array('foo'));
+        }
+
+        function it_is_initializable()
+        {
+            $this->beConstructedWith('bar');
+            $this->getType()->shouldReturn('bar');
+            $this->wasConstructedWith()->shouldReturn('__construct');
+        }
+    }
+
+    """
+    And the class file "src/Runner/ConstructorExample7/ClassWithStaticFactoryMethodAndConstructor.php" contains:
+    """
+    <?php
+
+    namespace Runner\ConstructorExample7;
+
+    class ClassWithStaticFactoryMethodAndConstructor
+    {
+        private $type;
+        private $wasConstructedWith;
+
+        public function __construct($type)
+        {
+            $this->type = $type;
+            $this->wasConstructedWith = '__construct';
+        }
+
+        public static function getInstanceOfType($type)
+        {
+            $created = new self($type);
+            $created->wasConstructedWith = 'getInstanceOfType';
+            return $created;
+        }
+
+        public function getType()
+        {
+            return $this->type;
+        }
+
+        public function wasConstructedWith()
+        {
+             return $this->wasConstructedWith;
+        }
+    }
+
+    """
+    When I run phpspec
+    Then the suite should pass
+
+  Scenario: Factory method set in example used instead of constructor set in let
+    Given the spec file "spec/Runner/ConstructorExample8/ClassWithStaticFactoryMethodAndConstructorSpec.php" contains:
+    """
+    <?php
+
+    namespace spec\Runner\ConstructorExample8;
+
+    use PhpSpec\ObjectBehavior;
+    use Prophecy\Argument;
+
+    class ClassWithStaticFactoryMethodAndConstructorSpec extends ObjectBehavior
+    {
+        function let()
+        {
+            $this->beConstructedWith('bar');
+            $this->beConstructedThrough('getInstanceOfType', array('foo'));
+        }
+
+        function it_is_initializable()
+        {
+            $this->beConstructedThrough('getInstanceOfType', array('foo'));
+            $this->getType()->shouldReturn('foo');
+            $this->wasConstructedWith()->shouldReturn('getInstanceOfType');
+        }
+    }
+
+    """
+    And the class file "src/Runner/ConstructorExample8/ClassWithStaticFactoryMethodAndConstructor.php" contains:
+    """
+    <?php
+
+    namespace Runner\ConstructorExample8;
+
+    class ClassWithStaticFactoryMethodAndConstructor
+    {
+        private $type;
+        private $wasConstructedWith;
+
+        public function __construct($type)
+        {
+            $this->type = $type;
+            $this->wasConstructedWith = '__construct';
+        }
+
+        public static function getInstanceOfType($type)
+        {
+            $created = new self($type);
+            $created->wasConstructedWith = 'getInstanceOfType';
+            return $created;
+        }
+
+        public function getType()
+        {
+            return $this->type;
+        }
+
+        public function wasConstructedWith()
+        {
+             return $this->wasConstructedWith;
+        }
+    }
+
+    """
+    When I run phpspec
+    Then the suite should pass

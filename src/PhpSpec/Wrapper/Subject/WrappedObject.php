@@ -81,6 +81,7 @@ class WrappedObject
         $unwrapper            = new Unwrapper;
         $this->arguments      = $unwrapper->unwrapAll($arguments);
         $this->isInstantiated = false;
+        $this->factoryMethod  = null;
     }
 
     /**
