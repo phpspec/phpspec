@@ -23,10 +23,12 @@ use PhpSpec\IO\IOInterface;
  */
 class Template implements TemplateInterface
 {
-    /**
-     *
-     */
     const DIR = __DIR__;
+
+    /**
+     * @var IOInterface
+     */
+    private $io;
 
     /**
      * @param IOInterface $io
