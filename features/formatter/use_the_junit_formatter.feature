@@ -1,6 +1,6 @@
 Feature: Use the JUnit formatter
   In order to provide my CI tool with parsable phpspec results
-  As a developper
+  As a developer
   I need to be able to use a JUnit formatter
 
   Scenario: Successfully export phpspec results in JUnit format
