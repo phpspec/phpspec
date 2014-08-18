@@ -3,21 +3,14 @@ phpspec
 
 The main website with documentation is at `http://phpspec.net <http://phpspec.net>`_.
 
-Build status
-------------
-
-|travis-badge| - Travis
-
-.. |travis-badge| image:: https://travis-ci.org/phpspec/phpspec.svg?branch=master
+.. image:: https://travis-ci.org/phpspec/phpspec.svg?branch=master
    :target: http://travis-ci.org/phpspec/phpspec
    :alt: Master Travis Build Status
    :align: bottom
 
-|scrutinizer-badge| - Scrutinizer
-
-.. |scrutinizer-badge| image:: https://scrutinizer-ci.com/g/phpspec/phpspec/badges/build.png?b=master
+.. image:: https://scrutinizer-ci.com/g/phpspec/phpspec/badges/quality-score.png?b=master
    :target: https://scrutinizer-ci.com/g/phpspec/phpspec/build-status/master
-   :alt: Master Scrutinizer Inspection Status
+   :alt: Master Scrutinizer Quality Score
    :align: bottom
    
 Installing Dependencies
