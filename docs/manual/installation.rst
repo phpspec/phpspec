@@ -519,6 +519,7 @@ Other useful resources for learning/using **phpspec**:
 .. toctree::
     :maxdepth: 1
 
+    ../cookbook/console
     ../cookbook/matchers
     ../cookbook/templates
     ../cookbook/configuration

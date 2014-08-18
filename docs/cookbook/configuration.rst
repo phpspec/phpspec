@@ -11,6 +11,8 @@ You can use a different config file name and path with the ``--config`` option:
 
     $ bin/phpspec run --config path/to/different-phpspec.yml
 
+.. _configuration-suites:
+
 Spec and source locations
 -------------------------
 
