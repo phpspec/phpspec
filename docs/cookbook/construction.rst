@@ -93,7 +93,7 @@ only have a single constructor in PHP.
         }
     }
 
-You can tell *phpspec* this is how you want to construct the object as follows:
+You can tell **phpspec** this is how you want to construct the object as follows:
 
 <?php
 
@@ -122,7 +122,7 @@ Overriding
 To avoid repetition you can tell **phpspec** how to construct the object in `let`.
 However, you may have a single example that needs constructing in a different way.
 You can do this by calling ``beConstructedWith`` again in the example. The last time you
-call ``beConstructedWith`` will determine how the **phpspec** constructs the object:
+call ``beConstructedWith`` will determine how **phpspec** constructs the object:
 
 
 <?php
