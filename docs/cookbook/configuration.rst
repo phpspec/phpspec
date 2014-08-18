@@ -73,7 +73,10 @@ add a suite without specifying the namespace.
             src_path: acme-src
 
 You can just set this suite if you wanted to override the default settings for
-all namespaces.
+all namespaces. Since **phpspec** matches on namespaces you cannot specify more
+than one set of configuration values for a null namespace. If you do add more
+than one suite with a null namespace then **phpspec** will use the last one
+defined.
 
 
 Formatter
