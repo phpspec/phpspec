@@ -6,12 +6,10 @@ The main website with documentation is at `http://phpspec.net <http://phpspec.ne
 .. image:: https://travis-ci.org/phpspec/phpspec.svg?branch=master
    :target: http://travis-ci.org/phpspec/phpspec
    :alt: Master Travis Build Status
-   :align: bottom
 
 .. image:: https://scrutinizer-ci.com/g/phpspec/phpspec/badges/quality-score.png?b=master
    :target: https://scrutinizer-ci.com/g/phpspec/phpspec/build-status/master
    :alt: Master Scrutinizer Quality Score
-   :align: bottom
    
 Installing Dependencies
 -----------------------
