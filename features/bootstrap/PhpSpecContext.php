@@ -197,7 +197,7 @@ class PhpSpecContext implements Context
      */
     private function createApplicationTester()
     {
-        $application = new Application('2.0-dev');
+        $application = new Application('2.1-dev');
         $application->setAutoExit(false);
 
         return new ApplicationTester($application);
