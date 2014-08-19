@@ -3,8 +3,10 @@
 namespace Console;
 
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Helper\DialogHelper;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\StreamOutput;
+use Symfony\Component\DependencyInjection\Exception\RuntimeException;
 
 /**
  * A console application tester heavily inspired by/proudly stolen from \Symfony\Component\Console\Tester\ApplicationTester.
@@ -69,9 +71,7 @@ class ApplicationTester
 
         $inputStream = $this->getInputStream();
         rewind($inputStream);
-        $this->application->getHelperSet()
-            ->get('dialog')
-            ->setInputStream($inputStream);
+        $this->getDialogHelper()->setInputStream($inputStream);
 
         $this->statusCode = $this->application->run($this->input, $this->output);
 
@@ -138,5 +138,19 @@ class ApplicationTester
     public function getStatusCode()
     {
         return $this->statusCode;
+    }
+
+    /**
+     * @return \Symfony\Component\Console\Helper\DialogHelper
+     */
+    private function getDialogHelper()
+    {
+        $dialogHelper = $this->application->getHelperSet()->get('dialog');
+
+        if (!$dialogHelper instanceof DialogHelper) {
+            throw new RuntimeException('Cannot get DialogHelper from Application');
+        }
+
+        return $dialogHelper;
     }
 }
