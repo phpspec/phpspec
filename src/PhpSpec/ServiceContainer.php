@@ -196,9 +196,9 @@ class ServiceContainer
      */
     public function addConfigurator($configurator)
     {
-        if (!is_object($configurator)) {
+        if (!is_callable($configurator)) {
             throw new InvalidArgumentException(sprintf(
-                'Configurator should be callback or object, but %s given.', gettype($configurator)
+                'Configurator should be callback, but %s given.', gettype($configurator)
             ));
         }
 
@@ -211,7 +211,7 @@ class ServiceContainer
     public function configure()
     {
         foreach ($this->configurators as $configurator) {
-            $configurator($this);
+            call_user_func($configurator, $this);
         }
     }
 
