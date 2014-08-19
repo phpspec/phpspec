@@ -112,7 +112,7 @@ class IO implements IOInterface
      */
     public function isVerbose()
     {
-        return OutputInterface::VERBOSITY_VERBOSE === $this->output->getVerbosity();
+        return OutputInterface::VERBOSITY_VERBOSE <= $this->output->getVerbosity();
     }
 
     /**
