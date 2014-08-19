@@ -6,7 +6,7 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Helper\DialogHelper;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\StreamOutput;
-use Symfony\Component\DependencyInjection\Exception\RuntimeException;
+use RuntimeException;
 
 /**
  * A console application tester heavily inspired by/proudly stolen from \Symfony\Component\Console\Tester\ApplicationTester.
