@@ -95,7 +95,7 @@ class ServiceContainer
     }
 
     /**
-     * Sets a object or a callable for the object creation. The same object will
+     * Sets a callable for the object creation. The same object will
      * be returned every time
      *
      * @param string   $id
