@@ -107,13 +107,12 @@ class StringPresenter implements PresenterInterface
      */
     public function presentException(Exception $exception, $verbose = false)
     {
-        $presentation = sprintf('Exception %s has been thrown.', $this->presentValue($exception));
         if ($exception instanceof PhpSpecException) {
             $presentation = wordwrap($exception->getMessage(), 120);
-        }
-
-        if ($exception instanceof ProphecyException) {
+        } elseif ($exception instanceof ProphecyException) {
             $presentation = $exception->getMessage();
+        } else {
+            $presentation = sprintf('Exception %s has been thrown.', $this->presentValue($exception));
         }
 
         if (!$verbose || $exception instanceof PendingException) {
