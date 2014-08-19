@@ -473,6 +473,7 @@ gets run before each example so each time the parser gets constructed with
 a fresh mock object.
 
 .. code-block:: php
+
     <?php
 
         namespace spec;
