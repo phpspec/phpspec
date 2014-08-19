@@ -66,8 +66,8 @@ class ServiceContainer
     }
 
     /**
-     * Sets a object or a callable for the object creation. A new object will
-     * be created every time
+     * Sets a object or a callable for the object creation. A callable will be invoked
+     * every time get is called.
      *
      * @param string          $id
      * @param object|callable $value
