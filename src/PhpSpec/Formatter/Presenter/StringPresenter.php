@@ -18,7 +18,6 @@ use PhpSpec\Exception\Exception as PhpSpecException;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Example\ErrorException;
 use PhpSpec\Exception\Example\PendingException;
-
 use Prophecy\Exception\Exception as ProphecyException;
 
 /**
@@ -33,11 +32,32 @@ class StringPresenter implements PresenterInterface
     private $differ;
 
     /**
+     * The PhpSpec base path.
+     *
+     * This property is used as a constant but PHP does not support setting the value with dirname().
+     *
+     * @var string
+     */
+    private $phpspecPath;
+
+    /**
+     * The PhpSpec Runner base path.
+     *
+     * This property is used as a constant but PHP does not support setting the value with dirname().
+     *
+     * @var string
+     */
+    private $runnerPath;
+
+    /**
      * @param Differ\Differ $differ
      */
     public function __construct(Differ\Differ $differ)
     {
         $this->differ = $differ;
+
+        $this->phpspecPath = dirname(dirname(__DIR__));
+        $this->runnerPath  = $this->phpspecPath.DIRECTORY_SEPARATOR.'Runner';
     }
 
     /**
@@ -48,20 +68,10 @@ class StringPresenter implements PresenterInterface
     public function presentValue($value)
     {
         if (is_callable($value)) {
-            if (is_array($value)) {
-                return $this->presentString(sprintf(
-                    '[%s::%s()]', get_class($value[0]), $value[1]
-                ));
-            } elseif ($value instanceof \Closure) {
-                return $this->presentString('[closure]');
-            } elseif (is_object($value)) {
-                return $this->presentString(sprintf('[obj:%s]', get_class($value)));
-            } else {
-                return $this->presentString(sprintf('[%s()]', $value));
-            }
+            return $this->presentString($this->presentCallable($value));
         }
 
-        if (is_object($value) && $value instanceof Exception) {
+        if ($value instanceof Exception) {
             return $this->presentString(sprintf(
                 '[exc:%s("%s")]', get_class($value), $value->getMessage()
             ));
@@ -97,13 +107,12 @@ class StringPresenter implements PresenterInterface
      */
     public function presentException(Exception $exception, $verbose = false)
     {
-        $presentation = sprintf('Exception %s has been thrown.', $this->presentValue($exception));
         if ($exception instanceof PhpSpecException) {
             $presentation = wordwrap($exception->getMessage(), 120);
-        }
-
-        if ($exception instanceof ProphecyException) {
+        } elseif ($exception instanceof ProphecyException) {
             $presentation = $exception->getMessage();
+        } else {
+            $presentation = sprintf('Exception %s has been thrown.', $this->presentValue($exception));
         }
 
         if (!$verbose || $exception instanceof PendingException) {
@@ -206,39 +215,25 @@ class StringPresenter implements PresenterInterface
      */
     protected function presentExceptionStackTrace(Exception $exception)
     {
-        $phpspecPath = dirname(dirname(__DIR__));
-        $runnerPath  = $phpspecPath.DIRECTORY_SEPARATOR.'Runner';
-
         $offset = 0;
         $text   = "\n";
 
-        $text .= $this->presentExceptionTraceHeader(sprintf("%2d %s:%d",
-            $offset++,
-            str_replace(getcwd().DIRECTORY_SEPARATOR, '', $exception->getFile()),
-            $exception->getLine()
-        ));
+        $text .= $this->presentExceptionTraceLocation($offset++, $exception->getFile(), $exception->getLine());
         $text .= $this->presentExceptionTraceFunction(
             'throw new '.get_class($exception), array($exception->getMessage())
         );
 
         foreach ($exception->getTrace() as $call) {
             // skip internal framework calls
-            if (isset($call['file']) && false !== strpos($call['file'], $runnerPath)) {
+            if ($this->shouldStopTracePresentation($call)) {
                 break;
             }
-            if (isset($call['file']) && 0 === strpos($call['file'], $phpspecPath)) {
-                continue;
-            }
-            if (isset($call['class']) && 0 === strpos($call['class'], "PhpSpec\\")) {
+            if ($this->shouldSkipTracePresentation($call)) {
                 continue;
             }
 
             if (isset($call['file'])) {
-                $text .= $this->presentExceptionTraceHeader(sprintf("%2d %s:%d",
-                    $offset++,
-                    str_replace(getcwd().DIRECTORY_SEPARATOR, '', $call['file']),
-                    $call['line']
-                ));
+                $text .= $this->presentExceptionTraceLocation($offset++, $call['file'], $call['line']);
             } else {
                 $text .= $this->presentExceptionTraceHeader(sprintf("%2d [internal]", $offset++));
             }
@@ -314,5 +309,58 @@ class StringPresenter implements PresenterInterface
         }
 
         return array($exception->getFile(), $exception->getLine());
+    }
+
+    /**
+     * @param int    $offset
+     * @param string $file
+     * @param int    $line
+     *
+     * @return string
+     */
+    private function presentExceptionTraceLocation($offset, $file, $line)
+    {
+        return $this->presentExceptionTraceHeader(sprintf("%2d %s:%d",
+            $offset,
+            str_replace(getcwd().DIRECTORY_SEPARATOR, '', $file),
+            $line
+        ));
+    }
+
+    private function shouldStopTracePresentation(array $call)
+    {
+        return isset($call['file']) && false !== strpos($call['file'], $this->runnerPath);
+    }
+
+    private function shouldSkipTracePresentation(array $call)
+    {
+        if (isset($call['file']) && 0 === strpos($call['file'], $this->phpspecPath)) {
+            return true;
+        }
+
+
+        return isset($call['class']) && 0 === strpos($call['class'], "PhpSpec\\");
+    }
+
+    /**
+     * @param callable $value
+     *
+     * @return string
+     */
+    private function presentCallable($value)
+    {
+        if (is_array($value)) {
+            return sprintf('[%s::%s()]', get_class($value[0]), $value[1]);
+        }
+
+        if ($value instanceof \Closure) {
+            return '[closure]';
+        }
+
+        if (is_object($value)) {
+            return sprintf('[obj:%s]', get_class($value));
+        }
+
+        return sprintf('[%s()]', $value);
     }
 }
