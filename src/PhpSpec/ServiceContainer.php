@@ -66,19 +66,19 @@ class ServiceContainer
     }
 
     /**
-     * Sets a object or a callback for the object creation. A new object will
+     * Sets a object or a callable for the object creation. A new object will
      * be created every time
      *
      * @param string          $id
      * @param object|callable $value
      *
-     * @throws \InvalidArgumentException if service is not an object or callback
+     * @throws \InvalidArgumentException if service is not an object or callable
      */
     public function set($id, $value)
     {
         if (!is_object($value) && !is_callable($value)) {
             throw new InvalidArgumentException(sprintf(
-                'Service should be callback or object, but %s given.',gettype($value)
+                'Service should be callable or object, but %s given.',gettype($value)
             ));
         }
 
@@ -95,19 +95,19 @@ class ServiceContainer
     }
 
     /**
-     * Sets a object or a callback for the object creation. The same object will
+     * Sets a object or a callable for the object creation. The same object will
      * be returned every time
      *
      * @param string   $id
      * @param callable $callable
      *
-     * @throws \InvalidArgumentException if service is not a callback
+     * @throws \InvalidArgumentException if service is not a callable
      */
     public function setShared($id, $callable)
     {
         if (!is_callable($callable)) {
             throw new InvalidArgumentException(sprintf(
-                'Service should be callback, "%s" given.', gettype($callable)
+                'Service should be callable, "%s" given.', gettype($callable)
             ));
         }
 
@@ -188,17 +188,17 @@ class ServiceContainer
     }
 
     /**
-     * Adds a configurator, that can configure many services in one callback
+     * Adds a configurator, that can configure many services in one callable
      *
      * @param callable $configurator
      *
-     * @throws \InvalidArgumentException if configurator is not a callback
+     * @throws \InvalidArgumentException if configurator is not a callable
      */
     public function addConfigurator($configurator)
     {
         if (!is_callable($configurator)) {
             throw new InvalidArgumentException(sprintf(
-                'Configurator should be callback, but %s given.', gettype($configurator)
+                'Configurator should be callable, but %s given.', gettype($configurator)
             ));
         }
 
