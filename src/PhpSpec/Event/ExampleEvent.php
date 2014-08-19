@@ -139,7 +139,7 @@ class ExampleEvent extends Event implements EventInterface
     }
 
     /**
-     * @return null
+     * @return integer
      */
     public function getResult()
     {

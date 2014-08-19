@@ -49,7 +49,7 @@ class Application extends BaseApplication
      */
     public function __construct($version)
     {
-        $this->container = new ServiceContainer;
+        $this->container = new ServiceContainer();
         parent::__construct('phpspec', $version);
     }
 
@@ -114,6 +114,7 @@ class Application extends BaseApplication
         );
 
         $definition->setOptions($options);
+
         return $definition;
     }
 
@@ -153,18 +154,18 @@ class Application extends BaseApplication
     protected function setupResultConverter(ServiceContainer $container)
     {
         $container->setShared('console.result_converter', function ($c) {
-            return new ResultConverter;
+            return new ResultConverter();
         });
     }
 
     protected function setupCommands(ServiceContainer $container)
     {
         $container->setShared('console.commands.run', function ($c) {
-            return new Command\RunCommand;
+            return new Command\RunCommand();
         });
 
         $container->setShared('console.commands.describe', function ($c) {
-            return new Command\DescribeCommand;
+            return new Command\DescribeCommand();
         });
     }
 
@@ -174,7 +175,7 @@ class Application extends BaseApplication
     protected function setupEventDispatcher(ServiceContainer $container)
     {
         $container->setShared('event_dispatcher', function ($c) {
-            $dispatcher = new EventDispatcher;
+            $dispatcher = new EventDispatcher();
 
             array_map(
                 array($dispatcher, 'addSubscriber'),
@@ -185,7 +186,7 @@ class Application extends BaseApplication
         });
 
         $container->setShared('event_dispatcher.listeners.stats', function ($c) {
-            return new Listener\StatisticsCollector;
+            return new Listener\StatisticsCollector();
         });
         $container->setShared('event_dispatcher.listeners.class_not_found', function ($c) {
             return new Listener\ClassNotFoundListener(
@@ -214,7 +215,7 @@ class Application extends BaseApplication
     protected function setupGenerators(ServiceContainer $container)
     {
         $container->setShared('code_generator', function ($c) {
-            $generator = new CodeGenerator\GeneratorManager;
+            $generator = new CodeGenerator\GeneratorManager();
 
             array_map(
                 array($generator, 'registerGenerator'),
@@ -244,7 +245,7 @@ class Application extends BaseApplication
         });
 
         $container->setShared('code_generator.templates', function ($c) {
-            $renderer = new CodeGenerator\TemplateRenderer;
+            $renderer = new CodeGenerator\TemplateRenderer();
             $renderer->setLocations($c->getParam('code_generator.templates.paths', array()));
 
             return $renderer;
@@ -272,7 +273,7 @@ class Application extends BaseApplication
         });
 
         $container->setShared('formatter.presenter.differ', function ($c) {
-            $differ = new SpecFormatter\Presenter\Differ\Differ;
+            $differ = new SpecFormatter\Presenter\Differ\Differ();
 
             array_map(
                 array($differ, 'addEngine'),
@@ -283,10 +284,10 @@ class Application extends BaseApplication
         });
 
         $container->set('formatter.presenter.differ.engines.string', function ($c) {
-            return new SpecFormatter\Presenter\Differ\StringEngine;
+            return new SpecFormatter\Presenter\Differ\StringEngine();
         });
         $container->set('formatter.presenter.differ.engines.array', function ($c) {
-            return new SpecFormatter\Presenter\Differ\ArrayEngine;
+            return new SpecFormatter\Presenter\Differ\ArrayEngine();
         });
     }
 
@@ -363,7 +364,7 @@ class Application extends BaseApplication
             return new SpecFormatter\DotFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
         });
         $container->set('formatter.formatters.html', function ($c) {
-            $io = new SpecFormatter\Html\IO;
+            $io = new SpecFormatter\Html\IO();
             $template = new SpecFormatter\Html\Template($io);
             $factory = new SpecFormatter\Html\ReportItemFactory($template);
             $presenter = new SpecFormatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
@@ -433,7 +434,7 @@ class Application extends BaseApplication
             return new Runner\Maintainer\CollaboratorsMaintainer($c->get('unwrapper'));
         });
         $container->set('runner.maintainers.let_letgo', function ($c) {
-            return new Runner\Maintainer\LetAndLetgoMaintainer;
+            return new Runner\Maintainer\LetAndLetgoMaintainer();
         });
         $container->set('runner.maintainers.matchers', function ($c) {
             return new Runner\Maintainer\MatchersMaintainer(
@@ -450,7 +451,7 @@ class Application extends BaseApplication
         });
 
         $container->setShared('unwrapper', function ($c) {
-            return new Wrapper\Unwrapper;
+            return new Wrapper\Unwrapper();
         });
     }
 
@@ -467,7 +468,7 @@ class Application extends BaseApplication
         foreach ($config as $key => $val) {
             if ('extensions' === $key && is_array($val)) {
                 foreach ($val as $class) {
-                    $extension = new $class;
+                    $extension = new $class();
 
                     if (!$extension instanceof Extension\ExtensionInterface) {
                         throw new RuntimeException(sprintf(

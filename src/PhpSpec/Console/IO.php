@@ -18,7 +18,6 @@ use PhpSpec\IO\IOInterface;
 use Symfony\Component\Console\Helper\DialogHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Helper\HelperSet;
 use PhpSpec\Config\OptionsConfig;
 
 /**
@@ -57,10 +56,10 @@ class IO implements IOInterface
     private $config;
 
     /**
-     * @param InputInterface   $input
-     * @param OutputInterface  $output
-     * @param DialogHelper     $dialogHelper
-     * @param OptionsConfig    $config
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     * @param DialogHelper    $dialogHelper
+     * @param OptionsConfig   $config
      */
     public function __construct(InputInterface $input, OutputInterface $output, DialogHelper $dialogHelper, OptionsConfig $config)
     {
@@ -117,7 +116,7 @@ class IO implements IOInterface
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getLastWrittenMessage()
     {
@@ -144,7 +143,7 @@ class IO implements IOInterface
     }
 
     /**
-     * @return void|string
+     * @return null|string
      */
     public function cutTemp()
     {
@@ -264,7 +263,7 @@ class IO implements IOInterface
      * @param int|false    $attempts
      * @param string       $default
      *
-     * @return Boolean
+     * @return string
      */
     public function askAndValidate($question, $validator, $attempts = false, $default = null)
     {

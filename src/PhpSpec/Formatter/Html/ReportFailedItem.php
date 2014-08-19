@@ -53,7 +53,7 @@ class ReportFailedItem
     }
 
     /**
-     * @param $index
+     * @param int $index
      */
     public function write($index)
     {

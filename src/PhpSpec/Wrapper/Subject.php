@@ -16,7 +16,6 @@ namespace PhpSpec\Wrapper;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 use PhpSpec\Wrapper\Subject\Caller;
 use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
-use PhpSpec\Wrapper\Subject\Expectation;
 use PhpSpec\Wrapper\Subject\ExpectationFactory;
 use PhpSpec\Util\Instantiator;
 
@@ -165,12 +164,10 @@ class Subject implements ArrayAccess, WrapperInterface
     /**
      * @param string|integer $key
      * @param mixed          $value
-     *
-     * @return Subject
      */
     public function offsetSet($key, $value)
     {
-        return $this->wrap($this->arrayAccess->offsetSet($key, $value));
+        $this->arrayAccess->offsetSet($key, $value);
     }
 
     /**
@@ -260,7 +257,7 @@ class Subject implements ArrayAccess, WrapperInterface
     private function makeSureWeHaveASubject()
     {
         if (null === $this->subject && $this->wrappedObject->getClassname()) {
-            $instantiator = new Instantiator;
+            $instantiator = new Instantiator();
 
             return $instantiator->instantiate($this->wrappedObject->getClassname());
         }

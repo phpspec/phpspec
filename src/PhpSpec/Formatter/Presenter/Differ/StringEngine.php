@@ -27,7 +27,7 @@ class StringEngine implements EngineInterface
 
         $diff = new \Diff($expected, $actual, array());
 
-        $renderer = new \Diff_Renderer_Text_Unified;
+        $renderer = new \Diff_Renderer_Text_Unified();
         $text = $diff->render($renderer);
 
         $lines = array();

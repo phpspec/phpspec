@@ -43,7 +43,7 @@ class StringPresenter implements PresenterInterface
     /**
      * @param mixed $value
      *
-     * @return mixed
+     * @return string
      */
     public function presentValue($value)
     {

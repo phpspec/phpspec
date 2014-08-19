@@ -77,7 +77,7 @@ abstract class DuringCall
     {
         if ($method === '__construct') {
             $this->subject->beAnInstanceOf($this->wrappedObject->getClassname(), $arguments);
-            $instantiator = new Instantiator;
+            $instantiator = new Instantiator();
             $object = $instantiator->instantiate($this->wrappedObject->getClassname());
         } else {
             $object = $this->wrappedObject->instantiate();

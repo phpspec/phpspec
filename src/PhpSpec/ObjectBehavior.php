@@ -84,7 +84,7 @@ class ObjectBehavior implements ArrayAccess,
      *
      * @param string|integer $key
      *
-     * @return bool
+     * @return Subject
      */
     public function offsetExists($key)
     {
@@ -96,7 +96,7 @@ class ObjectBehavior implements ArrayAccess,
      *
      * @param string|integer $key
      *
-     * @return mixed
+     * @return Subject
      */
     public function offsetGet($key)
     {

@@ -61,7 +61,7 @@ class SubjectWithArrayAccess
      */
     public function offsetExists($key)
     {
-        $unwrapper = new Unwrapper;
+        $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
         $key     = $unwrapper->unwrapOne($key);
 
@@ -77,7 +77,7 @@ class SubjectWithArrayAccess
      */
     public function offsetGet($key)
     {
-        $unwrapper = new Unwrapper;
+        $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
         $key     = $unwrapper->unwrapOne($key);
 
@@ -92,7 +92,7 @@ class SubjectWithArrayAccess
      */
     public function offsetSet($key, $value)
     {
-        $unwrapper = new Unwrapper;
+        $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
         $key     = $unwrapper->unwrapOne($key);
         $value   = $unwrapper->unwrapOne($value);
@@ -107,7 +107,7 @@ class SubjectWithArrayAccess
      */
     public function offsetUnset($key)
     {
-        $unwrapper = new Unwrapper;
+        $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
         $key     = $unwrapper->unwrapOne($key);
 

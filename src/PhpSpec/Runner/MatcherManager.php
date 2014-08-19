@@ -29,7 +29,7 @@ class MatcherManager
      */
     private $presenter;
     /**
-     * @var array
+     * @var MatcherInterface[]
      */
     private $matchers = array();
 
@@ -53,10 +53,12 @@ class MatcherManager
     }
 
     /**
-     * @param $keyword
-     * @param $subject
-     * @param  array                                               $arguments
-     * @return mixed
+     * @param string $keyword
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
+     * @return MatcherInterface
+     *
      * @throws \PhpSpec\Exception\Wrapper\MatcherNotFoundException
      */
     public function find($keyword, $subject, array $arguments)

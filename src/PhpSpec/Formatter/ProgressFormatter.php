@@ -28,11 +28,13 @@ class ProgressFormatter extends BasicFormatter
 
         $percents = array_map(function ($count) use ($total) {
             $percent = ($count == $total) ? 100 : $count / ($total / 100);
+
             return $percent == 0 || $percent > 1 ? floor($percent) : 1;
         }, $counts);
         $lengths  = array_map(function ($percent) {
             $length = $percent / 2;
             $res = $length == 0 || $length > 1 ? floor($length) : 1;
+
             return $res;
         }, $percents);
 

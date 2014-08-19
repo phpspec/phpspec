@@ -15,5 +15,9 @@ namespace PhpSpec\Formatter;
 
 interface Template
 {
+    /**
+     * @param string $text
+     * @param array  $templateVars
+     */
     public function render($text, array $templateVars = array());
 }

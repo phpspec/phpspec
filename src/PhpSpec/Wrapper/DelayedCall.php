@@ -25,7 +25,7 @@ class DelayedCall
     private $callable;
 
     /**
-     * @param $callable
+     * @param callable $callable
      */
     public function __construct($callable)
     {

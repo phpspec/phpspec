@@ -39,8 +39,8 @@ class Template implements TemplateInterface
     }
 
     /**
-     * @param $text
-     * @param array $templateVars
+     * @param string $text
+     * @param array  $templateVars
      */
     public function render($text, array $templateVars = array())
     {
@@ -53,10 +53,11 @@ class Template implements TemplateInterface
     }
 
     /**
-     * @param $templateVars
+     * @param array $templateVars
+     *
      * @return array
      */
-    private function extractKeys($templateVars)
+    private function extractKeys(array $templateVars)
     {
         return array_map(function ($e) {
             return '{' . $e . '}';

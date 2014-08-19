@@ -90,7 +90,7 @@ class Caller
         }
 
         $subject   = $this->wrappedObject->getInstance();
-        $unwrapper = new Unwrapper;
+        $unwrapper = new Unwrapper();
         $arguments = $unwrapper->unwrapAll($arguments);
 
         if ($this->isObjectMethodAccessible($method)) {
@@ -115,7 +115,7 @@ class Caller
             throw $this->settingPropertyOnNonObject($property);
         }
 
-        $unwrapper = new Unwrapper;
+        $unwrapper = new Unwrapper();
         $value = $unwrapper->unwrapOne($value);
 
         if ($this->isObjectPropertyAccessible($property, true)) {
@@ -281,8 +281,10 @@ class Caller
     }
 
     /**
-     * @param  ReflectionClass                                       $reflection
+     * @param ReflectionClass $reflection
+     *
      * @return object
+     *
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      * @throws \PhpSpec\Exception\Fracture\MethodNotVisibleException
      * @throws \Exception
@@ -314,7 +316,8 @@ class Caller
     }
 
     /**
-     * @param  ReflectionException $exception
+     * @param ReflectionException $exception
+     *
      * @return bool
      */
     private function detectMissingConstructorMessage(ReflectionException $exception)
@@ -333,8 +336,9 @@ class Caller
     }
 
     /**
-     * @param $method
-     * @param  array                                                                                                     $arguments
+     * @param string $method
+     * @param array  $arguments
+     *
      * @return \PhpSpec\Exception\Fracture\MethodNotFoundException|\PhpSpec\Exception\Fracture\MethodNotVisibleException
      */
     private function methodNotFound($method, array $arguments = array())
@@ -349,7 +353,8 @@ class Caller
     }
 
     /**
-     * @param $property
+     * @param string $property
+     *
      * @return \PhpSpec\Exception\Fracture\PropertyNotFoundException
      */
     private function propertyNotFound($property)
@@ -358,7 +363,8 @@ class Caller
     }
 
     /**
-     * @param $method
+     * @param string $method
+     *
      * @return \PhpSpec\Exception\Wrapper\SubjectException
      */
     private function callingMethodOnNonObject($method)
@@ -367,7 +373,8 @@ class Caller
     }
 
     /**
-     * @param $property
+     * @param string $property
+     *
      * @return \PhpSpec\Exception\Wrapper\SubjectException
      */
     private function settingPropertyOnNonObject($property)
@@ -376,7 +383,8 @@ class Caller
     }
 
     /**
-     * @param $property
+     * @param string $property
+     *
      * @return \PhpSpec\Exception\Wrapper\SubjectException
      */
     private function accessingPropertyOnNonObject($property)
@@ -385,7 +393,8 @@ class Caller
     }
 
     /**
-     * @param $property
+     * @param string $property
+     *
      * @return bool
      */
     private function lookingForConstants($property)
@@ -395,7 +404,8 @@ class Caller
     }
 
     /**
-     * @param $property
+     * @param string $property
+     *
      * @return bool
      */
     public function constantDefined($property)

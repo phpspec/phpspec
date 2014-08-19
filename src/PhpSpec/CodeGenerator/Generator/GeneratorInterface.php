@@ -25,20 +25,18 @@ interface GeneratorInterface
      * @param string            $generation
      * @param array             $data
      *
-     * @return mixed
+     * @return bool
      */
     public function supports(ResourceInterface $resource, $generation, array $data);
 
     /**
      * @param ResourceInterface $resource
      * @param array             $data
-     *
-     * @return mixed
      */
     public function generate(ResourceInterface $resource, array $data);
 
     /**
-     * @return mixed
+     * @return int
      */
     public function getPriority();
 }
