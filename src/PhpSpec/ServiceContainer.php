@@ -70,7 +70,7 @@ class ServiceContainer
      * be created every time
      *
      * @param string          $id
-     * @param object|callable $value
+     * @param mixed|callable $value
      *
      * @throws \InvalidArgumentException if service is not an object or callback
      */
