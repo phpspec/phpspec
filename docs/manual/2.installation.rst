@@ -1,0 +1,37 @@
+Installation
+============
+
+**phpspec** is a php 5.3 library that you'll have in your project
+development environment. Before you begin, ensure that you have at least
+PHP 5.3.3 installed.
+
+Method #1 (Composer)
+--------------------
+
+The simplest way to install phpspec with all its dependencies is through
+Composer:
+
+Create a ``composer.json`` file in the project root:
+
+.. code-block:: js
+
+    {
+        "require-dev": {
+            "phpspec/phpspec": "~2.0"
+        },
+        "config": {
+            "bin-dir": "bin"
+        },
+        "autoload": {"psr-0": {"": "src"}}
+    }
+
+Then download the ``composer.phar`` and run the ``install`` command:
+
+.. code-block:: bash
+
+    $ curl http://getcomposer.org/installer | php
+    $ php composer.phar install
+
+Everything will be installed inside the ``vendor`` folder and a phpspec executable will
+be linked into the ``bin`` folder.
+
