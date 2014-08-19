@@ -72,7 +72,7 @@ class ClassGenerator extends PromptingGenerator implements GeneratorInterface
      */
     protected function getTemplate()
     {
-        return file_get_contents(__FILE__, null, null, __COMPILER_HALT_OFFSET__);
+        return file_get_contents(__DIR__ . '/templates/class.template');
     }
 
     /**
@@ -98,9 +98,4 @@ class ClassGenerator extends PromptingGenerator implements GeneratorInterface
             $resource->getSrcClassname(), $filepath
         );
     }
-}
-__halt_compiler();<?php%namespace_block%
-
-class %name%
-{
 }
