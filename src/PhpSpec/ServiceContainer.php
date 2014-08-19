@@ -70,13 +70,13 @@ class ServiceContainer
      * be created every time
      *
      * @param string          $id
-     * @param mixed|callable $value
+     * @param object|callable $value
      *
      * @throws \InvalidArgumentException if service is not an object or callback
      */
     public function set($id, $value)
     {
-        if (!is_object($value)) {
+        if (!is_object($value) && !is_callable($value)) {
             throw new InvalidArgumentException(sprintf(
                 'Service should be callback or object, but %s given.',gettype($value)
             ));
@@ -138,8 +138,8 @@ class ServiceContainer
         }
 
         $value = $this->services[$id];
-        if (method_exists($value, '__invoke')) {
-            return $value($this);
+        if (is_callable($value)) {
+            return call_user_func($value, $this);
         }
 
         return $value;
