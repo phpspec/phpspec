@@ -261,8 +261,8 @@ class IO implements IOInterface
     /**
      * @param string       $question
      * @param callable     $validator
-     * @param bool         $attempts
-     * @param Boolean|null $default
+     * @param int|false    $attempts
+     * @param string       $default
      *
      * @return Boolean
      */
