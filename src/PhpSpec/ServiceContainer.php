@@ -127,7 +127,7 @@ class ServiceContainer
      *
      * @param string $id
      *
-     * @return mixed
+     * @return object
      *
      * @throws \InvalidArgumentException if service is not defined
      */
