@@ -45,7 +45,7 @@ class ResourceLoader
      */
     public function load($locator, $line = null)
     {
-        $suite = new Suite;
+        $suite = new Suite();
         foreach ($this->manager->locateResources($locator) as $resource) {
             if (!class_exists($resource->getSpecClassname()) && is_file($resource->getSpecFilename())) {
                 require_once $resource->getSpecFilename();
@@ -88,8 +88,9 @@ class ResourceLoader
     }
 
     /**
-     * @param $line
-     * @param  ReflectionMethod $method
+     * @param int              $line
+     * @param ReflectionMethod $method
+     *
      * @return bool
      */
     private function lineIsInsideMethod($line, ReflectionMethod $method)
@@ -100,7 +101,8 @@ class ResourceLoader
     }
 
     /**
-     * @param  ReflectionMethod $method
+     * @param ReflectionMethod $method
+     *
      * @return bool
      */
     private function methodIsEmpty(ReflectionMethod $method)

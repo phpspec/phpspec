@@ -30,7 +30,7 @@ class CollaboratorManager
      */
     private $presenter;
     /**
-     * @var array
+     * @var Collaborator[]
      */
     private $collaborators = array();
 

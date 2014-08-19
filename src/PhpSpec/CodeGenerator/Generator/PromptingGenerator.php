@@ -16,7 +16,7 @@ use PhpSpec\Locator\ResourceInterface;
 /**
  * Base class with common behaviour for generating class and spec class
  */
-abstract class PromptingGenerator
+abstract class PromptingGenerator implements GeneratorInterface
 {
     /**
      * @var \PhpSpec\Console\IO
@@ -42,7 +42,7 @@ abstract class PromptingGenerator
     {
         $this->io         = $io;
         $this->templates  = $templates;
-        $this->filesystem = $filesystem ?: new Filesystem;
+        $this->filesystem = $filesystem ?: new Filesystem();
     }
 
     /**

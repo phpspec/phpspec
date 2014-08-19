@@ -15,9 +15,6 @@ namespace PhpSpec\Util;
 
 use PhpSpec\Exception\Fracture\ClassNotFoundException;
 
-use ReflectionClass;
-use ReflectionProperty;
-
 /**
  * Class Instantiator
  * @package PhpSpec\Util
@@ -36,6 +33,7 @@ class Instantiator
         }
 
         $instantiator = new \Doctrine\Instantiator\Instantiator();
+
         return $instantiator->instantiate($className);
     }
 }

@@ -47,7 +47,7 @@ class MethodGenerator implements GeneratorInterface
     {
         $this->io         = $io;
         $this->templates  = $templates;
-        $this->filesystem = $filesystem ?: new Filesystem;
+        $this->filesystem = $filesystem ?: new Filesystem();
     }
 
     /**

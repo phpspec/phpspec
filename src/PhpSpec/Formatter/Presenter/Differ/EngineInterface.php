@@ -15,6 +15,19 @@ namespace PhpSpec\Formatter\Presenter\Differ;
 
 interface EngineInterface
 {
+    /**
+     * @param mixed $expected
+     * @param mixed $actual
+     *
+     * @return bool
+     */
     public function supports($expected, $actual);
+
+    /**
+     * @param mixed $expected
+     * @param mixed $actual
+     *
+     * @return string
+     */
     public function compare($expected, $actual);
 }
