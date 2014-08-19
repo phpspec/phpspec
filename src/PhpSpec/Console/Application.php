@@ -14,7 +14,6 @@
 namespace PhpSpec\Console;
 
 use Symfony\Component\Console\Application as BaseApplication;
-use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -25,7 +24,7 @@ use PhpSpec\ServiceContainer;
 use PhpSpec\Extension;
 
 use PhpSpec\CodeGenerator;
-use PhpSpec\Formatter;
+use PhpSpec\Formatter as SpecFormatter;
 use PhpSpec\Listener;
 use PhpSpec\Loader;
 use PhpSpec\Locator;
@@ -72,7 +71,7 @@ class Application extends BaseApplication
     {
         $this->container->set('console.input', $input);
         $this->container->set('console.output', $output);
-        $this->container->set('console.helpers', $this->getHelperSet());
+        $this->container->set('console.helper.dialog', $this->getHelperSet()->get('dialog'));
 
         $this->setupContainer($this->container);
         $this->loadConfigurationFile($input, $this->container);
@@ -142,7 +141,7 @@ class Application extends BaseApplication
             return new IO(
                 $c->get('console.input'),
                 $c->get('console.output'),
-                $c->get('console.helpers'),
+                $c->get('console.helper.dialog'),
                 new OptionsConfig(
                     $c->getParam('stop_on_failure', false),
                     $c->getParam('code_generation', true)
@@ -269,11 +268,11 @@ class Application extends BaseApplication
     protected function setupPresenter(ServiceContainer $container)
     {
         $container->setShared('formatter.presenter', function ($c) {
-            return new Formatter\Presenter\TaggedPresenter($c->get('formatter.presenter.differ'));
+            return new SpecFormatter\Presenter\TaggedPresenter($c->get('formatter.presenter.differ'));
         });
 
         $container->setShared('formatter.presenter.differ', function ($c) {
-            $differ = new Formatter\Presenter\Differ\Differ;
+            $differ = new SpecFormatter\Presenter\Differ\Differ;
 
             array_map(
                 array($differ, 'addEngine'),
@@ -284,10 +283,10 @@ class Application extends BaseApplication
         });
 
         $container->set('formatter.presenter.differ.engines.string', function ($c) {
-            return new Formatter\Presenter\Differ\StringEngine;
+            return new SpecFormatter\Presenter\Differ\StringEngine;
         });
         $container->set('formatter.presenter.differ.engines.array', function ($c) {
-            return new Formatter\Presenter\Differ\ArrayEngine;
+            return new SpecFormatter\Presenter\Differ\ArrayEngine;
         });
     }
 
@@ -352,24 +351,24 @@ class Application extends BaseApplication
     protected function setupFormatter(ServiceContainer $container)
     {
         $container->set('formatter.formatters.progress', function ($c) {
-            return new Formatter\ProgressFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+            return new SpecFormatter\ProgressFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
         });
         $container->set('formatter.formatters.pretty', function ($c) {
-            return new Formatter\PrettyFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+            return new SpecFormatter\PrettyFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
         });
         $container->set('formatter.formatters.junit', function ($c) {
-            return new Formatter\JUnitFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+            return new SpecFormatter\JUnitFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
         });
         $container->set('formatter.formatters.dot', function ($c) {
-            return new Formatter\DotFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+            return new SpecFormatter\DotFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
         });
         $container->set('formatter.formatters.html', function ($c) {
-            $io = new Formatter\Html\IO;
-            $template = new Formatter\Html\Template($io);
-            $factory = new Formatter\Html\ReportItemFactory($template);
-            $presenter = new Formatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
+            $io = new SpecFormatter\Html\IO;
+            $template = new SpecFormatter\Html\Template($io);
+            $factory = new SpecFormatter\Html\ReportItemFactory($template);
+            $presenter = new SpecFormatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
 
-            return new Formatter\HtmlFormatter($factory, $presenter, $io, $c->get('event_dispatcher.listeners.stats'));
+            return new SpecFormatter\HtmlFormatter($factory, $presenter, $io, $c->get('event_dispatcher.listeners.stats'));
         });
         $container->set('formatter.formatters.h', function ($c) {
             return $c->get('formatter.formatters.html');

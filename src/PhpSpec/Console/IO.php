@@ -15,6 +15,7 @@ namespace PhpSpec\Console;
 
 use PhpSpec\IO\IOInterface;
 
+use Symfony\Component\Console\Helper\DialogHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\HelperSet;
@@ -36,9 +37,9 @@ class IO implements IOInterface
     private $output;
 
     /**
-     * @var \Symfony\Component\Console\Helper\HelperSet
+     * @var \Symfony\Component\Console\Helper\DialogHelper
      */
-    private $helpers;
+    private $dialogHelper;
 
     /**
      * @var string
@@ -58,14 +59,14 @@ class IO implements IOInterface
     /**
      * @param InputInterface   $input
      * @param OutputInterface  $output
-     * @param HelperSet        $helpers
-     * @param ServiceContainer $config
+     * @param DialogHelper     $dialogHelper
+     * @param OptionsConfig    $config
      */
-    public function __construct(InputInterface $input, OutputInterface $output, HelperSet $helpers, OptionsConfig $config)
+    public function __construct(InputInterface $input, OutputInterface $output, DialogHelper $dialogHelper, OptionsConfig $config)
     {
         $this->input   = $input;
         $this->output  = $output;
-        $this->helpers = $helpers;
+        $this->dialogHelper = $dialogHelper;
         $this->config  = $config;
     }
 
@@ -233,7 +234,7 @@ class IO implements IOInterface
      */
     public function ask($question, $default = null)
     {
-        return $this->helpers->get('dialog')->ask($this->output, $question, $default);
+        return $this->dialogHelper->ask($this->output, $question, $default);
     }
 
     /**
@@ -252,7 +253,7 @@ class IO implements IOInterface
         $lines[] = '<question>'.str_repeat(' ', 62).'</question> <value>'.
             ($default ? '[Y/n]' : '[y/N]').'</value> ';
 
-        return $this->helpers->get('dialog')->askConfirmation(
+        return $this->dialogHelper->askConfirmation(
             $this->output, implode("\n", $lines), $default
         );
     }
@@ -267,7 +268,7 @@ class IO implements IOInterface
      */
     public function askAndValidate($question, $validator, $attempts = false, $default = null)
     {
-        return $this->helpers->get('dialog')->askAndValidate($this->output, $question, $validator, $attempts, $default);
+        return $this->dialogHelper->askAndValidate($this->output, $question, $validator, $attempts, $default);
     }
 
     /**
