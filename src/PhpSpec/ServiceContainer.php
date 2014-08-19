@@ -101,11 +101,11 @@ class ServiceContainer
      * @param string   $id
      * @param callable $callable
      *
-     * @throws \InvalidArgumentException if service is not an object or callback
+     * @throws \InvalidArgumentException if service is not a callback
      */
     public function setShared($id, $callable)
     {
-        if (!is_object($callable)) {
+        if (!is_callable($callable)) {
             throw new InvalidArgumentException(sprintf(
                 'Service should be callback, "%s" given.', gettype($callable)
             ));
@@ -115,7 +115,7 @@ class ServiceContainer
             static $instance;
 
             if (null === $instance) {
-                $instance = $callable($container);
+                $instance = call_user_func($callable, $container);
             }
 
             return $instance;
