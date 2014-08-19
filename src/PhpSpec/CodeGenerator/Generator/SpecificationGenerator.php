@@ -19,7 +19,7 @@ use PhpSpec\Locator\ResourceInterface;
  * Generates spec classes from resources and puts them into the appropriate
  * folder using the appropriate template.
  */
-class SpecificationGenerator extends PromptingGenerator implements GeneratorInterface
+class SpecificationGenerator extends PromptingGenerator
 {
     /**
      * @param ResourceInterface $resource

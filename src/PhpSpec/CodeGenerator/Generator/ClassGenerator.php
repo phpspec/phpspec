@@ -19,7 +19,7 @@ use PhpSpec\Locator\ResourceInterface;
  * The Class Generator is responsible for generating the classes from a resource
  * in the appropriate folder using the template provided
  */
-class ClassGenerator extends PromptingGenerator implements GeneratorInterface
+class ClassGenerator extends PromptingGenerator
 {
     /**
      * @param ResourceInterface $resource
