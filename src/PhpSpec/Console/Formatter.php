@@ -23,11 +23,11 @@ use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 class Formatter extends OutputFormatter
 {
     /**
-     * @param boolean|null $decorated
+     * @param boolean $decorated
      *
      * @param array $styles
      */
-    public function __construct($decorated = null, array $styles = array())
+    public function __construct($decorated = false, array $styles = array())
     {
         parent::__construct($decorated, $styles);
 

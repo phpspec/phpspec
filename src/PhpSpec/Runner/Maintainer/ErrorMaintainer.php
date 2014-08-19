@@ -105,10 +105,10 @@ class ErrorMaintainer implements MaintainerInterface
      */
     final public function errorHandler($level, $message, $file, $line)
     {
-        $regex = '/^Argument (\d)+ passed to (?:([\w\\\]+)::)?(\w+)\(\) must (?:be an instance of|implement interface) ([\w\\\]+),(?: instance of)? ([\w\\\]+) given/';
+        $regex = '/^Argument (\d)+ passed to (?:(?P<class>[\w\\\]+)::)?(\w+)\(\) must (?:be an instance of|implement interface) ([\w\\\]+),(?: instance of)? ([\w\\\]+) given/';
 
         if (E_RECOVERABLE_ERROR === $level && preg_match($regex, $message, $matches)) {
-            list($_, $_, $class, $method, $hint, $type) = $matches;
+            $class = $matches['class'];
 
             if (in_array('PhpSpec\SpecificationInterface', class_implements($class))) {
                 return true;

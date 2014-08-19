@@ -42,7 +42,7 @@ class ReportItemFactory
      *
      * @return ReportFailedItem|ReportPassedItem|ReportPendingItem
      */
-    public function create(ExampleEvent $event, PresenterInterface $presenter = null)
+    public function create(ExampleEvent $event, PresenterInterface $presenter)
     {
         switch ($event->getResult()) {
             case ExampleEvent::PASSED:
