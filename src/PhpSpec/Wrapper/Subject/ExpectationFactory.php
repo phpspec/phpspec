@@ -152,7 +152,7 @@ class ExpectationFactory
     {
         $dispatcherDecorator = new DispatcherDecorator($expectation, $this->dispatcher, $matcher, $this->example);
         $unwrapperDecorator = new UnwrapDecorator($dispatcherDecorator, new Unwrapper());
-        $constructorDecorator = new ConstructorDecorator($unwrapperDecorator, new Unwrapper());
+        $constructorDecorator = new ConstructorDecorator($unwrapperDecorator);
 
         return $constructorDecorator;
     }

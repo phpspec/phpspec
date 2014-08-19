@@ -62,7 +62,7 @@ class ProgressFormatter extends BasicFormatter
         }
         krsort($progress);
 
-        $this->printException($event, 2);
+        $this->printException($event);
         if ($io->isDecorated()) {
             $io->writeTemp(implode('', $progress).' '.$total);
         } else {
