@@ -190,11 +190,11 @@ class StringPresenter implements PresenterInterface
     }
 
     /**
-     * @param Exception $exception
+     * @param NotEqualException $exception
      *
      * @return string
      */
-    protected function presentExceptionDifference(Exception $exception)
+    protected function presentExceptionDifference(NotEqualException $exception)
     {
         return $this->differ->compare($exception->getExpected(), $exception->getActual());
     }
@@ -296,11 +296,11 @@ class StringPresenter implements PresenterInterface
     }
 
     /**
-     * @param Exception $exception
+     * @param PhpSpecException $exception
      *
      * @return array
      */
-    protected function getExceptionExamplePosition(Exception $exception)
+    protected function getExceptionExamplePosition(PhpSpecException $exception)
     {
         $refl = $exception->getCause();
         foreach ($exception->getTrace() as $call) {

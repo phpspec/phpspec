@@ -24,7 +24,7 @@ use PhpSpec\Formatter\Template as TemplateInterface;
 class ReportItemFactory
 {
     /**
-     * @var Template
+     * @var TemplateInterface
      */
     private $template;
 

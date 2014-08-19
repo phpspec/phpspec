@@ -54,7 +54,7 @@ class Subject implements ArrayAccess, WrapperInterface
     private $expectationFactory;
 
     /**
-     * @param object                 $subject
+     * @param mixed                  $subject
      * @param Wrapper                $wrapper
      * @param WrappedObject          $wrappedObject
      * @param Caller                 $caller
@@ -99,7 +99,7 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     * @return object
+     * @return mixed
      */
     public function getWrappedObject()
     {

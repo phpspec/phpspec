@@ -271,10 +271,11 @@ class PSR0Locator implements ResourceLocatorInterface
         $namespace = '';
         $content   = $this->filesystem->getFileContents($path);
         $tokens    = token_get_all($content);
+        $count     = count($tokens);
 
-        for ($i=0; $i<count($tokens); $i++) {
+        for ($i = 0; $i < $count; $i++) {
             if ($tokens[$i][0] === T_NAMESPACE) {
-                for ($j=$i+1; $j<count($tokens); $j++) {
+                for ($j = $i + 1; $j < $count; $j++) {
                     if ($tokens[$j][0] === T_STRING) {
                          $namespace .= $tokens[$j][1].'\\';
                     } elseif ($tokens[$j] === '{' || $tokens[$j] === ';') {
@@ -284,7 +285,7 @@ class PSR0Locator implements ResourceLocatorInterface
             }
 
             if ($tokens[$i][0] === T_CLASS) {
-                for ($j=$i+1; $j<count($tokens); $j++) {
+                for ($j = $i+1; $j < $count; $j++) {
                     if ($tokens[$j] === '{') {
                         return $namespace.$tokens[$i+2][1];
                     }
