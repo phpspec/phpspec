@@ -68,20 +68,10 @@ class StringPresenter implements PresenterInterface
     public function presentValue($value)
     {
         if (is_callable($value)) {
-            if (is_array($value)) {
-                return $this->presentString(sprintf(
-                    '[%s::%s()]', get_class($value[0]), $value[1]
-                ));
-            } elseif ($value instanceof \Closure) {
-                return $this->presentString('[closure]');
-            } elseif (is_object($value)) {
-                return $this->presentString(sprintf('[obj:%s]', get_class($value)));
-            } else {
-                return $this->presentString(sprintf('[%s()]', $value));
-            }
+            return $this->presentString($this->presentCallable($value));
         }
 
-        if (is_object($value) && $value instanceof Exception) {
+        if ($value instanceof Exception) {
             return $this->presentString(sprintf(
                 '[exc:%s("%s")]', get_class($value), $value->getMessage()
             ));
@@ -351,5 +341,27 @@ class StringPresenter implements PresenterInterface
 
 
         return isset($call['class']) && 0 === strpos($call['class'], "PhpSpec\\");
+    }
+
+    /**
+     * @param callable $value
+     *
+     * @return string
+     */
+    private function presentCallable($value)
+    {
+        if (is_array($value)) {
+            return sprintf('[%s::%s()]', get_class($value[0]), $value[1]);
+        }
+
+        if ($value instanceof \Closure) {
+            return '[closure]';
+        }
+
+        if (is_object($value)) {
+            return sprintf('[obj:%s]', get_class($value));
+        }
+
+        return sprintf('[%s()]', $value);
     }
 }
