@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Wrapper\Subject;
 
+use PhpSpec\Exception\Fracture\FactoryDoesNotReturnObjectException;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Exception\Wrapper\SubjectException;
@@ -216,7 +217,7 @@ class WrappedObject
         $instance = call_user_func_array($this->factoryMethod, $this->arguments);
 
         if (!is_object($instance)) {
-            throw new \RuntimeException(sprintf(
+            throw new FactoryDoesNotReturnObjectException(sprintf(
                 'The method %s::%s did not return an object, returned %s instead',
                 $this->factoryMethod[0],
                 $this->factoryMethod[1],

@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\Wrapper\Subject;
 
+use PhpSpec\Exception\Fracture\FactoryDoesNotReturnObjectException;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
@@ -56,6 +57,6 @@ class WrappedObjectSpec extends ObjectBehavior
         $this->callOnWrappedObject('beConstructedThrough', array('listAbbreviations'));
 
         $message = 'The method \DateTimeZone::listAbbreviations did not return an object, returned array instead';
-        $this->shouldThrow(new \RuntimeException($message))->duringInstantiate();
+        $this->shouldThrow(new FactoryDoesNotReturnObjectException($message))->duringInstantiate();
     }
 }
