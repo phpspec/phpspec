@@ -115,7 +115,7 @@ class ExampleRunnerSpec extends ObjectBehavior
 
     function it_runs_let_and_letgo_maintainer_before_and_after_each_example_if_the_example_throws_an_exception(
         ExampleNode $example, SpecificationNode $specification, ReflectionClass $specReflection,
-        $context, ReflectionMethod $exampReflection, LetAndLetgoMaintainer $maintainer,
+        ReflectionMethod $exampReflection, LetAndLetgoMaintainer $maintainer,
         SpecificationInterface $context
     )
     {
