@@ -20,7 +20,7 @@ use PhpSpec\Event\ExampleEvent;
  * Class DotFormatter
  * @package PhpSpec\Formatter
  */
-class DotFormatter extends BasicFormatter
+class DotFormatter extends ConsoleFormatter
 {
     /**
      * @var int

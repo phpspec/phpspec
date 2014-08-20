@@ -16,7 +16,7 @@ namespace PhpSpec\Formatter;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
 
-class ProgressFormatter extends BasicFormatter
+class ProgressFormatter extends ConsoleFormatter
 {
     public function afterExample(ExampleEvent $event)
     {
