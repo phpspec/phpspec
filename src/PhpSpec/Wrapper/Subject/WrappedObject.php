@@ -195,7 +195,7 @@ class WrappedObject
         }
 
         if ($this->factoryMethod) {
-            $this->instance = $this->instantiateFromCallback();
+            $this->instance = $this->instantiateFromCallback($this->factoryMethod);
         } else {
             $reflection = new \ReflectionClass($this->classname);
 
@@ -210,11 +210,13 @@ class WrappedObject
     }
 
     /**
+     * @param callable $factoryCallable
+     *
      * @return object
      */
-    private function instantiateFromCallback()
+    private function instantiateFromCallback($factoryCallable)
     {
-        $instance = call_user_func_array($this->factoryMethod, $this->arguments);
+        $instance = call_user_func_array($factoryCallable, $this->arguments);
 
         if (!is_object($instance)) {
             throw new FactoryDoesNotReturnObjectException(sprintf(
