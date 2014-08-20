@@ -13,26 +13,30 @@
 
 namespace PhpSpec\Formatter;
 
-use PhpSpec\IO\IOInterface as IO;
+use PhpSpec\Console\IO;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Listener\StatisticsCollector;
 
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use PhpSpec\Listener\StatisticsCollector;
 
-class PrettyFormatter extends BasicFormatter
+class PrettyFormatter extends ConsoleFormatter
 {
-    private $io;
-    private $presenter;
-    private $stats;
+    /**
+     * @var PresenterInterface
+     */
+    protected $presenter;
 
+    /**
+     * @param PresenterInterface $presenter
+     * @param IO $io
+     */
     public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
     {
-        $this->presenter = $presenter;
+        parent::__construct($presenter, $io, $stats);
         $this->io = $io;
-        $this->stats = $stats;
+        $this->presenter = $presenter;
     }
 
     public function setIO(IO $io)
@@ -86,9 +90,9 @@ class PrettyFormatter extends BasicFormatter
         $this->io->writeln();
 
         foreach (array(
-            'failed' => $this->stats->getFailedEvents(),
-            'broken' => $this->stats->getBrokenEvents(),
-            'skipped' => $this->stats->getSkippedEvents(),
+            'failed' => $this->getStatisticsCollector()->getFailedEvents(),
+            'broken' => $this->getStatisticsCollector()->getBrokenEvents(),
+            'skipped' => $this->getStatisticsCollector()->getSkippedEvents(),
         ) as $status => $events) {
             if (!count($events)) {
                 continue;
@@ -104,16 +108,16 @@ class PrettyFormatter extends BasicFormatter
             }
         }
 
-        $this->io->writeln(sprintf("\n%d specs", $this->stats->getTotalSpecs()));
+        $this->io->writeln(sprintf("\n%d specs", $this->getStatisticsCollector()->getTotalSpecs()));
 
         $counts = array();
-        foreach ($this->stats->getCountsHash() as $type => $count) {
+        foreach ($this->getStatisticsCollector()->getCountsHash() as $type => $count) {
             if ($count) {
                 $counts[] = sprintf('<%s>%d %s</%s>', $type, $count, $type, $type);
             }
         }
 
-        $this->io->write(sprintf("%d examples ", $this->stats->getEventsCount()));
+        $this->io->write(sprintf("%d examples ", $this->getStatisticsCollector()->getEventsCount()));
         if (count($counts)) {
             $this->io->write(sprintf("(%s)", implode(', ', $counts)));
         }

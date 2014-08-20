@@ -20,7 +20,7 @@ use PhpSpec\Event\ExampleEvent;
  * Class DotFormatter
  * @package PhpSpec\Formatter
  */
-class DotFormatter extends BasicFormatter
+class DotFormatter extends ConsoleFormatter
 {
     /**
      * @var int
@@ -40,38 +40,36 @@ class DotFormatter extends BasicFormatter
      */
     public function afterExample(ExampleEvent $event)
     {
-        $io = $this->getIO();
-
         $eventsCount = $this->getStatisticsCollector()->getEventsCount();
         if ($eventsCount === 1) {
-            $io->writeln();
+            $this->io->writeln();
         }
 
         switch ($event->getResult()) {
             case ExampleEvent::PASSED:
-                $io->write('<passed>.</passed>');
+                $this->io->write('<passed>.</passed>');
                 break;
             case ExampleEvent::PENDING:
-                $io->write('<pending>P</pending>');
+                $this->io->write('<pending>P</pending>');
                 break;
             case ExampleEvent::SKIPPED:
-                $io->write('<skipped>S</skipped>');
+                $this->io->write('<skipped>S</skipped>');
                 break;
             case ExampleEvent::FAILED:
-                $io->write('<failed>F</failed>');
+                $this->io->write('<failed>F</failed>');
                 break;
             case ExampleEvent::BROKEN:
-                $io->write('<broken>B</broken>');
+                $this->io->write('<broken>B</broken>');
                 break;
         }
 
         if ($eventsCount % 50 === 0) {
             $length = strlen((string) $this->examplesCount);
             $format = sprintf(' %%%dd / %%%dd', $length, $length);
-            $io->write(sprintf($format, $eventsCount, $this->examplesCount));
+            $this->io->write(sprintf($format, $eventsCount, $this->examplesCount));
 
             if ($eventsCount !== $this->examplesCount) {
-                $io->writeLn();
+                $this->io->writeLn();
             }
         }
     }
@@ -81,10 +79,9 @@ class DotFormatter extends BasicFormatter
      */
     public function afterSuite(SuiteEvent $event)
     {
-        $io = $this->getIO();
         $stats = $this->getStatisticsCollector();
 
-        $io->writeln("\n");
+        $this->io->writeln("\n");
 
         foreach (array(
             'failed' => $stats->getFailedEvents(),
@@ -102,7 +99,7 @@ class DotFormatter extends BasicFormatter
         }
 
         $plural = $stats->getTotalSpecs() !== 1 ? 's' : '';
-        $io->writeln(sprintf("%d spec%s", $stats->getTotalSpecs(), $plural));
+        $this->io->writeln(sprintf("%d spec%s", $stats->getTotalSpecs(), $plural));
 
         $counts = array();
         foreach ($stats->getCountsHash() as $type => $count) {
@@ -113,11 +110,11 @@ class DotFormatter extends BasicFormatter
 
         $count = $stats->getEventsCount();
         $plural = $count !== 1 ? 's' : '';
-        $io->write(sprintf("%d example%s ", $count, $plural));
+        $this->io->write(sprintf("%d example%s ", $count, $plural));
         if (count($counts)) {
-            $io->write(sprintf("(%s)", implode(', ', $counts)));
+            $this->io->write(sprintf("(%s)", implode(', ', $counts)));
         }
 
-        $io->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
+        $this->io->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
     }
 }
