@@ -194,7 +194,7 @@ class WrappedObject
         }
 
         if ($this->factoryMethod) {
-            $this->instance = call_user_func_array($this->factoryMethod, $this->arguments);
+            $this->instance = $this->instantiateFromCallback();
         } else {
             $reflection = new \ReflectionClass($this->classname);
 
@@ -206,5 +206,24 @@ class WrappedObject
         $this->isInstantiated = true;
 
         return $this->instance;
+    }
+
+    /**
+     * @return object
+     */
+    private function instantiateFromCallback()
+    {
+        $instance = call_user_func_array($this->factoryMethod, $this->arguments);
+
+        if (!is_object($instance)) {
+            throw new \RuntimeException(sprintf(
+                'The method %s::%s did not return an object, returned %s instead',
+                $this->factoryMethod[0],
+                $this->factoryMethod[1],
+                gettype($instance)
+            ));
+        }
+
+        return $instance;
     }
 }
