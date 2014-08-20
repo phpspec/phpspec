@@ -14,7 +14,7 @@ class ConsoleFormatter extends BasicFormatter
     /**
      * @var IO
      */
-    protected $io;
+    private $io;
 
     /**
      * @param PresenterInterface $presenter
@@ -25,6 +25,14 @@ class ConsoleFormatter extends BasicFormatter
     {
         parent::__construct($presenter, $io, $stats);
         $this->io = $io;
+    }
+
+    /**
+     * @return IO
+     */
+    protected function getIO()
+    {
+        return $this->io;
     }
 
     /**

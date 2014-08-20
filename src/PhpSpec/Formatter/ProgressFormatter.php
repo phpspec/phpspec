@@ -20,6 +20,7 @@ class ProgressFormatter extends ConsoleFormatter
 {
     public function afterExample(ExampleEvent $event)
     {
+        $io = $this->getIO();
         $stats = $this->getStatisticsCollector();
 
         $total  = $stats->getEventsCount();
@@ -45,7 +46,7 @@ class ProgressFormatter extends ConsoleFormatter
             $length = ($size - $length) >= 0 ? $length : $size;
             $size   = $size - $length;
 
-            if ($this->io->isDecorated()) {
+            if ($io->isDecorated()) {
                 if ($length > strlen($text) + 2) {
                     $text = str_pad($text, $length, ' ', STR_PAD_BOTH);
                 } else {
@@ -62,21 +63,22 @@ class ProgressFormatter extends ConsoleFormatter
         krsort($progress);
 
         $this->printException($event);
-        if ($this->io->isDecorated()) {
-            $this->io->writeTemp(implode('', $progress).' '.$total);
+        if ($io->isDecorated()) {
+            $io->writeTemp(implode('', $progress).' '.$total);
         } else {
-            $this->io->writeTemp('/'.implode('/', $progress).'/  '.$total.' examples');
+            $io->writeTemp('/'.implode('/', $progress).'/  '.$total.' examples');
         }
     }
 
     public function afterSuite(SuiteEvent $event)
     {
+        $io = $this->getIO();
         $stats = $this->getStatisticsCollector();
 
-        $this->io->freezeTemp();
-        $this->io->writeln();
+        $io->freezeTemp();
+        $io->writeln();
 
-        $this->io->writeln(sprintf("%d specs", $stats->getTotalSpecs()));
+        $io->writeln(sprintf("%d specs", $stats->getTotalSpecs()));
 
         $counts = array();
         foreach ($stats->getCountsHash() as $type => $count) {
@@ -86,11 +88,11 @@ class ProgressFormatter extends ConsoleFormatter
         }
         $count = $stats->getEventsCount();
         $plural = $count !== 1 ? 's' : '';
-        $this->io->write(sprintf("%d example%s ", $count, $plural));
+        $io->write(sprintf("%d example%s ", $count, $plural));
         if (count($counts)) {
-            $this->io->write(sprintf("(%s)", implode(', ', $counts)));
+            $io->write(sprintf("(%s)", implode(', ', $counts)));
         }
 
-        $this->io->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
+        $io->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
     }
 }

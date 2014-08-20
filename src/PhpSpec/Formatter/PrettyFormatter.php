@@ -23,55 +23,47 @@ use PhpSpec\Listener\StatisticsCollector;
 
 class PrettyFormatter extends ConsoleFormatter
 {
-    /**
-     * @param PresenterInterface $presenter
-     * @param IO $io
-     * @param StatisticsCollector $stats
-     */
-    public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
-    {
-        parent::__construct($presenter, $io, $stats);
-    }
-
     public function beforeSpecification(SpecificationEvent $event)
     {
-        $this->io->writeln(sprintf("\n      %s\n", $event->getSpecification()->getTitle()), 0);
+        $this->getIO()->writeln(sprintf("\n      %s\n", $event->getSpecification()->getTitle()), 0);
     }
 
     public function afterExample(ExampleEvent $event)
     {
+        $io = $this->getIO();
         $line  = $event->getExample()->getFunctionReflection()->getStartLine();
         $depth = 2;
         $title = preg_replace('/^it /', '', $event->getExample()->getTitle());
 
-        $this->io->write(sprintf('<lineno>%4d</lineno> ', $line));
+        $io->write(sprintf('<lineno>%4d</lineno> ', $line));
 
         switch ($event->getResult()) {
             case ExampleEvent::PASSED:
-                $this->io->write(sprintf('<passed>✔ %s</passed>', $title), $depth - 1);
+                $io->write(sprintf('<passed>✔ %s</passed>', $title), $depth - 1);
                 break;
             case ExampleEvent::PENDING:
-                $this->io->write(sprintf('<pending>- %s</pending>', $title), $depth - 1);
+                $io->write(sprintf('<pending>- %s</pending>', $title), $depth - 1);
                 break;
             case ExampleEvent::SKIPPED:
-                $this->io->write(sprintf('<skipped>? %s</skipped>', $title), $depth - 1);
+                $io->write(sprintf('<skipped>? %s</skipped>', $title), $depth - 1);
                 break;
             case ExampleEvent::FAILED:
-                $this->io->write(sprintf('<failed>✘ %s</failed>', $title), $depth - 1);
+                $io->write(sprintf('<failed>✘ %s</failed>', $title), $depth - 1);
                 break;
             case ExampleEvent::BROKEN:
-                $this->io->write(sprintf('<broken>! %s</broken>', $title), $depth - 1);
+                $io->write(sprintf('<broken>! %s</broken>', $title), $depth - 1);
                 break;
         }
 
         $this->printSlowTime($event);
-        $this->io->writeln();
+        $io->writeln();
         $this->printException($event);
     }
 
     public function afterSuite(SuiteEvent $event)
     {
-        $this->io->writeln();
+        $io = $this->getIO();
+        $io->writeln();
 
         foreach (array(
             'failed' => $this->getStatisticsCollector()->getFailedEvents(),
@@ -82,17 +74,17 @@ class PrettyFormatter extends ConsoleFormatter
                 continue;
             }
 
-            $this->io->writeln(sprintf("<%s>----  %s examples</%s>\n", $status, $status, $status));
+            $io->writeln(sprintf("<%s>----  %s examples</%s>\n", $status, $status, $status));
             foreach ($events as $failEvent) {
-                $this->io->writeln(sprintf('%s',
+                $io->writeln(sprintf('%s',
                     str_replace('\\', DIRECTORY_SEPARATOR, $failEvent->getSpecification()->getTitle())
                 ), 8);
                 $this->afterExample($failEvent);
-                $this->io->writeln();
+                $io->writeln();
             }
         }
 
-        $this->io->writeln(sprintf("\n%d specs", $this->getStatisticsCollector()->getTotalSpecs()));
+        $io->writeln(sprintf("\n%d specs", $this->getStatisticsCollector()->getTotalSpecs()));
 
         $counts = array();
         foreach ($this->getStatisticsCollector()->getCountsHash() as $type => $count) {
@@ -101,41 +93,44 @@ class PrettyFormatter extends ConsoleFormatter
             }
         }
 
-        $this->io->write(sprintf("%d examples ", $this->getStatisticsCollector()->getEventsCount()));
+        $io->write(sprintf("%d examples ", $this->getStatisticsCollector()->getEventsCount()));
         if (count($counts)) {
-            $this->io->write(sprintf("(%s)", implode(', ', $counts)));
+            $io->write(sprintf("(%s)", implode(', ', $counts)));
         }
 
-        $this->io->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
+        $io->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
     }
 
     protected function printSlowTime(ExampleEvent $event)
     {
+        $io = $this->getIO();
         $ms = $event->getTime() * 1000;
         if ($ms > 100) {
-            $this->io->write(sprintf(' <failed>(%sms)</failed>', round($ms)));
+            $io->write(sprintf(' <failed>(%sms)</failed>', round($ms)));
         } elseif ($ms > 50) {
-            $this->io->write(sprintf(' <pending>(%sms)</pending>', round($ms)));
+            $io->write(sprintf(' <pending>(%sms)</pending>', round($ms)));
         }
     }
 
     protected function printException(ExampleEvent $event, $depth = null)
     {
+        $io = $this->getIO();
+
         if (null === $exception = $event->getException()) {
             return;
         }
 
         $depth = $depth ?: 8;
-        $message = $this->getPresenter()->presentException($exception, $this->io->isVerbose());
+        $message = $this->getPresenter()->presentException($exception, $io->isVerbose());
 
         if (ExampleEvent::FAILED === $event->getResult()) {
-            $this->io->writeln(sprintf('<failed>%s</failed>', lcfirst($message)), $depth);
+            $io->writeln(sprintf('<failed>%s</failed>', lcfirst($message)), $depth);
         } elseif (ExampleEvent::PENDING === $event->getResult()) {
-            $this->io->writeln(sprintf('<pending>%s</pending>', lcfirst($message)), $depth);
+            $io->writeln(sprintf('<pending>%s</pending>', lcfirst($message)), $depth);
         } elseif (ExampleEvent::SKIPPED === $event->getResult()) {
-            $this->io->writeln(sprintf('<skipped>%s</skipped>', lcfirst($message)), $depth);
+            $io->writeln(sprintf('<skipped>%s</skipped>', lcfirst($message)), $depth);
         } else {
-            $this->io->writeln(sprintf('<broken>%s</broken>', lcfirst($message)), $depth);
+            $io->writeln(sprintf('<broken>%s</broken>', lcfirst($message)), $depth);
         }
     }
 }

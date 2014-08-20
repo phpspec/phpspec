@@ -40,36 +40,38 @@ class DotFormatter extends ConsoleFormatter
      */
     public function afterExample(ExampleEvent $event)
     {
+        $io = $this->getIO();
+
         $eventsCount = $this->getStatisticsCollector()->getEventsCount();
         if ($eventsCount === 1) {
-            $this->io->writeln();
+            $io->writeln();
         }
 
         switch ($event->getResult()) {
             case ExampleEvent::PASSED:
-                $this->io->write('<passed>.</passed>');
+                $io->write('<passed>.</passed>');
                 break;
             case ExampleEvent::PENDING:
-                $this->io->write('<pending>P</pending>');
+                $io->write('<pending>P</pending>');
                 break;
             case ExampleEvent::SKIPPED:
-                $this->io->write('<skipped>S</skipped>');
+                $io->write('<skipped>S</skipped>');
                 break;
             case ExampleEvent::FAILED:
-                $this->io->write('<failed>F</failed>');
+                $io->write('<failed>F</failed>');
                 break;
             case ExampleEvent::BROKEN:
-                $this->io->write('<broken>B</broken>');
+                $io->write('<broken>B</broken>');
                 break;
         }
 
         if ($eventsCount % 50 === 0) {
             $length = strlen((string) $this->examplesCount);
             $format = sprintf(' %%%dd / %%%dd', $length, $length);
-            $this->io->write(sprintf($format, $eventsCount, $this->examplesCount));
+            $io->write(sprintf($format, $eventsCount, $this->examplesCount));
 
             if ($eventsCount !== $this->examplesCount) {
-                $this->io->writeLn();
+                $io->writeLn();
             }
         }
     }
@@ -79,9 +81,10 @@ class DotFormatter extends ConsoleFormatter
      */
     public function afterSuite(SuiteEvent $event)
     {
+        $io = $this->getIO();
         $stats = $this->getStatisticsCollector();
 
-        $this->io->writeln("\n");
+        $io->writeln("\n");
 
         foreach (array(
             'failed' => $stats->getFailedEvents(),
@@ -99,7 +102,7 @@ class DotFormatter extends ConsoleFormatter
         }
 
         $plural = $stats->getTotalSpecs() !== 1 ? 's' : '';
-        $this->io->writeln(sprintf("%d spec%s", $stats->getTotalSpecs(), $plural));
+        $io->writeln(sprintf("%d spec%s", $stats->getTotalSpecs(), $plural));
 
         $counts = array();
         foreach ($stats->getCountsHash() as $type => $count) {
@@ -110,11 +113,11 @@ class DotFormatter extends ConsoleFormatter
 
         $count = $stats->getEventsCount();
         $plural = $count !== 1 ? 's' : '';
-        $this->io->write(sprintf("%d example%s ", $count, $plural));
+        $io->write(sprintf("%d example%s ", $count, $plural));
         if (count($counts)) {
-            $this->io->write(sprintf("(%s)", implode(', ', $counts)));
+            $io->write(sprintf("(%s)", implode(', ', $counts)));
         }
 
-        $this->io->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
+        $io->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
     }
 }
