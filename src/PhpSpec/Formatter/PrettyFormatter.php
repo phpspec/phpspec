@@ -36,7 +36,6 @@ class PrettyFormatter extends ConsoleFormatter
     public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
     {
         parent::__construct($presenter, $io, $stats);
-        $this->io = $io;
         $this->presenter = $presenter;
     }
 
