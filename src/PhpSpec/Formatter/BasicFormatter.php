@@ -19,9 +19,7 @@ use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Exception\Example\PendingException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use PhpSpec\Exception\Example\SkippingException;
 
 /**
  * Class BasicFormatter
