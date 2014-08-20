@@ -31,6 +31,7 @@ class PrettyFormatter extends ConsoleFormatter
     /**
      * @param PresenterInterface $presenter
      * @param IO $io
+     * @param StatisticsCollector $stats
      */
     public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
     {
