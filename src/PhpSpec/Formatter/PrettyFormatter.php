@@ -24,11 +24,6 @@ use PhpSpec\Listener\StatisticsCollector;
 class PrettyFormatter extends ConsoleFormatter
 {
     /**
-     * @var PresenterInterface
-     */
-    protected $presenter;
-
-    /**
      * @param PresenterInterface $presenter
      * @param IO $io
      * @param StatisticsCollector $stats
@@ -36,17 +31,6 @@ class PrettyFormatter extends ConsoleFormatter
     public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
     {
         parent::__construct($presenter, $io, $stats);
-        $this->presenter = $presenter;
-    }
-
-    public function setIO(IO $io)
-    {
-        $this->io = $io;
-    }
-
-    public function setPresenter(PresenterInterface $presenter)
-    {
-        $this->presenter = $presenter;
     }
 
     public function beforeSpecification(SpecificationEvent $event)
@@ -142,7 +126,7 @@ class PrettyFormatter extends ConsoleFormatter
         }
 
         $depth = $depth ?: 8;
-        $message = $this->presenter->presentException($exception, $this->io->isVerbose());
+        $message = $this->getPresenter()->presentException($exception, $this->io->isVerbose());
 
         if (ExampleEvent::FAILED === $event->getResult()) {
             $this->io->writeln(sprintf('<failed>%s</failed>', lcfirst($message)), $depth);
