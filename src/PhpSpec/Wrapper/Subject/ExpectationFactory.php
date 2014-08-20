@@ -136,7 +136,7 @@ class ExpectationFactory
      */
     private function findMatcher($name, $subject, array $arguments = array())
     {
-        $unwrapper = new Unwrapper;
+        $unwrapper = new Unwrapper();
         $arguments = $unwrapper->unwrapAll($arguments);
 
         return $this->matchers->find($name, $subject, $arguments);
@@ -151,8 +151,8 @@ class ExpectationFactory
     private function decoratedExpectation(ExpectationInterface $expectation, MatcherInterface $matcher)
     {
         $dispatcherDecorator = new DispatcherDecorator($expectation, $this->dispatcher, $matcher, $this->example);
-        $unwrapperDecorator = new UnwrapDecorator($dispatcherDecorator, new Unwrapper);
-        $constructorDecorator = new ConstructorDecorator($unwrapperDecorator, new Unwrapper);
+        $unwrapperDecorator = new UnwrapDecorator($dispatcherDecorator, new Unwrapper());
+        $constructorDecorator = new ConstructorDecorator($unwrapperDecorator);
 
         return $constructorDecorator;
     }

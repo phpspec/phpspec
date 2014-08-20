@@ -1,11 +1,16 @@
 phpspec
 =======
-.. image:: https://scrutinizer-ci.com/g/phpspec/phpspec/badges/build.png?b=master
-   :target: https://scrutinizer-ci.com/g/phpspec/phpspec/build-status/master
-   :alt: Master Build Status
 
 The main website with documentation is at `http://phpspec.net <http://phpspec.net>`_.
 
+.. image:: https://travis-ci.org/phpspec/phpspec.svg?branch=master
+   :target: http://travis-ci.org/phpspec/phpspec
+   :alt: Master Travis Build Status
+
+.. image:: https://scrutinizer-ci.com/g/phpspec/phpspec/badges/quality-score.png?b=master
+   :target: https://scrutinizer-ci.com/g/phpspec/phpspec/build-status/master
+   :alt: Master Scrutinizer Quality Score
+   
 Installing Dependencies
 -----------------------
 
@@ -13,7 +18,6 @@ Dependencies are handled via `composer <http://getcomposer.org>`_::
 
    wget -nc http://getcomposer.org/composer.phar
    php composer.phar install
-
 
 Developer's mailing list
 ------------------------

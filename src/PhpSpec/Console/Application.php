@@ -14,25 +14,12 @@
 namespace PhpSpec\Console;
 
 use Symfony\Component\Console\Application as BaseApplication;
-use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
-use Symfony\Component\EventDispatcher\EventDispatcher;
-
 use PhpSpec\ServiceContainer;
 use PhpSpec\Extension;
-
-use PhpSpec\CodeGenerator;
-use PhpSpec\Formatter;
-use PhpSpec\Listener;
-use PhpSpec\Loader;
-use PhpSpec\Locator;
-use PhpSpec\Runner;
-use PhpSpec\Wrapper;
-use PhpSpec\Config\OptionsConfig;
-
 use RuntimeException;
 
 /**
@@ -50,7 +37,7 @@ class Application extends BaseApplication
      */
     public function __construct($version)
     {
-        $this->container = new ServiceContainer;
+        $this->container = new ServiceContainer();
         parent::__construct('phpspec', $version);
     }
 
@@ -72,9 +59,11 @@ class Application extends BaseApplication
     {
         $this->container->set('console.input', $input);
         $this->container->set('console.output', $output);
-        $this->container->set('console.helpers', $this->getHelperSet());
+        $this->container->set('console.helper.dialog', $this->getHelperSet()->get('dialog'));
 
-        $this->setupContainer($this->container);
+        $assembler = new ContainerAssembler();
+        $assembler->build($this->container);
+
         $this->loadConfigurationFile($input, $this->container);
 
         foreach ($this->container->getByPrefix('console.commands') as $command) {
@@ -115,344 +104,8 @@ class Application extends BaseApplication
         );
 
         $definition->setOptions($options);
+
         return $definition;
-    }
-
-    /**
-     * @param ServiceContainer $container
-     */
-    protected function setupContainer(ServiceContainer $container)
-    {
-        $this->setupIO($container);
-        $this->setupEventDispatcher($container);
-        $this->setupGenerators($container);
-        $this->setupPresenter($container);
-        $this->setupLocator($container);
-        $this->setupLoader($container);
-        $this->setupFormatter($container);
-        $this->setupRunner($container);
-        $this->setupCommands($container);
-        $this->setupResultConverter($container);
-
-    }
-
-    protected function setupIO(ServiceContainer $container)
-    {
-        $container->setShared('console.io', function ($c) {
-            return new IO(
-                $c->get('console.input'),
-                $c->get('console.output'),
-                $c->get('console.helpers'),
-                new OptionsConfig(
-                    $c->getParam('stop_on_failure', false),
-                    $c->getParam('code_generation', true)
-                )
-            );
-        });
-    }
-
-    protected function setupResultConverter(ServiceContainer $container)
-    {
-        $container->setShared('console.result_converter', function ($c) {
-            return new ResultConverter;
-        });
-    }
-
-    protected function setupCommands(ServiceContainer $container)
-    {
-        $container->setShared('console.commands.run', function ($c) {
-            return new Command\RunCommand;
-        });
-
-        $container->setShared('console.commands.describe', function ($c) {
-            return new Command\DescribeCommand;
-        });
-    }
-
-    /**
-     * @param ServiceContainer $container
-     */
-    protected function setupEventDispatcher(ServiceContainer $container)
-    {
-        $container->setShared('event_dispatcher', function ($c) {
-            $dispatcher = new EventDispatcher;
-
-            array_map(
-                array($dispatcher, 'addSubscriber'),
-                $c->getByPrefix('event_dispatcher.listeners')
-            );
-
-            return $dispatcher;
-        });
-
-        $container->setShared('event_dispatcher.listeners.stats', function ($c) {
-            return new Listener\StatisticsCollector;
-        });
-        $container->setShared('event_dispatcher.listeners.class_not_found', function ($c) {
-            return new Listener\ClassNotFoundListener(
-                $c->get('console.io'),
-                $c->get('locator.resource_manager'),
-                $c->get('code_generator')
-            );
-        });
-        $container->setShared('event_dispatcher.listeners.method_not_found', function ($c) {
-            return new Listener\MethodNotFoundListener(
-                $c->get('console.io'),
-                $c->get('locator.resource_manager'),
-                $c->get('code_generator')
-            );
-        });
-        $container->setShared('event_dispatcher.listeners.stop_on_failure', function ($c) {
-            return new Listener\StopOnFailureListener(
-                $c->get('console.io')
-            );
-        });
-    }
-
-    /**
-     * @param ServiceContainer $container
-     */
-    protected function setupGenerators(ServiceContainer $container)
-    {
-        $container->setShared('code_generator', function ($c) {
-            $generator = new CodeGenerator\GeneratorManager;
-
-            array_map(
-                array($generator, 'registerGenerator'),
-                $c->getByPrefix('code_generator.generators')
-            );
-
-            return $generator;
-        });
-
-        $container->set('code_generator.generators.specification', function ($c) {
-            return new CodeGenerator\Generator\SpecificationGenerator(
-                $c->get('console.io'),
-                $c->get('code_generator.templates')
-            );
-        });
-        $container->set('code_generator.generators.class', function ($c) {
-            return new CodeGenerator\Generator\ClassGenerator(
-                $c->get('console.io'),
-                $c->get('code_generator.templates')
-            );
-        });
-        $container->set('code_generator.generators.method', function ($c) {
-            return new CodeGenerator\Generator\MethodGenerator(
-                $c->get('console.io'),
-                $c->get('code_generator.templates')
-            );
-        });
-
-        $container->setShared('code_generator.templates', function ($c) {
-            $renderer = new CodeGenerator\TemplateRenderer;
-            $renderer->setLocations($c->getParam('code_generator.templates.paths', array()));
-
-            return $renderer;
-        });
-
-        if (!empty($_SERVER['HOMEDRIVE']) && !empty($_SERVER['HOMEPATH'])) {
-            $home = $_SERVER['HOMEDRIVE'] . $_SERVER['HOMEPATH'];
-        } else {
-            $home = $_SERVER['HOME'];
-        }
-
-        $container->setParam('code_generator.templates.paths', array(
-            rtrim(getcwd(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
-            rtrim($home, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
-        ));
-    }
-
-    /**
-     * @param ServiceContainer $container
-     */
-    protected function setupPresenter(ServiceContainer $container)
-    {
-        $container->setShared('formatter.presenter', function ($c) {
-            return new Formatter\Presenter\TaggedPresenter($c->get('formatter.presenter.differ'));
-        });
-
-        $container->setShared('formatter.presenter.differ', function ($c) {
-            $differ = new Formatter\Presenter\Differ\Differ;
-
-            array_map(
-                array($differ, 'addEngine'),
-                $c->getByPrefix('formatter.presenter.differ.engines')
-            );
-
-            return $differ;
-        });
-
-        $container->set('formatter.presenter.differ.engines.string', function ($c) {
-            return new Formatter\Presenter\Differ\StringEngine;
-        });
-        $container->set('formatter.presenter.differ.engines.array', function ($c) {
-            return new Formatter\Presenter\Differ\ArrayEngine;
-        });
-    }
-
-    /**
-     * @param ServiceContainer $container
-     */
-    protected function setupLocator(ServiceContainer $container)
-    {
-        $container->setShared('locator.resource_manager', function ($c) {
-            $manager = new Locator\ResourceManager();
-
-            array_map(
-                array($manager, 'registerLocator'),
-                $c->getByPrefix('locator.locators')
-            );
-
-            return $manager;
-        });
-
-        $container->addConfigurator(function ($c) {
-            $suites = $c->getParam('suites', array('main' => ''));
-
-            foreach ($suites as $name => $suite) {
-                $suite      = is_array($suite) ? $suite : array('namespace' => $suite);
-                $srcNS      = isset($suite['namespace']) ? $suite['namespace'] : '';
-                $specPrefix = isset($suite['spec_prefix']) ? $suite['spec_prefix'] : 'spec';
-                $srcPath    = isset($suite['src_path']) ? $suite['src_path'] : 'src';
-                $specPath   = isset($suite['spec_path']) ? $suite['spec_path'] : '.';
-                $psr4prefix   = isset($suite['psr4_prefix']) ? $suite['psr4_prefix'] : null;
-
-                if (!is_dir($srcPath)) {
-                    mkdir($srcPath, 0777, true);
-                }
-                if (!is_dir($specPath)) {
-                    mkdir($specPath, 0777, true);
-                }
-
-                $c->set(sprintf('locator.locators.%s_suite', $name),
-                    function ($c) use ($srcNS, $specPrefix, $srcPath, $specPath, $psr4prefix) {
-                        return new Locator\PSR0\PSR0Locator($srcNS, $specPrefix, $srcPath, $specPath, null, $psr4prefix);
-                    }
-                );
-            }
-        });
-    }
-
-    /**
-     * @param ServiceContainer $container
-     */
-    protected function setupLoader(ServiceContainer $container)
-    {
-        $container->setShared('loader.resource_loader', function ($c) {
-            return new Loader\ResourceLoader($c->get('locator.resource_manager'));
-        });
-    }
-
-    /**
-     * @param ServiceContainer $container
-     *
-     * @throws \RuntimeException
-     */
-    protected function setupFormatter(ServiceContainer $container)
-    {
-        $container->set('formatter.formatters.progress', function ($c) {
-            return new Formatter\ProgressFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
-        });
-        $container->set('formatter.formatters.pretty', function ($c) {
-            return new Formatter\PrettyFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
-        });
-        $container->set('formatter.formatters.junit', function ($c) {
-            return new Formatter\JUnitFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
-        });
-        $container->set('formatter.formatters.dot', function ($c) {
-            return new Formatter\DotFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
-        });
-        $container->set('formatter.formatters.html', function ($c) {
-            $io = new Formatter\Html\IO;
-            $template = new Formatter\Html\Template($io);
-            $factory = new Formatter\Html\ReportItemFactory($template);
-            $presenter = new Formatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
-
-            return new Formatter\HtmlFormatter($factory, $presenter, $io, $c->get('event_dispatcher.listeners.stats'));
-        });
-        $container->set('formatter.formatters.h', function ($c) {
-            return $c->get('formatter.formatters.html');
-        });
-
-        $container->addConfigurator(function ($c) {
-            $formatterName = $c->getParam('formatter.name', 'progress');
-
-            $c->get('console.output')->setFormatter(new \PhpSpec\Console\Formatter(
-                $c->get('console.output')->isDecorated()
-            ));
-
-            try {
-                $formatter = $c->get('formatter.formatters.'.$formatterName);
-            } catch (\InvalidArgumentException $e) {
-                throw new \RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
-            }
-
-            $c->set('event_dispatcher.listeners.formatter', $formatter);
-        });
-    }
-
-    /**
-     * @param ServiceContainer $container
-     */
-    protected function setupRunner(ServiceContainer $container)
-    {
-        $container->setShared('runner.suite', function ($c) {
-            return new Runner\SuiteRunner(
-                $c->get('event_dispatcher'),
-                $c->get('runner.specification')
-            );
-        });
-
-        $container->setShared('runner.specification', function ($c) {
-            return new Runner\SpecificationRunner(
-                $c->get('event_dispatcher'),
-                $c->get('runner.example')
-            );
-        });
-
-        $container->setShared('runner.example', function ($c) {
-            $runner = new Runner\ExampleRunner(
-                $c->get('event_dispatcher'),
-                $c->get('formatter.presenter')
-            );
-
-            array_map(
-                array($runner, 'registerMaintainer'),
-                $c->getByPrefix('runner.maintainers')
-            );
-
-            return $runner;
-        });
-
-        $container->set('runner.maintainers.errors', function ($c) {
-            return new Runner\Maintainer\ErrorMaintainer(
-                $c->getParam('runner.maintainers.errors.level', E_ALL ^ E_STRICT)
-            );
-        });
-        $container->set('runner.maintainers.collaborators', function ($c) {
-            return new Runner\Maintainer\CollaboratorsMaintainer($c->get('unwrapper'));
-        });
-        $container->set('runner.maintainers.let_letgo', function ($c) {
-            return new Runner\Maintainer\LetAndLetgoMaintainer;
-        });
-        $container->set('runner.maintainers.matchers', function ($c) {
-            return new Runner\Maintainer\MatchersMaintainer(
-                $c->get('formatter.presenter'),
-                $c->get('unwrapper')
-            );
-        });
-        $container->set('runner.maintainers.subject', function ($c) {
-            return new Runner\Maintainer\SubjectMaintainer(
-                $c->get('formatter.presenter'),
-                $c->get('unwrapper'),
-                $c->get('event_dispatcher')
-            );
-        });
-
-        $container->setShared('unwrapper', function ($c) {
-            return new Wrapper\Unwrapper;
-        });
     }
 
     /**
@@ -468,7 +121,7 @@ class Application extends BaseApplication
         foreach ($config as $key => $val) {
             if ('extensions' === $key && is_array($val)) {
                 foreach ($val as $class) {
-                    $extension = new $class;
+                    $extension = new $class();
 
                     if (!$extension instanceof Extension\ExtensionInterface) {
                         throw new RuntimeException(sprintf(
@@ -477,7 +130,7 @@ class Application extends BaseApplication
                         ));
                     }
 
-                    $extension->load($this->container);
+                    $extension->load($container);
                 }
             } else {
                 $container->setParam($key, $val);
@@ -486,6 +139,8 @@ class Application extends BaseApplication
     }
 
     /**
+     * @param InputInterface $input
+     *
      * @return array
      *
      * @throws \RuntimeException

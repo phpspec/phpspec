@@ -7,13 +7,13 @@ use Prophecy\Argument;
 use PhpSpec\ServiceContainer;
 use PhpSpec\Config\OptionsConfig;
 
-use Symfony\Component\Console\Input\InputInterface,
-    Symfony\Component\Console\Output\OutputInterface,
-    Symfony\Component\Console\Helper\HelperSet;
+use Symfony\Component\Console\Helper\DialogHelper;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class IOSpec extends ObjectBehavior
 {
-    function let(InputInterface $input, OutputInterface $output, HelperSet $helpers, OptionsConfig $config)
+    function let(InputInterface $input, OutputInterface $output, DialogHelper $dialogHelper, OptionsConfig $config)
     {
         $input->isInteractive()->willReturn(true);
         $input->getOption('no-code-generation')->willReturn(false);
@@ -22,7 +22,7 @@ class IOSpec extends ObjectBehavior
         $config->isCodeGenerationEnabled()->willReturn(true);
         $config->isStopOnFailureEnabled()->willReturn(false);
 
-        $this->beConstructedWith($input, $output, $helpers, $config);
+        $this->beConstructedWith($input, $output, $dialogHelper, $config);
     }
 
     function it_has_io_interface()

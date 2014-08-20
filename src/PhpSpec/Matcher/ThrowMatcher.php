@@ -43,6 +43,11 @@ class ThrowMatcher implements MatcherInterface
     private $presenter;
 
     /**
+     * @var ReflectionFactory
+     */
+    private $factory;
+
+    /**
      * @param Unwrapper          $unwrapper
      * @param PresenterInterface $presenter
      * @param ReflectionFactory  $factory
@@ -51,7 +56,7 @@ class ThrowMatcher implements MatcherInterface
     {
         $this->unwrapper = $unwrapper;
         $this->presenter = $presenter;
-        $this->factory   = $factory ?: new ReflectionFactory;
+        $this->factory   = $factory ?: new ReflectionFactory();
     }
 
     /**

@@ -22,9 +22,19 @@ use Symfony\Component\EventDispatcher\Event;
 class SuiteEvent extends Event implements EventInterface
 {
     /**
+     * @var Suite
+     */
+    private $suite;
+
+    /**
      * @var float
      */
     private $time;
+
+    /**
+     * @var integer
+     */
+    private $result;
 
     /**
      * @param Suite   $suite

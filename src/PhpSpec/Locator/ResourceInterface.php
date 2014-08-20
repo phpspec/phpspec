@@ -20,42 +20,42 @@ namespace PhpSpec\Locator;
 interface ResourceInterface
 {
     /**
-     * @return mixed
+     * @return string
      */
     public function getName();
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getSpecName();
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getSrcFilename();
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getSrcNamespace();
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getSrcClassname();
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getSpecFilename();
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getSpecNamespace();
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getSpecClassname();
 }

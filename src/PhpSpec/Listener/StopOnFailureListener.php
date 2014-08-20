@@ -17,7 +17,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\StopOnFailureException;
-use Symfony\Component\Console\Input\InputInterface;
 use PhpSpec\Console\IO;
 
 /**
@@ -32,7 +31,7 @@ class StopOnFailureListener implements EventSubscriberInterface
     private $io;
 
     /**
-     * @param boolean $stopOnFailure
+     * @param IO $io
      */
     public function __construct(IO $io)
     {

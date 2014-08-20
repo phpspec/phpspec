@@ -47,7 +47,7 @@ class MethodGenerator implements GeneratorInterface
     {
         $this->io         = $io;
         $this->templates  = $templates;
-        $this->filesystem = $filesystem ?: new Filesystem;
+        $this->filesystem = $filesystem ?: new Filesystem();
     }
 
     /**
@@ -107,11 +107,6 @@ class MethodGenerator implements GeneratorInterface
      */
     protected function getTemplate()
     {
-        return file_get_contents(__FILE__, null, null, __COMPILER_HALT_OFFSET__);
+        return file_get_contents(__DIR__ . '/templates/method.template');
     }
 }
-__halt_compiler();
-    public function %name%(%arguments%)
-    {
-        // TODO: write logic here
-    }

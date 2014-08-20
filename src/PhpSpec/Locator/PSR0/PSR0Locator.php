@@ -55,6 +55,11 @@ class PSR0Locator implements ResourceLocatorInterface
     private $filesystem;
 
     /**
+     * @var string
+     */
+    private $psr4Prefix;
+
+    /**
      * @param string     $srcNamespace
      * @param string     $specNamespacePrefix
      * @param string     $srcPath
@@ -64,14 +69,14 @@ class PSR0Locator implements ResourceLocatorInterface
     public function __construct($srcNamespace = '', $specNamespacePrefix = 'spec',
                                 $srcPath = 'src', $specPath = '.', Filesystem $filesystem = null, $psr4Prefix = null)
     {
-        $this->filesystem = $filesystem ?: new Filesystem;
+        $this->filesystem = $filesystem ?: new Filesystem();
         $sepr = DIRECTORY_SEPARATOR;
 
         $this->srcPath       = rtrim(realpath($srcPath), '/\\').$sepr;
         $this->specPath      = rtrim(realpath($specPath), '/\\').$sepr;
         $this->srcNamespace  = ltrim(trim($srcNamespace, ' \\').'\\', '\\');
         $this->psr4Prefix    = (null === $psr4Prefix) ? null : ltrim(trim($psr4Prefix, ' \\').'\\', '\\');
-        if(null !== $this->psr4Prefix  && substr($this->srcNamespace, 0, strlen($psr4Prefix)) !== $psr4Prefix){
+        if (null !== $this->psr4Prefix  && substr($this->srcNamespace, 0, strlen($psr4Prefix)) !== $psr4Prefix) {
             throw new InvalidArgumentException('PSR4 prefix doesn\'t match given class namespace.' . PHP_EOL);
         }
         $srcNamespacePath = null === $this->psr4Prefix ? $this->srcNamespace : substr($this->srcNamespace, strlen($this->psr4Prefix));
@@ -266,10 +271,11 @@ class PSR0Locator implements ResourceLocatorInterface
         $namespace = '';
         $content   = $this->filesystem->getFileContents($path);
         $tokens    = token_get_all($content);
+        $count     = count($tokens);
 
-        for ($i=0; $i<count($tokens); $i++) {
+        for ($i = 0; $i < $count; $i++) {
             if ($tokens[$i][0] === T_NAMESPACE) {
-                for ($j=$i+1; $j<count($tokens); $j++) {
+                for ($j = $i + 1; $j < $count; $j++) {
                     if ($tokens[$j][0] === T_STRING) {
                          $namespace .= $tokens[$j][1].'\\';
                     } elseif ($tokens[$j] === '{' || $tokens[$j] === ';') {
@@ -279,7 +285,7 @@ class PSR0Locator implements ResourceLocatorInterface
             }
 
             if ($tokens[$i][0] === T_CLASS) {
-                for ($j=$i+1; $j<count($tokens); $j++) {
+                for ($j = $i+1; $j < $count; $j++) {
                     if ($tokens[$j] === '{') {
                         return $namespace.$tokens[$i+2][1];
                     }

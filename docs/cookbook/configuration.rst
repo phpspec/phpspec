@@ -5,23 +5,39 @@ Some things in phpspec can be configured in a ``phpspec.yml`` or
 ``phpspec.yml.dist`` file in the root of your project (the directory where you
 run the ``phpspec`` command).
 
-Suites
-------
+You can use a different config file name and path with the ``--config`` option:
 
-In phpspec, you can group specification files by a certain namespace/path in a
-*suite*. For each suite, you have a couple of configuration settings:
+.. code-block:: bash
 
-* ``namespace`` - The namespace of the classes. This is used for generating
+    $ bin/phpspec run --config path/to/different-phpspec.yml
+
+.. _configuration-suites:
+
+Spec and source locations
+-------------------------
+
+The default locations used by **phpspec** for the spec files and source files
+are `spec` and `src` respectively. You may find that this does not always suit
+your needs. You can specify an alternative location in the configuration file.
+You cannot do this at the command line as it does not make sense for a spec or
+source files path to change at runtime.
+
+You can specify alternative values depending on the namespace of the class you are
+describing. In phpspec, you can group specification files by a certain namespace in a
+*suite*. For each suite, you have several configuration settings:
+
+* ``namespace`` - The namespace of the classes. Used for generating
   spec files, locating them and generating code;
 * ``spec_prefix`` [**default**: ``spec``] - The namespace prefix for
   specifications. The complete namespace for specifications is
   ``%spec_prefix%\%namespace%``;
 * ``src_path`` [**default**: ``src``] - The path to store the generated
-  classes. Paths are relative to the location of the config file. Directories
-  will be created if they do not exists. This does not include the namespace
+  classes. Paths are relative to the location of the config file. **phpspec**
+  creates the directories if they do not exists. This does not include the namespace
   directories;
 * ``spec_path`` [**default**: ``.``] - The path of the specifications. This
   does not include the spec prefix or namespace.
+* ``psr4_prefix`` [**default**: ``null``] - A PSR-4 prefix to use.
 
 Some examples:
 
@@ -37,10 +53,33 @@ Some examples:
         #     namespace: The\Namespace
         my_suite: The\Namespace
 
-To run a suite, you have to use the namespace of the specification classes or
-the classes it tests. For instance, the above ``acme_suite`` will be used when
-running ``phpspec run Acme\TheLib``, ``phpspec run spec\Acme\TheLib`` or
-any classes in that namespace (e.g. ``phpspec run Acme\TheLib\Section\Foo``).
+phpspec will use suite settings based on the namespaces.
+If you have suites with different spec directories then ``phpspec run``
+will run the spces from each of the directories using the relevant suite settings.
+
+When you use ``phpspec desc`` **phpspec** creates the spec using the matching
+configuration.  E.g. ``phpspec desc Acme/TheLib/MyClass`` will use the default
+spec directory but the namespace ``acmespec Acme\TheLib\MyClass``.
+
+If the namespace does not match one of the namespaces in the suites config then
+**phpspec** uses the default settings. If you want to change the defaults then you can
+add a suite without specifying the namespace.
+
+.. code-block:: yaml
+
+    suites:
+        #...
+        default:
+            spec_prefix: acme_spec
+            spec_path: acmes-specs
+            src_path: acme-src
+
+You can just set this suite if you wanted to override the default settings for
+all namespaces. Since **phpspec** matches on namespaces you cannot specify more
+than one set of configuration values for a null namespace. If you do add more
+than one suite with a null namespace then **phpspec** will use the last one
+defined.
+
 
 Formatter
 ---------

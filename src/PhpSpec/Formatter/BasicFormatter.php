@@ -16,7 +16,6 @@ namespace PhpSpec\Formatter;
 use PhpSpec\IO\IOInterface as IO;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Listener\StatisticsCollector;
-
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
@@ -67,7 +66,7 @@ abstract class BasicFormatter implements EventSubscriberInterface
     }
 
     /**
-     * @return mixed
+     * @return IO
      */
     protected function getIO()
     {
@@ -75,7 +74,7 @@ abstract class BasicFormatter implements EventSubscriberInterface
     }
 
     /**
-     * @return mixed
+     * @return PresenterInterface
      */
     protected function getPresenter()
     {
@@ -83,7 +82,7 @@ abstract class BasicFormatter implements EventSubscriberInterface
     }
 
     /**
-     * @return mixed
+     * @return StatisticsCollector
      */
     protected function getStatisticsCollector()
     {

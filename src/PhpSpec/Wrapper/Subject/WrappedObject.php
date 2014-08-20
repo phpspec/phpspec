@@ -36,7 +36,7 @@ class WrappedObject
      */
     private $classname;
     /**
-     * @var array|string
+     * @var callable|null
      */
     private $factoryMethod;
     /**
@@ -78,10 +78,11 @@ class WrappedObject
         }
 
         $this->classname      = $classname;
-        $unwrapper            = new Unwrapper;
+        $unwrapper            = new Unwrapper();
         $this->arguments      = $unwrapper->unwrapAll($arguments);
         $this->instance       = null;
         $this->isInstantiated = false;
+        $this->factoryMethod  = null;
     }
 
     /**
@@ -102,8 +103,8 @@ class WrappedObject
     }
 
     /**
-     * @param array|string $factoryMethod
-     * @param array        $arguments
+     * @param callable|string|null $factoryMethod
+     * @param array                $arguments
      */
     public function beConstructedThrough($factoryMethod, array $arguments = array())
     {
@@ -116,14 +117,14 @@ class WrappedObject
         }
 
         $this->factoryMethod  = $factoryMethod;
-        $unwrapper            = new Unwrapper;
+        $unwrapper            = new Unwrapper();
         $this->arguments      = $unwrapper->unwrapAll($arguments);
         $this->instance       = null;
         $this->isInstantiated = false;
     }
 
     /**
-     * @return array|string
+     * @return callable|null
      */
     public function getFactoryMethod()
     {
