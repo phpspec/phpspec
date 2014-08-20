@@ -22,7 +22,7 @@ use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class PrettyFormatter implements EventSubscriberInterface
+class PrettyFormatter extends BasicFormatter
 {
     private $io;
     private $presenter;
@@ -33,13 +33,6 @@ class PrettyFormatter implements EventSubscriberInterface
         $this->presenter = $presenter;
         $this->io = $io;
         $this->stats = $stats;
-    }
-
-    public static function getSubscribedEvents()
-    {
-        $events = array('beforeSpecification', 'afterExample', 'afterSuite');
-
-        return array_combine($events, $events);
     }
 
     public function setIO(IO $io)
