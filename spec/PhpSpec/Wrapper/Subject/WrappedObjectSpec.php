@@ -55,6 +55,7 @@ class WrappedObjectSpec extends ObjectBehavior
         $this->callOnWrappedObject('beAnInstanceOf', array('\DateTimeZone'));
         $this->callOnWrappedObject('beConstructedThrough', array('listAbbreviations'));
 
-        $this->shouldThrow('RuntimeException')->duringInstantiate();
+        $message = 'The method \DateTimeZone::listAbbreviations did not return an object, returned array instead';
+        $this->shouldThrow(new \RuntimeException($message))->duringInstantiate();
     }
 }
