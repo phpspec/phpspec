@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Console;
 
+use SebastianBergmann\Exporter\Exporter;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use PhpSpec\ServiceContainer;
 use PhpSpec\CodeGenerator;
@@ -196,6 +197,12 @@ class ContainerAssembler
         });
         $container->set('formatter.presenter.differ.engines.array', function () {
             return new SpecFormatter\Presenter\Differ\ArrayEngine();
+        });
+        $container->set('formatter.presenter.differ.engines.object', function (ServiceContainer $c) {
+            return new SpecFormatter\Presenter\Differ\ObjectEngine(
+                new Exporter(),
+                $c->get('formatter.presenter.differ.engines.string')
+            );
         });
     }
 

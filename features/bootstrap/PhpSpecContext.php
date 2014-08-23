@@ -154,6 +154,16 @@ class PhpSpecContext implements Context
     }
 
     /**
+     * @Then I should see:
+     *
+     * @param PyStringNode $message
+     */
+    public function iShouldSeeBlock(PyStringNode $message)
+    {
+        $this->iShouldSee((string)$message);
+    }
+
+    /**
      * @Then /^(?:|I )should not see "(?P<message>[^"]*)"$/
      */
     public function iShouldNotSee($message)
