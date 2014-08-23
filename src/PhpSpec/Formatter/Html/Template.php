@@ -14,7 +14,6 @@
 namespace PhpSpec\Formatter\Html;
 
 use PhpSpec\Formatter\Template as TemplateInterface;
-
 use PhpSpec\IO\IOInterface;
 
 /**

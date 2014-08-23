@@ -14,7 +14,6 @@
 namespace PhpSpec\CodeGenerator;
 
 use PhpSpec\Locator\ResourceInterface;
-
 use InvalidArgumentException;
 
 /**

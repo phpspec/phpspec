@@ -17,7 +17,6 @@ use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\SpecificationInterface;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
-
 use PhpSpec\Exception\Example as ExampleException;
 
 /**

@@ -14,7 +14,6 @@
 namespace PhpSpec\Event;
 
 use Symfony\Component\EventDispatcher\Event;
-
 use PhpSpec\Loader\Node\SpecificationNode;
 
 /**

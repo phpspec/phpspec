@@ -14,7 +14,6 @@
 namespace PhpSpec\Runner;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-
 use PhpSpec\Event;
 use PhpSpec\Loader\Node\SpecificationNode;
 

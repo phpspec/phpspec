@@ -15,7 +15,6 @@ namespace PhpSpec\Loader\Node;
 
 use PhpSpec\Loader\Suite;
 use PhpSpec\Locator\ResourceInterface;
-
 use ReflectionClass;
 
 /**
