@@ -332,3 +332,105 @@ Feature: Developer specifies object construction
     """
     When I run phpspec
     Then the suite should pass
+
+    Scenario: Developer cannot redefine constructor parameters if object is already instantiated
+    Given the spec file "spec/Runner/ConstructorExample9/ClassWithConstructorSpec.php" contains:
+    """
+    <?php
+
+    namespace spec\Runner\ConstructorExample9;
+
+    use PhpSpec\ObjectBehavior;
+    use Prophecy\Argument;
+
+    class ClassConstructorSpec extends ObjectBehavior
+    {
+        function it_behaves_differently_depending_on_type()
+        {
+            $this->beConstructedWith('foo');
+            $this->getType()->shouldReturn('foo');
+
+            $this->beConstructedWith('bar');
+            $this->getType()->shouldReturn('bar');
+        }
+    }
+
+    """
+    And the class file "src/Runner/ConstructorExample9/ClassConstructor.php" contains:
+    """
+    <?php
+
+    namespace Runner\ConstructorExample9;
+
+    class ClassConstructor
+    {
+        public function __construct($type)
+        {
+            $this->type = $type;
+        }
+
+        public function getType()
+        {
+            return $this->type;
+        }
+    }
+
+    """
+    When I run phpspec
+    Then I should see "you can not change object construction method when it is already instantiated"
+
+  Scenario: Developer cannot redefine factory method if object is already instantiated
+    Given the spec file "spec/Runner/ConstructorExample10/ClassWithFactoryMethodSpec.php" contains:
+    """
+    <?php
+
+    namespace spec\Runner\ConstructorExample10;
+
+    use PhpSpec\ObjectBehavior;
+    use Prophecy\Argument;
+
+    class ClassWithFactoryMethodSpec extends ObjectBehavior
+    {
+        function it_behaves_differently_depending_on_type()
+        {
+            $this->beConstructedThrough('createFoo');
+            $this->getType()->shouldReturn('foo');
+
+            $this->beConstructedWith('createBar');
+            $this->getType()->shouldReturn('bar');
+        }
+    }
+
+    """
+    And the class file "src/Runner/ConstructorExample10/ClassWithFactoryMethod.php" contains:
+    """
+    <?php
+
+    namespace Runner\ConstructorExample10;
+
+    class ClassWithFactoryMethod
+    {
+        private function __construct($type)
+        {
+            $this->type = $type;
+        }
+
+        public function getType()
+        {
+            return $this->type;
+        }
+
+        public static function createFoo()
+        {
+            return new self('foo');
+        }
+
+        public static function createBar()
+        {
+            return new self('bar');
+        }
+    }
+
+    """
+    When I run phpspec
+    Then I should see "you can not change object construction method when it is already instantiated"

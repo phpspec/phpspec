@@ -99,6 +99,10 @@ class WrappedObject
             ));
         }
 
+        if ($this->isInstantiated()) {
+            throw new SubjectException('You can not change object construction method when it is already instantiated');
+        }
+
         $this->beAnInstanceOf($this->classname, $args);
     }
 
@@ -114,6 +118,10 @@ class WrappedObject
             method_exists($this->classname, $factoryMethod)
         ) {
             $factoryMethod = array($this->classname, $factoryMethod);
+        }
+
+        if ($this->isInstantiated()) {
+            throw new SubjectException('You can not change object construction method when it is already instantiated');
         }
 
         $this->factoryMethod = $factoryMethod;
