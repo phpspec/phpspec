@@ -17,7 +17,6 @@ use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\SpecificationInterface;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
-
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Matcher;

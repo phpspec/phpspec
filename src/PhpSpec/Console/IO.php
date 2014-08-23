@@ -14,7 +14,6 @@
 namespace PhpSpec\Console;
 
 use PhpSpec\IO\IOInterface;
-
 use Symfony\Component\Console\Helper\DialogHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;

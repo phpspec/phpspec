@@ -16,7 +16,6 @@ namespace PhpSpec\Runner;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Example\StopOnFailureException;
 use PhpSpec\Loader\Suite;
-
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**

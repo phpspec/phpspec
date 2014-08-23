@@ -13,13 +13,9 @@
 
 namespace PhpSpec\Formatter;
 
-use PhpSpec\Console\IO;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
-
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Listener\StatisticsCollector;
 
 class PrettyFormatter extends ConsoleFormatter
 {

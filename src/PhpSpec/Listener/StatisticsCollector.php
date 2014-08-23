@@ -14,7 +14,6 @@
 namespace PhpSpec\Listener;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SpecificationEvent;
 

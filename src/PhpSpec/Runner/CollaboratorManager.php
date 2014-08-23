@@ -15,7 +15,6 @@ namespace PhpSpec\Runner;
 
 use PhpSpec\Exception\Wrapper\CollaboratorException;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
-
 use PhpSpec\Wrapper\Collaborator;
 use ReflectionFunctionAbstract;
 

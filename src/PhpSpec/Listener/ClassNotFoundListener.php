@@ -14,14 +14,11 @@
 namespace PhpSpec\Listener;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-
 use PhpSpec\Console\IO;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\CodeGenerator\GeneratorManager;
-
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
-
 use PhpSpec\Exception\Fracture\ClassNotFoundException as PhpSpecClassException;
 use Prophecy\Exception\Doubler\ClassNotFoundException as ProphecyClassException;
 

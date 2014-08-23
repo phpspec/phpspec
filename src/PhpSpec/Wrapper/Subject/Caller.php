@@ -15,15 +15,11 @@ namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Loader\Node\ExampleNode;
-
 use PhpSpec\Wrapper\Subject;
 use PhpSpec\Wrapper\Wrapper;
 use PhpSpec\Wrapper\Unwrapper;
-
 use PhpSpec\Event\MethodCallEvent;
-
 use Symfony\Component\EventDispatcher\EventDispatcherInterface as Dispatcher;
-
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;

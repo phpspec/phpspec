@@ -17,7 +17,6 @@ use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Wrapper\DelayedCall;
 use PhpSpec\Factory\ReflectionFactory;
-
 use PhpSpec\Exception\Example\MatcherException;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\Example\NotEqualException;

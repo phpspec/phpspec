@@ -14,7 +14,6 @@
 namespace PhpSpec\Loader;
 
 use PhpSpec\Locator\ResourceManager;
-
 use ReflectionClass;
 use ReflectionMethod;
 

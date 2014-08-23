@@ -16,7 +16,6 @@ namespace PhpSpec\Locator\PSR0;
 use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Locator\ResourceLocatorInterface;
 use PhpSpec\Util\Filesystem;
-
 use InvalidArgumentException;
 
 /**
