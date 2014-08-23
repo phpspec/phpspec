@@ -11,6 +11,10 @@ tools:
     filter:
       excluded-paths: [ spec/* ]
 
+  php_sim:
+    filter:
+      excluded-paths: [ spec/* ]
+
 filter:
   excluded_paths:
     - docs/*
