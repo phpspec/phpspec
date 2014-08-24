@@ -1,0 +1,107 @@
+Feature: Developer generates a method returning a constant
+  As a Developer
+  I want to automate creating methods that return constants
+  In order to avoid having to manually write the code
+
+  Scenario: Generating a scalar return type when method exists
+    Given the spec file "spec/CodeGeneration/ConstantExample1/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\ConstantExample1;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_converts_plain_text_to_html_paragraphs()
+          {
+              $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/ConstantExample1/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\ConstantExample1;
+
+      class Markdown
+      {
+          public function toHtml($argument1)
+          {}
+      }
+
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/ConstantExample1/Markdown.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\ConstantExample1;
+
+      class Markdown
+      {
+          public function toHtml($argument1)
+          {
+              return '<p>Hi, there</p>';
+          }
+      }
+
+      """
+
+  Scenario: Generating a scalar return type when method contains comments
+    Given the spec file "spec/CodeGeneration/ConstantExample2/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\ConstantExample2;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_converts_plain_text_to_html_paragraphs()
+          {
+              $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/ConstantExample2/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\ConstantExample2;
+
+      class Markdown
+      {
+          public function toHtml($argument1)
+          {
+            // TODO: Add Logic here
+            /*
+                This code is inactive
+             */
+          }
+      }
+
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/ConstantExample2/Markdown.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\ConstantExample2;
+
+      class Markdown
+      {
+          public function toHtml($argument1)
+          {
+              return '<p>Hi, there</p>';
+          }
+      }
+
+      """

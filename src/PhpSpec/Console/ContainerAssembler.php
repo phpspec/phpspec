@@ -125,6 +125,13 @@ class ContainerAssembler
                 $c->get('process.rerunner')
             );
         });
+        $container->setShared('event_dispatcher.listeners.method_returned_null', function (ServiceContainer $c) {
+            return new Listener\MethodReturnedNullListener(
+                $c->get('console.io'),
+                $c->get('locator.resource_manager'),
+                $c->get('code_generator')
+            );
+        });
     }
 
     /**
@@ -157,6 +164,12 @@ class ContainerAssembler
         });
         $container->set('code_generator.generators.method', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\MethodGenerator(
+                $c->get('console.io'),
+                $c->get('code_generator.templates')
+            );
+        });
+        $container->set('code_generator.generators.returnConstant', function (ServiceContainer $c) {
+            return new CodeGenerator\Generator\ReturnConstantGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates')
             );
