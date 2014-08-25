@@ -70,9 +70,7 @@ class Application extends BaseApplication
             $this->add($command);
         }
 
-        return $this->container->get('console.result_converter')->convert(
-            parent::doRun($input, $output)
-        );
+        return parent::doRun($input, $output);
     }
 
     /**

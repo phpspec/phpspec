@@ -97,6 +97,8 @@ EOF
         $suite       = $container->get('loader.resource_loader')->load($locator, $linenum);
         $suiteRunner = $container->get('runner.suite');
 
-        return $suiteRunner->run($suite);
+        return $container->get('console.result_converter')->convert(
+            $suiteRunner->run($suite)
+        );
     }
 }
