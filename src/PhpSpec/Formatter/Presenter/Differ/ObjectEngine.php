@@ -37,8 +37,8 @@ class ObjectEngine implements EngineInterface
     }
 
     /**
-     * @param object $expected
-     * @param object $actual
+     * @param mixed $expected
+     * @param mixed $actual
      *
      * @return bool
      */
@@ -48,8 +48,8 @@ class ObjectEngine implements EngineInterface
     }
 
     /**
-     * @param mixed $expected
-     * @param mixed $actual
+     * @param object $expected
+     * @param object $actual
      *
      * @return string
      */
