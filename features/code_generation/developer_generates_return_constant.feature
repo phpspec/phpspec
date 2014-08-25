@@ -143,3 +143,44 @@ Feature: Developer generates a method returning a constant
     When I run phpspec interactively
     Then I should not be prompted for code generation
 
+
+  Scenario: No prompt when examples contradict code
+    Given the spec file "spec/CodeGeneration/ConstantExample4/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\ConstantExample4;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_converts_plain_text_to_html_paragraphs()
+          {
+              $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
+          }
+
+          function it_converts_more_plain_text_to_html_paragraphs()
+          {
+              $this->toHtml('Hello, there')->shouldReturn('<p>Hello, there</p>');
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/ConstantExample4/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\ConstantExample4;
+
+      class Markdown
+      {
+          public function toHtml($argument1)
+          {
+          }
+      }
+
+      """
+    When I run phpspec interactively
+    Then I should not be prompted for code generation

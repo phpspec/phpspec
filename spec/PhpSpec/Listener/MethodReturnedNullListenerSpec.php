@@ -146,6 +146,31 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 
+    function it_does_not_prompt_when_multiple_contradictory_examples_are_found(
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, NotEqualException $notEqualException, IO $io,
+        ExampleEvent $exampleEvent2, NotEqualException $notEqualException2
+    )
+    {
+        $exampleEvent->getException()->willReturn($notEqualException);
+        $exampleEvent2->getException()->willReturn($notEqualException2);
+
+        $notEqualException->getActual()->willReturn(null);
+        $notEqualException2->getActual()->willReturn(null);
+
+        $notEqualException->getExpected()->willReturn('foo');
+        $notEqualException2->getExpected()->willReturn('bar');
+
+        $this->afterMethodCall($methodCallEvent);
+        $this->afterExample($exampleEvent);
+
+        $this->afterMethodCall($methodCallEvent);
+        $this->afterExample($exampleEvent2);
+
+        $this->afterSuite();
+
+        $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
+    }
+
     function it_prompts_when_correct_type_of_exception_is_thrown(
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io
     )

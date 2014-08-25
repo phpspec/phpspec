@@ -101,11 +101,17 @@ class MethodReturnedNullListener implements EventSubscriberInterface
             return;
         }
 
-        $this->nullMethods[$class.'::'.$method] = array(
-            'class'=> $class,
-            'method' => $method,
-            'expected' => $exception->getExpected()
-        );
+        $key = $class . '::' . $method;
+
+        if (!array_key_exists($key, $this->nullMethods)) {
+            $this->nullMethods[$key] = array(
+                'class'=> $class,
+                'method' => $method,
+                'expected' => array()
+            );
+        }
+
+        $this->nullMethods[$key]['expected'][] = $exception->getExpected();
     }
 
     public function afterSuite()
@@ -115,10 +121,21 @@ class MethodReturnedNullListener implements EventSubscriberInterface
         }
 
         foreach ($this->nullMethods as $methodString => $failedCall) {
-            $message = sprintf('Would you like me to make %s() always return %s?', $methodString, $failedCall['expected']);
+
+            $failedCall['expected'] = array_unique($failedCall['expected']);
+
+
+            if (count($failedCall['expected'])>1) {
+                continue;
+            }
+
+            $expected = current($failedCall['expected']);
+            $class = $failedCall['class'];
+
+            $message = sprintf('Would you like me to make %s() always return %s?', $methodString, $expected);
 
             try {
-                $resource = $this->resources->createResource($failedCall['class']);
+                $resource = $this->resources->createResource($class);
             }
             catch (\RuntimeException $exception) {
                 continue;
@@ -127,7 +144,7 @@ class MethodReturnedNullListener implements EventSubscriberInterface
             if($this->io->askConfirmation($message)) {
                 $this->generator->generate(
                     $resource, 'returnConstant',
-                    array('method'=>$failedCall['method'], 'expected'=>$failedCall['expected'])
+                    array('method'=>$failedCall['method'], 'expected'=>$expected)
                 );
             }
         }
