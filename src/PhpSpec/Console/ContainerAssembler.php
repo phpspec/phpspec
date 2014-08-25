@@ -14,6 +14,7 @@
 namespace PhpSpec\Console;
 
 use SebastianBergmann\Exporter\Exporter;
+use PhpSpec\Process\ReRunner\PcntlReRunner;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use PhpSpec\ServiceContainer;
 use PhpSpec\CodeGenerator;
@@ -43,6 +44,7 @@ class ContainerAssembler
         $this->setupRunner($container);
         $this->setupCommands($container);
         $this->setupResultConverter($container);
+        $this->setupRerunner($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -114,6 +116,11 @@ class ContainerAssembler
         $container->setShared('event_dispatcher.listeners.stop_on_failure', function (ServiceContainer $c) {
             return new Listener\StopOnFailureListener(
                 $c->get('console.io')
+            );
+        });
+        $container->setShared('event_dispatcher.listeners.rerun', function (ServiceContainer $c) {
+            return new Listener\RerunListener(
+                $c->get('process.rerunner')
             );
         });
     }
@@ -367,6 +374,16 @@ class ContainerAssembler
 
         $container->setShared('unwrapper', function () {
             return new Wrapper\Unwrapper();
+        });
+    }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupRerunner(ServiceContainer $container)
+    {
+        $container->setShared('process.rerunner', function(ServiceContainer $c) {
+            return new PcntlReRunner();
         });
     }
 }

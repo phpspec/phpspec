@@ -37,6 +37,11 @@ class SuiteEvent extends Event implements EventInterface
     private $result;
 
     /**
+     * @var boolean
+     */
+    private $isWorthRerunning = false;
+
+    /**
      * @param Suite   $suite
      * @param float   $time
      * @param integer $result
@@ -70,5 +75,18 @@ class SuiteEvent extends Event implements EventInterface
     public function getResult()
     {
         return $this->result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsWorthRerunning()
+    {
+        return $this->isWorthRerunning;
+    }
+
+    public function markAsWorthRerunning()
+    {
+        $this->isWorthRerunning = true;
     }
 }

@@ -76,6 +76,7 @@ class ClassNotFoundListener implements EventSubscriberInterface
             $this->io->writeln();
             if ($this->io->askConfirmation($message)) {
                 $this->generator->generate($resource, 'class');
+                $event->markAsWorthRerunning();
             }
         }
     }
