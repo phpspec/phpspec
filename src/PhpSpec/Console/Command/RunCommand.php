@@ -33,6 +33,7 @@ class RunCommand extends Command
                     new InputOption('format', 'f', InputOption::VALUE_REQUIRED, 'Formatter'),
                     new InputOption('stop-on-failure', null , InputOption::VALUE_NONE, 'Stop on failure'),
                     new InputOption('no-code-generation', null , InputOption::VALUE_NONE, 'Do not prompt for missing method/class generation'),
+                    new InputOption('bootstrap', "b", InputOption::VALUE_REQUIRED, 'Bootstrap php file that is run before the tests'),
                 ))
             ->setDescription('Runs specifications')
             ->setHelp(<<<EOF
@@ -45,6 +46,10 @@ Will run all the specifications in the spec directory.
   <info>php %command.full_name% spec/ClassNameSpec.php</info>
 
 Will run only the ClassNameSpec.
+
+You can choose the bootstrap file with the bootstrap option e.g.:
+
+  <info>php %command.full_name% --bootstrap=bootstrap.php</info>
 
 By default, you will be asked whether missing methods and classes should
 be generated. You can suppress these prompts and automatically choose not
@@ -83,6 +88,17 @@ EOF
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $container = $this->getApplication()->getContainer();
+        $bootstrap = $input->getOption("bootstrap");
+
+        if (!empty($bootstrap)) {
+            $bootstrapFile = getcwd() . DIRECTORY_SEPARATOR . $bootstrap;
+            if (!is_file($bootstrapFile)) {
+                throw new \InvalidArgumentException(sprintf("Bootstrap file '%s' does not exist", $bootstrap));
+            }
+
+            require $bootstrapFile;
+        }
+
         $container->setParam('formatter.name',
             $input->getOption('format') ?: $container->getParam('formatter.name')
         );
