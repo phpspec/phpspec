@@ -14,7 +14,7 @@ class ReturnConstantGenerator implements GeneratorInterface
      */
     private $io;
     /**
-     * @var emplateRenderer
+     * @var TemplateRenderer
      */
     private $templates;
     /**
