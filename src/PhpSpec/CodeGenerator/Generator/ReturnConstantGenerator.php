@@ -6,20 +6,19 @@ use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Console\IO;
 use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Util\Filesystem;
-use ReflectionMethod;
 
 class ReturnConstantGenerator implements GeneratorInterface
 {
     /**
-     * @var \PhpSpec\Console\IO
+     * @var IO
      */
     private $io;
     /**
-     * @var \PhpSpec\CodeGenerator\TemplateRenderer
+     * @var emplateRenderer
      */
     private $templates;
     /**
-     * @var \Symfony\Component\Filesystem\Filesystem
+     * @var Filesystem
      */
     private $filesystem;
 
