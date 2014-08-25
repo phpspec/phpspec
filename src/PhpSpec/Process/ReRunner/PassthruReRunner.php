@@ -15,23 +15,19 @@ namespace PhpSpec\Process\ReRunner;
 
 use PhpSpec\Process\ReRunner;
 
-class PcntlReRunner implements ReRunner
+class PassthruReRunner implements ReRunner
 {
     /**
-     * @return bool
+     * @return boolean
      */
     public function isSupported()
     {
-        return function_exists('pcntl_exec');
+        return function_exists('passthru');
     }
 
-    /**
-     * Kills the current process and starts a new one
-     */
     public function reRunSuite()
     {
         $args = $_SERVER['argv'];
-        $command = array_shift($args);
-        pcntl_exec($command, $args);
+        passthru(join(' ', $args));
     }
 }

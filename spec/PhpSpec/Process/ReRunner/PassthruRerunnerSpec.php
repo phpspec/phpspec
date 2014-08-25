@@ -11,14 +11,15 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Process;
+namespace spec\PhpSpec\Process\ReRunner;
 
-interface ReRunner
+use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
+
+class PassthruRerunnerSpec extends ObjectBehavior
 {
-    /**
-     * @return boolean
-     */
-    public function isSupported();
-
-    public function reRunSuite();
+    function it_is_a_rerunner()
+    {
+        $this->shouldHaveType('PhpSpec\Process\ReRunner');
+    }
 }

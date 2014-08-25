@@ -37,5 +37,4 @@ class RerunListenerSpec extends ObjectBehavior
 
         $reRunner->reRunSuite()->shouldHaveBeenCalled();
     }
-
 }

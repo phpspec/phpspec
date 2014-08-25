@@ -14,7 +14,7 @@
 namespace PhpSpec\Console;
 
 use SebastianBergmann\Exporter\Exporter;
-use PhpSpec\Process\ReRunner\PcntlReRunner;
+use PhpSpec\Process\ReRunner;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use PhpSpec\ServiceContainer;
 use PhpSpec\CodeGenerator;
@@ -383,7 +383,18 @@ class ContainerAssembler
     private function setupRerunner(ServiceContainer $container)
     {
         $container->setShared('process.rerunner', function(ServiceContainer $c) {
-            return new PcntlReRunner();
+            return new ReRunner\CompositeReRunner(
+                array(
+                    $c->get('process.rerunner.pcntl'),
+                    $c->get('process.rerunner.passthru')
+                )
+            );
+        });
+        $container->setShared('process.rerunner.pcntl', function() {
+            return new ReRunner\PcntlReRunner();
+        });
+        $container->setShared('process.rerunner.passthru', function() {
+            return new ReRunner\PassthruReRunner();
         });
     }
 }
