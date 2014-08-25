@@ -105,3 +105,41 @@ Feature: Developer generates a method returning a constant
       }
 
       """
+
+  Scenario: No prompt when method contains code
+    Given the spec file "spec/CodeGeneration/ConstantExample3/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\ConstantExample3;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_converts_plain_text_to_html_paragraphs()
+          {
+              $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/ConstantExample3/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\ConstantExample3;
+
+      class Markdown
+      {
+          public function toHtml($argument1)
+          {
+            $foo = 'bar';
+          }
+      }
+
+      """
+    When I run phpspec interactively
+    Then I should not be prompted for code generation
+

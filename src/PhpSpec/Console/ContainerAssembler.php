@@ -15,6 +15,7 @@ namespace PhpSpec\Console;
 
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
+use PhpSpec\Util\MethodAnalyser;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use PhpSpec\ServiceContainer;
 use PhpSpec\CodeGenerator;
@@ -129,8 +130,12 @@ class ContainerAssembler
             return new Listener\MethodReturnedNullListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
-                $c->get('code_generator')
+                $c->get('code_generator'),
+                $c->get('util.method_analyser')
             );
+        });
+        $container->setShared('util.method_analyser', function(){
+            return new MethodAnalyser();
         });
     }
 

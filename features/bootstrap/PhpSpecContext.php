@@ -1,5 +1,6 @@
 <?php
 
+use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Behat\Context\Context;
 use Behat\Behat\Context\SnippetAcceptingContext;
 use Behat\Gherkin\Node\PyStringNode;
@@ -276,4 +277,11 @@ class PhpSpecContext implements Context
         return new ApplicationTester($application);
     }
 
+    /**
+     * @Then I should not be prompted for code generation
+     */
+    public function iShouldNotBePromptedForCodeGeneration()
+    {
+        $this->iShouldNotSee('Would you like');
+    }
 }

@@ -6,9 +6,9 @@ use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Console\IO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\MethodCallEvent;
-use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Locator\ResourceManager;
+use PhpSpec\Util\MethodAnalyser;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class MethodReturnedNullListener implements EventSubscriberInterface
@@ -35,17 +35,22 @@ class MethodReturnedNullListener implements EventSubscriberInterface
      * @var \PhpSpec\CodeGenerator\GeneratorManager
      */
     private $generator;
+    /**
+     * @var MethodAnalyser
+     */
+    private $methodAnalyser;
 
     /**
      * @param IO $io
      * @param ResourceManager $resources
      * @param GeneratorManager $generator
      */
-    public function __construct(IO $io, ResourceManager $resources, GeneratorManager $generator)
+    public function __construct(IO $io, ResourceManager $resources, GeneratorManager $generator, MethodAnalyser $methodAnalyser)
     {
         $this->io = $io;
         $this->resources = $resources;
         $this->generator = $generator;
+        $this->methodAnalyser = $methodAnalyser;
     }
 
     /**
@@ -91,6 +96,10 @@ class MethodReturnedNullListener implements EventSubscriberInterface
 
         $class = get_class($this->lastMethodCallEvent->getSubject());
         $method = $this->lastMethodCallEvent->getMethod();
+
+        if (!$this->methodAnalyser->methodIsEmpty($class, $method)) {
+            return;
+        }
 
         $this->nullMethods[$class.'::'.$method] = array(
             'class'=> $class,

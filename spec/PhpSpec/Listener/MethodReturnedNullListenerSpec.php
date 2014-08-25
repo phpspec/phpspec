@@ -10,16 +10,17 @@ use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Util\MethodAnalyser;
 use Prophecy\Argument;
 
 class MethodReturnedNullListenerSpec extends ObjectBehavior
 {
     function let(
         IO $io, ResourceManager $resourceManager, GeneratorManager $generatorManager,
-        ExampleEvent $exampleEvent, NotEqualException $notEqualException
+        ExampleEvent $exampleEvent, NotEqualException $notEqualException, MethodAnalyser $methodAnalyser
     )
     {
-        $this->beConstructedWith($io, $resourceManager, $generatorManager);
+        $this->beConstructedWith($io, $resourceManager, $generatorManager, $methodAnalyser);
 
         $exampleEvent->getException()->willReturn($notEqualException);
         $notEqualException->getActual()->willReturn(null);
@@ -28,6 +29,8 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         $io->isCodeGenerationEnabled()->willReturn(true);
 
         $io->askConfirmation(Argument::any())->willReturn(false);
+
+        $methodAnalyser->methodIsEmpty(Argument::cetera())->willReturn(true);
     }
 
     function it_is_an_event_listener()
@@ -115,7 +118,7 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
     }
 
     function it_does_not_prompt_when_input_is_not_interactive(
-        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io, ResourceManager $resourceManager
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io
     )
     {
         $io->isCodeGenerationEnabled()->willReturn(false);
@@ -127,6 +130,21 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 
+    function it_does_not_prompt_when_method_is_not_empty(
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io, MethodAnalyser $methodAnalyser
+    )
+    {
+        $methodCallEvent->getMethod()->willReturn('myMethod');
+        $methodCallEvent->getSubject()->willReturn(new \DateTime());
+
+        $methodAnalyser->methodIsEmpty('DateTime', 'myMethod')->willReturn(false);
+
+        $this->afterMethodCall($methodCallEvent);
+        $this->afterExample($exampleEvent);
+        $this->afterSuite();
+
+        $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
+    }
 
     function it_prompts_when_correct_type_of_exception_is_thrown(
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io
