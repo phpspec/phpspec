@@ -382,6 +382,10 @@ class ContainerAssembler
      */
     private function setupRerunner(ServiceContainer $container)
     {
+        if ($container->isDefined('process.rerunner')) {
+            return;
+        }
+
         $container->setShared('process.rerunner', function(ServiceContainer $c) {
             return new ReRunner\CompositeReRunner(
                 array(

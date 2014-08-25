@@ -214,6 +214,14 @@ class PhpSpecContext implements Context
     }
 
     /**
+     * @Then the tests should be rerun
+     */
+    public function theTestsShouldBeRerun()
+    {
+        expect($this->applicationTester)->toHaveBeenRerun();
+    }
+
+    /**
      * @return array
      *
      * @throws \LogicException
@@ -257,4 +265,5 @@ class PhpSpecContext implements Context
 
         return new ApplicationTester($application);
     }
+
 }
