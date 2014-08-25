@@ -282,6 +282,6 @@ class PhpSpecContext implements Context
      */
     public function iShouldNotBePromptedForCodeGeneration()
     {
-        $this->iShouldNotSee('Would you like');
+        $this->iShouldNotSee('Do you want me to');
     }
 }

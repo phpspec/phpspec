@@ -132,7 +132,7 @@ class MethodReturnedNullListener implements EventSubscriberInterface
             $expected = current($failedCall['expected']);
             $class = $failedCall['class'];
 
-            $message = sprintf('Would you like me to make %s() always return %s?', $methodString, $expected);
+            $message = sprintf('Do you want me to make `%s()` always return %s for you?', $methodString, var_export($expected, true));
 
             try {
                 $resource = $this->resources->createResource($class);
