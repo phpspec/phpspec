@@ -51,7 +51,7 @@ class ApplicationTester
         $this->application = $application;
 
         $this->reRunner = new LoggingReRunner();
-        $this->application->getContainer()->set('process.rerunner', $this->reRunner);
+        $this->application->getContainer()->set('process.rerunner.platformspecific', $this->reRunner);
     }
 
     /**

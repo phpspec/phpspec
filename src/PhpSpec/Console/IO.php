@@ -284,4 +284,9 @@ class IO implements IOInterface
             explode("\n", $text)
         ));
     }
+
+    public function isRerunEnabled()
+    {
+        return !$this->input->getOption('no-rerun');
+    }
 }

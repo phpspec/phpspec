@@ -382,11 +382,18 @@ class ContainerAssembler
      */
     private function setupRerunner(ServiceContainer $container)
     {
-        if ($container->isDefined('process.rerunner')) {
+        $container->setShared('process.rerunner', function(ServiceContainer $c) {
+            return new ReRunner\DisablableReRunner(
+                $c->get('process.rerunner.platformspecific'),
+                $c->get('console.io')
+            );
+        });
+
+        if ($container->isDefined('process.rerunner.platformspecific')) {
             return;
         }
 
-        $container->setShared('process.rerunner', function(ServiceContainer $c) {
+        $container->setShared('process.rerunner.platformspecific', function(ServiceContainer $c) {
             return new ReRunner\CompositeReRunner(
                 array(
                     $c->get('process.rerunner.pcntl'),
@@ -400,5 +407,6 @@ class ContainerAssembler
         $container->setShared('process.rerunner.passthru', function() {
             return new ReRunner\PassthruReRunner();
         });
+
     }
 }
