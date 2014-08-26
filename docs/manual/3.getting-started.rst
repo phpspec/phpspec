@@ -151,6 +151,8 @@ classes and methods and went straight into a real failed spec:
     1 examples (1 failed)
     284ms
 
+You can change the generated specs and classes using :doc:`templates </cookbook/templates>`.
+
 According to the TDD rules you now have full permission to write code. Red
 means "time to add code"; red is great! Now you can add just enough code to make
 the spec green, quickly. There will be time to get it right, but first just
