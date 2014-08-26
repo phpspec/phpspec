@@ -287,6 +287,6 @@ class IO implements IOInterface
 
     public function isRerunEnabled()
     {
-        return !$this->input->getOption('no-rerun');
+        return !$this->input->getOption('no-rerun') && $this->config->isReRunEnabled();
     }
 }

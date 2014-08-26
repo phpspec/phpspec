@@ -15,13 +15,20 @@ class OptionsConfig
     private $codeGenerationEnabled;
 
     /**
+     * @var bool
+     */
+    private $reRunEnabled;
+
+    /**
      * @param bool $stopOnFailureEnabled
      * @param bool $codeGenerationEnabled
+     * @param bool $reRunEnabled
      */
-    public function __construct($stopOnFailureEnabled, $codeGenerationEnabled)
+    public function __construct($stopOnFailureEnabled, $codeGenerationEnabled, $reRunEnabled)
     {
         $this->stopOnFailureEnabled  = $stopOnFailureEnabled;
         $this->codeGenerationEnabled = $codeGenerationEnabled;
+        $this->reRunEnabled = $reRunEnabled;
     }
 
     /**
@@ -38,5 +45,10 @@ class OptionsConfig
     public function isCodeGenerationEnabled()
     {
         return $this->codeGenerationEnabled;
+    }
+
+    public function isReRunEnabled()
+    {
+        return $this->reRunEnabled;
     }
 }

@@ -56,7 +56,8 @@ class ContainerAssembler
                 $c->get('console.helper.dialog'),
                 new OptionsConfig(
                     $c->getParam('stop_on_failure', false),
-                    $c->getParam('code_generation', true)
+                    $c->getParam('code_generation', true),
+                    $c->getParam('rerun', true)
                 )
             );
         });
