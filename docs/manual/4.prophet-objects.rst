@@ -167,3 +167,31 @@ to get called with a particular value:
 Now if the method is not called with that value then the example will
 fail.
 
+Spies
+-----
+
+Instead of using a mock you could use a spy. The difference is that you ask
+what happened after the object's behaviour has happened:
+
+.. code-block:: php
+
+    <?php
+
+        namespace spec;
+
+        use PhpSpec\ObjectBehavior;
+        use Markdown\Writer;
+
+        class MarkdownSpec extends ObjectBehavior
+        {
+            function it_outputs_converted_text(Writer $writer)
+            {
+                $this->outputHtml("Hi, there", $writer);
+
+                $writer->writeText("<p>Hi, there</p>")->shouldHaveBeenCalled();
+            }
+        }
+
+The difference is one of style. You may prefer to use mocks and say what
+should happen beforehand. Or you may prefer to use spies and say what should
+have happened afterwards.
