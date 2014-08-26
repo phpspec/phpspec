@@ -170,7 +170,7 @@ fail.
 Spies
 -----
 
-Instead of using a mock you could use a spy. The difference is that you ask
+Instead of using a mock you could use a spy. The difference is that you check
 what happened after the object's behaviour has happened:
 
 .. code-block:: php
