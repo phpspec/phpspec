@@ -46,6 +46,11 @@ Framework Integration
  * `Magento <https://github.com/MageTest/MageSpec>`_
  * `Laravel <https://github.com/BenConstable/phpspec-laravel>`_
 
+Code generation
+~~~~~~~~~~~~~~~
+
+ * `Typehinted Methods <https://github.com/ciaranmcnulty/phpspec-typehintedmethods>`_
+
 Additional Formatters
 ~~~~~~~~~~~~~~~~~~~~~
 
