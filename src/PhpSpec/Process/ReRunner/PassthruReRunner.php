@@ -28,7 +28,9 @@ class PassthruReRunner implements ReRunner
     public function reRunSuite()
     {
         $args = $_SERVER['argv'];
-        passthru(join(' ', $args), $exitCode);
+        $command = join(' ', array_map('escapeshellarg', $args));
+        echo($command);exit;
+        passthru($command, $exitCode);
         exit($exitCode);
     }
 }
