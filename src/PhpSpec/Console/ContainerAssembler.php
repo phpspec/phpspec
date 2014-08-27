@@ -396,18 +396,14 @@ class ContainerAssembler
 
         $container->setShared('process.rerunner.platformspecific', function(ServiceContainer $c) {
             return new ReRunner\CompositeReRunner(
-                array(
-                    $c->get('process.rerunner.pcntl'),
-                    $c->get('process.rerunner.passthru')
-                )
+                $c->getByPrefix('process.rerunner.platformspecific')
             );
         });
-        $container->setShared('process.rerunner.pcntl', function() {
+        $container->setShared('process.rerunner.platformspecific.pcntl', function() {
             return new ReRunner\PcntlReRunner();
         });
-        $container->setShared('process.rerunner.passthru', function() {
+        $container->setShared('process.rerunner.platformspecific.passthru', function() {
             return new ReRunner\PassthruReRunner();
         });
-
     }
 }
