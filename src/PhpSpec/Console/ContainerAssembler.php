@@ -384,7 +384,7 @@ class ContainerAssembler
     private function setupRerunner(ServiceContainer $container)
     {
         $container->setShared('process.rerunner', function(ServiceContainer $c) {
-            return new ReRunner\DisablableReRunner(
+            return new ReRunner\OptionalReRunner(
                 $c->get('process.rerunner.platformspecific'),
                 $c->get('console.io')
             );

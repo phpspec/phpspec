@@ -7,7 +7,7 @@ use PhpSpec\ObjectBehavior;
 use PhpSpec\Process\ReRunner;
 use Prophecy\Argument;
 
-class DisablableReRunnerSpec extends ObjectBehavior
+class OptionalReRunnerSpec extends ObjectBehavior
 {
     function let(IO $io, ReRunner $decoratedReRunner)
     {
