@@ -7,7 +7,7 @@ instead of verifying output. You use the matchers prefixed by ``should`` or
 ``shouldNot`` as appropriate.
 
 
-**phpspec** has 13 matchers, described in more detail here. Many of these
+**phpspec** has 13 built-in matchers, described in more detail here. Many of these
 matchers have aliases which you can use to make your specifications easy to
 read.
 
@@ -171,7 +171,7 @@ ObjectState Matcher
 
 The ObjectState matcher lets you check the state of an object by calling
 methods on it. These methods should start with ``is*`` or ``has*`` and return
-booleans.
+a boolean.
 
 .. code-block:: php
 
@@ -295,9 +295,8 @@ identity (``===``).
 ArrayKey Matcher
 ----------------
 
-You can specify that a method should return an array with a specific key
-using the ArrayKey matcher. You can also use it with an object implementing
-``ArrayAccess``.
+You can specify that a method should return an array or an ArrayAccess object
+with a specific key using the ArrayKey matcher.
 
 .. code-block:: php
 
@@ -342,7 +341,7 @@ starting with a given substring.
 StringEnd Matcher
 -----------------
 
-The StringStarts matcher lets you specify that a method should return a string
+The StringEnd matcher lets you specify that a method should return a string
 ending with a given substring.
 
 .. code-block:: php
@@ -365,7 +364,7 @@ ending with a given substring.
 StringRegex Matcher
 -------------------
 
-The StringStarts matcher lets you specify that a method should return a string
+The StringRegex matcher lets you specify that a method should return a string
 matching a given regular expression.
 
 .. code-block:: php
