@@ -5,7 +5,7 @@ Templates
 The default templates will be suitable for many use cases.
 
 However in some cases, it'll be useful to customize those templates by providing
-ones that suit your project requirements. For example, you may need to add
+ones that suit your project requirements. For example, you may need to add licence
 information in a docblock to every class file. Instead of doing this manually you
 can modify the template so it is already in the generated file.
 
@@ -18,18 +18,22 @@ Overriding templates
   - *method* - used to add a method that is specced to a class
 
 You can override these on a per project basis by creating a template file in
-`.phpspec` in the root directory of the project. For example, to add author
+`.phpspec` in the root directory of the project. For example, to add licence
 information to the docblock for a class, you can create a file ``{project_directory}/.phpspec/class.tpl``.
 You can copy the contents of the default template found in **phpspec** at
 ``src/PhpSpec/CodeGenerator/Generator/templates/class.template`` and add the docblock to it:
 
 .. code-block:: php
 
-    <?php%namespace_block%
+    <?php
 
-    /**
-     * @author user <user@example.com>
-     */
+    /*
+     * This file is part of Acme.
+     *
+     * For the full copyright and license information, please view the LICENSE
+     * file that was distributed with this source code.
+     */%namespace_block%
+
     class %name%
     {
     }
@@ -42,8 +46,11 @@ the spec``spec/Acme/Model/FooSpec.php``` and let **phpspec** generate the missin
 
     <?php
 
-    /**
-     * @author user <user@example.com>
+    /*
+     * This file is part of Acme.
+     *
+     * For the full copyright and license information, please view the LICENSE
+     * file that was distributed with this source code.
      */
 
     namespace Acme\Model;
@@ -52,8 +59,8 @@ the spec``spec/Acme/Model/FooSpec.php``` and let **phpspec** generate the missin
     {
     }
 
-You can also override the templates for all projects by creating a template
-in `.phpspec` in your home directory.
+You can also override the templates for all your projects by creating a
+template in `.phpspec` in your home directory.
 
 **phpspec** uses the first template it finds by looking in this order:
 
