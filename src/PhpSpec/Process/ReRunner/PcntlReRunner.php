@@ -22,7 +22,7 @@ class PcntlReRunner implements ReRunner
      */
     public function isSupported()
     {
-        return function_exists('pcntl_exec');
+        return (php_sapi_name() == 'cli') && function_exists('pcntl_exec');
     }
 
     /**

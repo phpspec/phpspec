@@ -22,7 +22,7 @@ class PassthruReRunner implements ReRunner
      */
     public function isSupported()
     {
-        return function_exists('passthru');
+        return (php_sapi_name() == 'cli') && function_exists('passthru');
     }
 
     public function reRunSuite()
