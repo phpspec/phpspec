@@ -7,7 +7,8 @@
 {%- block header %}
 <header>
     <ul class="main-menu">
-        <li{% if pagename == 'index' %} class="active"{% endif %}><a href="/">home</a></li>
+        <li{% if pagename == 'index' %} class="active"{% endif %}><a href="/">main</a></li>
+        <li{% if pagename != 'index' %} class="active"{% endif %}><a href="{{ pathto('manual/introduction') }}">phpspec manual</a></li>
         <li class="right"><a href="http://github.com/phpspec/prophecy">prophecy repo</a></li>
         <li class="right"><a href="http://github.com/phpspec/phpspec">phpspec repo</a></li>
     </ul>
