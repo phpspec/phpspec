@@ -45,7 +45,7 @@ class RerunListener implements EventSubscriberInterface
      */
     public function afterSuite(SuiteEvent $suiteEvent)
     {
-        if ($suiteEvent->getIsWorthRerunning()) {
+        if ($suiteEvent->isWorthRerunning()) {
             $this->reRunner->reRunSuite();
         }
     }

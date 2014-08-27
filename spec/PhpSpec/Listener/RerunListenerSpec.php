@@ -22,7 +22,7 @@ class RerunListenerSpec extends ObjectBehavior
 
     function it_does_not_tell_the_rerunner_to_rerun_if_it_is_not_worth_doing_so(SuiteEvent $suiteEvent, ReRunner $reRunner)
     {
-        $suiteEvent->getIsWorthRerunning()->willReturn(false);
+        $suiteEvent->isWorthRerunning()->willReturn(false);
 
         $this->afterSuite($suiteEvent);
 
@@ -31,7 +31,7 @@ class RerunListenerSpec extends ObjectBehavior
 
     function it_tells_the_rerunner_to_rerun_if_it_is_worth_doing_so(SuiteEvent $suiteEvent, ReRunner $reRunner)
     {
-        $suiteEvent->getIsWorthRerunning()->willReturn(true);
+        $suiteEvent->isWorthRerunning()->willReturn(true);
 
         $this->afterSuite($suiteEvent);
 

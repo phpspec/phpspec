@@ -39,7 +39,7 @@ class SuiteEvent extends Event implements EventInterface
     /**
      * @var boolean
      */
-    private $isWorthRerunning = false;
+    private $worthRerunning = false;
 
     /**
      * @param Suite   $suite
@@ -80,13 +80,13 @@ class SuiteEvent extends Event implements EventInterface
     /**
      * @return bool
      */
-    public function getIsWorthRerunning()
+    public function isWorthRerunning()
     {
-        return $this->isWorthRerunning;
+        return $this->worthRerunning;
     }
 
     public function markAsWorthRerunning()
     {
-        $this->isWorthRerunning = true;
+        $this->worthRerunning = true;
     }
 }

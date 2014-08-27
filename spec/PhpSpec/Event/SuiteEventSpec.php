@@ -37,12 +37,12 @@ class SuiteEventSpec extends ObjectBehavior
 
     function it_defaults_to_saying_suite_is_not_worth_rerunning()
     {
-        $this->getIsWorthRerunning()->shouldReturn(false);
+        $this->isWorthRerunning()->shouldReturn(false);
     }
 
     function it_can_be_told_that_the_suite_is_worth_rerunning()
     {
         $this->markAsWorthRerunning();
-        $this->getIsWorthRerunning()->shouldReturn(true);
+        $this->isWorthRerunning()->shouldReturn(true);
     }
 }
