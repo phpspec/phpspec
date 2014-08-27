@@ -1,5 +1,5 @@
-phpspec
-=======
+phpspec documentation
+=====================
 
 Manual
 ------

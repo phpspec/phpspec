@@ -28,7 +28,17 @@
 
     <section class="documentation">
         {% block body %}{% endblock %}
+        <footer>
+            {% if prev %}
+            <dl><dt>Previous</dt> <dd><a class="prev" href="{{ prev.link|e }}">{{ prev.title }}</a></dd></dl>
+            {% endif %}
+
+            {% if next %}
+            <dl><dt>Next</dt><dd><a class="next" href="{{ next.link|e }}">{{ next.title }}</a></dd></dl>
+            {% endif %}
+        </footer>
     </section>
+
 </section>
 {% endblock %}
 
