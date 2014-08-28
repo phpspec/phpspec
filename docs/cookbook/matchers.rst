@@ -32,18 +32,13 @@ the Identity matcher. It compares the result using the identity operator: ``===`
             $this->getRating()->shouldBe(5);
             $this->getTitle()->shouldBeEqualTo("Star Wars");
             $this->getReleaseDate()->shouldReturn(233366400);
+            $this->getDescription()->shouldEqual("Inexplicably popular children's film");
         }
     }
 
-There are four ways of using the Identity matcher. There is no difference
-in how they work. This lets you choose the one which makes your specification
-easier to read. These are:
-
- * ``shouldEqual``
- * ``shouldBeEqualTo``
- * ``shouldReturn``
- * ``shouldBe``
-
+All four ways of these ways of using the Identity matcher are equivalent.
+There is no difference in how they work, this lets you choose the one which
+makes your specification easier to read.
 
 Comparison Matcher
 ------------------
