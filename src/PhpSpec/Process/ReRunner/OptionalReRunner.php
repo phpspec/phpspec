@@ -36,14 +36,6 @@ class OptionalReRunner implements ReRunner
         $this->decoratedRerunner = $decoratedRerunner;
     }
 
-    /**
-     * @return boolean
-     */
-    public function isSupported()
-    {
-        return $this->decoratedRerunner->isSupported();
-    }
-
     public function reRunSuite()
     {
         if ($this->io->isRerunEnabled()) {

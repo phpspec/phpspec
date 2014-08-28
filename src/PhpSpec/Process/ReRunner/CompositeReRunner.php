@@ -23,7 +23,7 @@ class CompositeReRunner implements ReRunner
     private $reRunner;
 
     /**
-     * @param ReRunner[] $reRunners
+     * @param PlatformSpecificReRunner[] $reRunners
      */
     public function __construct(array $reRunners)
     {
@@ -33,14 +33,6 @@ class CompositeReRunner implements ReRunner
                 break;
             }
         }
-    }
-
-    /**
-     * @return boolean
-     */
-    public function isSupported()
-    {
-        return (bool)$this->reRunner;
     }
 
     public function reRunSuite()

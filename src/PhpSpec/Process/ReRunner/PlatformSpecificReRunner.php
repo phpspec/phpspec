@@ -11,9 +11,16 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Process;
+namespace PhpSpec\Process\ReRunner;
 
-interface ReRunner
+use PhpSpec\Process\ReRunner;
+
+interface PlatformSpecificReRunner extends ReRunner
 {
-    public function reRunSuite();
+    /**
+     * Does the current platform support this rerunner
+     *
+     * @return bool
+     */
+    public function isSupported();
 }

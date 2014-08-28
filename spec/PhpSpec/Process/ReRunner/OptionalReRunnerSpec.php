@@ -14,20 +14,6 @@ class OptionalReRunnerSpec extends ObjectBehavior
         $this->beconstructedWith($decoratedReRunner, $io);
     }
 
-    function it_is_not_supported_if_child_is_not_supported(ReRunner $decoratedReRunner)
-    {
-        $decoratedReRunner->isSupported()->willReturn(false);
-
-        $this->isSupported()->shouldReturn(false);
-    }
-
-    function it_is_supported_if_child_is_supported(ReRunner $decoratedReRunner)
-    {
-        $decoratedReRunner->isSupported()->willReturn(true);
-
-        $this->isSupported()->shouldReturn(true);
-    }
-
     function it_reruns_the_suite_if_it_is_enabled_in_the_config(IO $io, ReRunner $decoratedReRunner)
     {
         $io->isRerunEnabled()->willReturn(true);
