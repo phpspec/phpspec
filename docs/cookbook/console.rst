@@ -97,10 +97,12 @@ You can choose the output format with the format option e.g.:
 
     $ php bin/phpspec run --format=dot
 
-The available formatters are:
+The formatters available by default are:
 
 * progress (default)
 * html
 * pretty
 * junit
 * dot
+
+More formatters can be added by :doc:`extensions</cookbook/extensions>`.

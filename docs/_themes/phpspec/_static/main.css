@@ -369,28 +369,31 @@ body > footer {
   /*border-top:1px solid #2a2a2a;
   padding-top:40px;*/
 }
-body > footer dl {
+body > footer dl, section.documentation > footer dl {
   float: left;
   margin-top: 10px;
   margin-right: 50px;
   margin-bottom: 20px;
 }
-body > footer dl dt {
+section.documentation > footer dl + dl {
+    float: right;
+}
+body > footer dl dt, section.documentation > footer dl dt {
   color: #b3b3b3;
   font-family: 'Lobster', arial, serif;
   font-size: 18px;
   margin-bottom: 5px;
 }
-body > footer dl dd {
+body > footer dl dd, section.documentation > footer dl dd {
   margin-bottom: 3px;
 }
-body > footer dl dd a {
+body > footer dl dd a, section.documentation > footer dl dd a {
   color: #c9cbcb;
   font-size: 14px;
   font-weight: normal;
   text-decoration: none;
 }
-body > footer dl dd a:hover {
+body > footer dl dd a:hover, section.documentation > footer dl dd a:hover {
   text-decoration: underline;
 }
 body > footer .clear {

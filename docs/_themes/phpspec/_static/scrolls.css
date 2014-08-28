@@ -37,7 +37,7 @@ body > header{
     -moz-border-radius:10px;
     -webkit-border-radius:10px;
     border-radius:10px;
-/*    box-shadow:0px 0px 5px #dadada;*/
+    /*    box-shadow:0px 0px 5px #dadada;*/
 }
 
 /* Dark Button CSS */
@@ -58,12 +58,12 @@ body > header{
     text-decoration:underline;
 }
 .button.conseq:before {
-  content:',';
-  position:absolute;
-  margin-left:-14px;
+    content:',';
+    position:absolute;
+    margin-left:-14px;
 }
 .button.conseq {
-  padding-left:0px;
+    padding-left:0px;
 }
 .button.phar {
     background:url(images/elephpant.png) no-repeat 0px -3px;
@@ -91,10 +91,10 @@ h1 a {
 nav.toc {
     float:right;
     padding:15px 20px;
-/*    background:#1e1e1e;
-    -moz-border-radius: 0px 10px 10px 0px;
-    -webkit-border-radius: 0px 10px 10px 0px;
-    border-radius: 0px 10px 10px 0px;*/
+    /*    background:#1e1e1e;
+        -moz-border-radius: 0px 10px 10px 0px;
+        -webkit-border-radius: 0px 10px 10px 0px;
+        border-radius: 0px 10px 10px 0px;*/
     margin:0px 0px 15px 15px;
     width:214px;
     font-size:14px;
@@ -168,8 +168,13 @@ nav.toc > ul > li {
     margin-left:2px;
 }
 
-nav.toc > ul > li > a {
+nav.toc > ul > li > ul {
     display:none;
+}
+
+nav.toc > ul > li.current > ul {
+    display:block;
+    margin-left: 10px;
 }
 
 #quick-intro > .toctree-wrapper > ul > li > ul {
@@ -284,9 +289,9 @@ section.documentation ol li {
 }
 
 section.documentation img {
-  display:block; 
-  margin-left:auto; 
-  margin-right:auto;
+    display:block;
+    margin-left:auto;
+    margin-right:auto;
 }
 
 section.documentation a {
@@ -337,7 +342,7 @@ section.documentation .docutils.literal {
 }
 .highlight ::-webkit-scrollbar-track-piece  {
     background-color: #272822;
-/*    -webkit-border-radius: 6px;*/
+    /*    -webkit-border-radius: 6px;*/
 }
 .highlight ::-webkit-scrollbar-thumb:horizontal {
     background-color: #3b3d33;

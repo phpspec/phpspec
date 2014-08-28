@@ -92,13 +92,15 @@ formatter, use ``formatter.name``:
 
     formatter.name: pretty
 
-Available formatters are:
+The formatters available by default are:
 
 * progress (default)
 * html/h
 * pretty
 * junit
 * dot
+
+More formatters can be added by :doc:`extensions</cookbook/extensions>`.
 
 Options
 -------
