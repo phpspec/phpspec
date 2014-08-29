@@ -477,7 +477,7 @@ class Application extends BaseApplication
     {
         $paths = array('phpspec.yml','phpspec.yml.dist');
 
-        $input = new ArgvInput();
+        $input = $this->container->get('console.input');
         if ($customPath = $input->getParameterOption(array('-c','--config'))) {
             if (!file_exists($customPath)) {
                 throw new FileNotFoundException('Custom configuration file not found at '.$customPath);
