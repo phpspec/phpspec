@@ -193,5 +193,5 @@ what happened after the object's behaviour has happened:
         }
 
 The difference is one of style. You may prefer to use mocks and say what
-should happen beforehand. Or you may prefer to use spies and say what should
+should happen beforehand. You may prefer to use spies and say what should
 have happened afterwards.
