@@ -30,4 +30,13 @@ class DifferSpec extends ObjectBehavior
     {
         $this->compare(1, 2)->shouldReturn(null);
     }
+
+    function its_constructor_allows_a_list_of_engines(EngineInterface $engine)
+    {
+        $this->beConstructedWith(array($engine));
+        $engine->supports('string1', 'string2')->willReturn(true);
+        $engine->compare('string1', 'string2')->willReturn('string1 !== string2');
+
+        $this->compare('string1', 'string2')->shouldReturn('string1 !== string2');
+    }
 }
