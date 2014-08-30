@@ -13,12 +13,13 @@
 
 namespace PhpSpec\Formatter;
 
-use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
 
 class ProgressFormatter extends ConsoleFormatter
 {
+    const WIDTH=50;
+
     /**
      * @var int
      */
@@ -51,7 +52,7 @@ class ProgressFormatter extends ConsoleFormatter
             return $res;
         }, $percents);
 
-        $size = 50;
+        $size = self::WIDTH;
         asort($lengths);
         $progress = array();
         foreach ($lengths as $status => $length) {
@@ -77,7 +78,9 @@ class ProgressFormatter extends ConsoleFormatter
 
         $this->printException($event);
         if ($io->isDecorated()) {
-            $io->writeTemp(implode('', $progress).' '.$total);
+            $progressBar = implode('', $progress);
+            $pad = self::WIDTH - strlen(strip_tags($progressBar));
+            $io->writeTemp($progressBar . str_repeat(' ', $pad+1) . $total);
         } else {
             $io->writeTemp('/'.implode('/', $progress).'/  '.$total.' examples');
         }
