@@ -1,6 +1,7 @@
 <?php
 
 use Behat\Behat\Context\Context;
+use Behat\Behat\Context\SnippetAcceptingContext;
 use Behat\Gherkin\Node\PyStringNode;
 use Console\ApplicationTester;
 use PhpSpec\Console\Application;
@@ -44,7 +45,7 @@ class PhpSpecContext implements Context
     }
 
     /**
-     * @When /^(?:|I )run phpspec$/
+     * @When I run phpspec (non interactively)
      */
     public function iRunPhpspec()
     {
@@ -89,13 +90,14 @@ class PhpSpecContext implements Context
     }
 
     /**
-     * @When /^(?:|I )run phpspec and answer "(?P<answer>[^"]*)" when asked if I want to generate the code$/
+     * @When I run phpspec and answer :answer when asked if I want to generate the code
+     * @When I run phpspec with the option :option and I answer :answer when asked if I want to generate the code
      */
-    public function iRunPhpspecAndAnswer($answer)
+    public function iRunPhpspecAndAnswer($answer, $option="")
     {
         $this->applicationTester = $this->createApplicationTester();
         $this->applicationTester->putToInputStream(sprintf("%s\n", $answer));
-        $this->applicationTester->run('run', array('interactive' => true, 'decorated' => false));
+        $this->applicationTester->run($option?'run --'.$option:'run', array('interactive' => true, 'decorated' => false));
     }
 
     /**
@@ -214,6 +216,22 @@ class PhpSpecContext implements Context
     }
 
     /**
+     * @Then the tests should be rerun
+     */
+    public function theTestsShouldBeRerun()
+    {
+        expect($this->applicationTester)->toHaveBeenRerun();
+    }
+
+    /**
+     * @Then the tests should not be rerun
+     */
+    public function theTestsShouldNotBeRerun()
+    {
+        expect($this->applicationTester)->toNotHaveBeenRerun();
+    }
+
+    /**
      * @return array
      *
      * @throws \LogicException
@@ -257,4 +275,5 @@ class PhpSpecContext implements Context
 
         return new ApplicationTester($application);
     }
+
 }

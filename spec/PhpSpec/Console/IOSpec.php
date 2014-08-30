@@ -30,7 +30,7 @@ class IOSpec extends ObjectBehavior
         $this->shouldHaveType('PhpSpec\IO\IOInterface');
     }
 
-    function it_is_code_generation_ready_if_no_input_config_say_otherwise($input)
+    function it_is_code_generation_ready_if_no_input_config_say_otherwise()
     {
         $this->isCodeGenerationEnabled()->shouldReturn(true);
     }
@@ -56,7 +56,7 @@ class IOSpec extends ObjectBehavior
         $this->isCodeGenerationEnabled()->shouldReturn(false);
     }
 
-    function it_will_not_stop_on_failure_if_no_input_config_say_otherwise($input)
+    function it_will_not_stop_on_failure_if_no_input_config_say_otherwise()
     {
         $this->isStopOnFailureEnabled()->shouldReturn(false);
     }
@@ -68,10 +68,34 @@ class IOSpec extends ObjectBehavior
         $this->isStopOnFailureEnabled()->shouldReturn(true);
     }
 
-    function it_will_stop_on_failure_if_config_option_is_set($input, $config)
+    function it_will_stop_on_failure_if_config_option_is_set($config)
     {
         $config->isStopOnFailureEnabled()->willReturn(true);
 
         $this->isStopOnFailureEnabled()->shouldReturn(true);
+    }
+
+    function it_will_enable_rerunning_if_command_line_option_is_not_set_and_config_doesnt_disallow($input, $config)
+    {
+        $input->getOption('no-rerun')->willReturn(false);
+        $config->isReRunEnabled()->willReturn(true);
+
+        $this->isRerunEnabled()->shouldReturn(true);
+    }
+
+    function it_will_disable_rerunning_if_command_line_option_is_set($input, $config)
+    {
+        $input->getOption('no-rerun')->willReturn(true);
+        $config->isReRunEnabled()->willReturn(true);
+
+        $this->isRerunEnabled()->shouldReturn(false);
+    }
+
+    function it_will_disable_rerunning_if_config_option_is_set($input, $config)
+    {
+        $input->getOption('no-rerun')->willReturn(false);
+        $config->isReRunEnabled()->willReturn(false);
+
+        $this->isRerunEnabled()->shouldReturn(false);
     }
 }

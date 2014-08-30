@@ -14,6 +14,7 @@
 namespace PhpSpec\Console;
 
 use SebastianBergmann\Exporter\Exporter;
+use PhpSpec\Process\ReRunner;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use PhpSpec\ServiceContainer;
 use PhpSpec\CodeGenerator;
@@ -25,6 +26,7 @@ use PhpSpec\Runner;
 use PhpSpec\Wrapper;
 use PhpSpec\Config\OptionsConfig;
 use RuntimeException;
+use Symfony\Component\Process\PhpExecutableFinder;
 
 class ContainerAssembler
 {
@@ -43,6 +45,7 @@ class ContainerAssembler
         $this->setupRunner($container);
         $this->setupCommands($container);
         $this->setupResultConverter($container);
+        $this->setupRerunner($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -54,7 +57,8 @@ class ContainerAssembler
                 $c->get('console.helper.dialog'),
                 new OptionsConfig(
                     $c->getParam('stop_on_failure', false),
-                    $c->getParam('code_generation', true)
+                    $c->getParam('code_generation', true),
+                    $c->getParam('rerun', true)
                 )
             );
         });
@@ -114,6 +118,11 @@ class ContainerAssembler
         $container->setShared('event_dispatcher.listeners.stop_on_failure', function (ServiceContainer $c) {
             return new Listener\StopOnFailureListener(
                 $c->get('console.io')
+            );
+        });
+        $container->setShared('event_dispatcher.listeners.rerun', function (ServiceContainer $c) {
+            return new Listener\RerunListener(
+                $c->get('process.rerunner')
             );
         });
     }
@@ -367,6 +376,38 @@ class ContainerAssembler
 
         $container->setShared('unwrapper', function () {
             return new Wrapper\Unwrapper();
+        });
+    }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupRerunner(ServiceContainer $container)
+    {
+        $container->setShared('process.rerunner', function(ServiceContainer $c) {
+            return new ReRunner\OptionalReRunner(
+                $c->get('process.rerunner.platformspecific'),
+                $c->get('console.io')
+            );
+        });
+
+        if ($container->isDefined('process.rerunner.platformspecific')) {
+            return;
+        }
+
+        $container->setShared('process.rerunner.platformspecific', function(ServiceContainer $c) {
+            return new ReRunner\CompositeReRunner(
+                $c->getByPrefix('process.rerunner.platformspecific')
+            );
+        });
+        $container->setShared('process.rerunner.platformspecific.pcntl', function(ServiceContainer $c) {
+            return new ReRunner\PcntlReRunner($c->get('process.phpexecutablefinder'));
+        });
+        $container->setShared('process.rerunner.platformspecific.passthru', function(ServiceContainer $c) {
+            return new ReRunner\PassthruReRunner($c->get('process.phpexecutablefinder'));
+        });
+        $container->setShared('process.phpexecutablefinder', function() {
+            return new PhpExecutableFinder();
         });
     }
 }

@@ -146,6 +146,15 @@ class ServiceContainer
     }
 
     /**
+     * @param $id
+     * @return bool
+     */
+    public function isDefined($id)
+    {
+        return array_key_exists($id, $this->services);
+    }
+
+    /**
      * Retrieves a list of services of a given prefix
      *
      * @param string $prefix

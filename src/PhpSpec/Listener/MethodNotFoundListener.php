@@ -78,6 +78,7 @@ class MethodNotFoundListener implements EventSubscriberInterface
                     'name'      => $method,
                     'arguments' => $arguments
                 ));
+                $event->markAsWorthRerunning();
             }
         }
     }

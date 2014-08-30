@@ -2,7 +2,7 @@
 
 namespace Console;
 
-use Symfony\Component\Console\Application;
+use PhpSpec\Console\Application;
 use Symfony\Component\Console\Helper\DialogHelper;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\StreamOutput;
@@ -39,11 +39,19 @@ class ApplicationTester
     private $statusCode;
 
     /**
+     * @var LoggingReRunner
+     */
+    private $reRunner;
+
+    /**
      * @param Application $application
      */
     public function __construct(Application $application)
     {
         $this->application = $application;
+
+        $this->reRunner = new LoggingReRunner();
+        $this->application->getContainer()->set('process.rerunner.platformspecific', $this->reRunner);
     }
 
     /**
@@ -152,5 +160,13 @@ class ApplicationTester
         }
 
         return $dialogHelper;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasBeenRerun()
+    {
+        return $this->reRunner->hasBeenReRun();
     }
 }
