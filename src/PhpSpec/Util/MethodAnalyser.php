@@ -22,6 +22,10 @@ class MethodAnalyser
      */
     public function reflectionMethodIsEmpty(\ReflectionMethod $method)
     {
+        if ($this->isNotImplementedInPhp($method)) {
+            return false;
+        }
+
         $code = $this->getCodeBody($method);
         $codeWithoutComments = $this->stripComments($code);
 
@@ -78,5 +82,14 @@ class MethodAnalyser
     private function codeIsOnlyBlocksAndWhitespace($codeWithoutComments)
     {
         return (bool)preg_match('/^[\s{}]*$/s', $codeWithoutComments);
+    }
+
+    /**
+     * @param \ReflectionMethod $method
+     * @return bool
+     */
+    private function isNotImplementedInPhp(\ReflectionMethod $method)
+    {
+        return false === $method->getDeclaringClass()->getFileName();
     }
 }

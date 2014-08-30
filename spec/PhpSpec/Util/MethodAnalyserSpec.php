@@ -28,6 +28,11 @@ class MethodAnalyserSpec extends ObjectBehavior
         $this->methodIsEmpty('spec\PhpSpec\Util\ExampleObject', 'nonEmptyOneLineMethod2')->shouldReturn(false);
         $this->methodIsEmpty('spec\PhpSpec\Util\ExampleObject', 'nonEmptyOneLineMethod3')->shouldReturn(false);
     }
+
+    function it_identifies_internal_classes_as_non_empty()
+    {
+        $this->methodIsEmpty('DateTimeZone', 'getOffset')->shouldReturn(false);
+    }
 }
 
 class ExampleObject
