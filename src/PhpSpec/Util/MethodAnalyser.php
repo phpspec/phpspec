@@ -15,6 +15,11 @@ class MethodAnalyser
         return $this->reflectionMethodIsEmpty(new \ReflectionMethod($class, $method));
     }
 
+    /**
+     * @param \ReflectionMethod $method
+     *
+     * @return bool
+     */
     public function reflectionMethodIsEmpty(\ReflectionMethod $method)
     {
         $code = $this->getCodeBody($method);
@@ -43,8 +48,8 @@ class MethodAnalyser
     }
 
     /**
-     * @param $code
-     * @return mixed
+     * @param string $code
+     * @return string
      */
     private function stripComments($code)
     {
@@ -67,7 +72,7 @@ class MethodAnalyser
     }
 
     /**
-     * @param $codeWithoutComments
+     * @param string $codeWithoutComments
      * @return bool
      */
     private function codeIsOnlyBlocksAndWhitespace($codeWithoutComments)
