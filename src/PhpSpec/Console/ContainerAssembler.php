@@ -26,6 +26,7 @@ use PhpSpec\Runner;
 use PhpSpec\Wrapper;
 use PhpSpec\Config\OptionsConfig;
 use RuntimeException;
+use Symfony\Component\Process\PhpExecutableFinder;
 
 class ContainerAssembler
 {
@@ -399,11 +400,14 @@ class ContainerAssembler
                 $c->getByPrefix('process.rerunner.platformspecific')
             );
         });
-        $container->setShared('process.rerunner.platformspecific.pcntl', function() {
-            return new ReRunner\PcntlReRunner();
+        $container->setShared('process.rerunner.platformspecific.pcntl', function(ServiceContainer $c) {
+            return new ReRunner\PcntlReRunner($c->get('process.phpexecutablefinder'));
         });
-        $container->setShared('process.rerunner.platformspecific.passthru', function() {
-            return new ReRunner\PassthruReRunner();
+        $container->setShared('process.rerunner.platformspecific.passthru', function(ServiceContainer $c) {
+            return new ReRunner\PassthruReRunner($c->get('process.phpexecutablefinder'));
+        });
+        $container->setShared('process.phpexecutablefinder', function() {
+            return new PhpExecutableFinder();
         });
     }
 }

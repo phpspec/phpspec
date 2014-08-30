@@ -13,16 +13,16 @@
 
 namespace PhpSpec\Process\ReRunner;
 
-use PhpSpec\Process\ReRunner;
-
-class PcntlReRunner implements ReRunner
+class PcntlReRunner extends PhpExecutableReRunner
 {
     /**
      * @return bool
      */
     public function isSupported()
     {
-        return (php_sapi_name() == 'cli') && function_exists('pcntl_exec');
+        return (php_sapi_name() == 'cli')
+            && $this->getExecutablePath()
+            && function_exists('pcntl_exec');
     }
 
     /**
@@ -31,7 +31,6 @@ class PcntlReRunner implements ReRunner
     public function reRunSuite()
     {
         $args = $_SERVER['argv'];
-        $command = array_shift($args);
-        pcntl_exec($command, $args);
+        pcntl_exec($this->getExecutablePath(), $args);
     }
 }

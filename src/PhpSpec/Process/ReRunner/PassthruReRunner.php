@@ -13,22 +13,22 @@
 
 namespace PhpSpec\Process\ReRunner;
 
-use PhpSpec\Process\ReRunner;
-
-class PassthruReRunner implements ReRunner
+class PassthruReRunner extends PhpExecutableReRunner
 {
     /**
      * @return boolean
      */
     public function isSupported()
     {
-        return (php_sapi_name() == 'cli') && function_exists('passthru');
+        return (php_sapi_name() == 'cli')
+            && $this->getExecutablePath()
+            && function_exists('passthru');
     }
 
     public function reRunSuite()
     {
         $args = $_SERVER['argv'];
-        $command = join(' ', array_map('escapeshellarg', $args));
+        $command = escapeshellcmd($this->getExecutablePath()) . ' ' . join(' ', array_map('escapeshellarg', $args));
         passthru($command, $exitCode);
         exit($exitCode);
     }
