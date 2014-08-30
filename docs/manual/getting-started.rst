@@ -58,22 +58,8 @@ or ``its_``.
 Why are underscores used in example names? ``just_because_its_much_easier_to_read``
 than ``someLongCamelCasingLikeThat``.
 
-Matchers
---------
-
-Matchers are much like assertions in xUnit, except that matchers
-concentrate on telling how the object **should** behave instead of verifying how
-it works. There are 5 matchers in **phpspec** currently, but most of them have aliases
-to help make your examples easier to read:
-
-* Identity (return, be, equal, beEqualTo) - it's like checking ``===``
-* Comparison (beLike) - it's like checking ``==``
-* Throw (throw -> during) - for testing exceptions
-* Type (beAnInstanceOf, returnAnInstanceOf, haveType) - checks object type
-* ObjectState (have**) - checks object ``is**`` method return value
-
-How do you use these? By prefixing them with ``should`` or ``shouldNot``
-depending on what you expect and call them on subject of interest.
+Specifying behaviour
+--------------------
 
 Now we are ready to move on. Let's update that first example to express your next intention:
 
@@ -93,6 +79,8 @@ Now we are ready to move on. Let's update that first example to express your nex
         }
     }
 
+Here you are telling **phpspec** that your object has a ``toHtml`` method.
+You are also telling it that this method should return "<p>Hi, there</p>".
 Now what? Run the specs. You may not believe this, but **phpspec** will
 understand you are describing a class that doesn't exist and offer to create it!
 
@@ -192,4 +180,8 @@ the TDD/SpecBDD cycle. Here are just a couple for you look at:
 
 2. `Test Driven Development: By Example <http://www.amazon.com/Test-Driven-Development-Kent-Beck/dp/0321146530>`_
    Kent Beck
+
+In the example here you specified the value the ``toHtml`` method should
+return by using one of **phpspec's** matchers. There are several other
+matchers available, you can read more about these in the :doc:`Matchers Cookbook </cookbook/matchers>`
 

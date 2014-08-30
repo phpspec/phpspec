@@ -1,17 +1,21 @@
 Matchers
 ========
 
-Matchers are much like assertions in xUnit, except the fact that matchers
-concentrate on telling how the object should behave instead of verifying how it
-works. It just expresses better the focus on behaviour and fits better in the
-test-first cycle. There are 13 matchers in phpspec currently, but almost each
-one of them has aliases to make your examples read more fluid.
+You use matchers in **phpspec** to describe how an object should behave.
+They are like assertions in xUnit but with a focus on specifying behaviour
+instead of verifying output. You use the matchers prefixed by ``should`` or
+``shouldNot`` as appropriate.
+
+
+**phpspec** has 13 built-in matchers, described in more detail here. Many of these
+matchers have aliases which you can use to make your specifications easy to
+read.
 
 Identity Matcher
 ----------------
 
-Identity matcher is used to describe that method should return a specific value.
-It compare the result using the identity operator: ``===``.
+If you want to specify that a method returns a specific value, you can use
+the Identity matcher. It compares the result using the identity operator: ``===``.
 
 .. code-block:: php
 
@@ -28,23 +32,20 @@ It compare the result using the identity operator: ``===``.
             $this->getRating()->shouldBe(5);
             $this->getTitle()->shouldBeEqualTo("Star Wars");
             $this->getReleaseDate()->shouldReturn(233366400);
+            $this->getDescription()->shouldEqual("Inexplicably popular children's film");
         }
     }
 
-In order to make our specs more readable phpspec allows us to use four different
-variations of the Identity matcher, namely, ``shouldEqual``, ``shouldBeEqualTo``,
-``shouldReturn`` and ``shouldBe``. It's worth pointing out that there is no difference
-in using one over other from a technical perspective. The final result will be the
-same in each case, except that readability of specs might differ.
-
+All four ways of these ways of using the Identity matcher are equivalent.
+There is no difference in how they work, this lets you choose the one which
+makes your specification easier to read.
 
 Comparison Matcher
 ------------------
 
-Use Comparison matcher to specify that a method should return a specific value
-but it's not as strict as the identity matcher. It's pretty much like comparing
-the result using the comparison operator ``==``, following PHP rules for loosely
-type comparison.
+The Comparison matcher is like the Identity matcher. The difference is
+that is uses the comparison operator ``==``. So it is not as strict and
+follows the PHP rules for loose type comparison.
 
 .. code-block:: php
 
@@ -62,17 +63,16 @@ type comparison.
         }
     }
 
-We have changed the assertion from the previous example. Now, it doesn't matter
-whether ``StarWars::rating`` returns an integer or a string, the spec will pass
-either way.
+Using ``shouldBeLike`` it does not matter whether ``StarWars::rating`` returns
+an integer or a string. The spec will pass for 5 and "5".
 
 
 Throw Matcher
 -------------
 
-Throw matcher should be used to describe cases in which a method throws an
-exception. The usage of this matcher is a little bit different, as we call
-the matcher straight from ``$this``, which makes reading the example more natural.
+You can describe an object throwing an exception using the Throw matcher.
+You use the Throw matcher by calling it straight from ``$this``, making
+the example easier to read.
 
 .. code-block:: php
 
@@ -90,7 +90,7 @@ the matcher straight from ``$this``, which makes reading the example more natura
         }
     }
 
-The code above could also be written as follows:
+You can also write this as:
 
 .. code-block:: php
 
@@ -108,11 +108,11 @@ The code above could also be written as follows:
         }
     }
 
-The first argument of ``during`` is a method name and the second one is
+The first argument of ``during`` is the method name and the second one is
 an array of values passed to the method.
 
-You may want to specify the message of the exception. Another possible way to
-use the Throw matcher is by passing an exception object to shouldThrow:
+You may want to specify the message of the exception. You can do this by
+passing an exception object to shouldThrow:
 
 .. code-block:: php
 
@@ -134,7 +134,9 @@ use the Throw matcher is by passing an exception object to shouldThrow:
 Type Matcher
 ------------
 
-Type matcher looks into the type of object being described.
+You can specify the type of the object you are describing with the Type matcher.
+You can also use this matcher to check that a class implements an interface
+or that it extends a class.
 
 .. code-block:: php
 
@@ -162,9 +164,9 @@ is a ``Movie`` or not.
 ObjectState Matcher
 -------------------
 
-ObjectState matcher is used to check some common state validation methods,
-typically started with ``is*`` and ``has*``. Similar to what you'd see in
-``rspec`` predicate matcher.
+The ObjectState matcher lets you check the state of an object by calling
+methods on it. These methods should start with ``is*`` or ``has*`` and return
+a boolean.
 
 .. code-block:: php
 
@@ -178,17 +180,17 @@ typically started with ``is*`` and ``has*``. Similar to what you'd see in
     {
         function it_should_be_available_on_cinemas()
         {
-            $this->shouldBeAvailableOnCinemas();
+            $this->shouldBeAvailableOnCinemas(); // calls isAvailableOnCinemas()
         }
 
         function it_should_have_soundtrack()
         {
-            $this->shouldHaveSoundtrack();
+            $this->shouldHaveSoundtrack(); //calls hasSoundtrack()
         }
     }
 
-In order to make our specs green the implementation of the ``Movie`` should
-provide ``isAvailableOnCinemas`` and ``hasSoundtrack`` methods:
+The spec will pass if the object has ``isAvailableOnCinemas`` and ``hasSoundtrack``
+methods which both return true:
 
 .. code-block:: php
 
@@ -211,9 +213,9 @@ provide ``isAvailableOnCinemas`` and ``hasSoundtrack`` methods:
 Count Matcher
 -------------
 
-Use Count matcher to specify the number of items that should be returned by a method.
-This return could be either an array or an object that implements the ``\Countable``
-interface.
+You can check the number of items in the return value using the Count matcher.
+The returned value could be an array or an object that implements the
+``\Countable`` interface.
 
 .. code-block:: php
 
@@ -235,9 +237,9 @@ interface.
 Scalar Matcher
 --------------
 
-Use Scalar matcher to specify that value returned by a method should be of a
-specific primitive type. It's pretty much like using the ``is_*`` function family,
-e.g, ``is_bool``, ``is_integer``, ``is_decimal``, etc ..
+To specify that the value returned by a method should be a specific primitive
+type you can use the Scalar matcher. It's like using one of the ``is_*`` functions,
+e.g, ``is_bool``, ``is_integer``, ``is_decimal``, etc.
 
 .. code-block:: php
 
@@ -264,9 +266,9 @@ e.g, ``is_bool``, ``is_integer``, ``is_decimal``, etc ..
 ArrayContain Matcher
 --------------------
 
-Use the ArrayContain matcher to specify that a method should return an array that
-contains a given value. Be aware that this value is matched by identity
-(``===``).
+You can specify that a method should return an array that contains a given
+value with the ArrayContain matcher. **phpspec** matches the value by
+identity (``===``).
 
 .. code-block:: php
 
@@ -288,8 +290,8 @@ contains a given value. Be aware that this value is matched by identity
 ArrayKey Matcher
 ----------------
 
-Use the ArrayKey matcher to specify that a method should return an array (or an
-object implementing ``ArrayAccess``) that has a given key.
+You can specify that a method should return an array or an ArrayAccess object
+with a specific key using the ArrayKey matcher.
 
 .. code-block:: php
 
@@ -311,8 +313,8 @@ object implementing ``ArrayAccess``) that has a given key.
 StringStart Matcher
 -------------------
 
-Use the StringStarts matcher to specify that a method should return a string that
-starts with a given substring.
+The StringStarts matcher lets you specify that a method should return a string
+starting with a given substring.
 
 .. code-block:: php
 
@@ -334,8 +336,8 @@ starts with a given substring.
 StringEnd Matcher
 -----------------
 
-Use the StringEnd matcher to specify that a method should return a string that
-ends with a given substring.
+The StringEnd matcher lets you specify that a method should return a string
+ending with a given substring.
 
 .. code-block:: php
 
@@ -357,8 +359,8 @@ ends with a given substring.
 StringRegex Matcher
 -------------------
 
-Use the StringRegex matcher to specify that a method should return a string that
-matches a given regular expression.
+The StringRegex matcher lets you specify that a method should return a string
+matching a given regular expression.
 
 .. code-block:: php
 
@@ -380,8 +382,7 @@ matches a given regular expression.
 Inline Matcher
 --------------
 
-Inline matchers can be used to provide custom expectations not available in phpspec
-native matcher, more or specific to your project or domain.
+You can create custom matchers using the Inline matcher.
 
 .. code-block:: php
 
