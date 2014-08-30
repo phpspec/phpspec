@@ -36,7 +36,7 @@ class ResourceLoader
     /**
      * @param ResourceManager $manager
      */
-    public function __construct(ResourceManager $manager, MethodAnalyser $methodAnalyser=null)
+    public function __construct(ResourceManager $manager, MethodAnalyser $methodAnalyser = null)
     {
         $this->manager = $manager;
         $this->methodAnalyser = $methodAnalyser ?: new MethodAnalyser();
