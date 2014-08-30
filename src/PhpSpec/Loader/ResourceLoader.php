@@ -14,6 +14,7 @@
 namespace PhpSpec\Loader;
 
 use PhpSpec\Locator\ResourceManager;
+use PhpSpec\Util\MethodAnalyser;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -27,13 +28,18 @@ class ResourceLoader
      * @var \PhpSpec\Locator\ResourceManager
      */
     private $manager;
+    /**
+     * @var \PhpSpec\Util\MethodAnalyser
+     */
+    private $methodAnalyser;
 
     /**
      * @param ResourceManager $manager
      */
-    public function __construct(ResourceManager $manager)
+    public function __construct(ResourceManager $manager, MethodAnalyser $methodAnalyser=null)
     {
         $this->manager = $manager;
+        $this->methodAnalyser = $methodAnalyser ?: new MethodAnalyser();
     }
 
     /**
@@ -106,19 +112,6 @@ class ResourceLoader
      */
     private function methodIsEmpty(ReflectionMethod $method)
     {
-        $filename = $method->getFileName();
-        $lines    = explode("\n", file_get_contents($filename));
-        $function = trim(implode("\n",
-            array_slice($lines,
-                $method->getStartLine() - 1,
-                $method->getEndLine() - $method->getStartLine()
-            )
-        ));
-
-        $function = trim(preg_replace(
-            array('|^[^}]*{|', '|}$|', '|//[^\n]*|s', '|/\*.*\*/|s'), '', $function
-        ));
-
-        return '' === $function;
+        return $this->methodAnalyser->reflectionMethodIsEmpty($method);
     }
 }
