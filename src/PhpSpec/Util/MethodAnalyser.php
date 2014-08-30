@@ -57,12 +57,12 @@ class MethodAnalyser
             array_filter($tokens,
                 function ($token) {
                     return is_array($token)
-                    && array_key_exists(0, $token)
                     && in_array(token_name($token[0]), array('T_COMMENT', 'T_DOC_COMMENT'));
                 })
         );
 
         $commentless = str_replace($comments, '', $code);
+        
         return $commentless;
     }
 
