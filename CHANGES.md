@@ -1,3 +1,23 @@
+Upcoming
+========
+
+  * Allow objects to be instantiated via static factory methods
+  * Allow examples to mark themselves as skipped
+  * PSR-4 support
+  * PSR-0 locator now supports underscores correctly
+  * Improved diffs for object comparison
+  * Throw an exception when construction method is redefined
+  * Non-zero exit code when dependencies are missing
+  * Respect exit code of commands other than 'run'
+  * Higher CLI verbosity levels are handled properly
+  * Code Generation and Stop on Failure are configurable through phpspec.yml
+  * Fixes for object instantiation changes in newer versions of PHP
+  * PHP 5.6 support
+  * Fixes for progress bar sometimes rounding up to 100% when not all specs passed
+  * Support for non-standard Composer autoloader location
+  * Improved hhvm support
+  * Extensions can now register new command
+
 2.0.1 / 2014-07-01
 ==================
 
@@ -75,3 +95,4 @@
 =======================
 
   * Initial release
+
