@@ -79,7 +79,7 @@ class ResourceLoader
 
                 $example = new Node\ExampleNode(str_replace('_', ' ', $method->getName()), $method);
 
-                if ($this->methodIsEmpty($method)) {
+                if ($this->methodAnalyser->reflectionMethodIsEmpty($method)) {
                     $example->markAsPending();
                 }
 
@@ -103,15 +103,5 @@ class ResourceLoader
         $line = intval($line);
 
         return $line >= $method->getStartLine() && $line <= $method->getEndLine();
-    }
-
-    /**
-     * @param ReflectionMethod $method
-     *
-     * @return bool
-     */
-    private function methodIsEmpty(ReflectionMethod $method)
-    {
-        return $this->methodAnalyser->reflectionMethodIsEmpty($method);
     }
 }
