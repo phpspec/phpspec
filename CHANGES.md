@@ -2,6 +2,7 @@ Upcoming
 ========
 
   * Allow objects to be instantiated via static factory methods
+  * Test suite is automatically rerun when classes or methods have been generated
   * Allow examples to mark themselves as skipped
   * PSR-4 support
   * PSR-0 locator now supports underscores correctly
