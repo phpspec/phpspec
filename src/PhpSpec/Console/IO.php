@@ -206,12 +206,16 @@ class IO implements IOInterface
             $message = $this->indentText($message, $indent);
         }
 
-        $size = strlen(strip_tags($this->lastMessage));
+        $commonPrefix = $this->getCommonPrefix($message, $this->lastMessage);
+        $newSuffix = substr($message, strlen($commonPrefix));
+        $oldSuffix = substr($this->lastMessage, strlen($commonPrefix));
 
-        $this->write(str_repeat("\x08", $size));
-        $this->write($message);
+        $overwriteLength = strlen(strip_tags($oldSuffix));
 
-        $fill = $size - strlen(strip_tags($message));
+        $this->write(str_repeat("\x08", $overwriteLength));
+        $this->write($newSuffix);
+
+        $fill = $overwriteLength - strlen(strip_tags($newSuffix));
         if ($fill > 0) {
             $this->write(str_repeat(' ', $fill));
             $this->write(str_repeat("\x08", $fill));
@@ -222,6 +226,24 @@ class IO implements IOInterface
         }
 
         $this->lastMessage = $message.($newline ? "\n" : '');
+    }
+
+    private function getCommonPrefix($stringA, $stringB)
+    {
+        for ($i=0; $i<min(strlen($stringA), strlen($stringB)); $i++)
+        {
+            if ($stringA[$i]!=$stringB[$i]) {
+                break;
+            }
+        }
+
+        $common = substr($stringA, 0, $i);
+
+        if (preg_match('/(^.*)<[a-z-]+>?[^<]*$/', $common, $matches)) {
+            $common = $matches[1];
+        }
+
+        return $common;
     }
 
     /**

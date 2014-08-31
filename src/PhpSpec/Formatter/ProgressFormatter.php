@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Formatter;
 
+use PhpSpec\Console\IO;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
 
@@ -25,55 +26,13 @@ class ProgressFormatter extends ConsoleFormatter
         $io = $this->getIO();
         $stats = $this->getStatisticsCollector();
 
-        $total  = $stats->getEventsCount();
-        $counts = $stats->getCountsHash();
-
-        $percents = array_map(function ($count) use ($total) {
-            $percent = ($count == $total) ? 100 : $count / ($total / 100);
-
-            return $percent == 0 || $percent > 1 ? floor($percent) : 1;
-        }, $counts);
-
-        $specProgress = $stats->getTotalSpecs()/$stats->getTotalSpecsCount();
-        $lengths  = array_map(function ($percent) use ($specProgress){
-            $length = $percent / 2;
-            $res = $length == 0 || $length > 1 ? floor($length * $specProgress) : 1;
-
-            return $res;
-        }, $percents);
-
-        $size = self::WIDTH;
-        asort($lengths);
-        $progress = array();
-        foreach ($lengths as $status => $length) {
-            $text   = $percents[$status].'%';
-            $length = ($size - $length) >= 0 ? $length : $size;
-            $size   = $size - $length;
-
-            if ($io->isDecorated()) {
-                if ($length > strlen($text) + 2) {
-                    $text = str_pad($text, $length, ' ', STR_PAD_BOTH);
-                } else {
-                    $text = str_pad('', $length, ' ');
-                }
-
-                $progress[$status] = sprintf("<$status-bg>%s</$status-bg>", $text);
-            } else {
-                $progress[$status] = str_pad(
-                    sprintf('%s: %s', $status, $text), 15, ' ', STR_PAD_BOTH
-                );
-            }
-        }
-        krsort($progress);
+        $percents = $this->getPercentages($stats->getEventsCount(), $stats->getCountsHash());
+        $barLengths  = $this->getBarLengths($percents);
+        $progress = $this->formatProgressOutput($barLengths, $percents, $io->isDecorated());
 
         $this->printException($event);
-        if ($io->isDecorated()) {
-            $progressBar = implode('', $progress);
-            $pad = self::WIDTH - strlen(strip_tags($progressBar));
-            $io->writeTemp($progressBar . str_repeat(' ', $pad+1) . $total);
-        } else {
-            $io->writeTemp('/'.implode('/', $progress).'/  '.$total.' examples');
-        }
+
+        $this->updateProgressBar($io, $progress, $stats->getEventsCount());
     }
 
     public function afterSuite(SuiteEvent $event)
@@ -100,5 +59,99 @@ class ProgressFormatter extends ConsoleFormatter
         }
 
         $io->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
+    }
+
+    /**
+     * @param $total
+     * @param $counts
+     * @return array
+     */
+    private function getPercentages($total, $counts)
+    {
+        return array_map(
+            function ($count) use ($total) {
+                $percent = ($count == $total) ? 100 : $count / ($total / 100);
+
+                return $percent == 0 || $percent > 1 ? floor($percent) : 1;
+            },
+            $counts
+        );
+    }
+
+    /**
+     * @param $percents
+     * @return array
+     */
+    private function getBarLengths($percents)
+    {
+        $stats = $this->getStatisticsCollector();
+        $specProgress = $stats->getTotalSpecs()/$stats->getTotalSpecsCount();
+
+        $barLengths= array_map(
+            function ($percent) use ($specProgress) {
+                $length = $percent / 2;
+                $res = $length == 0 || $length > 1 ? floor($length * $specProgress) : 1;
+
+                return $res;
+            },
+            $percents
+        );
+        asort($barLengths);
+
+        return $barLengths;
+    }
+
+    /**
+     * @param array $barLengths
+     * @param array $percents
+     * @param boolean $isDecorated
+     * @return array
+     */
+    private function formatProgressOutput($barLengths, $percents, $isDecorated)
+    {
+        $size = self::WIDTH;
+        $progress = array();
+        foreach ($barLengths as $status => $length) {
+            $percent = $percents[$status];
+            $text = $percent . '%';
+            $length = ($size - $length) >= 0 ? $length : $size;
+            $size = $size - $length;
+
+            if ($isDecorated) {
+                if ($length > strlen($text) + 2) {
+                    $text = str_pad($text, $length, ' ', STR_PAD_BOTH);
+                } else {
+                    $text = str_pad('', $length, ' ');
+                }
+
+                $progress[$status] = sprintf("<$status-bg>%s</$status-bg>", $text);
+            } else {
+                $progress[$status] = str_pad(
+                    sprintf('%s: %s', $status, $text),
+                    15,
+                    ' ',
+                    STR_PAD_BOTH
+                );
+            }
+        }
+        krsort($progress);
+
+        return $progress;
+    }
+
+    /**
+     * @param IO $io
+     * @param array $progress
+     * @param int $total
+     */
+    private function updateProgressBar(IO $io, array $progress, $total)
+    {
+        if ($io->isDecorated()) {
+            $progressBar = implode('', $progress);
+            $pad = self::WIDTH - strlen(strip_tags($progressBar));
+            $io->writeTemp($progressBar . str_repeat(' ', $pad + 1) . $total);
+        } else {
+            $io->writeTemp('/' . implode('/', $progress) . '/  ' . $total . ' examples');
+        }
     }
 }
