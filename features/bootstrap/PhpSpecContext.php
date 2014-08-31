@@ -1,5 +1,6 @@
 <?php
 
+use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Behat\Context\Context;
 use Behat\Behat\Context\SnippetAcceptingContext;
 use Behat\Gherkin\Node\PyStringNode;
@@ -91,7 +92,7 @@ class PhpSpecContext implements Context
 
     /**
      * @When I run phpspec and answer :answer when asked if I want to generate the code
-     * @When I run phpspec with the option :option and I answer :answer when asked if I want to generate the code
+     * @When I run phpspec with the option :option and (I) answer :answer when asked if I want to generate the code
      */
     public function iRunPhpspecAndAnswer($answer, $option="")
     {
@@ -276,4 +277,19 @@ class PhpSpecContext implements Context
         return new ApplicationTester($application);
     }
 
+    /**
+     * @Then I should not be prompted for code generation
+     */
+    public function iShouldNotBePromptedForCodeGeneration()
+    {
+        $this->iShouldNotSee('Do you want me to');
+    }
+
+    /**
+     * @Then I should be prompted for code generation
+     */
+    public function iShouldBePromptedForCodeGeneration()
+    {
+        $this->iShouldSee('Do you want me to');
+    }
 }

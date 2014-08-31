@@ -15,6 +15,7 @@ namespace PhpSpec\Console;
 
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
+use PhpSpec\Util\MethodAnalyser;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use PhpSpec\ServiceContainer;
 use PhpSpec\CodeGenerator;
@@ -58,7 +59,8 @@ class ContainerAssembler
                 new OptionsConfig(
                     $c->getParam('stop_on_failure', false),
                     $c->getParam('code_generation', true),
-                    $c->getParam('rerun', true)
+                    $c->getParam('rerun', true),
+                    $c->getParam('fake', false)
                 )
             );
         });
@@ -125,6 +127,17 @@ class ContainerAssembler
                 $c->get('process.rerunner')
             );
         });
+        $container->setShared('event_dispatcher.listeners.method_returned_null', function (ServiceContainer $c) {
+            return new Listener\MethodReturnedNullListener(
+                $c->get('console.io'),
+                $c->get('locator.resource_manager'),
+                $c->get('code_generator'),
+                $c->get('util.method_analyser')
+            );
+        });
+        $container->setShared('util.method_analyser', function(){
+            return new MethodAnalyser();
+        });
     }
 
     /**
@@ -157,6 +170,12 @@ class ContainerAssembler
         });
         $container->set('code_generator.generators.method', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\MethodGenerator(
+                $c->get('console.io'),
+                $c->get('code_generator.templates')
+            );
+        });
+        $container->set('code_generator.generators.returnConstant', function (ServiceContainer $c) {
+            return new CodeGenerator\Generator\ReturnConstantGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates')
             );
