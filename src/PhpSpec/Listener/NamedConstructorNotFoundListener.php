@@ -67,6 +67,7 @@ class NamedConstructorNotFoundListener implements EventSubscriberInterface
                     'name'      => $method,
                     'arguments' => $arguments
                 ));
+                $event->markAsWorthRerunning();
             }
         }
     }
