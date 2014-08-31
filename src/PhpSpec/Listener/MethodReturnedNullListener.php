@@ -6,6 +6,7 @@ use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Console\IO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\MethodCallEvent;
+use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\Util\MethodAnalyser;
@@ -114,7 +115,7 @@ class MethodReturnedNullListener implements EventSubscriberInterface
         $this->nullMethods[$key]['expected'][] = $exception->getExpected();
     }
 
-    public function afterSuite()
+    public function afterSuite(SuiteEvent $event)
     {
         if (!$this->io->isCodeGenerationEnabled()) {
             return;
@@ -150,6 +151,7 @@ class MethodReturnedNullListener implements EventSubscriberInterface
                     $resource, 'returnConstant',
                     array('method'=>$failedCall['method'], 'expected'=>$expected)
                 );
+                $event->markAsWorthRerunning();
             }
         }
     }

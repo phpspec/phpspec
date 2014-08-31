@@ -6,6 +6,7 @@ use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Console\IO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\MethodCallEvent;
+use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Locator\ResourceManager;
@@ -56,20 +57,20 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
     }
 
     function it_does_not_prompt_when_wrong_type_of_exception_is_thrown(
-        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io, SuiteEvent $event
     )
     {
         $exampleEvent->getException()->willReturn(new \Exception());
 
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
-        $this->afterSuite();
+        $this->afterSuite($event);
 
         $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 
     function it_does_not_prompt_when_actual_value_is_not_null(
-        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, NotEqualException $notEqualException, IO $io
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, NotEqualException $notEqualException, IO $io, SuiteEvent $event
     )
     {
         $exampleEvent->getException()->willReturn($notEqualException);
@@ -78,13 +79,13 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
 
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
-        $this->afterSuite();
+        $this->afterSuite($event);
 
         $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 
     function it_does_not_prompt_when_expected_value_is_an_object(
-        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, NotEqualException $notEqualException, IO $io
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, NotEqualException $notEqualException, IO $io, SuiteEvent $event
     )
     {
         $exampleEvent->getException()->willReturn($notEqualException);
@@ -93,47 +94,47 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
 
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
-        $this->afterSuite();
+        $this->afterSuite($event);
 
         $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 
-    function it_does_not_prompt_if_no_method_was_called_beforehand(ExampleEvent $exampleEvent, IO $io)
+    function it_does_not_prompt_if_no_method_was_called_beforehand(ExampleEvent $exampleEvent, IO $io, SuiteEvent $event)
     {
         $this->afterExample($exampleEvent);
-        $this->afterSuite();
+        $this->afterSuite($event);
 
         $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 
     function it_does_not_prompt_when_there_is_a_problem_creating_the_resource(
-        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io, ResourceManager $resourceManager
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io, ResourceManager $resourceManager, SuiteEvent $event
     )
     {
         $resourceManager->createResource(Argument::any())->willThrow(new \RuntimeException());
 
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
-        $this->afterSuite();
+        $this->afterSuite($event);
 
         $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 
     function it_does_not_prompt_when_input_is_not_interactive(
-        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io, SuiteEvent $event
     )
     {
         $io->isCodeGenerationEnabled()->willReturn(false);
 
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
-        $this->afterSuite();
+        $this->afterSuite($event);
 
         $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 
     function it_does_not_prompt_when_method_is_not_empty(
-        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io, MethodAnalyser $methodAnalyser
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io, MethodAnalyser $methodAnalyser, SuiteEvent $event
     )
     {
         $methodCallEvent->getMethod()->willReturn('myMethod');
@@ -143,14 +144,14 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
 
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
-        $this->afterSuite();
+        $this->afterSuite($event);
 
         $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 
     function it_does_not_prompt_when_multiple_contradictory_examples_are_found(
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, NotEqualException $notEqualException, IO $io,
-        ExampleEvent $exampleEvent2, NotEqualException $notEqualException2
+        ExampleEvent $exampleEvent2, NotEqualException $notEqualException2, SuiteEvent $event
     )
     {
         $exampleEvent->getException()->willReturn($notEqualException);
@@ -168,38 +169,38 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent2);
 
-        $this->afterSuite();
+        $this->afterSuite($event);
 
         $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 
     function it_does_not_prompt_when_io_has_faking_disabled(
-        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io, SuiteEvent $event
     )
     {
         $io->isFakingEnabled()->willReturn(false);
 
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
-        $this->afterSuite();
+        $this->afterSuite($event);
 
         $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 
     function it_prompts_when_correct_type_of_exception_is_thrown(
-        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io, SuiteEvent $event
     )
     {
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
-        $this->afterSuite();
+        $this->afterSuite($event);
 
         $io->askConfirmation(Argument::any())->shouldHaveBeenCalled();
     }
 
     function it_invokes_method_body_generation_when_prompt_is_answered_yes(
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io,
-        GeneratorManager $generatorManager, ResourceManager $resourceManager, ResourceInterface $resource
+        GeneratorManager $generatorManager, ResourceManager $resourceManager, ResourceInterface $resource, SuiteEvent $event
     )
     {
         $io->askConfirmation(Argument::any())->willReturn(true);
@@ -210,7 +211,7 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
 
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
-        $this->afterSuite();
+        $this->afterSuite($event);
 
         $generatorManager->generate($resource, 'returnConstant', array('method'=> 'myMethod', 'expected'=>100))
             ->shouldHaveBeenCalled();
