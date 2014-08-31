@@ -3,7 +3,7 @@
 namespace PhpSpec\Exception\Fracture;
 
 /**
- * Class NamedConstructorNotFoundException holds information about a static constructor not found
+ * Class NamedConstructorNotFoundException holds information about a named constructor not found
  * exception
  */
 class NamedConstructorNotFoundException extends MethodInvocationException {}

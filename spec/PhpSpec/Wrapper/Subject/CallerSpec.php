@@ -120,7 +120,7 @@ class CallerSpec extends ObjectBehavior
             ->duringCall('__construct');
     }
 
-    function it_delegates_throwing_static_constructor_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
+    function it_delegates_throwing_named_constructor_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
     {
         $obj = new \ArrayObject;
         $arguments = array('firstname', 'lastname');
@@ -133,7 +133,7 @@ class CallerSpec extends ObjectBehavior
 
         $exceptions->namedConstructorNotFound('ArrayObject', 'register', $arguments)
             ->willReturn(new \PhpSpec\Exception\Fracture\NamedConstructorNotFoundException(
-                'Static constructor "register" not found.',
+                'Named constructor "register" not found.',
                 $obj,
                 '"ArrayObject::register"',
                 array()

@@ -146,9 +146,6 @@ Feature: Developer generates a method
 
     class User
     {
-        private function __construct()
-        {
-        }
 
         public static function register($argument1, $argument2)
         {

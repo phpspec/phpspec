@@ -63,10 +63,15 @@ class NamedConstructorGenerator implements GeneratorInterface
             : ''
         ;
 
-        $values = array('%name%' => $name, '%arguments%' => $argString);
-        if (!$content = $this->templates->render('method', $values)) {
+        $values = array(
+            '%name%' => $name,
+            '%arguments%' => $argString,
+            '%returnVar%' => '$' . lcfirst($resource->getName()),
+            '%className%' => $resource->getName()
+        );
+        if (!$content = $this->templates->render('named_constructor', $values)) {
             $content = $this->templates->renderString(
-                $this->getTemplate($resource->getSrcClassname(), $resource->getName()), $values
+                $this->getTemplate(), $values
             );
         }
 
@@ -89,47 +94,10 @@ class NamedConstructorGenerator implements GeneratorInterface
     }
 
     /**
-     * @param string $class
-     * @param string $className
      * @return string
      */
-    protected function getTemplate($class, $className)
+    protected function getTemplate()
     {
-        $template = !method_exists($class, '__construct') ? $this->getPrivateConstructor() : '';
-        return $template . $this->getStaticConstructor($className);
-    }
-
-    /**
-     * @param $className
-     * @return string
-     */
-    private function getStaticConstructor($className)
-    {
-        $returnVar = '$' . lcfirst($className);
-
-        return <<<CODE
-
-    public static function %name%(%arguments%)
-    {
-        $returnVar = new $className();
-
-        // TODO: write logic here
-
-        return $returnVar;
-    }
-CODE;
-    }
-
-    /**
-     * @return string
-     */
-    private function getPrivateConstructor()
-    {
-        return <<<CODE
-    private function __construct()
-    {
-    }
-
-CODE;
+        return file_get_contents(__DIR__ . '/templates/named_constructor.template');
     }
 }

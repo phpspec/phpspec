@@ -62,13 +62,15 @@ CODE;
         $values = array(
             '%name%'      => 'setName',
             '%arguments%' => '$argument1',
+            '%returnVar%' => '$app',
+            '%className%' => 'App'
         );
 
         $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
         $resource->getSrcClassname()->willReturn('Acme\App');
         $resource->getName()->willReturn('App');
 
-        $tpl->render('method', $values)->willReturn(null);
+        $tpl->render('named_constructor', $values)->willReturn(null);
         $tpl->renderString(Argument::type('string'), $values)->willReturn('METHOD');
 
         $fs->getFileContents('/project/src/Acme/App.php')->willReturn($codeWithoutMethod);

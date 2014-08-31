@@ -23,7 +23,7 @@ class ExceptionFactorySpec extends ObjectBehavior
         $this->fixture->property = 'zoo';
     }
 
-    function it_creates_a_static_constructor_not_found_exception(PresenterInterface $presenter)
+    function it_creates_a_named_constructor_not_found_exception(PresenterInterface $presenter)
     {
         $presenter->presentString("{$this->fixture->classname}::{$this->fixture->method}")
             ->shouldBeCalled()

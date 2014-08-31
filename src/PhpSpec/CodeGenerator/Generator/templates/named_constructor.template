@@ -1,0 +1,9 @@
+
+    public static function %name%(%arguments%)
+    {
+        %returnVar% = new %className%();
+
+        // TODO: write logic here
+
+        return %returnVar%;
+    }
