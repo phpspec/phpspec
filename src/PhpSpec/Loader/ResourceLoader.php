@@ -14,6 +14,7 @@
 namespace PhpSpec\Loader;
 
 use PhpSpec\Locator\ResourceManager;
+use PhpSpec\Util\MethodAnalyser;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -27,13 +28,18 @@ class ResourceLoader
      * @var \PhpSpec\Locator\ResourceManager
      */
     private $manager;
+    /**
+     * @var \PhpSpec\Util\MethodAnalyser
+     */
+    private $methodAnalyser;
 
     /**
      * @param ResourceManager $manager
      */
-    public function __construct(ResourceManager $manager)
+    public function __construct(ResourceManager $manager, MethodAnalyser $methodAnalyser = null)
     {
         $this->manager = $manager;
+        $this->methodAnalyser = $methodAnalyser ?: new MethodAnalyser();
     }
 
     /**
@@ -73,7 +79,7 @@ class ResourceLoader
 
                 $example = new Node\ExampleNode(str_replace('_', ' ', $method->getName()), $method);
 
-                if ($this->methodIsEmpty($method)) {
+                if ($this->methodAnalyser->reflectionMethodIsEmpty($method)) {
                     $example->markAsPending();
                 }
 
@@ -97,28 +103,5 @@ class ResourceLoader
         $line = intval($line);
 
         return $line >= $method->getStartLine() && $line <= $method->getEndLine();
-    }
-
-    /**
-     * @param ReflectionMethod $method
-     *
-     * @return bool
-     */
-    private function methodIsEmpty(ReflectionMethod $method)
-    {
-        $filename = $method->getFileName();
-        $lines    = explode("\n", file_get_contents($filename));
-        $function = trim(implode("\n",
-            array_slice($lines,
-                $method->getStartLine() - 1,
-                $method->getEndLine() - $method->getStartLine()
-            )
-        ));
-
-        $function = trim(preg_replace(
-            array('|^[^}]*{|', '|}$|', '|//[^\n]*|s', '|/\*.*\*/|s'), '', $function
-        ));
-
-        return '' === $function;
     }
 }
