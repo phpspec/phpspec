@@ -2,10 +2,12 @@ Upcoming
 ========
 
   * Allow objects to be instantiated via static factory methods
+  * Automatic generation of return statements using '--fake'
   * Test suite is automatically rerun when classes or methods have been generated
   * Allow examples to mark themselves as skipped
   * PSR-4 support
   * PSR-0 locator now supports underscores correctly
+  * Progress bar grows from left to right and flickers less
   * Improved diffs for object comparison
   * Throw an exception when construction method is redefined
   * Non-zero exit code when dependencies are missing
