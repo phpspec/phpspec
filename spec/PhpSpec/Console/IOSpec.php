@@ -99,16 +99,26 @@ class IOSpec extends ObjectBehavior
         $this->isRerunEnabled()->shouldReturn(false);
     }
 
-    function it_will_disable_faking_if_command_line_option_is_not_set($input)
+    function it_will_disable_faking_if_command_line_option_and_config_flag_are_not_set($input, $config)
     {
         $input->getOption('fake')->willReturn(false);
+        $config->isFakingEnabled()->willReturn(false);
 
         $this->isFakingEnabled()->shouldReturn(false);
     }
 
-    function it_will_enable_faking_if_command_line_option_is_Set($input)
+    function it_will_enable_faking_if_command_line_option_is_Set($input, $config)
     {
         $input->getOption('fake')->willReturn(true);
+        $config->isFakingEnabled()->willReturn(false);
+
+        $this->isFakingEnabled()->shouldReturn(true);
+    }
+
+    function it_will_enable_faking_if_config_flag_is_set($input, $config)
+    {
+        $input->getOption('fake')->willReturn(false);
+        $config->isFakingEnabled()->willReturn(true);
 
         $this->isFakingEnabled()->shouldReturn(true);
     }

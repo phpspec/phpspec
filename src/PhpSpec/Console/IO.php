@@ -292,6 +292,6 @@ class IO implements IOInterface
 
     public function isFakingEnabled()
     {
-        return $this->input->getOption('fake');
+        return $this->input->getOption('fake') || $this->config->isFakingEnabled();
     }
 }

@@ -219,3 +219,43 @@ Feature: Developer generates a method returning a constant
       """
     When I run phpspec interactively
     Then I should not be prompted for code generation
+
+  Scenario: Prompted when CLI option is not used but config flag is set
+    Given the spec file "spec/CodeGeneration/ConstantExample6/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\ConstantExample6;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_converts_plain_text_to_html_paragraphs()
+          {
+              $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/ConstantExample6/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\ConstantExample6;
+
+      class Markdown
+      {
+          public function toHtml($argument1)
+          {
+          }
+      }
+
+      """
+    And the config file contains:
+      """
+      fake: true
+      """
+    When I run phpspec interactively
+    Then I should be prompted for code generation

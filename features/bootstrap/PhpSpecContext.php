@@ -284,4 +284,12 @@ class PhpSpecContext implements Context
     {
         $this->iShouldNotSee('Do you want me to');
     }
+
+    /**
+     * @Then I should be prompted for code generation
+     */
+    public function iShouldBePromptedForCodeGeneration()
+    {
+        $this->iShouldSee('Do you want me to');
+    }
 }
