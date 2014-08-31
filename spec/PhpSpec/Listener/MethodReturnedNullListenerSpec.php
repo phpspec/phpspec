@@ -30,6 +30,8 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
 
         $io->askConfirmation(Argument::any())->willReturn(false);
 
+        $io->isFakingEnabled()->willReturn(true);
+
         $methodAnalyser->methodIsEmpty(Argument::cetera())->willReturn(true);
     }
 
@@ -166,6 +168,19 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent2);
 
+        $this->afterSuite();
+
+        $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
+    }
+
+    function it_does_not_prompt_when_io_has_faking_disabled(
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, IO $io
+    )
+    {
+        $io->isFakingEnabled()->willReturn(false);
+
+        $this->afterMethodCall($methodCallEvent);
+        $this->afterExample($exampleEvent);
         $this->afterSuite();
 
         $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();

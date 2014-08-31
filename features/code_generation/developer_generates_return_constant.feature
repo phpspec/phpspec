@@ -35,7 +35,7 @@ Feature: Developer generates a method returning a constant
       }
 
       """
-    When I run phpspec and answer "y" when asked if I want to generate the code
+    When I run phpspec with the option "fake" and answer "y" when asked if I want to generate the code
     Then the class in "src/CodeGeneration/ConstantExample1/Markdown.php" should contain:
       """
       <?php
@@ -89,7 +89,7 @@ Feature: Developer generates a method returning a constant
       }
 
       """
-    When I run phpspec and answer "y" when asked if I want to generate the code
+    When I run phpspec with the option "fake" and answer "y" when asked if I want to generate the code
     Then the class in "src/CodeGeneration/ConstantExample2/Markdown.php" should contain:
       """
       <?php
@@ -140,9 +140,8 @@ Feature: Developer generates a method returning a constant
       }
 
       """
-    When I run phpspec interactively
+    When I run phpspec interactively with the "fake" option
     Then I should not be prompted for code generation
-
 
   Scenario: No prompt when examples contradict code
     Given the spec file "spec/CodeGeneration/ConstantExample4/MarkdownSpec.php" contains:
@@ -173,6 +172,42 @@ Feature: Developer generates a method returning a constant
       <?php
 
       namespace CodeGeneration\ConstantExample4;
+
+      class Markdown
+      {
+          public function toHtml($argument1)
+          {
+          }
+      }
+
+      """
+    When I run phpspec interactively with the "fake" option
+    Then I should not be prompted for code generation
+
+  Scenario: No prompt when CLI option is not used
+    Given the spec file "spec/CodeGeneration/ConstantExample5/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\ConstantExample5;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_converts_plain_text_to_html_paragraphs()
+          {
+              $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/ConstantExample5/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\ConstantExample5;
 
       class Markdown
       {

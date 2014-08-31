@@ -34,6 +34,7 @@ class RunCommand extends Command
                     new InputOption('stop-on-failure', null , InputOption::VALUE_NONE, 'Stop on failure'),
                     new InputOption('no-code-generation', null , InputOption::VALUE_NONE, 'Do not prompt for missing method/class generation'),
                     new InputOption('no-rerun', null , InputOption::VALUE_NONE, 'Do not rerun the suite after code generation'),
+                    new InputOption('fake', null , InputOption::VALUE_NONE, 'Automatically fake return values when possible'),
                 ))
             ->setDescription('Runs specifications')
             ->setHelp(<<<EOF
@@ -57,6 +58,10 @@ You can choose to stop on failure and not attempt to run the remaining
 specs with:
 
   <info>php %command.full_name% --stop-on-failure</info>
+
+You can opt to automatically fake return values with:
+
+  <info>php %command.full_name% --fake</info>
 
 You can choose the output format with the format option e.g.:
 

@@ -120,6 +120,10 @@ class MethodReturnedNullListener implements EventSubscriberInterface
             return;
         }
 
+        if (!$this->io->isFakingEnabled()) {
+            return;
+        }
+
         foreach ($this->nullMethods as $methodString => $failedCall) {
 
             $failedCall['expected'] = array_unique($failedCall['expected']);

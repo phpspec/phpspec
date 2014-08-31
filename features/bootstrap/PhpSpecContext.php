@@ -92,7 +92,7 @@ class PhpSpecContext implements Context
 
     /**
      * @When I run phpspec and answer :answer when asked if I want to generate the code
-     * @When I run phpspec with the option :option and I answer :answer when asked if I want to generate the code
+     * @When I run phpspec with the option :option and (I) answer :answer when asked if I want to generate the code
      */
     public function iRunPhpspecAndAnswer($answer, $option="")
     {
