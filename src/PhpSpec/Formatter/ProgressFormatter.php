@@ -20,16 +20,6 @@ class ProgressFormatter extends ConsoleFormatter
 {
     const WIDTH=50;
 
-    /**
-     * @var int
-     */
-    private $specCount;
-
-    public function beforeSuite(SuiteEvent $event)
-    {
-        $this->specCount = count($event->getSuite()->getSpecifications());
-    }
-
     public function afterExample(ExampleEvent $event)
     {
         $io = $this->getIO();
@@ -44,7 +34,7 @@ class ProgressFormatter extends ConsoleFormatter
             return $percent == 0 || $percent > 1 ? floor($percent) : 1;
         }, $counts);
 
-        $specProgress = ($stats->getTotalSpecs()+1)/$this->specCount;
+        $specProgress = $stats->getTotalSpecs()/$stats->getTotalSpecsCount();
         $lengths  = array_map(function ($percent) use ($specProgress){
             $length = $percent / 2;
             $res = $length == 0 || $length > 1 ? floor($length * $specProgress) : 1;
