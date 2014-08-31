@@ -157,7 +157,6 @@ class Caller
             return $this->wrappedObject->getInstance();
         }
 
-
         if (null === $this->wrappedObject->getClassName() || !is_string($this->wrappedObject->getClassName())) {
             return $this->wrappedObject->getInstance();
         }
