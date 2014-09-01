@@ -239,7 +239,7 @@ class IO implements IOInterface
 
         $common = substr($stringA, 0, $i);
 
-        if (preg_match('/(^.*)<[a-z-]+>?[^<]*$/', $common, $matches)) {
+        if (preg_match('/(^.*)<[a-z-]*>?[^<]*$/', $common, $matches)) {
             $common = $matches[1];
         }
 
