@@ -20,11 +20,6 @@ namespace PhpSpec\Locator;
 Interface ResourceManagerInterface
 {
     /**
-     * @param ResourceLocatorInterface $locator
-     */
-    public function registerLocator(ResourceLocatorInterface $locator);
-
-    /**
      * @param string $query
      *
      * @return ResourceInterface[]
