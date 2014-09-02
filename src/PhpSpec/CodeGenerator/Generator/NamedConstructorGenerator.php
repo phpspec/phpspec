@@ -110,7 +110,7 @@ class NamedConstructorGenerator implements GeneratorInterface
      */
     private function getConstructorArguments($class)
     {
-        $constructorArguments = [];
+        $constructorArguments = array();
 
         if (method_exists($class, '__construct')) {
             $constructor = new ReflectionMethod($class, '__construct');
