@@ -1,7 +1,7 @@
 
     public static function %name%(%arguments%)
     {
-        %returnVar% = new %className%();
+        %returnVar% = new %className%(%constructorArguments%);
 
         // TODO: write logic here
 

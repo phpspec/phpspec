@@ -6,6 +6,7 @@ use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Console\IO;
 use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Util\Filesystem;
+use ReflectionMethod;
 
 class NamedConstructorGenerator implements GeneratorInterface
 {
@@ -64,11 +65,13 @@ class NamedConstructorGenerator implements GeneratorInterface
         ;
 
         $values = array(
-            '%name%' => $name,
-            '%arguments%' => $argString,
-            '%returnVar%' => '$' . lcfirst($resource->getName()),
-            '%className%' => $resource->getName()
+            '%name%'                 => $name,
+            '%arguments%'            => $argString,
+            '%returnVar%'            => '$' . lcfirst($resource->getName()),
+            '%className%'            => $resource->getName(),
+            '%constructorArguments%' => $this->getConstructorArguments($resource->getSrcClassname())
         );
+
         if (!$content = $this->templates->render('named_constructor', $values)) {
             $content = $this->templates->renderString(
                 $this->getTemplate(), $values
@@ -99,5 +102,25 @@ class NamedConstructorGenerator implements GeneratorInterface
     protected function getTemplate()
     {
         return file_get_contents(__DIR__ . '/templates/named_constructor.template');
+    }
+
+    /**
+     * @param string $class
+     * @return string
+     */
+    private function getConstructorArguments($class)
+    {
+        $constructorArguments = [];
+
+        if (method_exists($class, '__construct')) {
+            $constructor = new ReflectionMethod($class, '__construct');
+            $params = $constructor->getParameters();
+
+            foreach ($params as $param) {
+                $constructorArguments[] = '$' . $param->getName();
+            }
+        }
+
+        return implode(', ', $constructorArguments);
     }
 }

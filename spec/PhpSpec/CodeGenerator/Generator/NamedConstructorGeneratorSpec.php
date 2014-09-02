@@ -63,7 +63,8 @@ CODE;
             '%name%'      => 'setName',
             '%arguments%' => '$argument1',
             '%returnVar%' => '$app',
-            '%className%' => 'App'
+            '%className%' => 'App',
+            '%constructorArguments%' => ''
         );
 
         $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
