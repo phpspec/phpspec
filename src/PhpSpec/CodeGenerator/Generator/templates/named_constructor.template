@@ -1,5 +1,5 @@
 
-    public static function %name%(%arguments%)
+    public static function %methodName%(%arguments%)
     {
         %returnVar% = new %className%(%constructorArguments%);
 

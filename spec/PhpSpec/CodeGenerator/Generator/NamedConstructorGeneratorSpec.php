@@ -60,10 +60,10 @@ METHOD
 
 CODE;
         $values = array(
-            '%name%'      => 'setName',
-            '%arguments%' => '$argument1',
-            '%returnVar%' => '$app',
-            '%className%' => 'App',
+            '%methodName%' => 'setName',
+            '%arguments%'  => '$argument1',
+            '%returnVar%'  => '$app',
+            '%className%'  => 'App',
             '%constructorArguments%' => ''
         );
 
