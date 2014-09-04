@@ -19,7 +19,7 @@ use RuntimeException;
  * Class ResourceManager
  * @package PhpSpec\Locator
  */
-class ResourceManager
+class ResourceManager implements ResourceManagerInterface
 {
     /**
      * @var ResourceLocatorInterface[]

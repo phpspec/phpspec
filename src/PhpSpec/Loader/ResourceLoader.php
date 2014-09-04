@@ -13,8 +13,8 @@
 
 namespace PhpSpec\Loader;
 
-use PhpSpec\Locator\ResourceManager;
 use PhpSpec\Util\MethodAnalyser;
+use PhpSpec\Locator\ResourceManagerInterface;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -25,7 +25,7 @@ use ReflectionMethod;
 class ResourceLoader
 {
     /**
-     * @var \PhpSpec\Locator\ResourceManager
+     * @var \PhpSpec\Locator\ResourceManagerInterface
      */
     private $manager;
     /**
@@ -34,9 +34,9 @@ class ResourceLoader
     private $methodAnalyser;
 
     /**
-     * @param ResourceManager $manager
+     * @param ResourceManagerInterface $manager
      */
-    public function __construct(ResourceManager $manager, MethodAnalyser $methodAnalyser = null)
+    public function __construct(ResourceManagerInterface $manager, MethodAnalyser $methodAnalyser = null)
     {
         $this->manager = $manager;
         $this->methodAnalyser = $methodAnalyser ?: new MethodAnalyser();
