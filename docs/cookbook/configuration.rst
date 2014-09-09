@@ -12,7 +12,7 @@ You can use a different config file name and path with the ``--config`` option:
     $ bin/phpspec run --config path/to/different-phpspec.yml
 
 You can also specify default values for config variables across all repositories by creating
-the file `.phpspec.yml` in your home folder (Unix systems). Phpspec will use your personal preference for
+the file ``.phpspec.yml`` in your home folder (Unix systems). Phpspec will use your personal preference for
 all settings that are not defined in the project's configuration.
 
 .. _configuration-suites:
