@@ -71,7 +71,7 @@ CODE;
         $resource->getSrcClassname()->willReturn('Acme\App');
         $resource->getName()->willReturn('App');
 
-        $tpl->render('named_constructor', $values)->willReturn(null);
+        $tpl->render('named_constructor_create_object', $values)->willReturn(null);
         $tpl->renderString(Argument::type('string'), $values)->willReturn('METHOD');
 
         $fs->getFileContents('/project/src/Acme/App.php')->willReturn($codeWithoutMethod);

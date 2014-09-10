@@ -59,23 +59,7 @@ class NamedConstructorGenerator implements GeneratorInterface
         $methodName = $data['name'];
         $arguments  = $data['arguments'];
 
-        $argString = count($arguments)
-            ? '$argument'.implode(', $argument',  range(1, count($arguments)))
-            : ''
-        ;
-
-        $commonValues = $this->getCommonTemplateValues($methodName, $argString);
-
-        $content = $this->getTemplateContent($resource->getName(), $commonValues);
-
-        if (method_exists($resource->getSrcClassname(), '__construct')) {
-            $content = $this->getExistingConstructorContent(
-                $resource->getSrcClassname(),
-                $resource->getName(),
-                $arguments,
-                $commonValues
-            );
-        }
+        $content = $this->getContent($resource, $methodName, $arguments);
 
         $code = $this->filesystem->getFileContents($filepath);
         $code = preg_replace('/}[ \n]*$/', rtrim($content) ."\n}\n", trim($code));
@@ -96,114 +80,28 @@ class NamedConstructorGenerator implements GeneratorInterface
     }
 
     /**
+     * @param ResourceInterface $resource
+     * @param string            $methodName
+     * @param array             $arguments
      * @return string
      */
-    protected function getTemplate()
+    private function getContent(ResourceInterface $resource, $methodName, $arguments)
     {
-        return file_get_contents(__DIR__ . '/templates/named_constructor.template');
-    }
+        $className = $resource->getName();
+        $class = $resource->getSrcClassname();
 
-    /**
-     * @return string
-     */
-    protected function getExceptionTemplate()
-    {
-        return file_get_contents(__DIR__ . '/templates/named_constructor_exception.template');
-    }
+        $template = new CreateObjectTemplate($this->templates, $methodName, $arguments, $className);
 
-    /**
-     * @param string $className
-     * @param array  $templateValues
-     * @return string
-     */
-    private function getTemplateContent($className, array $templateValues)
-    {
-        $templateValues = $this->getTemplateValues($className, $templateValues);
-
-        if (!$content = $this->templates->render('named_constructor', $templateValues)) {
-            $content = $this->templates->renderString(
-                $this->getTemplate(), $templateValues
+        if (method_exists($class, '__construct')) {
+            $template = new ExistingConstructorTemplate(
+                $this->templates,
+                $methodName,
+                $arguments,
+                $className,
+                $class
             );
         }
-        return $content;
-    }
 
-    /**
-     * @param string $class
-     * @param string $className
-     * @param array  $arguments
-     * @param array  $values
-     * @return string
-     */
-    private function getExistingConstructorContent($class, $className, array $arguments, array $values)
-    {
-        $numberOfConstructorArguments = $this->getNumberOfConstructorArguments($class);
-
-        if ($numberOfConstructorArguments != count($arguments)) {
-            return $this->getExceptionTemplateContent($values);
-        }
-
-        $values['%constructorArguments%'] = $values['%arguments%'];
-        return $this->getTemplateContent($className, $values);
-    }
-
-    /**
-     * @param string $class
-     * @return int
-     */
-    private function getNumberOfConstructorArguments($class)
-    {
-        $constructorArguments = 0;
-
-        $constructor = new ReflectionMethod($class, '__construct');
-        $params = $constructor->getParameters();
-
-        foreach ($params as $param) {
-            if (!$param->isOptional()) {
-                $constructorArguments++;
-            }
-        }
-
-        return $constructorArguments;
-    }
-
-    /**
-     * @param array $values
-     * @return string
-     */
-    private function getExceptionTemplateContent(array $values)
-    {
-        if (!$content = $this->templates->render('named_constructor_exception', $values)) {
-            $content = $this->templates->renderString(
-                $this->getExceptionTemplate(), $values
-            );
-        }
-        return $content;
-    }
-
-    /**
-     * @param string $methodName
-     * @param string $argString
-     * @return array
-     */
-    private function getCommonTemplateValues($methodName, $argString)
-    {
-        return array(
-            '%methodName%'           => $methodName,
-            '%arguments%'            => $argString,
-            '%constructorArguments%' => ''
-        );
-    }
-
-    /**
-     * @param string $class
-     * @param array  $values
-     * @return array
-     */
-    private function getTemplateValues($class, array $values)
-    {
-        $values['%returnVar%'] = '$' . lcfirst($class);
-        $values['%className%'] = $class;
-        return $values;
+        return $template->getContent();
     }
 }
