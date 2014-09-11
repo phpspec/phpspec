@@ -53,7 +53,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'phpspec'
-copyright = u'2013, Konstantin Kudryashov (@everzet), Marcello Duarte (@_md)'
+copyright = u'2014, Konstantin Kudryashov (@everzet), Marcello Duarte (@_md)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -275,7 +275,7 @@ texinfo_no_detailmenu = False
 epub_title = u'phpspec'
 epub_author = u'Konstantin Kudryashov (everzet), Marcello Duarte (_md)'
 epub_publisher = u'Konstantin Kudryashov (everzet), Marcello Duarte (_md)'
-epub_copyright = u'2013, Konstantin Kudryashov (everzet), Marcello Duarte (_md)'
+epub_copyright = u'2014, Konstantin Kudryashov (everzet), Marcello Duarte (_md)'
 
 # The basename for the epub file. It defaults to the project name.
 epub_basename = u'phpspec'
