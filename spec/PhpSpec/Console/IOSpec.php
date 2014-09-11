@@ -61,7 +61,7 @@ class IOSpec extends ObjectBehavior
         $this->isStopOnFailureEnabled()->shouldReturn(false);
     }
 
-    function it_will_stop_on_failure_if_if_command_line_option_is_set($input)
+    function it_will_stop_on_failure_if_command_line_option_is_set($input)
     {
         $input->getOption('stop-on-failure')->willReturn(true);
 
