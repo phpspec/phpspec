@@ -84,7 +84,7 @@ to generate code with:
 
     $ php bin/phpspec run --no-code-generation
 
-You can choose to stop on failure and not attempt to run the remaining
+You can choose to stop on failure and avoid running the remaining
 specs with:
 
 .. code-block:: bash

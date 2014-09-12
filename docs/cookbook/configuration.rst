@@ -37,7 +37,7 @@ describing. In phpspec, you can group specification files by a certain namespace
   ``%spec_prefix%\%namespace%``;
 * ``src_path`` [**default**: ``src``] - The path to store the generated
   classes. Paths are relative to the location of the config file. **phpspec**
-  creates the directories if they do not exists. This does not include the namespace
+  creates the directories if they do not exist. This does not include the namespace
   directories;
 * ``spec_path`` [**default**: ``.``] - The path of the specifications. This
   does not include the spec prefix or namespace.
@@ -57,13 +57,13 @@ Some examples:
         #     namespace: The\Namespace
         my_suite: The\Namespace
 
-phpspec will use suite settings based on the namespaces.
+**phpspec** will use suite settings based on the namespaces.
 If you have suites with different spec directories then ``phpspec run``
-will run the spces from each of the directories using the relevant suite settings.
+will run the specs from each of the directories using the relevant suite settings.
 
 When you use ``phpspec desc`` **phpspec** creates the spec using the matching
 configuration.  E.g. ``phpspec desc Acme/TheLib/MyClass`` will use the default
-spec directory but the namespace ``acmespec Acme\TheLib\MyClass``.
+spec directory but the namespace ``acme_spec\Acme\TheLib\MyClass``.
 
 If the namespace does not match one of the namespaces in the suites config then
 **phpspec** uses the default settings. If you want to change the defaults then you can
