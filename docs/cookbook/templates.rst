@@ -1,7 +1,7 @@
 Templates
 =========
 
-**phpspec** can generate code snippets that will save you time when speccing classes.
+**phpspec** can generate code snippets that will save you time when specifying classes.
 The default templates will be suitable for many use cases.
 
 However in some cases, it'll be useful to customize those templates by providing
@@ -14,8 +14,8 @@ Overriding templates
 
 **phpspec** uses three templates:
   - *specification* - used when a spec is generated using the `describe` command
-  - *class* - used to generate a class that is specced but which does not exist
-  - *method* - used to add a method that is specced to a class
+  - *class* - used to generate a class that is specified but which does not exist
+  - *method* - used to add a method that is specified to a class
 
 You can override these on a per project basis by creating a template file in
 `.phpspec` in the root directory of the project. For example, to add licence
@@ -72,7 +72,7 @@ Parameters
 ----------
 
 As well as static text there are some parameters available like the ``%namespace_block%``
-in the example above. The parameters available depends on which type of
+in the example above. The parameters available depend on which type of
 template you are overriding:
 
 **specification**
