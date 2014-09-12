@@ -301,14 +301,24 @@ class Caller
     }
 
     /**
-     * @return object
+     * @return mixed
+     * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      */
     private function newInstanceWithFactoryMethod()
     {
-        return call_user_func_array(
-            $this->wrappedObject->getFactoryMethod(),
-            $this->wrappedObject->getArguments()
-        );
+        $method = $this->wrappedObject->getFactoryMethod();
+
+        if (!is_array($method)) {
+            $className = $this->wrappedObject->getClassName();
+
+            if (!method_exists($className, $method)) {
+                throw $this->namedConstructorNotFound(
+                    $method, $this->wrappedObject->getArguments()
+                );
+            }
+        }
+
+        return call_user_func_array($method, $this->wrappedObject->getArguments());
     }
 
     /**
@@ -335,6 +345,17 @@ class Caller
      * @param string $method
      * @param array  $arguments
      *
+     * @return \PhpSpec\Exception\Fracture\MethodNotFoundException|\PhpSpec\Exception\Fracture\MethodNotVisibleException
+     */
+    private function namedConstructorNotFound($method, array $arguments = array())
+    {
+        $className = $this->wrappedObject->getClassName();
+        return $this->exceptionFactory->namedConstructorNotFound($className, $method, $arguments);
+    }
+
+    /**
+     * @param $method
+     * @param  array                                                                                                     $arguments
      * @return \PhpSpec\Exception\Fracture\MethodNotFoundException|\PhpSpec\Exception\Fracture\MethodNotVisibleException
      */
     private function methodNotFound($method, array $arguments = array())

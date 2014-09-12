@@ -120,6 +120,30 @@ class CallerSpec extends ObjectBehavior
             ->duringCall('__construct');
     }
 
+    function it_delegates_throwing_named_constructor_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
+    {
+        $obj = new \ArrayObject;
+        $arguments = array('firstname', 'lastname');
+
+        $wrappedObject->isInstantiated()->willReturn(false);
+        $wrappedObject->getInstance()->willReturn(null);
+        $wrappedObject->getClassName()->willReturn('ArrayObject');
+        $wrappedObject->getFactoryMethod()->willReturn('register');
+        $wrappedObject->getArguments()->willReturn($arguments);
+
+        $exceptions->namedConstructorNotFound('ArrayObject', 'register', $arguments)
+            ->willReturn(new \PhpSpec\Exception\Fracture\NamedConstructorNotFoundException(
+                'Named constructor "register" not found.',
+                $obj,
+                '"ArrayObject::register"',
+                array()
+            ))
+            ->shouldBeCalled();
+
+        $this->shouldThrow('\PhpSpec\Exception\Fracture\NamedConstructorNotFoundException')
+            ->duringCall('foo');
+    }
+
     function it_delegates_throwing_method_not_visible_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
     {
         $obj = new ExampleClass;

@@ -23,6 +23,21 @@ class ExceptionFactorySpec extends ObjectBehavior
         $this->fixture->property = 'zoo';
     }
 
+    function it_creates_a_named_constructor_not_found_exception(PresenterInterface $presenter)
+    {
+        $presenter->presentString("{$this->fixture->classname}::{$this->fixture->method}")
+            ->shouldBeCalled()
+            ->willReturn("\"{$this->fixture->classname}::{$this->fixture->method}\"");
+        $this->fixture->message = 'Named constructor "\stdClass::foo" not found.';
+        $this->createdException = $this->namedConstructorNotFound(
+            $this->fixture->classname,
+            $this->fixture->method,
+            $this->fixture->arguments
+        );
+
+        $this->shouldCreateNamedConstructorNotFoundException();
+    }
+
     function it_creates_a_method_not_found_exception(PresenterInterface $presenter)
     {
         $presenter->presentString("{$this->fixture->classname}::{$this->fixture->method}")
@@ -112,6 +127,15 @@ class ExceptionFactorySpec extends ObjectBehavior
         $exception = $this->gettingPropertyOnNonObject($this->fixture->property);
         $exception->shouldHaveType('PhpSpec\Exception\Wrapper\SubjectException');
         $exception->getMessage()->shouldBe($fixtureMessage);
+    }
+
+    function shouldCreateNamedConstructorNotFoundException()
+    {
+        $this->createdException->shouldHaveType('PhpSpec\Exception\Fracture\NamedConstructorNotFoundException');
+        $this->createdException->getMessage()->shouldReturn($this->fixture->message);
+        $this->createdException->getSubject()->shouldBeLike($this->fixture->subject);
+        $this->createdException->getMethodName()->shouldReturn($this->fixture->method);
+        $this->createdException->getArguments()->shouldReturn($this->fixture->arguments);
     }
 
     function shouldCreateMethodNotFoundException()
