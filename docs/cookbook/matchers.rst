@@ -63,7 +63,7 @@ follows the PHP rules for loose type comparison.
         }
     }
 
-Using ``shouldBeLike`` it does not matter whether ``StarWars::rating`` returns
+Using ``shouldBeLike`` it does not matter whether ``StarWars::getRating()`` returns
 an integer or a string. The spec will pass for 5 and "5".
 
 
@@ -180,17 +180,19 @@ a boolean.
     {
         function it_should_be_available_on_cinemas()
         {
-            $this->shouldBeAvailableOnCinemas(); // calls isAvailableOnCinemas()
+            // calls isAvailableOnCinemas()
+            $this->shouldBeAvailableOnCinemas();
         }
 
         function it_should_have_soundtrack()
         {
-            $this->shouldHaveSoundtrack(); //calls hasSoundtrack()
+            // calls hasSoundtrack()
+            $this->shouldHaveSoundtrack();
         }
     }
 
 The spec will pass if the object has ``isAvailableOnCinemas`` and ``hasSoundtrack``
-methods which both return true:
+methods and both return true:
 
 .. code-block:: php
 
