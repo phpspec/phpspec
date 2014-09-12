@@ -192,7 +192,7 @@ a boolean.
     }
 
 The spec will pass if the object has ``isAvailableOnCinemas`` and ``hasSoundtrack``
-methods and both return true:
+methods which both return true:
 
 .. code-block:: php
 
