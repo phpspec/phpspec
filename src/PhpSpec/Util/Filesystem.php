@@ -15,10 +15,6 @@ namespace PhpSpec\Util;
 
 use Symfony\Component\Finder\Finder;
 
-/**
- * Class Filesystem
- * @package PhpSpec\Util
- */
 class Filesystem
 {
     /**

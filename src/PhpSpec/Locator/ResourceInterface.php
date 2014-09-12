@@ -13,10 +13,6 @@
 
 namespace PhpSpec\Locator;
 
-/**
- * Interface ResourceInterface
- * @package PhpSpec\Locator
- */
 interface ResourceInterface
 {
     /**

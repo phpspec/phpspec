@@ -16,10 +16,6 @@ namespace PhpSpec\Matcher;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Exception\Example\FailureException;
 
-/**
- * Class StringEndMatcher
- * @package PhpSpec\Matcher
- */
 class StringEndMatcher extends BasicMatcher
 {
     /**

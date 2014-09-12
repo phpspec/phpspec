@@ -20,10 +20,6 @@ use PhpSpec\Matcher\MatcherInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Exception;
 
-/**
- * Class DispatcherDecorator
- * @package PhpSpec\Wrapper\Subject\Expectation
- */
 class DispatcherDecorator extends Decorator implements ExpectationInterface
 {
     /**

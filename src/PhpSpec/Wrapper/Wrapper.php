@@ -23,10 +23,6 @@ use PhpSpec\Wrapper\Subject\Caller;
 use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
 use PhpSpec\Wrapper\Subject\ExpectationFactory;
 
-/**
- * Class Wrapper
- * @package PhpSpec\Wrapper
- */
 class Wrapper
 {
     /**

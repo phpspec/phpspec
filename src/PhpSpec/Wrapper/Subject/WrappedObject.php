@@ -18,10 +18,6 @@ use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Exception\Wrapper\SubjectException;
 
-/**
- * Class WrappedObject
- * @package PhpSpec\Wrapper\Subject
- */
 class WrappedObject
 {
     /**

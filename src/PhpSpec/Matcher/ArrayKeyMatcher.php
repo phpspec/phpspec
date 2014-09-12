@@ -17,10 +17,6 @@ use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Exception\Example\FailureException;
 use ArrayAccess;
 
-/**
- * Class ArrayKeyMatcher
- * @package PhpSpec\Matcher
- */
 class ArrayKeyMatcher extends BasicMatcher
 {
     /**

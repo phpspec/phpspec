@@ -13,10 +13,6 @@
 
 namespace PhpSpec\Wrapper;
 
-/**
- * Interface WrapperInterface
- * @package PhpSpec\Wrapper
- */
 interface WrapperInterface
 {
     /**

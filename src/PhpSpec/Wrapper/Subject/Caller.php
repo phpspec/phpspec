@@ -25,10 +25,6 @@ use ReflectionMethod;
 use ReflectionProperty;
 use ReflectionException;
 
-/**
- * Class Caller
- * @package PhpSpec\Wrapper\Subject
- */
 class Caller
 {
     /**

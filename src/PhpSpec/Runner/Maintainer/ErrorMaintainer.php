@@ -19,10 +19,6 @@ use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
 use PhpSpec\Exception\Example as ExampleException;
 
-/**
- * Class ErrorMaintainer
- * @package PhpSpec\Runner\Maintainer
- */
 class ErrorMaintainer implements MaintainerInterface
 {
     /**

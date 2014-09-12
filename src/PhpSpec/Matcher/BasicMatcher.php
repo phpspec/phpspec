@@ -15,10 +15,6 @@ namespace PhpSpec\Matcher;
 
 use PhpSpec\Exception\Example\FailureException;
 
-/**
- * Class BasicMatcher
- * @package PhpSpec\Matcher
- */
 abstract class BasicMatcher implements MatcherInterface
 {
     /**

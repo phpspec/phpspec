@@ -20,10 +20,6 @@ use PhpSpec\Wrapper\Subject\ExpectationFactory;
 use PhpSpec\Util\Instantiator;
 use ArrayAccess;
 
-/**
- * Class Subject
- * @package PhpSpec\Wrapper
- */
 class Subject implements ArrayAccess, WrapperInterface
 {
     /**

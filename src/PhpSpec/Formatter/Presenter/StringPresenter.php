@@ -20,10 +20,6 @@ use PhpSpec\Exception\Example\ErrorException;
 use PhpSpec\Exception\Example\PendingException;
 use Prophecy\Exception\Exception as ProphecyException;
 
-/**
- * Class StringPresenter
- * @package PhpSpec\Formatter\Presenter
- */
 class StringPresenter implements PresenterInterface
 {
     /**

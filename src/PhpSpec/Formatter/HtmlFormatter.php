@@ -20,10 +20,6 @@ use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\IO\IOInterface as IO;
 use PhpSpec\Listener\StatisticsCollector;
 
-/**
- * Class HtmlFormatter
- * @package PhpSpec\Formatter
- */
 class HtmlFormatter extends BasicFormatter
 {
     /**

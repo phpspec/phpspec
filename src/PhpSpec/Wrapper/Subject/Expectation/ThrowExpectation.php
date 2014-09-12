@@ -13,10 +13,6 @@
 
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
-/**
- * Interface ThrowExpectation
- * @package PhpSpec\Wrapper\Subject\Expectation
- */
 interface ThrowExpectation
 {
     /**

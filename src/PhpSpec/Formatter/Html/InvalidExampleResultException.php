@@ -15,10 +15,6 @@ namespace PhpSpec\Formatter\Html;
 
 use PhpSpec\Exception\Exception;
 
-/**
- * Class InvalidExampleResultException
- * @package PhpSpec\Formatter\Html
- */
 class InvalidExampleResultException extends Exception
 {
 }

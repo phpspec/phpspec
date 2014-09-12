@@ -15,10 +15,6 @@ namespace PhpSpec\Locator\PSR0;
 
 use PhpSpec\Locator\ResourceInterface;
 
-/**
- * Class PSR0Resource
- * @package PhpSpec\Locator\PSR0
- */
 class PSR0Resource implements ResourceInterface
 {
     /**

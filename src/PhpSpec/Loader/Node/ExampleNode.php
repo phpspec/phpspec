@@ -15,10 +15,6 @@ namespace PhpSpec\Loader\Node;
 
 use ReflectionFunctionAbstract;
 
-/**
- * Class ExampleNode
- * @package PhpSpec\Loader\Node
- */
 class ExampleNode
 {
     /**

@@ -22,10 +22,6 @@ use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Wrapper\Wrapper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
-/**
- * Class SubjectMaintainer
- * @package PhpSpec\Runner\Maintainer
- */
 class SubjectMaintainer implements MaintainerInterface
 {
     /**

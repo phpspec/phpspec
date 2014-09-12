@@ -18,10 +18,6 @@ use PhpSpec\Locator\ResourceManagerInterface;
 use ReflectionClass;
 use ReflectionMethod;
 
-/**
- * Class ResourceLoader
- * @package PhpSpec\Loader
- */
 class ResourceLoader
 {
     /**

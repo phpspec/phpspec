@@ -13,10 +13,6 @@
 
 namespace PhpSpec\Loader;
 
-/**
- * Class Suite
- * @package PhpSpec\Loader
- */
 class Suite implements \Countable
 {
     /**

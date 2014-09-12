@@ -22,10 +22,6 @@ use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
-/**
- * Class ThrowMatcher
- * @package PhpSpec\Matcher
- */
 class ThrowMatcher implements MatcherInterface
 {
     /**

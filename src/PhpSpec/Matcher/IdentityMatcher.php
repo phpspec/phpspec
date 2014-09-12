@@ -17,10 +17,6 @@ use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\Example\NotEqualException;
 
-/**
- * Class IdentityMatcher
- * @package PhpSpec\Matcher
- */
 class IdentityMatcher extends BasicMatcher
 {
     /**

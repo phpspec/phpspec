@@ -15,10 +15,6 @@ namespace PhpSpec\Formatter\Html;
 
 use PhpSpec\IO\IOInterface;
 
-/**
- * Class IO
- * @package PhpSpec\Formatter\Html
- */
 class IO implements IOInterface
 {
     /**
