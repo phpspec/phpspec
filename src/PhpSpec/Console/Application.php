@@ -154,12 +154,21 @@ class Application extends BaseApplication
             $paths = array($customPath);
         }
 
+        $config = array();
         foreach ($paths as $path) {
-            if ($path && file_exists($path) && $config = Yaml::parse(file_get_contents($path))) {
-                return $config;
+            if ($path && file_exists($path) && $parsedConfig = Yaml::parse($path)) {
+                $config = $parsedConfig;
+                break;
             }
         }
 
-        return array();
+        if ($homeFolder = getenv('HOME')) {
+            $localPath = $homeFolder . '/.phpspec.yml';
+            if (file_exists($localPath) && $parsedConfig = Yaml::parse($localPath)) {
+                $config = array_replace_recursive($parsedConfig, $config);
+            }
+        }
+
+        return $config;
     }
 }
