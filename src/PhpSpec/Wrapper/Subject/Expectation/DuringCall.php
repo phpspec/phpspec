@@ -18,10 +18,6 @@ use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\Util\Instantiator;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 
-/**
- * Class DuringCall
- * @package PhpSpec\Wrapper\Subject\Expectation
- */
 abstract class DuringCall
 {
     /**

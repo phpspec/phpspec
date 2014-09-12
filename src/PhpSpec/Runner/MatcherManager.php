@@ -17,10 +17,6 @@ use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\Exception\Wrapper\MatcherNotFoundException;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 
-/**
- * Class MatcherManager
- * @package PhpSpec\Runner
- */
 class MatcherManager
 {
     /**

@@ -20,10 +20,6 @@ use PhpSpec\Exception\Wrapper\SubjectException;
 use PhpSpec\Exception\Fracture\InterfaceNotImplementedException;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
-/**
- * Class SubjectWithArrayAccess
- * @package PhpSpec\Wrapper\Subject
- */
 class SubjectWithArrayAccess
 {
     /**

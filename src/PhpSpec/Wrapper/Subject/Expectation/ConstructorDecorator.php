@@ -19,10 +19,6 @@ use PhpSpec\Exception\Fracture\FractureException;
 use PhpSpec\Util\Instantiator;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 
-/**
- * Class ConstructorDecorator
- * @package PhpSpec\Wrapper\Subject\Expectation
- */
 class ConstructorDecorator extends Decorator implements ExpectationInterface
 {
     /**

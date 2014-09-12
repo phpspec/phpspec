@@ -13,10 +13,6 @@
 
 namespace PhpSpec\Matcher;
 
-/**
- * Interface MatcherInterface
- * @package PhpSpec\Matcher
- */
 interface MatcherInterface
 {
     /**

@@ -15,10 +15,6 @@ namespace PhpSpec\Locator;
 
 use RuntimeException;
 
-/**
- * Class ResourceManager
- * @package PhpSpec\Locator
- */
 class ResourceManager implements ResourceManagerInterface
 {
     /**

@@ -18,10 +18,6 @@ use PhpSpec\SpecificationInterface;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
 
-/**
- * Class LetAndLetgoMaintainer
- * @package PhpSpec\Runner\Maintainer
- */
 class LetAndLetgoMaintainer implements MaintainerInterface
 {
     /**

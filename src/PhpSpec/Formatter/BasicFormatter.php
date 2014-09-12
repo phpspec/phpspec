@@ -21,10 +21,6 @@ use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-/**
- * Class BasicFormatter
- * @package PhpSpec\Formatter
- */
 abstract class BasicFormatter implements EventSubscriberInterface
 {
     /**

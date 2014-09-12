@@ -15,10 +15,6 @@ namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Matcher\MatcherInterface;
 
-/**
- * Class Positive
- * @package PhpSpec\Wrapper\Subject\Expectation
- */
 class Positive implements ExpectationInterface
 {
     /**

@@ -15,10 +15,6 @@ namespace PhpSpec\Util;
 
 use PhpSpec\Exception\Fracture\ClassNotFoundException;
 
-/**
- * Class Instantiator
- * @package PhpSpec\Util
- */
 class Instantiator
 {
     /**

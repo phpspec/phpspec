@@ -13,10 +13,6 @@
 
 namespace PhpSpec\Formatter\Html;
 
-/**
- * Interface ReportItem
- * @package PhpSpec\Formatter\Html
- */
 interface ReportItem
 {
     /**

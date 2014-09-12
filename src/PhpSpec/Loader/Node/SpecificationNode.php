@@ -17,10 +17,6 @@ use PhpSpec\Loader\Suite;
 use PhpSpec\Locator\ResourceInterface;
 use ReflectionClass;
 
-/**
- * Class SpecificationNode
- * @package PhpSpec\Loader\Node
- */
 class SpecificationNode implements \Countable
 {
     /**

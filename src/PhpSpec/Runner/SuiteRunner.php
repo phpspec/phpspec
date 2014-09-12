@@ -18,10 +18,6 @@ use PhpSpec\Exception\Example\StopOnFailureException;
 use PhpSpec\Loader\Suite;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
-/**
- * Class SuiteRunner
- * @package PhpSpec\Runner
- */
 class SuiteRunner
 {
     /**

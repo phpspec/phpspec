@@ -24,10 +24,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Wrapper\Unwrapper;
 
-/**
- * Class ExpectationFactory
- * @package PhpSpec\Wrapper\Subject
- */
 class ExpectationFactory
 {
     /**

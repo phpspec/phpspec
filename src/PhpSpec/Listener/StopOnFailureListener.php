@@ -18,10 +18,6 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\StopOnFailureException;
 use PhpSpec\Console\IO;
 
-/**
- * Class StopOnFailureListener
- * @package PhpSpec\Listener
- */
 class StopOnFailureListener implements EventSubscriberInterface
 {
     /**

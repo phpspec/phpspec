@@ -21,10 +21,6 @@ use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Matcher;
 
-/**
- * Class MatchersMaintainer
- * @package PhpSpec\Runner\Maintainer
- */
 class MatchersMaintainer implements MaintainerInterface
 {
     /**

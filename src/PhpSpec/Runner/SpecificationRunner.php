@@ -17,10 +17,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Event;
 use PhpSpec\Loader\Node\SpecificationNode;
 
-/**
- * Class SpecificationRunner
- * @package PhpSpec\Runner
- */
 class SpecificationRunner
 {
     /**

@@ -17,10 +17,6 @@ use PhpSpec\Formatter\Presenter\StringPresenter;
 use Exception;
 use PhpSpec\Exception\Exception as PhpSpecException;
 
-/**
- * Class HtmlPresenter
- * @package PhpSpec\Formatter\Html
- */
 class HtmlPresenter extends StringPresenter
 {
     /**

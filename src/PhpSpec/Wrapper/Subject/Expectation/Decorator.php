@@ -13,10 +13,6 @@
 
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
-/**
- * Class Decorator
- * @package PhpSpec\Wrapper\Subject\Expectation
- */
 abstract class Decorator implements ExpectationInterface
 {
     /**

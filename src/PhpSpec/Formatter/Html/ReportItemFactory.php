@@ -17,10 +17,6 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Formatter\Template as TemplateInterface;
 
-/**
- * Class ReportItemFactory
- * @package PhpSpec\Formatter\Html
- */
 class ReportItemFactory
 {
     /**

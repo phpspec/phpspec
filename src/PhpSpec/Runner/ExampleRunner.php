@@ -24,10 +24,6 @@ use PhpSpec\Exception\Example as ExampleException;
 use Prophecy\Exception as ProphecyException;
 use Exception;
 
-/**
- * Class ExampleRunner
- * @package PhpSpec\Runner
- */
 class ExampleRunner
 {
     /**

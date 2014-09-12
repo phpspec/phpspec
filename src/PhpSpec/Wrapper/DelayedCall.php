@@ -13,10 +13,6 @@
 
 namespace PhpSpec\Wrapper;
 
-/**
- * Class DelayedCall
- * @package PhpSpec\Wrapper
- */
 class DelayedCall
 {
     /**

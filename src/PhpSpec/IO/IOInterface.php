@@ -13,10 +13,6 @@
 
 namespace PhpSpec\IO;
 
-/**
- * Interface IOInterface
- * @package PhpSpec\IO
- */
 interface IOInterface
 {
     /**

@@ -18,10 +18,6 @@ use PhpSpec\SpecificationInterface;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
 
-/**
- * Interface MaintainerInterface
- * @package PhpSpec\Runner\Maintainer
- */
 interface MaintainerInterface
 {
     /**

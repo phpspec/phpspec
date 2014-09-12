@@ -16,10 +16,6 @@ namespace PhpSpec\Formatter\Html;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Formatter\Template as TemplateInterface;
 
-/**
- * Class ReportPendingItem
- * @package PhpSpec\Formatter\Html
- */
 class ReportPendingItem
 {
     /**

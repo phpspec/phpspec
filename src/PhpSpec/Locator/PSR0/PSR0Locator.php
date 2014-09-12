@@ -18,10 +18,6 @@ use PhpSpec\Locator\ResourceLocatorInterface;
 use PhpSpec\Util\Filesystem;
 use InvalidArgumentException;
 
-/**
- * Class PSR0Locator
- * @package PhpSpec\Locator\PSR0
- */
 class PSR0Locator implements ResourceLocatorInterface
 {
     /**

@@ -16,10 +16,6 @@ namespace PhpSpec\Wrapper;
 use Prophecy\Prophecy\RevealerInterface;
 use Prophecy\Prophecy\ProphecyInterface;
 
-/**
- * Class Unwrapper
- * @package PhpSpec\Wrapper
- */
 class Unwrapper implements RevealerInterface
 {
     /**

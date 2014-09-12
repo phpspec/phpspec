@@ -16,10 +16,6 @@ namespace PhpSpec\Formatter;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
 
-/**
- * Class DotFormatter
- * @package PhpSpec\Formatter
- */
 class DotFormatter extends ConsoleFormatter
 {
     /**
