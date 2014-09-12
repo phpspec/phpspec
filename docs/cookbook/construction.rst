@@ -39,14 +39,14 @@ as you might with other tools, you write:
         }
     }
 
-On one hand this means that you do not construct the object you are
+On consequence this means that you do not construct the object you are
 describing in the examples. Instead **phpspec** handles the creation of the
 object you are describing when you run the specs.
 
 The default way **phpspec** does this is the same as ``new Markdown()``.
 If it does not need any values or dependencies passed to it then this is
 fine but for many objects this will not be good enough. You can tell **phpspec**
-how you want your object to be built though.
+how you want it to create the object though.
 
 Using the Constructor
 ---------------------
