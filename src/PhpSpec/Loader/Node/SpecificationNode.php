@@ -39,6 +39,10 @@ class SpecificationNode implements \Countable
      * @var ExampleNode[]
      */
     private $examples = array();
+    /**
+     * @var string[]
+     */
+    private $warnings = array();
 
     /**
      * @param string            $title
@@ -115,5 +119,21 @@ class SpecificationNode implements \Countable
     public function count()
     {
         return count($this->examples);
+    }
+
+    /**
+     * @param string $warning
+     */
+    public function addWarning($warning)
+    {
+        $this->warnings[] = $warning;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getWarnings()
+    {
+        return $this->warnings;
     }
 }

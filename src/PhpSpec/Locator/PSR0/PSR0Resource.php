@@ -21,19 +21,27 @@ class PSR0Resource implements ResourceInterface
      * @var array
      */
     private $parts;
+
     /**
      * @var PSR0Locator
      */
     private $locator;
 
     /**
+     * @var string
+     */
+    private $specFile;
+
+    /**
      * @param array       $parts
      * @param PSR0Locator $locator
+     * @param string      $specFile
      */
-    public function __construct(array $parts, PSR0Locator $locator)
+    public function __construct(array $parts, PSR0Locator $locator, $specFile = null)
     {
-        $this->parts   = $parts;
-        $this->locator = $locator;
+        $this->parts    = $parts;
+        $this->locator  = $locator;
+        $this->specFile = $specFile;
     }
 
     /**
@@ -88,6 +96,10 @@ class PSR0Resource implements ResourceInterface
      */
     public function getSpecFilename()
     {
+        if ($this->specFile) {
+            return $this->specFile;
+        }
+
         $nsParts   = $this->parts;
         $classname = array_pop($nsParts);
         $parts     = array_merge($nsParts, explode('_', $classname));

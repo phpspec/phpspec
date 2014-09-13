@@ -142,6 +142,11 @@ class ContainerAssembler
                 $c->get('util.method_analyser')
             );
         });
+        $container->setShared('event_dispatcher.listeners.warning', function (ServiceContainer $c) {
+            return new Listener\WarningListener(
+                $c->get('console.io')
+            );
+        });
         $container->setShared('util.method_analyser', function(){
             return new MethodAnalyser();
         });

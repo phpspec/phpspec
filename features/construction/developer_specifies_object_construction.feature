@@ -97,7 +97,7 @@ Feature: Developer specifies object construction
     Then the suite should pass
 
   Scenario: Default static constructor parameter is overridden in example
-    Given the spec file "spec/Runner/ConstructorExample3/ClassWith.php" contains:
+    Given the spec file "spec/Runner/ConstructorExample3/ClassWithConstructorSpec.php" contains:
       """
       <?php
 
@@ -334,7 +334,7 @@ Feature: Developer specifies object construction
     Then the suite should pass
 
     Scenario: Developer cannot redefine constructor parameters if object is already instantiated
-    Given the spec file "spec/Runner/ConstructorExample9/ClassWithConstructorSpec.php" contains:
+    Given the spec file "spec/Runner/ConstructorExample9/ClassConstructorSpec.php" contains:
     """
     <?php
 

@@ -15,6 +15,9 @@ namespace PhpSpec\Loader;
 
 use PhpSpec\Util\MethodAnalyser;
 use PhpSpec\Locator\ResourceManagerInterface;
+use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\Locator\ResourceManager;
+
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -48,48 +51,99 @@ class ResourceLoader
     {
         $suite = new Suite();
         foreach ($this->manager->locateResources($locator) as $resource) {
-            if (!class_exists($resource->getSpecClassname()) && is_file($resource->getSpecFilename())) {
-                require_once $resource->getSpecFilename();
-            }
-            if (!class_exists($resource->getSpecClassname())) {
-                continue;
-            }
-
-            $reflection = new ReflectionClass($resource->getSpecClassname());
-
-            if ($reflection->isAbstract()) {
-                continue;
-            }
-            if (!$reflection->implementsInterface('PhpSpec\SpecificationInterface')) {
-                continue;
-            }
-
-            $spec = new Node\SpecificationNode($resource->getSrcClassname(), $reflection, $resource);
-            foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-                if (!preg_match('/^(it|its)[^a-zA-Z]/', $method->getName())) {
-                    continue;
-                }
-                if (null !== $line && !$this->lineIsInsideMethod($line, $method)) {
-                    continue;
-                }
-
-                $example = new Node\ExampleNode(str_replace('_', ' ', $method->getName()), $method);
-
-                if ($this->methodAnalyser->reflectionMethodIsEmpty($method)) {
-                    $example->markAsPending();
-                }
-
-                $spec->addExample($example);
-            }
-
-            $suite->addSpecification($spec);
+            $this->loadResouceIntoSuite($resource, $line, $suite);
         }
 
         return $suite;
     }
 
     /**
-     * @param int              $line
+     * @param ResourceInterface $resource
+     * @param integer|null      $line
+     * @param Suite             $suite
+     */
+    private function loadResouceIntoSuite(ResourceInterface $resource, $line, Suite $suite)
+    {
+        $specClasses = $this->loadSpecClasses($resource->getSpecFilename());
+
+        foreach ($specClasses as $specClassname => $reflection) {
+            $spec = new Node\SpecificationNode($resource->getSrcClassname($specClassname), $reflection, $resource);
+
+            if ($resource->getSpecClassname() != $specClassname) {
+                $spec->addWarning(sprintf(
+                    '%s is a badly named spec in %s',
+                    $specClassname,
+                    $resource->getSpecFilename()
+                ));
+            }
+
+            foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+                $this->addExampleToSpecification($method, $line, $spec);
+            }
+
+            $suite->addSpecification($spec);
+        }
+    }
+
+    /**
+     * @param string $filename
+     *
+     * @return ReflectionClass[string]
+     */
+    private function loadSpecClasses($filename)
+    {
+        $classesBefore = get_declared_classes();
+        require_once $filename;
+        $classesLoaded = array_diff(get_declared_classes(), $classesBefore);
+        $specs = array();
+
+        foreach ($classesLoaded as $specClassname) {
+            if ($specClassname === 'PhpSpec\ObjectBehavior') {
+                continue;
+            }
+
+            $reflection = new ReflectionClass($specClassname);
+
+            if ($reflection->isAbstract()) {
+                continue;
+            }
+
+            if (!$reflection->implementsInterface('PhpSpec\SpecificationInterface')) {
+                continue;
+            }
+
+            $specs[$specClassname] = $reflection;
+        }
+
+        return $specs;
+    }
+
+    /**
+     * @param ReflectionMethod       $method
+     * @param integer|null           $line
+     * @param Node\SpecificationNode $spec
+     */
+    private function addExampleToSpecification(ReflectionMethod $method, $line, Node\SpecificationNode $spec)
+    {
+        if (!preg_match('/^(it|its)[^a-zA-Z]/', $method->getName())) {
+            return;
+        }
+
+        if (null !== $line && !$this->lineIsInsideMethod($line, $method)) {
+            return;
+        }
+
+        $example = new Node\ExampleNode(str_replace('_', ' ', $method->getName()), $method);
+
+        if ($this->methodAnalyser->reflectionMethodIsEmpty($method)) {
+            $example->markAsPending();
+        }
+
+        $spec->addExample($example);
+    }
+
+    /**
+     * @param $line
      * @param ReflectionMethod $method
      *
      * @return bool

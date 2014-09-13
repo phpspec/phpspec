@@ -62,4 +62,12 @@ class SpecificationNodeSpec extends ObjectBehavior
 
         $this->count()->shouldReturn(3);
     }
+
+    function it_stores_warning_messages()
+    {
+        $this->addWarning('warning 1');
+        $this->addWarning('warning 2');
+
+        $this->getWarnings()->shouldReturn(array('warning 1', 'warning 2'));
+    }
 }
