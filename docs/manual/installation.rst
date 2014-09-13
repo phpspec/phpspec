@@ -43,4 +43,3 @@ to the ``require-dev`` section and run:
 .. code-block:: bash
 
     $ composer update phpspec/phpspec
-

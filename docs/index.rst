@@ -49,3 +49,5 @@ Learn more from :doc:`the documentation <manual/introduction>`.
    cookbook/construction
    cookbook/matchers
    cookbook/templates
+   cookbook/extensions
+   cookbook/wrapped-objects

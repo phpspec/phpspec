@@ -60,3 +60,10 @@ Metrics
 ~~~~~~~
 
  * `Code coverage <https://github.com/henrikbjorn/PhpSpecCodeCoverageExtension>`_
+
+Miscellaneous
+~~~~~~~~~~~~~
+
+ * `Prepare <https://github.com/coduo/phpspec-prepare-extension>`_
+ * `Data provider <https://github.com/coduo/phpspec-data-provider-extension`_
+ * `Matcher extension <https://github.com/coduo/phpspec-matcher-extension>`_

@@ -39,19 +39,19 @@ as you might with other tools, you write:
         }
     }
 
-One thing this means is that you do not construct the object you are
-describing in the examples. **phpspec** instead handles creating the
+On consequence this means that you do not construct the object you are
+describing in the examples. Instead **phpspec** handles the creation of the
 object you are describing when you run the specs.
 
 The default way **phpspec** does this is the same as ``new Markdown()``.
-If it does not need any values or dependencies passing to it then this is
+If it does not need any values or dependencies to be passed to it then this is
 fine but for many objects this will not be good enough. You can tell **phpspec**
 how you want it to create the object though.
 
 Using the Constructor
 ---------------------
 
-You can tell phpspec to pass values to the constructor when it constructs the object:
+You can tell **phpspec** to pass values to the constructor when it constructs the object:
 
 .. code-block:: php
 
@@ -88,7 +88,7 @@ only have a single constructor in PHP.
 
         class Markdown
         {
-            static public function createForWriting(Writer $writer)
+            public static function createForWriting(Writer $writer)
             {
                 $markdown = new Self();
                 $markdown->writer = $writer;
@@ -148,14 +148,14 @@ call ``beConstructedWith`` will determine how **phpspec** constructs the object:
 
             function it_outputs_converted_text(Writer $writer)
             {
-                //constructed with second argument set to true
-                //...
+                // constructed with second argument set to true
+                // ...
             }
 
             function it_does_something_if_argument_is_false(Writer $writer)
             {
                 $this->beConstructedWith($writer, false);
-                //constructed with second argument set to false
-                //...
+                // constructed with second argument set to false
+                // ...
             }
         }
