@@ -35,7 +35,7 @@ class RunCommand extends Command
                     new InputOption('no-code-generation', null , InputOption::VALUE_NONE, 'Do not prompt for missing method/class generation'),
                     new InputOption('no-rerun', null , InputOption::VALUE_NONE, 'Do not rerun the suite after code generation'),
                     new InputOption('fake', null , InputOption::VALUE_NONE, 'Automatically fake return values when possible'),
-                    new InputOption('bootstrap', 'b', InputOption::VALUE_OPTIONAL, 'bootstrap php file that is run before the specs', "SpecHelper.php")
+                    new InputOption('bootstrap', 'b', InputOption::VALUE_REQUIRED, 'bootstrap php file that is run before the specs')
                 ))
             ->setDescription('Runs specifications')
             ->setHelp(<<<EOF
