@@ -16,7 +16,7 @@ class ProgressFormatterSpec extends ObjectBehavior
         $this->beConstructedWith($presenter, $io, $stats);
     }
 
-    function it_is_an_event_listener()
+    function it_is_an_event_subscriber()
     {
         $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
     }

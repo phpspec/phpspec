@@ -64,7 +64,9 @@ class TemplateRendererSpec extends ObjectBehavior
     {
         $fs->pathExists('location1'.DIRECTORY_SEPARATOR.'some_file.tpl')->willReturn(false);
         $fs->pathExists('location2'.DIRECTORY_SEPARATOR.'some_file.tpl')->willReturn(true);
+        $fs->pathExists('location3'.DIRECTORY_SEPARATOR.'some_file.tpl')->willReturn(true);
         $fs->getFileContents('location2'.DIRECTORY_SEPARATOR.'some_file.tpl')->willReturn('cont');
+        $fs->getFileContents('location3'.DIRECTORY_SEPARATOR.'some_file.tpl')->willReturn('cont2');
 
         $this->setLocations(array('location1', 'location2', 'location3'));
         $this->render('some_file')->shouldReturn('cont');
@@ -89,7 +91,7 @@ class TemplateRendererSpec extends ObjectBehavior
         ))->shouldReturn('Template #2. From tpl spec.');
     }
 
-    function it_returns_null_if_template_is_not_found_in_any_of_registered_locations()
+    function it_returns_null_if_template_is_not_found_in_any_registered_locations()
     {
         $this->render('some_file')->shouldReturn(null);
     }
