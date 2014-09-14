@@ -96,13 +96,12 @@ EOF
         $container = $this->getApplication()->getContainer();
         $bootstrap = $input->getOption("bootstrap");
 
-        if (!empty($bootstrap)) {
-            $bootstrapFile = getcwd() . DIRECTORY_SEPARATOR . $bootstrap;
-            if (!is_file($bootstrapFile)) {
-                throw new \InvalidArgumentException(sprintf("Bootstrap file '%s' does not exist", $bootstrap));
+        if ($bootstrap) {
+            if (!is_file($bootstrap)) {
+                throw new \RuntimeException(sprintf("Bootstrap file '%s' does not exist", $bootstrap));
             }
 
-            require $bootstrapFile;
+            require $bootstrap;
         }
 
         $container->setParam('formatter.name',
