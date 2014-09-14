@@ -21,7 +21,7 @@ class NamedConstructorGeneratorSpec extends ObjectBehavior
         $this->shouldBeAnInstanceOf('PhpSpec\CodeGenerator\Generator\GeneratorInterface');
     }
 
-    function it_supports_static_constructor_generations(ResourceInterface $resource)
+    function it_supports_static_constructor_generation(ResourceInterface $resource)
     {
         $this->supports($resource, 'named_constructor', array())->shouldReturn(true);
     }

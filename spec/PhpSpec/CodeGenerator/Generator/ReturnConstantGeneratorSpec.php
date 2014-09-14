@@ -21,13 +21,18 @@ class ReturnConstantGeneratorSpec extends ObjectBehavior
         $this->shouldHaveType('PhpSpec\CodeGenerator\Generator\GeneratorInterface');
     }
 
-    function it_has_priority_zero()
-    {
-        $this->getPriority()->shouldReturn(0);
-    }
-
     function it_supports_returnConstant_generation(ResourceInterface $resource)
     {
         $this->supports($resource, 'returnConstant', array())->shouldReturn(true);
+    }
+
+    function it_does_not_support_anything_else(ResourceInterface $resource)
+    {
+        $this->supports($resource, 'anything_else', array())->shouldReturn(false);
+    }
+
+    function its_priority_is_0()
+    {
+        $this->getPriority()->shouldReturn(0);
     }
 }

@@ -30,7 +30,7 @@ class IOSpec extends ObjectBehavior
         $this->shouldHaveType('PhpSpec\IO\IOInterface');
     }
 
-    function it_is_code_generation_ready_if_no_input_config_say_otherwise()
+    function it_is_code_generation_ready_if_no_input_config_says_otherwise()
     {
         $this->isCodeGenerationEnabled()->shouldReturn(true);
     }
@@ -56,7 +56,7 @@ class IOSpec extends ObjectBehavior
         $this->isCodeGenerationEnabled()->shouldReturn(false);
     }
 
-    function it_will_not_stop_on_failure_if_no_input_config_say_otherwise()
+    function it_will_not_stop_on_failure_if_no_input_config_says_otherwise()
     {
         $this->isStopOnFailureEnabled()->shouldReturn(false);
     }
@@ -107,7 +107,7 @@ class IOSpec extends ObjectBehavior
         $this->isFakingEnabled()->shouldReturn(false);
     }
 
-    function it_will_enable_faking_if_command_line_option_is_Set($input, $config)
+    function it_will_enable_faking_if_command_line_option_is_set($input, $config)
     {
         $input->getOption('fake')->willReturn(true);
         $config->isFakingEnabled()->willReturn(false);

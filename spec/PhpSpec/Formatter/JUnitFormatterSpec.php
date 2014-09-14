@@ -23,6 +23,11 @@ class JUnitFormatterSpec extends ObjectBehavior
         $this->beConstructedWith($presenter, $io, $stats);
     }
 
+    function it_is_an_event_subscriber()
+    {
+        $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
+    }
+
     function it_stores_a_testcase_node_after_passed_example_run(
         ExampleEvent $event,
         SpecificationNode $specification,

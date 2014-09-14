@@ -22,7 +22,7 @@ class ClassGeneratorSpec extends ObjectBehavior
         $this->shouldBeAnInstanceOf('PhpSpec\CodeGenerator\Generator\GeneratorInterface');
     }
 
-    function it_supports_class_generations(ResourceInterface $resource)
+    function it_supports_class_generation(ResourceInterface $resource)
     {
         $this->supports($resource, 'class', array())->shouldReturn(true);
     }
