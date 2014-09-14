@@ -7,7 +7,7 @@ Upcoming
   * Allow examples to mark themselves as skipped
   * PSR-4 support
   * PSR-0 locator now supports underscores correctly
-  * Ability to specify a custom bootstrap file (for autoloader registration etc)
+  * Ability to specify a custom bootstrap file using '--bootstrap' (for autoloader registration etc)
   * Ability to have a personal .phpspec.yml in home folder
   * Progress bar grows from left to right and flickers less
   * Improved diffs for object comparison
