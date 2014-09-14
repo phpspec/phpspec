@@ -7,6 +7,8 @@ Upcoming
   * Allow examples to mark themselves as skipped
   * PSR-4 support
   * PSR-0 locator now supports underscores correctly
+  * Ability to specify a custom bootstrap file (for autoloader registration etc)
+  * Ability to have a personal .phpspec.yml in home folder
   * Progress bar grows from left to right and flickers less
   * Improved diffs for object comparison
   * Throw an exception when construction method is redefined
@@ -20,6 +22,7 @@ Upcoming
   * Support for non-standard Composer autoloader location
   * Improved hhvm support
   * Extensions can now register new command
+  * Resource locator de-duplicates resources (supports custom locators in extensions)
 
 2.0.1 / 2014-07-01
 ==================
