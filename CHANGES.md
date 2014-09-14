@@ -1,5 +1,5 @@
-Upcoming
-========
+2.1.0-RC1 / 2014-09-14
+======================
 
   * Allow objects to be instantiated via static factory methods
   * Automatic generation of return statements using '--fake'
