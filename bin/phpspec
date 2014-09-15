@@ -5,6 +5,8 @@ define('PHPSPEC_VERSION', '2.1-dev');
 
 if (is_file($autoload = getcwd() . '/vendor/autoload.php')) {
     require $autoload;
+} elseif (is_file($autoload = getcwd() . '/../../autoload.php')) {
+    require $autoload;
 }
 
 if (is_file($autoload = __DIR__ . '/../vendor/autoload.php')) {
