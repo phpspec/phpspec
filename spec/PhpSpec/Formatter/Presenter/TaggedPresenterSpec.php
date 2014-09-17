@@ -2,8 +2,8 @@
 
 namespace spec\PhpSpec\Formatter\Presenter;
 
-use PhpSpec\ObjectBehavior;
 use PhpSpec\Formatter\Presenter\Differ\Differ;
+use PhpSpec\ObjectBehavior;
 
 class TaggedPresenterSpec extends ObjectBehavior
 {

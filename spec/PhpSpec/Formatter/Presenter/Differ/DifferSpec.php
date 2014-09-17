@@ -2,15 +2,14 @@
 
 namespace spec\PhpSpec\Formatter\Presenter\Differ;
 
-use PhpSpec\ObjectBehavior;
 use PhpSpec\Formatter\Presenter\Differ\EngineInterface;
+use PhpSpec\ObjectBehavior;
 
 class DifferSpec extends ObjectBehavior
 {
     function it_chooses_proper_engine_based_on_values(
         EngineInterface $engine1, EngineInterface $engine2
-    )
-    {
+    ) {
         $engine1->supports('string1', 'string2')->willReturn(true);
         $engine2->supports('string1', 'string2')->willReturn(false);
         $engine1->compare('string1', 'string2')->willReturn('string1 !== string2');

@@ -5,7 +5,6 @@ namespace spec\PhpSpec\Listener;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Process\ReRunner;
-use Prophecy\Argument;
 
 class RerunListenerSpec extends ObjectBehavior
 {

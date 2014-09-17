@@ -2,12 +2,12 @@
 
 namespace spec\PhpSpec\Matcher;
 
-use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
-
+use ArrayObject;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 
-use ArrayObject;
+use PhpSpec\ObjectBehavior;
+
+use Prophecy\Argument;
 
 class ArrayKeyMatcherSpec extends ObjectBehavior
 {

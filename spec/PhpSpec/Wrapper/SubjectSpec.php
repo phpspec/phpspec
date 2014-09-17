@@ -3,14 +3,14 @@
 namespace spec\PhpSpec\Wrapper;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
-
-use PhpSpec\Wrapper\Wrapper;
-use PhpSpec\Wrapper\Subject\WrappedObject;
 use PhpSpec\Wrapper\Subject\Caller;
-use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
+
 use PhpSpec\Wrapper\Subject\ExpectationFactory;
 use PhpSpec\Wrapper\Subject\Expectation\ExpectationInterface;
+use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
+use PhpSpec\Wrapper\Subject\WrappedObject;
+use PhpSpec\Wrapper\Wrapper;
+use Prophecy\Argument;
 
 class SubjectSpec extends ObjectBehavior
 {
@@ -34,7 +34,7 @@ class SubjectSpec extends ObjectBehavior
     function it_passes_the_existing_subject_to_expectation(Wrapper $wrapper, WrappedObject $wrappedObject, Caller $caller,
         SubjectWithArrayAccess $arrayAccess, ExpectationFactory $expectationFactory, ExpectationInterface $expectation)
     {
-        $existingSubject = new \ArrayObject;
+        $existingSubject = new \ArrayObject();
         $this->beConstructedWith($existingSubject, $wrapper, $wrappedObject, $caller, $arrayAccess, $expectationFactory);
 
         $expectation->match(Argument::cetera())->willReturn(true);

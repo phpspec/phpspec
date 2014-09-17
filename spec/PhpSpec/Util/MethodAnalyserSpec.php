@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Util;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class MethodAnalyserSpec extends ObjectBehavior
 {
@@ -37,7 +36,9 @@ class MethodAnalyserSpec extends ObjectBehavior
 
 class ExampleObject
 {
-    public function emptyMethod(){}
+    public function emptyMethod()
+    {
+    }
 
     public function commentedMethod()
     {
@@ -59,10 +60,16 @@ class ExampleObject
         // another comment
     }
 
-    public function nonEmptyOneLineMethod(){ return 'foo'; }
+    public function nonEmptyOneLineMethod()
+    {
+        return 'foo';
+    }
     public function nonEmptyOneLineMethod2()
-    { return 'foo'; }
-    public function nonEmptyOneLineMethod3(){
+    {
+        return 'foo';
+    }
+    public function nonEmptyOneLineMethod3()
+    {
         return 'foo';
     }
 }

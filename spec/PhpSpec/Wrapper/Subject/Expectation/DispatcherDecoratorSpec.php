@@ -2,15 +2,15 @@
 
 namespace spec\PhpSpec\Wrapper\Subject\Expectation;
 
+use PhpSpec\Event\ExpectationEvent;
+use PhpSpec\Loader\Node\ExampleNode;
+
+use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Wrapper\Subject\Expectation\ExpectationInterface;
 use Prophecy\Argument;
 
-use PhpSpec\Wrapper\Subject\Expectation\ExpectationInterface;
-use PhpSpec\Loader\Node\ExampleNode;
-use PhpSpec\Matcher\MatcherInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-
-use PhpSpec\Event\ExpectationEvent;
 
 class DispatcherDecoratorSpec extends ObjectBehavior
 {
@@ -27,7 +27,7 @@ class DispatcherDecoratorSpec extends ObjectBehavior
     function it_dispatches_before_and_after_events(EventDispatcherInterface $dispatcher)
     {
         $alias = 'be';
-        $subject = new \stdClass;
+        $subject = new \stdClass();
         $arguments = array();
 
         $dispatcher->dispatch('beforeExpectation', Argument::type('PhpSpec\Event\ExpectationEvent'))->shouldBeCalled();
@@ -38,7 +38,7 @@ class DispatcherDecoratorSpec extends ObjectBehavior
     function it_decorates_expectation_with_failed_event(ExpectationInterface $expectation, EventDispatcherInterface $dispatcher)
     {
         $alias = 'be';
-        $subject = new \stdClass;
+        $subject = new \stdClass();
         $arguments = array();
 
         $expectation->match(Argument::cetera())->willThrow('PhpSpec\Exception\Example\FailureException');
@@ -52,7 +52,7 @@ class DispatcherDecoratorSpec extends ObjectBehavior
     function it_decorates_expectation_with_broken_event(ExpectationInterface $expectation, EventDispatcherInterface $dispatcher)
     {
         $alias = 'be';
-        $subject = new \stdClass;
+        $subject = new \stdClass();
         $arguments = array();
 
         $expectation->match(Argument::cetera())->willThrow('\RuntimeException');

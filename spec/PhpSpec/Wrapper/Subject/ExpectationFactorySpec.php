@@ -2,14 +2,14 @@
 
 namespace spec\PhpSpec\Wrapper\Subject;
 
+use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Runner\MatcherManager;
+
 use PhpSpec\Wrapper\Subject;
 use Prophecy\Argument;
-
-use PhpSpec\Loader\Node\ExampleNode;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use PhpSpec\Runner\MatcherManager;
 
 class ExpectationFactorySpec extends ObjectBehavior
 {

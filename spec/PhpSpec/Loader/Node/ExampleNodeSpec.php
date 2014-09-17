@@ -2,10 +2,9 @@
 
 namespace spec\PhpSpec\Loader\Node;
 
-use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
-
 use PhpSpec\Loader\Node\SpecificationNode;
+
+use PhpSpec\ObjectBehavior;
 
 use ReflectionFunctionAbstract;
 

@@ -2,13 +2,12 @@
 
 namespace spec\PhpSpec\Event;
 
-use PhpSpec\ObjectBehavior;
-use PhpSpec\Loader\Suite;
-use PhpSpec\Loader\Node\SpecificationNode;
-use PhpSpec\Loader\Node\ExampleNode;
-use PhpSpec\Matcher\MatcherInterface;
-use Prophecy\Argument;
 use Exception;
+use PhpSpec\Loader\Node\ExampleNode;
+use PhpSpec\Loader\Node\SpecificationNode;
+use PhpSpec\Loader\Suite;
+use PhpSpec\Matcher\MatcherInterface;
+use PhpSpec\ObjectBehavior;
 
 class ExpectationEventSpec extends ObjectBehavior
 {
