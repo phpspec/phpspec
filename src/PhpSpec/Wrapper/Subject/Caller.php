@@ -346,6 +346,7 @@ class Caller
     private function namedConstructorNotFound($method, array $arguments = array())
     {
         $className = $this->wrappedObject->getClassName();
+
         return $this->exceptionFactory->namedConstructorNotFound($className, $method, $arguments);
     }
 

@@ -85,7 +85,7 @@ class MethodGenerator implements GeneratorInterface
         }
 
         $code = $this->filesystem->getFileContents($filepath);
-        $code = preg_replace('/}[ \n]*$/', rtrim($content) ."\n}\n", trim($code));
+        $code = preg_replace('/}[ \n]*$/', rtrim($content)."\n}\n", trim($code));
         $this->filesystem->putFileContents($filepath, $code);
 
         $this->io->writeln(sprintf(
@@ -107,6 +107,6 @@ class MethodGenerator implements GeneratorInterface
      */
     protected function getTemplate()
     {
-        return file_get_contents(__DIR__ . '/templates/method.template');
+        return file_get_contents(__DIR__.'/templates/method.template');
     }
 }

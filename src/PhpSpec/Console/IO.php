@@ -230,9 +230,8 @@ class IO implements IOInterface
 
     private function getCommonPrefix($stringA, $stringB)
     {
-        for ($i=0; $i<min(strlen($stringA), strlen($stringB)); $i++)
-        {
-            if ($stringA[$i]!=$stringB[$i]) {
+        for ($i = 0; $i<min(strlen($stringA), strlen($stringB)); $i++) {
+            if ($stringA[$i] != $stringB[$i]) {
                 break;
             }
         }
@@ -279,10 +278,10 @@ class IO implements IOInterface
     }
 
     /**
-     * @param string       $question
-     * @param callable     $validator
-     * @param int|false    $attempts
-     * @param string|null  $default
+     * @param string      $question
+     * @param callable    $validator
+     * @param int|false   $attempts
+     * @param string|null $default
      *
      * @return string
      */

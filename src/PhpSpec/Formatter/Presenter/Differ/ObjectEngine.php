@@ -27,7 +27,7 @@ class ObjectEngine implements EngineInterface
     private $stringDiffer;
 
     /**
-     * @param Exporter $exporter
+     * @param Exporter     $exporter
      * @param StringEngine $stringDiffer
      */
     public function __construct(Exporter $exporter, StringEngine $stringDiffer)

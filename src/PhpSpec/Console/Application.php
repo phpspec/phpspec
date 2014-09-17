@@ -163,7 +163,7 @@ class Application extends BaseApplication
         }
 
         if ($homeFolder = getenv('HOME')) {
-            $localPath = $homeFolder . '/.phpspec.yml';
+            $localPath = $homeFolder.'/.phpspec.yml';
             if (file_exists($localPath) && $parsedConfig = Yaml::parse($localPath)) {
                 $config = array_replace_recursive($parsedConfig, $config);
             }

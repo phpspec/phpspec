@@ -28,6 +28,7 @@ class CreateObjectTemplate
                 $this->getTemplate(), $values
             );
         }
+
         return $content;
     }
 
@@ -36,7 +37,7 @@ class CreateObjectTemplate
      */
     private function getTemplate()
     {
-        return file_get_contents(__DIR__ . '/templates/named_constructor_create_object.template');
+        return file_get_contents(__DIR__.'/templates/named_constructor_create_object.template');
     }
 
     /**
@@ -52,9 +53,9 @@ class CreateObjectTemplate
         return array(
             '%methodName%'           => $this->methodName,
             '%arguments%'            => $argString,
-            '%returnVar%'            => '$' . lcfirst($this->className),
+            '%returnVar%'            => '$'.lcfirst($this->className),
             '%className%'            => $this->className,
             '%constructorArguments%' => ''
         );
     }
-} 
+}
