@@ -14,8 +14,8 @@
 namespace PhpSpec\Formatter;
 
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
+use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\IO\IOInterface as IO;
 use PhpSpec\Listener\StatisticsCollector;

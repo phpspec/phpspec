@@ -124,7 +124,7 @@ class ExceptionFactory
     {
         return new SubjectException(sprintf(
             'Call to a member function %s on a non-object.',
-            $this->presenter->presentString($method.'()')
+            $this->presenter->presentString($method . '()')
         ));
     }
 

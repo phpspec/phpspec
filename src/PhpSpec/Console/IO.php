@@ -13,11 +13,11 @@
 
 namespace PhpSpec\Console;
 
+use PhpSpec\Config\OptionsConfig;
 use PhpSpec\IO\IOInterface;
 use Symfony\Component\Console\Helper\DialogHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use PhpSpec\Config\OptionsConfig;
 
 /**
  * Class IO deals with input and output from command line interaction
@@ -183,7 +183,7 @@ class IO implements IOInterface
         }
 
         $this->output->write($message, $newline);
-        $this->lastMessage = $message.($newline ? "\n" : '');
+        $this->lastMessage = $message . ($newline ? "\n" : '');
     }
 
     /**
@@ -225,14 +225,13 @@ class IO implements IOInterface
             $this->writeln();
         }
 
-        $this->lastMessage = $message.($newline ? "\n" : '');
+        $this->lastMessage = $message . ($newline ? "\n" : '');
     }
 
     private function getCommonPrefix($stringA, $stringB)
     {
-        for ($i=0; $i<min(strlen($stringA), strlen($stringB)); $i++)
-        {
-            if ($stringA[$i]!=$stringB[$i]) {
+        for ($i = 0; $i<min(strlen($stringA), strlen($stringB)); $i++) {
+            if ($stringA[$i] != $stringB[$i]) {
                 break;
             }
         }
@@ -266,12 +265,12 @@ class IO implements IOInterface
     public function askConfirmation($question, $default = true)
     {
         $lines   = array();
-        $lines[] = '<question>'.str_repeat(' ', 70)."</question>";
+        $lines[] = '<question>' . str_repeat(' ', 70) . "</question>";
         foreach (explode("\n", wordwrap($question), 50) as $line) {
-            $lines[] = '<question>  '.str_pad($line, 68).'</question>';
+            $lines[] = '<question>  ' . str_pad($line, 68) . '</question>';
         }
-        $lines[] = '<question>'.str_repeat(' ', 62).'</question> <value>'.
-            ($default ? '[Y/n]' : '[y/N]').'</value> ';
+        $lines[] = '<question>' . str_repeat(' ', 62) . '</question> <value>' .
+            ($default ? '[Y/n]' : '[y/N]') . '</value> ';
 
         return $this->dialogHelper->askConfirmation(
             $this->output, implode("\n", $lines), $default
@@ -279,10 +278,10 @@ class IO implements IOInterface
     }
 
     /**
-     * @param string       $question
-     * @param callable     $validator
-     * @param int|false    $attempts
-     * @param string|null  $default
+     * @param string      $question
+     * @param callable    $validator
+     * @param int|false   $attempts
+     * @param string|null $default
      *
      * @return string
      */
@@ -301,7 +300,7 @@ class IO implements IOInterface
     {
         return implode("\n", array_map(
             function ($line) use ($indent) {
-                return str_repeat(' ', $indent).$line;
+                return str_repeat(' ', $indent) . $line;
             },
             explode("\n", $text)
         ));

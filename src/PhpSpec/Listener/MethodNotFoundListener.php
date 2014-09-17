@@ -13,13 +13,13 @@
 
 namespace PhpSpec\Listener;
 
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use PhpSpec\Console\IO;
-use PhpSpec\Locator\ResourceManagerInterface;
 use PhpSpec\CodeGenerator\GeneratorManager;
+use PhpSpec\Console\IO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
+use PhpSpec\Locator\ResourceManagerInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class MethodNotFoundListener implements EventSubscriberInterface
 {
@@ -53,7 +53,7 @@ class MethodNotFoundListener implements EventSubscriberInterface
             return;
         }
 
-        $this->methods[get_class($exception->getSubject()).'::'.$exception->getMethodName()] = $exception->getArguments();
+        $this->methods[get_class($exception->getSubject()) . '::' . $exception->getMethodName()] = $exception->getArguments();
     }
 
     public function afterSuite(SuiteEvent $event)

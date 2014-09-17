@@ -13,9 +13,9 @@
 
 namespace PhpSpec\Matcher;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\Example\NotEqualException;
+use PhpSpec\Formatter\Presenter\PresenterInterface;
 
 class IdentityMatcher extends BasicMatcher
 {
@@ -63,7 +63,7 @@ class IdentityMatcher extends BasicMatcher
      */
     protected function matches($subject, array $arguments)
     {
-       return $subject === $arguments[0];
+        return $subject === $arguments[0];
     }
 
     /**

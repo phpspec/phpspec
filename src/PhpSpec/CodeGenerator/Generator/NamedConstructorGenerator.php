@@ -33,7 +33,7 @@ class NamedConstructorGenerator implements GeneratorInterface
     {
         $this->io         = $io;
         $this->templates  = $templates;
-        $this->filesystem = $filesystem ?: new Filesystem;
+        $this->filesystem = $filesystem ?: new Filesystem();
     }
 
     /**
@@ -61,7 +61,7 @@ class NamedConstructorGenerator implements GeneratorInterface
         $content = $this->getContent($resource, $methodName, $arguments);
 
         $code = $this->filesystem->getFileContents($filepath);
-        $code = preg_replace('/}[ \n]*$/', rtrim($content) ."\n}\n", trim($code));
+        $code = preg_replace('/}[ \n]*$/', rtrim($content) . "\n}\n", trim($code));
         $this->filesystem->putFileContents($filepath, $code);
 
         $this->io->writeln(sprintf(
@@ -79,9 +79,9 @@ class NamedConstructorGenerator implements GeneratorInterface
     }
 
     /**
-     * @param ResourceInterface $resource
-     * @param string            $methodName
-     * @param array             $arguments
+     * @param  ResourceInterface $resource
+     * @param  string            $methodName
+     * @param  array             $arguments
      * @return string
      */
     private function getContent(ResourceInterface $resource, $methodName, $arguments)

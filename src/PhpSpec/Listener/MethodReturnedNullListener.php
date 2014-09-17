@@ -42,8 +42,8 @@ class MethodReturnedNullListener implements EventSubscriberInterface
     private $methodAnalyser;
 
     /**
-     * @param IO $io
-     * @param ResourceManager $resources
+     * @param IO               $io
+     * @param ResourceManager  $resources
      * @param GeneratorManager $generator
      */
     public function __construct(IO $io, ResourceManager $resources, GeneratorManager $generator, MethodAnalyser $methodAnalyser)
@@ -106,7 +106,7 @@ class MethodReturnedNullListener implements EventSubscriberInterface
 
         if (!array_key_exists($key, $this->nullMethods)) {
             $this->nullMethods[$key] = array(
-                'class'=> $class,
+                'class' => $class,
                 'method' => $method,
                 'expected' => array()
             );
@@ -126,9 +126,7 @@ class MethodReturnedNullListener implements EventSubscriberInterface
         }
 
         foreach ($this->nullMethods as $methodString => $failedCall) {
-
             $failedCall['expected'] = array_unique($failedCall['expected']);
-
 
             if (count($failedCall['expected'])>1) {
                 continue;
@@ -141,19 +139,17 @@ class MethodReturnedNullListener implements EventSubscriberInterface
 
             try {
                 $resource = $this->resources->createResource($class);
-            }
-            catch (\RuntimeException $exception) {
+            } catch (\RuntimeException $exception) {
                 continue;
             }
 
-            if($this->io->askConfirmation($message)) {
+            if ($this->io->askConfirmation($message)) {
                 $this->generator->generate(
                     $resource, 'returnConstant',
-                    array('method'=>$failedCall['method'], 'expected'=>$expected)
+                    array('method' => $failedCall['method'], 'expected' => $expected)
                 );
                 $event->markAsWorthRerunning();
             }
         }
     }
 }
-

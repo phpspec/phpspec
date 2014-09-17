@@ -14,12 +14,12 @@
 namespace PhpSpec\Formatter;
 
 use PhpSpec\Console\IO;
-use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Event\SuiteEvent;
 
 class ProgressFormatter extends ConsoleFormatter
 {
-    const WIDTH=50;
+    const WIDTH = 50;
 
     public function afterExample(ExampleEvent $event)
     {
@@ -87,7 +87,7 @@ class ProgressFormatter extends ConsoleFormatter
         $stats = $this->getStatisticsCollector();
         $specProgress = ($stats->getTotalSpecs()+1)/$stats->getTotalSpecsCount();
 
-        $barLengths= array_map(
+        $barLengths = array_map(
             function ($percent) use ($specProgress) {
                 $length = $percent / 2;
                 $res = $length == 0 || $length > 1 ? floor($length * $specProgress) : 1;
@@ -102,9 +102,9 @@ class ProgressFormatter extends ConsoleFormatter
     }
 
     /**
-     * @param array $barLengths
-     * @param array $percents
-     * @param boolean $isDecorated
+     * @param  array   $barLengths
+     * @param  array   $percents
+     * @param  boolean $isDecorated
      * @return array
      */
     private function formatProgressOutput($barLengths, $percents, $isDecorated)
@@ -140,9 +140,9 @@ class ProgressFormatter extends ConsoleFormatter
     }
 
     /**
-     * @param IO $io
+     * @param IO    $io
      * @param array $progress
-     * @param int $total
+     * @param int   $total
      */
     private function updateProgressBar(IO $io, array $progress, $total)
     {

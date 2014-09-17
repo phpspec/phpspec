@@ -28,6 +28,7 @@ class CreateObjectTemplate
                 $this->getTemplate(), $values
             );
         }
+
         return $content;
     }
 
@@ -45,7 +46,7 @@ class CreateObjectTemplate
     private function getValues()
     {
         $argString = count($this->arguments)
-            ? '$argument'.implode(', $argument',  range(1, count($this->arguments)))
+            ? '$argument' . implode(', $argument',  range(1, count($this->arguments)))
             : ''
         ;
 
@@ -57,4 +58,4 @@ class CreateObjectTemplate
             '%constructorArguments%' => ''
         );
     }
-} 
+}

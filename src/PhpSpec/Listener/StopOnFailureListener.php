@@ -13,10 +13,10 @@
 
 namespace PhpSpec\Listener;
 
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use PhpSpec\Console\IO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\StopOnFailureException;
-use PhpSpec\Console\IO;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class StopOnFailureListener implements EventSubscriberInterface
 {
@@ -55,8 +55,7 @@ class StopOnFailureListener implements EventSubscriberInterface
         }
 
         if ($event->getResult() === ExampleEvent::FAILED
-         || $event->getResult() === ExampleEvent::BROKEN)
-        {
+         || $event->getResult() === ExampleEvent::BROKEN) {
             throw new StopOnFailureException('Example failed');
         }
     }

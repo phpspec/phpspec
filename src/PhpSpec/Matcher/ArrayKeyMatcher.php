@@ -13,9 +13,9 @@
 
 namespace PhpSpec\Matcher;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Exception\Example\FailureException;
 use ArrayAccess;
+use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Formatter\Presenter\PresenterInterface;
 
 class ArrayKeyMatcher extends BasicMatcher
 {

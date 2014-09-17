@@ -13,17 +13,17 @@
 
 namespace PhpSpec\Wrapper\Subject;
 
+use PhpSpec\Event\MethodCallEvent;
 use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Wrapper\Subject;
-use PhpSpec\Wrapper\Wrapper;
 use PhpSpec\Wrapper\Unwrapper;
-use PhpSpec\Event\MethodCallEvent;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface as Dispatcher;
+use PhpSpec\Wrapper\Wrapper;
 use ReflectionClass;
+use ReflectionException;
 use ReflectionMethod;
 use ReflectionProperty;
-use ReflectionException;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface as Dispatcher;
 
 class Caller
 {
@@ -128,7 +128,7 @@ class Caller
     public function get($property)
     {
         if ($this->lookingForConstants($property) && $this->constantDefined($property)) {
-            return constant($this->wrappedObject->getClassName().'::'.$property);
+            return constant($this->wrappedObject->getClassName() . '::' . $property);
         }
 
         if (null === $this->getWrappedObject()) {
@@ -346,6 +346,7 @@ class Caller
     private function namedConstructorNotFound($method, array $arguments = array())
     {
         $className = $this->wrappedObject->getClassName();
+
         return $this->exceptionFactory->namedConstructorNotFound($className, $method, $arguments);
     }
 
@@ -423,6 +424,6 @@ class Caller
      */
     public function constantDefined($property)
     {
-        return defined($this->wrappedObject->getClassName().'::'.$property);
+        return defined($this->wrappedObject->getClassName() . '::' . $property);
     }
 }

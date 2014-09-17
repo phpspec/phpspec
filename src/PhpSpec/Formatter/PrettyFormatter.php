@@ -13,9 +13,9 @@
 
 namespace PhpSpec\Formatter;
 
-use PhpSpec\Event\SuiteEvent;
-use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Event\SpecificationEvent;
+use PhpSpec\Event\SuiteEvent;
 
 class PrettyFormatter extends ConsoleFormatter
 {

@@ -13,14 +13,14 @@
 
 namespace PhpSpec\Listener;
 
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use PhpSpec\Console\IO;
-use PhpSpec\Locator\ResourceManagerInterface;
 use PhpSpec\CodeGenerator\GeneratorManager;
+use PhpSpec\Console\IO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\ClassNotFoundException as PhpSpecClassException;
+use PhpSpec\Locator\ResourceManagerInterface;
 use Prophecy\Exception\Doubler\ClassNotFoundException as ProphecyClassException;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class ClassNotFoundListener implements EventSubscriberInterface
 {

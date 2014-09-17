@@ -15,13 +15,13 @@ namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Matcher\MatcherInterface;
+use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Wrapper\Subject\Expectation\ConstructorDecorator;
 use PhpSpec\Wrapper\Subject\Expectation\DispatcherDecorator;
 use PhpSpec\Wrapper\Subject\Expectation\ExpectationInterface;
 use PhpSpec\Wrapper\Subject\Expectation\UnwrapDecorator;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Wrapper\Unwrapper;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ExpectationFactory
 {

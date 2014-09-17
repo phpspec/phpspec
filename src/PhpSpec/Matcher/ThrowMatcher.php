@@ -13,14 +13,14 @@
 
 namespace PhpSpec\Matcher;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Wrapper\Unwrapper;
-use PhpSpec\Wrapper\DelayedCall;
-use PhpSpec\Factory\ReflectionFactory;
-use PhpSpec\Exception\Example\MatcherException;
 use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Exception\Example\MatcherException;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
+use PhpSpec\Factory\ReflectionFactory;
+use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Wrapper\DelayedCall;
+use PhpSpec\Wrapper\Unwrapper;
 
 class ThrowMatcher implements MatcherInterface
 {
@@ -186,7 +186,7 @@ class ThrowMatcher implements MatcherInterface
 
                 $withProperties = '';
                 if (count($invalidProperties) > 0) {
-                    $withProperties = sprintf(' with'.PHP_EOL.'%s,'.PHP_EOL,
+                    $withProperties = sprintf(' with' . PHP_EOL . '%s,' . PHP_EOL,
                         implode(",\n", $invalidProperties)
                     );
                 }
@@ -262,8 +262,8 @@ class ThrowMatcher implements MatcherInterface
         }
 
         throw new MatcherException(sprintf(
-            "Wrong argument provided in throw matcher.\n".
-            "Fully qualified classname or exception instance expected,\n".
+            "Wrong argument provided in throw matcher.\n" .
+            "Fully qualified classname or exception instance expected,\n" .
             "Got %s.",
             $this->presenter->presentValue($arguments[0])
         ));

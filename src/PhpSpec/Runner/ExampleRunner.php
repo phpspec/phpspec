@@ -13,16 +13,16 @@
 
 namespace PhpSpec\Runner;
 
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use PhpSpec\Runner\Maintainer\LetAndLetgoMaintainer;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\SpecificationInterface;
-use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Loader\Node\ExampleNode;
-use PhpSpec\Exception\Exception as PhpSpecException;
-use PhpSpec\Exception\Example as ExampleException;
-use Prophecy\Exception as ProphecyException;
 use Exception;
+use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Exception\Example as ExampleException;
+use PhpSpec\Exception\Exception as PhpSpecException;
+use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Loader\Node\ExampleNode;
+use PhpSpec\Runner\Maintainer\LetAndLetgoMaintainer;
+use PhpSpec\SpecificationInterface;
+use Prophecy\Exception as ProphecyException;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ExampleRunner
 {

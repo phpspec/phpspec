@@ -13,8 +13,8 @@
 
 namespace PhpSpec\Matcher;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Formatter\Presenter\PresenterInterface;
 
 class ArrayCountMatcher extends BasicMatcher
 {

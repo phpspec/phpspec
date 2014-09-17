@@ -13,8 +13,8 @@
 
 namespace PhpSpec\Formatter;
 
-use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Event\SuiteEvent;
 
 class DotFormatter extends ConsoleFormatter
 {
