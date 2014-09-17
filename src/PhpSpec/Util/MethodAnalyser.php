@@ -33,7 +33,7 @@ class MethodAnalyser
     }
 
     /**
-     * @param ReflectionMethod $reflectionMethod
+     * @param \ReflectionMethod $reflectionMethod
      *
      * @return string
      */

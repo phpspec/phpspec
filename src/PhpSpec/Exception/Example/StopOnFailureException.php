@@ -17,4 +17,5 @@ namespace PhpSpec\Exception\Example;
  * Class StopOnFailureException holds information about stop on failure exception
  */
 class StopOnFailureException extends ExampleException
-{}
+{
+}

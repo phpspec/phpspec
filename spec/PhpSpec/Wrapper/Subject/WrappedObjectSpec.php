@@ -97,5 +97,4 @@ class WrappedObjectSpec extends ObjectBehavior
         $this->callOnWrappedObject('instantiate', array());
         $this->shouldThrow('PhpSpec\Exception\Wrapper\SubjectException')->duringBeConstructedWith('tomorrow');
     }
-
 }

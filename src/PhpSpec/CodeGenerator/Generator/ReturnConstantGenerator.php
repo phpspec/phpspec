@@ -92,5 +92,4 @@ class ReturnConstantGenerator implements GeneratorInterface
     {
         return file_get_contents(__DIR__ . '/templates/returnconstant.template');
     }
-
 }

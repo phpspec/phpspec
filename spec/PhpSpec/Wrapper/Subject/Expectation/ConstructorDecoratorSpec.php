@@ -34,5 +34,4 @@ class ConstructorDecoratorSpec extends ObjectBehavior
         $wrapped->getClassName()->willReturn('\stdClass');
         $this->shouldNotThrow('\Exception')->duringMatch('be', $subject, array(), $wrapped);
     }
-
 }
