@@ -64,8 +64,8 @@ class ReturnConstantGenerator implements GeneratorInterface
             );
         }
 
-        $pattern = '/' . '(function\s+' . preg_quote($method, '/') . '\s*\([^\)]*\))\s+{[^}]*?}/';
-        $replacement = '$1' . $content;
+        $pattern = '/'.'(function\s+'.preg_quote($method, '/').'\s*\([^\)]*\))\s+{[^}]*?}/';
+        $replacement = '$1'.$content;
 
         $modifiedCode = preg_replace($pattern, $replacement, $code);
 
@@ -90,6 +90,6 @@ class ReturnConstantGenerator implements GeneratorInterface
      */
     protected function getTemplate()
     {
-        return file_get_contents(__DIR__ . '/templates/returnconstant.template');
+        return file_get_contents(__DIR__.'/templates/returnconstant.template');
     }
 }

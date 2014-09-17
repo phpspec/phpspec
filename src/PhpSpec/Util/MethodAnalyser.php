@@ -57,7 +57,7 @@ class MethodAnalyser
      */
     private function stripComments($code)
     {
-        $tokens = token_get_all('<?php ' . $code);
+        $tokens = token_get_all('<?php '.$code);
 
         $comments = array_map(
             function ($token) {

@@ -102,7 +102,7 @@ class MethodReturnedNullListener implements EventSubscriberInterface
             return;
         }
 
-        $key = $class . '::' . $method;
+        $key = $class.'::'.$method;
 
         if (!array_key_exists($key, $this->nullMethods)) {
             $this->nullMethods[$key] = array(

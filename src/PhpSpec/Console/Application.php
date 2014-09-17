@@ -149,7 +149,7 @@ class Application extends BaseApplication
 
         if ($customPath = $input->getParameterOption(array('-c','--config'))) {
             if (!file_exists($customPath)) {
-                throw new RuntimeException('Custom configuration file not found at ' . $customPath);
+                throw new RuntimeException('Custom configuration file not found at '.$customPath);
             }
             $paths = array($customPath);
         }
@@ -163,7 +163,7 @@ class Application extends BaseApplication
         }
 
         if ($homeFolder = getenv('HOME')) {
-            $localPath = $homeFolder . '/.phpspec.yml';
+            $localPath = $homeFolder.'/.phpspec.yml';
             if (file_exists($localPath) && $parsedConfig = Yaml::parse($localPath)) {
                 $config = array_replace_recursive($parsedConfig, $config);
             }

@@ -203,14 +203,14 @@ class ContainerAssembler
         });
 
         if (!empty($_SERVER['HOMEDRIVE']) && !empty($_SERVER['HOMEPATH'])) {
-            $home = $_SERVER['HOMEDRIVE'] . $_SERVER['HOMEPATH'];
+            $home = $_SERVER['HOMEDRIVE'].$_SERVER['HOMEPATH'];
         } else {
             $home = $_SERVER['HOME'];
         }
 
         $container->setParam('code_generator.templates.paths', array(
-            rtrim(getcwd(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.phpspec',
-            rtrim($home, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.phpspec',
+            rtrim(getcwd(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
+            rtrim($home, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
         ));
     }
 
@@ -340,7 +340,7 @@ class ContainerAssembler
             ));
 
             try {
-                $formatter = $c->get('formatter.formatters.' . $formatterName);
+                $formatter = $c->get('formatter.formatters.'.$formatterName);
             } catch (\InvalidArgumentException $e) {
                 throw new \RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
             }

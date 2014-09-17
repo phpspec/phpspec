@@ -113,7 +113,7 @@ class ProgressFormatter extends ConsoleFormatter
         $progress = array();
         foreach ($barLengths as $status => $length) {
             $percent = $percents[$status];
-            $text = $percent . '%';
+            $text = $percent.'%';
             $length = ($size - $length) >= 0 ? $length : $size;
             $size = $size - $length;
 
@@ -149,9 +149,9 @@ class ProgressFormatter extends ConsoleFormatter
         if ($io->isDecorated()) {
             $progressBar = implode('', $progress);
             $pad = self::WIDTH - strlen(strip_tags($progressBar));
-            $io->writeTemp($progressBar . str_repeat(' ', $pad + 1) . $total);
+            $io->writeTemp($progressBar.str_repeat(' ', $pad + 1).$total);
         } else {
-            $io->writeTemp('/' . implode('/', $progress) . '/  ' . $total . ' examples');
+            $io->writeTemp('/'.implode('/', $progress).'/  '.$total.' examples');
         }
     }
 }

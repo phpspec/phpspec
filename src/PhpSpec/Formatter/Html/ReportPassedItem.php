@@ -42,7 +42,7 @@ class ReportPassedItem
      */
     public function write()
     {
-        $this->template->render(Template::DIR . '/Template/ReportPass.html', array(
+        $this->template->render(Template::DIR.'/Template/ReportPass.html', array(
             'title' => $this->event->getTitle()
         ));
     }

@@ -68,7 +68,7 @@ class SpecificationGenerator extends PromptingGenerator
      */
     protected function getTemplate()
     {
-        return file_get_contents(__DIR__ . '/templates/specification.template');
+        return file_get_contents(__DIR__.'/templates/specification.template');
     }
 
     /**

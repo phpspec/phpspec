@@ -183,7 +183,7 @@ class IO implements IOInterface
         }
 
         $this->output->write($message, $newline);
-        $this->lastMessage = $message . ($newline ? "\n" : '');
+        $this->lastMessage = $message.($newline ? "\n" : '');
     }
 
     /**
@@ -225,7 +225,7 @@ class IO implements IOInterface
             $this->writeln();
         }
 
-        $this->lastMessage = $message . ($newline ? "\n" : '');
+        $this->lastMessage = $message.($newline ? "\n" : '');
     }
 
     private function getCommonPrefix($stringA, $stringB)
@@ -265,12 +265,12 @@ class IO implements IOInterface
     public function askConfirmation($question, $default = true)
     {
         $lines   = array();
-        $lines[] = '<question>' . str_repeat(' ', 70) . "</question>";
+        $lines[] = '<question>'.str_repeat(' ', 70)."</question>";
         foreach (explode("\n", wordwrap($question), 50) as $line) {
-            $lines[] = '<question>  ' . str_pad($line, 68) . '</question>';
+            $lines[] = '<question>  '.str_pad($line, 68).'</question>';
         }
-        $lines[] = '<question>' . str_repeat(' ', 62) . '</question> <value>' .
-            ($default ? '[Y/n]' : '[y/N]') . '</value> ';
+        $lines[] = '<question>'.str_repeat(' ', 62).'</question> <value>'.
+            ($default ? '[Y/n]' : '[y/N]').'</value> ';
 
         return $this->dialogHelper->askConfirmation(
             $this->output, implode("\n", $lines), $default
@@ -300,7 +300,7 @@ class IO implements IOInterface
     {
         return implode("\n", array_map(
             function ($line) use ($indent) {
-                return str_repeat(' ', $indent) . $line;
+                return str_repeat(' ', $indent).$line;
             },
             explode("\n", $text)
         ));

@@ -61,7 +61,7 @@ class ObjectStateMatcher implements MatcherInterface
     public function positiveMatch($name, $subject, array $arguments)
     {
         preg_match(self::$regex, $name, $matches);
-        $method   = ('be' === $matches[1] ? 'is' : 'has') . ucfirst($matches[2]);
+        $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);
         $callable = array($subject, $method);
 
         if (!method_exists($subject, $method)) {
@@ -87,7 +87,7 @@ class ObjectStateMatcher implements MatcherInterface
     public function negativeMatch($name, $subject, array $arguments)
     {
         preg_match(self::$regex, $name, $matches);
-        $method   = ('be' === $matches[1] ? 'is' : 'has') . ucfirst($matches[2]);
+        $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);
         $callable = array($subject, $method);
 
         if (!method_exists($subject, $method)) {

@@ -61,7 +61,7 @@ class NamedConstructorGenerator implements GeneratorInterface
         $content = $this->getContent($resource, $methodName, $arguments);
 
         $code = $this->filesystem->getFileContents($filepath);
-        $code = preg_replace('/}[ \n]*$/', rtrim($content) . "\n}\n", trim($code));
+        $code = preg_replace('/}[ \n]*$/', rtrim($content)."\n}\n", trim($code));
         $this->filesystem->putFileContents($filepath, $code);
 
         $this->io->writeln(sprintf(

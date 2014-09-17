@@ -123,6 +123,6 @@ class ScalarMatcher implements MatcherInterface
             return 'is_bool';
         }
 
-        return 'is_' . $expected;
+        return 'is_'.$expected;
     }
 }

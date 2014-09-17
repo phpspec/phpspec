@@ -53,7 +53,7 @@ class StringPresenter implements PresenterInterface
         $this->differ = $differ;
 
         $this->phpspecPath = dirname(dirname(__DIR__));
-        $this->runnerPath  = $this->phpspecPath . DIRECTORY_SEPARATOR . 'Runner';
+        $this->runnerPath  = $this->phpspecPath.DIRECTORY_SEPARATOR.'Runner';
     }
 
     /**
@@ -117,18 +117,18 @@ class StringPresenter implements PresenterInterface
 
         if ($exception instanceof NotEqualException) {
             if ($diff = $this->presentExceptionDifference($exception)) {
-                $presentation .= "\n" . $diff;
+                $presentation .= "\n".$diff;
             }
         }
 
         if ($exception instanceof PhpSpecException && !$exception instanceof ErrorException) {
             list($file, $line) = $this->getExceptionExamplePosition($exception);
 
-            $presentation .= "\n" . $this->presentFileCode($file, $line);
+            $presentation .= "\n".$this->presentFileCode($file, $line);
         }
 
         if (trim($trace = $this->presentExceptionStackTrace($exception))) {
-            $presentation .= "\n" . $trace;
+            $presentation .= "\n".$trace;
         }
 
         return $presentation;
@@ -162,7 +162,7 @@ class StringPresenter implements PresenterInterface
             $offset++;
 
             if ($offset == $lineno) {
-                $text .= $this->presentHighlight(sprintf('%4d', $offset) . ' ' . $line);
+                $text .= $this->presentHighlight(sprintf('%4d', $offset).' '.$line);
             } else {
                 $text .= $this->presentCodeLine(sprintf('%4d', $offset), $line);
             }
@@ -181,7 +181,7 @@ class StringPresenter implements PresenterInterface
      */
     protected function presentCodeLine($number, $line)
     {
-        return $number . ' ' . $line;
+        return $number.' '.$line;
     }
 
     /**
@@ -216,7 +216,7 @@ class StringPresenter implements PresenterInterface
 
         $text .= $this->presentExceptionTraceLocation($offset++, $exception->getFile(), $exception->getLine());
         $text .= $this->presentExceptionTraceFunction(
-            'throw new ' . get_class($exception), array($exception->getMessage())
+            'throw new '.get_class($exception), array($exception->getMessage())
         );
 
         foreach ($exception->getTrace() as $call) {
@@ -255,7 +255,7 @@ class StringPresenter implements PresenterInterface
      */
     protected function presentExceptionTraceHeader($header)
     {
-        return $header . "\n";
+        return $header."\n";
     }
 
     /**
@@ -318,7 +318,7 @@ class StringPresenter implements PresenterInterface
     {
         return $this->presentExceptionTraceHeader(sprintf("%2d %s:%d",
             $offset,
-            str_replace(getcwd() . DIRECTORY_SEPARATOR, '', $file),
+            str_replace(getcwd().DIRECTORY_SEPARATOR, '', $file),
             $line
         ));
     }

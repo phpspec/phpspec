@@ -99,14 +99,14 @@ class ExistingConstructorTemplate
     private function getValues($constructorArguments = false)
     {
         $argString = count($this->arguments)
-            ? '$argument' . implode(', $argument',  range(1, count($this->arguments)))
+            ? '$argument'.implode(', $argument',  range(1, count($this->arguments)))
             : ''
         ;
 
         return array(
             '%methodName%'           => $this->methodName,
             '%arguments%'            => $argString,
-            '%returnVar%'            => '$' . lcfirst($this->className),
+            '%returnVar%'            => '$'.lcfirst($this->className),
             '%className%'            => $this->className,
             '%constructorArguments%' => $constructorArguments ? $argString : ''
         );
@@ -117,7 +117,7 @@ class ExistingConstructorTemplate
      */
     private function getCreateObjectTemplate()
     {
-        return file_get_contents(__DIR__ . '/templates/named_constructor_create_object.template');
+        return file_get_contents(__DIR__.'/templates/named_constructor_create_object.template');
     }
 
     /**
@@ -125,6 +125,6 @@ class ExistingConstructorTemplate
      */
     private function getExceptionTemplate()
     {
-        return file_get_contents(__DIR__ . '/templates/named_constructor_exception.template');
+        return file_get_contents(__DIR__.'/templates/named_constructor_exception.template');
     }
 }

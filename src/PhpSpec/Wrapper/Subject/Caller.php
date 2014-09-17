@@ -128,7 +128,7 @@ class Caller
     public function get($property)
     {
         if ($this->lookingForConstants($property) && $this->constantDefined($property)) {
-            return constant($this->wrappedObject->getClassName() . '::' . $property);
+            return constant($this->wrappedObject->getClassName().'::'.$property);
         }
 
         if (null === $this->getWrappedObject()) {
@@ -424,6 +424,6 @@ class Caller
      */
     public function constantDefined($property)
     {
-        return defined($this->wrappedObject->getClassName() . '::' . $property);
+        return defined($this->wrappedObject->getClassName().'::'.$property);
     }
 }
