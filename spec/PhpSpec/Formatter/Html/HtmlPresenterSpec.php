@@ -26,5 +26,4 @@ class HtmlPresenterSpec extends ObjectBehavior
         $e->getCause()->willReturn(new \ReflectionClass($this));
         $this->presentException($e, true);
     }
-
 }

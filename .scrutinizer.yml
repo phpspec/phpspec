@@ -1,6 +1,6 @@
 imports:
-    - javascript
-    - php
+  - javascript
+  - php
 
 tools:
   php_code_sniffer:

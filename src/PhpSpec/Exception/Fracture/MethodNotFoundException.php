@@ -17,4 +17,6 @@ namespace PhpSpec\Exception\Fracture;
  * Class MethodNotFoundException holds information about method not found
  * exception
  */
-class MethodNotFoundException extends MethodInvocationException {}
+class MethodNotFoundException extends MethodInvocationException
+{
+}

@@ -6,7 +6,6 @@ use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Console\IO;
 use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Util\Filesystem;
-use ReflectionMethod;
 
 class NamedConstructorGenerator implements GeneratorInterface
 {

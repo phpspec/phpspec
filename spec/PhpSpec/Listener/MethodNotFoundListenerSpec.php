@@ -5,12 +5,12 @@ namespace spec\PhpSpec\Listener;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-use PhpSpec\Console\IO,
-    PhpSpec\Locator\ResourceManager,
-    PhpSpec\CodeGenerator\GeneratorManager,
-    PhpSpec\Event\ExampleEvent,
-    PhpSpec\Event\SuiteEvent,
-    PhpSpec\Exception\Fracture\MethodNotFoundException;
+use PhpSpec\Console\IO;
+use PhpSpec\Locator\ResourceManager;
+use PhpSpec\CodeGenerator\GeneratorManager;
+use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Event\SuiteEvent;
+use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
 class MethodNotFoundListenerSpec extends ObjectBehavior
 {

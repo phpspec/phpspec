@@ -18,7 +18,6 @@ use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\Wrapper\Subject\Expectation\ConstructorDecorator;
 use PhpSpec\Wrapper\Subject\Expectation\DispatcherDecorator;
 use PhpSpec\Wrapper\Subject\Expectation\ExpectationInterface;
-use PhpSpec\Wrapper\Subject\Expectation\ThrowExpectation;
 use PhpSpec\Wrapper\Subject\Expectation\UnwrapDecorator;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Runner\MatcherManager;

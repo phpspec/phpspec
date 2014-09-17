@@ -17,4 +17,6 @@ namespace PhpSpec\Exception\Fracture;
  * Class MethodNotVisibleException holds information about method not visible
  * exception
  */
-class MethodNotVisibleException extends MethodInvocationException {}
+class MethodNotVisibleException extends MethodInvocationException
+{
+}
