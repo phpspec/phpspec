@@ -26,8 +26,7 @@ class MatcherManagerSpec extends ObjectBehavior
 
     function it_searches_matchers_by_their_priority(
         MatcherInterface $matcher1, MatcherInterface $matcher2
-    )
-    {
+    ) {
         $matcher1->getPriority()->willReturn(2);
         $matcher1->supports('startWith', 'hello, world', array('hello'))->willReturn(true);
         $matcher2->getPriority()->willReturn(5);

@@ -12,8 +12,7 @@ class GeneratorManagerSpec extends ObjectBehavior
 {
     function it_uses_registered_generators_to_generate_code(
         GeneratorInterface $generator, ResourceInterface $resource
-    )
-    {
+    ) {
         $generator->getPriority()->willReturn(0);
         $generator->supports($resource, 'specification', array())->willReturn(true);
         $generator->generate($resource, array())->shouldBeCalled();
@@ -24,8 +23,7 @@ class GeneratorManagerSpec extends ObjectBehavior
 
     function it_chooses_generator_by_priority(
         GeneratorInterface $generator1, GeneratorInterface $generator2, ResourceInterface $resource
-    )
-    {
+    ) {
         $generator1->supports($resource, 'class', array('class' => 'CustomLoader'))
             ->willReturn(true);
         $generator1->getPriority()->willReturn(0);

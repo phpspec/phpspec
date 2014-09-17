@@ -34,7 +34,6 @@ class InstantiatorSpec extends ObjectBehavior
 
 class NoConstructor
 {
-
 }
 
 class WithConstructor

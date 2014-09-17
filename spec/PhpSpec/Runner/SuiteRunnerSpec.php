@@ -81,6 +81,7 @@ class SuiteRunnerSpec extends ObjectBehavior
         $specRunner->run(Argument::any())->will(function () {
             // Wait a few microseconds to ensure that the spec passes even on fast machines
             usleep(10);
+
             return ExampleEvent::FAILED;
         });
 

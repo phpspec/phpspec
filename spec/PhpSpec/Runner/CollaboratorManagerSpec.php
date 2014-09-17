@@ -39,8 +39,7 @@ class CollaboratorManagerSpec extends ObjectBehavior
 
     function it_creates_function_arguments_for_ReflectionFunction(
         ReflectionFunction $function, ReflectionParameter $param1, ReflectionParameter $param2
-    )
-    {
+    ) {
         $this->set('arg1', '123');
         $this->set('arg2', '456');
         $this->set('arg3', '789');
@@ -54,8 +53,7 @@ class CollaboratorManagerSpec extends ObjectBehavior
 
     function it_creates_null_function_arguments_for_ReflectionFunction_if_no_collaborator_found(
         ReflectionFunction $function, ReflectionParameter $param1, ReflectionParameter $param2
-    )
-    {
+    ) {
         $this->set('arg1', '123');
         $this->set('arg2', '456');
         $this->set('arg3', '789');

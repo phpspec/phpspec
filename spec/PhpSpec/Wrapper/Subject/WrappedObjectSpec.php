@@ -52,7 +52,8 @@ class WrappedObjectSpec extends ObjectBehavior
         $this->instantiate()->shouldHaveType('\DateTime');
     }
 
-    function it_throws_an_exception_when_factory_method_returns_a_non_object(){
+    function it_throws_an_exception_when_factory_method_returns_a_non_object()
+    {
         $this->callOnWrappedObject('beAnInstanceOf', array('\DateTimeZone'));
         $this->callOnWrappedObject('beConstructedThrough', array('listAbbreviations'));
 

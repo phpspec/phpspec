@@ -15,8 +15,8 @@ class ExceptionFactorySpec extends ObjectBehavior
     function let(PresenterInterface $presenter)
     {
         $this->beConstructedWith($presenter);
-        $this->fixture = new \stdClass;
-        $this->fixture->subject   = new \stdClass;
+        $this->fixture = new \stdClass();
+        $this->fixture->subject   = new \stdClass();
         $this->fixture->method    = 'foo';
         $this->fixture->arguments = array('bar');
         $this->fixture->classname = '\stdClass';

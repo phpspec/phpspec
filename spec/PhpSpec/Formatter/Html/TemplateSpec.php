@@ -38,8 +38,8 @@ class TemplateSpec extends ObjectBehavior
 
     function it_renders_a_file($io)
     {
-        $tempFile = __DIR__ . "/_files/TemplateRenderFixture.tpl";
-        mkdir(__DIR__ . "/_files");
+        $tempFile = __DIR__."/_files/TemplateRenderFixture.tpl";
+        mkdir(__DIR__."/_files");
         file_put_contents($tempFile, 'hello, {name}');
 
         $this->render($tempFile, array('name' => 'Chuck'));
@@ -49,9 +49,9 @@ class TemplateSpec extends ObjectBehavior
 
     function letgo()
     {
-        if (file_exists(__DIR__ . "/_files/TemplateRenderFixture.tpl")) {
-            unlink(__DIR__ . "/_files/TemplateRenderFixture.tpl");
-            rmdir(__DIR__ . "/_files");
+        if (file_exists(__DIR__."/_files/TemplateRenderFixture.tpl")) {
+            unlink(__DIR__."/_files/TemplateRenderFixture.tpl");
+            rmdir(__DIR__."/_files");
         }
     }
 }
