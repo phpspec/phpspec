@@ -13,12 +13,12 @@
 
 namespace PhpSpec\Wrapper;
 
-use PhpSpec\Wrapper\Subject\WrappedObject;
-use PhpSpec\Wrapper\Subject\Caller;
-use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
-use PhpSpec\Wrapper\Subject\ExpectationFactory;
-use PhpSpec\Util\Instantiator;
 use ArrayAccess;
+use PhpSpec\Util\Instantiator;
+use PhpSpec\Wrapper\Subject\Caller;
+use PhpSpec\Wrapper\Subject\ExpectationFactory;
+use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
+use PhpSpec\Wrapper\Subject\WrappedObject;
 
 class Subject implements ArrayAccess, WrapperInterface
 {
@@ -170,7 +170,8 @@ class Subject implements ArrayAccess, WrapperInterface
      */
     public function offsetUnset($key)
     {
-        $this->arrayAccess->offsetUnset($key);;
+        $this->arrayAccess->offsetUnset($key);
+        ;
     }
 
     /**

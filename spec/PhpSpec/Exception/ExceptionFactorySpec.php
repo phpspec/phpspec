@@ -2,10 +2,9 @@
 
 namespace spec\PhpSpec\Exception;
 
-use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
-
 use PhpSpec\Formatter\Presenter\PresenterInterface;
+
+use PhpSpec\ObjectBehavior;
 
 class ExceptionFactorySpec extends ObjectBehavior
 {
@@ -15,8 +14,8 @@ class ExceptionFactorySpec extends ObjectBehavior
     function let(PresenterInterface $presenter)
     {
         $this->beConstructedWith($presenter);
-        $this->fixture = new \stdClass;
-        $this->fixture->subject   = new \stdClass;
+        $this->fixture = new \stdClass();
+        $this->fixture->subject   = new \stdClass();
         $this->fixture->method    = 'foo';
         $this->fixture->arguments = array('bar');
         $this->fixture->classname = '\stdClass';

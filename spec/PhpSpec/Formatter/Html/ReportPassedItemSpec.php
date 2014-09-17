@@ -2,11 +2,10 @@
 
 namespace spec\PhpSpec\Formatter\Html;
 
-use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
-
 use PhpSpec\Event\ExampleEvent;
+
 use PhpSpec\Formatter\Html\Template;
+use PhpSpec\ObjectBehavior;
 
 class ReportPassedItemSpec extends ObjectBehavior
 {

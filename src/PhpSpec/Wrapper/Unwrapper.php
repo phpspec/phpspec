@@ -13,8 +13,8 @@
 
 namespace PhpSpec\Wrapper;
 
-use Prophecy\Prophecy\RevealerInterface;
 use Prophecy\Prophecy\ProphecyInterface;
+use Prophecy\Prophecy\RevealerInterface;
 
 class Unwrapper implements RevealerInterface
 {

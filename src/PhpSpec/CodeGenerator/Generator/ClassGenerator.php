@@ -72,7 +72,7 @@ class ClassGenerator extends PromptingGenerator
      */
     protected function getTemplate()
     {
-        return file_get_contents(__DIR__ . '/templates/class.template');
+        return file_get_contents(__DIR__.'/templates/class.template');
     }
 
     /**

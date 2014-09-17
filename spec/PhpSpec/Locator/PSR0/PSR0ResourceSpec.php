@@ -2,9 +2,9 @@
 
 namespace spec\PhpSpec\Locator\PSR0;
 
-use PhpSpec\ObjectBehavior;
-
 use PhpSpec\Locator\PSR0\PSR0Locator as Locator;
+
+use PhpSpec\ObjectBehavior;
 
 class PSR0ResourceSpec extends ObjectBehavior
 {
@@ -32,7 +32,7 @@ class PSR0ResourceSpec extends ObjectBehavior
     {
         $locator->getFullSrcPath()->willReturn('/local/');
 
-        $this->getSrcFilename()->shouldReturn('/local/usr'.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR.'config.php');
+        $this->getSrcFilename()->shouldReturn('/local/usr' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'config.php');
     }
 
     function it_generates_src_namespace_from_provided_parts_using_locator($locator)
@@ -68,7 +68,7 @@ class PSR0ResourceSpec extends ObjectBehavior
     {
         $locator->getFullSpecPath()->willReturn('/local/spec/');
 
-        $this->getSpecFilename()->shouldReturn('/local/spec/usr'.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR.'configSpec.php');
+        $this->getSpecFilename()->shouldReturn('/local/spec/usr' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'configSpec.php');
     }
 
     function it_generates_spec_namespace_from_provided_parts_using_locator($locator)

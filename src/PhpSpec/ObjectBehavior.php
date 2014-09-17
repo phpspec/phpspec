@@ -13,11 +13,11 @@
 
 namespace PhpSpec;
 
-use PhpSpec\Matcher\MatchersProviderInterface;
-use PhpSpec\Wrapper\WrapperInterface;
-use PhpSpec\Wrapper\SubjectContainerInterface;
-use PhpSpec\Wrapper\Subject;
 use ArrayAccess;
+use PhpSpec\Matcher\MatchersProviderInterface;
+use PhpSpec\Wrapper\Subject;
+use PhpSpec\Wrapper\SubjectContainerInterface;
+use PhpSpec\Wrapper\WrapperInterface;
 
 /**
  * The object behaviour is the default base class for specification.

@@ -13,8 +13,8 @@
 
 namespace PhpSpec\CodeGenerator;
 
-use PhpSpec\Locator\ResourceInterface;
 use InvalidArgumentException;
+use PhpSpec\Locator\ResourceInterface;
 
 /**
  * Uses registered generators to generate code honoring priority order

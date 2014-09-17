@@ -14,12 +14,12 @@
 namespace PhpSpec\Formatter;
 
 use PhpSpec\Console\IO;
-use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Event\SuiteEvent;
 
 class ProgressFormatter extends ConsoleFormatter
 {
-    const WIDTH=50;
+    const WIDTH = 50;
 
     public function afterExample(ExampleEvent $event)
     {
@@ -87,7 +87,7 @@ class ProgressFormatter extends ConsoleFormatter
         $stats = $this->getStatisticsCollector();
         $specProgress = ($stats->getTotalSpecs()+1)/$stats->getTotalSpecsCount();
 
-        $barLengths= array_map(
+        $barLengths = array_map(
             function ($percent) use ($specProgress) {
                 $length = $percent / 2;
                 $res = $length == 0 || $length > 1 ? floor($length * $specProgress) : 1;
@@ -102,9 +102,9 @@ class ProgressFormatter extends ConsoleFormatter
     }
 
     /**
-     * @param array $barLengths
-     * @param array $percents
-     * @param boolean $isDecorated
+     * @param  array   $barLengths
+     * @param  array   $percents
+     * @param  boolean $isDecorated
      * @return array
      */
     private function formatProgressOutput($barLengths, $percents, $isDecorated)
@@ -113,7 +113,7 @@ class ProgressFormatter extends ConsoleFormatter
         $progress = array();
         foreach ($barLengths as $status => $length) {
             $percent = $percents[$status];
-            $text = $percent . '%';
+            $text = $percent.'%';
             $length = ($size - $length) >= 0 ? $length : $size;
             $size = $size - $length;
 
@@ -140,18 +140,18 @@ class ProgressFormatter extends ConsoleFormatter
     }
 
     /**
-     * @param IO $io
+     * @param IO    $io
      * @param array $progress
-     * @param int $total
+     * @param int   $total
      */
     private function updateProgressBar(IO $io, array $progress, $total)
     {
         if ($io->isDecorated()) {
             $progressBar = implode('', $progress);
             $pad = self::WIDTH - strlen(strip_tags($progressBar));
-            $io->writeTemp($progressBar . str_repeat(' ', $pad + 1) . $total);
+            $io->writeTemp($progressBar.str_repeat(' ', $pad + 1).$total);
         } else {
-            $io->writeTemp('/' . implode('/', $progress) . '/  ' . $total . ' examples');
+            $io->writeTemp('/'.implode('/', $progress).'/  '.$total.' examples');
         }
     }
 }

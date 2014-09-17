@@ -2,11 +2,11 @@
 
 namespace spec\PhpSpec\Matcher;
 
+use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Formatter\Presenter\PresenterInterface;
+
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
-
-use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Exception\Example\FailureException;
 
 class IdentityMatcherSpec extends ObjectBehavior
 {

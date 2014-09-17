@@ -2,12 +2,11 @@
 
 namespace spec\PhpSpec\Formatter\Html;
 
+use PhpSpec\Exception\Exception;
+
 use PhpSpec\Formatter\Presenter\Differ\Differ;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
-
-use PhpSpec\Exception\Exception;
 
 class HtmlPresenterSpec extends ObjectBehavior
 {

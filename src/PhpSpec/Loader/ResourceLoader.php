@@ -13,8 +13,8 @@
 
 namespace PhpSpec\Loader;
 
-use PhpSpec\Util\MethodAnalyser;
 use PhpSpec\Locator\ResourceManagerInterface;
+use PhpSpec\Util\MethodAnalyser;
 use ReflectionClass;
 use ReflectionMethod;
 

@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\CodeGenerator;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 use PhpSpec\Util\Filesystem;
 
@@ -45,16 +44,16 @@ class TemplateRendererSpec extends ObjectBehavior
     {
         $this->setLocations(array('lo/ca\\tion', '\\location', 'location\\'));
         $this->getLocations()->shouldReturn(array(
-            'lo'.DIRECTORY_SEPARATOR.'ca'.DIRECTORY_SEPARATOR.'tion',
-            DIRECTORY_SEPARATOR.'location',
+            'lo' . DIRECTORY_SEPARATOR . 'ca' . DIRECTORY_SEPARATOR . 'tion',
+            DIRECTORY_SEPARATOR . 'location',
             'location'
         ));
     }
 
     function it_reads_existing_file_from_registered_location($fs)
     {
-        $fs->pathExists('location1'.DIRECTORY_SEPARATOR.'some_file.tpl')->willReturn(true);
-        $fs->getFileContents('location1'.DIRECTORY_SEPARATOR.'some_file.tpl')->willReturn('cont');
+        $fs->pathExists('location1' . DIRECTORY_SEPARATOR . 'some_file.tpl')->willReturn(true);
+        $fs->getFileContents('location1' . DIRECTORY_SEPARATOR . 'some_file.tpl')->willReturn('cont');
 
         $this->setLocations(array('location1'));
         $this->render('some_file')->shouldReturn('cont');
@@ -62,11 +61,11 @@ class TemplateRendererSpec extends ObjectBehavior
 
     function it_reads_existing_file_from_first_registered_location($fs)
     {
-        $fs->pathExists('location1'.DIRECTORY_SEPARATOR.'some_file.tpl')->willReturn(false);
-        $fs->pathExists('location2'.DIRECTORY_SEPARATOR.'some_file.tpl')->willReturn(true);
-        $fs->pathExists('location3'.DIRECTORY_SEPARATOR.'some_file.tpl')->willReturn(true);
-        $fs->getFileContents('location2'.DIRECTORY_SEPARATOR.'some_file.tpl')->willReturn('cont');
-        $fs->getFileContents('location3'.DIRECTORY_SEPARATOR.'some_file.tpl')->willReturn('cont2');
+        $fs->pathExists('location1' . DIRECTORY_SEPARATOR . 'some_file.tpl')->willReturn(false);
+        $fs->pathExists('location2' . DIRECTORY_SEPARATOR . 'some_file.tpl')->willReturn(true);
+        $fs->pathExists('location3' . DIRECTORY_SEPARATOR . 'some_file.tpl')->willReturn(true);
+        $fs->getFileContents('location2' . DIRECTORY_SEPARATOR . 'some_file.tpl')->willReturn('cont');
+        $fs->getFileContents('location3' . DIRECTORY_SEPARATOR . 'some_file.tpl')->willReturn('cont2');
 
         $this->setLocations(array('location1', 'location2', 'location3'));
         $this->render('some_file')->shouldReturn('cont');
@@ -74,8 +73,8 @@ class TemplateRendererSpec extends ObjectBehavior
 
     function it_replaces_placeholders_in_template_with_provided_values($fs)
     {
-        $fs->pathExists('location1'.DIRECTORY_SEPARATOR.'some_file.tpl')->willReturn(true);
-        $fs->getFileContents('location1'.DIRECTORY_SEPARATOR.'some_file.tpl')
+        $fs->pathExists('location1' . DIRECTORY_SEPARATOR . 'some_file.tpl')->willReturn(true);
+        $fs->getFileContents('location1' . DIRECTORY_SEPARATOR . 'some_file.tpl')
             ->willReturn('Template #%number%. From %spec_name% spec.');
 
         $this->setLocations(array('location1'));

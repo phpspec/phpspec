@@ -2,16 +2,15 @@
 
 namespace spec\PhpSpec\Formatter;
 
-use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
+use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Event\SpecificationEvent;
+use PhpSpec\Event\SuiteEvent;
+use PhpSpec\Exception\Example\SkippingException;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\IO\IOInterface;
 use PhpSpec\Listener\StatisticsCollector;
-use PhpSpec\Event\SpecificationEvent;
-use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Loader\Node\SpecificationNode;
-use PhpSpec\Event\SuiteEvent;
-use PhpSpec\Exception\Example\SkippingException;
+use PhpSpec\ObjectBehavior;
 
 class JUnitFormatterSpec extends ObjectBehavior
 {

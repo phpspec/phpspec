@@ -14,10 +14,10 @@
 namespace PhpSpec\Formatter\Presenter;
 
 use Exception;
-use PhpSpec\Exception\Exception as PhpSpecException;
-use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Example\ErrorException;
+use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Example\PendingException;
+use PhpSpec\Exception\Exception as PhpSpecException;
 use Prophecy\Exception\Exception as ProphecyException;
 
 class StringPresenter implements PresenterInterface
@@ -333,7 +333,6 @@ class StringPresenter implements PresenterInterface
         if (isset($call['file']) && 0 === strpos($call['file'], $this->phpspecPath)) {
             return true;
         }
-
 
         return isset($call['class']) && 0 === strpos($call['class'], "PhpSpec\\");
     }

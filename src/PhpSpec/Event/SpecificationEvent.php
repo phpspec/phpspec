@@ -13,8 +13,8 @@
 
 namespace PhpSpec\Event;
 
-use Symfony\Component\EventDispatcher\Event;
 use PhpSpec\Loader\Node\SpecificationNode;
+use Symfony\Component\EventDispatcher\Event;
 
 /**
  * Class SpecificationEvent holds information about the specification event

@@ -4,10 +4,9 @@ namespace spec\PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Wrapper\Subject;
-use PhpSpec\Wrapper\Subject\WrappedObject;
-use Prophecy\Argument;
-
 use PhpSpec\Wrapper\Subject\Expectation\ExpectationInterface;
+
+use PhpSpec\Wrapper\Subject\WrappedObject;
 
 class ConstructorDecoratorSpec extends ObjectBehavior
 {

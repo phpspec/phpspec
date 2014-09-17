@@ -13,8 +13,8 @@
 
 namespace PhpSpec\Matcher;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Formatter\Presenter\PresenterInterface;
 
 class ScalarMatcher implements MatcherInterface
 {
@@ -123,6 +123,6 @@ class ScalarMatcher implements MatcherInterface
             return 'is_bool';
         }
 
-        return 'is_' . $expected;
+        return 'is_'.$expected;
     }
 }

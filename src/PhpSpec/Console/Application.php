@@ -13,14 +13,14 @@
 
 namespace PhpSpec\Console;
 
+use PhpSpec\Extension;
+use PhpSpec\ServiceContainer;
+use RuntimeException;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
-use PhpSpec\ServiceContainer;
-use PhpSpec\Extension;
-use RuntimeException;
 
 /**
  * The command line application entry point
@@ -163,7 +163,7 @@ class Application extends BaseApplication
         }
 
         if ($homeFolder = getenv('HOME')) {
-            $localPath = $homeFolder . '/.phpspec.yml';
+            $localPath = $homeFolder.'/.phpspec.yml';
             if (file_exists($localPath) && $parsedConfig = Yaml::parse($localPath)) {
                 $config = array_replace_recursive($parsedConfig, $config);
             }

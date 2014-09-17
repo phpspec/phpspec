@@ -2,10 +2,10 @@
 
 namespace spec\PhpSpec\Matcher;
 
-use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
-
 use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\ObjectBehavior;
+
+use Prophecy\Argument;
 
 class StringStartMatcherSpec extends ObjectBehavior
 {

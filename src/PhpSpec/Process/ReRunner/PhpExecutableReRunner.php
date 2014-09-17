@@ -47,4 +47,4 @@ abstract class PhpExecutableReRunner implements PlatformSpecificReRunner
 
         return $this->executablePath;
     }
-} 
+}

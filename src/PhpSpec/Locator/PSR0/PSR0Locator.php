@@ -13,10 +13,10 @@
 
 namespace PhpSpec\Locator\PSR0;
 
+use InvalidArgumentException;
 use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Locator\ResourceLocatorInterface;
 use PhpSpec\Util\Filesystem;
-use InvalidArgumentException;
 
 class PSR0Locator implements ResourceLocatorInterface
 {
@@ -72,7 +72,7 @@ class PSR0Locator implements ResourceLocatorInterface
         $this->srcNamespace  = ltrim(trim($srcNamespace, ' \\').'\\', '\\');
         $this->psr4Prefix    = (null === $psr4Prefix) ? null : ltrim(trim($psr4Prefix, ' \\').'\\', '\\');
         if (null !== $this->psr4Prefix  && substr($this->srcNamespace, 0, strlen($psr4Prefix)) !== $psr4Prefix) {
-            throw new InvalidArgumentException('PSR4 prefix doesn\'t match given class namespace.' . PHP_EOL);
+            throw new InvalidArgumentException('PSR4 prefix doesn\'t match given class namespace.'.PHP_EOL);
         }
         $srcNamespacePath = null === $this->psr4Prefix ? $this->srcNamespace : substr($this->srcNamespace, strlen($this->psr4Prefix));
         $this->specNamespace = trim($specNamespacePrefix, ' \\').'\\'.$this->srcNamespace;
@@ -272,9 +272,9 @@ class PSR0Locator implements ResourceLocatorInterface
             if ($tokens[$i][0] === T_NAMESPACE) {
                 for ($j = $i + 1; $j < $count; $j++) {
                     if ($tokens[$j][0] === T_STRING) {
-                         $namespace .= $tokens[$j][1].'\\';
+                        $namespace .= $tokens[$j][1].'\\';
                     } elseif ($tokens[$j] === '{' || $tokens[$j] === ';') {
-                         break;
+                        break;
                     }
                 }
             }
@@ -330,8 +330,8 @@ class PSR0Locator implements ResourceLocatorInterface
 
         if (!preg_match($classnamePattern, $classname)) {
             throw new InvalidArgumentException(
-                sprintf('String "%s" is not a valid class name.', $classname) . PHP_EOL .
-                'Please see reference document: ' .
+                sprintf('String "%s" is not a valid class name.', $classname).PHP_EOL.
+                'Please see reference document: '.
                 'https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
             );
         }

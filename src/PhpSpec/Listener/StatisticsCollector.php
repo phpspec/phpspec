@@ -13,10 +13,10 @@
 
 namespace PhpSpec\Listener;
 
-use PhpSpec\Event\SuiteEvent;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SpecificationEvent;
+use PhpSpec\Event\SuiteEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class StatisticsCollector implements EventSubscriberInterface
 {

@@ -13,9 +13,9 @@
 
 namespace PhpSpec\Event;
 
-use Symfony\Component\EventDispatcher\Event;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Matcher\MatcherInterface;
+use Symfony\Component\EventDispatcher\Event;
 
 /**
  * Class ExpectationEvent holds information about the expectation event

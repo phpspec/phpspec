@@ -13,9 +13,9 @@
 
 namespace PhpSpec\Matcher;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Exception\Example\NotEqualException;
+use PhpSpec\Formatter\Presenter\PresenterInterface;
 
 class ComparisonMatcher extends BasicMatcher
 {

@@ -42,7 +42,7 @@ class ReportSkippedItem
      */
     public function write()
     {
-        $this->template->render(Template::DIR . '/Template/ReportSkipped.html', array(
+        $this->template->render(Template::DIR.'/Template/ReportSkipped.html', array(
             'title' => htmlentities(strip_tags($this->event->getTitle())),
             'message' => htmlentities(strip_tags($this->event->getMessage())),
         ));

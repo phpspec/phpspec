@@ -2,13 +2,13 @@
 
 namespace spec\PhpSpec\Event;
 
-use PhpSpec\ObjectBehavior;
+use Exception;
 
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Loader\Suite;
 
-use Exception;
+use PhpSpec\ObjectBehavior;
 
 class ExampleEventSpec extends ObjectBehavior
 {

@@ -13,9 +13,9 @@
 
 namespace PhpSpec\Formatter\Html;
 
-use PhpSpec\Formatter\Presenter\StringPresenter;
 use Exception;
 use PhpSpec\Exception\Exception as PhpSpecException;
+use PhpSpec\Formatter\Presenter\StringPresenter;
 
 class HtmlPresenter extends StringPresenter
 {
@@ -56,8 +56,8 @@ class HtmlPresenter extends StringPresenter
             } else {
                 $cssClass = "normal";
             }
-            $text .= '<span class="linenum">'.$offset.'</span><span class="' .
-                     $cssClass . '">'.$line.'</span>';
+            $text .= '<span class="linenum">'.$offset.'</span><span class="'.
+                     $cssClass.'">'.$line.'</span>';
 
             $text .= "\n";
         }

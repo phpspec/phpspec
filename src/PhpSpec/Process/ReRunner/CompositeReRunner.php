@@ -27,7 +27,7 @@ class CompositeReRunner implements ReRunner
      */
     public function __construct(array $reRunners)
     {
-        foreach($reRunners as $reRunner) {
+        foreach ($reRunners as $reRunner) {
             if ($reRunner->isSupported()) {
                 $this->reRunner = $reRunner;
                 break;

@@ -14,9 +14,9 @@
 namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Exception\Fracture\FactoryDoesNotReturnObjectException;
+use PhpSpec\Exception\Wrapper\SubjectException;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Wrapper\Unwrapper;
-use PhpSpec\Exception\Wrapper\SubjectException;
 
 class WrappedObject
 {

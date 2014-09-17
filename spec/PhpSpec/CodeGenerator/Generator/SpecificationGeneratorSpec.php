@@ -2,13 +2,13 @@
 
 namespace spec\PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
-
-use PhpSpec\Console\IO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
-use PhpSpec\Util\Filesystem;
+use PhpSpec\Console\IO;
+
 use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\ObjectBehavior;
+use PhpSpec\Util\Filesystem;
+use Prophecy\Argument;
 
 class SpecificationGeneratorSpec extends ObjectBehavior
 {
@@ -39,8 +39,7 @@ class SpecificationGeneratorSpec extends ObjectBehavior
 
     function it_generates_spec_class_from_resource_and_puts_it_into_appropriate_folder(
         $io, $tpl, $fs, ResourceInterface $resource
-    )
-    {
+    ) {
         $resource->getSpecName()->willReturn('App');
         $resource->getSpecFilename()->willReturn('/project/spec/Acme/App.php');
         $resource->getSpecNamespace()->willReturn('spec\Acme');
@@ -65,8 +64,7 @@ class SpecificationGeneratorSpec extends ObjectBehavior
 
     function it_uses_template_provided_by_templating_system_if_there_is_one(
         $io, $tpl, $fs, ResourceInterface $resource
-    )
-    {
+    ) {
         $resource->getSpecName()->willReturn('App');
         $resource->getSpecFilename()->willReturn('/project/spec/Acme/App.php');
         $resource->getSpecNamespace()->willReturn('spec\Acme');
@@ -106,8 +104,7 @@ class SpecificationGeneratorSpec extends ObjectBehavior
 
     function it_asks_confirmation_if_spec_already_exists(
         $io, $tpl, $fs, ResourceInterface $resource
-    )
-    {
+    ) {
         $resource->getSpecName()->willReturn('App');
         $resource->getSpecFilename()->willReturn('/project/spec/Acme/App.php');
         $resource->getSpecNamespace()->willReturn('spec\Acme');

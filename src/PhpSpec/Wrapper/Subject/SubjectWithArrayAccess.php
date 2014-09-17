@@ -13,11 +13,11 @@
 
 namespace PhpSpec\Wrapper\Subject;
 
-use PhpSpec\Wrapper\Unwrapper;
+use PhpSpec\Exception\Fracture\InterfaceNotImplementedException;
+use PhpSpec\Exception\Wrapper\SubjectException;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Wrapper\Subject;
-use PhpSpec\Exception\Wrapper\SubjectException;
-use PhpSpec\Exception\Fracture\InterfaceNotImplementedException;
+use PhpSpec\Wrapper\Unwrapper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class SubjectWithArrayAccess
