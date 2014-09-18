@@ -171,7 +171,6 @@ class Subject implements ArrayAccess, WrapperInterface
     public function offsetUnset($key)
     {
         $this->arrayAccess->offsetUnset($key);
-        ;
     }
 
     /**
