@@ -435,7 +435,7 @@ class PSR0LocatorSpec extends ObjectBehavior
         $this->beConstructedWith('', 'spec', $this->srcPath, $this->specPath);
 
         $exception = new \InvalidArgumentException(
-            'String "Non-PSR0/Namespace" is not a valid class name.' . PHP_EOL .
+            'String "Non-PSR0/Namespace" is not a valid class name.'.PHP_EOL.
             'Please see reference document: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
         );
 
@@ -447,7 +447,7 @@ class PSR0LocatorSpec extends ObjectBehavior
         $this->beConstructedWith('', 'spec', $this->srcPath, $this->specPath);
 
         $exception = new \InvalidArgumentException(
-            'String "NonPSR0\\\\Namespace" is not a valid class name.' . PHP_EOL .
+            'String "NonPSR0\\\\Namespace" is not a valid class name.'.PHP_EOL.
             'Please see reference document: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
         );
 
@@ -459,7 +459,7 @@ class PSR0LocatorSpec extends ObjectBehavior
         $this->beConstructedWith('', 'spec', $this->srcPath, $this->specPath);
 
         $exception = new \InvalidArgumentException(
-            'String "Namespace/" is not a valid class name.' . PHP_EOL .
+            'String "Namespace/" is not a valid class name.'.PHP_EOL.
             'Please see reference document: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
         );
 
@@ -469,7 +469,7 @@ class PSR0LocatorSpec extends ObjectBehavior
     function it_throws_an_exception_on_PSR4_prefix_not_matching_namespace()
     {
         $exception = new \InvalidArgumentException(
-            'PSR4 prefix doesn\'t match given class namespace.' . PHP_EOL
+            'PSR4 prefix doesn\'t match given class namespace.'.PHP_EOL
         );
 
         $this->shouldThrow($exception)->during('__construct', array('p\pf\N\S', 'spec', $this->srcPath, $this->specPath, null, 'wrong\prefix'));

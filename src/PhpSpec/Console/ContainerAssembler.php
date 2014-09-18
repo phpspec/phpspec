@@ -142,7 +142,7 @@ class ContainerAssembler
                 $c->get('util.method_analyser')
             );
         });
-        $container->setShared('util.method_analyser', function(){
+        $container->setShared('util.method_analyser', function () {
             return new MethodAnalyser();
         });
     }
@@ -203,7 +203,7 @@ class ContainerAssembler
         });
 
         if (!empty($_SERVER['HOMEDRIVE']) && !empty($_SERVER['HOMEPATH'])) {
-            $home = $_SERVER['HOMEDRIVE'] . $_SERVER['HOMEPATH'];
+            $home = $_SERVER['HOMEDRIVE'].$_SERVER['HOMEPATH'];
         } else {
             $home = $_SERVER['HOME'];
         }
@@ -417,7 +417,7 @@ class ContainerAssembler
      */
     private function setupRerunner(ServiceContainer $container)
     {
-        $container->setShared('process.rerunner', function(ServiceContainer $c) {
+        $container->setShared('process.rerunner', function (ServiceContainer $c) {
             return new ReRunner\OptionalReRunner(
                 $c->get('process.rerunner.platformspecific'),
                 $c->get('console.io')
@@ -428,18 +428,18 @@ class ContainerAssembler
             return;
         }
 
-        $container->setShared('process.rerunner.platformspecific', function(ServiceContainer $c) {
+        $container->setShared('process.rerunner.platformspecific', function (ServiceContainer $c) {
             return new ReRunner\CompositeReRunner(
                 $c->getByPrefix('process.rerunner.platformspecific')
             );
         });
-        $container->setShared('process.rerunner.platformspecific.pcntl', function(ServiceContainer $c) {
+        $container->setShared('process.rerunner.platformspecific.pcntl', function (ServiceContainer $c) {
             return new ReRunner\PcntlReRunner($c->get('process.phpexecutablefinder'));
         });
-        $container->setShared('process.rerunner.platformspecific.passthru', function(ServiceContainer $c) {
+        $container->setShared('process.rerunner.platformspecific.passthru', function (ServiceContainer $c) {
             return new ReRunner\PassthruReRunner($c->get('process.phpexecutablefinder'));
         });
-        $container->setShared('process.phpexecutablefinder', function() {
+        $container->setShared('process.phpexecutablefinder', function () {
             return new PhpExecutableFinder();
         });
     }

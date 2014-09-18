@@ -111,7 +111,7 @@ class ExpectationFactory
     private function createDecoratedExpectation($expectation, $name, $subject, array $arguments)
     {
         $matcher = $this->findMatcher($name, $subject, $arguments);
-        $expectation = "\\PhpSpec\\Wrapper\\Subject\\Expectation\\" . $expectation;
+        $expectation = "\\PhpSpec\\Wrapper\\Subject\\Expectation\\".$expectation;
 
         $expectation = new $expectation($matcher);
 

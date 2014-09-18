@@ -72,6 +72,7 @@ class ExistingConstructorTemplate
                 $this->getExceptionTemplate(), $values
             );
         }
+
         return $content;
     }
 
@@ -87,11 +88,12 @@ class ExistingConstructorTemplate
                 $this->getCreateObjectTemplate(), $values
             );
         }
+
         return $content;
     }
 
     /**
-     * @param bool $constructorArguments
+     * @param  bool  $constructorArguments
      * @return array
      */
     private function getValues($constructorArguments = false)
@@ -104,7 +106,7 @@ class ExistingConstructorTemplate
         return array(
             '%methodName%'           => $this->methodName,
             '%arguments%'            => $argString,
-            '%returnVar%'            => '$' . lcfirst($this->className),
+            '%returnVar%'            => '$'.lcfirst($this->className),
             '%className%'            => $this->className,
             '%constructorArguments%' => $constructorArguments ? $argString : ''
         );
@@ -115,7 +117,7 @@ class ExistingConstructorTemplate
      */
     private function getCreateObjectTemplate()
     {
-        return file_get_contents(__DIR__ . '/templates/named_constructor_create_object.template');
+        return file_get_contents(__DIR__.'/templates/named_constructor_create_object.template');
     }
 
     /**
@@ -123,6 +125,6 @@ class ExistingConstructorTemplate
      */
     private function getExceptionTemplate()
     {
-        return file_get_contents(__DIR__ . '/templates/named_constructor_exception.template');
+        return file_get_contents(__DIR__.'/templates/named_constructor_exception.template');
     }
-} 
+}

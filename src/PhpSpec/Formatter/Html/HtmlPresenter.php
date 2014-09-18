@@ -56,8 +56,8 @@ class HtmlPresenter extends StringPresenter
             } else {
                 $cssClass = "normal";
             }
-            $text .= '<span class="linenum">'.$offset.'</span><span class="' .
-                     $cssClass . '">'.$line.'</span>';
+            $text .= '<span class="linenum">'.$offset.'</span><span class="'.
+                     $cssClass.'">'.$line.'</span>';
 
             $text .= "\n";
         }

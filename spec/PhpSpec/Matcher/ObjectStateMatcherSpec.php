@@ -86,7 +86,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_if_subject_is_callable()
     {
-        $subject = function() {};
+        $subject = function () {};
 
         $this->supports('beCallable', $subject, array())->shouldReturn(false);
     }

@@ -43,7 +43,7 @@ class CallerSpec extends ObjectBehavior
 
     function it_sets_a_property_on_the_wrapped_object(WrappedObject $wrappedObject)
     {
-        $obj = new \stdClass;
+        $obj = new \stdClass();
         $obj->id = 1;
 
         $wrappedObject->isInstantiated()->willReturn(true);
@@ -78,7 +78,7 @@ class CallerSpec extends ObjectBehavior
 
     function it_delegates_throwing_method_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
     {
-        $obj = new \ArrayObject;
+        $obj = new \ArrayObject();
 
         $wrappedObject->isInstantiated()->willReturn(true);
         $wrappedObject->getInstance()->willReturn($obj);
@@ -99,7 +99,7 @@ class CallerSpec extends ObjectBehavior
 
     function it_delegates_throwing_method_not_found_exception_for_constructor(WrappedObject $wrappedObject, ExceptionFactory $exceptions, \stdClass $argument)
     {
-        $obj = new ExampleClass;
+        $obj = new ExampleClass();
 
         $wrappedObject->isInstantiated()->willReturn(false);
         $wrappedObject->getInstance()->willReturn(null);
@@ -122,7 +122,7 @@ class CallerSpec extends ObjectBehavior
 
     function it_delegates_throwing_named_constructor_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
     {
-        $obj = new \ArrayObject;
+        $obj = new \ArrayObject();
         $arguments = array('firstname', 'lastname');
 
         $wrappedObject->isInstantiated()->willReturn(false);
@@ -146,7 +146,7 @@ class CallerSpec extends ObjectBehavior
 
     function it_delegates_throwing_method_not_visible_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
     {
-        $obj = new ExampleClass;
+        $obj = new ExampleClass();
 
         $wrappedObject->isInstantiated()->willReturn(true);
         $wrappedObject->getInstance()->willReturn($obj);
@@ -167,7 +167,7 @@ class CallerSpec extends ObjectBehavior
 
     function it_delegates_throwing_property_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
     {
-        $obj = new ExampleClass;
+        $obj = new ExampleClass();
 
         $wrappedObject->isInstantiated()->willReturn(true);
         $wrappedObject->getInstance()->willReturn($obj);
@@ -222,5 +222,7 @@ class CallerSpec extends ObjectBehavior
 
 class ExampleClass
 {
-    private function privateMethod() {}
+    private function privateMethod()
+    {
+    }
 }

@@ -13,7 +13,6 @@ use ReflectionClass;
 
 class SpecificationNodeSpec extends ObjectBehavior
 {
-
     public function let(ReflectionClass $class, ResourceInterface $resource)
     {
         $this->beConstructedWith('specification node', $class, $resource);

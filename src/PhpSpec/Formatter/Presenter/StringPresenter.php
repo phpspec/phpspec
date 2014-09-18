@@ -334,7 +334,6 @@ class StringPresenter implements PresenterInterface
             return true;
         }
 
-
         return isset($call['class']) && 0 === strpos($call['class'], "PhpSpec\\");
     }
 

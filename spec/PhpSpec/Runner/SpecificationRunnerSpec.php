@@ -21,8 +21,7 @@ class SpecificationRunnerSpec extends ObjectBehavior
     function it_passes_each_specification_example_to_ExampleRunner(
         SpecificationNode $specification, ExampleNode $ex1, ExampleNode $ex2,
         ExampleRunner $exampleRunner
-    )
-    {
+    ) {
         $specification->getExamples()->willReturn(array($ex1, $ex2));
 
         $exampleRunner->run($ex1)->shouldBeCalled();
@@ -34,8 +33,7 @@ class SpecificationRunnerSpec extends ObjectBehavior
     function it_returns_examples_max_resultCode(
         SpecificationNode $specification, ExampleNode $ex1, ExampleNode $ex2,
         ExampleRunner $exampleRunner
-    )
-    {
+    ) {
         $specification->getExamples()->willReturn(array($ex1, $ex2));
 
         $exampleRunner->run($ex1)->willReturn(2);
@@ -53,8 +51,7 @@ class SpecificationRunnerSpec extends ObjectBehavior
 
     function it_dispatches_SpecificationEvent_before_and_after_examples_run(
         EventDispatcherInterface $dispatcher, SpecificationNode $specification
-    )
-    {
+    ) {
         $specification->getExamples()->willReturn(array());
 
         $dispatcher->dispatch('beforeSpecification',

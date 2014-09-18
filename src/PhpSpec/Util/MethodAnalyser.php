@@ -52,12 +52,12 @@ class MethodAnalyser
     }
 
     /**
-     * @param string $code
+     * @param  string $code
      * @return string
      */
     private function stripComments($code)
     {
-        $tokens = token_get_all('<?php ' . $code);
+        $tokens = token_get_all('<?php '.$code);
 
         $comments = array_map(
             function ($token) {
@@ -76,16 +76,16 @@ class MethodAnalyser
     }
 
     /**
-     * @param string $codeWithoutComments
+     * @param  string $codeWithoutComments
      * @return bool
      */
     private function codeIsOnlyBlocksAndWhitespace($codeWithoutComments)
     {
-        return (bool)preg_match('/^[\s{}]*$/s', $codeWithoutComments);
+        return (bool) preg_match('/^[\s{}]*$/s', $codeWithoutComments);
     }
 
     /**
-     * @param \ReflectionMethod $method
+     * @param  \ReflectionMethod $method
      * @return bool
      */
     private function isNotImplementedInPhp(\ReflectionMethod $method)

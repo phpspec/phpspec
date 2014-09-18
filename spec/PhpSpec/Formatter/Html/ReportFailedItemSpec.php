@@ -29,8 +29,8 @@ class ReportFailedItemSpec extends ObjectBehavior
         $event->getTitle()->willReturn(self::EVENT_TITLE);
         $event->getMessage()->willReturn(self::EVENT_MESSAGE);
         $event->getBacktrace()->willReturn(self::$BACKTRACE);
-        $event->getException()->willReturn(new \Exception);
-        $template->render(Template::DIR . '/Template/ReportFailed.html', array(
+        $event->getException()->willReturn(new \Exception());
+        $template->render(Template::DIR.'/Template/ReportFailed.html', array(
             'title' => self::EVENT_TITLE,
             'message' => self::EVENT_MESSAGE,
             'backtrace' => self::BACKTRACE,

@@ -63,7 +63,7 @@ class IdentityMatcher extends BasicMatcher
      */
     protected function matches($subject, array $arguments)
     {
-       return $subject === $arguments[0];
+        return $subject === $arguments[0];
     }
 
     /**

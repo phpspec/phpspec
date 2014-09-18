@@ -36,7 +36,7 @@ class StringPresenterSpec extends ObjectBehavior
 
     function it_presents_object_as_classname()
     {
-        $this->presentValue(new \stdClass)->shouldReturn('[obj:stdClass]');
+        $this->presentValue(new \stdClass())->shouldReturn('[obj:stdClass]');
     }
 
     function it_presents_array_as_elements_count()
@@ -68,7 +68,7 @@ class StringPresenterSpec extends ObjectBehavior
 
     function its_presentValue_displays_invokable_objects_as_objects()
     {
-        $invokable = new ObjectBehavior;
+        $invokable = new ObjectBehavior();
         $invokable->setSpecificationSubject($this);
         $this->presentValue($invokable)->shouldReturn('[obj:PhpSpec\Formatter\Presenter\StringPresenter]');
     }

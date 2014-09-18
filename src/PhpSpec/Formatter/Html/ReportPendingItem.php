@@ -46,7 +46,7 @@ class ReportPendingItem
      */
     public function write()
     {
-        $this->template->render(Template::DIR . '/Template/ReportPending.html', array(
+        $this->template->render(Template::DIR.'/Template/ReportPending.html', array(
             'title' => $this->event->getTitle(),
             'pendingExamplesCount' => self::$pendingExamplesCount
         ));

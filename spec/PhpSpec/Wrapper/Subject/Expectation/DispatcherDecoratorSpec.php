@@ -27,7 +27,7 @@ class DispatcherDecoratorSpec extends ObjectBehavior
     function it_dispatches_before_and_after_events(EventDispatcherInterface $dispatcher)
     {
         $alias = 'be';
-        $subject = new \stdClass;
+        $subject = new \stdClass();
         $arguments = array();
 
         $dispatcher->dispatch('beforeExpectation', Argument::type('PhpSpec\Event\ExpectationEvent'))->shouldBeCalled();
@@ -38,7 +38,7 @@ class DispatcherDecoratorSpec extends ObjectBehavior
     function it_decorates_expectation_with_failed_event(ExpectationInterface $expectation, EventDispatcherInterface $dispatcher)
     {
         $alias = 'be';
-        $subject = new \stdClass;
+        $subject = new \stdClass();
         $arguments = array();
 
         $expectation->match(Argument::cetera())->willThrow('PhpSpec\Exception\Example\FailureException');
@@ -52,7 +52,7 @@ class DispatcherDecoratorSpec extends ObjectBehavior
     function it_decorates_expectation_with_broken_event(ExpectationInterface $expectation, EventDispatcherInterface $dispatcher)
     {
         $alias = 'be';
-        $subject = new \stdClass;
+        $subject = new \stdClass();
         $arguments = array();
 
         $expectation->match(Argument::cetera())->willThrow('\RuntimeException');
