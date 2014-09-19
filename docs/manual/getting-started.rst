@@ -91,7 +91,7 @@ understand you are describing a class that doesn't exist and offer to create it!
     > spec\Markdown
 
       ✘ it converts plain text to html paragraphs
-          Class Markdown does not exists.
+          Class Markdown does not exist.
 
              Do you want me to create it for you? [Y/n]
 
