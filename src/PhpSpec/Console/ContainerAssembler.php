@@ -23,6 +23,7 @@ use PhpSpec\Formatter as SpecFormatter;
 use PhpSpec\Listener;
 use PhpSpec\Loader;
 use PhpSpec\Locator;
+use PhpSpec\Matcher;
 use PhpSpec\Runner;
 use PhpSpec\Wrapper;
 use PhpSpec\Config\OptionsConfig;
@@ -47,6 +48,7 @@ class ContainerAssembler
         $this->setupCommands($container);
         $this->setupResultConverter($container);
         $this->setupRerunner($container);
+        $this->setupMatchers($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -354,6 +356,10 @@ class ContainerAssembler
      */
     private function setupRunner(ServiceContainer $container)
     {
+        $container->setShared('unwrapper', function () {
+            return new Wrapper\Unwrapper();
+        });
+
         $container->setShared('runner.suite', function (ServiceContainer $c) {
             return new Runner\SuiteRunner(
                 $c->get('event_dispatcher'),
@@ -393,12 +399,12 @@ class ContainerAssembler
         $container->set('runner.maintainers.let_letgo', function () {
             return new Runner\Maintainer\LetAndLetgoMaintainer();
         });
-        $container->set('runner.maintainers.matchers', function (ServiceContainer $c) {
-            return new Runner\Maintainer\MatchersMaintainer(
-                $c->get('formatter.presenter'),
-                $c->get('unwrapper')
-            );
-        });
+
+        $container->set('runner.maintainers.matchers', new Runner\Maintainer\MatchersMaintainer(
+            $container->get('formatter.presenter'),
+            $container->get('unwrapper')
+        ));
+
         $container->set('runner.maintainers.subject', function (ServiceContainer $c) {
             return new Runner\Maintainer\SubjectMaintainer(
                 $c->get('formatter.presenter'),
@@ -406,9 +412,57 @@ class ContainerAssembler
                 $c->get('event_dispatcher')
             );
         });
+    }
 
-        $container->setShared('unwrapper', function () {
-            return new Wrapper\Unwrapper();
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupMatchers(ServiceContainer $container)
+    {
+        $container->set('matchers.identitymatcher', function (ServiceContainer $c) {
+            return new Matcher\IdentityMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.comparisonmatcher', function (ServiceContainer $c) {
+            return new Matcher\ComparisonMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.throwmatcher', function (ServiceContainer $c) {
+            return new Matcher\ThrowMatcher($c->get('unwrapper'), $c->get('formatter.presenter'));
+        });
+        $container->set('matchers.typematcher', function (ServiceContainer $c) {
+            return new Matcher\TypeMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.objectstatematcher', function (ServiceContainer $c) {
+            return new Matcher\ObjectStateMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.scalarmatcher', function (ServiceContainer $c) {
+            return new Matcher\ScalarMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.arraycountmatcher', function (ServiceContainer $c) {
+            return new Matcher\ArrayCountMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.arraykeymatcher', function (ServiceContainer $c) {
+            return new Matcher\ArrayKeyMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.arraycontainmatcher', function (ServiceContainer $c) {
+            return new Matcher\ArrayContainMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.stringstartmatcher', function (ServiceContainer $c) {
+            return new Matcher\StringStartMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.stringendmatcher', function (ServiceContainer $c) {
+            return new Matcher\StringEndMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.stringregexmatcher', function (ServiceContainer $c) {
+            return new Matcher\StringRegexMatcher($c->get('formatter.presenter'));
+        });
+
+        $container->addConfigurator(function (ServiceContainer $c) {
+            $matcherMaintainer = $c->get('runner.maintainers.matchers');
+
+            array_map(
+                array($matcherMaintainer, 'addMatcher'),
+                $c->getByPrefix('matchers')
+            );
         });
     }
 
