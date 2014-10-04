@@ -422,40 +422,40 @@ class ContainerAssembler
      */
     private function setupMatchers(ServiceContainer $container)
     {
-        $container->set('matchers.identitymatcher', function (ServiceContainer $c) {
+        $container->set('matchers.identity', function (ServiceContainer $c) {
             return new Matcher\IdentityMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.comparisonmatcher', function (ServiceContainer $c) {
+        $container->set('matchers.comparison', function (ServiceContainer $c) {
             return new Matcher\ComparisonMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.throwmatcher', function (ServiceContainer $c) {
+        $container->set('matchers.throwm', function (ServiceContainer $c) {
             return new Matcher\ThrowMatcher($c->get('unwrapper'), $c->get('formatter.presenter'));
         });
-        $container->set('matchers.typematcher', function (ServiceContainer $c) {
+        $container->set('matchers.type', function (ServiceContainer $c) {
             return new Matcher\TypeMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.objectstatematcher', function (ServiceContainer $c) {
+        $container->set('matchers.object_state', function (ServiceContainer $c) {
             return new Matcher\ObjectStateMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.scalarmatcher', function (ServiceContainer $c) {
+        $container->set('matchers.scalar', function (ServiceContainer $c) {
             return new Matcher\ScalarMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.arraycountmatcher', function (ServiceContainer $c) {
+        $container->set('matchers.array_count', function (ServiceContainer $c) {
             return new Matcher\ArrayCountMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.arraykeymatcher', function (ServiceContainer $c) {
+        $container->set('matchers.array_key', function (ServiceContainer $c) {
             return new Matcher\ArrayKeyMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.arraycontainmatcher', function (ServiceContainer $c) {
+        $container->set('matchers.array_contain', function (ServiceContainer $c) {
             return new Matcher\ArrayContainMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.stringstartmatcher', function (ServiceContainer $c) {
+        $container->set('matchers.string_start', function (ServiceContainer $c) {
             return new Matcher\StringStartMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.stringendmatcher', function (ServiceContainer $c) {
+        $container->set('matchers.string_end', function (ServiceContainer $c) {
             return new Matcher\StringEndMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.stringregexmatcher', function (ServiceContainer $c) {
+        $container->set('matchers.string_regex', function (ServiceContainer $c) {
             return new Matcher\StringRegexMatcher($c->get('formatter.presenter'));
         });
     }
