@@ -39,9 +39,9 @@ class MatchersMaintainer implements MaintainerInterface
 
     /**
      * @param PresenterInterface $presenter
-     * @param Unwrapper          $unwrapper
+     * @param MatcherInterface[] $matchers
      */
-    public function __construct(PresenterInterface $presenter, $matchers)
+    public function __construct(PresenterInterface $presenter, array $matchers)
     {
         $this->presenter = $presenter;
         $this->defaultMatchers = $matchers;
