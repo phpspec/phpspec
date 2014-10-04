@@ -356,10 +356,6 @@ class ContainerAssembler
      */
     private function setupRunner(ServiceContainer $container)
     {
-        $container->setShared('unwrapper', function () {
-            return new Wrapper\Unwrapper();
-        });
-
         $container->setShared('runner.suite', function (ServiceContainer $c) {
             return new Runner\SuiteRunner(
                 $c->get('event_dispatcher'),
@@ -400,10 +396,13 @@ class ContainerAssembler
             return new Runner\Maintainer\LetAndLetgoMaintainer();
         });
 
-        $container->set('runner.maintainers.matchers', new Runner\Maintainer\MatchersMaintainer(
-            $container->get('formatter.presenter'),
-            $container->get('unwrapper')
-        ));
+        $container->set('runner.maintainers.matchers', function (ServiceContainer $c) {
+            $matchers = $c->getByPrefix('matchers');
+            return new Runner\Maintainer\MatchersMaintainer(
+                $c->get('formatter.presenter'),
+                $matchers
+            );
+        });
 
         $container->set('runner.maintainers.subject', function (ServiceContainer $c) {
             return new Runner\Maintainer\SubjectMaintainer(
@@ -411,6 +410,10 @@ class ContainerAssembler
                 $c->get('unwrapper'),
                 $c->get('event_dispatcher')
             );
+        });
+
+        $container->setShared('unwrapper', function () {
+            return new Wrapper\Unwrapper();
         });
     }
 
@@ -454,15 +457,6 @@ class ContainerAssembler
         });
         $container->set('matchers.stringregexmatcher', function (ServiceContainer $c) {
             return new Matcher\StringRegexMatcher($c->get('formatter.presenter'));
-        });
-
-        $container->addConfigurator(function (ServiceContainer $c) {
-            $matcherMaintainer = $c->get('runner.maintainers.matchers');
-
-            array_map(
-                array($matcherMaintainer, 'addMatcher'),
-                $c->getByPrefix('matchers')
-            );
         });
     }
 

@@ -33,7 +33,7 @@ class MatchersMaintainer implements MaintainerInterface
      */
     private $unwrapper;
     /**
-     * @var array
+     * @var MatcherInterface[]
      */
     private $defaultMatchers = array();
 
@@ -41,10 +41,10 @@ class MatchersMaintainer implements MaintainerInterface
      * @param PresenterInterface $presenter
      * @param Unwrapper          $unwrapper
      */
-    public function __construct(PresenterInterface $presenter, Unwrapper $unwrapper)
+    public function __construct(PresenterInterface $presenter, $matchers)
     {
         $this->presenter = $presenter;
-        $this->unwrapper = $unwrapper;
+        $this->defaultMatchers = $matchers;
     }
 
     /**
@@ -102,13 +102,5 @@ class MatchersMaintainer implements MaintainerInterface
     public function getPriority()
     {
         return 50;
-    }
-
-    /**
-     * @param MatcherInterface $matcher
-     */
-    public function addMatcher(MatcherInterface $matcher)
-    {
-        $this->defaultMatchers[] = $matcher;
     }
 }
