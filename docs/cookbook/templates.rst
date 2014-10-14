@@ -39,7 +39,7 @@ You can copy the contents of the default template found in **phpspec** at
     }
 
 So now, for example, you want to describe a class ``Acme\Model\Foo`` which does not exist. You can run
-the spec``spec/Acme/Model/FooSpec.php``` and let **phpspec** generate the missing class.
+the spec ``spec/Acme/Model/FooSpec.php`` and let **phpspec** generate the missing class.
 **phpspec** will use your overridden template and the generated file will look like:
 
 .. code-block:: php

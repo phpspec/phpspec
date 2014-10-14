@@ -22,8 +22,8 @@ you can have different implementations for different types of source.
 
 You want to describe a method which has an instance of a `Reader` as an
 argument. It will call ``Markdown\Reader::getMarkdown()`` to get the markdown
-to format. You have not you written any implementations of Reader to pass
-into the method though. You do want to get distracted by creating an implementation
+to format. You have not yet written any implementations of Reader to pass
+into the method though. You do not want to get distracted by creating an implementation
 before you can carry on writing the parser. Instead we can create a fake
 version of Reader called a stub and tell **phpspec** what ``Markdown\Reader::getMarkdown()``
 should return.
@@ -136,13 +136,13 @@ of just returning the formatted text. Again you create an interface:
         public function writeText($text);
     }
 
-You again pass it to to the method but this time the ``Markdown\Writer::writeText($text)``
+You again pass it to the method but this time the ``Markdown\Writer::writeText($text)``
 method does not return something to your parser class. The new method you
 are going to create on the parser will not return anything either. Instead
 it is going to give the formatted text to the `Markdown\Writer` so you want
 to be able to give an example of what that formatted text should be. You
 can do this using a mock, the mock gets created in the same way as the stub.
-This this time you tell it to expect ``Markdown\Writer::writeText($text)``
+This time you tell it to expect ``Markdown\Writer::writeText($text)``
 to get called with a particular value:
 
 .. code-block:: php
