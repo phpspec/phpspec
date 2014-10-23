@@ -61,6 +61,12 @@ class StringPresenterSpec extends ObjectBehavior
             ->shouldReturn('[exc:RuntimeException("message")]');
     }
 
+    function it_presents_function_callable_as_string()
+    {
+        $this->presentValue('date')
+            ->shouldReturn('[date()]');
+    }
+
     function it_presents_string_as_string()
     {
         $this->presentString('some string')->shouldReturn('some string');
