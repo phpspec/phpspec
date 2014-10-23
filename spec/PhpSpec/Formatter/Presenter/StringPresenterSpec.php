@@ -67,6 +67,14 @@ class StringPresenterSpec extends ObjectBehavior
             ->shouldReturn('[date()]');
     }
 
+
+    function it_presents_invokable_object_as_string(WithMagicInvoke $object)
+    {
+        $className = get_class($object->getWrappedObject());
+        $this->presentValue($object)
+            ->shouldReturn(sprintf('[obj:%s]', $className));
+    }
+
     function it_presents_string_as_string()
     {
         $this->presentString('some string')->shouldReturn('some string');
@@ -77,5 +85,12 @@ class StringPresenterSpec extends ObjectBehavior
         $invokable = new ObjectBehavior();
         $invokable->setSpecificationSubject($this);
         $this->presentValue($invokable)->shouldReturn('[obj:PhpSpec\Formatter\Presenter\StringPresenter]');
+    }
+}
+
+class WithMagicInvoke
+{
+    function __invoke()
+    {
     }
 }
