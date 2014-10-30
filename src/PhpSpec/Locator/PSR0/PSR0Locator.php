@@ -142,7 +142,7 @@ class PSR0Locator implements ResourceLocatorInterface
     public function supportsQuery($query)
     {
         $sepr = DIRECTORY_SEPARATOR;
-        $path = rtrim(realpath(str_replace(array('\\', '/'), $sepr, $query)), $sepr);
+        $path = realpath(str_replace(array('\\', '/'), $sepr, $query)) . $sepr;
 
         if (null === $path) {
             return false;
