@@ -16,6 +16,7 @@ namespace PhpSpec\Console\Command;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -32,6 +33,7 @@ class DescribeCommand extends Command
                     new InputArgument('class', InputArgument::REQUIRED, 'Class to describe'),
                 ))
             ->setDescription('Creates a specification for a class')
+            ->addOption('confirm', null, InputOption::VALUE_NONE, 'Ask for confirmation before creating spec')
             ->setHelp(<<<EOF
 The <info>%command.name%</info> command creates a specification for a class:
 
@@ -63,8 +65,34 @@ EOF
         $container->configure();
 
         $classname = $input->getArgument('class');
+
+        if (!$this->confirm($input, $container, $classname)) {
+            return;
+        }
+
         $resource  = $container->get('locator.resource_manager')->createResource($classname);
 
         $container->get('code_generator')->generate($resource, 'specification');
+    }
+
+    /**
+     * @param InputInterface $input
+     * @param $container
+     * @param $classname
+     * @return bool
+     */
+    private function confirm(InputInterface $input, $container, $classname)
+    {
+        if (!$input->getOption('confirm')) {
+            return true;
+        }
+
+        $question = sprintf('Do you want to generate a specification for %s? (Y/n)', $classname);
+
+        if ($container->get('console.io')->askConfirmation($question, true)) {
+            return true;
+        }
+
+        return false;
     }
 }
