@@ -62,12 +62,12 @@ class PSR0LocatorSpec extends ObjectBehavior
         );
     }
 
-    function it_generates_fullSpecPath_from_specPath_plus_namespace_not_cutting_psr4_prefix()
+    function it_generates_fullSpecPath_from_specPath_plus_namespace_cutting_psr4_prefix()
     {
         $this->beConstructedWith('p\pf\C\N', 'spec', dirname(__DIR__), __DIR__, null, 'p\pf');
 
         $this->getFullSpecPath()->shouldReturn(
-            __DIR__.DIRECTORY_SEPARATOR.'spec'.DIRECTORY_SEPARATOR.'p'.DIRECTORY_SEPARATOR.'pf'.DIRECTORY_SEPARATOR.'C'.DIRECTORY_SEPARATOR.'N'.DIRECTORY_SEPARATOR
+            __DIR__.DIRECTORY_SEPARATOR.'spec'.DIRECTORY_SEPARATOR.'C'.DIRECTORY_SEPARATOR.'N'.DIRECTORY_SEPARATOR
         );
     }
 
