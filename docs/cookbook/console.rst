@@ -5,7 +5,7 @@ The phpspec console command uses Symfony's console component. This means
 that it inherits the `default Symfony console command and options <http://symfony.com/doc/current/components/console/usage.html>`_.
 
 **phpspec** has an additional global option to let you specify a config file
-other then `phpspec.yml` or `phpspec.yml.dist`:
+other than `phpspec.yml` or `phpspec.yml.dist`:
 
 .. code-block:: bash
 
@@ -58,14 +58,14 @@ The run command runs the specs:
 
     $ php bin/phpspec run
 
- Will run all the specs in the `spec` directory.
+Will run all the specs in the `spec` directory.
 
 .. code-block:: bash
 
     $ php bin/phpspec run spec/ClassNameSpec.php
 
- Will run only the ClassNameSpec. You can run just the specs in a directory
- with:
+Will run only the ClassNameSpec. You can run just the specs in a directory
+with:
 
 .. code-block:: bash
 

@@ -241,7 +241,7 @@ Scalar Matcher
 
 To specify that the value returned by a method should be a specific primitive
 type you can use the Scalar matcher. It's like using one of the ``is_*`` functions,
-e.g, ``is_bool``, ``is_integer``, ``is_decimal``, etc.
+e.g, ``is_bool``, ``is_integer``, ``is_float``, etc.
 
 .. code-block:: php
 
