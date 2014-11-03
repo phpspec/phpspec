@@ -76,8 +76,10 @@ class PSR0Locator implements ResourceLocatorInterface
         }
         $srcNamespacePath = null === $this->psr4Prefix ? $this->srcNamespace : substr($this->srcNamespace, strlen($this->psr4Prefix));
         $this->specNamespace = trim($specNamespacePrefix, ' \\').'\\'.$this->srcNamespace;
+        $specNamespacePath = trim($specNamespacePrefix, ' \\').'\\'.$srcNamespacePath;
+
         $this->fullSrcPath   = $this->srcPath.str_replace('\\', $sepr, $srcNamespacePath);
-        $this->fullSpecPath  = $this->specPath.str_replace('\\', $sepr, $this->specNamespace);
+        $this->fullSpecPath  = $this->specPath.str_replace('\\', $sepr, $specNamespacePath);
 
         if ($sepr === $this->srcPath) {
             throw new InvalidArgumentException(sprintf(
@@ -149,8 +151,8 @@ class PSR0Locator implements ResourceLocatorInterface
         }
 
         return 0 === strpos($path, $this->srcPath)
-            || 0 === strpos($path, $this->specPath)
-        ;
+        || 0 === strpos($path, $this->specPath)
+            ;
     }
 
     /**
@@ -198,9 +200,9 @@ class PSR0Locator implements ResourceLocatorInterface
         $classname = str_replace('/', '\\', $classname);
 
         return '' === $this->srcNamespace
-            || 0  === strpos($classname, $this->srcNamespace)
-            || 0  === strpos($classname, $this->specNamespace)
-        ;
+        || 0  === strpos($classname, $this->srcNamespace)
+        || 0  === strpos($classname, $this->specNamespace)
+            ;
     }
 
     /**
