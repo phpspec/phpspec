@@ -38,6 +38,7 @@ class ContainerAssembler
     {
         $this->setupIO($container);
         $this->setupEventDispatcher($container);
+        $this->setupConsoleEventDispatcher($container);
         $this->setupGenerators($container);
         $this->setupPresenter($container);
         $this->setupLocator($container);
@@ -81,6 +82,23 @@ class ContainerAssembler
 
         $container->setShared('console.commands.describe', function () {
             return new Command\DescribeCommand();
+        });
+    }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupConsoleEventDispatcher(ServiceContainer $container)
+    {
+        $container->setShared('console_event_dispatcher', function (ServiceContainer $c) {
+            $dispatcher = new EventDispatcher();
+
+            array_map(
+                array($dispatcher, 'addSubscriber'),
+                $c->getByPrefix('console_event_dispatcher.listeners')
+            );
+
+            return $dispatcher;
         });
     }
 
@@ -344,7 +362,6 @@ class ContainerAssembler
             } catch (\InvalidArgumentException $e) {
                 throw new \RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
             }
-
             $c->set('event_dispatcher.listeners.formatter', $formatter);
         });
     }
