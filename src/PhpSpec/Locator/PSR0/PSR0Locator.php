@@ -200,9 +200,9 @@ class PSR0Locator implements ResourceLocatorInterface
         $classname = str_replace('/', '\\', $classname);
 
         return '' === $this->srcNamespace
-        || 0  === strpos($classname, $this->srcNamespace)
-        || 0  === strpos($classname, $this->specNamespace)
-            ;
+            || 0  === strpos($classname, $this->srcNamespace)
+            || 0  === strpos($classname, $this->specNamespace)
+        ;
     }
 
     /**
