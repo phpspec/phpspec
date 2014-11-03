@@ -1,0 +1,21 @@
+{
+    "chmod": "0755",
+    "directories": [
+        "src"
+    ],
+    "files": [
+        "LICENSE"
+    ],
+    "finder": [
+        {
+            "name": "*.php",
+            "exclude": ["Tests"],
+            "in": "vendor"
+        }
+    ],
+    "main": "bin/phpspec",
+    "git-commit": "git-commit",
+    "git-version": "git-version",
+    "output": "phpspec-@git-version@.phar",
+    "stub": true
+}
