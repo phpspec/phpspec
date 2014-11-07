@@ -51,7 +51,7 @@ Feature: Developer generates a method
 
       """
   Scenario: Generating a method in a class with psr4 prefix
-    Given the spec file "spec/Behat/Tests/MyNamespace/PrefixSpec.php" contains:
+    Given the spec file "spec/MyNamespace/PrefixSpec.php" contains:
     """
     <?php
 
