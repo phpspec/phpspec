@@ -70,6 +70,8 @@ class Application extends BaseApplication
             $this->add($command);
         }
 
+        $this->setDispatcher($this->container->get('console_event_dispatcher'));
+
         return parent::doRun($input, $output);
     }
 
