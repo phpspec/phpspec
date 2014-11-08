@@ -17,6 +17,11 @@ class Differ
 {
     private $engines = array();
 
+    public function __construct(array $engines = array())
+    {
+        $this->engines = $engines;
+    }
+
     public function addEngine(EngineInterface $engine)
     {
         $this->engines[] = $engine;
