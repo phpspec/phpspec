@@ -23,6 +23,7 @@ use PhpSpec\Formatter as SpecFormatter;
 use PhpSpec\Listener;
 use PhpSpec\Loader;
 use PhpSpec\Locator;
+use PhpSpec\Matcher;
 use PhpSpec\Runner;
 use PhpSpec\Wrapper;
 use PhpSpec\Config\OptionsConfig;
@@ -48,6 +49,7 @@ class ContainerAssembler
         $this->setupCommands($container);
         $this->setupResultConverter($container);
         $this->setupRerunner($container);
+        $this->setupMatchers($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -410,12 +412,15 @@ class ContainerAssembler
         $container->set('runner.maintainers.let_letgo', function () {
             return new Runner\Maintainer\LetAndLetgoMaintainer();
         });
+
         $container->set('runner.maintainers.matchers', function (ServiceContainer $c) {
+            $matchers = $c->getByPrefix('matchers');
             return new Runner\Maintainer\MatchersMaintainer(
                 $c->get('formatter.presenter'),
-                $c->get('unwrapper')
+                $matchers
             );
         });
+
         $container->set('runner.maintainers.subject', function (ServiceContainer $c) {
             return new Runner\Maintainer\SubjectMaintainer(
                 $c->get('formatter.presenter'),
@@ -426,6 +431,49 @@ class ContainerAssembler
 
         $container->setShared('unwrapper', function () {
             return new Wrapper\Unwrapper();
+        });
+    }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupMatchers(ServiceContainer $container)
+    {
+        $container->set('matchers.identity', function (ServiceContainer $c) {
+            return new Matcher\IdentityMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.comparison', function (ServiceContainer $c) {
+            return new Matcher\ComparisonMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.throwm', function (ServiceContainer $c) {
+            return new Matcher\ThrowMatcher($c->get('unwrapper'), $c->get('formatter.presenter'));
+        });
+        $container->set('matchers.type', function (ServiceContainer $c) {
+            return new Matcher\TypeMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.object_state', function (ServiceContainer $c) {
+            return new Matcher\ObjectStateMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.scalar', function (ServiceContainer $c) {
+            return new Matcher\ScalarMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.array_count', function (ServiceContainer $c) {
+            return new Matcher\ArrayCountMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.array_key', function (ServiceContainer $c) {
+            return new Matcher\ArrayKeyMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.array_contain', function (ServiceContainer $c) {
+            return new Matcher\ArrayContainMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.string_start', function (ServiceContainer $c) {
+            return new Matcher\StringStartMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.string_end', function (ServiceContainer $c) {
+            return new Matcher\StringEndMatcher($c->get('formatter.presenter'));
+        });
+        $container->set('matchers.string_regex', function (ServiceContainer $c) {
+            return new Matcher\StringRegexMatcher($c->get('formatter.presenter'));
         });
     }
 

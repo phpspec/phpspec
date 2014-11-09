@@ -14,6 +14,7 @@
 namespace PhpSpec\Runner\Maintainer;
 
 use PhpSpec\Loader\Node\ExampleNode;
+use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\SpecificationInterface;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
@@ -31,15 +32,19 @@ class MatchersMaintainer implements MaintainerInterface
      * @var \PhpSpec\Wrapper\Unwrapper
      */
     private $unwrapper;
+    /**
+     * @var MatcherInterface[]
+     */
+    private $defaultMatchers = array();
 
     /**
      * @param PresenterInterface $presenter
-     * @param Unwrapper          $unwrapper
+     * @param MatcherInterface[] $matchers
      */
-    public function __construct(PresenterInterface $presenter, Unwrapper $unwrapper)
+    public function __construct(PresenterInterface $presenter, array $matchers)
     {
         $this->presenter = $presenter;
-        $this->unwrapper = $unwrapper;
+        $this->defaultMatchers = $matchers;
     }
 
     /**
@@ -61,18 +66,9 @@ class MatchersMaintainer implements MaintainerInterface
     public function prepare(ExampleNode $example, SpecificationInterface $context,
                             MatcherManager $matchers, CollaboratorManager $collaborators)
     {
-        $matchers->add(new Matcher\IdentityMatcher($this->presenter));
-        $matchers->add(new Matcher\ComparisonMatcher($this->presenter));
-        $matchers->add(new Matcher\ThrowMatcher($this->unwrapper, $this->presenter));
-        $matchers->add(new Matcher\TypeMatcher($this->presenter));
-        $matchers->add(new Matcher\ObjectStateMatcher($this->presenter));
-        $matchers->add(new Matcher\ScalarMatcher($this->presenter));
-        $matchers->add(new Matcher\ArrayCountMatcher($this->presenter));
-        $matchers->add(new Matcher\ArrayKeyMatcher($this->presenter));
-        $matchers->add(new Matcher\ArrayContainMatcher($this->presenter));
-        $matchers->add(new Matcher\StringStartMatcher($this->presenter));
-        $matchers->add(new Matcher\StringEndMatcher($this->presenter));
-        $matchers->add(new Matcher\StringRegexMatcher($this->presenter));
+        foreach ($this->defaultMatchers as $matcher) {
+            $matchers->add($matcher);
+        }
 
         if (!$context instanceof Matcher\MatchersProviderInterface) {
             return;
