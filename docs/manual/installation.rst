@@ -11,35 +11,35 @@ Method #1 (Composer)
 The simplest way to install phpspec with all its dependencies is through
 Composer.
 
-First, create a ``composer.json`` file in your project's root directory:
+If you don't have Composer installed yet, follow the instructions on `the composer website <https://getcomposer.org/download/>`__
+
+First, create a ``composer.json`` file in your project's root directory (``composer init``):
+
+**Example composer.json with psr-0 autoloading**
 
 .. code-block:: js
 
     {
-        "require-dev": {
-            "phpspec/phpspec": "~2.0"
-        },
-        "config": {
-            "bin-dir": "bin"
-        },
         "autoload": {"psr-0": {"": "src"}}
     }
 
-Then install phpspec with the composer install command:
+Then install phpspec with the ``composer require`` command:
 
 .. code-block:: bash
-
-    $ composer install
-
-Follow instructions on `the composer website <https://getcomposer.org/download/`_
-if you don't have it installed yet.
+    
+    $ # This will ensure you get the latest stable version and
+    $ # add the proper entry to your composer.json's require-dev section
+    $ composer require phpspec/phpspec --dev
 
 Phpspec with its dependencies will be installed inside the ``vendor`` folder
 and the phpspec executable will be linked into the ``bin`` folder.
 
-In case your project already uses composer, simply add ``phpspec/phpspec``
-to the ``require-dev`` section and run:
+You may now use ``vendor/bin/phpspec``. 
+
+*Optionally set up an alias* such as ``alias spec='vendor/bin/phpspec'`` to enable usage such as ``spec run``, ``spec describe``, etc...
+
+**To update phpspec/phpspec**
 
 .. code-block:: bash
-
+    
     $ composer update phpspec/phpspec
