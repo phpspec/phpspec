@@ -69,11 +69,11 @@ class Filesystem
      *
      * @return \SplFileInfo[]
      */
-    public function findPhpFilesIn($path)
+    public function findSpecFilesIn($path)
     {
         $finder = Finder::create()
             ->files()
-            ->name('*.php')
+            ->name('*Spec.php')
             ->followLinks()
             ->sortByName()
             ->in($path)
