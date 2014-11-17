@@ -50,6 +50,7 @@ Code generation
 ~~~~~~~~~~~~~~~
 
  * `Typehinted Methods <https://github.com/ciaranmcnulty/phpspec-typehintedmethods>`_
+ * `Example Generation <https://github.com/richardmiller/ExemplifyExtension>`_
 
 Additional Formatters
 ~~~~~~~~~~~~~~~~~~~~~
@@ -67,3 +68,4 @@ Miscellaneous
  * `Prepare <https://github.com/coduo/phpspec-prepare-extension>`_
  * `Data provider <https://github.com/coduo/phpspec-data-provider-extension`_
  * `Matcher extension <https://github.com/coduo/phpspec-matcher-extension>`_
+ * `Behat Integration <https://github.com/richardmiller/BehatSpec>`_
