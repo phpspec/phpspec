@@ -3,7 +3,7 @@ all:
 
 build-phar:
 	@echo "--> Checking for composer command line tool"
-	command -v $i >/dev/null && continue || { echo "$i command not found."; exit 1; }
+	command -v composer >/dev/null && continue || { echo "composer command not found."; exit 1; }
 	@echo "--> Cleaning vendor directory"
 	rm -Rfv vendor
 	@echo "--> Installing dependencies without dev"
