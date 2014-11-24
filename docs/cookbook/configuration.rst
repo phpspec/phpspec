@@ -17,6 +17,38 @@ all settings that are not defined in the project's configuration.
 
 .. _configuration-suites:
 
+PSR-4
+-----
+
+**phpspec** assumes a PSR-0 mapping of namespaces to the src and spec directories by default.
+So for example running:
+
+.. code-block:: bash
+
+    $ bin/phpspec describe Acme/Text/Markdown
+
+Will create a spec in the ``spec/Acme/Text/MarkdownSpec.php`` file and the class will
+be created in ``src/Acme/Text/Markdown.php``
+
+To use PSR-4 you configure the ``namespace`` and ``psr4_prefix`` options
+in a suite to the part that should be omitted from the directory structure:
+
+.. code-block:: yaml
+
+    suites:
+        acme_suite:
+            namespace: Acme\Text
+            psr4_prefix: Acme\Text
+
+With this config running:
+
+.. code-block:: bash
+
+    $ bin/phpspec describe Acme/Text/Markdown
+
+will now put the spec in ``spec/MarkdownSpec.php`` and the class will be created
+in  ``src/Markdown.php``.
+
 Spec and source locations
 -------------------------
 
@@ -49,7 +81,7 @@ Some examples:
 
     suites:
         acme_suite:
-            namespace: Acme\TheLib
+            namespace: Acme\Text
             spec_prefix: acme_spec
 
         # shortcut for
@@ -62,8 +94,8 @@ If you have suites with different spec directories then ``phpspec run``
 will run the specs from each of the directories using the relevant suite settings.
 
 When you use ``phpspec desc`` **phpspec** creates the spec using the matching
-configuration.  E.g. ``phpspec desc Acme/TheLib/MyClass`` will use the default
-spec directory but the namespace ``acme_spec\Acme\TheLib\MyClass``.
+configuration.  E.g. ``phpspec desc Acme/Text/MyClass`` will use the the
+namespace ``acme_spec\Acme\Text\MyClass``.
 
 If the namespace does not match one of the namespaces in the suites config then
 **phpspec** uses the default settings. If you want to change the defaults then you can
@@ -84,6 +116,25 @@ than one set of configuration values for a null namespace. If you do add more
 than one suite with a null namespace then **phpspec** will use the last one
 defined.
 
+Note that the default spec directory is ``.``, specs are created in the `spec`
+directory because it is the first part of the spec namespace. This means that
+changing the `spec_path` will result in additional directories before `spec` not
+instead of it. For example, with the config:
+
+.. code-block:: yaml
+
+    suites:
+        acme_suite:
+            namespace: Acme\Text
+            spec_prefix: acme_spec
+
+running:
+
+.. code-block:: bash
+
+    $ bin/phpspec describe Acme/Text/Markdown
+
+will create the spec in the file ``acme_spec/spec/Acme/Text/MarkdownSpec.php``
 
 Formatter
 ---------
