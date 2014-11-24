@@ -255,7 +255,7 @@ class PSR0Locator implements ResourceLocatorInterface
         }
 
         $resources = array();
-        foreach ($this->filesystem->findPhpFilesIn($path) as $file) {
+        foreach ($this->filesystem->findSpecFilesIn($path) as $file) {
             $resources[] = $this->createResourceFromSpecFile($file->getRealPath());
         }
 
