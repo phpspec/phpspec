@@ -54,7 +54,7 @@ class MethodAnalyser
 
         $length = $reflectionMethod->getEndLine() - $reflectionMethod->getStartLine();
         $lines = file($reflectionClass->getFileName());
-        $code = join("\n", array_slice($lines, $reflectionMethod->getStartLine()-1, $length+1));
+        $code = join(PHP_EOL, array_slice($lines, $reflectionMethod->getStartLine()-1, $length+1));
 
         return preg_replace('/.*function[^{]+{/s', '', $code);
     }
