@@ -315,4 +315,16 @@ class IO implements IOInterface
     {
         return $this->input->getOption('fake') || $this->config->isFakingEnabled();
     }
+
+    public function getBootstrapPath()
+    {
+        if ($path = $this->input->getOption('bootstrap')) {
+            return $path;
+        }
+
+        if ($path = $this->config->getBootstrapPath()) {
+            return $path;
+        }
+        return false;
+    }
 }

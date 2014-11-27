@@ -121,4 +121,36 @@ class IOSpec extends ObjectBehavior
 
         $this->isFakingEnabled()->shouldReturn(true);
     }
+
+    function it_will_report_no_bootstrap_when_there_is_none($input, $config)
+    {
+        $input->getOption('bootstrap')->willReturn(null);
+        $config->getBootstrapPath()->willReturn(false);
+
+        $this->getBootstrapPath()->shouldReturn(false);
+    }
+
+    function it_will_report_bootstrap_path_when_one_is_in_the_config_file($input, $config)
+    {
+        $input->getOption('bootstrap')->willReturn(null);
+        $config->getBootstrapPath()->willReturn('/path/to/bootstrap.php');
+
+        $this->getBootstrapPath()->shouldReturn('/path/to/bootstrap.php');
+    }
+
+    function it_will_report_bootstrap_path_when_one_is_specified_at_the_command_line($input, $config)
+    {
+        $input->getOption('bootstrap')->willReturn('/path/to/bootstrap.php');
+        $config->getBootstrapPath()->willReturn(false);
+
+        $this->getBootstrapPath()->shouldReturn('/path/to/bootstrap.php');
+    }
+
+    function it_will_report_bootstrap_path_from_cli_when_different_paths_are_specified_in_config_and_cli($input, $config)
+    {
+        $input->getOption('bootstrap')->willReturn('/path/to/bootstrap.php');
+        $config->getBootstrapPath()->willReturn('/path/to/different.php');
+
+        $this->getBootstrapPath()->shouldReturn('/path/to/bootstrap.php');
+    }
 }
