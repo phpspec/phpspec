@@ -1,3 +1,12 @@
+2.1.0-RC2 / 2014-11-14
+======================
+
+  * Specify bootstrap file via configuration
+  * Correct error codes while using --stop-on-failure
+  * Better detection of empty specs
+  * Fixed issue where non-spec files in spec folder caused errors
+  * Better PSR-4 support
+
 2.1.0-RC1 / 2014-09-14
 ======================
 
