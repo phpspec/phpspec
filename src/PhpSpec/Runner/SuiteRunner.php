@@ -55,6 +55,7 @@ class SuiteRunner
             try {
                 $result = max($result, $this->specRunner->run($specification));
             } catch (StopOnFailureException $e) {
+                $result = $e->getResult();
                 break;
             }
         }

@@ -44,7 +44,7 @@ Feature: Developer chooses stop on failure
 
       """
     When I run phpspec
-    Then 2 example should have been run
+    Then 2 examples should have been run
 
   @issue352
   Scenario: stop-on-failure is specified in the config
@@ -92,6 +92,7 @@ Feature: Developer chooses stop on failure
       """
     When I run phpspec
     Then 1 example should have been run
+    And the exit code should be 1
 
   @issue352
   Scenario: stop-on-failure at command line overrides config
@@ -139,3 +140,5 @@ Feature: Developer chooses stop on failure
       """
     When I run phpspec with the "stop-on-failure" option
     Then 1 example should have been run
+    And the exit code should be 1
+

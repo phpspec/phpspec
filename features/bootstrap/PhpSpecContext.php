@@ -334,4 +334,12 @@ class PhpSpecContext implements Context
 
         file_put_contents($file, $string->getRaw());
     }
+
+    /**
+     * @Then the exit code should be :code
+     */
+    public function theExitCodeShouldBe($code)
+    {
+        expect($this->applicationTester->getStatusCode())->toBe((int)$code);
+    }
 }
