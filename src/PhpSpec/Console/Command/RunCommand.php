@@ -94,15 +94,6 @@ EOF
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $container = $this->getApplication()->getContainer();
-        $bootstrap = $input->getOption("bootstrap");
-
-        if ($bootstrap) {
-            if (!is_file($bootstrap)) {
-                throw new \RuntimeException(sprintf("Bootstrap file '%s' does not exist", $bootstrap));
-            }
-
-            require $bootstrap;
-        }
 
         $container->setParam('formatter.name',
             $input->getOption('format') ?: $container->getParam('formatter.name')

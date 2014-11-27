@@ -63,7 +63,8 @@ class ContainerAssembler
                     $c->getParam('stop_on_failure', false),
                     $c->getParam('code_generation', true),
                     $c->getParam('rerun', true),
-                    $c->getParam('fake', false)
+                    $c->getParam('fake', false),
+                    $c->getParam('bootstrap', false)
                 )
             );
         });
@@ -164,6 +165,11 @@ class ContainerAssembler
         });
         $container->setShared('util.method_analyser', function () {
             return new MethodAnalyser();
+        });
+        $container->setShared('event_dispatcher.listeners.bootstrap', function (ServiceContainer $c) {
+            return new Listener\BootstrapListener(
+                $c->get('console.io')
+            );
         });
     }
 
