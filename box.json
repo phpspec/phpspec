@@ -14,8 +14,6 @@
         }
     ],
     "main": "bin/phpspec",
-    "git-commit": "git-commit",
-    "git-version": "git-version",
-    "output": "phpspec-@git-version@.phar",
+    "output": "phpspec.phar",
     "stub": true
 }
