@@ -35,7 +35,7 @@ class OptionsConfig
      */
     private $fakingEnabled;
     /**
-     * @var string
+     * @var string|bool
      */
     private $bootstrapPath;
 
