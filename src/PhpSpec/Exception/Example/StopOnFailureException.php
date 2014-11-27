@@ -14,7 +14,6 @@
 namespace PhpSpec\Exception\Example;
 
 use Exception;
-use PhpSpec\Event\ExampleEvent;
 
 /**
  * Class StopOnFailureException holds information about stop on failure exception
