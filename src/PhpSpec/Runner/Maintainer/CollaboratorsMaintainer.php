@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Runner\Maintainer;
 
+use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\SpecificationInterface;
 use PhpSpec\Runner\MatcherManager;
@@ -20,6 +21,7 @@ use PhpSpec\Runner\CollaboratorManager;
 use PhpSpec\Wrapper\Collaborator;
 use PhpSpec\Wrapper\Unwrapper;
 use Prophecy\Prophet;
+use ReflectionException;
 
 class CollaboratorsMaintainer implements MaintainerInterface
 {
@@ -118,8 +120,16 @@ class CollaboratorsMaintainer implements MaintainerInterface
 
         foreach ($function->getParameters() as $parameter) {
             $collaborator = $this->getOrCreateCollaborator($collaborators, $parameter->getName());
-            if (null !== $class = $parameter->getClass()) {
-                $collaborator->beADoubleOf($class->getName());
+            try {
+                if (null !== $class = $parameter->getClass()) {
+                    $collaborator->beADoubleOf($class->getName());
+                }
+            } catch (ReflectionException $e) {
+                throw new CollaboratorNotFoundException(
+                    sprintf('Collaborator does not exist '),
+                    0, $e,
+                    $parameter
+                );
             }
         }
     }
