@@ -13,6 +13,9 @@
 
 namespace PhpSpec;
 
+use Behat\Testwork\ServiceContainer\ContainerLoader;
+use Behat\Testwork\ServiceContainer\Extension;
+use Behat\Testwork\ServiceContainer\ExtensionManager;
 use InvalidArgumentException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -29,6 +32,8 @@ class ServiceContainer
      * @var ContainerBuilder
      */
     private $containerBuilder;
+    private $params = array();
+    private $defaultExtensions = array();
 
     /**
      * @var array
@@ -37,6 +42,9 @@ class ServiceContainer
 
     public function __construct($container)
     {
+        $container = new ContainerBuilder();
+        $container->setParameter('paths.base', __DIR__);
+
         $this->containerBuilder = $container;
         $definition = new Definition('PhpSpec\\ServiceFactory');
         $this->containerBuilder->setDefinition(self::COMPAT_SERVICE_FACTORY_ID, $definition);
@@ -53,6 +61,14 @@ class ServiceContainer
     public function setParam($id, $value)
     {
         $this->containerBuilder->setParameter($id, $value);
+        $this->params[$id] = $value;
+    }
+
+    public function processParams()
+    {
+        foreach ($this->params as $id => $value) {
+            $this->containerBuilder->setParameter($id, $value);
+        }
     }
 
     /**
@@ -187,11 +203,12 @@ class ServiceContainer
     /**
      * Loop through all configurators and invoke them
      */
-    public function configure()
+    public function compile()
     {
-        foreach ($this->configurators as $configurator) {
-            call_user_func($configurator, $this);
-        }
+        $this->addDefaultExtension(new LegacyExtension($this));
+        $containerLoader = new ContainerLoader(new ExtensionManager($this->defaultExtensions));
+        $containerLoader->load($this->containerBuilder, array());
+        $this->containerBuilder->addObjectResource($containerLoader);
         $this->containerBuilder->compile();
     }
 
@@ -202,16 +219,16 @@ class ServiceContainer
      *
      * @return array
      */
-    private function getPrefixAndSid($id)
+    private function getPrefix($id)
     {
         if (count($parts = explode('.', $id)) < 2) {
-            return array(null, $id);
+            return null;
         }
 
-        $sid    = array_pop($parts);
+        array_pop($parts);
         $prefix = implode('.', $parts);
 
-        return array($prefix, $sid);
+        return $prefix;
     }
 
     /**
@@ -234,9 +251,20 @@ class ServiceContainer
         $definition->setFactoryService(self::COMPAT_SERVICE_FACTORY_ID);
         $definition->setFactoryMethod('create');
         $definition->addArgument($id);
+        $definition->addTag($this->getPrefix($id));
 
-        list($prefix, $_) = $this->getPrefixAndSid($id);
-        $definition->addTag($prefix);
         return $definition;
+    }
+
+    public function configure()
+    {
+        foreach ($this->configurators as $configurator) {
+            call_user_func($configurator, $this);
+        }
+    }
+
+    public function addDefaultExtension(Extension $extension)
+    {
+        $this->defaultExtensions[] = $extension;
     }
 }

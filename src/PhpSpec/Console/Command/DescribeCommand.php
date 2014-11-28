@@ -60,7 +60,7 @@ EOF
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $container = $this->getApplication()->getContainer();
-        $container->configure();
+        $container->compile();
 
         $classname = $input->getArgument('class');
         $resource  = $container->get('locator.resource_manager')->createResource($classname);

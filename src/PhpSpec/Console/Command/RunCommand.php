@@ -98,7 +98,7 @@ EOF
         $container->setParam('formatter.name',
             $input->getOption('format') ?: $container->getParam('formatter.name')
         );
-        $container->configure();
+        $container->compile();
 
         $locator = $input->getArgument('spec');
         $linenum = null;

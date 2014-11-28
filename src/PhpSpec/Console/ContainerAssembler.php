@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Console;
 
+use PhpSpec\IO\IOExtension;
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
@@ -26,7 +27,6 @@ use PhpSpec\Locator;
 use PhpSpec\Matcher;
 use PhpSpec\Runner;
 use PhpSpec\Wrapper;
-use PhpSpec\Config\OptionsConfig;
 use RuntimeException;
 use Symfony\Component\Process\PhpExecutableFinder;
 
@@ -54,20 +54,7 @@ class ContainerAssembler
 
     private function setupIO(ServiceContainer $container)
     {
-        $container->setShared('console.io', function (ServiceContainer $c) {
-            return new IO(
-                $c->get('console.input'),
-                $c->get('console.output'),
-                $c->get('console.helper.dialog'),
-                new OptionsConfig(
-                    $c->getParam('stop_on_failure', false),
-                    $c->getParam('code_generation', true),
-                    $c->getParam('rerun', true),
-                    $c->getParam('fake', false),
-                    $c->getParam('bootstrap', false)
-                )
-            );
-        });
+        $container->addDefaultExtension(new IOExtension());
     }
 
     private function setupResultConverter(ServiceContainer $container)
