@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpSpec\IO;
+namespace PhpSpec\Matcher\DependencyInjection;
 
 use Behat\Testwork\ServiceContainer\Extension;
 use Behat\Testwork\ServiceContainer\ExtensionManager;
@@ -9,7 +9,7 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 
-class IOExtension implements Extension
+class MatcherExtension implements Extension
 {
 
     /**
@@ -31,7 +31,7 @@ class IOExtension implements Extension
      */
     public function getConfigKey()
     {
-        return 'io';
+        return 'matcher';
     }
 
     /**
