@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Console;
 
+use Behat\Testwork\ServiceContainer\Extension as TestworkExtension;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -125,14 +126,22 @@ class Application extends BaseApplication
                 foreach ($val as $class) {
                     $extension = new $class();
 
-                    if (!$extension instanceof Extension\ExtensionInterface) {
-                        throw new RuntimeException(sprintf(
-                            'Extension class must implement ExtensionInterface. But `%s` is not.',
-                            $class
-                        ));
+                    if ($extension instanceof Extension\ExtensionInterface) {
+                        $extension->load($container);
+
+                        return;
                     }
 
-                    $extension->load($container);
+                    if ($extension instanceof TestworkExtension) {
+                        $container->addDefaultExtension($extension);
+
+                        return;
+                    }
+
+                    throw new RuntimeException(sprintf(
+                        'Extension class must implement ExtensionInterface. But `%s` is not.',
+                        $class
+                    ));
                 }
             } else {
                 $container->setParam($key, $val);
