@@ -17,6 +17,7 @@ use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Yaml\Yaml;
 use PhpSpec\ServiceContainer;
 use PhpSpec\Extension;
@@ -37,7 +38,8 @@ class Application extends BaseApplication
      */
     public function __construct($version)
     {
-        $this->container = new ServiceContainer();
+        $this->containerBuilder = new ContainerBuilder();
+        $this->container = new ServiceContainer($this->containerBuilder);
         parent::__construct('phpspec', $version);
     }
 
