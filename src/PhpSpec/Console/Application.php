@@ -124,28 +124,13 @@ class Application extends BaseApplication
         foreach ($config as $key => $val) {
             if ('extensions' === $key && is_array($val)) {
                 foreach ($val as $class) {
-                    $extension = new $class();
-
-                    if ($extension instanceof Extension\ExtensionInterface) {
-                        $extension->load($container);
-
-                        return;
-                    }
-
-                    if ($extension instanceof TestworkExtension) {
-                        $container->addDefaultExtension($extension);
-
-                        return;
-                    }
-
-                    throw new RuntimeException(sprintf(
-                        'Extension class must implement ExtensionInterface. But `%s` is not.',
-                        $class
-                    ));
+                    $this->loadExtension($container, $class);
                 }
-            } else {
-                $container->setParam($key, $val);
+
+                continue;
             }
+
+            $container->setParam($key, $val);
         }
     }
 
@@ -183,5 +168,32 @@ class Application extends BaseApplication
         }
 
         return $config;
+    }
+
+    /**
+     * @param ServiceContainer $container
+     * @param $class
+     * @throws \RuntimeException
+     */
+    private function loadExtension(ServiceContainer $container, $class)
+    {
+        $extension = new $class();
+
+        if ($extension instanceof Extension\ExtensionInterface) {
+            $extension->load($container);
+
+            return;
+        }
+
+        if ($extension instanceof TestworkExtension) {
+            $container->addDefaultExtension($extension);
+
+            return;
+        }
+
+        throw new RuntimeException(sprintf(
+            'Extension class must implement ExtensionInterface. But `%s` is not.',
+            $class
+        ));
     }
 }
