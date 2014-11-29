@@ -48,6 +48,14 @@ class MatcherManager
     }
 
     /**
+     * @param MatcherInterface[] $matchers
+     */
+    public function setDefault(array $matchers)
+    {
+        $this->matchers = $matchers;
+    }
+
+    /**
      * @param string $keyword
      * @param mixed  $subject
      * @param array  $arguments
