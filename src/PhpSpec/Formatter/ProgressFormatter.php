@@ -86,10 +86,11 @@ class ProgressFormatter extends ConsoleFormatter
     {
         $stats = $this->getStatisticsCollector();
         $specProgress = ($stats->getTotalSpecs()+1)/$stats->getTotalSpecsCount();
+        $width = $this->getIO()->getBlockWidth();
 
         $barLengths = array_map(
-            function ($percent) use ($specProgress) {
-                $length = floor($this->getIO()->getBlockWidth() * $percent / 100);
+            function ($percent) use ($specProgress, $width) {
+                $length = floor($width * $percent / 100);
                 $res = $length == 0 || $length > 1 ? floor($length * $specProgress) : 1;
 
                 return $res;
