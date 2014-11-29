@@ -24,7 +24,7 @@ use PhpSpec\Config\OptionsConfig;
  */
 class IO implements IOInterface
 {
-    const COL_WIDTH = 70;
+    const COL_WIDTH = 60;
     /**
      * @var \Symfony\Component\Console\Input\InputInterface
      */
