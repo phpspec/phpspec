@@ -34,7 +34,7 @@ class CollaboratorNotFoundException extends FractureException
 
     /**
      * @param ReflectionParameter $parameter
-     * 
+     *
      * @return string
      */
     private function extractCollaboratorName(ReflectionParameter $parameter)
