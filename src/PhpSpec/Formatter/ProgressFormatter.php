@@ -20,23 +20,25 @@ use PhpSpec\Event\ExampleEvent;
 class ProgressFormatter extends ConsoleFormatter
 {
     const WIDTH = 50;
+    const FPS = 10;
+
+    private $lastDraw;
 
     public function afterExample(ExampleEvent $event)
     {
-        $io = $this->getIO();
-        $stats = $this->getStatisticsCollector();
-
-        $percents = $this->getPercentages($stats->getEventsCount(), $stats->getCountsHash());
-        $barLengths  = $this->getBarLengths($percents);
-        $progress = $this->formatProgressOutput($barLengths, $percents, $io->isDecorated());
-
         $this->printException($event);
 
-        $this->updateProgressBar($io, $progress, $stats->getEventsCount());
+        $now = microtime(true);
+        if (!$this->lastDraw || ($now - $this->lastDraw) > 1/self::FPS) {
+            $this->lastDraw = $now;
+            $this->drawStats();
+        }
     }
 
     public function afterSuite(SuiteEvent $event)
     {
+        $this->drawStats();
+
         $io = $this->getIO();
         $stats = $this->getStatisticsCollector();
 
@@ -153,5 +155,17 @@ class ProgressFormatter extends ConsoleFormatter
         } else {
             $io->writeTemp('/'.implode('/', $progress).'/  '.$total.' examples');
         }
+    }
+
+    private function drawStats()
+    {
+        $io = $this->getIO();
+        $stats = $this->getStatisticsCollector();
+
+        $percents = $this->getPercentages($stats->getEventsCount(), $stats->getCountsHash());
+        $barLengths = $this->getBarLengths($percents);
+        $progress = $this->formatProgressOutput($barLengths, $percents, $io->isDecorated());
+
+        $this->updateProgressBar($io, $progress, $stats->getEventsCount());
     }
 }
