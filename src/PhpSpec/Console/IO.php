@@ -24,6 +24,7 @@ use PhpSpec\Config\OptionsConfig;
  */
 class IO implements IOInterface
 {
+    const COL_WIDTH = 70;
     /**
      * @var \Symfony\Component\Console\Input\InputInterface
      */
@@ -265,11 +266,11 @@ class IO implements IOInterface
     public function askConfirmation($question, $default = true)
     {
         $lines   = array();
-        $lines[] = '<question>'.str_repeat(' ', 70)."</question>";
-        foreach (explode("\n", wordwrap($question), 50) as $line) {
-            $lines[] = '<question>  '.str_pad($line, 68).'</question>';
+        $lines[] = '<question>'.str_repeat(' ', self::COL_WIDTH)."</question>";
+        foreach (explode("\n", wordwrap($question, self::COL_WIDTH - 4, "\n", true)) as $line) {
+            $lines[] = '<question>  '.str_pad($line, self::COL_WIDTH - 2).'</question>';
         }
-        $lines[] = '<question>'.str_repeat(' ', 62).'</question> <value>'.
+        $lines[] = '<question>'.str_repeat(' ', self::COL_WIDTH - 8).'</question> <value>'.
             ($default ? '[Y/n]' : '[y/N]').'</value> ';
 
         return $this->dialogHelper->askConfirmation(
