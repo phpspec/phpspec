@@ -89,7 +89,7 @@ class ProgressFormatter extends ConsoleFormatter
 
         $barLengths = array_map(
             function ($percent) use ($specProgress) {
-                $length = floor(IO::COL_WIDTH * $percent / 100);
+                $length = floor($this->getIO()->getBlockWidth() * $percent / 100);
                 $res = $length == 0 || $length > 1 ? floor($length * $specProgress) : 1;
 
                 return $res;
@@ -109,7 +109,7 @@ class ProgressFormatter extends ConsoleFormatter
      */
     private function formatProgressOutput($barLengths, $percents, $isDecorated)
     {
-        $size = IO::COL_WIDTH;
+        $size = $this->getIO()->getBlockWidth();
         $progress = array();
         foreach ($barLengths as $status => $length) {
             $percent = $percents[$status];
@@ -148,7 +148,7 @@ class ProgressFormatter extends ConsoleFormatter
     {
         if ($io->isDecorated()) {
             $progressBar = implode('', $progress);
-            $pad = IO::COL_WIDTH - strlen(strip_tags($progressBar));
+            $pad = $this->getIO()->getBlockWidth() - strlen(strip_tags($progressBar));
             $io->writeTemp($progressBar.str_repeat(' ', $pad + 1).$total);
         } else {
             $io->writeTemp('/'.implode('/', $progress).'/  '.$total.' examples');

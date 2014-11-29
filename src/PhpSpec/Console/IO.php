@@ -25,6 +25,7 @@ use PhpSpec\Config\OptionsConfig;
 class IO implements IOInterface
 {
     const COL_WIDTH = 60;
+
     /**
      * @var \Symfony\Component\Console\Input\InputInterface
      */
@@ -327,5 +328,10 @@ class IO implements IOInterface
             return $path;
         }
         return false;
+    }
+
+    public function getBlockWidth()
+    {
+        return self::COL_WIDTH;
     }
 }
