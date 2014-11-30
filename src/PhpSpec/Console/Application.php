@@ -123,8 +123,8 @@ class Application extends BaseApplication
 
         foreach ($config as $key => $val) {
             if ('extensions' === $key && is_array($val)) {
-                foreach ($val as $class) {
-                    $this->loadExtension($container, $class);
+                foreach ($val as $id => $class) {
+                    $this->loadExtension($container, $id, $class);
                 }
 
                 continue;
@@ -173,20 +173,23 @@ class Application extends BaseApplication
     /**
      * @param ServiceContainer $container
      * @param $class
+     * @param $extensionConfig
      * @throws \RuntimeException
      */
-    private function loadExtension(ServiceContainer $container, $class)
+    private function loadExtension(ServiceContainer $container, $class, $extensionConfig)
     {
         $extension = new $class();
 
         if ($extension instanceof Extension\ExtensionInterface) {
-            $extension->load($container);
+            $extension->load($container, $container->getParam('compat.testwork-extensions.config'));
 
             return;
         }
 
         if ($extension instanceof TestworkExtension) {
-            $container->addDefaultExtension($extension);
+            $testworkConfig = $container->getParam('compat.testwork-extensions.config', array('extensions' => array()));
+            $testworkConfig['extensions'][$class] = $extensionConfig;
+            $container->setParam('compat.testwork-extensions.config', $testworkConfig);
 
             return;
         }

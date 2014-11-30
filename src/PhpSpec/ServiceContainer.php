@@ -207,7 +207,8 @@ class ServiceContainer
     {
         $this->addDefaultExtension(new LegacyExtension($this));
         $containerLoader = new ContainerLoader(new ExtensionManager($this->defaultExtensions));
-        $containerLoader->load($this->containerBuilder, array());
+        $configs = $this->getParam('compat.testwork-extensions.config', array());
+        $containerLoader->load($this->containerBuilder, array($configs));
         $this->containerBuilder->addObjectResource($containerLoader);
         $this->containerBuilder->compile();
     }

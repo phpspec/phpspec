@@ -21,7 +21,6 @@ class MatcherExtension implements Extension
      */
     public function process(ContainerBuilder $container)
     {
-        // TODO: Implement process() method.
     }
 
     /**
@@ -46,7 +45,6 @@ class MatcherExtension implements Extension
      */
     public function initialize(ExtensionManager $extensionManager)
     {
-        // TODO: Implement initialize() method.
     }
 
     /**
@@ -56,7 +54,6 @@ class MatcherExtension implements Extension
      */
     public function configure(ArrayNodeDefinition $builder)
     {
-        // TODO: Implement configure() method.
     }
 
     /**

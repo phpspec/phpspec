@@ -1,3 +1,1 @@
 formatter.name: pretty
-#extensions:
-#  - PhpSpec\Matcher\DependencyInjection\MatcherExtension
