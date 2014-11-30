@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Console;
 
+use PhpSpec\Process\ErrorHandler;
+use PhpSpec\Process\RerunContext;
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
@@ -48,13 +50,14 @@ class ContainerAssembler
         $this->setupRunner($container);
         $this->setupCommands($container);
         $this->setupResultConverter($container);
+        $this->setupErrorHandler($container);
         $this->setupRerunner($container);
         $this->setupMatchers($container);
     }
 
     private function setupIO(ServiceContainer $container)
     {
-        $container->setShared('console.io', function (ServiceContainer $c) {
+        $container->setShared('console.io.default', function (ServiceContainer $c) {
             return new IO(
                 $c->get('console.input'),
                 $c->get('console.output'),
@@ -67,6 +70,9 @@ class ContainerAssembler
                     $c->getParam('bootstrap', false)
                 )
             );
+        });
+        $container->setShared('console.io', function (ServiceContainer $c) {
+            return $c->get('console.io.default');
         });
     }
 
@@ -161,6 +167,17 @@ class ContainerAssembler
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator'),
                 $c->get('util.method_analyser')
+            );
+        });
+        $container->setShared('event_dispatcher.listeners.error_handler', function (ServiceContainer $c) {
+            return new Listener\ErrorHandlerListener(
+                $c->get('process.error_handler')
+            );
+        });
+        $container->setShared('event_dispatcher.listeners.fatal_example_skipping', function (ServiceContainer $c) {
+            return new Listener\FatalSkippingListener(
+                $c->get('console.output'),
+                $c->get('process.rerun_context')
             );
         });
         $container->setShared('util.method_analyser', function () {
@@ -393,7 +410,7 @@ class ContainerAssembler
             );
         });
 
-        $container->setShared('runner.example', function (ServiceContainer $c) {
+        $container->setShared('runner.example.default', function (ServiceContainer $c) {
             $runner = new Runner\ExampleRunner(
                 $c->get('event_dispatcher'),
                 $c->get('formatter.presenter')
@@ -405,6 +422,9 @@ class ContainerAssembler
             );
 
             return $runner;
+        });
+        $container->setShared('runner.example', function (ServiceContainer $c) {
+            return $c->get('runner.example.default');
         });
 
         $container->set('runner.maintainers.errors', function (ServiceContainer $c) {
@@ -505,13 +525,29 @@ class ContainerAssembler
             );
         });
         $container->setShared('process.rerunner.platformspecific.pcntl', function (ServiceContainer $c) {
-            return new ReRunner\PcntlReRunner($c->get('process.phpexecutablefinder'));
+            return new ReRunner\PcntlReRunner(
+                $c->get('process.phpexecutablefinder'),
+                $c->get('process.rerun_context')
+            );
         });
         $container->setShared('process.rerunner.platformspecific.passthru', function (ServiceContainer $c) {
             return new ReRunner\PassthruReRunner($c->get('process.phpexecutablefinder'));
         });
         $container->setShared('process.phpexecutablefinder', function () {
             return new PhpExecutableFinder();
+        });
+        $container->setShared('process.rerun_context', function() {
+            return new RerunContext();
+        });
+    }
+
+    private function setupErrorHandler($container)
+    {
+        $container->setShared('process.error_handler', function(ServiceContainer $c) {
+            return new ErrorHandler(
+                $c->get('process.rerun_context'),
+                $c->get('process.rerunner')
+            );
         });
     }
 }

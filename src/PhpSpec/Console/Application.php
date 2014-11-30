@@ -13,6 +13,10 @@
 
 namespace PhpSpec\Console;
 
+use PhpSpec\Process\ErrorHandler;
+use PhpSpec\Process\IO;
+use PhpSpec\Process\RerunContext;
+use PhpSpec\Process\Runner\FatalSkippingExampleRunner;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -71,6 +75,24 @@ class Application extends BaseApplication
         }
 
         $this->setDispatcher($this->container->get('console_event_dispatcher'));
+
+        $this->container->get('process.error_handler')->init();
+
+        if($contextString = getenv(RerunContext::ENV_NAME)) {
+            $context = RerunContext::fromString($contextString);
+            $this->container->set('process.rerun_context', $context);
+
+            $this->container->setShared('runner.example',
+                function (ServiceContainer $c) {
+                    return new FatalSkippingExampleRunner(
+                        $c->get('event_dispatcher'),
+                        $c->get('formatter.presenter'),
+                        $c->get('process.rerun_context'),
+                        $c->get('runner.example.default')
+                    );
+                }
+            );
+        }
 
         return parent::doRun($input, $output);
     }

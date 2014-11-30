@@ -3,14 +3,15 @@
 namespace spec\PhpSpec\Process\ReRunner;
 
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Process\RerunContext;
 use Prophecy\Argument;
 use Symfony\Component\Process\PhpExecutableFinder;
 
 class PcntlReRunnerSpec extends ObjectBehavior
 {
-    function let(PhpExecutableFinder $executableFinder)
+    function let(PhpExecutableFinder $executableFinder, RerunContext $rerunContext)
     {
-        $this->beConstructedWith($executableFinder);
+        $this->beConstructedWith($executableFinder, $rerunContext);
     }
 
     function it_is_a_rerunner()
