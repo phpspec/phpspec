@@ -24,7 +24,9 @@ use PhpSpec\Config\OptionsConfig;
  */
 class IO implements IOInterface
 {
-    const COL_WIDTH = 60;
+    const COL_MIN_WIDTH = 40;
+    const COL_DEFAULT_WIDTH = 60;
+    const COL_MAX_WIDTH = 120;
 
     /**
      * @var \Symfony\Component\Console\Input\InputInterface
@@ -55,6 +57,11 @@ class IO implements IOInterface
       * @var OptionsConfig
       */
     private $config;
+
+    /**
+     * @var integer
+     */
+    private $consoleWidth;
 
     /**
      * @param InputInterface  $input
@@ -267,11 +274,11 @@ class IO implements IOInterface
     public function askConfirmation($question, $default = true)
     {
         $lines   = array();
-        $lines[] = '<question>'.str_repeat(' ', self::COL_WIDTH)."</question>";
-        foreach (explode("\n", wordwrap($question, self::COL_WIDTH - 4, "\n", true)) as $line) {
-            $lines[] = '<question>  '.str_pad($line, self::COL_WIDTH - 2).'</question>';
+        $lines[] = '<question>'.str_repeat(' ', $this->getBlockWidth())."</question>";
+        foreach (explode("\n", wordwrap($question, $this->getBlockWidth() - 4, "\n", true)) as $line) {
+            $lines[] = '<question>  '.str_pad($line, $this->getBlockWidth() - 2).'</question>';
         }
-        $lines[] = '<question>'.str_repeat(' ', self::COL_WIDTH - 8).'</question> <value>'.
+        $lines[] = '<question>'.str_repeat(' ', $this->getBlockWidth() - 8).'</question> <value>'.
             ($default ? '[Y/n]' : '[y/N]').'</value> ';
 
         return $this->dialogHelper->askConfirmation(
@@ -330,8 +337,26 @@ class IO implements IOInterface
         return false;
     }
 
+    /**
+     * @param integer $width
+     */
+    function setConsoleWidth($width)
+    {
+        $this->consoleWidth = $width;
+    }
+
+    /**
+     * @return integer
+     */
     public function getBlockWidth()
     {
-        return self::COL_WIDTH;
+        $width = self::COL_DEFAULT_WIDTH;
+        if ($this->consoleWidth && ($this->consoleWidth - 10) > self::COL_MIN_WIDTH) {
+            $width = $this->consoleWidth - 10;
+        }
+        if ($width > self::COL_MAX_WIDTH) {
+            $width = self::COL_MAX_WIDTH;
+        }
+        return $width;
     }
 }
