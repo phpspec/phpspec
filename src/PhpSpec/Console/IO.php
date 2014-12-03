@@ -206,7 +206,7 @@ class IO implements IOInterface
             $message = $this->indentText($message, $indent);
         }
 
-        if ($message == $this->lastMessage) {
+        if ($message === $this->lastMessage) {
             return;
         }
 
