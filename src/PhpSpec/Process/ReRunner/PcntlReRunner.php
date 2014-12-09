@@ -13,8 +13,22 @@
 
 namespace PhpSpec\Process\ReRunner;
 
+use PhpSpec\Process\RerunContext;
+use Symfony\Component\Process\PhpExecutableFinder;
+
 class PcntlReRunner extends PhpExecutableReRunner
 {
+    /**
+     * @var RerunContext
+     */
+    private $context;
+
+    public function __construct(PhpExecutableFinder $executableFinder, RerunContext $context)
+    {
+        parent::__construct($executableFinder);
+        $this->context = $context;
+    }
+
     /**
      * @return bool
      */
@@ -31,6 +45,7 @@ class PcntlReRunner extends PhpExecutableReRunner
     public function reRunSuite()
     {
         $args = $_SERVER['argv'];
-        pcntl_exec($this->getExecutablePath(), $args);
+        $envs = array_merge($_ENV, $_SERVER, array(RerunContext::ENV_NAME=>$this->context->asString()));
+        pcntl_exec($this->getExecutablePath(), $args, $envs);
     }
 }
