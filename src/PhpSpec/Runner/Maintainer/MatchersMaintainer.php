@@ -70,7 +70,7 @@ class MatchersMaintainer implements MaintainerInterface
                             MatcherManager $matchers, CollaboratorManager $collaborators)
     {
 
-        $matchers->setDefault($this->defaultMatchers);
+        $matchers->replace($this->defaultMatchers);
 
         if (!$context instanceof Matcher\MatchersProviderInterface) {
             return;
