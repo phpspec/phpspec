@@ -1,3 +1,8 @@
+Upcoming
+========
+
+ * Smoother rendering for progress bar
+
 2.1.0 / 2014-12-14
 ==================
 
