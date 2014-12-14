@@ -206,6 +206,10 @@ class IO implements IOInterface
             $message = $this->indentText($message, $indent);
         }
 
+        if ($message === $this->lastMessage) {
+            return;
+        }
+
         $commonPrefix = $this->getCommonPrefix($message, $this->lastMessage);
         $newSuffix = substr($message, strlen($commonPrefix));
         $oldSuffix = substr($this->lastMessage, strlen($commonPrefix));
