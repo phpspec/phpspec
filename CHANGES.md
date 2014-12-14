@@ -2,6 +2,7 @@ Upcoming
 ========
 
  * Smoother rendering for progress bar
+ * Removed deprecated calls to Yaml::parse
 
 2.1.0 / 2014-12-14
 ==================
