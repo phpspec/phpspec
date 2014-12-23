@@ -16,7 +16,7 @@ Feature: Developer generates a spec
 
       class MarkdownSpec extends ObjectBehavior
       {
-          function it_is_initializable()
+          public function it_is_initializable()
           {
               $this->shouldHaveType('CodeGeneration\SpecExample1\Markdown');
           }
@@ -38,7 +38,7 @@ Feature: Developer generates a spec
 
       class Text_MarkdownSpec extends ObjectBehavior
       {
-          function it_is_initializable()
+          public function it_is_initializable()
           {
               $this->shouldHaveType('CodeGeneration\SpecExample1\Text_Markdown');
           }
@@ -60,7 +60,7 @@ Feature: Developer generates a spec
 
       class Text_MarkdownSpec extends ObjectBehavior
       {
-          function it_is_initializable()
+          public function it_is_initializable()
           {
               $this->shouldHaveType('CodeGeneration\Spec_Example2\Text_Markdown');
           }
@@ -88,7 +88,7 @@ Feature: Developer generates a spec
 
       class MarkdownSpec extends ObjectBehavior
       {
-          function it_is_initializable()
+          public function it_is_initializable()
           {
               $this->shouldHaveType('Behat\CodeGeneration\Markdown');
           }
