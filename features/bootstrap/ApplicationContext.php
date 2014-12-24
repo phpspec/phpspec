@@ -68,11 +68,12 @@ class ApplicationContext implements Context
      */
     public function iDescribeTheClass($class)
     {
-        $this->tester->run(array(
+        $arguments = array(
             'command' => 'describe',
-            '--no-interaction' => true,
             'class' => $class
-        ));
+        );
+
+        $this->tester->run($arguments, array('interactive' => false));
 
         expect($this->tester->getStatusCode())->toBe(0);
     }
