@@ -16,6 +16,11 @@ class FilesystemContext implements Context
      */
     private $workingDirectory;
 
+    /**
+     * @var Filesystem
+     */
+    private $filesystem;
+
     public function __construct()
     {
         $this->filesystem = new Filesystem();
