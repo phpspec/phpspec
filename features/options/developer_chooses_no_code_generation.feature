@@ -1,4 +1,3 @@
-@interactive
 Feature: Developer chooses no code generation
   As a Developer
   I want to set the no code generation setting option
