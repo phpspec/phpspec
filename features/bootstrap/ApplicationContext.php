@@ -100,7 +100,7 @@ class ApplicationContext implements Context
 
         $this->addOptionToArguments($option, $arguments);
 
-        $this->tester->run($arguments, array('interactive'=> (bool)$interactive));
+        $this->tester->run($arguments, array('interactive' => (bool)$interactive));
     }
 
     /**
@@ -117,7 +117,7 @@ class ApplicationContext implements Context
 
         $this->dialogHelper->setAnswer($answer=='y');
 
-        $this->tester->run($arguments, array('interactive'=>true));
+        $this->tester->run($arguments, array('interactive' => true));
     }
 
     /**
