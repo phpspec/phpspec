@@ -94,17 +94,13 @@ class ApplicationContext implements Context
             'command' => 'run'
         );
 
-        if (!$interactive) {
-            $arguments['--no-interaction'] = true;
-        }
-
         if ($formatter) {
             $arguments['--format'] = $formatter;
         }
 
         $this->addOptionToArguments($option, $arguments);
 
-        $this->tester->run($arguments, array('interactive'=>'true'));
+        $this->tester->run($arguments, array('interactive'=> (bool)$interactive));
     }
 
     /**
