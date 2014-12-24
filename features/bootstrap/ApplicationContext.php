@@ -125,10 +125,10 @@ class ApplicationContext implements Context
     }
 
     /**
-     * @param $option
-     * @param $arguments
+     * @param string $option
+     * @param array $arguments
      */
-    private function addOptionToArguments($option,  &$arguments)
+    private function addOptionToArguments($option, array &$arguments)
     {
         if ($option) {
             if (preg_match('/(?P<option>[a-z-]+)=(?P<value>[a-z.]+)/', $option, $matches)) {

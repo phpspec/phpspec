@@ -4,6 +4,7 @@ use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Defines application features from the specific context.
@@ -11,13 +12,13 @@ use Behat\Gherkin\Node\TableNode;
 class FilesystemContext implements Context
 {
     /**
-     * @var WorkingDirectory
+     * @var string
      */
     private $workingDirectory;
 
     public function __construct()
     {
-        $this->filesystem = new \Symfony\Component\Filesystem\Filesystem();
+        $this->filesystem = new Filesystem();
     }
 
     /**
