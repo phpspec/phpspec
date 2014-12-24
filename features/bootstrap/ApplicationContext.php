@@ -48,7 +48,7 @@ class ApplicationContext implements Context
         $this->setupReRunner();
     }
 
-    public function setupDialogHelper()
+    private function setupDialogHelper()
     {
         $this->dialogHelper = new DialogHelper();
 
@@ -56,7 +56,7 @@ class ApplicationContext implements Context
         $helperSet->set($this->dialogHelper);
     }
 
-    public function setupReRunner()
+    private function setupReRunner()
     {
         $this->reRunner = new ReRunner;
         $this->application->getContainer()->set('process.rerunner.platformspecific', $this->reRunner);
