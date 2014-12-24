@@ -43,11 +43,11 @@ class ApplicationContext implements Context
         $this->application->setAutoExit(false);
 
         $this->tester = new ApplicationTester($this->application);
+
+        $this->setupDialogHelper();
+        $this->setupReRunner();
     }
 
-    /**
-     * @beforeScenario
-     */
     public function setupDialogHelper()
     {
         $this->dialogHelper = new DialogHelper();
@@ -56,9 +56,6 @@ class ApplicationContext implements Context
         $helperSet->set($this->dialogHelper);
     }
 
-    /**
-     * @beforeScenario
-     */
     public function setupReRunner()
     {
         $this->reRunner = new ReRunner;
