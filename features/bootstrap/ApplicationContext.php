@@ -24,6 +24,11 @@ class ApplicationContext implements Context, MatchersProviderInterface
     private $application;
 
     /**
+     * @var integer
+     */
+    private $lastExitCode;
+
+    /**
      * @var ApplicationTester
      */
     private $tester;
@@ -77,9 +82,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
             'class' => $class
         );
 
-        $this->tester->run($arguments, array('interactive' => false));
-
-        expect($this->tester)->toHaveExitedWithStatus(0);
+        expect($this->tester->run($arguments, array('interactive' => false)))->toBe(0);
     }
 
     /**
@@ -102,7 +105,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
 
         $this->addOptionToArguments($option, $arguments);
 
-        $this->tester->run($arguments, array('interactive' => (bool)$interactive));
+        $this->lastExitCode = $this->tester->run($arguments, array('interactive' => (bool)$interactive));
     }
 
     /**
@@ -119,7 +122,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
 
         $this->dialogHelper->setAnswer($answer=='y');
 
-        $this->tester->run($arguments, array('interactive' => true));
+        $this->lastExitCode = $this->tester->run($arguments, array('interactive' => true));
     }
 
     /**
@@ -167,7 +170,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function theSuiteShouldPass()
     {
-        expect($this->tester)->toHaveExitedWithStatus(0);
+        expect($this->lastExitCode)->toBeLike(0);
     }
 
     /**
@@ -191,7 +194,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function theExitCodeShouldBe($code)
     {
-        expect($this->tester)->toHaveExitedWithStatus($code);
+        expect($this->lastExitCode)->toBeLike($code);
     }
 
     /**
@@ -226,7 +229,6 @@ class ApplicationContext implements Context, MatchersProviderInterface
     public function getMatchers()
     {
         return array(
-            new ExitStatusMatcher(),
             new ApplicationOutputMatcher(),
             new ValidJUnitXmlMatcher()
         );
