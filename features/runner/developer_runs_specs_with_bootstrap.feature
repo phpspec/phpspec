@@ -26,6 +26,6 @@ Feature: Developer runs the specs with bootstrap option
     Then I should see "bootstrap file is loaded"
 
   Scenario: Running a spec with --bootstrap option and bootstrap file is missing.
-    Given there is no file missing.php
+    Given there is no file "missing.php"
     When I run phpspec with option --bootstrap=missing.php
     Then I should see "Bootstrap file 'missing.php' does not exist"

@@ -1,10 +1,10 @@
 <?php
 
-namespace Console;
+namespace Fake;
 
-use PhpSpec\Process\ReRunner;
+use PhpSpec\Process\ReRunner as BaseReRunner;
 
-class LoggingReRunner implements ReRunner
+class ReRunner implements BaseReRunner
 {
     private $hasBeenReRun = false;
 
