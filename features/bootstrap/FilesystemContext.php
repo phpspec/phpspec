@@ -4,6 +4,8 @@ use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
+use Matcher\FileExistsMatcher;
+use Matcher\FileHasContentsMatcher;
 use PhpSpec\Matcher\MatchersProviderInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -97,23 +99,8 @@ class FilesystemContext implements Context, MatchersProviderInterface
     public function getMatchers()
     {
         return array(
-            'exist' => function ($path) {
-                if (file_exists($path)) {
-                    return true;
-                }
-                return false;
-            },
-            'haveContents' => function ($path, $expectedContents) {
-                if ($expectedContents != file_get_contents($path)) {
-                    throw new Exception(sprintf(
-                       "File at '%s' did not contain expected contents.\nExpected: '%s'\nActual: '%s'",
-                       $path,
-                       $expectedContents,
-                       file_get_contents($path)
-                    ));
-                }
-                return true;
-            }
+            new FileExistsMatcher(),
+            new FileHasContentsMatcher()
         );
     }
 }

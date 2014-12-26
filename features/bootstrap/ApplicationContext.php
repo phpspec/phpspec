@@ -6,10 +6,12 @@ use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
 use Fake\DialogHelper;
 use Fake\ReRunner;
+use Matcher\ApplicationOutputMatcher;
+use Matcher\ExitStatusMatcher;
+use Matcher\ValidJUnitXmlMatcher;
 use PhpSpec\Console\Application;
 use PhpSpec\Matcher\MatchersProviderInterface;
 use Symfony\Component\Console\Tester\ApplicationTester;
-const JUNIT_XSD_PATH = '/../../src/PhpSpec/Resources/schema/junit.xsd';
 
 /**
  * Defines application features from the specific context.
@@ -224,37 +226,9 @@ class ApplicationContext implements Context, MatchersProviderInterface
     public function getMatchers()
     {
         return array(
-            'haveExitedWithStatus' => function (ApplicationTester $tester, $code) {
-                if (!$code == $tester->getStatusCode()) {
-                    throw new \Exception(sprintf(
-                        'Application exited with code %s, not the expected %s',
-                        $tester->getStatusCode(),
-                        $code
-                    ));
-                }
-                return true;
-            },
-            'haveOutput' => function (ApplicationTester $tester, $expected) {
-                if (strpos($tester->getDisplay(), $expected) === false) {
-                    throw new \Exception(sprintf(
-                        "Application output did not contain expected '%s'. Actual output:\n'%s'" ,
-                        $expected,
-                        $tester->getDisplay()
-                    ));
-                }
-                return true;
-            },
-            'haveOutputValidJunitXml' => function (ApplicationTester $tester) {
-                $dom = new \DOMDocument();
-                $dom->loadXML($tester->getDisplay());
-                if (!$dom->schemaValidate(__DIR__ . JUNIT_XSD_PATH)) {
-                    throw new \Exception(sprintf(
-                       "Output was not valid JUnit XML"
-                    ));
-                }
-                return true;
-            }
-
+            new ExitStatusMatcher(),
+            new ApplicationOutputMatcher(),
+            new ValidJUnitXmlMatcher()
         );
     }
 }
