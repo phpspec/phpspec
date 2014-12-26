@@ -7,12 +7,14 @@ use Behat\Gherkin\Node\TableNode;
 use Fake\DialogHelper;
 use Fake\ReRunner;
 use PhpSpec\Console\Application;
+use PhpSpec\Matcher\MatchersProviderInterface;
 use Symfony\Component\Console\Tester\ApplicationTester;
+const JUNIT_XSD_PATH = '/../../src/PhpSpec/Resources/schema/junit.xsd';
 
 /**
  * Defines application features from the specific context.
  */
-class ApplicationContext implements Context
+class ApplicationContext implements Context, MatchersProviderInterface
 {
     /**
      * @var Application
@@ -75,7 +77,7 @@ class ApplicationContext implements Context
 
         $this->tester->run($arguments, array('interactive' => false));
 
-        expect($this->tester->getStatusCode())->toBe(0);
+        expect($this->tester)->toHaveExitedWithStatus(0);
     }
 
     /**
@@ -139,7 +141,7 @@ class ApplicationContext implements Context
      */
     public function iShouldSee($output)
     {
-        expect(strpos($this->tester->getDisplay(), (string)$output))->toNotBe(false);
+        expect($this->tester)->toHaveOutput((string)$output);
     }
 
     /**
@@ -163,7 +165,7 @@ class ApplicationContext implements Context
      */
     public function theSuiteShouldPass()
     {
-        expect($this->tester->getStatusCode())->toBe(0);
+        expect($this->tester)->toHaveExitedWithStatus(0);
     }
 
     /**
@@ -171,7 +173,7 @@ class ApplicationContext implements Context
      */
     public function exampleShouldHaveBeenSkipped($number)
     {
-        expect(strpos($this->tester->getDisplay(), "($number skipped)"))->toNotBe(false);
+        expect($this->tester)->toHaveOutput("($number skipped)");
     }
 
     /**
@@ -179,7 +181,7 @@ class ApplicationContext implements Context
      */
     public function examplesShouldHaveBeenRun($number)
     {
-        expect(strpos($this->tester->getDisplay(), "$number examples"))->toNotBe(false);
+        expect($this->tester)->toHaveOutput("$number examples");
     }
 
     /**
@@ -187,7 +189,7 @@ class ApplicationContext implements Context
      */
     public function theExitCodeShouldBe($code)
     {
-        expect($this->tester->getStatusCode())->toBeLike($code);
+        expect($this->tester)->toHaveExitedWithStatus($code);
     }
 
     /**
@@ -195,9 +197,7 @@ class ApplicationContext implements Context
      */
     public function iShouldSeeValidJunitOutput()
     {
-        $dom = new \DOMDocument();
-        $dom->loadXML($this->tester->getDisplay());
-        expect($dom->schemaValidate(__DIR__ . '/../../src/PhpSpec/Resources/schema/junit.xsd'))->toBe(true);
+        expect($this->tester)->toHaveOutputValidJunitXml();
     }
 
     /**
@@ -214,5 +214,47 @@ class ApplicationContext implements Context
     public function theTestsShouldNotBeRerun()
     {
         expect($this->reRunner)->toNotHaveBeenRerun();
+    }
+
+    /**
+     * Custom matchers
+     *
+     * @return array
+     */
+    public function getMatchers()
+    {
+        return array(
+            'haveExitedWithStatus' => function (ApplicationTester $tester, $code) {
+                if (!$code == $tester->getStatusCode()) {
+                    throw new \Exception(sprintf(
+                        'Application exited with code %s, not the expected %s',
+                        $tester->getStatusCode(),
+                        $code
+                    ));
+                }
+                return true;
+            },
+            'haveOutput' => function (ApplicationTester $tester, $expected) {
+                if (strpos($tester->getDisplay(), $expected) === false) {
+                    throw new \Exception(sprintf(
+                        "Application output did not contain expected '%s'. Actual output:\n'%s'" ,
+                        $expected,
+                        $tester->getDisplay()
+                    ));
+                }
+                return true;
+            },
+            'haveOutputValidJunitXml' => function (ApplicationTester $tester) {
+                $dom = new \DOMDocument();
+                $dom->loadXML($tester->getDisplay());
+                if (!$dom->schemaValidate(__DIR__ . JUNIT_XSD_PATH)) {
+                    throw new \Exception(sprintf(
+                       "Output was not valid JUnit XML"
+                    ));
+                }
+                return true;
+            }
+
+        );
     }
 }

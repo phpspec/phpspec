@@ -4,12 +4,13 @@ use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
+use PhpSpec\Matcher\MatchersProviderInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Defines application features from the specific context.
  */
-class FilesystemContext implements Context
+class FilesystemContext implements Context, MatchersProviderInterface
 {
     /**
      * @var string
@@ -76,6 +77,7 @@ class FilesystemContext implements Context
      */
     public function thereIsNoFile($file)
     {
+        expect($file)->toNotExist();
         expect(file_exists($file))->toBe(false);
     }
 
@@ -85,7 +87,33 @@ class FilesystemContext implements Context
      */
     public function theFileShouldContain($file, PyStringNode $contents)
     {
-        expect(file_exists($file));
-        expect(file_get_contents($file))->toBeLike($contents);
+        expect($file)->toExist();
+        expect($file)->toHaveContents($contents);
+    }
+
+    /**
+     * @return array
+     */
+    public function getMatchers()
+    {
+        return array(
+            'exist' => function ($path) {
+                if (file_exists($path)) {
+                    return true;
+                }
+                return false;
+            },
+            'haveContents' => function ($path, $expectedContents) {
+                if ($expectedContents != file_get_contents($path)) {
+                    throw new Exception(sprintf(
+                       "File at '%s' did not contain expected contents.\nExpected: '%s'\nActual: '%s'",
+                       $path,
+                       $expectedContents,
+                       file_get_contents($path)
+                    ));
+                }
+                return true;
+            }
+        );
     }
 }
