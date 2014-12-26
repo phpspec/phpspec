@@ -52,56 +52,55 @@ Feature: Developer generates a method
       """
   Scenario: Generating a method in a class with psr4 prefix
     Given the spec file "spec/MyNamespace/PrefixSpec.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace spec\Behat\Tests\MyNamespace;
+      namespace spec\Behat\Tests\MyNamespace;
 
-    use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
 
-    class PrefixSpec extends ObjectBehavior
-    {
-        function it_converts_plain_text_to_html_paragraphs()
-        {
-            $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
-        }
-    }
+      class PrefixSpec extends ObjectBehavior
+      {
+          function it_converts_plain_text_to_html_paragraphs()
+          {
+              $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
+          }
+      }
 
-    """
+      """
     And the config file contains:
-    """
-    suites:
-      behat_suite:
-        namespace: Behat\Tests\MyNamespace
-        psr4_prefix: Behat\Tests
-    """
-
+      """
+      suites:
+        behat_suite:
+          namespace: Behat\Tests\MyNamespace
+          psr4_prefix: Behat\Tests
+      """
     And the class file "src/MyNamespace/Prefix.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace Behat\Tests\MyNamespace;
+      namespace Behat\Tests\MyNamespace;
 
-    class Prefix
-    {
-    }
+      class Prefix
+      {
+      }
 
-    """
+      """
     When I run phpspec and answer "y" when asked if I want to generate the code
     Then the class in "src/MyNamespace/Prefix.php" should contain:
-    """
-    <?php
+      """
+      <?php
 
-    namespace Behat\Tests\MyNamespace;
+      namespace Behat\Tests\MyNamespace;
 
-    class Prefix
-    {
+      class Prefix
+      {
 
-        public function toHtml($argument1)
-        {
-            // TODO: write logic here
-        }
-    }
+          public function toHtml($argument1)
+          {
+              // TODO: write logic here
+          }
+      }
 
-    """
+      """

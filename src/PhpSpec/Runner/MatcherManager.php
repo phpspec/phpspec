@@ -48,6 +48,16 @@ class MatcherManager
     }
 
     /**
+     * Replaces matchers with an already-sorted list
+     *
+     * @param MatcherInterface[] $matchers
+     */
+    public function replace(array $matchers)
+    {
+        $this->matchers = $matchers;
+    }
+
+    /**
      * @param string $keyword
      * @param mixed  $subject
      * @param array  $arguments

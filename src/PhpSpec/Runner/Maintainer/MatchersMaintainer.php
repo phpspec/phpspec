@@ -45,6 +45,9 @@ class MatchersMaintainer implements MaintainerInterface
     {
         $this->presenter = $presenter;
         $this->defaultMatchers = $matchers;
+        @usort($this->defaultMatchers, function ($matcher1, $matcher2) {
+            return $matcher2->getPriority() - $matcher1->getPriority();
+        });
     }
 
     /**
@@ -66,9 +69,8 @@ class MatchersMaintainer implements MaintainerInterface
     public function prepare(ExampleNode $example, SpecificationInterface $context,
                             MatcherManager $matchers, CollaboratorManager $collaborators)
     {
-        foreach ($this->defaultMatchers as $matcher) {
-            $matchers->add($matcher);
-        }
+
+        $matchers->replace($this->defaultMatchers);
 
         if (!$context instanceof Matcher\MatchersProviderInterface) {
             return;
