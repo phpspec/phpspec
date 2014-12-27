@@ -4,6 +4,11 @@ php: [5.3.3, 5.3, 5.4, 5.5, 5.6, hhvm, hhvm-nightly]
 
 sudo: false
 
+cache:
+  directories:
+    - vendor
+    - $HOME/.composer/cache
+
 before_install:
   - echo 'hhvm.libxml.ext_entity_whitelist = file' > travis.hhvm.ini
 
