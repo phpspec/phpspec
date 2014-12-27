@@ -13,7 +13,12 @@
 
 namespace PhpSpec;
 
+use Behat\Testwork\ServiceContainer\ContainerLoader;
+use Behat\Testwork\ServiceContainer\Extension;
+use Behat\Testwork\ServiceContainer\ExtensionManager;
 use InvalidArgumentException;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 
 /**
  * The Service Container is a lightweight container based on Pimple to handle
@@ -21,25 +26,31 @@ use InvalidArgumentException;
  */
 class ServiceContainer
 {
+    const COMPAT_SERVICE_FACTORY_ID = 'compat.service-factory';
+    private $serviceFactory;
     /**
-     * @var array
+     * @var ContainerBuilder
      */
-    private $parameters = array();
-
-    /**
-     * @var array
-     */
-    private $services = array();
-
-    /**
-     * @var array
-     */
-    private $prefixed = array();
+    private $containerBuilder;
+    private $params = array();
+    private $defaultExtensions = array();
 
     /**
      * @var array
      */
     private $configurators = array();
+
+    public function __construct($container)
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('paths.base', __DIR__);
+
+        $this->containerBuilder = $container;
+        $definition = new Definition('PhpSpec\\ServiceFactory');
+        $this->containerBuilder->setDefinition(self::COMPAT_SERVICE_FACTORY_ID, $definition);
+        $this->serviceFactory = $this->containerBuilder->get(self::COMPAT_SERVICE_FACTORY_ID);
+        $this->serviceFactory->setContainer($this);
+    }
 
     /**
      * Sets a param in the container
@@ -49,7 +60,15 @@ class ServiceContainer
      */
     public function setParam($id, $value)
     {
-        $this->parameters[$id] = $value;
+        $this->containerBuilder->setParameter($id, $value);
+        $this->params[$id] = $value;
+    }
+
+    public function processParams()
+    {
+        foreach ($this->params as $id => $value) {
+            $this->containerBuilder->setParameter($id, $value);
+        }
     }
 
     /**
@@ -62,64 +81,17 @@ class ServiceContainer
      */
     public function getParam($id, $default = null)
     {
-        return isset($this->parameters[$id]) ? $this->parameters[$id] : $default;
-    }
-
-    /**
-     * Sets a object or a callable for the object creation. A callable will be invoked
-     * every time get is called.
-     *
-     * @param string          $id
-     * @param object|callable $value
-     *
-     * @throws \InvalidArgumentException if service is not an object or callable
-     */
-    public function set($id, $value)
-    {
-        if (!is_object($value) && !is_callable($value)) {
-            throw new InvalidArgumentException(sprintf(
-                'Service should be callable or object, but %s given.',gettype($value)
-            ));
+        if (!$this->containerBuilder->hasParameter($id)) {
+            return $default;
         }
 
-        list($prefix, $sid) = $this->getPrefixAndSid($id);
-        if ($prefix) {
-            if (!isset($this->prefixed[$prefix])) {
-                $this->prefixed[$prefix] = array();
-            }
+        $value = $this->containerBuilder->getParameter($id);
 
-            $this->prefixed[$prefix][$sid] = $id;
+        if (isset($value)) {
+            return $value;
         }
 
-        $this->services[$id] = $value;
-    }
-
-    /**
-     * Sets a callable for the object creation. The same object will
-     * be returned every time
-     *
-     * @param string   $id
-     * @param callable $callable
-     *
-     * @throws \InvalidArgumentException if service is not a callable
-     */
-    public function setShared($id, $callable)
-    {
-        if (!is_callable($callable)) {
-            throw new InvalidArgumentException(sprintf(
-                'Service should be callable, "%s" given.', gettype($callable)
-            ));
-        }
-
-        $this->set($id, function ($container) use ($callable) {
-            static $instance;
-
-            if (null === $instance) {
-                $instance = call_user_func($callable, $container);
-            }
-
-            return $instance;
-        });
+        return $default;
     }
 
     /**
@@ -133,16 +105,11 @@ class ServiceContainer
      */
     public function get($id)
     {
-        if (!array_key_exists($id, $this->services)) {
+        if (!$this->containerBuilder->has($id)) {
             throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
         }
 
-        $value = $this->services[$id];
-        if (is_callable($value)) {
-            return call_user_func($value, $this);
-        }
-
-        return $value;
+        return $this->containerBuilder->get($id);
     }
 
     /**
@@ -151,7 +118,7 @@ class ServiceContainer
      */
     public function isDefined($id)
     {
-        return array_key_exists($id, $this->services);
+        return $this->containerBuilder->has($id);
     }
 
     /**
@@ -163,16 +130,7 @@ class ServiceContainer
      */
     public function getByPrefix($prefix)
     {
-        if (!array_key_exists($prefix, $this->prefixed)) {
-            return array();
-        }
-
-        $services = array();
-        foreach ($this->prefixed[$prefix] as $id) {
-            $services[] = $this->get($id);
-        }
-
-        return $services;
+        return array_map(function($id) {return $this->containerBuilder->get($id);}, array_keys($this->containerBuilder->findTaggedServiceIds($prefix)));
     }
 
     /**
@@ -184,16 +142,44 @@ class ServiceContainer
      */
     public function remove($id)
     {
-        if (!array_key_exists($id, $this->services)) {
+        if (!$this->containerBuilder->has($id)) {
             throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
         }
 
-        list($prefix, $sid) = $this->getPrefixAndSid($id);
-        if ($prefix) {
-            unset($this->prefixed[$prefix][$sid]);
-        }
+        $this->containerBuilder->removeDefinition($id);
+    }
 
-        unset($this->services[$id]);
+    /**
+     * Sets a object or a callable for the object creation. A callable will be invoked
+     * every time get is called.
+     *
+     * @param string          $id
+     * @param object|callable $value
+     *
+     * @throws \InvalidArgumentException if service is not an object or callable
+     */
+    public function set($id, $value)
+    {
+        $definition = $this->createDefinition($id, $value);
+        $definition->setScope('prototype');
+
+        $this->containerBuilder->setDefinition($id, $definition);
+    }
+
+    /**
+     * Sets a callable for the object creation. The same object will
+     * be returned every time
+     *
+     * @param string   $id
+     * @param callable $callable
+     *
+     * @throws \InvalidArgumentException if service is not a callable
+     */
+    public function setShared($id, $callable)
+    {
+        $definition = $this->createDefinition($id, $callable);
+
+        $this->containerBuilder->setDefinition($id, $definition);
     }
 
     /**
@@ -217,11 +203,14 @@ class ServiceContainer
     /**
      * Loop through all configurators and invoke them
      */
-    public function configure()
+    public function compile()
     {
-        foreach ($this->configurators as $configurator) {
-            call_user_func($configurator, $this);
-        }
+        $this->addDefaultExtension(new LegacyExtension($this));
+        $containerLoader = new ContainerLoader(new ExtensionManager($this->defaultExtensions));
+        $configs = $this->getParam('compat.testwork-extensions.config', array());
+        $containerLoader->load($this->containerBuilder, array($configs));
+        $this->containerBuilder->addObjectResource($containerLoader);
+        $this->containerBuilder->compile();
     }
 
     /**
@@ -231,15 +220,52 @@ class ServiceContainer
      *
      * @return array
      */
-    private function getPrefixAndSid($id)
+    private function getPrefix($id)
     {
         if (count($parts = explode('.', $id)) < 2) {
-            return array(null, $id);
+            return null;
         }
 
-        $sid    = array_pop($parts);
+        array_pop($parts);
         $prefix = implode('.', $parts);
 
-        return array($prefix, $sid);
+        return $prefix;
+    }
+
+    /**
+     * @param $id
+     * @param $value
+     * @return Definition
+     * @throws \InvalidArgumentException
+     */
+    private function createDefinition($id, $value)
+    {
+        if (!is_object($value) && !is_callable($value)) {
+            throw new InvalidArgumentException(sprintf(
+                'Service should be callable or object, but %s given.', gettype($value)
+            ));
+        }
+
+        $definition = new Definition('\stdClass');
+        $this->serviceFactory->setService($id, $value);
+
+        $definition->setFactoryService(self::COMPAT_SERVICE_FACTORY_ID);
+        $definition->setFactoryMethod('create');
+        $definition->addArgument($id);
+        $definition->addTag($this->getPrefix($id));
+
+        return $definition;
+    }
+
+    public function configure()
+    {
+        foreach ($this->configurators as $configurator) {
+            call_user_func($configurator, $this);
+        }
+    }
+
+    public function addDefaultExtension(Extension $extension)
+    {
+        $this->defaultExtensions[] = $extension;
     }
 }

@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <parameters>
+        <parameter key="stop_on_failure" type="constant">FALSE</parameter>
+        <parameter key="code_generation" type="constant">TRUE</parameter>
+        <parameter key="rerun" type="constant">TRUE</parameter>
+        <parameter key="fake" type="constant">FALSE</parameter>
+        <parameter key="bootstrap" type="constant">FALSE</parameter>
+    </parameters>
+    <services>
+
+        <service id="console.io" class="PhpSpec\Console\IO" scope="prototype">
+            <argument type="service" id="console.input"/>
+            <argument type="service" id="console.output"/>
+            <argument type="service" id="console.helper.dialog"/>
+            <argument type="service" id="console.io.config"/>
+        </service>
+
+        <service id="console.io.config" class="PhpSpec\Config\OptionsConfig" scope="prototype">
+            <argument>%stop_on_failure%</argument>
+            <argument>%code_generation%</argument>
+            <argument>%rerun%</argument>
+            <argument>%fake%</argument>
+            <argument>%bootstrap%</argument>
+        </service>
+
+    </services>
+</container>

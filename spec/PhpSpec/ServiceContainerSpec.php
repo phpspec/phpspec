@@ -3,9 +3,15 @@
 namespace spec\PhpSpec;
 
 use PhpSpec\ObjectBehavior;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class ServiceContainerSpec extends ObjectBehavior
 {
+    function let()
+    {
+        $this->beConstructedWith(new ContainerBuilder());
+    }
+
     function it_stores_parameters()
     {
         $this->setParam('some_param', 42);

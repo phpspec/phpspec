@@ -1,0 +1,70 @@
+<?xml version="1.0" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+
+        <service id="matchers.identity" class="PhpSpec\Matcher\IdentityMatcher">
+            <argument type="service" id="formatter.presenter"/>
+            <tag name="matchers"/>
+        </service>
+
+        <service id="matchers.comparison" class="PhpSpec\Matcher\ComparisonMatcher">
+            <argument type="service" id="formatter.presenter"/>
+            <tag name="matchers"/>
+        </service>
+
+        <service id="matchers.throwm" class="PhpSpec\Matcher\ThrowMatcher">
+            <argument type="service" id="unwrapper"/>
+            <argument type="service" id="formatter.presenter"/>
+            <tag name="matchers"/>
+        </service>
+
+        <service id="matchers.type" class="PhpSpec\Matcher\TypeMatcher">
+            <argument type="service" id="formatter.presenter"/>
+            <tag name="matchers"/>
+        </service>
+
+        <service id="matchers.object_state" class="PhpSpec\Matcher\ObjectStateMatcher">
+            <argument type="service" id="formatter.presenter"/>
+            <tag name="matchers"/>
+        </service>
+
+        <service id="matchers.scalar" class="PhpSpec\Matcher\ScalarMatcher">
+            <argument type="service" id="formatter.presenter"/>
+            <tag name="matchers"/>
+        </service>
+
+        <service id="matchers.array_count" class="PhpSpec\Matcher\ArrayCountMatcher">
+            <argument type="service" id="formatter.presenter"/>
+            <tag name="matchers"/>
+        </service>
+
+        <service id="matchers.array_key" class="PhpSpec\Matcher\ArrayKeyMatcher">
+            <argument type="service" id="formatter.presenter"/>
+            <tag name="matchers"/>
+        </service>
+
+        <service id="matchers.array_contain" class="PhpSpec\Matcher\ArrayContainMatcher">
+            <argument type="service" id="formatter.presenter"/>
+            <tag name="matchers"/>
+        </service>
+
+        <service id="matchers.string_start" class="PhpSpec\Matcher\StringStartMatcher">
+            <argument type="service" id="formatter.presenter"/>
+            <tag name="matchers"/>
+        </service>
+
+        <service id="matchers.string_end" class="PhpSpec\Matcher\StringEndMatcher">
+            <argument type="service" id="formatter.presenter"/>
+            <tag name="matchers"/>
+        </service>
+
+        <service id="matchers.string_regex" class="PhpSpec\Matcher\StringRegexMatcher">
+            <argument type="service" id="formatter.presenter"/>
+            <tag name="matchers"/>
+        </service>
+
+    </services>
+</container>

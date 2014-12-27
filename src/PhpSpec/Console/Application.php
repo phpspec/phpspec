@@ -13,10 +13,12 @@
 
 namespace PhpSpec\Console;
 
+use Behat\Testwork\ServiceContainer\Extension as TestworkExtension;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Yaml\Yaml;
 use PhpSpec\ServiceContainer;
 use PhpSpec\Extension;
@@ -37,7 +39,8 @@ class Application extends BaseApplication
      */
     public function __construct($version)
     {
-        $this->container = new ServiceContainer();
+        $this->containerBuilder = new ContainerBuilder();
+        $this->container = new ServiceContainer($this->containerBuilder);
         parent::__construct('phpspec', $version);
     }
 
@@ -120,21 +123,14 @@ class Application extends BaseApplication
 
         foreach ($config as $key => $val) {
             if ('extensions' === $key && is_array($val)) {
-                foreach ($val as $class) {
-                    $extension = new $class();
-
-                    if (!$extension instanceof Extension\ExtensionInterface) {
-                        throw new RuntimeException(sprintf(
-                            'Extension class must implement ExtensionInterface. But `%s` is not.',
-                            $class
-                        ));
-                    }
-
-                    $extension->load($container);
+                foreach ($val as $id => $class) {
+                    $this->loadExtension($container, $id, $class);
                 }
-            } else {
-                $container->setParam($key, $val);
+
+                continue;
             }
+
+            $container->setParam($key, $val);
         }
     }
 
@@ -172,5 +168,35 @@ class Application extends BaseApplication
         }
 
         return $config;
+    }
+
+    /**
+     * @param ServiceContainer $container
+     * @param $class
+     * @param $extensionConfig
+     * @throws \RuntimeException
+     */
+    private function loadExtension(ServiceContainer $container, $class, $extensionConfig)
+    {
+        $extension = new $class();
+
+        if ($extension instanceof Extension\ExtensionInterface) {
+            $extension->load($container, $container->getParam('compat.testwork-extensions.config'));
+
+            return;
+        }
+
+        if ($extension instanceof TestworkExtension) {
+            $testworkConfig = $container->getParam('compat.testwork-extensions.config', array('extensions' => array()));
+            $testworkConfig['extensions'][$class] = $extensionConfig;
+            $container->setParam('compat.testwork-extensions.config', $testworkConfig);
+
+            return;
+        }
+
+        throw new RuntimeException(sprintf(
+            'Extension class must implement ExtensionInterface. But `%s` is not.',
+            $class
+        ));
     }
 }
