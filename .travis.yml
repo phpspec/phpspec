@@ -3,14 +3,18 @@ language: php
 php: [5.3, 5.4, 5.5, 5.6, hhvm, hhvm-nightly]
 
 env:
-  - COMPOSER_OPTIONS='install --prefer-source'
+  - COMPOSER_OPTIONS='install'
 
 matrix:
   include:
     - php: 5.3.3
-      env: COMPOSER_OPTIONS='update --prefer-lowest --prefer-source'
+      env: COMPOSER_OPTIONS='update --prefer-lowest'
 
 sudo: false
+
+cache:
+  directories:
+    - $HOME/.composer/cache
 
 before_install:
   - echo 'hhvm.libxml.ext_entity_whitelist = file' > travis.hhvm.ini
