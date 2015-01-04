@@ -81,26 +81,19 @@ class ProgressFormatter extends ConsoleFormatter
     }
 
     /**
-     * @param $percents
+     * @param array $counts
      * @return array
      */
-    private function getBarLengths($percents)
+    private function getBarLengths($counts)
     {
         $stats = $this->getStatisticsCollector();
+        $specProgress = ($stats->getTotalSpecsCount() == 0) ? 1 : ($stats->getTotalSpecs())/$stats->getTotalSpecsCount();
+        $targetWidth = ceil($this->getIO()->getBlockWidth() * $specProgress);
+        asort($counts);
 
-        $specProgress = $stats->getTotalSpecs() == 0 ? 1 : ($stats->getTotalSpecs()+1)/$stats->getTotalSpecsCount();
-        $width = $this->getIO()->getBlockWidth()+1;
-
-        $barLengths = array_map(
-            function ($percent) use ($specProgress, $width) {
-                $length = floor($width * $percent / 100);
-                $res = $length == 0 || $length > 1 ? floor($length * $specProgress) : 1;
-
-                return $res;
-            },
-            $percents
-        );
-        asort($barLengths);
+        $barLengths = array_map(function($count) use ($targetWidth, $counts) {
+            return $count ? max(1,round($targetWidth * $count / array_sum($counts))) : 0;
+        }, $counts);
 
         return $barLengths;
     }
@@ -165,7 +158,7 @@ class ProgressFormatter extends ConsoleFormatter
         $stats = $this->getStatisticsCollector();
 
         $percents = $this->getPercentages($stats->getEventsCount(), $stats->getCountsHash());
-        $barLengths = $this->getBarLengths($percents);
+        $barLengths = $this->getBarLengths($stats->getCountsHash());
         $progress = $this->formatProgressOutput($barLengths, $percents, $io->isDecorated());
 
         $this->updateProgressBar($io, $progress, $stats->getEventsCount());
