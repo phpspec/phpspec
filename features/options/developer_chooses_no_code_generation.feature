@@ -24,7 +24,7 @@ Feature: Developer chooses no code generation
 
       """
     When I run phpspec interactively
-    Then I should see "Do you want me to create"
+    Then I should be prompted for code generation
 
   @issue352
   Scenario: code-generation is specified in the config
@@ -51,7 +51,7 @@ Feature: Developer chooses no code generation
 
       """
     When I run phpspec interactively
-    Then I should not see "Do you want me to create"
+    Then I should not be prompted for code generation
 
   @issue352
   Scenario: code-generation on the command line takes priority
@@ -78,4 +78,4 @@ Feature: Developer chooses no code generation
 
       """
     When I run phpspec interactively with the "no-code-generation" option
-    Then I should not see "Do you want me to create"
+    Then I should not be prompted for code generation

@@ -160,7 +160,7 @@ class Application extends BaseApplication
 
         $config = array();
         foreach ($paths as $path) {
-            if ($path && file_exists($path) && $parsedConfig = Yaml::parse($path)) {
+            if ($path && file_exists($path) && $parsedConfig = Yaml::parse(file_get_contents($path))) {
                 $config = $parsedConfig;
                 break;
             }
@@ -168,7 +168,7 @@ class Application extends BaseApplication
 
         if ($homeFolder = getenv('HOME')) {
             $localPath = $homeFolder.'/.phpspec.yml';
-            if (file_exists($localPath) && $parsedConfig = Yaml::parse($localPath)) {
+            if (file_exists($localPath) && $parsedConfig = Yaml::parse(file_get_contents($localPath))) {
                 $config = array_replace_recursive($parsedConfig, $config);
             }
         }

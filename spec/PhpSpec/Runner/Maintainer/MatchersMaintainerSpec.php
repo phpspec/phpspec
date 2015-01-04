@@ -20,6 +20,6 @@ class MatchersMaintainerSpec extends ObjectBehavior
         $this->beConstructedWith($presenter, array($matcher));
         $this->prepare($example, $context, $matchers, $collaborators);
 
-        $matchers->add($matcher)->shouldHaveBeenCalled();
+        $matchers->replace(array($matcher))->shouldHaveBeenCalled();
     }
 }

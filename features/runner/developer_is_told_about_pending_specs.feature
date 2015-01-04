@@ -30,7 +30,7 @@ Feature: Developer is told about pending specs
       1 examples (1 pending)
       """
 
-  Scenario: Spec with commentss causes pending result
+  Scenario: Spec with comments causes pending result
     Given the spec file "spec/Runner/PendingExample2/MarkdownSpec.php" contains:
       """
       <?php

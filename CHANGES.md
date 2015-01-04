@@ -1,3 +1,19 @@
+Upcoming
+========
+
+ * Smoother rendering for progress bar
+ * Removed deprecated calls to Yaml::parse
+
+2.1.0 / 2014-12-14
+==================
+
+ * No changes from RC3
+
+2.1.0-RC3 / 2014-12-04
+======================
+
+ * Removed minor BC break introduced in RC2
+
 2.1.0-RC2 / 2014-11-14
 ======================
 
