@@ -26,7 +26,7 @@ class IO implements IOInterface
 {
     const COL_MIN_WIDTH = 40;
     const COL_DEFAULT_WIDTH = 60;
-    const COL_MAX_WIDTH = 120;
+    const COL_MAX_WIDTH = 80;
 
     /**
      * @var \Symfony\Component\Console\Input\InputInterface

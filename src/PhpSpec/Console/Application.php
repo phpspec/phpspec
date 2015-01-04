@@ -72,9 +72,9 @@ class Application extends BaseApplication
 
         $this->setDispatcher($this->container->get('console_event_dispatcher'));
 
-        return parent::doRun($input, $output);
-
         $this->container->get('console.io')->setConsoleWidth($this->getTerminalWidth());
+
+        return parent::doRun($input, $output);
     }
 
     /**

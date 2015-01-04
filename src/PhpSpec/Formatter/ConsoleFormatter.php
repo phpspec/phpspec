@@ -56,7 +56,7 @@ class ConsoleFormatter extends BasicFormatter
         }
 
         $title = str_replace('\\', DIRECTORY_SEPARATOR, $event->getSpecification()->getTitle());
-        $title = str_pad($title, 50, ' ', STR_PAD_RIGHT);
+        $title = str_pad($title, $this->io->getBlockWidth(), ' ', STR_PAD_RIGHT);
         $message = $this->getPresenter()->presentException($exception, $this->io->isVerbose());
 
         if ($exception instanceof PendingException) {

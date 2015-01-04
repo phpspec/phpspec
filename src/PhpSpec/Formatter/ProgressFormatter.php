@@ -19,7 +19,6 @@ use PhpSpec\Event\ExampleEvent;
 
 class ProgressFormatter extends ConsoleFormatter
 {
-    const WIDTH = 50;
     const FPS = 10;
 
     private $lastDraw;
@@ -88,7 +87,7 @@ class ProgressFormatter extends ConsoleFormatter
     {
         $stats = $this->getStatisticsCollector();
         $specProgress = ($stats->getTotalSpecs()+1)/$stats->getTotalSpecsCount();
-        $width = $this->getIO()->getBlockWidth();
+        $width = $this->getIO()->getBlockWidth()+1;
 
         $barLengths = array_map(
             function ($percent) use ($specProgress, $width) {
