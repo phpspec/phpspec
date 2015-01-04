@@ -286,7 +286,7 @@ class IO implements IOInterface
             ($default ? '[Y/n]' : '[y/N]').'</value> ';
 
         return $this->dialogHelper->askConfirmation(
-            $this->output, implode("\n", $lines), $default
+            $this->output, implode("\n", $lines). "\n", $default
         );
     }
 
@@ -344,7 +344,7 @@ class IO implements IOInterface
     /**
      * @param integer $width
      */
-    function setConsoleWidth($width)
+    public function setConsoleWidth($width)
     {
         $this->consoleWidth = $width;
     }

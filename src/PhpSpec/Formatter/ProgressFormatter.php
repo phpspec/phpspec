@@ -60,6 +60,7 @@ class ProgressFormatter extends ConsoleFormatter
         }
 
         $io->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
+        $io->writeln();
     }
 
     /**

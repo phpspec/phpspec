@@ -72,7 +72,6 @@ class NamedConstructorNotFoundListener implements EventSubscriberInterface
                 continue;
             }
 
-            $this->io->writeln();
             if ($this->io->askConfirmation($message)) {
                 $this->generator->generate($resource, 'named_constructor', array(
                     'name'      => $method,

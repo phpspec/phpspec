@@ -83,7 +83,7 @@ class ReturnConstantGenerator implements GeneratorInterface
         $this->filesystem->putFileContents($resource->getSrcFilename(), $modifiedCode);
 
         $this->io->writeln(sprintf(
-            "\n<info>Method <value>%s::%s()</value> has been modified.</info>",
+            "<info>Method <value>%s::%s()</value> has been modified.</info>\n",
             $resource->getSrcClassname(), $method
         ), 2);
     }

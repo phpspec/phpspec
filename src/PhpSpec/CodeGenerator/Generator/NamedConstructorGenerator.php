@@ -76,7 +76,7 @@ class NamedConstructorGenerator implements GeneratorInterface
         $this->filesystem->putFileContents($filepath, $code);
 
         $this->io->writeln(sprintf(
-            "\n<info>Method <value>%s::%s()</value> has been created.</info>",
+            "<info>Method <value>%s::%s()</value> has been created.</info>\n",
             $resource->getSrcClassname(), $methodName
         ), 2);
     }
