@@ -87,7 +87,7 @@ class ProgressFormatter extends ConsoleFormatter
     private function getBarLengths($percents)
     {
         $stats = $this->getStatisticsCollector();
-        $specProgress = $stats->getTotalSpecs() ? ($stats->getTotalSpecs()+1)/$stats->getTotalSpecsCount() : 0;
+        $specProgress = $stats->getTotalSpecsCount() ? ($stats->getTotalSpecs() + 1) / $stats->getTotalSpecsCount() : 0;
 
         $barLengths = array_map(
             function ($percent) use ($specProgress) {
