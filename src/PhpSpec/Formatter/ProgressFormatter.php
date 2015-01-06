@@ -72,6 +72,10 @@ class ProgressFormatter extends ConsoleFormatter
     {
         return array_map(
             function ($count) use ($total) {
+                if (0 == $total) {
+                    return 0;
+                }
+
                 $percent = ($count == $total) ? 100 : $count / ($total / 100);
 
                 return $percent == 0 || $percent > 1 ? floor($percent) : 1;
