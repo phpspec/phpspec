@@ -27,7 +27,7 @@
         "symfony/finder":           "~2.1",
         "symfony/process":          "~2.1",
         "symfony/yaml":             "~2.1",
-        "doctrine/instantiator":    "~1.0,>=1.0.1"
+        "doctrine/instantiator":    "^1.0.1"
     },
 
     "require-dev": {
