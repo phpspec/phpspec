@@ -75,7 +75,6 @@ class ConsoleFormatter extends BasicFormatter
     protected function printSpecificException(ExampleEvent $event, $type)
     {
         $title = str_replace('\\', DIRECTORY_SEPARATOR, $event->getSpecification()->getTitle());
-//        $title = str_pad($title, $this->io->getBlockWidth(), ' ', STR_PAD_RIGHT);
         $message = $this->getPresenter()->presentException($event->getException(), $this->io->isVerbose());
 
         foreach (explode("\n", wordwrap($title, $this->io->getBlockWidth(), "\n", true)) as $line) {
