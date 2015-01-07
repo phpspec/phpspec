@@ -27,11 +27,11 @@
         "symfony/finder":           "~2.1",
         "symfony/process":          "~2.1",
         "symfony/yaml":             "~2.1",
-        "doctrine/instantiator":    "^1.0.1"
+        "doctrine/instantiator":    "~1.0,>=1.0.1"
     },
 
     "require-dev": {
-        "behat/behat": "^3.0.11",
+        "behat/behat": "~3.0,>=3.0.11",
         "bossa/phpspec2-expect": "~1.0",
         "symfony/filesystem":    "~2.1"
     },
