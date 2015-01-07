@@ -21,6 +21,25 @@ class ProgressFormatterSpec extends ObjectBehavior
         $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
     }
 
+    function it_outputs_progress_as_0_when_0_examples_have_run(ExampleEvent $event, IO $io, StatisticsCollector $stats)
+    {
+        $stats->getEventsCount()->willReturn(0);
+        $stats->getCountsHash()->willReturn(array(
+                'passed'  => 0,
+                'pending' => 0,
+                'skipped' => 0,
+                'failed'  => 0,
+                'broken'  => 0,
+            ));
+        $stats->getTotalSpecs()->willReturn(0);
+        $stats->getTotalSpecsCount()->willReturn(0);
+
+        $this->afterExample($event);
+
+        $expected = '/  skipped: 0%  /  pending: 0%  /  passed: 0%   /  failed: 0%   /  broken: 0%   /  0 examples';
+        $io->writeTemp($expected)->shouldHaveBeenCalled();
+    }
+
     function it_outputs_progress_as_0_when_0_examples_have_passed(ExampleEvent $event, IO $io, StatisticsCollector $stats)
     {
         $stats->getEventsCount()->willReturn(1);
