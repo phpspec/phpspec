@@ -153,4 +153,30 @@ class IOSpec extends ObjectBehavior
 
         $this->getBootstrapPath()->shouldReturn('/path/to/bootstrap.php');
     }
+
+    function it_defaults_the_block_width()
+    {
+        $this->getBlockWidth()->shouldReturn(60);
+    }
+
+    function it_sets_the_block_width_to_the_minimum_when_terminal_is_narrow()
+    {
+        $this->setConsoleWidth(10);
+
+        $this->getBlockWidth()->shouldReturn(60);
+    }
+
+    function it_sets_the_block_width_to_the_maximum_when_terminal_is_very_wide()
+    {
+        $this->setConsoleWidth(1000);
+
+        $this->getBlockWidth()->shouldReturn(80);
+    }
+
+    function it_sets_the_block_width_to_narrower_than_the_terminal_width_when_terminal_is_in_range()
+    {
+        $this->setConsoleWidth(75);
+
+        $this->getBlockWidth()->shouldReturn(65);
+    }
 }
