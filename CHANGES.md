@@ -1,9 +1,10 @@
-Upcoming
-========
+2.1.1 / 2015-01-09
+==================
 
  * Smoother rendering for progress bar
- * Removed deprecated calls to Yaml::parse
  * Fixed progress bar for case where no examples are found
+ * Tidier output alignment + block width
+ * Removed deprecated calls to Yaml::parse
  * More accurate lower bounds for composer installation
 
 2.1.0 / 2014-12-14
