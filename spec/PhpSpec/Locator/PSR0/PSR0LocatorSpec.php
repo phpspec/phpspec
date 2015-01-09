@@ -349,7 +349,7 @@ class PSR0LocatorSpec extends ObjectBehavior
         $fs->getFileContents($filePath)->willReturn('<?php namespace InvalidSpecNamespace\\PhpSpec; class ServiceContainer {} ?>');
         $file->getRealPath()->willReturn($filePath);
 
-        $exception = new \RuntimeException('Spec class must be in the base spec namespace `spec\\PhpSpec\\`.');
+        $exception = new \RuntimeException('Spec class `InvalidSpecNamespace\\PhpSpec\\ServiceContainer` must be in the base spec namespace `spec\\PhpSpec\\`.');
 
         $this->shouldThrow($exception)->duringFindResources($this->srcPath);
     }
