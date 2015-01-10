@@ -60,6 +60,10 @@ class Application extends BaseApplication
         $this->container->set('console.input', $input);
         $this->container->set('console.output', $output);
         $this->container->set('console.helper.dialog', $this->getHelperSet()->get('dialog'));
+        $helperSet = $this->getHelperSet();
+        $this->container->set('console.helper.question', function () use ($helperSet) {
+            return ($helperSet->has('question')) ? $helperSet->get('question') : null;
+        });
 
         $assembler = new ContainerAssembler();
         $assembler->build($this->container);

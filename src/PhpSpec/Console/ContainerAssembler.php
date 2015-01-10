@@ -65,7 +65,8 @@ class ContainerAssembler
                     $c->getParam('rerun', true),
                     $c->getParam('fake', false),
                     $c->getParam('bootstrap', false)
-                )
+                ),
+                $c->get('console.helper.question')
             );
         });
     }
