@@ -11,6 +11,7 @@ use Matcher\ExitStatusMatcher;
 use Matcher\ValidJUnitXmlMatcher;
 use PhpSpec\Console\Application;
 use PhpSpec\Matcher\MatchersProviderInterface;
+use Symfony\Component\Console\Helper\HelperSet;
 use Symfony\Component\Console\Tester\ApplicationTester;
 
 /**
@@ -61,8 +62,8 @@ class ApplicationContext implements Context, MatchersProviderInterface
     {
         $this->dialogHelper = new DialogHelper();
 
-        $helperSet = $this->application->getHelperSet();
-        $helperSet->set($this->dialogHelper);
+        $helperSet = new HelperSet(array('dialog'=> $this->dialogHelper));
+        $this->application->setHelperSet($helperSet);
     }
 
     private function setupReRunner()
