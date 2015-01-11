@@ -55,6 +55,6 @@ final class Question implements Prompter
      */
     public function askConfirmation($question, $default = true)
     {
-        return $this->helper->ask($this->input, $this->output, new ConfirmationQuestion($question, $default));
+        return (bool)$this->helper->ask($this->input, $this->output, new ConfirmationQuestion($question, $default));
     }
 }
