@@ -66,7 +66,7 @@ class ContainerAssembler
                     $c->getParam('fake', false),
                     $c->getParam('bootstrap', false)
                 ),
-                $c->get('console.helper.question')
+                $c->get('console.prompter.factory')->getPrompter()
             );
         });
     }

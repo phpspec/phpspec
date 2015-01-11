@@ -41,6 +41,8 @@ class IO implements IOInterface
     private $output;
 
     /**
+     * @deprecated
+     *
      * @var \Symfony\Component\Console\Helper\DialogHelper
      */
     private $dialogHelper;
@@ -66,24 +68,24 @@ class IO implements IOInterface
     private $consoleWidth;
 
     /**
-     * @var QuestionHelper
+     * @var Prompter
      */
-    private $questionHelper;
+    private $prompter;
 
     /**
      * @param InputInterface  $input
      * @param OutputInterface $output
      * @param DialogHelper    $dialogHelper
      * @param OptionsConfig   $config
-     * @param QuestionHelper  $questionHelper Used in preference to DialogHelper if both provided
+     * @param Prompter        $prompter;
      */
-    public function __construct(InputInterface $input, OutputInterface $output, DialogHelper $dialogHelper, OptionsConfig $config, QuestionHelper $questionHelper = null)
+    public function __construct(InputInterface $input, OutputInterface $output, DialogHelper $dialogHelper, OptionsConfig $config, Prompter $prompter)
     {
         $this->input   = $input;
         $this->output  = $output;
         $this->dialogHelper = $dialogHelper;
         $this->config  = $config;
-        $this->questionHelper = $questionHelper;
+        $this->prompter = $prompter;
     }
 
     /**
@@ -268,6 +270,19 @@ class IO implements IOInterface
     }
 
     /**
+     * @deprecated
+     *
+     * @param string      $question
+     * @param string|null $default
+     *
+     * @return string
+     */
+    public function ask($question, $default = null)
+    {
+        return $this->dialogHelper->ask($this->output, $question, $default);
+    }
+
+    /**
      * @param string $question
      * @param bool   $default
      *
@@ -285,11 +300,7 @@ class IO implements IOInterface
 
         $formattedQuestion = implode("\n", $lines) . "\n";
 
-        if ($this->questionHelper) {
-            $confirmation = new ConfirmationQuestion($formattedQuestion, $default);
-            return $this->questionHelper->ask($this->input, $this->output, $confirmation);
-        }
-        return $this->dialogHelper->askConfirmation($this->output, $formattedQuestion, $default);
+        return $this->prompter->askConfirmation($formattedQuestion, $default);
     }
 
     /**
@@ -305,19 +316,6 @@ class IO implements IOInterface
     public function askAndValidate($question, $validator, $attempts = false, $default = null)
     {
         return $this->dialogHelper->askAndValidate($this->output, $question, $validator, $attempts, $default);
-    }
-
-    /**
-     * @deprecated
-     *
-     * @param string      $question
-     * @param string|null $default
-     *
-     * @return string
-     */
-    public function ask($question, $default = null)
-    {
-        return $this->dialogHelper->ask($this->output, $question, $default);
     }
 
     /**
