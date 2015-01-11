@@ -42,7 +42,7 @@ final class Dialog implements Prompter
     /**
      * @param string  $question
      * @param boolean $default
-     * @return string
+     * @return boolean
      */
     public function askConfirmation($question, $default = true)
     {

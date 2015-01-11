@@ -18,7 +18,7 @@ interface Prompter
     /**
      * @param string $question
      * @param boolean $default
-     * @return string
+     * @return boolean
      */
     public function askConfirmation($question, $default = true);
 }

@@ -77,7 +77,7 @@ class IO implements IOInterface
      * @param OutputInterface $output
      * @param DialogHelper    $dialogHelper
      * @param OptionsConfig   $config
-     * @param Prompter        $prompter;
+     * @param Prompter        $prompter
      */
     public function __construct(InputInterface $input, OutputInterface $output, DialogHelper $dialogHelper, OptionsConfig $config, Prompter $prompter)
     {
