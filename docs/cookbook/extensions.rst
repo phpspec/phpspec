@@ -66,6 +66,6 @@ Miscellaneous
 ~~~~~~~~~~~~~
 
  * `Prepare <https://github.com/coduo/phpspec-prepare-extension>`_
- * `Data provider <https://github.com/coduo/phpspec-data-provider-extension`_
+ * `Data provider <https://github.com/coduo/phpspec-data-provider-extension>`_
  * `Matcher extension <https://github.com/coduo/phpspec-matcher-extension>`_
  * `Behat Integration <https://github.com/richardmiller/BehatSpec>`_
