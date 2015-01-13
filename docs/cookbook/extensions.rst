@@ -69,4 +69,4 @@ Miscellaneous
  * `Data provider <https://github.com/coduo/phpspec-data-provider-extension>`_
  * `Matcher extension <https://github.com/coduo/phpspec-matcher-extension>`_
  * `Behat Integration <https://github.com/richardmiller/BehatSpec>`_
- * `Scenario skipping through annotation <https://github.com/akeneo/PhpSpecSkipExampleExtension>`_
+ * `Example skipping through annotation <https://github.com/akeneo/PhpSpecSkipExampleExtension>`_
