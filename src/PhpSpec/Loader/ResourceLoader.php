@@ -66,7 +66,7 @@ class ResourceLoader
 
             $spec = new Node\SpecificationNode($resource->getSrcClassname(), $reflection, $resource);
             foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-                if (!preg_match('/^[Ii](?:ts|t)\w/', $method->getName())) {
+                if (!preg_match('/^[Ii](?:ts|t)/', $method->getName())) {
                     continue;
                 }
                 if (null !== $line && !$this->lineIsInsideMethod($line, $method)) {
