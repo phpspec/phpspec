@@ -66,14 +66,14 @@ class ResourceLoader
 
             $spec = new Node\SpecificationNode($resource->getSrcClassname(), $reflection, $resource);
             foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-                if (!preg_match('/^(it|its)[^a-zA-Z]/', $method->getName())) {
+                if (!preg_match('/^[Ii](?:ts|t)/', $method->getName())) {
                     continue;
                 }
                 if (null !== $line && !$this->lineIsInsideMethod($line, $method)) {
                     continue;
                 }
 
-                $example = new Node\ExampleNode(str_replace('_', ' ', $method->getName()), $method);
+                $example = new Node\ExampleNode(ucfirst($this->smartExampleNameSplitter($method->getName())), $method);
 
                 if ($this->methodAnalyser->reflectionMethodIsEmpty($method)) {
                     $example->markAsPending();
@@ -99,5 +99,24 @@ class ResourceLoader
         $line = intval($line);
 
         return $line >= $method->getStartLine() && $line <= $method->getEndLine();
+    }
+
+    /**
+     * Detects underscore_case vs camelCase or PascalCase and splits into words accordingly.
+     *
+     * @param $name
+     *
+     * @return string
+     *
+     * @author Michael Cummings <mgcummings@yahoo.com>
+     */
+    private function smartExampleNameSplitter($name)
+    {
+        if('_' === $name[2] || '_' === $name[3]) {
+            return str_replace('_', ' ', $name);
+        }
+        $split = preg_split('/(^[^A-Z]+|[A-Z][^A-Z]+)/', $name, null, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+
+        return strtolower(implode(' ', $split));
     }
 }
