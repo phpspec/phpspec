@@ -346,6 +346,9 @@ class ContainerAssembler
         $container->set('formatter.formatters.dot', function (ServiceContainer $c) {
             return new SpecFormatter\DotFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
         });
+        $container->set('formatter.formatters.tap', function (ServiceContainer $c) {
+            return new SpecFormatter\TapFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
+        });
         $container->set('formatter.formatters.html', function (ServiceContainer $c) {
             $io = new SpecFormatter\Html\IO();
             $template = new SpecFormatter\Html\Template($io);
