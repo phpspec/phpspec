@@ -3,7 +3,7 @@ Feature: Use the TAP formatter
   As a Developer
   I need to be able to use a TAP formatter
 
-  Scenario: Empty spec causes pending result
+  Scenario: Empty spec causes various result states
     Given the spec file "spec/Formatter/TapExample1/TapSpec.php" contains:
       """
       <?php
@@ -72,15 +72,20 @@ Feature: Use the TAP formatter
     Then I should see:
       """
       TAP version 13
-      ok 1 - Formatter\TapExample1\Tap: is most definitely pending # TODO todo: write pending example
+      not ok 1 - Formatter\TapExample1\Tap: is most definitely pending # TODO todo: write pending example
+        ---
+        severity: todo
+        ...
       ok 2 - Formatter\TapExample1\Tap: is most definitely passing
       not ok 3 - Formatter\TapExample1\Tap: is most definitely failing
         ---
         message: 'Expected "pass", but got "fail".'
+        severity: fail
         ...
       not ok 4 - Formatter\TapExample1\Tap: is most definitely broken
         ---
         message: 'error: something terrible occurred in foo.php line 99'
+        severity: fail
         ...
       ok 5 - Formatter\TapExample1\Tap: is most definitely skipping # SKIP skipped: php is not installed
       1..5

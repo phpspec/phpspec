@@ -79,7 +79,7 @@ class TapFormatterSpec extends ObjectBehavior
         $this->beforeSpecification($specEvent);
         $this->afterExample($exampleEvent);
 
-        $expected = 'not ok 1 - spec1: foobar' . "\n  ---\n  message: 'Something failed.'\n  ...";
+        $expected = "not ok 1 - spec1: foobar\n  ---\n  message: 'Something failed.'\n  severity: fail\n  ...";
         $io->writeln($expected)->shouldHaveBeenCalled();
     }
 
@@ -111,7 +111,7 @@ class TapFormatterSpec extends ObjectBehavior
         $this->beforeSpecification($specEvent);
         $this->afterExample($exampleEvent);
 
-        $expected = 'ok 1 - spec1: foobar # TODO no \ reason';
+        $expected = "not ok 1 - spec1: foobar # TODO no / reason\n  ---\n  severity: todo\n  ...";
         $io->writeln($expected)->shouldHaveBeenCalled();
     }
 
@@ -127,7 +127,7 @@ class TapFormatterSpec extends ObjectBehavior
         $this->beforeSpecification($specEvent);
         $this->afterExample($exampleEvent);
 
-        $expected = 'not ok 1 - spec1: foobar' . "\n  ---\n  message: \"Something broke's.\\nIt hurts.\"\n  ...";
+        $expected = "not ok 1 - spec1: foobar\n  ---\n  message: \"Something broke's.\\nIt hurts.\"\n  severity: fail\n  ...";
         $io->writeln($expected)->shouldHaveBeenCalled();
     }
 }

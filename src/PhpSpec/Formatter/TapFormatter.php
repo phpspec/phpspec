@@ -37,6 +37,8 @@ class TapFormatter extends ConsoleFormatter
 
     const MESSAGE = "---\nmessage: %s\n...";
 
+    const SEVERITY = "\n---\nseverity: %s\n...";
+
     /**
      * @var int
      */
@@ -80,16 +82,16 @@ class TapFormatter extends ConsoleFormatter
                 $result = sprintf(self::OK, $this->examplesCount) . $desc;
                 break;
             case ExampleEvent::PENDING:
-                $message = sprintf(self::TODO, $this->getExceptionMessage($event));
-                $result = sprintf(self::OK, $this->examplesCount) . $desc . $message;
+                $message = $this->getResultData($event, $event->getResult());
+                $result = sprintf(self::NOT_OK, $this->examplesCount) . $desc . $message;
                 break;
             case ExampleEvent::SKIPPED:
-                $message = sprintf(self::SKIP, $this->getExceptionMessage($event));
+                $message = sprintf(self::SKIP, $this->getResultData($event));
                 $result = sprintf(self::OK, $this->examplesCount) . $desc . $message;
                 break;
             case ExampleEvent::BROKEN:
             case ExampleEvent::FAILED:
-                $message = $this->getExceptionMessage($event, true);
+                $message = $this->getResultData($event, $event->getResult());
                 $result = sprintf(self::NOT_OK, $this->examplesCount) . $desc . "\n" . $message;
                 break;
         }
@@ -113,23 +115,39 @@ class TapFormatter extends ConsoleFormatter
      * SKIP or TODO directive.
      *
      * @param ExampleEvent $event
-     * @param boolean $yaml
+     * @param int $result
      * @return string
      */
-    private function getExceptionMessage(ExampleEvent $event, $yaml = false)
+    private function getResultData(ExampleEvent $event, $result = null)
     {
-        if (false === $yaml) {
-            return str_replace(
-                array("\r\n", "\n", "\r"),
-                ' \\ ',
-                $event->getException()->getMessage()
-            );
+        if (null === $result) {
+            return $this->stripNewlines($event->getException()->getMessage());
         }
         $message = $event->getException()->getMessage();
+        switch ($result) {
+            case ExampleEvent::PENDING:
+                $message = sprintf(self::TODO, $this->stripNewlines($message))
+                    . $this->indent(sprintf(self::SEVERITY, Yaml::dump('todo')));
+                break;
+            default:
+                $message = $this->indent(
+                    sprintf(self::MESSAGE . self::SEVERITY, Yaml::dump($message), Yaml::dump('fail'))
+                );
+        }
+        return $message;
+    }
+
+    private function stripNewlines($string)
+    {
+        return str_replace(array("\r\n", "\n", "\r"), ' / ', $string);
+    }
+
+    private function indent($string)
+    {
         return preg_replace(
-            array("%(^.?)%", "%([\n\r]{1,2})%"),
-            array("  \\1", "\\1  "),
-            sprintf(self::MESSAGE, Yaml::dump($message))
+            array("%(^[^\n\r])%", "%([\n\r]{1,2})%", "%\s+...[\n\r]{1,2}\s+---%"),
+            array("  \\1", "\\1  ", ""),
+            $string
         );
     }
 
