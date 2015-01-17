@@ -11,6 +11,7 @@ Feature: Use the TAP formatter
       namespace spec\Formatter\TapExample1;
 
       use PhpSpec\ObjectBehavior;
+      use PhpSpec\Exception\Example\SkippingException;
 
       class TapSpec extends ObjectBehavior
       {
@@ -35,7 +36,7 @@ Feature: Use the TAP formatter
 
           function it_is_most_definitely_skipping()
           {
-            $this->fire('skip')->shouldReturn('pass');
+            throw new SkippingException('php is not installed');
           }
       }
       """
@@ -45,7 +46,6 @@ Feature: Use the TAP formatter
 
       namespace Formatter\TapExample1;
 
-      use PhpSpec\Exception\Example\SkippingException;
       use PhpSpec\Exception\Example\ErrorException;
 
       class Tap
@@ -61,8 +61,6 @@ Feature: Use the TAP formatter
                 break;
                 case 'broken':
                 throw new ErrorException('error','something terrible occurred','foo.php',99);
-                case 'skip':
-                throw new SkippingException('php is not installed');
                 break;
               }
           }
