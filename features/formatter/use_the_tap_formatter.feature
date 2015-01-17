@@ -3,7 +3,7 @@ Feature: Use the TAP formatter
   As a Developer
   I need to be able to use a TAP formatter
 
-  Scenario: Empty spec causes various result states
+  Scenario: A spec which causes various result states
     Given the spec file "spec/Formatter/TapExample1/TapSpec.php" contains:
       """
       <?php
