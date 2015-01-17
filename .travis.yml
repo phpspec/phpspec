@@ -8,6 +8,10 @@ matrix:
       env: DEPENDENCIES='low'
     - php: 5.6
       env: DEPENDENCIES='dev'
+  allow_failures:
+    - php: hhvm-nightly
+    - env: DEPENDENCIES='dev'
+  fast_finish: true
 
 sudo: false
 
