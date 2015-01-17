@@ -137,11 +137,19 @@ class TapFormatter extends ConsoleFormatter
         return $message;
     }
 
+    /**
+     * @param string $string
+     * @return string
+     */
     private function stripNewlines($string)
     {
         return str_replace(array("\r\n", "\n", "\r"), ' / ', $string);
     }
 
+    /**
+     * @param string $string
+     * @return string
+     */
     private function indent($string)
     {
         return preg_replace(
@@ -150,5 +158,4 @@ class TapFormatter extends ConsoleFormatter
             $string
         );
     }
-
 }
