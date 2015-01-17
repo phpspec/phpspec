@@ -49,7 +49,7 @@ class TapFormatterSpec extends ObjectBehavior
     {
         $specEvent->getSpecification()->willReturn($spec);
         $exampleEvent->getExample()->willReturn($example);
-        $exampleEvent->getResult()->willReturn(0);
+        $exampleEvent->getResult()->willReturn(ExampleEvent::PASSED);
 
         $example->getTitle()->willReturn('it foobar');
         $spec->getTitle()->willReturn('spec1');
@@ -67,50 +67,67 @@ class TapFormatterSpec extends ObjectBehavior
         $io->writeln($expected2)->shouldHaveBeenCalled();
     }
 
-    function it_outputs_failure_progress_on_afterexample_event(SpecificationEvent $suiteEvent, ExampleEvent $exampleEvent, ExampleNode $example, SpecificationNode $spec, IO $io, StatisticsCollector $stats)
+    function it_outputs_failure_progress_on_afterexample_event(SpecificationEvent $specEvent, ExampleEvent $exampleEvent, ExampleNode $example, SpecificationNode $spec, IO $io, StatisticsCollector $stats)
     {
-        $suiteEvent->getSpecification()->willReturn($spec);
+        $specEvent->getSpecification()->willReturn($spec);
         $exampleEvent->getExample()->willReturn($example);
         $example->getTitle()->willReturn('foobar');
-        $exampleEvent->getResult()->willReturn(3);
+        $exampleEvent->getResult()->willReturn(ExampleEvent::FAILED);
+        $exampleEvent->getException()->willReturn(new \Exception('Something failed.'));
 
         $spec->getTitle()->willReturn('spec1');
-        $this->beforeSpecification($suiteEvent);
+        $this->beforeSpecification($specEvent);
         $this->afterExample($exampleEvent);
 
-        $expected = 'not ok 1 - spec1: foobar';
+        $expected = 'not ok 1 - spec1: foobar' . "\n  ---\n  message: 'Something failed.'\n  ...";
         $io->writeln($expected)->shouldHaveBeenCalled();
     }
 
-    function it_outputs_skip_progress_on_afterexample_event(SpecificationEvent $suiteEvent, ExampleEvent $exampleEvent, ExampleNode $example, SpecificationNode $spec, IO $io, StatisticsCollector $stats)
+    function it_outputs_skip_progress_on_afterexample_event(SpecificationEvent $specEvent, ExampleEvent $exampleEvent, ExampleNode $example, SpecificationNode $spec, IO $io, StatisticsCollector $stats)
     {
-        $suiteEvent->getSpecification()->willReturn($spec);
+        $specEvent->getSpecification()->willReturn($spec);
         $exampleEvent->getExample()->willReturn($example);
         $example->getTitle()->willReturn('foobar');
-        $exampleEvent->getResult()->willReturn(2);
+        $exampleEvent->getResult()->willReturn(ExampleEvent::SKIPPED);
         $exampleEvent->getException()->willReturn(new \Exception('no reason'));
 
         $spec->getTitle()->willReturn('spec1');
-        $this->beforeSpecification($suiteEvent);
+        $this->beforeSpecification($specEvent);
         $this->afterExample($exampleEvent);
 
         $expected = 'ok 1 - spec1: foobar # SKIP no reason';
         $io->writeln($expected)->shouldHaveBeenCalled();
     }
 
-    function it_outputs_todo_progress_on_afterexample_event(SpecificationEvent $suiteEvent, ExampleEvent $exampleEvent, ExampleNode $example, SpecificationNode $spec, IO $io, StatisticsCollector $stats)
+    function it_outputs_todo_progress_on_afterexample_event(SpecificationEvent $specEvent, ExampleEvent $exampleEvent, ExampleNode $example, SpecificationNode $spec, IO $io, StatisticsCollector $stats)
     {
-        $suiteEvent->getSpecification()->willReturn($spec);
+        $specEvent->getSpecification()->willReturn($spec);
         $exampleEvent->getExample()->willReturn($example);
         $example->getTitle()->willReturn('foobar');
-        $exampleEvent->getResult()->willReturn(1);
-        $exampleEvent->getException()->willReturn(new \Exception('no reason'));
+        $exampleEvent->getResult()->willReturn(ExampleEvent::PENDING);
+        $exampleEvent->getException()->willReturn(new \Exception("no\nreason"));
 
         $spec->getTitle()->willReturn('spec1');
-        $this->beforeSpecification($suiteEvent);
+        $this->beforeSpecification($specEvent);
         $this->afterExample($exampleEvent);
 
-        $expected = 'ok 1 - spec1: foobar # TODO no reason';
+        $expected = 'ok 1 - spec1: foobar # TODO no \ reason';
+        $io->writeln($expected)->shouldHaveBeenCalled();
+    }
+
+    function it_outputs_broken_progress_on_afterexample_event(SpecificationEvent $specEvent, ExampleEvent $exampleEvent, ExampleNode $example, SpecificationNode $spec, IO $io, StatisticsCollector $stats)
+    {
+        $specEvent->getSpecification()->willReturn($spec);
+        $exampleEvent->getExample()->willReturn($example);
+        $example->getTitle()->willReturn('foobar');
+        $exampleEvent->getResult()->willReturn(ExampleEvent::BROKEN);
+        $exampleEvent->getException()->willReturn(new \Exception("Something broke's.\nIt hurts."));
+
+        $spec->getTitle()->willReturn('spec1');
+        $this->beforeSpecification($specEvent);
+        $this->afterExample($exampleEvent);
+
+        $expected = 'not ok 1 - spec1: foobar' . "\n  ---\n  message: \"Something broke's.\\nIt hurts.\"\n  ...";
         $io->writeln($expected)->shouldHaveBeenCalled();
     }
 }

@@ -16,6 +16,7 @@ namespace PhpSpec\Formatter;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
+use Symfony\Component\Yaml\Yaml;
 
 class TapFormatter extends ConsoleFormatter
 {
@@ -32,9 +33,9 @@ class TapFormatter extends ConsoleFormatter
 
     const TODO = ' # TODO %s';
 
-    const BROKEN = ' # BROKEN';
-
     const PLAN = '1..%d';
+
+    const MESSAGE = "---\nmessage: %s\n...";
 
     /**
      * @var int
@@ -71,7 +72,7 @@ class TapFormatter extends ConsoleFormatter
         $desc = sprintf(
             self::DESC,
             $this->currentSpecificationTitle,
-            preg_replace('/^it[s]* /', '', $event->getExample()->getTitle())
+            preg_replace('/^its? /', '', $event->getExample()->getTitle())
         );
 
         switch ($event->getResult()) {
@@ -79,18 +80,17 @@ class TapFormatter extends ConsoleFormatter
                 $result = sprintf(self::OK, $this->examplesCount) . $desc;
                 break;
             case ExampleEvent::PENDING:
-                $todo = sprintf(self::TODO, $this->getExceptionMessage($event));
-                $result = sprintf(self::OK, $this->examplesCount) . $desc . $todo;
+                $message = sprintf(self::TODO, $this->getExceptionMessage($event));
+                $result = sprintf(self::OK, $this->examplesCount) . $desc . $message;
                 break;
             case ExampleEvent::SKIPPED:
-                $skip = sprintf(self::SKIP, $this->getExceptionMessage($event));
-                $result = sprintf(self::OK, $this->examplesCount) . $desc . $skip;
-                break;
-            case ExampleEvent::FAILED:
-                $result = sprintf(self::NOT_OK, $this->examplesCount) . $desc;
+                $message = sprintf(self::SKIP, $this->getExceptionMessage($event));
+                $result = sprintf(self::OK, $this->examplesCount) . $desc . $message;
                 break;
             case ExampleEvent::BROKEN:
-                $result = sprintf(self::NOT_OK, $this->examplesCount) . $desc . self::BROKEN;
+            case ExampleEvent::FAILED:
+                $message = $this->getExceptionMessage($event, true);
+                $result = sprintf(self::NOT_OK, $this->examplesCount) . $desc . "\n" . $message;
                 break;
         }
 
@@ -109,15 +109,27 @@ class TapFormatter extends ConsoleFormatter
     }
 
     /**
+     * Format message as two-space indented YAML when needed outside of a
+     * SKIP or TODO directive.
+     *
      * @param ExampleEvent $event
+     * @param boolean $yaml
      * @return string
      */
-    private function getExceptionMessage(ExampleEvent $event)
+    private function getExceptionMessage(ExampleEvent $event, $yaml = false)
     {
-        return str_replace(
-            array("\n", "\r"),
-            " \\ ",
-            $event->getException()->getMessage()
+        if (false === $yaml) {
+            return str_replace(
+                array("\r\n", "\n", "\r"),
+                ' \\ ',
+                $event->getException()->getMessage()
+            );
+        }
+        $message = $event->getException()->getMessage();
+        return preg_replace(
+            array("%(^.?)%", "%([\n\r]{1,2})%"),
+            array("  \\1", "\\1  "),
+            sprintf(self::MESSAGE, Yaml::dump($message))
         );
     }
 
