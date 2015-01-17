@@ -21,22 +21,22 @@ Feature: Use the TAP formatter
 
           function it_is_most_definitely_passing()
           {
-            $this->fire('pass')->shouldReturn('pass');
+              $this->fire('pass')->shouldReturn('pass');
           }
 
           function it_is_most_definitely_failing()
           {
-            $this->fire('fail')->shouldReturn('pass');
+              $this->fire('fail')->shouldReturn('pass');
           }
 
           function it_is_most_definitely_broken()
           {
-            $this->fire('broken')->shouldReturn('pass');
+              $this->fire('broken')->shouldReturn('pass');
           }
 
           function it_is_most_definitely_skipping()
           {
-            throw new SkippingException('php is not installed');
+              throw new SkippingException('php is not installed');
           }
       }
       """
@@ -53,12 +53,12 @@ Feature: Use the TAP formatter
           public function fire($stuff)
           {
               switch ($stuff) {
-                case 'pass':
-                return 'pass';
-                case 'fail':
-                return 'fail';
-                case 'broken':
-                throw new ErrorException('error','something terrible occurred','foo.php',99);
+                  case 'pass':
+                      return 'pass';
+                  case 'fail':
+                      return 'fail';
+                  case 'broken':
+                      throw new ErrorException('error','something terrible occurred','foo.php',99);
               }
           }
       }
