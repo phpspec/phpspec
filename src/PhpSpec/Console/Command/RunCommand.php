@@ -79,6 +79,7 @@ The available formatters are:
    pretty
    junit
    dot
+   tap
 
 EOF
             )
