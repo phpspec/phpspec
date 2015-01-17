@@ -29,7 +29,6 @@ use PhpSpec\Wrapper;
 use PhpSpec\Config\OptionsConfig;
 use RuntimeException;
 use Symfony\Component\Process\PhpExecutableFinder;
-use Symfony\Component\Yaml\Dumper as YamlDumper;
 
 class ContainerAssembler
 {
