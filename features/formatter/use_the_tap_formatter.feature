@@ -55,13 +55,10 @@ Feature: Use the TAP formatter
               switch ($stuff) {
                 case 'pass':
                 return 'pass';
-                break;
                 case 'fail':
                 return 'fail';
-                break;
                 case 'broken':
                 throw new ErrorException('error','something terrible occurred','foo.php',99);
-                break;
               }
           }
       }
@@ -87,4 +84,5 @@ Feature: Use the TAP formatter
         ...
       ok 5 - Formatter\TapExample1\Tap: is most definitely skipping # SKIP skipped: php is not installed
       1..5
+
       """
