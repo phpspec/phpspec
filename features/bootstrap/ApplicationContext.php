@@ -9,6 +9,7 @@ use Fake\ReRunner;
 use Matcher\ApplicationOutputMatcher;
 use Matcher\ExitStatusMatcher;
 use Matcher\ValidJUnitXmlMatcher;
+use Matcher\ValidTapMatcher;
 use PhpSpec\Console\Application;
 use PhpSpec\Matcher\MatchersProviderInterface;
 use Symfony\Component\Console\Tester\ApplicationTester;
@@ -206,6 +207,15 @@ class ApplicationContext implements Context, MatchersProviderInterface
     }
 
     /**
+     * @Then I should see valid tap output :output
+     * @Then I should see valid tap output:
+     */
+    public function iShouldSeeValidTapOutput($output)
+    {
+        expect($this->tester)->toHaveOutputValidTap((string)$output);
+    }
+
+    /**
      * @Then the tests should be rerun
      */
     public function theTestsShouldBeRerun()
@@ -230,7 +240,8 @@ class ApplicationContext implements Context, MatchersProviderInterface
     {
         return array(
             new ApplicationOutputMatcher(),
-            new ValidJUnitXmlMatcher()
+            new ValidJUnitXmlMatcher(),
+            new ValidTapMatcher()
         );
     }
 }
