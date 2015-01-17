@@ -46,6 +46,7 @@ Feature: Use the TAP formatter
       namespace Formatter\TapExample1;
 
       use PhpSpec\Exception\Example\SkippingException;
+      use PhpSpec\Exception\Example\ErrorException;
 
       class Tap
       {
@@ -59,7 +60,7 @@ Feature: Use the TAP formatter
                 return 'fail';
                 break;
                 case 'broken':
-                return $stuff[99];
+                throw new ErrorException('error','something terrible occurred','foo.php',99);
                 case 'skip':
                 throw new SkippingException('php is not installed');
                 break;
@@ -68,7 +69,7 @@ Feature: Use the TAP formatter
       }
       """
     When I run phpspec using the "tap" format
-    Then I should see valid tap output:
+    Then I should see:
       """
       TAP version 13
       ok 1 - Formatter\TapExample1\Tap: is most definitely pending # TODO todo: write pending example
@@ -79,7 +80,7 @@ Feature: Use the TAP formatter
         ...
       not ok 4 - Formatter\TapExample1\Tap: is most definitely broken
         ---
-        message: 'notice: Uninitialized string offset: 99 in /tmp/phpspec-behat%ID%/src/Formatter/TapExample1/Tap.php line 19'
+        message: 'error: something terrible occurred in foo.php line 99'
         ...
       ok 5 - Formatter\TapExample1\Tap: is most definitely skipping # SKIP skipped: php is not installed
       1..5
