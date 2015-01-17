@@ -28,10 +28,14 @@ Feature: Use the TAP formatter
             $this->fire('fail')->shouldReturn('pass');
           }
 
-
           function it_is_most_definitely_broken()
           {
             $this->fire('broken')->shouldReturn('pass');
+          }
+
+          function it_is_most_definitely_skipping()
+          {
+            $this->fire('skip')->shouldReturn('pass');
           }
       }
       """
@@ -40,6 +44,8 @@ Feature: Use the TAP formatter
       <?php
 
       namespace Formatter\TapExample1;
+
+      use PhpSpec\Exception\Example\SkippingException;
 
       class Tap
       {
@@ -54,6 +60,8 @@ Feature: Use the TAP formatter
                 break;
                 case 'broken':
                 return $stuff[99];
+                case 'skip':
+                throw new SkippingException('php is not installed');
                 break;
               }
           }
@@ -71,7 +79,8 @@ Feature: Use the TAP formatter
         ...
       not ok 4 - Formatter\TapExample1\Tap: is most definitely broken
         ---
-        message: 'notice: Uninitialized string offset: 99 in /tmp/phpspec-behat%ID%/src/Formatter/TapExample1/Tap.php line 17'
+        message: 'notice: Uninitialized string offset: 99 in /tmp/phpspec-behat%ID%/src/Formatter/TapExample1/Tap.php line 19'
         ...
-      1..4
+      ok 5 - Formatter\TapExample1\Tap: is most definitely skipping # SKIP skipped: php is not installed
+      1..5
       """
