@@ -71,7 +71,7 @@ class TapFormatter extends ConsoleFormatter
         $desc = sprintf(
             self::DESC,
             $this->currentSpecificationTitle,
-            preg_replace('/^it /', '', $event->getExample()->getTitle())
+            preg_replace('/^it[s]* /', '', $event->getExample()->getTitle())
         );
 
         switch ($event->getResult()) {
@@ -112,13 +112,13 @@ class TapFormatter extends ConsoleFormatter
      * @param ExampleEvent $event
      * @return string
      */
-    protected function getExceptionMessage(ExampleEvent $event, $depth = null)
+    private function getExceptionMessage(ExampleEvent $event)
     {
-        if (null === $exception = $event->getException()) {
-            return '';
-        }
-
-        return str_replace(array("\n", "\r"), " \\ ", $exception->getMessage());
+        return str_replace(
+            array("\n", "\r"),
+            " \\ ",
+            $event->getException()->getMessage()
+        );
     }
 
 }
