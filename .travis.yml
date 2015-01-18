@@ -30,5 +30,6 @@ install:
 
 script:
    - bin/phpspec run --format=pretty
-   - ./vendor/behat/behat/bin/behat --format=pretty
+   - ./vendor/bin/phpunit --testdox
+   - ./vendor/bin/behat --format=pretty
 

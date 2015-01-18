@@ -54,18 +54,23 @@ class ContainerAssembler
 
     private function setupIO(ServiceContainer $container)
     {
+        if (!$container->isDefined('console.prompter')) {
+            $container->setShared('console.prompter', function($c) {
+                return $c->get('console.prompter.factory')->getPrompter();
+            });
+        }
         $container->setShared('console.io', function (ServiceContainer $c) {
             return new IO(
                 $c->get('console.input'),
                 $c->get('console.output'),
-                $c->get('console.helper.dialog'),
                 new OptionsConfig(
                     $c->getParam('stop_on_failure', false),
                     $c->getParam('code_generation', true),
                     $c->getParam('rerun', true),
                     $c->getParam('fake', false),
                     $c->getParam('bootstrap', false)
-                )
+                ),
+                $c->get('console.prompter')
             );
         });
     }

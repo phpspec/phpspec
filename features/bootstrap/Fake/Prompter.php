@@ -2,10 +2,9 @@
 
 namespace Fake;
 
-use Symfony\Component\Console\Helper\DialogHelper as BaseDialogHelper;
-use Symfony\Component\Console\Output\OutputInterface;
+use PhpSpec\Console\Prompter as PrompterInterface;
 
-class DialogHelper extends BaseDialogHelper
+class Prompter implements PrompterInterface
 {
     private $answer;
     private $hasBeenAsked = false;
@@ -15,7 +14,7 @@ class DialogHelper extends BaseDialogHelper
         $this->answer = $answer;
     }
 
-    public function askConfirmation(OutputInterface $output, $question, $default = true)
+    public function askConfirmation($question, $default = true)
     {
         $this->hasBeenAsked = true;
         return (bool)$this->answer;
