@@ -1,5 +1,5 @@
-Upcoming
-========
+2.2.x-dev
+=========
 
  * Support for TAP format output
  * Remove deprecated usage of Symfony DialogHelper
