@@ -1,6 +1,8 @@
 Upcoming
 ========
 
+ * Support for TAP format output
+ * Remove deprecated usage of Symfony DialogHelper
  * Clearer error message when specs have incorrect namespace prefix
 
 Backward Compatibility
