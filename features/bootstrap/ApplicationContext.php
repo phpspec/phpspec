@@ -4,7 +4,7 @@ use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
-use Fake\DialogHelper;
+use Fake\Prompter;
 use Fake\ReRunner;
 use Matcher\ApplicationOutputMatcher;
 use Matcher\ExitStatusMatcher;
@@ -35,9 +35,9 @@ class ApplicationContext implements Context, MatchersProviderInterface
     private $tester;
 
     /**
-     * @var DialogHelper
+     * @var Prompter
      */
-    private $dialogHelper;
+    private $prompter;
 
     /**
      * @var ReRunner
@@ -54,16 +54,15 @@ class ApplicationContext implements Context, MatchersProviderInterface
 
         $this->tester = new ApplicationTester($this->application);
 
-        $this->setupDialogHelper();
         $this->setupReRunner();
+        $this->setupPrompter();
     }
 
-    private function setupDialogHelper()
+    private function setupPrompter()
     {
-        $this->dialogHelper = new DialogHelper();
+        $this->prompter = new Prompter();
 
-        $helperSet = new HelperSet(array('dialog'=> $this->dialogHelper));
-        $this->application->setHelperSet($helperSet);
+        $this->application->getContainer()->set('console.prompter', $this->prompter);
     }
 
     private function setupReRunner()
@@ -121,7 +120,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
 
         $this->addOptionToArguments($option, $arguments);
 
-        $this->dialogHelper->setAnswer($answer=='y');
+        $this->prompter->setAnswer($answer=='y');
 
         $this->lastExitCode = $this->tester->run($arguments, array('interactive' => true));
     }
@@ -155,7 +154,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function iShouldBePromptedForCodeGeneration()
     {
-        expect($this->dialogHelper)->toHaveBeenAsked();
+        expect($this->prompter)->toHaveBeenAsked();
     }
 
     /**
@@ -163,7 +162,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function iShouldNotBePromptedForCodeGeneration()
     {
-        expect($this->dialogHelper)->toNotHaveBeenAsked();
+        expect($this->prompter)->toNotHaveBeenAsked();
     }
 
     /**

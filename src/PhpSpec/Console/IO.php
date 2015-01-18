@@ -41,13 +41,6 @@ class IO implements IOInterface
     private $output;
 
     /**
-     * @deprecated
-     *
-     * @var \Symfony\Component\Console\Helper\DialogHelper
-     */
-    private $dialogHelper;
-
-    /**
      * @var string
      */
     private $lastMessage;
@@ -75,15 +68,13 @@ class IO implements IOInterface
     /**
      * @param InputInterface  $input
      * @param OutputInterface $output
-     * @param DialogHelper    $dialogHelper
      * @param OptionsConfig   $config
      * @param Prompter        $prompter
      */
-    public function __construct(InputInterface $input, OutputInterface $output, DialogHelper $dialogHelper, OptionsConfig $config, Prompter $prompter)
+    public function __construct(InputInterface $input, OutputInterface $output, OptionsConfig $config, Prompter $prompter)
     {
         $this->input   = $input;
         $this->output  = $output;
-        $this->dialogHelper = $dialogHelper;
         $this->config  = $config;
         $this->prompter = $prompter;
     }
@@ -270,19 +261,6 @@ class IO implements IOInterface
     }
 
     /**
-     * @deprecated
-     *
-     * @param string      $question
-     * @param string|null $default
-     *
-     * @return string
-     */
-    public function ask($question, $default = null)
-    {
-        return $this->dialogHelper->ask($this->output, $question, $default);
-    }
-
-    /**
      * @param string $question
      * @param bool   $default
      *
@@ -301,21 +279,6 @@ class IO implements IOInterface
         $formattedQuestion = implode("\n", $lines) . "\n";
 
         return $this->prompter->askConfirmation($formattedQuestion, $default);
-    }
-
-    /**
-     * @deprecated
-     *
-     * @param string      $question
-     * @param callable    $validator
-     * @param int|false   $attempts
-     * @param string|null $default
-     *
-     * @return string
-     */
-    public function askAndValidate($question, $validator, $attempts = false, $default = null)
-    {
-        return $this->dialogHelper->askAndValidate($this->output, $question, $validator, $attempts, $default);
     }
 
     /**

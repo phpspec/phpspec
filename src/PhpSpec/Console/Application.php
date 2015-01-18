@@ -61,14 +61,18 @@ class Application extends BaseApplication
         $helperSet = $this->getHelperSet();
         $this->container->set('console.input', $input);
         $this->container->set('console.output', $output);
-        $this->container->set('console.helper.dialog', $helperSet->get('dialog'));
-        $this->container->set('console.prompter.factory', function($c) use ($helperSet) {
+        $this->container->setShared('console.prompter.factory', function($c) use ($helperSet) {
             return new Factory(
                 $c->get('console.input'),
                 $c->get('console.output'),
                 $helperSet
             );
         });
+        if (!$this->container->isDefined('console.prompter')) {
+            $this->container->setShared('console.prompter', function($c) {
+                return $c->get('console.prompter.factory')->getPrompter();
+            });
+        }
 
         $assembler = new ContainerAssembler();
         $assembler->build($this->container);

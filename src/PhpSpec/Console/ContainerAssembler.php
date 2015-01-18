@@ -58,7 +58,6 @@ class ContainerAssembler
             return new IO(
                 $c->get('console.input'),
                 $c->get('console.output'),
-                $c->get('console.helper.dialog'),
                 new OptionsConfig(
                     $c->getParam('stop_on_failure', false),
                     $c->getParam('code_generation', true),
@@ -66,7 +65,7 @@ class ContainerAssembler
                     $c->getParam('fake', false),
                     $c->getParam('bootstrap', false)
                 ),
-                $c->get('console.prompter.factory')->getPrompter()
+                $c->get('console.prompter')
             );
         });
     }
