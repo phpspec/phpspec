@@ -3,8 +3,8 @@ Upcoming
 
  * Clearer error message when specs have incorrect namespace prefix
 
-BC Breaks
----------
+Backward Compatibility
+----------------------
 
  * The unused `ask` and `askAndValidate` methods on `Console\IO` have been removed
 
