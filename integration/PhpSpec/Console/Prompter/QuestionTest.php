@@ -55,8 +55,8 @@ class QuestionTest extends \PHPUnit_Framework_TestCase
         $this->questionHelper->expects($this->once())
                            ->method('ask')
                            ->with(
-                               $this->equalTo($this->input),
-                               $this->equalTo($this->output),
+                               $this->identicalTo($this->input),
+                               $this->identicalTo($this->output),
                                $this->equalTo(new ConfirmationQuestion('Are you sure?', true))
                            )
                            ->willReturn(true);

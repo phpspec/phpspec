@@ -48,7 +48,7 @@ class DialogTest extends \PHPUnit_Framework_TestCase
     {
         $this->dialogHelper->expects($this->once())
                            ->method('askConfirmation')
-                           ->with($this->equalTo($this->output), 'Are you sure?', true)
+                           ->with($this->identicalTo($this->output), 'Are you sure?', true)
                            ->willReturn(true);
 
         $result = $this->prompter->askConfirmation('Are you sure?');
