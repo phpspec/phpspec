@@ -130,4 +130,19 @@ class TapFormatterSpec extends ObjectBehavior
         $expected = "not ok 1 - spec1: foobar\n  ---\n  message: \"Something broke's.\\nIt hurts.\"\n  severity: fail\n  ...";
         $io->writeln($expected)->shouldHaveBeenCalled();
     }
+
+    function it_outputs_undefined_progress_on_afterexample_event(SpecificationEvent $specEvent, ExampleEvent $exampleEvent, ExampleNode $example, SpecificationNode $spec, IO $io, StatisticsCollector $stats)
+    {
+        $specEvent->getSpecification()->willReturn($spec);
+        $exampleEvent->getExample()->willReturn($example);
+        $example->getTitle()->willReturn('foobar');
+        $exampleEvent->getResult()->willReturn(999);
+
+        $spec->getTitle()->willReturn('spec1');
+        $this->beforeSpecification($specEvent);
+        $this->afterExample($exampleEvent);
+
+        $expected = "not ok 1 - spec1: foobar\n  ---\n  message: 'The example result type was unknown to formatter'\n  severity: fail\n  ...";
+        $io->writeln($expected)->shouldHaveBeenCalled();
+    }
 }

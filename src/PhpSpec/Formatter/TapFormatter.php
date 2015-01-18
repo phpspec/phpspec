@@ -39,6 +39,8 @@ class TapFormatter extends ConsoleFormatter
 
     const SEVERITY = "\n---\nseverity: %s\n...";
 
+    const UNDEFINED_RESULT = -1;
+
     /**
      * @var int
      */
@@ -94,6 +96,9 @@ class TapFormatter extends ConsoleFormatter
                 $message = $this->getResultData($event, $event->getResult());
                 $result = sprintf(self::NOT_OK, $this->examplesCount) . $desc . "\n" . $message;
                 break;
+            default:
+                $message = $this->getResultData($event, self::UNDEFINED_RESULT);
+                $result = sprintf(self::NOT_OK, $this->examplesCount) . $desc . "\n" . $message;
         }
 
         $this->getIO()->writeln($result);
@@ -123,15 +128,28 @@ class TapFormatter extends ConsoleFormatter
         if (null === $result) {
             return $this->stripNewlines($event->getException()->getMessage());
         }
-        $message = $event->getException()->getMessage();
         switch ($result) {
             case ExampleEvent::PENDING:
-                $message = sprintf(self::TODO, $this->stripNewlines($message))
+                $message = sprintf(self::TODO, $this->stripNewlines($event->getException()->getMessage()))
                     . $this->indent(sprintf(self::SEVERITY, Yaml::dump('todo')));
+                break;
+            case self::UNDEFINED_RESULT:
+                $message = 'The example result type was unknown to formatter';
+                $message = $this->indent(
+                    sprintf(
+                        self::MESSAGE . self::SEVERITY,
+                        Yaml::dump($message),
+                        Yaml::dump('fail')
+                    )
+                );
                 break;
             default:
                 $message = $this->indent(
-                    sprintf(self::MESSAGE . self::SEVERITY, Yaml::dump($message), Yaml::dump('fail'))
+                    sprintf(
+                        self::MESSAGE . self::SEVERITY,
+                        Yaml::dump($event->getException()->getMessage()),
+                        Yaml::dump('fail')
+                    )
                 );
         }
         return $message;
