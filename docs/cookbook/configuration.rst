@@ -154,6 +154,7 @@ The formatters available by default are:
 * pretty
 * junit
 * dot
+* tap
 
 More formatters can be added by :doc:`extensions</cookbook/extensions>`.
 
