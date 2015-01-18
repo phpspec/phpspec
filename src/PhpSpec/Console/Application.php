@@ -68,11 +68,6 @@ class Application extends BaseApplication
                 $helperSet
             );
         });
-        if (!$this->container->isDefined('console.prompter')) {
-            $this->container->setShared('console.prompter', function($c) {
-                return $c->get('console.prompter.factory')->getPrompter();
-            });
-        }
 
         $assembler = new ContainerAssembler();
         $assembler->build($this->container);

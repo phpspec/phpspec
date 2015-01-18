@@ -54,6 +54,11 @@ class ContainerAssembler
 
     private function setupIO(ServiceContainer $container)
     {
+        if (!$container->isDefined('console.prompter')) {
+            $container->setShared('console.prompter', function($c) {
+                return $c->get('console.prompter.factory')->getPrompter();
+            });
+        }
         $container->setShared('console.io', function (ServiceContainer $c) {
             return new IO(
                 $c->get('console.input'),
