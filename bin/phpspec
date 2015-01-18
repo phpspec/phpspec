@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-define('PHPSPEC_VERSION', '2.1.1');
+define('PHPSPEC_VERSION', '2.2.x-dev');
 
 if (is_file($autoload = getcwd() . '/vendor/autoload.php')) {
     require $autoload;
