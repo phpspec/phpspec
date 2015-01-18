@@ -24,7 +24,7 @@ class DialogTest extends \PHPUnit_Framework_TestCase
      */
     private $prompter;
 
-    function setUp()
+    protected function setUp()
     {
         $this->output = $this->getMock('Symfony\Component\Console\Output\OutputInterface');
         $this->dialogHelper = $this->getMockBuilder('Symfony\Component\Console\Helper\DialogHelper')

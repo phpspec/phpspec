@@ -22,7 +22,7 @@ class FactoryTest extends \PHPUnit_Framework_TestCase
      */
     private $reportingLevel;
 
-    function setUp()
+    protected function setUp()
     {
         $this->reportingLevel = error_reporting();
         error_reporting($this->reportingLevel & ~E_USER_DEPRECATED);
@@ -101,7 +101,7 @@ class FactoryTest extends \PHPUnit_Framework_TestCase
         $prompter->askConfirmation('Are you sure?');
     }
 
-    function tearDown()
+    protected function tearDown()
     {
         error_reporting($this->reportingLevel);
     }
