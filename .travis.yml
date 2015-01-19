@@ -14,6 +14,7 @@ matrix:
       env: SMOKE='true'
     - php: hhvm
       env: SMOKE='true'
+    - php: hhvm-nightly
   allow_failures:
     - php: hhvm-nightly
     - env: DEPENDENCIES='dev'
