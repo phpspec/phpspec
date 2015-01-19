@@ -46,9 +46,8 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
             "set timeout 10\n" .
             "spawn {$this->buildPhpSpecCmd()} run\n" .
             "expect \"Y/n\"\n" .
-            "sleep 0.1\n" .
             "send \"$answer\n\"\n" .
-            "sleep 2\n" .
+            "expect \"Y/n\"\n" .
             "interact\n" .
             "'"
         );
