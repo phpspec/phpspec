@@ -48,7 +48,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
             "expect \"Y/n\"\n" .
             "sleep 0.1\n" .
             "send \"$answer\n\"\n" .
-            "sleep 5\n" .
+            "sleep 2\n" .
             "interact\n" .
             "'"
         );
