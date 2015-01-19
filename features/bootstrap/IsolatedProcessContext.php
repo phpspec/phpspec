@@ -37,7 +37,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
             "expect \"Y/n\"\n" .
             "sleep 0.1\n" .
             "send \"$answer\n\"\n" .
-            "sleep 1\n" .
+            "sleep 5\n" .
             "interact\n" .
             "'"
         );
@@ -45,7 +45,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
         $process->run();
         $this->lastOutput = $process->getOutput();
 
-        expect($process->getErrorOutput())->toBe(null);
+        expect((bool)$process->getErrorOutput())->toBe(false);
     }
 
     /**
