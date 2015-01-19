@@ -61,6 +61,6 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function theTestsShouldBeRerun()
     {
-        expect(substr_count($this->lastOutput, 'Y/n'))->toBe(2);
+        expect(substr_count($this->lastOutput, 'for you?'))->toBe(2);
     }
 }
