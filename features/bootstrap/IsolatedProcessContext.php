@@ -15,6 +15,17 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     private $lastOutput;
 
     /**
+     * @beforeSuite
+     */
+    public static function checkDependencies()
+    {
+        chdir(sys_get_temp_dir());
+        if (!@`which expect`) {
+            throw new \Exception('Smoke tests require the `expect` command line application');
+        }
+    }
+
+    /**
      * @Given I have started describing the :class class
      */
     public function iHaveStartedDescribingTheClass($class)
