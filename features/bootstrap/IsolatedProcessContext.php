@@ -5,7 +5,6 @@ use Behat\Behat\Context\Context;
 use Behat\Behat\Context\SnippetAcceptingContext;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
-use PhpSpec\Exception\Example\SkippingException;
 use Symfony\Component\Process\Process;
 
 /**
@@ -31,10 +30,6 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function iRunPhpspecAndAnswerWhenAskedIfIWantToGenerateTheCode($answer)
     {
-        if (!`which expect`) {
-            throw new SkippingException('Cannot test interactive scripts on this platform');
-        }
-
         $process = new Process(
             "exec expect -c '\n" .
             "set timeout 10\n" .
@@ -42,13 +37,12 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
             "expect \"Y/n\"\n" .
             "sleep 0.1\n" .
             "send \"$answer\n\"\n" .
-            "sleep 0.5\n" .
+            "sleep 1\n" .
             "interact\n" .
             "'"
         );
 
         $process->run();
-
         $this->lastOutput = $process->getOutput();
 
         expect($process->getErrorOutput())->toBe(null);

@@ -13,13 +13,12 @@ matrix:
     - env: DEPENDENCIES='dev'
   fast_finish: true
 
-sudo: false
-
 cache:
   directories:
     - $HOME/.composer/cache
 
 before_install:
+  - sudo apt-get install expect
   - composer selfupdate
 
 install:
