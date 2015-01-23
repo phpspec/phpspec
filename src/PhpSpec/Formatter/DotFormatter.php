@@ -77,43 +77,64 @@ class DotFormatter extends ConsoleFormatter
      */
     public function afterSuite(SuiteEvent $event)
     {
-        $io = $this->getIO();
+        $this->getIO()->writeln("\n");
+
+        $this->outputExceptions();
+        $this->outputSuiteSummary($event);
+    }
+
+    private function outputExceptions()
+    {
         $stats = $this->getStatisticsCollector();
-
-        $io->writeln("\n");
-
-        foreach (array(
+        $notPassed = array_filter(array(
             'failed' => $stats->getFailedEvents(),
             'broken' => $stats->getBrokenEvents(),
             'pending' => $stats->getPendingEvents(),
             'skipped' => $stats->getSkippedEvents(),
-        ) as $status => $events) {
-            if (!count($events)) {
-                continue;
-            }
+        ));
 
-            foreach ($events as $failEvent) {
-                $this->printException($failEvent);
-            }
+        foreach ($notPassed as $events) {
+            array_map(array($this, 'printException'), $events);
         }
+    }
 
-        $plural = $stats->getTotalSpecs() !== 1 ? 's' : '';
-        $io->writeln(sprintf("%d spec%s", $stats->getTotalSpecs(), $plural));
+    private function outputSuiteSummary(SuiteEvent $event)
+    {
+        $this->outputTotalSpecCount();
+        $this->outputTotalExamplesCount();
+        $this->outputSpecificExamplesCount();
+
+        $this->getIO()->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
+    }
+
+    private function plural($count)
+    {
+        return $count !== 1 ? 's' : '';
+    }
+
+    private function outputTotalSpecCount()
+    {
+        $count = $this->getStatisticsCollector()->getTotalSpecs();
+        $this->getIO()->writeln(sprintf("%d spec%s", $count, $this->plural($count)));
+    }
+
+    private function outputTotalExamplesCount()
+    {
+        $count = $this->getStatisticsCollector()->getEventsCount();
+        $this->getIO()->write(sprintf("%d example%s ", $count, $this->plural($count)));
+    }
+
+    private function outputSpecificExamplesCount()
+    {
+        $typesWithEvents = array_filter($this->getStatisticsCollector()->getCountsHash());
 
         $counts = array();
-        foreach ($stats->getCountsHash() as $type => $count) {
-            if ($count) {
-                $counts[] = sprintf('<%s>%d %s</%s>', $type, $count, $type, $type);
-            }
+        foreach ($typesWithEvents as $type => $count) {
+            $counts[] = sprintf('<%s>%d %s</%s>', $type, $count, $type, $type);
         }
 
-        $count = $stats->getEventsCount();
-        $plural = $count !== 1 ? 's' : '';
-        $io->write(sprintf("%d example%s ", $count, $plural));
         if (count($counts)) {
-            $io->write(sprintf("(%s)", implode(', ', $counts)));
+            $this->getIO()->write(sprintf("(%s)", implode(', ', $counts)));
         }
-
-        $io->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
     }
 }
