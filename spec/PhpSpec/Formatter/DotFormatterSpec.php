@@ -119,10 +119,10 @@ class DotFormatterSpec extends ObjectBehavior
         $pendingEvent->getExample()->willReturn($example);
 
         $stats->getEventsCount()->willReturn(1);
-        $stats->getFailedEvents()->willReturn([]);
-        $stats->getBrokenEvents()->willReturn([]);
-        $stats->getPendingEvents()->willReturn([$pendingEvent]);
-        $stats->getSkippedEvents()->willReturn([]);
+        $stats->getFailedEvents()->willReturn(array());
+        $stats->getBrokenEvents()->willReturn(array());
+        $stats->getPendingEvents()->willReturn(array($pendingEvent));
+        $stats->getSkippedEvents()->willReturn(array());
         $stats->getTotalSpecs()->willReturn(1);
 
         $stats->getCountsHash()->willReturn(array(
@@ -145,10 +145,10 @@ class DotFormatterSpec extends ObjectBehavior
         StatisticsCollector $stats
     ) {
         $stats->getEventsCount()->willReturn(1);
-        $stats->getFailedEvents()->willReturn([]);
-        $stats->getBrokenEvents()->willReturn([]);
-        $stats->getPendingEvents()->willReturn([]);
-        $stats->getSkippedEvents()->willReturn([]);
+        $stats->getFailedEvents()->willReturn(array());
+        $stats->getBrokenEvents()->willReturn(array());
+        $stats->getPendingEvents()->willReturn(array());
+        $stats->getSkippedEvents()->willReturn(array());
         $stats->getTotalSpecs()->willReturn(15);
         $event->getTime()->willReturn(12.345);
 
