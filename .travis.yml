@@ -20,10 +20,6 @@ matrix:
     - env: DEPENDENCIES='dev'
   fast_finish: true
 
-cache:
-  directories:
-    - $HOME/.composer/cache
-
 before_install:
   - if [ "$SMOKE" == "true" ]; then sudo apt-get install expect; fi;
   - composer selfupdate
