@@ -1,7 +1,7 @@
 phpspec
 =======
 
-The main website with documentation is at `http://phpspec.net <http://phpspec.net>`_.
+The main website with documentation is at `http://www.phpspec.net <http://www.phpspec.net>`_.
 
 .. image:: https://travis-ci.org/phpspec/phpspec.svg?branch=master
    :target: http://travis-ci.org/phpspec/phpspec
