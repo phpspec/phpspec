@@ -300,22 +300,33 @@ class ContainerAssembler
 
             foreach ($suites as $name => $suite) {
                 $suite      = is_array($suite) ? $suite : array('namespace' => $suite);
-                $srcNS      = isset($suite['namespace']) ? $suite['namespace'] : '';
-                $specPrefix = isset($suite['spec_prefix']) ? $suite['spec_prefix'] : 'spec';
-                $srcPath    = isset($suite['src_path']) ? $suite['src_path'] : 'src';
-                $specPath   = isset($suite['spec_path']) ? $suite['spec_path'] : '.';
-                $psr4prefix   = isset($suite['psr4_prefix']) ? $suite['psr4_prefix'] : null;
+                $defaults = array(
+                    'namespace'     => '',
+                    'spec_prefix'   => 'spec',
+                    'src_path'      => 'src',
+                    'spec_path'     => '.',
+                    'psr4_prefix'   => null
+                );
 
-                if (!is_dir($srcPath)) {
-                    mkdir($srcPath, 0777, true);
+                $config = array_merge($defaults, $suite);
+
+                if (!is_dir($config['src_path'])) {
+                    mkdir($config['src_path'], 0777, true);
                 }
-                if (!is_dir($specPath)) {
-                    mkdir($specPath, 0777, true);
+                if (!is_dir($config['spec_path'])) {
+                    mkdir($config['spec_path'], 0777, true);
                 }
 
                 $c->set(sprintf('locator.locators.%s_suite', $name),
-                    function () use ($srcNS, $specPrefix, $srcPath, $specPath, $psr4prefix) {
-                        return new Locator\PSR0\PSR0Locator($srcNS, $specPrefix, $srcPath, $specPath, null, $psr4prefix);
+                    function () use ($config) {
+                        return new Locator\PSR0\PSR0Locator(
+                            $config['namespace'],
+                            $config['spec_prefix'],
+                            $config['src_path'],
+                            $config['spec_path'],
+                            null,
+                            $config['psr4_prefix']
+                        );
                     }
                 );
             }
