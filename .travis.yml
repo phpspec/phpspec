@@ -1,25 +1,27 @@
 language: php
 
-php: [5.3, 5.4, 5.5, 5.6, hhvm, hhvm-nightly]
-
 matrix:
   include:
+    - php: 5.3
     - php: 5.3.3
       env: DEPENDENCIES='low'
+           SMOKE='true'
+    - php: 5.4
+    - php: 5.5
     - php: 5.6
       env: DEPENDENCIES='dev'
+    - php: 5.6
+      env: SMOKE='true'
+    - php: hhvm
+      env: SMOKE='true'
+    - php: hhvm-nightly
   allow_failures:
     - php: hhvm-nightly
     - env: DEPENDENCIES='dev'
   fast_finish: true
 
-sudo: false
-
-cache:
-  directories:
-    - $HOME/.composer/cache
-
 before_install:
+  - if [ "$SMOKE" == "true" ]; then sudo apt-get install expect; fi;
   - composer selfupdate
 
 install:
@@ -31,5 +33,6 @@ install:
 script:
    - bin/phpspec run --format=pretty
    - ./vendor/bin/phpunit --testdox
-   - ./vendor/bin/behat --format=pretty
+   - if [ "$SMOKE" != "true" ]; then ./vendor/bin/behat --format=pretty; fi;
+   - if [ "$SMOKE" == "true" ]; then ./vendor/bin/behat --format=pretty --profile=smoke; fi;
 
