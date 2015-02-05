@@ -88,9 +88,9 @@ class StringPresenterSpec extends ObjectBehavior
             ->shouldReturn(sprintf('%s::specMethod()', $className));
     }
 
-    function it_presents_static_magic_method_as_string(WithStaticMagicCall $object)
+    function it_presents_static_magic_method_as_string()
     {
-        $className = get_class($object->getWrappedObject());
+        $className = __NAMESPACE__ . '\\WithStaticMagicCall';
         $this->presentValue(array($className, 'undefinedMethod'))
             ->shouldReturn(sprintf('%s::undefinedMethod()', $className));
     }
