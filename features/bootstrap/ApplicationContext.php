@@ -248,7 +248,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function iShouldBePromptedWith(PyStringNode $question)
     {
-        expect($this->dialogHelper)->toHaveBeenAsked((string)$question);
+        expect($this->prompter)->toHaveBeenAsked((string)$question);
     }
 
     /**
