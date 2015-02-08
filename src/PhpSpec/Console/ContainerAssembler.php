@@ -143,6 +143,13 @@ class ContainerAssembler
                 $c->get('code_generator')
             );
         });
+        $container->setShared('event_dispatcher.listeners.collaborator_method_not_found', function (ServiceContainer $c) {
+            return new Listener\CollaboratorMethodNotFoundListener(
+                $c->get('console.io'),
+                $c->get('locator.resource_manager'),
+                $c->get('code_generator')
+            );
+        });
         $container->setShared('event_dispatcher.listeners.named_constructor_not_found', function (ServiceContainer $c) {
             return new Listener\NamedConstructorNotFoundListener(
                 $c->get('console.io'),
@@ -221,6 +228,12 @@ class ContainerAssembler
             });
         $container->set('code_generator.generators.method', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\MethodGenerator(
+                $c->get('console.io'),
+                $c->get('code_generator.templates')
+            );
+        });
+        $container->set('code_generator.generators.methodSignature', function (ServiceContainer $c) {
+            return new CodeGenerator\Generator\MethodSignatureGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates')
             );
