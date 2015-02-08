@@ -7,6 +7,7 @@ use PhpSpec\Console\IO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Locator\ResourceManagerInterface;
+use Prophecy\Argument\ArgumentsWildcard;
 use Prophecy\Exception\Doubler\MethodNotFoundException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -61,16 +62,29 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
      */
     public function afterExample(ExampleEvent $event)
     {
-        if (!$this->io->isCodeGenerationEnabled()) {
+        if (!$this->io->isCodeGenerationEnabled()
+        || !($exception = $event->getException())
+        || !$exception instanceof MethodNotFoundException) {
             return;
         }
 
-        if (!($exception = $event->getException()) || !$exception instanceof MethodNotFoundException) {
+        if (!$interface = $this->getDoubledInterface($exception->getClassName())) {
             return;
         }
 
-        $classname = $exception->getClassname();
+        if (!array_key_exists($interface, $this->interfaces)) {
+            $this->interfaces[$interface] = array();
+        }
 
+        $this->interfaces[$interface][$exception->getMethodName()] = $exception->getArguments();
+    }
+
+    /**
+     * @param string $classname
+     * @return mixed
+     */
+    private function getDoubledInterface($classname)
+    {
         if (class_parents($classname) !== array('stdClass'=>'stdClass')) {
             return;
         }
@@ -83,13 +97,7 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
             return;
         }
 
-        $interface = current($interfaces);
-
-        if (!array_key_exists($interface, $this->interfaces)) {
-            $this->interfaces[$interface] = array();
-        }
-
-        $this->interfaces[$interface][$exception->getMethodName()] = $exception->getMethodName();
+        return current($interfaces);
     }
 
     public function afterSuite(SuiteEvent $event)
@@ -103,16 +111,29 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
                 continue;
             }
 
-            foreach ($methods as $method) {
+            foreach ($methods as $method => $arguments) {
                 if ($this->io->askConfirmation(sprintf(self::PROMPT, $interface, $method))) {
                     $this->generator->generate(
                         $resource,
                         'method-signature',
-                        array('name' => $method)
+                        array(
+                            'name' => $method,
+                            'arguments' => $this->getRealArguments($arguments)
+                        )
                     );
                     $event->markAsWorthRerunning();
                 }
             }
         }
+    }
+
+    private function getRealArguments($prophecyArguments)
+    {
+        if ($prophecyArguments instanceof ArgumentsWildcard)
+        {
+            return $prophecyArguments->getTokens();
+        }
+
+        return array();
     }
 }

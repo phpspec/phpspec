@@ -109,3 +109,61 @@ Feature: Developer generates a collaborator's method
       }
 
       """
+
+
+  Scenario: Asking for the method signature to be generated with multiple parameters
+    Given the spec file "spec/CodeGeneration/CollaboratorMethodExample3/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\CollaboratorMethodExample3;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use CodeGeneration\CollaboratorMethodExample3\Parser;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_interacts_with_a_collaborator(Parser $parser)
+          {
+              $parser->parse('xyz', 2)->willReturn(1);
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/CollaboratorMethodExample3/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\CollaboratorMethodExample3;
+
+      class Markdown
+      {
+      }
+
+      """
+    And the class file "src/CodeGeneration/CollaboratorMethodExample3/Parser.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\CollaboratorMethodExample3;
+
+      interface Parser
+      {
+      }
+
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/CollaboratorMethodExample3/Parser.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\CollaboratorMethodExample3;
+
+      interface Parser
+      {
+
+          public function parse($argument1, $argument2);
+      }
+
+      """

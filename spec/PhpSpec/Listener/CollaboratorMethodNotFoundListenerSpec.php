@@ -29,6 +29,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
         $io->askConfirmation(Argument::any())->willReturn(false);
 
         $resources->createResource(Argument::any())->willReturn($resource);
+        $exception->getArguments()->willReturn(array());
     }
 
     function it_is_an_event_subscriber()
@@ -133,9 +134,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
         $this->afterExample($event);
         $this->afterSuite($suiteEvent);
 
-        $generator->generate($resource, 'method-signature', array(
-            'name' => 'aMethod'
-        ))->shouldHaveBeenCalled();
+        $generator->generate($resource, 'method-signature', Argument::any())->shouldHaveBeenCalled();
     }
 
     function it_marks_the_suite_as_being_worth_rerunning_when_generation_happens(

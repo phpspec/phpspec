@@ -70,8 +70,14 @@ class MethodSignatureGenerator implements GeneratorInterface
     {
         $filepath  = $resource->getSrcFilename();
         $name      = $data['name'];
+        $arguments = $data['arguments'];
 
-        $values = array('%name%' => $name);
+        $argString = count($arguments)
+            ? '$argument'.implode(', $argument',  range(1, count($arguments)))
+            : ''
+        ;
+
+        $values = array('%name%' => $name, '%arguments%' => $argString);
         if (!$content = $this->templates->render('method-signature', $values)) {
             $content = $this->templates->renderString(
                 $this->getTemplate(), $values
@@ -101,6 +107,6 @@ class MethodSignatureGenerator implements GeneratorInterface
      */
     protected function getTemplate()
     {
-        return file_get_contents(__DIR__.'/templates/method-signature.template');
+        return file_get_contents(__DIR__.'/templates/method_signature.template');
     }
 }
