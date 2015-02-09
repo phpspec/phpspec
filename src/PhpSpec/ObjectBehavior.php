@@ -120,7 +120,7 @@ class ObjectBehavior implements ArrayAccess,
      */
     public function offsetUnset($key)
     {
-        return $this->object->offsetUnset($key);
+        $this->object->offsetUnset($key);
     }
 
     /**
