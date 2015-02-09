@@ -85,3 +85,37 @@ Feature: Developer generates a collaborator
       }
 
       """
+
+  Scenario: Not being prompted when typehint is in spec namespace
+    Given the spec file "spec/CodeGeneration/CollaboratorExample3/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\CollaboratorExample3;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_interacts_with_a_collaborator(Parser $parser)
+          {
+              $parser->willReturn(true);
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/CollaboratorExample3/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\CollaboratorExample3;
+
+      class Markdown
+      {
+      }
+
+      """
+    When I run phpspec and answer "n" when asked if I want to generate the code
+    Then I should not be prompted for code generation
+

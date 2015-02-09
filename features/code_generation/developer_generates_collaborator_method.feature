@@ -110,7 +110,6 @@ Feature: Developer generates a collaborator's method
 
       """
 
-
   Scenario: Asking for the method signature to be generated with multiple parameters
     Given the spec file "spec/CodeGeneration/CollaboratorMethodExample3/MarkdownSpec.php" contains:
       """

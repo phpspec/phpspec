@@ -60,10 +60,15 @@ class CollaboratorNotFoundListener implements EventSubscriberInterface
         }
 
         foreach ($this->exceptions as $exception) {
+            $resource = $this->resources->createResource($exception->getCollaboratorName());
+
+            if (strpos($exception->getCollaboratorName(), $resource->getSpecNamespace()) === 0) {
+                continue;
+            }
+
             if($this->io->askConfirmation(
                 sprintf('Would you like me to generate an interface `%s` for you?', $exception->getCollaboratorName())
             )) {
-                $resource = $this->resources->createResource($exception->getCollaboratorName());
                 $this->generator->generate($resource, 'interface');
                 $event->markAsWorthRerunning();
             }
