@@ -163,6 +163,13 @@ class PSR0LocatorSpec extends ObjectBehavior
         $this->supportsQuery($this->srcPath)->shouldReturn(true);
     }
 
+    function it_supports_srcPath_queries_when_specsPath_is_not_default()
+    {
+        $this->beConstructedWith('PhpSpec', 'spec', $this->srcPath, realpath($this->specPath . '/vendor'));
+
+        $this->supportsQuery($this->srcPath)->shouldReturn(true);
+    }
+
     function it_supports_file_queries_in_srcPath()
     {
         $this->beConstructedWith('PhpSpec', 'spec', $this->srcPath, $this->specPath);
