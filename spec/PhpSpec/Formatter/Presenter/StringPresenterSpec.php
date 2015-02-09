@@ -61,6 +61,47 @@ class StringPresenterSpec extends ObjectBehavior
             ->shouldReturn('[exc:RuntimeException("message")]');
     }
 
+    function it_presents_function_callable_as_string()
+    {
+        $this->presentValue('date')
+            ->shouldReturn('[date()]');
+    }
+
+    function it_presents_method_as_string(WithMethod $object)
+    {
+        $className = get_class($object->getWrappedObject());
+        $this->presentValue(array($object, 'specMethod'))
+            ->shouldReturn(sprintf('[obj:%s]::specMethod()', $className));
+    }
+
+    function it_presents_magic_method_as_string(WithMagicCall $object)
+    {
+        $className = get_class($object->getWrappedObject());
+        $this->presentValue(array($object, 'undefinedMethod'))
+            ->shouldReturn(sprintf('[obj:%s]::undefinedMethod()', $className));
+    }
+
+    function it_presents_static_method_as_string(WithMethod $object)
+    {
+        $className = get_class($object->getWrappedObject());
+        $this->presentValue(array($className, 'specMethod'))
+            ->shouldReturn(sprintf('%s::specMethod()', $className));
+    }
+
+    function it_presents_static_magic_method_as_string()
+    {
+        $className = __NAMESPACE__ . '\\WithStaticMagicCall';
+        $this->presentValue(array($className, 'undefinedMethod'))
+            ->shouldReturn(sprintf('%s::undefinedMethod()', $className));
+    }
+
+    function it_presents_invokable_object_as_string(WithMagicInvoke $object)
+    {
+        $className = get_class($object->getWrappedObject());
+        $this->presentValue($object)
+            ->shouldReturn(sprintf('[obj:%s]', $className));
+    }
+
     function it_presents_string_as_string()
     {
         $this->presentString('some string')->shouldReturn('some string');
@@ -71,5 +112,40 @@ class StringPresenterSpec extends ObjectBehavior
         $invokable = new ObjectBehavior();
         $invokable->setSpecificationSubject($this);
         $this->presentValue($invokable)->shouldReturn('[obj:PhpSpec\Formatter\Presenter\StringPresenter]');
+    }
+}
+
+class WithMethod
+{
+    function specMethod()
+    {
+    }
+}
+
+class WithStaticMethod
+{
+    function specMethod()
+    {
+    }
+}
+
+class WithMagicInvoke
+{
+    function __invoke()
+    {
+    }
+}
+
+class WithStaticMagicCall
+{
+    static function __callStatic($method, $name)
+    {
+    }
+}
+
+class WithMagicCall
+{
+    function __call($method, $name)
+    {
     }
 }

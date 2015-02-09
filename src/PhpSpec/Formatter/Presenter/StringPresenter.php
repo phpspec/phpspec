@@ -345,7 +345,8 @@ class StringPresenter implements PresenterInterface
     private function presentCallable($value)
     {
         if (is_array($value)) {
-            return sprintf('[%s::%s()]', get_class($value[0]), $value[1]);
+            $type = is_object($value[0]) ? $this->presentValue($value[0]) : $value[0];
+            return sprintf('%s::%s()', $type, $value[1]);
         }
 
         if ($value instanceof \Closure) {
