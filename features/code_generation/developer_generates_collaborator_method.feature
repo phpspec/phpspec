@@ -166,3 +166,48 @@ Feature: Developer generates a collaborator's method
       }
 
       """
+
+  Scenario: Not being prompted when collaborator is a class
+    Given the spec file "spec/CodeGeneration/CollaboratorMethodExample4/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\CollaboratorMethodExample4;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use CodeGeneration\CollaboratorMethodExample4\Parser;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_interacts_with_a_collaborator(Parser $parser)
+          {
+              $parser->getSuccess()->willReturn(true);
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/CollaboratorMethodExample4/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\CollaboratorMethodExample4;
+
+      class Markdown
+      {
+      }
+
+      """
+    And the class file "src/CodeGeneration/CollaboratorMethodExample4/Parser.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\CollaboratorMethodExample4;
+
+      class Parser
+      {
+      }
+
+      """
+    When I run phpspec and answer "n" when asked if I want to generate the code
+    Then I should not be prompted for code generation
