@@ -89,7 +89,7 @@ class MethodSignatureGenerator implements GeneratorInterface
         $this->filesystem->putFileContents($filepath, $code);
 
         $this->io->writeln(sprintf(
-            "<info>Method signature<value>%s::%s()</value> has been created.</info>\n",
+            "<info>Method signature <value>%s::%s()</value> has been created.</info>\n",
             $resource->getSrcClassname(), $name
         ), 2);
     }

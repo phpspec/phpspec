@@ -22,7 +22,7 @@ class Prompter implements PrompterInterface
         return (bool)$this->answer;
     }
 
-    public function hasBeenAsked($question=null)
+    public function hasBeenAsked($question = null)
     {
         if (!$question) {
             return $this->hasBeenAsked;
