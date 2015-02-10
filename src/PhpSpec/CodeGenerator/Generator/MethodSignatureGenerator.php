@@ -72,10 +72,7 @@ class MethodSignatureGenerator implements GeneratorInterface
         $name      = $data['name'];
         $arguments = $data['arguments'];
 
-        $argString = count($arguments)
-            ? '$argument'.implode(', $argument',  range(1, count($arguments)))
-            : ''
-        ;
+        $argString = $this->buildArgumentString($arguments);
 
         $values = array('%name%' => $name, '%arguments%' => $argString);
         if (!$content = $this->templates->render('method-signature', $values)) {
@@ -84,9 +81,7 @@ class MethodSignatureGenerator implements GeneratorInterface
             );
         }
 
-        $code = $this->filesystem->getFileContents($filepath);
-        $code = preg_replace('/}[ \n]*$/', rtrim($content)."\n}\n", trim($code));
-        $this->filesystem->putFileContents($filepath, $code);
+        $this->insertMethodSignature($filepath, $content);
 
         $this->io->writeln(sprintf(
             "<info>Method signature <value>%s::%s()</value> has been created.</info>\n",
@@ -108,5 +103,28 @@ class MethodSignatureGenerator implements GeneratorInterface
     protected function getTemplate()
     {
         return file_get_contents(__DIR__.'/templates/method_signature.template');
+    }
+
+    /**
+     * @param string $filepath
+     * @param string $content
+     */
+    private function insertMethodSignature($filepath, $content)
+    {
+        $code = $this->filesystem->getFileContents($filepath);
+        $code = preg_replace('/}[ \n]*$/', rtrim($content) . "\n}\n", trim($code));
+        $this->filesystem->putFileContents($filepath, $code);
+    }
+
+    /**
+     * @param array $arguments
+     * @return string
+     */
+    private function buildArgumentString($arguments)
+    {
+        $argString = count($arguments)
+            ? '$argument' . implode(', $argument', range(1, count($arguments)))
+            : '';
+        return $argString;
     }
 }

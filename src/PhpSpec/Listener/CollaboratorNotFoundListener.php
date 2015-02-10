@@ -43,6 +43,11 @@ class CollaboratorNotFoundListener implements EventSubscriberInterface
      */
     private $generator;
 
+    /**
+     * @param IO $io
+     * @param ResourceManagerInterface $resources
+     * @param GeneratorManager $generator
+     */
     public function __construct(IO $io, ResourceManagerInterface $resources, GeneratorManager $generator)
     {
         $this->io = $io;
@@ -50,6 +55,9 @@ class CollaboratorNotFoundListener implements EventSubscriberInterface
         $this->generator = $generator;
     }
 
+    /**
+     * @return array
+     */
     public static function getSubscribedEvents()
     {
         return array(
@@ -58,6 +66,9 @@ class CollaboratorNotFoundListener implements EventSubscriberInterface
         );
     }
 
+    /**
+     * @param ExampleEvent $event
+     */
     public function afterExample(ExampleEvent $event)
     {
         if (($exception = $event->getException()) &&
@@ -66,6 +77,9 @@ class CollaboratorNotFoundListener implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param SuiteEvent $event
+     */
     public function afterSuite(SuiteEvent $event)
     {
         if (!$this->io->isCodeGenerationEnabled()) {
@@ -75,7 +89,7 @@ class CollaboratorNotFoundListener implements EventSubscriberInterface
         foreach ($this->exceptions as $exception) {
             $resource = $this->resources->createResource($exception->getCollaboratorName());
 
-            if (strpos($exception->getCollaboratorName(), $resource->getSpecNamespace()) === 0) {
+            if ($this->resourceIsInSpecNamespace($exception, $resource)) {
                 continue;
             }
 
@@ -86,5 +100,15 @@ class CollaboratorNotFoundListener implements EventSubscriberInterface
                 $event->markAsWorthRerunning();
             }
         }
+    }
+
+    /**
+     * @param CollaboratorNotFoundException $exception
+     * @param ResourceInterface $resource
+     * @return bool
+     */
+    private function resourceIsInSpecNamespace($exception, $resource)
+    {
+        return strpos($exception->getCollaboratorName(), $resource->getSpecNamespace()) === 0;
     }
 }

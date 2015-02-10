@@ -74,9 +74,7 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
      */
     public function afterExample(ExampleEvent $event)
     {
-        if (!$this->io->isCodeGenerationEnabled()
-        || !($exception = $event->getException())
-        || !$exception instanceof MethodNotFoundException) {
+        if (!$exception = $this->getMethodNotFoundException($event)) {
             return;
         }
 
@@ -112,6 +110,9 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
         return current($interfaces);
     }
 
+    /**
+     * @param SuiteEvent $event
+     */
     public function afterSuite(SuiteEvent $event)
     {
         foreach ($this->interfaces as $interface => $methods) {
@@ -139,13 +140,29 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param mixed $prophecyArguments
+     * @return array
+     */
     private function getRealArguments($prophecyArguments)
     {
-        if ($prophecyArguments instanceof ArgumentsWildcard)
-        {
+        if ($prophecyArguments instanceof ArgumentsWildcard) {
             return $prophecyArguments->getTokens();
         }
 
         return array();
+    }
+
+    /**
+     * @param ExampleEvent $event
+     * @return bool
+     */
+    private function getMethodNotFoundException(ExampleEvent $event)
+    {
+        if ($this->io->isCodeGenerationEnabled()
+            && ($exception = $event->getException())
+            && $exception instanceof MethodNotFoundException) {
+            return $exception;
+        }
     }
 }
