@@ -39,15 +39,21 @@ abstract class PromptingGenerator implements GeneratorInterface
     private $filesystem;
 
     /**
+     * @var array
+     */
+    private $options;
+
+    /**
      * @param IO               $io
      * @param TemplateRenderer $templates
      * @param Filesystem       $filesystem
      */
-    public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null)
+    public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null, array $options = array())
     {
         $this->io         = $io;
         $this->templates  = $templates;
         $this->filesystem = $filesystem ?: new Filesystem();
+        $this->options    = $options;
     }
 
     /**
@@ -144,5 +150,15 @@ abstract class PromptingGenerator implements GeneratorInterface
 
         $this->filesystem->putFileContents($filepath, $content);
         $this->io->writeln($this->getGeneratedMessage($resource, $filepath));
+    }
+
+    /**
+     * @param string $key
+     *
+     * @return mixed
+     */
+    protected function getOption($key)
+    {
+        return isset($this->options[$key]) ? $this->options[$key] : null;
     }
 }

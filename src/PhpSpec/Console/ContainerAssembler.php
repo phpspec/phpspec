@@ -201,9 +201,15 @@ class ContainerAssembler
             );
         });
         $container->set('code_generator.generators.class', function (ServiceContainer $c) {
+            $generateFinalClasses = (bool) $c->getParam('generator.final_classes', false);
+
             return new CodeGenerator\Generator\ClassGenerator(
                 $c->get('console.io'),
-                $c->get('code_generator.templates')
+                $c->get('code_generator.templates'),
+                null,
+                array(
+                    'generator.final_classes' => $generateFinalClasses
+                )
             );
         });
         $container->set('code_generator.generators.method', function (ServiceContainer $c) {

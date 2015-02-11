@@ -19,6 +19,26 @@ Feature: Developer generates a class
 
       """
 
+  @issue632
+  Scenario: Generating a final class
+    Given the config file contains:
+    """
+    generator.final_classes: true
+    """
+    And I have started describing the "CodeGeneration/FinalClasses/Markdown" class
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then a new class should be generated in the "src/CodeGeneration/FinalClasses/Markdown.php":
+      """
+      <?php
+
+      namespace CodeGeneration\FinalClasses;
+
+      final class Markdown
+      {
+      }
+
+      """
+
   @issue269
   Scenario: Generating a class with psr4 prefix
     Given the config file contains:
@@ -131,3 +151,4 @@ Feature: Developer generates a class
     }
 
     """
+
