@@ -1,5 +1,5 @@
 <?php%namespace_block%
 
-class %name%
+%final_mark%class %name%
 {
 }

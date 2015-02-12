@@ -56,6 +56,7 @@ class ClassGenerator extends PromptingGenerator
             '%namespace_block%' => '' !== $resource->getSrcNamespace()
                                 ?  sprintf("\n\nnamespace %s;", $resource->getSrcNamespace())
                                 : '',
+            '%final_mark%'      => $this->getOption('generator.final_classes') ? 'final ' : '',
         );
 
         if (!$content = $this->getTemplateRenderer()->render('class', $values)) {
