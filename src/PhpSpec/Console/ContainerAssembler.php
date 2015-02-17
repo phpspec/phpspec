@@ -488,6 +488,9 @@ class ContainerAssembler
         $container->set('matchers.array_key', function (ServiceContainer $c) {
             return new Matcher\ArrayKeyMatcher($c->get('formatter.presenter'));
         });
+        $container->set('matchers.array_key_with_value', function (ServiceContainer $c) {
+            return new Matcher\ArrayKeyValueMatcher($c->get('formatter.presenter'));
+        });
         $container->set('matchers.array_contain', function (ServiceContainer $c) {
             return new Matcher\ArrayContainMatcher($c->get('formatter.presenter'));
         });
