@@ -31,7 +31,7 @@ Then install phpspec with the composer install command:
 
     $ composer install
 
-Follow instructions on `the composer website <https://getcomposer.org/download/`_
+Follow instructions on `the composer website <https://getcomposer.org/download/>`_
 if you don't have it installed yet.
 
 Phpspec with its dependencies will be installed inside the ``vendor`` folder

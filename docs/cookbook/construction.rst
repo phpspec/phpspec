@@ -73,6 +73,29 @@ You can tell **phpspec** to pass values to the constructor when it constructs th
             }
         }
 
+Keep in mind that by default, **phpspec** creates a mock object. If you want
+to inject an actual object you could do it like this:
+
+.. code-block:: php
+
+    <?php
+
+        namespace spec;
+
+        use PhpSpec\ObjectBehavior;
+        use Markdown\Writer;
+
+        class MarkdownSpec extends ObjectBehavior
+        {
+            function it_outputs_converted_text()
+            {
+                $this->beConstructedWith(new Writer());
+                $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
+
+                $this->outputHtml("Hi, there");
+            }
+        }
+
 Using a Factory Method
 ----------------------
 
