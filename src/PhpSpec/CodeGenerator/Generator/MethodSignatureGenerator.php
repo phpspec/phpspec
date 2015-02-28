@@ -75,7 +75,7 @@ class MethodSignatureGenerator implements GeneratorInterface
         $argString = $this->buildArgumentString($arguments);
 
         $values = array('%name%' => $name, '%arguments%' => $argString);
-        if (!$content = $this->templates->render('method-signature', $values)) {
+        if (!$content = $this->templates->render('interface-method-signature', $values)) {
             $content = $this->templates->renderString(
                 $this->getTemplate(), $values
             );
@@ -102,7 +102,7 @@ class MethodSignatureGenerator implements GeneratorInterface
      */
     protected function getTemplate()
     {
-        return file_get_contents(__DIR__.'/templates/method_signature.template');
+        return file_get_contents(__DIR__.'/templates/interface_method_signature.template');
     }
 
     /**
