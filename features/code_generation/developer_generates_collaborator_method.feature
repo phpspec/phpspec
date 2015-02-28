@@ -3,7 +3,7 @@ Feature: Developer generates a collaborator's method
   I want to automate creating collaborators' missing methods
   In order to avoid disrupting my workflow
 
-  Scenario: Being prompted but not generating a collaborator method
+  Scenario: Being prompted to generate a collaborator method based on typehints
     Given the spec file "spec/CodeGeneration/CollaboratorMethodExample1/MarkdownSpec.php" contains:
       """
       <?php
@@ -53,7 +53,8 @@ Feature: Developer generates a collaborator's method
                                                                      [Y/n]
       """
 
-  Scenario: Asking for the method signature to be generated
+
+  Scenario: Being prompted to generate a collaborator method based on docblocks
     Given the spec file "spec/CodeGeneration/CollaboratorMethodExample2/MarkdownSpec.php" contains:
       """
       <?php
@@ -62,11 +63,13 @@ Feature: Developer generates a collaborator's method
 
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
-      use CodeGeneration\CollaboratorMethodExample2\Parser;
 
       class MarkdownSpec extends ObjectBehavior
       {
-          function it_interacts_with_a_collaborator(Parser $parser)
+          /**
+           * @param \CodeGeneration\CollaboratorMethodExample2\Parser $parser
+           */
+          function it_interacts_with_a_collaborator($parser)
           {
               $parser->getSuccess()->willReturn(true);
           }
@@ -95,22 +98,15 @@ Feature: Developer generates a collaborator's method
       }
 
       """
-    When I run phpspec and answer "y" when asked if I want to generate the code
-    Then the class in "src/CodeGeneration/CollaboratorMethodExample2/Parser.php" should contain:
+    When I run phpspec and answer "n" when asked if I want to generate the code
+    Then I should be prompted with:
       """
-      <?php
-
-      namespace CodeGeneration\CollaboratorMethodExample2;
-
-      interface Parser
-      {
-
-          public function getSuccess();
-      }
-
+      Would you like me to generate a method signature
+        `CodeGeneration\CollaboratorMethodExample2\Parser::getSuccess()` for you?
+                                                                     [Y/n]
       """
 
-  Scenario: Asking for the method signature to be generated with multiple parameters
+  Scenario: Asking for the method signature to be generated
     Given the spec file "spec/CodeGeneration/CollaboratorMethodExample3/MarkdownSpec.php" contains:
       """
       <?php
@@ -125,7 +121,7 @@ Feature: Developer generates a collaborator's method
       {
           function it_interacts_with_a_collaborator(Parser $parser)
           {
-              $parser->parse('xyz', 2)->willReturn(1);
+              $parser->getSuccess()->willReturn(true);
           }
       }
 
@@ -162,12 +158,12 @@ Feature: Developer generates a collaborator's method
       interface Parser
       {
 
-          public function parse($argument1, $argument2);
+          public function getSuccess();
       }
 
       """
 
-  Scenario: Not being prompted when collaborator is a class
+  Scenario: Asking for the method signature to be generated with multiple parameters
     Given the spec file "spec/CodeGeneration/CollaboratorMethodExample4/MarkdownSpec.php" contains:
       """
       <?php
@@ -182,7 +178,7 @@ Feature: Developer generates a collaborator's method
       {
           function it_interacts_with_a_collaborator(Parser $parser)
           {
-              $parser->getSuccess()->willReturn(true);
+              $parser->parse('xyz', 2)->willReturn(1);
           }
       }
 
@@ -203,6 +199,63 @@ Feature: Developer generates a collaborator's method
       <?php
 
       namespace CodeGeneration\CollaboratorMethodExample4;
+
+      interface Parser
+      {
+      }
+
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/CollaboratorMethodExample4/Parser.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\CollaboratorMethodExample4;
+
+      interface Parser
+      {
+
+          public function parse($argument1, $argument2);
+      }
+
+      """
+
+  Scenario: Not being prompted when collaborator is a class
+    Given the spec file "spec/CodeGeneration/CollaboratorMethodExample5/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\CollaboratorMethodExample5;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use CodeGeneration\CollaboratorMethodExample5\Parser;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_interacts_with_a_collaborator(Parser $parser)
+          {
+              $parser->getSuccess()->willReturn(true);
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/CollaboratorMethodExample5/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\CollaboratorMethodExample5;
+
+      class Markdown
+      {
+      }
+
+      """
+    And the class file "src/CodeGeneration/CollaboratorMethodExample5/Parser.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\CollaboratorMethodExample5;
 
       class Parser
       {
