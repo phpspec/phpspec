@@ -6,6 +6,7 @@ use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Console\IO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
+use PhpSpec\Exception\Locator\ResourceCreationException;
 use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\Locator\ResourceManagerInterface;
@@ -110,7 +111,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
         IO $io, ResourceManager $resources, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception
     )
     {
-        $resources->createResource(Argument::any())->willThrow(new \RuntimeException());
+        $resources->createResource(Argument::any())->willThrow(new ResourceCreationException());
 
         $exception->getClassname()->willReturn('spec\PhpSpec\Listener\DoubleOfInterface');
         $exception->getMethodName()->willReturn('aMethod');

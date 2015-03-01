@@ -17,6 +17,7 @@ use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Console\IO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
+use PhpSpec\Exception\Locator\ResourceCreationException;
 use PhpSpec\Locator\ResourceManagerInterface;
 use Prophecy\Argument\ArgumentsWildcard;
 use Prophecy\Exception\Doubler\MethodNotFoundException;
@@ -119,8 +120,7 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
 
             try {
                 $resource = $this->resources->createResource($interface);
-            }
-            catch (\RuntimeException $e) {
+            } catch (ResourceCreationException $e) {
                 continue;
             }
 
