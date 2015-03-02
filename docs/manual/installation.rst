@@ -31,10 +31,10 @@ Then install phpspec with the composer install command:
 
     $ composer install
 
-Follow instructions on `the composer website <https://getcomposer.org/download/`_
+Follow instructions on `the composer website <https://getcomposer.org/download/>`_
 if you don't have it installed yet.
 
-Phpspec with its dependencies will be installed inside the ``vendor`` folder
+phpspec with its dependencies will be installed inside the ``vendor`` folder
 and the phpspec executable will be linked into the ``bin`` folder.
 
 In case your project already uses composer, simply add ``phpspec/phpspec``
