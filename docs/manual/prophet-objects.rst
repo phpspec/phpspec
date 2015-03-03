@@ -80,22 +80,22 @@ the example and use an `@param` docblock to tell it what type it should have:
 
      <?php
 
-        namespace spec;
+    namespace spec;
 
-        use PhpSpec\ObjectBehavior;
+    use PhpSpec\ObjectBehavior;
 
-        class MarkdownSpec extends ObjectBehavior
+    class MarkdownSpec extends ObjectBehavior
+    {
+        /**
+         * @param Markdown\Reader $reader
+         */
+        function it_converts_text_from_an_external_source($reader)
         {
-            /**
-             * @param Markdown\Reader $reader
-             */
-            function it_converts_text_from_an_external_source($reader)
-            {
-                $reader->getMarkdown()->willReturn("Hi, there");
+            $reader->getMarkdown()->willReturn("Hi, there");
 
-                $this->toHtmlFromReader($reader)->shouldReturn("<p>Hi, there</p>");
-            }
+            $this->toHtmlFromReader($reader)->shouldReturn("<p>Hi, there</p>");
         }
+    }
 
 We can improve this further by instead using a type hint which **phpspec**
 will use to determine the type of the stub:
@@ -104,20 +104,20 @@ will use to determine the type of the stub:
 
     <?php
 
-        namespace spec;
+    namespace spec;
 
-        use PhpSpec\ObjectBehavior;
-        use Markdown\Reader;
+    use PhpSpec\ObjectBehavior;
+    use Markdown\Reader;
 
-        class MarkdownSpec extends ObjectBehavior
+    class MarkdownSpec extends ObjectBehavior
+    {
+        function it_converts_text_from_an_external_source(Reader $reader)
         {
-            function it_converts_text_from_an_external_source(Reader $reader)
-            {
-                $reader->getMarkdown()->willReturn("Hi, there");
+            $reader->getMarkdown()->willReturn("Hi, there");
 
-                $this->toHtmlFromReader($reader)->shouldReturn("<p>Hi, there</p>");
-            }
+            $this->toHtmlFromReader($reader)->shouldReturn("<p>Hi, there</p>");
         }
+    }
 
 Mocks
 -----
@@ -149,20 +149,20 @@ to get called with a particular value:
 
     <?php
 
-        namespace spec;
+    namespace spec;
 
-        use PhpSpec\ObjectBehavior;
-        use Markdown\Writer;
+    use PhpSpec\ObjectBehavior;
+    use Markdown\Writer;
 
-        class MarkdownSpec extends ObjectBehavior
+    class MarkdownSpec extends ObjectBehavior
+    {
+        function it_outputs_converted_text(Writer $writer)
         {
-            function it_outputs_converted_text(Writer $writer)
-            {
-                $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
+            $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
 
-                $this->outputHtml("Hi, there", $writer);
-            }
+            $this->outputHtml("Hi, there", $writer);
         }
+    }
 
 Now if the method is not called with that value then the example will
 fail.
@@ -177,20 +177,20 @@ what happened after the object's behaviour has happened:
 
     <?php
 
-        namespace spec;
+    namespace spec;
 
-        use PhpSpec\ObjectBehavior;
-        use Markdown\Writer;
+    use PhpSpec\ObjectBehavior;
+    use Markdown\Writer;
 
-        class MarkdownSpec extends ObjectBehavior
+    class MarkdownSpec extends ObjectBehavior
+    {
+        function it_outputs_converted_text(Writer $writer)
         {
-            function it_outputs_converted_text(Writer $writer)
-            {
-                $this->outputHtml("Hi, there", $writer);
+            $this->outputHtml("Hi, there", $writer);
 
-                $writer->writeText("<p>Hi, there</p>")->shouldHaveBeenCalled();
-            }
+            $writer->writeText("<p>Hi, there</p>")->shouldHaveBeenCalled();
         }
+    }
 
 The difference is one of style. You may prefer to use mocks and say what
 should happen beforehand. You may prefer to use spies and say what should
