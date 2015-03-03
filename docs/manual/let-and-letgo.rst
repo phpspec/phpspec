@@ -8,21 +8,21 @@ then you can do it like this:
 
     <?php
 
-        namespace spec;
+    namespace spec;
 
-        use PhpSpec\ObjectBehavior;
-        use Markdown\Writer;
+    use PhpSpec\ObjectBehavior;
+    use Markdown\Writer;
 
-        class MarkdownSpec extends ObjectBehavior
+    class MarkdownSpec extends ObjectBehavior
+    {
+        function it_outputs_converted_text(Writer $writer)
         {
-            function it_outputs_converted_text(Writer $writer)
-            {
-                $this->beConstructedWith($writer);
-                $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
+            $this->beConstructedWith($writer);
+            $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
 
-                $this->outputHtml("Hi, there");
-            }
+            $this->outputHtml("Hi, there");
         }
+    }
 
 If you have many examples then writing this in each example will get
 tiresome. You can instead move this to a `let` method. The `let` method
@@ -33,18 +33,18 @@ a fresh mock object.
 
     <?php
 
-        namespace spec;
+    namespace spec;
 
-        use PhpSpec\ObjectBehavior;
-        use Markdown\Writer;
+    use PhpSpec\ObjectBehavior;
+    use Markdown\Writer;
 
-        class MarkdownSpec extends ObjectBehavior
+    class MarkdownSpec extends ObjectBehavior
+    {
+        function let(Writer $writer)
         {
-            function let(Writer $writer)
-            {
-                $this->beConstructedWith($writer);
-            }
+            $this->beConstructedWith($writer);
         }
+    }
 
 There is also a `letGo` method which runs after each example if you need
 to clean up after the examples.
@@ -59,23 +59,22 @@ will work:
 
     <?php
 
-        namespace spec;
+    namespace spec;
 
-        use PhpSpec\ObjectBehavior;
-        use Markdown\Writer;
+    use PhpSpec\ObjectBehavior;
+    use Markdown\Writer;
 
-        class MarkdownSpec extends ObjectBehavior
+    class MarkdownSpec extends ObjectBehavior
+    {
+        function let(Writer $writer)
         {
-            function let(Writer $writer)
-            {
-                $this->beConstructedWith($writer);
-            }
-
-            function it_outputs_converted_text($writer)
-            {
-                $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
-
-                $this->outputHtml("Hi, there");
-            }
+            $this->beConstructedWith($writer);
         }
 
+        function it_outputs_converted_text($writer)
+        {
+            $writer->writeText("<p>Hi, there</p>")->shouldBeCalled();
+
+            $this->outputHtml("Hi, there");
+        }
+    }
