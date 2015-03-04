@@ -406,10 +406,10 @@ You can create custom matchers using the Inline matcher.
         public function getMatchers()
         {
             return [
-                'haveKey' => function($subject, $key) {
+                'haveKey' => function ($subject, $key) {
                     return array_key_exists($key, $subject);
                 },
-                'haveValue' => function($subject, $value) {
+                'haveValue' => function ($subject, $value) {
                     return in_array($value, $subject);
                 },
             ];
