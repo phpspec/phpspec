@@ -283,7 +283,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
 
         $this->autoloader = function () use ($workingDirectory) {
             foreach (new RecursiveiteratorIterator( new RecursiveDirectoryIterator($workingDirectory)) as $fs) {
-                if ($fs->getExtension() == 'php') { require_once $fs->getPathName();}
+                if (preg_match('/\\.php$/', $fs->getFilename())) { require_once $fs->getPathName();}
             }
         };
 
