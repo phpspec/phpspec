@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Listener;
 
+use PhpSpec\Exception\CodeGeneration\ClassGenerationFailedException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use PhpSpec\Console\IO;
 use PhpSpec\Locator\ResourceManagerInterface;
@@ -75,7 +76,13 @@ class ClassNotFoundListener implements EventSubscriberInterface
 
             if ($this->io->askConfirmation($message)) {
                 $this->generator->generate($resource, 'class');
-                $event->markAsWorthRerunning();
+                if (class_exists($classname)) {
+                    $event->markAsWorthRerunning();
+                }
+                else {
+                    $message = 'File was written but the class %s was not autoloadable - do you have an autoloader configured?';
+                    throw new ClassGenerationFailedException(sprintf($message, $classname));
+                }
             }
         }
     }

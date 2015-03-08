@@ -37,6 +37,7 @@ class FilesystemContext implements Context, MatchersProviderInterface
         $this->workingDirectory = tempnam(sys_get_temp_dir(), 'phpspec-behat');
         $this->filesystem->remove($this->workingDirectory);
         $this->filesystem->mkdir($this->workingDirectory);
+        $this->filesystem->mkdir($this->workingDirectory . '/vendor');
         chdir($this->workingDirectory);
     }
 

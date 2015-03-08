@@ -2,7 +2,6 @@
 
 use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Behat\Context\Context;
-use Behat\Behat\Context\SnippetAcceptingContext;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
 use Symfony\Component\Process\Process;
@@ -10,7 +9,7 @@ use Symfony\Component\Process\Process;
 /**
  * Defines application features from the specific context.
  */
-class IsolatedProcessContext implements Context, SnippetAcceptingContext
+class IsolatedProcessContext implements Context
 {
     private $lastOutput;
 
@@ -41,15 +40,16 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function iRunPhpspecAndAnswerWhenAskedIfIWantToGenerateTheCode($answer)
     {
+        $this->writeAutoloader(getcwd());
+
         $process = new Process(
             "exec expect -c '\n" .
             "set timeout 10\n" .
             "spawn {$this->buildPhpSpecCmd()} run\n" .
             "expect \"Y/n\"\n" .
-            "send \"$answer\n\"\n" .
-            "expect \"Y/n\"\n" .
-            "interact\n" .
-            "'"
+            "send \"$answer\\n\"\n" .
+            "expect \"ms\"\n" .
+            "interact'"
         );
 
         $process->run();
@@ -71,6 +71,14 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function theTestsShouldBeRerun()
     {
-        expect(substr_count($this->lastOutput, 'for you?'))->toBe(2);
+        expect(substr_count($this->lastOutput, 'specs'))->toBe(2);
+    }
+
+    /**
+     * @param $dir
+     */
+    private function writeAutoloader($dir)
+    {
+        copy(__DIR__ . '/autoloader/autoload.php', $dir . '/vendor/autoload.php');
     }
 }
