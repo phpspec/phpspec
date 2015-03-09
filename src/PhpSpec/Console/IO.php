@@ -245,7 +245,7 @@ class IO implements IOInterface
 
     private function getCommonPrefix($stringA, $stringB)
     {
-        for ($i = 0; $i<min(strlen($stringA), strlen($stringB)); $i++) {
+        for ($i = 0, $len = min(strlen($stringA), strlen($stringB)); $i<$len; $i++) {
             if ($stringA[$i] != $stringB[$i]) {
                 break;
             }
