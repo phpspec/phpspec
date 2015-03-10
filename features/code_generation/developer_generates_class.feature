@@ -131,3 +131,21 @@ Feature: Developer generates a class
     }
 
     """
+
+  Scenario: Generating a class when no autoloader is configured
+    Given I have started describing the "CodeGeneration/ClassExample3/Markdown" class
+    But I have not configured an autoloader
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then a new class should be generated in the "src/CodeGeneration/ClassExample3/Markdown.php":
+      """
+      <?php
+
+      namespace CodeGeneration\ClassExample3;
+
+      class Markdown
+      {
+      }
+
+      """
+    But I should be told autoloading failed
+    And the tests should not be rerun
