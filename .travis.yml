@@ -15,8 +15,10 @@ matrix:
     - php: hhvm
       env: SMOKE='true'
     - php: hhvm-nightly
+    - php: 7.0
   allow_failures:
     - php: hhvm-nightly
+    - php: 7.0
     - env: DEPENDENCIES='dev'
   fast_finish: true
 
