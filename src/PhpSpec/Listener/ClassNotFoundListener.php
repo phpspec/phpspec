@@ -76,13 +76,11 @@ class ClassNotFoundListener implements EventSubscriberInterface
 
             if ($this->io->askConfirmation($message)) {
                 $this->generator->generate($resource, 'class');
-                if (class_exists($classname)) {
-                    $event->markAsWorthRerunning();
-                }
-                else {
+                if (!class_exists($classname)) {
                     $message = 'File was written but the class %s was not autoloadable - do you have an autoloader configured?';
                     throw new ClassGenerationFailedException(sprintf($message, $classname));
                 }
+                $event->markAsWorthRerunning();
             }
         }
     }
