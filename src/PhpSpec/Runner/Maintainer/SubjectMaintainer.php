@@ -42,8 +42,11 @@ class SubjectMaintainer implements MaintainerInterface
      * @param Unwrapper                $unwrapper
      * @param EventDispatcherInterface $dispatcher
      */
-    public function __construct(PresenterInterface $presenter, Unwrapper $unwrapper, EventDispatcherInterface $dispatcher)
-    {
+    public function __construct(
+        PresenterInterface $presenter,
+        Unwrapper $unwrapper,
+        EventDispatcherInterface $dispatcher
+    ) {
         $this->presenter = $presenter;
         $this->unwrapper = $unwrapper;
         $this->dispatcher = $dispatcher;

@@ -162,8 +162,13 @@ class ExampleRunner
      * @param MatcherManager                   $matchers
      * @param CollaboratorManager              $collaborators
      */
-    private function runMaintainersTeardown(array $maintainers, ExampleNode $example, SpecificationInterface $context, MatcherManager $matchers, CollaboratorManager $collaborators)
-    {
+    private function runMaintainersTeardown(
+        array $maintainers,
+        ExampleNode $example,
+        SpecificationInterface $context,
+        MatcherManager $matchers,
+        CollaboratorManager $collaborators
+    ) {
         foreach (array_reverse($maintainers) as $maintainer) {
             $maintainer->teardown($example, $context, $matchers, $collaborators);
         }

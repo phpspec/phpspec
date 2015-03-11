@@ -32,8 +32,12 @@ class HtmlFormatter extends BasicFormatter
      */
     private $index = 1;
 
-    public function __construct(Html\ReportItemFactory $reportItemFactory, PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
-    {
+    public function __construct(
+        Html\ReportItemFactory $reportItemFactory,
+        PresenterInterface $presenter,
+        IO $io,
+        StatisticsCollector $stats
+    ) {
         $this->reportItemFactory = $reportItemFactory;
 
         parent::__construct($presenter, $io, $stats);

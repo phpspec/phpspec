@@ -361,7 +361,7 @@ class Caller
 
     /**
      * @param $method
-     * @param  array                                                                                                     $arguments
+     * @param array $arguments
      * @return \PhpSpec\Exception\Fracture\MethodNotFoundException|\PhpSpec\Exception\Fracture\MethodNotVisibleException
      */
     private function methodNotFound($method, array $arguments = array())

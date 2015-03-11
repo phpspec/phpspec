@@ -106,7 +106,8 @@ class ErrorMaintainer implements MaintainerInterface
      */
     final public function errorHandler($level, $message, $file, $line)
     {
-        $regex = '/^Argument (\d)+ passed to (?:(?P<class>[\w\\\]+)::)?(\w+)\(\) must (?:be an instance of|implement interface) ([\w\\\]+),(?: instance of)? ([\w\\\]+) given/';
+        $regex = '/^Argument (\d)+ passed to (?:(?P<class>[\w\\\]+)::)?(\w+)\(\)' .
+                 ' must (?:be an instance of|implement interface) ([\w\\\]+),(?: instance of)? ([\w\\\]+) given/';
 
         if (E_RECOVERABLE_ERROR === $level && preg_match($regex, $message, $matches)) {
             $class = $matches['class'];

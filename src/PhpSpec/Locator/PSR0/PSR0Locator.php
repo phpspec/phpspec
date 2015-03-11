@@ -79,7 +79,9 @@ class PSR0Locator implements ResourceLocatorInterface
         if (null !== $this->psr4Prefix  && substr($this->srcNamespace, 0, strlen($psr4Prefix)) !== $psr4Prefix) {
             throw new InvalidArgumentException('PSR4 prefix doesn\'t match given class namespace.'.PHP_EOL);
         }
-        $srcNamespacePath = null === $this->psr4Prefix ? $this->srcNamespace : substr($this->srcNamespace, strlen($this->psr4Prefix));
+        $srcNamespacePath = null === $this->psr4Prefix ?
+            $this->srcNamespace :
+            substr($this->srcNamespace, strlen($this->psr4Prefix));
         $this->specNamespace = trim($specNamespacePrefix, ' \\').'\\'.$this->srcNamespace;
         $specNamespacePath = trim($specNamespacePrefix, ' \\').'\\'.$srcNamespacePath;
 
@@ -334,9 +336,9 @@ class PSR0Locator implements ResourceLocatorInterface
 
     private function validatePsr0Classname($classname)
     {
-        $classnamePattern = '/^([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*[\/\\\\]?)*[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/';
+        $pattern = '/^([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*[\/\\\\]?)*[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/';
 
-        if (!preg_match($classnamePattern, $classname)) {
+        if (!preg_match($pattern, $classname)) {
             throw new InvalidArgumentException(
                 sprintf('String "%s" is not a valid class name.', $classname).PHP_EOL.
                 'Please see reference document: '.

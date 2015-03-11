@@ -46,8 +46,13 @@ class OptionsConfig
      * @param bool $fakingEnabled
      * @param string|bool $bootstrapPath
      */
-    public function __construct($stopOnFailureEnabled, $codeGenerationEnabled, $reRunEnabled, $fakingEnabled, $bootstrapPath)
-    {
+    public function __construct(
+        $stopOnFailureEnabled,
+        $codeGenerationEnabled,
+        $reRunEnabled,
+        $fakingEnabled,
+        $bootstrapPath
+    ) {
         $this->stopOnFailureEnabled  = $stopOnFailureEnabled;
         $this->codeGenerationEnabled = $codeGenerationEnabled;
         $this->reRunEnabled = $reRunEnabled;

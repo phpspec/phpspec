@@ -351,32 +351,78 @@ class ContainerAssembler
      */
     protected function setupFormatter(ServiceContainer $container)
     {
-        $container->set('formatter.formatters.progress', function (ServiceContainer $c) {
-            return new SpecFormatter\ProgressFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
-        });
-        $container->set('formatter.formatters.pretty', function (ServiceContainer $c) {
-            return new SpecFormatter\PrettyFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
-        });
-        $container->set('formatter.formatters.junit', function (ServiceContainer $c) {
-            return new SpecFormatter\JUnitFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
-        });
-        $container->set('formatter.formatters.dot', function (ServiceContainer $c) {
-            return new SpecFormatter\DotFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
-        });
-        $container->set('formatter.formatters.tap', function (ServiceContainer $c) {
-            return new SpecFormatter\TapFormatter($c->get('formatter.presenter'), $c->get('console.io'), $c->get('event_dispatcher.listeners.stats'));
-        });
-        $container->set('formatter.formatters.html', function (ServiceContainer $c) {
-            $io = new SpecFormatter\Html\IO();
-            $template = new SpecFormatter\Html\Template($io);
-            $factory = new SpecFormatter\Html\ReportItemFactory($template);
-            $presenter = new SpecFormatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
+        $container->set(
+            'formatter.formatters.progress',
+            function (ServiceContainer $c) {
+                return new SpecFormatter\ProgressFormatter(
+                    $c->get('formatter.presenter'),
+                    $c->get('console.io'),
+                    $c->get('event_dispatcher.listeners.stats')
+                );
+            }
+        );
+        $container->set(
+            'formatter.formatters.pretty',
+            function (ServiceContainer $c) {
+                return new SpecFormatter\PrettyFormatter(
+                    $c->get('formatter.presenter'),
+                    $c->get('console.io'),
+                    $c->get('event_dispatcher.listeners.stats')
+                );
+            }
+        );
+        $container->set(
+            'formatter.formatters.junit',
+            function (ServiceContainer $c) {
+                return new SpecFormatter\JUnitFormatter(
+                    $c->get('formatter.presenter'),
+                    $c->get('console.io'),
+                    $c->get('event_dispatcher.listeners.stats')
+                );
+            }
+        );
+        $container->set(
+            'formatter.formatters.dot',
+            function (ServiceContainer $c) {
+                return new SpecFormatter\DotFormatter(
+                    $c->get('formatter.presenter'),
+                    $c->get('console.io'),
+                    $c->get('event_dispatcher.listeners.stats')
+                );
+            }
+        );
+        $container->set(
+            'formatter.formatters.tap',
+            function (ServiceContainer $c) {
+                return new SpecFormatter\TapFormatter(
+                    $c->get('formatter.presenter'),
+                    $c->get('console.io'),
+                    $c->get('event_dispatcher.listeners.stats')
+                );
+            }
+        );
+        $container->set(
+            'formatter.formatters.html',
+            function (ServiceContainer $c) {
+                $io = new SpecFormatter\Html\IO();
+                $template = new SpecFormatter\Html\Template($io);
+                $factory = new SpecFormatter\Html\ReportItemFactory($template);
+                $presenter = new SpecFormatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
 
-            return new SpecFormatter\HtmlFormatter($factory, $presenter, $io, $c->get('event_dispatcher.listeners.stats'));
-        });
-        $container->set('formatter.formatters.h', function (ServiceContainer $c) {
-            return $c->get('formatter.formatters.html');
-        });
+                return new SpecFormatter\HtmlFormatter(
+                    $factory,
+                    $presenter,
+                    $io,
+                    $c->get('event_dispatcher.listeners.stats')
+                );
+            }
+        );
+        $container->set(
+            'formatter.formatters.h',
+            function (ServiceContainer $c) {
+                return $c->get('formatter.formatters.html');
+            }
+        );
 
         $container->addConfigurator(function (ServiceContainer $c) {
             $formatterName = $c->getParam('formatter.name', 'progress');
