@@ -94,8 +94,7 @@ class MethodReturnedNullListener implements EventSubscriberInterface
             return;
         }
 
-        if (
-            is_object($exception->getExpected())
+        if (is_object($exception->getExpected())
          || is_array($exception->getExpected())
          || is_resource($exception->getExpected())
         ) {
@@ -156,7 +155,8 @@ class MethodReturnedNullListener implements EventSubscriberInterface
 
             if ($this->io->askConfirmation($message)) {
                 $this->generator->generate(
-                    $resource, 'returnConstant',
+                    $resource,
+                    'returnConstant',
                     array('method' => $failedCall['method'], 'expected' => $expected)
                 );
                 $event->markAsWorthRerunning();

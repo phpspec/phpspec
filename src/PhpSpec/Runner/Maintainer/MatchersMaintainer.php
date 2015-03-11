@@ -66,9 +66,12 @@ class MatchersMaintainer implements MaintainerInterface
      * @param MatcherManager         $matchers
      * @param CollaboratorManager    $collaborators
      */
-    public function prepare(ExampleNode $example, SpecificationInterface $context,
-                            MatcherManager $matchers, CollaboratorManager $collaborators)
-    {
+    public function prepare(
+        ExampleNode $example,
+        SpecificationInterface $context,
+        MatcherManager $matchers,
+        CollaboratorManager $collaborators
+    ) {
 
         $matchers->replace($this->defaultMatchers);
 
@@ -81,7 +84,9 @@ class MatchersMaintainer implements MaintainerInterface
                 $matchers->add($matcher);
             } else {
                 $matchers->add(new Matcher\CallbackMatcher(
-                    $name, $matcher, $this->presenter
+                    $name,
+                    $matcher,
+                    $this->presenter
                 ));
             }
         }
@@ -93,9 +98,12 @@ class MatchersMaintainer implements MaintainerInterface
      * @param MatcherManager         $matchers
      * @param CollaboratorManager    $collaborators
      */
-    public function teardown(ExampleNode $example, SpecificationInterface $context,
-                             MatcherManager $matchers, CollaboratorManager $collaborators)
-    {
+    public function teardown(
+        ExampleNode $example,
+        SpecificationInterface $context,
+        MatcherManager $matchers,
+        CollaboratorManager $collaborators
+    ) {
     }
 
     /**

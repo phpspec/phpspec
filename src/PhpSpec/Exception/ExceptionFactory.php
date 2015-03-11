@@ -50,7 +50,10 @@ class ExceptionFactory
         $message = sprintf('Named constructor %s not found.', $this->presenter->presentString($classname.'::'.$method));
 
         return new Fracture\NamedConstructorNotFoundException(
-            $message, $subject, $method, $arguments
+            $message,
+            $subject,
+            $method,
+            $arguments
         );
     }
 
@@ -68,7 +71,10 @@ class ExceptionFactory
         $message = sprintf('Method %s not found.', $this->presenter->presentString($classname.'::'.$method));
 
         return new Fracture\MethodNotFoundException(
-            $message, $subject, $method, $arguments
+            $message,
+            $subject,
+            $method,
+            $arguments
         );
     }
 
@@ -86,7 +92,10 @@ class ExceptionFactory
         $message = sprintf('Method %s not visible.', $this->presenter->presentString($classname.'::'.$method));
 
         return new Fracture\MethodNotVisibleException(
-            $message, $subject, $method, $arguments
+            $message,
+            $subject,
+            $method,
+            $arguments
         );
     }
 

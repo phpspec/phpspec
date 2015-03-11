@@ -96,8 +96,8 @@ class ProgressFormatter extends ConsoleFormatter
         $targetWidth = ceil($this->getIO()->getBlockWidth() * $specProgress);
         asort($counts);
 
-        $barLengths = array_map(function($count) use ($targetWidth, $counts) {
-            return $count ? max(1,round($targetWidth * $count / array_sum($counts))) : 0;
+        $barLengths = array_map(function ($count) use ($targetWidth, $counts) {
+            return $count ? max(1, round($targetWidth * $count / array_sum($counts))) : 0;
         }, $counts);
 
         return $barLengths;

@@ -78,7 +78,8 @@ class ServiceContainer
     {
         if (!is_object($value) && !is_callable($value)) {
             throw new InvalidArgumentException(sprintf(
-                'Service should be callable or object, but %s given.',gettype($value)
+                'Service should be callable or object, but %s given.',
+                gettype($value)
             ));
         }
 
@@ -107,7 +108,8 @@ class ServiceContainer
     {
         if (!is_callable($callable)) {
             throw new InvalidArgumentException(sprintf(
-                'Service should be callable, "%s" given.', gettype($callable)
+                'Service should be callable, "%s" given.',
+                gettype($callable)
             ));
         }
 
@@ -207,7 +209,8 @@ class ServiceContainer
     {
         if (!is_callable($configurator)) {
             throw new InvalidArgumentException(sprintf(
-                'Configurator should be callable, but %s given.', gettype($configurator)
+                'Configurator should be callable, but %s given.',
+                gettype($configurator)
             ));
         }
 

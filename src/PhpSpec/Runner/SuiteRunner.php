@@ -61,7 +61,8 @@ class SuiteRunner
         }
 
         $endTime = microtime(true);
-        $this->dispatcher->dispatch('afterSuite',
+        $this->dispatcher->dispatch(
+            'afterSuite',
             new SuiteEvent($suite, $endTime-$startTime, $result)
         );
 

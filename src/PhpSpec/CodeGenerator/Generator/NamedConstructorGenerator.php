@@ -77,7 +77,8 @@ class NamedConstructorGenerator implements GeneratorInterface
 
         $this->io->writeln(sprintf(
             "<info>Method <value>%s::%s()</value> has been created.</info>\n",
-            $resource->getSrcClassname(), $methodName
+            $resource->getSrcClassname(),
+            $methodName
         ), 2);
     }
 

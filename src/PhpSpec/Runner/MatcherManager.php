@@ -75,12 +75,15 @@ class MatcherManager
         }
 
         throw new MatcherNotFoundException(
-            sprintf('No %s(%s) matcher found for %s.',
+            sprintf(
+                'No %s(%s) matcher found for %s.',
                 $this->presenter->presentString($keyword),
                 $this->presenter->presentValue($arguments),
                 $this->presenter->presentValue($subject)
             ),
-            $keyword, $subject, $arguments
+            $keyword,
+            $subject,
+            $arguments
         );
     }
 }

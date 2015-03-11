@@ -48,9 +48,12 @@ class Wrapper
      * @param EventDispatcherInterface $dispatcher
      * @param ExampleNode              $example
      */
-    public function __construct(MatcherManager $matchers, PresenterInterface $presenter,
-        EventDispatcherInterface $dispatcher, ExampleNode $example)
-    {
+    public function __construct(
+        MatcherManager $matchers,
+        PresenterInterface $presenter,
+        EventDispatcherInterface $dispatcher,
+        ExampleNode $example
+    ) {
         $this->matchers = $matchers;
         $this->presenter = $presenter;
         $this->dispatcher = $dispatcher;
@@ -71,7 +74,12 @@ class Wrapper
         $expectationFactory = new ExpectationFactory($this->example, $this->dispatcher, $this->matchers);
 
         return new Subject(
-            $value, $this, $wrappedObject, $caller, $arrayAccess, $expectationFactory
+            $value,
+            $this,
+            $wrappedObject,
+            $caller,
+            $arrayAccess,
+            $expectationFactory
         );
     }
 }

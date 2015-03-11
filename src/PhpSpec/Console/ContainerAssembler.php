@@ -55,7 +55,7 @@ class ContainerAssembler
     private function setupIO(ServiceContainer $container)
     {
         if (!$container->isDefined('console.prompter')) {
-            $container->setShared('console.prompter', function($c) {
+            $container->setShared('console.prompter', function ($c) {
                 return $c->get('console.prompter.factory')->getPrompter();
             });
         }
@@ -317,7 +317,8 @@ class ContainerAssembler
                     mkdir($config['spec_path'], 0777, true);
                 }
 
-                $c->set(sprintf('locator.locators.%s_suite', $name),
+                $c->set(
+                    sprintf('locator.locators.%s_suite', $name),
                     function () use ($config) {
                         return new Locator\PSR0\PSR0Locator(
                             $config['namespace'],

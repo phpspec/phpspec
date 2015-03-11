@@ -61,7 +61,7 @@ class Application extends BaseApplication
         $helperSet = $this->getHelperSet();
         $this->container->set('console.input', $input);
         $this->container->set('console.output', $output);
-        $this->container->setShared('console.prompter.factory', function($c) use ($helperSet) {
+        $this->container->setShared('console.prompter.factory', function ($c) use ($helperSet) {
             return new Factory(
                 $c->get('console.input'),
                 $c->get('console.output'),

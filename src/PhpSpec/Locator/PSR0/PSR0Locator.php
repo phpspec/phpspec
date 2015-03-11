@@ -61,9 +61,14 @@ class PSR0Locator implements ResourceLocatorInterface
      * @param string     $specPath
      * @param Filesystem $filesystem
      */
-    public function __construct($srcNamespace = '', $specNamespacePrefix = 'spec',
-                                $srcPath = 'src', $specPath = '.', Filesystem $filesystem = null, $psr4Prefix = null)
-    {
+    public function __construct(
+        $srcNamespace = '',
+        $specNamespacePrefix = 'spec',
+        $srcPath = 'src',
+        $specPath = '.',
+        Filesystem $filesystem = null,
+        $psr4Prefix = null
+    ) {
         $this->filesystem = $filesystem ?: new Filesystem();
         $sepr = DIRECTORY_SEPARATOR;
 
@@ -313,7 +318,8 @@ class PSR0Locator implements ResourceLocatorInterface
         if (0 !== strpos($classname, $specNamespace)) {
             throw new \RuntimeException(sprintf(
                 'Spec class `%s` must be in the base spec namespace `%s`.',
-                $classname, $this->getSpecNamespace()
+                $classname,
+                $this->getSpecNamespace()
             ));
         }
 
