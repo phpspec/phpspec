@@ -34,7 +34,8 @@ class ArrayEngine extends StringEngine
         foreach ($a as $key => $val) {
             switch ($type = strtolower(gettype($val))) {
                 case 'array':
-                    $line = sprintf('%s => %s,',
+                    $line = sprintf(
+                        '%s => %s,',
                         $key,
                         ltrim($this->convertArrayToString($val, $pad+2))
                     );
@@ -46,7 +47,8 @@ class ArrayEngine extends StringEngine
                     $line = sprintf('%s => %s,', $key, $val ? 'true' : 'false');
                     break;
                 case 'object':
-                    $line = sprintf('%s => %s#%s,',
+                    $line = sprintf(
+                        '%s => %s#%s,',
                         $key,
                         get_class($val),
                         spl_object_hash($val)

@@ -81,9 +81,15 @@ class ExpectationEvent extends Event implements EventInterface
      * @param integer          $result
      * @param \Exception       $exception
      */
-    public function __construct(ExampleNode $example, MatcherInterface $matcher, $subject,
-                                $method, $arguments, $result = null, $exception = null)
-    {
+    public function __construct(
+        ExampleNode $example,
+        MatcherInterface $matcher,
+        $subject,
+        $method,
+        $arguments,
+        $result = null,
+        $exception = null
+    ) {
         $this->example = $example;
         $this->matcher = $matcher;
         $this->subject = $subject;

@@ -80,7 +80,8 @@ class ExistingConstructorTemplate
 
         if (!$content = $this->templates->render('named_constructor_exception', $values)) {
             $content = $this->templates->renderString(
-                $this->getExceptionTemplate(), $values
+                $this->getExceptionTemplate(),
+                $values
             );
         }
 
@@ -96,7 +97,8 @@ class ExistingConstructorTemplate
 
         if (!$content = $this->templates->render('named_constructor_create_object', $values)) {
             $content = $this->templates->renderString(
-                $this->getCreateObjectTemplate(), $values
+                $this->getCreateObjectTemplate(),
+                $values
             );
         }
 
@@ -110,7 +112,7 @@ class ExistingConstructorTemplate
     private function getValues($constructorArguments = false)
     {
         $argString = count($this->arguments)
-            ? '$argument'.implode(', $argument',  range(1, count($this->arguments)))
+            ? '$argument'.implode(', $argument', range(1, count($this->arguments)))
             : ''
         ;
 

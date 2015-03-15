@@ -57,8 +57,12 @@ class MethodReturnedNullListener implements EventSubscriberInterface
      * @param ResourceManager  $resources
      * @param GeneratorManager $generator
      */
-    public function __construct(IO $io, ResourceManager $resources, GeneratorManager $generator, MethodAnalyser $methodAnalyser)
-    {
+    public function __construct(
+        IO $io,
+        ResourceManager $resources,
+        GeneratorManager $generator,
+        MethodAnalyser $methodAnalyser
+    ) {
         $this->io = $io;
         $this->resources = $resources;
         $this->generator = $generator;
@@ -94,8 +98,7 @@ class MethodReturnedNullListener implements EventSubscriberInterface
             return;
         }
 
-        if (
-            is_object($exception->getExpected())
+        if (is_object($exception->getExpected())
          || is_array($exception->getExpected())
          || is_resource($exception->getExpected())
         ) {
@@ -146,7 +149,11 @@ class MethodReturnedNullListener implements EventSubscriberInterface
             $expected = current($failedCall['expected']);
             $class = $failedCall['class'];
 
-            $message = sprintf('Do you want me to make `%s()` always return %s for you?', $methodString, var_export($expected, true));
+            $message = sprintf(
+                'Do you want me to make `%s()` always return %s for you?',
+                $methodString,
+                var_export($expected, true)
+            );
 
             try {
                 $resource = $this->resources->createResource($class);
@@ -156,7 +163,8 @@ class MethodReturnedNullListener implements EventSubscriberInterface
 
             if ($this->io->askConfirmation($message)) {
                 $this->generator->generate(
-                    $resource, 'returnConstant',
+                    $resource,
+                    'returnConstant',
                     array('method' => $failedCall['method'], 'expected' => $expected)
                 );
                 $event->markAsWorthRerunning();

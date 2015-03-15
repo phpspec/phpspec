@@ -60,7 +60,8 @@ class ClassGenerator extends PromptingGenerator
 
         if (!$content = $this->getTemplateRenderer()->render('class', $values)) {
             $content = $this->getTemplateRenderer()->renderString(
-                $this->getTemplate(), $values
+                $this->getTemplate(),
+                $values
             );
         }
 
@@ -95,7 +96,8 @@ class ClassGenerator extends PromptingGenerator
     {
         return sprintf(
             "<info>Class <value>%s</value> created in <value>%s</value>.</info>\n",
-            $resource->getSrcClassname(), $filepath
+            $resource->getSrcClassname(),
+            $filepath
         );
     }
 }

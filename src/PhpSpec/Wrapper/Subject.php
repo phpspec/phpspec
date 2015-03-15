@@ -55,9 +55,14 @@ class Subject implements ArrayAccess, WrapperInterface
      * @param SubjectWithArrayAccess $arrayAccess
      * @param ExpectationFactory     $expectationFactory
      */
-    public function __construct($subject, Wrapper $wrapper, WrappedObject $wrappedObject, Caller $caller,
-                                SubjectWithArrayAccess $arrayAccess, ExpectationFactory $expectationFactory)
-    {
+    public function __construct(
+        $subject,
+        Wrapper $wrapper,
+        WrappedObject $wrappedObject,
+        Caller $caller,
+        SubjectWithArrayAccess $arrayAccess,
+        ExpectationFactory $expectationFactory
+    ) {
         $this->subject            = $subject;
         $this->wrapper            = $wrapper;
         $this->wrappedObject      = $wrappedObject;

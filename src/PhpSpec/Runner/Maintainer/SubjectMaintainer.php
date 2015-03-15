@@ -42,8 +42,11 @@ class SubjectMaintainer implements MaintainerInterface
      * @param Unwrapper                $unwrapper
      * @param EventDispatcherInterface $dispatcher
      */
-    public function __construct(PresenterInterface $presenter, Unwrapper $unwrapper, EventDispatcherInterface $dispatcher)
-    {
+    public function __construct(
+        PresenterInterface $presenter,
+        Unwrapper $unwrapper,
+        EventDispatcherInterface $dispatcher
+    ) {
         $this->presenter = $presenter;
         $this->unwrapper = $unwrapper;
         $this->dispatcher = $dispatcher;
@@ -67,9 +70,12 @@ class SubjectMaintainer implements MaintainerInterface
      * @param MatcherManager         $matchers
      * @param CollaboratorManager    $collaborators
      */
-    public function prepare(ExampleNode $example, SpecificationInterface $context,
-                            MatcherManager $matchers, CollaboratorManager $collaborators)
-    {
+    public function prepare(
+        ExampleNode $example,
+        SpecificationInterface $context,
+        MatcherManager $matchers,
+        CollaboratorManager $collaborators
+    ) {
         $subjectFactory = new Wrapper($matchers, $this->presenter, $this->dispatcher, $example);
         $subject = $subjectFactory->wrap(null);
         $subject->beAnInstanceOf(
@@ -85,9 +91,12 @@ class SubjectMaintainer implements MaintainerInterface
      * @param MatcherManager         $matchers
      * @param CollaboratorManager    $collaborators
      */
-    public function teardown(ExampleNode $example, SpecificationInterface $context,
-                             MatcherManager $matchers, CollaboratorManager $collaborators)
-    {
+    public function teardown(
+        ExampleNode $example,
+        SpecificationInterface $context,
+        MatcherManager $matchers,
+        CollaboratorManager $collaborators
+    ) {
     }
 
     /**

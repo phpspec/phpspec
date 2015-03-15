@@ -69,7 +69,9 @@ class StringPresenter implements PresenterInterface
 
         if ($value instanceof Exception) {
             return $this->presentString(sprintf(
-                '[exc:%s("%s")]', get_class($value), $value->getMessage()
+                '[exc:%s("%s")]',
+                get_class($value),
+                $value->getMessage()
             ));
         }
 
@@ -216,7 +218,8 @@ class StringPresenter implements PresenterInterface
 
         $text .= $this->presentExceptionTraceLocation($offset++, $exception->getFile(), $exception->getLine());
         $text .= $this->presentExceptionTraceFunction(
-            'throw new '.get_class($exception), array($exception->getMessage())
+            'throw new '.get_class($exception),
+            array($exception->getMessage())
         );
 
         foreach ($exception->getTrace() as $call) {
@@ -236,11 +239,15 @@ class StringPresenter implements PresenterInterface
 
             if (isset($call['class'])) {
                 $text .= $this->presentExceptionTraceMethod(
-                    $call['class'], $call['type'], $call['function'], isset($call['args']) ? $call['args'] : array()
+                    $call['class'],
+                    $call['type'],
+                    $call['function'],
+                    isset($call['args']) ? $call['args'] : array()
                 );
             } elseif (isset($call['function'])) {
                 $text .= $this->presentExceptionTraceFunction(
-                    $call['function'], isset($call['args']) ? $call['args'] : array()
+                    $call['function'],
+                    isset($call['args']) ? $call['args'] : array()
                 );
             }
         }
@@ -316,7 +323,8 @@ class StringPresenter implements PresenterInterface
      */
     private function presentExceptionTraceLocation($offset, $file, $line)
     {
-        return $this->presentExceptionTraceHeader(sprintf("%2d %s:%d",
+        return $this->presentExceptionTraceHeader(sprintf(
+            "%2d %s:%d",
             $offset,
             str_replace(getcwd().DIRECTORY_SEPARATOR, '', $file),
             $line

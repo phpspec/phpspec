@@ -64,8 +64,10 @@ class ScalarMatcher implements MatcherInterface
         if (!call_user_func($checker, $subject)) {
             throw new FailureException(sprintf(
                 '%s expected to return %s, but it did not.',
-                $this->presenter->presentString(sprintf('%s(%s)',
-                    $checker, $this->presenter->presentValue($subject)
+                $this->presenter->presentString(sprintf(
+                    '%s(%s)',
+                    $checker,
+                    $this->presenter->presentValue($subject)
                 )),
                 $this->presenter->presentValue(true)
             ));
@@ -89,8 +91,10 @@ class ScalarMatcher implements MatcherInterface
         if (call_user_func($checker, $subject)) {
             throw new FailureException(sprintf(
                 '%s not expected to return %s, but it did.',
-                $this->presenter->presentString(sprintf('%s(%s)',
-                    $checker, $this->presenter->presentValue($subject)
+                $this->presenter->presentString(sprintf(
+                    '%s(%s)',
+                    $checker,
+                    $this->presenter->presentValue($subject)
                 )),
                 $this->presenter->presentValue(true)
             ));

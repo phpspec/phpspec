@@ -72,7 +72,8 @@ class PrettyFormatter extends ConsoleFormatter
 
             $io->writeln(sprintf("<%s>----  %s examples</%s>\n", $status, $status, $status));
             foreach ($events as $failEvent) {
-                $io->writeln(sprintf('%s',
+                $io->writeln(sprintf(
+                    '%s',
                     str_replace('\\', DIRECTORY_SEPARATOR, $failEvent->getSpecification()->getTitle())
                 ), 8);
                 $this->afterExample($failEvent);

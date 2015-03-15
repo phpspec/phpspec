@@ -71,8 +71,12 @@ class IO implements IOInterface
      * @param OptionsConfig   $config
      * @param Prompter        $prompter
      */
-    public function __construct(InputInterface $input, OutputInterface $output, OptionsConfig $config, Prompter $prompter)
-    {
+    public function __construct(
+        InputInterface $input,
+        OutputInterface $output,
+        OptionsConfig $config,
+        Prompter $prompter
+    ) {
         $this->input   = $input;
         $this->output  = $output;
         $this->config  = $config;

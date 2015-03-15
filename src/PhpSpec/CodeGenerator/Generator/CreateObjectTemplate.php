@@ -36,7 +36,8 @@ class CreateObjectTemplate
 
         if (!$content = $this->templates->render('named_constructor_create_object', $values)) {
             $content = $this->templates->renderString(
-                $this->getTemplate(), $values
+                $this->getTemplate(),
+                $values
             );
         }
 
@@ -57,7 +58,7 @@ class CreateObjectTemplate
     private function getValues()
     {
         $argString = count($this->arguments)
-            ? '$argument'.implode(', $argument',  range(1, count($this->arguments)))
+            ? '$argument'.implode(', $argument', range(1, count($this->arguments)))
             : ''
         ;
 
