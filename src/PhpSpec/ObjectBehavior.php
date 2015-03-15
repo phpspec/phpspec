@@ -52,10 +52,7 @@ class ObjectBehavior implements
      * @link http://phpspec.net/cookbook/matchers.html Matchers cookbook
      * @return array a list of inline matchers
      */
-    public function getMatchers()
-    {
-        return array();
-    }
+    public function getMatchers(){return array();}
 
     /**
      * Used by { @link PhpSpec\Runner\Maintainer\SubjectMaintainer::prepare() }
