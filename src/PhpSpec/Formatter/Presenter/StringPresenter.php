@@ -18,7 +18,10 @@ use PhpSpec\Exception\Exception as PhpSpecException;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Example\ErrorException;
 use PhpSpec\Exception\Example\PendingException;
+use Prophecy\Argument\Token\ExactValueToken;
+use Prophecy\Exception\Call\UnexpectedCallException;
 use Prophecy\Exception\Exception as ProphecyException;
+use Prophecy\Prophecy\MethodProphecy;
 
 class StringPresenter implements PresenterInterface
 {
@@ -125,6 +128,10 @@ class StringPresenter implements PresenterInterface
             list($file, $line) = $this->getExceptionExamplePosition($exception);
 
             $presentation .= "\n".$this->presentFileCode($file, $line);
+        }
+
+        if ($exception instanceof UnexpectedCallException) {
+            $presentation .= $this->presentCallArgumentsDifference($exception);
         }
 
         if (trim($trace = $this->presentExceptionStackTrace($exception))) {
@@ -359,4 +366,75 @@ class StringPresenter implements PresenterInterface
 
         return sprintf('[%s()]', $value);
     }
+
+    /**
+     * @param UnexpectedCallException $exception
+     *
+     * @return string
+     */
+    private function presentCallArgumentsDifference(UnexpectedCallException $exception)
+    {
+        $text = '';
+
+        $actualArguments = $exception->getArguments();
+        $methodProphecies = $exception->getObjectProphecy()->getMethodProphecies($exception->getMethodName());
+        $presentedMethodProphecy = $this->findMethodProphecyOfFirstNotExpectedCall($methodProphecies, $exception);
+        $expectedTokens = $presentedMethodProphecy->getArgumentsWildcard()->getTokens();
+
+        if (count($expectedTokens) !== count($actualArguments)) {
+
+            //parameters count mismatch will be shown in exception message, no need in diff
+            return $text;
+        }
+
+        $expectedArguments = array();
+        foreach ($expectedTokens as $token) {
+            if ($token instanceof ExactValueToken) {
+                $expectedArguments[] = $token->getValue();
+            } else {
+                $expectedArguments[] = (string)$token;
+            }
+        }
+
+        foreach($actualArguments as $i => $actualArgument) {
+            $expectedArgument = $expectedArguments[$i];
+            if (is_null($actualArgument)) {
+                $actualArgument = 'null';
+            }
+            if (is_null($expectedArgument)) {
+                $expectedArgument = 'null';
+            }
+
+            $text .= $this->differ->compare($expectedArgument, $actualArgument);
+        }
+
+        return $text;
+    }
+
+    /**
+     * @param MethodProphecy[] $methodProphecies
+     * @param UnexpectedCallException $exception
+     *
+     * @return MethodProphecy
+     */
+    private function findMethodProphecyOfFirstNotExpectedCall(array $methodProphecies, UnexpectedCallException $exception)
+    {
+        $objectProphecy = $exception->getObjectProphecy();
+        foreach ($methodProphecies as $methodProphecy) {
+            $calls = $objectProphecy->findProphecyMethodCalls(
+                $exception->getMethodName(),
+                $methodProphecy->getArgumentsWildcard()
+            );
+
+            //this call is expected
+            if (count($calls)) {
+                continue;
+            }
+
+            return $methodProphecy;
+        }
+
+        throw new \LogicException("UnexpectedCallException has been thrown, but no unexpected calls found.");
+    }
+
 }
