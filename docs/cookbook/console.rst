@@ -23,6 +23,18 @@ Also of note is that using the `--no-interaction` command means that no
 code generation will be done.
 
 
+**phpspec** has the global option to let you specify a custom bootstrap or autoloading script.
+
+.. code-block:: bash
+
+    $ bin/phpspec run --bootstrap=path/to/different-bootstrap.php
+
+or:
+
+.. code-block:: bash
+
+    $ bin/phpspec run -b path/to/different-bootstrap.php
+
 Describe Command
 ----------------
 
