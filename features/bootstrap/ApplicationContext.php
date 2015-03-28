@@ -45,16 +45,6 @@ class ApplicationContext implements Context, MatchersProviderInterface
     private $reRunner;
 
     /**
-     * @var bool
-     */
-    private $shouldAutoload = true;
-
-    /**
-     * @var callable
-     */
-    private $autoloader;
-
-    /**
      * @beforeScenario
      */
     public function setupApplication()
@@ -66,16 +56,6 @@ class ApplicationContext implements Context, MatchersProviderInterface
 
         $this->setupReRunner();
         $this->setupPrompter();
-    }
-
-    /**
-     * @afterScenario
-     */
-    public function cleanAutoloaders()
-    {
-        if ($this->autoloader) {
-            spl_autoload_unregister($this->autoloader);
-        }
     }
 
     private function setupPrompter()
@@ -134,8 +114,6 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function iRunPhpspecAndAnswerWhenAskedIfIWantToGenerateTheCode($answer, $option=null)
     {
-        $this->makeAutoloadable(getcwd());
-
         $arguments = array (
             'command' => 'run'
         );
@@ -262,39 +240,5 @@ class ApplicationContext implements Context, MatchersProviderInterface
             new ApplicationOutputMatcher(),
             new ValidJUnitXmlMatcher()
         );
-    }
-
-    /**
-     * @Then I should be told autoloading failed
-     */
-    public function iShouldBeToldAutoloadingFailed()
-    {
-        expect($this->tester->getDisplay())->toMatch('/do you have an autoloader/i');
-    }
-
-    /**
-     * @Given I have not configured an autoloader
-     */
-    public function iHaveNotConfiguredAnAutoloader()
-    {
-        $this->shouldAutoload = false;
-    }
-
-    /**
-     * @param $workingDirectory
-     */
-    private function makeAutoloadable($workingDirectory)
-    {
-        if (!$this->shouldAutoload) {
-            return;
-        }
-
-        $this->autoloader = function () use ($workingDirectory) {
-            foreach (new RecursiveiteratorIterator( new RecursiveDirectoryIterator($workingDirectory)) as $fs) {
-                if (preg_match('/\\.php$/', $fs->getFilename())) { require_once $fs->getPathName();}
-            }
-        };
-
-        spl_autoload_register($this->autoloader);
     }
 }
