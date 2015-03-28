@@ -1,6 +1,7 @@
 2.2.x-dev
 =========
 
+ * Offer to generate interfaces for missing typehinted collaborators
  * Support for TAP format output
  * Remove deprecated usage of Symfony DialogHelper
  * New array `shouldHaveKeyWithValue` matcher
