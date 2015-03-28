@@ -244,6 +244,14 @@ class ApplicationContext implements Context, MatchersProviderInterface
     }
 
     /**
+     * @Then I should be prompted with:
+     */
+    public function iShouldBePromptedWith(PyStringNode $question)
+    {
+        expect($this->prompter)->toHaveBeenAsked((string)$question);
+    }
+
+    /**
      * Custom matchers
      *
      * @return array

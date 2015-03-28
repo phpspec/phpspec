@@ -19,7 +19,7 @@
 
     "require": {
         "php":                      ">=5.3.3",
-        "phpspec/prophecy":         "~1.1",
+        "phpspec/prophecy":         "~1.4",
         "phpspec/php-diff":         "~1.0.0",
         "sebastian/exporter":       "~1.0",
         "symfony/console":          "~2.3",
@@ -54,5 +54,12 @@
         "branch-alias": {
             "dev-master": "2.1.x-dev"
         }
-    }
+    },
+
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/ciaranmcnulty/prophecy.git"
+        }
+    ]
 }
