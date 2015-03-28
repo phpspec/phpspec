@@ -18,6 +18,7 @@ use PhpSpec\Console\IO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
+use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Locator\ResourceManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -93,7 +94,7 @@ class CollaboratorNotFoundListener implements EventSubscriberInterface
                 continue;
             }
 
-            if($this->io->askConfirmation(
+            if ($this->io->askConfirmation(
                 sprintf('Would you like me to generate an interface `%s` for you?', $exception->getCollaboratorName())
             )) {
                 $this->generator->generate($resource, 'interface');

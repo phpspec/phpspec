@@ -101,7 +101,9 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
         }
 
         $interfaces = array_filter(class_implements($classname),
-            function ($interface) { return !preg_match('/^Prophecy/', $interface); }
+            function ($interface) {
+                return !preg_match('/^Prophecy/', $interface);
+            }
         );
 
         if (count($interfaces) !== 1) {

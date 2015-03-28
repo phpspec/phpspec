@@ -221,11 +221,11 @@ class ContainerAssembler
             );
         });
         $container->set('code_generator.generators.interface', function (ServiceContainer $c) {
-                return new CodeGenerator\Generator\InterfaceGenerator(
-                    $c->get('console.io'),
-                    $c->get('code_generator.templates')
-                );
-            });
+            return new CodeGenerator\Generator\InterfaceGenerator(
+                $c->get('console.io'),
+                $c->get('code_generator.templates')
+            );
+        });
         $container->set('code_generator.generators.method', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\MethodGenerator(
                 $c->get('console.io'),
