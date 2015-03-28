@@ -1,5 +1,5 @@
-2.2.x-dev
-=========
+2.2.0-beta / 2015-03-28
+=======================
 
  * Offer to generate interfaces for missing typehinted collaborators
  * Support for TAP format output
