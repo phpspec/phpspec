@@ -19,7 +19,7 @@
 
     "require": {
         "php":                      ">=5.3.3",
-        "phpspec/prophecy":         "dev-refactor/argument-information-when-methodnotfound",
+        "phpspec/prophecy":         "~1.4",
         "phpspec/php-diff":         "~1.0.0",
         "sebastian/exporter":       "~1.0",
         "symfony/console":          "~2.3",
