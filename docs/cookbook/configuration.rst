@@ -183,3 +183,14 @@ array of extension classes:
 
     extensions:
         - PhpSpec\Symfony2Extension\Extension
+
+Bootstrapping
+-------------
+
+There are times when you would be required to load classes and execute additional statements that the Composer-generated autoloader may not provide, which is likely for a legacy project that wants to introduce phpspec for designing new classes that may rely on some legacy collaborators.
+
+To load a custom bootstrap when running phpspec, use the ``console.io.bootstrap`` setting:
+
+.. code-block:: yaml
+
+    console.io.bootstrap: path/to/different-bootstrap.php
