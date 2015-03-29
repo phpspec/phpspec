@@ -1,3 +1,8 @@
+Upcoming
+========
+
+ * Better diffs when presenting unexpected method arguments
+
 2.2.0-beta / 2015-03-28
 =======================
 
