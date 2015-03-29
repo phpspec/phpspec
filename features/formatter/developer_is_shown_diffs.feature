@@ -154,187 +154,187 @@ Feature: Developer is shown diffs
 
   Scenario: Unexpected call arguments string diffing
     Given the spec file "spec/Diffs/DiffExample4/ClassUnderSpecificationSpec.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace spec\Diffs\DiffExample4;
+      namespace spec\Diffs\DiffExample4;
 
-    use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
-    use Diffs\DiffExample4\ClassBeingMocked;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use Diffs\DiffExample4\ClassBeingMocked;
 
-    class ClassUnderSpecificationSpec extends ObjectBehavior
-    {
-        function it_can_do_work(ClassBeingMocked $objectBeingMocked)
-        {
-            $objectBeingMocked->setValue('some really really long string, and even more, and more!')->shouldBeCalled();
-            $this->doWork($objectBeingMocked);
-        }
-    }
-    """
+      class ClassUnderSpecificationSpec extends ObjectBehavior
+      {
+          function it_can_do_work(ClassBeingMocked $objectBeingMocked)
+          {
+              $objectBeingMocked->setValue('some really really long string, and even more, and more!')->shouldBeCalled();
+              $this->doWork($objectBeingMocked);
+          }
+      }
+      """
     And the class file "src/Diffs/DiffExample4/ClassUnderSpecification.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace Diffs\DiffExample4;
+      namespace Diffs\DiffExample4;
 
-    class ClassUnderSpecification
-    {
-        public function doWork(ClassBeingMocked $objectBeingMocked)
-        {
-            $objectBeingMocked->setValue('some really really long string, and even more, and more');
-        }
-    }
-    """
+      class ClassUnderSpecification
+      {
+          public function doWork(ClassBeingMocked $objectBeingMocked)
+          {
+              $objectBeingMocked->setValue('some really really long string, and even more, and more');
+          }
+      }
+      """
     And the class file "src/Diffs/DiffExample4/ClassBeingMocked.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace Diffs\DiffExample4;
+      namespace Diffs\DiffExample4;
 
-    class ClassBeingMocked
-    {
-        public function setValue($value)
-        {
-        }
-    }
-    """
+      class ClassBeingMocked
+      {
+          public function setValue($value)
+          {
+          }
+      }
+      """
     When I run phpspec with the "verbose" option
     Then I should see:
-    """
-          @@ -1,1 +1,1 @@
-          -some really really long string, and even more, and more!
-          +some really really long string, and even more, and more
-    """
+      """
+            @@ -1,1 +1,1 @@
+            -some really really long string, and even more, and more!
+            +some really really long string, and even more, and more
+      """
 
 
   Scenario: Unexpected call arguments array diffing
     Given the spec file "spec/Diffs/DiffExample5/ClassUnderSpecificationSpec.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace spec\Diffs\DiffExample5;
+      namespace spec\Diffs\DiffExample5;
 
-    use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
-    use Diffs\DiffExample5\ClassBeingMocked;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use Diffs\DiffExample5\ClassBeingMocked;
 
-    class ClassUnderSpecificationSpec extends ObjectBehavior
-    {
-        function it_can_do_work(ClassBeingMocked $objectBeingMocked)
-        {
-            $objectBeingMocked->setValue(array(
-                'key1' => 'val1',
-                'key2' => 'val2',
-            ))->shouldBeCalled();
-            $this->doWork($objectBeingMocked);
-        }
-    }
-    """
+      class ClassUnderSpecificationSpec extends ObjectBehavior
+      {
+          function it_can_do_work(ClassBeingMocked $objectBeingMocked)
+          {
+              $objectBeingMocked->setValue(array(
+                  'key1' => 'val1',
+                  'key2' => 'val2',
+              ))->shouldBeCalled();
+              $this->doWork($objectBeingMocked);
+          }
+      }
+      """
     And the class file "src/Diffs/DiffExample5/ClassUnderSpecification.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace Diffs\DiffExample5;
+      namespace Diffs\DiffExample5;
 
-    class ClassUnderSpecification
-    {
-        public function doWork(ClassBeingMocked $objectBeingMocked)
-        {
-            $objectBeingMocked->setValue(array(
-                'key1' => 'val1',
-                'key5' => 'val5',
-            ));
-        }
-    }
-    """
+      class ClassUnderSpecification
+      {
+          public function doWork(ClassBeingMocked $objectBeingMocked)
+          {
+              $objectBeingMocked->setValue(array(
+                  'key1' => 'val1',
+                  'key5' => 'val5',
+              ));
+          }
+      }
+      """
     And the class file "src/Diffs/DiffExample5/ClassBeingMocked.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace Diffs\DiffExample5;
+      namespace Diffs\DiffExample5;
 
-    class ClassBeingMocked
-    {
-        public function setValue($value)
-        {
-        }
-    }
-    """
+      class ClassBeingMocked
+      {
+          public function setValue($value)
+          {
+          }
+      }
+      """
     When I run phpspec with the "verbose" option
     Then I should see:
-    """
-          @@ -1,4 +1,4 @@
-             [
-               key1 => ""val1"...",
-          -    key2 => ""val2"...",
-          +    key5 => ""val5"...",
-             ]
-    """
+      """
+            @@ -1,4 +1,4 @@
+               [
+                 key1 => ""val1"...",
+            -    key2 => ""val2"...",
+            +    key5 => ""val5"...",
+               ]
+      """
 
   Scenario: Unexpected call with multiple arguments icluding null diffing
     Given the spec file "spec/Diffs/DiffExample6/ClassUnderSpecificationSpec.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace spec\Diffs\DiffExample6;
+      namespace spec\Diffs\DiffExample6;
 
-    use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
-    use Diffs\DiffExample6\ClassBeingMocked;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use Diffs\DiffExample6\ClassBeingMocked;
 
-    class ClassUnderSpecificationSpec extends ObjectBehavior
-    {
-        function it_can_do_work(ClassBeingMocked $objectBeingMocked)
-        {
-            $objectBeingMocked->setValue(array(
-                'key' => 'value'
-            ), 'foo', null)->shouldBeCalled();
-            $this->doWork($objectBeingMocked);
-        }
-    }
-    """
+      class ClassUnderSpecificationSpec extends ObjectBehavior
+      {
+          function it_can_do_work(ClassBeingMocked $objectBeingMocked)
+          {
+              $objectBeingMocked->setValue(array(
+                  'key' => 'value'
+              ), 'foo', null)->shouldBeCalled();
+              $this->doWork($objectBeingMocked);
+          }
+      }
+      """
     And the class file "src/Diffs/DiffExample6/ClassUnderSpecification.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace Diffs\DiffExample6;
+      namespace Diffs\DiffExample6;
 
-    class ClassUnderSpecification
-    {
-        public function doWork(ClassBeingMocked $objectBeingMocked)
-        {
-            $objectBeingMocked->setValue(array(
-              'key' => 'another value'
-            ), 'foo', 'bar');
-        }
-    }
-    """
+      class ClassUnderSpecification
+      {
+          public function doWork(ClassBeingMocked $objectBeingMocked)
+          {
+              $objectBeingMocked->setValue(array(
+                'key' => 'another value'
+              ), 'foo', 'bar');
+          }
+      }
+      """
     And the class file "src/Diffs/DiffExample6/ClassBeingMocked.php" contains:
-    """
-    <?php
+      """
+      <?php
 
-    namespace Diffs\DiffExample6;
+      namespace Diffs\DiffExample6;
 
-    class ClassBeingMocked
-    {
-        public function setValue($value)
-        {
-        }
-    }
-    """
+      class ClassBeingMocked
+      {
+          public function setValue($value)
+          {
+          }
+      }
+      """
     When I run phpspec with the "verbose" option
     Then I should see:
-    """
-          @@ -1,3 +1,3 @@
-             [
-          -    key => ""value"...",
-          +    key => ""another value"...",
-             ]
-    """
+      """
+            @@ -1,3 +1,3 @@
+               [
+            -    key => ""value"...",
+            +    key => ""another value"...",
+               ]
+      """
     And I should see:
-    """
-          @@ -1,1 +1,1 @@
-          -null
-          +bar
-    """
+      """
+            @@ -1,1 +1,1 @@
+            -null
+            +bar
+      """

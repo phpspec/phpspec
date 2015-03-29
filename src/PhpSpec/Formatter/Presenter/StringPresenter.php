@@ -374,39 +374,18 @@ class StringPresenter implements PresenterInterface
      */
     private function presentCallArgumentsDifference(UnexpectedCallException $exception)
     {
-        $text = '';
-
         $actualArguments = $exception->getArguments();
         $methodProphecies = $exception->getObjectProphecy()->getMethodProphecies($exception->getMethodName());
         $presentedMethodProphecy = $this->findMethodProphecyOfFirstNotExpectedCall($methodProphecies, $exception);
         $expectedTokens = $presentedMethodProphecy->getArgumentsWildcard()->getTokens();
 
-        if (count($expectedTokens) !== count($actualArguments)) {
+        if ($this->parametersCountMismatch($expectedTokens, $actualArguments)) {
 
-            //parameters count mismatch will be shown in exception message, no need in diff
-            return $text;
+            return '';
         }
 
-        $expectedArguments = array();
-        foreach ($expectedTokens as $token) {
-            if ($token instanceof ExactValueToken) {
-                $expectedArguments[] = $token->getValue();
-            } else {
-                $expectedArguments[] = (string)$token;
-            }
-        }
-
-        foreach($actualArguments as $i => $actualArgument) {
-            $expectedArgument = $expectedArguments[$i];
-            if (is_null($actualArgument)) {
-                $actualArgument = 'null';
-            }
-            if (is_null($expectedArgument)) {
-                $expectedArgument = 'null';
-            }
-
-            $text .= $this->differ->compare($expectedArgument, $actualArgument);
-        }
+        $expectedArguments = $this->convertArgumentTokensToDiffableValues($expectedTokens);
+        $text = $this->generateArgumentsDifferenceText($actualArguments, $expectedArguments);
 
         return $text;
     }
@@ -426,15 +405,62 @@ class StringPresenter implements PresenterInterface
                 $methodProphecy->getArgumentsWildcard()
             );
 
-            //this call is expected
             if (count($calls)) {
                 continue;
             }
 
             return $methodProphecy;
         }
+    }
 
-        throw new \LogicException("UnexpectedCallException has been thrown, but no unexpected calls found.");
+    /**
+     * @param array $expectedTokens
+     * @param array $actualArguments
+     *
+     * @return bool
+     */
+    private function parametersCountMismatch(array $expectedTokens, array $actualArguments)
+    {
+        return count($expectedTokens) !== count($actualArguments);
+    }
+
+    /**
+     * @param array $tokens
+     *
+     * @return array
+     */
+    private function convertArgumentTokensToDiffableValues(array $tokens)
+    {
+        $values = array();
+        foreach ($tokens as $token) {
+            if ($token instanceof ExactValueToken) {
+                $values[] = $token->getValue();
+            } else {
+                $values[] = (string)$token;
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * @param array $actualArguments
+     * @param array $expectedArguments
+     *
+     * @return string
+     */
+    private function generateArgumentsDifferenceText(array $actualArguments, array $expectedArguments)
+    {
+        $text = '';
+        foreach($actualArguments as $i => $actualArgument) {
+            $expectedArgument = $expectedArguments[$i];
+            $actualArgument = is_null($actualArgument) ? 'null' : $actualArgument;
+            $expectedArgument = is_null($expectedArgument) ? 'null' : $expectedArgument;
+
+            $text .= $this->differ->compare($expectedArgument, $actualArgument);
+        }
+
+        return $text;
     }
 
 }
