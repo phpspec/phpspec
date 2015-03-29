@@ -87,7 +87,7 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
             $this->interfaces[$interface] = array();
         }
 
-        $this->interfaces[$interface][$exception->getMethodName()] = $exception->getArguments();
+        $this->interfaces[$interface][$exception->getMethodName()] = method_exists($exception, 'getArguments') ? $exception->getArguments() : array();
     }
 
     /**
