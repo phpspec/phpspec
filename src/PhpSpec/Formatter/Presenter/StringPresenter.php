@@ -18,7 +18,10 @@ use PhpSpec\Exception\Exception as PhpSpecException;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Example\ErrorException;
 use PhpSpec\Exception\Example\PendingException;
+use Prophecy\Argument\Token\ExactValueToken;
+use Prophecy\Exception\Call\UnexpectedCallException;
 use Prophecy\Exception\Exception as ProphecyException;
+use Prophecy\Prophecy\MethodProphecy;
 
 class StringPresenter implements PresenterInterface
 {
@@ -127,6 +130,10 @@ class StringPresenter implements PresenterInterface
             list($file, $line) = $this->getExceptionExamplePosition($exception);
 
             $presentation .= "\n".$this->presentFileCode($file, $line);
+        }
+
+        if ($exception instanceof UnexpectedCallException) {
+            $presentation .= $this->presentCallArgumentsDifference($exception);
         }
 
         if (trim($trace = $this->presentExceptionStackTrace($exception))) {
@@ -367,4 +374,101 @@ class StringPresenter implements PresenterInterface
 
         return sprintf('[%s()]', $value);
     }
+
+    /**
+     * @param UnexpectedCallException $exception
+     *
+     * @return string
+     */
+    private function presentCallArgumentsDifference(UnexpectedCallException $exception)
+    {
+        $actualArguments = $exception->getArguments();
+        $methodProphecies = $exception->getObjectProphecy()->getMethodProphecies($exception->getMethodName());
+        $presentedMethodProphecy = $this->findMethodProphecyOfFirstNotExpectedCall($methodProphecies, $exception);
+        $expectedTokens = $presentedMethodProphecy->getArgumentsWildcard()->getTokens();
+
+        if ($this->parametersCountMismatch($expectedTokens, $actualArguments)) {
+
+            return '';
+        }
+
+        $expectedArguments = $this->convertArgumentTokensToDiffableValues($expectedTokens);
+        $text = $this->generateArgumentsDifferenceText($actualArguments, $expectedArguments);
+
+        return $text;
+    }
+
+    /**
+     * @param MethodProphecy[] $methodProphecies
+     * @param UnexpectedCallException $exception
+     *
+     * @return MethodProphecy
+     */
+    private function findMethodProphecyOfFirstNotExpectedCall(array $methodProphecies, UnexpectedCallException $exception)
+    {
+        $objectProphecy = $exception->getObjectProphecy();
+        foreach ($methodProphecies as $methodProphecy) {
+            $calls = $objectProphecy->findProphecyMethodCalls(
+                $exception->getMethodName(),
+                $methodProphecy->getArgumentsWildcard()
+            );
+
+            if (count($calls)) {
+                continue;
+            }
+
+            return $methodProphecy;
+        }
+    }
+
+    /**
+     * @param array $expectedTokens
+     * @param array $actualArguments
+     *
+     * @return bool
+     */
+    private function parametersCountMismatch(array $expectedTokens, array $actualArguments)
+    {
+        return count($expectedTokens) !== count($actualArguments);
+    }
+
+    /**
+     * @param array $tokens
+     *
+     * @return array
+     */
+    private function convertArgumentTokensToDiffableValues(array $tokens)
+    {
+        $values = array();
+        foreach ($tokens as $token) {
+            if ($token instanceof ExactValueToken) {
+                $values[] = $token->getValue();
+            } else {
+                $values[] = (string)$token;
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * @param array $actualArguments
+     * @param array $expectedArguments
+     *
+     * @return string
+     */
+    private function generateArgumentsDifferenceText(array $actualArguments, array $expectedArguments)
+    {
+        $text = '';
+        foreach($actualArguments as $i => $actualArgument) {
+            $expectedArgument = $expectedArguments[$i];
+            $actualArgument = is_null($actualArgument) ? 'null' : $actualArgument;
+            $expectedArgument = is_null($expectedArgument) ? 'null' : $expectedArgument;
+
+            $text .= $this->differ->compare($expectedArgument, $actualArgument);
+        }
+
+        return $text;
+    }
+
 }
