@@ -163,7 +163,6 @@ Feature: Developer generates a collaborator's method
 
       """
 
-  @prophecy-1.4
   Scenario: Asking for the method signature to be generated with multiple parameters
     Given the spec file "spec/CodeGeneration/CollaboratorMethodExample4/MarkdownSpec.php" contains:
       """
