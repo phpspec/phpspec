@@ -30,11 +30,10 @@ install:
   - export COMPOSER_ROOT_VERSION=dev-master
   - if [ "$DEPENDENCIES" == "dev" ]; then perl -pi -e 's/^}$/,"minimum-stability":"dev"}/' composer.json; fi;
   - if [ "$DEPENDENCIES" != "low" ]; then composer update; fi;
-  - if [ "$DEPENDENCIES" == "low" ]; then composer update --prefer-lowest; TAGS="~@prophecy-1.4"; fi;
+  - if [ "$DEPENDENCIES" == "low" ]; then composer update --prefer-lowest; fi;
 
 script:
    - bin/phpspec run --format=pretty
    - ./vendor/bin/phpunit --testdox
-   - if [ "$SMOKE" != "true" ]; then ./vendor/bin/behat --format=pretty `if [ $TAGS ]; then echo "--tags=$TAGS"; fi;`; fi;
-   - if [ "$SMOKE" == "true" ]; then ./vendor/bin/behat --format=pretty --profile=smoke `if [ $TAGS ]; then echo "--tags=$TAGS"; fi;`; fi;
+   - ./vendor/bin/behat --format=pretty `if [ "$SMOKE" == "true" ]; then echo '--profile=smoke'; fi;`
 

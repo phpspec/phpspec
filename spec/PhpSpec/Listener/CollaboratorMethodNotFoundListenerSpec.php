@@ -31,9 +31,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
 
         $resources->createResource(Argument::any())->willReturn($resource);
 
-        if (method_exists('Prophecy\Exception\Doubler\MethodNotFoundException', 'getArguments')) {
-            $exception->getArguments()->willReturn(array());
-        }
+        $exception->getArguments()->willReturn(array());
     }
 
     function it_is_an_event_subscriber()

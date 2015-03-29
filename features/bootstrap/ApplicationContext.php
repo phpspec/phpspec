@@ -58,16 +58,6 @@ class ApplicationContext implements Context, MatchersProviderInterface
         $this->setupPrompter();
     }
 
-    /**
-     * @beforeScenario @prophecy-1.4
-     */
-    public function checkProphecy()
-    {
-        if (!method_exists('Prophecy\Exception\Doubler\MethodNotFoundException', 'getArguments')) {
-            throw new \Exception('Cannot run scenario tagged @prophecy-1.4 that depends on Prophecy 1.4 or greater');
-        }
-    }
-
     private function setupPrompter()
     {
         $this->prompter = new Prompter();
