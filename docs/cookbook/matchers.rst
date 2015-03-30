@@ -289,6 +289,28 @@ identity (``===``).
     }
 
 
+ArrayKeyWithValue Matcher
+--------------------
+
+This matcher lets you assert a specific value for a specific key on a method that returns an array or an implementor of ArrayAccess.
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_have_jane_smith_in_the_cast_with_a_lead_role()
+        {
+            $this->getCast()->shouldHaveKeyWithValue('leadRole', 'John Smith');
+        }
+    }
+
+
 ArrayKey Matcher
 ----------------
 
