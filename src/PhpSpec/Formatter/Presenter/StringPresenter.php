@@ -384,7 +384,12 @@ class StringPresenter implements PresenterInterface
     {
         $actualArguments = $exception->getArguments();
         $methodProphecies = $exception->getObjectProphecy()->getMethodProphecies($exception->getMethodName());
-        $presentedMethodProphecy = $this->findMethodProphecyOfFirstNotExpectedCall($methodProphecies, $exception);
+        if ($this->noMethodPropheciesForUnexpectedCall($methodProphecies)) {
+
+            return '';
+        }
+
+        $presentedMethodProphecy = $this->findMethodProphecyOfFirstNotExpectedArgumentsCall($methodProphecies, $exception);
         $expectedTokens = $presentedMethodProphecy->getArgumentsWildcard()->getTokens();
 
         if ($this->parametersCountMismatch($expectedTokens, $actualArguments)) {
@@ -398,13 +403,18 @@ class StringPresenter implements PresenterInterface
         return $text;
     }
 
+    private function noMethodPropheciesForUnexpectedCall(array $methodProphecies)
+    {
+        return count($methodProphecies) === 0;
+    }
+
     /**
      * @param MethodProphecy[] $methodProphecies
      * @param UnexpectedCallException $exception
      *
      * @return MethodProphecy
      */
-    private function findMethodProphecyOfFirstNotExpectedCall(array $methodProphecies, UnexpectedCallException $exception)
+    private function findMethodProphecyOfFirstNotExpectedArgumentsCall(array $methodProphecies, UnexpectedCallException $exception)
     {
         $objectProphecy = $exception->getObjectProphecy();
         foreach ($methodProphecies as $methodProphecy) {

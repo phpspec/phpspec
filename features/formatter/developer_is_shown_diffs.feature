@@ -152,7 +152,7 @@ Feature: Developer is shown diffs
       """
 
 
-  Scenario: Unexpected call arguments string diffing
+  Scenario: Unexpected method arguments call arguments string diffing
     Given the spec file "spec/Diffs/DiffExample4/ClassUnderSpecificationSpec.php" contains:
       """
       <?php
@@ -208,7 +208,7 @@ Feature: Developer is shown diffs
       """
 
 
-  Scenario: Unexpected call arguments array diffing
+  Scenario: Unexpected method arguments call arguments array diffing
     Given the spec file "spec/Diffs/DiffExample5/ClassUnderSpecificationSpec.php" contains:
       """
       <?php
@@ -272,7 +272,7 @@ Feature: Developer is shown diffs
                ]
       """
 
-  Scenario: Unexpected call with multiple arguments icluding null diffing
+  Scenario: Unexpected method arguments call with multiple arguments icluding null diffing
     Given the spec file "spec/Diffs/DiffExample6/ClassUnderSpecificationSpec.php" contains:
       """
       <?php
@@ -337,4 +337,65 @@ Feature: Developer is shown diffs
             @@ -1,1 +1,1 @@
             -null
             +bar
+      """
+
+  Scenario: Unexpected method call
+    Given the spec file "spec/Diffs/DiffExample7/ClassUnderSpecificationSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Diffs\DiffExample7;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use Diffs\DiffExample7\ClassBeingMocked;
+
+      class ClassUnderSpecificationSpec extends ObjectBehavior
+      {
+          function it_can_do_work(ClassBeingMocked $objectBeingMocked)
+          {
+              $objectBeingMocked->methodOne('value')->shouldBeCalled();
+              $this->doWork($objectBeingMocked);
+          }
+      }
+      """
+    And the class file "src/Diffs/DiffExample7/ClassUnderSpecification.php" contains:
+      """
+      <?php
+
+      namespace Diffs\DiffExample7;
+
+      class ClassUnderSpecification
+      {
+          public function doWork(ClassBeingMocked $objectBeingMocked)
+          {
+              $objectBeingMocked->methodTwo('value');
+          }
+      }
+      """
+    And the class file "src/Diffs/DiffExample7/ClassBeingMocked.php" contains:
+      """
+      <?php
+
+      namespace Diffs\DiffExample7;
+
+      class ClassBeingMocked
+      {
+          public function methodOne($value)
+          {
+          }
+
+          public function methodTwo($value)
+          {
+          }
+
+      }
+      """
+    When I run phpspec with the "verbose" option
+    Then I should see:
+      """
+            method call:
+              - methodTwo("value")
+            on Double\Diffs\DiffExample7\ClassBeingMocked\P13 was not expected, expected calls were:
+              - methodOne(exact("value"))
       """
