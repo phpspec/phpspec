@@ -33,6 +33,7 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         $io->isFakingEnabled()->willReturn(true);
 
         $methodAnalyser->methodIsEmpty(Argument::cetera())->willReturn(true);
+        $methodAnalyser->getMethodOwnerName(Argument::cetera())->willReturn('Foo');;
     }
 
     function it_is_an_event_listener()

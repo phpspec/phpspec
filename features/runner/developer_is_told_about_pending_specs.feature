@@ -88,3 +88,38 @@ Feature: Developer is told about pending specs
       """
       1 examples (1 passed)
       """
+
+  @php-version @php5.4
+  Scenario: Spec defined in trait does not cause pending
+    Given the trait file "spec/Runner/PendingExample4/PartialSpecTrait.php" contains:
+      """
+      <?php
+
+      namespace spec\Runner\PendingExample4;
+
+      trait PartialSpecTrait
+      {
+          function it_converts_plain_text_to_html_paragraphs()
+          {
+              pow(2,2);
+          }
+      }
+      """
+    And the spec file "spec/Runner/PendingExample4/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Runner\PendingExample4;
+
+      use PhpSpec\ObjectBehavior;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          use PartialSpecTrait;
+      }
+      """
+    When I run phpspec using the "pretty" format
+    Then I should see:
+      """
+      1 examples (1 passed)
+      """

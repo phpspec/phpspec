@@ -120,7 +120,7 @@ class MethodReturnedNullListener implements EventSubscriberInterface
 
         if (!array_key_exists($key, $this->nullMethods)) {
             $this->nullMethods[$key] = array(
-                'class' => $class,
+                'class' => $this->methodAnalyser->getMethodOwnerName($class, $method),
                 'method' => $method,
                 'expected' => array()
             );

@@ -48,6 +48,12 @@
         }
     },
 
+    "autoload-dev": {
+        "psr-0": {
+            "spec\\PhpSpec": "."
+        }
+    },
+
     "bin": ["bin/phpspec"],
 
     "extra": {

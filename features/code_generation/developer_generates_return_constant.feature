@@ -259,3 +259,66 @@ Feature: Developer generates a method returning a constant
       """
     When I run phpspec interactively
     Then I should be prompted for code generation
+
+  @php-version @php5.4
+  Scenario: Generating a scalar return type when method is in trait
+    Given the spec file "spec/CodeGeneration/ConstantExample7/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\ConstantExample7;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_converts_plain_text_to_html_paragraphs()
+          {
+              $this->toHtml('Hi, there')->shouldReturn('<p>Hi, there</p>');
+          }
+      }
+
+      """
+    And the trait file "src/CodeGeneration/ConstantExample7/MarkdownTrait.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\ConstantExample7;
+
+      trait MarkdownTrait
+      {
+          public function toHtml($argument1)
+          {
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/ConstantExample7/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\ConstantExample7;
+
+      class Markdown
+      {
+          use MarkdownTrait;
+      }
+
+      """
+    When I run phpspec with the option "fake" and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/ConstantExample7/MarkdownTrait.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\ConstantExample7;
+
+      trait MarkdownTrait
+      {
+          public function toHtml($argument1)
+          {
+              return '<p>Hi, there</p>';
+          }
+      }
+
+      """
