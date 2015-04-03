@@ -1,5 +1,5 @@
-Upcoming
-========
+2.2.0-beta2 / 2015-04-03
+========================
 
  * Better diffs when presenting unexpected method arguments
  * Better handling of methods delclared inside Traits when faking
