@@ -32,8 +32,10 @@ install:
   - if [ "$DEPENDENCIES" != "low" ]; then composer update; fi;
   - if [ "$DEPENDENCIES" == "low" ]; then composer update --prefer-lowest; fi;
 
+before_script:
+  - echo "<?php if (PHP_VERSION_ID >= 50400) echo ',@php5.4';" > php_version_tags.php
+
 script:
    - bin/phpspec run --format=pretty
    - ./vendor/bin/phpunit --testdox
-   - ./vendor/bin/behat --format=pretty `if [ "$SMOKE" == "true" ]; then echo '--profile=smoke'; fi;`
-
+   - ./vendor/bin/behat --format=pretty `if [ "$SMOKE" == "true" ]; then echo '--profile=smoke'; fi;` --tags '~@php-version'`php php_version_tags.php`
