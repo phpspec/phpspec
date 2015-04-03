@@ -32,14 +32,22 @@ class ApplicationOutputMatcher implements MatcherInterface
      */
     public function positiveMatch($name, $subject, array $arguments)
     {
-        $expected = $arguments[0];
-        if (strpos($subject->getDisplay(), $expected) === false) {
+        $expected = $this->normalise($arguments[0]);
+        $actual = $this->normalise($subject->getDisplay());
+        if (strpos($actual, $expected) === false) {
             throw new FailureException(sprintf(
                 "Application output did not contain expected '%s'. Actual output:\n'%s'" ,
                 $expected,
                 $subject->getDisplay()
             ));
         }
+    }
+
+    private function normalise($string)
+    {
+        $string = preg_replace('/\([0-9]+ms\)/', '', $string);
+
+        return $string;
     }
 
     /**
