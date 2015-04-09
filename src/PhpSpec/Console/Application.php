@@ -163,12 +163,42 @@ class Application extends BaseApplication
             if (!file_exists($customPath)) {
                 throw new RuntimeException('Custom configuration file not found at '.$customPath);
             }
+
+            if (substr($customPath, 0 , 1) !== DIRECTORY_SEPARATOR) {
+                $customPath = getcwd() . DIRECTORY_SEPARATOR.$customPath;
+            }
+
             $paths = array($customPath);
         }
 
         $config = array();
+
         foreach ($paths as $path) {
             if ($path && file_exists($path) && $parsedConfig = Yaml::parse(file_get_contents($path))) {
+
+                $configDir = dirname($path);
+
+                if (isset($parsedConfig['suites']) && is_array($parsedConfig['suites']))
+                {
+                    foreach ($parsedConfig['suites'] as &$suiteConfig) {
+                        if (empty($suiteConfig['src_path'])) {
+                            $suiteConfig['src_path'] = $configDir.DIRECTORY_SEPARATOR.'src';
+                        }
+
+                        if (substr($suiteConfig['src_path'], 0, 1) !== DIRECTORY_SEPARATOR) {
+                            $suiteConfig['src_path'] = $configDir.DIRECTORY_SEPARATOR . $suiteConfig['src_path'];
+                        }
+
+                        if (empty($suiteConfig['spec_path'])) {
+                            $suiteConfig['spec_path'] = $configDir;
+                        }
+
+                        if (substr($suiteConfig['spec_path'], 0, 1) !== DIRECTORY_SEPARATOR) {
+                            $suiteConfig['spec_path'] = $configDir.DIRECTORY_SEPARATOR . $suiteConfig['spec_path'];
+                        }
+                    }
+                }
+
                 $config = $parsedConfig;
                 break;
             }
