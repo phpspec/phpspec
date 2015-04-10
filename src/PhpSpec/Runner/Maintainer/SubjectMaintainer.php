@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Runner\Maintainer;
 
+use Phpspec\CodeAnalysis\AccessInspectorInterface;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\SpecificationInterface;
 use PhpSpec\Runner\MatcherManager;
@@ -36,6 +37,10 @@ class SubjectMaintainer implements MaintainerInterface
      * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
      */
     private $dispatcher;
+    /**
+     * @var \PhpSpec\CodeAnalysis\AccessInspectorInterface
+     */
+    private $accessInspector;
 
     /**
      * @param PresenterInterface       $presenter
@@ -45,11 +50,13 @@ class SubjectMaintainer implements MaintainerInterface
     public function __construct(
         PresenterInterface $presenter,
         Unwrapper $unwrapper,
-        EventDispatcherInterface $dispatcher
+        EventDispatcherInterface $dispatcher,
+        AccessInspectorInterface $accessInspector
     ) {
         $this->presenter = $presenter;
         $this->unwrapper = $unwrapper;
         $this->dispatcher = $dispatcher;
+        $this->accessInspector = $accessInspector;
     }
 
     /**
@@ -76,7 +83,7 @@ class SubjectMaintainer implements MaintainerInterface
         MatcherManager $matchers,
         CollaboratorManager $collaborators
     ) {
-        $subjectFactory = new Wrapper($matchers, $this->presenter, $this->dispatcher, $example);
+        $subjectFactory = new Wrapper($matchers, $this->presenter, $this->dispatcher, $example, $this->accessInspector);
         $subject = $subjectFactory->wrap(null);
         $subject->beAnInstanceOf(
             $example->getSpecification()->getResource()->getSrcClassname()
