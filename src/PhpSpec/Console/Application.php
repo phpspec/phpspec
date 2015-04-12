@@ -169,7 +169,7 @@ class Application extends BaseApplication
         $config = array();
         foreach ($paths as $path) {
             if ($path && file_exists($path) && $parsedConfig = Yaml::parse(file_get_contents($path))) {
-                $config = $parsedConfig;
+                $config = $this->appendConfigDirToSuite(dirname($path), $parsedConfig);
                 break;
             }
         }
@@ -178,6 +178,24 @@ class Application extends BaseApplication
             $localPath = $homeFolder.'/.phpspec.yml';
             if (file_exists($localPath) && $parsedConfig = Yaml::parse(file_get_contents($localPath))) {
                 $config = array_replace_recursive($parsedConfig, $config);
+            }
+        }
+
+        return $config;
+    }
+
+    /**
+     * @param array $configDir
+     *
+     * @param array $config
+     *
+     * @return array
+     */
+    public function appendConfigDirToSuite($configDir, $config)
+    {
+        if (isset($config['suites']) && is_array($config['suites'])) {
+            foreach ($config['suites'] as &$suiteConfig) {
+                $suiteConfig['config_dir'] = $configDir;
             }
         }
 

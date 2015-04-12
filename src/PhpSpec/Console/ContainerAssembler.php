@@ -327,14 +327,20 @@ class ContainerAssembler
             foreach ($suites as $name => $suite) {
                 $suite      = is_array($suite) ? $suite : array('namespace' => $suite);
                 $defaults = array(
-                    'namespace'     => '',
-                    'spec_prefix'   => 'spec',
-                    'src_path'      => 'src',
-                    'spec_path'     => '.',
-                    'psr4_prefix'   => null
+                    'namespace'       => '',
+                    'spec_prefix'     => 'spec',
+                    'src_path'        => 'src',
+                    'spec_path'       => '.',
+                    'psr4_prefix'     => null,
+                    'use_config_path' => false
                 );
 
                 $config = array_merge($defaults, $suite);
+
+                if ($config['use_config_path'] === true && isset($config['config_dir'])) {
+                    $config['src_path'] = $config['config_dir'].DIRECTORY_SEPARATOR.$config['src_path'];
+                    $config['spec_path'] = $config['config_dir'].DIRECTORY_SEPARATOR.$config['spec_path'];
+                }
 
                 if (!is_dir($config['src_path'])) {
                     mkdir($config['src_path'], 0777, true);

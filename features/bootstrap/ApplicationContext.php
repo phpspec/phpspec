@@ -86,6 +86,21 @@ class ApplicationContext implements Context, MatchersProviderInterface
     }
 
     /**
+     * @Given I have started describing the :class class with the :config (custom) config
+     * @Given I start describing the :class class with the :config (custom) config
+     */
+    public function iDescribeTheClassWithTheConfig($class, $config)
+    {
+        $arguments = array(
+            'command' => 'describe',
+            'class' => $class,
+            '--config' => $config
+        );
+
+        expect($this->tester->run($arguments, array('interactive' => false)))->toBe(0);
+    }
+
+    /**
      * @When I run phpspec (non interactively)
      * @When I run phpspec using the :formatter format
      * @When I run phpspec with the :option option
@@ -119,6 +134,21 @@ class ApplicationContext implements Context, MatchersProviderInterface
         );
 
         $this->addOptionToArguments($option, $arguments);
+
+        $this->prompter->setAnswer($answer=='y');
+
+        $this->lastExitCode = $this->tester->run($arguments, array('interactive' => true));
+    }
+
+    /**
+     * @When I run phpspec with the :config (custom) config and answer :answer when asked if I want to generate the code
+     */
+    public function iRunPhpspecWithConfigAndAnswerIfIWantToGenerateTheCode($config, $answer)
+    {
+        $arguments = array (
+            'command' => 'run',
+            '--config' => $config
+        );
 
         $this->prompter->setAnswer($answer=='y');
 

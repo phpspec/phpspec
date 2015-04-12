@@ -76,6 +76,14 @@ class FilesystemContext implements Context, MatchersProviderInterface
     }
 
     /**
+     * @Given the config file located in :folder contains:
+     */
+    public function theConfigFileInFolderContains($folder, PyStringNode $contents)
+    {
+        $this->theFileContains($folder.DIRECTORY_SEPARATOR.'phpspec.yml', $contents);
+    }
+
+    /**
      * @Given there is no file :file
      */
     public function thereIsNoFile($file)
