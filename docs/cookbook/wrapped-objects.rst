@@ -15,7 +15,7 @@ for example:
 
 .. code-block:: php
 
-    function_it_should_handle_something($somethingToHandle)
+    function it_should_handle_something($somethingToHandle)
     {
         $this->shouldHandle($somethingToHandle);
     }
@@ -25,7 +25,7 @@ call thinking it is a matcher. You can avoid this by using ``callOnWrappedObject
 
 .. code-block:: php
 
-    function_it_should_handle_something($somethingToHandle)
+    function it_should_handle_something($somethingToHandle)
     {
         $this->callOnWrappedObject('shouldHandle', array($somethingToHandle));
     }
