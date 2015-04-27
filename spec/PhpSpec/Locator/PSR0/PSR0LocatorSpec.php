@@ -58,7 +58,6 @@ class PSR0LocatorSpec extends ObjectBehavior
         $this->beConstructedWith('Cust\Ns', '', dirname(__DIR__), __DIR__);
 
         $this->getSpecNamespace()->shouldReturn('Cust\Ns\\');
-        $this->getSpecNamespace()->shouldNotReturn('\Cust\Ns\\');
 
         $this->getFullSpecPath()->shouldReturn(__DIR__.DIRECTORY_SEPARATOR.'Cust'.DIRECTORY_SEPARATOR.'Ns'.DIRECTORY_SEPARATOR);
     }
