@@ -62,7 +62,7 @@ class ArrayKeyValueMatcher extends BasicMatcher
             return $subject->offsetExists($key) && $subject->offsetGet($key) === $value;
         }
 
-        return (isset($subject[$key]) || array_key_exists($arguments[0], $subject) && $subject[$key] === $value);
+        return (isset($subject[$key]) || array_key_exists($arguments[0], $subject)) && $subject[$key] === $value;
     }
 
     /**
