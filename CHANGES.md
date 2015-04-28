@@ -1,3 +1,8 @@
+Upcoming
+========
+
+* Fix false positives in `shouldHaveKeyWithValue` matcher
+
 2.2.0 / 2015-04-18
 ==================
 
