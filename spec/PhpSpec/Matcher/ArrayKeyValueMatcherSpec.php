@@ -34,12 +34,33 @@ class ArrayKeyValueMatcherSpec extends ObjectBehavior
         $this->shouldNotThrow()->duringPositiveMatch('haveKeyWithValue', array('abc' => 123), array('abc', 123));
     }
 
+    function it_does_not_match_array_with_wrong_value_for_specified_key()
+    {
+        $this->shouldThrow()->duringPositiveMatch(
+            'haveKeyWithValue',
+            array('abc' => 123),
+            array('abc', 456)
+        );
+    }
+
     function it_matches_ArrayObject_with_correct_value_for_specified_offset(ArrayObject $array)
     {
         $array->offsetExists('abc')->willReturn(true);
         $array->offsetGet('abc')->willReturn(123);
 
         $this->shouldNotThrow()->duringPositiveMatch('haveKeyWithValue', $array, array('abc', 123));
+    }
+
+    function it_does_not_match_ArrayObject_with_wrong_value_for_specified_offset(ArrayObject $array)
+    {
+        $array->offsetExists('abc')->willReturn(true);
+        $array->offsetGet('abc')->willReturn(123);
+
+        $this->shouldThrow()->duringPositiveMatch(
+            'haveKeyWithValue',
+            $array,
+            array('abc', 456)
+        );
     }
 
     function it_does_not_match_array_without_specified_key()
