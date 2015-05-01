@@ -193,4 +193,4 @@ To load a custom bootstrap when running phpspec, use the ``console.io.bootstrap`
 
 .. code-block:: yaml
 
-    console.io.bootstrap: path/to/different-bootstrap.php
+    bootstrap: path/to/different-bootstrap.php
