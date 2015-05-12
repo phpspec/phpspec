@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Shutdown;
 
 use PhpSpec\ObjectBehavior;
-use PhpSpec\Shutdown\Shutdown;
 use Prophecy\Argument;
 
 class ShutdownSpec extends ObjectBehavior
@@ -20,6 +19,6 @@ class ShutdownSpec extends ObjectBehavior
 
     function it_should_update_the_formatter_on_shutdown()
     {
-        //update
+        $this->updateConsole();
     }
 }

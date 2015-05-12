@@ -9,4 +9,9 @@ class Shutdown
     {
         echo 'registered shutdown';
     }
+
+    public function updateConsole()
+    {
+        // TODO: write logic here
+    }
 }
