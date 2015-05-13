@@ -5,9 +5,9 @@ namespace spec\PhpSpec\Listener;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-class FatalErrorListenerSpec extends ObjectBehavior {
+class StateListenerSpec extends ObjectBehavior {
     function it_is_initializable() {
-        $this->shouldHaveType('PhpSpec\Listener\FatalErrorListener');
+        $this->shouldHaveType('PhpSpec\Listener\StateListener');
     }
 
     function it_should_implement_event_subscriber_interface() {

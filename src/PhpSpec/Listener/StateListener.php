@@ -4,7 +4,7 @@ namespace PhpSpec\Listener;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class FatalErrorListener implements EventSubscriberInterface {
+class StateListener implements EventSubscriberInterface {
 
     public static function getSubscribedEvents() {
         return array(

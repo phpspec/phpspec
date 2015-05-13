@@ -12,6 +12,6 @@ class Shutdown
 
     public function updateConsole()
     {
-        // TODO: write logic here
+        // TODO: write logic here send current state IO handler
     }
 }
