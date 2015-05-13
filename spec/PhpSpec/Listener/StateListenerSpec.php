@@ -2,6 +2,8 @@
 
 namespace spec\PhpSpec\Listener;
 
+use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Message\Example;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
@@ -14,18 +16,18 @@ class StateListenerSpec extends ObjectBehavior {
         $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
     }
 
-    function it_should_call_beforeExample() {
-        $this->beforeExample();
+    function it_should_call_beforeExample(ExampleEvent $example, Example $message) {
+        $this->beforeExample($example, $message);
     }
 
-    function it_should_call_afterExample()
+    function it_should_call_afterExample(ExampleEvent $example, Example $message)
     {
-        $this->afterExample();
+        $this->afterExample($example, $message);
     }
 
-    function it_should_call_afterSuite()
+    function it_should_call_afterSuite(ExampleEvent $example, Example $message)
     {
-        $this->afterSuite();
+        $this->afterSuite($example, $message);
     }
 
 

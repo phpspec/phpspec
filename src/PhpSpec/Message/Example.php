@@ -4,11 +4,13 @@ namespace PhpSpec\Message;
 
 class Example implements ExampleInterface
 {
-    public function setExampleMessage() {
-        // TODO: Implement setExampleMessage() method.
+    private $currentExample;
+
+    public function setExampleMessage($currentExample) {
+        $this->currentExample = $currentExample;
     }
 
     public function getExampleMessage() {
-        // TODO: Implement getExampleMessage() method.
+        return $this->currentExample;
     }
 }
