@@ -3,11 +3,18 @@
 namespace spec\PhpSpec\Listener;
 
 use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Message\Example;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 class StateListenerSpec extends ObjectBehavior {
+
+    function let(Example $message)
+    {
+        $this->beConstructedWith($message);
+    }
+
     function it_is_initializable() {
         $this->shouldHaveType('PhpSpec\Listener\StateListener');
     }
@@ -25,7 +32,7 @@ class StateListenerSpec extends ObjectBehavior {
         $this->afterExample($example, $message);
     }
 
-    function it_should_call_afterSuite(ExampleEvent $example, Example $message)
+    function it_should_call_afterSuite(SuiteEvent $example, Example $message)
     {
         $this->afterSuite($example, $message);
     }

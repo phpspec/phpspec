@@ -3,10 +3,17 @@
 namespace PhpSpec\Listener;
 
 use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Message\Example;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class StateListener implements EventSubscriberInterface {
+class StateListener implements EventSubscriberInterface
+{
+
+    /**
+     * @var Example
+     */
+    private $message;
 
     public static function getSubscribedEvents() {
         return array(
@@ -16,18 +23,23 @@ class StateListener implements EventSubscriberInterface {
         );
     }
 
-    public function beforeExample(ExampleEvent $example, Example $message)
+    public function __construct(Example $message)
     {
-        $message->setExampleMessage($example->getTitle());
+        $this->message = $message;
     }
 
-    public function afterExample(ExampleEvent $example, Example $message)
+    public function beforeExample(ExampleEvent $event)
     {
-        $message->setExampleMessage($example->getTitle());
+        $this->message->setExampleMessage($event->getTitle());
     }
 
-    public function afterSuite(ExampleEvent $example, Example $message)
+    public function afterExample(ExampleEvent $event)
     {
-        $message->setExampleMessage($example->getTitle());
+        $this->message->setExampleMessage($event->getTitle());
+    }
+
+    public function afterSuite(SuiteEvent $event)
+    {
+        $this->message->setExampleMessage($event->getResult());
     }
 }

@@ -14,7 +14,7 @@ class ShutdownSpec extends ObjectBehavior
 
     function it_should_register_a_shutdown_method()
     {
-        $this::register()->shouldReturn(null);
+        $this::register()->shouldHaveType('PhpSpec\Shutdown\Shutdown');
     }
 
     function it_should_update_the_formatter_on_shutdown()

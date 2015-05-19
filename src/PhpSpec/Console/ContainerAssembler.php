@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Console;
 
+use PhpSpec\Message\Example;
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
@@ -50,6 +51,7 @@ class ContainerAssembler
         $this->setupResultConverter($container);
         $this->setupRerunner($container);
         $this->setupMatchers($container);
+        $this->setupMessage($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -180,6 +182,11 @@ class ContainerAssembler
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator'),
                 $c->get('util.method_analyser')
+            );
+        });
+        $container->setShared('event_dispatcher.listeners.state_listener', function (ServiceContainer $c) {
+            return new Listener\StateListener(
+                $c->get('message.example')
             );
         });
         $container->setShared('util.method_analyser', function () {
@@ -608,5 +615,16 @@ class ContainerAssembler
         $container->setShared('process.phpexecutablefinder', function () {
             return new PhpExecutableFinder();
         });
+    }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupMessage(ServiceContainer $container)
+    {
+        $container->set('message.example', function () {
+            return new Example();
+        });
+
     }
 }

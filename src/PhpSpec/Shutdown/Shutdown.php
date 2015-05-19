@@ -5,13 +5,18 @@ namespace PhpSpec\Shutdown;
 class Shutdown
 {
 
+    public function __construct()
+    {
+        register_shutdown_function(array($this, 'updateConsole'));
+    }
+
     public static function register()
     {
-        echo 'registered shutdown';
+        return new Shutdown();
     }
 
     public function updateConsole()
     {
-        // TODO: write logic here send current state IO handler
+        echo 'Shutting Down Baby';
     }
 }
