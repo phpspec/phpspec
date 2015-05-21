@@ -14,6 +14,7 @@
 namespace PhpSpec\Console;
 
 use PhpSpec\Console\Prompter\Factory;
+use PhpSpec\Message\Example;
 use PhpSpec\Shutdown\Shutdown;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
@@ -59,8 +60,6 @@ class Application extends BaseApplication
      */
     public function doRun(InputInterface $input, OutputInterface $output)
     {
-        Shutdown::register();
-
         $helperSet = $this->getHelperSet();
         $this->container->set('console.input', $input);
         $this->container->set('console.output', $output);
@@ -74,6 +73,8 @@ class Application extends BaseApplication
 
         $assembler = new ContainerAssembler();
         $assembler->build($this->container);
+
+        new Shutdown($this->container->get('message.example'));
 
         $this->loadConfigurationFile($input, $this->container);
 

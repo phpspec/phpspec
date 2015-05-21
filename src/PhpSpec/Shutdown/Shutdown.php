@@ -2,21 +2,22 @@
 
 namespace PhpSpec\Shutdown;
 
+use PhpSpec\Message\Example;
+
 class Shutdown
 {
+    /**
+     * @var Example
+     */
+    private $message;
 
-    public function __construct()
-    {
+    public function __construct(Example $message) {
         register_shutdown_function(array($this, 'updateConsole'));
-    }
-
-    public static function register()
-    {
-        return new Shutdown();
+        $this->message = $message;
     }
 
     public function updateConsole()
     {
-        echo 'Shutting Down Baby';
+//        echo $this->message->getExampleMessage() . PHP_EOL;
     }
 }
