@@ -34,9 +34,14 @@ class ArrayKeyValueMatcherSpec extends ObjectBehavior
         $this->shouldBeAnInstanceOf('PhpSpec\Matcher\MatcherInterface');
     }
 
-    function it_responds_to_haveKeyWithValue()
+    function it_responds_to_haveKeyWithValue_with_array_subject()
     {
         $this->supports('haveKeyWithValue', array(), array('', ''))->shouldReturn(true);
+    }
+
+    function it_responds_to_haveKeyWithValue_with_array_access_subject()
+    {
+        $this->supports('haveKeyWithValue', new \ArrayIterator(), array('', ''))->shouldReturn(true);
     }
 
     function it_does_not_respond_to_haveKeyWithValue_with_non_array_subject()
