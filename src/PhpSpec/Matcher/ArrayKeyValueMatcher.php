@@ -41,7 +41,11 @@ class ArrayKeyValueMatcher extends BasicMatcher
      */
     public function supports($name, $subject, array $arguments)
     {
-        return 'haveKeyWithValue' === $name && 2 == count($arguments);
+        return
+            (is_array($subject) || $subject instanceof \ArrayAccess) &&
+            'haveKeyWithValue' === $name &&
+            2 == count($arguments)
+        ;
     }
 
     /**
@@ -52,10 +56,6 @@ class ArrayKeyValueMatcher extends BasicMatcher
      */
     protected function matches($subject, array $arguments)
     {
-        if (!is_array($subject) && !$subject instanceof \ArrayAccess) {
-            return false;
-        }
-
         $key = $arguments[0];
         $value  = $arguments[1];
 
@@ -75,13 +75,6 @@ class ArrayKeyValueMatcher extends BasicMatcher
      */
     protected function getFailureException($name, $subject, array $arguments)
     {
-        if (!is_array($subject) && !$subject instanceof \ArrayAccess) {
-            return new FailureException(sprintf(
-                'Expected array or instance of \ArrayAccess, got %s',
-                $this->presenter->presentValue(is_object($subject) ? get_class($subject) : gettype($subject))
-            ));
-        }
-
         $key = $arguments[0];
 
         if (!$this->offsetExists($key, $subject)) {

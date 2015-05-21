@@ -39,29 +39,9 @@ class ArrayKeyValueMatcherSpec extends ObjectBehavior
         $this->supports('haveKeyWithValue', array(), array('', ''))->shouldReturn(true);
     }
 
-    function it_does_not_matches_null_value()
+    function it_does_not_respond_to_haveKeyWithValue_with_non_array_subject()
     {
-        $this->shouldThrow(new FailureException('Expected array or instance of \ArrayAccess, got NULL'))->duringPositiveMatch('haveKeyWithValue', null, array('abc', 123));
-    }
-
-    function it_does_not_matches_string_value()
-    {
-        $this->shouldThrow(new FailureException('Expected array or instance of \ArrayAccess, got string'))->duringPositiveMatch('haveKeyWithValue', 'foo', array('abc', 123));
-    }
-
-    function it_does_not_matches_integer_value()
-    {
-        $this->shouldThrow(new FailureException('Expected array or instance of \ArrayAccess, got integer'))->duringPositiveMatch('haveKeyWithValue', 42, array('abc', 123));
-    }
-
-    function it_does_not_matches_double_value()
-    {
-        $this->shouldThrow(new FailureException('Expected array or instance of \ArrayAccess, got double'))->duringPositiveMatch('haveKeyWithValue', 1.2, array('abc', 123));
-    }
-
-    function it_does_not_matches_instance_of_something_else_than_ArrayObject()
-    {
-        $this->shouldThrow(new FailureException('Expected array or instance of \ArrayAccess, got stdClass'))->duringPositiveMatch('haveKeyWithValue', new \StdClass(), array('abc', 123));
+        $this->supports('haveKeyWithValue', null, array('', ''))->shouldReturn(false);
     }
 
     function it_matches_array_with_correct_value_for_specified_key()
