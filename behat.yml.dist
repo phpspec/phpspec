@@ -2,6 +2,10 @@ default:
   suites:
     application:
       contexts: [ ApplicationContext, FilesystemContext ]
+      filters: { tags: ~@isolated }
+    isolated:
+      contexts: [ IsolatedProcessContext, FilesystemContext ]
+      filters: { tags: @isolated }
   formatters:
     progress: ~
 

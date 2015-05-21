@@ -14,8 +14,6 @@
 namespace PhpSpec\Console;
 
 use PhpSpec\Console\Prompter\Factory;
-use PhpSpec\Message\Example;
-use PhpSpec\Shutdown\Shutdown;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -74,8 +72,6 @@ class Application extends BaseApplication
         $assembler = new ContainerAssembler();
         $assembler->build($this->container);
 
-        new Shutdown($this->container->get('message.example'));
-
         $this->loadConfigurationFile($input, $this->container);
 
         foreach ($this->container->getByPrefix('console.commands') as $command) {
@@ -85,6 +81,8 @@ class Application extends BaseApplication
         $this->setDispatcher($this->container->get('console_event_dispatcher'));
 
         $this->container->get('console.io')->setConsoleWidth($this->getTerminalWidth());
+
+        $this->container->get('process.shutdown')->registerShutdown();
 
         return parent::doRun($input, $output);
     }
