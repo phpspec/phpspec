@@ -14,6 +14,7 @@
 namespace PhpSpec\Console;
 
 use PhpSpec\Message\Example;
+use PhpSpec\Shutdown\Shutdown;
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
@@ -52,6 +53,7 @@ class ContainerAssembler
         $this->setupRerunner($container);
         $this->setupMatchers($container);
         $this->setupMessage($container);
+        $this->setupShutdown($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -637,4 +639,18 @@ class ContainerAssembler
             return new Example();
         });
     }
+
+  /**
+   * @param ServiceContainer $container
+   */
+    private function setupShutdown(ServiceContainer $container)
+    {
+        $container->set('shutdown.shutdown', function(ServiceContainer $c){
+          return new Shutdown(
+            $c->get('message.example'),
+            $c->get('formatter.formatters.fatal')
+          );
+        });
+    }
+
 }

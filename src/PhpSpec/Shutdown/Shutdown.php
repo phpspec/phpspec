@@ -17,8 +17,8 @@ class Shutdown
   private $formatter;
 
   public function __construct(Example $message, FatalFormatter $formatter) {
-        register_shutdown_function(array($this, 'updateConsole'));
-        $this->message = $message;
+      register_shutdown_function(array($this, 'updateConsole'));
+      $this->message = $message;
       $this->formatter = $formatter;
   }
 
