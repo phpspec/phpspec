@@ -40,6 +40,6 @@ class StateListener implements EventSubscriberInterface
 
     public function afterSuite(SuiteEvent $event)
     {
-        $this->message->setExampleMessage($event->getResult());
+      $this->message->setExampleMessage($event->getResult());
     }
 }

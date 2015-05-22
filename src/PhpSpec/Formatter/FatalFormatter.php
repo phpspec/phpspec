@@ -19,6 +19,9 @@ class FatalFormatter extends ConsoleFormatter
 
   public function displayFatal(Example $message)
   {
-    $this->io->writeln($message->getExampleMessage());
+    if ($message->getExampleMessage())
+    {
+      $this->io->writeln($message->getExampleMessage());
+    }
   }
 }
