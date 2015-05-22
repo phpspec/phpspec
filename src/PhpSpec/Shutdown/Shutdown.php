@@ -2,6 +2,7 @@
 
 namespace PhpSpec\Shutdown;
 
+use PhpSpec\Formatter\FatalFormatter;
 use PhpSpec\Message\Example;
 
 class Shutdown
@@ -10,14 +11,19 @@ class Shutdown
      * @var Example
      */
     private $message;
+  /**
+   * @var FatalFormatter
+   */
+  private $formatter;
 
-    public function __construct(Example $message) {
+  public function __construct(Example $message, FatalFormatter $formatter) {
         register_shutdown_function(array($this, 'updateConsole'));
         $this->message = $message;
-    }
+      $this->formatter = $formatter;
+  }
 
     public function updateConsole()
     {
-//        echo $this->message->getExampleMessage() . PHP_EOL;
+      $this->formatter->displayFatal($this->message);
     }
 }

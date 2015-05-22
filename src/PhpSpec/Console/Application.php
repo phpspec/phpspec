@@ -74,7 +74,8 @@ class Application extends BaseApplication
         $assembler = new ContainerAssembler();
         $assembler->build($this->container);
 
-        new Shutdown($this->container->get('message.example'));
+        //TODO: Make into a Service
+        new Shutdown($this->container->get('message.example'), $this->container->get('formatter.formatters.fatal'));
 
         $this->loadConfigurationFile($input, $this->container);
 

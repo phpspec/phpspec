@@ -456,6 +456,16 @@ class ContainerAssembler
                 return $c->get('formatter.formatters.html');
             }
         );
+        $container->set(
+            'formatter.formatters.fatal',
+            function (ServiceContainer $c) {
+                return new SpecFormatter\FatalFormatter(
+                  $c->get('formatter.presenter'),
+                  $c->get('console.io'),
+                  $c->get('event_dispatcher.listeners.stats')
+                );
+            }
+        );
 
         $container->addConfigurator(function (ServiceContainer $c) {
             $formatterName = $c->getParam('formatter.name', 'progress');
@@ -471,6 +481,7 @@ class ContainerAssembler
             }
             $c->set('event_dispatcher.listeners.formatter', $formatter);
         });
+
     }
 
     /**
