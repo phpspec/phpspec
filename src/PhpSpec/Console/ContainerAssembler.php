@@ -635,7 +635,7 @@ class ContainerAssembler
      */
     private function setupMessage(ServiceContainer $container)
     {
-        $container->set('message.example', function () {
+        $container->setShared('message.example', function () {
             return new Example();
         });
     }
