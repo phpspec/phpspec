@@ -24,17 +24,17 @@ class StateListenerSpec extends ObjectBehavior {
     }
 
     function it_should_call_beforeExample(ExampleEvent $example, Example $message) {
-        $this->beforeExample($example, $message);
+        $this->exampleMessage($example, $message);
     }
 
     function it_should_call_afterExample(ExampleEvent $example, Example $message)
     {
-        $this->afterExample($example, $message);
+        $this->exampleMessage($example, $message);
     }
 
     function it_should_call_afterSuite(SuiteEvent $example, Example $message)
     {
-        $this->afterSuite($example, $message);
+        $this->suiteMessage($example, $message);
     }
 
 

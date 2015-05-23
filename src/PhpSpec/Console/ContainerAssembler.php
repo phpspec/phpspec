@@ -645,7 +645,7 @@ class ContainerAssembler
    */
     private function setupShutdown(ServiceContainer $container)
     {
-        $container->set('shutdown.shutdown', function(ServiceContainer $c){
+        $container->setShared('shutdown.shutdown', function(ServiceContainer $c){
           return new Shutdown(
             $c->get('message.example'),
             $c->get('formatter.formatters.fatal')

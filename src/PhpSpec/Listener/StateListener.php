@@ -17,9 +17,9 @@ class StateListener implements EventSubscriberInterface
 
     public static function getSubscribedEvents() {
         return array(
-            'beforeExample' => array('beforeExample', -20),
-            'afterExample'  => array('afterExample', -20),
-            'afterSuite'    => array('afterSuite', -20),
+            'beforeExample' => array('exampleMessage', -20),
+            'afterExample'  => array('exampleMessage', -20),
+            'afterSuite'    => array('suiteMessage', -20),
         );
     }
 
@@ -28,17 +28,12 @@ class StateListener implements EventSubscriberInterface
         $this->message = $message;
     }
 
-    public function beforeExample(ExampleEvent $event)
+    public function exampleMessage(ExampleEvent $event)
     {
         $this->message->setExampleMessage($event->getTitle());
     }
 
-    public function afterExample(ExampleEvent $event)
-    {
-        $this->message->setExampleMessage($event->getTitle());
-    }
-
-    public function afterSuite(SuiteEvent $event)
+    public function suiteMessage(SuiteEvent $event)
     {
       $this->message->setExampleMessage($event->getResult());
     }
