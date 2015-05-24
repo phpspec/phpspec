@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Console;
 
-use PhpSpec\Message\Example;
+use PhpSpec\Message\Fatal;
 use PhpSpec\Shutdown\Shutdown;
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
@@ -188,7 +188,7 @@ class ContainerAssembler
         });
         $container->setShared('event_dispatcher.listeners.state_listener', function (ServiceContainer $c) {
             return new Listener\StateListener(
-                $c->get('message.example')
+                $c->get('message.fatal')
             );
         });
         $container->setShared('util.method_analyser', function () {
@@ -635,8 +635,8 @@ class ContainerAssembler
      */
     private function setupMessage(ServiceContainer $container)
     {
-        $container->setShared('message.example', function () {
-            return new Example();
+        $container->setShared('message.fatal', function () {
+            return new Fatal();
         });
     }
 
@@ -647,7 +647,7 @@ class ContainerAssembler
     {
         $container->setShared('shutdown.shutdown', function(ServiceContainer $c){
           return new Shutdown(
-            $c->get('message.example'),
+            $c->get('message.fatal'),
             $c->get('formatter.formatters.fatal')
           );
         });
