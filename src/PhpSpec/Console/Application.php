@@ -74,7 +74,7 @@ class Application extends BaseApplication
         $assembler = new ContainerAssembler();
         $assembler->build($this->container);
 
-        $this->container->get('shutdown.shutdown');
+        $this->container->get('process.shutdown');
 
         $this->loadConfigurationFile($input, $this->container);
 

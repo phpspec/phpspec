@@ -14,7 +14,7 @@
 namespace PhpSpec\Console;
 
 use PhpSpec\Message\Fatal;
-use PhpSpec\Shutdown\Shutdown;
+use PhpSpec\Process\Shutdown\Shutdown;
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
@@ -645,7 +645,7 @@ class ContainerAssembler
    */
     private function setupShutdown(ServiceContainer $container)
     {
-        $container->setShared('shutdown.shutdown', function(ServiceContainer $c){
+        $container->setShared('process.shutdown', function(ServiceContainer $c){
           return new Shutdown(
             $c->get('message.fatal'),
             $c->get('formatter.formatters.fatal')

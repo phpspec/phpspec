@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpSpec\Shutdown;
+namespace PhpSpec\Process\Shutdown;
 
 use PhpSpec\Formatter\FatalFormatter;
 use PhpSpec\Message\MessageInterface;
