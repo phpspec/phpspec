@@ -3,7 +3,7 @@
 namespace PhpSpec\Shutdown;
 
 use PhpSpec\Formatter\FatalFormatter;
-use PhpSpec\Message\Example;
+use PhpSpec\Message\MessageInterface;
 
 class Shutdown
 {
@@ -16,7 +16,7 @@ class Shutdown
    */
   private $formatter;
 
-  public function __construct(Example $message, FatalFormatter $formatter) {
+  public function __construct(MessageInterface $message, FatalFormatter $formatter) {
       register_shutdown_function(array($this, 'updateConsole'));
       $this->message = $message;
       $this->formatter = $formatter;

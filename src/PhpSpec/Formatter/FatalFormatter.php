@@ -6,6 +6,7 @@ use PhpSpec\Console\IO;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\Message\Example;
+use PhpSpec\Message\MessageInterface;
 
 class FatalFormatter extends ConsoleFormatter
 {
@@ -17,11 +18,11 @@ class FatalFormatter extends ConsoleFormatter
     $this->io = $io;
   }
 
-  public function displayFatal(Example $message)
+  public function displayFatal(MessageInterface $message)
   {
-    if ($message->getExampleMessage())
+    if ($message->getMessage())
     {
-      $this->io->writeln($message->getExampleMessage());
+      $this->io->writeln($message->getMessage());
     }
   }
 }

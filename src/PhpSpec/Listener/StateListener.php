@@ -4,7 +4,7 @@ namespace PhpSpec\Listener;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
-use PhpSpec\Message\Example;
+use PhpSpec\Message\MessageInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class StateListener implements EventSubscriberInterface
@@ -23,18 +23,18 @@ class StateListener implements EventSubscriberInterface
         );
     }
 
-    public function __construct(Example $message)
+    public function __construct(MessageInterface $message)
     {
         $this->message = $message;
     }
 
     public function exampleMessage(ExampleEvent $event)
     {
-        $this->message->setExampleMessage($event->getTitle());
+        $this->message->setMessage($event->getTitle());
     }
 
     public function suiteMessage(SuiteEvent $event)
     {
-      $this->message->setExampleMessage($event->getResult());
+      $this->message->setMessage($event->getResult());
     }
 }

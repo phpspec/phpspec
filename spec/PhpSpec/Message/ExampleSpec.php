@@ -12,21 +12,21 @@ class ExampleSpec extends ObjectBehavior {
         $this->shouldHaveType('PhpSpec\Message\Example');
     }
 
-    function it_should_implement_the_Example_Message_Interface() {
-        $this->shouldHaveType('PhpSpec\Message\ExampleInterface');
+    function it_should_implement_the_Message_Interface() {
+        $this->shouldHaveType('PhpSpec\Message\MessageInterface');
     }
 
     function it_should_set_a_message()
     {
       $message = new Example();
-      $message->setExampleMessage('test');
-      expect($message->getExampleMessage())->toBe('test');
+      $message->setMessage('test');
+      expect($message->getMessage())->toBe('test');
     }
 
     function it_should_be_null_on_construction()
     {
       $message = new Example();
-      expect($message->getExampleMessage())->toBe(null);
+      expect($message->getMessage())->toBe(null);
     }
 
 }
