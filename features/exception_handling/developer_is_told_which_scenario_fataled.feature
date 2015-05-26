@@ -3,35 +3,36 @@ Feature: As a Developer
   So that I can better trace where my changes caused a fatal error
 
   Scenario: Spec attempts to call an undeclared function
-    Given the spec file "spec/Runner/ExceptionExample3/MarkdownSpec.php" contains:
-    """
-    <?php
-
-    namespace spec\Runner\ExceptionExample3;
-
-    use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
-
-    class MarkdownSpec extends ObjectBehavior
-    {
-        function let()
-        {
-            $this->beConstructedWith('nothrow');
-        }
-
-        function it_throws_an_exception_using_magic_syntax()
-        {
-            $this->shouldThrow('Exception')->during__construct('throw');
-        }
-    }
-    """
-	And the class file "src/Runner/ExceptionExample3/Markdown.php" contains:
-    """
+    Given the spec file "spec/Message/Fatal3/FatalSpec.php" contains:
+      """
       <?php
 
-      namespace Runner\ExceptionExample3;
+      namespace spec\Message\Fatal3;
 
-      class Markdown
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class FatalSpec extends ObjectBehavior
+      {
+          function let()
+          {
+              $this->beConstructedWith('nothrow');
+          }
+
+          function it_throws_an_exception_using_magic_syntax()
+          {
+              $this->callAny();
+          }
+      }
+
+      """
+    And the class file "src/Message/Fatal3/Fatal.php" contains:
+      """
+      <?php
+
+      namespace Message\Fatal3;
+
+      class Fatal
       {
           public function __construct($param)
           {
@@ -43,44 +44,53 @@ Feature: As a Developer
 
       """
     When I run phpspec
-    Then I should see "it causes a fatal error"
+    Then I should see "it throws an exception using magic syntax"
 
-  Scenario: No message displayed when the run is successful
-    Given the spec file "spec/Message/ProcessSpec/Limit2.php" contains:
-    """
+  Scenario: No message displayed when the run is successful 
+    Given the spec file "spec/Message/Fatal3/NonFatalSpec.php" contains:
+      """
       <?php
 
-      namespace spec\Message\ProcessSpec;
+      namespace spec\Message\Fatal3;
 
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
 
-      class Limit2Spec extends ObjectBehavior
+      class NonFatalSpec extends ObjectBehavior
       {
           function let()
           {
               $this->beConstructedWith('nothrow');
           }
 
-          function it_causes_a_fatal_error()
+          function it_throws_an_exception_using_magic_syntax()
           {
-    :          $this->callMe();
+              $this->callAny();
           }
       }
 
       """
-    And the class file "src/Message/Process/Limit2.php" contains:
-    """
+    And the class file "src/Message/Fatal3/Fatal.php" contains:
+      """
       <?php
 
-      namespace src\Message\Process;
+      namespace Message\Fatal3;
 
-      class Limit2 {
-          public function callMe()
+      class NonFatal
+      {
+          public function __construct($param)
+          {
+              if ($param == 'throw') {
+                  throw new \Exception();
+              }
+          }
+
+          public function callAny()
           {
               return true;
           }
       }
-    """
+
+      """
     When I run phpspec
     Then the suite should pass
