@@ -14,14 +14,9 @@ Feature: As a Developer
 
       class FatalSpec extends ObjectBehavior
       {
-          function let()
-          {
-              $this->beConstructedWith('nothrow');
-          }
-
           function it_throws_an_exception_using_magic_syntax()
           {
-              $this->callAny();
+              $this->randomFatalError()->shouldBeCalled();
           }
       }
 
