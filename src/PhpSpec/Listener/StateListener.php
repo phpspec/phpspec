@@ -15,7 +15,8 @@ class StateListener implements EventSubscriberInterface
      */
     private $message;
 
-    public static function getSubscribedEvents() {
+    public static function getSubscribedEvents()
+    {
         return array(
             'beforeExample' => array('exampleMessage', -20),
             'afterExample'  => array('exampleMessage', -20),

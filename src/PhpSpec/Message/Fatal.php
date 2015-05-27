@@ -6,11 +6,13 @@ class Fatal implements MessageInterface
 {
     private $currentExample;
 
-    public function setMessage($currentExample) {
+    public function setMessage($currentExample)
+    {
         $this->currentExample = $currentExample;
     }
 
-    public function getMessage() {
+    public function getMessage()
+    {
         return $this->currentExample;
     }
 }

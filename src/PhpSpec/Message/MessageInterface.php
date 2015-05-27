@@ -1,7 +1,8 @@
 <?php
 namespace PhpSpec\Message;
 
-interface MessageInterface {
+interface MessageInterface
+{
     public function setMessage($currentExample);
     public function getMessage();
 }

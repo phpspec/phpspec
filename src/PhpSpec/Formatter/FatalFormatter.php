@@ -20,8 +20,7 @@ class FatalFormatter extends ConsoleFormatter
 
   public function displayFatal(MessageInterface $message)
   {
-    if ($message->getMessage())
-    {
+    if ($message->getMessage()) {
       $this->io->writeln($message->getMessage());
     }
   }
