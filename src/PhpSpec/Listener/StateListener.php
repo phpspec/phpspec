@@ -35,6 +35,6 @@ class StateListener implements EventSubscriberInterface
 
     public function suiteMessage(SuiteEvent $event)
     {
-      $this->message->setMessage($event->getResult());
+        $this->message->setMessage($event->getResult());
     }
 }

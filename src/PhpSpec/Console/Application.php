@@ -74,7 +74,6 @@ class Application extends BaseApplication
         $assembler = new ContainerAssembler();
         $assembler->build($this->container);
 
-        $this->container->get('process.shutdown');
 
         $this->loadConfigurationFile($input, $this->container);
 
@@ -85,6 +84,7 @@ class Application extends BaseApplication
         $this->setDispatcher($this->container->get('console_event_dispatcher'));
 
         $this->container->get('console.io')->setConsoleWidth($this->getTerminalWidth());
+        $this->container->get('process.shutdown');
 
         return parent::doRun($input, $output);
     }
