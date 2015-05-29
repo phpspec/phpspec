@@ -25,5 +25,6 @@ class Shutdown
     public function updateConsole()
     {
       $this->formatter->displayFatal($this->message);
+        exit();
     }
 }
