@@ -645,11 +645,11 @@ class ContainerAssembler
    */
     private function setupShutdown(ServiceContainer $container)
     {
-        $container->setShared('process.shutdown', function(ServiceContainer $c){
-          return new Shutdown(
-            $c->get('message.fatal'),
-            $c->get('formatter.formatters.fatal')
-          );
+        $container->setShared('process.shutdown', function(ServiceContainer $c) {
+            return new Shutdown(
+                $c->get('message.fatal'),
+                $c->get('formatter.formatters.fatal')
+            );
         });
     }
 
