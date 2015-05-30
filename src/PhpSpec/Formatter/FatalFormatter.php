@@ -36,7 +36,7 @@ class FatalFormatter extends ConsoleFormatter
         if (!empty($error) && $message->getMessage()) {
             $this->output->writeln("Error Happened while executing the following example");
             $this->output->writeln($message->getMessage());
-            $this->output->writeln((error_get_last()['message']));
+            $this->output->writeln(($error['message']));
         }
     }
 }

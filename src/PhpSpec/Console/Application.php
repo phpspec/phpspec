@@ -86,6 +86,7 @@ class Application extends BaseApplication
         $this->container->get('console.io')->setConsoleWidth($this->getTerminalWidth());
 
         $this->container->get('process.shutdown')->registerShutdown();
+
         return parent::doRun($input, $output);
     }
 

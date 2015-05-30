@@ -86,7 +86,6 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
         $process->run();
         $this->lastOutput = $process->getOutput();
 
-//        expect((bool)$process->getErrorOutput())->toBe(false);
     }
 
     /**
