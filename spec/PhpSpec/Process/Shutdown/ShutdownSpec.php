@@ -14,6 +14,11 @@ class ShutdownSpec extends ObjectBehavior
         $this->beConstructedWith($message, $formatter);
     }
 
+    function it_should_register_the_shutdown_method()
+    {
+        $this->registerShutdown()->shouldReturn(true);
+    }
+
     function it_should_update_the_formatter_on_shutdown(MessageInterface $message)
     {
         $message->getMessage()->willReturn('Hello');

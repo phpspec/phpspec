@@ -18,12 +18,16 @@ class Shutdown
 
   public function __construct(MessageInterface $message, FatalFormatter $formatter)
   {
+      $this->message = $message;
+      $this->formatter = $formatter;
+  }
+
+  public function registerShutdown()
+  {
       ini_set('display_errors', '0');
       error_reporting(E_NOTICE);
       register_shutdown_function(array($this, 'updateConsole'));
-
-      $this->message = $message;
-      $this->formatter = $formatter;
+      return true;
   }
 
   public function updateConsole()
