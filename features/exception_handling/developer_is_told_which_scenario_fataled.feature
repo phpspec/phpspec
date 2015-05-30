@@ -17,7 +17,7 @@ Feature: As a Developer
       {
           function it_throws_an_exception_using_magic_syntax()
           {
-              $this->randomFatalError()->shouldBeCalled();
+              anything();
           }
       }
 
@@ -40,5 +40,6 @@ Feature: As a Developer
 
       """
     When I run phpspec
-    Then I should see "it throws an exception using magic syntax"
+    Then I should see "Error Happened while executing the following example"
+    And  I should see "it throws an exception using magic syntax"
 
