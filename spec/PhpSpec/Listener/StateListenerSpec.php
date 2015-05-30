@@ -41,5 +41,4 @@ class StateListenerSpec extends ObjectBehavior
         $this->suiteMessage($example, $message);
     }
 
-
 }

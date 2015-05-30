@@ -483,7 +483,6 @@ class ContainerAssembler
             }
             $c->set('event_dispatcher.listeners.formatter', $formatter);
         });
-
     }
 
     /**

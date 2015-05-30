@@ -14,8 +14,6 @@
 namespace PhpSpec\Console;
 
 use PhpSpec\Console\Prompter\Factory;
-use PhpSpec\Message\Example;
-use PhpSpec\Shutdown\Shutdown;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -73,7 +71,6 @@ class Application extends BaseApplication
 
         $assembler = new ContainerAssembler();
         $assembler->build($this->container);
-
 
         $this->loadConfigurationFile($input, $this->container);
 

@@ -16,7 +16,8 @@ namespace PhpSpec\Process\Shutdown;
 use PhpSpec\Formatter\FatalFormatter;
 use PhpSpec\Message\MessageInterface;
 
-class Shutdown {
+class Shutdown
+{
     /**
      * @var Example
      */
