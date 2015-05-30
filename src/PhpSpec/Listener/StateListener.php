@@ -18,8 +18,7 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Message\MessageInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class StateListener implements EventSubscriberInterface
-{
+class StateListener implements EventSubscriberInterface {
 
     /**
      * @var Example
@@ -30,8 +29,8 @@ class StateListener implements EventSubscriberInterface
     {
         return array(
             'beforeExample' => array('exampleMessage', -20),
-            'afterExample'  => array('exampleMessage', -20),
-            'afterSuite'    => array('suiteMessage', -20),
+            'afterExample' => array('exampleMessage', -20),
+            'afterSuite' => array('suiteMessage', -20),
         );
     }
 

@@ -13,7 +13,7 @@ class FatalFormatterSpec extends ObjectBehavior
 
     function let(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
     {
-      $this->beConstructedWith($presenter, $io, $stats);
+        $this->beConstructedWith($presenter, $io, $stats);
     }
 
     function it_is_initializable()

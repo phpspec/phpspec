@@ -18,32 +18,32 @@ use PhpSpec\Message\MessageInterface;
 
 class Shutdown
 {
-  /**
-   * @var Example
-   */
-  private $message;
+    /**
+     * @var Example
+     */
+    private $message;
 
-  /**
-   * @var FatalFormatter
-   */
-  private $formatter;
+    /**
+     * @var FatalFormatter
+     */
+    private $formatter;
 
-  public function __construct(MessageInterface $message, FatalFormatter $formatter)
-  {
-      $this->message = $message;
-      $this->formatter = $formatter;
-  }
+    public function __construct(MessageInterface $message, FatalFormatter $formatter)
+    {
+        $this->message = $message;
+        $this->formatter = $formatter;
+    }
 
-  public function registerShutdown()
-  {
-      ini_set('display_errors', '0');
-      error_reporting(E_NOTICE);
-      register_shutdown_function(array($this, 'updateConsole'));
-      return true;
-  }
+    public function registerShutdown()
+    {
+        ini_set('display_errors', '0');
+        error_reporting(E_NOTICE);
+        register_shutdown_function(array($this, 'updateConsole'));
+        return TRUE;
+    }
 
-  public function updateConsole()
-  {
-      $this->formatter->displayFatal($this->message);
-  }
+    public function updateConsole()
+    {
+        $this->formatter->displayFatal($this->message);
+    }
 }

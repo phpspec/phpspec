@@ -21,22 +21,22 @@ use PhpSpec\Message\MessageInterface;
 
 class FatalFormatter extends ConsoleFormatter
 {
-  private $io;
+    private $io;
 
-  public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
-  {
-    parent::__construct($presenter, $io, $stats);
-    $this->io = $io;
-  }
+    public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
+    {
+        parent::__construct($presenter, $io, $stats);
+        $this->io = $io;
+    }
 
-  public function displayFatal(MessageInterface $message)
-  {
-      $error = error_get_last();
+    public function displayFatal(MessageInterface $message)
+    {
+        $error = error_get_last();
 
-      if ($error && $message->getMessage()) {
-          $this->io->writeln("Error Happened while executing the following example");
-          $this->io->writeln($message->getMessage());
-          $this->io->writeln((error_get_last()['message']));
-      }
-  }
+        if ($error && $message->getMessage()) {
+            $this->io->writeln("Error Happened while executing the following example");
+            $this->io->writeln($message->getMessage());
+            $this->io->writeln((error_get_last()['message']));
+        }
+    }
 }
