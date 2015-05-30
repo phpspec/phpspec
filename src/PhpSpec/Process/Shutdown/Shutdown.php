@@ -7,10 +7,11 @@ use PhpSpec\Message\MessageInterface;
 
 class Shutdown
 {
-    /**
-     * @var Example
-     */
-    private $message;
+  /**
+   * @var Example
+   */
+  private $message;
+
   /**
    * @var FatalFormatter
    */
@@ -32,6 +33,6 @@ class Shutdown
 
   public function updateConsole()
   {
-    $this->formatter->displayFatal($this->message);
+      $this->formatter->displayFatal($this->message);
   }
 }
