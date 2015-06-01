@@ -11,18 +11,9 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Message;
+namespace PhpSpec\Process\Shutdown;
 
-class Fatal implements MessageInterface {
-    private $currentExample;
-
-    public function setMessage($currentExample)
-    {
-        $this->currentExample = $currentExample;
-    }
-
-    public function getMessage()
-    {
-        return $this->currentExample;
-    }
+interface ShutdownActionInterface
+{
+    public function runAction();
 }

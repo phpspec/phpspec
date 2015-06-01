@@ -4,14 +4,14 @@ namespace spec\PhpSpec\Listener;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
-use PhpSpec\Message\MessageInterface;
+use PhpSpec\Message\CurrentExample;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 class CurrentExampleListenerSpec extends ObjectBehavior
 {
 
-    function let(MessageInterface $message)
+    function let(CurrentExample $message)
     {
         $this->beConstructedWith($message);
     }
@@ -26,19 +26,29 @@ class CurrentExampleListenerSpec extends ObjectBehavior
         $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
     }
 
-    function it_should_call_beforeExample(ExampleEvent $example, MessageInterface $message)
+    function it_should_call_beforeExample(ExampleEvent $example, CurrentExample $message)
     {
-        $this->exampleMessage($example, $message);
+        $localMessage = 'in before example';
+        $example->getTitle()->willReturn($localMessage);
+        $message->setCurrentExample($localMessage)->shouldBeCalled();
+        $this->beforeExampleMessage($example);
+
     }
 
-    function it_should_call_afterExample(ExampleEvent $example, MessageInterface $message)
+    function it_should_call_afterExample(ExampleEvent $example, CurrentExample $message)
     {
-        $this->exampleMessage($example, $message);
+        $localMessage = 'in after example';
+        $example->getTitle()->willReturn($localMessage);
+        $message->setCurrentExample('After the example ' . $localMessage)->shouldBeCalled();
+        $this->afterExampleMessage($example);
     }
 
-    function it_should_call_afterSuite(SuiteEvent $example, MessageInterface $message)
+    function it_should_call_afterSuite(SuiteEvent $example, CurrentExample $message)
     {
-        $this->suiteMessage($example, $message);
+        $localMessage = '0';
+        $example->getResult()->willReturn($localMessage);
+        $message->setCurrentExample($localMessage)->shouldBeCalled();
+        $this->suiteMessage($example);
     }
 
 }

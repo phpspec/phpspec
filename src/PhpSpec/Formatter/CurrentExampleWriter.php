@@ -14,29 +14,25 @@
 namespace PhpSpec\Formatter;
 
 use PhpSpec\Console\IO;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Listener\StatisticsCollector;
-use PhpSpec\Message\Example;
-use PhpSpec\Message\MessageInterface;
+use PhpSpec\Message\CurrentExample;
 
-class FatalFormatter extends ConsoleFormatter
+class CurrentExampleWriter
 {
     private $output;
 
-    public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
+    public function __construct(IO $io)
     {
-        parent::__construct($presenter, $io, $stats);
         $this->output = $io;
     }
 
-    public function displayFatal(MessageInterface $message)
+    public function displayFatal(CurrentExample $message)
     {
         $error = error_get_last();
 
-        if (!empty($error) && $message->getMessage()) {
+        if (!empty($error) && $message->getCurrentExample()) {
             $this->output->writeln("Fatal error happened while executing the following example");
-            $this->output->writeln($message->getMessage());
-            $this->output->writeln(($error['message']));
+            $this->output->writeln($message->getCurrentExample());
+            $this->output->writeln($error['message']);
         }
     }
 }

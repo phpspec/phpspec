@@ -13,8 +13,9 @@
 
 namespace PhpSpec\Console;
 
-use PhpSpec\Message\Fatal;
+use PhpSpec\Message\CurrentExample;
 use PhpSpec\Process\Shutdown\Shutdown;
+use PhpSpec\Process\Shutdown\UpdateConsoleAction;
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
@@ -54,6 +55,7 @@ class ContainerAssembler
         $this->setupMatchers($container);
         $this->setupMessage($container);
         $this->setupShutdown($container);
+        $this->setupShutdownAction($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -188,7 +190,7 @@ class ContainerAssembler
         });
         $container->setShared('event_dispatcher.listeners.state_listener', function (ServiceContainer $c) {
             return new Listener\CurrentExampleListener(
-                $c->get('message.fatal')
+                $c->get('message.current_example')
             );
         });
         $container->setShared('util.method_analyser', function () {
@@ -459,12 +461,10 @@ class ContainerAssembler
             }
         );
         $container->set(
-            'formatter.formatters.fatal',
+            'formatter.formatters.current_example_writer',
             function (ServiceContainer $c) {
-                return new SpecFormatter\FatalFormatter(
-                  $c->get('formatter.presenter'),
-                  $c->get('console.io'),
-                  $c->get('event_dispatcher.listeners.stats')
+                return new SpecFormatter\CurrentExampleWriter(
+                  $c->get('console.io')
                 );
             }
         );
@@ -634,8 +634,8 @@ class ContainerAssembler
      */
     private function setupMessage(ServiceContainer $container)
     {
-        $container->setShared('message.fatal', function () {
-            return new Fatal();
+        $container->setShared('message.current_example', function () {
+            return new CurrentExample();
         });
     }
 
@@ -644,10 +644,20 @@ class ContainerAssembler
    */
     private function setupShutdown(ServiceContainer $container)
     {
-        $container->setShared('process.shutdown', function(ServiceContainer $c) {
-            return new Shutdown(
-                $c->get('message.fatal'),
-                $c->get('formatter.formatters.fatal')
+        $container->setShared('process.shutdown', function() {
+            return new Shutdown();
+        });
+    }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupShutdownAction(ServiceContainer $container)
+    {
+        $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) {
+            return new UpdateConsoleAction(
+                $c->get('message.current_example'),
+                $c->get('formatter.formatters.current_example_writer')
             );
         });
     }

@@ -2,26 +2,23 @@
 
 namespace spec\PhpSpec\Process\Shutdown;
 
-use PhpSpec\Formatter\FatalFormatter;
-use PhpSpec\Message\MessageInterface;
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Process\Shutdown\UpdateConsoleAction;
 use Prophecy\Argument;
 
 class ShutdownSpec extends ObjectBehavior
 {
-    function let(MessageInterface $message, FatalFormatter $formatter)
+    function it_returns_the_count_of_the_actions_registered(UpdateConsoleAction $action)
     {
-        $this->beConstructedWith($message, $formatter);
+        $this->count()->shouldReturn(0);
+        $this->registerAction($action);
+        $this->count()->shouldReturn(1);
     }
 
-    function it_should_register_the_shutdown_method()
+    function it_runs_register_shutdown(UpdateConsoleAction $action)
     {
-        $this->registerShutdown()->shouldReturn(true);
-    }
-
-    function it_should_update_the_formatter_on_shutdown(MessageInterface $message)
-    {
-        $message->getMessage()->willReturn('Hello');
-        $this->updateConsole();
+        $action->runAction()->shouldBeCalled();
+        $this->registerAction($action);
+        $this->registerShutdown();
     }
 }

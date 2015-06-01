@@ -15,37 +15,43 @@ namespace PhpSpec\Listener;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
-use PhpSpec\Message\MessageInterface;
+use PhpSpec\Message\CurrentExample;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class CurrentExampleListener implements EventSubscriberInterface {
 
     /**
-     * @var Example
+     * @var MessageInterface
      */
     private $message;
 
     public static function getSubscribedEvents()
     {
         return array(
-            'beforeExample' => array('exampleMessage', -20),
-            'afterExample' => array('exampleMessage', -20),
+            'beforeExample' => array('beforeExampleMessage', -20),
+            'afterExample' => array('afterExampleMessage', -20),
             'afterSuite' => array('suiteMessage', -20),
         );
     }
 
-    public function __construct(MessageInterface $message)
+    public function __construct(CurrentExample $message)
     {
         $this->message = $message;
     }
 
-    public function exampleMessage(ExampleEvent $event)
+    public function beforeExampleMessage(ExampleEvent $event)
     {
-        $this->message->setMessage($event->getTitle());
+        $this->message->setCurrentExample($event->getTitle());
+    }
+
+    public function afterExampleMessage(ExampleEvent $event)
+    {
+        $message = 'After the example ' . $event->getTitle();
+        $this->message->setCurrentExample($message);
     }
 
     public function suiteMessage(SuiteEvent $event)
     {
-        $this->message->setMessage($event->getResult());
+        $this->message->setCurrentExample($event->getResult());
     }
 }

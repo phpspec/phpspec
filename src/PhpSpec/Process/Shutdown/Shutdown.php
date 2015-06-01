@@ -13,37 +13,30 @@
 
 namespace PhpSpec\Process\Shutdown;
 
-use PhpSpec\Formatter\FatalFormatter;
-use PhpSpec\Message\MessageInterface;
-
 class Shutdown
 {
-    /**
-     * @var Example
-     */
-    private $message;
 
-    /**
-     * @var FatalFormatter
-     */
-    private $formatter;
+    protected $actions;
 
-    public function __construct(MessageInterface $message, FatalFormatter $formatter)
+    public function __construct()
     {
-        $this->message = $message;
-        $this->formatter = $formatter;
+        $this->actions = array();
     }
 
     public function registerShutdown()
     {
-        ini_set('display_errors', '0');
-        error_reporting(E_NOTICE);
-        register_shutdown_function(array($this, 'updateConsole'));
-        return true;
+        foreach ($this->actions as $shutdownActions) {
+            $shutdownActions->runAction();
+        }
     }
 
-    public function updateConsole()
+    public function registerAction(ShutdownActionInterface $action)
     {
-        $this->formatter->displayFatal($this->message);
+        $this->actions[] = $action;
+    }
+
+    public function count()
+    {
+        return count($this->actions);
     }
 }
