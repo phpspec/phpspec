@@ -8,7 +8,7 @@ use PhpSpec\Message\MessageInterface;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-class StateListenerSpec extends ObjectBehavior
+class CurrentExampleListenerSpec extends ObjectBehavior
 {
 
     function let(MessageInterface $message)
@@ -18,7 +18,7 @@ class StateListenerSpec extends ObjectBehavior
 
     function it_is_initializable()
     {
-        $this->shouldHaveType('PhpSpec\Listener\StateListener');
+        $this->shouldHaveType('PhpSpec\Listener\CurrentExampleListener');
     }
 
     function it_should_implement_event_subscriber_interface()

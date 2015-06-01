@@ -187,7 +187,7 @@ class ContainerAssembler
             );
         });
         $container->setShared('event_dispatcher.listeners.state_listener', function (ServiceContainer $c) {
-            return new Listener\StateListener(
+            return new Listener\CurrentExampleListener(
                 $c->get('message.fatal')
             );
         });
