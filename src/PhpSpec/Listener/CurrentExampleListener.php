@@ -28,8 +28,8 @@ class CurrentExampleListener implements EventSubscriberInterface {
     public static function getSubscribedEvents()
     {
         return array(
-            'beforeExample' => array('exampleMessage', -20),
-            'afterExample' => array('exampleMessage', -20),
+            'beforeExample' => array('beforeExampleMessage', -20),
+            'afterExample' => array('afterExampleMessage', -20),
             'afterSuite' => array('suiteMessage', -20),
         );
     }
@@ -39,9 +39,15 @@ class CurrentExampleListener implements EventSubscriberInterface {
         $this->message = $message;
     }
 
-    public function exampleMessage(ExampleEvent $event)
+    public function beforeExampleMessage(ExampleEvent $event)
     {
         $this->message->setMessage($event->getTitle());
+    }
+
+    public function afterExampleMessage(ExampleEvent $event)
+    {
+        $message = 'After the example ' . $event->getTitle();
+        $this->message->setMessage($message);
     }
 
     public function suiteMessage(SuiteEvent $event)

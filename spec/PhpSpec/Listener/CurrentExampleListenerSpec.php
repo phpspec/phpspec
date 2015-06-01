@@ -28,12 +28,12 @@ class CurrentExampleListenerSpec extends ObjectBehavior
 
     function it_should_call_beforeExample(ExampleEvent $example, MessageInterface $message)
     {
-        $this->exampleMessage($example, $message);
+        $this->beforeExampleMessage($example, $message);
     }
 
     function it_should_call_afterExample(ExampleEvent $example, MessageInterface $message)
     {
-        $this->exampleMessage($example, $message);
+        $this->afterExampleMessage($example, $message);
     }
 
     function it_should_call_afterSuite(SuiteEvent $example, MessageInterface $message)
