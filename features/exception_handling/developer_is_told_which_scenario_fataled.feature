@@ -4,11 +4,11 @@ Feature: As a Developer
   So that I can better trace where my changes caused a fatal error
 
   Scenario: Spec attempts to call an undeclared function
-    Given the spec file "spec/Message/Fatal3/FatalSpec.php" contains:
+    Given the spec file "spec/Message/Fatal/FatalSpec.php" contains:
       """
       <?php
 
-      namespace spec\Message\Fatal3;
+      namespace spec\Message\Fatal;
 
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
@@ -22,11 +22,11 @@ Feature: As a Developer
       }
 
       """
-    And the class file "src/Message/Fatal3/Fatal.php" contains:
+    And the class file "src/Message/Fatal/Fatal.php" contains:
       """
       <?php
 
-      namespace Message\Fatal3;
+      namespace Message\Fatal;
 
       class Fatal
       {
@@ -40,6 +40,6 @@ Feature: As a Developer
 
       """
     When I run phpspec
-    Then I should see "Error Happened while executing the following example"
+    Then I should see "Fatal error happened while executing the following example"
     And  I should see "it throws an exception using magic syntax"
 
