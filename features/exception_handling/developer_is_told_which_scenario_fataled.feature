@@ -15,7 +15,7 @@ Feature: As a Developer
 
       class FatalSpec extends ObjectBehavior
       {
-          function it_throws_an_exception_using_magic_syntax()
+          function it_fatals_when_calling_an_undeclared_function()
           {
               anything();
           }
@@ -41,5 +41,5 @@ Feature: As a Developer
       """
     When I run phpspec
     Then I should see "Fatal error happened while executing the following example"
-    And  I should see "it throws an exception using magic syntax"
+    And  I should see "it fatals when calling an undeclared function"
 
