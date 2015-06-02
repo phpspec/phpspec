@@ -1,7 +1,7 @@
 Feature: Config directory can be used in spec and src paths
     As a Developer
     I need a path variable representing the config directory
-    So I may use the directory of the config in spec and src paths
+    So I may use the directory of the config in spec and src paths and thus be able to run tests regardless of the current working directory
 
     Scenario: Using %paths.config% variable in spec_path
         Given the config file located in "Awesome" contains:
