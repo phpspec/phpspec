@@ -166,21 +166,84 @@ class Application extends BaseApplication
             $paths = array($customPath);
         }
 
-        $config = array();
+        $config = $this->extractConfigFromFirstParsablePath($paths);
+
+        if ($homeFolder = getenv('HOME')) {
+            $config = array_replace_recursive($this->parseConfigFromExistingPath($homeFolder.'/.phpspec.yml'), $config);
+        }
+
+        return $config;
+    }
+
+    /**
+     * @param array $paths
+     *
+     * @return array
+     */
+    private function extractConfigFromFirstParsablePath(array $paths)
+    {
         foreach ($paths as $path) {
-            if ($path && file_exists($path) && $parsedConfig = Yaml::parse(file_get_contents($path))) {
-                $config = $parsedConfig;
-                break;
+            if (!empty($config = $this->parseConfigFromExistingPath($path))) {
+                return $this->addPathsToEachSuiteConfig(dirname($path), $config);
             }
         }
 
-        if ($homeFolder = getenv('HOME')) {
-            $localPath = $homeFolder.'/.phpspec.yml';
-            if (file_exists($localPath) && $parsedConfig = Yaml::parse(file_get_contents($localPath))) {
-                $config = array_replace_recursive($parsedConfig, $config);
+        return array();
+    }
+
+    /**
+     * @param string $path
+     *
+     * @return array
+     */
+    private function parseConfigFromExistingPath($path)
+    {
+        if (!file_exists($path)) {
+            return array();
+        }
+
+        return Yaml::parse(file_get_contents($path));
+    }
+
+    /**
+     * @param string $configDir
+     *
+     * @param array $config
+     *
+     * @return array
+     */
+    private function addPathsToEachSuiteConfig($configDir, $config)
+    {
+        if (isset($config['suites']) && is_array($config['suites'])) {
+            foreach ($config['suites'] as &$suiteConfig) {
+                $suiteConfig['paths.config'] = $configDir;
+                $suiteConfig['paths.current'] = getcwd();
+                $suiteConfig['paths.bin'] = dirname(getcwd().DIRECTORY_SEPARATOR.$_SERVER['argv'][0]);
+                $suiteConfig = $this->replacePathVariablesOfSpecOrSrc($suiteConfig);
             }
         }
 
         return $config;
+    }
+
+    /**
+     * @param array $suiteConfig
+     *
+     * @return array
+     */
+    private function replacePathVariablesOfSpecOrSrc($suiteConfig)
+    {
+        foreach (array('spec_path', 'src_path') as $pathKey) {
+
+            if (!isset($suiteConfig[$pathKey])) {
+                continue;
+            }
+
+            foreach (array('paths.config', 'paths.current', 'paths.bin') as $pathVar) {
+                $suiteConfig[$pathKey] = str_replace("%{$pathVar}%", $suiteConfig[$pathVar], $suiteConfig[$pathKey]);
+            }
+        }
+
+        return $suiteConfig;
     }
 }
