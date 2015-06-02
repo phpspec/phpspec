@@ -1,3 +1,8 @@
+Upcoming
+========
+
+* Added `duringInstantiation` to more easily test constructor exceptions
+
 2.2.1 / 2015-05-30
 ==================
 
