@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Message;
 
-class Fatal implements MessageInterface {
+class CurrentExample implements MessageInterface {
     private $currentExample;
 
     public function setMessage($currentExample)

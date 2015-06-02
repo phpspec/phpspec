@@ -2,16 +2,16 @@
 
 namespace spec\PhpSpec\Message;
 
-use PhpSpec\Message\Fatal;
+use PhpSpec\Message\CurrentExample;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-class FatalSpec extends ObjectBehavior
+class CurrentExampleSpec extends ObjectBehavior
 {
 
     function it_is_initializable()
     {
-        $this->shouldHaveType('PhpSpec\Message\Fatal');
+        $this->shouldHaveType('PhpSpec\Message\CurrentExample');
     }
 
     function it_should_implement_the_Message_Interface()
@@ -21,14 +21,14 @@ class FatalSpec extends ObjectBehavior
 
     function it_should_set_a_message()
     {
-        $message = new Fatal();
+        $message = new CurrentExample();
         $message->setMessage('test');
         expect($message->getMessage())->toBe('test');
     }
 
     function it_should_be_null_on_construction()
     {
-        $message = new Fatal();
+        $message = new CurrentExample();
         expect($message->getMessage())->toBe(null);
     }
 
