@@ -39,7 +39,6 @@ class Shutdown
         ini_set('display_errors', '0');
         error_reporting(E_NOTICE);
         register_shutdown_function(array($this, 'updateConsole'));
-        return true;
     }
 
     public function updateConsole()
