@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Process\Shutdown;
 
-use PhpSpec\Formatter\FatalFormatter;
+use PhpSpec\Formatter\CurrentExampleWriter;
 use PhpSpec\Message\MessageInterface;
 
 class Shutdown
@@ -24,14 +24,14 @@ class Shutdown
     private $message;
 
     /**
-     * @var FatalFormatter
+     * @var CurrentExampleWriter
      */
-    private $formatter;
+    private $currentExampleWriter;
 
-    public function __construct(MessageInterface $message, FatalFormatter $formatter)
+    public function __construct(MessageInterface $message, CurrentExampleWriter $currentExampleWriter)
     {
         $this->message = $message;
-        $this->formatter = $formatter;
+        $this->currentExampleWriter = $currentExampleWriter;
     }
 
     public function registerShutdown()
@@ -44,6 +44,6 @@ class Shutdown
 
     public function updateConsole()
     {
-        $this->formatter->displayFatal($this->message);
+        $this->currentExampleWriter->displayFatal($this->message);
     }
 }

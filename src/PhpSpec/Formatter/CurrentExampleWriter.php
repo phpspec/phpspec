@@ -14,18 +14,14 @@
 namespace PhpSpec\Formatter;
 
 use PhpSpec\Console\IO;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Listener\StatisticsCollector;
-use PhpSpec\Message\Example;
 use PhpSpec\Message\MessageInterface;
 
-class FatalFormatter extends ConsoleFormatter
+class CurrentExampleWriter
 {
     private $output;
 
-    public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
+    public function __construct(IO $io)
     {
-        parent::__construct($presenter, $io, $stats);
         $this->output = $io;
     }
 

@@ -2,16 +2,16 @@
 
 namespace spec\PhpSpec\Process\Shutdown;
 
-use PhpSpec\Formatter\FatalFormatter;
+use PhpSpec\Formatter\CurrentExampleWriter;
 use PhpSpec\Message\MessageInterface;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 class ShutdownSpec extends ObjectBehavior
 {
-    function let(MessageInterface $message, FatalFormatter $formatter)
+    function let(MessageInterface $message, CurrentExampleWriter $currentExampleWriter)
     {
-        $this->beConstructedWith($message, $formatter);
+        $this->beConstructedWith($message, $currentExampleWriter);
     }
 
     function it_should_register_the_shutdown_method()

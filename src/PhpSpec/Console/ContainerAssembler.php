@@ -459,12 +459,10 @@ class ContainerAssembler
             }
         );
         $container->set(
-            'formatter.formatters.fatal',
+            'formatter.formatters.current_example_writer',
             function (ServiceContainer $c) {
-                return new SpecFormatter\FatalFormatter(
-                  $c->get('formatter.presenter'),
-                  $c->get('console.io'),
-                  $c->get('event_dispatcher.listeners.stats')
+                return new SpecFormatter\CurrentExampleWriter(
+                  $c->get('console.io')
                 );
             }
         );
@@ -647,7 +645,7 @@ class ContainerAssembler
         $container->setShared('process.shutdown', function(ServiceContainer $c) {
             return new Shutdown(
                 $c->get('message.current_example'),
-                $c->get('formatter.formatters.fatal')
+                $c->get('formatter.formatters.current_example_writer')
             );
         });
     }
