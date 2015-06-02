@@ -219,34 +219,10 @@ class Application extends BaseApplication
     {
         if (isset($config['suites']) && is_array($config['suites'])) {
             foreach ($config['suites'] as &$suiteConfig) {
-                $suiteConfig['paths.config'] = $configDir;
-                $suiteConfig['paths.current'] = getcwd();
-                $suiteConfig['paths.bin'] = dirname(getcwd().DIRECTORY_SEPARATOR.$_SERVER['argv'][0]);
-                $suiteConfig = $this->replacePathVariablesOfSpecOrSrc($suiteConfig);
+                $suiteConfig = str_replace('%paths.config%', $configDir, $suiteConfig);
             }
         }
 
         return $config;
-    }
-
-    /**
-     * @param array $suiteConfig
-     *
-     * @return array
-     */
-    private function replacePathVariablesOfSpecOrSrc($suiteConfig)
-    {
-        foreach (array('spec_path', 'src_path') as $pathKey) {
-
-            if (!isset($suiteConfig[$pathKey])) {
-                continue;
-            }
-
-            foreach (array('paths.config', 'paths.current', 'paths.bin') as $pathVar) {
-                $suiteConfig[$pathKey] = str_replace("%{$pathVar}%", $suiteConfig[$pathVar], $suiteConfig[$pathKey]);
-            }
-        }
-
-        return $suiteConfig;
     }
 }
