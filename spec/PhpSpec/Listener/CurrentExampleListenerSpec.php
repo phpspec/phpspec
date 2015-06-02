@@ -28,17 +28,27 @@ class CurrentExampleListenerSpec extends ObjectBehavior
 
     function it_should_call_beforeExample(ExampleEvent $example, MessageInterface $message)
     {
-        $this->beforeExampleMessage($example, $message);
+        $localMessage = 'in before example';
+        $example->getTitle()->willReturn($localMessage);
+        $message->setMessage($localMessage)->shouldBeCalled();
+        $this->beforeExampleMessage($example);
+
     }
 
     function it_should_call_afterExample(ExampleEvent $example, MessageInterface $message)
     {
-        $this->afterExampleMessage($example, $message);
+        $localMessage = 'in after example';
+        $example->getTitle()->willReturn($localMessage);
+        $message->setMessage('After the example ' . $localMessage)->shouldBeCalled();
+        $this->afterExampleMessage($example);
     }
 
     function it_should_call_afterSuite(SuiteEvent $example, MessageInterface $message)
     {
-        $this->suiteMessage($example, $message);
+        $localMessage = '0';
+        $example->getResult()->willReturn($localMessage);
+        $message->setMessage($localMessage)->shouldBeCalled();
+        $this->suiteMessage($example);
     }
 
 }

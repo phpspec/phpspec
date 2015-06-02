@@ -21,7 +21,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class CurrentExampleListener implements EventSubscriberInterface {
 
     /**
-     * @var Example
+     * @var MessageInterface
      */
     private $message;
 
