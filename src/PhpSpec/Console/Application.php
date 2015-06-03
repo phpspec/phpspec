@@ -183,9 +183,7 @@ class Application extends BaseApplication
     private function extractConfigFromFirstParsablePath(array $paths)
     {
         foreach ($paths as $path) {
-
             $config = $this->parseConfigFromExistingPath($path);
-
             if (!empty($config)) {
                 return $this->addPathsToEachSuiteConfig(dirname($path), $config);
             }
@@ -210,16 +208,15 @@ class Application extends BaseApplication
 
     /**
      * @param string $configDir
-     *
      * @param array $config
-     *
+     * 
      * @return array
      */
     private function addPathsToEachSuiteConfig($configDir, $config)
     {
         if (isset($config['suites']) && is_array($config['suites'])) {
-            foreach ($config['suites'] as &$suiteConfig) {
-                $suiteConfig = str_replace('%paths.config%', $configDir, $suiteConfig);
+            foreach ($config['suites'] as $suiteKey => $suiteConfig) {
+                $config['suites'][$suiteKey] = str_replace('%paths.config%', $configDir, $suiteConfig);
             }
         }
 
