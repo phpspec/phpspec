@@ -25,7 +25,7 @@ class Shutdown
 
     public function registerShutdown()
     {
-        foreach($this->actions as $shutdownActions) {
+        foreach ($this->actions as $shutdownActions) {
             $shutdownActions->runAction();
         }
     }

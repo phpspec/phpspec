@@ -644,7 +644,7 @@ class ContainerAssembler
    */
     private function setupShutdown(ServiceContainer $container)
     {
-        $container->setShared('process.shutdown', function(ServiceContainer $c) {
+        $container->setShared('process.shutdown', function() {
             return new Shutdown();
         });
     }
