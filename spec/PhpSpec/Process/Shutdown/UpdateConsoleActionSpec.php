@@ -4,7 +4,6 @@ namespace spec\PhpSpec\Process\Shutdown;
 
 use PhpSpec\Formatter\CurrentExampleWriter;
 use PhpSpec\Message\CurrentExample;
-use PhpSpec\Message\MessageInterface;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
@@ -26,9 +25,9 @@ class UpdateConsoleActionSpec extends ObjectBehavior
         $this->shouldHaveType('PhpSpec\Process\Shutdown\ShutdownActionInterface');
     }
 
-    function it_should_update_the_console(MessageInterface $message, CurrentExampleWriter $currentExampleWriter)
+    function it_should_update_the_console(CurrentExample $message, CurrentExampleWriter $currentExampleWriter)
     {
-        $message->getMessage()->willReturn('Hello');
+        $message->getCurrentExample()->willReturn('Hello');
         $currentExampleWriter->displayFatal($message)->shouldBeCalled();
         $this->updateConsole();
     }

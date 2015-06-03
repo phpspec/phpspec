@@ -14,22 +14,17 @@ class CurrentExampleSpec extends ObjectBehavior
         $this->shouldHaveType('PhpSpec\Message\CurrentExample');
     }
 
-    function it_should_implement_the_Message_Interface()
-    {
-        $this->shouldHaveType('PhpSpec\Message\MessageInterface');
-    }
-
     function it_should_set_a_message()
     {
         $message = new CurrentExample();
-        $message->setMessage('test');
-        expect($message->getMessage())->toBe('test');
+        $message->setCurrentExample('test');
+        expect($message->getCurrentExample())->toBe('test');
     }
 
     function it_should_be_null_on_construction()
     {
         $message = new CurrentExample();
-        expect($message->getMessage())->toBe(null);
+        expect($message->getCurrentExample())->toBe(null);
     }
 
 }

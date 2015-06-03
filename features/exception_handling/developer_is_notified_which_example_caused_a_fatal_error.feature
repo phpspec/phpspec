@@ -1,5 +1,6 @@
 @isolated
-Feature: As a Developer
+Feature: Developer is notified of which scenario caused a fatal error
+  As a Developer
   I want to know in which scenario or example my script was running
   So that I can better trace where my changes caused a fatal error
 

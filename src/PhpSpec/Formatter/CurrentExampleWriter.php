@@ -14,7 +14,7 @@
 namespace PhpSpec\Formatter;
 
 use PhpSpec\Console\IO;
-use PhpSpec\Message\MessageInterface;
+use PhpSpec\Message\CurrentExample;
 
 class CurrentExampleWriter
 {
@@ -25,14 +25,14 @@ class CurrentExampleWriter
         $this->output = $io;
     }
 
-    public function displayFatal(MessageInterface $message)
+    public function displayFatal(CurrentExample $message)
     {
         $error = error_get_last();
 
-        if (!empty($error) && $message->getMessage()) {
+        if (!empty($error) && $message->getCurrentExample()) {
             $this->output->writeln("Fatal error happened while executing the following example");
-            $this->output->writeln($message->getMessage());
-            $this->output->writeln(($error['message']));
+            $this->output->writeln($message->getCurrentExample());
+            $this->output->writeln($error['message']);
         }
     }
 }

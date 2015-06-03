@@ -13,15 +13,16 @@
 
 namespace PhpSpec\Message;
 
-class CurrentExample implements MessageInterface {
+class CurrentExample
+{
     private $currentExample;
 
-    public function setMessage($currentExample)
+    public function setCurrentExample($currentExample)
     {
         $this->currentExample = $currentExample;
     }
 
-    public function getMessage()
+    public function getCurrentExample()
     {
         return $this->currentExample;
     }

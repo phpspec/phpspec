@@ -15,7 +15,7 @@ namespace PhpSpec\Listener;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
-use PhpSpec\Message\MessageInterface;
+use PhpSpec\Message\CurrentExample;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class CurrentExampleListener implements EventSubscriberInterface {
@@ -34,24 +34,24 @@ class CurrentExampleListener implements EventSubscriberInterface {
         );
     }
 
-    public function __construct(MessageInterface $message)
+    public function __construct(CurrentExample $message)
     {
         $this->message = $message;
     }
 
     public function beforeExampleMessage(ExampleEvent $event)
     {
-        $this->message->setMessage($event->getTitle());
+        $this->message->setCurrentExample($event->getTitle());
     }
 
     public function afterExampleMessage(ExampleEvent $event)
     {
         $message = 'After the example ' . $event->getTitle();
-        $this->message->setMessage($message);
+        $this->message->setCurrentExample($message);
     }
 
     public function suiteMessage(SuiteEvent $event)
     {
-        $this->message->setMessage($event->getResult());
+        $this->message->setCurrentExample($event->getResult());
     }
 }
