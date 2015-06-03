@@ -15,6 +15,7 @@ namespace PhpSpec\Console;
 
 use PhpSpec\Message\CurrentExample;
 use PhpSpec\Process\Shutdown\Shutdown;
+use PhpSpec\Process\Shutdown\UpdateConsoleAction;
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
@@ -54,6 +55,7 @@ class ContainerAssembler
         $this->setupMatchers($container);
         $this->setupMessage($container);
         $this->setupShutdown($container);
+        $this->setupShutdownAction($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -643,7 +645,17 @@ class ContainerAssembler
     private function setupShutdown(ServiceContainer $container)
     {
         $container->setShared('process.shutdown', function(ServiceContainer $c) {
-            return new Shutdown(
+            return new Shutdown();
+        });
+    }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupShutdownAction(ServiceContainer $container)
+    {
+        $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) {
+            return new UpdateConsoleAction(
                 $c->get('message.current_example'),
                 $c->get('formatter.formatters.current_example_writer')
             );
