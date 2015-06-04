@@ -96,11 +96,4 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
         expect(strpos($this->lastOutput, $message))->toNotBe(false);
     }
 
-    /**
-     * @Then the suite should pass
-     */
-    public function theSuiteShouldPass()
-    {
-        throw new PendingException();
-    }
 }

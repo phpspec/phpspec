@@ -21,7 +21,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class CurrentExampleListener implements EventSubscriberInterface {
 
     /**
-     * @var MessageInterface
+     * @var CurrentExample
      */
     private $message;
 
@@ -44,9 +44,9 @@ class CurrentExampleListener implements EventSubscriberInterface {
         $this->message->setCurrentExample($event->getTitle());
     }
 
-    public function afterExampleMessage(ExampleEvent $event)
+    public function afterExampleMessage()
     {
-        $message = 'After the example ' . $event->getTitle();
+        $message = "";
         $this->message->setCurrentExample($message);
     }
 
