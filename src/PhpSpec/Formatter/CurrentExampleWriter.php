@@ -32,7 +32,7 @@ class CurrentExampleWriter
         if (!empty($error) && $message->getCurrentExample()) {
             $this->output->writeln("Fatal error happened while executing the following example");
             $this->output->writeln($message->getCurrentExample());
-            $this->output->writeln($error['message']);
+            $this->output->writeln(var_dump($error));
         }
     }
 }

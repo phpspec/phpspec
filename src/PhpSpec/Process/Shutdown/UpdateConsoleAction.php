@@ -16,7 +16,7 @@ namespace PhpSpec\Process\Shutdown;
 use PhpSpec\Formatter\CurrentExampleWriter;
 use PhpSpec\Message\CurrentExample;
 
-class UpdateConsoleAction implements ShutdownActionInterface
+final class UpdateConsoleAction implements ShutdownActionInterface
 {
     /**
      * @var MessageInterface
@@ -36,11 +36,11 @@ class UpdateConsoleAction implements ShutdownActionInterface
     public function runAction()
     {
         ini_set('display_errors', '0');
-        error_reporting(E_NOTICE);
-        register_shutdown_function(array($this, 'updateConsole'));
+        error_reporting(E_ALL | ~E_NOTICE);
+        register_shutdown_function(array($this, 'output'));
     }
 
-    public function updateConsole()
+    public function output()
     {
         $this->currentExampleWriter->displayFatal($this->message);
     }
