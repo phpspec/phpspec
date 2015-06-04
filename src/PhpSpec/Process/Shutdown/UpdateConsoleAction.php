@@ -19,7 +19,7 @@ use PhpSpec\Message\CurrentExample;
 final class UpdateConsoleAction implements ShutdownActionInterface
 {
     /**
-     * @var MessageInterface
+     * @var CurrentExample
      */
     private $message;
     /**
@@ -36,7 +36,7 @@ final class UpdateConsoleAction implements ShutdownActionInterface
     public function runAction()
     {
         ini_set('display_errors', '0');
-        error_reporting(E_NOTICE);
+        error_reporting(E_ERROR);
         register_shutdown_function(array($this, 'output'));
     }
 

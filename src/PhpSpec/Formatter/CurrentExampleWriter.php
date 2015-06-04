@@ -29,10 +29,17 @@ class CurrentExampleWriter
     {
         $error = error_get_last();
 
-        if (!empty($error) && $error['type'] == E_ERROR && $message->getCurrentExample()) {
-            $this->output->writeln(sprintf('<failed>✘ %s</failed>', "Fatal error happened while executing the following example"));
-            $this->output->writeln(sprintf('<failed>    %s</failed>', $message->getCurrentExample()));
-            $this->output->writeln(sprintf('<failed>    %s</failed>', $error['message']));
+        if (!empty($error))
+        {
+            $hhvmFatalCode = 16777217;
+
+            $fatal = isset($_ENV['HHVM']) ? ($hhvmFatalCode == $error['type']) : (E_ERROR == $error['type']);
+
+            if ($message->getCurrentExample() && $fatal) {
+                $this->output->writeln(sprintf('<failed>✘ %s</failed>', "Fatal error happened while executing the following example"));
+                $this->output->writeln(sprintf('<failed>    %s</failed>', $message->getCurrentExample()));
+                $this->output->writeln(sprintf('<failed>    %s</failed>', $error['message']));
+            }
         }
     }
 }

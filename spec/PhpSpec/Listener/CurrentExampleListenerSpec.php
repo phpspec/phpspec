@@ -43,7 +43,7 @@ class CurrentExampleListenerSpec extends ObjectBehavior
 
     function it_should_call_afterSuite(SuiteEvent $example, CurrentExample $message)
     {
-        $localMessage = '0';
+        $localMessage = 'A Message';
         $example->getResult()->willReturn($localMessage);
         $message->setCurrentExample($localMessage)->shouldBeCalled();
         $this->suiteMessage($example);
