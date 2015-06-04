@@ -19,7 +19,7 @@ use PhpSpec\Message\CurrentExample;
 final class UpdateConsoleAction implements ShutdownActionInterface
 {
     /**
-     * @var MessageInterface
+     * @var CurrentExample
      */
     private $message;
     /**
