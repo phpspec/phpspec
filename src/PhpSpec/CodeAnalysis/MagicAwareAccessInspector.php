@@ -15,20 +15,7 @@ final class MagicAwareAccessInspector implements AccessInspectorInterface
      */
     public function isPropertyReadable($object, $property)
     {
-        if (!is_object($object)) {
-            return false;
-        }
-
-        if (method_exists($object, '__get')) {
-            return true;
-        }
-
-        if (!property_exists($object, $property)) {
-            return false;
-        }
-
-        $propertyReflection = new ReflectionProperty($object, $property);
-        return $propertyReflection->isPublic();
+        return is_object($object) && (method_exists($object, '__get') || $this->isExistingPublicProperty($object, $property));
     }
 
     /**
@@ -39,20 +26,7 @@ final class MagicAwareAccessInspector implements AccessInspectorInterface
      */
     public function isPropertyWritable($object, $property)
     {
-        if (!is_object($object)) {
-            return false;
-        }
-
-        if (method_exists($object, '__set')) {
-            return true;
-        }
-
-        if (!property_exists($object, $property)) {
-            return false;
-        }
-
-        $propertyReflection = new ReflectionProperty($object, $property);
-        return $propertyReflection->isPublic();
+        return is_object($object) && (method_exists($object, '__set') || $this->isExistingPublicProperty($object, $property));
     }
 
     /**
@@ -63,19 +37,40 @@ final class MagicAwareAccessInspector implements AccessInspectorInterface
      */
     public function isMethodCallable($object, $method)
     {
-        if (!is_object($object)) {
+        return is_object($object) && (method_exists($object, '__call') || $this->isExistingPublicMethod($object, $method));
+    }
+
+    /**
+     * @param object $object
+     * @param string $property
+     *
+     * @return bool
+     */
+    private function isExistingPublicProperty($object, $property)
+    {
+        if (!property_exists($object, $property)) {
             return false;
         }
 
-        if (method_exists($object, '__call')) {
-            return true;
-        }
+        $propertyReflection = new ReflectionProperty($object, $property);
 
+        return $propertyReflection->isPublic();
+    }
+
+    /**
+     * @param object $object
+     * @param string $method
+     *
+     * @return bool
+     */
+    private function isExistingPublicMethod($object, $method)
+    {
         if (!method_exists($object, $method)) {
             return false;
         }
 
         $methodReflection = new ReflectionMethod($object, $method);
+
         return $methodReflection->isPublic();
     }
 }
