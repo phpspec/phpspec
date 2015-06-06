@@ -32,7 +32,7 @@ class CurrentExampleWriter
         if (!empty($error) && $message->getCurrentExample()) {
             if (isset($error['type'])) {
                 $ls = $error['type'];
-                if($ls == 1)
+                if($ls == '1')
                 {
                     $this->output->writeln(sprintf('<failed>✘ %s</failed>', "Fatal error happened while executing the following example"));
                     $this->output->writeln(sprintf('<failed>    %s</failed>', $message->getCurrentExample()));
