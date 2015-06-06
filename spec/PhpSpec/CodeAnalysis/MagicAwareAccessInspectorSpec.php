@@ -14,57 +14,61 @@ class MagicAwareAccessInspectorSpec extends ObjectBehavior
 
     function it_should_fail_to_check_for_a_property_of_a_non_object()
     {
-        $this->isPropertyAccessible('foo', 'property')->shouldReturn(false);
+        $this->isPropertyReadable('foo', 'property')->shouldReturn(false);
+        $this->isPropertyWritable('foo', 'property')->shouldReturn(false);
     }
 
     function it_should_detect_a_magic_getter_if_no_value_is_given()
     {
-        $this->isPropertyAccessible(new ObjectWithMagicGet, 'property')->shouldReturn(true);
+        $this->isPropertyReadable(new ObjectWithMagicGet, 'property')->shouldReturn(true);
     }
 
     function it_should_detect_a_magic_setter_if_a_value_is_given()
     {
-        $this->isPropertyAccessible(new ObjectWithMagicSet, 'property', true)->shouldReturn(true);
+        $this->isPropertyWritable(new ObjectWithMagicSet, 'property', true)->shouldReturn(true);
     }
 
     function it_should_reject_an_object_if_the_property_does_not_exist()
     {
-        $this->isPropertyAccessible(new ObjectWithNoProperty, 'property')->shouldReturn(false);
+        $this->isPropertyReadable(new ObjectWithNoProperty, 'property')->shouldReturn(false);
+        $this->isPropertyWritable(new ObjectWithNoProperty, 'property')->shouldReturn(false);
     }
 
     function it_should_reject_a_private_property()
     {
-        $this->isPropertyAccessible(new ObjectWithPrivateProperty, 'property')->shouldReturn(false);
+        $this->isPropertyReadable(new ObjectWithPrivateProperty, 'property')->shouldReturn(false);
+        $this->isPropertyWritable(new ObjectWithPrivateProperty, 'property')->shouldReturn(false);
     }
 
     function it_should_detect_a_public_property()
     {
-        $this->isPropertyAccessible(new ObjectWithPublicProperty, 'property')->shouldReturn(true);
+        $this->isPropertyReadable(new ObjectWithPublicProperty, 'property')->shouldReturn(true);
+        $this->isPropertyWritable(new ObjectWithPublicProperty, 'property')->shouldReturn(true);
     }
 
     function it_should_fail_to_check_for_a_method_of_a_non_object()
     {
-        $this->isMethodAccessible('foo', 'method')->shouldReturn(false);
+        $this->isMethodCallable('foo', 'method')->shouldReturn(false);
     }
 
     function it_should_detect_a_magic_call_method()
     {
-        $this->isMethodAccessible(new ObjectWithMagicCall, 'method')->shouldreturn(true);
+        $this->isMethodCallable(new ObjectWithMagicCall, 'method')->shouldreturn(true);
     }
 
     function it_should_reject_an_object_if_a_method_does_not_exist()
     {
-        $this->isMethodAccessible(new ObjectWithNoMethod, 'method')->shouldReturn(false);
+        $this->isMethodCallable(new ObjectWithNoMethod, 'method')->shouldReturn(false);
     }
 
     function it_should_reject_a_private_method()
     {
-        $this->isMethodAccessible(new ObjectWithPrivateMethod, 'method')->shouldReturn(false);
+        $this->isMethodCallable(new ObjectWithPrivateMethod, 'method')->shouldReturn(false);
     }
 
     function it_should_detect_a_public_method()
     {
-        $this->isMethodAccessible(new ObjectWithPublicMethod, 'method')->shouldReturn(true);
+        $this->isMethodCallable(new ObjectWithPublicMethod, 'method')->shouldReturn(true);
     }
 }
 

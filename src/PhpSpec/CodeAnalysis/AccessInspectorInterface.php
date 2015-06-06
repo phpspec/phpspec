@@ -7,15 +7,24 @@ interface AccessInspectorInterface
     /**
      * @param object $object
      * @param string $property
-     * @param bool $withValue
+     *
      * @return bool
      */
-    public function isPropertyAccessible($object, $property, $withValue);
+    public function isPropertyReadable($object, $property);
+
+    /**
+     * @param object $object
+     * @param string $property
+     *
+     * @return bool
+     */
+    public function isPropertyWritable($object, $property);
 
     /**
      * @param object $object
      * @param string $method
+     *
      * @return bool
      */
-    public function isMethodAccessible($object, $method);
+    public function isMethodCallable($object, $method);
 }

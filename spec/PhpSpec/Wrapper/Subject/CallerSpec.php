@@ -30,7 +30,7 @@ class CallerSpec extends ObjectBehavior
         $wrappedObject->isInstantiated()->willReturn(true);
         $wrappedObject->getInstance()->willReturn(new \ArrayObject());
 
-        $accessInspector->isMethodAccessible(Argument::type('ArrayObject'), 'count')->willReturn(true);
+        $accessInspector->isMethodCallable(Argument::type('ArrayObject'), 'count')->willReturn(true);
 
         $dispatcher->dispatch(
             'beforeMethodCall',
@@ -51,8 +51,8 @@ class CallerSpec extends ObjectBehavior
         $obj = new \stdClass();
         $obj->id = 1;
 
-        $accessInspector->isPropertyAccessible(
-            Argument::type('stdClass'), 'id', true
+        $accessInspector->isPropertyWritable(
+            Argument::type('stdClass'), 'id'
         )->willReturn('true');
 
         $wrappedObject->isInstantiated()->willReturn(true);
@@ -69,7 +69,7 @@ class CallerSpec extends ObjectBehavior
         $wrappedObject->isInstantiated()->willReturn(true);
         $wrappedObject->getInstance()->willReturn($obj);
 
-        $accessInspector->isMethodAccessible(Argument::type('ArrayObject'), 'asort')->willReturn(true);
+        $accessInspector->isMethodCallable(Argument::type('ArrayObject'), 'asort')->willReturn(true);
 
         $this->call('asort');
     }
