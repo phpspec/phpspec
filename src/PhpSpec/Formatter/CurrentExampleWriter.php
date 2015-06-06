@@ -30,10 +30,18 @@ class CurrentExampleWriter
         $error = error_get_last();
 
         if (!empty($error) && $message->getCurrentExample()) {
-            if (isset($error['type']) && in_array(1, $error)) {
-                $this->output->writeln(sprintf('<failed>✘ %s</failed>', "Fatal error happened while executing the following example"));
-                $this->output->writeln(sprintf('<failed>    %s</failed>', $message->getCurrentExample()));
-                $this->output->writeln(sprintf('<failed>    %s</failed>', $error['message']));
+            if (isset($error['type'])) {
+                if (isset($_ENV['HHVM'])) {
+                    $fatal_error = (1 << 24);
+                } else {
+                    $fatal_error = $error['type'];
+                }
+
+                if ($fatal_error == 1) {
+                    $this->output->writeln(sprintf('<failed>✘ %s</failed>', "Fatal error happened while executing the following example"));
+                    $this->output->writeln(sprintf('<failed>    %s</failed>', $message->getCurrentExample()));
+                    $this->output->writeln(sprintf('<failed>    %s</failed>', $error['message']));
+                }
             }
         }
     }
