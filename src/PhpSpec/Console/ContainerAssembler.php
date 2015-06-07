@@ -632,7 +632,10 @@ class ContainerAssembler
             return $reRunner;
         });
         $container->setShared('process.rerunner.platformspecific.passthru', function (ServiceContainer $c) {
-            return new ReRunner\PassthruReRunner($c->get('process.phpexecutablefinder'));
+            $reRunner = new ReRunner\PassthruReRunner($c->get('process.phpexecutablefinder'));
+            $reRunner->setExecutionContext($c->get('process.executioncontext'));
+
+            return $reRunner;
         });
         $container->setShared('process.phpexecutablefinder', function () {
             return new PhpExecutableFinder();

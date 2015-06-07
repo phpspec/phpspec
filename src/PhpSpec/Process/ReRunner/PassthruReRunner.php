@@ -13,8 +13,23 @@
 
 namespace PhpSpec\Process\ReRunner;
 
+use PhpSpec\Process\Context\ExecutionContextInterface;
+
 class PassthruReRunner extends PhpExecutableReRunner
 {
+    /**
+     * @var ExecutionContextInterface
+     */
+    private $executionContext;
+
+    /**
+     * @param ExecutionContextInterface $executionContext
+     */
+    public function setExecutionContext(ExecutionContextInterface $executionContext)
+    {
+        $this->executionContext = $executionContext;
+    }
+
     /**
      * @return boolean
      */
@@ -28,8 +43,19 @@ class PassthruReRunner extends PhpExecutableReRunner
     public function reRunSuite()
     {
         $args = $_SERVER['argv'];
-        $command = escapeshellcmd($this->getExecutablePath()).' '.join(' ', array_map('escapeshellarg', $args));
+        $command = $this->buildArgString() . escapeshellcmd($this->getExecutablePath()).' '.join(' ', array_map('escapeshellarg', $args));
         passthru($command, $exitCode);
         exit($exitCode);
+    }
+
+    private function buildArgString()
+    {
+        $argstring = '';
+
+        foreach ($this->executionContext->asEnv() as $key => $value) {
+            $argstring .= $key . '=' . escapeshellarg($value) . ' ';
+        }
+
+        return $argstring;
     }
 }

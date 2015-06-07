@@ -17,7 +17,6 @@ use PhpSpec\Process\Context\ExecutionContextInterface;
 
 class PcntlReRunner extends PhpExecutableReRunner
 {
-
     /**
      * @var ExecutionContextInterface
      */
