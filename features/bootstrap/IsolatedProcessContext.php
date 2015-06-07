@@ -93,7 +93,6 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function iShouldSee($message)
     {
-        expect(array())->toEqual(error_get_last());
         expect(strpos($this->lastOutput, $message))->toNotBe(false);
     }
 
