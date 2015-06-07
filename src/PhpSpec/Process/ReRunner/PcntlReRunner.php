@@ -13,8 +13,24 @@
 
 namespace PhpSpec\Process\ReRunner;
 
+use PhpSpec\Process\Context\ExecutionContextInterface;
+
 class PcntlReRunner extends PhpExecutableReRunner
 {
+
+    /**
+     * @var ExecutionContextInterface
+     */
+    private $executionContext;
+
+    /**
+     * @param ExecutionContextInterface $executionContext
+     */
+    public function setExecutionContext(ExecutionContextInterface $executionContext)
+    {
+        $this->executionContext = $executionContext;
+    }
+
     /**
      * @return bool
      */
@@ -32,6 +48,8 @@ class PcntlReRunner extends PhpExecutableReRunner
     public function reRunSuite()
     {
         $args = $_SERVER['argv'];
-        pcntl_exec($this->getExecutablePath(), $args);
+        $env = $this->executionContext ? $this->executionContext->asEnv() : array();
+
+        pcntl_exec($this->getExecutablePath(), $args, array_merge($env, $_SERVER));
     }
 }

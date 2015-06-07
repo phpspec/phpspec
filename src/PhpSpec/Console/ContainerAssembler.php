@@ -219,13 +219,17 @@ class ContainerAssembler
         $container->set('code_generator.generators.class', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\ClassGenerator(
                 $c->get('console.io'),
-                $c->get('code_generator.templates')
+                $c->get('code_generator.templates'),
+                null,
+                $c->get('process.executioncontext')
             );
         });
         $container->set('code_generator.generators.interface', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\InterfaceGenerator(
                 $c->get('console.io'),
-                $c->get('code_generator.templates')
+                $c->get('code_generator.templates'),
+                null,
+                $c->get('process.executioncontext')
             );
         });
         $container->set('code_generator.generators.method', function (ServiceContainer $c) {
@@ -615,7 +619,10 @@ class ContainerAssembler
             );
         });
         $container->setShared('process.rerunner.platformspecific.pcntl', function (ServiceContainer $c) {
-            return new ReRunner\PcntlReRunner($c->get('process.phpexecutablefinder'));
+            $reRunner = new ReRunner\PcntlReRunner($c->get('process.phpexecutablefinder'));
+            $reRunner->setExecutionContext($c->get('process.executioncontext'));
+
+            return $reRunner;
         });
         $container->setShared('process.rerunner.platformspecific.passthru', function (ServiceContainer $c) {
             return new ReRunner\PassthruReRunner($c->get('process.phpexecutablefinder'));

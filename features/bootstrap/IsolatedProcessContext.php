@@ -73,4 +73,20 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     {
         expect(substr_count($this->lastOutput, 'for you?'))->toBe(2);
     }
+
+    /**
+     * @Given I have not configured an autoloader
+     */
+    public function iHaveNotConfiguredAnAutoloader()
+    {
+        // this is actually the default behaviour
+    }
+
+    /**
+     * @Then I should see an error about the missing autoloader
+     */
+    public function iShouldSeeAnErrorAboutTheMissingAutoloader()
+    {
+        expect($this->lastOutput)->toMatch('/autoload/');
+    }
 }
