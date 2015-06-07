@@ -68,9 +68,9 @@ describing. In phpspec, you can group specification files by a certain namespace
   specifications. The complete namespace for specifications is
   ``%spec_prefix%\%namespace%``;
 * ``src_path`` [**default**: ``src``] - The path to store the generated
-  classes. Paths are relative to the location of the config file. **phpspec**
-  creates the directories if they do not exist. This does not include the namespace
-  directories;
+  classes. By default Paths are relative to the location where ***phpspec*** was 
+  invoked. **phpspec** creates the directories if they do not exist. This does 
+  not include the namespace directories;
 * ``spec_path`` [**default**: ``.``] - The path of the specifications. This
   does not include the spec prefix or namespace.
 * ``psr4_prefix`` [**default**: ``null``] - A PSR-4 prefix to use.
@@ -88,6 +88,19 @@ Some examples:
         # my_suite:
         #     namespace: The\Namespace
         my_suite: The\Namespace
+
+.. tip:: You may use ``%paths.config%`` in ``src_path`` and ``spec_path`` making paths relative to the location of the config file.
+
+Some examples:
+
+.. code-block:: yaml
+
+    suites:
+        acme_suite:
+            namespace: Acme\Text
+            spec_prefix: acme_spec
+            src_path: %paths.config%/src
+            spec_path: %paths.config%
 
 **phpspec** will use suite settings based on the namespaces.
 If you have suites with different spec directories then ``phpspec run``
@@ -193,4 +206,4 @@ To load a custom bootstrap when running phpspec, use the ``console.io.bootstrap`
 
 .. code-block:: yaml
 
-    console.io.bootstrap: path/to/different-bootstrap.php
+    bootstrap: path/to/different-bootstrap.php

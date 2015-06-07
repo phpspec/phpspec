@@ -399,3 +399,68 @@ Feature: Developer is shown diffs
             on Double\Diffs\DiffExample7\ClassBeingMocked\P13 was not expected, expected calls were:
               - methodOne(exact("value"))
       """
+
+  Scenario: Unexpected method call when another prophecy for that call with not matching arguments exists
+    Given the spec file "spec/Diffs/DiffExample8/ClassUnderSpecificationSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Diffs\DiffExample8;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use Diffs\DiffExample8\ClassBeingMocked;
+
+      class ClassUnderSpecificationSpec extends ObjectBehavior
+      {
+          function it_can_do_work(ClassBeingMocked $objectBeingMocked)
+          {
+              $objectBeingMocked->methodTwo('value')->shouldBeCalled();
+              $objectBeingMocked->methodOne('another value')->shouldBeCalled();
+
+              $this->doWork($objectBeingMocked);
+          }
+      }
+      """
+    And the class file "src/Diffs/DiffExample8/ClassUnderSpecification.php" contains:
+      """
+      <?php
+
+      namespace Diffs\DiffExample8;
+
+      class ClassUnderSpecification
+      {
+          public function doWork(ClassBeingMocked $objectBeingMocked)
+          {
+              $objectBeingMocked->methodTwo('value');
+              $objectBeingMocked->methodTwo('another value');
+          }
+      }
+      """
+    And the class file "src/Diffs/DiffExample8/ClassBeingMocked.php" contains:
+      """
+      <?php
+
+      namespace Diffs\DiffExample8;
+
+      class ClassBeingMocked
+      {
+          public function methodOne($value)
+          {
+          }
+
+          public function methodTwo($value)
+          {
+          }
+
+      }
+      """
+    When I run phpspec with the "verbose" option
+    Then I should see:
+      """
+            method call:
+              - methodTwo("another value")
+            on Double\Diffs\DiffExample8\ClassBeingMocked\P14 was not expected, expected calls were:
+              - methodTwo(exact("value"))
+              - methodOne(exact("another value"))
+      """

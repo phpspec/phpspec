@@ -390,8 +390,12 @@ class StringPresenter implements PresenterInterface
         }
 
         $presentedMethodProphecy = $this->findMethodProphecyOfFirstNotExpectedArgumentsCall($methodProphecies, $exception);
-        $expectedTokens = $presentedMethodProphecy->getArgumentsWildcard()->getTokens();
+        if (is_null($presentedMethodProphecy)) {
 
+            return '';
+        }
+
+        $expectedTokens = $presentedMethodProphecy->getArgumentsWildcard()->getTokens();
         if ($this->parametersCountMismatch($expectedTokens, $actualArguments)) {
 
             return '';

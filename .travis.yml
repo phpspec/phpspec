@@ -1,5 +1,16 @@
 language: php
 
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - expect
+      
+cache:
+  directories:
+    - $HOME/.composer/cache
+
 matrix:
   include:
     - php: 5.3
@@ -14,16 +25,13 @@ matrix:
       env: SMOKE='true'
     - php: hhvm
       env: SMOKE='true'
-    - php: hhvm-nightly
     - php: 7.0
   allow_failures:
-    - php: hhvm-nightly
     - php: 7.0
     - env: DEPENDENCIES='dev'
   fast_finish: true
 
 before_install:
-  - if [ "$SMOKE" == "true" ]; then sudo apt-get install expect; fi;
   - composer selfupdate
 
 install:

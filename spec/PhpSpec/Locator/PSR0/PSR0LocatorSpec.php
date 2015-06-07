@@ -53,6 +53,15 @@ class PSR0LocatorSpec extends ObjectBehavior
         $this->getFullSrcPath()->shouldReturn(dirname(__DIR__).DIRECTORY_SEPARATOR);
     }
 
+    function it_should_not_have_backslash_on_missing_prefix()
+    {
+        $this->beConstructedWith('Cust\Ns', '', dirname(__DIR__), __DIR__);
+
+        $this->getSpecNamespace()->shouldReturn('Cust\Ns\\');
+
+        $this->getFullSpecPath()->shouldReturn(__DIR__.DIRECTORY_SEPARATOR.'Cust'.DIRECTORY_SEPARATOR.'Ns'.DIRECTORY_SEPARATOR);
+    }
+
     function it_generates_fullSpecPath_from_specPath_plus_namespace()
     {
         $this->beConstructedWith('C\N', 'spec', dirname(__DIR__), __DIR__);

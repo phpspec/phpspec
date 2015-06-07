@@ -1,7 +1,14 @@
 Upcoming
 ========
 
+* Added `duringInstantiation` to more easily test constructor exceptions
+* New `%paths.config%` to make config paths relative to config file
+
+2.2.1 / 2015-05-30
+==================
+
 * Fix false positives in `shouldHaveKeyWithValue` matcher
+* Fix fatal error in edge case when method call parameters don't match expectations
 
 2.2.0 / 2015-04-18
 ==================

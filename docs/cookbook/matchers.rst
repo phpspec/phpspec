@@ -130,6 +130,46 @@ passing an exception object to shouldThrow:
         }
     }
 
+If you want to use the Throw matcher to check for exceptions thrown
+during object instantiation you can use the ``duringInstantiation``
+method.
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_not_allow_negative_ratings()
+        {
+            $this->beConstructedWith(-3);
+            $this->shouldThrow('\InvalidArgumentException')->duringInstantiation();
+        }
+    }
+
+You can also use the Throw matcher with named constructors.
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_not_allow_negative_ratings()
+        {
+            $this->beConstructedThrough('rated', array(-3));
+            $this->shouldThrow('\InvalidArgumentException')->duringInstantiation();
+        }
+    }
+
 
 Type Matcher
 ------------

@@ -163,3 +163,53 @@ Feature: Developer uses throw matcher
     """
     When I run phpspec
     Then the suite should pass
+
+  @issue610
+  Scenario: Throwing an exception during object construction
+    Given the spec file "spec/Runner/ThrowExample5/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Runner\ThrowExample5;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_throws_an_exception_using_during_instantiation_syntax()
+          {
+              $this->beConstructedWith(1, 2);
+              $this->shouldThrow('\InvalidArgumentException')->duringInstantiation();
+          }
+
+          function it_throws_an_exception_using_during_named_instantiation_syntax()
+          {
+              $this->beConstructedThrough('defaultNumber2', array(1));
+              $this->shouldThrow('\InvalidArgumentException')->duringInstantiation();
+          }
+      }
+
+      """
+    And the class file "src/Runner/ThrowExample5/Markdown.php" contains:
+      """
+      <?php
+
+      namespace Runner\ThrowExample5;
+
+      class Markdown
+      {
+          public function __construct($num1, $num2)
+          {
+              throw new \InvalidArgumentException();
+          }
+
+          public static function defaultNumber2($num1, $num2 = 2)
+          {
+              return new self($num1, $num2);
+          }
+      }
+
+      """
+    When I run phpspec
+    Then the suite should pass
