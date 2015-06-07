@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Console;
 
+use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
+use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
@@ -523,12 +525,25 @@ class ContainerAssembler
             return new Runner\Maintainer\SubjectMaintainer(
                 $c->get('formatter.presenter'),
                 $c->get('unwrapper'),
-                $c->get('event_dispatcher')
+                $c->get('event_dispatcher'),
+                $c->get('access_inspector')
             );
         });
 
         $container->setShared('unwrapper', function () {
             return new Wrapper\Unwrapper();
+        });
+
+        $container->setShared('access_inspector', function($c) {
+            return $c->get('access_inspector.magic');
+        });
+
+        $container->setShared('access_inspector.magic', function($c) {
+            return new MagicAwareAccessInspector($c->get('access_inspector.visibility'));
+        });
+
+        $container->setShared('access_inspector.visibility', function() {
+            return new VisibilityAccessInspector();
         });
     }
 

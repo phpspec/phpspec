@@ -13,6 +13,9 @@
 
 namespace PhpSpec\Wrapper\Subject;
 
+use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
+use Phpspec\CodeAnalysis\AccessInspectorInterface;
+use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
 use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Wrapper\Subject;
@@ -21,8 +24,6 @@ use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Event\MethodCallEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface as Dispatcher;
 use ReflectionClass;
-use ReflectionMethod;
-use ReflectionProperty;
 use ReflectionException;
 
 class Caller
@@ -47,26 +48,33 @@ class Caller
      * @var \PhpSpec\Exception\ExceptionFactory
      */
     private $exceptionFactory;
+    /**
+     * @var AccessInspectorInterface
+     */
+    private $accessInspector;
 
     /**
-     * @param WrappedObject    $wrappedObject
-     * @param ExampleNode      $example
-     * @param Dispatcher       $dispatcher
+     * @param WrappedObject $wrappedObject
+     * @param ExampleNode $example
+     * @param Dispatcher $dispatcher
      * @param ExceptionFactory $exceptions
-     * @param Wrapper          $wrapper
+     * @param Wrapper $wrapper
+     * @param AccessInspectorInterface $accessInspector
      */
     public function __construct(
         WrappedObject $wrappedObject,
         ExampleNode $example,
         Dispatcher $dispatcher,
         ExceptionFactory $exceptions,
-        Wrapper $wrapper
+        Wrapper $wrapper,
+        AccessInspectorInterface $accessInspector = null
     ) {
         $this->wrappedObject    = $wrappedObject;
         $this->example          = $example;
         $this->dispatcher       = $dispatcher;
         $this->wrapper          = $wrapper;
         $this->exceptionFactory = $exceptions;
+        $this->accessInspector  = $accessInspector ?: new MagicAwareAccessInspector(new VisibilityAccessInspector());
     }
 
     /**
@@ -89,7 +97,7 @@ class Caller
         $unwrapper = new Unwrapper();
         $arguments = $unwrapper->unwrapAll($arguments);
 
-        if ($this->isObjectMethodAccessible($method)) {
+        if ($this->isObjectMethodCallable($method)) {
             return $this->invokeAndWrapMethodResult($subject, $method, $arguments);
         }
 
@@ -114,7 +122,7 @@ class Caller
         $unwrapper = new Unwrapper();
         $value = $unwrapper->unwrapOne($value);
 
-        if ($this->isObjectPropertyAccessible($property, true)) {
+        if ($this->isObjectPropertyWritable($property)) {
             return $this->getWrappedObject()->$property = $value;
         }
 
@@ -139,7 +147,7 @@ class Caller
             throw $this->accessingPropertyOnNonObject($property);
         }
 
-        if ($this->isObjectPropertyAccessible($property)) {
+        if ($this->isObjectPropertyReadable($property)) {
             return $this->wrap($this->getWrappedObject()->$property);
         }
 
@@ -179,27 +187,26 @@ class Caller
 
     /**
      * @param string $property
-     * @param bool   $withValue
      *
      * @return bool
      */
-    private function isObjectPropertyAccessible($property, $withValue = false)
+    private function isObjectPropertyReadable($property)
     {
-        if (!is_object($this->getWrappedObject())) {
-            return false;
-        }
+        $subject = $this->getWrappedObject();
 
-        if (method_exists($this->getWrappedObject(), $withValue ? '__set' : '__get')) {
-            return true;
-        }
+        return is_object($subject) && $this->accessInspector->isPropertyReadable($subject, $property);
+    }
 
-        if (!property_exists($this->getWrappedObject(), $property)) {
-            return false;
-        }
+    /**
+     * @param string $property
+     *
+     * @return bool
+     */
+    private function isObjectPropertyWritable($property)
+    {
+        $subject = $this->getWrappedObject();
 
-        $propertyReflection = new ReflectionProperty($this->getWrappedObject(), $property);
-
-        return $propertyReflection->isPublic();
+        return is_object($subject) && $this->accessInspector->isPropertyWritable($subject, $property);
     }
 
     /**
@@ -207,23 +214,9 @@ class Caller
      *
      * @return bool
      */
-    private function isObjectMethodAccessible($method)
+    private function isObjectMethodCallable($method)
     {
-        if (!is_object($this->getWrappedObject())) {
-            return false;
-        }
-
-        if (method_exists($this->getWrappedObject(), '__call')) {
-            return true;
-        }
-
-        if (!method_exists($this->getWrappedObject(), $method)) {
-            return false;
-        }
-
-        $methodReflection = new ReflectionMethod($this->getWrappedObject(), $method);
-
-        return $methodReflection->isPublic();
+        return $this->accessInspector->isMethodCallable($this->getWrappedObject(), $method);
     }
 
     /**
