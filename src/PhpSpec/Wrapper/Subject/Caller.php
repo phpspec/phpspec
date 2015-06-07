@@ -191,7 +191,9 @@ class Caller
      */
     private function isObjectPropertyReadable($property)
     {
-        return $this->accessInspector->isPropertyReadable($this->getWrappedObject(), $property);
+        $subject = $this->getWrappedObject();
+
+        return is_object($subject) && $this->accessInspector->isPropertyReadable($subject, $property);
     }
 
     /**
@@ -201,7 +203,9 @@ class Caller
      */
     private function isObjectPropertyWritable($property)
     {
-        return $this->accessInspector->isPropertyWritable($this->getWrappedObject(), $property);
+        $subject = $this->getWrappedObject();
+
+        return is_object($subject) && $this->accessInspector->isPropertyWritable($subject, $property);
     }
 
     /**

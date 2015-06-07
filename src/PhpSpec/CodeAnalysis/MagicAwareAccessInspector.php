@@ -15,7 +15,7 @@ final class MagicAwareAccessInspector implements AccessInspectorInterface
      */
     public function isPropertyReadable($object, $property)
     {
-        return is_object($object) && (method_exists($object, '__get') || $this->isExistingPublicProperty($object, $property));
+        return (method_exists($object, '__get') || $this->isExistingPublicProperty($object, $property));
     }
 
     /**
@@ -26,7 +26,7 @@ final class MagicAwareAccessInspector implements AccessInspectorInterface
      */
     public function isPropertyWritable($object, $property)
     {
-        return is_object($object) && (method_exists($object, '__set') || $this->isExistingPublicProperty($object, $property));
+        return(method_exists($object, '__set') || $this->isExistingPublicProperty($object, $property));
     }
 
     /**
@@ -37,7 +37,7 @@ final class MagicAwareAccessInspector implements AccessInspectorInterface
      */
     public function isMethodCallable($object, $method)
     {
-        return is_object($object) && (method_exists($object, '__call') || $this->isExistingPublicMethod($object, $method));
+        return (method_exists($object, '__call') || $this->isExistingPublicMethod($object, $method));
     }
 
     /**
