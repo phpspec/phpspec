@@ -283,3 +283,109 @@ Feature: Developer generates a named constructor
     }
 
     """
+
+  Scenario: Generating a named constructor using beConstructedThrough*
+    Given the spec file "spec/CodeGeneration/ShortSyntax/UserSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\ShortSyntax;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class UserSpec extends ObjectBehavior
+      {
+          function it_registers_a_user()
+          {
+              $this->beConstructedThroughRegister('firstname', 'lastname');
+              $this->getFirstname()->shouldBe('firstname');
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/ShortSyntax/User.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\ShortSyntax;
+
+      class User
+      {
+      }
+
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/ShortSyntax/User.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\ShortSyntax;
+
+      class User
+      {
+
+          public static function register($argument1, $argument2)
+          {
+              $user = new User();
+
+              // TODO: write logic here
+
+              return $user;
+          }
+      }
+
+      """
+
+  Scenario: Generating a named constructor using beConstructed*
+    Given the spec file "spec/CodeGeneration/ShortSyntax2/UserSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\ShortSyntax2;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class UserSpec extends ObjectBehavior
+      {
+          function it_registers_a_user()
+          {
+              $this->beConstructedFromString('firstname', 'lastname');
+              $this->getFirstname()->shouldBe('firstname');
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/ShortSyntax2/User.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\ShortSyntax2;
+
+      class User
+      {
+      }
+
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/ShortSyntax2/User.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\ShortSyntax2;
+
+      class User
+      {
+
+          public static function fromString($argument1, $argument2)
+          {
+              $user = new User();
+
+              // TODO: write logic here
+
+              return $user;
+          }
+      }
+
+      """
