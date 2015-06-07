@@ -69,15 +69,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function theTestsShouldBeRerun()
     {
-        expect(substr_count($this->lastOutput, 'for you?'))->toBe(2);
-    }
-
-    /**
-     * @Given I have not configured an autoloader
-     */
-    public function iHaveNotConfiguredAnAutoloader()
-    {
-        // this is actually the default behaviour
+        expect(substr_count($this->lastOutput, 'specs'))->toBe(2);
     }
 
     /**
