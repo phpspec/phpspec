@@ -93,9 +93,8 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function iShouldSee($message)
     {
-        if($_ENV['hhvm']) {
-            var_dump(error_get_last());
-        }
+        var_dump(error_get_last());
+        expect(error_get_last())->toEqual(array());
         expect(strpos($this->lastOutput, $message))->toNotBe(false);
     }
 
