@@ -15,6 +15,7 @@ namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
 use Phpspec\CodeAnalysis\AccessInspectorInterface;
+use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
 use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Wrapper\Subject;
@@ -73,7 +74,7 @@ class Caller
         $this->dispatcher       = $dispatcher;
         $this->wrapper          = $wrapper;
         $this->exceptionFactory = $exceptions;
-        $this->accessInspector  = $accessInspector ?: new MagicAwareAccessInspector();
+        $this->accessInspector  = $accessInspector ?: new MagicAwareAccessInspector(new VisibilityAccessInspector());
     }
 
     /**
@@ -96,7 +97,7 @@ class Caller
         $unwrapper = new Unwrapper();
         $arguments = $unwrapper->unwrapAll($arguments);
 
-        if ($this->isObjectMethodAccessible($method)) {
+        if ($this->isObjectMethodCallable($method)) {
             return $this->invokeAndWrapMethodResult($subject, $method, $arguments);
         }
 
@@ -121,7 +122,7 @@ class Caller
         $unwrapper = new Unwrapper();
         $value = $unwrapper->unwrapOne($value);
 
-        if ($this->isObjectPropertyAccessible($property, true)) {
+        if ($this->isObjectPropertyWritable($property)) {
             return $this->getWrappedObject()->$property = $value;
         }
 
@@ -146,7 +147,7 @@ class Caller
             throw $this->accessingPropertyOnNonObject($property);
         }
 
-        if ($this->isObjectPropertyAccessible($property)) {
+        if ($this->isObjectPropertyReadable($property)) {
             return $this->wrap($this->getWrappedObject()->$property);
         }
 
@@ -186,13 +187,26 @@ class Caller
 
     /**
      * @param string $property
-     * @param bool   $withValue
      *
      * @return bool
      */
-    private function isObjectPropertyAccessible($property, $withValue = false)
+    private function isObjectPropertyReadable($property)
     {
-        return $this->accessInspector->isPropertyAccessible($this->getWrappedObject(), $property, $withValue);
+        $subject = $this->getWrappedObject();
+
+        return is_object($subject) && $this->accessInspector->isPropertyReadable($subject, $property);
+    }
+
+    /**
+     * @param string $property
+     *
+     * @return bool
+     */
+    private function isObjectPropertyWritable($property)
+    {
+        $subject = $this->getWrappedObject();
+
+        return is_object($subject) && $this->accessInspector->isPropertyWritable($subject, $property);
     }
 
     /**
@@ -200,9 +214,9 @@ class Caller
      *
      * @return bool
      */
-    private function isObjectMethodAccessible($method)
+    private function isObjectMethodCallable($method)
     {
-        return $this->accessInspector->isMethodAccessible($this->getWrappedObject(), $method);
+        return $this->accessInspector->isMethodCallable($this->getWrappedObject(), $method);
     }
 
     /**

@@ -1,5 +1,16 @@
 <?php
 
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace PhpSpec\CodeAnalysis;
 
 use ReflectionMethod;
@@ -8,49 +19,48 @@ use ReflectionProperty;
 final class MagicAwareAccessInspector implements AccessInspectorInterface
 {
     /**
+     * @var AccessInspectorInterface
+     */
+    private $accessInspector;
+
+    /**
+     * @param AccessInspectorInterface $accessInspector
+     */
+    public function __construct(AccessInspectorInterface $accessInspector)
+    {
+        $this->accessInspector = $accessInspector;
+    }
+
+    /**
      * @param object $object
      * @param string $property
-     * @param bool $withValue
+     *
      * @return bool
      */
-    public function isPropertyAccessible($object, $property, $withValue = false)
+    public function isPropertyReadable($object, $property)
     {
-        if (!is_object($object)) {
-            return false;
-        }
+        return method_exists($object, '__get') || $this->accessInspector->isPropertyReadable($object, $property);
+    }
 
-        if (method_exists($object, $withValue ? '__set' : '__get')) {
-            return true;
-        }
-
-        if (!property_exists($object, $property)) {
-            return false;
-        }
-
-        $propertyReflection = new ReflectionProperty($object, $property);
-        return $propertyReflection->isPublic();
+    /**
+     * @param object $object
+     * @param string $property
+     *
+     * @return bool
+     */
+    public function isPropertyWritable($object, $property)
+    {
+        return method_exists($object, '__set') || $this->accessInspector->isPropertyWritable($object, $property);
     }
 
     /**
      * @param object $object
      * @param string $method
+     *
      * @return bool
      */
-    public function isMethodAccessible($object, $method)
+    public function isMethodCallable($object, $method)
     {
-        if (!is_object($object)) {
-            return false;
-        }
-
-        if (method_exists($object, '__call')) {
-            return true;
-        }
-
-        if (!method_exists($object, $method)) {
-            return false;
-        }
-
-        $methodReflection = new ReflectionMethod($object, $method);
-        return $methodReflection->isPublic();
+        return method_exists($object, '__call') || $this->accessInspector->isMethodCallable($object, $method);
     }
 }
