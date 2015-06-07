@@ -11,22 +11,12 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Process\Context;
+namespace PhpSpec\Process\Prerequisites;
 
-interface ExecutionContextInterface
+interface SuitePrerequisitesInterface
 {
     /**
-     * @param string $type
+     * @throws PrerequisiteFailedException
      */
-    public function addGeneratedType($type);
-
-    /**
-     * @return array
-     */
-    public function getGeneratedTypes();
-
-    /**
-     * @return array
-     */
-    public function asEnv();
+    public function guardPrerequisites();
 }

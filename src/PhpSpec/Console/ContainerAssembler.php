@@ -15,6 +15,7 @@ namespace PhpSpec\Console;
 
 use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
+use PhpSpec\Process\Prerequisites\SuitePrerequisites;
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
@@ -173,7 +174,13 @@ class ContainerAssembler
         });
         $container->setShared('event_dispatcher.listeners.rerun', function (ServiceContainer $c) {
             return new Listener\RerunListener(
-                $c->get('process.rerunner')
+                $c->get('process.rerunner'),
+                $c->get('process.prerequisites')
+            );
+        });
+        $container->setShared('process.prerequisites', function (ServiceContainer $c) {
+            return new SuitePrerequisites(
+                $c->get('process.executioncontext')
             );
         });
         $container->setShared('event_dispatcher.listeners.method_returned_null', function (ServiceContainer $c) {

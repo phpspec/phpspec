@@ -4,14 +4,15 @@ namespace spec\PhpSpec\Listener;
 
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Process\Prerequisites\SuitePrerequisitesInterface;
 use PhpSpec\Process\ReRunner;
 use Prophecy\Argument;
 
 class RerunListenerSpec extends ObjectBehavior
 {
-    function let(ReRunner $reRunner)
+    function let(ReRunner $reRunner, SuitePrerequisitesInterface $suitePrerequisites)
     {
-        $this->beConstructedWith($reRunner);
+        $this->beConstructedWith($reRunner, $suitePrerequisites);
     }
 
     function it_subscribes_to_aftersuite()
