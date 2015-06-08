@@ -15,4 +15,3 @@ smoke:
     smoke:
       contexts: [ IsolatedProcessContext, FilesystemContext ]
       filters: { tags: @smoke && ~@isolated }
-
