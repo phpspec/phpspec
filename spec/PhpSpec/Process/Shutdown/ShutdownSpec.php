@@ -8,15 +8,17 @@ use Prophecy\Argument;
 
 class ShutdownSpec extends ObjectBehavior
 {
-    function it_has_type_shutdown()
+    function it_returns_the_count_of_the_actions_registered(ShutdownActionInterface $action)
     {
-        $this->beAnInstanceOf('PhpSpec/Process/Shutdown/Shutdown');
+        $this->count()->shouldReturn(0);
+        $this->registerAction($action);
+        $this->count()->shouldReturn(1);
     }
 
-    function it_runs_through_all_registered_actions(ShutdownActionInterface $action)
+    function it_runs_register_shutdown(ShutdownActionInterface $action)
     {
-        $action->runAction(null)->shouldBeCalled();
+        $action->runAction()->shouldBeCalled();
         $this->registerAction($action);
-        $this->runShutdown();
+        $this->registerShutdown();
     }
 }

@@ -13,11 +13,10 @@
 
 namespace PhpSpec\Process\Shutdown;
 
-final class Shutdown
+class Shutdown
 {
-    protected $actions;
 
-    const HHVM_FATAL_ERROR = 16777217;
+    protected $actions;
 
     public function __construct()
     {
@@ -26,8 +25,9 @@ final class Shutdown
 
     public function registerShutdown()
     {
-        error_reporting(E_ERROR);
-        register_shutdown_function(array($this, 'runShutdown'));
+        foreach ($this->actions as $shutdownActions) {
+            $shutdownActions->runAction();
+        }
     }
 
     public function registerAction(ShutdownActionInterface $action)
@@ -35,24 +35,8 @@ final class Shutdown
         $this->actions[] = $action;
     }
 
-    public function runShutdown()
+    public function count()
     {
-        $error = $this->getFatalError();
-
-        foreach ($this->actions as $fatalErrorActions) {
-            $fatalErrorActions->runAction($error);
-        }
-    }
-
-    private function getFatalError()
-    {
-        $error = error_get_last();
-        $fatal = false;
-
-        if (!empty($error)) {
-            $fatal = defined('HHVM_VERSION') ? (self::HHVM_FATAL_ERROR === $error['type']) : (E_ERROR === $error['type']);
-        }
-
-        return $fatal ? $error : null;
+        return count($this->actions);
     }
 }

@@ -10,10 +10,9 @@ use Prophecy\Argument;
 
 class CurrentExampleListenerSpec extends ObjectBehavior
 {
-    function let()
+    function let(CurrentExample $message)
     {
-        $currentExample = new CurrentExample();
-        $this->beConstructedWith($currentExample);
+        $this->beConstructedWith($message);
     }
 
     function it_is_initializable()
@@ -26,29 +25,26 @@ class CurrentExampleListenerSpec extends ObjectBehavior
         $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
     }
 
-    function it_should_call_beforeCurrentExample(ExampleEvent $example)
+    function it_should_call_beforeExample(ExampleEvent $example, CurrentExample $message)
     {
-        $currentExample = new CurrentExample();
-        $fatalError = 'Fatal error happened before example';
-        $example->getTitle()->willReturn($fatalError);
-        $currentExample->setCurrentExample($fatalError);
-        $this->beforeCurrentExample($example);
+        $localMessage = 'in before example';
+        $example->getTitle()->willReturn($localMessage);
+        $message->setCurrentExample($localMessage)->shouldBeCalled();
+        $this->beforeExampleMessage($example);
+
     }
 
-    function it_should_call_afterCurrentExample(ExampleEvent $example)
+    function it_should_call_afterExample(ExampleEvent $example, CurrentExample $message)
     {
-        $currentExample = new CurrentExample();
-        $currentExample->setCurrentExample(null);
-        $example->getTitle()->willReturn(null);
-        $this->afterCurrentExample($example);
+        $message->setCurrentExample("")->shouldBeCalled();
+        $this->afterExampleMessage($example);
     }
 
-    function it_should_call_afterSuiteEvent(SuiteEvent $example)
+    function it_should_call_afterSuite(SuiteEvent $example, CurrentExample $message)
     {
-        $fatalError = '3';
-        $currentExample = new CurrentExample();
-        $currentExample->setCurrentExample("Exited with code: " . $fatalError);
-        $example->getResult()->willReturn($fatalError);
-        $this->afterSuiteEvent($example);
+        $localMessage = 'A Message';
+        $example->getResult()->willReturn($localMessage);
+        $message->setCurrentExample($localMessage)->shouldBeCalled();
+        $this->suiteMessage($example);
     }
 }

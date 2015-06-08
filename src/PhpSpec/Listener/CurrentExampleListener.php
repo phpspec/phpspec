@@ -18,39 +18,40 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Message\CurrentExample;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final class CurrentExampleListener implements EventSubscriberInterface {
+class CurrentExampleListener implements EventSubscriberInterface {
 
     /**
      * @var CurrentExample
      */
-    private $currentExample;
+    private $message;
 
     public static function getSubscribedEvents()
     {
         return array(
-            'beforeExample' => array('beforeCurrentExample', -20),
-            'afterExample' => array('afterCurrentExample', -20),
-            'afterSuite' => array('afterSuiteEvent', -20),
+            'beforeExample' => array('beforeExampleMessage', -20),
+            'afterExample' => array('afterExampleMessage', -20),
+            'afterSuite' => array('suiteMessage', -20),
         );
     }
 
-    public function __construct(CurrentExample $currentExample)
+    public function __construct(CurrentExample $message)
     {
-        $this->currentExample = $currentExample;
+        $this->message = $message;
     }
 
-    public function beforeCurrentExample(ExampleEvent $event)
+    public function beforeExampleMessage(ExampleEvent $event)
     {
-        $this->currentExample->setCurrentExample($event->getTitle());
+        $this->message->setCurrentExample($event->getTitle());
     }
 
-    public function afterCurrentExample()
+    public function afterExampleMessage()
     {
-        $this->currentExample->setCurrentExample(null);
+        $message = "";
+        $this->message->setCurrentExample($message);
     }
 
-    public function afterSuiteEvent(SuiteEvent $event)
+    public function suiteMessage(SuiteEvent $event)
     {
-        $this->currentExample->setCurrentExample('Exited with code: ' . $event->getResult());
+        $this->message->setCurrentExample($event->getResult());
     }
 }

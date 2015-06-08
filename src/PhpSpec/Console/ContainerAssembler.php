@@ -56,9 +56,9 @@ class ContainerAssembler
         $this->setupResultConverter($container);
         $this->setupRerunner($container);
         $this->setupMatchers($container);
-        $this->setupCurrentExample($container);
+        $this->setupMessage($container);
         $this->setupShutdown($container);
-        $this->setupShutdownActions($container);
+        $this->setupShutdownAction($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -190,9 +190,9 @@ class ContainerAssembler
                 $c->get('util.method_analyser')
             );
         });
-        $container->setShared('event_dispatcher.listeners.current_example_listener', function (ServiceContainer $c) {
+        $container->setShared('event_dispatcher.listeners.state_listener', function (ServiceContainer $c) {
             return new Listener\CurrentExampleListener(
-                $c->get('current_example')
+                $c->get('message.current_example')
             );
         });
         $container->setShared('util.method_analyser', function () {
@@ -474,9 +474,9 @@ class ContainerAssembler
             }
         );
         $container->set(
-            'formatter.formatters.fatal_error_writer',
+            'formatter.formatters.current_example_writer',
             function (ServiceContainer $c) {
-                return new SpecFormatter\FatalErrorWriter(
+                return new SpecFormatter\CurrentExampleWriter(
                   $c->get('console.io')
                 );
             }
@@ -664,9 +664,9 @@ class ContainerAssembler
     /**
      * @param ServiceContainer $container
      */
-    private function setupCurrentExample(ServiceContainer $container)
+    private function setupMessage(ServiceContainer $container)
     {
-        $container->setShared('current_example', function () {
+        $container->setShared('message.current_example', function () {
             return new CurrentExample();
         });
     }
@@ -684,15 +684,14 @@ class ContainerAssembler
     /**
      * @param ServiceContainer $container
      */
-    private function setupShutdownActions(ServiceContainer $container)
+    private function setupShutdownAction(ServiceContainer $container)
     {
         $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) {
             return new UpdateConsoleAction(
-                $c->get('current_example'),
-                $c->get('formatter.formatters.fatal_error_writer')
+                $c->get('message.current_example'),
+                $c->get('formatter.formatters.current_example_writer')
             );
         });
     }
 
->>>>>>> Add Fatal Error Message feature
 }
