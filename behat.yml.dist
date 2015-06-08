@@ -9,7 +9,8 @@ default:
     smoke:
       contexts: [ IsolatedProcessContext, FilesystemContext ]
       filters: { tags: @smoke && ~@isolated }
-  formatters:
+  
+	formatters:
     progress: ~
 
 no-smoke:

@@ -16,6 +16,9 @@ namespace PhpSpec\Console;
 use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
+use PhpSpec\Message\CurrentExample;
+use PhpSpec\Process\Shutdown\Shutdown;
+use PhpSpec\Process\Shutdown\UpdateConsoleAction;
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
@@ -53,7 +56,9 @@ class ContainerAssembler
         $this->setupResultConverter($container);
         $this->setupRerunner($container);
         $this->setupMatchers($container);
-        $this->setupSubscribers($container);
+        $this->setupMessage($container);
+        $this->setupShutdown($container);
+        $this->setupShutdownAction($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -183,6 +188,11 @@ class ContainerAssembler
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator'),
                 $c->get('util.method_analyser')
+            );
+        });
+        $container->setShared('event_dispatcher.listeners.state_listener', function (ServiceContainer $c) {
+            return new Listener\CurrentExampleListener(
+                $c->get('message.current_example')
             );
         });
         $container->setShared('util.method_analyser', function () {
@@ -463,6 +473,14 @@ class ContainerAssembler
                 return $c->get('formatter.formatters.html');
             }
         );
+        $container->set(
+            'formatter.formatters.current_example_writer',
+            function (ServiceContainer $c) {
+                return new SpecFormatter\CurrentExampleWriter(
+                  $c->get('console.io')
+                );
+            }
+        );
 
         $container->addConfigurator(function (ServiceContainer $c) {
             $formatterName = $c->getParam('formatter.name', 'progress');
@@ -646,13 +664,35 @@ class ContainerAssembler
     /**
      * @param ServiceContainer $container
      */
-    private function setupSubscribers(ServiceContainer $container)
+    private function setupMessage(ServiceContainer $container)
     {
-        $container->addConfigurator(function (ServiceContainer $c) {
-            array_map(
-                array($c->get('event_dispatcher'), 'addSubscriber'),
-                $c->getByPrefix('event_dispatcher.listeners')
+        $container->setShared('message.current_example', function () {
+            return new CurrentExample();
+        });
+    }
+
+  /**
+   * @param ServiceContainer $container
+   */
+    private function setupShutdown(ServiceContainer $container)
+    {
+        $container->setShared('process.shutdown', function() {
+            return new Shutdown();
+        });
+    }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupShutdownAction(ServiceContainer $container)
+    {
+        $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) {
+            return new UpdateConsoleAction(
+                $c->get('message.current_example'),
+                $c->get('formatter.formatters.current_example_writer')
             );
         });
     }
+
+>>>>>>> Add Fatal Error Message feature
 }
