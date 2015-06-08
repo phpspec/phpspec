@@ -87,6 +87,12 @@ class Application extends BaseApplication
 
         $this->container->get('console.io')->setConsoleWidth($this->getTerminalWidth());
 
+        $this->container->get('process.shutdown')->registerAction(
+            $this->container->get('process.shutdown.update_console_action')
+        );
+
+        $this->container->get('process.shutdown')->registerShutdown();
+
         return parent::doRun($input, $output);
     }
 
@@ -214,7 +220,7 @@ class Application extends BaseApplication
     /**
      * @param string $configDir
      * @param array $config
-     * 
+     *
      * @return array
      */
     private function addPathsToEachSuiteConfig($configDir, $config)
