@@ -31,7 +31,9 @@ class CurrentExampleWriter
 
         if (!empty($error))
         {
-            $fatal = isset($_ENV['HHVM']) ? (16777217 == $error['type']) : (E_ERROR == $error['type']);
+            $hhvmFatalCode = 16777217;
+
+            $fatal = isset($_ENV['HHVM']) ? ($hhvmFatalCode == $error['type']) : (E_ERROR == $error['type']);
 
             if ($message->getCurrentExample() && $fatal) {
                 $this->output->writeln(sprintf('<failed>✘ %s</failed>', "Fatal error happened while executing the following example"));
