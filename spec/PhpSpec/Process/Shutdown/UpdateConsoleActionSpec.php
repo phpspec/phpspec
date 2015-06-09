@@ -29,6 +29,6 @@ class UpdateConsoleActionSpec extends ObjectBehavior
     {
         $message->getCurrentExample()->willReturn('Hello');
         $currentExampleWriter->displayFatal($message)->shouldBeCalled();
-        $this->output();
+        $this->runAction();
     }
 }
