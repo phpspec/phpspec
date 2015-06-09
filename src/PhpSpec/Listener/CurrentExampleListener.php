@@ -23,7 +23,7 @@ class CurrentExampleListener implements EventSubscriberInterface {
     /**
      * @var CurrentExample
      */
-    private $message;
+    private $currentExample;
 
     public static function getSubscribedEvents()
     {
@@ -34,24 +34,23 @@ class CurrentExampleListener implements EventSubscriberInterface {
         );
     }
 
-    public function __construct(CurrentExample $message)
+    public function __construct(CurrentExample $currentExample)
     {
-        $this->message = $message;
+        $this->currentExample = $currentExample;
     }
 
     public function beforeExampleMessage(ExampleEvent $event)
     {
-        $this->message->setCurrentExample($event->getTitle());
+        $this->currentExample->setCurrentExample($event->getTitle());
     }
 
     public function afterExampleMessage()
     {
-        $message = "";
-        $this->message->setCurrentExample($message);
+        $this->currentExample->setCurrentExample(null);
     }
 
     public function suiteMessage(SuiteEvent $event)
     {
-        $this->message->setCurrentExample($event->getResult());
+        $this->currentExample->setCurrentExample($event->getResult());
     }
 }
