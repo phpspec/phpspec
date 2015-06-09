@@ -58,7 +58,7 @@ class ContainerAssembler
         $this->setupMatchers($container);
         $this->setupMessage($container);
         $this->setupShutdown($container);
-        $this->setupShutdownAction($container);
+        $this->setupShutdownActions($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -691,7 +691,7 @@ class ContainerAssembler
     /**
      * @param ServiceContainer $container
      */
-    private function setupShutdownAction(ServiceContainer $container)
+    private function setupShutdownActions(ServiceContainer $container)
     {
         $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) {
             return new UpdateConsoleAction(
