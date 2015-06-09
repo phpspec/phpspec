@@ -10,9 +10,9 @@ use Prophecy\Argument;
 
 class CurrentExampleListenerSpec extends ObjectBehavior
 {
-    function let(CurrentExample $message)
+    function let(CurrentExample $currentExample)
     {
-        $this->beConstructedWith($message);
+        $this->beConstructedWith($currentExample);
     }
 
     function it_is_initializable()
@@ -25,26 +25,26 @@ class CurrentExampleListenerSpec extends ObjectBehavior
         $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
     }
 
-    function it_should_call_beforeExample(ExampleEvent $example, CurrentExample $message)
+    function it_should_call_beforeExample(ExampleEvent $example, CurrentExample $currentExample)
     {
-        $localMessage = 'in before example';
-        $example->getTitle()->willReturn($localMessage);
-        $message->setCurrentExample($localMessage)->shouldBeCalled();
+        $fatalError = 'Fatal error happened before example';
+        $example->getTitle()->willReturn($fatalError);
+        $currentExample->setCurrentExample($fatalError)->shouldBeCalled();
         $this->beforeExampleMessage($example);
 
     }
 
-    function it_should_call_afterExample(ExampleEvent $example, CurrentExample $message)
+    function it_should_call_afterExample(ExampleEvent $example, CurrentExample $currentExample)
     {
-        $message->setCurrentExample("")->shouldBeCalled();
+        $currentExample->setCurrentExample(null)->shouldBeCalled();
         $this->afterExampleMessage($example);
     }
 
-    function it_should_call_afterSuite(SuiteEvent $example, CurrentExample $message)
+    function it_should_call_afterSuite(SuiteEvent $example, CurrentExample $currentExample)
     {
-        $localMessage = 'A Message';
-        $example->getResult()->willReturn($localMessage);
-        $message->setCurrentExample($localMessage)->shouldBeCalled();
+        $fatalError = 'Fatal error happened after suite';
+        $example->getResult()->willReturn($fatalError);
+        $currentExample->setCurrentExample($fatalError)->shouldBeCalled();
         $this->suiteMessage($example);
     }
 }
