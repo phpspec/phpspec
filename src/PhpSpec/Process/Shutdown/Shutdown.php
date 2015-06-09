@@ -15,7 +15,6 @@ namespace PhpSpec\Process\Shutdown;
 
 class Shutdown
 {
-
     protected $actions;
 
     public function __construct()
@@ -25,9 +24,9 @@ class Shutdown
 
     public function registerShutdown()
     {
-        foreach ($this->actions as $shutdownActions) {
-            $shutdownActions->runAction();
-        }
+        ini_set('display_errors', '0');
+        error_reporting(E_ERROR);
+        register_shutdown_function(array($this, 'runShutdown'));
     }
 
     public function registerAction(ShutdownActionInterface $action)
@@ -38,5 +37,12 @@ class Shutdown
     public function count()
     {
         return count($this->actions);
+    }
+
+    public function runShutdown()
+    {
+        foreach ($this->actions as $shutdownActions) {
+            $shutdownActions->runAction();
+        }
     }
 }

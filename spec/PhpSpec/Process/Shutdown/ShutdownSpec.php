@@ -19,6 +19,6 @@ class ShutdownSpec extends ObjectBehavior
     {
         $action->runAction()->shouldBeCalled();
         $this->registerAction($action);
-        $this->registerShutdown();
+        $this->runShutdown();
     }
 }
