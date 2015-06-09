@@ -35,9 +35,7 @@ final class UpdateConsoleAction implements ShutdownActionInterface
 
     public function runAction()
     {
-        ini_set('display_errors', '0');
-        error_reporting(E_ERROR);
-        register_shutdown_function(array($this, 'output'));
+        $this->output();
     }
 
     public function output()
