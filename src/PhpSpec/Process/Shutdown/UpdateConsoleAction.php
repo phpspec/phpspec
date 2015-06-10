@@ -21,15 +21,15 @@ final class UpdateConsoleAction implements ShutdownActionInterface
     /**
      * @var CurrentExample
      */
-    private $message;
+    private $currentExample;
     /**
      * @var CurrentExampleWriter
      */
     private $currentExampleWriter;
 
-    public function __construct(CurrentExample $message, CurrentExampleWriter $currentExampleWriter)
+    public function __construct(CurrentExample $currentExample, CurrentExampleWriter $currentExampleWriter)
     {
-        $this->message = $message;
+        $this->currentExample = $currentExample;
         $this->currentExampleWriter = $currentExampleWriter;
     }
 
@@ -40,7 +40,7 @@ final class UpdateConsoleAction implements ShutdownActionInterface
 
     public function output()
     {
-        $this->currentExampleWriter->displayFatal($this->message);
+        $this->currentExampleWriter->displayFatal($this->currentExample);
     }
 
 }
