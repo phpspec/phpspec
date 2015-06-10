@@ -31,7 +31,6 @@ class CurrentExampleListenerSpec extends ObjectBehavior
         $example->getTitle()->willReturn($fatalError);
         $currentExample->setCurrentExample($fatalError)->shouldBeCalled();
         $this->beforeCurrentExample($example);
-
     }
 
     function it_should_call_afterCurrentExample(ExampleEvent $example, CurrentExample $currentExample)
