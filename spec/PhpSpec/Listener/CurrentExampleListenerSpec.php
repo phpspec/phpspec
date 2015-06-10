@@ -42,9 +42,9 @@ class CurrentExampleListenerSpec extends ObjectBehavior
 
     function it_should_call_afterSuite(SuiteEvent $example, CurrentExample $currentExample)
     {
-        $fatalError = 'Fatal error happened after suite';
+        $fatalError = '3';
         $example->getResult()->willReturn($fatalError);
-        $currentExample->setCurrentExample($fatalError)->shouldBeCalled();
+        $currentExample->setCurrentExample("Exited with code: " . $fatalError)->shouldBeCalled();
         $this->suiteMessage($example);
     }
 }

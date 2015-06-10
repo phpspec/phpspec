@@ -51,6 +51,6 @@ class CurrentExampleListener implements EventSubscriberInterface {
 
     public function suiteMessage(SuiteEvent $event)
     {
-        $this->currentExample->setCurrentExample($event->getResult());
+        $this->currentExample->setCurrentExample('Exited with code: ' . $event->getResult());
     }
 }
