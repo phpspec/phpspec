@@ -26,27 +26,27 @@ class CurrentExampleListenerSpec extends ObjectBehavior
         $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
     }
 
-    function it_should_call_beforeExample(ExampleEvent $example, CurrentExample $currentExample)
+    function it_should_call_beforeCurrentExample(ExampleEvent $example, CurrentExample $currentExample)
     {
         $fatalError = 'Fatal error happened before example';
         $example->getTitle()->willReturn($fatalError);
         $currentExample->setCurrentExample($fatalError)->shouldBeCalled();
-        $this->beforeExampleMessage($example);
+        $this->beforeCurrentExample($example);
 
     }
 
-    function it_should_call_afterExample(ExampleEvent $example, CurrentExample $currentExample)
+    function it_should_call_afterCurrentExample(ExampleEvent $example, CurrentExample $currentExample)
     {
         $currentExample->setCurrentExample(null)->shouldBeCalled();
-        $this->afterExampleMessage($example);
+        $this->afterCurrentExample($example);
     }
 
-    function it_should_call_afterSuite(SuiteEvent $example, CurrentExample $currentExample)
+    function it_should_call_afterSuiteEvent(SuiteEvent $example, CurrentExample $currentExample)
     {
         $fatalError = '3';
         $example->getResult()->willReturn($fatalError);
         $currentExample->setCurrentExample("Exited with code: " . $fatalError)->shouldBeCalled();
-        $this->suiteMessage($example);
+        $this->afterSuiteEvent($example);
     }
 
 }
