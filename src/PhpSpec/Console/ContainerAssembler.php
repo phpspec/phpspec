@@ -190,7 +190,7 @@ class ContainerAssembler
                 $c->get('util.method_analyser')
             );
         });
-        $container->setShared('event_dispatcher.listeners.state_listener', function (ServiceContainer $c) {
+        $container->setShared('event_dispatcher.listeners.current_example_listener', function (ServiceContainer $c) {
             return new Listener\CurrentExampleListener(
                 $c->get('message.current_example')
             );
