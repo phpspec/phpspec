@@ -25,7 +25,7 @@ class CurrentExampleWriter
         $this->output = $io;
     }
 
-    public function displayFatal(CurrentExample $message)
+    public function displayFatal(CurrentExample $currentExample)
     {
         $error = error_get_last();
 
@@ -35,9 +35,9 @@ class CurrentExampleWriter
 
             $fatal = isset($_ENV['HHVM']) ? ($hhvmFatalCode == $error['type']) : (E_ERROR == $error['type']);
 
-            if ($message->getCurrentExample() && $fatal) {
+            if ($currentExample->getCurrentExample() && $fatal) {
                 $this->output->writeln(sprintf('<failed>✘ %s</failed>', "Fatal error happened while executing the following"));
-                $this->output->writeln(sprintf('<failed>    %s</failed>', $message->getCurrentExample()));
+                $this->output->writeln(sprintf('<failed>    %s</failed>', $currentExample->getCurrentExample()));
                 $this->output->writeln(sprintf('<failed>    %s</failed>', $error['message']));
             }
         }
