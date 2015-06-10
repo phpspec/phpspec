@@ -10,7 +10,6 @@ use Prophecy\Argument;
 
 class CurrentExampleListenerSpec extends ObjectBehavior
 {
-
     function let(CurrentExample $currentExample)
     {
         $this->beConstructedWith($currentExample);
@@ -32,7 +31,6 @@ class CurrentExampleListenerSpec extends ObjectBehavior
         $example->getTitle()->willReturn($fatalError);
         $currentExample->setCurrentExample($fatalError)->shouldBeCalled();
         $this->beforeCurrentExample($example);
-
     }
 
     function it_should_call_afterCurrentExample(ExampleEvent $example, CurrentExample $currentExample)
@@ -48,5 +46,4 @@ class CurrentExampleListenerSpec extends ObjectBehavior
         $currentExample->setCurrentExample("Exited with code: " . $fatalError)->shouldBeCalled();
         $this->afterSuiteEvent($example);
     }
-
 }

@@ -43,4 +43,3 @@ Feature: Developer is notified of which scenario caused a fatal error
     When I run phpspec
     Then I should see "Fatal error happened while executing the following"
     And  I should see "it fatals when calling an undeclared function"
-
