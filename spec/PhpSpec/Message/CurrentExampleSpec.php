@@ -15,14 +15,14 @@ class CurrentExampleSpec extends ObjectBehavior
 
     function it_should_set_a_message()
     {
-        $message = new CurrentExample();
-        $message->setCurrentExample('test');
-        expect($message->getCurrentExample())->toBe('test');
+        $currentExample = new CurrentExample();
+        $currentExample->setCurrentExample('test');
+        expect($currentExample->getCurrentExample())->toBe('test');
     }
 
     function it_should_be_null_on_construction()
     {
-        $message = new CurrentExample();
-        expect($message->getCurrentExample())->toBe(null);
+        $currentExample = new CurrentExample();
+        expect($currentExample->getCurrentExample())->toBe(null);
     }
 }
