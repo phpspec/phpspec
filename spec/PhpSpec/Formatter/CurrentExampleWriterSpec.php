@@ -8,7 +8,6 @@ use Prophecy\Argument;
 
 class CurrentExampleWriterSpec extends ObjectBehavior
 {
-
     function let(IO $io)
     {
         $this->beConstructedWith($io);
