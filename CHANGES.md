@@ -1,9 +1,9 @@
 Upcoming
 ========
 
-* Added `duringInstantiation` to more easily test constructor exceptions
-* New `%paths.config%` to make config paths relative to config file
-* New `beConstructedThrough*` and `beConstructed*()` shortcuts for named constructors
+* Adds `duringInstantiation` to more easily test constructor exceptions
+* Adds `%paths.config%` placeholder to allow config paths to be relative to config file
+* Adds `beConstructedThrough*` and `beConstructed*()` shortcuts for named constructors
 * Shows a warning when a class is generated in a location that is not autoloadable
 
 2.2.1 / 2015-05-30
