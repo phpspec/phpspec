@@ -36,11 +36,6 @@ final class UpdateConsoleAction implements ShutdownActionInterface
 
     public function runAction()
     {
-        $this->output();
-    }
-
-    public function output()
-    {
         $this->currentExampleWriter->displayFatal($this->currentExample);
     }
 }
