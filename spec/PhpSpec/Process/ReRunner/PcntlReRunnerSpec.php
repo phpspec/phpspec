@@ -11,7 +11,7 @@ class PcntlReRunnerSpec extends ObjectBehavior
 {
     function let(PhpExecutableFinder $executableFinder, ExecutionContextInterface $executionContext)
     {
-        $this->beConstructedThrough('withExecutionContext', [$executableFinder, $executionContext]);
+        $this->beConstructedThrough('withExecutionContext', array($executableFinder, $executionContext));
     }
 
     function it_is_a_rerunner()
