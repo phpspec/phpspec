@@ -3,6 +3,7 @@ Upcoming
 
 * Added `duringInstantiation` to more easily test constructor exceptions
 * New `%paths.config%` to make config paths relative to config file
+* New `beConstructedThrough*` and `beConstructed*()` shortcuts for named constructors
 
 2.2.1 / 2015-05-30
 ==================
