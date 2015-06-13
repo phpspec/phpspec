@@ -54,8 +54,6 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
 
         $process->run();
         $this->lastOutput = $process->getOutput();
-
-        expect((bool)$process->getErrorOutput())->toBe(false);
     }
 
     /**
@@ -71,6 +69,14 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function theTestsShouldBeRerun()
     {
-        expect(substr_count($this->lastOutput, 'for you?'))->toBe(2);
+        expect(substr_count($this->lastOutput, 'specs'))->toBe(2);
+    }
+
+    /**
+     * @Then I should see an error about the missing autoloader
+     */
+    public function iShouldSeeAnErrorAboutTheMissingAutoloader()
+    {
+        expect($this->lastOutput)->toMatch('/autoload/');
     }
 }

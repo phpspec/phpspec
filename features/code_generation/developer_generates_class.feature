@@ -131,3 +131,10 @@ Feature: Developer generates a class
     }
 
     """
+
+  @isolated
+  Scenario: Generating a class outside of autoloadable paths gives a warning
+    Given I have started describing the "CodeGeneration/ClassExample2/Markdown" class
+    But I have not configured an autoloader
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then I should see an error about the missing autoloader

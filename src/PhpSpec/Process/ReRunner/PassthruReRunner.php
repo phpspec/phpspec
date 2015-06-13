@@ -13,8 +13,29 @@
 
 namespace PhpSpec\Process\ReRunner;
 
+use PhpSpec\Process\Context\ExecutionContextInterface;
+use Symfony\Component\Process\PhpExecutableFinder;
+
 class PassthruReRunner extends PhpExecutableReRunner
 {
+    /**
+     * @var ExecutionContextInterface
+     */
+    private $executionContext;
+
+    /**
+     * @param PhpExecutableFinder $phpExecutableFinder
+     * @param ExecutionContextInterface $executionContext
+     * @return static
+     */
+    public static function withExecutionContext(PhpExecutableFinder $phpExecutableFinder, ExecutionContextInterface $executionContext)
+    {
+        $reRunner = new static($phpExecutableFinder);
+        $reRunner->executionContext = $executionContext;
+
+        return $reRunner;
+    }
+
     /**
      * @return boolean
      */
@@ -28,8 +49,19 @@ class PassthruReRunner extends PhpExecutableReRunner
     public function reRunSuite()
     {
         $args = $_SERVER['argv'];
-        $command = escapeshellcmd($this->getExecutablePath()).' '.join(' ', array_map('escapeshellarg', $args));
+        $command = $this->buildArgString() . escapeshellcmd($this->getExecutablePath()).' '.join(' ', array_map('escapeshellarg', $args));
         passthru($command, $exitCode);
         exit($exitCode);
+    }
+
+    private function buildArgString()
+    {
+        $argstring = '';
+
+        foreach ($this->executionContext->asEnv() as $key => $value) {
+            $argstring .= $key . '=' . escapeshellarg($value) . ' ';
+        }
+
+        return $argstring;
     }
 }

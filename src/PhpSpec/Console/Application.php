@@ -14,6 +14,7 @@
 namespace PhpSpec\Console;
 
 use PhpSpec\Console\Prompter\Factory;
+use PhpSpec\Process\Context\JsonExecutionContext;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -67,6 +68,10 @@ class Application extends BaseApplication
                 $c->get('console.output'),
                 $helperSet
             );
+        });
+
+        $this->container->setShared('process.executioncontext', function () {
+            return JsonExecutionContext::fromEnv($_SERVER);
         });
 
         $assembler = new ContainerAssembler();
