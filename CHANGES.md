@@ -5,6 +5,7 @@ Upcoming
 * Adds `%paths.config%` placeholder to allow config paths to be relative to config file
 * Adds `beConstructedThrough*` and `beConstructed*()` shortcuts for named constructors
 * Shows a warning when a class is generated in a location that is not autoloadable
+* Offers to make constructors private after generating a named constructor
 
 2.2.1 / 2015-05-30
 ==================
