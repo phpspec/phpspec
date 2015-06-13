@@ -18,7 +18,7 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Message\CurrentExample;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class CurrentExampleListener implements EventSubscriberInterface {
+final class CurrentExampleListener implements EventSubscriberInterface {
 
     /**
      * @var CurrentExample
