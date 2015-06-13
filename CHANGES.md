@@ -6,6 +6,7 @@ Upcoming
 * Adds `beConstructedThrough*` and `beConstructed*()` shortcuts for named constructors
 * Shows a warning when a class is generated in a location that is not autoloadable
 * Offers to make constructors private after generating a named constructor
+* Fixed invalid JUnit output in some non-EN locales
 
 2.2.1 / 2015-05-30
 ==================
