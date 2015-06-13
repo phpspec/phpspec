@@ -34,11 +34,6 @@ class Shutdown
         $this->actions[] = $action;
     }
 
-    public function count()
-    {
-        return count($this->actions);
-    }
-
     public function runShutdown()
     {
         foreach ($this->actions as $shutdownActions) {
