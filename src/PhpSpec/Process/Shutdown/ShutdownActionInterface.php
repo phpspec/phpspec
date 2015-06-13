@@ -16,6 +16,4 @@ namespace PhpSpec\Process\Shutdown;
 interface ShutdownActionInterface
 {
     public function runAction();
-
-    public function output();
 }
