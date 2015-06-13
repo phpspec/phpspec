@@ -265,6 +265,13 @@ class ContainerAssembler
             );
         });
 
+        $container->set('code_generator.generators.private_constructor', function (ServiceContainer $c) {
+            return new CodeGenerator\Generator\PrivateConstructorGenerator(
+                $c->get('console.io'),
+                $c->get('code_generator.templates')
+            );
+        });
+
         $container->setShared('code_generator.templates', function (ServiceContainer $c) {
             $renderer = new CodeGenerator\TemplateRenderer();
             $renderer->setLocations($c->getParam('code_generator.templates.paths', array()));

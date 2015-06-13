@@ -126,6 +126,21 @@ class ApplicationContext implements Context, MatchersProviderInterface
     }
 
     /**
+     * @When I run phpspec and answer :answer to both questions
+     */
+    public function iRunPhpspecAndAnswerToBothQuestions($answer)
+    {
+        $arguments = array (
+            'command' => 'run'
+        );
+
+        $this->prompter->setAnswer($answer=='y');
+        $this->prompter->setAnswer($answer=='y');
+
+        $this->lastExitCode = $this->tester->run($arguments, array('interactive' => true));
+    }
+
+    /**
      * @param string $option
      * @param array $arguments
      */

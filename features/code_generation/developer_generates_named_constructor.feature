@@ -389,3 +389,60 @@ Feature: Developer generates a named constructor
       }
 
       """
+
+  Scenario: Generating the private constructor
+    Given the spec file "spec/CodeGeneration/PrivateConstructor/UserSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\PrivateConstructor;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class UserSpec extends ObjectBehavior
+      {
+          function it_registers_a_user()
+          {
+              $this->beConstructedThrough('register', array('firstname', 'lastname'));
+              $this->getFirstname()->shouldBe('firstname');
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/PrivateConstructor/User.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\PrivateConstructor;
+
+      class User
+      {
+      }
+
+      """
+    When I run phpspec and answer "y" to both questions
+    Then the class in "src/CodeGeneration/PrivateConstructor/User.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\PrivateConstructor;
+
+      class User
+      {
+
+          public static function register($argument1, $argument2)
+          {
+              $user = new User();
+
+              // TODO: write logic here
+
+              return $user;
+          }
+
+          private function __construct()
+          {
+          }
+      }
+
+      """
