@@ -122,6 +122,14 @@ You can tell **phpspec** this is how you want to construct the object as follows
 Where the first argument is the method name and the second an array of the values
 to pass to that method.
 
+To be more descriptive, shorter syntaxes are available. All of the following are equivalent:
+
+.. code-block: php
+
+    $this->beConstructedNamed('Bob');
+    $this->beConstructedThroughNamed('Bob');
+    $this->beConstructedThrough('Named', array('Bob'));
+
 Overriding
 ----------
 
