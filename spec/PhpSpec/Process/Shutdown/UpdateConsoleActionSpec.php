@@ -27,8 +27,9 @@ class UpdateConsoleActionSpec extends ObjectBehavior
 
     function it_should_update_the_console(CurrentExample $currentExample, CurrentExampleWriter $currentExampleWriter)
     {
+        $error = array('type' => 1, 'message' => 'Hello');
         $currentExample->getCurrentExample()->willReturn('Hello');
-        $currentExampleWriter->displayFatal($currentExample)->shouldBeCalled();
-        $this->runAction();
+        $currentExampleWriter->displayFatal($currentExample, $error)->shouldBeCalled();
+        $this->runAction($error);
     }
 }
