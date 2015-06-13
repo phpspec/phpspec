@@ -17,6 +17,8 @@ class Shutdown
 {
     protected $actions;
 
+    const HHVM_FATAL_ERROR = 16777217;
+
     public function __construct()
     {
         $this->actions = array();
@@ -36,8 +38,22 @@ class Shutdown
 
     public function runShutdown()
     {
-        foreach ($this->actions as $shutdownActions) {
-            $shutdownActions->runAction();
+        $error = $this->getFatalError();
+
+        foreach ($this->actions as $fatalErrorActions) {
+            $fatalErrorActions->runAction($error);
         }
+    }
+
+    public function getFatalError()
+    {
+        $error = error_get_last();
+        $fatal = false;
+
+        if (!empty($error)) {
+            $fatal = isset($_ENV['HHVM']) ? (self::HHVM_FATAL_ERROR == $error['type']) : (E_ERROR == $error['type']);
+        }
+
+        return ($fatal) ? $error : null;
     }
 }
