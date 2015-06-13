@@ -14,6 +14,7 @@
 namespace PhpSpec\Process\ReRunner;
 
 use PhpSpec\Process\Context\ExecutionContextInterface;
+use Symfony\Component\Process\PhpExecutableFinder;
 
 class PcntlReRunner extends PhpExecutableReRunner
 {
@@ -23,11 +24,16 @@ class PcntlReRunner extends PhpExecutableReRunner
     private $executionContext;
 
     /**
+     * @param PhpExecutableFinder $phpExecutableFinder
      * @param ExecutionContextInterface $executionContext
+     * @return static
      */
-    public function setExecutionContext(ExecutionContextInterface $executionContext)
+    public static function withExecutionContext(PhpExecutableFinder $phpExecutableFinder, ExecutionContextInterface $executionContext)
     {
-        $this->executionContext = $executionContext;
+        $reRunner = new static($phpExecutableFinder);
+        $reRunner->executionContext = $executionContext;
+
+        return $reRunner;
     }
 
     /**

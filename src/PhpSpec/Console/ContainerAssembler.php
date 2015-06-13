@@ -626,16 +626,16 @@ class ContainerAssembler
             );
         });
         $container->setShared('process.rerunner.platformspecific.pcntl', function (ServiceContainer $c) {
-            $reRunner = new ReRunner\PcntlReRunner($c->get('process.phpexecutablefinder'));
-            $reRunner->setExecutionContext($c->get('process.executioncontext'));
-
-            return $reRunner;
+            return ReRunner\PcntlReRunner::withExecutionContext(
+                $c->get('process.phpexecutablefinder'),
+                $c->get('process.executioncontext')
+            );
         });
         $container->setShared('process.rerunner.platformspecific.passthru', function (ServiceContainer $c) {
-            $reRunner = new ReRunner\PassthruReRunner($c->get('process.phpexecutablefinder'));
-            $reRunner->setExecutionContext($c->get('process.executioncontext'));
-
-            return $reRunner;
+            return ReRunner\PassthruReRunner::withExecutionContext(
+                $c->get('process.phpexecutablefinder'),
+                $c->get('process.executioncontext')
+            );
         });
         $container->setShared('process.phpexecutablefinder', function () {
             return new PhpExecutableFinder();
