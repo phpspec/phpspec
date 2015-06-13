@@ -43,7 +43,7 @@ class JUnitFormatterSpec extends ObjectBehavior
         $this->afterExample($event);
 
         $this->getTestCaseNodes()->shouldReturn(array(
-            '<testcase name="example title" time="1337" classname="Acme\Foo\Bar" status="passed" />'
+            '<testcase name="example title" time="1337.000000" classname="Acme\Foo\Bar" status="passed" />'
         ));
     }
 
@@ -65,7 +65,7 @@ class JUnitFormatterSpec extends ObjectBehavior
         $this->afterExample($event);
 
         $this->getTestCaseNodes()->shouldReturn(array(
-            '<testcase name="example title" time="1337" classname="Acme\Foo\Bar" status="broken">'."\n".
+            '<testcase name="example title" time="1337.000000" classname="Acme\Foo\Bar" status="broken">'."\n".
                 '<error type="spec\PhpSpec\Formatter\ExceptionStub" message="Something went wrong" />'."\n".
                 '<system-err>'."\n".
                     '<![CDATA['."\n".
@@ -94,7 +94,7 @@ class JUnitFormatterSpec extends ObjectBehavior
         $this->afterExample($event);
 
         $this->getTestCaseNodes()->shouldReturn(array(
-            '<testcase name="example title" time="1337" classname="Acme\Foo\Bar" status="failed">'."\n".
+            '<testcase name="example title" time="1337.000000" classname="Acme\Foo\Bar" status="failed">'."\n".
                 '<failure type="spec\PhpSpec\Formatter\ExceptionStub" message="Something went wrong" />'."\n".
                 '<system-err>'."\n".
                     '<![CDATA['."\n".
@@ -124,7 +124,7 @@ class JUnitFormatterSpec extends ObjectBehavior
 
         // skipped tag is escaped because a skipped tag is also registered in the console formatter
         $this->getTestCaseNodes()->shouldReturn(array(
-            '<testcase name="example title" time="1337" classname="Acme\Foo\Bar" status="skipped">'."\n".
+            '<testcase name="example title" time="1337.000000" classname="Acme\Foo\Bar" status="skipped">'."\n".
                 '\<skipped><![CDATA[ skipped: zog zog ]]>\</skipped>'."\n".
             '</testcase>'
         ));
@@ -150,7 +150,7 @@ class JUnitFormatterSpec extends ObjectBehavior
         $this->afterSpecification($event);
 
         $this->getTestSuiteNodes()->shouldReturn(array(
-            '<testsuite name="specification title" time="42" tests="3" failures="1" errors="2" skipped="8">'."\n".
+            '<testsuite name="specification title" time="42.000000" tests="3" failures="1" errors="2" skipped="8">'."\n".
                 '<testcase name="example1" />'."\n".
                 '<testcase name="example2" />'."\n".
                 '<testcase name="example3" />'."\n".
@@ -188,7 +188,7 @@ class JUnitFormatterSpec extends ObjectBehavior
 
         $io->write(
             '<?xml version="1.0" encoding="UTF-8" ?>'."\n".
-            '<testsuites time="48151.62342" tests="100" failures="12" errors="3">'."\n".
+            '<testsuites time="48151.623420" tests="100" failures="12" errors="3">'."\n".
                 '<testsuite name="specification1" tests="3">'."\n".
                     '<testcase name="example1" />'."\n".
                     '<testcase name="example2" />'."\n".
