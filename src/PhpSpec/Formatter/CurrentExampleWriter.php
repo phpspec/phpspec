@@ -27,7 +27,7 @@ class CurrentExampleWriter
 
     public function displayFatal(CurrentExample $currentExample, $error = null)
     {
-        if (!empty($error) && !empty($currentExample->getCurrentExample()))
+        if (!empty($error) && $currentExample->getCurrentExample())
         {
             $this->output->writeln(sprintf('<failed>✘ %s</failed>', "Fatal error happened while executing the following"));
             $this->output->writeln(sprintf('<failed>    %s</failed>', $currentExample->getCurrentExample()));
