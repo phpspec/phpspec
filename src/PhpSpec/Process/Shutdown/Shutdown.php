@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Process\Shutdown;
 
-class Shutdown
+final class Shutdown
 {
     protected $actions;
 
@@ -45,7 +45,7 @@ class Shutdown
         }
     }
 
-    public function getFatalError()
+    private function getFatalError()
     {
         $error = error_get_last();
         $fatal = false;
