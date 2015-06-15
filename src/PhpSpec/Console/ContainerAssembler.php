@@ -474,9 +474,9 @@ class ContainerAssembler
             }
         );
         $container->set(
-            'formatter.formatters.current_example_writer',
+            'formatter.formatters.fatal_error_writer',
             function (ServiceContainer $c) {
-                return new SpecFormatter\CurrentExampleWriter(
+                return new SpecFormatter\FatalErrorWriter(
                   $c->get('console.io')
                 );
             }
@@ -689,7 +689,7 @@ class ContainerAssembler
         $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) {
             return new UpdateConsoleAction(
                 $c->get('message.current_example'),
-                $c->get('formatter.formatters.current_example_writer')
+                $c->get('formatter.formatters.fatal_error_writer')
             );
         });
     }
