@@ -6,13 +6,12 @@ default:
     isolated:
       contexts: [ IsolatedProcessContext, FilesystemContext ]
       filters: { tags: @isolated }
-
-  formatters:
-    progress: ~
-
-smoke:
-  suites:
     smoke:
       contexts: [ IsolatedProcessContext, FilesystemContext ]
       filters: { tags: @smoke && ~@isolated }
+  formatters:
+    progress: ~
 
+no-smoke:
+  suites:
+    smoke: ~

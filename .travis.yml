@@ -45,4 +45,4 @@ before_script:
 script:
    - bin/phpspec run --format=pretty
    - ./vendor/bin/phpunit --testdox
-   - ./vendor/bin/behat --format=pretty --profile=smoke --tags '~@php-version'`php php_version_tags.php`
+   - ./vendor/bin/behat --format=pretty --tags '~@php-version'`php php_version_tags.php`
