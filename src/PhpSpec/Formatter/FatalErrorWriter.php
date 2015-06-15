@@ -16,7 +16,7 @@ namespace PhpSpec\Formatter;
 use PhpSpec\Console\IO;
 use PhpSpec\Message\CurrentExample;
 
-final class FatalErrorWriter implements WriterInterface
+final class FatalErrorWriter implements FatalPresenterInterface
 {
     private $output;
 
@@ -32,9 +32,9 @@ final class FatalErrorWriter implements WriterInterface
             $failedClosed = ($this->output->isDecorated()) ? '</failed>' : '';
             $failedCross = ($this->output->isDecorated()) ? '✘' : '';
 
-            $this->output->writeln(sprintf("$failedOpen$failedCross %s$failedClosed", "Fatal error happened while executing the following"));
-            $this->output->writeln(sprintf("$failedOpen    %s$failedClosed", $currentExample->getCurrentExample()));
-            $this->output->writeln(sprintf("$failedOpen    %s$failedClosed", $error['message']));
+            $this->output->writeln("$failedOpen$failedCross Fatal error happened while executing the following $failedClosed");
+            $this->output->writeln("$failedOpen    {$currentExample->getCurrentExample()} $failedClosed");
+            $this->output->writeln("$failedOpen    {$error['message']} $failedClosed");
         }
     }
 }
