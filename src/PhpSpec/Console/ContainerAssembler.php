@@ -56,7 +56,7 @@ class ContainerAssembler
         $this->setupResultConverter($container);
         $this->setupRerunner($container);
         $this->setupMatchers($container);
-        $this->setupMessage($container);
+        $this->setupCurrentExample($container);
         $this->setupShutdown($container);
         $this->setupShutdownActions($container);
     }
@@ -192,7 +192,7 @@ class ContainerAssembler
         });
         $container->setShared('event_dispatcher.listeners.current_example_listener', function (ServiceContainer $c) {
             return new Listener\CurrentExampleListener(
-                $c->get('message.current_example')
+                $c->get('current_example')
             );
         });
         $container->setShared('util.method_analyser', function () {
@@ -664,9 +664,9 @@ class ContainerAssembler
     /**
      * @param ServiceContainer $container
      */
-    private function setupMessage(ServiceContainer $container)
+    private function setupCurrentExample(ServiceContainer $container)
     {
-        $container->setShared('message.current_example', function () {
+        $container->setShared('current_example', function () {
             return new CurrentExample();
         });
     }
@@ -688,7 +688,7 @@ class ContainerAssembler
     {
         $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) {
             return new UpdateConsoleAction(
-                $c->get('message.current_example'),
+                $c->get('current_example'),
                 $c->get('formatter.formatters.fatal_error_writer')
             );
         });

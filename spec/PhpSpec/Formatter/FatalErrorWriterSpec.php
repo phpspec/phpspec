@@ -20,6 +20,6 @@ class FatalErrorWriterSpec extends ObjectBehavior
 
     function it_implements_writer_interface()
     {
-        $this->shouldHaveType('PhpSpec\Formatter\WriterInterface');
+        $this->shouldHaveType('PhpSpec\Formatter\FatalPresenterInterface');
     }
 }

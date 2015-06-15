@@ -15,7 +15,7 @@ namespace PhpSpec\Formatter;
 
 use PhpSpec\Message\CurrentExample;
 
-interface WriterInterface
+interface FatalPresenterInterface
 {
     public function displayFatal(CurrentExample $currentExample, $error = null);
-} 
+}
