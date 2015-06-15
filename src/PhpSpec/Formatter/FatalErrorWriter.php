@@ -16,7 +16,7 @@ namespace PhpSpec\Formatter;
 use PhpSpec\Console\IO;
 use PhpSpec\Message\CurrentExample;
 
-final class FatalErrorWriter implements FatalPresenterInterface
+final class FatalErrorWriter implements WriterInterface
 {
     private $output;
 
@@ -28,13 +28,16 @@ final class FatalErrorWriter implements FatalPresenterInterface
     public function displayFatal(CurrentExample $currentExample, $error = null)
     {
         if (!empty($error) && $currentExample->getCurrentExample()) {
-            $failedOpen = ($this->output->isDecorated()) ? '<failed>' : '';
-            $failedClosed = ($this->output->isDecorated()) ? '</failed>' : '';
-            $failedCross = ($this->output->isDecorated()) ? '✘' : '';
-
-            $this->output->writeln("$failedOpen$failedCross Fatal error happened while executing the following $failedClosed");
-            $this->output->writeln("$failedOpen    {$currentExample->getCurrentExample()} $failedClosed");
-            $this->output->writeln("$failedOpen    {$error['message']} $failedClosed");
+            if ($this->output->isDecorated())
+            {
+                $this->output->writeln(sprintf('<failed>✘ %s</failed>', "Fatal error happened while executing the following"));
+                $this->output->writeln(sprintf('<failed>    %s</failed>', $currentExample->getCurrentExample()));
+                $this->output->writeln(sprintf('<failed>    %s</failed>', $error['message']));
+            } else {
+                $this->output->writeln(sprintf('  %s', "Fatal error happened while executing the following"));
+                $this->output->writeln(sprintf('    %s', $currentExample->getCurrentExample()));
+                $this->output->writeln(sprintf('    %s', $error['message']));
+            }
         }
     }
 }

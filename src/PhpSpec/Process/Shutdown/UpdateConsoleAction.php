@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Process\Shutdown;
 
-use PhpSpec\Formatter\CurrentExampleWriter;
+use PhpSpec\Formatter\WriterInterface;
 use PhpSpec\Message\CurrentExample;
 
 final class UpdateConsoleAction implements ShutdownActionInterface
@@ -28,7 +28,7 @@ final class UpdateConsoleAction implements ShutdownActionInterface
      */
     private $currentExampleWriter;
 
-    public function __construct(CurrentExample $currentExample, CurrentExampleWriter $currentExampleWriter)
+    public function __construct(CurrentExample $currentExample, WriterInterface $currentExampleWriter)
     {
         $this->currentExample = $currentExample;
         $this->currentExampleWriter = $currentExampleWriter;
