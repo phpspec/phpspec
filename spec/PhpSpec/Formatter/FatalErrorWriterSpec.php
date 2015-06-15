@@ -6,7 +6,7 @@ use PhpSpec\Console\IO;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-class CurrentExampleWriterSpec extends ObjectBehavior
+class FatalErrorWriterSpec extends ObjectBehavior
 {
     function let(IO $io)
     {
@@ -15,6 +15,11 @@ class CurrentExampleWriterSpec extends ObjectBehavior
 
     function it_is_initializable()
     {
-        $this->shouldHaveType('PhpSpec\Formatter\CurrentExampleWriter');
+        $this->shouldHaveType('PhpSpec\Formatter\FatalErrorWriter');
+    }
+
+    function it_implements_writer_interface()
+    {
+        $this->shouldHaveType('PhpSpec\Formatter\WriterInterface');
     }
 }
