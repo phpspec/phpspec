@@ -10,8 +10,9 @@ use Prophecy\Argument;
 
 class CurrentExampleListenerSpec extends ObjectBehavior
 {
-    function let(CurrentExample $currentExample)
+    function let()
     {
+        $currentExample = new CurrentExample();
         $this->beConstructedWith($currentExample);
     }
 
@@ -25,25 +26,29 @@ class CurrentExampleListenerSpec extends ObjectBehavior
         $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
     }
 
-    function it_should_call_beforeCurrentExample(ExampleEvent $example, CurrentExample $currentExample)
+    function it_should_call_beforeCurrentExample(ExampleEvent $example)
     {
+        $currentExample = new CurrentExample();
         $fatalError = 'Fatal error happened before example';
         $example->getTitle()->willReturn($fatalError);
-        $currentExample->setCurrentExample($fatalError)->shouldBeCalled();
+        $currentExample->setCurrentExample($fatalError);
         $this->beforeCurrentExample($example);
     }
 
-    function it_should_call_afterCurrentExample(ExampleEvent $example, CurrentExample $currentExample)
+    function it_should_call_afterCurrentExample(ExampleEvent $example)
     {
-        $currentExample->setCurrentExample(null)->shouldBeCalled();
+        $currentExample = new CurrentExample();
+        $currentExample->setCurrentExample(null);
+        $example->getTitle()->willReturn(null);
         $this->afterCurrentExample($example);
     }
 
-    function it_should_call_afterSuiteEvent(SuiteEvent $example, CurrentExample $currentExample)
+    function it_should_call_afterSuiteEvent(SuiteEvent $example)
     {
         $fatalError = '3';
+        $currentExample = new CurrentExample();
+        $currentExample->setCurrentExample("Exited with code: " . $fatalError);
         $example->getResult()->willReturn($fatalError);
-        $currentExample->setCurrentExample("Exited with code: " . $fatalError)->shouldBeCalled();
         $this->afterSuiteEvent($example);
     }
 }
