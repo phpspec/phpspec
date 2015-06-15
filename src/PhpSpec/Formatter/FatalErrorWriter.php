@@ -28,16 +28,13 @@ final class FatalErrorWriter implements WriterInterface
     public function displayFatal(CurrentExample $currentExample, $error = null)
     {
         if (!empty($error) && $currentExample->getCurrentExample()) {
-            if ($this->output->isDecorated())
-            {
-                $this->output->writeln(sprintf('<failed>✘ %s</failed>', "Fatal error happened while executing the following"));
-                $this->output->writeln(sprintf('<failed>    %s</failed>', $currentExample->getCurrentExample()));
-                $this->output->writeln(sprintf('<failed>    %s</failed>', $error['message']));
-            } else {
-                $this->output->writeln(sprintf('  %s', "Fatal error happened while executing the following"));
-                $this->output->writeln(sprintf('    %s', $currentExample->getCurrentExample()));
-                $this->output->writeln(sprintf('    %s', $error['message']));
-            }
+            $failedOpen = ($this->output->isDecorated()) ? '<failed>' : '';
+            $failedClosed = ($this->output->isDecorated()) ? '</failed>' : '';
+            $failedCross = ($this->output->isDecorated()) ? '✘' : '';
+
+            $this->output->writeln(sprintf("$failedOpen$failedCross %s$failedClosed", "Fatal error happened while executing the following"));
+            $this->output->writeln(sprintf("$failedOpen    %s$failedClosed", $currentExample->getCurrentExample()));
+            $this->output->writeln(sprintf("$failedOpen    %s$failedClosed", $error['message']));
         }
     }
 }
