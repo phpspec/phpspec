@@ -11,15 +11,17 @@ use Prophecy\Argument;
 class UpdateConsoleActionSpec extends ObjectBehavior
 {
 
-    function let(CurrentExample $currentExample, WriterInterface $currentExampleWriter)
+    function let(WriterInterface $currentExampleWriter)
     {
+        $currentExample = new CurrentExample();
         $this->beConstructedWith($currentExample, $currentExampleWriter);
     }
 
-    function it_should_update_the_console(CurrentExample $currentExample, WriterInterface $currentExampleWriter)
+    function it_should_update_the_console(WriterInterface $currentExampleWriter)
     {
+        $currentExample = new CurrentExample();
         $error = array('type' => 1, 'message' => 'Hello');
-        $currentExample->getCurrentExample()->willReturn('Hello');
+        $currentExample->getCurrentExample('Hello');
         $currentExampleWriter->displayFatal($currentExample, $error)->shouldBeCalled();
         $this->runAction($error);
     }

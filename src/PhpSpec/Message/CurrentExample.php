@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Message;
 
-class CurrentExample
+final class CurrentExample
 {
     private $currentExample;
 
