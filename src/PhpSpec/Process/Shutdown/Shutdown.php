@@ -50,9 +50,9 @@ final class Shutdown
         $fatal = false;
 
         if (!empty($error)) {
-            $fatal = isset($_ENV['HHVM']) ? (self::HHVM_FATAL_ERROR == $error['type']) : (E_ERROR == $error['type']);
+            $fatal = defined('HHVM_VERSION') ? (self::HHVM_FATAL_ERROR === $error['type']) : (E_ERROR === $error['type']);
         }
 
-        return ($fatal) ? $error : null;
+        return $fatal ? $error : null;
     }
 }
