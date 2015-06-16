@@ -16,15 +16,12 @@ matrix:
     - php: 5.3
     - php: 5.3.3
       env: DEPENDENCIES='low'
-           SMOKE='true'
     - php: 5.4
     - php: 5.5
     - php: 5.6
       env: DEPENDENCIES='dev'
     - php: 5.6
-      env: SMOKE='true'
     - php: hhvm
-      env: SMOKE='true'
     - php: 7.0
   allow_failures:
     - php: 7.0
@@ -46,4 +43,4 @@ before_script:
 script:
    - bin/phpspec run --format=pretty
    - ./vendor/bin/phpunit --testdox
-   - ./vendor/bin/behat --format=pretty `if [ "$SMOKE" == "true" ]; then echo '--profile=smoke'; fi;` --tags '~@php-version'`php php_version_tags.php`
+   - ./vendor/bin/behat --format=pretty --tags '~@php-version'`php php_version_tags.php`

@@ -21,7 +21,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     {
         chdir(sys_get_temp_dir());
         if (!@`which expect`) {
-            throw new \Exception('Smoke tests require the `expect` command line application');
+            throw new \Exception('Smoke tests require the `expect` command line application. Try running with --profile=no-smoke');
         }
     }
 
