@@ -19,6 +19,7 @@ use PhpSpec\Process\Context\JsonExecutionContext;
 use PhpSpec\Process\Context\ExecutionContextInterface;
 use PhpSpec\Util\Filesystem;
 use PhpSpec\Locator\ResourceInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Base class with common behaviour for generating class and spec class
@@ -39,20 +40,29 @@ abstract class PromptingGenerator implements GeneratorInterface
      * @var \PhpSpec\Util\Filesystem
      */
     private $filesystem;
+
     /**
      * @var ExecutionContextInterface
      */
     private $executionContext;
 
     /**
-     * @param IO               $io
-     * @param TemplateRenderer $templates
-     * @param Filesystem       $filesystem
+     * @var EventDispatcherInterface
      */
-    public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null, ExecutionContextInterface $executionContext = null)
+    private $dispatcher;
+
+    /**
+     * @param IO $io
+     * @param TemplateRenderer $templates
+     * @param EventDispatcherInterface $dispatcher
+     * @param Filesystem $filesystem
+     * @param ExecutionContextInterface $executionContext
+     */
+    public function __construct(IO $io, TemplateRenderer $templates, EventDispatcherInterface $dispatcher, Filesystem $filesystem = null, ExecutionContextInterface $executionContext = null)
     {
         $this->io         = $io;
         $this->templates  = $templates;
+        $this->dispatcher = $dispatcher;
         $this->filesystem = $filesystem ?: new Filesystem();
         $this->executionContext = $executionContext ?: new JsonExecutionContext();
     }
@@ -65,7 +75,7 @@ abstract class PromptingGenerator implements GeneratorInterface
     {
         $filepath = $this->getFilePath($resource);
 
-        if ($this->ifFileAlreadyExists($filepath)) {
+        if ($this->fileAlreadyExists($filepath)) {
             if ($this->userAborts($filepath)) {
                 return;
             }
@@ -114,7 +124,7 @@ abstract class PromptingGenerator implements GeneratorInterface
      *
      * @return bool
      */
-    private function ifFileAlreadyExists($filepath)
+    private function fileAlreadyExists($filepath)
     {
         return $this->filesystem->pathExists($filepath);
     }
@@ -148,9 +158,19 @@ abstract class PromptingGenerator implements GeneratorInterface
      */
     private function generateFileAndRenderTemplate(ResourceInterface $resource, $filepath)
     {
+        $isNewFile = $this->fileAlreadyExists($filepath);
         $content = $this->renderTemplate($resource, $filepath);
 
         $this->filesystem->putFileContents($filepath, $content);
         $this->io->writeln($this->getGeneratedMessage($resource, $filepath));
+
+        if ($isNewFile) {
+            $this->dispatchFileCreationEvent($filepath);
+        }
+    }
+
+    private function dispatchFileCreationEvent($filepath)
+    {
+
     }
 }

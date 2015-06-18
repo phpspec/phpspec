@@ -10,12 +10,13 @@ use PhpSpec\Console\IO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Util\Filesystem;
 use PhpSpec\Locator\ResourceInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ClassGeneratorSpec extends ObjectBehavior
 {
-    function let(IO $io, TemplateRenderer $tpl, Filesystem $fs, ExecutionContextInterface $executionContext)
+    function let(IO $io, TemplateRenderer $tpl, EventDispatcherInterface $dispatcher, Filesystem $fs, ExecutionContextInterface $executionContext)
     {
-        $this->beConstructedWith($io, $tpl, $fs, $executionContext);
+        $this->beConstructedWith($io, $tpl, $dispatcher, $fs, $executionContext);
     }
 
     function it_is_a_generator()

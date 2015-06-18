@@ -214,13 +214,15 @@ class ContainerAssembler
         $container->set('code_generator.generators.specification', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\SpecificationGenerator(
                 $c->get('console.io'),
-                $c->get('code_generator.templates')
+                $c->get('code_generator.templates'),
+                $c->get('event_dispatcher')
             );
         });
         $container->set('code_generator.generators.class', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\ClassGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
+                $c->get('event_dispatcher'),
                 null,
                 $c->get('process.executioncontext')
             );
@@ -229,6 +231,7 @@ class ContainerAssembler
             return new CodeGenerator\Generator\InterfaceGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
+                $c->get('event_dispatcher'),
                 null,
                 $c->get('process.executioncontext')
             );
