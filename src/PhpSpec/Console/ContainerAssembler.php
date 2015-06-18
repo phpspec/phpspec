@@ -53,6 +53,7 @@ class ContainerAssembler
         $this->setupResultConverter($container);
         $this->setupRerunner($container);
         $this->setupMatchers($container);
+        $this->setupSubscribers($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -118,15 +119,8 @@ class ContainerAssembler
      */
     private function setupEventDispatcher(ServiceContainer $container)
     {
-        $container->setShared('event_dispatcher', function (ServiceContainer $c) {
-            $dispatcher = new EventDispatcher();
-
-            array_map(
-                array($dispatcher, 'addSubscriber'),
-                $c->getByPrefix('event_dispatcher.listeners')
-            );
-
-            return $dispatcher;
+        $container->setShared('event_dispatcher', function () {
+            return new EventDispatcher();
         });
 
         $container->setShared('event_dispatcher.listeners.stats', function () {
@@ -646,6 +640,19 @@ class ContainerAssembler
         });
         $container->setShared('process.phpexecutablefinder', function () {
             return new PhpExecutableFinder();
+        });
+    }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupSubscribers(ServiceContainer $container)
+    {
+        $container->addConfigurator(function (ServiceContainer $c) {
+            array_map(
+                array($c->get('event_dispatcher'), 'addSubscriber'),
+                $c->getByPrefix('event_dispatcher.listeners')
+            );
         });
     }
 }
