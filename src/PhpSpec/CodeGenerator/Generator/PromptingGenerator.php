@@ -15,6 +15,7 @@ namespace PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\Console\IO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
+use PhpSpec\Event\FileCreationEvent;
 use PhpSpec\Process\Context\JsonExecutionContext;
 use PhpSpec\Process\Context\ExecutionContextInterface;
 use PhpSpec\Util\Filesystem;
@@ -158,19 +159,23 @@ abstract class PromptingGenerator implements GeneratorInterface
      */
     private function generateFileAndRenderTemplate(ResourceInterface $resource, $filepath)
     {
-        $isNewFile = $this->fileAlreadyExists($filepath);
+        $fileExists = $this->fileAlreadyExists($filepath);
         $content = $this->renderTemplate($resource, $filepath);
 
         $this->filesystem->putFileContents($filepath, $content);
         $this->io->writeln($this->getGeneratedMessage($resource, $filepath));
 
-        if ($isNewFile) {
+        if (!$fileExists) {
             $this->dispatchFileCreationEvent($filepath);
         }
     }
 
+    /**
+     * @param string $filepath
+     */
     private function dispatchFileCreationEvent($filepath)
     {
-
+        $event = new FileCreationEvent($filepath);
+        $this->dispatcher->dispatch('afterFileCreation', $event);
     }
 }

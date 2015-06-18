@@ -131,4 +131,39 @@ class ClassGeneratorSpec extends ObjectBehavior
 
         $executionContext->addGeneratedType('Acme\App')->shouldHaveBeenCalled();
     }
+
+    function it_should_dispatch_an_event_after_file_creation($dispatcher, $fs, ResourceInterface $resource) {
+        $resource->getName()->willReturn('App');
+        $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
+        $resource->getSrcNamespace()->willReturn('Acme');
+        $resource->getSrcClassname()->willReturn('Acme\App');
+
+        $fs->pathExists('/project/src/Acme/App.php')->willReturn(false);
+        $fs->isDirectory('/project/src/Acme')->willReturn(true);
+        $fs->putFileContents(Argument::cetera())->shouldBeCalled();
+
+        $this->generate($resource);
+
+        $dispatcher->dispatch('afterFileCreation', Argument::type('PhpSpec\Event\FileCreationEvent'))->shouldHaveBeenCalled();
+    }
+
+    function it_should_not_dispatch_an_event_after_file_is_updated(
+        $io, $dispatcher, $fs, ResourceInterface $resource
+    ) {
+        $resource->getName()->willReturn('App');
+        $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
+        $resource->getSrcNamespace()->willReturn('Acme');
+        $resource->getSrcClassname()->willReturn('Acme\App');
+
+        $io->askConfirmation(Argument::cetera())->willReturn(true);
+        $io->writeln(Argument::cetera())->shouldBeCalled();
+
+        $fs->pathExists('/project/src/Acme/App.php')->willReturn(true);
+        $fs->isDirectory('/project/src/Acme')->willReturn(true);
+        $fs->putFileContents(Argument::cetera())->shouldBeCalled();
+
+        $this->generate($resource);
+
+        $dispatcher->dispatch('afterFileCreation', Argument::type('PhpSpec\Event\FileCreationEvent'))->shouldNotHaveBeenCalled();
+    }
 }
