@@ -5,6 +5,7 @@ use Behat\Behat\Context\Context;
 use Behat\Behat\Context\SnippetAcceptingContext;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
 /**
@@ -13,6 +14,16 @@ use Symfony\Component\Process\Process;
 class IsolatedProcessContext implements Context, SnippetAcceptingContext
 {
     private $lastOutput;
+
+    /**
+     * @var Filesystem
+     */
+    private $filesystem;
+
+    public function __construct()
+    {
+        $this->filesystem = new Filesystem();
+    }
 
     /**
      * @beforeSuite
@@ -94,11 +105,29 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     }
 
     /**
+     * @Given the isolated spec :file contains:
+     */
+    public function theIllformedFileContains($file, PyStringNode $contents)
+    {
+        $this->filesystem->dumpFile($file, (string)$contents);
+        eval("@include($file)");
+    }
+
+    /**
      * @Then I should see :message
      */
     public function iShouldSee($message)
     {
         expect(strpos($this->lastOutput, $message))->toNotBe(false);
+    }
+
+    /**
+     * @Then I should see the following parse error :message
+     */
+    public function iShouldSeeTheFollowingParseError($message)
+    {
+        $local = error_get_last();
+        expect(strpos($local['message'], $message))->toNotBe(false);
     }
 
 }
