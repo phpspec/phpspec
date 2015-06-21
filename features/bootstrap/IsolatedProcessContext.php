@@ -105,29 +105,11 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     }
 
     /**
-     * @Given the isolated spec :file contains:
-     */
-    public function theIllformedFileContains($file, PyStringNode $contents)
-    {
-        $this->filesystem->dumpFile($file, (string)$contents);
-        eval("@include($file)");
-    }
-
-    /**
      * @Then I should see :message
      */
     public function iShouldSee($message)
     {
         expect(strpos($this->lastOutput, $message))->toNotBe(false);
-    }
-
-    /**
-     * @Then I should see the following parse error :message
-     */
-    public function iShouldSeeTheFollowingParseError($message)
-    {
-        $local = error_get_last();
-        expect(strpos($local['message'], $message))->toNotBe(false);
     }
 
 }
