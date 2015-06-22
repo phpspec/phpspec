@@ -16,5 +16,5 @@ namespace PhpSpec\CodeGenerator\Generator;
 interface MethodGeneratorInterface
 {
     const METHOD_PLACEMENT = '/}[ \n]*$/';
-    const CONSTRUCTOR_PLACEMENT = '/\n(?=\s*(private|protected|public)?\s?function)/';
+    const CONSTRUCTOR_PLACEMENT = '/\n(?=\s*(private|protected|public|static|final|abstract|\s)*function)/';
 }
