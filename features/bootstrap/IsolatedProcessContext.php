@@ -97,9 +97,8 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     public function iRunPhpspec()
     {
         $process = new Process(
-            $this->buildPhpSpecCmd() . ' run'
+            $this->buildPhpSpecCmd() . ' run spec/Message/Fatal/ParseSpec.php'
         );
-
         $process->run();
         $this->lastOutput = $process->getOutput();
     }
@@ -109,7 +108,16 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function iShouldSee($message)
     {
+        var_dump($this->lastOutput);
         expect(strpos($this->lastOutput, $message))->toNotBe(false);
+    }
+
+    /**
+     * @Given the isolated file :file contains:
+     */
+    public function theFileContains($file, PyStringNode $contents)
+    {
+        $this->filesystem->dumpFile($file, (string)$contents);
     }
 
 }
