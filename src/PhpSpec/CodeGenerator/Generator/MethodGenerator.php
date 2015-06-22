@@ -23,6 +23,9 @@ use PhpSpec\Locator\ResourceInterface;
  */
 class MethodGenerator implements GeneratorInterface
 {
+    const METHOD_PLACEMENT = '/}[ \n]*$/';
+    const CONSTRUCTOR_PLACEMENT = '/\n(?=\s*(private|protected|public)?\s?function)/';
+
     /**
      * @var \PhpSpec\Console\IO
      */
@@ -86,8 +89,7 @@ class MethodGenerator implements GeneratorInterface
         }
 
         $code = $this->filesystem->getFileContents($filepath);
-        $code = preg_replace('/}[ \n]*$/', rtrim($content)."\n}\n", trim($code));
-        $this->filesystem->putFileContents($filepath, $code);
+        $this->filesystem->putFileContents($filepath, $this->getUpdatedCode($name, $content, $code));
 
         $this->io->writeln(sprintf(
             "<info>Method <value>%s::%s()</value> has been created.</info>\n",
@@ -110,5 +112,28 @@ class MethodGenerator implements GeneratorInterface
     protected function getTemplate()
     {
         return file_get_contents(__DIR__.'/templates/method.template');
+    }
+
+    /**
+     * @param string $methodName
+     * @param string $snippetToInsert
+     * @param string $code
+     * @return string
+     */
+    private function getUpdatedCode($methodName, $snippetToInsert, $code)
+    {
+        if ('__construct' === $methodName && $this->codeContainsAFunction($code)) {
+            return preg_replace(self::CONSTRUCTOR_PLACEMENT, rtrim($snippetToInsert)."\n\n", $code, 1);
+        }
+        return preg_replace(self::METHOD_PLACEMENT, rtrim($snippetToInsert)."\n}\n", trim($code));
+    }
+
+    /**
+     * @param $code
+     * @return bool
+     */
+    private function codeContainsAFunction($code)
+    {
+        return false !== strpos($code, 'function');
     }
 }
