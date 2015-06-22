@@ -77,7 +77,7 @@ class NewFileNotifyingGenerator implements GeneratorInterface
      */
     private function getFilePath(ResourceInterface $resource)
     {
-        if ($this->generator->supports($resource, 'specification', [])) {
+        if ($this->generator->supports($resource, 'specification', array())) {
             return $resource->getSpecFilename();
         }
 
