@@ -56,6 +56,7 @@ class ContainerAssembler
         $this->setupResultConverter($container);
         $this->setupRerunner($container);
         $this->setupMatchers($container);
+        $this->setupSubscribers($container);
         $this->setupCurrentExample($container);
         $this->setupShutdown($container);
         $this->setupShutdownActions($container);
@@ -665,6 +666,19 @@ class ContainerAssembler
         });
         $container->setShared('process.phpexecutablefinder', function () {
             return new PhpExecutableFinder();
+        });
+    }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupSubscribers(ServiceContainer $container)
+    {
+        $container->addConfigurator(function (ServiceContainer $c) {
+            array_map(
+                array($c->get('event_dispatcher'), 'addSubscriber'),
+                $c->getByPrefix('event_dispatcher.listeners')
+            );
         });
     }
 
