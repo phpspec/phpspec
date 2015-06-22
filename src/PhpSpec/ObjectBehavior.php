@@ -32,6 +32,9 @@ use ArrayAccess;
  * @method void beConstructedThrough($factoryMethod, array $constructorArguments)
  * @method void beAnInstanceOf($class)
  * @method void shouldHaveType($type)
+ * @method void shouldImplement($class)
+ * @method void shouldBeAnInstanceOf($class)
+ * @method void shouldReturnAnInstanceOf($class)
  * @method \PhpSpec\Wrapper\Subject\Expectation\DuringCall shouldThrow($exception = null)
  */
 class ObjectBehavior implements
