@@ -212,28 +212,40 @@ class ContainerAssembler
         });
 
         $container->set('code_generator.generators.specification', function (ServiceContainer $c) {
-            return new CodeGenerator\Generator\SpecificationGenerator(
+            $specificationGenerator =  new CodeGenerator\Generator\SpecificationGenerator(
                 $c->get('console.io'),
-                $c->get('code_generator.templates'),
+                $c->get('code_generator.templates')
+            );
+
+            return new CodeGenerator\Generator\NewFileNotifyingGenerator(
+                $specificationGenerator,
                 $c->get('event_dispatcher')
             );
         });
         $container->set('code_generator.generators.class', function (ServiceContainer $c) {
-            return new CodeGenerator\Generator\ClassGenerator(
+            $classGenerator = new CodeGenerator\Generator\ClassGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
-                $c->get('event_dispatcher'),
                 null,
                 $c->get('process.executioncontext')
             );
+
+            return new CodeGenerator\Generator\NewFileNotifyingGenerator(
+                $classGenerator,
+                $c->get('event_dispatcher')
+            );
         });
         $container->set('code_generator.generators.interface', function (ServiceContainer $c) {
-            return new CodeGenerator\Generator\InterfaceGenerator(
+            $interfaceGenerator = new CodeGenerator\Generator\InterfaceGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
-                $c->get('event_dispatcher'),
                 null,
                 $c->get('process.executioncontext')
+            );
+
+            return new CodeGenerator\Generator\NewFileNotifyingGenerator(
+                $interfaceGenerator,
+                $c->get('event_dispatcher')
             );
         });
         $container->set('code_generator.generators.method', function (ServiceContainer $c) {

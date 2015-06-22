@@ -10,13 +10,12 @@ use PhpSpec\Console\IO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Util\Filesystem;
 use PhpSpec\Locator\ResourceInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ClassGeneratorSpec extends ObjectBehavior
 {
-    function let(IO $io, TemplateRenderer $tpl, EventDispatcherInterface $dispatcher, Filesystem $fs, ExecutionContextInterface $executionContext)
+    function let(IO $io, TemplateRenderer $tpl, Filesystem $fs, ExecutionContextInterface $executionContext)
     {
-        $this->beConstructedWith($io, $tpl, $dispatcher, $fs, $executionContext);
+        $this->beConstructedWith($io, $tpl, $fs, $executionContext);
     }
 
     function it_is_a_generator()
@@ -130,40 +129,5 @@ class ClassGeneratorSpec extends ObjectBehavior
         $this->generate($resource);
 
         $executionContext->addGeneratedType('Acme\App')->shouldHaveBeenCalled();
-    }
-
-    function it_should_dispatch_an_event_after_file_creation($dispatcher, $fs, ResourceInterface $resource) {
-        $resource->getName()->willReturn('App');
-        $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
-        $resource->getSrcNamespace()->willReturn('Acme');
-        $resource->getSrcClassname()->willReturn('Acme\App');
-
-        $fs->pathExists('/project/src/Acme/App.php')->willReturn(false);
-        $fs->isDirectory('/project/src/Acme')->willReturn(true);
-        $fs->putFileContents(Argument::cetera())->shouldBeCalled();
-
-        $this->generate($resource);
-
-        $dispatcher->dispatch('afterFileCreation', Argument::type('PhpSpec\Event\FileCreationEvent'))->shouldHaveBeenCalled();
-    }
-
-    function it_should_not_dispatch_an_event_after_file_is_updated(
-        $io, $dispatcher, $fs, ResourceInterface $resource
-    ) {
-        $resource->getName()->willReturn('App');
-        $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
-        $resource->getSrcNamespace()->willReturn('Acme');
-        $resource->getSrcClassname()->willReturn('Acme\App');
-
-        $io->askConfirmation(Argument::cetera())->willReturn(true);
-        $io->writeln(Argument::cetera())->shouldBeCalled();
-
-        $fs->pathExists('/project/src/Acme/App.php')->willReturn(true);
-        $fs->isDirectory('/project/src/Acme')->willReturn(true);
-        $fs->putFileContents(Argument::cetera())->shouldBeCalled();
-
-        $this->generate($resource);
-
-        $dispatcher->dispatch('afterFileCreation', Argument::type('PhpSpec\Event\FileCreationEvent'))->shouldNotHaveBeenCalled();
     }
 }

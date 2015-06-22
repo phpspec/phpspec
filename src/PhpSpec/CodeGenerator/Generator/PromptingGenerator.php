@@ -15,12 +15,10 @@ namespace PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\Console\IO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
-use PhpSpec\Event\FileCreationEvent;
 use PhpSpec\Process\Context\JsonExecutionContext;
 use PhpSpec\Process\Context\ExecutionContextInterface;
 use PhpSpec\Util\Filesystem;
 use PhpSpec\Locator\ResourceInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Base class with common behaviour for generating class and spec class
@@ -48,22 +46,15 @@ abstract class PromptingGenerator implements GeneratorInterface
     private $executionContext;
 
     /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
-
-    /**
      * @param IO $io
      * @param TemplateRenderer $templates
-     * @param EventDispatcherInterface $dispatcher
      * @param Filesystem $filesystem
      * @param ExecutionContextInterface $executionContext
      */
-    public function __construct(IO $io, TemplateRenderer $templates, EventDispatcherInterface $dispatcher, Filesystem $filesystem = null, ExecutionContextInterface $executionContext = null)
+    public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null, ExecutionContextInterface $executionContext = null)
     {
         $this->io         = $io;
         $this->templates  = $templates;
-        $this->dispatcher = $dispatcher;
         $this->filesystem = $filesystem ?: new Filesystem();
         $this->executionContext = $executionContext ?: new JsonExecutionContext();
     }
@@ -159,23 +150,9 @@ abstract class PromptingGenerator implements GeneratorInterface
      */
     private function generateFileAndRenderTemplate(ResourceInterface $resource, $filepath)
     {
-        $fileExists = $this->fileAlreadyExists($filepath);
         $content = $this->renderTemplate($resource, $filepath);
 
         $this->filesystem->putFileContents($filepath, $content);
         $this->io->writeln($this->getGeneratedMessage($resource, $filepath));
-
-        if (!$fileExists) {
-            $this->dispatchFileCreationEvent($filepath);
-        }
-    }
-
-    /**
-     * @param string $filepath
-     */
-    private function dispatchFileCreationEvent($filepath)
-    {
-        $event = new FileCreationEvent($filepath);
-        $this->dispatcher->dispatch('afterFileCreation', $event);
     }
 }
