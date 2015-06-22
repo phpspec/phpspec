@@ -21,11 +21,8 @@ use PhpSpec\Locator\ResourceInterface;
 /**
  * Generates class methods from a resource
  */
-class MethodGenerator implements GeneratorInterface
+class MethodGenerator implements GeneratorInterface, MethodGeneratorInterface
 {
-    const METHOD_PLACEMENT = '/}[ \n]*$/';
-    const CONSTRUCTOR_PLACEMENT = '/\n(?=\s*(private|protected|public)?\s?function)/';
-
     /**
      * @var \PhpSpec\Console\IO
      */
