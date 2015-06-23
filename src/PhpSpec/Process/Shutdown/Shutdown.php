@@ -26,7 +26,7 @@ final class Shutdown
 
     public function registerShutdown()
     {
-        error_reporting(E_ALL);
+        error_reporting(E_ALL | E_STRICT);
         register_shutdown_function(array($this, 'runShutdown'));
     }
 
