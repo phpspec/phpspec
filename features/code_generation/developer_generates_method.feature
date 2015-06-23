@@ -42,7 +42,6 @@ Feature: Developer generates a method
 
       class Markdown
       {
-
           public function toHtml($argument1)
           {
               // TODO: write logic here
@@ -96,7 +95,6 @@ Feature: Developer generates a method
 
       class Prefix
       {
-
           public function toHtml($argument1)
           {
               // TODO: write logic here
@@ -199,7 +197,6 @@ Feature: Developer generates a method
 
       class ConstructorFirst
       {
-
           public function __construct($argument1)
           {
               // TODO: write logic here

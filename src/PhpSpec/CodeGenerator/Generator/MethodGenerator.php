@@ -15,13 +15,15 @@ namespace PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\Console\IO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
+use PhpSpec\Util\CodeWriter;
 use PhpSpec\Util\Filesystem;
 use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\Util\TokenizedCodeWriter;
 
 /**
  * Generates class methods from a resource
  */
-class MethodGenerator implements GeneratorInterface, MethodGeneratorInterface
+class MethodGenerator implements GeneratorInterface
 {
     /**
      * @var \PhpSpec\Console\IO
@@ -39,15 +41,22 @@ class MethodGenerator implements GeneratorInterface, MethodGeneratorInterface
     private $filesystem;
 
     /**
-     * @param IO               $io
-     * @param TemplateRenderer $templates
-     * @param Filesystem       $filesystem
+     * @var CodeWriter
      */
-    public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null)
+    private $codeWriter;
+
+    /**
+     * @param IO $io
+     * @param TemplateRenderer $templates
+     * @param Filesystem $filesystem
+     * @param CodeWriter $codeWriter
+     */
+    public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null, CodeWriter $codeWriter = null)
     {
         $this->io         = $io;
         $this->templates  = $templates;
         $this->filesystem = $filesystem ?: new Filesystem();
+        $this->codeWriter = $codeWriter ?: new TokenizedCodeWriter();
     }
 
     /**
@@ -119,18 +128,9 @@ class MethodGenerator implements GeneratorInterface, MethodGeneratorInterface
      */
     private function getUpdatedCode($methodName, $snippetToInsert, $code)
     {
-        if ('__construct' === $methodName && $this->codeContainsAFunction($code)) {
-            return preg_replace(self::CONSTRUCTOR_PLACEMENT, rtrim($snippetToInsert)."\n\n", $code, 1);
+        if ('__construct' === $methodName) {
+            return $this->codeWriter->insertMethodFirstInClass($code, $snippetToInsert);
         }
-        return preg_replace(self::METHOD_PLACEMENT, rtrim($snippetToInsert)."\n}\n", trim($code));
-    }
-
-    /**
-     * @param $code
-     * @return bool
-     */
-    private function codeContainsAFunction($code)
-    {
-        return false !== strpos($code, 'function');
+        return $this->codeWriter->insertMethodLastInClass($code, $snippetToInsert);
     }
 }
