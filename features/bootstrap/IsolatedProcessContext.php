@@ -13,9 +13,6 @@ use Symfony\Component\Process\Process;
 class IsolatedProcessContext implements Context, SnippetAcceptingContext
 {
     /**
-<<<<<<< HEAD
-     * @var Process
-=======
      * @var Filesystem
      */
     private $filesystem;
@@ -27,7 +24,6 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
 
     /**
      * @beforeSuite
->>>>>>> Parse error capture
      */
     private $process;
 
@@ -104,28 +100,6 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function iShouldSee($message)
     {
-        expect(strpos($this->lastOutput, $message))->toNotBe(false);
-    }
-
-    /**
-     * @When I run phpspec
-     */
-    public function iRunPhpspec()
-    {
-        $process = new Process(
-            $this->buildPhpSpecCmd() . ' run'
-        );
-
-        $process->run();
-        $this->lastOutput = $process->getOutput();
-    }
-
-    /**
-     * @Then I should see :message
-     */
-    public function iShouldSee($message)
-    {
-        var_dump($this->lastOutput);
         expect(strpos($this->lastOutput, $message))->toNotBe(false);
     }
 
