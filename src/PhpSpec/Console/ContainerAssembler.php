@@ -56,7 +56,6 @@ class ContainerAssembler
         $this->setupResultConverter($container);
         $this->setupRerunner($container);
         $this->setupMatchers($container);
-        $this->setupSubscribers($container);
         $this->setupCurrentExample($container);
         $this->setupShutdown($container);
         $this->setupShutdownActions($container);

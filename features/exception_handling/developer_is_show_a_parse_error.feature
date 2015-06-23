@@ -9,14 +9,15 @@ Feature: Developer is shown a parse error
       """
       <?php
 
-      namespace spec\Message\Parse;
+      namespace spec\Message\Fatal;
 
+      use Parse;
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
 
       class ParseSpec extends ObjectBehavior
       {
-          function it_throws_a_syntax_error()
+          function it_thro ws_a_syntax_error()
           {
               $this->cool();
           }
@@ -39,4 +40,4 @@ Feature: Developer is shown a parse error
 
       """
     When I run phpspec
-    Then I should see "Parse Error: "
+    Then I should see "Parse error: syntax error, unexpected 'ws_a_syntax_error' (T_STRING)"
