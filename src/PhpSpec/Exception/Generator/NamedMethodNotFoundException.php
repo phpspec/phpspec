@@ -11,7 +11,7 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Exception\Util;
+namespace PhpSpec\Exception\Generator;
 
 
 class NamedMethodNotFoundException extends \RuntimeException

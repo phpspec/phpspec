@@ -15,11 +15,11 @@ namespace PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Console\IO;
-use PhpSpec\Exception\Util\NamedMethodNotFoundException;
+use PhpSpec\Exception\Generator\NamedMethodNotFoundException;
 use PhpSpec\Locator\ResourceInterface;
-use PhpSpec\Util\CodeWriter;
+use PhpSpec\CodeGenerator\Writer\CodeWriter;
 use PhpSpec\Util\Filesystem;
-use PhpSpec\Util\TokenizedCodeWriter;
+use PhpSpec\CodeGenerator\Writer\TokenizedCodeWriter;
 
 class NamedConstructorGenerator implements GeneratorInterface
 {

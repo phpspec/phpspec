@@ -1,8 +1,8 @@
 <?php
 
-namespace spec\PhpSpec\Util;
+namespace spec\PhpSpec\CodeGenerator\Writer;
 
-use PhpSpec\Exception\Util\NamedMethodNotFoundException;
+use PhpSpec\Exception\Generator\NamedMethodNotFoundException;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 

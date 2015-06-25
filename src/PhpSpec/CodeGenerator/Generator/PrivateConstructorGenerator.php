@@ -17,9 +17,9 @@ namespace PhpSpec\CodeGenerator\Generator;
 use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Console\IO;
 use PhpSpec\Locator\ResourceInterface;
-use PhpSpec\Util\CodeWriter;
+use PhpSpec\CodeGenerator\Writer\CodeWriter;
 use PhpSpec\Util\Filesystem;
-use PhpSpec\Util\TokenizedCodeWriter;
+use PhpSpec\CodeGenerator\Writer\TokenizedCodeWriter;
 
 final class PrivateConstructorGenerator implements GeneratorInterface
 {
