@@ -75,32 +75,6 @@ final class TokenizedCodeWriter implements CodeWriter
     }
 
     /**
-     * @param array $tokens
-     * @param int $index
-     * @return int
-     */
-    private function findIndexOfMethodEnd(array $tokens, $index)
-    {
-        $braceCount = 0;
-
-        for ($i = $index, $max = count($tokens); $i < $max; $i++) {
-            $token = $tokens[$i];
-
-            if ('{' === $token) {
-                $braceCount++;
-                continue;
-            }
-
-            if ('}' === $token) {
-                $braceCount--;
-                if ($braceCount === 0) {
-                    return $i + 1;
-                }
-            }
-        }
-    }
-
-    /**
      * @param string $target
      * @param string $toInsert
      * @param int $line
