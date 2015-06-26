@@ -154,8 +154,7 @@ class PSR0Locator implements ResourceLocatorInterface
      */
     public function supportsQuery($query)
     {
-        $sepr = DIRECTORY_SEPARATOR;
-        $path = rtrim(realpath(str_replace(array('\\', '/'), $sepr, $query)), $sepr);
+        $path = $this->getQueryPath($query);
 
         if (null === $path) {
             return false;
@@ -173,11 +172,10 @@ class PSR0Locator implements ResourceLocatorInterface
      */
     public function findResources($query)
     {
-        $sepr = DIRECTORY_SEPARATOR;
-        $path = rtrim(realpath(str_replace(array('\\', '/'), $sepr, $query)), $sepr);
+        $path = $this->getQueryPath($query);
 
         if ('.php' !== substr($path, -4)) {
-            $path .= $sepr;
+            $path .= DIRECTORY_SEPARATOR;
         }
 
         if ($path && 0 === strpos($path, $this->fullSrcPath)) {
@@ -349,5 +347,26 @@ class PSR0Locator implements ResourceLocatorInterface
                 'https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
             );
         }
+    }
+
+    /**
+     * @param $query
+     * @return string
+     */
+    private function getQueryPath($query)
+    {
+        $sepr = DIRECTORY_SEPARATOR;
+        $replacedQuery = str_replace(array('\\', '/'), $sepr, $query);
+
+        if (false !== strpos($query, '\\')) {
+            // check for a namespace first
+            $namespace = str_replace(array('\\', '/'), $sepr, $this->specNamespace);
+            $path = realpath($namespace . $replacedQuery . 'Spec.php');
+            if ($path) {
+                return $path;
+            }
+        }
+
+        return rtrim(realpath($replacedQuery), $sepr);
     }
 }

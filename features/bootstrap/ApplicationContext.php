@@ -286,4 +286,17 @@ class ApplicationContext implements Context, MatchersProviderInterface
             new ValidJUnitXmlMatcher()
         );
     }
+
+    /**
+     * @When I run phpspec with the spec :spec
+     */
+    public function iRunPhpspecWithTheSpec($spec)
+    {
+        $arguments = array (
+            'command' => 'run',
+            1 => $spec
+        );
+
+        $this->lastExitCode = $this->tester->run($arguments, array('interactive' => false));
+    }
 }
