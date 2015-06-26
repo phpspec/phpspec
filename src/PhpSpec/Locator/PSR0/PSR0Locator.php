@@ -359,10 +359,12 @@ class PSR0Locator implements ResourceLocatorInterface
         $replacedQuery = str_replace(array('\\', '/'), $sepr, $query);
 
         if (false !== strpos($query, '\\')) {
-            // check for a namespace first
-            $namespace = str_replace(array('\\', '/'), $sepr, $this->specNamespace);
-            $path = realpath($namespace . $replacedQuery . 'Spec.php');
-            if ($path) {
+            $namespacedQuery = null === $this->psr4Prefix ?
+                $replacedQuery :
+                substr($replacedQuery, strlen($this->srcNamespace));
+
+            $path = $this->fullSpecPath . $namespacedQuery . 'Spec.php';
+            if ($this->filesystem->pathExists($path)) {
                 return $path;
             }
         }

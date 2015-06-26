@@ -514,6 +514,13 @@ class PSR0LocatorSpec extends ObjectBehavior
         $this->supportsQuery('Console\\Application')->shouldReturn(true);
     }
 
+    function it_supports_psr4_namespace_queries(Filesystem $filesystem)
+    {
+        $this->beConstructedWith('Test\\Namespace\\PhpSpec', 'spec', $this->srcPath, $this->specPath, $filesystem, 'Test\\Namespace');
+        $filesystem->pathExists($this->specPath.'/spec/PhpSpec/Console/ApplicationSpec.php')->willReturn(true);
+        $this->supportsQuery('Test\\Namespace\\PhpSpec\\Console\\Application')->shouldReturn(true);
+    }
+
     private function convert_to_path($path)
     {
         if ('/' === DIRECTORY_SEPARATOR) {
