@@ -1,11 +1,8 @@
 <?php
 
-use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Behat\Context\Context;
 use Behat\Behat\Context\SnippetAcceptingContext;
-use Behat\Gherkin\Node\PyStringNode;
-use Behat\Gherkin\Node\TableNode;
-use Symfony\Component\Process\Process;
+use Helper\IsolatedProcess;
 
 /**
  * Defines application features from the specific context.
@@ -13,32 +10,20 @@ use Symfony\Component\Process\Process;
 class IsolatedProcessContext implements Context, SnippetAcceptingContext
 {
     /**
-     * @var string
+     * @var Helper\IsolatedProcess
      */
-    private $lastOutput;
-
-    /**
-     * @var string
-     */
-    private $lastError;
+    private $process;
 
     /**
      * @Given I have started describing the :class class
      */
     public function iHaveStartedDescribingTheClass($class)
     {
-        $descriptors = array(
-            array('pipe', 'r'),
-            array('pipe', 'w')
-        );
+        $command = sprintf('%s %s %s', $this->buildPhpSpecCmd(), 'describe', escapeshellarg($class));
 
-        $process = proc_open(
-            sprintf('%s %s %s', $this->buildPhpSpecCmd(), 'describe', escapeshellarg($class)),
-            $descriptors,
-            $pipes
-        );
+        $process = new IsolatedProcess($command);
 
-        expect(proc_close($process))->toBe(0);
+        expect($process->run())->toBe(0);
     }
 
     /**
@@ -46,29 +31,17 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function iRunPhpspecAndAnswerWhenAskedIfIWantToGenerateTheCode($answer)
     {
-        $descriptors = array(
-            array('pipe', 'r'),
-            array('pipe', 'w'),
-            array('pipe', 'w')
+        $command = sprintf('%s %s', $this->buildPhpSpecCmd(), 'run');
+        $env = array(
+            'SHELL_INTERACTIVE' => true,
+            'HOME' => $_SERVER['HOME']
         );
 
-        $env = array('SHELL_INTERACTIVE' => true);
+        $this->process = new IsolatedProcess($command, $env);
 
-        $process = proc_open(
-            sprintf('%s %s', $this->buildPhpSpecCmd(), 'run'),
-            $descriptors,
-            $pipes,
-            null,
-            $env
-        );
-
-        fwrite($pipes[0], $answer);
-        fclose($pipes[0]);
-
-        $this->lastOutput = stream_get_contents($pipes[1]);
-        $this->lastError = stream_get_contents($pipes[2]);
-
-        proc_close($process);
+        $this->process->open();
+        $this->process->sendInput($answer);
+        $this->process->close();
     }
 
     /**
@@ -84,7 +57,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function theTestsShouldBeRerun()
     {
-        expect(substr_count($this->lastOutput, 'specs'))->toBe(2);
+        expect(substr_count($this->process->getOutput(), 'specs'))->toBe(2);
     }
 
     /**
@@ -92,6 +65,6 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function iShouldSeeAnErrorAboutTheMissingAutoloader()
     {
-        expect($this->lastError)->toMatch('/autoload/');
+        expect($this->process->getError())->toMatch('/autoload/');
     }
 }
