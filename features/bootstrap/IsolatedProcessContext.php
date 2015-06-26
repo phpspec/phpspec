@@ -12,28 +12,33 @@ use Symfony\Component\Process\Process;
  */
 class IsolatedProcessContext implements Context, SnippetAcceptingContext
 {
+    /**
+     * @var string
+     */
     private $lastOutput;
 
     /**
-     * @beforeSuite
+     * @var string
      */
-    public static function checkDependencies()
-    {
-        chdir(sys_get_temp_dir());
-        if (!@`which expect`) {
-            throw new \Exception('Smoke tests require the `expect` command line application. Try running with --profile=no-smoke');
-        }
-    }
+    private $lastError;
 
     /**
      * @Given I have started describing the :class class
      */
     public function iHaveStartedDescribingTheClass($class)
     {
-        $process = new Process($this->buildPhpSpecCmd() . ' describe '. escapeshellarg($class));
-        $process->run();
+        $descriptors = array(
+            array('pipe', 'r'),
+            array('pipe', 'w')
+        );
 
-        expect($process->getExitCode())->toBe(0);
+        $process = proc_open(
+            sprintf('%s %s %s', $this->buildPhpSpecCmd(), 'describe', escapeshellarg($class)),
+            $descriptors,
+            $pipes
+        );
+
+        expect(proc_close($process))->toBe(0);
     }
 
     /**
@@ -41,19 +46,29 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function iRunPhpspecAndAnswerWhenAskedIfIWantToGenerateTheCode($answer)
     {
-        $process = new Process(
-            "exec expect -c '\n" .
-            "set timeout 10\n" .
-            "spawn {$this->buildPhpSpecCmd()} run\n" .
-            "expect \"Y/n\"\n" .
-            "send \"$answer\n\"\n" .
-            "expect \"Y/n\"\n" .
-            "interact\n" .
-            "'"
+        $descriptors = array(
+            array('pipe', 'r'),
+            array('pipe', 'w'),
+            array('pipe', 'w')
         );
 
-        $process->run();
-        $this->lastOutput = $process->getOutput();
+        $env = array('SHELL_INTERACTIVE' => true);
+
+        $process = proc_open(
+            sprintf('%s %s', $this->buildPhpSpecCmd(), 'run'),
+            $descriptors,
+            $pipes,
+            null,
+            $env
+        );
+
+        fwrite($pipes[0], $answer);
+        fclose($pipes[0]);
+
+        $this->lastOutput = stream_get_contents($pipes[1]);
+        $this->lastError = stream_get_contents($pipes[2]);
+
+        proc_close($process);
     }
 
     /**
@@ -77,6 +92,6 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function iShouldSeeAnErrorAboutTheMissingAutoloader()
     {
-        expect($this->lastOutput)->toMatch('/autoload/');
+        expect($this->lastError)->toMatch('/autoload/');
     }
 }
