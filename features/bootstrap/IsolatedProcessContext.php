@@ -2,7 +2,7 @@
 
 use Behat\Behat\Context\Context;
 use Behat\Behat\Context\SnippetAcceptingContext;
-use Helper\IsolatedProcess;
+use Symfony\Component\Process\Process;
 
 /**
  * Defines application features from the specific context.
@@ -10,7 +10,7 @@ use Helper\IsolatedProcess;
 class IsolatedProcessContext implements Context, SnippetAcceptingContext
 {
     /**
-     * @var Helper\IsolatedProcess
+     * @var Process
      */
     private $process;
 
@@ -21,9 +21,11 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     {
         $command = sprintf('%s %s %s', $this->buildPhpSpecCmd(), 'describe', escapeshellarg($class));
 
-        $process = new IsolatedProcess($command);
+        $process = new Process($command);
 
-        expect($process->run())->toBe(0);
+        $process->run();
+
+        expect($process->getExitCode())->toBe(0);
     }
 
     /**
@@ -37,11 +39,11 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
             'HOME' => $_SERVER['HOME']
         );
 
-        $this->process = new IsolatedProcess($command, $env);
+        $this->process = $process = new Process($command);
 
-        $this->process->open();
-        $this->process->sendInput($answer);
-        $this->process->close();
+        $process->setEnv($env);
+        $process->setInput($answer);
+        $process->run();
     }
 
     /**
@@ -65,6 +67,6 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function iShouldSeeAnErrorAboutTheMissingAutoloader()
     {
-        expect($this->process->getError())->toMatch('/autoload/');
+        expect($this->process->getErrorOutput())->toMatch('/autoload/');
     }
 }
