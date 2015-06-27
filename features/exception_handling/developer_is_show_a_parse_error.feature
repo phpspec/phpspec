@@ -40,4 +40,4 @@ Feature: Developer is shown a parse error
 
       """
     When I run phpspec
-    Then I should see "Parse error: syntax error"
+    Then I should see "syntax error"
