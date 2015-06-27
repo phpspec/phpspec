@@ -40,4 +40,4 @@ Feature: Developer is shown a parse error
 
       """
     When I run phpspec
-    Then I should see "Parse error: syntax error, unexpected 'ws_a_syntax_error' (T_STRING)"
+    Then I should see "Parse error: syntax error, unexpected (T_STRING)"
