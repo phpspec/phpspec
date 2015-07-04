@@ -44,8 +44,8 @@ Feature: Developer is notified of which scenario caused a fatal error
     Then I should see "Fatal error happened while executing the following"
     And  I should see "it fatals when calling an undeclared function"
 
-    @isolated
-	Scenario: Spec attempts to call an undeclared function with a differenet formatter
+  @isolated
+  Scenario: Fatal error writer message not shown when formatter does not support it
     Given the spec file "spec/Message/Fatal/Fatal2Spec.php" contains:
       """
       <?php

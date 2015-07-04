@@ -17,5 +17,5 @@ use PhpSpec\Message\CurrentExample;
 
 interface FatalPresenterInterface
 {
-    public function displayFatal(CurrentExample $currentExample, $error = null);
+    public function displayFatal(CurrentExample $currentExample, $error);
 }

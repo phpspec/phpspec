@@ -33,6 +33,7 @@ class CurrentExampleListenerSpec extends ObjectBehavior
         $example->getTitle()->willReturn($fatalError);
         $currentExample->setCurrentExample($fatalError);
         $this->beforeCurrentExample($example);
+        $example->getTitle()->shouldHaveBeenCalled();
     }
 
     function it_should_call_afterCurrentExample(ExampleEvent $example)
@@ -41,6 +42,7 @@ class CurrentExampleListenerSpec extends ObjectBehavior
         $currentExample->setCurrentExample(null);
         $example->getTitle()->willReturn(null);
         $this->afterCurrentExample($example);
+        $example->getTitle()->shouldNotHaveBeenCalled();
     }
 
     function it_should_call_afterSuiteEvent(SuiteEvent $example)
@@ -50,5 +52,6 @@ class CurrentExampleListenerSpec extends ObjectBehavior
         $currentExample->setCurrentExample("Exited with code: " . $fatalError);
         $example->getResult()->willReturn($fatalError);
         $this->afterSuiteEvent($example);
+        $example->getResult()->shouldHaveBeenCalled();
     }
 }
