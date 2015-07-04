@@ -43,7 +43,6 @@ Feature: Developer generates a named constructor
 
     class User
     {
-
         public static function register($argument1, $argument2)
         {
             $user = new User();
@@ -324,7 +323,6 @@ Feature: Developer generates a named constructor
 
       class User
       {
-
           public static function register($argument1, $argument2)
           {
               $user = new User();
@@ -377,7 +375,6 @@ Feature: Developer generates a named constructor
 
       class User
       {
-
           public static function fromString($argument1, $argument2)
           {
               $user = new User();
@@ -430,6 +427,9 @@ Feature: Developer generates a named constructor
 
       class User
       {
+          private function __construct()
+          {
+          }
 
           public static function register($argument1, $argument2)
           {
@@ -438,10 +438,6 @@ Feature: Developer generates a named constructor
               // TODO: write logic here
 
               return $user;
-          }
-
-          private function __construct()
-          {
           }
       }
 

@@ -17,7 +17,9 @@ namespace PhpSpec\CodeGenerator\Generator;
 use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Console\IO;
 use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\CodeGenerator\Writer\CodeWriter;
 use PhpSpec\Util\Filesystem;
+use PhpSpec\CodeGenerator\Writer\TokenizedCodeWriter;
 
 final class PrivateConstructorGenerator implements GeneratorInterface
 {
@@ -37,15 +39,21 @@ final class PrivateConstructorGenerator implements GeneratorInterface
     private $filesystem;
 
     /**
+     * @var CodeWriter
+     */
+    private $codeWriter;
+
+    /**
      * @param IO               $io
      * @param TemplateRenderer $templates
      * @param Filesystem       $filesystem
      */
-    public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null)
+    public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null, CodeWriter $codeWriter = null)
     {
         $this->io         = $io;
         $this->templates  = $templates;
         $this->filesystem = $filesystem ?: new Filesystem();
+        $this->codeWriter = $codeWriter ?: new TokenizedCodeWriter();
     }
 
     /**
@@ -76,7 +84,7 @@ final class PrivateConstructorGenerator implements GeneratorInterface
         }
 
         $code = $this->filesystem->getFileContents($filepath);
-        $code = preg_replace('/}[ \n]*$/', rtrim($content)."\n}\n", trim($code));
+        $code = $this->codeWriter->insertMethodFirstInClass($code, $content);
         $this->filesystem->putFileContents($filepath, $code);
 
         $this->io->writeln("<info>Private constructor has been created.</info>\n", 2);
