@@ -25,7 +25,7 @@ final class FatalErrorWriter implements FatalPresenterInterface
         $this->output = $io;
     }
 
-    public function displayFatal(CurrentExample $currentExample, $error = null)
+    public function displayFatal(CurrentExample $currentExample, $error)
     {
         if (!empty($error) && $currentExample->getCurrentExample()) {
             $failedOpen = ($this->output->isDecorated()) ? '<failed>' : '';
