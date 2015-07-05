@@ -26,13 +26,13 @@ class RerunListener implements EventSubscriberInterface
     private $reRunner;
 
     /**
-     * @var SuitePrerequisites
+     * @var SuitePrerequisitesInterface
      */
     private $suitePrerequisites;
 
     /**
      * @param ReRunner $reRunner
-     * @param SuitePrerequisites $suitePrerequisites
+     * @param SuitePrerequisitesInterface $suitePrerequisites
      */
     public function __construct(ReRunner $reRunner, SuitePrerequisitesInterface $suitePrerequisites)
     {
