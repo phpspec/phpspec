@@ -16,7 +16,6 @@ namespace PhpSpec\Formatter;
 use PhpSpec\Console\IO;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Listener\StatisticsCollector;
 
 class ProgressFormatter extends ConsoleFormatter
 {

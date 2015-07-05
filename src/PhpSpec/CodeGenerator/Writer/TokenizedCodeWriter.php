@@ -13,7 +13,6 @@
 
 namespace PhpSpec\CodeGenerator\Writer;
 
-use PhpSpec\Exception\Generator\NamedMethodNotFoundException;
 use PhpSpec\Util\ClassFileAnalyser;
 
 final class TokenizedCodeWriter implements CodeWriter

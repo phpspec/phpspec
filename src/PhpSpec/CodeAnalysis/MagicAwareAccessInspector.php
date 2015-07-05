@@ -13,9 +13,6 @@
 
 namespace PhpSpec\CodeAnalysis;
 
-use ReflectionMethod;
-use ReflectionProperty;
-
 final class MagicAwareAccessInspector implements AccessInspectorInterface
 {
     /**
