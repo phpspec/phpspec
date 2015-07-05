@@ -32,7 +32,7 @@ use ArrayAccess;
  * @method void beConstructedThrough($factoryMethod, array $constructorArguments)
  * @method void beAnInstanceOf($class)
  * @method void shouldHaveType($type)
- * @method \PhpSpec\Wrapper\Subject\Expectation\DuringCall shouldThrow($exception = null)
+ * @method Subject\Expectation\DuringCall shouldThrow($exception = null)
  */
 class ObjectBehavior implements
     ArrayAccess,

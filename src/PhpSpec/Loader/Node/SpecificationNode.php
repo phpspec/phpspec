@@ -28,7 +28,7 @@ class SpecificationNode implements \Countable
      */
     private $class;
     /**
-     * @var \PhpSpec\Locator\ResourceInterface
+     * @var ResourceInterface
      */
     private $resource;
     /**

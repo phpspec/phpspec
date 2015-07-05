@@ -20,7 +20,7 @@ use PhpSpec\Loader\Node\SpecificationNode;
 class SpecificationRunner
 {
     /**
-     * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+     * @var EventDispatcherInterface
      */
     private $dispatcher;
     /**

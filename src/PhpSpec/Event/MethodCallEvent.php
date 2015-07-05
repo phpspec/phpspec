@@ -22,7 +22,7 @@ use Symfony\Component\EventDispatcher\Event;
 class MethodCallEvent extends Event implements EventInterface
 {
     /**
-     * @var \PhpSpec\Loader\Node\ExampleNode
+     * @var ExampleNode
      */
     private $example;
 

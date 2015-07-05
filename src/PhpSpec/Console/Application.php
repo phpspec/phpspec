@@ -30,7 +30,7 @@ use RuntimeException;
 class Application extends BaseApplication
 {
     /**
-     * @var \PhpSpec\ServiceContainer
+     * @var ServiceContainer
      */
     private $container;
 
@@ -214,7 +214,7 @@ class Application extends BaseApplication
     /**
      * @param string $configDir
      * @param array $config
-     * 
+     *
      * @return array
      */
     private function addPathsToEachSuiteConfig($configDir, $config)

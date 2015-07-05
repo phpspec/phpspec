@@ -26,15 +26,15 @@ use PhpSpec\Wrapper\Unwrapper;
 class ExpectationFactory
 {
     /**
-     * @var \PhpSpec\Loader\Node\ExampleNode
+     * @var ExampleNode
      */
     private $example;
     /**
-     * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+     * @var EventDispatcherInterface
      */
     private $dispatcher;
     /**
-     * @var \PhpSpec\Runner\MatcherManager
+     * @var MatcherManager
      */
     private $matchers;
 

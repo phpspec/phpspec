@@ -22,7 +22,7 @@ use PhpSpec\Loader\Node\SpecificationNode;
 class SpecificationEvent extends Event implements EventInterface
 {
     /**
-     * @var \PhpSpec\Loader\Node\SpecificationNode
+     * @var SpecificationNode
      */
     private $specification;
 

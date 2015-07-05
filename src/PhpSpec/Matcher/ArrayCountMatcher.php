@@ -19,7 +19,7 @@ use PhpSpec\Exception\Example\FailureException;
 class ArrayCountMatcher extends BasicMatcher
 {
     /**
-     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     * @var PresenterInterface
      */
     private $presenter;
 

@@ -25,7 +25,7 @@ class WrappedObject
      */
     private $instance;
     /**
-     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     * @var PresenterInterface
      */
     private $presenter;
     /**

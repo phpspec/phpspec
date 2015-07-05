@@ -27,7 +27,7 @@ class TemplateRenderer
     private $locations = array();
 
     /**
-     * @var \PhpSpec\Util\Filesystem
+     * @var Filesystem
      */
     private $filesystem;
 

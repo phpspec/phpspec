@@ -33,19 +33,19 @@ class Caller
      */
     private $wrappedObject;
     /**
-     * @var \PhpSpec\Loader\Node\ExampleNode
+     * @var ExampleNode
      */
     private $example;
     /**
-     * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+     * @var Dispatcher
      */
     private $dispatcher;
     /**
-     * @var \PhpSpec\Wrapper\Wrapper
+     * @var Wrapper
      */
     private $wrapper;
     /**
-     * @var \PhpSpec\Exception\ExceptionFactory
+     * @var ExceptionFactory
      */
     private $exceptionFactory;
     /**
