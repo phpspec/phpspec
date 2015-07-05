@@ -169,15 +169,4 @@ class ProgressFormatter extends ConsoleFormatter
 
         $this->updateProgressBar($io, $progress, $stats->getEventsCount());
     }
-
-    /**
-     * @return float
-     */
-    private function getSpecProgress()
-    {
-        $stats = $this->getStatisticsCollector();
-        $specProgress = $stats->getTotalSpecsCount() ? ($stats->getTotalSpecs() + 1) / $stats->getTotalSpecsCount() : 0;
-
-        return $specProgress;
-    }
 }
