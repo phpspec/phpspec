@@ -28,10 +28,7 @@ class MatchersMaintainer implements MaintainerInterface
      * @var \PhpSpec\Formatter\Presenter\PresenterInterface
      */
     private $presenter;
-    /**
-     * @var \PhpSpec\Wrapper\Unwrapper
-     */
-    private $unwrapper;
+
     /**
      * @var MatcherInterface[]
      */
