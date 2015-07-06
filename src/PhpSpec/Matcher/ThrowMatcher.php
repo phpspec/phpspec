@@ -29,11 +29,11 @@ class ThrowMatcher implements MatcherInterface
      */
     private static $ignoredProperties = array('file', 'line', 'string', 'trace', 'previous');
     /**
-     * @var \PhpSpec\Wrapper\Unwrapper
+     * @var Unwrapper
      */
     private $unwrapper;
     /**
-     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     * @var PresenterInterface
      */
     private $presenter;
 

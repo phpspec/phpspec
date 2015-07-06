@@ -47,7 +47,7 @@ class ExampleEvent extends Event implements EventInterface
     const BROKEN  = 4;
 
     /**
-     * @var \PhpSpec\Loader\Node\ExampleNode
+     * @var ExampleNode
      */
     private $example;
 

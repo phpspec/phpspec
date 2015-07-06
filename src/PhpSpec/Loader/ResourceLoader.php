@@ -21,11 +21,11 @@ use ReflectionMethod;
 class ResourceLoader
 {
     /**
-     * @var \PhpSpec\Locator\ResourceManagerInterface
+     * @var ResourceManagerInterface
      */
     private $manager;
     /**
-     * @var \PhpSpec\Util\MethodAnalyser
+     * @var MethodAnalyser
      */
     private $methodAnalyser;
 

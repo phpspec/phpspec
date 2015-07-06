@@ -26,17 +26,17 @@ use PhpSpec\CodeGenerator\Writer\TokenizedCodeWriter;
 class MethodGenerator implements GeneratorInterface
 {
     /**
-     * @var \PhpSpec\Console\IO
+     * @var IO
      */
     private $io;
 
     /**
-     * @var \PhpSpec\CodeGenerator\TemplateRenderer
+     * @var TemplateRenderer
      */
     private $templates;
 
     /**
-     * @var \PhpSpec\Util\Filesystem
+     * @var Filesystem
      */
     private $filesystem;
 

@@ -21,7 +21,7 @@ use PhpSpec\Wrapper\Subject\WrappedObject;
 abstract class DuringCall
 {
     /**
-     * @var \PhpSpec\Matcher\MatcherInterface
+     * @var MatcherInterface
      */
     private $matcher;
     /**

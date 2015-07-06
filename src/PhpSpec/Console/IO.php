@@ -28,12 +28,12 @@ class IO implements IOInterface
     const COL_MAX_WIDTH = 80;
 
     /**
-     * @var \Symfony\Component\Console\Input\InputInterface
+     * @var InputInterface
      */
     private $input;
 
     /**
-     * @var \Symfony\Component\Console\Output\OutputInterface
+     * @var OutputInterface
      */
     private $output;
 

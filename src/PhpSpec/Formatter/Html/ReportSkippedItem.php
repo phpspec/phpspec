@@ -19,11 +19,11 @@ use PhpSpec\Formatter\Template as TemplateInterface;
 class ReportSkippedItem
 {
     /**
-     * @var \PhpSpec\Formatter\Template
+     * @var TemplateInterface
      */
     private $template;
     /**
-     * @var \PhpSpec\Event\ExampleEvent
+     * @var ExampleEvent
      */
     private $event;
 

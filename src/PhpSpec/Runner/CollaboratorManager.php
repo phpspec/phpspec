@@ -21,7 +21,7 @@ use ReflectionFunctionAbstract;
 class CollaboratorManager
 {
     /**
-     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     * @var PresenterInterface
      */
     private $presenter;
     /**

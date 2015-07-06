@@ -26,17 +26,17 @@ use PhpSpec\Locator\ResourceInterface;
 abstract class PromptingGenerator implements GeneratorInterface
 {
     /**
-     * @var \PhpSpec\Console\IO
+     * @var IO
      */
     private $io;
 
     /**
-     * @var \PhpSpec\CodeGenerator\TemplateRenderer
+     * @var TemplateRenderer
      */
     private $templates;
 
     /**
-     * @var \PhpSpec\Util\Filesystem
+     * @var Filesystem
      */
     private $filesystem;
     /**

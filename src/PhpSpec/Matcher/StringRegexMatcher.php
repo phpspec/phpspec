@@ -19,7 +19,7 @@ use PhpSpec\Exception\Example\FailureException;
 class StringRegexMatcher extends BasicMatcher
 {
     /**
-     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     * @var PresenterInterface
      */
     private $presenter;
 

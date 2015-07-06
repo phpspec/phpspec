@@ -24,7 +24,7 @@ use PhpSpec\Matcher;
 class MatchersMaintainer implements MaintainerInterface
 {
     /**
-     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     * @var PresenterInterface
      */
     private $presenter;
 

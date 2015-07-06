@@ -19,12 +19,12 @@ use PhpSpec\Exception\Example\FailureException;
 class ScalarMatcher implements MatcherInterface
 {
     /**
-     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     * @var PresenterInterface
      */
     private $presenter;
 
     /**
-     * @param \PhpSpec\Formatter\Presenter\PresenterInterface $presenter
+     * @param PresenterInterface $presenter
      */
     public function __construct(PresenterInterface $presenter)
     {

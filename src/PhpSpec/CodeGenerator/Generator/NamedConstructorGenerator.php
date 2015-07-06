@@ -24,17 +24,17 @@ use PhpSpec\CodeGenerator\Writer\TokenizedCodeWriter;
 class NamedConstructorGenerator implements GeneratorInterface
 {
     /**
-     * @var \PhpSpec\Console\IO
+     * @var IO
      */
     private $io;
 
     /**
-     * @var \PhpSpec\CodeGenerator\TemplateRenderer
+     * @var TemplateRenderer
      */
     private $templates;
 
     /**
-     * @var \PhpSpec\Util\Filesystem
+     * @var Filesystem
      */
     private $filesystem;
     /**

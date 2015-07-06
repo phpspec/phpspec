@@ -20,7 +20,7 @@ use PhpSpec\Formatter\Presenter\PresenterInterface;
 class ArrayKeyValueMatcher extends BasicMatcher
 {
     /**
-     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     * @var PresenterInterface
      */
     private $presenter;
 

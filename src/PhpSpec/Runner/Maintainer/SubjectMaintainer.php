@@ -26,19 +26,19 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 class SubjectMaintainer implements MaintainerInterface
 {
     /**
-     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     * @var PresenterInterface
      */
     private $presenter;
     /**
-     * @var \PhpSpec\Wrapper\Unwrapper
+     * @var Unwrapper
      */
     private $unwrapper;
     /**
-     * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+     * @var EventDispatcherInterface
      */
     private $dispatcher;
     /**
-     * @var \PhpSpec\CodeAnalysis\AccessInspectorInterface
+     * @var AccessInspectorInterface
      */
     private $accessInspector;
 

@@ -27,23 +27,23 @@ use PhpSpec\Wrapper\Subject\ExpectationFactory;
 class Wrapper
 {
     /**
-     * @var \PhpSpec\Runner\MatcherManager
+     * @var MatcherManager
      */
     private $matchers;
     /**
-     * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+     * @var PresenterInterface
      */
     private $presenter;
     /**
-     * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+     * @var EventDispatcherInterface
      */
     private $dispatcher;
     /**
-     * @var \PhpSpec\Loader\Node\ExampleNode
+     * @var ExampleNode
      */
     private $example;
     /**
-     * @var \PhpSpec\CodeAnalysis\AccessInspectorInterface
+     * @var AccessInspectorInterface
      */
     private $accessInspector;
 
@@ -92,7 +92,7 @@ class Wrapper
 
     /**
      * @param WrappedObject $wrappedObject
-     * 
+     *
      * @return Caller
      */
     private function createCaller(WrappedObject $wrappedObject)
