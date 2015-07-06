@@ -16,6 +16,9 @@ namespace PhpSpec\Console;
 use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
+use PhpSpec\Message\CurrentExample;
+use PhpSpec\Process\Shutdown\Shutdown;
+use PhpSpec\Process\Shutdown\UpdateConsoleAction;
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
@@ -53,7 +56,9 @@ class ContainerAssembler
         $this->setupResultConverter($container);
         $this->setupRerunner($container);
         $this->setupMatchers($container);
-        $this->setupSubscribers($container);
+        $this->setupCurrentExample($container);
+        $this->setupShutdown($container);
+        $this->setupShutdownActions($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -119,8 +124,15 @@ class ContainerAssembler
      */
     private function setupEventDispatcher(ServiceContainer $container)
     {
-        $container->setShared('event_dispatcher', function () {
-            return new EventDispatcher();
+        $container->setShared('event_dispatcher', function (ServiceContainer $c) {
+            $dispatcher = new EventDispatcher();
+
+            array_map(
+                array($dispatcher, 'addSubscriber'),
+                $c->getByPrefix('event_dispatcher.listeners')
+            );
+
+            return $dispatcher;
         });
 
         $container->setShared('event_dispatcher.listeners.stats', function () {
@@ -183,6 +195,11 @@ class ContainerAssembler
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator'),
                 $c->get('util.method_analyser')
+            );
+        });
+        $container->setShared('event_dispatcher.listeners.current_example_listener', function (ServiceContainer $c) {
+            return new Listener\CurrentExampleListener(
+                $c->get('current_example')
             );
         });
         $container->setShared('util.method_analyser', function () {
@@ -463,6 +480,14 @@ class ContainerAssembler
                 return $c->get('formatter.formatters.html');
             }
         );
+        $container->set(
+            'formatter.formatters.fatal_error_writer',
+            function (ServiceContainer $c) {
+                return new SpecFormatter\FatalErrorWriter(
+                  $c->get('console.io')
+                );
+            }
+        );
 
         $container->addConfigurator(function (ServiceContainer $c) {
             $formatterName = $c->getParam('formatter.name', 'progress');
@@ -655,4 +680,38 @@ class ContainerAssembler
             );
         });
     }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupCurrentExample(ServiceContainer $container)
+    {
+        $container->setShared('current_example', function () {
+            return new CurrentExample();
+        });
+    }
+
+  /**
+   * @param ServiceContainer $container
+   */
+    private function setupShutdown(ServiceContainer $container)
+    {
+        $container->setShared('process.shutdown', function() {
+            return new Shutdown();
+        });
+    }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupShutdownActions(ServiceContainer $container)
+    {
+        $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) {
+            return new UpdateConsoleAction(
+                $c->get('current_example'),
+                $c->get('formatter.formatters.fatal_error_writer')
+            );
+        });
+    }
+
 }
