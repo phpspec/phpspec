@@ -17,6 +17,7 @@ Feature: Developer generates a class
       {
       }
 
+
       """
 
   @issue269
@@ -40,6 +41,7 @@ Feature: Developer generates a class
     {
     }
 
+
     """
 
   @issue127
@@ -56,6 +58,7 @@ Feature: Developer generates a class
       {
       }
 
+
       """
 
   @issue127
@@ -71,6 +74,7 @@ Feature: Developer generates a class
       class Text_Markdown
       {
       }
+
 
       """
 
@@ -129,6 +133,7 @@ Feature: Developer generates a class
     class ForgotPassword
     {
     }
+
 
     """
 

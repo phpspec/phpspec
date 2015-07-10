@@ -84,6 +84,7 @@ Feature: Developer generates a collaborator
       {
       }
 
+
       """
 
   Scenario: Not being prompted when typehint is in spec namespace

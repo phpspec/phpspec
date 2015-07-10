@@ -12,3 +12,4 @@ class %name% extends ObjectBehavior
         $this->shouldHaveType('%subject%');
     }
 }
+
