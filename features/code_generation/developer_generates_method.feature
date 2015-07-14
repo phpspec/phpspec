@@ -204,3 +204,60 @@ Feature: Developer generates a method
       }
 
       """
+
+  Scenario: Generating a method in a class with existing methods and new lines
+    Given the spec file "spec/MyNamespace/ExistingMethodSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\MyNamespace;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class ExistingMethodSpec extends ObjectBehavior
+      {
+          function it_should_do_something()
+          {
+              $this->foo()->shouldReturn('bar');
+          }
+      }
+      """
+    And the class file "src/MyNamespace/ExistingMethod.php" contains:
+      """
+      <?php
+
+      namespace MyNamespace;
+
+      class ExistingMethod
+      {
+          public function existing()
+          {
+              return 'something';
+          }
+
+      }
+
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/MyNamespace/ExistingMethod.php" should contain:
+      """
+      <?php
+
+      namespace MyNamespace;
+
+      class ExistingMethod
+      {
+          public function existing()
+          {
+              return 'something';
+          }
+
+          public function foo()
+          {
+              // TODO: write logic here
+          }
+
+      }
+
+      """

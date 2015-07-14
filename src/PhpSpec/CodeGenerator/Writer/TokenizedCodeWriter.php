@@ -54,7 +54,8 @@ final class TokenizedCodeWriter implements CodeWriter
     public function insertMethodLastInClass($class, $method)
     {
         if ($this->analyser->classHasMethods($class)) {
-            return $this->writeAtEndOfClass($class, $method, true);
+            $line = $this->analyser->getEndLineOfLastMethod($class);
+            return $this->insertStringAfterLine($class, $method, $line);
         }
 
         return $this->writeAtEndOfClass($class, $method);
