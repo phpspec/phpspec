@@ -32,4 +32,12 @@ final class ObjectTypePresenter implements TypePresenter
     {
         return sprintf('[obj:%s]', get_class($value));
     }
+
+    /**
+     * @return int
+     */
+    public function getPriority()
+    {
+        return 30;
+    }
 }

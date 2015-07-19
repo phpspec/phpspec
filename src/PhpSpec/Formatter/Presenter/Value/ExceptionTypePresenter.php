@@ -36,4 +36,12 @@ final class ExceptionTypePresenter implements TypePresenter
             $value->getMessage()
         );
     }
+
+    /**
+     * @return int
+     */
+    public function getPriority()
+    {
+        return 60;
+    }
 }

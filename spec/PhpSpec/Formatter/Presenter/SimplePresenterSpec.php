@@ -40,6 +40,10 @@ class SimplePresenterSpec extends ObjectBehavior
     ) {
         $value = 'blah';
 
+        $presenter1->getPriority()->willReturn(3);
+        $presenter2->getPriority()->willReturn(2);
+        $presenter3->getPriority()->willReturn(1);
+
         $this->addTypePresenter($presenter1);
         $this->addTypePresenter($presenter2);
         $this->addTypePresenter($presenter3);
@@ -47,10 +51,27 @@ class SimplePresenterSpec extends ObjectBehavior
         $presenter1->supports($value)->willReturn(false)->shouldBeCalled();
         $presenter2->supports($value)->willReturn(true)->shouldBeCalled();
         $presenter2->present(Argument::any())->shouldBeCalled();
+        $presenter3->supports($value)->shouldNotBeCalled();
 
         $this->presentValue($value);
+    }
 
-        $presenter3->supports($value)->shouldNotHaveBeenCalled();
+    function it_should_order_presenters_by_their_priority_in_descending_order(
+        TypePresenter $presenter1, TypePresenter $presenter2
+    ) {
+        $value = 'foo';
+
+        $presenter1->getPriority()->willReturn(10);
+        $presenter2->getPriority()->willReturn(20);
+
+        $this->addTypePresenter($presenter1);
+        $this->addTypePresenter($presenter2);
+
+        $presenter1->supports($value)->shouldBeCalled()->willReturn(true);
+        $presenter2->supports($value)->shouldBeCalled();
+        $presenter1->present(Argument::any())->shouldBeCalled();
+
+        $this->presentValue($value);
     }
 
     function it_should_call_present_on_a_supporting_type_presenter(TypePresenter $typePresenter)

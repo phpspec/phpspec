@@ -65,5 +65,9 @@ final class SimplePresenter implements Presenter
     public function addTypePresenter(TypePresenter $typePresenter)
     {
         $this->typePresenters[] = $typePresenter;
+
+        @usort($this->typePresenters, function ($presenter1, $presenter2) {
+            return $presenter2->getPriority() - $presenter1->getPriority();
+        });
     }
 }

@@ -27,4 +27,9 @@ interface TypePresenter
      * @return string
      */
     public function present($value);
+
+    /**
+     * @return int
+     */
+    public function getPriority();
 }

@@ -32,4 +32,12 @@ final class QuotingStringTypePresenter implements StringTypePresenter
     {
         return sprintf('"%s"', $value);
     }
+
+    /**
+     * @return int
+     */
+    public function getPriority()
+    {
+        return 10;
+    }
 }

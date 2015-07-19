@@ -32,4 +32,12 @@ final class NullTypePresenter implements TypePresenter
     {
         return 'null';
     }
+
+    /**
+     * @return int
+     */
+    public function getPriority()
+    {
+        return 50;
+    }
 }

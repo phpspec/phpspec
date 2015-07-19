@@ -47,4 +47,12 @@ final class TruncatingStringTypePresenter implements StringTypePresenter
         $lines = explode("\n", $value);
         return $this->stringTypePresenter->present(sprintf('%s...', substr($lines[0], 0, 25)));
     }
+
+    /**
+     * @return int
+     */
+    public function getPriority()
+    {
+        return $this->stringTypePresenter->getPriority();
+    }
 }

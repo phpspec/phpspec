@@ -32,4 +32,12 @@ final class BooleanTypePresenter implements TypePresenter
     {
         return $value ? 'true' : 'false';
     }
+
+    /**
+     * @return int
+     */
+    public function getPriority()
+    {
+        return 40;
+    }
 }

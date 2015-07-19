@@ -32,4 +32,12 @@ final class ArrayTypePresenter implements TypePresenter
     {
         return sprintf('[array:%d]', count($value));
     }
+
+    /**
+     * @return int
+     */
+    public function getPriority()
+    {
+        return 20;
+    }
 }

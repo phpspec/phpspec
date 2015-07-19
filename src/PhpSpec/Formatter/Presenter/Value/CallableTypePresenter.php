@@ -60,4 +60,12 @@ final class CallableTypePresenter implements TypePresenter
 
         return sprintf('[%s()]', $value);
     }
+
+    /**
+     * @return int
+     */
+    public function getPriority()
+    {
+        return 70;
+    }
 }
