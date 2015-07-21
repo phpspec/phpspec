@@ -11,17 +11,14 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Formatter\Presenter;
+namespace PhpSpec\Formatter\Presenter\Exception;
 
-use PhpSpec\Formatter\Presenter\Exception\ExceptionPresenter;
-use PhpSpec\Formatter\Presenter\Value\ValuePresenter;
-
-interface Presenter extends ExceptionPresenter, ValuePresenter
+interface ExceptionPresenter
 {
     /**
-     * @param string $string
-     *
+     * @param \Exception $exception
+     * @param bool $verbose
      * @return string
      */
-    public function presentString($string);
+    public function presentException(\Exception $exception, $verbose = false);
 }
