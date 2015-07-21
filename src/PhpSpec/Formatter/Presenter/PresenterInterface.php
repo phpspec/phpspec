@@ -14,7 +14,7 @@
 namespace PhpSpec\Formatter\Presenter;
 
 /**
- * @deprecated
+ * @deprecated Use PhpSpec\Formatter\Presenter\Presenter instead
  */
 interface PresenterInterface extends Presenter
 {

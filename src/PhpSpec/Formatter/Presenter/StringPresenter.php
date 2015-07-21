@@ -23,6 +23,9 @@ use Prophecy\Exception\Call\UnexpectedCallException;
 use Prophecy\Exception\Exception as ProphecyException;
 use Prophecy\Prophecy\MethodProphecy;
 
+/**
+ * @deprecated Use PhpSpec\Formatter\Presenter\SimplePresenter instead
+ */
 class StringPresenter implements PresenterInterface
 {
     /**
