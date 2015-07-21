@@ -5,11 +5,11 @@ namespace spec\PhpSpec\Formatter\Presenter\Value;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-class ExceptionTypePresenterSpec extends ObjectBehavior
+class BaseExceptionTypePresenterSpec extends ObjectBehavior
 {
     function it_is_a_type_presenter()
     {
-        $this->shouldImplement('PhpSpec\Formatter\Presenter\Value\TypePresenter');
+        $this->shouldImplement('PhpSpec\Formatter\Presenter\Value\ExceptionTypePresenter');
     }
 
     function it_should_support_exceptions()

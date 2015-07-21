@@ -13,35 +13,6 @@
 
 namespace PhpSpec\Formatter\Presenter\Value;
 
-final class ExceptionTypePresenter implements TypePresenter
+interface ExceptionTypePresenter extends TypePresenter
 {
-    /**
-     * @param mixed $value
-     * @return bool
-     */
-    public function supports($value)
-    {
-        return $value instanceof \Exception;
-    }
-
-    /**
-     * @param mixed $value
-     * @return string
-     */
-    public function present($value)
-    {
-        return sprintf(
-            '[exc:%s("%s")]',
-            get_class($value),
-            $value->getMessage()
-        );
-    }
-
-    /**
-     * @return int
-     */
-    public function getPriority()
-    {
-        return 60;
-    }
 }
