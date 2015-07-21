@@ -18,6 +18,7 @@ use PhpSpec\Formatter\Presenter\Differ\Differ;
 use PhpSpec\Formatter\Presenter\Differ\ObjectEngine;
 use PhpSpec\Formatter\Presenter\Differ\StringEngine;
 use PhpSpec\Formatter\Presenter\Exception\CallArgumentsPresenter;
+use PhpSpec\Formatter\Presenter\Exception\GenericPhpSpecExceptionPresenter;
 use PhpSpec\Formatter\Presenter\Exception\SimpleExceptionPresenter;
 use PhpSpec\Formatter\Presenter\Exception\TaggingExceptionElementPresenter;
 use PhpSpec\Formatter\Presenter\SimplePresenter;
@@ -98,7 +99,8 @@ class PresenterAssembler
                     new SimpleExceptionPresenter(
                         $c->get('formatter.presenter.differ'),
                         $c->get('formatter.presenter.exception_presenter'),
-                        new CallArgumentsPresenter($c->get('formatter.presenter.differ'))
+                        new CallArgumentsPresenter($c->get('formatter.presenter.differ')),
+                        $c->get('formatter.presenter.exception.phpspec')
                     )
                 )
             );
@@ -113,6 +115,12 @@ class PresenterAssembler
                 $c->get('formatter.presenter.value.exception_type_presenter'),
                 $c->get('formatter.presenter.value_presenter')
             );
+        });
+
+        $container->setShared('formatter.presenter.exception.phpspec', function (ServiceContainer $c) {
+           return new GenericPhpSpecExceptionPresenter(
+               $c->get('formatter.presenter.exception_presenter')
+           );
         });
     }
 

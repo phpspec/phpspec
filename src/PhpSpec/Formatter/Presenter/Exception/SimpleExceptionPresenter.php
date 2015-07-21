@@ -49,18 +49,26 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
     private $callArgumentsPresenter;
 
     /**
+     * @var PhpSpecExceptionPresenter
+     */
+    private $phpspecExceptionPresenter;
+
+    /**
      * @param Differ $differ
      * @param ExceptionElementPresenter $exceptionElementPresenter
      * @param CallArgumentsPresenter $callArgumentsPresenter
+     * @param PhpSpecExceptionPresenter $phpspecExceptionPresenter
      */
     public function __construct(
         Differ $differ,
         ExceptionElementPresenter $exceptionElementPresenter,
-        CallArgumentsPresenter $callArgumentsPresenter
+        CallArgumentsPresenter $callArgumentsPresenter,
+        PhpSpecExceptionPresenter $phpspecExceptionPresenter
     ) {
         $this->differ = $differ;
         $this->exceptionElementPresenter = $exceptionElementPresenter;
         $this->callArgumentsPresenter = $callArgumentsPresenter;
+        $this->phpspecExceptionPresenter = $phpspecExceptionPresenter;
 
         $this->phpspecPath = dirname(dirname(__DIR__));
         $this->runnerPath  = $this->phpspecPath.DIRECTORY_SEPARATOR.'Runner';
@@ -73,32 +81,19 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
      */
     public function presentException(\Exception $exception, $verbose = false)
     {
-        $presentation = $this->getInitialPresentation($exception);
+        if ($exception instanceof PhpSpecException) {
+            $presentation = wordwrap($exception->getMessage(), 120);
+        } elseif ($exception instanceof ProphecyException) {
+            $presentation = $exception->getMessage();
+        } else {
+            $presentation = $this->exceptionElementPresenter->presentExceptionThrownMessage($exception);
+        }
 
         if (!$verbose || $exception instanceof PendingException) {
             return $presentation;
         }
 
         return $this->getVerbosePresentation($exception, $presentation);
-    }
-
-    /**
-     * @param \Exception $exception
-     * @return string
-     */
-    private function getInitialPresentation(\Exception $exception)
-    {
-        if ($exception instanceof PhpSpecException) {
-            $presentation = wordwrap($exception->getMessage(), 120);
-            return $presentation;
-        }
-
-        if ($exception instanceof ProphecyException) {
-            $presentation = $exception->getMessage();
-            return $presentation;
-        }
-
-        return $this->exceptionElementPresenter->presentExceptionThrownMessage($exception);
     }
 
     /**
@@ -115,20 +110,14 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
         }
 
         if ($exception instanceof PhpSpecException && !$exception instanceof ErrorException) {
-            list($file, $line) = $this->getExceptionExamplePosition($exception);
-
-            $presentation .= PHP_EOL . $this->presentFileCode($file, $line);
+            $presentation .= PHP_EOL . $this->phpspecExceptionPresenter->presentException($exception);
         }
 
         if ($exception instanceof UnexpectedCallException) {
             $presentation .= $this->callArgumentsPresenter->presentDifference($exception);
         }
 
-        if (trim($trace = $this->presentExceptionStackTrace($exception))) {
-            $presentation .= "\n".$trace;
-        }
-
-        return $presentation;
+        return $presentation . $this->presentExceptionStackTrace($exception);
     }
 
     /**
@@ -142,57 +131,6 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
     }
 
     /**
-     * @param PhpSpecException $exception
-     *
-     * @return array
-     */
-    private function getExceptionExamplePosition(PhpSpecException $exception)
-    {
-        $cause = $exception->getCause();
-
-        foreach ($exception->getTrace() as $call) {
-            if (!isset($call['file'])) {
-                continue;
-            }
-
-            if (!empty($cause) && $cause->getFilename() === $call['file']) {
-                return array($call['file'], $call['line']);
-            }
-        }
-
-        return array($exception->getFile(), $exception->getLine());
-    }
-
-    /**
-     * @param string  $file
-     * @param integer $lineno
-     * @param integer $context
-     *
-     * @return string
-     */
-    private function presentFileCode($file, $lineno, $context = 6)
-    {
-        $lines  = explode(PHP_EOL, file_get_contents($file));
-        $offset = max(0, $lineno - ceil($context / 2));
-        $lines  = array_slice($lines, $offset, $context);
-
-        $text = PHP_EOL;
-        foreach ($lines as $line) {
-            $offset++;
-
-            if ($offset == $lineno) {
-                $text .= $this->exceptionElementPresenter->presentHighlight(sprintf('%4d', $offset).' '.$line);
-            } else {
-                $text .= $this->exceptionElementPresenter->presentCodeLine(sprintf('%4d', $offset), $line);
-            }
-
-            $text .= PHP_EOL;
-        }
-
-        return $text;
-    }
-
-    /**
      * @param \Exception $exception
      *
      * @return string
@@ -200,7 +138,7 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
     private function presentExceptionStackTrace(\Exception $exception)
     {
         $offset = 0;
-        $text = PHP_EOL;
+        $text = '';
 
         $text .= $this->presentExceptionTraceLocation($offset++, $exception->getFile(), $exception->getLine());
         $text .= $this->presentExceptionTraceFunction(
@@ -217,28 +155,10 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
                 continue;
             }
 
-            if (isset($call['file'])) {
-                $text .= $this->presentExceptionTraceLocation($offset++, $call['file'], $call['line']);
-            } else {
-                $text .= $this->presentExceptionTraceHeader(sprintf("%2d [internal]", $offset++));
-            }
-
-            if (isset($call['class'])) {
-                $text .= $this->presentExceptionTraceMethod(
-                    $call['class'],
-                    $call['type'],
-                    $call['function'],
-                    isset($call['args']) ? $call['args'] : array()
-                );
-            } elseif (isset($call['function'])) {
-                $text .= $this->presentExceptionTraceFunction(
-                    $call['function'],
-                    isset($call['args']) ? $call['args'] : array()
-                );
-            }
+            $text .= $this->presentExceptionTraceDetails($call, $offset++);
         }
 
-        return $text;
+        return empty($text) ? $text : PHP_EOL . $text;
     }
 
     /**
@@ -312,6 +232,42 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
         }
 
         return isset($call['class']) && 0 === strpos($call['class'], "PhpSpec\\");
+    }
+
+    /**
+     * @param array $call
+     * @param int $offset
+     * @return string
+     */
+    private function presentExceptionTraceDetails(array $call, $offset)
+    {
+        $text = '';
+
+        if (isset($call['file'])) {
+            $text .= $this->presentExceptionTraceLocation($offset, $call['file'], $call['line']);
+        } else {
+            $text .= $this->presentExceptionTraceHeader(sprintf("%2d [internal]", $offset));
+        }
+
+        if (!isset($call['args'])) {
+            $call['args'] = array();
+        }
+
+        if (isset($call['class'])) {
+            $text .= $this->presentExceptionTraceMethod(
+                $call['class'],
+                $call['type'],
+                $call['function'],
+                $call['args']
+            );
+        } elseif (isset($call['function'])) {
+            $text .= $this->presentExceptionTraceFunction(
+                $call['function'],
+                $call['args']
+            );
+        }
+
+        return $text;
     }
 
 }
