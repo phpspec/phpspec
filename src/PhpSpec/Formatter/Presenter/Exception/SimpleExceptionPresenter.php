@@ -59,7 +59,7 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
         CallArgumentsPresenter $callArgumentsPresenter
     ) {
         $this->differ = $differ;
-        $this->exceptionTypePresenter = $exceptionElementPresenter;
+        $this->exceptionElementPresenter = $exceptionElementPresenter;
         $this->callArgumentsPresenter = $callArgumentsPresenter;
 
         $this->phpspecPath = dirname(dirname(__DIR__));
