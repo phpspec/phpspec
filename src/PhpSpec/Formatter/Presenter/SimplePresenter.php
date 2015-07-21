@@ -13,14 +13,30 @@
 
 namespace PhpSpec\Formatter\Presenter;
 
-use PhpSpec\Formatter\Presenter\Value\TypePresenter;
+use PhpSpec\Formatter\Presenter\Exception\ExceptionPresenter;
+use PhpSpec\Formatter\Presenter\Value\ValuePresenter;
 
 final class SimplePresenter implements Presenter
 {
     /**
-     * @var TypePresenter[]
+     * @var ValuePresenter
      */
-    private $typePresenters = array();
+    private $valuePresenter;
+
+    /**
+     * @var ExceptionPresenter
+     */
+    private $exceptionPresenter;
+
+    /**
+     * @param ValuePresenter $valuePresenter
+     * @param ExceptionPresenter $exceptionPresenter
+     */
+    public function __construct(ValuePresenter $valuePresenter, ExceptionPresenter $exceptionPresenter)
+    {
+        $this->valuePresenter = $valuePresenter;
+        $this->exceptionPresenter = $exceptionPresenter;
+    }
 
     /**
      * @param mixed $value
@@ -29,13 +45,7 @@ final class SimplePresenter implements Presenter
      */
     public function presentValue($value)
     {
-        foreach ($this->typePresenters as $typePresenter) {
-            if ($typePresenter->supports($value)) {
-                return $typePresenter->present($value);
-            }
-        }
-
-        return sprintf('[%s:%s]', strtolower(gettype($value)), $value);
+        return $this->valuePresenter->presentValue($value);
     }
 
     /**
@@ -46,7 +56,7 @@ final class SimplePresenter implements Presenter
      */
     public function presentException(\Exception $exception, $verbose = false)
     {
-        // TODO: Implement presentException() method.
+        return $this->exceptionPresenter->presentException($exception, $verbose);
     }
 
     /**
@@ -57,17 +67,5 @@ final class SimplePresenter implements Presenter
     public function presentString($string)
     {
         return $string;
-    }
-
-    /**
-     * @param TypePresenter $typePresenter
-     */
-    public function addTypePresenter(TypePresenter $typePresenter)
-    {
-        $this->typePresenters[] = $typePresenter;
-
-        @usort($this->typePresenters, function ($presenter1, $presenter2) {
-            return $presenter2->getPriority() - $presenter1->getPriority();
-        });
     }
 }
