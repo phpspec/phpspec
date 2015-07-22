@@ -423,7 +423,7 @@ class ContainerAssembler
                 $io = new SpecFormatter\Html\IO();
                 $template = new SpecFormatter\Html\Template($io);
                 $factory = new SpecFormatter\Html\ReportItemFactory($template);
-                $presenter = new SpecFormatter\Html\HtmlPresenter($c->get('formatter.presenter.differ'));
+                $presenter = $c->get('formatter.presenter.html');
 
                 return new SpecFormatter\HtmlFormatter(
                     $factory,

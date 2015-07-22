@@ -13,23 +13,10 @@
 
 namespace PhpSpec\Formatter\Presenter\Exception;
 
-final class GenericPhpSpecExceptionPresenter
+final class HtmlPhpSpecExceptionPresenter
     extends AbstractPhpSpecExceptionPresenter
     implements PhpSpecExceptionPresenter
 {
-    /**
-     * @var ExceptionElementPresenter
-     */
-    private $exceptionElementPresenter;
-
-    /**
-     * @param ExceptionElementPresenter $exceptionElementPresenter
-     */
-    public function __construct(ExceptionElementPresenter $exceptionElementPresenter)
-    {
-        $this->exceptionElementPresenter = $exceptionElementPresenter;
-    }
-
     /**
      * @param string  $file
      * @param integer $lineno
@@ -44,16 +31,16 @@ final class GenericPhpSpecExceptionPresenter
         $lines  = array_slice($lines, $offset, $context);
 
         $text = PHP_EOL;
+
         foreach ($lines as $line) {
             $offset++;
 
-            if ($offset == $lineno) {
-                $text .= $this->exceptionElementPresenter->presentHighlight(sprintf('%4d', $offset).' '.$line);
-            } else {
-                $text .= $this->exceptionElementPresenter->presentCodeLine(sprintf('%4d', $offset), $line);
-            }
-
-            $text .= PHP_EOL;
+            $text .= sprintf(
+                '<span class="linenum">%d</span><span class="%s">%s</span>' . PHP_EOL,
+                $offset,
+                $offset == $lineno ? 'offending' : 'normal',
+                $line
+            );
         }
 
         return $text;
