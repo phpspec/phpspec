@@ -20,6 +20,10 @@ tools:
 build_failure_conditions:
     - 'issues.label("coding-style").exists'
 
+checks:
+  php:
+    avoid_superglobals: false
+
 filter:
   excluded_paths:
     - docs/*
