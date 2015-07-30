@@ -234,7 +234,7 @@ class ServiceContainer
      *
      * @return array
      */
-    private function getPrefixAndSid($id)
+    public function getPrefixAndSid($id)
     {
         if (count($parts = explode('.', $id)) < 2) {
             return array(null, $id);
