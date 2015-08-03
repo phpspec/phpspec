@@ -261,3 +261,52 @@ Feature: Developer generates a method
       }
 
       """
+
+  Scenario: Generating a constructor in a file with no methods
+    Given the spec file "spec/MyNamespace/CommentMethodSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\MyNamespace;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class CommentmethodSpec extends ObjectBehavior
+      {
+          function it_should_do_something()
+          {
+              $this->foo()->shouldReturn('bar');
+          }
+      }
+      """
+    And the class file "src/MyNamespace/CommentMethod.php" contains:
+      """
+      <?php
+
+      namespace MyNamespace;
+
+      class CommentMethod
+      {
+          // this is a comment
+      }
+
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/MyNamespace/CommentMethod.php" should contain:
+      """
+      <?php
+
+      namespace MyNamespace;
+
+      class CommentMethod
+      {
+          // this is a comment
+
+          public function foo()
+          {
+              // TODO: write logic here
+          }
+      }
+
+      """
