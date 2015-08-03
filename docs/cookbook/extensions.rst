@@ -51,6 +51,7 @@ Code generation
 
  * `Typehinted Methods <https://github.com/ciaranmcnulty/phpspec-typehintedmethods>`_
  * `Example Generation <https://github.com/richardmiller/ExemplifyExtension>`_
+ * `SpecGen <https://github.com/memio/spec-gen>`_
 
 Additional Formatters
 ~~~~~~~~~~~~~~~~~~~~~
