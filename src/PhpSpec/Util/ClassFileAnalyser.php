@@ -32,6 +32,17 @@ final class ClassFileAnalyser
 
     /**
      * @param string $class
+     * @return int
+     */
+    public function getEndLineOfLastMethod($class)
+    {
+        $tokens = $this->getTokensForClass($class);
+        $index = $this->findIndexOfMethodEnd($tokens, $this->findIndexOfLastMethod($tokens));
+        return $tokens[$index][2];
+    }
+
+    /**
+     * @param string $class
      * @return bool
      */
     public function classHasMethods($class)
@@ -69,7 +80,20 @@ final class ClassFileAnalyser
     private function findIndexOfFirstMethod(array $tokens)
     {
         for ($i = 0, $max = count($tokens); $i < $max; $i++) {
-            if (is_array($tokens[$i]) && $tokens[$i][0] === T_FUNCTION) {
+            if ($this->tokenIsFunction($tokens[$i])) {
+                return $i;
+            }
+        }
+    }
+
+    /**
+     * @param array $tokens
+     * @return int
+     */
+    private function findIndexOfLastMethod(array $tokens)
+    {
+        for ($i = count($tokens) - 1; $i >= 0; $i--) {
+            if ($this->tokenIsFunction($tokens[$i])) {
                 return $i;
             }
         }
@@ -198,5 +222,14 @@ final class ClassFileAnalyser
                 }
             }
         }
+    }
+
+    /**
+     * @param mixed $token
+     * @return bool
+     */
+    private function tokenIsFunction($token)
+    {
+        return is_array($token) && $token[0] === T_FUNCTION;
     }
 }
