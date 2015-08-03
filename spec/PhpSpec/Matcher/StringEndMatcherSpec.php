@@ -31,22 +31,22 @@ class StringEndMatcherSpec extends ObjectBehavior
         $this->supports('endWith', array(), array())->shouldReturn(false);
     }
 
-    function it_matches_strings_that_start_with_specified_prefix()
+    function it_matches_strings_that_end_with_specified_suffix()
     {
         $this->shouldNotThrow()->duringPositiveMatch('endWith', 'everzet', array('zet'));
     }
 
-    function it_does_not_match_strings_that_do_not_start_with_specified_prefix()
+    function it_does_not_match_strings_that_do_not_end_with_specified_suffix()
     {
         $this->shouldThrow()->duringPositiveMatch('endWith', 'everzet', array('tez'));
     }
 
-    function it_matches_strings_that_do_not_start_with_specified_prefix()
+    function it_matches_strings_that_do_not_end_with_specified_suffix()
     {
         $this->shouldNotThrow()->duringNegativeMatch('endWith', 'everzet', array('tez'));
     }
 
-    function it_does_not_match_strings_that_do_start_with_specified_prefix()
+    function it_does_not_match_strings_that_do_end_with_specified_suffix()
     {
         $this->shouldThrow()->duringNegativeMatch('endWith', 'everzet', array('zet'));
     }
