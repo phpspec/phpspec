@@ -307,7 +307,7 @@ class Caller
         if (!is_array($method)) {
             $className = $this->wrappedObject->getClassName();
 
-            if (!method_exists($className, $method)) {
+            if (is_string($method) && !method_exists($className, $method)) {
                 throw $this->namedConstructorNotFound(
                     $method,
                     $this->wrappedObject->getArguments()
