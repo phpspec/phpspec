@@ -189,6 +189,14 @@ class ApplicationContext implements Context, MatchersProviderInterface
     }
 
     /**
+     * @Then the suite should not pass
+     */
+    public function theSuiteShouldNotPass()
+    {
+        expect($this->lastExitCode)->notToBeLike(0);
+    }
+
+    /**
      * @Then :number example(s) should have been skipped
      */
     public function exampleShouldHaveBeenSkipped($number)
