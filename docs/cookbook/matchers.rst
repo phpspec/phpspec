@@ -477,3 +477,40 @@ You can create custom matchers using the Inline matcher.
             ];
         }
     }
+
+In order to print a more verbose error message
+your inline matcher should throw `FailureException`:
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+    use PhpSpec\Matcher\InlineMatcher;
+    use PhpSpec\Exception\Example\FailureException;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_have_some_specific_options_by_default()
+        {
+            $this->getOptions()->shouldHaveKey('username');
+            $this->getOptions()->shouldHaveValue('diegoholiveira');
+        }
+
+        public function getMatchers()
+        {
+            return [
+                'haveKey' => function ($subject, $key) {
+                    if (!array_key_exists($key, $subject)) {
+                        throw new FailureException(sprintf(
+                            'Message with subject "%s" and key "%s".',
+                            $subject, $key
+                        ));
+                    }
+                    return true;
+                }
+            ];
+        }
+    }
