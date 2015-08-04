@@ -13,9 +13,7 @@
 
 namespace PhpSpec\Formatter\Presenter\Exception;
 
-final class HtmlPhpSpecExceptionPresenter
-    extends AbstractPhpSpecExceptionPresenter
-    implements PhpSpecExceptionPresenter
+final class HtmlPhpSpecExceptionPresenter extends AbstractPhpSpecExceptionPresenter implements PhpSpecExceptionPresenter
 {
     /**
      * @param string  $file

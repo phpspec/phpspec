@@ -13,9 +13,7 @@
 
 namespace PhpSpec\Formatter\Presenter\Exception;
 
-final class GenericPhpSpecExceptionPresenter
-    extends AbstractPhpSpecExceptionPresenter
-    implements PhpSpecExceptionPresenter
+final class GenericPhpSpecExceptionPresenter extends AbstractPhpSpecExceptionPresenter implements PhpSpecExceptionPresenter
 {
     /**
      * @var ExceptionElementPresenter
