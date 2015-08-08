@@ -24,6 +24,7 @@
         "sebastian/exporter":       "~1.0",
         "symfony/console":          "~2.3",
         "symfony/event-dispatcher": "~2.1",
+        "symfony/process":          "^2.6",
         "symfony/finder":           "~2.1",
         "symfony/yaml":             "~2.1",
         "doctrine/instantiator":    "^1.0.1"
@@ -33,8 +34,7 @@
         "behat/behat":           "^3.0.11",
         "bossa/phpspec2-expect": "~1.0",
         "symfony/filesystem":    "~2.1",
-        "phpunit/phpunit":       "~4.4",
-        "symfony/process":       "^2.6"
+        "phpunit/phpunit":       "~4.4"
     },
 
     "suggest": {
