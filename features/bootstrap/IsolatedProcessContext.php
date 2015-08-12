@@ -97,18 +97,6 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     }
 
     /**
-     * @When I run phpspec
-     */
-    public function iRunPhpspec()
-    {
-        $process = new Process(
-            $this->buildPhpSpecCmd() . ' run'
-        );
-        $process->run();
-        $this->lastOutput = $process->getOutput();
-    }
-
-    /**
      * @When I run phpspec with the :formatter formatter
      */
     public function iRunPhpspecWithThe($formatter)
