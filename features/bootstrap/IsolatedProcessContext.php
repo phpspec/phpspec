@@ -14,6 +14,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
 {
     /**
      * @var Filesystem
+     * @beforeSuite
      */
     private $filesystem;
 
@@ -81,6 +82,18 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     public function iShouldSeeAnErrorAboutTheMissingAutoloader()
     {
         expect($this->process->getErrorOutput())->toMatch('/autoload/');
+    }
+
+    /**
+     * @When I run phpspec
+     */
+    public function iRunPhpspec()
+    {
+        $process = new Process(
+            $this->buildPhpSpecCmd() . ' run'
+        );
+        $process->run();
+        $this->lastOutput = $process->getOutput();
     }
 
     /**

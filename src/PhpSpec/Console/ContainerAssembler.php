@@ -124,8 +124,15 @@ class ContainerAssembler
      */
     private function setupEventDispatcher(ServiceContainer $container)
     {
-        $container->setShared('event_dispatcher', function () {
-            return new EventDispatcher();
+        $container->setShared('event_dispatcher', function (ServiceContainer $c) {
+            $dispatcher = new EventDispatcher();
+
+            array_map(
+                array($dispatcher, 'addSubscriber'),
+                $c->getByPrefix('event_dispatcher.listeners')
+            );
+
+            return $dispatcher;
         });
 
         $container->setShared('event_dispatcher.listeners.stats', function () {
@@ -660,6 +667,7 @@ class ContainerAssembler
             return new PhpExecutableFinder();
         });
     }
+
 
     /**
      * @param ServiceContainer $container
