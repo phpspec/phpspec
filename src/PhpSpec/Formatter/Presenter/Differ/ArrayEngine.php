@@ -55,8 +55,10 @@ class ArrayEngine extends StringEngine
                     );
                     break;
                 case 'string':
-                    if (25 > strlen($val) && false === strpos($val, PHP_EOL)) {
+                    if (false === strpos($val, PHP_EOL)) {
                         $val = sprintf('"%s"', $val);
+                        $line = sprintf('%s => %s,', $key, $val);
+                        break;
                     }
 
                     $lines = explode(PHP_EOL, $val);
