@@ -124,7 +124,7 @@ to pass to that method.
 
 To be more descriptive, shorter syntaxes are available. All of the following are equivalent:
 
-.. code-block: php
+.. code-block:: php
 
     $this->beConstructedNamed('Bob');
     $this->beConstructedThroughNamed('Bob');
