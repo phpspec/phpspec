@@ -3,6 +3,7 @@
 namespace integration\PhpSpec\Loader;
 
 use PhpSpec\Loader\StreamWrapper;
+use PhpSpec\Loader\Transformer\InMemoryTypeHintIndex;
 use PhpSpec\Loader\Transformer\TypeHintRewriter;
 
 class StreamWrapperTest extends \PHPUnit_Framework_Testcase
@@ -10,7 +11,7 @@ class StreamWrapperTest extends \PHPUnit_Framework_Testcase
     function setUp()
     {
         StreamWrapper::register(array(
-            new TypeHintRewriter()
+            new TypeHintRewriter(new InMemoryTypeHintIndex())
         ));
     }
 

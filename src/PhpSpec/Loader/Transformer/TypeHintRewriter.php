@@ -17,14 +17,30 @@ use PhpSpec\Loader\SpecTransformer;
 
 final class TypeHintRewriter implements SpecTransformer
 {
+    private $inClass = false;
     private $inFunction = false;
     private $inArguments = false;
+    private $currentClass;
     private $currentFunction;
-
+    
     private $typehintTokens = array(
         T_WHITESPACE, T_STRING, T_NS_SEPARATOR
     );
 
+    /**
+     * @var TypeHintIndex
+     */
+    private $typeHintIndex;
+
+    public function __construct(TypeHintIndex $typeHintIndex)
+    {
+        $this->typeHintIndex = $typeHintIndex;
+    }
+
+    /**
+     * @param string $spec
+     * @return string
+     */
     public function transform($spec)
     {
         $tokens = $this->stripTypeHints(token_get_all($spec));
@@ -35,7 +51,7 @@ final class TypeHintRewriter implements SpecTransformer
     }
 
     /**
-     * @param $tokens
+     * @param array $tokens
      * @return $tokens
      */
     private function stripTypeHints($tokens)
@@ -53,6 +69,9 @@ final class TypeHintRewriter implements SpecTransformer
                     unset($this->currentFunction);
                 }
             }
+            elseif (T_CLASS == $token[0]) {
+                $this->inClass = true;
+            }
             elseif (T_FUNCTION == $token[0]) {
                 $this->inFunction = true;
             }
@@ -61,14 +80,22 @@ final class TypeHintRewriter implements SpecTransformer
                 if ($this->inFunction && !$this->currentFunction) {
                     $this->currentFunction = $token[1];
                 }
+                // string is likely the class name
+                if ($this->inClass && !$this->currentClass) {
+                    $this->currentClass = $token[1];
+                }
             }
             elseif (T_VARIABLE == $token[0]) {
                 // variable is an argument
                 if ($this->inArguments) {
                     $typehint = '';
-                    for ($i = $index -1; in_array($tokens[$i][0], $this->typehintTokens); $i--) {
+                    for ($i = $index - 1; in_array($tokens[$i][0], $this->typehintTokens); $i--) {
                         $typehint = $tokens[$i][1] . $typehint;
                         unset($tokens[$i]);
+
+                        if ($typehint = trim($typehint)) {
+                            $this->typeHintIndex->add($this->currentClass, $token[1], $typehint);
+                        }
                     }
                 }
             }
@@ -78,7 +105,7 @@ final class TypeHintRewriter implements SpecTransformer
     }
 
     /**
-     * @param $tokens
+     * @param array $tokens
      * @return string
      */
     private function tokensToString($tokens)
