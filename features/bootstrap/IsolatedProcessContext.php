@@ -2,6 +2,9 @@
 
 use Behat\Behat\Context\Context;
 use Behat\Behat\Context\SnippetAcceptingContext;
+use Behat\Gherkin\Node\PyStringNode;
+use Behat\Gherkin\Node\TableNode;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
 /**
@@ -10,7 +13,18 @@ use Symfony\Component\Process\Process;
 class IsolatedProcessContext implements Context, SnippetAcceptingContext
 {
     /**
-     * @var Process
+     * @var Filesystem
+     * @beforeSuite
+     */
+    private $filesystem;
+
+    public function __construct()
+    {
+        $this->filesystem = new Filesystem();
+    }
+
+    /**
+     * @beforeSuite
      */
     private $process;
 
@@ -69,4 +83,45 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     {
         expect($this->process->getErrorOutput())->toMatch('/autoload/');
     }
+
+    /**
+     * @When I run phpspec
+     */
+    public function iRunPhpspec()
+    {
+        $process = new Process(
+            $this->buildPhpSpecCmd() . ' run'
+        );
+        $process->run();
+        $this->lastOutput = $process->getOutput();
+    }
+
+    /**
+     * @When I run phpspec with the :formatter formatter
+     */
+    public function iRunPhpspecWithThe($formatter)
+    {
+        $process = new Process(
+            $this->buildPhpSpecCmd() . " --format=$formatter run"
+        );
+        $process->run();
+        $this->lastOutput = $process->getOutput();
+    }
+
+    /**
+     * @Then I should see :message
+     */
+    public function iShouldSee($message)
+    {
+        expect(strpos($this->lastOutput, $message))->toNotBe(false);
+    }
+
+    /**
+     * @Given the isolated file :file contains:
+     */
+    public function theFileContains($file, PyStringNode $contents)
+    {
+        $this->filesystem->dumpFile($file, (string)$contents);
+    }
+
 }
