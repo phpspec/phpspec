@@ -14,6 +14,8 @@
 namespace PhpSpec\Runner\Maintainer;
 
 use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
+use PhpSpec\Exception\Wrapper\CollaboratorException;
+use PhpSpec\Exception\Wrapper\InvalidCollaboratorTypeException;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\SpecificationInterface;
 use PhpSpec\Runner\MatcherManager;
@@ -119,6 +121,7 @@ class CollaboratorsMaintainer implements MaintainerInterface
         }
 
         foreach ($function->getParameters() as $parameter) {
+            $this->ensureParameterHasSupportedTypeHinting($parameter, $function);
             $collaborator = $this->getOrCreateCollaborator($collaborators, $parameter->getName());
             try {
                 if (null !== $class = $parameter->getClass()) {
@@ -131,6 +134,20 @@ class CollaboratorsMaintainer implements MaintainerInterface
                     $parameter
                 );
             }
+        }
+    }
+
+    private function ensureParameterHasSupportedTypeHinting(
+        \ReflectionParameter $parameter,
+        \ReflectionFunctionAbstract $function
+    ) {
+        $isUnsupportedTypeHinting = $parameter->isArray();
+        if (version_compare(PHP_VERSION, '5.4.0', '>')) {
+            $isUnsupportedTypeHinting = $isUnsupportedTypeHinting || $parameter->isCallable();
+        }
+
+        if ($isUnsupportedTypeHinting) {
+            throw new InvalidCollaboratorTypeException($parameter, $function);
         }
     }
 
