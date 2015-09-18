@@ -121,7 +121,10 @@ class CollaboratorsMaintainer implements MaintainerInterface
         }
 
         foreach ($function->getParameters() as $parameter) {
-            $this->ensureParameterHasSupportedTypeHinting($parameter, $function);
+            if ($this->isUnsupportedTypeHinting($parameter)) {
+                throw new InvalidCollaboratorTypeException($parameter, $function);
+            }
+
             $collaborator = $this->getOrCreateCollaborator($collaborators, $parameter->getName());
             try {
                 if (null !== $class = $parameter->getClass()) {
@@ -137,18 +140,16 @@ class CollaboratorsMaintainer implements MaintainerInterface
         }
     }
 
-    private function ensureParameterHasSupportedTypeHinting(
-        \ReflectionParameter $parameter,
-        \ReflectionFunctionAbstract $function
-    ) {
+    private function isUnsupportedTypeHinting(\ReflectionParameter $parameter)
+    {
         $isUnsupportedTypeHinting = $parameter->isArray();
-        if (version_compare(PHP_VERSION, '5.4.0', '>')) {
+        if (PHP_VERSION_ID >= 70000) {
+            $isUnsupportedTypeHinting = $isUnsupportedTypeHinting || $parameter->getType()->isBuiltin();
+        } else if (PHP_VERSION_ID >= 50400) {
             $isUnsupportedTypeHinting = $isUnsupportedTypeHinting || $parameter->isCallable();
         }
 
-        if ($isUnsupportedTypeHinting) {
-            throw new InvalidCollaboratorTypeException($parameter, $function);
-        }
+        return $isUnsupportedTypeHinting;
     }
 
     /**

@@ -20,8 +20,8 @@ class InvalidCollaboratorTypeException extends CollaboratorException
     public function __construct(\ReflectionParameter $parameter, \ReflectionFunctionAbstract $function)
     {
         $message = sprintf(
-            'Collaborator cannot be array or callable: argument %s defined in %s. ' .
-            'You can create arrays/callables manually.',
+            'Collaborator must be an object: argument %s defined in %s. ' .
+            'You can create non-object values manually.',
             $parameter->getPosition(),
             $this->fetchFunctionIdentifier($function)
         );

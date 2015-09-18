@@ -39,7 +39,7 @@ Feature: Developer uses unsupported collaborator type hinting
     When I run phpspec
     Then I should see:
       """
-            collaborator cannot be array or callable: argument 0 defined in
+            collaborator must be an object: argument 0 defined in
             spec\InvalidUsage\InvalidUsageExample1\StorageSpec::it_can_store_data.
       """
 
@@ -81,6 +81,49 @@ Feature: Developer uses unsupported collaborator type hinting
     When I run phpspec
     Then I should see:
       """
-            collaborator cannot be array or callable: argument 0 defined in
+            collaborator must be an object: argument 0 defined in
             spec\InvalidUsage\InvalidUsageExample2\InvokerSpec::it_invokes_callable.
+      """
+
+
+  @php-version @php7
+  Scenario: Integer collaborator type hinting
+    Given the spec file "spec/InvalidUsage/InvalidUsageExample3/StorageSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\InvalidUsage\InvalidUsageExample3;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class StorageSpec extends ObjectBehavior
+      {
+          function it_can_store_data(int $data)
+          {
+              $this->store($data)->shouldReturn(true);
+          }
+      }
+
+      """
+    And the class file "src/InvalidUsage/InvalidUsageExample3/Storage.php" contains:
+      """
+      <?php
+
+      namespace InvalidUsage\InvalidUsageExample3;
+
+      class Storage
+      {
+          public function store(int $data)
+          {
+              return true;
+          }
+      }
+
+      """
+    When I run phpspec
+    Then I should see:
+      """
+            collaborator must be an object: argument 0 defined in
+            spec\InvalidUsage\InvalidUsageExample3\StorageSpec::it_can_store_data.
       """

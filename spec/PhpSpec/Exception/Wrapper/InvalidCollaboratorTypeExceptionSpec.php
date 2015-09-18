@@ -28,7 +28,7 @@ class InvalidCollaboratorTypeExceptionSpec extends ObjectBehavior
         $class->getName()->willReturn('Acme\Foo');
         $function->getName()->willReturn('bar');
 
-        $this->getMessage()->shouldStartWith('Collaborator cannot be array or callable: argument 2 defined in Acme\Foo::bar.');
+        $this->getMessage()->shouldStartWith('Collaborator must be an object: argument 2 defined in Acme\Foo::bar.');
     }
 
     function it_sets_cause(\ReflectionFunction $function)
