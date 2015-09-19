@@ -20,9 +20,14 @@ final class TypeHintRewriter implements SpecTransformer
     private $inClass = false;
     private $inFunction = false;
     private $inArguments = false;
+    private $readingNamespace = false;
+    private $readingUse = false;
     private $currentClass;
     private $currentFunction;
-    
+    private $currentNamespace;
+    private $currentUse;
+    private $uses = array();
+
     private $typehintTokens = array(
         T_WHITESPACE, T_STRING, T_NS_SEPARATOR
     );
@@ -68,6 +73,26 @@ final class TypeHintRewriter implements SpecTransformer
                     $this->inFunction = true;
                     unset($this->currentFunction);
                 }
+                // found end of namespace declaration
+                if (';' == $token && $this->readingNamespace) {
+                    $this->currentNamespace = trim($this->currentNamespace);
+                    $this->readingNamespace = false;
+                }
+                // found end of use statement
+                if (';' == $token && $this->readingUse) {
+                    $this->storeUse();
+                    $this->currentUse = '';
+                    $this->readingUse = false;
+                }
+                // found break in use statement
+                if (',' == $token && $this->readingUse) {
+                    $this->currentNamespace = trim($this->currentNamespace);
+                    $this->storeUse();
+                    $this->currentUse = '';
+                }
+            }
+            elseif ($this->readingUse) {
+                $this->currentUse .= $token[1];
             }
             elseif (T_CLASS == $token[0]) {
                 $this->inClass = true;
@@ -84,6 +109,10 @@ final class TypeHintRewriter implements SpecTransformer
                 if ($this->inClass && !$this->currentClass) {
                     $this->currentClass = $token[1];
                 }
+                // string is likey part of the namespace
+                if ($this->readingNamespace) {
+                    $this->currentNamespace .= $token[1];
+                }
             }
             elseif (T_VARIABLE == $token[0]) {
                 // variable is an argument
@@ -94,10 +123,22 @@ final class TypeHintRewriter implements SpecTransformer
                         unset($tokens[$i]);
 
                         if ($typehint = trim($typehint)) {
-                            $this->typeHintIndex->add($this->currentClass, $token[1], $typehint);
+                            $this->typeHintIndex->add(
+                                $this->applyNamespace($this->currentClass),
+                                $token[1],
+                                $this->applyNamespace($typehint));
                         }
                     }
                 }
+            }
+            elseif (T_NAMESPACE == $token[0]) {
+                $this->readingNamespace = true;
+                $this->currentNamespace = '';
+                $this->uses = array();
+            }
+            elseif (T_USE == $token[0]) {
+                $this->readingUse = true;
+                $this->currentUse = '';
             }
         }
 
@@ -113,5 +154,34 @@ final class TypeHintRewriter implements SpecTransformer
         return join('', array_map(function ($token) {
             return is_array($token) ? $token[1] : $token;
         }, $tokens));
+    }
+
+    /**
+     * @param string $classAlias
+     * @return string
+     */
+    private function applyNamespace($classAlias)
+    {
+        if (array_key_exists($classAlias, $this->uses)) {
+            return $this->uses[$classAlias];
+        }
+        if ($this->currentNamespace) {
+            return  $this->currentNamespace . '\\' . $classAlias;
+        }
+
+        return $classAlias;
+    }
+
+    private function storeUse()
+    {
+        if (preg_match('/\s*(.*)\s+as\s+(.*)\s*/', $this->currentUse, $matches)) {
+            $this->uses[trim($matches[2])] = trim($matches[1]);
+        }
+        elseif(preg_match('/\\\\([^\\\\]+)\s*/', $this->currentUse, $matches)){
+            $this->uses[$matches[1]] = trim($this->currentUse);
+        }
+        else {
+            $this->uses[trim($this->currentUse)] = trim($this->currentUse);
+        }
     }
 }

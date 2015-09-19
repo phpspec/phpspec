@@ -19,7 +19,6 @@ interface TypeHintIndex
      * @param string $class
      * @param string $argument
      * @param string $typehint
-     * @return mixed
      */
     public function add($class, $argument, $typehint);
 }

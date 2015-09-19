@@ -11,4 +11,16 @@ class InMemoryTypeHintIndexSpec extends ObjectBehavior
     {
         $this->shouldHaveType('PhpSpec\Loader\Transformer\TypeHintIndex');
     }
+
+    function it_remembers_the_typehints_that_are_added()
+    {
+        $this->add('Foo', '$bar', 'Baz');
+
+        $this->lookup('Foo', '$bar')->shouldReturn('Baz');
+    }
+
+    function it_returns_false_for_typehints_that_have_not_been_added()
+    {
+        $this->lookup('Foo', '$bar')->shouldBe(false);
+    }
 }

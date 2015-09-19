@@ -16,13 +16,36 @@ namespace PhpSpec\Loader\Transformer;
 final class InMemoryTypeHintIndex implements TypeHintIndex
 {
     /**
+     * @var array
+     */
+    private $typehints = array();
+
+    /**
      * @param string $class
      * @param string $argument
      * @param string $typehint
-     * @return mixed
      */
     public function add($class, $argument, $typehint)
     {
-        // TODO: Implement add() method.
+        if (!array_key_exists($class, $this->typehints)) {
+            $this->typehints[$class] = array();
+        }
+
+        $this->typehints[$class][$argument] = $typehint;
+    }
+
+    /**
+     * @param string $class
+     * @param string $argument
+     *
+     * @return string|null
+     */
+    public function lookup($class, $argument)
+    {
+        if (isset($this->typehints[$class][$argument])) {
+            return $this->typehints[$class][$argument];
+        }
+
+        return false;
     }
 }
