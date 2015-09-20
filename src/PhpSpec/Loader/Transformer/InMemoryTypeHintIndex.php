@@ -22,28 +22,41 @@ final class InMemoryTypeHintIndex implements TypeHintIndex
 
     /**
      * @param string $class
+     * @param string $method
      * @param string $argument
      * @param string $typehint
      */
-    public function add($class, $argument, $typehint)
+    public function add($class, $method, $argument, $typehint)
     {
+        $class = strtolower($class);
+        $method = strtolower($method);
+        $argument = strtolower($argument);
+
         if (!array_key_exists($class, $this->typehints)) {
             $this->typehints[$class] = array();
         }
+        if (!array_key_exists($method, $this->typehints[$class])) {
+            $this->typehints[$class][$method] = array();
+        }
 
-        $this->typehints[$class][$argument] = $typehint;
+        $this->typehints[$class][$method][$argument] = $typehint;
     }
 
     /**
      * @param string $class
+     * @param string $method
      * @param string $argument
      *
      * @return string|null
      */
-    public function lookup($class, $argument)
+    public function lookup($class, $method, $argument)
     {
-        if (isset($this->typehints[$class][$argument])) {
-            return $this->typehints[$class][$argument];
+        $class = strtolower($class);
+        $method = strtolower($method);
+        $argument = strtolower($argument);
+
+        if (isset($this->typehints[$class][$method][$argument])) {
+            return $this->typehints[$class][$method][$argument];
         }
 
         return false;

@@ -17,8 +17,17 @@ interface TypeHintIndex
 {
     /**
      * @param string $class
+     * @param string $method
      * @param string $argument
      * @param string $typehint
      */
-    public function add($class, $argument, $typehint);
+    public function add($class, $method, $argument, $typehint);
+
+    /**
+     * @param string $class
+     * @param string $method
+     * @param string $argument
+     * @return string
+     */
+    public function lookup($class, $method, $argument);
 }

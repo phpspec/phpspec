@@ -10,9 +10,10 @@ class StreamWrapperTest extends \PHPUnit_Framework_Testcase
 {
     function setUp()
     {
-        StreamWrapper::register(array(
-            new TypeHintRewriter(new InMemoryTypeHintIndex())
-        ));
+        $wrapper = new StreamWrapper();
+        $wrapper->addTransformer(new TypeHintRewriter(new InMemoryTypeHintIndex()));
+
+        StreamWrapper::register();
     }
 
     /**

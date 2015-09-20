@@ -71,7 +71,7 @@ class MethodAnalyser
         $reflectionClass = $this->getMethodOwner($reflectionMethod, $startLine, $endLine);
 
         $length = $endLine - $startLine;
-        $lines = file($reflectionClass->getFileName());
+        $lines = file('phpspec://'.$reflectionClass->getFileName());
         $code = join(PHP_EOL, array_slice($lines, $startLine - 1, $length + 1));
 
         return preg_replace('/.*function[^{]+{/s', '', $code);

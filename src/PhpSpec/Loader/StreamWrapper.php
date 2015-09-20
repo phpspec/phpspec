@@ -18,12 +18,18 @@ class StreamWrapper
     private $realPath;
     private $fileResource;
 
-    private static $specTransformers;
+    private static $specTransformers = array();
 
-    public static function register(array $specTransformers)
+    public static function register()
     {
-        static::$specTransformers = $specTransformers;
-        stream_wrapper_register('phpspec', 'PhpSpec\Loader\StreamWrapper');
+        if (!in_array('phpspec', stream_get_wrappers())) {
+            stream_wrapper_register('phpspec', 'PhpSpec\Loader\StreamWrapper');
+        }
+    }
+
+    public function addTransformer(SpecTransformer $specTransformer)
+    {
+        static::$specTransformers[] = $specTransformer;
     }
 
     public function stream_open($path , $mode , $options , &$opened_path)

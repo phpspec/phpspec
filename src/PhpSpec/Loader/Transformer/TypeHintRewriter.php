@@ -48,11 +48,25 @@ final class TypeHintRewriter implements SpecTransformer
      */
     public function transform($spec)
     {
+        $this->reset();
         $tokens = $this->stripTypeHints(token_get_all($spec));
-
         $tokensToString = $this->tokensToString($tokens);
 
         return $tokensToString;
+    }
+
+    public function reset()
+    {
+        $this->inClass = false;
+        $this->inFunction = false;
+        $this->inArguments = false;
+        $this->readingNamespace = false;
+        $this->readingUse = false;
+        $this->currentClass = null;
+        $this->currentFunction = null;
+        $this->currentNamespace = null;
+        $this->currentUse = null;
+        $this->uses = array();
     }
 
     /**
@@ -71,7 +85,7 @@ final class TypeHintRewriter implements SpecTransformer
                 if (')' == $token && $this->inArguments) {
                     $this->inArguments = false;
                     $this->inFunction = true;
-                    unset($this->currentFunction);
+                    $this->currentFunction = null;
                 }
                 // found end of namespace declaration
                 if (';' == $token && $this->readingNamespace) {
@@ -101,7 +115,6 @@ final class TypeHintRewriter implements SpecTransformer
                 $this->inFunction = true;
             }
             elseif (T_STRING == $token[0]) {
-                // string is likely the function name
                 if ($this->inFunction && !$this->currentFunction) {
                     $this->currentFunction = $token[1];
                 }
@@ -109,6 +122,12 @@ final class TypeHintRewriter implements SpecTransformer
                 if ($this->inClass && !$this->currentClass) {
                     $this->currentClass = $token[1];
                 }
+                // string is likey part of the namespace
+                if ($this->readingNamespace) {
+                    $this->currentNamespace .= $token[1];
+                }
+            }
+            elseif (T_NS_SEPARATOR == $token[0]) {
                 // string is likey part of the namespace
                 if ($this->readingNamespace) {
                     $this->currentNamespace .= $token[1];
@@ -125,6 +144,7 @@ final class TypeHintRewriter implements SpecTransformer
                         if ($typehint = trim($typehint)) {
                             $this->typeHintIndex->add(
                                 $this->applyNamespace($this->currentClass),
+                                trim($this->currentFunction),
                                 $token[1],
                                 $this->applyNamespace($typehint));
                         }
@@ -162,11 +182,14 @@ final class TypeHintRewriter implements SpecTransformer
      */
     private function applyNamespace($classAlias)
     {
-        if (array_key_exists($classAlias, $this->uses)) {
-            return $this->uses[$classAlias];
+        if (strpos($classAlias, '\\') === 0) {
+            return substr($classAlias, 1);
+        }
+        if (array_key_exists(strtolower($classAlias), $this->uses)) {
+            return $this->uses[strtolower($classAlias)];
         }
         if ($this->currentNamespace) {
-            return  $this->currentNamespace . '\\' . $classAlias;
+            return $this->currentNamespace . '\\' . $classAlias;
         }
 
         return $classAlias;
@@ -175,13 +198,13 @@ final class TypeHintRewriter implements SpecTransformer
     private function storeUse()
     {
         if (preg_match('/\s*(.*)\s+as\s+(.*)\s*/', $this->currentUse, $matches)) {
-            $this->uses[trim($matches[2])] = trim($matches[1]);
+            $this->uses[strtolower(trim($matches[2]))] = trim($matches[1]);
         }
-        elseif(preg_match('/\\\\([^\\\\]+)\s*/', $this->currentUse, $matches)){
-            $this->uses[$matches[1]] = trim($this->currentUse);
+        elseif(preg_match('/\\\\([^\\\\]+)\s*$/', $this->currentUse, $matches)){
+            $this->uses[strtolower($matches[1])] = trim($this->currentUse);
         }
         else {
-            $this->uses[trim($this->currentUse)] = trim($this->currentUse);
+            $this->uses[strtolower(trim($this->currentUse))] = trim($this->currentUse);
         }
     }
 }

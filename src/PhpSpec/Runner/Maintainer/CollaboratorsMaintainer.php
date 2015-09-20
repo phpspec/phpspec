@@ -17,6 +17,7 @@ use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
 use PhpSpec\Exception\Wrapper\CollaboratorException;
 use PhpSpec\Exception\Wrapper\InvalidCollaboratorTypeException;
 use PhpSpec\Loader\Node\ExampleNode;
+use PhpSpec\Loader\Transformer\TypeHintIndex;
 use PhpSpec\SpecificationInterface;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
@@ -41,11 +42,18 @@ class CollaboratorsMaintainer implements MaintainerInterface
     private $prophet;
 
     /**
-     * @param Unwrapper $unwrapper
+     * @var TypeHintIndex
      */
-    public function __construct(Unwrapper $unwrapper)
+    private $typeHintIndex;
+
+    /**
+     * @param Unwrapper $unwrapper
+     * @param TypeHintIndex $typeHintIndex
+     */
+    public function __construct(Unwrapper $unwrapper, TypeHintIndex $typeHintIndex = null)
     {
         $this->unwrapper = $unwrapper;
+        $this->typeHintIndex = $typeHintIndex;
     }
 
     /**
@@ -75,10 +83,10 @@ class CollaboratorsMaintainer implements MaintainerInterface
         $classRefl = $example->getSpecification()->getClassReflection();
 
         if ($classRefl->hasMethod('let')) {
-            $this->generateCollaborators($collaborators, $classRefl->getMethod('let'));
+            $this->generateCollaborators($collaborators, $classRefl->getMethod('let'), $classRefl);
         }
 
-        $this->generateCollaborators($collaborators, $example->getFunctionReflection());
+        $this->generateCollaborators($collaborators, $example->getFunctionReflection(), $classRefl);
     }
 
     /**
@@ -107,8 +115,9 @@ class CollaboratorsMaintainer implements MaintainerInterface
     /**
      * @param CollaboratorManager         $collaborators
      * @param \ReflectionFunctionAbstract $function
+     * @param \ReflectionClass            $classRefl
      */
-    private function generateCollaborators(CollaboratorManager $collaborators, \ReflectionFunctionAbstract $function)
+    private function generateCollaborators(CollaboratorManager $collaborators, \ReflectionFunctionAbstract $function, \ReflectionClass $classRefl)
     {
         if ($comment = $function->getDocComment()) {
             $comment = str_replace("\r\n", "\n", $comment);
@@ -129,6 +138,9 @@ class CollaboratorsMaintainer implements MaintainerInterface
             try {
                 if (null !== $class = $parameter->getClass()) {
                     $collaborator->beADoubleOf($class->getName());
+                }
+                elseif ($this->typeHintIndex && $indexedClass = $this->typeHintIndex->lookup($classRefl->getName(), $parameter->getDeclaringFunction()->getName(), '$'.$parameter->getName())) {
+                    $collaborator->beADoubleOf($indexedClass);
                 }
             } catch (ReflectionException $e) {
                 throw new CollaboratorNotFoundException(

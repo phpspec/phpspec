@@ -12,15 +12,22 @@ class InMemoryTypeHintIndexSpec extends ObjectBehavior
         $this->shouldHaveType('PhpSpec\Loader\Transformer\TypeHintIndex');
     }
 
+    function it_is_case_insensitive()
+    {
+        $this->add('Foo', 'boz', '$bar', 'Baz');
+
+        $this->lookup('FoO', 'bOz', '$bAr')->shouldReturn('Baz');
+    }
+
     function it_remembers_the_typehints_that_are_added()
     {
-        $this->add('Foo', '$bar', 'Baz');
+        $this->add('Foo', 'boz', '$bar', 'Baz');
 
-        $this->lookup('Foo', '$bar')->shouldReturn('Baz');
+        $this->lookup('Foo', 'boz', '$bar')->shouldReturn('Baz');
     }
 
     function it_returns_false_for_typehints_that_have_not_been_added()
     {
-        $this->lookup('Foo', '$bar')->shouldBe(false);
+        $this->lookup('Foo', 'boz', '$bar')->shouldBe(false);
     }
 }

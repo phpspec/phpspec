@@ -14,6 +14,7 @@
 namespace PhpSpec\Console;
 
 use PhpSpec\Console\Prompter\Factory;
+use PhpSpec\Loader\StreamWrapper;
 use PhpSpec\Process\Context\JsonExecutionContext;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
@@ -86,6 +87,9 @@ class Application extends BaseApplication
         $this->setDispatcher($this->container->get('console_event_dispatcher'));
 
         $this->container->get('console.io')->setConsoleWidth($this->getTerminalWidth());
+
+        $this->container->get('loader.resource_loader.stream_wrapper');
+        StreamWrapper::register();
 
         return parent::doRun($input, $output);
     }

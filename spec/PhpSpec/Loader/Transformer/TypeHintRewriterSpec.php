@@ -107,8 +107,8 @@ class TypeHintRewriterSpec extends ObjectBehavior
 
         ');
 
-        $typeHintIndex->add('Foo', '$bar', 'Foo\Bar')->shouldHaveBeenCalled();
-        $typeHintIndex->add('Foo', '$baz', 'Baz')->shouldHaveBeenCalled();
+        $typeHintIndex->add('Foo', 'bar', '$bar', 'Foo\Bar')->shouldHaveBeenCalled();
+        $typeHintIndex->add('Foo', 'bar', '$baz', 'Baz')->shouldHaveBeenCalled();
     }
 
     function it_indexes_typehints_in_the_correct_namespace(TypeHintIndex $typeHintIndex)
@@ -127,7 +127,7 @@ class TypeHintRewriterSpec extends ObjectBehavior
 
         ');
 
-        $typeHintIndex->add('Baz\Foo', '$bar', 'Baz\Bar')->shouldHaveBeenCalled();
+        $typeHintIndex->add('Baz\Foo', 'bar', '$bar', 'Baz\Bar')->shouldHaveBeenCalled();
     }
 
     function it_indexes_typehints_that_have_applicable_use_statements(TypeHintIndex $typeHintIndex)
@@ -149,7 +149,7 @@ class TypeHintRewriterSpec extends ObjectBehavior
 
         ');
 
-        $typeHintIndex->add('Baz\Foo', '$bar', 'Boz\Bar')->shouldHaveBeenCalled();
-        $typeHintIndex->add('Baz\Foo', '$bez', 'Boz\Bez')->shouldHaveBeenCalled();
+        $typeHintIndex->add('Baz\Foo', 'bar', '$bar', 'Boz\Bar')->shouldHaveBeenCalled();
+        $typeHintIndex->add('Baz\Foo', 'bar', '$bez', 'Boz\Bez')->shouldHaveBeenCalled();
     }
 }
