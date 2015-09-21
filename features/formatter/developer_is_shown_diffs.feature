@@ -512,3 +512,55 @@ Feature: Developer is shown diffs
             +    0 => "Vestibulum vehicula nisl at ex maximus, nec lobortis orci luctus. Integer euismod in nunc nec lobortis",
                ]
       """
+
+  Scenario: Array diffing with multi line strings
+    Given the spec file "spec/Diffs/DiffExample10/ClassWithArraysSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Diffs\DiffExample10;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class ClassWithArraysSpec extends ObjectBehavior
+      {
+          function it_is_equal()
+          {
+              $this->getArray()->shouldReturn(array(
+                  'Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  Etiam nunc nulla, posuere et arcu ut.'
+              ));
+          }
+      }
+
+      """
+    And the class file "src/Diffs/DiffExample10/ClassWithArrays.php" contains:
+      """
+      <?php
+
+      namespace Diffs\DiffExample10;
+
+      class ClassWithArrays
+      {
+          public function getArray()
+          {
+              return array(
+                  'Vestibulum vehicula nisl at ex maximus, nec lobortis orci luctus.
+                  Integer euismod in nunc nec lobortis'
+              );
+          }
+      }
+
+      """
+    When I run phpspec with the "verbose" option
+    Then I should see:
+      """
+            @@ -1,4 +1,4 @@
+               [
+            -    0 => "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            -            Etiam nunc nulla, posuere et arcu ut.",
+            +    0 => "Vestibulum vehicula nisl at ex maximus, nec lobortis orci luctus.
+            +            Integer euismod in nunc nec lobortis",
+               ]
+      """

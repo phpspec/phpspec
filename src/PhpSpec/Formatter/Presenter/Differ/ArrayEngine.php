@@ -55,15 +55,7 @@ class ArrayEngine extends StringEngine
                     );
                     break;
                 case 'string':
-                    if (false === strpos($val, PHP_EOL)) {
-                        $val = sprintf('"%s"', $val);
-                        $line = sprintf('%s => %s,', $key, $val);
-                        break;
-                    }
-
-                    $lines = explode(PHP_EOL, $val);
-                    $val = sprintf('"%s..."', substr($lines[0], 0, 25));
-
+                    $val = sprintf('"%s"', $val);
                     $line = sprintf('%s => %s,', $key, $val);
                     break;
                 case 'integer':
