@@ -11,7 +11,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Phpspec\CodeAnalysis;
+namespace PhpSpec\CodeAnalysis;
 
 interface AccessInspectorInterface
 {
