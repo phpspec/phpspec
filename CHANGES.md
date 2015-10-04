@@ -2,6 +2,7 @@ Upcoming
 ========
 
 * Fixed case error in class name that triggered strictness warnings on some platforms
+* Clarify in composer that ext-tokenizer is required
 
 2.3.0 / 2015-09-07
 ==================
