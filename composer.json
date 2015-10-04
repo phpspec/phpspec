@@ -27,7 +27,8 @@
         "symfony/process":          "^2.6",
         "symfony/finder":           "~2.1",
         "symfony/yaml":             "~2.1",
-        "doctrine/instantiator":    "^1.0.1"
+        "doctrine/instantiator":    "^1.0.1",
+        "ext-tokenizer":            "*"
     },
 
     "require-dev": {
