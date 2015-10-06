@@ -28,7 +28,7 @@ use ArrayAccess;
  * wrap the results into PhpSpec subjects. This results will then be able to
  * be matched against expectations.
  *
- * @method void beConstructedWith()
+ * @method void beConstructedWith(...$arguments)
  * @method void beConstructedThrough($factoryMethod, array $constructorArguments)
  * @method void beAnInstanceOf($class)
  * @method void shouldHaveType($type)

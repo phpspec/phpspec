@@ -81,7 +81,7 @@ class Subject implements ArrayAccess, WrapperInterface
     }
 
     /**
-     *
+     * @param ...$arguments
      */
     public function beConstructedWith()
     {
