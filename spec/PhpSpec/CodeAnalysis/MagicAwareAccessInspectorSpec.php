@@ -4,8 +4,6 @@ namespace spec\PhpSpec\CodeAnalysis;
 
 use Phpspec\CodeAnalysis\AccessInspectorInterface;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
-use spec\PhpSpec\Listener\DoubleOfStdClass;
 
 class MagicAwareAccessInspectorSpec extends ObjectBehavior
 {

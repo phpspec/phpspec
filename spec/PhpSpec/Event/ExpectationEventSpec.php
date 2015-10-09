@@ -7,7 +7,6 @@ use PhpSpec\Loader\Suite;
 use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Matcher\MatcherInterface;
-use Prophecy\Argument;
 use Exception;
 
 class ExpectationEventSpec extends ObjectBehavior

@@ -4,7 +4,6 @@ namespace spec\PhpSpec\Util;
 
 use PhpSpec\Exception\Example\SkippingException;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class MethodAnalyserSpec extends ObjectBehavior
 {

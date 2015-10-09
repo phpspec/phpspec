@@ -1,17 +1,13 @@
 <?php
 
-use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
-use Behat\Gherkin\Node\TableNode;
 use Fake\Prompter;
 use Fake\ReRunner;
 use Matcher\ApplicationOutputMatcher;
-use Matcher\ExitStatusMatcher;
 use Matcher\ValidJUnitXmlMatcher;
 use PhpSpec\Console\Application;
 use PhpSpec\Matcher\MatchersProviderInterface;
-use Symfony\Component\Console\Helper\HelperSet;
 use Symfony\Component\Console\Tester\ApplicationTester;
 
 /**

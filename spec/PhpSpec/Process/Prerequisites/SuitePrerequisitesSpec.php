@@ -4,7 +4,6 @@ namespace spec\PhpSpec\Process\Prerequisites;
 
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Process\Context\ExecutionContextInterface;
-use Prophecy\Argument;
 
 class SuitePrerequisitesSpec extends ObjectBehavior
 {

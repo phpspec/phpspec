@@ -5,7 +5,6 @@ namespace spec\PhpSpec\Process\ReRunner;
 use PhpSpec\Console\IO;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Process\ReRunner;
-use Prophecy\Argument;
 
 class OptionalReRunnerSpec extends ObjectBehavior
 {

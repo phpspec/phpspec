@@ -7,7 +7,6 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class ProgressFormatterSpec extends ObjectBehavior
 {

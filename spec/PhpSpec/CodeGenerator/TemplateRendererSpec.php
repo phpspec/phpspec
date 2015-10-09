@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\CodeGenerator;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 use PhpSpec\Util\Filesystem;
 

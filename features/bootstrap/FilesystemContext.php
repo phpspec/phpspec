@@ -1,9 +1,7 @@
 <?php
 
-use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
-use Behat\Gherkin\Node\TableNode;
 use Matcher\FileExistsMatcher;
 use Matcher\FileHasContentsMatcher;
 use PhpSpec\Matcher\MatchersProviderInterface;

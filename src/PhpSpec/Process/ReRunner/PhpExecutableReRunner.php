@@ -13,7 +13,6 @@
 
 namespace PhpSpec\Process\ReRunner;
 
-use PhpSpec\Process\ReRunner;
 use Symfony\Component\Process\PhpExecutableFinder;
 
 abstract class PhpExecutableReRunner implements PlatformSpecificReRunner
