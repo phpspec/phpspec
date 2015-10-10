@@ -91,9 +91,9 @@ Feature: Developer is shown diffs
             @@ -1,4 +1,4 @@
                [
             -    int => 1,
-            -    string => ""foo"...",
+            -    string => "foo",
             +    int => 3,
-            +    string => ""bar"...",
+            +    string => "bar",
                ]
       """
 
@@ -266,13 +266,13 @@ Feature: Developer is shown diffs
       """
             @@ -1,4 +1,4 @@
                [
-                 key1 => ""val1"...",
-            -    key2 => ""val2"...",
-            +    key5 => ""val5"...",
+                 key1 => "val1",
+            -    key2 => "val2",
+            +    key5 => "val5",
                ]
       """
 
-  Scenario: Unexpected method arguments call with multiple arguments icluding null diffing
+  Scenario: Unexpected method arguments call with multiple arguments including null diffing
     Given the spec file "spec/Diffs/DiffExample6/ClassUnderSpecificationSpec.php" contains:
       """
       <?php
@@ -328,8 +328,8 @@ Feature: Developer is shown diffs
       """
             @@ -1,3 +1,3 @@
                [
-            -    key => ""value"...",
-            +    key => ""another value"...",
+            -    key => "value",
+            +    key => "another value",
                ]
       """
     And I should see:
@@ -463,4 +463,104 @@ Feature: Developer is shown diffs
             on Double\Diffs\DiffExample8\ClassBeingMocked\P14 was not expected, expected calls were:
               - methodTwo(exact("value"))
               - methodOne(exact("another value"))
+      """
+
+  Scenario: Array diffing with long strings
+    Given the spec file "spec/Diffs/DiffExample9/ClassWithArraysSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Diffs\DiffExample9;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class ClassWithArraysSpec extends ObjectBehavior
+      {
+          function it_is_equal()
+          {
+              $this->getArray()->shouldReturn(array(
+                'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam nunc nulla, posuere et arcu ut.'
+              ));
+          }
+      }
+
+      """
+    And the class file "src/Diffs/DiffExample9/ClassWithArrays.php" contains:
+      """
+      <?php
+
+      namespace Diffs\DiffExample9;
+
+      class ClassWithArrays
+      {
+          public function getArray()
+          {
+              return array(
+                  'Vestibulum vehicula nisl at ex maximus, nec lobortis orci luctus. Integer euismod in nunc nec lobortis'
+              );
+          }
+      }
+
+      """
+    When I run phpspec with the "verbose" option
+    Then I should see:
+      """
+            @@ -1,3 +1,3 @@
+               [
+            -    0 => "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam nunc nulla, posuere et arcu ut.",
+            +    0 => "Vestibulum vehicula nisl at ex maximus, nec lobortis orci luctus. Integer euismod in nunc nec lobortis",
+               ]
+      """
+
+  Scenario: Array diffing with multi line strings
+    Given the spec file "spec/Diffs/DiffExample10/ClassWithArraysSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Diffs\DiffExample10;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class ClassWithArraysSpec extends ObjectBehavior
+      {
+          function it_is_equal()
+          {
+              $this->getArray()->shouldReturn(array(
+                  'Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  Etiam nunc nulla, posuere et arcu ut.'
+              ));
+          }
+      }
+
+      """
+    And the class file "src/Diffs/DiffExample10/ClassWithArrays.php" contains:
+      """
+      <?php
+
+      namespace Diffs\DiffExample10;
+
+      class ClassWithArrays
+      {
+          public function getArray()
+          {
+              return array(
+                  'Vestibulum vehicula nisl at ex maximus, nec lobortis orci luctus.
+                  Integer euismod in nunc nec lobortis'
+              );
+          }
+      }
+
+      """
+    When I run phpspec with the "verbose" option
+    Then I should see:
+      """
+            @@ -1,4 +1,4 @@
+               [
+            -    0 => "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            -            Etiam nunc nulla, posuere et arcu ut.",
+            +    0 => "Vestibulum vehicula nisl at ex maximus, nec lobortis orci luctus.
+            +            Integer euismod in nunc nec lobortis",
+               ]
       """
