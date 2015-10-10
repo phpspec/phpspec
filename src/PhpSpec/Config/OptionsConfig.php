@@ -95,6 +95,11 @@ class OptionsConfig
         return $this->fakingEnabled;
     }
 
+    public function isIgnorePendingEnabled()
+    {
+        return $this->ignorePending;
+    }
+
     public function getBootstrapPath()
     {
         return $this->bootstrapPath;
