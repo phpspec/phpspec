@@ -143,6 +143,10 @@ EOF
             'formatter.name',
             $input->getOption('format') ?: $container->getParam('formatter.name')
         );
+        $container->setParam(
+            'ignore-pending',
+            $input->getOption('ignore-pending') ?: $container->getParam('ignore_pending')
+        );
         $container->configure();
 
         $locator = $input->getArgument('spec');
