@@ -72,7 +72,8 @@ class ContainerAssembler
                     $c->getParam('code_generation', true),
                     $c->getParam('rerun', true),
                     $c->getParam('fake', false),
-                    $c->getParam('bootstrap', false)
+                    $c->getParam('bootstrap', false),
+                    $c->getParam('ignore_pending', false)
                 ),
                 $c->get('console.prompter')
             );
