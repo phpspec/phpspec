@@ -81,8 +81,10 @@ class ContainerAssembler
 
     private function setupResultConverter(ServiceContainer $container)
     {
-        $container->setShared('console.result_converter', function () {
-            return new ResultConverter();
+        $ignorePending = $container->getParam('ignore-pending', false);
+
+        $container->setShared('console.result_converter', function () use ($ignorePending) {
+            return new ResultConverter($ignorePending);
         });
     }
 
