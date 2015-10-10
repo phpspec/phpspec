@@ -82,11 +82,8 @@ class ContainerAssembler
 
     private function setupResultConverter(ServiceContainer $container)
     {
-        /** @var IO $io */
-        $io = $container->get('console.io');
-
-        $container->setShared('console.result_converter', function () use ($io) {
-            return new ResultConverter($io);
+        $container->setShared('console.result_converter', function () use ($container) {
+            return new ResultConverter($container->get('console.io'));
         });
     }
 
