@@ -86,6 +86,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
      * @When I run phpspec (non interactively)
      * @When I run phpspec using the :formatter format
      * @When I run phpspec with the :option option
+     * @When I run phpspec using the :formatter format and :option option
      * @When /I run phpspec with option (?P<option>.*)/
      * @When /I run phpspec (?P<interactive>interactively)$/
      * @When /I run phpspec (?P<interactive>interactively) with the (?P<option>.*) option/
@@ -199,14 +200,6 @@ class ApplicationContext implements Context, MatchersProviderInterface
     public function exampleShouldHaveBeenSkipped($number)
     {
         expect($this->tester)->toHaveOutput("($number skipped)");
-    }
-
-    /**
-     * @Then :number example(s) should be pending
-     */
-    public function exampleShouldBePending($number)
-    {
-        expect($this->tester)->toHaveOutput("($number pending)");
     }
 
     /**
