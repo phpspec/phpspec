@@ -20,16 +20,6 @@ Feature: Developer ignores pending test warnings
       }
 
       """
-#    And the class file "src/Runner/IgnoresPendingExample1/Markdown.php" contains:
-#      """
-#      <?php
-#
-#      namespace Runner\IgnoresPendingExample1;
-#
-#      class Markdown
-#      {
-#      }
-#      """
     When I run phpspec using the "pretty" format and "ignore-pending" option
     Then I should see:
       """
@@ -64,16 +54,6 @@ Feature: Developer ignores pending test warnings
       }
 
       """
-    And the class file "src/Runner/IgnoresPendingExample2/Markdown.php" contains:
-      """
-      <?php
-
-      namespace Runner\IgnoresPendingExample2;
-
-      class Markdown
-      {
-      }
-      """
     When I run phpspec using the "pretty" format
     Then I should see:
       """
@@ -85,3 +65,33 @@ Feature: Developer ignores pending test warnings
       1 examples (1 pending)
       """
     But the suite should pass
+
+
+  Scenario: ignore-pending is not specified in either the command line or the config
+    Given the spec file "spec/Runner/IgnoresPendingExample3/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Runner\IgnoresPendingExample3;
+
+      use PhpSpec\ObjectBehavior;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_does_nothing()
+          {
+          }
+      }
+
+      """
+    When I run phpspec using the "pretty" format
+    Then I should see:
+      """
+        9  - does nothing
+              todo: write pending example
+
+
+      1 specs
+      1 examples (1 pending)
+      """
+    But the suite should not pass
