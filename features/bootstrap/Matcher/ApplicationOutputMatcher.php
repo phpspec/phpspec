@@ -33,12 +33,13 @@ class ApplicationOutputMatcher implements MatcherInterface
     public function positiveMatch($name, $subject, array $arguments)
     {
         $expected = $this->normalize($arguments[0]);
-        $actual = $this->normalize($subject->getDisplay());
+        $output   = $subject->getDisplay();
+        $actual   = $this->normalize($output);
         if (strpos($actual, $expected) === false) {
             throw new FailureException(sprintf(
-                "Application output did not contain expected '%s'. Actual output:\n'%s'" ,
+                "Application output did not contain expected '%s'. Actual output:\n'%s'",
                 $expected,
-                $subject->getDisplay()
+                $output
             ));
         }
     }
