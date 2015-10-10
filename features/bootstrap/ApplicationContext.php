@@ -202,6 +202,14 @@ class ApplicationContext implements Context, MatchersProviderInterface
     }
 
     /**
+     * @Then :number example(s) should be pending
+     */
+    public function exampleShouldBePending($number)
+    {
+        expect($this->tester)->toHaveOutput("($number pending)");
+    }
+
+    /**
      * @Then :number example(s) should have been run
      */
     public function examplesShouldHaveBeenRun($number)
