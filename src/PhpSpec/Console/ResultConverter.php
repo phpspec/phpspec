@@ -21,6 +21,23 @@ use PhpSpec\Event\ExampleEvent;
 class ResultConverter
 {
     /**
+     * @var IO
+     */
+    private $io;
+
+
+    /**
+     * ResultConverter constructor.
+     *
+     * @param IO $io
+     */
+    public function __construct(IO $io)
+    {
+        $this->io = $io;
+    }
+
+
+    /**
      * Convert Example result into exit code
      *
      * @param mixed $result
@@ -33,6 +50,12 @@ class ResultConverter
             case ExampleEvent::PASSED:
             case ExampleEvent::SKIPPED:
                 return 0;
+
+            case ExampleEvent::PENDING:
+                if ($this->io->isIgnorePendingEnabled()) {
+                    return 0;
+                }
+                break;
         }
 
         return 1;

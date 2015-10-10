@@ -308,6 +308,11 @@ class IO implements IOInterface
         return $this->input->getOption('fake') || $this->config->isFakingEnabled();
     }
 
+    public function isIgnorePendingEnabled()
+    {
+        return $this->input->getOption('ignore-pending') || $this->config->isIgnorePendingEnabled();
+    }
+
     public function getBootstrapPath()
     {
         if ($path = $this->input->getOption('bootstrap')) {

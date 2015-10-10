@@ -186,6 +186,12 @@ You can also set your tests to stop on failure by setting ``stop_on_failure``:
 
     stop_on_failure: true
 
+You can cause pending specs not to cause a non-zero exit code by setting ``ignore_pending``:
+
+.. code-block:: yaml
+
+    ignore_pending: true
+
 Extensions
 ----------
 

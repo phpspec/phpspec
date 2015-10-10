@@ -2,12 +2,18 @@
 
 namespace spec\PhpSpec\Console;
 
+use PhpSpec\Console\IO;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 use PhpSpec\Event\ExampleEvent;
 
 class ResultConverterSpec extends ObjectBehavior
 {
+    function let(IO $io)
+    {
+        $this->beConstructedWith($io);
+    }
+
     function it_converts_passed_result_code_into_0()
     {
         $this->convert(ExampleEvent::PASSED)->shouldReturn(0);
@@ -18,9 +24,18 @@ class ResultConverterSpec extends ObjectBehavior
         $this->convert(ExampleEvent::SKIPPED)->shouldReturn(0);
     }
 
-    function it_converts_pending_result_code_into_1()
+    function it_converts_pending_result_code_into_1_if_ignore_pending_is_false(IO $io)
     {
+        $io->isIgnorePendingEnabled()->willReturn(false);
+
         $this->convert(ExampleEvent::PENDING)->shouldReturn(1);
+    }
+
+    function it_converts_pending_result_code_into_1_if_ignore_pending_is_true(IO $io)
+    {
+        $io->isIgnorePendingEnabled()->willReturn(true);
+
+        $this->convert(ExampleEvent::PENDING)->shouldReturn(0);
     }
 
     function it_converts_failed_result_code_into_1()

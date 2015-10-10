@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Console\Command;
 
+use PhpSpec\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
@@ -21,6 +22,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Main command, responsible for running the specs
+ *
+ * @method Application getApplication()
  */
 class RunCommand extends Command
 {
@@ -69,6 +72,12 @@ class RunCommand extends Command
                         'b',
                         InputOption::VALUE_REQUIRED,
                         'Bootstrap php file that is run before the specs'
+                    ),
+                    new InputOption(
+                        'ignore-pending',
+                        null,
+                        InputOption::VALUE_NONE,
+                        'Causes pending tests not to cause a non-zero return code'
                     )
                 ))
             ->setDescription('Runs specifications')

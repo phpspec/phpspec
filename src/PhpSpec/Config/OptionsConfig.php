@@ -40,24 +40,33 @@ class OptionsConfig
     private $bootstrapPath;
 
     /**
-     * @param bool $stopOnFailureEnabled
-     * @param bool $codeGenerationEnabled
-     * @param bool $reRunEnabled
-     * @param bool $fakingEnabled
+     * @var bool
+     */
+    private $ignorePending;
+
+
+    /**
+     * @param bool        $stopOnFailureEnabled
+     * @param bool        $codeGenerationEnabled
+     * @param bool        $reRunEnabled
+     * @param bool        $fakingEnabled
      * @param string|bool $bootstrapPath
+     * @param bool        $ignorePending
      */
     public function __construct(
         $stopOnFailureEnabled,
         $codeGenerationEnabled,
         $reRunEnabled,
         $fakingEnabled,
-        $bootstrapPath
+        $bootstrapPath,
+        $ignorePending
     ) {
         $this->stopOnFailureEnabled  = $stopOnFailureEnabled;
         $this->codeGenerationEnabled = $codeGenerationEnabled;
-        $this->reRunEnabled = $reRunEnabled;
-        $this->fakingEnabled = $fakingEnabled;
-        $this->bootstrapPath = $bootstrapPath;
+        $this->reRunEnabled          = $reRunEnabled;
+        $this->fakingEnabled         = $fakingEnabled;
+        $this->bootstrapPath         = $bootstrapPath;
+        $this->ignorePending         = $ignorePending;
     }
 
     /**
@@ -84,6 +93,11 @@ class OptionsConfig
     public function isFakingEnabled()
     {
         return $this->fakingEnabled;
+    }
+
+    public function isIgnorePendingEnabled()
+    {
+        return $this->ignorePending;
     }
 
     public function getBootstrapPath()

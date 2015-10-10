@@ -15,22 +15,22 @@ namespace PhpSpec\Console;
 
 use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
-use PhpSpec\Process\Prerequisites\SuitePrerequisites;
-use SebastianBergmann\Exporter\Exporter;
-use PhpSpec\Process\ReRunner;
-use PhpSpec\Util\MethodAnalyser;
-use Symfony\Component\EventDispatcher\EventDispatcher;
-use PhpSpec\ServiceContainer;
 use PhpSpec\CodeGenerator;
+use PhpSpec\Config\OptionsConfig;
 use PhpSpec\Formatter as SpecFormatter;
 use PhpSpec\Listener;
 use PhpSpec\Loader;
 use PhpSpec\Locator;
 use PhpSpec\Matcher;
+use PhpSpec\Process\Prerequisites\SuitePrerequisites;
+use PhpSpec\Process\ReRunner;
 use PhpSpec\Runner;
+use PhpSpec\ServiceContainer;
+use PhpSpec\Util\MethodAnalyser;
 use PhpSpec\Wrapper;
-use PhpSpec\Config\OptionsConfig;
 use RuntimeException;
+use SebastianBergmann\Exporter\Exporter;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Process\PhpExecutableFinder;
 
 class ContainerAssembler
@@ -72,7 +72,8 @@ class ContainerAssembler
                     $c->getParam('code_generation', true),
                     $c->getParam('rerun', true),
                     $c->getParam('fake', false),
-                    $c->getParam('bootstrap', false)
+                    $c->getParam('bootstrap', false),
+                    $c->getParam('ignore_pending', false)
                 ),
                 $c->get('console.prompter')
             );
@@ -81,8 +82,8 @@ class ContainerAssembler
 
     private function setupResultConverter(ServiceContainer $container)
     {
-        $container->setShared('console.result_converter', function () {
-            return new ResultConverter();
+        $container->setShared('console.result_converter', function () use ($container) {
+            return new ResultConverter($container->get('console.io'));
         });
     }
 
