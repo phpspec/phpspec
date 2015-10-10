@@ -15,22 +15,22 @@ namespace PhpSpec\Console;
 
 use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
-use PhpSpec\Process\Prerequisites\SuitePrerequisites;
-use SebastianBergmann\Exporter\Exporter;
-use PhpSpec\Process\ReRunner;
-use PhpSpec\Util\MethodAnalyser;
-use Symfony\Component\EventDispatcher\EventDispatcher;
-use PhpSpec\ServiceContainer;
 use PhpSpec\CodeGenerator;
+use PhpSpec\Config\OptionsConfig;
 use PhpSpec\Formatter as SpecFormatter;
 use PhpSpec\Listener;
 use PhpSpec\Loader;
 use PhpSpec\Locator;
 use PhpSpec\Matcher;
+use PhpSpec\Process\Prerequisites\SuitePrerequisites;
+use PhpSpec\Process\ReRunner;
 use PhpSpec\Runner;
+use PhpSpec\ServiceContainer;
+use PhpSpec\Util\MethodAnalyser;
 use PhpSpec\Wrapper;
-use PhpSpec\Config\OptionsConfig;
 use RuntimeException;
+use SebastianBergmann\Exporter\Exporter;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Process\PhpExecutableFinder;
 
 class ContainerAssembler
@@ -82,10 +82,11 @@ class ContainerAssembler
 
     private function setupResultConverter(ServiceContainer $container)
     {
-        $ignorePending = $container->getParam('ignore-pending', false);
+        /** @var IO $io */
+        $io = $container->get('console.io');
 
-        $container->setShared('console.result_converter', function () use ($ignorePending) {
-            return new ResultConverter($ignorePending);
+        $container->setShared('console.result_converter', function () use ($io) {
+            return new ResultConverter($io);
         });
     }
 
