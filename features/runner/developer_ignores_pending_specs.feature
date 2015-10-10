@@ -4,39 +4,84 @@ Feature: Developer ignores pending test warnings
   I should be able to ignore pending spec warnings
 
   Scenario: Run command with --ignore-pending flag set, using the dot formatter
-    Given the spec file "spec/Runner/SpecExample/MarkdownSpec.php" contains:
+    Given the spec file "spec/Runner/IgnoresPendingExample1/MarkdownSpec.php" contains:
       """
       <?php
 
-      namespace spec\Runner\SpecExample;
+      namespace spec\Runner\IgnoresPendingExample1;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
-      use PhpSpec\Exception\Example\SkippingException;
 
       class MarkdownSpec extends ObjectBehavior
       {
-          function it_converts_plain_text_table_to_html_table()
+          function it_does_nothing()
           {
-              // Nothing here, so pending warning triggered
           }
       }
 
       """
-    And the class file "src/Runner/SpecExample/Markdown.php" contains:
+#    And the class file "src/Runner/IgnoresPendingExample1/Markdown.php" contains:
+#      """
+#      <?php
+#
+#      namespace Runner\IgnoresPendingExample1;
+#
+#      class Markdown
+#      {
+#      }
+#      """
+    When I run phpspec using the "pretty" format and "ignore-pending" option
+    Then I should see:
+      """
+        9  - does nothing
+              todo: write pending example
+
+
+      1 specs
+      1 examples (1 pending)
+      """
+    But the suite should pass
+
+
+  Scenario: ignore-pending is specified in the config
+    Given the config file contains:
+      """
+      ignore_pending: true
+      """
+    And the spec file "spec/Runner/IgnoresPendingExample2/MarkdownSpec.php" contains:
       """
       <?php
 
-      namespace Runner\SpecExample;
+      namespace spec\Runner\IgnoresPendingExample2;
 
-      class Markdown
+      use PhpSpec\ObjectBehavior;
+
+      class MarkdownSpec extends ObjectBehavior
       {
-          public function toHtml($text)
+          function it_does_nothing()
           {
           }
       }
 
       """
-    When I run phpspec interactively with the "ignore-pending" option
-    Then 1 example should be pending
+    And the class file "src/Runner/IgnoresPendingExample2/Markdown.php" contains:
+      """
+      <?php
+
+      namespace Runner\IgnoresPendingExample2;
+
+      class Markdown
+      {
+      }
+      """
+    When I run phpspec using the "pretty" format
+    Then I should see:
+      """
+        9  - does nothing
+              todo: write pending example
+
+
+      1 specs
+      1 examples (1 pending)
+      """
     But the suite should pass
