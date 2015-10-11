@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\Util;
 
 use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
 
 class InstantiatorSpec extends ObjectBehavior
 {

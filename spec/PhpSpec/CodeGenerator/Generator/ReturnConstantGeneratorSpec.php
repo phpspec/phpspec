@@ -6,6 +6,7 @@ use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Console\IO;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Util\Filesystem;
+use Prophecy\Argument;
 use PhpSpec\Locator\ResourceInterface;
 
 class ReturnConstantGeneratorSpec extends ObjectBehavior

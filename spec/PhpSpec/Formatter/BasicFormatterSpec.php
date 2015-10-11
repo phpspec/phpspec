@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\Formatter;
 
 use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
 
 use PhpSpec\Formatter\BasicFormatter;
 use PhpSpec\Formatter\Presenter\PresenterInterface;

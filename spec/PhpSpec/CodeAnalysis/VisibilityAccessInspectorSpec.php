@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\CodeAnalysis;
 
 use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
 
 class VisibilityAccessInspectorSpec extends ObjectBehavior
 {

@@ -9,6 +9,7 @@ use PhpSpec\ObjectBehavior;
 use PhpSpec\Runner\CollaboratorManager;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\SpecificationInterface;
+use Prophecy\Argument;
 
 class MatchersMaintainerSpec extends ObjectBehavior
 {

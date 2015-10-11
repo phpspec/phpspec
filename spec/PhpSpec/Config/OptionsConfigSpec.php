@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\Config;
 
 use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
 
 class OptionsConfigSpec extends ObjectBehavior
 {

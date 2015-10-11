@@ -3,9 +3,11 @@
 namespace spec\PhpSpec\Event;
 
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Wrapper\Subject;
 use PhpSpec\Loader\Suite;
 use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Loader\Node\ExampleNode;
+use Prophecy\Argument;
 
 class MethodCallEventSpec extends ObjectBehavior
 {

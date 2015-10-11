@@ -4,6 +4,7 @@ namespace spec\PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Exception\Fracture\FactoryDoesNotReturnObjectException;
 use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
 
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 

@@ -6,6 +6,7 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Process\Prerequisites\SuitePrerequisitesInterface;
 use PhpSpec\Process\ReRunner;
+use Prophecy\Argument;
 
 class RerunListenerSpec extends ObjectBehavior
 {

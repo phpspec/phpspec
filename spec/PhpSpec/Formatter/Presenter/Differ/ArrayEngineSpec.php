@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\Formatter\Presenter\Differ;
 
 use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
 
 class ArrayEngineSpec extends ObjectBehavior
 {

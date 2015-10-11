@@ -11,6 +11,7 @@ use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
 
 class TapFormatterSpec extends ObjectBehavior
 {

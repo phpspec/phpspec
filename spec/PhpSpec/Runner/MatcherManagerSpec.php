@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\Runner;
 
 use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
 
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Matcher\MatcherInterface;

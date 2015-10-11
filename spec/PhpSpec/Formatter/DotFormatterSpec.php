@@ -11,6 +11,7 @@ use PhpSpec\ObjectBehavior;
 use PhpSpec\Exception\Example\PendingException;
 use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Loader\Node\ExampleNode;
+use Prophecy\Argument;
 use ReflectionFunctionAbstract;
 
 class DotFormatterSpec extends ObjectBehavior
