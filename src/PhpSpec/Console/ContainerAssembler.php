@@ -30,7 +30,6 @@ use PhpSpec\Matcher;
 use PhpSpec\Runner;
 use PhpSpec\Wrapper;
 use PhpSpec\Config\OptionsConfig;
-use RuntimeException;
 use Symfony\Component\Process\PhpExecutableFinder;
 
 class ContainerAssembler
