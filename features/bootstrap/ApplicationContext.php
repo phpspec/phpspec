@@ -1,7 +1,9 @@
 <?php
 
+use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
+use Behat\Gherkin\Node\TableNode;
 use Fake\Prompter;
 use Fake\ReRunner;
 use Matcher\ApplicationOutputMatcher;
