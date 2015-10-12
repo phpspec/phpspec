@@ -6,7 +6,6 @@ use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Matcher\MatcherInterface;
 use Symfony\Component\Console\Tester\ApplicationTester;
 
-
 /**
  * Matcher class to test the status code from a console command
  *
@@ -14,7 +13,6 @@ use Symfony\Component\Console\Tester\ApplicationTester;
  */
 class ApplicationStatusCodeMatcher implements MatcherInterface
 {
-
     /**
      * Checks if matcher supports provided subject and matcher name.
      *
@@ -26,9 +24,9 @@ class ApplicationStatusCodeMatcher implements MatcherInterface
      */
     public function supports($name, $subject, array $arguments)
     {
+
         return ($name == 'haveStatusCode' && $subject instanceof ApplicationTester);
     }
-
 
     /**
      * Evaluates positive match.
@@ -40,16 +38,15 @@ class ApplicationStatusCodeMatcher implements MatcherInterface
     public function positiveMatch($name, $subject, array $arguments)
     {
         $expected = $arguments[0];
-        $actual = $subject->getStatusCode();
+        $actual   = $subject->getStatusCode();
         if ($expected !== $actual) {
             throw new FailureException(sprintf(
-                "Application status code did not contain expected '%s'. Actual output:\n'%s'" ,
+                "Application status code did not contain expected '%s'. Actual output:\n'%s'",
                 $expected,
                 $actual
             ));
         }
     }
-
 
     /**
      * Evaluates negative match.
@@ -61,16 +58,15 @@ class ApplicationStatusCodeMatcher implements MatcherInterface
     public function negativeMatch($name, $subject, array $arguments)
     {
         $expected = $arguments[0];
-        $actual = $subject->getStatusCode();
+        $actual   = $subject->getStatusCode();
         if ($expected === $actual) {
             throw new FailureException(sprintf(
-                "Application status code did not contain expected '%s'. Actual output:\n'%s'" ,
+                "Application status code did not contain expected '%s'. Actual output:\n'%s'",
                 $expected,
                 $actual
             ));
         }
     }
-
 
     /**
      * Returns matcher priority.
@@ -79,6 +75,7 @@ class ApplicationStatusCodeMatcher implements MatcherInterface
      */
     public function getPriority()
     {
+
         return 51;
     }
 }
