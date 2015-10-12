@@ -25,7 +25,6 @@ class ResultConverter
      */
     private $io;
 
-
     /**
      * ResultConverter constructor.
      *
@@ -35,7 +34,6 @@ class ResultConverter
     {
         $this->io = $io;
     }
-
 
     /**
      * Convert Example result into exit code
