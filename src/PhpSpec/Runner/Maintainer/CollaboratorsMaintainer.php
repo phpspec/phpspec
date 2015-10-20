@@ -23,6 +23,7 @@ use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
 use PhpSpec\Wrapper\Collaborator;
 use PhpSpec\Wrapper\Unwrapper;
+use Prophecy\Exception\Doubler\ClassNotFoundException;
 use Prophecy\Prophet;
 use ReflectionException;
 
@@ -138,16 +139,13 @@ class CollaboratorsMaintainer implements MaintainerInterface
             try {
                 if (null !== $class = $parameter->getClass()) {
                     $collaborator->beADoubleOf($class->getName());
-                }
-                elseif ($this->typeHintIndex && $indexedClass = $this->typeHintIndex->lookup($classRefl->getName(), $parameter->getDeclaringFunction()->getName(), '$'.$parameter->getName())) {
+                } elseif ($this->typeHintIndex && $indexedClass = $this->typeHintIndex->lookup($classRefl->getName(), $parameter->getDeclaringFunction()->getName(), '$' . $parameter->getName())) {
                     $collaborator->beADoubleOf($indexedClass);
                 }
             } catch (ReflectionException $e) {
-                throw new CollaboratorNotFoundException(
-                    sprintf('Collaborator does not exist '),
-                    0, $e,
-                    $parameter
-                );
+                $this->throwCollaboratorNotFound($e, $parameter);
+            } catch (ClassNotFoundException $e) {
+                $this->throwCollaboratorNotFound($e, null, $e->getClassname());
             }
         }
     }
@@ -178,5 +176,21 @@ class CollaboratorsMaintainer implements MaintainerInterface
         }
 
         return $collaborators->get($name);
+    }
+
+    /**
+     * @param Exception $e
+     * @param ReflectionParameter|null $parameter
+     * @param string $className
+     * @throws CollaboratorNotFoundException
+     */
+    private function throwCollaboratorNotFound($e, $parameter, $className = null)
+    {
+        throw new CollaboratorNotFoundException(
+            sprintf('Collaborator does not exist '),
+            0, $e,
+            $parameter,
+            $className
+        );
     }
 }
