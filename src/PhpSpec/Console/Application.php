@@ -88,7 +88,10 @@ class Application extends BaseApplication
 
         $this->container->get('console.io')->setConsoleWidth($this->getTerminalWidth());
 
-        $this->container->get('loader.resource_loader.stream_wrapper');
+        StreamWrapper::reset();
+        foreach ($this->container->getByPrefix('loader.resource_loader.spec_transformer') as $transformer) {
+            StreamWrapper::addTransformer($transformer);
+        }
         StreamWrapper::register();
 
         return parent::doRun($input, $output);

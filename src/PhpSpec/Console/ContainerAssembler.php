@@ -372,18 +372,11 @@ class ContainerAssembler
         $container->setShared('loader.resource_loader', function (ServiceContainer $c) {
             return new Loader\ResourceLoader($c->get('locator.resource_manager'));
         });
-        $container->setShared('loader.resource_loader.stream_wrapper', function (ServiceContainer $c) {
-            $transformers = $c->getByPrefix('loader.resource_loader.spec_transformer');
-            $wrapper = new Loader\StreamWrapper();
-            foreach ($transformers as $transformer) {
-                $wrapper->addTransformer($transformer);
-            }
-
-            return $wrapper;
-        });
-        $container->setShared('loader.resource_loader.spec_transformer.typehint_rewriter', function(ServiceContainer $c) {
-            return new Loader\Transformer\TypeHintRewriter($c->get('loader.transformer.typehintindex'));
-        });
+        if (PHP_VERSION >= 7) {
+            $container->setShared('loader.resource_loader.spec_transformer.typehint_rewriter', function (ServiceContainer $c) {
+                return new Loader\Transformer\TypeHintRewriter($c->get('loader.transformer.typehintindex'));
+            });
+        }
         $container->setShared('loader.transformer.typehintindex', function() {
             return new Loader\Transformer\InMemoryTypeHintIndex();
         });

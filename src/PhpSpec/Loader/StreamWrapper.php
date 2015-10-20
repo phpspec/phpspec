@@ -22,12 +22,18 @@ class StreamWrapper
 
     public static function register()
     {
-        if (!in_array('phpspec', stream_get_wrappers())) {
-            stream_wrapper_register('phpspec', 'PhpSpec\Loader\StreamWrapper');
+        if (in_array('phpspec', stream_get_wrappers())) {
+            stream_wrapper_unregister('phpspec');
         }
+        stream_wrapper_register('phpspec', 'PhpSpec\Loader\StreamWrapper');
     }
 
-    public function addTransformer(SpecTransformer $specTransformer)
+    public static function reset()
+    {
+        static::$specTransformers = array();
+    }
+
+    public static function addTransformer(SpecTransformer $specTransformer)
     {
         static::$specTransformers[] = $specTransformer;
     }
