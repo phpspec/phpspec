@@ -272,7 +272,7 @@ Feature: Developer generates a method
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
 
-      class CommentmethodSpec extends ObjectBehavior
+      class CommentMethodSpec extends ObjectBehavior
       {
           function it_should_do_something()
           {
