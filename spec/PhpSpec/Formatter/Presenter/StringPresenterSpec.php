@@ -4,6 +4,7 @@ namespace spec\PhpSpec\Formatter\Presenter;
 
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Formatter\Presenter\Differ\Differ;
+use PhpSpec\Wrapper\Subject;
 
 class StringPresenterSpec extends ObjectBehavior
 {
@@ -105,13 +106,6 @@ class StringPresenterSpec extends ObjectBehavior
     function it_presents_string_as_string()
     {
         $this->presentString('some string')->shouldReturn('some string');
-    }
-
-    function its_presentValue_displays_invokable_objects_as_objects()
-    {
-        $invokable = new ObjectBehavior();
-        $invokable->setSpecificationSubject($this);
-        $this->presentValue($invokable)->shouldReturn('[obj:PhpSpec\Formatter\Presenter\StringPresenter]');
     }
 }
 
