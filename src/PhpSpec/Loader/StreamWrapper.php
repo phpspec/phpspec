@@ -38,6 +38,16 @@ class StreamWrapper
         static::$specTransformers[] = $specTransformer;
     }
 
+    public static function wrapPath($path)
+    {
+        if (!defined('HHVM_VERSION'))
+        {
+            return 'phpspec://' . $path;
+        }
+
+        return $path;
+    }
+
     public function stream_open($path , $mode , $options , &$opened_path)
     {
         if ($mode != 'rb') {
