@@ -48,7 +48,7 @@ class StreamWrapper
         return $path;
     }
 
-    public function stream_open($path , $mode , $options , &$opened_path)
+    public function stream_open($path, $mode, $options, &$opened_path)
     {
         if ($mode != 'rb') {
             throw new \RuntimeException('Cannot open phpspec url in mode "$mode"');

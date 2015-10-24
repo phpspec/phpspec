@@ -38,8 +38,7 @@ class CollaboratorNotFoundException extends FractureException
         Exception $previous = null,
         ReflectionParameter $reflectionParameter = null,
         $className = null
-    )
-    {
+    ) {
         if ($reflectionParameter) {
             $this->collaboratorName = $this->extractCollaboratorName($reflectionParameter);
         }

@@ -5,7 +5,7 @@ imports:
 tools:
   php_code_sniffer:
     filter:
-      excluded-paths: [ spec/*, integration/*, features/* ]
+      excluded-paths: [ spec/*, integration/*, features/*, src/PhpSpec/Loader/StreamWrapper.php ]
     config:
       standard: PSR2
 
