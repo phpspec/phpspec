@@ -35,6 +35,9 @@ use PhpSpec\Runner;
 use PhpSpec\Wrapper;
 use PhpSpec\Config\OptionsConfig;
 use Symfony\Component\Process\PhpExecutableFinder;
+use PhpSpec\Message\CurrentExample;
+use PhpSpec\Process\Shutdown\Shutdown;
+use PhpSpec\Process\Shutdown\UpdateConsoleAction;
 
 class ContainerAssembler
 {
@@ -57,6 +60,9 @@ class ContainerAssembler
         $this->setupRerunner($container);
         $this->setupMatchers($container);
         $this->setupSubscribers($container);
+        $this->setupCurrentExample($container);
+        $this->setupShutdown($container);
+        $this->setupShutdownActions($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -194,6 +200,11 @@ class ContainerAssembler
         $container->setShared('event_dispatcher.listeners.bootstrap', function (ServiceContainer $c) {
             return new Listener\BootstrapListener(
                 $c->get('console.io')
+            );
+        });
+        $container->setShared('event_dispatcher.listeners.current_example_listener', function (ServiceContainer $c) {
+            return new Listener\CurrentExampleListener(
+                $c->get('current_example')
             );
         });
     }
@@ -479,6 +490,14 @@ class ContainerAssembler
                 return $c->get('formatter.formatters.html');
             }
         );
+        $container->set(
+            'formatter.formatters.fatal_error_writer',
+            function (ServiceContainer $c) {
+                return new SpecFormatter\FatalErrorWriter(
+                  $c->get('console.io')
+                );
+            }
+        );
 
         $container->addConfigurator(function (ServiceContainer $c) {
             $formatterName = $c->getParam('formatter.name', 'progress');
@@ -674,6 +693,39 @@ class ContainerAssembler
             array_map(
                 array($c->get('event_dispatcher'), 'addSubscriber'),
                 $c->getByPrefix('event_dispatcher.listeners')
+            );
+        });
+    }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupCurrentExample(ServiceContainer $container)
+    {
+        $container->setShared('current_example', function () {
+            return new CurrentExample();
+        });
+    }
+
+  /**
+   * @param ServiceContainer $container
+   */
+    private function setupShutdown(ServiceContainer $container)
+    {
+        $container->setShared('process.shutdown', function() {
+            return new Shutdown();
+        });
+    }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupShutdownActions(ServiceContainer $container)
+    {
+        $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) {
+            return new UpdateConsoleAction(
+                $c->get('current_example'),
+                $c->get('formatter.formatters.fatal_error_writer')
             );
         });
     }

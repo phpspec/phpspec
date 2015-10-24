@@ -16,8 +16,9 @@ namespace PhpSpec\Formatter;
 use PhpSpec\Console\IO;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Formatter\Presenter\FatalPresenter;
 
-class ProgressFormatter extends ConsoleFormatter
+class ProgressFormatter extends ConsoleFormatter implements FatalPresenter
 {
     const FPS = 10;
 
