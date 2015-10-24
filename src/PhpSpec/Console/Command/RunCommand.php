@@ -18,6 +18,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use PhpSpec\Formatter\Presenter\FatalPresenter;
 
 /**
  * Main command, responsible for running the specs
@@ -134,6 +135,18 @@ EOF
             'formatter.name',
             $input->getOption('format') ?: $container->getParam('formatter.name')
         );
+
+        $formatterName = $container->getParam('formatter.name', 'progress');
+        $currentFormatter = $container->get('formatter.formatters.'.$formatterName);
+
+
+        if ($currentFormatter instanceof FatalPresenter) {
+            $container->get('process.shutdown')->registerAction(
+                $container->get('process.shutdown.update_console_action')
+            );
+            $container->get('process.shutdown')->registerShutdown();
+        }
+
         $container->configure();
 
         $locator = $input->getArgument('spec');
