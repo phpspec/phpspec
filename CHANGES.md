@@ -5,6 +5,7 @@ Upcoming
 * New shouldContain matcher for strings
 * Warning added when trying to typehint scalars or callable in spec
 * No longer truncates strings when diffing arrays in verbose mode 
+* New %resource_name% placeholder for generated specs
 * Fixed case error in class name that triggered strictness warnings on some platforms
 * Clarified in composer that ext-tokenizer is required
 * Supported installation with Symfony 3.0
