@@ -11,11 +11,14 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Formatter\Presenter;
+namespace PhpSpec\Formatter\Presenter\Value;
 
-/**
- * @deprecated Use PhpSpec\Formatter\Presenter\Presenter instead
- */
-interface PresenterInterface extends Presenter
+
+interface ValuePresenter
 {
+    /**
+     * @param mixed $value
+     * @return string
+     */
+    public function presentValue($value);
 }

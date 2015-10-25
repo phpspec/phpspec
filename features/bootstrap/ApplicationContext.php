@@ -87,14 +87,16 @@ class ApplicationContext implements Context, MatchersProviderInterface
      * @When I run phpspec (non interactively)
      * @When I run phpspec using the :formatter format
      * @When I run phpspec with the :option option
+     * @When I run phpspec with :spec specs to run
      * @When /I run phpspec with option (?P<option>.*)/
      * @When /I run phpspec (?P<interactive>interactively)$/
      * @When /I run phpspec (?P<interactive>interactively) with the (?P<option>.*) option/
      */
-    public function iRunPhpspec($formatter = null, $option = null, $interactive=null)
+    public function iRunPhpspec($formatter = null, $option = null, $interactive = null, $spec = null)
     {
         $arguments = array (
-            'command' => 'run'
+            'command' => 'run',
+            'spec' => $spec
         );
 
         if ($formatter) {
@@ -291,5 +293,32 @@ class ApplicationContext implements Context, MatchersProviderInterface
             new ApplicationOutputMatcher(),
             new ValidJUnitXmlMatcher()
         );
+    }
+
+    /**
+     * @When I run phpspec with the spec :spec
+     */
+    public function iRunPhpspecWithTheSpec($spec)
+    {
+        $arguments = array (
+            'command' => 'run',
+            1 => $spec
+        );
+
+        $this->lastExitCode = $this->tester->run($arguments, array('interactive' => false));
+    }
+
+    /**
+     * @When I run phpspec with the spec :spec and the config :config
+     */
+    public function iRunPhpspecWithTheSpecAndTheConfig($spec, $config)
+    {
+        $arguments = array (
+            'command' => 'run',
+            1 => $spec,
+            '--config' => $config
+        );
+
+        $this->lastExitCode = $this->tester->run($arguments, array('interactive' => false));
     }
 }

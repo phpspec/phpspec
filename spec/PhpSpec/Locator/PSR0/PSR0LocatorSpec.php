@@ -500,6 +500,27 @@ class PSR0LocatorSpec extends ObjectBehavior
         $this->shouldThrow($exception)->during('__construct', array('p\pf\N\S', 'spec', $this->srcPath, $this->specPath, null, 'wrong\prefix'));
     }
 
+    function it_supports_psr0_namespace_queries(Filesystem $filesystem)
+    {
+        $this->beConstructedWith('', 'spec', $this->srcPath, $this->specPath, $filesystem);
+        $filesystem->pathExists($this->specPath.'/spec/PhpSpec/Console/ApplicationSpec.php')->willReturn(true);
+        $this->supportsQuery('PhpSpec\\Console\\Application')->shouldReturn(true);
+    }
+
+    function it_supports_psr0_namespace_queries_with_a_namespace_prefix(Filesystem $filesystem)
+    {
+        $this->beConstructedWith('PhpSpec', 'spec', $this->srcPath, $this->specPath, $filesystem);
+        $filesystem->pathExists($this->specPath.'/spec/PhpSpec/Console/ApplicationSpec.php')->willReturn(true);
+        $this->supportsQuery('Console\\Application')->shouldReturn(true);
+    }
+
+    function it_supports_psr4_namespace_queries(Filesystem $filesystem)
+    {
+        $this->beConstructedWith('Test\\Namespace\\PhpSpec', 'spec', $this->srcPath, $this->specPath, $filesystem, 'Test\\Namespace');
+        $filesystem->pathExists($this->specPath.'/spec/PhpSpec/Console/ApplicationSpec.php')->willReturn(true);
+        $this->supportsQuery('Test\\Namespace\\PhpSpec\\Console\\Application')->shouldReturn(true);
+    }
+
     private function convert_to_path($path)
     {
         if ('/' === DIRECTORY_SEPARATOR) {

@@ -7,7 +7,7 @@ instead of verifying output. You use the matchers prefixed by ``should`` or
 ``shouldNot`` as appropriate.
 
 
-**phpspec** has 13 built-in matchers, described in more detail here. Many of these
+**phpspec** has 14 built-in matchers, described in more detail here. Many of these
 matchers have aliases which you can use to make your specifications easy to
 read.
 
@@ -370,6 +370,29 @@ with a specific key using the ArrayKey matcher.
         function it_should_have_a_release_date_for_france()
         {
             $this->getReleaseDates()->shouldHaveKey('France');
+        }
+    }
+
+
+StringContain Matcher
+---------------------
+
+The StringContain matcher lets you specify that a method should return a string
+containing a given substring. This matcher is case sensitive.
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_have_a_title_that_contains_wizard()
+        {
+            $this->getTitle()->shouldContain('Wizard');
         }
     }
 

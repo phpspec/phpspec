@@ -11,11 +11,16 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Formatter\Presenter;
+namespace PhpSpec\Formatter\Presenter\Exception;
 
-/**
- * @deprecated Use PhpSpec\Formatter\Presenter\Presenter instead
- */
-interface PresenterInterface extends Presenter
+
+use PhpSpec\Exception\Exception;
+
+interface PhpSpecExceptionPresenter
 {
+    /**
+     * @param Exception $exception
+     * @return string
+     */
+    public function presentException(Exception $exception);
 }
