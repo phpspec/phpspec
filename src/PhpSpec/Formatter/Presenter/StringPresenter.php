@@ -19,10 +19,14 @@ use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Example\ErrorException;
 use PhpSpec\Exception\Example\PendingException;
 use Prophecy\Argument\Token\ExactValueToken;
+use Prophecy\Argument\Token\TokenInterface;
 use Prophecy\Exception\Call\UnexpectedCallException;
 use Prophecy\Exception\Exception as ProphecyException;
 use Prophecy\Prophecy\MethodProphecy;
 
+/**
+ * @deprecated Use PhpSpec\Formatter\Presenter\SimplePresenter instead
+ */
 class StringPresenter implements PresenterInterface
 {
     /**
@@ -436,7 +440,7 @@ class StringPresenter implements PresenterInterface
     }
 
     /**
-     * @param array $expectedTokens
+     * @param TokenInterface[] $expectedTokens
      * @param array $actualArguments
      *
      * @return bool
@@ -447,7 +451,7 @@ class StringPresenter implements PresenterInterface
     }
 
     /**
-     * @param array $tokens
+     * @param TokenInterface[] $tokens
      *
      * @return array
      */

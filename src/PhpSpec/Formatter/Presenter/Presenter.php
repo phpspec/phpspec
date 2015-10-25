@@ -13,9 +13,15 @@
 
 namespace PhpSpec\Formatter\Presenter;
 
-/**
- * @deprecated Use PhpSpec\Formatter\Presenter\Presenter instead
- */
-interface PresenterInterface extends Presenter
+use PhpSpec\Formatter\Presenter\Exception\ExceptionPresenter;
+use PhpSpec\Formatter\Presenter\Value\ValuePresenter;
+
+interface Presenter extends ExceptionPresenter, ValuePresenter
 {
+    /**
+     * @param string $string
+     *
+     * @return string
+     */
+    public function presentString($string);
 }
