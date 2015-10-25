@@ -130,3 +130,75 @@ Feature: Developer runs the specs
       """
     When I run phpspec
     Then I should see "Letgo is called"
+
+
+  Scenario: Fully qualified class name can run specs
+    Given the spec file "spec/Runner/Namespace/Example1Spec.php" contains:
+      """
+      <?php
+      namespace spec\Runner\TestNamespace;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class Example1Spec extends ObjectBehavior
+      {
+          function it_is_initializable()
+          {
+              $this->shouldHaveType('Runner\TestNamespace\Example1');
+          }
+      }
+
+      """
+    And the class file "src/Runner/TestNamespace/Example1.php" contains:
+      """
+      <?php
+
+      namespace Runner\TestNamespace;
+
+      class Example1
+      {
+      }
+
+      """
+    When I run phpspec with the spec "Runner\TestNamespace\Example1"
+    Then the suite should pass
+
+  Scenario: Fully qualified PSR4 class name can run specs
+    Given the spec file "spec/Runner/Namespace/Example2Spec.php" contains:
+      """
+      <?php
+      namespace spec\Psr4\Runner\TestNamespace;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class Example2Spec extends ObjectBehavior
+      {
+          function it_is_initializable()
+          {
+              $this->shouldHaveType('Psr4\Runner\TestNamespace\Example2');
+          }
+      }
+
+      """
+    And the class file "src/Psr4/Runner/TestNamespace/Example2.php" contains:
+      """
+      <?php
+
+      namespace Psr4\Runner\TestNamespace;
+
+      class Example2
+      {
+      }
+
+      """
+    And the config file located in "Psr4" contains:
+      """
+      suites:
+        behat_suite:
+          namespace: Psr4
+          psr4_prefix: Psr4
+      """
+    When I run phpspec with the spec "Psr4\Runner\TestNamespace\Example2" and the config "Psr4/phpspec.yml"
+    Then the suite should pass
