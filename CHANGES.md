@@ -1,10 +1,16 @@
 Upcoming
 ========
 
+* Specs can now be run by specifying a fully qualified class name
+* New shouldContain matcher for strings
+* Warning added when trying to typehint scalars or callable in spec
 * No longer truncates strings when diffing arrays in verbose mode 
 * Fixed case error in class name that triggered strictness warnings on some platforms
 * Clarified in composer that ext-tokenizer is required
 * Supported installation with Symfony 3.0
+* Fixed error when spec and src paths are the same
+* New event is fired when phpspec creates a file
+* Internal refactoring of Presenter objects
 
 2.3.0 / 2015-09-07
 ==================
