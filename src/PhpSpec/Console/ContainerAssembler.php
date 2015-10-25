@@ -593,6 +593,9 @@ class ContainerAssembler
         $container->set('matchers.string_regex', function (ServiceContainer $c) {
             return new Matcher\StringRegexMatcher($c->get('formatter.presenter'));
         });
+        $container->set('matchers.string_contain', function (ServiceContainer $c) {
+            return new Matcher\StringContainMatcher($c->get('formatter.presenter'));
+        });
     }
 
     /**
