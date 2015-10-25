@@ -181,6 +181,10 @@ class PSR0Locator implements ResourceLocatorInterface
             $path .= $sepr;
         }
 
+        if ($path && 0 === strpos($path, $this->fullSpecPath)) {
+            return $this->findSpecResources($path);
+        }
+
         if ($path && 0 === strpos($path, $this->fullSrcPath)) {
             $path = $this->fullSpecPath.substr($path, strlen($this->fullSrcPath));
             $path = preg_replace('/\.php/', 'Spec.php', $path);
@@ -192,10 +196,6 @@ class PSR0Locator implements ResourceLocatorInterface
             $path = $this->fullSpecPath.substr($path, strlen($this->srcPath));
             $path = preg_replace('/\.php/', 'Spec.php', $path);
 
-            return $this->findSpecResources($path);
-        }
-
-        if ($path && 0 === strpos($path, $this->specPath)) {
             return $this->findSpecResources($path);
         }
 
