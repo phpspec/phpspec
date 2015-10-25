@@ -50,10 +50,11 @@ class SpecificationGenerator extends PromptingGenerator
     protected function renderTemplate(ResourceInterface $resource, $filepath)
     {
         $values = array(
-            '%filepath%'  => $filepath,
-            '%name%'      => $resource->getSpecName(),
-            '%namespace%' => $resource->getSpecNamespace(),
-            '%subject%'   => $resource->getSrcClassname()
+            '%filepath%'      => $filepath,
+            '%name%'          => $resource->getSpecName(),
+            '%namespace%'     => $resource->getSpecNamespace(),
+            '%subject%'       => $resource->getSrcClassname(),
+            '%subject_class%' => $resource->getName()
         );
 
         if (!$content = $this->getTemplateRenderer()->render('specification', $values)) {
