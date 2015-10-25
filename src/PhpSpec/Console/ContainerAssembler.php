@@ -14,6 +14,7 @@
 namespace PhpSpec\Console;
 
 use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
+use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
 use PhpSpec\Console\Assembler\PresenterAssembler;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
@@ -374,9 +375,12 @@ class ContainerAssembler
         });
         if (PHP_VERSION >= 7) {
             $container->setShared('loader.resource_loader.spec_transformer.typehint_rewriter', function (ServiceContainer $c) {
-                return new Loader\Transformer\TypeHintRewriter($c->get('loader.transformer.typehintindex'));
+                return new Loader\Transformer\TypeHintRewriter($c->get('analysis.typehintrewriter'));
             });
         }
+        $container->setShared('analysis.typehintrewriter', function($c) {
+            return new TokenizedTypeHintRewriter($c->get('loader.transformer.typehintindex'));
+        });
         $container->setShared('loader.transformer.typehintindex', function() {
             return new Loader\Transformer\InMemoryTypeHintIndex();
         });
