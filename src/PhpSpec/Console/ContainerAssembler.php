@@ -291,7 +291,7 @@ class ContainerAssembler
         if (!empty($_SERVER['HOMEDRIVE']) && !empty($_SERVER['HOMEPATH'])) {
             $home = $_SERVER['HOMEDRIVE'].$_SERVER['HOMEPATH'];
         } else {
-            $home = $_SERVER['HOME'];
+            $home = getenv('HOME');
         }
 
         $container->setParam('code_generator.templates.paths', array(
