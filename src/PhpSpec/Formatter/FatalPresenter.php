@@ -11,10 +11,11 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Formatter\Presenter;
+namespace PhpSpec\Formatter;
 
+use PhpSpec\Message\CurrentExampleTracker;
 
 interface FatalPresenter
 {
-
+    public function displayFatal(CurrentExampleTracker $currentExample, $error);
 }

@@ -13,12 +13,15 @@
 
 namespace PhpSpec\Console\Command;
 
+use PhpSpec\Formatter\FatalPresenter;
+use PhpSpec\Process\Shutdown\UpdateConsoleAction;
+use PhpSpec\ServiceContainer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use PhpSpec\Formatter\Presenter\FatalPresenter;
+
 
 /**
  * Main command, responsible for running the specs
@@ -141,6 +144,14 @@ EOF
 
 
         if ($currentFormatter instanceof FatalPresenter) {
+
+            $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) use ($currentFormatter) {
+                return new UpdateConsoleAction(
+                    $c->get('current_example'),
+                    $currentFormatter
+                );
+            });
+
             $container->get('process.shutdown')->registerAction(
                 $container->get('process.shutdown.update_console_action')
             );

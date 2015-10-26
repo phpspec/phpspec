@@ -35,9 +35,8 @@ use PhpSpec\Runner;
 use PhpSpec\Wrapper;
 use PhpSpec\Config\OptionsConfig;
 use Symfony\Component\Process\PhpExecutableFinder;
-use PhpSpec\Message\CurrentExample;
+use PhpSpec\Message\CurrentExampleTracker;
 use PhpSpec\Process\Shutdown\Shutdown;
-use PhpSpec\Process\Shutdown\UpdateConsoleAction;
 
 class ContainerAssembler
 {
@@ -62,7 +61,6 @@ class ContainerAssembler
         $this->setupSubscribers($container);
         $this->setupCurrentExample($container);
         $this->setupShutdown($container);
-        $this->setupShutdownActions($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -490,14 +488,6 @@ class ContainerAssembler
                 return $c->get('formatter.formatters.html');
             }
         );
-        $container->set(
-            'formatter.formatters.fatal_error_writer',
-            function (ServiceContainer $c) {
-                return new SpecFormatter\FatalErrorWriter(
-                  $c->get('console.io')
-                );
-            }
-        );
 
         $container->addConfigurator(function (ServiceContainer $c) {
             $formatterName = $c->getParam('formatter.name', 'progress');
@@ -703,7 +693,7 @@ class ContainerAssembler
     private function setupCurrentExample(ServiceContainer $container)
     {
         $container->setShared('current_example', function () {
-            return new CurrentExample();
+            return new CurrentExampleTracker();
         });
     }
 
@@ -714,19 +704,6 @@ class ContainerAssembler
     {
         $container->setShared('process.shutdown', function() {
             return new Shutdown();
-        });
-    }
-
-    /**
-     * @param ServiceContainer $container
-     */
-    private function setupShutdownActions(ServiceContainer $container)
-    {
-        $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) {
-            return new UpdateConsoleAction(
-                $c->get('current_example'),
-                $c->get('formatter.formatters.fatal_error_writer')
-            );
         });
     }
 }

@@ -15,13 +15,13 @@ namespace PhpSpec\Listener;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
-use PhpSpec\Message\CurrentExample;
+use PhpSpec\Message\CurrentExampleTracker;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class CurrentExampleListener implements EventSubscriberInterface {
 
     /**
-     * @var CurrentExample
+     * @var CurrentExampleTracker
      */
     private $currentExample;
 
@@ -34,7 +34,7 @@ final class CurrentExampleListener implements EventSubscriberInterface {
         );
     }
 
-    public function __construct(CurrentExample $currentExample)
+    public function __construct(CurrentExampleTracker $currentExample)
     {
         $this->currentExample = $currentExample;
     }

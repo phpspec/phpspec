@@ -4,7 +4,7 @@ namespace spec\PhpSpec\Listener;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
-use PhpSpec\Message\CurrentExample;
+use PhpSpec\Message\CurrentExampleTracker;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
@@ -12,7 +12,7 @@ class CurrentExampleListenerSpec extends ObjectBehavior
 {
     function let()
     {
-        $currentExample = new CurrentExample();
+        $currentExample = new CurrentExampleTracker();
         $this->beConstructedWith($currentExample);
     }
 
@@ -28,7 +28,7 @@ class CurrentExampleListenerSpec extends ObjectBehavior
 
     function it_should_call_beforeCurrentExample(ExampleEvent $example)
     {
-        $currentExample = new CurrentExample();
+        $currentExample = new CurrentExampleTracker();
         $fatalError = 'Fatal error happened before example';
         $example->getTitle()->willReturn($fatalError);
         $currentExample->setCurrentExample($fatalError);
@@ -38,7 +38,7 @@ class CurrentExampleListenerSpec extends ObjectBehavior
 
     function it_should_call_afterCurrentExample(ExampleEvent $example)
     {
-        $currentExample = new CurrentExample();
+        $currentExample = new CurrentExampleTracker();
         $currentExample->setCurrentExample(null);
         $example->getTitle()->willReturn(null);
         $this->afterCurrentExample($example);
@@ -48,7 +48,7 @@ class CurrentExampleListenerSpec extends ObjectBehavior
     function it_should_call_afterSuiteEvent(SuiteEvent $example)
     {
         $fatalError = '3';
-        $currentExample = new CurrentExample();
+        $currentExample = new CurrentExampleTracker();
         $currentExample->setCurrentExample("Exited with code: " . $fatalError);
         $example->getResult()->willReturn($fatalError);
         $this->afterSuiteEvent($example);
