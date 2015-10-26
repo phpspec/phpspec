@@ -28,7 +28,6 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
         $this->filesystem = new Filesystem();
     }
 
-
     /**
      * @Given I have started describing the :class class
      */

@@ -9,7 +9,6 @@ use Prophecy\Argument;
 
 class UpdateConsoleActionSpec extends ObjectBehavior
 {
-
     function let(FatalPresenter $currentExampleWriter)
     {
         $currentExample = new CurrentExampleTracker();
