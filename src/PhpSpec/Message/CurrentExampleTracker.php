@@ -11,11 +11,19 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Formatter;
+namespace PhpSpec\Message;
 
-use PhpSpec\Message\CurrentExample;
-
-interface FatalPresenterInterface
+final class CurrentExampleTracker
 {
-    public function displayFatal(CurrentExample $currentExample, $error);
+    private $currentExample;
+
+    public function setCurrentExample($currentExample)
+    {
+        $this->currentExample = $currentExample;
+    }
+
+    public function getCurrentExample()
+    {
+        return $this->currentExample;
+    }
 }

@@ -16,9 +16,8 @@ namespace PhpSpec\Formatter;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Formatter\Presenter\FatalPresenter;
 
-class PrettyFormatter extends ConsoleFormatter implements FatalPresenter
+class PrettyFormatter extends ConsoleFormatter
 {
     public function beforeSpecification(SpecificationEvent $event)
     {
