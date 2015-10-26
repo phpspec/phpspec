@@ -142,7 +142,6 @@ EOF
         $formatterName = $container->getParam('formatter.name', 'progress');
         $currentFormatter = $container->get('formatter.formatters.'.$formatterName);
 
-
         if ($currentFormatter instanceof FatalPresenter) {
 
             $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) use ($currentFormatter) {
