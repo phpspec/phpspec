@@ -96,6 +96,7 @@ class ConsoleFormatter extends BasicFormatter implements FatalPresenter
     public function displayFatal(CurrentExampleTracker $currentExample, $error)
     {
         if (!empty($error) && $currentExample->getCurrentExample()) {
+            ini_set('display_errors', 0);
             $failedOpen = ($this->io->isDecorated()) ? '<failed>' : '';
             $failedClosed = ($this->io->isDecorated()) ? '</failed>' : '';
             $failedCross = ($this->io->isDecorated()) ? '✘' : '';
