@@ -17,8 +17,6 @@ final class Shutdown
 {
     protected $actions;
 
-    const HHVM_FATAL_ERROR = 16777217;
-
     public function __construct()
     {
         $this->actions = array();
@@ -26,12 +24,6 @@ final class Shutdown
 
     public function registerShutdown()
     {
-        if (defined('HHVM_VERSION')) {
-            error_reporting(E_ERROR | E_PARSE | E_STRICT);
-        } else {
-            error_reporting(E_PARSE | E_STRICT);
-        }
-
         register_shutdown_function(array($this, 'runShutdown'));
     }
 
@@ -55,7 +47,7 @@ final class Shutdown
         $fatal = false;
 
         if (!empty($error)) {
-            $fatal = defined('HHVM_VERSION') ? (self::HHVM_FATAL_ERROR === $error['type']) : (E_ERROR === $error['type']);
+            $fatal = (E_ERROR & $error['type']);
         }
 
         return $fatal ? $error : null;
