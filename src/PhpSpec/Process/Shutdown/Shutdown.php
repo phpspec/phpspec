@@ -26,7 +26,12 @@ final class Shutdown
 
     public function registerShutdown()
     {
-        error_reporting(E_PARSE | E_STRICT);
+        if (defined('HHVM_VERSION')) {
+            error_reporting(E_ERROR | E_PARSE | E_STRICT);
+        } else {
+            error_reporting(E_PARSE | E_STRICT);
+        }
+
         register_shutdown_function(array($this, 'runShutdown'));
     }
 

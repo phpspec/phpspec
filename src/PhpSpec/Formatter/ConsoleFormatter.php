@@ -105,11 +105,5 @@ class ConsoleFormatter extends BasicFormatter implements FatalPresenter
             $this->io->writeln("$failedOpen    {$currentExample->getCurrentExample()} $failedClosed");
             $this->io->writeln("$failedOpen    {$error['message']} $failedClosed");
         }
-
-        if (defined('HHVM_VERSION')) {
-            $this->io->writeln("$failedOpen    {$error['message']} $failedClosed");
-            var_dump($error['message']);
-        }
-
     }
 }
