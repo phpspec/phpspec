@@ -152,14 +152,7 @@ class CollaboratorsMaintainer implements MaintainerInterface
 
     private function isUnsupportedTypeHinting(\ReflectionParameter $parameter)
     {
-        $isUnsupportedTypeHinting = $parameter->isArray();
-        if (PHP_VERSION_ID >= 70000) {
-            $isUnsupportedTypeHinting = $isUnsupportedTypeHinting || $parameter->getType()->isBuiltin();
-        } else if (PHP_VERSION_ID >= 50400) {
-            $isUnsupportedTypeHinting = $isUnsupportedTypeHinting || $parameter->isCallable();
-        }
-
-        return $isUnsupportedTypeHinting;
+        return $parameter->isArray() || $parameter->isCallable();
     }
 
     /**
