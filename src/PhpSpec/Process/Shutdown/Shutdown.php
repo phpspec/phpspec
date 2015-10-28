@@ -24,6 +24,7 @@ final class Shutdown
 
     public function registerShutdown()
     {
+        error_reporting(error_reporting() & ~E_ERROR);
         register_shutdown_function(array($this, 'runShutdown'));
     }
 
@@ -47,7 +48,7 @@ final class Shutdown
         $fatal = false;
 
         if (!empty($error)) {
-            $fatal = (E_ERROR & $error['type']);
+            $fatal = (bool) (E_ERROR & $error['type']);
         }
 
         return $fatal ? $error : null;
