@@ -131,19 +131,16 @@ class CollaboratorsMaintainer implements MaintainerInterface
         }
 
         foreach ($function->getParameters() as $parameter) {
-            if ($this->isUnsupportedTypeHinting($parameter)) {
-                throw new InvalidCollaboratorTypeException($parameter, $function);
-            }
 
             $collaborator = $this->getOrCreateCollaborator($collaborators, $parameter->getName());
             try {
-                if (null !== $class = $parameter->getClass()) {
-                    $collaborator->beADoubleOf($class->getName());
-                } elseif ($this->typeHintIndex && $indexedClass = $this->typeHintIndex->lookup($classRefl->getName(), $parameter->getDeclaringFunction()->getName(), '$' . $parameter->getName())) {
+                if ($this->isUnsupportedTypeHinting($parameter)) {
+                    throw new InvalidCollaboratorTypeException($parameter, $function);
+                }
+                if (($indexedClass = $this->getParameterTypeFromIndex($classRefl, $parameter))
+                    || ($indexedClass = $this->getParameterTypeFromReflection($parameter))) {
                     $collaborator->beADoubleOf($indexedClass);
                 }
-            } catch (ReflectionException $e) {
-                $this->throwCollaboratorNotFound($e, $parameter);
             } catch (ClassNotFoundException $e) {
                 $this->throwCollaboratorNotFound($e, null, $e->getClassname());
             }
@@ -186,4 +183,43 @@ class CollaboratorsMaintainer implements MaintainerInterface
             $className
         );
     }
+
+    /**
+     * @param \ReflectionClass $classRefl
+     * @param \ReflectionParameter $parameter
+     *
+     * @return string
+     */
+    private function getParameterTypeFromIndex(\ReflectionClass $classRefl, \ReflectionParameter $parameter)
+    {
+        if (!$this->typeHintIndex) {
+            return null;
+        }
+
+        return $this->typeHintIndex->lookup(
+            $classRefl->getName(),
+            $parameter->getDeclaringFunction()->getName(),
+            '$' . $parameter->getName()
+        );
+    }
+
+    /**
+     * @param \ReflectionParameter $parameter
+     *
+     * @return string
+     */
+    private function getParameterTypeFromReflection(\ReflectionParameter $parameter)
+    {
+        try {
+            if (null === $class = $parameter->getClass()) {
+                return null;
+            }
+
+            return $class->getName();
+        }
+        catch (ReflectionException $e) {
+            $this->throwCollaboratorNotFound($e, $parameter);
+        }
+    }
+
 }
