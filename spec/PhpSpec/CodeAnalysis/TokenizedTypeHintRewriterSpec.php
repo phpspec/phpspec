@@ -2,15 +2,16 @@
 
 namespace spec\PhpSpec\CodeAnalysis;
 
+use PhpSpec\CodeAnalysis\NamespaceResolver;
 use PhpSpec\Loader\Transformer\TypeHintIndex;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 {
-    function let(TypeHintIndex $typeHintIndex)
+    function let(TypeHintIndex $typeHintIndex, NamespaceResolver $namespaceResolver)
     {
-        $this->beConstructedWith($typeHintIndex);
+        $this->beConstructedWith($typeHintIndex, $namespaceResolver);
     }
 
     function it_is_a_typehint_rewriter()
@@ -93,8 +94,14 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
         ');
     }
 
-    function it_indexes_typehints_that_are_removed(TypeHintIndex $typeHintIndex)
+    function it_indexes_typehints_that_are_removed(TypeHintIndex $typeHintIndex, NamespaceResolver $namespaceResolver)
     {
+        $namespaceResolver->analyse(Argument::any())->shouldBeCalled();
+
+        $namespaceResolver->resolve('Foo')->willReturn('Foo');
+        $namespaceResolver->resolve('Foo\Bar')->willReturn('Foo\Bar');
+        $namespaceResolver->resolve('Baz')->willReturn('Baz');
+
         $this->rewrite('
         <?php
 
@@ -109,47 +116,5 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
         $typeHintIndex->add('Foo', 'bar', '$bar', 'Foo\Bar')->shouldHaveBeenCalled();
         $typeHintIndex->add('Foo', 'bar', '$baz', 'Baz')->shouldHaveBeenCalled();
-    }
-
-    function it_indexes_typehints_in_the_correct_namespace(TypeHintIndex $typeHintIndex)
-    {
-        $this->rewrite('
-        <?php
-
-        namespace Baz;
-
-        class Foo
-        {
-            public function bar(Bar $bar)
-            {
-            }
-        }
-
-        ');
-
-        $typeHintIndex->add('Baz\Foo', 'bar', '$bar', 'Baz\Bar')->shouldHaveBeenCalled();
-    }
-
-    function it_indexes_typehints_that_have_applicable_use_statements(TypeHintIndex $typeHintIndex)
-    {
-        $this->rewrite('
-        <?php
-
-        namespace Baz;
-
-        use Boz\\Bar as Bur;
-        use Boz\\Bez;
-
-        class Foo
-        {
-            public function bar(Bur $bar, Bez $bez)
-            {
-            }
-        }
-
-        ');
-
-        $typeHintIndex->add('Baz\Foo', 'bar', '$bar', 'Boz\Bar')->shouldHaveBeenCalled();
-        $typeHintIndex->add('Baz\Foo', 'bar', '$bez', 'Boz\Bez')->shouldHaveBeenCalled();
     }
 }

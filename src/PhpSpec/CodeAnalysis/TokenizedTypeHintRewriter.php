@@ -20,13 +20,8 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     private $inClass = false;
     private $inFunction = false;
     private $inArguments = false;
-    private $readingNamespace = false;
-    private $readingUse = false;
     private $currentClass;
     private $currentFunction;
-    private $currentNamespace;
-    private $currentUse;
-    private $uses = array();
 
     private $typehintTokens = array(
         T_WHITESPACE, T_STRING, T_NS_SEPARATOR
@@ -36,13 +31,19 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
      * @var TypeHintIndex
      */
     private $typeHintIndex;
+    /**
+     * @var NamespaceResolver
+     */
+    private $namespaceResolver;
 
     /**
      * @param TypeHintIndex $typeHintIndex
+     * @param NamespaceResolver $namespaceResolver
      */
-    public function __construct(TypeHintIndex $typeHintIndex)
+    public function __construct(TypeHintIndex $typeHintIndex, NamespaceResolver $namespaceResolver)
     {
         $this->typeHintIndex = $typeHintIndex;
+        $this->namespaceResolver = $namespaceResolver;
     }
 
     /**
@@ -52,6 +53,8 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
      */
     public function rewrite($classDefinition)
     {
+        $this->namespaceResolver->analyse($classDefinition);
+
         $this->reset();
         $tokens = $this->stripTypeHints(token_get_all($classDefinition));
         $tokensToString = $this->tokensToString($tokens);
@@ -64,13 +67,8 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         $this->inClass = false;
         $this->inFunction = false;
         $this->inArguments = false;
-        $this->readingNamespace = false;
-        $this->readingUse = false;
         $this->currentClass = null;
         $this->currentFunction = null;
-        $this->currentNamespace = null;
-        $this->currentUse = null;
-        $this->uses = array();
     }
     /**
      * @param array $tokens
@@ -90,26 +88,6 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                     $this->inFunction = true;
                     $this->currentFunction = null;
                 }
-                // found end of namespace declaration
-                if (';' == $token && $this->readingNamespace) {
-                    $this->currentNamespace = trim($this->currentNamespace);
-                    $this->readingNamespace = false;
-                }
-                // found end of use statement
-                if (';' == $token && $this->readingUse) {
-                    $this->storeUse();
-                    $this->currentUse = '';
-                    $this->readingUse = false;
-                }
-                // found break in use statement
-                if (',' == $token && $this->readingUse) {
-                    $this->currentNamespace = trim($this->currentNamespace);
-                    $this->storeUse();
-                    $this->currentUse = '';
-                }
-            }
-            elseif ($this->readingUse) {
-                $this->currentUse .= $token[1];
             }
             elseif (T_CLASS == $token[0]) {
                 $this->inClass = true;
@@ -125,16 +103,6 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                 if ($this->inClass && !$this->currentClass) {
                     $this->currentClass = $token[1];
                 }
-                // string is likey part of the namespace
-                if ($this->readingNamespace) {
-                    $this->currentNamespace .= $token[1];
-                }
-            }
-            elseif (T_NS_SEPARATOR == $token[0]) {
-                // string is likey part of the namespace
-                if ($this->readingNamespace) {
-                    $this->currentNamespace .= $token[1];
-                }
             }
             elseif (T_VARIABLE == $token[0]) {
                 // variable is an argument
@@ -143,25 +111,16 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                     for ($i = $index - 1; in_array($tokens[$i][0], $this->typehintTokens); $i--) {
                         $typehint = $tokens[$i][1] . $typehint;
                         unset($tokens[$i]);
+                    }
 
-                        if ($typehint = trim($typehint)) {
-                            $this->typeHintIndex->add(
-                                $this->applyNamespace($this->currentClass),
-                                trim($this->currentFunction),
-                                $token[1],
-                                $this->applyNamespace($typehint));
-                        }
+                    if ($typehint = trim($typehint)) {
+                        $this->typeHintIndex->add(
+                            $this->namespaceResolver->resolve($this->currentClass),
+                            trim($this->currentFunction),
+                            $token[1],
+                            $this->namespaceResolver->resolve($typehint));
                     }
                 }
-            }
-            elseif (T_NAMESPACE == $token[0]) {
-                $this->readingNamespace = true;
-                $this->currentNamespace = '';
-                $this->uses = array();
-            }
-            elseif (T_USE == $token[0]) {
-                $this->readingUse = true;
-                $this->currentUse = '';
             }
         }
 
@@ -178,38 +137,4 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
             return is_array($token) ? $token[1] : $token;
         }, $tokens));
     }
-
-    /**
-     * @param string $classAlias
-     * @return string
-     */
-    private function applyNamespace($classAlias)
-    {
-        if (strpos($classAlias, '\\') === 0) {
-            return substr($classAlias, 1);
-        }
-        if (array_key_exists(strtolower($classAlias), $this->uses)) {
-            return $this->uses[strtolower($classAlias)];
-        }
-        if ($this->currentNamespace) {
-            return $this->currentNamespace . '\\' . $classAlias;
-        }
-
-        return $classAlias;
-    }
-
-    private function storeUse()
-    {
-        if (preg_match('/\s*(.*)\s+as\s+(.*)\s*/', $this->currentUse, $matches)) {
-            $this->uses[strtolower(trim($matches[2]))] = trim($matches[1]);
-        }
-        elseif(preg_match('/\\\\([^\\\\]+)\s*$/', $this->currentUse, $matches)){
-            $this->uses[strtolower($matches[1])] = trim($this->currentUse);
-        }
-        else {
-            $this->uses[strtolower(trim($this->currentUse))] = trim($this->currentUse);
-        }
-    }
-
-
 }
