@@ -18,6 +18,7 @@ use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
 use PhpSpec\Exception\Wrapper\CollaboratorException;
 use PhpSpec\Exception\Wrapper\InvalidCollaboratorTypeException;
 use PhpSpec\Loader\Node\ExampleNode;
+use PhpSpec\Loader\Transformer\InMemoryTypeHintIndex;
 use PhpSpec\Loader\Transformer\TypeHintIndex;
 use PhpSpec\SpecificationInterface;
 use PhpSpec\Runner\MatcherManager;
@@ -55,7 +56,7 @@ class CollaboratorsMaintainer implements MaintainerInterface
     public function __construct(Unwrapper $unwrapper, TypeHintIndex $typeHintIndex = null)
     {
         $this->unwrapper = $unwrapper;
-        $this->typeHintIndex = $typeHintIndex;
+        $this->typeHintIndex = $typeHintIndex ? $typeHintIndex : new InMemoryTypeHintIndex();
     }
 
     /**
@@ -197,10 +198,6 @@ class CollaboratorsMaintainer implements MaintainerInterface
      */
     private function getParameterTypeFromIndex(\ReflectionClass $classRefl, \ReflectionParameter $parameter)
     {
-        if (!$this->typeHintIndex) {
-            return null;
-        }
-
         return $this->typeHintIndex->lookup(
             $classRefl->getName(),
             $parameter->getDeclaringFunction()->getName(),
