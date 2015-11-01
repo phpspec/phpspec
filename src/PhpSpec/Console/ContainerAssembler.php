@@ -14,6 +14,7 @@
 namespace PhpSpec\Console;
 
 use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
+use PhpSpec\CodeAnalysis\StaticRejectingNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
@@ -388,8 +389,14 @@ class ContainerAssembler
         $container->setShared('loader.transformer.typehintindex', function() {
             return new Loader\Transformer\InMemoryTypeHintIndex();
         });
-        $container->setShared('analysis.namespaceresolver', function() {
+        $container->setShared('analysis.namespaceresolver.tokenized', function() {
             return new TokenizedNamespaceResolver();
+        });
+        $container->setShared('analysis.namespaceresolver', function ($c) {
+            if (PHP_VERSION >= 7) {
+                return new StaticRejectingNamespaceResolver($c->get('analysis.namespaceresolver.tokenized'));
+            }
+            return $c->get('analysis.namespaceresolver.tokenized');
         });
     }
 

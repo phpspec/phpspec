@@ -2,6 +2,7 @@
 
 namespace integration\PhpSpec\Loader;
 
+use PhpSpec\CodeAnalysis\TokenizedNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\Loader\StreamWrapper;
 use PhpSpec\Loader\Transformer\InMemoryTypeHintIndex;
@@ -12,7 +13,7 @@ class StreamWrapperTest extends \PHPUnit_Framework_Testcase
     function setUp()
     {
         $wrapper = new StreamWrapper();
-        $wrapper->addTransformer(new TypeHintRewriter(new TokenizedTypeHintRewriter(new InMemoryTypeHintIndex())));
+        $wrapper->addTransformer(new TypeHintRewriter(new TokenizedTypeHintRewriter(new InMemoryTypeHintIndex(), new TokenizedNamespaceResolver())));
 
         StreamWrapper::register();
     }

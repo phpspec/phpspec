@@ -72,7 +72,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     }
     /**
      * @param array $tokens
-     * @return $tokens
+     * @return array $tokens
      */
     private function stripTypeHints($tokens)
     {
@@ -114,11 +114,24 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                     }
 
                     if ($typehint = trim($typehint)) {
-                        $this->typeHintIndex->add(
-                            $this->namespaceResolver->resolve($this->currentClass),
-                            trim($this->currentFunction),
-                            $token[1],
-                            $this->namespaceResolver->resolve($typehint));
+                        $class = $this->namespaceResolver->resolve($this->currentClass);
+                        try {
+                            $typehintFcqn = $this->namespaceResolver->resolve($typehint);
+                            $this->typeHintIndex->add(
+                                $class,
+                                trim($this->currentFunction),
+                                $token[1],
+                                $typehintFcqn
+                            );
+                        }
+                        catch (DisallowedScalarTypehintException $e) {
+                            $this->typeHintIndex->addInvalid(
+                                $class,
+                                trim($this->currentFunction),
+                                $token[1],
+                                $e
+                            );
+                        }
                     }
                 }
             }

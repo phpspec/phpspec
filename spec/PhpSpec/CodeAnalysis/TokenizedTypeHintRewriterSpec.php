@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\CodeAnalysis;
 
+use PhpSpec\CodeAnalysis\DisallowedScalarTypehintException;
 use PhpSpec\CodeAnalysis\NamespaceResolver;
 use PhpSpec\Loader\Transformer\TypeHintIndex;
 use PhpSpec\ObjectBehavior;
@@ -116,5 +117,31 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
         $typeHintIndex->add('Foo', 'bar', '$bar', 'Foo\Bar')->shouldHaveBeenCalled();
         $typeHintIndex->add('Foo', 'bar', '$baz', 'Baz')->shouldHaveBeenCalled();
+    }
+
+    function it_indexes_invalid_typehints(
+        TypeHintIndex $typeHintIndex,
+        NamespaceResolver $namespaceResolver
+    ) {
+        $e = new DisallowedScalarTypehintException();
+        $namespaceResolver->analyse(Argument::any())->shouldBeCalled();
+
+        $namespaceResolver->resolve('Foo')->willReturn('Foo');
+        $namespaceResolver->resolve('int')->willThrow($e);
+
+        $this->rewrite('
+        <?php
+
+        class Foo
+        {
+            public function bar(int $bar)
+            {
+            }
+        }
+
+        ');
+
+        $typeHintIndex->addInvalid('Foo', 'bar', '$bar', $e)->shouldHaveBeenCalled();
+        $typeHintIndex->add('Foo', 'bar', '$bar', Argument::any())->shouldNotHaveBeenCalled();
     }
 }

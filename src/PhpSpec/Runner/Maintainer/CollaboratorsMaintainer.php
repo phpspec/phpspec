@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Runner\Maintainer;
 
+use PhpSpec\CodeAnalysis\DisallowedScalarTypehintException;
 use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
 use PhpSpec\Exception\Wrapper\CollaboratorException;
 use PhpSpec\Exception\Wrapper\InvalidCollaboratorTypeException;
@@ -141,15 +142,19 @@ class CollaboratorsMaintainer implements MaintainerInterface
                     || ($indexedClass = $this->getParameterTypeFromReflection($parameter))) {
                     $collaborator->beADoubleOf($indexedClass);
                 }
-            } catch (ClassNotFoundException $e) {
+            }
+            catch (ClassNotFoundException $e) {
                 $this->throwCollaboratorNotFound($e, null, $e->getClassname());
+            }
+            catch (DisallowedScalarTypehintException $e) {
+                throw new InvalidCollaboratorTypeException($parameter, $function);
             }
         }
     }
 
     private function isUnsupportedTypeHinting(\ReflectionParameter $parameter)
     {
-        return $parameter->isArray() || $parameter->isCallable();
+        return $parameter->isArray() || version_compare(PHP_VERSION, '5.4.0', '>') && $parameter->isCallable();
     }
 
     /**
