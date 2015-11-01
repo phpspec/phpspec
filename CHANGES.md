@@ -1,5 +1,5 @@
-Upcoming
-========
+2.4.0-alpha1 / 2015-11-01
+=========================
 
 * Specs can now be run by specifying a fully qualified class name
 * New shouldContain matcher for strings
