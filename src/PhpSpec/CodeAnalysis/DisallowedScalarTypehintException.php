@@ -15,5 +15,4 @@ namespace PhpSpec\CodeAnalysis;
 
 class DisallowedScalarTypehintException extends \Exception
 {
-
 }
