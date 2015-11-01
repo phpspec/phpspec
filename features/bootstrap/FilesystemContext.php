@@ -64,13 +64,20 @@ class FilesystemContext implements Context, MatchersProviderInterface
 
     /**
      * @Given the class file :file contains:
-     * @Given the spec file :file contains:
      * @Given the trait file :file contains:
      */
-    public function theClassOrTraitOrSpecFileContains($file, PyStringNode $contents)
+    public function theClassOrTraitFileContains($file, PyStringNode $contents)
     {
         $this->theFileContains($file, $contents);
         require_once($file);
+    }
+
+    /**
+     * @Given the spec file :file contains:
+     */
+    public function theSpecFileContains($file, PyStringNode $contents)
+    {
+        $this->theFileContains($file, $contents);
     }
 
     /**

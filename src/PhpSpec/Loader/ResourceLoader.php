@@ -48,10 +48,10 @@ class ResourceLoader
     {
         $suite = new Suite();
         foreach ($this->manager->locateResources($locator) as $resource) {
-            if (!class_exists($resource->getSpecClassname()) && is_file($resource->getSpecFilename())) {
-                require_once $resource->getSpecFilename();
+            if (!class_exists($resource->getSpecClassname(), false) && is_file($resource->getSpecFilename())) {
+                require_once StreamWrapper::wrapPath($resource->getSpecFilename());
             }
-            if (!class_exists($resource->getSpecClassname())) {
+            if (!class_exists($resource->getSpecClassname(), false)) {
                 continue;
             }
 

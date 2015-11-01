@@ -14,6 +14,9 @@
 namespace PhpSpec\Console;
 
 use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
+use PhpSpec\CodeAnalysis\StaticRejectingNamespaceResolver;
+use PhpSpec\CodeAnalysis\TokenizedNamespaceResolver;
+use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
 use PhpSpec\Console\Assembler\PresenterAssembler;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
@@ -372,6 +375,29 @@ class ContainerAssembler
         $container->setShared('loader.resource_loader', function (ServiceContainer $c) {
             return new Loader\ResourceLoader($c->get('locator.resource_manager'));
         });
+        if (PHP_VERSION >= 7) {
+            $container->setShared('loader.resource_loader.spec_transformer.typehint_rewriter', function (ServiceContainer $c) {
+                return new Loader\Transformer\TypeHintRewriter($c->get('analysis.typehintrewriter'));
+            });
+        }
+        $container->setShared('analysis.typehintrewriter', function($c) {
+            return new TokenizedTypeHintRewriter(
+                $c->get('loader.transformer.typehintindex'),
+                $c->get('analysis.namespaceresolver')
+            );
+        });
+        $container->setShared('loader.transformer.typehintindex', function() {
+            return new Loader\Transformer\InMemoryTypeHintIndex();
+        });
+        $container->setShared('analysis.namespaceresolver.tokenized', function() {
+            return new TokenizedNamespaceResolver();
+        });
+        $container->setShared('analysis.namespaceresolver', function ($c) {
+            if (PHP_VERSION >= 7) {
+                return new StaticRejectingNamespaceResolver($c->get('analysis.namespaceresolver.tokenized'));
+            }
+            return $c->get('analysis.namespaceresolver.tokenized');
+        });
     }
 
     /**
@@ -509,7 +535,10 @@ class ContainerAssembler
             );
         });
         $container->set('runner.maintainers.collaborators', function (ServiceContainer $c) {
-            return new Runner\Maintainer\CollaboratorsMaintainer($c->get('unwrapper'));
+            return new Runner\Maintainer\CollaboratorsMaintainer(
+                $c->get('unwrapper'),
+                $c->get('loader.transformer.typehintindex')
+            );
         });
         $container->set('runner.maintainers.let_letgo', function () {
             return new Runner\Maintainer\LetAndLetgoMaintainer();

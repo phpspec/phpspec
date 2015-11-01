@@ -9,6 +9,7 @@ use Fake\ReRunner;
 use Matcher\ApplicationOutputMatcher;
 use Matcher\ValidJUnitXmlMatcher;
 use PhpSpec\Console\Application;
+use PhpSpec\Loader\StreamWrapper;
 use PhpSpec\Matcher\MatchersProviderInterface;
 use Symfony\Component\Console\Tester\ApplicationTester;
 
@@ -47,6 +48,8 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function setupApplication()
     {
+        StreamWrapper::register();
+
         $this->application = new Application('2.1-dev');
         $this->application->setAutoExit(false);
 

@@ -75,12 +75,6 @@ class CallableTypePresenterSpec extends ObjectBehavior
         $this->present($object)->shouldReturn(sprintf('[obj:%s]', $className));
     }
 
-    function it_should_present_invokable_objects_as_objects()
-    {
-        $invokable = new ObjectBehavior();
-        $invokable->setSpecificationSubject($this);
-        $this->present($invokable)->shouldReturn('[obj:PhpSpec\Formatter\Presenter\Value\CallableTypePresenter]');
-    }
 }
 
 class WithMethod

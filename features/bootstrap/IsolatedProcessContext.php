@@ -36,7 +36,8 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
         $command = sprintf('%s %s', $this->buildPhpSpecCmd(), 'run');
         $env = array(
             'SHELL_INTERACTIVE' => true,
-            'HOME' => $_SERVER['HOME']
+            'HOME' => $_SERVER['HOME'],
+            'PATH' => $_SERVER['PATH']
         );
 
         $this->process = $process = new Process($command);
