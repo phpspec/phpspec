@@ -17,9 +17,13 @@ use PhpSpec\Loader\Transformer\TypeHintIndex;
 
 final class TokenizedTypeHintRewriter implements TypeHintRewriter
 {
-    private $inClass = false;
-    private $inFunction = false;
-    private $inArguments = false;
+    const STATE_DEFAULT = 0;
+    const STATE_READING_CLASS = 1;
+    const STATE_READING_FUNCTION = 2;
+    const STATE_READING_ARGUMENTS = 3;
+
+    private $state = self::STATE_DEFAULT;
+
     private $currentClass;
     private $currentFunction;
 
@@ -64,11 +68,9 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
 
     private function reset()
     {
-        $this->inClass = false;
-        $this->inFunction = false;
-        $this->inArguments = false;
-        $this->currentClass = null;
-        $this->currentFunction = null;
+        $this->state = self::STATE_DEFAULT;
+        $this->currentClass = '';
+        $this->currentFunction = '';
     }
     /**
      * @param array $tokens
@@ -77,63 +79,37 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     private function stripTypeHints($tokens)
     {
         foreach ($tokens as $index => $token) {
-            if (!is_array($token)) {
-                // found start of argument list
-                if ('(' == $token && $this->inFunction) {
-                    $this->inArguments = true;
-                }
-                // found end of argument list so reset state
-                if (')' == $token && $this->inArguments) {
-                    $this->inArguments = false;
-                    $this->inFunction = true;
-                    $this->currentFunction = null;
-                }
-            }
-            elseif (T_CLASS == $token[0]) {
-                $this->inClass = true;
-            }
-            elseif (T_FUNCTION == $token[0]) {
-                $this->inFunction = true;
-            }
-            elseif (T_STRING == $token[0]) {
-                if ($this->inFunction && !$this->currentFunction) {
-                    $this->currentFunction = $token[1];
-                }
-                // string is likely the class name
-                if ($this->inClass && !$this->currentClass) {
-                    $this->currentClass = $token[1];
-                }
-            }
-            elseif (T_VARIABLE == $token[0]) {
-                // variable is an argument
-                if ($this->inArguments) {
-                    $typehint = '';
-                    for ($i = $index - 1; in_array($tokens[$i][0], $this->typehintTokens); $i--) {
-                        $typehint = $tokens[$i][1] . $typehint;
-                        unset($tokens[$i]);
-                    }
 
-                    if ($typehint = trim($typehint)) {
-                        $class = $this->namespaceResolver->resolve($this->currentClass);
-                        try {
-                            $typehintFcqn = $this->namespaceResolver->resolve($typehint);
-                            $this->typeHintIndex->add(
-                                $class,
-                                trim($this->currentFunction),
-                                $token[1],
-                                $typehintFcqn
-                            );
-                        }
-                        catch (DisallowedScalarTypehintException $e) {
-                            $this->typeHintIndex->addInvalid(
-                                $class,
-                                trim($this->currentFunction),
-                                $token[1],
-                                $e
-                            );
-                        }
+            switch ($this->state) {
+                case self::STATE_READING_ARGUMENTS:
+                    if (')' == $token) {
+                        $this->state = self::STATE_READING_CLASS;
+                        $this->currentFunction = '';
                     }
-                }
+                    elseif ($this->tokenHasType($token, T_VARIABLE)) {
+                        $this->extractTypehints($tokens, $index, $token);
+                    }
+                    break;
+                case self::STATE_READING_FUNCTION:
+                    if ('(' == $token) {
+                        $this->state = self::STATE_READING_ARGUMENTS;
+                    }
+                    elseif ($this->tokenHasType($token, T_STRING) && !$this->currentFunction) {
+                        $this->currentFunction = $token[1];
+                    }
+                    break;
+                case self::STATE_READING_CLASS:
+                    if ($this->tokenHasType($token, T_STRING) && !$this->currentClass) {
+                        $this->currentClass = $token[1];
+                    }
+                    elseif($this->tokenHasType($token, T_FUNCTION)) {
+                        $this->state = self::STATE_READING_FUNCTION;
+                    }
+                    break;
+                default:
+                    if ($this->tokenHasType($token, T_CLASS)) {
+                        $this->state = self::STATE_READING_CLASS;
+                    }
             }
         }
 
@@ -149,5 +125,50 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         return join('', array_map(function ($token) {
             return is_array($token) ? $token[1] : $token;
         }, $tokens));
+    }
+
+    /**
+     * @param array $tokens
+     * @param integer $index
+     * @param array $token
+     */
+    private function extractTypehints(&$tokens, $index, $token)
+    {
+        $typehint = '';
+        for ($i = $index - 1; in_array($tokens[$i][0], $this->typehintTokens); $i--) {
+            $typehint = $tokens[$i][1] . $typehint;
+            unset($tokens[$i]);
+        }
+
+        if ($typehint = trim($typehint)) {
+            $class = $this->namespaceResolver->resolve($this->currentClass);
+            try {
+                $typehintFcqn = $this->namespaceResolver->resolve($typehint);
+                $this->typeHintIndex->add(
+                    $class,
+                    trim($this->currentFunction),
+                    $token[1],
+                    $typehintFcqn
+                );
+            } catch (DisallowedScalarTypehintException $e) {
+                $this->typeHintIndex->addInvalid(
+                    $class,
+                    trim($this->currentFunction),
+                    $token[1],
+                    $e
+                );
+            }
+        }
+    }
+
+    /**
+     * @param array|string $token
+     * @param string $type
+     *
+     * @return bool
+     */
+    private function tokenHasType($token, $type)
+    {
+        return is_array($token) && $type == $token[0];
     }
 }

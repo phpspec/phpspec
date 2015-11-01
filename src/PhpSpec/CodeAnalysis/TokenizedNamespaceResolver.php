@@ -15,8 +15,12 @@ namespace PhpSpec\CodeAnalysis;
 
 final class TokenizedNamespaceResolver implements NamespaceResolver
 {
-    private $readingNamespace = false;
-    private $readingUse = false;
+    const STATE_DEFAULT = 0;
+    const STATE_READING_NAMESPACE = 1;
+    const STATE_READING_USE = 2;
+
+    private $state = self::STATE_DEFAULT;
+
     private $currentNamespace;
     private $currentUse;
     private $uses = array();
@@ -26,56 +30,47 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
      */
     public function analyse($code)
     {
-        $this->readingNamespace = false;
-        $this->readingUse = false;
+        $this->state = self::STATE_DEFAULT;
         $this->currentUse = null;
         $this->uses = array();
 
         $tokens = token_get_all($code);
 
         foreach ($tokens as $index => $token) {
-            if (!is_array($token)) {
-                // found end of namespace declaration
-                if (';' == $token && $this->readingNamespace) {
-                    $this->currentNamespace = trim($this->currentNamespace);
-                    $this->readingNamespace = false;
-                }
-                // found end of use statement
-                if (';' == $token && $this->readingUse) {
-                    $this->storeUse();
-                    $this->currentUse = '';
-                    $this->readingUse = false;
-                }
-                // found break in use statement
-                if (',' == $token && $this->readingUse) {
-                    $this->currentNamespace = trim($this->currentNamespace);
-                    $this->storeUse();
-                    $this->currentUse = '';
-                }
-            }
-            elseif ($this->readingUse) {
-                $this->currentUse .= $token[1];
-            }
-            elseif (T_STRING == $token[0]) {
-                // string is likey part of the namespace
-                if ($this->readingNamespace) {
-                    $this->currentNamespace .= $token[1];
-                }
-            }
-            elseif (T_NS_SEPARATOR == $token[0]) {
-                // string is likey part of the namespace
-                if ($this->readingNamespace) {
-                    $this->currentNamespace .= $token[1];
-                }
-            }
-            elseif (T_NAMESPACE == $token[0]) {
-                $this->readingNamespace = true;
-                $this->currentNamespace = '';
-                $this->uses = array();
-            }
-            elseif (T_USE == $token[0]) {
-                $this->readingUse = true;
-                $this->currentUse = '';
+
+            switch ($this->state) {
+                case self::STATE_READING_NAMESPACE:
+                    if (';' == $token) {
+                        $this->currentNamespace = trim($this->currentNamespace);
+                        $this->state = self::STATE_DEFAULT;
+                    }
+                    elseif (is_array($token)) {
+                        $this->currentNamespace .= $token[1];
+                    }
+                    break;
+                case self::STATE_READING_USE:
+                    if (';' == $token) {
+                        $this->storeCurrentUse();
+                        $this->state = self::STATE_DEFAULT;
+                    }
+                    if (',' == $token) {
+                        $this->storeCurrentUse();
+                    }
+                    elseif (is_array($token)) {
+                        $this->currentUse .= $token[1];
+                    }
+                    break;
+                default:
+                    if (is_array($token) && T_NAMESPACE == $token[0]) {
+                        $this->state = self::STATE_READING_NAMESPACE;
+                        $this->currentNamespace = '';
+                        $this->uses = array();
+                    }
+                    elseif (is_array($token) && T_USE == $token[0]) {
+                        $this->state = self::STATE_READING_USE;
+                        $this->currentUse = '';
+                    }
+
             }
         }
     }
@@ -100,7 +95,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
         return $typeAlias;
     }
 
-    private function storeUse()
+    private function storeCurrentUse()
     {
         if (preg_match('/\s*(.*)\s+as\s+(.*)\s*/', $this->currentUse, $matches)) {
             $this->uses[strtolower(trim($matches[2]))] = trim($matches[1]);
@@ -111,5 +106,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
         else {
             $this->uses[strtolower(trim($this->currentUse))] = trim($this->currentUse);
         }
+
+        $this->currentUse = '';
     }
 }
