@@ -106,7 +106,7 @@ class ConsoleFormatter extends BasicFormatter implements FatalPresenter
 
             $this->io->writeln("$failedOpen$failedCross Fatal error happened while executing the following $failedClosed");
             $this->io->writeln("$failedOpen    {$currentExample->getCurrentExample()} $failedClosed");
-            $this->io->writeln("$failedOpen    {$error['message']} $failedClosed");
+            $this->io->writeln("$failedOpen    {$error['message']} in {$error['file']} on line {$error['line']} $failedClosed");
         }
     }
 }
