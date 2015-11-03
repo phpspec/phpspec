@@ -96,7 +96,7 @@ class ConsoleFormatter extends BasicFormatter implements FatalPresenter
     public function displayFatal(CurrentExampleTracker $currentExample, $error)
     {
         if (
-            (!empty($error) && $currentExample->getCurrentExample()) ||
+            (null !== $error && $currentExample->getCurrentExample()) ||
             (is_null($currentExample->getCurrentExample()) && defined('HHVM_VERSION'))
         ) {
             ini_set('display_errors', 0);

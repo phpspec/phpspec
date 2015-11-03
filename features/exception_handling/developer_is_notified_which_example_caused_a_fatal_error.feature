@@ -82,4 +82,4 @@ Feature: Developer is notified of which scenario caused a fatal error
 
       """
     When I run phpspec with the "junit" formatter
-    Then I should see "Fatal error: Call to undefined function"
+    Then I should see "Call to undefined function"
