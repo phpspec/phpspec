@@ -80,4 +80,26 @@ class TokenizedNamespaceResolverSpec extends ObjectBehavior
         $this->resolve('Foo')->shouldReturn('Baz\Foo');
         $this->resolve('Biz')->shouldReturn('Boz\Bar');
     }
+
+    function it_resolves_types_with_partial_use_statements()
+    {
+        $this->analyse('
+        <?php
+
+        namespace Baz;
+
+        use Boz\Bar;
+
+        class Foo
+        {
+            function it_something(Bar\Baz $boz)
+            {
+            }
+        }
+
+        ');
+
+        $this->resolve('Foo')->shouldReturn('Baz\Foo');
+        $this->resolve('Bar\Baz')->shouldReturn('Boz\Bar\Baz');
+    }
 }
