@@ -45,12 +45,7 @@ final class Shutdown
     private function getFatalError()
     {
         $error = error_get_last();
-        $fatal = false;
 
-        if (!empty($error)) {
-            $fatal = (bool) (E_ERROR & $error['type']);
-        }
-
-        return $fatal ? $error : null;
+        return (null !== $error) && (bool) (E_ERROR & $error['type']) ? $error : null;
     }
 }

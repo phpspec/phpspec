@@ -16,17 +16,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     private $process;
 
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
-
     private $lastOutput;
-
-    public function __construct()
-    {
-        $this->filesystem = new Filesystem();
-    }
 
     /**
      * @Given I have started describing the :class class
@@ -115,14 +105,6 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     public function iShouldSee($message)
     {
         expect(strpos($this->lastOutput, $message))->toNotBe(false);
-    }
-
-    /**
-     * @Given the isolated file :file contains:
-     */
-    public function theFileContains($file, PyStringNode $contents)
-    {
-        $this->filesystem->dumpFile($file, (string)$contents);
     }
 
 }
