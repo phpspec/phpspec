@@ -1,3 +1,13 @@
+Upcoming
+========
+
+* Handle and present fatal errors
+
+2.4.0-alpha2 / 2015-11-03
+=========================
+
+* Fixed edge case with partial use statements
+
 2.4.0-alpha1 / 2015-11-01
 =========================
 
