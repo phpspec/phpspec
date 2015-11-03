@@ -35,6 +35,8 @@ use PhpSpec\Runner;
 use PhpSpec\Wrapper;
 use PhpSpec\Config\OptionsConfig;
 use Symfony\Component\Process\PhpExecutableFinder;
+use PhpSpec\Message\CurrentExampleTracker;
+use PhpSpec\Process\Shutdown\Shutdown;
 
 class ContainerAssembler
 {
@@ -57,6 +59,8 @@ class ContainerAssembler
         $this->setupRerunner($container);
         $this->setupMatchers($container);
         $this->setupSubscribers($container);
+        $this->setupCurrentExample($container);
+        $this->setupShutdown($container);
     }
 
     private function setupIO(ServiceContainer $container)
@@ -194,6 +198,11 @@ class ContainerAssembler
         $container->setShared('event_dispatcher.listeners.bootstrap', function (ServiceContainer $c) {
             return new Listener\BootstrapListener(
                 $c->get('console.io')
+            );
+        });
+        $container->setShared('event_dispatcher.listeners.current_example_listener', function (ServiceContainer $c) {
+            return new Listener\CurrentExampleListener(
+                $c->get('current_example')
             );
         });
     }
@@ -675,6 +684,26 @@ class ContainerAssembler
                 array($c->get('event_dispatcher'), 'addSubscriber'),
                 $c->getByPrefix('event_dispatcher.listeners')
             );
+        });
+    }
+
+    /**
+     * @param ServiceContainer $container
+     */
+    private function setupCurrentExample(ServiceContainer $container)
+    {
+        $container->setShared('current_example', function () {
+            return new CurrentExampleTracker();
+        });
+    }
+
+  /**
+   * @param ServiceContainer $container
+   */
+    private function setupShutdown(ServiceContainer $container)
+    {
+        $container->setShared('process.shutdown', function() {
+            return new Shutdown();
         });
     }
 }

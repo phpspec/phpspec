@@ -19,8 +19,9 @@ use PhpSpec\Exception\Example\PendingException;
 use PhpSpec\Exception\Example\SkippingException;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
 use PhpSpec\Listener\StatisticsCollector;
+use PhpSpec\Message\CurrentExampleTracker;
 
-class ConsoleFormatter extends BasicFormatter
+class ConsoleFormatter extends BasicFormatter implements FatalPresenter
 {
     /**
      * @var IO
@@ -90,5 +91,27 @@ class ConsoleFormatter extends BasicFormatter
         ));
         $this->io->writeln(sprintf('<%s>%s</%s>', $type, lcfirst($message), $type), 6);
         $this->io->writeln();
+    }
+
+    public function displayFatal(CurrentExampleTracker $currentExample, $error)
+    {
+        if (!empty($error) && $currentExample->getCurrentExample()) {
+            ini_set('display_errors', 0);
+            $failedOpen = ($this->io->isDecorated()) ? '<failed>' : '';
+            $failedClosed = ($this->io->isDecorated()) ? '</failed>' : '';
+            $failedCross = ($this->io->isDecorated()) ? '✘' : '';
+
+            $this->io->writeln("$failedOpen$failedCross Fatal error happened while executing the following $failedClosed");
+            $this->io->writeln("$failedOpen    {$currentExample->getCurrentExample()} $failedClosed");
+            $this->io->writeln("$failedOpen    {$error['message']} $failedClosed");
+        } elseif (!empty($error) && is_null($currentExample->getCurrentExample()) && defined('HHVM_VERSION')) {
+            ini_set('display_errors', 0);
+            $failedOpen = ($this->io->isDecorated()) ? '<comment>' : '';
+            $failedClosed = ($this->io->isDecorated()) ? '</comment>' : '';
+            $failedCross = ($this->io->isDecorated()) ? '✘' : '';
+
+            $this->io->writeln("$failedOpen$failedCross Fatal error happened while executing the following $failedClosed");
+            $this->io->writeln("$failedOpen    {$error['message']} $failedClosed");
+        }
     }
 }

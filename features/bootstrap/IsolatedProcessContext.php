@@ -3,6 +3,8 @@
 use Behat\Behat\Context\Context;
 use Behat\Behat\Context\SnippetAcceptingContext;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Filesystem\Filesystem;
+use Behat\Gherkin\Node\PyStringNode;
 
 /**
  * Defines application features from the specific context.
@@ -13,6 +15,18 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      * @var Process
      */
     private $process;
+
+    /**
+     * @var Filesystem
+     */
+    private $filesystem;
+
+    private $lastOutput;
+
+    public function __construct()
+    {
+        $this->filesystem = new Filesystem();
+    }
 
     /**
      * @Given I have started describing the :class class
@@ -69,5 +83,37 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     public function iShouldSeeAnErrorAboutTheMissingAutoloader()
     {
         expect($this->process->getErrorOutput())->toMatch('/autoload/');
+    }
+
+    /**
+     * @When I run phpspec
+     */
+    public function iRunPhpspec()
+    {
+        $process = new Process(
+            $this->buildPhpSpecCmd() . ' run'
+        );
+        $process->run();
+        $this->lastOutput = $process->getOutput();
+    }
+
+    /**
+     * @When I run phpspec with the :formatter formatter
+     */
+    public function iRunPhpspecWithThe($formatter)
+    {
+        $process = new Process(
+            $this->buildPhpSpecCmd() . " --format=$formatter run"
+        );
+        $process->run();
+        $this->lastOutput = $process->getOutput();
+    }
+
+    /**
+     * @Then I should see :message
+     */
+    public function iShouldSee($message)
+    {
+        expect(strpos($this->lastOutput, $message))->toNotBe(false);
     }
 }
