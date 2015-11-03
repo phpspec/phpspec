@@ -5,7 +5,7 @@ Feature: Developer is shown a parse error
   So that I can know that I can handle pass errors
 
   Scenario: Spec attempts to call an undeclared function
-    Given the isolated file "spec/Message/Fatal/ParseSpec.php" contains:
+    Given the spec file "spec/Message/Fatal/ParseSpec.php" contains:
       """
       <?php
 
@@ -24,7 +24,7 @@ Feature: Developer is shown a parse error
       }
 
       """
-    And the isolated file "src/Message/Fatal/Parse.php" contains:
+    And the class file "src/Message/Fatal/Parse.php" contains:
       """
       <?php
 

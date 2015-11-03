@@ -116,13 +116,4 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     {
         expect(strpos($this->lastOutput, $message))->toNotBe(false);
     }
-
-    /**
-     * @Given the isolated file :file contains:
-     */
-    public function theFileContains($file, PyStringNode $contents)
-    {
-        $this->filesystem->dumpFile($file, (string)$contents);
-    }
-
 }
