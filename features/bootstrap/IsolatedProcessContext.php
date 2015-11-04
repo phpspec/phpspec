@@ -96,7 +96,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
             $this->buildPhpSpecCmd() . " --format=$formatter run"
         );
         $process->run();
-        $this->lastOutput = $process->getOutput();
+        $this->lastOutput = $process->getErrorOutput();
     }
 
     /**

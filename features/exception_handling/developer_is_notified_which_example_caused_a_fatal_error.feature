@@ -4,7 +4,7 @@ Feature: Developer is notified of which scenario caused a fatal error
   So that I can better trace where my changes caused a fatal error
 
   @isolated
-  Scenario: Spec attempts to call an undeclared function
+  Scenario: Spec attempts to call an undeclared function and outputs to stdout
     Given the spec file "spec/Message/Fatal/FatalSpec.php" contains:
       """
       <?php
@@ -45,7 +45,7 @@ Feature: Developer is notified of which scenario caused a fatal error
     And  I should see "it fatals when calling an undeclared function"
 
   @isolated
-  Scenario: Fatal error writer message not shown when formatter does not support it
+  Scenario: Fatal error writer message not shown when formatter does not support it outputs to stderr
     Given the spec file "spec/Message/Fatal/Fatal2Spec.php" contains:
       """
       <?php
