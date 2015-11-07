@@ -81,7 +81,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     public function iRunPhpspec()
     {
         $process = new Process(
-            $this->buildPhpSpecCmd() . ' run'
+            $this->buildPhpSpecCmd() . ' run 2>&1'
         );
         $process->run();
         $this->lastOutput = $process->getOutput();
@@ -93,7 +93,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     public function iRunPhpspecWithThe($formatter)
     {
         $process = new Process(
-            $this->buildPhpSpecCmd() . " --format=$formatter run"
+            $this->buildPhpSpecCmd() . " --format=$formatter run 1>&2"
         );
         $process->run();
         $this->lastOutput = $process->getErrorOutput();
