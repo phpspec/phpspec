@@ -42,7 +42,7 @@ Feature: Developer is shown a parse error
     When I run phpspec with the "junit" formatter
     Then I should see "syntax error"
 
-  @isolated @php-version @hhvm
+  @isolated @hhvm
   Scenario: Spec attempts to call an undeclared function and outputs to stdout on hhvm
     Given the spec file "spec/Message/Fatal/ParseSpec.php" contains:
     """
@@ -81,7 +81,7 @@ Feature: Developer is shown a parse error
     When I run phpspec with the "junit" formatter on hhvm
     Then I should see "syntax error"
 
-  @isolated @php-version @hhvm
+  @isolated @hhvm
   Scenario: Spec attempts to call an undeclared function and outputs to stdout on hhvm
     Given the spec file "spec/Message/Fatal/ParseSpec.php" contains:
     """

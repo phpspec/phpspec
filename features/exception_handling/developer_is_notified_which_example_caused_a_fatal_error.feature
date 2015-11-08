@@ -84,7 +84,7 @@ Feature: Developer is notified of which scenario caused a fatal error
     When I run phpspec with the "junit" formatter
     Then I should see "Call to undefined function"
 
-  @isolated @php-version @hhvm
+  @isolated @hhvm
   Scenario: Fatal error writer message not shown, when formatter does not support it, outputs to stdout for hhvm.
     Given the spec file "spec/Message/Fatal/Fatal2Spec.php" contains:
     """
