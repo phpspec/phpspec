@@ -83,11 +83,11 @@ Feature: Developer is notified of which scenario caused a fatal error
       """
     When I run phpspec with the "junit" formatter
     Then I should see "Call to undefined function"
-
-  @isolated @hhvm
+  
+	@isolated @php-version @hhvm
   Scenario: Fatal error writer message not shown, when formatter does not support it, outputs to stdout for hhvm.
-    Given the spec file "spec/Message/Fatal/Fatal2Spec.php" contains:
-    """
+    Given the spec file "spec/Message/Fatal/FatalHhvmSpec.php" contains:
+      """
       <?php
 
       namespace spec\Message\Fatal;
@@ -95,7 +95,7 @@ Feature: Developer is notified of which scenario caused a fatal error
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
 
-      class Fatal2Spec extends ObjectBehavior
+      class FatalHhvmSpec extends ObjectBehavior
       {
           function it_fatals_when_calling_an_undeclared_function()
           {
@@ -104,13 +104,13 @@ Feature: Developer is notified of which scenario caused a fatal error
       }
 
       """
-    And the class file "src/Message/Fatal/Fatal2.php" contains:
-    """
+    And the class file "src/Message/Fatal/FatalHhvm.php" contains:
+      """
       <?php
 
       namespace Message\Fatal;
 
-      class Fatal2
+      class FatalHhvm
       {
           public function __construct($param)
           {
