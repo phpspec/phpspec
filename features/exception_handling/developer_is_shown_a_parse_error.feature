@@ -1,9 +1,9 @@
-@isolated @php-version @php5.3 @php5.4 @php5.5 @php5.6 @php7
 Feature: Developer is shown a parse error
   As a Developer
   I want to know if a parse error was thrown
   So that I can know that I can handle pass errors
 
+  @isolated @php-version @php5.3 @php5.4 @php5.5 @php5.6 @php7
   Scenario: Spec attempts to call an undeclared function and outputs to stderr
     Given the spec file "spec/Message/Fatal/ParseSpec.php" contains:
       """
@@ -39,7 +39,7 @@ Feature: Developer is shown a parse error
       }
 
       """
-    When I run phpspec with the "progress" formatter
+    When I run phpspec with the "junit" formatter
     Then I should see "syntax error"
 
   @isolated @php-version @hhvm
