@@ -39,7 +39,7 @@ Feature: Developer is shown a parse error
       }
 
       """
-    When I run phpspec
+    When I run phpspec with the "progress" formatter
     Then I should see "syntax error"
 
   @isolated @php-version @hhvm
