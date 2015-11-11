@@ -24,6 +24,7 @@ final class Shutdown
 
     public function registerShutdown()
     {
+        ini_set('display_errors', "stderr");
         error_reporting(error_reporting() & ~E_ERROR);
         register_shutdown_function(array($this, 'runShutdown'));
     }
