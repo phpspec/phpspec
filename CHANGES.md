@@ -1,5 +1,5 @@
-Upcoming
-========
+2.4.0-beta / 2015-11-13
+=======================
 
 * Handle and present fatal errors
 
