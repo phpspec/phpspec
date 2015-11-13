@@ -96,7 +96,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
             $this->buildPhpSpecCmd() . " --format=$formatter run"
         );
         $process->run();
-        $this->lastOutput = defined('HHVM_VERSION') ? $process->getOutput() : $process->getErrorOutput();
+        $this->lastOutput = $process->getErrorOutput();
 
     }
 

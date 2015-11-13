@@ -99,7 +99,7 @@ class ConsoleFormatter extends BasicFormatter implements FatalPresenter
             (null !== $error && $currentExample->getCurrentExample()) ||
             (is_null($currentExample->getCurrentExample()) && defined('HHVM_VERSION'))
         ) {
-            ini_set('display_errors', "stdout");
+            ini_set('display_errors', "stderr");
             $failedOpen = ($this->io->isDecorated()) ? '<failed>' : '';
             $failedClosed = ($this->io->isDecorated()) ? '</failed>' : '';
             $failedCross = ($this->io->isDecorated()) ? '✘' : '';
