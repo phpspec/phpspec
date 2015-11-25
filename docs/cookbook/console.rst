@@ -103,6 +103,17 @@ specs with:
 
     $ php bin/phpspec run --stop-on-failure
 
+TDD work cycle can be described using three steps: Fail, Pass, Refactor.
+If you create a failing spec for a new method, the next step will be to make it pass.
+The easiest way to do that is to always return expected value from the method.
+**phpspec** can do that for you.
+
+You can opt to automatically fake return values with:
+
+.. code-block:: bash
+
+    $ php bin/phpspec run --fake
+
 You can choose the output format with the format option e.g.:
 
 .. code-block:: bash
