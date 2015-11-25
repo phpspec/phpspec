@@ -105,7 +105,7 @@ specs with:
 
 TDD work cycle can be described using three steps: Fail, Pass, Refactor.
 If you create a failing spec for a new method, the next step will be to make it pass.
-The easiest way to achieve it, is to always return expected value from the method.
+The easiest way to achieve it, is to simply hard code the method, so it returns the expected value.
 
 **phpspec** can do that for you.
 
