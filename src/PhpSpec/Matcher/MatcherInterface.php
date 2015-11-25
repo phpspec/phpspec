@@ -50,4 +50,12 @@ interface MatcherInterface
      * @return integer
      */
     public function getPriority();
+
+    /**
+     * Returns an array of matcher names this implementation can provide
+     *
+     * @return array
+     */
+    public function providesMatchers();
+
 }
