@@ -182,7 +182,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
      */
     private function functionShouldBeRead(array $tokens, $index)
     {
-        return strpos($this->getFunctionName($tokens, $index), 'it_') === 0;
+        return preg_match('/^(it|its)[^a-zA-Z]/', $this->getFunctionName($tokens, $index));
     }
 
     /**

@@ -70,6 +70,31 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
         ');
     }
 
+    function it_removes_typehints_from_single_argument_methods_that_starts_with_its()
+    {
+        $this->rewrite('
+        <?php
+
+        class Foo
+        {
+            public function its_do_bar(\Foo\Bar $bar)
+            {
+            }
+        }
+
+        ')->shouldReturn('
+        <?php
+
+        class Foo
+        {
+            public function its_do_bar($bar)
+            {
+            }
+        }
+
+        ');
+    }
+
     function it_removes_typehints_for_multiple_arguments_in_methods()
     {
         $this->rewrite('
