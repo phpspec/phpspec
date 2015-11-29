@@ -27,7 +27,7 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
         class Foo
         {
-            public function bar()
+            public function it_do_bar()
             {
             }
         }
@@ -37,7 +37,7 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
         class Foo
         {
-            public function bar()
+            public function it_do_bar()
             {
             }
         }
@@ -52,7 +52,7 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
         class Foo
         {
-            public function bar(\Foo\Bar $bar)
+            public function it_do_bar(\Foo\Bar $bar)
             {
             }
         }
@@ -62,7 +62,32 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
         class Foo
         {
-            public function bar($bar)
+            public function it_do_bar($bar)
+            {
+            }
+        }
+
+        ');
+    }
+
+    function it_removes_typehints_from_single_argument_methods_that_starts_with_its()
+    {
+        $this->rewrite('
+        <?php
+
+        class Foo
+        {
+            public function its_do_bar(\Foo\Bar $bar)
+            {
+            }
+        }
+
+        ')->shouldReturn('
+        <?php
+
+        class Foo
+        {
+            public function its_do_bar($bar)
             {
             }
         }
@@ -77,7 +102,7 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
         class Foo
         {
-            public function bar(Bar $bar, Baz $baz)
+            public function it_do_bar(Bar $bar, Baz $baz)
             {
             }
         }
@@ -87,8 +112,41 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
         class Foo
         {
-            public function bar($bar,$baz)
+            public function it_do_bar($bar,$baz)
             {
+            }
+        }
+
+        ');
+    }
+
+    function it_do_not_removes_type_hints_of_a_function_that_do_not_starts_with_it()
+    {
+        $this->rewrite('
+        <?php
+
+        class Foo
+        {
+            public function it_do_bar(Bar $bar, Baz $baz)
+            {
+                new class($argument) implements InterfaceName
+                {
+                    public function foo(Foo $foo) {}
+                };
+            }
+        }
+
+        ')->shouldReturn('
+        <?php
+
+        class Foo
+        {
+            public function it_do_bar($bar,$baz)
+            {
+                new class($argument) implements InterfaceName
+                {
+                    public function foo(Foo $foo) {}
+                };
             }
         }
 
@@ -108,15 +166,15 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
         class Foo
         {
-            public function bar(Foo\Bar $bar, Baz $baz)
+            public function it_do_bar(Foo\Bar $bar, Baz $baz)
             {
             }
         }
 
         ');
 
-        $typeHintIndex->add('Foo', 'bar', '$bar', 'Foo\Bar')->shouldHaveBeenCalled();
-        $typeHintIndex->add('Foo', 'bar', '$baz', 'Baz')->shouldHaveBeenCalled();
+        $typeHintIndex->add('Foo', 'it_do_bar', '$bar', 'Foo\Bar')->shouldHaveBeenCalled();
+        $typeHintIndex->add('Foo', 'it_do_bar', '$baz', 'Baz')->shouldHaveBeenCalled();
     }
 
     function it_indexes_invalid_typehints(
@@ -134,14 +192,14 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
         class Foo
         {
-            public function bar(int $bar)
+            public function it_do_bar(int $bar)
             {
             }
         }
 
         ');
 
-        $typeHintIndex->addInvalid('Foo', 'bar', '$bar', $e)->shouldHaveBeenCalled();
-        $typeHintIndex->add('Foo', 'bar', '$bar', Argument::any())->shouldNotHaveBeenCalled();
+        $typeHintIndex->addInvalid('Foo', 'it_do_bar', '$bar', $e)->shouldHaveBeenCalled();
+        $typeHintIndex->add('Foo', 'it_do_bar', '$bar', Argument::any())->shouldNotHaveBeenCalled();
     }
 }

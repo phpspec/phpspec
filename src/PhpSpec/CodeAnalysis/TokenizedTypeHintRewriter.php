@@ -102,7 +102,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                     if ($this->tokenHasType($token, T_STRING) && !$this->currentClass) {
                         $this->currentClass = $token[1];
                     }
-                    elseif($this->tokenHasType($token, T_FUNCTION)) {
+                    elseif($this->tokenHasType($token, T_FUNCTION) && $this->functionShouldBeRead($tokens, $index)) {
                         $this->state = self::STATE_READING_FUNCTION;
                     }
                     break;
@@ -170,5 +170,39 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     private function tokenHasType($token, $type)
     {
         return is_array($token) && $type == $token[0];
+    }
+
+    /**
+     * Returns true if the function should be read with the rewriter.
+     *
+     * @param array $tokens
+     * @param int $index
+     *
+     * @return bool
+     */
+    private function functionShouldBeRead(array $tokens, $index)
+    {
+        return preg_match('/^(it|its)[^a-zA-Z]/', $this->getFunctionName($tokens, $index));
+    }
+
+    /**
+     * Return name of the function at this index.
+     *
+     * @param array $tokens
+     * @param int $index
+     *
+     * @return string|null
+     */
+    private function getFunctionName(array $tokens, $index)
+    {
+        for (; $index < count($tokens); $index++) {
+            $token = $tokens[$index];
+
+            if ($this->tokenHasType($token, T_STRING)) {
+                return $token[1];
+            }
+        }
+
+        return null;
     }
 }
