@@ -1,3 +1,8 @@
+2.4.0 / 2015/11/28
+==================
+
+* Improved docblock for beConstructedThrough()
+
 2.4.0-rc1 / 2015/11/20
 ======================
 
