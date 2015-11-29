@@ -29,7 +29,7 @@ use ArrayAccess;
  * be matched against expectations.
  *
  * @method void beConstructedWith(...$arguments)
- * @method void beConstructedThrough($factoryMethod, array $constructorArguments)
+ * @method void beConstructedThrough($factoryMethod, array $constructorArguments = array())
  * @method void beAnInstanceOf($class)
  * @method void shouldHaveType($type)
  * @method Subject\Expectation\DuringCall shouldThrow($exception = null)
