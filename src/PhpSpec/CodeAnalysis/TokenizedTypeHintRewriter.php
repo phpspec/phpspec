@@ -84,7 +84,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
             switch ($this->state) {
                 case self::STATE_READING_ARGUMENTS:
                     if (')' == $token) {
-                        $this->state = self::STATE_READING_FUNCTION_BODY;
+                        $this->state = self::STATE_READING_CLASS;
                     }
                     elseif ($this->tokenHasType($token, T_VARIABLE)) {
                         $this->extractTypehints($tokens, $index, $token);
@@ -99,7 +99,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                     }
                     break;
                 case self::STATE_READING_CLASS:
-                    if('{' == $token) {
+                    if ('{' == $token && $this->currentFunction) {
                         $this->state = self::STATE_READING_FUNCTION_BODY;
                         $this->currentBodyLevel = 1;
                     }
@@ -117,13 +117,10 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                     elseif ('}' == $token) {
                         $this->currentBodyLevel--;
 
-                        if ($this->currentBodyLevel == 0) {
+                        if ($this->currentBodyLevel === 0) {
                             $this->currentFunction = '';
+                            $this->state = self::STATE_READING_CLASS;
                         }
-                    }
-
-                    if (!$this->currentFunction) {
-                        $this->state = self::STATE_READING_CLASS;
                     }
 
                     break;
