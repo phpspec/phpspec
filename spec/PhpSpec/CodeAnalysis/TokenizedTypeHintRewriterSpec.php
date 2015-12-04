@@ -70,7 +70,7 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
         ');
     }
 
-    function it_do_not_remove_typehints_in_methods()
+    function it_does_not_remove_typehints_in_methods()
     {
         $this->rewrite('
         <?php
