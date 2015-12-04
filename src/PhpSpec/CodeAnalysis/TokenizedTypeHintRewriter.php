@@ -21,11 +21,13 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     const STATE_READING_CLASS = 1;
     const STATE_READING_FUNCTION = 2;
     const STATE_READING_ARGUMENTS = 3;
+    const STATE_READING_FUNCTION_BODY = 4;
 
     private $state = self::STATE_DEFAULT;
 
     private $currentClass;
     private $currentFunction;
+    private $currentBodyLevel;
 
     private $typehintTokens = array(
         T_WHITESPACE, T_STRING, T_NS_SEPARATOR
@@ -79,12 +81,10 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     private function stripTypeHints($tokens)
     {
         foreach ($tokens as $index => $token) {
-
             switch ($this->state) {
                 case self::STATE_READING_ARGUMENTS:
                     if (')' == $token) {
                         $this->state = self::STATE_READING_CLASS;
-                        $this->currentFunction = '';
                     }
                     elseif ($this->tokenHasType($token, T_VARIABLE)) {
                         $this->extractTypehints($tokens, $index, $token);
@@ -99,12 +99,30 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                     }
                     break;
                 case self::STATE_READING_CLASS:
-                    if ($this->tokenHasType($token, T_STRING) && !$this->currentClass) {
+                    if ('{' == $token && $this->currentFunction) {
+                        $this->state = self::STATE_READING_FUNCTION_BODY;
+                        $this->currentBodyLevel = 1;
+                    }
+                    elseif ($this->tokenHasType($token, T_STRING) && !$this->currentClass) {
                         $this->currentClass = $token[1];
                     }
                     elseif($this->tokenHasType($token, T_FUNCTION)) {
                         $this->state = self::STATE_READING_FUNCTION;
                     }
+                    break;
+                case self::STATE_READING_FUNCTION_BODY:
+                    if ('{' == $token) {
+                        $this->currentBodyLevel++;
+                    }
+                    elseif ('}' == $token) {
+                        $this->currentBodyLevel--;
+
+                        if ($this->currentBodyLevel === 0) {
+                            $this->currentFunction = '';
+                            $this->state = self::STATE_READING_CLASS;
+                        }
+                    }
+
                     break;
                 default:
                     if ($this->tokenHasType($token, T_CLASS)) {
