@@ -44,7 +44,7 @@ class PassthruReRunner extends PhpExecutableReRunner
         return (php_sapi_name() == 'cli')
             && $this->getExecutablePath()
             && function_exists('passthru')
-            && strtolower(substr(PHP_OS, 0, 3)) != "win";
+            && (stripos(PHP_OS, "win") !== 0);
     }
 
     public function reRunSuite()
