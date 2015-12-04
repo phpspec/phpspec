@@ -1,3 +1,8 @@
+Upcoming
+========
+
+* Correctly handle nested class definitions 
+
 2.4.0 / 2015/11/28
 ==================
 
