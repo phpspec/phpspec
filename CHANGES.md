@@ -1,7 +1,9 @@
-Upcoming
-========
+2.4.1 / 2015/12/14
+==================
 
 * Correctly handle nested class definitions 
+* Fixed rerunning on Windows platform
+* Fixed issue with fatal errors being suppressed
 
 2.4.0 / 2015/11/28
 ==================
