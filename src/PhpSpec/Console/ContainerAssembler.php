@@ -669,6 +669,12 @@ class ContainerAssembler
                 $c->get('process.executioncontext')
             );
         });
+        $container->setShared('process.rerunner.platformspecific.windowspassthru', function (ServiceContainer $c) {
+            return ReRunner\WindowsPassthruReRunner::withExecutionContext(
+                $c->get('process.phpexecutablefinder'),
+                $c->get('process.executioncontext')
+            );
+        });
         $container->setShared('process.phpexecutablefinder', function () {
             return new PhpExecutableFinder();
         });

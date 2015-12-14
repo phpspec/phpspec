@@ -16,7 +16,7 @@ namespace PhpSpec\Process\ReRunner;
 use PhpSpec\Process\Context\ExecutionContextInterface;
 use Symfony\Component\Process\PhpExecutableFinder;
 
-class PassthruReRunner extends PhpExecutableReRunner
+class WindowsPassthruReRunner extends PhpExecutableReRunner
 {
     /**
      * @var ExecutionContextInterface
@@ -44,13 +44,14 @@ class PassthruReRunner extends PhpExecutableReRunner
         return (php_sapi_name() == 'cli')
             && $this->getExecutablePath()
             && function_exists('passthru')
-            && (stripos(PHP_OS, "win") !== 0);
+            && (stripos(PHP_OS, "win") === 0);
     }
 
     public function reRunSuite()
     {
         $args = $_SERVER['argv'];
-        $command = $this->buildArgString() . escapeshellcmd($this->getExecutablePath()).' '.join(' ', array_map('escapeshellarg', $args));
+        $command = $this->buildArgString() . '"' . $this->getExecutablePath().'" '.join(' ', array_map('escapeshellarg', $args));
+
         passthru($command, $exitCode);
         exit($exitCode);
     }
@@ -60,7 +61,7 @@ class PassthruReRunner extends PhpExecutableReRunner
         $argstring = '';
 
         foreach ($this->executionContext->asEnv() as $key => $value) {
-            $argstring .= $key . '=' . escapeshellarg($value) . ' ';
+            $argstring .= 'SET ' . $key . '=' . $value . ' && ';
         }
 
         return $argstring;
