@@ -222,22 +222,13 @@ final class ClassFileAnalyser
     }
 
     /**
-     * @param mixed $token
-     * @return bool
-     */
-    function tokenIsClass($token)
-    {
-        return is_array($token) && $token[0] === T_CLASS;
-    }
-
-    /**
      * @param array $tokens
      * @return int
      */
     private function findIndexOfClassEnd(array $tokens)
     {
         $classTokenIndex = key(array_filter($tokens, function($token) {
-            return $this->tokenIsClass($token);
+            return is_array($token) && $token[0] === T_CLASS;
         }));
         return $this->findIndexOfMethodOrClassEnd($tokens, $classTokenIndex) - 1;
     }
