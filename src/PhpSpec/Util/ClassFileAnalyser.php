@@ -227,9 +227,10 @@ final class ClassFileAnalyser
      */
     private function findIndexOfClassEnd(array $tokens)
     {
-        $classTokenIndex = key(array_filter($tokens, function($token) {
+        $classTokens = array_filter($tokens, function ($token) {
             return is_array($token) && $token[0] === T_CLASS;
-        }));
+        });
+        $classTokenIndex = key($classTokens);
         return $this->findIndexOfMethodOrClassEnd($tokens, $classTokenIndex) - 1;
     }
 
@@ -243,7 +244,6 @@ final class ClassFileAnalyser
         for ($i = $index - 1; $i > 0; $i--) {
             if ($tokens[$i] == "}") {
                 return $i + 1;
-                continue;
             }
         }
         throw new NoMethodFoundInClass();
