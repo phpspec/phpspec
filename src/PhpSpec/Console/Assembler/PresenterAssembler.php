@@ -174,7 +174,7 @@ class PresenterAssembler
     private function assembleHtmlPresenter(ServiceContainer $container)
     {
         $container->setShared('formatter.presenter.html', function (ServiceContainer $c) {
-            new SimplePresenter(
+            return new SimplePresenter(
                 $c->get('formatter.presenter.value_presenter'),
                 new SimpleExceptionPresenter(
                     $c->get('formatter.presenter.differ'),
