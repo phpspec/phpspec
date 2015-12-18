@@ -21,6 +21,7 @@ use PhpSpec\Formatter\Presenter\Exception\CallArgumentsPresenter;
 use PhpSpec\Formatter\Presenter\Exception\GenericPhpSpecExceptionPresenter;
 use PhpSpec\Formatter\Presenter\Exception\HtmlPhpSpecExceptionPresenter;
 use PhpSpec\Formatter\Presenter\Exception\SimpleExceptionPresenter;
+use PhpSpec\Formatter\Presenter\Exception\SimpleExceptionElementPresenter;
 use PhpSpec\Formatter\Presenter\Exception\TaggingExceptionElementPresenter;
 use PhpSpec\Formatter\Presenter\SimplePresenter;
 use PhpSpec\Formatter\Presenter\TaggedPresenter;
