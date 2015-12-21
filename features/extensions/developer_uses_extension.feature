@@ -14,10 +14,10 @@ Feature: Developer uses extension
 
     namespace Example1\PhpSpec\MatcherExtension;
 
-    use PhpSpec\Extension\ExtensionInterface;
+    use PhpSpec\Extension as PhpSpecExtension;
     use PhpSpec\ServiceContainer;
 
-    class Extension implements ExtensionInterface
+    class Extension implements PhpSpecExtension
     {
         /**
          * @param ServiceContainer $container

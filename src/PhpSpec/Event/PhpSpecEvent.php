@@ -11,18 +11,11 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Extension;
-
-use PhpSpec\ServiceContainer;
+namespace PhpSpec\Event;
 
 /**
- * Interface ExtensionInterface is used for PhpSpec extensions to interface
- * with PhpSpec through the service container
+ * Interface PhpSpecEvent is used for all events in PhpSpec
  */
-interface ExtensionInterface
+interface PhpSpecEvent
 {
-    /**
-     * @param ServiceContainer $container
-     */
-    public function load(ServiceContainer $container);
 }

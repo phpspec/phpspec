@@ -11,9 +11,16 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Process\Shutdown;
+namespace PhpSpec;
 
-interface ShutdownActionInterface
+/**
+ * Interface Extension is used for PhpSpec extensions to interface with PhpSpec
+ * through the service container
+ */
+interface Extension
 {
-    public function runAction($error);
+    /**
+     * @param ServiceContainer $container
+     */
+    public function load(ServiceContainer $container);
 }

@@ -19,7 +19,7 @@ class CallbackMatcherSpec extends ObjectBehavior
 
     function it_is_a_matcher()
     {
-        $this->shouldBeAnInstanceOf('PhpSpec\Matcher\MatcherInterface');
+        $this->shouldBeAnInstanceOf('PhpSpec\Matcher\Matcher');
     }
 
     function it_supports_same_alias_it_was_constructed_with()

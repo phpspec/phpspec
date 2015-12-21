@@ -14,7 +14,7 @@
 namespace PhpSpec\Listener;
 
 use PhpSpec\CodeGenerator\GeneratorManager;
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\MethodCallEvent;
 use PhpSpec\Event\SuiteEvent;
@@ -26,7 +26,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class MethodReturnedNullListener implements EventSubscriberInterface
 {
     /**
-     * @var IO
+     * @var ConsoleIO
      */
     private $io;
 
@@ -40,7 +40,7 @@ class MethodReturnedNullListener implements EventSubscriberInterface
      */
     private $lastMethodCallEvent = null;
     /**
-     * @var ResourceManager
+     * @var PrioritizedResourceManager
      */
     private $resources;
     /**
@@ -53,12 +53,13 @@ class MethodReturnedNullListener implements EventSubscriberInterface
     private $methodAnalyser;
 
     /**
-     * @param IO               $io
-     * @param ResourceManager  $resources
+     * @param ConsoleIO $io
+     * @param ResourceManager $resources
      * @param GeneratorManager $generator
+     * @param MethodAnalyser $methodAnalyser
      */
     public function __construct(
-        IO $io,
+        ConsoleIO $io,
         ResourceManager $resources,
         GeneratorManager $generator,
         MethodAnalyser $methodAnalyser

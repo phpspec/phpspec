@@ -19,7 +19,7 @@ use Symfony\Component\EventDispatcher\Event;
 /**
  * Class MethodCallEvent holds information about method call events
  */
-class MethodCallEvent extends Event implements EventInterface
+class MethodCallEvent extends Event implements PhpSpecEvent
 {
     /**
      * @var ExampleNode

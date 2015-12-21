@@ -11,7 +11,7 @@ use Symfony\Component\Console\Helper\DialogHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class IOSpec extends ObjectBehavior
+class ConsoleIOSpec extends ObjectBehavior
 {
     function let(InputInterface $input, OutputInterface $output, OptionsConfig $config, Prompter $prompter)
     {
@@ -27,7 +27,7 @@ class IOSpec extends ObjectBehavior
 
     function it_has_io_interface()
     {
-        $this->shouldHaveType('PhpSpec\IO\IOInterface');
+        $this->shouldHaveType('PhpSpec\IO\IO');
     }
 
     function it_is_code_generation_ready_if_no_input_config_says_otherwise()

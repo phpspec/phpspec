@@ -14,7 +14,7 @@
 namespace PhpSpec\Loader\Node;
 
 use PhpSpec\Loader\Suite;
-use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\Locator\Resource;
 use ReflectionClass;
 
 class SpecificationNode implements \Countable
@@ -28,7 +28,7 @@ class SpecificationNode implements \Countable
      */
     private $class;
     /**
-     * @var ResourceInterface
+     * @var Resource
      */
     private $resource;
     /**
@@ -43,9 +43,9 @@ class SpecificationNode implements \Countable
     /**
      * @param string            $title
      * @param ReflectionClass   $class
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      */
-    public function __construct($title, ReflectionClass $class, ResourceInterface $resource)
+    public function __construct($title, ReflectionClass $class, Resource $resource)
     {
         $this->title    = $title;
         $this->class    = $class;
@@ -69,7 +69,7 @@ class SpecificationNode implements \Countable
     }
 
     /**
-     * @return ResourceInterface
+     * @return Resource
      */
     public function getResource()
     {

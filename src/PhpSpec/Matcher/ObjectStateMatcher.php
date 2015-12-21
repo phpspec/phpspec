@@ -17,7 +17,7 @@ use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
-class ObjectStateMatcher implements MatcherInterface
+class ObjectStateMatcher implements Matcher
 {
     /**
      * @var string

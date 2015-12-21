@@ -11,13 +11,16 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec;
+namespace PhpSpec\Wrapper\Subject\Expectation;
 
-/**
- * This is the basic type for specification classes. ObjectBehaviour will
- * implement this interface. If a spec class does not implement this interface
- * PhpSpec runner will refuse to run the spec class.
- */
-interface SpecificationInterface
+interface Expectation
 {
+    /**
+     * @param string $alias
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
+     * @return mixed
+     */
+    public function match($alias, $subject, array $arguments = array());
 }

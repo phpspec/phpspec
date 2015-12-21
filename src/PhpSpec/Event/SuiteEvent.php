@@ -19,7 +19,7 @@ use Symfony\Component\EventDispatcher\Event;
 /**
  * Class SuiteEvent holds information about the suite event
  */
-class SuiteEvent extends Event implements EventInterface
+class SuiteEvent extends Event implements PhpSpecEvent
 {
     /**
      * @var Suite

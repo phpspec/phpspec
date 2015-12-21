@@ -6,7 +6,7 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 use PhpSpec\Formatter\Presenter\Presenter;
-use PhpSpec\Matcher\MatcherInterface;
+use PhpSpec\Matcher\Matcher;
 
 class MatcherManagerSpec extends ObjectBehavior
 {
@@ -15,7 +15,7 @@ class MatcherManagerSpec extends ObjectBehavior
         $this->beConstructedWith($presenter);
     }
 
-    function it_searches_in_registered_matchers(MatcherInterface $matcher)
+    function it_searches_in_registered_matchers(Matcher $matcher)
     {
         $matcher->getPriority()->willReturn(0);
         $matcher->supports('startWith', 'hello, world', array('hello'))->willReturn(true);
@@ -25,7 +25,7 @@ class MatcherManagerSpec extends ObjectBehavior
     }
 
     function it_searches_matchers_by_their_priority(
-        MatcherInterface $matcher1, MatcherInterface $matcher2
+        Matcher $matcher1, Matcher $matcher2
     ) {
         $matcher1->getPriority()->willReturn(2);
         $matcher1->supports('startWith', 'hello, world', array('hello'))->willReturn(true);

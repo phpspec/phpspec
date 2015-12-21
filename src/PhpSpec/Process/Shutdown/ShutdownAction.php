@@ -11,12 +11,9 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Process\Prerequisites;
+namespace PhpSpec\Process\Shutdown;
 
-interface SuitePrerequisitesInterface
+interface ShutdownAction
 {
-    /**
-     * @throws PrerequisiteFailedException
-     */
-    public function guardPrerequisites();
+    public function runAction($error);
 }

@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Util;
 
-final class ReservedWordsMethodNameChecker implements NameCheckerInterface
+final class ReservedWordsMethodNameChecker implements NameChecker
 {
     private $reservedWords = array(
         '__halt_compiler',

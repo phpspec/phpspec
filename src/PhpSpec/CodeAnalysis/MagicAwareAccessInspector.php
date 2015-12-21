@@ -13,17 +13,17 @@
 
 namespace PhpSpec\CodeAnalysis;
 
-final class MagicAwareAccessInspector implements AccessInspectorInterface
+final class MagicAwareAccessInspector implements AccessInspector
 {
     /**
-     * @var AccessInspectorInterface
+     * @var AccessInspector
      */
     private $accessInspector;
 
     /**
-     * @param AccessInspectorInterface $accessInspector
+     * @param AccessInspector $accessInspector
      */
-    public function __construct(AccessInspectorInterface $accessInspector)
+    public function __construct(AccessInspector $accessInspector)
     {
         $this->accessInspector = $accessInspector;
     }

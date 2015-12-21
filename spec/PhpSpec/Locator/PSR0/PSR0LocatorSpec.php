@@ -22,7 +22,7 @@ class PSR0LocatorSpec extends ObjectBehavior
 
     function it_is_a_locator()
     {
-        $this->shouldBeAnInstanceOf('PhpSpec\Locator\ResourceLocatorInterface');
+        $this->shouldBeAnInstanceOf('PhpSpec\Locator\ResourceLocator');
     }
 
     function its_priority_is_zero()

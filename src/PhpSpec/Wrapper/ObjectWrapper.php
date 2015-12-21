@@ -13,10 +13,10 @@
 
 namespace PhpSpec\Wrapper;
 
-interface SubjectContainerInterface
+interface ObjectWrapper
 {
     /**
-     * @param Subject $subject
+     * @return mixed
      */
-    public function setSpecificationSubject(Subject $subject);
+    public function getWrappedObject();
 }

@@ -7,7 +7,7 @@ use Prophecy\Argument;
 
 use Symfony\Component\Console\Input\InputInterface;
 
-class IOSpec extends ObjectBehavior
+class HtmlIOSpec extends ObjectBehavior
 {
     function let(InputInterface $input)
     {

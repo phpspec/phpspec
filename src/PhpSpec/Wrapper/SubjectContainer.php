@@ -11,23 +11,12 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Formatter\Presenter\Differ;
+namespace PhpSpec\Wrapper;
 
-interface EngineInterface
+interface SubjectContainer
 {
     /**
-     * @param mixed $expected
-     * @param mixed $actual
-     *
-     * @return bool
+     * @param Subject $subject
      */
-    public function supports($expected, $actual);
-
-    /**
-     * @param mixed $expected
-     * @param mixed $actual
-     *
-     * @return string
-     */
-    public function compare($expected, $actual);
+    public function setSpecificationSubject(Subject $subject);
 }

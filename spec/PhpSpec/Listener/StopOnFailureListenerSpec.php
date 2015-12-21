@@ -6,11 +6,11 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 
 class StopOnFailureListenerSpec extends ObjectBehavior
 {
-    function let(IO $io)
+    function let(ConsoleIO $io)
     {
         $io->isStopOnFailureEnabled()->willReturn(false);
         $this->beConstructedWith($io);

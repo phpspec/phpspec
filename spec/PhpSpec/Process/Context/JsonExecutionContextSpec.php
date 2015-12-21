@@ -14,7 +14,7 @@ class JsonExecutionContextSpec extends ObjectBehavior
 
     function it_is_an_execution_context()
     {
-        $this->shouldHaveType('PhpSpec\Process\Context\ExecutionContextInterface');
+        $this->shouldHaveType('PhpSpec\Process\Context\ExecutionContext');
     }
 
     function it_contains_no_generated_classes_when_created()

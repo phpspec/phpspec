@@ -20,7 +20,7 @@ use PhpSpec\Wrapper\Subject\ExpectationFactory;
 use PhpSpec\Util\Instantiator;
 use ArrayAccess;
 
-class Subject implements ArrayAccess, WrapperInterface
+class Subject implements ArrayAccess, ObjectWrapper
 {
     /**
      * @var mixed
