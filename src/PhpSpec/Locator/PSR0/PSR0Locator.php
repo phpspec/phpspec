@@ -359,17 +359,45 @@ class PSR0Locator implements ResourceLocatorInterface
         $sepr = DIRECTORY_SEPARATOR;
         $replacedQuery = str_replace(array('\\', '/'), $sepr, $query);
 
-        if (false !== strpos($query, '\\')) {
+        if ($this->queryContainsQualifiedClassName($query)) {
             $namespacedQuery = null === $this->psr4Prefix ?
                 $replacedQuery :
                 substr($replacedQuery, strlen($this->srcNamespace));
 
             $path = $this->fullSpecPath . $namespacedQuery . 'Spec.php';
+
             if ($this->filesystem->pathExists($path)) {
                 return $path;
             }
         }
 
         return rtrim(realpath($replacedQuery), $sepr);
+    }
+
+    /**
+     * @param $query
+     * @return bool
+     */
+    private function queryContainsQualifiedClassName($query)
+    {
+        return $this->queryContainsBlackslashes($query) && !$this->isWindowsPath($query);
+    }
+
+    /**
+     * @param $query
+     * @return bool
+     */
+    private function queryContainsBlackslashes($query)
+    {
+        return false !== strpos($query, '\\');
+    }
+
+    /**
+     * @param $query
+     * @return bool
+     */
+    private function isWindowsPath($query)
+    {
+        return preg_match('/^\w:/', $query);
     }
 }
