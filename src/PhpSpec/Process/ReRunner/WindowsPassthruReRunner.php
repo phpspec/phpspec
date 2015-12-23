@@ -50,7 +50,7 @@ class WindowsPassthruReRunner extends PhpExecutableReRunner
     public function reRunSuite()
     {
         $args = $_SERVER['argv'];
-        $command = $this->buildArgString() . '"' . $this->getExecutablePath().'" '.join(' ', array_map('escapeshellarg', $args));
+        $command = $this->buildArgString() . escapeshellarg($this->getExecutablePath()) . ' ' . join(' ', array_map('escapeshellarg', $args));
 
         passthru($command, $exitCode);
         exit($exitCode);
