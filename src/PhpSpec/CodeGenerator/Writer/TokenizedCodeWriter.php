@@ -103,7 +103,7 @@ final class TokenizedCodeWriter implements CodeWriter
     private function insertStringBeforeLine($target, $toInsert, $line)
     {
         $line--;
-        $lines = explode(PHP_EOL, $target);
+        $lines = explode("\n", $target);
         $lastLines = array_slice($lines, $line);
         array_unshift($lastLines, trim($toInsert, "\n\r") . PHP_EOL);
         array_splice($lines, $line, count($lines), $lastLines);
