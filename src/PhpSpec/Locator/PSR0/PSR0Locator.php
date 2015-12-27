@@ -167,6 +167,14 @@ class PSR0Locator implements ResourceLocatorInterface
     }
 
     /**
+     * @return boolean
+     */
+    public function isPSR4()
+    {
+        return $this->psr4Prefix !== null;
+    }
+
+    /**
      * @param string $query
      *
      * @return ResourceInterface[]

@@ -11,6 +11,8 @@ class PSR0ResourceSpec extends ObjectBehavior
     function let(Locator $locator)
     {
         $this->beConstructedWith(array('usr', 'lib', 'config'), $locator);
+
+        $locator->isPSR4()->willReturn(false);
     }
 
     function it_uses_last_segment_as_name()
@@ -91,5 +93,17 @@ class PSR0ResourceSpec extends ObjectBehavior
         $locator->getSpecNamespace()->willReturn('spec\Local\\');
 
         $this->getSpecClassname()->shouldReturn('spec\Local\usr\lib\configSpec');
+    }
+
+    function it_does_not_split_underscores_when_locator_has_psr4_prefix($locator)
+    {
+        $this->beConstructedWith(array('usr', 'lib', 'config_test'), $locator);
+
+        $locator->getFullSrcPath()->willReturn('/local/');
+        $locator->getFullSpecPath()->willReturn('/local/spec/');
+        $locator->isPSR4()->willReturn(true);
+
+        $this->getSrcFilename()->shouldReturn('/local/usr/lib/config_test.php');
+        $this->getSpecFilename()->shouldReturn('/local/spec/usr/lib/config_testSpec.php');
     }
 }

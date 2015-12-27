@@ -57,6 +57,10 @@ class PSR0Resource implements ResourceInterface
      */
     public function getSrcFilename()
     {
+        if ($this->locator->isPSR4()) {
+            return $this->locator->getFullSrcPath().implode(DIRECTORY_SEPARATOR, $this->parts).'.php';
+        }
+
         $nsParts   = $this->parts;
         $classname = array_pop($nsParts);
         $parts     = array_merge($nsParts, explode('_', $classname));
@@ -88,6 +92,11 @@ class PSR0Resource implements ResourceInterface
      */
     public function getSpecFilename()
     {
+        if ($this->locator->isPSR4()) {
+            return $this->locator->getFullSpecPath().
+                implode(DIRECTORY_SEPARATOR, $this->parts).'Spec.php';
+        }
+
         $nsParts   = $this->parts;
         $classname = array_pop($nsParts);
         $parts     = array_merge($nsParts, explode('_', $classname));
