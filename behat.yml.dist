@@ -2,13 +2,13 @@ default:
   suites:
     application:
       contexts: [ ApplicationContext, FilesystemContext ]
-      filters: { tags: ~@isolated }
+      filters: { tags: "~@isolated" }
     isolated:
       contexts: [ IsolatedProcessContext, FilesystemContext ]
-      filters: { tags: @isolated }
+      filters: { tags: "@isolated" }
     smoke:
       contexts: [ IsolatedProcessContext, FilesystemContext ]
-      filters: { tags: @smoke && ~@isolated }
+      filters: { tags: "@smoke && ~@isolated" }
 
 no-smoke:
   suites:
