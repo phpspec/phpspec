@@ -1,9 +1,10 @@
-2.4.1 / 2015/12/14
-==================
+Upcoming
+========
 
 * Correctly handle nested class definitions 
 * Fixed rerunning on Windows platform
 * Fixed issue with fatal errors being suppressed
+* Handle underscores correctly when using PSR-4
 
 2.4.0 / 2015/11/28
 ==================
