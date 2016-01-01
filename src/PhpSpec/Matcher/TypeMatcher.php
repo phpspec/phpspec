@@ -96,4 +96,12 @@ class TypeMatcher extends BasicMatcher
             $this->presenter->presentValue($subject)
         ));
     }
+
+    /***
+     * @return array
+     */
+    public function providesMatchers()
+    {
+        return self::$keywords;
+    }
 }
