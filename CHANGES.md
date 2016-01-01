@@ -1,5 +1,5 @@
-Upcoming
-========
+2.4.1 / 2016/01/01
+==================
 
 * Correctly handle nested class definitions 
 * Correctly handle anonymous functions in code generation
