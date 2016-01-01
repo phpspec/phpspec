@@ -3,6 +3,7 @@ Upcoming
 
 * Correctly handle nested class definitions 
 * Fixed rerunning on Windows platform
+* Fixed code generation on Windows platform
 * Fixed issue with fatal errors being suppressed
 * Handle underscores correctly when using PSR-4
 * Fixed HTML formatter
