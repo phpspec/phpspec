@@ -21,6 +21,7 @@ use PhpSpec\Formatter\Presenter\Exception\CallArgumentsPresenter;
 use PhpSpec\Formatter\Presenter\Exception\GenericPhpSpecExceptionPresenter;
 use PhpSpec\Formatter\Presenter\Exception\HtmlPhpSpecExceptionPresenter;
 use PhpSpec\Formatter\Presenter\Exception\SimpleExceptionPresenter;
+use PhpSpec\Formatter\Presenter\Exception\SimpleExceptionElementPresenter;
 use PhpSpec\Formatter\Presenter\Exception\TaggingExceptionElementPresenter;
 use PhpSpec\Formatter\Presenter\SimplePresenter;
 use PhpSpec\Formatter\Presenter\TaggedPresenter;
@@ -173,7 +174,7 @@ class PresenterAssembler
     private function assembleHtmlPresenter(ServiceContainer $container)
     {
         $container->setShared('formatter.presenter.html', function (ServiceContainer $c) {
-            new SimplePresenter(
+            return new SimplePresenter(
                 $c->get('formatter.presenter.value_presenter'),
                 new SimpleExceptionPresenter(
                     $c->get('formatter.presenter.differ'),
