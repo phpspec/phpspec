@@ -2,6 +2,7 @@ Upcoming
 ========
 
 * Correctly handle nested class definitions 
+* Correctly handle anonymous functions in code generation
 * Fixed rerunning on Windows platform
 * Fixed code generation on Windows platform
 * Fixed issue with fatal errors being suppressed
