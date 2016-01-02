@@ -14,7 +14,6 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 use Prophecy\Doubler\DoubleInterface;
 use Prophecy\Exception\Doubler\MethodNotFoundException;
-use Symfony\Component\DependencyInjection\Exception\RuntimeException;
 
 class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
 {
@@ -72,7 +71,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
 
     function it_does_not_prompt_when_wrong_exception_is_thrown(IO $io, ExampleEvent $event, SuiteEvent $suiteEvent)
     {
-        $event->getException()->willReturn(new RuntimeException());
+        $event->getException()->willReturn(new \RuntimeException());
 
         $this->afterExample($event);
         $this->afterSuite($suiteEvent);
