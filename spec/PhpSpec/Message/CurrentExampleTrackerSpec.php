@@ -15,14 +15,12 @@ class CurrentExampleTrackerSpec extends ObjectBehavior
 
     function it_should_set_a_message()
     {
-        $currentExample = new CurrentExampleTracker();
-        $currentExample->setCurrentExample('test');
-        expect($currentExample->getCurrentExample())->toBe('test');
+        $this->setCurrentExample('test');
+        $this->getCurrentExample()->shouldBe('test');
     }
 
     function it_should_be_null_on_construction()
     {
-        $currentExample = new CurrentExampleTracker();
-        expect($currentExample->getCurrentExample())->toBe(null);
+        $this->getCurrentExample()->shouldBe(null);
     }
 }
