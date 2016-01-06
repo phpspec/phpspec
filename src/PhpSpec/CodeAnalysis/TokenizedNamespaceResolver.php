@@ -73,7 +73,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
                         $this->currentUseGroup = trim($this->currentUse);
                         $this->state = self::STATE_READING_USE_GROUP;
                     }
-                    elseif ('' == $token) {
+                    elseif (',' == $token) {
                         $this->storeCurrentUse();
                     }
                     elseif (is_array($token)) {
@@ -114,6 +114,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
         if ($this->currentNamespace) {
             return $this->currentNamespace . '\\' . $typeAlias;
         }
+        
         return $typeAlias;
     }
 
@@ -128,6 +129,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
         else {
             $this->uses[strtolower(trim($this->currentUse))] = trim($this->currentUse);
         }
+
         $this->currentUse = '';
     }
 }
