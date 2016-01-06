@@ -1,4 +1,4 @@
-@php7
+@php-version @php7
 Feature: Developer generates a collaborator
   As a Developer
   I want to automate creating collaborators
