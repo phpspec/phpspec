@@ -4,7 +4,7 @@ Feature: Developer generates a collaborator
   In order to avoid disrupting my workflow
 
   Scenario: Being prompted but not generating a collaborator
-    Given the spec file "spec/CodeGeneration/CollaboratorExample1/MarkdownSpec.php" contains:
+    Given the spec file "spec/CodeGeneration/CollaboratorExample1/Markdown1Spec.php" contains:
       """
       <?php
 
@@ -14,7 +14,7 @@ Feature: Developer generates a collaborator
       use Prophecy\Argument;
       use CodeGeneration\CollaboratorExample1\{Tokenizer, Parser};
 
-      class MarkdownSpec extends ObjectBehavior
+      class Markdown1Spec extends ObjectBehavior
       {
           function it_interacts_with_a_collaborator(Parser $parser)
           {
@@ -23,13 +23,13 @@ Feature: Developer generates a collaborator
       }
 
       """
-    And the class file "src/CodeGeneration/CollaboratorExample1/Markdown.php" contains:
+    And the class file "src/CodeGeneration/CollaboratorExample1/Markdown1.php" contains:
       """
       <?php
 
       namespace CodeGeneration\CollaboratorExample1;
 
-      class Markdown
+      class Markdown1
       {
       }
 
@@ -43,7 +43,7 @@ Feature: Developer generates a collaborator
       """
 
   Scenario: Asking for interface to be generated for second collaborator in group
-    Given the spec file "spec/CodeGeneration/CollaboratorExample2/MarkdownSpec.php" contains:
+    Given the spec file "spec/CodeGeneration/CollaboratorExample2/Markdown1Spec.php" contains:
       """
       <?php
 
@@ -53,7 +53,7 @@ Feature: Developer generates a collaborator
       use Prophecy\Argument;
       use CodeGeneration\CollaboratorExample2\{Tokenizer, Parser};
 
-      class MarkdownSpec extends ObjectBehavior
+      class Markdown1Spec extends ObjectBehavior
       {
           function it_interacts_with_a_collaborator(Parser $parser)
           {
@@ -62,13 +62,13 @@ Feature: Developer generates a collaborator
       }
 
       """
-    And the class file "src/CodeGeneration/CollaboratorExample2/Markdown.php" contains:
+    And the class file "src/CodeGeneration/CollaboratorExample2/Markdown1.php" contains:
       """
       <?php
 
       namespace CodeGeneration\CollaboratorExample2;
 
-      class Markdown
+      class Markdown1
       {
       }
 
@@ -87,7 +87,7 @@ Feature: Developer generates a collaborator
       """
 
   Scenario: Asking for interface to be generated for the first collaborator in group
-    Given the spec file "spec/CodeGeneration/CollaboratorExample3/MarkdownSpec.php" contains:
+    Given the spec file "spec/CodeGeneration/CollaboratorExample3/Markdown1Spec.php" contains:
       """
       <?php
 
@@ -97,7 +97,7 @@ Feature: Developer generates a collaborator
       use Prophecy\Argument;
       use CodeGeneration\CollaboratorExample3\{Tokenizer, Parser};
 
-      class MarkdownSpec extends ObjectBehavior
+      class Markdown1Spec extends ObjectBehavior
       {
           function it_interacts_with_a_collaborator(Tokenizer $tokenizer)
           {
@@ -106,13 +106,13 @@ Feature: Developer generates a collaborator
       }
 
       """
-    And the class file "src/CodeGeneration/CollaboratorExample3/Markdown.php" contains:
+    And the class file "src/CodeGeneration/CollaboratorExample3/Markdown1.php" contains:
       """
       <?php
 
       namespace CodeGeneration\CollaboratorExample3;
 
-      class Markdown
+      class Markdown1
       {
       }
       """

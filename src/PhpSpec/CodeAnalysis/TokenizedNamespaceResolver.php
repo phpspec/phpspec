@@ -114,7 +114,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
         if ($this->currentNamespace) {
             return $this->currentNamespace . '\\' . $typeAlias;
         }
-        
+
         return $typeAlias;
     }
 
