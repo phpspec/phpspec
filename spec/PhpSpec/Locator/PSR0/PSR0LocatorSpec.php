@@ -326,7 +326,7 @@ class PSR0LocatorSpec extends ObjectBehavior
         $fs->getFileContents($filePath)->willReturn('no class definition');
         $file->getRealPath()->willReturn($filePath);
 
-        $exception = new \RuntimeException('Spec file does not contains any class definition.');
+        $exception = new \RuntimeException(sprintf('Spec file "%s" does not contains any class definition.', $filePath));
 
         $this->shouldThrow($exception)->duringFindResources($this->srcPath);
     }
