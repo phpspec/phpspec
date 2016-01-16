@@ -1,3 +1,8 @@
+Upcoming
+========
+
+* Support grouped Use statements
+
 2.4.1 / 2016/01/01
 ==================
 
