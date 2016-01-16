@@ -18,10 +18,12 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
     const STATE_DEFAULT = 0;
     const STATE_READING_NAMESPACE = 1;
     const STATE_READING_USE = 2;
+    const STATE_READING_USE_GROUP = 3;
 
     private $state = self::STATE_DEFAULT;
 
     private $currentNamespace;
+    private $currentUseGroup;
     private $currentUse;
     private $uses = array();
 
@@ -32,6 +34,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
     {
         $this->state = self::STATE_DEFAULT;
         $this->currentUse = null;
+        $this->currentUseGroup = null;
         $this->uses = array();
 
         $tokens = token_get_all($code);
@@ -48,12 +51,29 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
                         $this->currentNamespace .= $token[1];
                     }
                     break;
+                case self::STATE_READING_USE_GROUP:
+                    if ('}' == $token) {
+                        $this->state = self::STATE_READING_USE;
+                        $this->currentUseGroup = null;
+                    }
+                    elseif (',' == $token) {
+                        $this->storeCurrentUse();
+                    }
+                    elseif (is_array($token)) {
+                        $this->currentUse = $this->currentUseGroup . trim($token[1]);
+                    }
+                    break;
+
                 case self::STATE_READING_USE:
                     if (';' == $token) {
                         $this->storeCurrentUse();
                         $this->state = self::STATE_DEFAULT;
                     }
-                    if (',' == $token) {
+                    if ('{' == $token) {
+                        $this->currentUseGroup = trim($this->currentUse);
+                        $this->state = self::STATE_READING_USE_GROUP;
+                    }
+                    elseif (',' == $token) {
                         $this->storeCurrentUse();
                     }
                     elseif (is_array($token)) {
