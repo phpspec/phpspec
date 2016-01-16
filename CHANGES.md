@@ -1,7 +1,8 @@
 Upcoming
 ========
 
-* Support grouped Use statements
+* Supports grouped Use statements
+* Shows path in error message when spec file doesn't contain a class
 
 2.4.1 / 2016/01/01
 ==================
