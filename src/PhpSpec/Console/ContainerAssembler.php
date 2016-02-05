@@ -360,6 +360,21 @@ class ContainerAssembler
                 }
 
                 $c->set(
+                    sprintf('locator.locators.%s_suitename', $name ),
+                    function () use( $name, $config ){
+                        return new Locator\Suite\SuiteLocator(
+                            $name,
+                            $config['namespace'],
+                            $config['spec_prefix'],
+                            $config['src_path'],
+                            $config['spec_path'],
+                            null,
+                            $config['psr4_prefix']
+                        );
+                    }
+                );
+
+                $c->set(
                     sprintf('locator.locators.%s_suite', $name),
                     function () use ($config) {
                         return new Locator\PSR0\PSR0Locator(
