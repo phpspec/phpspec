@@ -56,7 +56,6 @@ class SuiteLocator extends PSR0Locator implements ResourceLocatorInterface
 
      public function findResources($query)
      {
-         var_dump( "Finding Resources for $query" );
          return parent::getAllResources();
      }
 }
