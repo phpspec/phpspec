@@ -14,48 +14,47 @@
 namespace PhpSpec\Locator\Suite;
 
 use PhpSpec\Locator\PSR0\PSR0Locator;
-use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Locator\ResourceLocatorInterface;
 use PhpSpec\Util\Filesystem;
-use InvalidArgumentException;
 
 class SuiteLocator extends PSR0Locator implements ResourceLocatorInterface
 {
-    private $suiteName;
+	private $suiteName;
 
-    /**
-     * @param string     $srcNamespace
-     * @param string     $specNamespacePrefix
-     * @param string     $srcPath
-     * @param string     $specPath
-     * @param Filesystem $filesystem
-     * @param string     $psr4Prefix
-     */
-    public function __construct(
-        $name = '',
-        $srcNamespace = '',
-        $specNamespacePrefix = 'spec',
-        $srcPath = 'src',
-        $specPath = '.',
-        Filesystem $filesystem = null,
-        $psr4Prefix = null
-    ) {
-        $this->suiteName = $name;
-        parent::__construct( $srcNamespace, $specNamespacePrefix, $srcPath, $specPath, $filesystem, $psr4Prefix );
-    }
+	/**
+	 * @param string $srcNamespace
+	 * @param string $specNamespacePrefix
+	 * @param string $srcPath
+	 * @param string $specPath
+	 * @param Filesystem $filesystem
+	 * @param string $psr4Prefix
+	 */
+	public function __construct(
+		$name = '',
+		$srcNamespace = '',
+		$specNamespacePrefix = 'spec',
+		$srcPath = 'src',
+		$specPath = '.',
+		Filesystem $filesystem = null,
+		$psr4Prefix = null
+	)
+	{
+		$this->suiteName = $name;
+		parent::__construct( $srcNamespace, $specNamespacePrefix, $srcPath, $specPath, $filesystem, $psr4Prefix );
+	}
 
-    /**
-     * @param string $query
-     *
-     * @return bool
-     */
-    public function supportsQuery($query)
-    {
-        return $query == $this->suiteName;
-    }
+	/**
+	 * @param string $query
+	 *
+	 * @return bool
+	 */
+	public function supportsQuery( $query )
+	{
+		return $query == $this->suiteName;
+	}
 
-     public function findResources($query)
-     {
-         return parent::getAllResources();
-     }
+	public function findResources( $query )
+	{
+		return parent::getAllResources();
+	}
 }
