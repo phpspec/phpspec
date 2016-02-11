@@ -7,10 +7,6 @@ environment:
     matrix:
         - PHP_DOWNLOAD_FILE: php-5.6.14-nts-Win32-VC11-x86.zip
 
-matrix:
-    allow_failures:
-        - PHP_DOWNLOAD_FILE: php-5.6.14-nts-Win32-VC11-x86.zip
-
 skip_commits:
     message: /\[ci skip\]/
 
