@@ -26,6 +26,6 @@ class StringEngineSpec extends ObjectBehavior
 </code>
 DIFF;
 
-        $this->compare('string1', 'string2')->shouldReturn(str_replace("\n", PHP_EOL, $expected));
+        $this->compare('string1', 'string2')->shouldReturn($expected);
     }
 }
