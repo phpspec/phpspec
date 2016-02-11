@@ -87,11 +87,12 @@ final class TokenizedCodeWriter implements CodeWriter
         $lastLines = array_slice($lines, $line);
         $toInsert = trim($toInsert, "\n\r");
         if ($leadingNewline) {
-            $toInsert = PHP_EOL . $toInsert;
+            $toInsert = "\n" . $toInsert;
         }
         array_unshift($lastLines, $toInsert);
         array_splice($lines, $line, count($lines), $lastLines);
-        return implode(PHP_EOL, $lines);
+
+        return implode("\n", $lines);
     }
 
     /**
@@ -105,9 +106,10 @@ final class TokenizedCodeWriter implements CodeWriter
         $line--;
         $lines = explode("\n", $target);
         $lastLines = array_slice($lines, $line);
-        array_unshift($lastLines, trim($toInsert, "\n\r") . PHP_EOL);
+        array_unshift($lastLines, trim($toInsert, "\n\r") . "\n");
         array_splice($lines, $line, count($lines), $lastLines);
-        return implode(PHP_EOL, $lines);
+
+        return implode("\n", $lines);
     }
 
     /**
@@ -144,7 +146,8 @@ final class TokenizedCodeWriter implements CodeWriter
             if ($token === '{') {
                 $search = implode('', $searchPattern);
                 $position = strpos($class, $search) + strlen($search) - 1;
-                return substr_replace($class, PHP_EOL . $method . PHP_EOL, $position, 0);
+
+                return substr_replace($class, "\n" . $method . "\n", $position, 0);
             }
         }
     }
@@ -155,6 +158,6 @@ final class TokenizedCodeWriter implements CodeWriter
      */
     private function isWritePoint($token)
     {
-        return is_array($token) && ($token[1] === PHP_EOL || $token[0] === T_COMMENT);
+        return is_array($token) && ($token[1] === "\n" || $token[0] === T_COMMENT);
     }
 }
