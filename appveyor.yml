@@ -44,4 +44,4 @@ test_script:
     - cd c:\projects\phpspec
     - php bin\phpspec run --format=pretty
     - php vendor\phpunit\phpunit\phpunit --testdox
-    - php vendor\behat\behat\bin\behat --format=pretty --tags="~@php-version,@php5.4"
+    - php vendor\behat\behat\bin\behat --format=pretty --tags="~@php-version,@php5.4&&~@hhvm"
