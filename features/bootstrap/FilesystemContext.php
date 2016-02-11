@@ -7,6 +7,7 @@ use Behat\Gherkin\Node\TableNode;
 use Matcher\FileExistsMatcher;
 use Matcher\FileHasContentsMatcher;
 use PhpSpec\Matcher\MatchersProviderInterface;
+use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -51,7 +52,11 @@ class FilesystemContext implements Context, MatchersProviderInterface
      */
     public function removeWorkingDirectory()
     {
-        $this->filesystem->remove($this->workingDirectory);
+        try {
+            $this->filesystem->remove($this->workingDirectory);
+        } catch (IOException $e) {
+            //ignoring exception
+        }
     }
 
     /**
