@@ -180,4 +180,33 @@ class IOSpec extends ObjectBehavior
 
         $this->getBlockWidth()->shouldReturn(65);
     }
+
+    function it_writes_error_message(OutputInterface $output)
+    {
+        $message = 'Error message';
+        $output->writeln('<error>                                                            </error>')->shouldBeCalledTimes(2);
+        $output->writeln('<error>Error message                                               </error>')->shouldBeCalled();
+
+        $this->writeError($message);
+    }
+
+    function it_wraps_long_error_message(OutputInterface $output)
+    {
+        $message = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin maximus nulla eget libero rhoncus lacinia.';
+        $output->writeln('<error>                                                            </error>')->shouldBeCalledTimes(2);
+        $output->writeln('<error>Lorem ipsum dolor sit amet, consectetur adipiscing elit.    </error>')->shouldBeCalled();
+        $output->writeln('<error>Proin maximus nulla eget libero rhoncus lacinia.            </error>')->shouldBeCalled();
+
+        $this->writeError($message);
+    }
+
+    function it_indents_and_wraps_long_error_message(OutputInterface $output)
+    {
+        $message = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin maximus nulla eget libero rhoncus lacinia.';
+        $output->writeln('<error>                                                            </error>')->shouldBeCalledTimes(2);
+        $output->writeln('<error>  Lorem ipsum dolor sit amet, consectetur adipiscing elit.  </error>')->shouldBeCalled();
+        $output->writeln('<error>  Proin maximus nulla eget libero rhoncus lacinia.          </error>')->shouldBeCalled();
+
+        $this->writeError($message, 2);
+    }
 }

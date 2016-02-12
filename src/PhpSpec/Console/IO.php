@@ -342,4 +342,25 @@ class IO implements IOInterface
         }
         return $width;
     }
+
+    /**
+     * @param string $message
+     * @param int|null $indent
+     */
+    public function writeError($message, $indent = null)
+    {
+        $message = wordwrap($message, $this->getBlockWidth() - 4, "\n", true);
+
+        if (null !== $indent) {
+            $message = $this->indentText($message, $indent);
+        }
+
+        $this->output->writeln("<error>".str_repeat(" ", $this->getBlockWidth())."</error>");
+
+        foreach (explode("\n", $message) as $line) {
+            $this->output->writeln("<error>".str_pad($line, $this->getBlockWidth(), ' ')."</error>");
+        }
+
+        $this->output->writeln("<error>".str_repeat(" ", $this->getBlockWidth())."</error>");
+    }
 }

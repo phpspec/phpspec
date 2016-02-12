@@ -11,16 +11,22 @@ use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
+use PhpSpec\Util\VoterInterface;
 
 class MethodNotFoundListenerSpec extends ObjectBehavior
 {
-    function let(IO $io, ResourceManager $resourceManager, GeneratorManager $generatorManager,
-                 SuiteEvent $suiteEvent, ExampleEvent $exampleEvent)
-    {
+    function let(
+        IO $io,
+        ResourceManager $resourceManager,
+        GeneratorManager $generatorManager,
+        SuiteEvent $suiteEvent,
+        ExampleEvent $exampleEvent,
+        VoterInterface $nameChecker
+    ) {
         $io->writeln(Argument::any())->willReturn();
         $io->askConfirmation(Argument::any())->willReturn();
 
-        $this->beConstructedWith($io, $resourceManager, $generatorManager);
+        $this->beConstructedWith($io, $resourceManager, $generatorManager, $nameChecker);
     }
 
     function it_does_not_prompt_for_method_generation_if_no_exception_was_thrown($exampleEvent, $suiteEvent, $io)
@@ -44,10 +50,17 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         $io->askConfirmation(Argument::any())->shouldNotBeenCalled();
     }
 
-    function it_prompts_for_method_generation_if_methodnotfoundexception_was_thrown_and_input_is_interactive($exampleEvent, $suiteEvent, $io, MethodNotFoundException $exception)
-    {
+    function it_prompts_for_method_generation_if_methodnotfoundexception_was_thrown_and_input_is_interactive(
+        $exampleEvent,
+        $suiteEvent,
+        $io,
+        VoterInterface $nameChecker
+    ) {
+        $exception = new MethodNotFoundException('Error', new \stdClass(), 'bar');
+
         $exampleEvent->getException()->willReturn($exception);
         $io->isCodeGenerationEnabled()->willReturn(true);
+        $nameChecker->supports('bar')->willReturn(true);
 
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
@@ -64,5 +77,23 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         $this->afterSuite($suiteEvent);
 
         $io->askConfirmation(Argument::any())->shouldNotBeenCalled();
+    }
+
+    function it_writes_error_for_method_generation_if_methodnotfoundexception_was_thrown_and_method_name_is_wrong(
+        $exampleEvent,
+        $suiteEvent,
+        IO $io,
+        VoterInterface $nameChecker
+    ) {
+        $exception = new MethodNotFoundException('Error', new \stdClass(), 'throw');
+
+        $exampleEvent->getException()->willReturn($exception);
+        $io->isCodeGenerationEnabled()->willReturn(true);
+        $nameChecker->supports('throw')->willReturn(false);
+
+        $io->writeError('You cannot use restricted `throw` as a method name', 2)->shouldBeCalled();
+
+        $this->afterExample($exampleEvent);
+        $this->afterSuite($suiteEvent);
     }
 }

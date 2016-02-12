@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Listener;
 
+use PhpSpec\Util\VoterInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use PhpSpec\Console\IO;
 use PhpSpec\Locator\ResourceManagerInterface;
@@ -27,12 +28,28 @@ class MethodNotFoundListener implements EventSubscriberInterface
     private $resources;
     private $generator;
     private $methods = array();
+    private $wrongMethodNames = array();
+    /**
+     * @var VoterInterface
+     */
+    private $nameChecker;
 
-    public function __construct(IO $io, ResourceManagerInterface $resources, GeneratorManager $generator)
-    {
+    /**
+     * @param IO $io
+     * @param ResourceManagerInterface $resources
+     * @param GeneratorManager $generator
+     * @param VoterInterface $nameChecker
+     */
+    public function __construct(
+        IO $io,
+        ResourceManagerInterface $resources,
+        GeneratorManager $generator,
+        VoterInterface $nameChecker
+    ) {
         $this->io        = $io;
         $this->resources = $resources;
         $this->generator = $generator;
+        $this->nameChecker = $nameChecker;
     }
 
     public static function getSubscribedEvents()
@@ -54,12 +71,19 @@ class MethodNotFoundListener implements EventSubscriberInterface
         }
 
         $classname = get_class($exception->getSubject());
-        $this->methods[$classname .'::'.$exception->getMethodName()] = $exception->getArguments();
+        $methodName = $exception->getMethodName();
+        $this->methods[$classname .'::'.$methodName] = $exception->getArguments();
+        $this->checkIfMethodNameAllowed($methodName);
     }
 
     public function afterSuite(SuiteEvent $event)
     {
         if (!$this->io->isCodeGenerationEnabled()) {
+            return;
+        }
+
+        if (!empty($this->wrongMethodNames)) {
+            $this->writeErrorMessage();
             return;
         }
 
@@ -80,6 +104,21 @@ class MethodNotFoundListener implements EventSubscriberInterface
                 ));
                 $event->markAsWorthRerunning();
             }
+        }
+    }
+
+    private function checkIfMethodNameAllowed($methodName)
+    {
+        if (!$this->nameChecker->supports($methodName)) {
+            $this->wrongMethodNames[] = $methodName;
+        }
+    }
+
+    private function writeErrorMessage()
+    {
+        foreach ($this->wrongMethodNames as $methodName) {
+            $message = sprintf("You cannot use restricted `%s` as a method name", $methodName);
+            $this->io->writeError($message, 2);
         }
     }
 }

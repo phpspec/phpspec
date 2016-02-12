@@ -20,6 +20,7 @@ use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
 use PhpSpec\Console\Assembler\PresenterAssembler;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
+use PhpSpec\Util\PhpNameChecker;
 use SebastianBergmann\Exporter\Exporter;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
@@ -165,7 +166,8 @@ class ContainerAssembler
             return new Listener\MethodNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
-                $c->get('code_generator')
+                $c->get('code_generator'),
+                $c->get('util.php_name_checker')
             );
         });
         $container->setShared('event_dispatcher.listeners.stop_on_failure', function (ServiceContainer $c) {
@@ -194,6 +196,9 @@ class ContainerAssembler
         });
         $container->setShared('util.method_analyser', function () {
             return new MethodAnalyser();
+        });
+        $container->setShared('util.php_name_checker', function (ServiceContainer $c) {
+            return new PhpNameChecker();
         });
         $container->setShared('event_dispatcher.listeners.bootstrap', function (ServiceContainer $c) {
             return new Listener\BootstrapListener(
