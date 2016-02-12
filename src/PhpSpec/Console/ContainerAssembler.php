@@ -197,7 +197,7 @@ class ContainerAssembler
         $container->setShared('util.method_analyser', function () {
             return new MethodAnalyser();
         });
-        $container->setShared('util.php_name_checker', function (ServiceContainer $c) {
+        $container->setShared('util.php_name_checker', function () {
             return new PhpNameChecker();
         });
         $container->setShared('event_dispatcher.listeners.bootstrap', function (ServiceContainer $c) {
