@@ -18,7 +18,7 @@ tools:
       excluded-paths: [ spec/*, integration/* ]
 
 build_failure_conditions:
-    - 'issues.label("coding-style").exists'
+    - 'issues.label("coding-style").new.exists'
 
 filter:
   excluded_paths:

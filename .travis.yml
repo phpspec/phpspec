@@ -24,6 +24,7 @@ matrix:
 
 before_install:
   - composer selfupdate
+  - if [ "$DEPENDENCIES" == "low" ]; then composer config disable-tls true; fi;
 
 install:
   - export COMPOSER_ROOT_VERSION=dev-master
