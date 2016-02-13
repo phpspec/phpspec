@@ -28,10 +28,12 @@ class ThrowMatcher implements MatcherInterface
      * @var array
      */
     private static $ignoredProperties = array('file', 'line', 'string', 'trace', 'previous');
+
     /**
      * @var Unwrapper
      */
     private $unwrapper;
+
     /**
      * @var PresenterInterface
      */
@@ -43,9 +45,9 @@ class ThrowMatcher implements MatcherInterface
     private $factory;
 
     /**
-     * @param Unwrapper          $unwrapper
-     * @param PresenterInterface $presenter
-     * @param ReflectionFactory  $factory
+     * @param Unwrapper              $unwrapper
+     * @param PresenterInterface     $presenter
+     * @param ReflectionFactory|null $factory
      */
     public function __construct(Unwrapper $unwrapper, PresenterInterface $presenter, ReflectionFactory $factory = null)
     {
@@ -91,114 +93,134 @@ class ThrowMatcher implements MatcherInterface
     }
 
     /**
-     * @param callable $callable
-     * @param array    $arguments
-     * @param null     $exception
+     * @param callable           $callable
+     * @param array              $arguments
+     * @param null|object|string $exception
      *
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \PhpSpec\Exception\Example\NotEqualException
      */
     public function verifyPositive($callable, array $arguments, $exception = null)
     {
+        $exceptionThrown = null;
+
         try {
             call_user_func_array($callable, $arguments);
         } catch (\Exception $e) {
-            if (null === $exception) {
-                return;
-            }
+            $exceptionThrown = $e;
+        } catch (\Throwable $e) {
+            $exceptionThrown = $e;
+        }
 
-            if (!$e instanceof $exception) {
-                throw new FailureException(sprintf(
+        if (!$exceptionThrown) {
+            throw new FailureException('Expected to get exception / throwable, none got.');
+        }
+
+        if (null === $exception) {
+            return;
+        }
+
+        if (!$exceptionThrown instanceof $exception) {
+            throw new FailureException(
+                sprintf(
                     'Expected exception of class %s, but got %s.',
                     $this->presenter->presentValue($exception),
-                    $this->presenter->presentValue($e)
-                ));
-            }
+                    $this->presenter->presentValue($exceptionThrown)
+                )
+            );
+        }
 
-            if (is_object($exception)) {
-                $exceptionRefl = $this->factory->create($exception);
-                foreach ($exceptionRefl->getProperties() as $property) {
-                    if (in_array($property->getName(), self::$ignoredProperties)) {
-                        continue;
-                    }
+        if (is_object($exception)) {
+            $exceptionRefl = $this->factory->create($exception);
+            foreach ($exceptionRefl->getProperties() as $property) {
+                if (in_array($property->getName(), self::$ignoredProperties, true)) {
+                    continue;
+                }
 
-                    $property->setAccessible(true);
-                    $expected = $property->getValue($exception);
-                    $actual   = $property->getValue($e);
+                $property->setAccessible(true);
+                $expected = $property->getValue($exception);
+                $actual = $property->getValue($exceptionThrown);
 
-                    if (null !== $expected && $actual !== $expected) {
-                        throw new NotEqualException(sprintf(
+                if (null !== $expected && $actual !== $expected) {
+                    throw new NotEqualException(
+                        sprintf(
                             'Expected exception `%s` to be %s, but it is %s.',
                             $property->getName(),
                             $this->presenter->presentValue($expected),
                             $this->presenter->presentValue($actual)
-                        ), $expected, $actual);
-                    }
+                        ), $expected, $actual
+                    );
                 }
             }
-
-            return;
         }
-
-        throw new FailureException('Expected to get exception, none got.');
     }
 
     /**
-     * @param callable    $callable
-     * @param array       $arguments
-     * @param string|null $exception
+     * @param callable           $callable
+     * @param array              $arguments
+     * @param string|null|object $exception
      *
      * @throws \PhpSpec\Exception\Example\FailureException
      */
     public function verifyNegative($callable, array $arguments, $exception = null)
     {
+        $exceptionThrown = null;
+
         try {
             call_user_func_array($callable, $arguments);
         } catch (\Exception $e) {
-            if (null === $exception) {
-                throw new FailureException(sprintf(
+            $exceptionThrown = $e;
+        } catch (\Throwable $e) {
+            $exceptionThrown = $e;
+        }
+
+        if ($exceptionThrown && null === $exception) {
+            throw new FailureException(
+                sprintf(
                     'Expected to not throw any exceptions, but got %s.',
-                    $this->presenter->presentValue($e)
-                ));
-            }
+                    $this->presenter->presentValue($exceptionThrown)
+                )
+            );
+        }
 
-            if ($e instanceof $exception) {
-                $invalidProperties = array();
-                if (is_object($exception)) {
-                    $exceptionRefl = $this->factory->create($exception);
-                    foreach ($exceptionRefl->getProperties() as $property) {
-                        if (in_array($property->getName(), self::$ignoredProperties)) {
-                            continue;
-                        }
+        if ($exceptionThrown && $exceptionThrown instanceof $exception) {
+            $invalidProperties = array();
+            if (is_object($exception)) {
+                $exceptionRefl = $this->factory->create($exception);
+                foreach ($exceptionRefl->getProperties() as $property) {
+                    if (in_array($property->getName(), self::$ignoredProperties, true)) {
+                        continue;
+                    }
 
-                        $property->setAccessible(true);
-                        $expected = $property->getValue($exception);
-                        $actual   = $property->getValue($e);
+                    $property->setAccessible(true);
+                    $expected = $property->getValue($exception);
+                    $actual = $property->getValue($exceptionThrown);
 
-                        if (null !== $expected && $actual === $expected) {
-                            $invalidProperties[] = sprintf(
-                                '  `%s`=%s',
-                                $property->getName(),
-                                $this->presenter->presentValue($expected)
-                            );
-                        }
+                    if (null !== $expected && $actual === $expected) {
+                        $invalidProperties[] = sprintf(
+                            '  `%s`=%s',
+                            $property->getName(),
+                            $this->presenter->presentValue($expected)
+                        );
                     }
                 }
+            }
 
-                $withProperties = '';
-                if (count($invalidProperties) > 0) {
-                    $withProperties = sprintf(
-                        ' with'.PHP_EOL.'%s,'.PHP_EOL,
-                        implode(",\n", $invalidProperties)
-                    );
-                }
+            $withProperties = '';
+            if (count($invalidProperties) > 0) {
+                $withProperties = sprintf(
+                    ' with'.PHP_EOL.'%s,'.PHP_EOL,
+                    implode(",\n", $invalidProperties)
+                );
+            }
 
-                throw new FailureException(sprintf(
+            throw new FailureException(
+                sprintf(
                     'Expected to not throw %s exception%s but got it.',
                     $this->presenter->presentValue($exception),
                     $withProperties
-                ));
-            }
+                )
+            );
         }
     }
 
@@ -226,7 +248,7 @@ class ThrowMatcher implements MatcherInterface
             function ($method, $arguments) use ($check, $subject, $exception, $unwrapper) {
                 $arguments = $unwrapper->unwrapAll($arguments);
 
-                $methodName  = $arguments[0];
+                $methodName = $arguments[0];
                 $arguments = isset($arguments[1]) ? $arguments[1] : array();
                 $callable = array($subject, $methodName);
 
@@ -253,7 +275,7 @@ class ThrowMatcher implements MatcherInterface
      */
     private function getException(array $arguments)
     {
-        if (0 == count($arguments)) {
+        if (0 === count($arguments)) {
             return null;
         }
 
@@ -261,15 +283,21 @@ class ThrowMatcher implements MatcherInterface
             return $arguments[0];
         }
 
-        if (is_object($arguments[0]) && $arguments[0] instanceof \Exception) {
-            return $arguments[0];
+        if (is_object($arguments[0])) {
+            if (class_exists('\Throwable') && $arguments[0] instanceof \Throwable) {
+                return $arguments[0];
+            } elseif ($arguments[0] instanceof \Exception) {
+                return $arguments[0];
+            }
         }
 
-        throw new MatcherException(sprintf(
-            "Wrong argument provided in throw matcher.\n".
-            "Fully qualified classname or exception instance expected,\n".
-            "Got %s.",
-            $this->presenter->presentValue($arguments[0])
-        ));
+        throw new MatcherException(
+            sprintf(
+                "Wrong argument provided in throw matcher.\n".
+                "Fully qualified classname or exception instance expected,\n".
+                "Got %s.",
+                $this->presenter->presentValue($arguments[0])
+            )
+        );
     }
 }

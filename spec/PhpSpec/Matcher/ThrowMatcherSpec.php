@@ -7,6 +7,7 @@ use Prophecy\Argument;
 
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Exception\Example\SkippingException;
 
 use ArrayObject;
 
@@ -32,8 +33,28 @@ class ThrowMatcherSpec extends ObjectBehavior
         $this->positiveMatch('throw', $arr, array('\Exception'))->during('ksort', array());
     }
 
+    function it_accepts_a_method_during_which_an_error_should_be_thrown(ArrayObject $arr)
+    {
+        if (!class_exists('\Error')) {
+            throw new SkippingException('The class Error, introduced in PHP 7, does not exist');
+        }
+
+        $arr->ksort()->willThrow('\Error');
+
+        $this->positiveMatch('throw', $arr, array('\Error'))->during('ksort', array());
+    }
+
     function it_accepts_a_method_during_which_an_exception_should_not_be_thrown(ArrayObject $arr)
     {
         $this->negativeMatch('throw', $arr, array('\Exception'))->during('ksort', array());
+    }
+
+    function it_accepts_a_method_during_which_an_error_should_not_be_thrown(ArrayObject $arr)
+    {
+        if (!class_exists('\Error')) {
+            throw new SkippingException('The class Error, introduced in PHP 7, does not exist');
+        }
+
+        $this->negativeMatch('throw', $arr, array('\Error'))->during('ksort', array());
     }
 }
