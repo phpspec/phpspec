@@ -13,7 +13,6 @@
 
 namespace PhpSpec\Console;
 
-use PhpSpec\Console\Prompter\Factory;
 use PhpSpec\Loader\StreamWrapper;
 use PhpSpec\Process\Context\JsonExecutionContext;
 use Symfony\Component\Console\Application as BaseApplication;
@@ -63,13 +62,7 @@ class Application extends BaseApplication
         $helperSet = $this->getHelperSet();
         $this->container->set('console.input', $input);
         $this->container->set('console.output', $output);
-        $this->container->setShared('console.prompter.factory', function ($c) use ($helperSet) {
-            return new Factory(
-                $c->get('console.input'),
-                $c->get('console.output'),
-                $helperSet
-            );
-        });
+        $this->container->set('console.helper_set', $helperSet);
 
         $this->container->setShared('process.executioncontext', function () {
             return JsonExecutionContext::fromEnv($_SERVER);
