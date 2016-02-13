@@ -3,6 +3,7 @@ Upcoming
 
 * Supports grouped Use statements
 * Shows path in error message when spec file doesn't contain a class
+* Support for catching PHP 7 Errors in shouldThrow
 
 2.4.1 / 2016/01/01
 ==================
