@@ -39,20 +39,12 @@ class MethodAnalyserSpec extends ObjectBehavior
 
     function it_identifies_methods_from_traits()
     {
-        if (version_compare(PHP_VERSION, '5.4.0', '<')) {
-            throw new SkippingException('Traits implemented since PHP 5.4');
-        }
-
         $this->methodIsEmpty('spec\PhpSpec\Util\ExampleObjectUsingTrait', 'emptyMethodInTrait')->shouldReturn(true);
         $this->methodIsEmpty('spec\PhpSpec\Util\ExampleObjectUsingTrait', 'nonEmptyMethodInTrait')->shouldReturn(false);
     }
     
     function it_finds_the_real_declaring_class_of_a_method()
     {
-        if (version_compare(PHP_VERSION, '5.4.0', '<')) {
-            throw new SkippingException('Traits implemented since PHP 5.4');
-        }
-
         $this->getMethodOwnerName('spec\PhpSpec\Util\ExampleObjectUsingTrait', 'emptyMethodInTrait')
             ->shouldReturn('spec\PhpSpec\Util\ExampleTrait');
     }
