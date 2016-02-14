@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Util;
 
-final class PhpNameChecker implements VoterInterface
+final class ReservedWordsMethodNameChecker implements NameCheckerInterface
 {
     private $reservedWords = array(
         '__halt_compiler',
@@ -81,21 +81,21 @@ final class PhpNameChecker implements VoterInterface
         'var',
         'while',
         'xor',
-        '__CLASS__',
-        '__DIR__',
-        '__FILE__',
-        '__FUNCTION__',
-        '__LINE__',
-        '__METHOD__',
-        '__NAMESPACE__',
-        '__TRAIT__',
+        '__class__',
+        '__dir__',
+        '__file__',
+        '__function__',
+        '__line__',
+        '__method__',
+        '__namespace__',
+        '__trait__',
     );
 
     /**
      * {@inheritdoc}
      */
-    public function supports($subject)
+    public function isNameValid($name)
     {
-        return !in_array($subject, $this->reservedWords);
+        return !in_array(strtolower($name), $this->reservedWords);
     }
 }

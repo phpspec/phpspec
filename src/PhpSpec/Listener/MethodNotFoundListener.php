@@ -13,7 +13,8 @@
 
 namespace PhpSpec\Listener;
 
-use PhpSpec\Util\VoterInterface;
+use PhpSpec\Util\ReservedWordsMethodNameChecker;
+use PhpSpec\Util\NameCheckerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use PhpSpec\Console\IO;
 use PhpSpec\Locator\ResourceManagerInterface;
@@ -30,7 +31,7 @@ class MethodNotFoundListener implements EventSubscriberInterface
     private $methods = array();
     private $wrongMethodNames = array();
     /**
-     * @var VoterInterface
+     * @var NameCheckerInterface
      */
     private $nameChecker;
 
@@ -38,17 +39,22 @@ class MethodNotFoundListener implements EventSubscriberInterface
      * @param IO $io
      * @param ResourceManagerInterface $resources
      * @param GeneratorManager $generator
-     * @param VoterInterface $nameChecker
+     * @param NameCheckerInterface $nameChecker
      */
     public function __construct(
         IO $io,
         ResourceManagerInterface $resources,
         GeneratorManager $generator,
-        VoterInterface $nameChecker
+        NameCheckerInterface $nameChecker = null
     ) {
         $this->io        = $io;
         $this->resources = $resources;
         $this->generator = $generator;
+
+        if (null === $nameChecker) {
+            $nameChecker = new ReservedWordsMethodNameChecker();
+        }
+
         $this->nameChecker = $nameChecker;
     }
 
@@ -109,7 +115,7 @@ class MethodNotFoundListener implements EventSubscriberInterface
 
     private function checkIfMethodNameAllowed($methodName)
     {
-        if (!$this->nameChecker->supports($methodName)) {
+        if (!$this->nameChecker->isNameValid($methodName)) {
             $this->wrongMethodNames[] = $methodName;
         }
     }
@@ -117,7 +123,7 @@ class MethodNotFoundListener implements EventSubscriberInterface
     private function writeErrorMessage()
     {
         foreach ($this->wrongMethodNames as $methodName) {
-            $message = sprintf("You cannot use restricted `%s` as a method name", $methodName);
+            $message = sprintf("You cannot use the reserved word `%s` as a method name", $methodName);
             $this->io->writeError($message, 2);
         }
     }

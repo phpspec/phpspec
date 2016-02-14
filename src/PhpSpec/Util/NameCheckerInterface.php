@@ -13,12 +13,12 @@
 
 namespace PhpSpec\Util;
 
-interface VoterInterface
+interface NameCheckerInterface
 {
     /**
-     * @param mixed $subject
+     * @param string $name
      *
      * @return bool
      */
-    public function supports($subject);
+    public function isNameValid($name);
 }

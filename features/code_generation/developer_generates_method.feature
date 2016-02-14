@@ -403,7 +403,7 @@ Feature: Developer generates a method
 
       """
     When I run phpspec interactively
-    Then I should see "You cannot use restricted `throw` as a method name"
+    Then I should see "You cannot use the reserved word `throw` as a method name"
     Then the class in "src/MyNamespace/Restricted.php" should contain:
       """
       <?php

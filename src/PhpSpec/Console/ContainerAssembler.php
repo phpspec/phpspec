@@ -20,8 +20,7 @@ use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
 use PhpSpec\Console\Assembler\PresenterAssembler;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
-use PhpSpec\Util\PhpNameChecker;
-use SebastianBergmann\Exporter\Exporter;
+use PhpSpec\Util\ReservedWordsMethodNameChecker;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -198,7 +197,7 @@ class ContainerAssembler
             return new MethodAnalyser();
         });
         $container->setShared('util.php_name_checker', function () {
-            return new PhpNameChecker();
+            return new ReservedWordsMethodNameChecker();
         });
         $container->setShared('event_dispatcher.listeners.bootstrap', function (ServiceContainer $c) {
             return new Listener\BootstrapListener(

@@ -11,7 +11,7 @@ use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
-use PhpSpec\Util\VoterInterface;
+use PhpSpec\Util\NameCheckerInterface;
 
 class MethodNotFoundListenerSpec extends ObjectBehavior
 {
@@ -21,7 +21,7 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         GeneratorManager $generatorManager,
         SuiteEvent $suiteEvent,
         ExampleEvent $exampleEvent,
-        VoterInterface $nameChecker
+        NameCheckerInterface $nameChecker
     ) {
         $io->writeln(Argument::any())->willReturn();
         $io->askConfirmation(Argument::any())->willReturn();
@@ -54,13 +54,13 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         $exampleEvent,
         $suiteEvent,
         $io,
-        VoterInterface $nameChecker
+        NameCheckerInterface $nameChecker
     ) {
         $exception = new MethodNotFoundException('Error', new \stdClass(), 'bar');
 
         $exampleEvent->getException()->willReturn($exception);
         $io->isCodeGenerationEnabled()->willReturn(true);
-        $nameChecker->supports('bar')->willReturn(true);
+        $nameChecker->isNameValid('bar')->willReturn(true);
 
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
@@ -83,15 +83,15 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         $exampleEvent,
         $suiteEvent,
         IO $io,
-        VoterInterface $nameChecker
+        NameCheckerInterface $nameChecker
     ) {
         $exception = new MethodNotFoundException('Error', new \stdClass(), 'throw');
 
         $exampleEvent->getException()->willReturn($exception);
         $io->isCodeGenerationEnabled()->willReturn(true);
-        $nameChecker->supports('throw')->willReturn(false);
+        $nameChecker->isNameValid('throw')->willReturn(false);
 
-        $io->writeError('You cannot use restricted `throw` as a method name', 2)->shouldBeCalled();
+        $io->writeError('You cannot use the reserved word `throw` as a method name', 2)->shouldBeCalled();
 
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
