@@ -62,6 +62,15 @@ class TokenizedCodeWriterSpec extends ObjectBehavior
         $this->shouldThrow($exception)->during('insertAfterMethod', array($class, 'methodOne', ''));
     }
 
+    function it_should_generate_a_method_in_a_class_with_a_string_containing_braces()
+    {
+        $class = $this->getClassWithBraceText();
+        $method = $this->getMethod();
+        $result = $this->getClassWithBraceTextAndNewMethod();
+
+        $this->insertMethodLastInClass($class, $method)->shouldReturn($result);
+    }
+
     private function getSingleMethodClass()
     {
         return <<<SINGLE_METHOD_CLASS
@@ -231,5 +240,44 @@ final class MyClass
     }
 }
 ONLY_NEW_METHOD_CLASS;
+    }
+
+    private function getClassWithBraceText()
+    {
+        return <<<'BRACE_TEXT_CLASS'
+<?php
+
+namespace MyNamespace;
+
+final class MyClass
+{
+    public function braceMethod()
+    {
+        return "{$foo}";
+    }
+}
+BRACE_TEXT_CLASS;
+    }
+
+    private function getClassWithBraceTextAndNewMethod()
+    {
+        return <<<'BRACE_TEXT_RESULT_CLASS'
+<?php
+
+namespace MyNamespace;
+
+final class MyClass
+{
+    public function braceMethod()
+    {
+        return "{$foo}";
+    }
+
+    public function newMethod()
+    {
+        return 'newSomething';
+    }
+}
+BRACE_TEXT_RESULT_CLASS;
     }
 }
