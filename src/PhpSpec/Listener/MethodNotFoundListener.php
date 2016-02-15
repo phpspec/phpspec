@@ -50,12 +50,7 @@ class MethodNotFoundListener implements EventSubscriberInterface
         $this->io        = $io;
         $this->resources = $resources;
         $this->generator = $generator;
-
-        if (null === $nameChecker) {
-            $nameChecker = new ReservedWordsMethodNameChecker();
-        }
-
-        $this->nameChecker = $nameChecker;
+        $this->nameChecker = $nameChecker ? $nameChecker : new ReservedWordsMethodNameChecker();
     }
 
     public static function getSubscribedEvents()
@@ -88,7 +83,7 @@ class MethodNotFoundListener implements EventSubscriberInterface
             return;
         }
 
-        if (!empty($this->wrongMethodNames)) {
+        if ($this->wrongMethodNames) {
             $this->writeErrorMessage();
             return;
         }
