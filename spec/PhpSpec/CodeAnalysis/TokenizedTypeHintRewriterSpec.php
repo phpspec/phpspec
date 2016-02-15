@@ -249,4 +249,38 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
         ');
     }
+
+    function it_preserves_line_numbers()
+    {
+        $this->rewrite('
+        <?php
+
+        class Foo
+        {
+            public function(
+                $foo,
+                array $bar,
+                Foo\Bar $arg3,
+                $arg4
+            )
+            {
+            }
+        }
+        ')->shouldReturn('
+        <?php
+
+        class Foo
+        {
+            public function(
+                $foo,
+                array $bar,
+                 $arg3,
+                $arg4
+            )
+            {
+            }
+        }
+        ');
+    }
+
 }
