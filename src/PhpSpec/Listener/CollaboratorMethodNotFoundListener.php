@@ -19,6 +19,8 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Locator\ResourceCreationException;
 use PhpSpec\Locator\ResourceManagerInterface;
+use PhpSpec\Util\NameCheckerInterface;
+use PhpSpec\Util\ReservedWordsMethodNameChecker;
 use Prophecy\Argument\ArgumentsWildcard;
 use Prophecy\Exception\Doubler\MethodNotFoundException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -48,15 +50,31 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
     private $generator;
 
     /**
+     * @var NameCheckerInterface
+     */
+    private $nameChecker;
+
+    /**
+     * @var array
+     */
+    private $wrongMethodNames = array();
+
+    /**
      * @param IO $io
      * @param ResourceManagerInterface $resources
      * @param GeneratorManager $generator
+     * @param NameCheckerInterface $nameChecker
      */
-    public function __construct(IO $io, ResourceManagerInterface $resources, GeneratorManager $generator)
-    {
+    public function __construct(
+        IO $io,
+        ResourceManagerInterface $resources,
+        GeneratorManager $generator,
+        NameCheckerInterface $nameChecker = null
+    ) {
         $this->io = $io;
         $this->resources = $resources;
         $this->generator = $generator;
+        $this->nameChecker = $nameChecker ? $nameChecker : new ReservedWordsMethodNameChecker();
     }
 
     /**
@@ -87,7 +105,9 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
             $this->interfaces[$interface] = array();
         }
 
-        $this->interfaces[$interface][$exception->getMethodName()] = $exception->getArguments();
+        $methodName = $exception->getMethodName();
+        $this->interfaces[$interface][$methodName] = $exception->getArguments();
+        $this->checkIfMethodNameAllowed($methodName);
     }
 
     /**
@@ -118,6 +138,11 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
      */
     public function afterSuite(SuiteEvent $event)
     {
+        if ($this->wrongMethodNames) {
+            $this->writeErrorMessage();
+            return;
+        }
+
         foreach ($this->interfaces as $interface => $methods) {
 
             try {
@@ -165,6 +190,21 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
             && ($exception = $event->getException())
             && $exception instanceof MethodNotFoundException) {
             return $exception;
+        }
+    }
+
+    private function checkIfMethodNameAllowed($methodName)
+    {
+        if (!$this->nameChecker->isNameValid($methodName)) {
+            $this->wrongMethodNames[] = $methodName;
+        }
+    }
+
+    private function writeErrorMessage()
+    {
+        foreach ($this->wrongMethodNames as $methodName) {
+            $message = sprintf("You cannot use the reserved word `%s` as a method name", $methodName);
+            $this->io->writeError($message, 2);
         }
     }
 }

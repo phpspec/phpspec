@@ -11,6 +11,7 @@ use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\Locator\ResourceManagerInterface;
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Util\NameCheckerInterface;
 use Prophecy\Argument;
 use Prophecy\Doubler\DoubleInterface;
 use Prophecy\Exception\Doubler\MethodNotFoundException;
@@ -19,10 +20,10 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
 {
     function let(
         IO $io, ResourceManagerInterface $resources, ExampleEvent $event,
-        MethodNotFoundException $exception, ResourceInterface $resource, GeneratorManager $generator
-    )
-    {
-        $this->beConstructedWith($io, $resources, $generator);
+        MethodNotFoundException $exception, ResourceInterface $resource, GeneratorManager $generator,
+        NameCheckerInterface $nameChecker
+    ) {
+        $this->beConstructedWith($io, $resources, $generator, $nameChecker);
         $event->getException()->willReturn($exception);
 
         $io->isCodeGenerationEnabled()->willReturn(true);
@@ -31,6 +32,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
         $resources->createResource(Argument::any())->willReturn($resource);
 
         $exception->getArguments()->willReturn(array());
+        $nameChecker->isNameValid('aMethod')->willReturn(true);
     }
 
     function it_is_an_event_subscriber()
@@ -151,6 +153,25 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
         $this->afterSuite($suiteEvent);
 
         $suiteEvent->markAsWorthRerunning()->shouldHaveBeenCalled();
+    }
+
+    function it_writes_error_if_a_method_name_is_wrong(
+        ExampleEvent $event,
+        SuiteEvent $suiteEvent,
+        IO $io,
+        NameCheckerInterface $nameChecker
+    ) {
+        $exception = new MethodNotFoundException('Error', new DoubleOfInterface(), 'throw');
+
+        $event->getException()->willReturn($exception);
+        $io->isCodeGenerationEnabled()->willReturn(true);
+        $nameChecker->isNameValid('throw')->willReturn(false);
+
+        $io->writeError('You cannot use the reserved word `throw` as a method name', 2)->shouldBeCalled();
+        $io->askConfirmation(Argument::any())->shouldNotBeCalled();
+
+        $this->afterExample($event);
+        $this->afterSuite($suiteEvent);
     }
 }
 

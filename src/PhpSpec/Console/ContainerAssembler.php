@@ -151,7 +151,8 @@ class ContainerAssembler
             return new Listener\CollaboratorMethodNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
-                $c->get('code_generator')
+                $c->get('code_generator'),
+                $c->get('util.reserved_words_checker')
             );
         });
         $container->setShared('event_dispatcher.listeners.named_constructor_not_found', function (ServiceContainer $c) {
@@ -166,7 +167,7 @@ class ContainerAssembler
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator'),
-                $c->get('util.php_name_checker')
+                $c->get('util.reserved_words_checker')
             );
         });
         $container->setShared('event_dispatcher.listeners.stop_on_failure', function (ServiceContainer $c) {
@@ -196,7 +197,7 @@ class ContainerAssembler
         $container->setShared('util.method_analyser', function () {
             return new MethodAnalyser();
         });
-        $container->setShared('util.php_name_checker', function () {
+        $container->setShared('util.reserved_words_checker', function () {
             return new ReservedWordsMethodNameChecker();
         });
         $container->setShared('event_dispatcher.listeners.bootstrap', function (ServiceContainer $c) {
