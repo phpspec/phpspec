@@ -62,7 +62,7 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
         class Foo
         {
-            public function bar($bar)
+            public function bar( $bar)
             {
             }
         }
@@ -91,7 +91,7 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
         class Foo
         {
-            public function bar($bar)
+            public function bar( $bar)
             {
                 new class($argument) implements InterfaceName
                 {
@@ -120,7 +120,7 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
         class Foo
         {
-            public function bar($bar,$baz)
+            public function bar( $bar,  $baz)
             {
             }
         }
@@ -177,4 +177,38 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
         $typeHintIndex->addInvalid('Foo', 'bar', '$bar', $e)->shouldHaveBeenCalled();
         $typeHintIndex->add('Foo', 'bar', '$bar', Argument::any())->shouldNotHaveBeenCalled();
     }
+
+    function it_preserves_line_numbers()
+    {
+        $this->rewrite('
+        <?php
+
+        class Foo
+        {
+            public function(
+                $foo,
+                array $bar,
+                Foo\Bar $arg3,
+                $arg4
+            )
+            {
+            }
+        }
+        ')->shouldReturn('
+        <?php
+
+        class Foo
+        {
+            public function(
+                $foo,
+                array $bar,
+                 $arg3,
+                $arg4
+            )
+            {
+            }
+        }
+        ');
+    }
+
 }
