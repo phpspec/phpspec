@@ -122,17 +122,23 @@ final class TokenizedCodeWriter implements CodeWriter
     {
         $tokens = token_get_all($class);
         $searching = false;
+        $inString = false;
         $searchPattern = array();
 
         for ($i = count($tokens) - 1; $i >= 0; $i--) {
             $token = $tokens[$i];
 
-            if ($token === '}') {
+            if ($token === '}' && !$inString) {
                 $searching = true;
                 continue;
             }
 
             if (!$searching) {
+                continue;
+            }
+
+            if ($token === '"') {
+                $inString = !$inString;
                 continue;
             }
 
