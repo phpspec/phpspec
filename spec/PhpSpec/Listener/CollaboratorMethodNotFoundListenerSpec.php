@@ -155,7 +155,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
         $suiteEvent->markAsWorthRerunning()->shouldHaveBeenCalled();
     }
 
-    function it_writes_error_if_a_method_name_is_wrong(
+    function it_warns_if_a_method_name_is_wrong(
         ExampleEvent $event,
         SuiteEvent $suiteEvent,
         IO $io,
@@ -164,14 +164,37 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
         $exception = new MethodNotFoundException('Error', new DoubleOfInterface(), 'throw');
 
         $event->getException()->willReturn($exception);
-        $io->isCodeGenerationEnabled()->willReturn(true);
         $nameChecker->isNameValid('throw')->willReturn(false);
 
-        $io->writeError('You cannot use the reserved word `throw` as a method name', 2)->shouldBeCalled();
+        $io->writeBrokenCodeBlock("I cannot generate the method 'throw' for you because it is a reserved keyword", 2)->shouldBeCalled();
         $io->askConfirmation(Argument::any())->shouldNotBeCalled();
 
         $this->afterExample($event);
         $this->afterSuite($suiteEvent);
+    }
+
+    function it_prompts_and_warns_when_one_method_name_is_correct_but_other_reserved(
+        ExampleEvent $event,
+        SuiteEvent $suiteEvent,
+        IO $io,
+        NameCheckerInterface $nameChecker
+    ) {
+        $this->callAfterExample($event, $nameChecker, 'throw', false);
+        $this->callAfterExample($event, $nameChecker, 'foo');
+
+        $io->writeBrokenCodeBlock("I cannot generate the method 'throw' for you because it is a reserved keyword", 2)->shouldBeCalled();
+        $io->askConfirmation(Argument::any())->shouldBeCalled();
+
+        $this->afterSuite($suiteEvent);
+    }
+
+    private function callAfterExample($event, $nameChecker, $method, $isNameValid = true)
+    {
+        $exception = new MethodNotFoundException('Error', new DoubleOfInterface(), $method);
+        $event->getException()->willReturn($exception);
+        $nameChecker->isNameValid($method)->willReturn($isNameValid);
+
+        $this->afterExample($event);
     }
 }
 

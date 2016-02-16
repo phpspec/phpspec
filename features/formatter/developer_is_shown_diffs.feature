@@ -396,7 +396,7 @@ Feature: Developer is shown diffs
       """
             method call:
               - methodTwo("value")
-            on Double\Diffs\DiffExample7\ClassBeingMocked\P13 was not expected, expected calls were:
+            on Double\Diffs\DiffExample7\ClassBeingMocked\P14 was not expected, expected calls were:
               - methodOne(exact("value"))
       """
 
@@ -460,7 +460,7 @@ Feature: Developer is shown diffs
       """
             method call:
               - methodTwo("another value")
-            on Double\Diffs\DiffExample8\ClassBeingMocked\P14 was not expected, expected calls were:
+            on Double\Diffs\DiffExample8\ClassBeingMocked\P15 was not expected, expected calls were:
               - methodTwo(exact("value"))
               - methodOne(exact("another value"))
       """

@@ -181,32 +181,32 @@ class IOSpec extends ObjectBehavior
         $this->getBlockWidth()->shouldReturn(65);
     }
 
-    function it_writes_error_message(OutputInterface $output)
+    function it_writes_a_message_about_broken_code(OutputInterface $output)
     {
         $message = 'Error message';
-        $output->writeln('<error>                                                            </error>')->shouldBeCalledTimes(2);
-        $output->writeln('<error>Error message                                               </error>')->shouldBeCalled();
+        $output->writeln('<broken-bg>                                                            </broken-bg>')->shouldBeCalledTimes(2);
+        $output->writeln('<broken-bg>Error message                                               </broken-bg>')->shouldBeCalled();
 
-        $this->writeError($message);
+        $this->writeBrokenCodeBlock($message);
     }
 
-    function it_wraps_long_error_message(OutputInterface $output)
+    function it_wraps_long_broken_message(OutputInterface $output)
     {
         $message = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pro maximus nulla eget libero rhoncus lacinia.';
-        $output->writeln('<error>                                                            </error>')->shouldBeCalledTimes(2);
-        $output->writeln('<error>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pro</error>')->shouldBeCalled();
-        $output->writeln('<error>maximus nulla eget libero rhoncus lacinia.                  </error>')->shouldBeCalled();
+        $output->writeln('<broken-bg>                                                            </broken-bg>')->shouldBeCalledTimes(2);
+        $output->writeln('<broken-bg>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pro</broken-bg>')->shouldBeCalled();
+        $output->writeln('<broken-bg>maximus nulla eget libero rhoncus lacinia.                  </broken-bg>')->shouldBeCalled();
 
-        $this->writeError($message);
+        $this->writeBrokenCodeBlock($message);
     }
 
-    function it_indents_and_wraps_long_error_message(OutputInterface $output)
+    function it_indents_and_wraps_long_broken_message(OutputInterface $output)
     {
         $message = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin maximus nulla eget libero rhoncus lacinia.';
-        $output->writeln('<error>                                                            </error>')->shouldBeCalledTimes(2);
-        $output->writeln('<error>  Lorem ipsum dolor sit amet, consectetur adipiscing elit.  </error>')->shouldBeCalled();
-        $output->writeln('<error>  Proin maximus nulla eget libero rhoncus lacinia.          </error>')->shouldBeCalled();
+        $output->writeln('<broken-bg>                                                            </broken-bg>')->shouldBeCalledTimes(2);
+        $output->writeln('<broken-bg>  Lorem ipsum dolor sit amet, consectetur adipiscing elit.  </broken-bg>')->shouldBeCalled();
+        $output->writeln('<broken-bg>  Proin maximus nulla eget libero rhoncus lacinia.          </broken-bg>')->shouldBeCalled();
 
-        $this->writeError($message, 2);
+        $this->writeBrokenCodeBlock($message, 2);
     }
 }

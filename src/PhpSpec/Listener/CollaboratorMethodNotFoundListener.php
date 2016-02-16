@@ -74,7 +74,7 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
         $this->io = $io;
         $this->resources = $resources;
         $this->generator = $generator;
-        $this->nameChecker = $nameChecker ? $nameChecker : new ReservedWordsMethodNameChecker();
+        $this->nameChecker = $nameChecker ?: new ReservedWordsMethodNameChecker();
     }
 
     /**
@@ -138,13 +138,7 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
      */
     public function afterSuite(SuiteEvent $event)
     {
-        if ($this->wrongMethodNames) {
-            $this->writeErrorMessage();
-            return;
-        }
-
         foreach ($this->interfaces as $interface => $methods) {
-
             try {
                 $resource = $this->resources->createResource($interface);
             } catch (ResourceCreationException $e) {
@@ -152,6 +146,10 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
             }
 
             foreach ($methods as $method => $arguments) {
+                if (in_array($method, $this->wrongMethodNames)) {
+                    continue;
+                }
+
                 if ($this->io->askConfirmation(sprintf(self::PROMPT, $interface, $method))) {
                     $this->generator->generate(
                         $resource,
@@ -164,6 +162,10 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
                     $event->markAsWorthRerunning();
                 }
             }
+        }
+
+        if ($this->wrongMethodNames) {
+            $this->writeErrorMessage();
         }
     }
 
@@ -203,8 +205,8 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
     private function writeErrorMessage()
     {
         foreach ($this->wrongMethodNames as $methodName) {
-            $message = sprintf("You cannot use the reserved word `%s` as a method name", $methodName);
-            $this->io->writeError($message, 2);
+            $message = sprintf("I cannot generate the method '%s' for you because it is a reserved keyword", $methodName);
+            $this->io->writeBrokenCodeBlock($message, 2);
         }
     }
 }

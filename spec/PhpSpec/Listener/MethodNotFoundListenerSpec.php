@@ -27,12 +27,11 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         $io->askConfirmation(Argument::any())->willReturn();
 
         $this->beConstructedWith($io, $resourceManager, $generatorManager, $nameChecker);
+        $io->isCodeGenerationEnabled()->willReturn(true);
     }
 
     function it_does_not_prompt_for_method_generation_if_no_exception_was_thrown($exampleEvent, $suiteEvent, $io)
     {
-        $io->isCodeGenerationEnabled()->willReturn(true);
-
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
 
@@ -42,7 +41,6 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
     function it_does_not_prompt_for_method_generation_if_non_methodnotfoundexception_was_thrown($exampleEvent, $suiteEvent, $io, \InvalidArgumentException $exception)
     {
         $exampleEvent->getException()->willReturn($exception);
-        $io->isCodeGenerationEnabled()->willReturn(true);
 
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
@@ -59,7 +57,6 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         $exception = new MethodNotFoundException('Error', new \stdClass(), 'bar');
 
         $exampleEvent->getException()->willReturn($exception);
-        $io->isCodeGenerationEnabled()->willReturn(true);
         $nameChecker->isNameValid('bar')->willReturn(true);
 
         $this->afterExample($exampleEvent);
@@ -79,21 +76,40 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         $io->askConfirmation(Argument::any())->shouldNotBeenCalled();
     }
 
-    function it_writes_error_for_method_generation_if_methodnotfoundexception_was_thrown_and_method_name_is_wrong(
+    function it_warns_when_method_name_is_reserved(
         $exampleEvent,
         $suiteEvent,
         IO $io,
         NameCheckerInterface $nameChecker
     ) {
-        $exception = new MethodNotFoundException('Error', new \stdClass(), 'throw');
+        $this->callAfterExample($exampleEvent, $nameChecker, 'throw', false);
 
+        $io->writeBrokenCodeBlock("I cannot generate the method 'throw' for you because it is a reserved keyword", 2)->shouldBeCalled();
+
+        $this->afterSuite($suiteEvent);
+    }
+
+    function it_prompts_and_warns_when_one_method_name_is_correct_but_other_reserved(
+        $exampleEvent,
+        $suiteEvent,
+        IO $io,
+        NameCheckerInterface $nameChecker
+    ) {
+        $this->callAfterExample($exampleEvent, $nameChecker, 'throw', false);
+        $this->callAfterExample($exampleEvent, $nameChecker, 'foo');
+
+        $io->writeBrokenCodeBlock("I cannot generate the method 'throw' for you because it is a reserved keyword", 2)->shouldBeCalled();
+        $io->askConfirmation('Do you want me to create `stdClass::foo()` for you?')->shouldBeCalled();
+
+        $this->afterSuite($suiteEvent);
+    }
+
+    private function callAfterExample($exampleEvent, $nameChecker, $method, $isNameValid = true)
+    {
+        $exception = new MethodNotFoundException('Error', new \stdClass(), $method);
         $exampleEvent->getException()->willReturn($exception);
-        $io->isCodeGenerationEnabled()->willReturn(true);
-        $nameChecker->isNameValid('throw')->willReturn(false);
-
-        $io->writeError('You cannot use the reserved word `throw` as a method name', 2)->shouldBeCalled();
+        $nameChecker->isNameValid($method)->willReturn($isNameValid);
 
         $this->afterExample($exampleEvent);
-        $this->afterSuite($suiteEvent);
     }
 }

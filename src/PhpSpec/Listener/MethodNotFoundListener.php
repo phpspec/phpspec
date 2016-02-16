@@ -50,7 +50,7 @@ class MethodNotFoundListener implements EventSubscriberInterface
         $this->io        = $io;
         $this->resources = $resources;
         $this->generator = $generator;
-        $this->nameChecker = $nameChecker ? $nameChecker : new ReservedWordsMethodNameChecker();
+        $this->nameChecker = $nameChecker ?: new ReservedWordsMethodNameChecker();
     }
 
     public static function getSubscribedEvents()
@@ -83,13 +83,13 @@ class MethodNotFoundListener implements EventSubscriberInterface
             return;
         }
 
-        if ($this->wrongMethodNames) {
-            $this->writeErrorMessage();
-            return;
-        }
-
         foreach ($this->methods as $call => $arguments) {
             list($classname, $method) = explode('::', $call);
+
+            if (in_array($method, $this->wrongMethodNames)) {
+                continue;
+            }
+
             $message = sprintf('Do you want me to create `%s()` for you?', $call);
 
             try {
@@ -106,6 +106,10 @@ class MethodNotFoundListener implements EventSubscriberInterface
                 $event->markAsWorthRerunning();
             }
         }
+
+        if ($this->wrongMethodNames) {
+            $this->writeWrongMethodNameMessage();
+        }
     }
 
     private function checkIfMethodNameAllowed($methodName)
@@ -115,11 +119,11 @@ class MethodNotFoundListener implements EventSubscriberInterface
         }
     }
 
-    private function writeErrorMessage()
+    private function writeWrongMethodNameMessage()
     {
         foreach ($this->wrongMethodNames as $methodName) {
-            $message = sprintf("You cannot use the reserved word `%s` as a method name", $methodName);
-            $this->io->writeError($message, 2);
+            $message = sprintf("I cannot generate the method '%s' for you because it is a reserved keyword", $methodName);
+            $this->io->writeBrokenCodeBlock($message, 2);
         }
     }
 }
