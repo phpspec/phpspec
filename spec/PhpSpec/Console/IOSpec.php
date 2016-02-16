@@ -186,6 +186,7 @@ class IOSpec extends ObjectBehavior
         $message = 'Error message';
         $output->writeln('<broken-bg>                                                            </broken-bg>')->shouldBeCalledTimes(2);
         $output->writeln('<broken-bg>Error message                                               </broken-bg>')->shouldBeCalled();
+        $output->writeln('')->shouldBeCalled();
 
         $this->writeBrokenCodeBlock($message);
     }
@@ -196,6 +197,7 @@ class IOSpec extends ObjectBehavior
         $output->writeln('<broken-bg>                                                            </broken-bg>')->shouldBeCalledTimes(2);
         $output->writeln('<broken-bg>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pro</broken-bg>')->shouldBeCalled();
         $output->writeln('<broken-bg>maximus nulla eget libero rhoncus lacinia.                  </broken-bg>')->shouldBeCalled();
+        $output->writeln('')->shouldBeCalled();
 
         $this->writeBrokenCodeBlock($message);
     }
@@ -206,6 +208,7 @@ class IOSpec extends ObjectBehavior
         $output->writeln('<broken-bg>                                                            </broken-bg>')->shouldBeCalledTimes(2);
         $output->writeln('<broken-bg>  Lorem ipsum dolor sit amet, consectetur adipiscing elit.  </broken-bg>')->shouldBeCalled();
         $output->writeln('<broken-bg>  Proin maximus nulla eget libero rhoncus lacinia.          </broken-bg>')->shouldBeCalled();
+        $output->writeln('')->shouldBeCalled();
 
         $this->writeBrokenCodeBlock($message, 2);
     }

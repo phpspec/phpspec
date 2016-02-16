@@ -362,5 +362,6 @@ class IO implements IOInterface
         }
 
         $this->output->writeln("<broken-bg>".str_repeat(" ", $this->getBlockWidth())."</broken-bg>");
+        $this->output->writeln('');
     }
 }
