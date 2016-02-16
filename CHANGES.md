@@ -2,9 +2,10 @@ Upcoming
 ========
 
 * Supports grouped Use statements
-* Shows path in error message when spec file doesn't contain a class
-* Support for catching PHP 7 Errors in shouldThrow
-* Fix bug where bootstrapped classes could not be loaded after class generation
+* Now shows path in error message when spec file doesn't contain a class
+* Supports catching PHP 7 Errors in shouldThrow
+* Fixed bug where bootstrapped classes could not be loaded after class generation
+* Fixed bug where line numbers were incorrectly reported on PHP 7
 
 2.4.1 / 2016/01/01
 ==================
