@@ -345,13 +345,13 @@ class IO implements IOInterface
 
     /**
      * @param string $message
-     * @param int|null $indent
+     * @param int $indent
      */
-    public function writeError($message, $indent = null)
+    public function writeError($message, $indent = 0)
     {
-        $message = wordwrap($message, $this->getBlockWidth() - 4, "\n", true);
+        $message = wordwrap($message, $this->getBlockWidth() - ($indent * 2), "\n", true);
 
-        if (null !== $indent) {
+        if ($indent) {
             $message = $this->indentText($message, $indent);
         }
 

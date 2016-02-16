@@ -192,10 +192,10 @@ class IOSpec extends ObjectBehavior
 
     function it_wraps_long_error_message(OutputInterface $output)
     {
-        $message = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin maximus nulla eget libero rhoncus lacinia.';
+        $message = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pro maximus nulla eget libero rhoncus lacinia.';
         $output->writeln('<error>                                                            </error>')->shouldBeCalledTimes(2);
-        $output->writeln('<error>Lorem ipsum dolor sit amet, consectetur adipiscing elit.    </error>')->shouldBeCalled();
-        $output->writeln('<error>Proin maximus nulla eget libero rhoncus lacinia.            </error>')->shouldBeCalled();
+        $output->writeln('<error>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pro</error>')->shouldBeCalled();
+        $output->writeln('<error>maximus nulla eget libero rhoncus lacinia.                  </error>')->shouldBeCalled();
 
         $this->writeError($message);
     }
