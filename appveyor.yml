@@ -13,7 +13,6 @@ skip_commits:
 cache:
     - c:\php -> appveyor.yml
     - '%LOCALAPPDATA%\Composer'
-    - vendor
 
 init:
     - SET PATH=c:\php;%PATH%
