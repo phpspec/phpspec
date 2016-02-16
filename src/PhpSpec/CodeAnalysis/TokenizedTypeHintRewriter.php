@@ -155,7 +155,10 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         $typehint = '';
         for ($i = $index - 1; in_array($tokens[$i][0], $this->typehintTokens); $i--) {
             $typehint = $tokens[$i][1] . $typehint;
-            unset($tokens[$i]);
+
+            if (T_WHITESPACE !== $tokens[$i][0]) {
+                unset($tokens[$i]);
+            }
         }
 
         if ($typehint = trim($typehint)) {
