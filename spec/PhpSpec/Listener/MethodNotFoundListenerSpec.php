@@ -91,7 +91,7 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
 
     function it_prompts_and_warns_when_one_method_name_is_correct_but_other_reserved(
         $exampleEvent,
-        $suiteEvent,
+        SuiteEvent $suiteEvent,
         IO $io,
         NameCheckerInterface $nameChecker
     ) {
@@ -100,6 +100,7 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
 
         $io->writeBrokenCodeBlock("I cannot generate the method 'throw' for you because it is a reserved keyword", 2)->shouldBeCalled();
         $io->askConfirmation('Do you want me to create `stdClass::foo()` for you?')->shouldBeCalled();
+        $suiteEvent->markAsNotWorthRerunning()->shouldBeCalled();
 
         $this->afterSuite($suiteEvent);
     }

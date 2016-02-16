@@ -109,6 +109,7 @@ class MethodNotFoundListener implements EventSubscriberInterface
 
         if ($this->wrongMethodNames) {
             $this->writeWrongMethodNameMessage();
+            $event->markAsNotWorthRerunning();
         }
     }
 

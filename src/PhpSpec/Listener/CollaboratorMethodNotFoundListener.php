@@ -166,6 +166,7 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
 
         if ($this->wrongMethodNames) {
             $this->writeErrorMessage();
+            $event->markAsNotWorthRerunning();
         }
     }
 

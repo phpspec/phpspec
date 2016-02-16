@@ -184,6 +184,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
 
         $io->writeBrokenCodeBlock("I cannot generate the method 'throw' for you because it is a reserved keyword", 2)->shouldBeCalled();
         $io->askConfirmation(Argument::any())->shouldBeCalled();
+        $suiteEvent->markAsNotWorthRerunning()->shouldBeCalled();
 
         $this->afterSuite($suiteEvent);
     }
