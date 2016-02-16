@@ -6,6 +6,7 @@ Upcoming
 * Supports catching PHP 7 Errors in shouldThrow
 * Fixed bug where bootstrapped classes could not be loaded after class generation
 * Fixed bug where line numbers were incorrectly reported on PHP 7
+* Fixed new methods being inserted incorrectly when strings included closing brace
 
 2.4.1 / 2016/01/01
 ==================
