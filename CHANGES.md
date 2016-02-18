@@ -4,6 +4,7 @@ Upcoming
 * Supports grouped Use statements
 * Now shows path in error message when spec file doesn't contain a class
 * Supports catching PHP 7 Errors in shouldThrow
+* No longer attempts to generate methods with reserved names
 * Fixed bug where bootstrapped classes could not be loaded after class generation
 * Fixed bug where line numbers were incorrectly reported on PHP 7
 * Fixed new methods being inserted incorrectly when strings included closing brace
