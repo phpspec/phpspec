@@ -342,4 +342,26 @@ class IO implements IOInterface
         }
         return $width;
     }
+
+    /**
+     * @param string $message
+     * @param int $indent
+     */
+    public function writeBrokenCodeBlock($message, $indent = 0)
+    {
+        $message = wordwrap($message, $this->getBlockWidth() - ($indent * 2), "\n", true);
+
+        if ($indent) {
+            $message = $this->indentText($message, $indent);
+        }
+
+        $this->output->writeln("<broken-bg>".str_repeat(" ", $this->getBlockWidth())."</broken-bg>");
+
+        foreach (explode("\n", $message) as $line) {
+            $this->output->writeln("<broken-bg>".str_pad($line, $this->getBlockWidth(), ' ')."</broken-bg>");
+        }
+
+        $this->output->writeln("<broken-bg>".str_repeat(" ", $this->getBlockWidth())."</broken-bg>");
+        $this->output->writeln('');
+    }
 }

@@ -11,6 +11,7 @@ use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\Locator\ResourceManagerInterface;
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Util\NameCheckerInterface;
 use Prophecy\Argument;
 use Prophecy\Doubler\DoubleInterface;
 use Prophecy\Exception\Doubler\MethodNotFoundException;
@@ -19,10 +20,10 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
 {
     function let(
         IO $io, ResourceManagerInterface $resources, ExampleEvent $event,
-        MethodNotFoundException $exception, ResourceInterface $resource, GeneratorManager $generator
-    )
-    {
-        $this->beConstructedWith($io, $resources, $generator);
+        MethodNotFoundException $exception, ResourceInterface $resource, GeneratorManager $generator,
+        NameCheckerInterface $nameChecker
+    ) {
+        $this->beConstructedWith($io, $resources, $generator, $nameChecker);
         $event->getException()->willReturn($exception);
 
         $io->isCodeGenerationEnabled()->willReturn(true);
@@ -31,6 +32,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
         $resources->createResource(Argument::any())->willReturn($resource);
 
         $exception->getArguments()->willReturn(array());
+        $nameChecker->isNameValid('aMethod')->willReturn(true);
     }
 
     function it_is_an_event_subscriber()
@@ -151,6 +153,49 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
         $this->afterSuite($suiteEvent);
 
         $suiteEvent->markAsWorthRerunning()->shouldHaveBeenCalled();
+    }
+
+    function it_warns_if_a_method_name_is_wrong(
+        ExampleEvent $event,
+        SuiteEvent $suiteEvent,
+        IO $io,
+        NameCheckerInterface $nameChecker
+    ) {
+        $exception = new MethodNotFoundException('Error', new DoubleOfInterface(), 'throw');
+
+        $event->getException()->willReturn($exception);
+        $nameChecker->isNameValid('throw')->willReturn(false);
+
+        $io->writeBrokenCodeBlock("I cannot generate the method 'throw' for you because it is a reserved keyword", 2)->shouldBeCalled();
+        $io->askConfirmation(Argument::any())->shouldNotBeCalled();
+
+        $this->afterExample($event);
+        $this->afterSuite($suiteEvent);
+    }
+
+    function it_prompts_and_warns_when_one_method_name_is_correct_but_other_reserved(
+        ExampleEvent $event,
+        SuiteEvent $suiteEvent,
+        IO $io,
+        NameCheckerInterface $nameChecker
+    ) {
+        $this->callAfterExample($event, $nameChecker, 'throw', false);
+        $this->callAfterExample($event, $nameChecker, 'foo');
+
+        $io->writeBrokenCodeBlock("I cannot generate the method 'throw' for you because it is a reserved keyword", 2)->shouldBeCalled();
+        $io->askConfirmation(Argument::any())->shouldBeCalled();
+        $suiteEvent->markAsNotWorthRerunning()->shouldBeCalled();
+
+        $this->afterSuite($suiteEvent);
+    }
+
+    private function callAfterExample($event, $nameChecker, $method, $isNameValid = true)
+    {
+        $exception = new MethodNotFoundException('Error', new DoubleOfInterface(), $method);
+        $event->getException()->willReturn($exception);
+        $nameChecker->isNameValid($method)->willReturn($isNameValid);
+
+        $this->afterExample($event);
     }
 }
 

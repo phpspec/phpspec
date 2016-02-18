@@ -89,4 +89,9 @@ class SuiteEvent extends Event implements EventInterface
     {
         $this->worthRerunning = true;
     }
+
+    public function markAsNotWorthRerunning()
+    {
+        $this->worthRerunning = false;
+    }
 }

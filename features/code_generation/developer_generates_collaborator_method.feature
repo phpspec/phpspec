@@ -264,3 +264,48 @@ Feature: Developer generates a collaborator's method
       """
     When I run phpspec and answer "n" when asked if I want to generate the code
     Then I should not be prompted for code generation
+
+  Scenario: Being warned when a collaborator method is a restricted word
+    Given the spec file "spec/CodeGeneration/CollaboratorMethodExample6/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\CollaboratorMethodExample6;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use CodeGeneration\CollaboratorMethodExample1\Parser;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_interacts_with_a_collaborator(Parser $parser)
+          {
+              $parser->throw()->willReturn(true);
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/CollaboratorMethodExample6/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\CollaboratorMethodExample6;
+
+      class Markdown
+      {
+      }
+
+      """
+    And the class file "src/CodeGeneration/CollaboratorMethodExample6/Parser.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\CollaboratorMethodExample6;
+
+      interface Parser
+      {
+      }
+
+      """
+    When I run phpspec and answer "n" when asked if I want to generate the code
+    Then I should see "I cannot generate the method 'throw' for you"
