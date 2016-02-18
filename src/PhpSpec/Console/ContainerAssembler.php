@@ -361,7 +361,7 @@ class ContainerAssembler
 
                 $c->set(
                     sprintf('locator.locators.%s_suitename', $name ),
-                    function () use( $name, $config ){
+                    function () use ($name, $config) {
                         return new Locator\Suite\SuiteLocator(
                             $name,
                             $config['namespace'],

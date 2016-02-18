@@ -37,8 +37,7 @@ class SuiteLocator extends PSR0Locator implements ResourceLocatorInterface
 		$specPath = '.',
 		Filesystem $filesystem = null,
 		$psr4Prefix = null
-	)
-	{
+	) {
 		$this->suiteName = $name;
 		parent::__construct( $srcNamespace, $specNamespacePrefix, $srcPath, $specPath, $filesystem, $psr4Prefix );
 	}
@@ -48,12 +47,12 @@ class SuiteLocator extends PSR0Locator implements ResourceLocatorInterface
 	 *
 	 * @return bool
 	 */
-	public function supportsQuery( $query )
+	public function supportsQuery($query)
 	{
 		return $query == $this->suiteName;
 	}
 
-	public function findResources( $query )
+	public function findResources($query)
 	{
 		return parent::getAllResources();
 	}
