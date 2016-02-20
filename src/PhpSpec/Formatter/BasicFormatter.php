@@ -18,12 +18,13 @@ use PhpSpec\IO\IO;
 use PhpSpec\Listener\ExampleListener;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\Listener\SuiteListener;
+use PhpSpec\Listener\SpecificationListener;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-abstract class BasicFormatter implements EventSubscriberInterface, ExampleListener, SuiteListener
+abstract class BasicFormatter implements EventSubscriberInterface, ExampleListener, SuiteListener, SpecificationListener
 {
     /**
      * @var IO
