@@ -96,7 +96,7 @@ final class ClassNotFoundListener implements ExampleListener, SuiteListener
 
             if ($this->io->askConfirmation($message)) {
                 $this->generator->generate($resource, 'class');
-                $event->markAsWorthRerunning();
+                $suiteEvent->markAsWorthRerunning();
             }
         }
     }
