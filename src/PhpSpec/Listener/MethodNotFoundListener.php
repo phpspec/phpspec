@@ -19,6 +19,7 @@ use PhpSpec\Locator\ResourceManager;
 use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
+use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
 final class MethodNotFoundListener implements ExampleListener, SuiteListener
 {
