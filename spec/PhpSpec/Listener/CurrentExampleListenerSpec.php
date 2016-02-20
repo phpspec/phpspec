@@ -23,7 +23,8 @@ class CurrentExampleListenerSpec extends ObjectBehavior
 
     function it_should_implement_event_subscriber_interface()
     {
-        $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
+        $this->shouldHaveType('PhpSpec\Listener\ExampleListener');
+        $this->shouldHaveType('PhpSpec\Listener\SuiteListener');
     }
 
     function it_should_call_beforeCurrentExample(ExampleEvent $example)

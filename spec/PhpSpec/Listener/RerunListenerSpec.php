@@ -17,7 +17,7 @@ class RerunListenerSpec extends ObjectBehavior
 
     function it_subscribes_to_aftersuite()
     {
-        $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
+        $this->shouldHaveType('PhpSpec\Listener\SuiteListener');
         $this->getSubscribedEvents()->shouldHaveKey('afterSuite');
     }
 

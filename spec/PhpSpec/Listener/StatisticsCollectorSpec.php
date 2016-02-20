@@ -20,7 +20,8 @@ class StatisticsCollectorSpec extends ObjectBehavior
 
     function it_is_an_event_listener()
     {
-        $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
+        $this->shouldHaveType('PhpSpec\Listener\ExampleListener');
+        $this->shouldHaveType('PhpSpec\Listener\SuiteListener');
     }
 
     function it_listens_to_stats_generating_events()

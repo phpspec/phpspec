@@ -25,7 +25,9 @@ class JUnitFormatterSpec extends ObjectBehavior
 
     function it_is_an_event_subscriber()
     {
-        $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
+        $this->shouldHaveType('PhpSpec\Listener\ExampleListener');
+        $this->shouldHaveType('PhpSpec\Listener\SuiteListener');
+        $this->shouldHaveType('PhpSpec\Listener\SpecificationListener');
     }
 
     function it_stores_a_testcase_node_after_passed_example_run(
