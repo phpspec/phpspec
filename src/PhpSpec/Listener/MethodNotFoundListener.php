@@ -45,12 +45,12 @@ class MethodNotFoundListener implements EventSubscriberInterface
         IO $io,
         ResourceManagerInterface $resources,
         GeneratorManager $generator,
-        NameCheckerInterface $nameChecker = null
+        NameCheckerInterface $nameChecker
     ) {
         $this->io        = $io;
         $this->resources = $resources;
         $this->generator = $generator;
-        $this->nameChecker = $nameChecker ?: new ReservedWordsMethodNameChecker();
+        $this->nameChecker = $nameChecker;
     }
 
     public static function getSubscribedEvents()
