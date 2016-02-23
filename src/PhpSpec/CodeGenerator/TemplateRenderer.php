@@ -34,9 +34,9 @@ class TemplateRenderer
     /**
      * @param Filesystem $filesystem
      */
-    public function __construct(Filesystem $filesystem = null)
+    public function __construct(Filesystem $filesystem)
     {
-        $this->filesystem = $filesystem ?: new Filesystem();
+        $this->filesystem = $filesystem;
     }
 
     /**

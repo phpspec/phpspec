@@ -31,11 +31,12 @@ class ResourceLoader
 
     /**
      * @param ResourceManagerInterface $manager
+     * @param MethodAnalyser $methodAnalyser
      */
-    public function __construct(ResourceManagerInterface $manager, MethodAnalyser $methodAnalyser = null)
+    public function __construct(ResourceManagerInterface $manager, MethodAnalyser $methodAnalyser)
     {
         $this->manager = $manager;
-        $this->methodAnalyser = $methodAnalyser ?: new MethodAnalyser();
+        $this->methodAnalyser = $methodAnalyser;
     }
 
     /**

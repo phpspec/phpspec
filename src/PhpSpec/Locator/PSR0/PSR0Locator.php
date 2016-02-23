@@ -63,14 +63,14 @@ class PSR0Locator implements ResourceLocatorInterface
      * @param string     $psr4Prefix
      */
     public function __construct(
+        Filesystem $filesystem,
         $srcNamespace = '',
         $specNamespacePrefix = 'spec',
         $srcPath = 'src',
         $specPath = '.',
-        Filesystem $filesystem = null,
         $psr4Prefix = null
     ) {
-        $this->filesystem = $filesystem ?: new Filesystem();
+        $this->filesystem = $filesystem;
         $sepr = DIRECTORY_SEPARATOR;
 
         $this->srcPath       = rtrim(realpath($srcPath), '/\\').$sepr;

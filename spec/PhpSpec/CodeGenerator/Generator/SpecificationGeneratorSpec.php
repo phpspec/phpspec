@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Process\Context\ExecutionContextInterface;
 use Prophecy\Argument;
 
 use PhpSpec\Console\IO;
@@ -12,9 +13,9 @@ use PhpSpec\Locator\ResourceInterface;
 
 class SpecificationGeneratorSpec extends ObjectBehavior
 {
-    function let(IO $io, TemplateRenderer $tpl, Filesystem $fs)
+    function let(IO $io, TemplateRenderer $tpl, Filesystem $fs, ExecutionContextInterface $context)
     {
-        $this->beConstructedWith($io, $tpl, $fs);
+        $this->beConstructedWith($io, $tpl, $fs, $context);
     }
 
     function it_is_a_generator()

@@ -51,12 +51,12 @@ abstract class PromptingGenerator implements GeneratorInterface
      * @param Filesystem $filesystem
      * @param ExecutionContextInterface $executionContext
      */
-    public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null, ExecutionContextInterface $executionContext = null)
+    public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem, ExecutionContextInterface $executionContext)
     {
         $this->io         = $io;
         $this->templates  = $templates;
-        $this->filesystem = $filesystem ?: new Filesystem();
-        $this->executionContext = $executionContext ?: new JsonExecutionContext();
+        $this->filesystem = $filesystem;
+        $this->executionContext = $executionContext;
     }
 
     /**

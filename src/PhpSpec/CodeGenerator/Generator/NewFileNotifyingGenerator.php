@@ -29,11 +29,11 @@ class NewFileNotifyingGenerator implements GeneratorInterface
      * @param EventDispatcherInterface $dispatcher
      * @param Filesystem $filesystem
      */
-    public function __construct(GeneratorInterface $generator, EventDispatcherInterface $dispatcher, Filesystem $filesystem = null)
+    public function __construct(GeneratorInterface $generator, EventDispatcherInterface $dispatcher, Filesystem $filesystem)
     {
         $this->generator = $generator;
         $this->dispatcher = $dispatcher;
-        $this->filesystem = $filesystem ?: new Filesystem();
+        $this->filesystem = $filesystem;
     }
 
     /**
