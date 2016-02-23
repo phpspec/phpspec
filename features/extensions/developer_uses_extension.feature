@@ -37,21 +37,21 @@ Feature: Developer uses extension
 
     namespace Example1\PhpSpec\MatcherExtension;
 
-    use PhpSpec\Formatter\Presenter\PresenterInterface;
+    use PhpSpec\Formatter\Presenter\Presenter;
     use PhpSpec\Exception\Example\FailureException;
     use PhpSpec\Matcher\BasicMatcher;
 
     class BeSevenMatcher extends BasicMatcher
     {
         /**
-         * @var \PhpSpec\Formatter\Presenter\PresenterInterface
+         * @var \PhpSpec\Formatter\Presenter\Presenter
          */
         private $presenter;
 
         /**
-         * @param PresenterInterface $presenter
+         * @param Presenter $presenter
          */
-        public function __construct(PresenterInterface $presenter)
+        public function __construct(Presenter $presenter)
         {
             $this->presenter = $presenter;
         }

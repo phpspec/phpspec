@@ -9,7 +9,7 @@ use Prophecy\Argument;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 use PhpSpec\SpecificationInterface;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Runner\Maintainer\MaintainerInterface;
 use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Loader\Node\ExampleNode;
@@ -20,7 +20,7 @@ use ReflectionMethod;
 
 class ExampleRunnerSpec extends ObjectBehavior
 {
-    function let(EventDispatcherInterface $dispatcher, PresenterInterface $presenter, ExampleNode $example, SpecificationNode $specification, ReflectionClass $specReflection,
+    function let(EventDispatcherInterface $dispatcher, Presenter $presenter, ExampleNode $example, SpecificationNode $specification, ReflectionClass $specReflection,
         ReflectionMethod $exampReflection, SpecificationInterface $context)
     {
         $this->beConstructedWith($dispatcher, $presenter);

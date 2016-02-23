@@ -5,14 +5,14 @@ namespace spec\PhpSpec\Exception;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 
 class ExceptionFactorySpec extends ObjectBehavior
 {
     private $fixture;
     private $createdException;
 
-    function let(PresenterInterface $presenter)
+    function let(Presenter $presenter)
     {
         $this->beConstructedWith($presenter);
         $this->fixture = new \stdClass();
@@ -23,7 +23,7 @@ class ExceptionFactorySpec extends ObjectBehavior
         $this->fixture->property = 'zoo';
     }
 
-    function it_creates_a_named_constructor_not_found_exception(PresenterInterface $presenter)
+    function it_creates_a_named_constructor_not_found_exception(Presenter $presenter)
     {
         $presenter->presentString("{$this->fixture->classname}::{$this->fixture->method}")
             ->shouldBeCalled()
@@ -38,7 +38,7 @@ class ExceptionFactorySpec extends ObjectBehavior
         $this->shouldCreateNamedConstructorNotFoundException();
     }
 
-    function it_creates_a_method_not_found_exception(PresenterInterface $presenter)
+    function it_creates_a_method_not_found_exception(Presenter $presenter)
     {
         $presenter->presentString("{$this->fixture->classname}::{$this->fixture->method}")
             ->shouldBeCalled()
@@ -53,7 +53,7 @@ class ExceptionFactorySpec extends ObjectBehavior
         $this->shouldCreateMethodNotFoundException();
     }
 
-    function it_creates_a_method_not_visible_exception(PresenterInterface $presenter)
+    function it_creates_a_method_not_visible_exception(Presenter $presenter)
     {
         $presenter->presentString("{$this->fixture->classname}::{$this->fixture->method}")
             ->shouldBeCalled()
@@ -69,7 +69,7 @@ class ExceptionFactorySpec extends ObjectBehavior
         $this->shouldCreateMethodNotVisibleException();
     }
 
-    function it_creates_a_class_not_found_exception(PresenterInterface $presenter)
+    function it_creates_a_class_not_found_exception(Presenter $presenter)
     {
         $presenter->presentString("{$this->fixture->classname}")
             ->shouldBeCalled()
@@ -82,7 +82,7 @@ class ExceptionFactorySpec extends ObjectBehavior
         $this->shouldCreateClassNotFoundException();
     }
 
-    function it_creates_a_property_not_found_exception(PresenterInterface $presenter)
+    function it_creates_a_property_not_found_exception(Presenter $presenter)
     {
         $presenter->presentString("{$this->fixture->property}")
             ->shouldBeCalled()
@@ -96,7 +96,7 @@ class ExceptionFactorySpec extends ObjectBehavior
         $this->shouldCreatePropertyNotFoundException();
     }
 
-    function it_creates_a_calling_method_on_non_object_exception(PresenterInterface $presenter)
+    function it_creates_a_calling_method_on_non_object_exception(Presenter $presenter)
     {
         $presenter->presentString("{$this->fixture->method}()")
             ->shouldBeCalled()
@@ -107,7 +107,7 @@ class ExceptionFactorySpec extends ObjectBehavior
         $exception->getMessage()->shouldBe($fixtureMessage);
     }
 
-    function it_creates_a_setting_property_on_non_object_exception(PresenterInterface $presenter)
+    function it_creates_a_setting_property_on_non_object_exception(Presenter $presenter)
     {
         $presenter->presentString("{$this->fixture->property}")
             ->shouldBeCalled()
@@ -118,7 +118,7 @@ class ExceptionFactorySpec extends ObjectBehavior
         $exception->getMessage()->shouldBe($fixtureMessage);
     }
 
-    function it_creates_an_accessing_property_on_non_object_exception(PresenterInterface $presenter)
+    function it_creates_an_accessing_property_on_non_object_exception(Presenter $presenter)
     {
         $presenter->presentString("{$this->fixture->property}")
             ->shouldBeCalled()
