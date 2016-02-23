@@ -2,7 +2,7 @@
 
 namespace spec\PhpSpec\Runner\Maintainer;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\ObjectBehavior;
@@ -14,7 +14,7 @@ use Prophecy\Argument;
 class MatchersMaintainerSpec extends ObjectBehavior
 {
     function it_should_add_default_matchers_to_the_matcher_manager(
-        PresenterInterface $presenter, ExampleNode $example, SpecificationInterface $context,
+        Presenter $presenter, ExampleNode $example, SpecificationInterface $context,
         MatcherManager $matchers, CollaboratorManager $collaborators, MatcherInterface $matcher)
     {
         $this->beConstructedWith($presenter, array($matcher));

@@ -17,7 +17,7 @@ use PhpSpec\Console\IO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\PendingException;
 use PhpSpec\Exception\Example\SkippingException;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\Message\CurrentExampleTracker;
 
@@ -29,11 +29,11 @@ class ConsoleFormatter extends BasicFormatter implements FatalPresenter
     private $io;
 
     /**
-     * @param PresenterInterface  $presenter
+     * @param Presenter           $presenter
      * @param IO                  $io
      * @param StatisticsCollector $stats
      */
-    public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
+    public function __construct(Presenter $presenter, IO $io, StatisticsCollector $stats)
     {
         parent::__construct($presenter, $io, $stats);
         $this->io = $io;

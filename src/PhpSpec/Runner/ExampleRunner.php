@@ -15,7 +15,7 @@ namespace PhpSpec\Runner;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Runner\Maintainer\LetAndLetgoMaintainer;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\SpecificationInterface;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Loader\Node\ExampleNode;
@@ -31,7 +31,7 @@ class ExampleRunner
      */
     private $dispatcher;
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
     /**
@@ -41,9 +41,9 @@ class ExampleRunner
 
     /**
      * @param EventDispatcherInterface $dispatcher
-     * @param PresenterInterface       $presenter
+     * @param Presenter       $presenter
      */
-    public function __construct(EventDispatcherInterface $dispatcher, PresenterInterface $presenter)
+    public function __construct(EventDispatcherInterface $dispatcher, Presenter $presenter)
     {
         $this->dispatcher = $dispatcher;
         $this->presenter  = $presenter;

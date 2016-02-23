@@ -16,7 +16,7 @@ namespace PhpSpec\Formatter\Presenter;
 use PhpSpec\Formatter\Presenter\Exception\ExceptionPresenter;
 use PhpSpec\Formatter\Presenter\Value\ValuePresenter;
 
-final class SimplePresenter implements PresenterInterface
+final class SimplePresenter implements Presenter
 {
     /**
      * @var ValuePresenter

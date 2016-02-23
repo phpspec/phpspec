@@ -13,13 +13,13 @@
 
 namespace spec\PhpSpec\Matcher;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 class StringContainMatcherSpec extends ObjectBehavior
 {
-    function let(PresenterInterface $presenter)
+    function let(Presenter $presenter)
     {
         $presenter->presentString(Argument::type('string'))->willReturnArgument();
 

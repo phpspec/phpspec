@@ -5,12 +5,12 @@ namespace spec\PhpSpec\Runner;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Matcher\MatcherInterface;
 
 class MatcherManagerSpec extends ObjectBehavior
 {
-    function let(PresenterInterface $presenter)
+    function let(Presenter $presenter)
     {
         $this->beConstructedWith($presenter);
     }

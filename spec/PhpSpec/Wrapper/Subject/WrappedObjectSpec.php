@@ -6,11 +6,11 @@ use PhpSpec\Exception\Fracture\FactoryDoesNotReturnObjectException;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 
 class WrappedObjectSpec extends ObjectBehavior
 {
-    function let(PresenterInterface $presenter)
+    function let(Presenter $presenter)
     {
         $this->beConstructedWith(null, $presenter);
     }

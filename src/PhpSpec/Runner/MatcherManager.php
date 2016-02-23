@@ -15,12 +15,12 @@ namespace PhpSpec\Runner;
 
 use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\Exception\Wrapper\MatcherNotFoundException;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 
 class MatcherManager
 {
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
     /**
@@ -29,9 +29,9 @@ class MatcherManager
     private $matchers = array();
 
     /**
-     * @param PresenterInterface $presenter
+     * @param Presenter $presenter
      */
-    public function __construct(PresenterInterface $presenter)
+    public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }
