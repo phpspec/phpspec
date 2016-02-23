@@ -20,7 +20,6 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Locator\ResourceCreationException;
 use PhpSpec\Locator\ResourceManagerInterface;
 use PhpSpec\Util\NameCheckerInterface;
-use PhpSpec\Util\ReservedWordsMethodNameChecker;
 use Prophecy\Argument\ArgumentsWildcard;
 use Prophecy\Exception\Doubler\MethodNotFoundException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

@@ -13,7 +13,6 @@
 
 namespace PhpSpec\Listener;
 
-use PhpSpec\Util\ReservedWordsMethodNameChecker;
 use PhpSpec\Util\NameCheckerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use PhpSpec\Console\IO;
