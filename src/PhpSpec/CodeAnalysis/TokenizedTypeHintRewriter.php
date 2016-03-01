@@ -103,10 +103,14 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                         $this->state = self::STATE_READING_FUNCTION_BODY;
                         $this->currentBodyLevel = 1;
                     }
-                    elseif ($this->tokenHasType($token, T_STRING) && !$this->currentClass) {
+                    elseif ('}' == $token && $this->currentClass) {
+                        $this->state = self::STATE_DEFAULT;
+                        $this->currentClass = null;
+                    }
+                    elseif ($this->tokenHasType($token, T_STRING) && !$this->currentClass && $this->shouldExtractTokensOfClass($token[1])) {
                         $this->currentClass = $token[1];
                     }
-                    elseif($this->tokenHasType($token, T_FUNCTION)) {
+                    elseif($this->tokenHasType($token, T_FUNCTION) && $this->currentClass) {
                         $this->state = self::STATE_READING_FUNCTION;
                     }
                     break;
@@ -191,5 +195,15 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     private function tokenHasType($token, $type)
     {
         return is_array($token) && $type == $token[0];
+    }
+
+    /**
+     * @param string $className
+     *
+     * @return bool
+     */
+    private function shouldExtractTokensOfClass($className)
+    {
+        return substr($className, -4) == 'Spec';
     }
 }
