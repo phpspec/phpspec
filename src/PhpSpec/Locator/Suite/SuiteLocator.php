@@ -14,6 +14,7 @@
 namespace PhpSpec\Locator\Suite;
 
 use PhpSpec\Locator\PSR0\PSR0Locator;
+use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\Locator\ResourceLocatorInterface;
 use PhpSpec\Util\Filesystem;
 
@@ -53,6 +54,11 @@ class SuiteLocator extends PSR0Locator implements ResourceLocatorInterface
         return $query == $this->suiteName;
     }
 
+    /**
+     * @param string $query
+     *
+     * @return ResourceInterface[]
+     */
     public function findResources($query)
     {
         return parent::getAllResources();
