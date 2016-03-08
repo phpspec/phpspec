@@ -390,6 +390,12 @@ class PSR0Locator implements ResourceLocatorInterface
             }
         }
 
+        if ($this->queryContainsSpecFileWithoutExtension($query)) {
+            if (false !== $path = realpath($replacedQuery . '.php')) {
+                return $path;
+            }
+        }
+
         return rtrim(realpath($replacedQuery), $sepr);
     }
 
@@ -421,5 +427,15 @@ class PSR0Locator implements ResourceLocatorInterface
     private function isWindowsPath($query)
     {
         return preg_match('/^\w:/', $query);
+    }
+
+    /**
+     * @param $query
+     *
+     * @return bool
+     */
+    private function queryContainsSpecFileWithoutExtension($query)
+    {
+        return 'Spec' === substr($query, -4);
     }
 }
