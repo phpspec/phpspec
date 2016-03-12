@@ -1,3 +1,8 @@
+2.5.0-rc1 / 2016-03-12
+======================
+
+* Fixed bug with typehints in classes defined in spec file
+
 2.5.0-beta / 2016-02-16
 =======================
 
