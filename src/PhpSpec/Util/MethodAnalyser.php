@@ -90,11 +90,6 @@ class MethodAnalyser
     {
         $reflectionClass = $reflectionMethod->getDeclaringClass();
 
-        // PHP <=5.3 does not handle traits
-        if (version_compare(PHP_VERSION, '5.4.0', '<')) {
-            return $reflectionClass;
-        }
-
         $fileName = $reflectionMethod->getFileName();
         $trait = $this->getDeclaringTrait($reflectionClass->getTraits(), $fileName, $methodStartLine, $methodEndLine);
 
