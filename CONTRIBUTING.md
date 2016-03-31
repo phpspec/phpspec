@@ -7,9 +7,9 @@ feel free to do this, but remember to follow this few simple rules:
 Branching strategy
 -------------------
 
-- __Always__ base your changes on the `master` branch (all new development happens here),
-- When you create Pull Request, always select `master` branch as target, otherwise it
-will be closed (this is selected by default).
+- For new features, or bugs that only affect the 3.x versions, base your changes on the `master` branch and open PRs against `master`
+- For bugs that affect 2.5.x versions, base your changes on the `2.5` branch and open PRs agains `2.5`
+- Bugs in previous versions are not going to be fixed, upgrade to `2.5` minimum.
 
 Coverage
 --------
