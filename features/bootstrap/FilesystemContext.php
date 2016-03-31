@@ -1,19 +1,14 @@
 <?php
 
-use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
-use Behat\Gherkin\Node\TableNode;
-use Matcher\FileExistsMatcher;
-use Matcher\FileHasContentsMatcher;
-use PhpSpec\Matcher\MatchersProviderInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Defines application features from the specific context.
  */
-class FilesystemContext implements Context, MatchersProviderInterface
+class FilesystemContext implements Context
 {
     /**
      * @var string
@@ -98,8 +93,12 @@ class FilesystemContext implements Context, MatchersProviderInterface
      */
     public function thereIsNoFile($file)
     {
-        expect($file)->toNotExist();
-        expect(file_exists($file))->toBe(false);
+        if (file_exists($file)) {
+            throw new \Exception(sprintf(
+                "File unexpectedly exists at path '%s'",
+                $file
+            ));
+        }
     }
 
     /**
@@ -108,8 +107,22 @@ class FilesystemContext implements Context, MatchersProviderInterface
      */
     public function theFileShouldContain($file, PyStringNode $contents)
     {
-        expect($file)->toExist();
-        expect($file)->toHaveContents($contents);
+        if (!file_exists($file)) {
+            throw new \Exception(sprintf(
+                "File did not exist at path '%s'",
+                $file
+            ));
+        }
+
+        $expectedContents = (string)$contents;
+        if ($expectedContents != file_get_contents($file)) {
+            throw new \Exception(sprintf(
+                "File at '%s' did not contain expected contents.\nExpected: '%s'\nActual: '%s'",
+                $file,
+                $expectedContents,
+                file_get_contents($file)
+            ));
+        }
     }
 
     /**
@@ -126,16 +139,5 @@ class FilesystemContext implements Context, MatchersProviderInterface
     public function iHaveNotConfiguredAnAutoloader()
     {
         $this->filesystem->remove($this->workingDirectory . '/vendor/autoload.php');
-    }
-
-    /**
-     * @return array
-     */
-    public function getMatchers()
-    {
-        return array(
-            new FileExistsMatcher(),
-            new FileHasContentsMatcher()
-        );
     }
 }
