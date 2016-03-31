@@ -3,8 +3,6 @@
 use Behat\Behat\Context\Context;
 use Behat\Behat\Context\SnippetAcceptingContext;
 use Symfony\Component\Process\Process;
-use Symfony\Component\Filesystem\Filesystem;
-use Behat\Gherkin\Node\PyStringNode;
 
 /**
  * Defines application features from the specific context.
@@ -29,7 +27,9 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
 
         $process->run();
 
-        expect($process->getExitCode())->toBe(0);
+        if ($process->getExitCode() !== 0) {
+            throw new \Exception('The describe process ended with an error');
+        }
     }
 
     /**
@@ -70,7 +70,9 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function theTestsShouldBeRerun()
     {
-        expect(substr_count($this->process->getOutput(), 'specs'))->toBe(2);
+        if (substr_count($this->process->getOutput(), 'specs') !== 2) {
+            throw new \Exception('The tests were not rerun');
+        }
     }
 
     /**
@@ -78,7 +80,9 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function iShouldSeeAnErrorAboutTheMissingAutoloader()
     {
-        expect($this->process->getErrorOutput())->toMatch('/autoload/');
+        if (!preg_match('/autoload/', $this->process->getErrorOutput())) {
+            throw new \Exception('There was no error regarding a missing autoloader');
+        }
     }
 
     /**
@@ -124,7 +128,9 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function iShouldSee($message)
     {
-        expect(strpos($this->lastOutput, $message))->toNotBe(false);
+        if (strpos($this->lastOutput, $message) === false) {
+            throw new \Exception("Missing message: $message");
+        }
     }
 
 }
