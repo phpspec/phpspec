@@ -19,6 +19,7 @@ use PhpSpec\CodeAnalysis\TokenizedNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
 use PhpSpec\Console\Assembler\PresenterAssembler;
+use PhpSpec\Console\Prompter\Question;
 use PhpSpec\Factory\ReflectionFactory;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
 use PhpSpec\Util\ClassFileAnalyser;
@@ -70,7 +71,11 @@ class ContainerAssembler
     {
         if (!$container->isDefined('console.prompter')) {
             $container->setShared('console.prompter', function ($c) {
-                return $c->get('console.prompter.factory')->getPrompter();
+                return new Question(
+                    $c->get('console.input'),
+                    $c->get('console.output'),
+                    $c->get('console.helper_set')->get('question')
+                );
             });
         }
         $container->setShared('console.io', function (ServiceContainer $c) {

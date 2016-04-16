@@ -1,23 +1,20 @@
 <?php
 
-use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
-use Behat\Gherkin\Node\TableNode;
 use Fake\Prompter;
 use Fake\ReRunner;
-use Matcher\ApplicationOutputMatcher;
-use Matcher\ValidJUnitXmlMatcher;
 use PhpSpec\Console\Application;
 use PhpSpec\Loader\StreamWrapper;
-use PhpSpec\Matcher\MatchersProviderInterface;
 use Symfony\Component\Console\Tester\ApplicationTester;
 
 /**
  * Defines application features from the specific context.
  */
-class ApplicationContext implements Context, MatchersProviderInterface
+class ApplicationContext implements Context
 {
+    const JUNIT_XSD_PATH = '/src/PhpSpec/Resources/schema/junit.xsd';
+
     /**
      * @var Application
      */
@@ -83,7 +80,9 @@ class ApplicationContext implements Context, MatchersProviderInterface
             'class' => $class
         );
 
-        expect($this->tester->run($arguments, array('interactive' => false)))->toBe(0);
+        if ($this->tester->run($arguments, array('interactive' => false)) !== 0) {
+            throw new \Exception('Test runner exited with an error');
+        }
     }
 
     /**
@@ -167,7 +166,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function iShouldSee($output)
     {
-        expect($this->tester)->toHaveOutput((string)$output);
+        $this->checkApplicationOutput((string)$output);
     }
 
     /**
@@ -175,7 +174,9 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function iShouldBePromptedForCodeGeneration()
     {
-        expect($this->prompter)->toHaveBeenAsked();
+        if(!$this->prompter->hasBeenAsked()) {
+            throw new \Exception('There was a missing prompt for code generation');
+        }
     }
 
     /**
@@ -183,7 +184,9 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function iShouldNotBePromptedForCodeGeneration()
     {
-        expect($this->prompter)->toNotHaveBeenAsked();
+        if($this->prompter->hasBeenAsked()) {
+            throw new \Exception('There was an unexpected prompt for code generation');
+        }
     }
 
     /**
@@ -191,7 +194,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function theSuiteShouldPass()
     {
-        expect($this->lastExitCode)->toBeLike(0);
+        $this->theExitCodeShouldBe(0);
     }
 
     /**
@@ -199,7 +202,9 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function theSuiteShouldNotPass()
     {
-        expect($this->lastExitCode)->notToBeLike(0);
+        if ($this->lastExitCode === 0) {
+            throw new \Exception('The application did not exit with an error code');
+        }
     }
 
     /**
@@ -207,7 +212,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function exampleShouldHaveBeenSkipped($number)
     {
-        expect($this->tester)->toHaveOutput("($number skipped)");
+        $this->checkApplicationOutput("($number skipped)");
     }
 
     /**
@@ -215,7 +220,7 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function examplesShouldHaveBeenRun($number)
     {
-        expect($this->tester)->toHaveOutput("$number examples");
+        $this->checkApplicationOutput("$number examples");
     }
 
     /**
@@ -223,7 +228,13 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function theExitCodeShouldBe($code)
     {
-        expect($this->lastExitCode)->toBeLike($code);
+        if ($this->lastExitCode !== (int)$code) {
+            throw new \Exception(sprintf(
+                'The application existed with an unexpected code: expected: %s, actual: %s',
+                $code,
+                $this->lastExitCode
+            ));
+        }
     }
 
     /**
@@ -231,7 +242,13 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function iShouldSeeValidJunitOutput()
     {
-        expect($this->tester)->toHaveOutputValidJunitXml();
+        $dom = new \DOMDocument();
+        $dom->loadXML($this->tester->getDisplay());
+        if (!$dom->schemaValidate(__DIR__ . '/../..' . self::JUNIT_XSD_PATH)) {
+            throw new \Exception(sprintf(
+                "Output was not valid JUnit XML"
+            ));
+        }
     }
 
     /**
@@ -239,7 +256,9 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function theTestsShouldBeRerun()
     {
-        expect($this->reRunner)->toHaveBeenRerun();
+        if (!$this->reRunner->hasBeenReRun()) {
+            throw new \Exception('The tests should have been rerun');
+        }
     }
 
     /**
@@ -247,7 +266,9 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function theTestsShouldNotBeRerun()
     {
-        expect($this->reRunner)->toNotHaveBeenRerun();
+        if ($this->reRunner->hasBeenReRun()) {
+            throw new \Exception('The tests should not have been rerun');
+        }
     }
 
     /**
@@ -255,7 +276,10 @@ class ApplicationContext implements Context, MatchersProviderInterface
      */
     public function iShouldBePromptedWith(PyStringNode $question)
     {
-        expect($this->prompter)->toHaveBeenAsked((string)$question);
+        $stringQuestion = (string)$question;
+        if (!$this->prompter->hasBeenAsked($stringQuestion)) {
+            throw new \Exception("The prompt was not shown: $stringQuestion");
+        }
     }
 
     /**
@@ -270,7 +294,9 @@ class ApplicationContext implements Context, MatchersProviderInterface
             '--config' => $config
         );
 
-        expect($this->tester->run($arguments, array('interactive' => false)))->toBe(0);
+        if ($this->tester->run($arguments, array('interactive' => false)) !== 0) {
+            throw new \Exception('Test runner exited with an error');
+        }
     }
 
     /**
@@ -286,19 +312,6 @@ class ApplicationContext implements Context, MatchersProviderInterface
         $this->prompter->setAnswer($answer=='y');
 
         $this->lastExitCode = $this->tester->run($arguments, array('interactive' => true));
-    }
-
-    /**
-     * Custom matchers
-     *
-     * @return array
-     */
-    public function getMatchers()
-    {
-        return array(
-            new ApplicationOutputMatcher(),
-            new ValidJUnitXmlMatcher()
-        );
     }
 
     /**
@@ -326,5 +339,25 @@ class ApplicationContext implements Context, MatchersProviderInterface
         );
 
         $this->lastExitCode = $this->tester->run($arguments, array('interactive' => false));
+    }
+
+    private function checkApplicationOutput($output)
+    {
+        $expected = $this->normalize($output);
+        $actual = $this->normalize($this->tester->getDisplay(true));
+        if (strpos($actual, $expected) === false) {
+            throw new \Exception(sprintf(
+                "Application output did not contain expected '%s'. Actual output:\n'%s'" ,
+                $expected,
+                $this->tester->getDisplay()
+            ));
+        }
+    }
+
+    private function normalize($string)
+    {
+        $string = preg_replace('/\([0-9]+ms\)/', '', $string);
+
+        return $string;
     }
 }
