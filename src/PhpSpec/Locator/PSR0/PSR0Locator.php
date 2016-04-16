@@ -55,11 +55,11 @@ class PSR0Locator implements ResourceLocatorInterface
     private $psr4Prefix;
 
     /**
+     * @param Filesystem $filesystem
      * @param string     $srcNamespace
      * @param string     $specNamespacePrefix
      * @param string     $srcPath
      * @param string     $specPath
-     * @param Filesystem $filesystem
      * @param string     $psr4Prefix
      */
     public function __construct(
