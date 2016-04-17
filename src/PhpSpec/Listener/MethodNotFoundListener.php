@@ -13,7 +13,6 @@
 
 namespace PhpSpec\Listener;
 
-use PhpSpec\Util\ReservedWordsMethodNameChecker;
 use PhpSpec\Util\NameCheckerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use PhpSpec\Console\IO;
@@ -45,12 +44,12 @@ class MethodNotFoundListener implements EventSubscriberInterface
         IO $io,
         ResourceManagerInterface $resources,
         GeneratorManager $generator,
-        NameCheckerInterface $nameChecker = null
+        NameCheckerInterface $nameChecker
     ) {
         $this->io        = $io;
         $this->resources = $resources;
         $this->generator = $generator;
-        $this->nameChecker = $nameChecker ?: new ReservedWordsMethodNameChecker();
+        $this->nameChecker = $nameChecker;
     }
 
     public static function getSubscribedEvents()

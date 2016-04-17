@@ -67,14 +67,14 @@ class Caller
         Dispatcher $dispatcher,
         ExceptionFactory $exceptions,
         Wrapper $wrapper,
-        AccessInspectorInterface $accessInspector = null
+        AccessInspectorInterface $accessInspector
     ) {
         $this->wrappedObject    = $wrappedObject;
         $this->example          = $example;
         $this->dispatcher       = $dispatcher;
         $this->wrapper          = $wrapper;
         $this->exceptionFactory = $exceptions;
-        $this->accessInspector  = $accessInspector ?: new MagicAwareAccessInspector(new VisibilityAccessInspector());
+        $this->accessInspector  = $accessInspector;
     }
 
     /**

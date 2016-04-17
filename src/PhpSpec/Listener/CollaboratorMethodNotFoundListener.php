@@ -20,7 +20,6 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Locator\ResourceCreationException;
 use PhpSpec\Locator\ResourceManagerInterface;
 use PhpSpec\Util\NameCheckerInterface;
-use PhpSpec\Util\ReservedWordsMethodNameChecker;
 use Prophecy\Argument\ArgumentsWildcard;
 use Prophecy\Exception\Doubler\MethodNotFoundException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -69,12 +68,12 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
         IO $io,
         ResourceManagerInterface $resources,
         GeneratorManager $generator,
-        NameCheckerInterface $nameChecker = null
+        NameCheckerInterface $nameChecker
     ) {
         $this->io = $io;
         $this->resources = $resources;
         $this->generator = $generator;
-        $this->nameChecker = $nameChecker ?: new ReservedWordsMethodNameChecker();
+        $this->nameChecker = $nameChecker;
     }
 
     /**

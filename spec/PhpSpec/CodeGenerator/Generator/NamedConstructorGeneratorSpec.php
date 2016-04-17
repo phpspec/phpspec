@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\CodeGenerator\TemplateRenderer;
+use PhpSpec\CodeGenerator\Writer\CodeWriter;
 use PhpSpec\Console\IO;
 use PhpSpec\Locator\ResourceInterface;
 use PhpSpec\ObjectBehavior;
@@ -11,9 +12,9 @@ use Prophecy\Argument;
 
 class NamedConstructorGeneratorSpec extends ObjectBehavior
 {
-    function let(IO $io, TemplateRenderer $tpl, Filesystem $fs)
+    function let(IO $io, TemplateRenderer $tpl, Filesystem $fs, CodeWriter $codeWriter)
     {
-        $this->beConstructedWith($io, $tpl, $fs);
+        $this->beConstructedWith($io, $tpl, $fs, $codeWriter);
     }
 
     function it_is_a_generator()
@@ -36,7 +37,7 @@ class NamedConstructorGeneratorSpec extends ObjectBehavior
         $this->getPriority()->shouldReturn(0);
     }
 
-    function it_generates_static_constructor_method_from_resource($io, $tpl, $fs, ResourceInterface $resource)
+    function it_generates_static_constructor_method_from_resource($io, $tpl, $fs, ResourceInterface $resource, CodeWriter $codeWriter)
     {
         $codeWithoutMethod = <<<CODE
 <?php
@@ -73,6 +74,8 @@ CODE;
 
         $tpl->render('named_constructor_create_object', $values)->willReturn(null);
         $tpl->renderString(Argument::type('string'), $values)->willReturn('METHOD');
+
+        $codeWriter->insertAfterMethod($codeWithoutMethod, '__construct', 'METHOD')->willReturn($codeWithMethod);
 
         $fs->getFileContents('/project/src/Acme/App.php')->willReturn($codeWithoutMethod);
         $fs->putFileContents('/project/src/Acme/App.php', $codeWithMethod)->shouldBeCalled();

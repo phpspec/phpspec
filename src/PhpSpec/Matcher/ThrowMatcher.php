@@ -46,14 +46,14 @@ class ThrowMatcher implements MatcherInterface
 
     /**
      * @param Unwrapper              $unwrapper
-     * @param Presenter     $presenter
+     * @param Presenter              $presenter
      * @param ReflectionFactory|null $factory
      */
-    public function __construct(Unwrapper $unwrapper, Presenter $presenter, ReflectionFactory $factory = null)
+    public function __construct(Unwrapper $unwrapper, Presenter $presenter, ReflectionFactory $factory)
     {
         $this->unwrapper = $unwrapper;
         $this->presenter = $presenter;
-        $this->factory   = $factory ?: new ReflectionFactory();
+        $this->factory   = $factory;
     }
 
     /**

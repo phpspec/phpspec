@@ -20,7 +20,10 @@ use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
 use PhpSpec\Console\Assembler\PresenterAssembler;
 use PhpSpec\Console\Prompter\Question;
+use PhpSpec\Factory\ReflectionFactory;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
+use PhpSpec\Util\ClassFileAnalyser;
+use PhpSpec\Util\Filesystem;
 use PhpSpec\Util\ReservedWordsMethodNameChecker;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
@@ -88,6 +91,9 @@ class ContainerAssembler
                 ),
                 $c->get('console.prompter')
             );
+        });
+        $container->setShared('util.filesystem', function () {
+            return new Filesystem();
         });
     }
 
@@ -236,75 +242,93 @@ class ContainerAssembler
         $container->set('code_generator.generators.specification', function (ServiceContainer $c) {
             $specificationGenerator =  new CodeGenerator\Generator\SpecificationGenerator(
                 $c->get('console.io'),
-                $c->get('code_generator.templates')
+                $c->get('code_generator.templates'),
+                $c->get('util.filesystem'),
+                $c->get('process.executioncontext')
             );
 
             return new CodeGenerator\Generator\NewFileNotifyingGenerator(
                 $specificationGenerator,
-                $c->get('event_dispatcher')
+                $c->get('event_dispatcher'),
+                $c->get('util.filesystem')
             );
         });
         $container->set('code_generator.generators.class', function (ServiceContainer $c) {
             $classGenerator = new CodeGenerator\Generator\ClassGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
-                null,
+                $c->get('util.filesystem'),
                 $c->get('process.executioncontext')
             );
 
             return new CodeGenerator\Generator\NewFileNotifyingGenerator(
                 $classGenerator,
-                $c->get('event_dispatcher')
+                $c->get('event_dispatcher'),
+                $c->get('util.filesystem')
             );
         });
         $container->set('code_generator.generators.interface', function (ServiceContainer $c) {
             $interfaceGenerator = new CodeGenerator\Generator\InterfaceGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
-                null,
+                $c->get('util.filesystem'),
                 $c->get('process.executioncontext')
             );
 
             return new CodeGenerator\Generator\NewFileNotifyingGenerator(
                 $interfaceGenerator,
-                $c->get('event_dispatcher')
+                $c->get('event_dispatcher'),
+                $c->get('util.filesystem')
             );
+        });
+        $container->set('code_generator.writers.tokenized', function () {
+            return new CodeGenerator\Writer\TokenizedCodeWriter(new ClassFileAnalyser());
         });
         $container->set('code_generator.generators.method', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\MethodGenerator(
                 $c->get('console.io'),
-                $c->get('code_generator.templates')
+                $c->get('code_generator.templates'),
+                $c->get('util.filesystem'),
+                $c->get('code_generator.writers.tokenized')
             );
         });
         $container->set('code_generator.generators.methodSignature', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\MethodSignatureGenerator(
                 $c->get('console.io'),
-                $c->get('code_generator.templates')
+                $c->get('code_generator.templates'),
+                $c->get('util.filesystem')
             );
         });
         $container->set('code_generator.generators.returnConstant', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\ReturnConstantGenerator(
                 $c->get('console.io'),
-                $c->get('code_generator.templates')
+                $c->get('code_generator.templates'),
+                $c->get('util.filesystem')
             );
         });
 
         $container->set('code_generator.generators.named_constructor', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\NamedConstructorGenerator(
                 $c->get('console.io'),
-                $c->get('code_generator.templates')
+                $c->get('code_generator.templates'),
+                $c->get('util.filesystem'),
+                $c->get('code_generator.writers.tokenized')
             );
         });
 
         $container->set('code_generator.generators.private_constructor', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\PrivateConstructorGenerator(
                 $c->get('console.io'),
-                $c->get('code_generator.templates')
+                $c->get('code_generator.templates'),
+                $c->get('util.filesystem'),
+                $c->get('code_generator.writers.tokenized')
             );
         });
 
         $container->setShared('code_generator.templates', function (ServiceContainer $c) {
-            $renderer = new CodeGenerator\TemplateRenderer();
+            $renderer = new CodeGenerator\TemplateRenderer(
+                $c->get('util.filesystem')
+            );
             $renderer->setLocations($c->getParam('code_generator.templates.paths', array()));
 
             return $renderer;
@@ -371,13 +395,13 @@ class ContainerAssembler
 
                 $c->set(
                     sprintf('locator.locators.%s_suite', $name),
-                    function () use ($config) {
+                    function (ServiceContainer $c) use ($config) {
                         return new Locator\PSR0\PSR0Locator(
+                            $c->get('util.filesystem'),
                             $config['namespace'],
                             $config['spec_prefix'],
                             $config['src_path'],
                             $config['spec_path'],
-                            null,
                             $config['psr4_prefix']
                         );
                     }
@@ -392,7 +416,10 @@ class ContainerAssembler
     private function setupLoader(ServiceContainer $container)
     {
         $container->setShared('loader.resource_loader', function (ServiceContainer $c) {
-            return new Loader\ResourceLoader($c->get('locator.resource_manager'));
+            return new Loader\ResourceLoader(
+                $c->get('locator.resource_manager'),
+                $c->get('util.method_analyser')
+            );
         });
         if (PHP_VERSION >= 7) {
             $container->setShared('loader.resource_loader.spec_transformer.typehint_rewriter', function (ServiceContainer $c) {
@@ -609,7 +636,7 @@ class ContainerAssembler
             return new Matcher\ComparisonMatcher($c->get('formatter.presenter'));
         });
         $container->set('matchers.throwm', function (ServiceContainer $c) {
-            return new Matcher\ThrowMatcher($c->get('unwrapper'), $c->get('formatter.presenter'));
+            return new Matcher\ThrowMatcher($c->get('unwrapper'), $c->get('formatter.presenter'), new ReflectionFactory());
         });
         $container->set('matchers.type', function (ServiceContainer $c) {
             return new Matcher\TypeMatcher($c->get('formatter.presenter'));
