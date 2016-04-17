@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\Matcher;
 
+use PhpSpec\Factory\ReflectionFactory;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
@@ -13,7 +14,7 @@ use ArrayObject;
 
 class ThrowMatcherSpec extends ObjectBehavior
 {
-    function let(Unwrapper $unwrapper, Presenter $presenter)
+    function let(Unwrapper $unwrapper, Presenter $presenter, ReflectionFactory $factory)
     {
         $unwrapper->unwrapAll(Argument::any())->willReturnArgument();
         $presenter->presentValue(Argument::any())->willReturn('val1', 'val2');
