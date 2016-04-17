@@ -5,14 +5,14 @@ namespace spec\PhpSpec\Matcher;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 
 use PhpSpec\Exception\Example\FailureException;
 use ArrayObject;
 
 class ArrayKeyValueMatcherSpec extends ObjectBehavior
 {
-    function let(PresenterInterface $presenter)
+    function let(Presenter $presenter)
     {
         $presenter->presentValue(Argument::any())->will(function ($subject) {
             if (is_array($subject[0])) {

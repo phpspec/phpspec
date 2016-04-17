@@ -6,7 +6,7 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Formatter\Html\Template;
 
 class ReportFailedItemSpec extends ObjectBehavior

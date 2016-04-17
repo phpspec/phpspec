@@ -2,7 +2,7 @@
 
 namespace spec\PhpSpec\Formatter;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Console\IO;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\Event\SuiteEvent;
@@ -16,7 +16,7 @@ use ReflectionFunctionAbstract;
 
 class DotFormatterSpec extends ObjectBehavior
 {
-    function let(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
+    function let(Presenter $presenter, IO $io, StatisticsCollector $stats)
     {
         $this->beConstructedWith($presenter, $io, $stats);
     }

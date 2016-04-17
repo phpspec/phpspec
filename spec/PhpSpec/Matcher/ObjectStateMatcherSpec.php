@@ -5,11 +5,11 @@ namespace spec\PhpSpec\Matcher;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 
 class ObjectStateMatcherSpec extends ObjectBehavior
 {
-    function let(PresenterInterface $presenter)
+    function let(Presenter $presenter)
     {
         $presenter->presentValue(Argument::any())->willReturn('val1', 'val2');
         $presenter->presentString(Argument::any())->willReturnArgument();

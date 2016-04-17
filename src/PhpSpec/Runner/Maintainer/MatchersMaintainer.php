@@ -18,13 +18,13 @@ use PhpSpec\Matcher\MatcherInterface;
 use PhpSpec\SpecificationInterface;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Matcher;
 
 class MatchersMaintainer implements MaintainerInterface
 {
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
 
@@ -34,10 +34,10 @@ class MatchersMaintainer implements MaintainerInterface
     private $defaultMatchers = array();
 
     /**
-     * @param PresenterInterface $presenter
+     * @param Presenter $presenter
      * @param MatcherInterface[] $matchers
      */
-    public function __construct(PresenterInterface $presenter, array $matchers)
+    public function __construct(Presenter $presenter, array $matchers)
     {
         $this->presenter = $presenter;
         $this->defaultMatchers = $matchers;

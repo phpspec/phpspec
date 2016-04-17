@@ -14,7 +14,7 @@
 namespace PhpSpec\Formatter;
 
 use PhpSpec\IO\IOInterface as IO;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
@@ -52,7 +52,7 @@ class JUnitFormatter extends BasicFormatter
         ExampleEvent::SKIPPED => 'skipped',
     );
 
-    public function __construct(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
+    public function __construct(Presenter $presenter, IO $io, StatisticsCollector $stats)
     {
         parent::__construct($presenter, $io, $stats);
 
