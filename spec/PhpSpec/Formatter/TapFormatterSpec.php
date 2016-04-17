@@ -8,14 +8,14 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Loader\Node\SpecificationNode;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 class TapFormatterSpec extends ObjectBehavior
 {
-    function let(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
+    function let(Presenter $presenter, IO $io, StatisticsCollector $stats)
     {
         $this->beConstructedWith($presenter, $io, $stats);
     }

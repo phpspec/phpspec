@@ -4,7 +4,7 @@ namespace spec\PhpSpec\Formatter;
 
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\IO\IOInterface;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\Event\SpecificationEvent;
@@ -16,7 +16,7 @@ use PhpSpec\Exception\Example\SkippingException;
 class JUnitFormatterSpec extends ObjectBehavior
 {
     function let(
-        PresenterInterface $presenter,
+        Presenter $presenter,
         IOInterface $io,
         StatisticsCollector $stats
     ) {

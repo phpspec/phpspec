@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Matcher;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Wrapper\DelayedCall;
 use PhpSpec\Factory\ReflectionFactory;
@@ -35,7 +35,7 @@ class ThrowMatcher implements MatcherInterface
     private $unwrapper;
 
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
 
@@ -46,10 +46,10 @@ class ThrowMatcher implements MatcherInterface
 
     /**
      * @param Unwrapper              $unwrapper
-     * @param PresenterInterface     $presenter
-     * @param ReflectionFactory      $factory
+     * @param Presenter              $presenter
+     * @param ReflectionFactory|null $factory
      */
-    public function __construct(Unwrapper $unwrapper, PresenterInterface $presenter, ReflectionFactory $factory)
+    public function __construct(Unwrapper $unwrapper, Presenter $presenter, ReflectionFactory $factory)
     {
         $this->unwrapper = $unwrapper;
         $this->presenter = $presenter;

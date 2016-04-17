@@ -18,7 +18,7 @@ use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\SpecificationInterface;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Wrapper\Wrapper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -26,7 +26,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 class SubjectMaintainer implements MaintainerInterface
 {
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
     /**
@@ -43,12 +43,12 @@ class SubjectMaintainer implements MaintainerInterface
     private $accessInspector;
 
     /**
-     * @param PresenterInterface       $presenter
+     * @param Presenter       $presenter
      * @param Unwrapper                $unwrapper
      * @param EventDispatcherInterface $dispatcher
      */
     public function __construct(
-        PresenterInterface $presenter,
+        Presenter $presenter,
         Unwrapper $unwrapper,
         EventDispatcherInterface $dispatcher,
         AccessInspectorInterface $accessInspector
