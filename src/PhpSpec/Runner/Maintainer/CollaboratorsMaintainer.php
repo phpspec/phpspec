@@ -120,18 +120,8 @@ class CollaboratorsMaintainer implements MaintainerInterface
      */
     private function generateCollaborators(CollaboratorManager $collaborators, \ReflectionFunctionAbstract $function, \ReflectionClass $classRefl)
     {
-        if ($comment = $function->getDocComment()) {
-            $comment = str_replace("\r\n", "\n", $comment);
-            foreach (explode("\n", trim($comment)) as $line) {
-                if (preg_match(self::$docex, $line, $match)) {
-                    $collaborator = $this->getOrCreateCollaborator($collaborators, $match[2]);
-                    $collaborator->beADoubleOf($match[1]);
-                }
-            }
-        }
-
         foreach ($function->getParameters() as $parameter) {
-
+            $foundClassInSignature = false;
             $collaborator = $this->getOrCreateCollaborator($collaborators, $parameter->getName());
             try {
                 if ($this->isUnsupportedTypeHinting($parameter)) {
@@ -140,6 +130,7 @@ class CollaboratorsMaintainer implements MaintainerInterface
                 if (($indexedClass = $this->getParameterTypeFromIndex($classRefl, $parameter))
                     || ($indexedClass = $this->getParameterTypeFromReflection($parameter))) {
                     $collaborator->beADoubleOf($indexedClass);
+                    $foundClassInSignature = null !== $indexedClass;
                 }
             }
             catch (ClassNotFoundException $e) {
@@ -147,6 +138,16 @@ class CollaboratorsMaintainer implements MaintainerInterface
             }
             catch (DisallowedScalarTypehintException $e) {
                 throw new InvalidCollaboratorTypeException($parameter, $function);
+            }
+        }
+
+        if ($comment = $function->getDocComment()) {
+            $comment = str_replace("\r\n", "\n", $comment);
+            foreach (explode("\n", trim($comment)) as $line) {
+                if (preg_match(self::$docex, $line, $match) && !$foundClassInSignature) {
+                    $collaborator = $this->getOrCreateCollaborator($collaborators, $match[2]);
+                    $collaborator->beADoubleOf($match[1]);
+                }
             }
         }
     }
