@@ -13,15 +13,15 @@
 
 namespace PhpSpec\Console;
 
-use PhpSpec\IO\IOInterface;
+use PhpSpec\IO\IO;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use PhpSpec\Config\OptionsConfig;
 
 /**
- * Class IO deals with input and output from command line interaction
+ * Class ConsoleIO deals with input and output from command line interaction
  */
-class IO implements IOInterface
+class ConsoleIO implements IO
 {
     const COL_MIN_WIDTH = 40;
     const COL_DEFAULT_WIDTH = 60;

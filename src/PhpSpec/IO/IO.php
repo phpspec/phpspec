@@ -11,11 +11,17 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Event;
+namespace PhpSpec\IO;
 
-/**
- * Interface EventInterface is used for all events in PhpSpec
- */
-interface EventInterface
+interface IO
 {
+    /**
+     * @param string $message
+     */
+    public function write($message);
+
+    /**
+     * @return bool
+     */
+    public function isVerbose();
 }

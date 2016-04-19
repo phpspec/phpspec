@@ -13,9 +13,9 @@
 
 namespace PhpSpec;
 
-use PhpSpec\Matcher\MatchersProviderInterface;
-use PhpSpec\Wrapper\WrapperInterface;
-use PhpSpec\Wrapper\SubjectContainerInterface;
+use PhpSpec\Matcher\MatchersProvider;
+use PhpSpec\Wrapper\ObjectWrapper;
+use PhpSpec\Wrapper\SubjectContainer;
 use PhpSpec\Wrapper\Subject;
 use ArrayAccess;
 
@@ -37,10 +37,10 @@ use ArrayAccess;
  */
 class ObjectBehavior implements
     ArrayAccess,
-    MatchersProviderInterface,
-    SubjectContainerInterface,
-    WrapperInterface,
-    SpecificationInterface
+    MatchersProvider,
+    SubjectContainer,
+    ObjectWrapper,
+    Specification
 {
     /**
      * @var Subject

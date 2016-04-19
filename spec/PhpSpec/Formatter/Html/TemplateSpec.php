@@ -5,11 +5,11 @@ namespace spec\PhpSpec\Formatter\Html;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-use PhpSpec\IO\IOInterface;
+use PhpSpec\IO\IO;
 
 class TemplateSpec extends ObjectBehavior
 {
-    function let(IOInterface $io)
+    function let(IO $io)
     {
         $this->beConstructedWith($io);
     }

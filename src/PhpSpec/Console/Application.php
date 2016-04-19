@@ -138,9 +138,9 @@ class Application extends BaseApplication
                 foreach ($val as $class) {
                     $extension = new $class();
 
-                    if (!$extension instanceof Extension\ExtensionInterface) {
+                    if (!$extension instanceof Extension) {
                         throw new RuntimeException(sprintf(
-                            'Extension class must implement ExtensionInterface. But `%s` is not.',
+                            'Extension class must implement PhpSpec\Extension. But `%s` is not.',
                             $class
                         ));
                     }

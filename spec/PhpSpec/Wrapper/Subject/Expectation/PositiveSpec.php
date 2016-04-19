@@ -2,18 +2,18 @@
 
 namespace spec\PhpSpec\Wrapper\Subject\Expectation;
 
-use PhpSpec\Matcher\MatcherInterface;
+use PhpSpec\Matcher\Matcher;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 class PositiveSpec extends ObjectBehavior
 {
-    function let(MatcherInterface $matcher)
+    function let(Matcher $matcher)
     {
         $this->beConstructedWith($matcher);
     }
 
-    function it_calls_a_positive_match_on_matcher(MatcherInterface $matcher)
+    function it_calls_a_positive_match_on_matcher(Matcher $matcher)
     {
         $alias = 'somealias';
         $subject = 'subject';

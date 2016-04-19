@@ -22,7 +22,7 @@ class Differ
         $this->engines = $engines;
     }
 
-    public function addEngine(EngineInterface $engine)
+    public function addEngine(DifferEngine $engine)
     {
         $this->engines[] = $engine;
     }

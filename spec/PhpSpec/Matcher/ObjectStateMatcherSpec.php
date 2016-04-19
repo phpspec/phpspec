@@ -19,7 +19,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
 
     function it_is_a_matcher()
     {
-        $this->shouldBeAnInstanceOf('PhpSpec\Matcher\MatcherInterface');
+        $this->shouldBeAnInstanceOf('PhpSpec\Matcher\Matcher');
     }
 
     function it_infers_matcher_alias_name_from_methods_prefixed_with_is()

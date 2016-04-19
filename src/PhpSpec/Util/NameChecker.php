@@ -11,25 +11,14 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Formatter\Html;
+namespace PhpSpec\Util;
 
-use PhpSpec\IO\IOInterface;
-
-class IO implements IOInterface
+interface NameChecker
 {
     /**
-     * @param $message
-     */
-    public function write($message)
-    {
-        echo $message;
-    }
-
-    /**
+     * @param string $name
+     *
      * @return bool
      */
-    public function isVerbose()
-    {
-        return true;
-    }
+    public function isNameValid($name);
 }

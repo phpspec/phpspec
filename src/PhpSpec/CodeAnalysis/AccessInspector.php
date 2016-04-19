@@ -13,7 +13,7 @@
 
 namespace PhpSpec\CodeAnalysis;
 
-interface AccessInspectorInterface
+interface AccessInspector
 {
     /**
      * @param object $object

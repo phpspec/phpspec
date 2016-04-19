@@ -79,7 +79,7 @@ class ContainerAssembler
             });
         }
         $container->setShared('console.io', function (ServiceContainer $c) {
-            return new IO(
+            return new ConsoleIO(
                 $c->get('console.input'),
                 $c->get('console.output'),
                 new OptionsConfig(
@@ -361,7 +361,7 @@ class ContainerAssembler
     private function setupLocator(ServiceContainer $container)
     {
         $container->setShared('locator.resource_manager', function (ServiceContainer $c) {
-            $manager = new Locator\ResourceManager();
+            $manager = new Locator\PrioritizedResourceManager();
 
             array_map(
                 array($manager, 'registerLocator'),
@@ -506,7 +506,7 @@ class ContainerAssembler
         $container->set(
             'formatter.formatters.html',
             function (ServiceContainer $c) {
-                $io = new SpecFormatter\Html\IO();
+                $io = new SpecFormatter\Html\HtmlIO();
                 $template = new SpecFormatter\Html\Template($io);
                 $factory = new SpecFormatter\Html\ReportItemFactory($template);
                 $presenter = $c->get('formatter.presenter.html');

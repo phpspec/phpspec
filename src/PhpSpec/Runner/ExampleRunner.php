@@ -16,7 +16,7 @@ namespace PhpSpec\Runner;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Runner\Maintainer\LetAndLetgoMaintainer;
 use PhpSpec\Formatter\Presenter\Presenter;
-use PhpSpec\SpecificationInterface;
+use PhpSpec\Specification;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Exception\Exception as PhpSpecException;
@@ -35,7 +35,7 @@ class ExampleRunner
      */
     private $presenter;
     /**
-     * @var Maintainer\MaintainerInterface[]
+     * @var Maintainer\Maintainer[]
      */
     private $maintainers = array();
 
@@ -50,9 +50,9 @@ class ExampleRunner
     }
 
     /**
-     * @param Maintainer\MaintainerInterface $maintainer
+     * @param Maintainer\Maintainer $maintainer
      */
-    public function registerMaintainer(Maintainer\MaintainerInterface $maintainer)
+    public function registerMaintainer(Maintainer\Maintainer $maintainer)
     {
         $this->maintainers[] = $maintainer;
 
@@ -113,13 +113,13 @@ class ExampleRunner
     }
 
     /**
-     * @param SpecificationInterface $context
+     * @param Specification $context
      * @param ExampleNode            $example
      *
      * @throws \PhpSpec\Exception\Example\PendingException
      * @throws \Exception
      */
-    protected function executeExample(SpecificationInterface $context, ExampleNode $example)
+    protected function executeExample(Specification $context, ExampleNode $example)
     {
         if ($example->isPending()) {
             throw new ExampleException\PendingException();
@@ -156,16 +156,16 @@ class ExampleRunner
     }
 
     /**
-     * @param Maintainer\MaintainerInterface[] $maintainers
+     * @param Maintainer\Maintainer[] $maintainers
      * @param ExampleNode                      $example
-     * @param SpecificationInterface           $context
+     * @param Specification           $context
      * @param MatcherManager                   $matchers
      * @param CollaboratorManager              $collaborators
      */
     private function runMaintainersTeardown(
         array $maintainers,
         ExampleNode $example,
-        SpecificationInterface $context,
+        Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
     ) {
@@ -175,9 +175,9 @@ class ExampleRunner
     }
 
     /**
-     * @param Maintainer\MaintainerInterface[] $maintainers
+     * @param Maintainer\Maintainer[] $maintainers
      *
-     * @return Maintainer\MaintainerInterface[]
+     * @return Maintainer\Maintainer[]
      */
     private function searchExceptionMaintainers(array $maintainers)
     {

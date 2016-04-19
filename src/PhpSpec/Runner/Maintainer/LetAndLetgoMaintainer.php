@@ -14,11 +14,11 @@
 namespace PhpSpec\Runner\Maintainer;
 
 use PhpSpec\Loader\Node\ExampleNode;
-use PhpSpec\SpecificationInterface;
+use PhpSpec\Specification;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
 
-class LetAndLetgoMaintainer implements MaintainerInterface
+class LetAndLetgoMaintainer implements Maintainer
 {
     /**
      * @param ExampleNode $example
@@ -34,13 +34,13 @@ class LetAndLetgoMaintainer implements MaintainerInterface
 
     /**
      * @param ExampleNode            $example
-     * @param SpecificationInterface $context
+     * @param Specification $context
      * @param MatcherManager         $matchers
      * @param CollaboratorManager    $collaborators
      */
     public function prepare(
         ExampleNode $example,
-        SpecificationInterface $context,
+        Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
     ) {
@@ -54,13 +54,13 @@ class LetAndLetgoMaintainer implements MaintainerInterface
 
     /**
      * @param ExampleNode            $example
-     * @param SpecificationInterface $context
+     * @param Specification $context
      * @param MatcherManager         $matchers
      * @param CollaboratorManager    $collaborators
      */
     public function teardown(
         ExampleNode $example,
-        SpecificationInterface $context,
+        Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
     ) {

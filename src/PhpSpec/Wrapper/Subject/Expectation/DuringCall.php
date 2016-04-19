@@ -14,14 +14,14 @@
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Exception\Example\MatcherException;
-use PhpSpec\Matcher\MatcherInterface;
+use PhpSpec\Matcher\Matcher;
 use PhpSpec\Util\Instantiator;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 
 abstract class DuringCall
 {
     /**
-     * @var MatcherInterface
+     * @var Matcher
      */
     private $matcher;
     /**
@@ -38,9 +38,9 @@ abstract class DuringCall
     private $wrappedObject;
 
     /**
-     * @param MatcherInterface $matcher
+     * @param Matcher $matcher
      */
-    public function __construct(MatcherInterface $matcher)
+    public function __construct(Matcher $matcher)
     {
         $this->matcher = $matcher;
     }
@@ -129,7 +129,7 @@ abstract class DuringCall
     }
 
     /**
-     * @return MatcherInterface
+     * @return Matcher
      */
     protected function getMatcher()
     {

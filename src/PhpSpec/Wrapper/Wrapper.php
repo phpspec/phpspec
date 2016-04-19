@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Wrapper;
 
-use PhpSpec\CodeAnalysis\AccessInspectorInterface;
+use PhpSpec\CodeAnalysis\AccessInspector;
 use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Formatter\Presenter\Presenter;
@@ -43,7 +43,7 @@ class Wrapper
      */
     private $example;
     /**
-     * @var AccessInspectorInterface
+     * @var AccessInspector
      */
     private $accessInspector;
 
@@ -52,14 +52,14 @@ class Wrapper
      * @param Presenter $presenter
      * @param EventDispatcherInterface $dispatcher
      * @param ExampleNode $example
-     * @param AccessInspectorInterface $accessInspector
+     * @param AccessInspector $accessInspector
      */
     public function __construct(
         MatcherManager $matchers,
         Presenter $presenter,
         EventDispatcherInterface $dispatcher,
         ExampleNode $example,
-        AccessInspectorInterface $accessInspector = null
+        AccessInspector $accessInspector = null
     ) {
         $this->matchers = $matchers;
         $this->presenter = $presenter;

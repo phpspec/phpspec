@@ -11,21 +11,23 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Locator;
+namespace PhpSpec\Formatter\Presenter\Differ;
 
-interface ResourceManagerInterface
+interface DifferEngine
 {
     /**
-     * @param string $query
+     * @param mixed $expected
+     * @param mixed $actual
      *
-     * @return ResourceInterface[]
+     * @return bool
      */
-    public function locateResources($query);
+    public function supports($expected, $actual);
 
     /**
-     * @param string $classname
+     * @param mixed $expected
+     * @param mixed $actual
      *
-     * @return ResourceInterface
+     * @return string
      */
-    public function createResource($classname);
+    public function compare($expected, $actual);
 }

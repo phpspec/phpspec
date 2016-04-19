@@ -11,12 +11,12 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Wrapper;
+namespace PhpSpec\Process\Prerequisites;
 
-interface WrapperInterface
+interface PrerequisiteTester
 {
     /**
-     * @return mixed
+     * @throws PrerequisiteFailedException
      */
-    public function getWrappedObject();
+    public function guardPrerequisites();
 }

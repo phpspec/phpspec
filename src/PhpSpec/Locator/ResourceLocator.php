@@ -13,10 +13,10 @@
 
 namespace PhpSpec\Locator;
 
-interface ResourceLocatorInterface
+interface ResourceLocator
 {
     /**
-     * @return ResourceInterface[]
+     * @return Resource[]
      */
     public function getAllResources();
 
@@ -30,7 +30,7 @@ interface ResourceLocatorInterface
     /**
      * @param string $query
      *
-     * @return ResourceInterface[]
+     * @return Resource[]
      */
     public function findResources($query);
 
@@ -44,7 +44,7 @@ interface ResourceLocatorInterface
     /**
      * @param string $classname
      *
-     * @return ResourceInterface|null
+     * @return Resource|null
      */
     public function createResource($classname);
 

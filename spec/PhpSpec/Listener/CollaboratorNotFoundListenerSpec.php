@@ -3,20 +3,20 @@
 namespace spec\PhpSpec\Listener;
 
 use PhpSpec\CodeGenerator\GeneratorManager;
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
-use PhpSpec\Locator\ResourceInterface;
-use PhpSpec\Locator\ResourceManagerInterface;
+use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\ResourceManager;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 class CollaboratorNotFoundListenerSpec extends ObjectBehavior
 {
     function let(
-        IO $io, CollaboratorNotFoundException $exception, ExampleEvent $exampleEvent,
-        ResourceManagerInterface $resources, GeneratorManager $generator, ResourceInterface $resource
+        ConsoleIO $io, CollaboratorNotFoundException $exception, ExampleEvent $exampleEvent,
+        ResourceManager $resources, GeneratorManager $generator, Resource $resource
     )
     {
         $this->beConstructedWith($io, $resources, $generator);
@@ -41,7 +41,7 @@ class CollaboratorNotFoundListenerSpec extends ObjectBehavior
     }
 
     function it_prompts_to_generate_missing_collaborator(
-        IO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent
+        ConsoleIO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent
     )
     {
         $this->afterExample($exampleEvent);
@@ -53,7 +53,7 @@ class CollaboratorNotFoundListenerSpec extends ObjectBehavior
     }
 
     function it_does_not_prompt_to_generate_when_there_was_no_exception(
-        IO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent
+        ConsoleIO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent
     )
     {
         $exampleEvent->getException()->willReturn(null);
@@ -65,7 +65,7 @@ class CollaboratorNotFoundListenerSpec extends ObjectBehavior
     }
 
     function it_does_not_prompt_to_generate_when_there_was_an_exception_of_the_wrong_type(
-        IO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent, \InvalidArgumentException $otherException
+        ConsoleIO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent, \InvalidArgumentException $otherException
     )
     {
         $exampleEvent->getException()->willReturn($otherException);
@@ -77,7 +77,7 @@ class CollaboratorNotFoundListenerSpec extends ObjectBehavior
     }
 
     function it_does_not_prompt_when_code_generation_is_disabled(
-        IO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent
+        ConsoleIO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent
     )
     {
         $io->isCodeGenerationEnabled()->willReturn(false);
@@ -89,7 +89,7 @@ class CollaboratorNotFoundListenerSpec extends ObjectBehavior
     }
 
     function it_does_not_prompt_when_collaborator_is_in_spec_namespace(
-        IO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent, CollaboratorNotFoundException $exception
+        ConsoleIO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent, CollaboratorNotFoundException $exception
     )
     {
         $exception->getCollaboratorName()->willReturn('spec\Example\ExampleClass');
@@ -101,8 +101,8 @@ class CollaboratorNotFoundListenerSpec extends ObjectBehavior
     }
 
     function it_generates_interface_when_prompt_is_answered_with_yes(
-        IO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent,
-        GeneratorManager $generator, ResourceInterface $resource
+        ConsoleIO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent,
+        GeneratorManager $generator, Resource $resource
     )
     {
         $io->askConfirmation(
@@ -117,7 +117,7 @@ class CollaboratorNotFoundListenerSpec extends ObjectBehavior
     }
 
     function it_does_not_generate_interface_when_prompt_is_answered_with_no(
-        IO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent,
+        ConsoleIO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent,
         GeneratorManager $generator
     )
     {

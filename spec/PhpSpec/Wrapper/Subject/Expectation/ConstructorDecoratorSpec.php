@@ -7,11 +7,11 @@ use PhpSpec\Wrapper\Subject;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 use Prophecy\Argument;
 
-use PhpSpec\Wrapper\Subject\Expectation\ExpectationInterface;
+use PhpSpec\Wrapper\Subject\Expectation\Expectation;
 
 class ConstructorDecoratorSpec extends ObjectBehavior
 {
-    function let(ExpectationInterface $expectation)
+    function let(Expectation $expectation)
     {
         $this->beConstructedWith($expectation);
     }

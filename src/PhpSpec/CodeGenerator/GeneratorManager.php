@@ -13,7 +13,7 @@
 
 namespace PhpSpec\CodeGenerator;
 
-use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\Locator\Resource;
 use InvalidArgumentException;
 
 /**
@@ -27,9 +27,9 @@ class GeneratorManager
     private $generators = array();
 
     /**
-     * @param Generator\GeneratorInterface $generator
+     * @param Generator\Generator $generator
      */
-    public function registerGenerator(Generator\GeneratorInterface $generator)
+    public function registerGenerator(Generator\Generator $generator)
     {
         $this->generators[] = $generator;
         @usort($this->generators, function ($generator1, $generator2) {
@@ -38,14 +38,14 @@ class GeneratorManager
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $name
      * @param array             $data
      *
      * @return mixed
      * @throws \InvalidArgumentException
      */
-    public function generate(ResourceInterface $resource, $name, array $data = array())
+    public function generate(Resource $resource, $name, array $data = array())
     {
         foreach ($this->generators as $generator) {
             if ($generator->supports($resource, $name, $data)) {

@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Process\Context;
 
-interface ExecutionContextInterface
+interface ExecutionContext
 {
     /**
      * @param string $type

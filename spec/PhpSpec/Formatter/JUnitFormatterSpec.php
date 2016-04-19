@@ -5,7 +5,7 @@ namespace spec\PhpSpec\Formatter;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 use PhpSpec\Formatter\Presenter\Presenter;
-use PhpSpec\IO\IOInterface;
+use PhpSpec\IO\IO;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
@@ -17,7 +17,7 @@ class JUnitFormatterSpec extends ObjectBehavior
 {
     function let(
         Presenter $presenter,
-        IOInterface $io,
+        IO $io,
         StatisticsCollector $stats
     ) {
         $this->beConstructedWith($presenter, $io, $stats);

@@ -28,7 +28,7 @@ class StringContainMatcherSpec extends ObjectBehavior
 
     function it_is_a_matcher()
     {
-        $this->shouldBeAnInstanceOf('PhpSpec\Matcher\MatcherInterface');
+        $this->shouldBeAnInstanceOf('PhpSpec\Matcher\Matcher');
     }
 
     function it_supports_contain_keyword_string_subject_and_argument()

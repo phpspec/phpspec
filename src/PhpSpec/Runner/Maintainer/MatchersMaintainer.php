@@ -14,14 +14,15 @@
 namespace PhpSpec\Runner\Maintainer;
 
 use PhpSpec\Loader\Node\ExampleNode;
-use PhpSpec\Matcher\MatcherInterface;
-use PhpSpec\SpecificationInterface;
+use PhpSpec\Matcher\CallbackMatcher;
+use PhpSpec\Matcher\Matcher;
+use PhpSpec\Matcher\MatchersProvider;
+use PhpSpec\Specification;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
 use PhpSpec\Formatter\Presenter\Presenter;
-use PhpSpec\Matcher;
 
-class MatchersMaintainer implements MaintainerInterface
+class MatchersMaintainer implements Maintainer
 {
     /**
      * @var Presenter
@@ -29,13 +30,13 @@ class MatchersMaintainer implements MaintainerInterface
     private $presenter;
 
     /**
-     * @var MatcherInterface[]
+     * @var Matcher[]
      */
     private $defaultMatchers = array();
 
     /**
      * @param Presenter $presenter
-     * @param MatcherInterface[] $matchers
+     * @param Matcher[] $matchers
      */
     public function __construct(Presenter $presenter, array $matchers)
     {
@@ -58,28 +59,28 @@ class MatchersMaintainer implements MaintainerInterface
 
     /**
      * @param ExampleNode            $example
-     * @param SpecificationInterface $context
+     * @param Specification $context
      * @param MatcherManager         $matchers
      * @param CollaboratorManager    $collaborators
      */
     public function prepare(
         ExampleNode $example,
-        SpecificationInterface $context,
+        Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
     ) {
 
         $matchers->replace($this->defaultMatchers);
 
-        if (!$context instanceof Matcher\MatchersProviderInterface) {
+        if (!$context instanceof MatchersProvider) {
             return;
         }
 
         foreach ($context->getMatchers() as $name => $matcher) {
-            if ($matcher instanceof Matcher\MatcherInterface) {
+            if ($matcher instanceof Matcher) {
                 $matchers->add($matcher);
             } else {
-                $matchers->add(new Matcher\CallbackMatcher(
+                $matchers->add(new CallbackMatcher(
                     $name,
                     $matcher,
                     $this->presenter
@@ -90,13 +91,13 @@ class MatchersMaintainer implements MaintainerInterface
 
     /**
      * @param ExampleNode            $example
-     * @param SpecificationInterface $context
+     * @param Specification $context
      * @param MatcherManager         $matchers
      * @param CollaboratorManager    $collaborators
      */
     public function teardown(
         ExampleNode $example,
-        SpecificationInterface $context,
+        Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
     ) {

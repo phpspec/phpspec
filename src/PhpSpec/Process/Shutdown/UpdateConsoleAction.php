@@ -16,7 +16,7 @@ namespace PhpSpec\Process\Shutdown;
 use PhpSpec\Formatter\FatalPresenter;
 use PhpSpec\Message\CurrentExampleTracker;
 
-final class UpdateConsoleAction implements ShutdownActionInterface
+final class UpdateConsoleAction implements ShutdownAction
 {
     /**
      * @var CurrentExampleTracker

@@ -13,23 +13,23 @@
 
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
-abstract class Decorator implements ExpectationInterface
+abstract class Decorator implements Expectation
 {
     /**
-     * @var ExpectationInterface
+     * @var Expectation
      */
     private $expectation;
 
     /**
-     * @param ExpectationInterface $expectation
+     * @param Expectation $expectation
      */
-    public function __construct(ExpectationInterface $expectation)
+    public function __construct(Expectation $expectation)
     {
         $this->expectation = $expectation;
     }
 
     /**
-     * @return ExpectationInterface
+     * @return Expectation
      */
     public function getExpectation()
     {
@@ -37,15 +37,15 @@ abstract class Decorator implements ExpectationInterface
     }
 
     /**
-     * @param ExpectationInterface $expectation
+     * @param Expectation $expectation
      */
-    protected function setExpectation(ExpectationInterface $expectation)
+    protected function setExpectation(Expectation $expectation)
     {
         $this->expectation = $expectation;
     }
 
     /**
-     * @return ExpectationInterface
+     * @return Expectation
      */
     public function getNestedExpectation()
     {

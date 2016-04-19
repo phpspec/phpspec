@@ -11,17 +11,12 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\IO;
+namespace PhpSpec\Matcher;
 
-interface IOInterface
+interface MatchersProvider
 {
     /**
-     * @param string $message
+     * @return array
      */
-    public function write($message);
-
-    /**
-     * @return bool
-     */
-    public function isVerbose();
+    public function getMatchers();
 }

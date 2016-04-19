@@ -13,27 +13,27 @@
 
 namespace PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\Locator\Resource;
 
 /**
  * Interface that all Generators need to implement in PhpSpec
  */
-interface GeneratorInterface
+interface Generator
 {
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $generation
      * @param array             $data
      *
      * @return bool
      */
-    public function supports(ResourceInterface $resource, $generation, array $data);
+    public function supports(Resource $resource, $generation, array $data);
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param array             $data
      */
-    public function generate(ResourceInterface $resource, array $data);
+    public function generate(Resource $resource, array $data);
 
     /**
      * @return int

@@ -14,12 +14,12 @@
 namespace PhpSpec\Listener;
 
 use PhpSpec\CodeGenerator\GeneratorManager;
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Locator\ResourceCreationException;
-use PhpSpec\Locator\ResourceManagerInterface;
-use PhpSpec\Util\NameCheckerInterface;
+use PhpSpec\Locator\ResourceManager;
+use PhpSpec\Util\NameChecker;
 use Prophecy\Argument\ArgumentsWildcard;
 use Prophecy\Exception\Doubler\MethodNotFoundException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -29,7 +29,7 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
     const PROMPT = 'Would you like me to generate a method signature `%s::%s()` for you?';
 
     /**
-     * @var IO
+     * @var ConsoleIO
      */
     private $io;
 
@@ -39,7 +39,7 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
     private $interfaces = array();
 
     /**
-     * @var ResourceManagerInterface
+     * @var ResourceManager
      */
     private $resources;
 
@@ -49,7 +49,7 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
     private $generator;
 
     /**
-     * @var NameCheckerInterface
+     * @var NameChecker
      */
     private $nameChecker;
 
@@ -59,16 +59,16 @@ class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
     private $wrongMethodNames = array();
 
     /**
-     * @param IO $io
-     * @param ResourceManagerInterface $resources
+     * @param ConsoleIO $io
+     * @param ResourceManager $resources
      * @param GeneratorManager $generator
-     * @param NameCheckerInterface $nameChecker
+     * @param NameChecker $nameChecker
      */
     public function __construct(
-        IO $io,
-        ResourceManagerInterface $resources,
+        ConsoleIO $io,
+        ResourceManager $resources,
         GeneratorManager $generator,
-        NameCheckerInterface $nameChecker
+        NameChecker $nameChecker
     ) {
         $this->io = $io;
         $this->resources = $resources;

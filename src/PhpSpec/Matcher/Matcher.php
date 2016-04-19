@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Matcher;
 
-interface MatcherInterface
+interface Matcher
 {
     /**
      * Checks if matcher supports provided subject and matcher name.

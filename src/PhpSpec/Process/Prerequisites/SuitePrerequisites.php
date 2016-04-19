@@ -13,19 +13,19 @@
 
 namespace PhpSpec\Process\Prerequisites;
 
-use PhpSpec\Process\Context\ExecutionContextInterface;
+use PhpSpec\Process\Context\ExecutionContext;
 
-final class SuitePrerequisites implements SuitePrerequisitesInterface
+final class SuitePrerequisites implements PrerequisiteTester
 {
     /**
-     * @var ExecutionContextInterface
+     * @var ExecutionContext
      */
     private $executionContext;
 
     /**
-     * @param ExecutionContextInterface $executionContext
+     * @param ExecutionContext $executionContext
      */
-    public function __construct(ExecutionContextInterface $executionContext)
+    public function __construct(ExecutionContext $executionContext)
     {
         $this->executionContext = $executionContext;
     }
