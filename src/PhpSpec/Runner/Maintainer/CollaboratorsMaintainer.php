@@ -120,7 +120,7 @@ class CollaboratorsMaintainer implements MaintainerInterface
      */
     private function generateCollaborators(CollaboratorManager $collaborators, \ReflectionFunctionAbstract $function, \ReflectionClass $classRefl)
     {
-        $foundClasses = array();
+        $collaboratorsWithAssignedTypes = array();
         foreach ($function->getParameters() as $parameter) {
             $collaborator = $this->getOrCreateCollaborator($collaborators, $parameter->getName());
             try {
@@ -130,9 +130,7 @@ class CollaboratorsMaintainer implements MaintainerInterface
                 if (($indexedClass = $this->getParameterTypeFromIndex($classRefl, $parameter))
                     || ($indexedClass = $this->getParameterTypeFromReflection($parameter))) {
                     $collaborator->beADoubleOf($indexedClass);
-                    if (null !== $indexedClass) {
-                        $foundClasses[] = $parameter->getName();
-                    }
+                    $collaboratorsWithAssignedTypes[] = $parameter->getName();
                 }
             }
             catch (ClassNotFoundException $e) {
@@ -146,7 +144,7 @@ class CollaboratorsMaintainer implements MaintainerInterface
         if ($comment = $function->getDocComment()) {
             $comment = str_replace("\r\n", "\n", $comment);
             foreach (explode("\n", trim($comment)) as $line) {
-                if (preg_match(self::$docex, $line, $match) && !in_array($match[2], $foundClasses)) {
+                if (preg_match(self::$docex, $line, $match) && !in_array($match[2], $collaboratorsWithAssignedTypes)) {
                     $collaborator = $this->getOrCreateCollaborator($collaborators, $match[2]);
                     $collaborator->beADoubleOf($match[1]);
                 }
