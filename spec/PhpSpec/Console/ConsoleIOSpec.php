@@ -35,11 +35,11 @@ class ConsoleIOSpec extends ObjectBehavior
         $this->isCodeGenerationEnabled()->shouldReturn(true);
     }
 
-    function it_is_not_code_generation_ready_if_input_is_not_interactive($input)
+    function it_is_code_generation_ready_if_input_is_not_interactive($input)
     {
         $input->isInteractive()->willReturn(false);
 
-        $this->isCodeGenerationEnabled()->shouldReturn(false);
+        $this->isCodeGenerationEnabled()->shouldReturn(true);
     }
 
     function it_is_not_code_generation_ready_if_command_line_option_is_set($input)
