@@ -52,7 +52,7 @@ Examples
 --------
 
 The object behavior is made up of examples. Examples are encased in public methods,
-started with ``it_``, or ``its_``.
+started with ``it_`` or ``its_``.
 
 **phpspec** searches for these methods in your specification to run.
 
