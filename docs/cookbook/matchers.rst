@@ -332,7 +332,7 @@ identity (``===``).
 ArrayKeyWithValue Matcher
 --------------------
 
-This matcher lets you assert a specific value for a specific key on a method that returns an array or an implementor of ArrayAccess.
+This matcher lets you assert a specific value for a specific key on a method that returns an array or an implementor of ``\ArrayAccess``.
 
 .. code-block:: php
 
@@ -354,7 +354,7 @@ This matcher lets you assert a specific value for a specific key on a method tha
 ArrayKey Matcher
 ----------------
 
-You can specify that a method should return an array or an ArrayAccess object
+You can specify that a method should return an array or an object implementing ``\ArrayAccess``
 with a specific key using the ArrayKey matcher.
 
 .. code-block:: php
@@ -400,7 +400,7 @@ containing a given substring. This matcher is case sensitive.
 StringStart Matcher
 -------------------
 
-The StringStarts matcher lets you specify that a method should return a string
+The StringStart matcher lets you specify that a method should return a string
 starting with a given substring.
 
 .. code-block:: php
@@ -469,7 +469,7 @@ matching a given regular expression.
 Inline Matcher
 --------------
 
-You can create custom matchers using the Inline matcher.
+You can create custom matchers by providing them in ``getMatchers`` method.
 
 .. code-block:: php
 
@@ -478,7 +478,6 @@ You can create custom matchers using the Inline matcher.
     namespace spec;
 
     use PhpSpec\ObjectBehavior;
-    use PhpSpec\Matcher\InlineMatcher;
 
     class MovieSpec extends ObjectBehavior
     {
@@ -511,7 +510,6 @@ your inline matcher should throw `FailureException`:
     namespace spec;
 
     use PhpSpec\ObjectBehavior;
-    use PhpSpec\Matcher\InlineMatcher;
     use PhpSpec\Exception\Example\FailureException;
 
     class MovieSpec extends ObjectBehavior

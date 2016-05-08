@@ -68,7 +68,7 @@ describing. In phpspec, you can group specification files by a certain namespace
   specifications. The complete namespace for specifications is
   ``%spec_prefix%\%namespace%``;
 * ``src_path`` [**default**: ``src``] - The path to store the generated
-  classes. By default Paths are relative to the location where ***phpspec*** was 
+  classes. By default paths are relative to the location where **phpspec** was 
   invoked. **phpspec** creates the directories if they do not exist. This does 
   not include the namespace directories;
 * ``spec_path`` [**default**: ``.``] - The path of the specifications. This
@@ -202,7 +202,7 @@ Bootstrapping
 
 There are times when you would be required to load classes and execute additional statements that the Composer-generated autoloader may not provide, which is likely for a legacy project that wants to introduce phpspec for designing new classes that may rely on some legacy collaborators.
 
-To load a custom bootstrap when running phpspec, use the ``console.io.bootstrap`` setting:
+To load a custom bootstrap when running phpspec, use the ``bootstrap`` setting:
 
 .. code-block:: yaml
 
