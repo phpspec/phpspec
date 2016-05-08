@@ -17,7 +17,7 @@ use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
 
-class ProgressFormatter extends ConsoleFormatter
+final class ProgressFormatter extends ConsoleFormatter
 {
     const FPS = 10;
 

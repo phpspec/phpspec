@@ -20,7 +20,7 @@ use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\IO\IO;
 use PhpSpec\Listener\StatisticsCollector;
 
-class HtmlFormatter extends BasicFormatter
+final class HtmlFormatter extends BasicFormatter
 {
     /**
      * @var Html\ReportItemFactory

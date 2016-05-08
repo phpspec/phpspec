@@ -16,7 +16,7 @@ namespace PhpSpec\Formatter;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
 
-class DotFormatter extends ConsoleFormatter
+final class DotFormatter extends ConsoleFormatter
 {
     /**
      * @var int
