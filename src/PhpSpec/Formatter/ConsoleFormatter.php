@@ -21,7 +21,7 @@ use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\Message\CurrentExampleTracker;
 
-class ConsoleFormatter extends BasicFormatter implements FatalPresenter
+abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
 {
     /**
      * @var IO
