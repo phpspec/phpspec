@@ -15,11 +15,12 @@ Create a ``composer.json`` file:
         "autoload": {"psr-0": {"": "src"}}
     }
 
+Follow the instructions on this page to install composer: `<https://getcomposer.org/download/>`_.  
+
 Install **phpspec** with composer:
 
 .. code-block:: bash
 
-    curl http://getcomposer.org/installer | php
     php composer.phar install
 
 Start writing specs:
