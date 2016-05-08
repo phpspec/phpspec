@@ -7,13 +7,13 @@ use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\NamedConstructorNotFoundException;
-use PhpSpec\Locator\PrioritizedResourceManager;
+use PhpSpec\Locator\ResourceManager;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 class NamedConstructorNotFoundListenerSpec extends ObjectBehavior
 {
-    function let(ConsoleIO $io, PrioritizedResourceManager $resourceManager, GeneratorManager $generatorManager,
+    function let(ConsoleIO $io, ResourceManager $resourceManager, GeneratorManager $generatorManager,
                  SuiteEvent $suiteEvent, ExampleEvent $exampleEvent)
     {
         $io->writeln(Argument::any())->willReturn();

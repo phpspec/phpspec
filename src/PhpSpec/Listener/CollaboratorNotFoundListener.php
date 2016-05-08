@@ -22,7 +22,7 @@ use PhpSpec\Locator\Resource;
 use PhpSpec\Locator\ResourceManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class CollaboratorNotFoundListener implements EventSubscriberInterface
+final class CollaboratorNotFoundListener implements EventSubscriberInterface
 {
     /**
      * @var ConsoleIO

@@ -22,7 +22,7 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
-class MethodNotFoundListener implements EventSubscriberInterface
+final class MethodNotFoundListener implements EventSubscriberInterface
 {
     private $io;
     private $resources;

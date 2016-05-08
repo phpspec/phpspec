@@ -16,7 +16,7 @@ namespace PhpSpec\Formatter\Html;
 use PhpSpec\Formatter\Template as TemplateInterface;
 use PhpSpec\IO\IO;
 
-class Template implements TemplateInterface
+final class Template implements TemplateInterface
 {
     const DIR = __DIR__;
 

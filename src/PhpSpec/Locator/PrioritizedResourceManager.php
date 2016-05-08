@@ -15,7 +15,7 @@ namespace PhpSpec\Locator;
 
 use PhpSpec\Exception\Locator\ResourceCreationException;
 
-class PrioritizedResourceManager implements ResourceManager
+final class PrioritizedResourceManager implements ResourceManager
 {
     /**
      * @var ResourceLocator[]

@@ -22,7 +22,7 @@ use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
 use PhpSpec\Formatter\Presenter\Presenter;
 
-class MatchersMaintainer implements Maintainer
+final class MatchersMaintainer implements Maintainer
 {
     /**
      * @var Presenter

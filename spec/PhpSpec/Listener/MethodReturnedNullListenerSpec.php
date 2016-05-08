@@ -9,7 +9,7 @@ use PhpSpec\Event\MethodCallEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Locator\Resource;
-use PhpSpec\Locator\PrioritizedResourceManager;
+use PhpSpec\Locator\ResourceManager;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Util\MethodAnalyser;
 use Prophecy\Argument;
@@ -17,7 +17,7 @@ use Prophecy\Argument;
 class MethodReturnedNullListenerSpec extends ObjectBehavior
 {
     function let(
-        ConsoleIO $io, PrioritizedResourceManager $resourceManager, GeneratorManager $generatorManager,
+        ConsoleIO $io, ResourceManager $resourceManager, GeneratorManager $generatorManager,
         ExampleEvent $exampleEvent, NotEqualException $notEqualException, MethodAnalyser $methodAnalyser
     ) {
         $this->beConstructedWith($io, $resourceManager, $generatorManager, $methodAnalyser);
@@ -105,7 +105,7 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
     }
 
     function it_does_not_prompt_when_there_is_a_problem_creating_the_resource(
-        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io, PrioritizedResourceManager $resourceManager, SuiteEvent $event
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io, ResourceManager $resourceManager, SuiteEvent $event
     ) {
         $resourceManager->createResource(Argument::any())->willThrow(new \RuntimeException());
 
@@ -191,7 +191,7 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
 
     function it_invokes_method_body_generation_when_prompt_is_answered_yes(
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io,
-        GeneratorManager $generatorManager, PrioritizedResourceManager $resourceManager, Resource $resource, SuiteEvent $event
+        GeneratorManager $generatorManager, ResourceManager $resourceManager, Resource $resource, SuiteEvent $event
     ) {
         $io->askConfirmation(Argument::any())->willReturn(true);
         $resourceManager->createResource(Argument::any())->willReturn($resource);

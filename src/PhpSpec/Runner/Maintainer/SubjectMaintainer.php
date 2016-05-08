@@ -23,7 +23,7 @@ use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Wrapper\Wrapper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
-class SubjectMaintainer implements Maintainer
+final class SubjectMaintainer implements Maintainer
 {
     /**
      * @var Presenter

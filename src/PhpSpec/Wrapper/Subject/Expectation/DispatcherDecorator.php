@@ -20,7 +20,7 @@ use PhpSpec\Matcher\Matcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Exception;
 
-class DispatcherDecorator extends Decorator implements Expectation
+final class DispatcherDecorator extends Decorator implements Expectation
 {
     /**
      * @var EventDispatcherInterface

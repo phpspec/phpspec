@@ -6,18 +6,18 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 use PhpSpec\Console\ConsoleIO;
-use PhpSpec\Locator\PrioritizedResourceManager;
 use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
+use PhpSpec\Locator\ResourceManager;
 use PhpSpec\Util\NameChecker;
 
 class MethodNotFoundListenerSpec extends ObjectBehavior
 {
     function let(
         ConsoleIO $io,
-        PrioritizedResourceManager $resourceManager,
+        ResourceManager $resourceManager,
         GeneratorManager $generatorManager,
         SuiteEvent $suiteEvent,
         ExampleEvent $exampleEvent,

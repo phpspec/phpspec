@@ -20,7 +20,7 @@ use PhpSpec\Matcher\Matcher;
 /**
  * Class ExpectationEvent holds information about the expectation event
  */
-class ExpectationEvent extends Event implements PhpSpecEvent
+final class ExpectationEvent extends Event implements PhpSpecEvent
 {
     /**
      * Expectation passed

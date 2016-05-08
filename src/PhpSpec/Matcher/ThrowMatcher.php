@@ -22,7 +22,7 @@ use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
-class ThrowMatcher implements Matcher
+final class ThrowMatcher implements Matcher
 {
     /**
      * @var array

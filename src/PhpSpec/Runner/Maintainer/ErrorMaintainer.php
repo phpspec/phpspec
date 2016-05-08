@@ -19,7 +19,7 @@ use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
 use PhpSpec\Exception\Example as ExampleException;
 
-class ErrorMaintainer implements Maintainer
+final class ErrorMaintainer implements Maintainer
 {
     /**
      * @var integer

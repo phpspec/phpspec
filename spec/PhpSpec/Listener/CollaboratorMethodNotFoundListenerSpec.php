@@ -8,7 +8,6 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Locator\ResourceCreationException;
 use PhpSpec\Locator\Resource;
-use PhpSpec\Locator\PrioritizedResourceManager;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Util\NameChecker;
@@ -110,7 +109,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
     }
 
     function it_does_not_prompt_if_it_cannot_generate_the_resource(
-        ConsoleIO $io, PrioritizedResourceManager $resources, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception
+        ConsoleIO $io, ResourceManager $resources, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception
     )
     {
         $resources->createResource(Argument::any())->willThrow(new ResourceCreationException());
