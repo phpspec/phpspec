@@ -2,3 +2,4 @@
 *.bat  eol=crlf
 
 docs     export-ignore
+logo     export-ignore
