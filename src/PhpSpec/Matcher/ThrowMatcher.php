@@ -125,7 +125,7 @@ class ThrowMatcher implements Matcher
 
             // Show full error message if the thrown exception is an instance of Error.
             // See https://github.com/phpspec/phpspec/issues/908
-            if (class_exists('\Error') && $exceptionThrown instanceof \Error) {
+            if ($exceptionThrown instanceof \Error) {
                 // TODO: Can we can use $this->presenter->presentValue() rather
                 // than adding the raw Error message in quotes here? Currently
                 // not included since presentValue() truncates the string to 25
