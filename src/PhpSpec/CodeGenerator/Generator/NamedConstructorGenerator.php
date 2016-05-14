@@ -21,7 +21,7 @@ use PhpSpec\CodeGenerator\Writer\CodeWriter;
 use PhpSpec\Util\Filesystem;
 use PhpSpec\CodeGenerator\Writer\TokenizedCodeWriter;
 
-class NamedConstructorGenerator implements Generator
+final class NamedConstructorGenerator implements Generator
 {
     /**
      * @var ConsoleIO

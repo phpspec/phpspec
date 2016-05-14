@@ -19,7 +19,7 @@ use PhpSpec\Locator\Resource;
  * The Interface Generator is responsible for generating the interface from a resource
  * in the appropriate folder using the template provided
  */
-class InterfaceGenerator extends PromptingGenerator
+final class InterfaceGenerator extends PromptingGenerator
 {
     /**
      * @param Resource $resource

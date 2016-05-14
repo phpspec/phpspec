@@ -23,7 +23,7 @@ use PhpSpec\CodeGenerator\Writer\TokenizedCodeWriter;
 /**
  * Generates class methods from a resource
  */
-class MethodGenerator implements Generator
+final class MethodGenerator implements Generator
 {
     /**
      * @var ConsoleIO

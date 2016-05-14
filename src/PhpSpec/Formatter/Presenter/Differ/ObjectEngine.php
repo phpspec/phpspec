@@ -15,7 +15,7 @@ namespace PhpSpec\Formatter\Presenter\Differ;
 
 use SebastianBergmann\Exporter\Exporter;
 
-class ObjectEngine implements DifferEngine
+final class ObjectEngine implements DifferEngine
 {
     /**
      * @var Exporter

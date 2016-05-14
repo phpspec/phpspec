@@ -2,11 +2,11 @@
 
 namespace spec\PhpSpec\Formatter;
 
+use PhpSpec\IO\IO;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Formatter\Html\HtmlIO;
 use PhpSpec\Formatter\Html\ReportItem;
 use PhpSpec\Formatter\Html\ReportItemFactory;
 use PhpSpec\Formatter\Presenter\Presenter;
@@ -16,7 +16,7 @@ class HtmlFormatterSpec extends ObjectBehavior
 {
     const EVENT_TITLE = 'it works';
 
-    function let(ReportItemFactory $factory, Presenter $presenter, HtmlIO $io, StatisticsCollector $stats)
+    function let(ReportItemFactory $factory, Presenter $presenter, IO $io, StatisticsCollector $stats)
     {
         $this->beConstructedWith($factory, $presenter, $io, $stats);
     }

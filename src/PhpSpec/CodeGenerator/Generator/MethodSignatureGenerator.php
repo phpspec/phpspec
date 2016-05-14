@@ -21,7 +21,7 @@ use PhpSpec\Locator\Resource;
 /**
  * Generates interface method signatures from a resource
  */
-class MethodSignatureGenerator implements Generator
+final class MethodSignatureGenerator implements Generator
 {
     /**
      * @var ConsoleIO

@@ -16,7 +16,7 @@ namespace PhpSpec\Process\ReRunner;
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Process\ReRunner;
 
-class OptionalReRunner implements ReRunner
+final class OptionalReRunner implements ReRunner
 {
     /**
      * @var ConsoleIO

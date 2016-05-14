@@ -18,7 +18,7 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\StopOnFailureException;
 use PhpSpec\Console\ConsoleIO;
 
-class StopOnFailureListener implements EventSubscriberInterface
+final class StopOnFailureListener implements EventSubscriberInterface
 {
     /**
      * @var ConsoleIO

@@ -17,7 +17,7 @@ use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Example\FailureException;
 
-class ComparisonMatcher extends BasicMatcher
+final class ComparisonMatcher extends BasicMatcher
 {
     /**
      * @var Presenter

@@ -35,7 +35,7 @@ use ArrayAccess;
  * @method void shouldImplement($interface)
  * @method Subject\Expectation\DuringCall shouldThrow($exception = null)
  */
-class ObjectBehavior implements
+abstract class ObjectBehavior implements
     ArrayAccess,
     MatchersProvider,
     SubjectContainer,

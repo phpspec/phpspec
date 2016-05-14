@@ -15,7 +15,7 @@ namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Wrapper\Unwrapper;
 
-class UnwrapDecorator extends Decorator implements Expectation
+final class UnwrapDecorator extends Decorator implements Expectation
 {
     /**
      * @var Unwrapper

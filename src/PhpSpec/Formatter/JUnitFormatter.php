@@ -25,7 +25,7 @@ use PhpSpec\Event\SpecificationEvent;
  *
  * @author Gildas Quemener <gildas.quemener@gmail.com>
  */
-class JUnitFormatter extends BasicFormatter
+final class JUnitFormatter extends BasicFormatter
 {
     /** @var array */
     protected $testCaseNodes = array();

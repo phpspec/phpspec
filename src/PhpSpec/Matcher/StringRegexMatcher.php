@@ -16,7 +16,7 @@ namespace PhpSpec\Matcher;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 
-class StringRegexMatcher extends BasicMatcher
+final class StringRegexMatcher extends BasicMatcher
 {
     /**
      * @var Presenter

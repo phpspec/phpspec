@@ -23,7 +23,7 @@ use PhpSpec\Locator\ResourceManager;
 use PhpSpec\Util\MethodAnalyser;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class MethodReturnedNullListener implements EventSubscriberInterface
+final class MethodReturnedNullListener implements EventSubscriberInterface
 {
     /**
      * @var ConsoleIO

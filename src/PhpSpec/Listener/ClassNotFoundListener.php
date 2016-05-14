@@ -22,7 +22,7 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\ClassNotFoundException as PhpSpecClassException;
 use Prophecy\Exception\Doubler\ClassNotFoundException as ProphecyClassException;
 
-class ClassNotFoundListener implements EventSubscriberInterface
+final class ClassNotFoundListener implements EventSubscriberInterface
 {
     private $io;
     private $resources;

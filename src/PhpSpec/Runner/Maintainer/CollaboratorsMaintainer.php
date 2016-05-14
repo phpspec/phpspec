@@ -27,7 +27,7 @@ use Prophecy\Exception\Doubler\ClassNotFoundException;
 use Prophecy\Prophet;
 use ReflectionException;
 
-class CollaboratorsMaintainer implements Maintainer
+final class CollaboratorsMaintainer implements Maintainer
 {
     /**
      * @var string

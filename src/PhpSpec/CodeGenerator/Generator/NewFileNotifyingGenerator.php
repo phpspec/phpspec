@@ -7,7 +7,7 @@ use PhpSpec\Locator\Resource;
 use PhpSpec\Util\Filesystem;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
-class NewFileNotifyingGenerator implements Generator
+final class NewFileNotifyingGenerator implements Generator
 {
     /**
      * @var Generator

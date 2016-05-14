@@ -16,7 +16,7 @@ namespace PhpSpec\Matcher;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 
-class StringStartMatcher extends BasicMatcher
+final class StringStartMatcher extends BasicMatcher
 {
     /**
      * @var Presenter

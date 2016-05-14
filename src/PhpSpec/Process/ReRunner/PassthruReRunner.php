@@ -16,7 +16,7 @@ namespace PhpSpec\Process\ReRunner;
 use PhpSpec\Process\Context\ExecutionContext;
 use Symfony\Component\Process\PhpExecutableFinder;
 
-class PassthruReRunner extends PhpExecutableReRunner
+final class PassthruReRunner extends PhpExecutableReRunner
 {
     /**
      * @var ExecutionContext

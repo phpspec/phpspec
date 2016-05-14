@@ -15,7 +15,7 @@ namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Matcher\Matcher;
 
-class Negative implements Expectation
+final class Negative implements Expectation
 {
     /**
      * @var Matcher

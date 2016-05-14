@@ -18,7 +18,7 @@ use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Locator\Resource;
 use PhpSpec\Util\Filesystem;
 
-class ReturnConstantGenerator implements Generator
+final class ReturnConstantGenerator implements Generator
 {
     /**
      * @var ConsoleIO

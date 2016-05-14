@@ -16,7 +16,7 @@ namespace PhpSpec\Matcher;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 
-class ArrayCountMatcher extends BasicMatcher
+final class ArrayCountMatcher extends BasicMatcher
 {
     /**
      * @var Presenter

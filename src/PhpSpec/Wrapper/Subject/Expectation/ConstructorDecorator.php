@@ -19,7 +19,7 @@ use PhpSpec\Exception\Fracture\FractureException;
 use PhpSpec\Util\Instantiator;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 
-class ConstructorDecorator extends Decorator implements Expectation
+final class ConstructorDecorator extends Decorator implements Expectation
 {
     /**
      * @param Expectation $expectation

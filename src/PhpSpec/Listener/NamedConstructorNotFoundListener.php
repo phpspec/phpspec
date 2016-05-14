@@ -18,17 +18,17 @@ use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\NamedConstructorNotFoundException;
-use PhpSpec\Locator\PrioritizedResourceManager;
+use PhpSpec\Locator\ResourceManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class NamedConstructorNotFoundListener implements EventSubscriberInterface
+final class NamedConstructorNotFoundListener implements EventSubscriberInterface
 {
     private $io;
     private $resources;
     private $generator;
     private $methods = array();
 
-    public function __construct(ConsoleIO $io, PrioritizedResourceManager $resources, GeneratorManager $generator)
+    public function __construct(ConsoleIO $io, ResourceManager $resources, GeneratorManager $generator)
     {
         $this->io        = $io;
         $this->resources = $resources;

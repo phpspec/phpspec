@@ -15,7 +15,7 @@ namespace PhpSpec\Formatter\Html;
 
 use PhpSpec\IO\IO;
 
-class HtmlIO implements IO
+final class HtmlIO implements IO
 {
     /**
      * @param $message

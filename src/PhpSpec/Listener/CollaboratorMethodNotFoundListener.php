@@ -24,7 +24,7 @@ use Prophecy\Argument\ArgumentsWildcard;
 use Prophecy\Exception\Doubler\MethodNotFoundException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
+final class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
 {
     const PROMPT = 'Would you like me to generate a method signature `%s::%s()` for you?';
 
