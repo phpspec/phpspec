@@ -669,7 +669,7 @@ class ContainerAssembler
             );
         });
         $container->setShared('process.rerunner.platformspecific.passthru', function (ServiceContainer $c) {
-            return ReRunner\PassthruReRunner::withExecutionContext(
+            return ReRunner\ProcOpenReRunner::withExecutionContext(
                 $c->get('process.phpexecutablefinder'),
                 $c->get('process.executioncontext')
             );
