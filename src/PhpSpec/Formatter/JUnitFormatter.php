@@ -204,7 +204,7 @@ final class JUnitFormatter extends BasicFormatter
             implode("\n", $this->testSuiteNodes)
         );
 
-        $this->getIo()->write($output);
+        $this->getIO()->write($output);
     }
 
     /**

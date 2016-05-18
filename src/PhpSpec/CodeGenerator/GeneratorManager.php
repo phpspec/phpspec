@@ -15,6 +15,7 @@ namespace PhpSpec\CodeGenerator;
 
 use PhpSpec\Locator\Resource;
 use InvalidArgumentException;
+use PhpSpec\CodeGenerator\Generator\Generator;
 
 /**
  * Uses registered generators to generate code honoring priority order
@@ -22,17 +23,17 @@ use InvalidArgumentException;
 class GeneratorManager
 {
     /**
-     * @var array
+     * @var Generator[]
      */
     private $generators = array();
 
     /**
-     * @param Generator\Generator $generator
+     * @param Generator $generator
      */
-    public function registerGenerator(Generator\Generator $generator)
+    public function registerGenerator(Generator $generator)
     {
         $this->generators[] = $generator;
-        @usort($this->generators, function ($generator1, $generator2) {
+        @usort($this->generators, function (Generator $generator1, Generator $generator2) {
             return $generator2->getPriority() - $generator1->getPriority();
         });
     }

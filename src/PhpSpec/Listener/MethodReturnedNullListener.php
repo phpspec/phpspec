@@ -40,7 +40,7 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
      */
     private $lastMethodCallEvent = null;
     /**
-     * @var PrioritizedResourceManager
+     * @var ResourceManager
      */
     private $resources;
     /**

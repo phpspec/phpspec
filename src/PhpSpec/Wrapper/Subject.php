@@ -148,7 +148,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      */
     public function offsetExists($key)
     {
-        return $this->wrap($this->arrayAccess->offSetExists($key));
+        return $this->wrap($this->arrayAccess->offsetExists($key));
     }
 
     /**
@@ -264,10 +264,10 @@ class Subject implements ArrayAccess, ObjectWrapper
      */
     private function makeSureWeHaveASubject()
     {
-        if (null === $this->subject && $this->wrappedObject->getClassname()) {
+        if (null === $this->subject && $this->wrappedObject->getClassName()) {
             $instantiator = new Instantiator();
 
-            return $instantiator->instantiate($this->wrappedObject->getClassname());
+            return $instantiator->instantiate($this->wrappedObject->getClassName());
         }
 
         return $this->subject;

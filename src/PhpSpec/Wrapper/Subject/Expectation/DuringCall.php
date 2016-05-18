@@ -72,7 +72,7 @@ abstract class DuringCall
     public function during($method, array $arguments = array())
     {
         if ($method === '__construct') {
-            $this->subject->beAnInstanceOf($this->wrappedObject->getClassname(), $arguments);
+            $this->subject->beAnInstanceOf($this->wrappedObject->getClassName(), $arguments);
 
             return $this->duringInstantiation();
         }
@@ -93,7 +93,7 @@ abstract class DuringCall
             $method = '__construct';
         }
         $instantiator = new Instantiator();
-        $object = $instantiator->instantiate($this->wrappedObject->getClassname());
+        $object = $instantiator->instantiate($this->wrappedObject->getClassName());
 
         return $this->runDuring($object, $method, $this->wrappedObject->getArguments());
     }

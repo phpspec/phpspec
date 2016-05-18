@@ -42,7 +42,7 @@ final class MatchersMaintainer implements Maintainer
     {
         $this->presenter = $presenter;
         $this->defaultMatchers = $matchers;
-        @usort($this->defaultMatchers, function ($matcher1, $matcher2) {
+        @usort($this->defaultMatchers, function (Matcher $matcher1, Matcher $matcher2) {
             return $matcher2->getPriority() - $matcher1->getPriority();
         });
     }
