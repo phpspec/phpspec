@@ -457,6 +457,16 @@ class PSR0LocatorSpec extends ObjectBehavior
         $resource->getSpecClassname()->shouldReturn('spec\Console\ApplicationSpec');
     }
 
+    function it_creates_resource_from_spec_class_with_leading_backslash(Filesystem $fs)
+    {
+        $this->beConstructedWith($fs, 'PhpSpec', 'spec', $this->srcPath, $this->specPath);
+
+        $resource = $this->createResource('\PhpSpec\Console\Application');
+
+        $resource->getSrcClassname()->shouldReturn('PhpSpec\Console\Application');
+        $resource->getSpecClassname()->shouldReturn('spec\PhpSpec\Console\ApplicationSpec');
+    }
+
     function it_throws_an_exception_on_non_PSR0_resource(Filesystem $fs)
     {
         $this->beConstructedWith($fs, '', 'spec', $this->srcPath, $this->specPath);

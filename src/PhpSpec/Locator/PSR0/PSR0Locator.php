@@ -229,6 +229,7 @@ class PSR0Locator implements ResourceLocator
      */
     public function createResource($classname)
     {
+        $classname = ltrim($classname, '\\');
         $this->validatePsr0Classname($classname);
 
         $classname = str_replace('/', '\\', $classname);
