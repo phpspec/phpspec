@@ -173,8 +173,8 @@ final class CollaboratorsMaintainer implements Maintainer
     }
 
     /**
-     * @param Exception $e
-     * @param ReflectionParameter|null $parameter
+     * @param \Exception $e
+     * @param \ReflectionParameter|null $parameter
      * @param string $className
      * @throws CollaboratorNotFoundException
      */

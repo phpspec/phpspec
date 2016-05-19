@@ -42,7 +42,7 @@ class MatcherManager
     public function add(Matcher $matcher)
     {
         $this->matchers[] = $matcher;
-        @usort($this->matchers, function ($matcher1, $matcher2) {
+        @usort($this->matchers, function (Matcher $matcher1, Matcher $matcher2) {
             return $matcher2->getPriority() - $matcher1->getPriority();
         });
     }

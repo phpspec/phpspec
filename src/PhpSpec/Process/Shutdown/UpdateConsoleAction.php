@@ -24,7 +24,7 @@ final class UpdateConsoleAction implements ShutdownAction
     private $currentExample;
 
     /**
-     * @var CurrentExampleWriter
+     * @var FatalPresenter
      */
     private $currentExampleWriter;
 

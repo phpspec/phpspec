@@ -15,7 +15,6 @@ namespace PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
-use PhpSpec\Process\Context\JsonExecutionContext;
 use PhpSpec\Process\Context\ExecutionContext;
 use PhpSpec\Util\Filesystem;
 use PhpSpec\Locator\Resource;

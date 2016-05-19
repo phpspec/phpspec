@@ -24,7 +24,6 @@ use PhpSpec\Formatter\Presenter\Exception\SimpleExceptionPresenter;
 use PhpSpec\Formatter\Presenter\Exception\SimpleExceptionElementPresenter;
 use PhpSpec\Formatter\Presenter\Exception\TaggingExceptionElementPresenter;
 use PhpSpec\Formatter\Presenter\SimplePresenter;
-use PhpSpec\Formatter\Presenter\TaggedPresenter;
 use PhpSpec\Formatter\Presenter\TaggingPresenter;
 use PhpSpec\Formatter\Presenter\Value\ArrayTypePresenter;
 use PhpSpec\Formatter\Presenter\Value\BaseExceptionTypePresenter;

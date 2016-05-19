@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Runner;
 
+use PhpSpec\Runner\Maintainer\Maintainer;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Runner\Maintainer\LetAndLetgoMaintainer;
 use PhpSpec\Formatter\Presenter\Presenter;
@@ -35,7 +36,7 @@ class ExampleRunner
      */
     private $presenter;
     /**
-     * @var Maintainer\Maintainer[]
+     * @var Maintainer[]
      */
     private $maintainers = array();
 
@@ -50,9 +51,9 @@ class ExampleRunner
     }
 
     /**
-     * @param Maintainer\Maintainer $maintainer
+     * @param Maintainer $maintainer
      */
-    public function registerMaintainer(Maintainer\Maintainer $maintainer)
+    public function registerMaintainer(Maintainer $maintainer)
     {
         $this->maintainers[] = $maintainer;
 
@@ -127,7 +128,7 @@ class ExampleRunner
 
         $matchers      = new MatcherManager($this->presenter);
         $collaborators = new CollaboratorManager($this->presenter);
-        $maintainers   = array_filter($this->maintainers, function ($maintainer) use ($example) {
+        $maintainers   = array_filter($this->maintainers, function (Maintainer $maintainer) use ($example) {
             return $maintainer->supports($example);
         });
 
@@ -156,7 +157,7 @@ class ExampleRunner
     }
 
     /**
-     * @param Maintainer\Maintainer[] $maintainers
+     * @param Maintainer[] $maintainers
      * @param ExampleNode                      $example
      * @param Specification           $context
      * @param MatcherManager                   $matchers
@@ -175,9 +176,9 @@ class ExampleRunner
     }
 
     /**
-     * @param Maintainer\Maintainer[] $maintainers
+     * @param Maintainer[] $maintainers
      *
-     * @return Maintainer\Maintainer[]
+     * @return Maintainer[]
      */
     private function searchExceptionMaintainers(array $maintainers)
     {

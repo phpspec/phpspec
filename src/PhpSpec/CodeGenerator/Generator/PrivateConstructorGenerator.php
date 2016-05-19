@@ -19,7 +19,6 @@ use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Locator\Resource;
 use PhpSpec\CodeGenerator\Writer\CodeWriter;
 use PhpSpec\Util\Filesystem;
-use PhpSpec\CodeGenerator\Writer\TokenizedCodeWriter;
 
 final class PrivateConstructorGenerator implements Generator
 {

@@ -30,7 +30,7 @@ class ResourceLoader
     private $methodAnalyser;
 
     /**
-     * @param ResourceManagerInterface $manager
+     * @param ResourceManager $manager
      * @param MethodAnalyser $methodAnalyser
      */
     public function __construct(ResourceManager $manager, MethodAnalyser $methodAnalyser)

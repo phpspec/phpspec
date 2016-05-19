@@ -18,7 +18,6 @@ use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\CodeGenerator\Writer\CodeWriter;
 use PhpSpec\Util\Filesystem;
 use PhpSpec\Locator\Resource;
-use PhpSpec\CodeGenerator\Writer\TokenizedCodeWriter;
 
 /**
  * Generates class methods from a resource
