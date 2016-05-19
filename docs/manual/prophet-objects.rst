@@ -95,6 +95,10 @@ lets you create the stub in an easier way. Instead using a type hint which
         }
     }
 
+**phpspec** 2.* supports the use of `@param` annotations instead of parametric
+typehints for this purpose. However, this functionality is removed in
+**phpspec** 3.0.
+
 Mocks
 -----
 
