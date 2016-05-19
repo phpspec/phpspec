@@ -1,26 +1,26 @@
-Upgrading to PHPSpec 3
+Upgrading to phpspec 3
 ======================
 
-PHPSpec 3.0 is still in development, but here is a guide to upgrading a test
+phpspec 3.0 is still in development, but here is a guide to upgrading a test
 suite or an extension, based on BC-breaking changes made so far.
 
 Upgrading for Users
 -------------------
 
 So far, there are no changes that need to be made to get a typical test suite
-written for PHPSpec 2 to work with 3.0. We suggest trying the upgrade and
+written for phpspec 2 to work with 3.0. We suggest trying the upgrade and
 running your tests to see what happens.
 
-If you are using 3rd party PHPSpec extensions, you may have to increase the
+If you are using 3rd party phpspec extensions, you may have to increase the
 version numbers for those as well.
 
 As PHP 5.5 and below are no longer supported language versions, you will need
-to upgrade to PHP 5.6 or 7.0+ to use PHPSpec 3.
+to upgrade to PHP 5.6 or 7.0+ to use phpspec 3.
 
 Upgrading for Extension Authors
 -------------------------------
 
-Several interfaces have been renamed in PHPSpec 3.0.  Here is a quick guide to
+Several interfaces have been renamed in phpspec 3.0.  Here is a quick guide to
 changes you will need to make in your code.
 
 - *PhpSpec\Console\IO* is now *PhpSpec\Console\ConsoleIO*
