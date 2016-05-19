@@ -40,6 +40,7 @@ Learn more from :doc:`the documentation <manual/introduction>`.
    manual/getting-started
    manual/prophet-objects
    manual/let-and-letgo
+   manual/upgrading-to-phpspec-3
 
 .. toctree::
    :hidden:
