@@ -76,8 +76,15 @@ Will run all the specs in the `spec` directory.
 
     $ bin/phpspec run spec/ClassNameSpec.php
 
-Will run only the ClassNameSpec. You can run just the specs in a directory
-with:
+Will run only the ClassNameSpec.
+
+.. code-block:: bash
+
+    $ bin/phpspec run spec/ClassNameSpec.php:56
+
+Will run only specification defined in the ClassNameSpec on line 56.
+
+You can run just the specs in a directory with:
 
 .. code-block:: bash
 
