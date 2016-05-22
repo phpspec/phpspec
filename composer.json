@@ -32,9 +32,9 @@
     },
 
     "require-dev": {
-        "behat/behat":           "^3.0.11",
-        "symfony/filesystem":    "~2.7|~3.0",
-        "phpunit/phpunit":       "~4.4|~5.0"
+        "behat/behat":           "^3.1",
+        "symfony/filesystem":    "^3.0",
+        "phpunit/phpunit":       "^5.3"
     },
 
     "suggest": {
