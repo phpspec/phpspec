@@ -73,8 +73,8 @@ We can tell **phpspec** what we want it to return though.
 Now you can write the code that will get this example to pass. As well as
 refactoring your implementation you should see if you can refactor your specs
 once they are passing. In this case we can tidy it up a bit as **phpspec**
-lets you create the stub in an easier way. Instead using a type hint which
-**phpspec** will use to determine the type of the stub:
+lets you create the stub in an easier way. If you use a typehint, **phpspec**
+determine the required type of the collaborator:
 
 .. code-block:: php
 
