@@ -73,32 +73,8 @@ We can tell **phpspec** what we want it to return though.
 Now you can write the code that will get this example to pass. As well as
 refactoring your implementation you should see if you can refactor your specs
 once they are passing. In this case we can tidy it up a bit as **phpspec**
-lets you create the stub in an easier way. You can pass in a variable to
-the example and use an `@param` docblock to tell it what type it should have:
-
-.. code-block:: php
-
-     <?php
-
-    namespace spec;
-
-    use PhpSpec\ObjectBehavior;
-
-    class MarkdownSpec extends ObjectBehavior
-    {
-        /**
-         * @param Markdown\Reader $reader
-         */
-        function it_converts_text_from_an_external_source($reader)
-        {
-            $reader->getMarkdown()->willReturn("Hi, there");
-
-            $this->toHtmlFromReader($reader)->shouldReturn("<p>Hi, there</p>");
-        }
-    }
-
-We can improve this further by instead using a type hint which **phpspec**
-will use to determine the type of the stub:
+lets you create the stub in an easier way. If you use a typehint, **phpspec**
+determine the required type of the collaborator:
 
 .. code-block:: php
 
@@ -118,6 +94,10 @@ will use to determine the type of the stub:
             $this->toHtmlFromReader($reader)->shouldReturn("<p>Hi, there</p>");
         }
     }
+
+**phpspec** 2.* supports the use of `@param` annotations instead of parametric
+typehints for this purpose. However, this functionality is removed in
+**phpspec** 3.0.
 
 Mocks
 -----

@@ -120,16 +120,6 @@ final class CollaboratorsMaintainer implements Maintainer
      */
     private function generateCollaborators(CollaboratorManager $collaborators, \ReflectionFunctionAbstract $function, \ReflectionClass $classRefl)
     {
-        if ($comment = $function->getDocComment()) {
-            $comment = str_replace("\r\n", "\n", $comment);
-            foreach (explode("\n", trim($comment)) as $line) {
-                if (preg_match(self::$docex, $line, $match)) {
-                    $collaborator = $this->getOrCreateCollaborator($collaborators, $match[2]);
-                    $collaborator->beADoubleOf($match[1]);
-                }
-            }
-        }
-
         foreach ($function->getParameters() as $parameter) {
 
             $collaborator = $this->getOrCreateCollaborator($collaborators, $parameter->getName());

@@ -7,20 +7,33 @@ suite or an extension, based on BC-breaking changes made so far.
 Upgrading for Users
 -------------------
 
-So far, there are no changes that need to be made to get a typical test suite
-written for phpspec 2 to work with 3.0. We suggest trying the upgrade and
-running your tests to see what happens.
-
-If you are using 3rd party phpspec extensions, you may have to increase the
+If you are using 3rd party **phpspec** extensions, you may have to increase the
 version numbers for those as well.
 
 As PHP 5.5 and below are no longer supported language versions, you will need
-to upgrade to PHP 5.6 or 7.0+ to use phpspec 3.
+to upgrade to PHP 5.6 or 7.0+ to use **phpspec** 3.
+
+Where you have used `@param` annotations for spec examples, to indicate the
+required type for a collaborator, you will need to remove these and use
+explicit typehinting in the method signature instead. For example:
+
+.. code-block:: php
+
+    /**
+     * @param \stdClass $collaborator
+     */
+    function it_does_something_with_a_stdclass($collaborator)
+
+Change to:
+
+.. code-block:: php
+
+    function it_does_something_with_a_stdclass(\stdClass $collaborator)
 
 Upgrading for Extension Authors
 -------------------------------
 
-Several interfaces have been renamed in phpspec 3.0.  Here is a quick guide to
+Several interfaces have been renamed in **phpspec** 3.0.  Here is a quick guide to
 changes you will need to make in your code.
 
 - *PhpSpec\Console\IO* is now *PhpSpec\Console\ConsoleIO*
