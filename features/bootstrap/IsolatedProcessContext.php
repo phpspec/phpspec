@@ -80,8 +80,8 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     public function iShouldSeeAnErrorAboutTheMissingAutoloader()
     {
-        if (!preg_match('/autoload/', $this->process->getErrorOutput())) {
-            throw new \Exception('There was no error regarding a missing autoloader');
+        if (!preg_match('/autoload/', $this->process->getErrorOutput().$this->process->getOutput())) {
+            throw new \Exception('There was no error regarding a missing autoloader:');
         }
     }
 
