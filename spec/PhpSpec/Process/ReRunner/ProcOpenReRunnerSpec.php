@@ -18,7 +18,7 @@ use PhpSpec\Process\Context\ExecutionContext;
 use Prophecy\Argument;
 use Symfony\Component\Process\PhpExecutableFinder;
 
-class PassthruRerunnerSpec extends ObjectBehavior
+class ProcOpenReRunnerSpec extends ObjectBehavior
 {
     function let(PhpExecutableFinder $executableFinder, ExecutionContext $executionContext)
     {

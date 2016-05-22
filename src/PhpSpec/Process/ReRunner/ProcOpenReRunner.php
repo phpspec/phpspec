@@ -16,7 +16,7 @@ namespace PhpSpec\Process\ReRunner;
 use PhpSpec\Process\Context\ExecutionContext;
 use Symfony\Component\Process\PhpExecutableFinder;
 
-final class PassthruReRunner extends PhpExecutableReRunner
+final class ProcOpenReRunner extends PhpExecutableReRunner
 {
     /**
      * @var ExecutionContext
@@ -50,9 +50,21 @@ final class PassthruReRunner extends PhpExecutableReRunner
     public function reRunSuite()
     {
         $args = $_SERVER['argv'];
-        $command = $this->buildArgString() . escapeshellcmd($this->getExecutablePath()).' '.join(' ', array_map('escapeshellarg', $args));
-        passthru($command, $exitCode);
-        exit($exitCode);
+        $command = $this->buildArgString() . escapeshellcmd($this->getExecutablePath()).' '.join(' ', array_map('escapeshellarg', $args)) . ' 2>&1';
+
+        $desc = [
+            0 => ['file', 'php://stdin', 'r'],
+            1 => ['file', 'php://stdout', 'w'],
+            2 => ['file', 'php://stderr', 'w'],
+        ];
+        $proc = proc_open( $command, $desc, $pipes );
+
+        do {
+            sleep(1);
+            $status = proc_get_status($proc);
+        } while ($status['running']);
+
+        exit($status['exitcode']);
     }
 
     private function buildArgString()
