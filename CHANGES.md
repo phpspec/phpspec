@@ -5,6 +5,8 @@
 * Default template now uses `::class` (@ciaranmcnulty)
 * No longer declare variables/constants in global scope (@ciaranmcnulty)
 * Remove usage of `phpspec2-expect` lib in test suite (@shanethehat)
+* Fixed bug where rerun test suite was uncoloured (@ciaranmcnulty)
+* [BC break] Removed support for @param for creating doubles (@Sam-Burns)
 * [BC break] Bumped dependency versions (see migration guide) (@ciaranmcnulty)
 * [BC break] Removed various code braches for support of older dependecies (@ciaranmcnulty)
 * [BC break] Made classes final or abstract in simple cases (@ciaranmcnulty)
