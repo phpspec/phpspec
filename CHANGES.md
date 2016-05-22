@@ -1,3 +1,17 @@
+3.0 - Upcoming
+==============
+
+* Allow to describe a class providing a namespace with leading backslash (@mheki)
+* Default template now uses `::class` (@ciaranmcnulty)
+* No longer declare variables/constants in global scope (@ciaranmcnulty)
+* Remove usage of `phpspec2-expect` lib in test suite (@shanethehat)
+* [BC break] Bumped dependency versions (see migration guide) (@ciaranmcnulty)
+* [BC break] Removed various code braches for support of older dependecies (@ciaranmcnulty)
+* [BC break] Made classes final or abstract in simple cases (@ciaranmcnulty)
+* [BC break] Remove `*Interface` from all interfaces (@shanethehat)
+* [BC break] Remove deprecated code / optional interfaces (@mheki)
+
+
 2.5 - Upcoming
 ==============
 
