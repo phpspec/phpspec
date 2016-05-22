@@ -1,3 +1,8 @@
+2.5 - Upcoming
+==============
+
+*  Allow to describe a class providing a namespace with leading backslash
+
 2.5.0 / 2016-03-20
 ==================
 
