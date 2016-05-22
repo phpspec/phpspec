@@ -87,6 +87,10 @@ Will run all the specifications in the spec directory.
 
 Will run only the ClassNameSpec.
 
+  <info>php %command.full_name% spec/ClassNameSpec.php:56</info>
+
+Will run only specification defined in the ClassNameSpec on line 56.
+
 You can choose the bootstrap file with the bootstrap option e.g.:
 
   <info>php %command.full_name% --bootstrap=bootstrap.php</info>
