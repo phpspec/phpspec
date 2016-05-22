@@ -52,7 +52,11 @@ If you prefer editing your ``composer.json`` file manually, add phpspec to your
         "config": {
             "bin-dir": "bin"
         },
-        "autoload": {"psr-0": {"": "src"}}
+        "autoload": {
+            "psr-0": {
+                "": "src/"
+            }
+        }
     }
 
 Then install phpspec with the composer install command:
