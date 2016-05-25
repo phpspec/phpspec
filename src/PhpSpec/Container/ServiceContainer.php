@@ -11,15 +11,16 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec;
+namespace PhpSpec\Container;
 
+use Interop\Container\ContainerInterface;
 use InvalidArgumentException;
 
 /**
  * The Service Container is a lightweight container based on Pimple to handle
  * object creation of PhpSpec services.
  */
-class ServiceContainer
+class ServiceContainer implements ContainerInterface
 {
     /**
      * @var array
@@ -69,30 +70,27 @@ class ServiceContainer
      * Sets a object or a callable for the object creation. A callable will be invoked
      * every time get is called.
      *
-     * @param string          $id
+     * @param string          $serviceId
      * @param object|callable $value
      *
      * @throws \InvalidArgumentException if service is not an object or callable
      */
-    public function set($id, $value)
+    public function set($serviceId, $value)
     {
         if (!is_object($value) && !is_callable($value)) {
-            throw new InvalidArgumentException(sprintf(
-                'Service should be callable or object, but %s given.',
-                gettype($value)
-            ));
+            ServiceNotFound::constructFromServiceId($serviceId);
         }
 
-        list($prefix, $sid) = $this->getPrefixAndSid($id);
+        list($prefix, $sid) = $this->getPrefixAndSid($serviceId);
         if ($prefix) {
             if (!isset($this->prefixed[$prefix])) {
                 $this->prefixed[$prefix] = array();
             }
 
-            $this->prefixed[$prefix][$sid] = $id;
+            $this->prefixed[$prefix][$sid] = $serviceId;
         }
 
-        $this->services[$id] = $value;
+        $this->services[$serviceId] = $value;
     }
 
     /**
@@ -107,7 +105,7 @@ class ServiceContainer
     public function setShared($id, $callable)
     {
         if (!is_callable($callable)) {
-            throw new InvalidArgumentException(sprintf(
+            throw new ContainerException(sprintf(
                 'Service should be callable, "%s" given.',
                 gettype($callable)
             ));
@@ -127,19 +125,19 @@ class ServiceContainer
     /**
      * Retrieves a service from the container
      *
-     * @param string $id
+     * @param string $serviceId
      *
      * @return object
      *
      * @throws \InvalidArgumentException if service is not defined
      */
-    public function get($id)
+    public function get($serviceId)
     {
-        if (!array_key_exists($id, $this->services)) {
-            throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
+        if (!$this->has($serviceId)) {
+            throw ServiceNotFound::constructFromServiceId($serviceId);
         }
 
-        $value = $this->services[$id];
+        $value = $this->services[$serviceId];
         if (is_callable($value)) {
             return call_user_func($value, $this);
         }
@@ -148,12 +146,22 @@ class ServiceContainer
     }
 
     /**
-     * @param $id
+     * @param string $serviceId
      * @return bool
      */
-    public function isDefined($id)
+    public function has($serviceId)
     {
-        return array_key_exists($id, $this->services);
+        return array_key_exists($serviceId, $this->services);
+    }
+
+    /**
+     * @deprecated Use has()
+     * @param $serviceId
+     * @return bool
+     */
+    public function isDefined($serviceId)
+    {
+        return $this->has($serviceId);
     }
 
     /**
