@@ -27,6 +27,7 @@ use PhpSpec\Console\Formatter;
 use PhpSpec\Console\Prompter\Question;
 use PhpSpec\Console\ResultConverter;
 use PhpSpec\Factory\ReflectionFactory;
+use PhpSpec\Process\Context\JsonExecutionContext;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
 use PhpSpec\Util\ClassFileAnalyser;
 use PhpSpec\Util\Filesystem;
@@ -55,6 +56,7 @@ class ServiceContainerConfigurer
     {
         $this->setupConfigManager($container);
         $this->setupConsoleManager($container);
+        $this->setupExecutionContext($container);
         $this->setupIO($container);
         $this->setupEventDispatcher($container);
         $this->setupConsoleEventDispatcher($container);
@@ -84,6 +86,13 @@ class ServiceContainerConfigurer
     {
         $container->setShared('phpspec.console-manager', function (ServiceContainer $container) {
             return new ConsoleManager();
+        });
+    }
+
+    private function setupExecutionContext(ServiceContainer $container)
+    {
+        $container->setShared('process.executioncontext', function () {
+            return JsonExecutionContext::fromEnv($_SERVER);
         });
     }
 

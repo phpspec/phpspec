@@ -68,10 +68,6 @@ class Application extends BaseApplication
 
         $this->loadExtensions($this->container);
 
-        $this->container->setShared('process.executioncontext', function () {
-            return JsonExecutionContext::fromEnv($_SERVER);
-        });
-
         foreach ($this->container->getByPrefix('console.commands') as $command) {
             $this->add($command);
         }
