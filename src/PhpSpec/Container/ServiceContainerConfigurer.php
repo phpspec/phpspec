@@ -11,7 +11,7 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Console;
+namespace PhpSpec\Container;
 
 use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
 use PhpSpec\CodeAnalysis\StaticRejectingNamespaceResolver;
@@ -19,7 +19,11 @@ use PhpSpec\CodeAnalysis\TokenizedNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
 use PhpSpec\Console\Assembler\PresenterAssembler;
+use PhpSpec\Console\Command;
+use PhpSpec\Console\ConsoleIO;
+use PhpSpec\Console\Formatter;
 use PhpSpec\Console\Prompter\Question;
+use PhpSpec\Console\ResultConverter;
 use PhpSpec\Factory\ReflectionFactory;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
 use PhpSpec\Util\ClassFileAnalyser;
@@ -28,7 +32,6 @@ use PhpSpec\Util\ReservedWordsMethodNameChecker;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use PhpSpec\ServiceContainer;
 use PhpSpec\CodeGenerator;
 use PhpSpec\Formatter as SpecFormatter;
 use PhpSpec\Listener;
@@ -42,7 +45,7 @@ use Symfony\Component\Process\PhpExecutableFinder;
 use PhpSpec\Message\CurrentExampleTracker;
 use PhpSpec\Process\Shutdown\Shutdown;
 
-class ContainerAssembler
+class ServiceContainerConfigurer
 {
     /**
      * @param ServiceContainer $container
@@ -69,7 +72,7 @@ class ContainerAssembler
 
     private function setupIO(ServiceContainer $container)
     {
-        if (!$container->isDefined('console.prompter')) {
+        if (!$container->has('console.prompter')) {
             $container->setShared('console.prompter', function ($c) {
                 return new Question(
                     $c->get('console.input'),
@@ -426,16 +429,16 @@ class ContainerAssembler
                 return new Loader\Transformer\TypeHintRewriter($c->get('analysis.typehintrewriter'));
             });
         }
-        $container->setShared('analysis.typehintrewriter', function($c) {
+        $container->setShared('analysis.typehintrewriter', function ($c) {
             return new TokenizedTypeHintRewriter(
                 $c->get('loader.transformer.typehintindex'),
                 $c->get('analysis.namespaceresolver')
             );
         });
-        $container->setShared('loader.transformer.typehintindex', function() {
+        $container->setShared('loader.transformer.typehintindex', function () {
             return new Loader\Transformer\InMemoryTypeHintIndex();
         });
-        $container->setShared('analysis.namespaceresolver.tokenized', function() {
+        $container->setShared('analysis.namespaceresolver.tokenized', function () {
             return new TokenizedNamespaceResolver();
         });
         $container->setShared('analysis.namespaceresolver', function ($c) {
@@ -611,15 +614,15 @@ class ContainerAssembler
             return new Wrapper\Unwrapper();
         });
 
-        $container->setShared('access_inspector', function($c) {
+        $container->setShared('access_inspector', function ($c) {
             return $c->get('access_inspector.magic');
         });
 
-        $container->setShared('access_inspector.magic', function($c) {
+        $container->setShared('access_inspector.magic', function ($c) {
             return new MagicAwareAccessInspector($c->get('access_inspector.visibility'));
         });
 
-        $container->setShared('access_inspector.visibility', function() {
+        $container->setShared('access_inspector.visibility', function () {
             return new VisibilityAccessInspector();
         });
     }
@@ -685,7 +688,7 @@ class ContainerAssembler
             );
         });
 
-        if ($container->isDefined('process.rerunner.platformspecific')) {
+        if ($container->has('process.rerunner.platformspecific')) {
             return;
         }
 
@@ -745,7 +748,7 @@ class ContainerAssembler
    */
     private function setupShutdown(ServiceContainer $container)
     {
-        $container->setShared('process.shutdown', function() {
+        $container->setShared('process.shutdown', function () {
             return new Shutdown();
         });
     }

@@ -1,11 +1,17 @@
 <?php
 
-namespace spec\PhpSpec;
+namespace spec\PhpSpec\Container;
 
+use Interop\Container\ContainerInterface;
 use PhpSpec\ObjectBehavior;
 
 class ServiceContainerSpec extends ObjectBehavior
 {
+    function it_is_standards_compliant()
+    {
+        $this->shouldHaveType(ContainerInterface::class);
+    }
+
     function it_stores_parameters()
     {
         $this->setParam('some_param', 42);
