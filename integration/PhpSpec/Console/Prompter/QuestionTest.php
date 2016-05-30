@@ -2,6 +2,7 @@
 
 namespace integration\PhpSpec\Console\Prompter;
 
+use PhpSpec\Console\Manager as ConsoleManager;
 use PhpSpec\Console\Prompter\Question;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
@@ -36,7 +37,12 @@ class QuestionTest extends \PHPUnit_Framework_TestCase
         $this->output = $this->getMock('Symfony\Component\Console\Output\OutputInterface');
         $this->questionHelper = $this->getMock('Symfony\Component\Console\Helper\QuestionHelper');
 
-        $this->prompter = new Question($this->input, $this->output, $this->questionHelper);
+        $consoleManager = new ConsoleManager();
+        $consoleManager->setInput($this->input);
+        $consoleManager->setOutput($this->output);
+        $consoleManager->setQuestionHelper($this->questionHelper);
+
+        $this->prompter = new Question($consoleManager);
     }
 
     /**

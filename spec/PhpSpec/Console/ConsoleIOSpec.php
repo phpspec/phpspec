@@ -6,23 +6,33 @@ use PhpSpec\Console\Prompter;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 use PhpSpec\Config\OptionsConfig;
-
-use Symfony\Component\Console\Helper\DialogHelper;
+use PhpSpec\Config\Manager as ConfigManager;
+use PhpSpec\Console\Manager as ConsoleManager;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class ConsoleIOSpec extends ObjectBehavior
 {
-    function let(InputInterface $input, OutputInterface $output, OptionsConfig $config, Prompter $prompter)
-    {
+    function let(
+        InputInterface $input,
+        OutputInterface $output,
+        ConsoleManager $consoleManager,
+        ConfigManager $configManager,
+        OptionsConfig $config,
+        Prompter $prompter
+    ) {
+        $consoleManager->getInput()->willReturn($input);
+        $consoleManager->getOutput()->willReturn($output);
+
         $input->isInteractive()->willReturn(true);
         $input->getOption('no-code-generation')->willReturn(false);
         $input->getOption('stop-on-failure')->willReturn(false);
 
+        $configManager->optionsConfig()->willReturn($config);
         $config->isCodeGenerationEnabled()->willReturn(true);
         $config->isStopOnFailureEnabled()->willReturn(false);
 
-        $this->beConstructedWith($input, $output, $config, $prompter);
+        $this->beConstructedWith($consoleManager, $configManager, $prompter);
     }
 
     function it_has_io_interface()

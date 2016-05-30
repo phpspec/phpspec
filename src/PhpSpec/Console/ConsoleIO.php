@@ -16,7 +16,8 @@ namespace PhpSpec\Console;
 use PhpSpec\IO\IO;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use PhpSpec\Config\OptionsConfig;
+use PhpSpec\Config\Manager as ConfigManager;
+use PhpSpec\Console\Manager as ConsoleManager;
 
 /**
  * Class ConsoleIO deals with input and output from command line interaction
@@ -28,14 +29,9 @@ class ConsoleIO implements IO
     const COL_MAX_WIDTH = 80;
 
     /**
-     * @var InputInterface
+     * @var ConsoleManager
      */
-    private $input;
-
-    /**
-     * @var OutputInterface
-     */
-    private $output;
+    private $consoleManager;
 
     /**
      * @var string
@@ -48,9 +44,9 @@ class ConsoleIO implements IO
     private $hasTempString = false;
 
     /**
-      * @var OptionsConfig
+      * @var ConfigManager
       */
-    private $config;
+    private $configManager;
 
     /**
      * @var integer
@@ -63,20 +59,17 @@ class ConsoleIO implements IO
     private $prompter;
 
     /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     * @param OptionsConfig   $config
+     * @param ConsoleManager  $consoleManager
+     * @param ConfigManager   $configManager
      * @param Prompter        $prompter
      */
     public function __construct(
-        InputInterface $input,
-        OutputInterface $output,
-        OptionsConfig $config,
+        ConsoleManager $consoleManager,
+        ConfigManager $configManager,
         Prompter $prompter
     ) {
-        $this->input   = $input;
-        $this->output  = $output;
-        $this->config  = $config;
+        $this->consoleManager = $consoleManager;
+        $this->configManager = $configManager;
         $this->prompter = $prompter;
     }
 
@@ -85,7 +78,7 @@ class ConsoleIO implements IO
      */
     public function isInteractive()
     {
-        return $this->input->isInteractive();
+        return $this->getInput()->isInteractive();
     }
 
     /**
@@ -93,7 +86,7 @@ class ConsoleIO implements IO
      */
     public function isDecorated()
     {
-        return $this->output->isDecorated();
+        return $this->getOutput()->isDecorated();
     }
 
     /**
@@ -105,8 +98,8 @@ class ConsoleIO implements IO
             return false;
         }
 
-        return $this->config->isCodeGenerationEnabled()
-            && !$this->input->getOption('no-code-generation');
+        return $this->configManager->optionsConfig()->isCodeGenerationEnabled()
+            && !$this->getInput()->getOption('no-code-generation');
     }
 
     /**
@@ -114,8 +107,8 @@ class ConsoleIO implements IO
      */
     public function isStopOnFailureEnabled()
     {
-        return $this->config->isStopOnFailureEnabled()
-            || $this->input->getOption('stop-on-failure');
+        return $this->configManager->optionsConfig()->isStopOnFailureEnabled()
+            || $this->getInput()->getOption('stop-on-failure');
     }
 
     /**
@@ -123,7 +116,7 @@ class ConsoleIO implements IO
      */
     public function isVerbose()
     {
-        return OutputInterface::VERBOSITY_VERBOSE <= $this->output->getVerbosity();
+        return OutputInterface::VERBOSITY_VERBOSE <= $this->getOutput()->getVerbosity();
     }
 
     /**
@@ -194,7 +187,7 @@ class ConsoleIO implements IO
             $message = $this->indentText($message, $indent);
         }
 
-        $this->output->write($message, $newline);
+        $this->getOutput()->write($message, $newline);
         $this->lastMessage = $message.($newline ? "\n" : '');
     }
 
@@ -300,21 +293,21 @@ class ConsoleIO implements IO
 
     public function isRerunEnabled()
     {
-        return !$this->input->getOption('no-rerun') && $this->config->isReRunEnabled();
+        return !$this->getInput()->getOption('no-rerun') && $this->configManager->optionsConfig()->isReRunEnabled();
     }
 
     public function isFakingEnabled()
     {
-        return $this->input->getOption('fake') || $this->config->isFakingEnabled();
+        return $this->getInput()->getOption('fake') || $this->configManager->optionsConfig()->isFakingEnabled();
     }
 
     public function getBootstrapPath()
     {
-        if ($path = $this->input->getOption('bootstrap')) {
+        if ($path = $this->getInput()->getOption('bootstrap')) {
             return $path;
         }
 
-        if ($path = $this->config->getBootstrapPath()) {
+        if ($path = $this->configManager->optionsConfig()->getBootstrapPath()) {
             return $path;
         }
         return false;
@@ -355,13 +348,29 @@ class ConsoleIO implements IO
             $message = $this->indentText($message, $indent);
         }
 
-        $this->output->writeln("<broken-bg>".str_repeat(" ", $this->getBlockWidth())."</broken-bg>");
+        $this->getOutput()->writeln("<broken-bg>".str_repeat(" ", $this->getBlockWidth())."</broken-bg>");
 
         foreach (explode("\n", $message) as $line) {
-            $this->output->writeln("<broken-bg>".str_pad($line, $this->getBlockWidth(), ' ')."</broken-bg>");
+            $this->getOutput()->writeln("<broken-bg>".str_pad($line, $this->getBlockWidth(), ' ')."</broken-bg>");
         }
 
-        $this->output->writeln("<broken-bg>".str_repeat(" ", $this->getBlockWidth())."</broken-bg>");
-        $this->output->writeln('');
+        $this->getOutput()->writeln("<broken-bg>".str_repeat(" ", $this->getBlockWidth())."</broken-bg>");
+        $this->getOutput()->writeln('');
+    }
+
+    /**
+     * @return OutputInterface
+     */
+    private function getOutput()
+    {
+        return $this->consoleManager->getOutput();
+    }
+
+    /**
+     * @return InputInterface
+     */
+    private function getInput()
+    {
+        return $this->consoleManager->getInput();
     }
 }

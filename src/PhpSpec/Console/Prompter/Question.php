@@ -14,38 +14,22 @@
 namespace PhpSpec\Console\Prompter;
 
 use PhpSpec\Console\Prompter;
-use Symfony\Component\Console\Helper\QuestionHelper;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
+use PhpSpec\Console\Manager as ConsoleManager;
 
 final class Question implements Prompter
 {
     /**
-     * @var InputInterface
+     * @var ConsoleManager
      */
-    private $input;
+    private $consoleManager;
 
     /**
-     * @var OutputInterface
+     * @param ConsoleManager $consoleManager
      */
-    private $output;
-
-    /**
-     * @var QuestionHelper
-     */
-    private $helper;
-
-    /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     * @param QuestionHelper  $helper
-     */
-    public function __construct(InputInterface $input, OutputInterface $output, QuestionHelper $helper)
+    public function __construct(ConsoleManager $consoleManager)
     {
-        $this->input = $input;
-        $this->output = $output;
-        $this->helper = $helper;
+        $this->consoleManager = $consoleManager;
     }
 
     /**
@@ -55,6 +39,9 @@ final class Question implements Prompter
      */
     public function askConfirmation($question, $default = true)
     {
-        return (bool)$this->helper->ask($this->input, $this->output, new ConfirmationQuestion($question, $default));
+        $input = $this->consoleManager->getInput();
+        $output = $this->consoleManager->getOutput();
+        $questionHelper = $this->consoleManager->getQuestionHelper();
+        return (bool)$questionHelper->ask($input, $output, new ConfirmationQuestion($question, $default));
     }
 }

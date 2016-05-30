@@ -1,25 +1,15 @@
 <?php
 
-namespace spec\PhpSpec;
+namespace spec\PhpSpec\Container;
 
+use Interop\Container\ContainerInterface;
 use PhpSpec\ObjectBehavior;
 
 class ServiceContainerSpec extends ObjectBehavior
 {
-    function it_stores_parameters()
+    function it_is_standards_compliant()
     {
-        $this->setParam('some_param', 42);
-        $this->getParam('some_param')->shouldReturn(42);
-    }
-
-    function it_returns_null_value_for_unexisting_parameter()
-    {
-        $this->getParam('unexisting')->shouldReturn(null);
-    }
-
-    function it_returns_custom_default_for_unexisting_parameter_if_provided()
-    {
-        $this->getParam('unexisting', 42)->shouldReturn(42);
+        $this->shouldHaveType(ContainerInterface::class);
     }
 
     function it_stores_services($service)
@@ -70,15 +60,5 @@ class ServiceContainerSpec extends ObjectBehavior
 
         $this->shouldThrow()->duringGet('collection1.some_service');
         $this->getByPrefix('collection1')->shouldHaveCount(0);
-    }
-
-    function it_supports_custom_service_configurators()
-    {
-        $this->addConfigurator(function ($c) {
-            $c->setParam('name', 'Jim');
-        });
-        $this->configure();
-
-        $this->getParam('name')->shouldReturn('Jim');
     }
 }
