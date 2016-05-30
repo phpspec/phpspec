@@ -25,11 +25,6 @@ class ServiceContainer implements ContainerInterface
     /**
      * @var array
      */
-    private $parameters = array();
-
-    /**
-     * @var array
-     */
     private $services = array();
 
     /**
@@ -41,30 +36,6 @@ class ServiceContainer implements ContainerInterface
      * @var array
      */
     private $configurators = array();
-
-    /**
-     * Sets a param in the container
-     *
-     * @param string $id
-     * @param mixed  $value
-     */
-    public function setParam($id, $value)
-    {
-        $this->parameters[$id] = $value;
-    }
-
-    /**
-     * Gets a param from the container or a default value.
-     *
-     * @param string $id
-     * @param mixed  $default
-     *
-     * @return mixed
-     */
-    public function getParam($id, $default = null)
-    {
-        return isset($this->parameters[$id]) ? $this->parameters[$id] : $default;
-    }
 
     /**
      * Sets a object or a callable for the object creation. A callable will be invoked

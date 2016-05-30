@@ -18,6 +18,7 @@ use PhpSpec\CodeAnalysis\StaticRejectingNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
+use PhpSpec\Config\Manager as ConfigManger;
 use PhpSpec\Console\Assembler\PresenterAssembler;
 use PhpSpec\Console\Command;
 use PhpSpec\Console\ConsoleIO;
@@ -40,7 +41,6 @@ use PhpSpec\Locator;
 use PhpSpec\Matcher;
 use PhpSpec\Runner;
 use PhpSpec\Wrapper;
-use PhpSpec\Config\OptionsConfig;
 use Symfony\Component\Process\PhpExecutableFinder;
 use PhpSpec\Message\CurrentExampleTracker;
 use PhpSpec\Process\Shutdown\Shutdown;
@@ -52,6 +52,7 @@ class ServiceContainerConfigurer
      */
     public function build(ServiceContainer $container)
     {
+        $this->setupConfigManager($container);
         $this->setupIO($container);
         $this->setupEventDispatcher($container);
         $this->setupConsoleEventDispatcher($container);
@@ -70,6 +71,13 @@ class ServiceContainerConfigurer
         $this->setupShutdown($container);
     }
 
+    private function setupConfigManager(ServiceContainer $container)
+    {
+        $container->setShared('phpspec.config-manager', function (ServiceContainer $container) {
+            return new ConfigManger();
+        });
+    }
+
     private function setupIO(ServiceContainer $container)
     {
         if (!$container->has('console.prompter')) {
@@ -85,13 +93,7 @@ class ServiceContainerConfigurer
             return new ConsoleIO(
                 $c->get('console.input'),
                 $c->get('console.output'),
-                new OptionsConfig(
-                    $c->getParam('stop_on_failure', false),
-                    $c->getParam('code_generation', true),
-                    $c->getParam('rerun', true),
-                    $c->getParam('fake', false),
-                    $c->getParam('bootstrap', false)
-                ),
+                $c->get('phpspec.config-manager'),
                 $c->get('console.prompter')
             );
         });
@@ -332,21 +334,11 @@ class ServiceContainerConfigurer
             $renderer = new CodeGenerator\TemplateRenderer(
                 $c->get('util.filesystem')
             );
-            $renderer->setLocations($c->getParam('code_generator.templates.paths', array()));
+            $templatePaths = $c->get('phpspec.config-manager')->optionsConfig()->getCodeGeneratorTemplatePaths();
+            $renderer->setLocations($templatePaths);
 
             return $renderer;
         });
-
-        if (!empty($_SERVER['HOMEDRIVE']) && !empty($_SERVER['HOMEPATH'])) {
-            $home = $_SERVER['HOMEDRIVE'].$_SERVER['HOMEPATH'];
-        } else {
-            $home = getenv('HOME');
-        }
-
-        $container->setParam('code_generator.templates.paths', array(
-            rtrim(getcwd(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
-            rtrim($home, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
-        ));
     }
 
     /**
@@ -375,7 +367,7 @@ class ServiceContainerConfigurer
         });
 
         $container->addConfigurator(function (ServiceContainer $c) {
-            $suites = $c->getParam('suites', array('main' => ''));
+            $suites = $c->get('phpspec.config-manager')->optionsConfig()->getSuites();
 
             foreach ($suites as $name => $suite) {
                 $suite      = is_array($suite) ? $suite : array('namespace' => $suite);
@@ -530,7 +522,7 @@ class ServiceContainerConfigurer
         );
 
         $container->addConfigurator(function (ServiceContainer $c) {
-            $formatterName = $c->getParam('formatter.name', 'progress');
+            $formatterName = $c->get('phpspec.config-manager')->optionsConfig()->getFormatterName();
 
             $c->get('console.output')->setFormatter(new Formatter(
                 $c->get('console.output')->isDecorated()
@@ -580,7 +572,7 @@ class ServiceContainerConfigurer
 
         $container->set('runner.maintainers.errors', function (ServiceContainer $c) {
             return new Runner\Maintainer\ErrorMaintainer(
-                $c->getParam('runner.maintainers.errors.level', E_ALL ^ E_STRICT)
+                $c->get('phpspec.config-manager')->optionsConfig()->getErrorLevel()
             );
         });
         $container->set('runner.maintainers.collaborators', function (ServiceContainer $c) {

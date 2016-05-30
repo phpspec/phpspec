@@ -138,12 +138,8 @@ EOF
     {
         $container = $this->getApplication()->getContainer();
 
-        $container->setParam(
-            'formatter.name',
-            $input->getOption('format') ?: $container->getParam('formatter.name')
-        );
+        $formatterName = $container->get('phpspec.config-manager')->optionsConfig()->getFormatterName();
 
-        $formatterName = $container->getParam('formatter.name', 'progress');
         $currentFormatter = $container->get('formatter.formatters.'.$formatterName);
 
         if ($currentFormatter instanceof FatalPresenter) {
