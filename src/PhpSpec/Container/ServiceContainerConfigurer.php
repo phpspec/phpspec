@@ -19,6 +19,7 @@ use PhpSpec\CodeAnalysis\TokenizedNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
 use PhpSpec\Config\Manager as ConfigManger;
+use PhpSpec\Console\Manager as ConsoleManager;
 use PhpSpec\Console\Assembler\PresenterAssembler;
 use PhpSpec\Console\Command;
 use PhpSpec\Console\ConsoleIO;
@@ -53,6 +54,7 @@ class ServiceContainerConfigurer
     public function build(ServiceContainer $container)
     {
         $this->setupConfigManager($container);
+        $this->setupConsoleManager($container);
         $this->setupIO($container);
         $this->setupEventDispatcher($container);
         $this->setupConsoleEventDispatcher($container);
@@ -78,21 +80,25 @@ class ServiceContainerConfigurer
         });
     }
 
+    private function setupConsoleManager(ServiceContainer $container)
+    {
+        $container->setShared('phpspec.console-manager', function (ServiceContainer $container) {
+            return new ConsoleManager();
+        });
+    }
+
     private function setupIO(ServiceContainer $container)
     {
         if (!$container->has('console.prompter')) {
             $container->setShared('console.prompter', function ($c) {
                 return new Question(
-                    $c->get('console.input'),
-                    $c->get('console.output'),
-                    $c->get('console.helper_set')->get('question')
+                    $c->get('phpspec.console-manager')
                 );
             });
         }
         $container->setShared('console.io', function (ServiceContainer $c) {
             return new ConsoleIO(
-                $c->get('console.input'),
-                $c->get('console.output'),
+                $c->get('phpspec.console-manager'),
                 $c->get('phpspec.config-manager'),
                 $c->get('console.prompter')
             );
@@ -523,10 +529,8 @@ class ServiceContainerConfigurer
 
         $container->addConfigurator(function (ServiceContainer $c) {
             $formatterName = $c->get('phpspec.config-manager')->optionsConfig()->getFormatterName();
-
-            $c->get('console.output')->setFormatter(new Formatter(
-                $c->get('console.output')->isDecorated()
-            ));
+            $output = $c->get('phpspec.console-manager')->getOutput();
+            $output->setFormatter(new Formatter($output->isDecorated()));
 
             try {
                 $formatter = $c->get('formatter.formatters.'.$formatterName);

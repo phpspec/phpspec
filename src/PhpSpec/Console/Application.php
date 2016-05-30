@@ -21,6 +21,7 @@ use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use PhpSpec\Console\Manager as ConsoleManager;
 use PhpSpec\Container\ServiceContainer;
 
 /**
@@ -58,15 +59,12 @@ class Application extends BaseApplication
      */
     public function doRun(InputInterface $input, OutputInterface $output)
     {
-        $helperSet = $this->getHelperSet();
-
         $assembler = new ServiceContainerConfigurer();
         $assembler->build($this->container);
 
         $this->container->get('phpspec.config-manager')->setInput($input);
-        $this->container->set('console.input', $input);
-        $this->container->set('console.output', $output);
-        $this->container->set('console.helper_set', $helperSet);
+        $consoleManager = $this->container->get('phpspec.console-manager');
+        $this->configureConsoleManager($consoleManager, $input, $output);
 
         $this->loadExtensions($this->container);
 
@@ -143,5 +141,12 @@ class Application extends BaseApplication
 
             $extension->load($container);
         }
+    }
+
+    private function configureConsoleManager(ConsoleManager $consoleManager, InputInterface $input, OutputInterface $output)
+    {
+        $consoleManager->setInput($input);
+        $consoleManager->setOutput($output);
+        $consoleManager->setQuestionHelper($this->getHelperSet()->get('question'));
     }
 }
