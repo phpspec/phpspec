@@ -16,7 +16,7 @@ namespace PhpSpec\Console;
 use PhpSpec\IO\IO;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use PhpSpec\Config\OptionsConfig;
+use PhpSpec\Config\Manager as ConfigManager;
 
 /**
  * Class ConsoleIO deals with input and output from command line interaction
@@ -48,9 +48,9 @@ class ConsoleIO implements IO
     private $hasTempString = false;
 
     /**
-      * @var OptionsConfig
+      * @var ConfigManger
       */
-    private $config;
+    private $configManager;
 
     /**
      * @var integer
@@ -65,18 +65,18 @@ class ConsoleIO implements IO
     /**
      * @param InputInterface  $input
      * @param OutputInterface $output
-     * @param OptionsConfig   $config
+     * @param ConfigManager   $configManager
      * @param Prompter        $prompter
      */
     public function __construct(
         InputInterface $input,
         OutputInterface $output,
-        OptionsConfig $config,
+        ConfigManager $configManager,
         Prompter $prompter
     ) {
         $this->input   = $input;
         $this->output  = $output;
-        $this->config  = $config;
+        $this->configManager  = $configManager;
         $this->prompter = $prompter;
     }
 
@@ -105,7 +105,7 @@ class ConsoleIO implements IO
             return false;
         }
 
-        return $this->config->isCodeGenerationEnabled()
+        return $this->configManager->optionsConfig()->isCodeGenerationEnabled()
             && !$this->input->getOption('no-code-generation');
     }
 
@@ -114,7 +114,7 @@ class ConsoleIO implements IO
      */
     public function isStopOnFailureEnabled()
     {
-        return $this->config->isStopOnFailureEnabled()
+        return $this->configManager->optionsConfig()->isStopOnFailureEnabled()
             || $this->input->getOption('stop-on-failure');
     }
 
@@ -300,12 +300,12 @@ class ConsoleIO implements IO
 
     public function isRerunEnabled()
     {
-        return !$this->input->getOption('no-rerun') && $this->config->isReRunEnabled();
+        return !$this->input->getOption('no-rerun') && $this->configManager->optionsConfig()->isReRunEnabled();
     }
 
     public function isFakingEnabled()
     {
-        return $this->input->getOption('fake') || $this->config->isFakingEnabled();
+        return $this->input->getOption('fake') || $this->configManager->optionsConfig()->isFakingEnabled();
     }
 
     public function getBootstrapPath()
@@ -314,7 +314,7 @@ class ConsoleIO implements IO
             return $path;
         }
 
-        if ($path = $this->config->getBootstrapPath()) {
+        if ($path = $this->configManager->optionsConfig()->getBootstrapPath()) {
             return $path;
         }
         return false;

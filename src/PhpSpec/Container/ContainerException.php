@@ -11,18 +11,10 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec;
+namespace PhpSpec\Container;
 
-use PhpSpec\Container\ServiceContainer;
+use Interop\Container\Exception\ContainerException as ContainerInteropException;
 
-/**
- * Interface Extension is used for PhpSpec extensions to interface with PhpSpec
- * through the service container
- */
-interface Extension
+class ContainerException extends \RuntimeException implements ContainerInteropException
 {
-    /**
-     * @param ServiceContainer $container
-     */
-    public function load(ServiceContainer $container);
 }
