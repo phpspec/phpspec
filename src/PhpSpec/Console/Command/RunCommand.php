@@ -143,17 +143,6 @@ EOF
         $currentFormatter = $container->get('formatter.formatters.'.$formatterName);
 
         if ($currentFormatter instanceof FatalPresenter) {
-
-            $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) use ($currentFormatter) {
-                return new UpdateConsoleAction(
-                    $c->get('current_example'),
-                    $currentFormatter
-                );
-            });
-
-            $container->get('process.shutdown')->registerAction(
-                $container->get('process.shutdown.update_console_action')
-            );
             $container->get('process.shutdown')->registerShutdown();
         }
 

@@ -29,6 +29,7 @@ use PhpSpec\Console\ResultConverter;
 use PhpSpec\Factory\ReflectionFactory;
 use PhpSpec\Process\Context\JsonExecutionContext;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
+use PhpSpec\Process\Shutdown\UpdateConsoleAction;
 use PhpSpec\Util\ClassFileAnalyser;
 use PhpSpec\Util\Filesystem;
 use PhpSpec\Util\ReservedWordsMethodNameChecker;
@@ -753,8 +754,23 @@ class ServiceContainerConfigurer
    */
     private function setupShutdown(ServiceContainer $container)
     {
-        $container->setShared('process.shutdown', function () {
-            return new Shutdown();
+        $container->setShared('process.shutdown', function (ServiceContainer $container) {
+
+            $shutdown = new Shutdown();
+            
+            $formatterName = $container->get('phpspec.config-manager')->optionsConfig()->getFormatterName();
+
+            $currentFormatter = $container->get('formatter.formatters.'.$formatterName);
+            
+            $shutdown->registerAction(
+                new UpdateConsoleAction(
+                    $container->get('current_example'),
+                    $currentFormatter
+                )
+            );
+            
+            
+            return $shutdown;
         });
     }
 }
