@@ -101,17 +101,17 @@ class ServiceContainerConfigurer
     private function setupIO(Container $container)
     {
         if (!$container->has('console.prompter')) {
-            $container->set('console.prompter', function ($c) {
+            $container->set('console.prompter', function (ContainerInterface $container) {
                 return new Question(
-                    $c->get('phpspec.console-manager')
+                    $container->get('phpspec.console-manager')
                 );
             });
         }
-        $container->set('console.io', function (ContainerInterface $c) {
+        $container->set('console.io', function (ContainerInterface $container) {
             return new ConsoleIO(
-                $c->get('phpspec.console-manager'),
-                $c->get('phpspec.config-manager'),
-                $c->get('console.prompter')
+                $container->get('phpspec.console-manager'),
+                $container->get('phpspec.config-manager'),
+                $container->get('console.prompter')
             );
         });
         $container->set('util.filesystem', function () {
@@ -384,10 +384,10 @@ class ServiceContainerConfigurer
                 return new Loader\Transformer\TypeHintRewriter($c->get('analysis.typehintrewriter'));
             });
         }
-        $container->set('analysis.typehintrewriter', function ($c) {
+        $container->set('analysis.typehintrewriter', function (ContainerInterface $container) {
             return new TokenizedTypeHintRewriter(
-                $c->get('loader.transformer.typehintindex'),
-                $c->get('analysis.namespaceresolver')
+                $container->get('loader.transformer.typehintindex'),
+                $container->get('analysis.namespaceresolver')
             );
         });
         $container->set('loader.transformer.typehintindex', function () {
@@ -396,11 +396,11 @@ class ServiceContainerConfigurer
         $container->set('analysis.namespaceresolver.tokenized', function () {
             return new TokenizedNamespaceResolver();
         });
-        $container->set('analysis.namespaceresolver', function ($c) {
+        $container->set('analysis.namespaceresolver', function (ContainerInterface $container) {
             if (PHP_VERSION >= 7) {
-                return new StaticRejectingNamespaceResolver($c->get('analysis.namespaceresolver.tokenized'));
+                return new StaticRejectingNamespaceResolver($container->get('analysis.namespaceresolver.tokenized'));
             }
-            return $c->get('analysis.namespaceresolver.tokenized');
+            return $container->get('analysis.namespaceresolver.tokenized');
         });
     }
 
@@ -520,20 +520,20 @@ class ServiceContainerConfigurer
                 $c->get('phpspec.config-manager')->optionsConfig()->getErrorLevel()
             );
         });
-        $container->set('runner.maintainers.collaborators', function (ContainerInterface $c) {
+        $container->set('runner.maintainers.collaborators', function (ContainerInterface $container) {
             return new Runner\Maintainer\CollaboratorsMaintainer(
-                $c->get('unwrapper'),
-                $c->get('loader.transformer.typehintindex')
+                $container->get('unwrapper'),
+                $container->get('loader.transformer.typehintindex')
             );
         });
-        $container->set('runner.maintainers.let_letgo', function () {
+        $container->set('runner.maintainers.let_letgo', function (ContainerInterface $container) {
             return new Runner\Maintainer\LetAndLetgoMaintainer();
         });
 
-        $container->set('runner.maintainers.matchers', function (ContainerInterface $c) {
-            $matchers = $c->get('phpspec.matchers');
+        $container->set('runner.maintainers.matchers', function (ContainerInterface $container) {
+            $matchers = $container->get('phpspec.matchers');
             return new Runner\Maintainer\MatchersMaintainer(
-                $c->get('formatter.presenter'),
+                $container->get('formatter.presenter'),
                 $matchers
             );
         });
@@ -547,16 +547,16 @@ class ServiceContainerConfigurer
             );
         });
 
-        $container->set('unwrapper', function () {
+        $container->set('unwrapper', function (ContainerInterface $container) {
             return new Wrapper\Unwrapper();
         });
 
-        $container->set('access_inspector', function ($c) {
-            return $c->get('access_inspector.magic');
+        $container->set('access_inspector', function (ContainerInterface $container) {
+            return $container->get('access_inspector.magic');
         });
 
-        $container->set('access_inspector.magic', function ($c) {
-            return new MagicAwareAccessInspector($c->get('access_inspector.visibility'));
+        $container->set('access_inspector.magic', function (ContainerInterface $container) {
+            return new MagicAwareAccessInspector($container->get('access_inspector.visibility'));
         });
 
         $container->set('access_inspector.visibility', function () {
