@@ -371,14 +371,14 @@ class ServiceContainerConfigurer
     private function setupLocator(ServiceContainer $container)
     {
         $container->setShared('locator.resource_manager', function (ServiceContainer $c) {
-            $manager = new Locator\PrioritizedResourceManager();
+            $locatorFactory = $c->get('phpspec.locator-factory');
+            $configManager = $c->get('phpspec.config-manager');
+            return new Locator\PrioritizedResourceManager($locatorFactory, $configManager);
+        });
 
-            array_map(
-                array($manager, 'registerLocator'),
-                $c->getByPrefix('locator.locators')
-            );
-
-            return $manager;
+        $container->setShared('phpspec.locator-factory', function (ServiceContainer $c) {
+            $fileSystem = $c->get('util.filesystem');
+            return new Locator\Factory($fileSystem);
         });
 
         $container->addConfigurator(function (ServiceContainer $c) {
