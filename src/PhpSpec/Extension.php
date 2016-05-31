@@ -13,7 +13,7 @@
 
 namespace PhpSpec;
 
-use PhpSpec\Container\ServiceContainer;
+use UltraLite\Container\Container;
 
 /**
  * Interface Extension is used for PhpSpec extensions to interface with PhpSpec
@@ -22,7 +22,7 @@ use PhpSpec\Container\ServiceContainer;
 interface Extension
 {
     /**
-     * @param ServiceContainer $container
+     * @param Container $container
      */
-    public function load(ServiceContainer $container);
+    public function load(Container $container);
 }

@@ -15,7 +15,7 @@ Feature: Developer uses extension
     namespace Example1\PhpSpec\MatcherExtension;
 
     use PhpSpec\Extension as PhpSpecExtension;
-    use PhpSpec\Container\ServiceContainer;
+    use UltraLite\Container\Container;
     use Interop\Container\ContainerInterface;
 
     class Extension implements PhpSpecExtension
@@ -23,7 +23,7 @@ Feature: Developer uses extension
         /**
          * @param ServiceContainer $container
          */
-        public function load(ServiceContainer $container)
+        public function load(Container $container)
         {
 
             // Inject new matcher
@@ -35,7 +35,7 @@ Feature: Developer uses extension
             $matcherList = $container->get('phpspec.servicelist.matchers');
             $matcherList[] = 'matcher.beseven';
 
-            $container->set('phpspec.servicelist.matchers', function (ServiceContainer $container) use ($matcherList) {
+            $container->set('phpspec.servicelist.matchers', function (ContainerInterface $container) use ($matcherList) {
                 return $matcherList;
             });
         }

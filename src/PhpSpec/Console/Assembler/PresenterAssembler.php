@@ -34,15 +34,13 @@ use PhpSpec\Formatter\Presenter\Value\NullTypePresenter;
 use PhpSpec\Formatter\Presenter\Value\ObjectTypePresenter;
 use PhpSpec\Formatter\Presenter\Value\QuotingStringTypePresenter;
 use PhpSpec\Formatter\Presenter\Value\TruncatingStringTypePresenter;
-use PhpSpec\Container\ServiceContainer;
+use Interop\Container\ContainerInterface;
+use UltraLite\Container\Container;
 use SebastianBergmann\Exporter\Exporter;
 
 class PresenterAssembler
 {
-    /**
-     * @param ServiceContainer $container
-     */
-    public function assemble(ServiceContainer $container)
+    public function assemble(Container $container)
     {
         $this->assembleDiffer($container);
         $this->assembleDifferEngines($container);
@@ -51,12 +49,9 @@ class PresenterAssembler
         $this->assembleHtmlPresenter($container);
     }
 
-    /**
-     * @param ServiceContainer $container
-     */
-    private function assembleDiffer(ServiceContainer $container)
+    private function assembleDiffer(Container $container)
     {
-        $container->setShared('formatter.presenter.differ', function (ServiceContainer $c) {
+        $container->set('formatter.presenter.differ', function (ContainerInterface $c) {
             $differ = new Differ();
 
             array_map(
@@ -68,10 +63,7 @@ class PresenterAssembler
         });
     }
 
-    /**
-     * @param ServiceContainer $container
-     */
-    private function assembleDifferEngines(ServiceContainer $container)
+    private function assembleDifferEngines(Container $container)
     {
         $container->set('formatter.presenter.differ.engines.string', function () {
             return new StringEngine();
@@ -81,7 +73,7 @@ class PresenterAssembler
             return new ArrayEngine();
         });
 
-        $container->set('formatter.presenter.differ.engines.object', function (ServiceContainer $c) {
+        $container->set('formatter.presenter.differ.engines.object', function (ContainerInterface $c) {
             return new ObjectEngine(
                 new Exporter(),
                 $c->get('formatter.presenter.differ.engines.string')
@@ -89,46 +81,40 @@ class PresenterAssembler
         });
     }
 
-    /**
-     * @param ServiceContainer $container
-     */
-    private function assembleTypePresenters(ServiceContainer $container)
+    private function assembleTypePresenters(Container $container)
     {
-        $container->setShared('formatter.presenter.value.array_type_presenter', function () {
+        $container->set('formatter.presenter.value.array_type_presenter', function () {
             return new ArrayTypePresenter();
         });
 
-        $container->setShared('formatter.presenter.value.boolean_type_presenter', function () {
+        $container->set('formatter.presenter.value.boolean_type_presenter', function () {
             return new BooleanTypePresenter();
         });
 
-        $container->setShared('formatter.presenter.value.callable_type_presenter', function (ServiceContainer $c) {
+        $container->set('formatter.presenter.value.callable_type_presenter', function (ContainerInterface $c) {
             return new CallableTypePresenter($c->get('formatter.presenter'));
         });
 
-        $container->setShared('formatter.presenter.value.exception_type_presenter', function () {
+        $container->set('formatter.presenter.value.exception_type_presenter', function () {
             return new BaseExceptionTypePresenter();
         });
 
-        $container->setShared('formatter.presenter.value.null_type_presenter', function () {
+        $container->set('formatter.presenter.value.null_type_presenter', function () {
             return new NullTypePresenter();
         });
 
-        $container->setShared('formatter.presenter.value.object_type_presenter', function () {
+        $container->set('formatter.presenter.value.object_type_presenter', function () {
             return new ObjectTypePresenter();
         });
 
-        $container->setShared('formatter.presenter.value.string_type_presenter', function () {
+        $container->set('formatter.presenter.value.string_type_presenter', function () {
             return new TruncatingStringTypePresenter(new QuotingStringTypePresenter());
         });
     }
 
-    /**
-     * @param ServiceContainer $container
-     */
-    private function assemblePresenter(ServiceContainer $container)
+    private function assemblePresenter(Container $container)
     {
-        $container->setShared('formatter.presenter', function (ServiceContainer $c) {
+        $container->set('formatter.presenter', function (ContainerInterface $c) {
             return new TaggingPresenter(
                 new SimplePresenter(
                     $c->get('formatter.presenter.value_presenter'),
@@ -142,30 +128,27 @@ class PresenterAssembler
             );
         });
 
-        $container->setShared('formatter.presenter.value_presenter', function () {
+        $container->set('formatter.presenter.value_presenter', function () {
             return new ComposedValuePresenter();
         });
 
-        $container->setShared('formatter.presenter.exception_element_presenter', function (ServiceContainer $c) {
+        $container->set('formatter.presenter.exception_element_presenter', function (ContainerInterface $c) {
             return new TaggingExceptionElementPresenter(
                 $c->get('formatter.presenter.value.exception_type_presenter'),
                 $c->get('formatter.presenter.value_presenter')
             );
         });
 
-        $container->setShared('formatter.presenter.exception.phpspec', function (ServiceContainer $c) {
+        $container->set('formatter.presenter.exception.phpspec', function (ContainerInterface $c) {
             return new GenericPhpSpecExceptionPresenter(
                 $c->get('formatter.presenter.exception_element_presenter')
             );
         });
     }
 
-    /**
-     * @param ServiceContainer $container
-     */
-    private function assembleHtmlPresenter(ServiceContainer $container)
+    private function assembleHtmlPresenter(Container $container)
     {
-        $container->setShared('formatter.presenter.html', function (ServiceContainer $c) {
+        $container->set('formatter.presenter.html', function (ContainerInterface $c) {
             return new SimplePresenter(
                 $c->get('formatter.presenter.value_presenter'),
                 new SimpleExceptionPresenter(
@@ -177,14 +160,14 @@ class PresenterAssembler
             );
         });
 
-        $container->setShared('formatter.presenter.html.exception_element_presenter', function (ServiceContainer $c) {
+        $container->set('formatter.presenter.html.exception_element_presenter', function (ContainerInterface $c) {
             return new SimpleExceptionElementPresenter(
                 $c->get('formatter.presenter.value.exception_type_presenter'),
                 $c->get('formatter.presenter.value_presenter')
             );
         });
 
-        $container->setShared('formatter.presenter.html.exception.phpspec', function () {
+        $container->set('formatter.presenter.html.exception.phpspec', function () {
             return new HtmlPhpSpecExceptionPresenter();
         });
     }

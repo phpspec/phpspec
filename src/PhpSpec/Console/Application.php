@@ -21,7 +21,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use PhpSpec\Console\Manager as ConsoleManager;
-use PhpSpec\Container\ServiceContainer;
+use UltraLite\Container\Container;
+use Interop\Container\ContainerInterface;
 
 /**
  * The command line application entry point
@@ -29,7 +30,7 @@ use PhpSpec\Container\ServiceContainer;
 class Application extends BaseApplication
 {
     /**
-     * @var ServiceContainer
+     * @var ContainerInterface
      */
     private $container;
 
@@ -38,12 +39,12 @@ class Application extends BaseApplication
      */
     public function __construct($version)
     {
-        $this->container = new ServiceContainer();
+        $this->container = new Container();
         parent::__construct('phpspec', $version);
     }
 
     /**
-     * @return ServiceContainer
+     * @return ContainerInterface
      */
     public function getContainer()
     {
@@ -118,11 +119,11 @@ class Application extends BaseApplication
     }
 
     /**
-     * @param ServiceContainer $container
+     * @param ContainerInterface $container
      *
      * @throws \RuntimeException
      */
-    private function loadExtensions(ServiceContainer $container)
+    private function loadExtensions(ContainerInterface $container)
     {
         foreach ($container->get('phpspec.config-manager')->optionsConfig()->getExtensions() as $class) {
             $extension = new $class();
