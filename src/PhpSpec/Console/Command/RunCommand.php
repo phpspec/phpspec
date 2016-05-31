@@ -15,14 +15,13 @@ namespace PhpSpec\Console\Command;
 
 use Interop\Container\ContainerInterface;
 use PhpSpec\Console\Formatter;
-use PhpSpec\Container\ServiceNotFound;
 use PhpSpec\Formatter\FatalPresenter;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-
+use Interop\Container\Exception\NotFoundException;
 
 /**
  * Main command, responsible for running the specs
@@ -194,7 +193,7 @@ EOF
 
         try {
             return $container->get('formatter.formatters.'.$formatterName);
-        } catch (ServiceNotFound $e) {
+        } catch (NotFoundException $e) {
             throw new \RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
         }
     }

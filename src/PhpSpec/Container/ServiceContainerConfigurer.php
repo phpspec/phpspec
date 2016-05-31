@@ -132,8 +132,10 @@ class ServiceContainerConfigurer
             return new Command\RunCommand();
         });
 
-        $container->set('console.commands.describe', function () {
-            return new Command\DescribeCommand();
+        $container->set('console.commands.describe', function (ContainerInterface $container) {
+            $resourceManager = $container->get('locator.resource_manager');
+            $codeGenerator = $container->get('code_generator');
+            return new Command\DescribeCommand($resourceManager, $codeGenerator);
         });
     }
 
