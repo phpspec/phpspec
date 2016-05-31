@@ -23,7 +23,6 @@ use PhpSpec\Console\Manager as ConsoleManager;
 use PhpSpec\Console\Assembler\PresenterAssembler;
 use PhpSpec\Console\Command;
 use PhpSpec\Console\ConsoleIO;
-use PhpSpec\Console\Formatter;
 use PhpSpec\Console\Prompter\Question;
 use PhpSpec\Console\ResultConverter;
 use PhpSpec\Factory\ReflectionFactory;
@@ -71,7 +70,6 @@ class ServiceContainerConfigurer
         $this->setupResultConverter($container);
         $this->setupRerunner($container);
         $this->setupMatchers($container);
-        $this->setupSubscribers($container);
         $this->setupCurrentExample($container);
         $this->setupShutdown($container);
     }
@@ -498,19 +496,6 @@ class ServiceContainerConfigurer
                 return $c->get('formatter.formatters.html');
             }
         );
-
-        $container->addConfigurator(function (ServiceContainer $c) {
-            $formatterName = $c->get('phpspec.config-manager')->optionsConfig()->getFormatterName();
-            $output = $c->get('phpspec.console-manager')->getOutput();
-            $output->setFormatter(new Formatter($output->isDecorated()));
-
-            try {
-                $formatter = $c->get('formatter.formatters.'.$formatterName);
-            } catch (\InvalidArgumentException $e) {
-                throw new \RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
-            }
-            $c->set('event_dispatcher.listeners.formatter', $formatter);
-        });
     }
 
     /**
@@ -685,19 +670,6 @@ class ServiceContainerConfigurer
         });
         $container->setShared('process.phpexecutablefinder', function () {
             return new PhpExecutableFinder();
-        });
-    }
-
-    /**
-     * @param ServiceContainer $container
-     */
-    private function setupSubscribers(ServiceContainer $container)
-    {
-        $container->addConfigurator(function (ServiceContainer $c) {
-            array_map(
-                array($c->get('event_dispatcher'), 'addSubscriber'),
-                $c->getByPrefix('event_dispatcher.listeners')
-            );
         });
     }
 

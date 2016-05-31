@@ -13,8 +13,9 @@
 
 namespace PhpSpec\Console\Command;
 
+use PhpSpec\Console\Formatter;
+use PhpSpec\Container\ServiceNotFound;
 use PhpSpec\Formatter\FatalPresenter;
-use PhpSpec\Process\Shutdown\UpdateConsoleAction;
 use PhpSpec\Container\ServiceContainer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -146,7 +147,7 @@ EOF
             $container->get('process.shutdown')->registerShutdown();
         }
 
-        $container->configure();
+        $this->initialiseEventManagement($container);
 
         $locator = $input->getArgument('spec');
         $linenum = null;
@@ -160,5 +161,43 @@ EOF
         return $container->get('console.result_converter')->convert(
             $suiteRunner->run($suite)
         );
+    }
+
+    private function initialiseEventManagement(ServiceContainer $container)
+    {
+        $this->addTypePresentersToValuePresenter($container);
+        $formatter = $this->getFormatter($container);
+        $this->registerEventSubscribers($container, $formatter);
+    }
+
+    private function addTypePresentersToValuePresenter(ServiceContainer $container)
+    {
+        array_map(
+            array($container->get('formatter.presenter.value_presenter'), 'addTypePresenter'),
+            $container->getByPrefix('formatter.presenter.value')
+        );
+    }
+
+    private function getFormatter(ServiceContainer $container)
+    {
+        $formatterName = $container->get('phpspec.config-manager')->optionsConfig()->getFormatterName();
+        $output = $container->get('phpspec.console-manager')->getOutput();
+        $output->setFormatter(new Formatter($output->isDecorated()));
+
+        try {
+            return $container->get('formatter.formatters.'.$formatterName);
+        } catch (ServiceNotFound $e) {
+            throw new \RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
+        }
+    }
+
+    private function registerEventSubscribers($container, $formatter)
+    {
+        array_map(
+            array($container->get('event_dispatcher'), 'addSubscriber'),
+            $container->getByPrefix('event_dispatcher.listeners')
+        );
+
+        $container->get('event_dispatcher')->addSubscriber($formatter);
     }
 }

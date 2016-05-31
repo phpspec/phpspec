@@ -33,11 +33,6 @@ class ServiceContainer implements ContainerInterface
     private $prefixed = array();
 
     /**
-     * @var array
-     */
-    private $configurators = array();
-
-    /**
      * Sets a object or a callable for the object creation. A callable will be invoked
      * every time get is called.
      *
@@ -154,56 +149,6 @@ class ServiceContainer implements ContainerInterface
         }
 
         return $services;
-    }
-
-    /**
-     * Removes a service from the container
-     *
-     * @param string $id
-     *
-     * @throws \InvalidArgumentException if service is not defined
-     */
-    public function remove($id)
-    {
-        if (!array_key_exists($id, $this->services)) {
-            throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
-        }
-
-        list($prefix, $sid) = $this->getPrefixAndSid($id);
-        if ($prefix) {
-            unset($this->prefixed[$prefix][$sid]);
-        }
-
-        unset($this->services[$id]);
-    }
-
-    /**
-     * Adds a configurator, that can configure many services in one callable
-     *
-     * @param callable $configurator
-     *
-     * @throws \InvalidArgumentException if configurator is not a callable
-     */
-    public function addConfigurator($configurator)
-    {
-        if (!is_callable($configurator)) {
-            throw new InvalidArgumentException(sprintf(
-                'Configurator should be callable, but %s given.',
-                gettype($configurator)
-            ));
-        }
-
-        $this->configurators[] = $configurator;
-    }
-
-    /**
-     * Loop through all configurators and invoke them
-     */
-    public function configure()
-    {
-        foreach ($this->configurators as $configurator) {
-            call_user_func($configurator, $this);
-        }
     }
 
     /**

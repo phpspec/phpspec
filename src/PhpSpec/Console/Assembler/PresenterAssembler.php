@@ -121,13 +121,6 @@ class PresenterAssembler
         $container->setShared('formatter.presenter.value.string_type_presenter', function () {
             return new TruncatingStringTypePresenter(new QuotingStringTypePresenter());
         });
-
-        $container->addConfigurator(function (ServiceContainer $c) {
-            array_map(
-                array($c->get('formatter.presenter.value_presenter'), 'addTypePresenter'),
-                $c->getByPrefix('formatter.presenter.value')
-            );
-        });
     }
 
     /**

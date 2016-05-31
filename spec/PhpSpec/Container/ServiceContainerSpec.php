@@ -52,13 +52,4 @@ class ServiceContainerSpec extends ObjectBehavior
 
         $this->getByPrefix('collection1')->shouldReturn(array($service1, $service2));
     }
-
-    function it_provides_a_way_to_remove_service_by_key($service)
-    {
-        $this->set('collection1.some_service', $service);
-        $this->remove('collection1.some_service');
-
-        $this->shouldThrow()->duringGet('collection1.some_service');
-        $this->getByPrefix('collection1')->shouldHaveCount(0);
-    }
 }
