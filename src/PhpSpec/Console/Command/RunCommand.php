@@ -174,7 +174,7 @@ EOF
     {
         array_map(
             array($container->get('formatter.presenter.value_presenter'), 'addTypePresenter'),
-            $container->getByPrefix('formatter.presenter.value')
+            $container->get('phpspec.formatter.presenters')
         );
     }
 

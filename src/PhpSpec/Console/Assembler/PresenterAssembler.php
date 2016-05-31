@@ -61,7 +61,7 @@ class PresenterAssembler
 
             array_map(
                 array($differ, 'addEngine'),
-                $c->getByPrefix('formatter.presenter.differ.engines')
+                $c->get('phpspec.formatter.differ-engines')
             );
 
             return $differ;

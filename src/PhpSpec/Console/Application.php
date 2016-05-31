@@ -68,7 +68,7 @@ class Application extends BaseApplication
 
         $this->loadExtensions($this->container);
 
-        foreach ($this->container->getByPrefix('console.commands') as $command) {
+        foreach ($this->container->get('phpspec.console.commands') as $command) {
             $this->add($command);
         }
 
@@ -77,7 +77,7 @@ class Application extends BaseApplication
         $this->container->get('console.io')->setConsoleWidth($this->getTerminalWidth());
 
         StreamWrapper::reset();
-        foreach ($this->container->getByPrefix('loader.resource_loader.spec_transformer') as $transformer) {
+        foreach ($this->container->get('phpspec.spec-transformers') as $transformer) {
             StreamWrapper::addTransformer($transformer);
         }
         StreamWrapper::register();

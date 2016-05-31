@@ -72,6 +72,7 @@ class ServiceContainerConfigurer
         $this->setupMatchers($container);
         $this->setupCurrentExample($container);
         $this->setupShutdown($container);
+        $this->setupArrayServices($container);
     }
 
     private function setupConfigManager(ServiceContainer $container)
@@ -683,9 +684,9 @@ class ServiceContainerConfigurer
         });
     }
 
-  /**
-   * @param ServiceContainer $container
-   */
+   /**
+    * @param ServiceContainer $container
+    */
     private function setupShutdown(ServiceContainer $container)
     {
         $container->setShared('process.shutdown', function (ServiceContainer $container) {
@@ -703,6 +704,43 @@ class ServiceContainerConfigurer
                 )
             );
             return $shutdown;
+        });
+    }
+
+    private function setupArrayServices(ServiceContainer $container)
+    {
+        $container->setShared('phpspec.console.commands', function (ServiceContainer $container) {
+            return [
+                $container->get('console.commands.run'),
+                $container->get('console.commands.describe'),
+            ];
+        });
+
+        $container->setShared('phpspec.spec-transformers', function (ServiceContainer $container) {
+            if ($container->has('loader.resource_loader.spec_transformer.typehint_rewriter')) {
+                return [$container->get('loader.resource_loader.spec_transformer.typehint_rewriter')];
+            }
+            return [];
+        });
+
+        $container->setShared('phpspec.formatter.differ-engines', function (ServiceContainer $container) {
+            return [
+                $container->get('formatter.presenter.differ.engines.string'),
+                $container->get('formatter.presenter.differ.engines.array'),
+                $container->get('formatter.presenter.differ.engines.object'),
+            ];
+        });
+        
+        $container->setShared('phpspec.formatter.presenters', function (ServiceContainer $container) {
+            return [
+                $container->get('formatter.presenter.value.array_type_presenter'),
+                $container->get('formatter.presenter.value.boolean_type_presenter'),
+                $container->get('formatter.presenter.value.callable_type_presenter'),
+                $container->get('formatter.presenter.value.exception_type_presenter'),
+                $container->get('formatter.presenter.value.null_type_presenter'),
+                $container->get('formatter.presenter.value.object_type_presenter'),
+                $container->get('formatter.presenter.value.string_type_presenter'),
+            ];
         });
     }
 }

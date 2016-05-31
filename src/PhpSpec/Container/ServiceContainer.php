@@ -93,7 +93,7 @@ class ServiceContainer implements ContainerInterface
      *
      * @param string $serviceId
      *
-     * @return object
+     * @return mixed
      *
      * @throws \InvalidArgumentException if service is not defined
      */
