@@ -28,11 +28,6 @@ class ServiceContainer implements ContainerInterface
     private $services = array();
 
     /**
-     * @var array
-     */
-    private $prefixed = array();
-
-    /**
      * Sets a object or a callable for the object creation. A callable will be invoked
      * every time get is called.
      *
@@ -45,15 +40,6 @@ class ServiceContainer implements ContainerInterface
     {
         if (!is_object($value) && !is_callable($value)) {
             ServiceNotFound::constructFromServiceId($serviceId);
-        }
-
-        list($prefix, $sid) = $this->getPrefixAndSid($serviceId);
-        if ($prefix) {
-            if (!isset($this->prefixed[$prefix])) {
-                $this->prefixed[$prefix] = array();
-            }
-
-            $this->prefixed[$prefix][$sid] = $serviceId;
         }
 
         $this->services[$serviceId] = $value;
@@ -128,24 +114,5 @@ class ServiceContainer implements ContainerInterface
     public function isDefined($serviceId)
     {
         return $this->has($serviceId);
-    }
-
-    /**
-     * Retrieves the prefix and sid of a given service
-     *
-     * @param string $id
-     *
-     * @return array
-     */
-    private function getPrefixAndSid($id)
-    {
-        if (count($parts = explode('.', $id)) < 2) {
-            return array(null, $id);
-        }
-
-        $sid    = array_pop($parts);
-        $prefix = implode('.', $parts);
-
-        return array($prefix, $sid);
     }
 }

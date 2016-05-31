@@ -7,6 +7,7 @@ use Fake\ReRunner;
 use PhpSpec\Console\Application;
 use PhpSpec\Loader\StreamWrapper;
 use Symfony\Component\Console\Tester\ApplicationTester;
+use Interop\Container\ContainerInterface;
 
 /**
  * Defines application features from the specific context.
@@ -58,15 +59,25 @@ class ApplicationContext implements Context
 
     private function setupPrompter()
     {
-        $this->prompter = new Prompter();
+        $this->prompter = $prompter = new Prompter();
 
-        $this->application->getContainer()->set('console.prompter', $this->prompter);
+        $this->application->getContainer()->set(
+            'console.prompter',
+            function (ContainerInterface $container) use ($prompter) {
+                return $prompter;
+            }
+        );
     }
 
     private function setupReRunner()
     {
-        $this->reRunner = new ReRunner;
-        $this->application->getContainer()->set('process.rerunner.platformspecific', $this->reRunner);
+        $this->reRunner = $reRunner = new ReRunner;
+        $this->application->getContainer()->set(
+            'process.rerunner.platformspecific',
+            function (ContainerInterface $container) use ($reRunner) {
+               return $reRunner;
+            }
+        );
     }
 
     /**
