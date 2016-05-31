@@ -709,108 +709,178 @@ class ServiceContainerConfigurer
 
     private function setupArrayServices(ServiceContainer $container)
     {
-        $container->setShared('phpspec.console.commands', function (ServiceContainer $container) {
+        $container->setShared('phpspec.servicelist.console.commands', function (ServiceContainer $container) {
             return [
-                $container->get('console.commands.run'),
-                $container->get('console.commands.describe'),
+                'console.commands.run',
+                'console.commands.describe',
             ];
         });
 
-        $container->setShared('phpspec.spec-transformers', function (ServiceContainer $container) {
+        $container->setShared('phpspec.console.commands', function (ServiceContainer $container) {
+            return array_map(
+                function ($serviceId) use ($container) {return $container->get($serviceId);},
+                $container->get('phpspec.servicelist.console.commands')
+            );
+        });
+
+        $container->setShared('phpspec.servicelist.spec-transformers', function (ServiceContainer $container) {
             if ($container->has('loader.resource_loader.spec_transformer.typehint_rewriter')) {
-                return [$container->get('loader.resource_loader.spec_transformer.typehint_rewriter')];
+                return ['loader.resource_loader.spec_transformer.typehint_rewriter'];
             }
             return [];
         });
 
-        $container->setShared('phpspec.formatter.differ-engines', function (ServiceContainer $container) {
+        $container->setShared('phpspec.spec-transformers', function (ServiceContainer $container) {
+            return array_map(
+                function ($serviceId) use ($container) {return $container->get($serviceId);},
+                $container->get('phpspec.servicelist.spec-transformers')
+            );
+        });
+
+        $container->setShared('phpspec.servicelist.formatter.differ-engines', function (ServiceContainer $container) {
             return [
-                $container->get('formatter.presenter.differ.engines.string'),
-                $container->get('formatter.presenter.differ.engines.array'),
-                $container->get('formatter.presenter.differ.engines.object'),
+                'formatter.presenter.differ.engines.string',
+                'formatter.presenter.differ.engines.array',
+                'formatter.presenter.differ.engines.object',
             ];
         });
-        
-        $container->setShared('phpspec.formatter.presenters', function (ServiceContainer $container) {
+
+        $container->setShared('phpspec.formatter.differ-engines', function (ServiceContainer $container) {
+            return array_map(
+                function ($serviceId) use ($container) {return $container->get($serviceId);},
+                $container->get('phpspec.servicelist.formatter.differ-engines')
+            );
+        });
+
+        $container->setShared('phpspec.servicelist.formatter.presenters', function (ServiceContainer $container) {
             return [
-                $container->get('formatter.presenter.value.array_type_presenter'),
-                $container->get('formatter.presenter.value.boolean_type_presenter'),
-                $container->get('formatter.presenter.value.callable_type_presenter'),
-                $container->get('formatter.presenter.value.exception_type_presenter'),
-                $container->get('formatter.presenter.value.null_type_presenter'),
-                $container->get('formatter.presenter.value.object_type_presenter'),
-                $container->get('formatter.presenter.value.string_type_presenter'),
+                'formatter.presenter.value.array_type_presenter',
+                'formatter.presenter.value.boolean_type_presenter',
+                'formatter.presenter.value.callable_type_presenter',
+                'formatter.presenter.value.exception_type_presenter',
+                'formatter.presenter.value.null_type_presenter',
+                'formatter.presenter.value.object_type_presenter',
+                'formatter.presenter.value.string_type_presenter',
+            ];
+        });
+
+        $container->setShared('phpspec.formatter.presenters', function (ServiceContainer $container) {
+            return array_map(
+                function ($serviceId) use ($container) {return $container->get($serviceId);},
+                $container->get('phpspec.servicelist.formatter.presenters')
+            );
+        });
+
+        $container->setShared('phpspec.servicelist.event-listeners', function (ServiceContainer $container) {
+            return [
+                'event_dispatcher.listeners.bootstrap',
+                'event_dispatcher.listeners.class_not_found',
+                'event_dispatcher.listeners.collaborator_method_not_found',
+                'event_dispatcher.listeners.collaborator_not_found',
+                'event_dispatcher.listeners.current_example_listener',
+                'event_dispatcher.listeners.method_not_found',
+                'event_dispatcher.listeners.method_returned_null',
+                'event_dispatcher.listeners.named_constructor_not_found',
+                'event_dispatcher.listeners.rerun',
+                'event_dispatcher.listeners.stats',
+                'event_dispatcher.listeners.stop_on_failure',
             ];
         });
 
         $container->setShared('phpspec.event-listeners', function (ServiceContainer $container) {
-            return [
-                $container->get('event_dispatcher.listeners.bootstrap'),
-                $container->get('event_dispatcher.listeners.class_not_found'),
-                $container->get('event_dispatcher.listeners.collaborator_method_not_found'),
-                $container->get('event_dispatcher.listeners.collaborator_not_found'),
-                $container->get('event_dispatcher.listeners.current_example_listener'),
-                $container->get('event_dispatcher.listeners.method_not_found'),
-                $container->get('event_dispatcher.listeners.method_returned_null'),
-                $container->get('event_dispatcher.listeners.named_constructor_not_found'),
-                $container->get('event_dispatcher.listeners.rerun'),
-                $container->get('event_dispatcher.listeners.stats'),
-                $container->get('event_dispatcher.listeners.stop_on_failure'),
-            ];
+            return array_map(
+                function ($serviceId) use ($container) {return $container->get($serviceId);},
+                $container->get('phpspec.servicelist.event-listeners')
+            );
         });
 
-        $container->setShared('phpspec.console-event-listeners', function (ServiceContainer $container) {
+        $container->setShared('phpspec.servicelist.console-event-listeners', function (ServiceContainer $container) {
             return [];
         });
 
-        $container->setShared('phpspec.process.platform-specific-rerunners', function (ServiceContainer $container) {
+        $container->setShared('phpspec.console-event-listeners', function (ServiceContainer $container) {
+            return array_map(
+                function ($serviceId) use ($container) {return $container->get($serviceId);},
+                $container->get('phpspec.servicelist.console-event-listeners')
+            );
+        });
+
+        $container->setShared('phpspec.servicelist.process.platform-specific-rerunners', function (ServiceContainer $container) {
             return [
-                $container->get('process.rerunner.platformspecific.pcntl'),
-                $container->get('process.rerunner.platformspecific.passthru'),
-                $container->get('process.rerunner.platformspecific.windowspassthru'),
+                'process.rerunner.platformspecific.pcntl',
+                'process.rerunner.platformspecific.passthru',
+                'process.rerunner.platformspecific.windowspassthru',
+            ];
+        });
+
+        $container->setShared('phpspec.process.platform-specific-rerunners', function (ServiceContainer $container) {
+            return array_map(
+                function ($serviceId) use ($container) {return $container->get($serviceId);},
+                $container->get('phpspec.servicelist.process.platform-specific-rerunners')
+            );
+        });
+
+        $container->setShared('phpspec.servicelist.code-generators', function (ServiceContainer $container) {
+            return [
+                'code_generator.generators.class',
+                'code_generator.generators.interface',
+                'code_generator.generators.method',
+                'code_generator.generators.methodSignature',
+                'code_generator.generators.named_constructor',
+                'code_generator.generators.private_constructor',
+                'code_generator.generators.returnConstant',
+                'code_generator.generators.specification',
             ];
         });
 
         $container->setShared('phpspec.code-generators', function (ServiceContainer $container) {
+            return array_map(
+                function ($serviceId) use ($container) {return $container->get($serviceId);},
+                $container->get('phpspec.servicelist.code-generators')
+            );
+        });
+
+        $container->setShared('phpspec.servicelist.matchers', function (ServiceContainer $container) {
             return [
-                $container->get('code_generator.generators.class'),
-                $container->get('code_generator.generators.interface'),
-                $container->get('code_generator.generators.method'),
-                $container->get('code_generator.generators.methodSignature'),
-                $container->get('code_generator.generators.named_constructor'),
-                $container->get('code_generator.generators.private_constructor'),
-                $container->get('code_generator.generators.returnConstant'),
-                $container->get('code_generator.generators.specification'),
+                'matchers.identity',
+                'matchers.comparison',
+                'matchers.throwm',
+                'matchers.type',
+                'matchers.object_state',
+                'matchers.scalar',
+                'matchers.array_count',
+                'matchers.array_key',
+                'matchers.array_key_with_value',
+                'matchers.array_contain',
+                'matchers.string_start',
+                'matchers.string_end',
+                'matchers.string_regex',
+                'matchers.string_contain',
             ];
         });
 
         $container->setShared('phpspec.matchers', function (ServiceContainer $container) {
+            return array_map(
+                function ($serviceId) use ($container) {return $container->get($serviceId);},
+                $container->get('phpspec.servicelist.matchers')
+            );
+        });
+
+        $container->setShared('phpspec.servicelist.runner-maintainers', function (ServiceContainer $container) {
             return [
-                $container->get('matchers.identity'),
-                $container->get('matchers.comparison'),
-                $container->get('matchers.throwm'),
-                $container->get('matchers.type'),
-                $container->get('matchers.object_state'),
-                $container->get('matchers.scalar'),
-                $container->get('matchers.array_count'),
-                $container->get('matchers.array_key'),
-                $container->get('matchers.array_key_with_value'),
-                $container->get('matchers.array_contain'),
-                $container->get('matchers.string_start'),
-                $container->get('matchers.string_end'),
-                $container->get('matchers.string_regex'),
-                $container->get('matchers.string_contain'),
+                'runner.maintainers.errors',
+                'runner.maintainers.collaborators',
+                'runner.maintainers.let_letgo',
+                'runner.maintainers.matchers',
+                'runner.maintainers.subject',
             ];
         });
 
         $container->setShared('phpspec.runner-maintainers', function (ServiceContainer $container) {
-            return [
-                $container->get('runner.maintainers.errors'),
-                $container->get('runner.maintainers.collaborators'),
-                $container->get('runner.maintainers.let_letgo'),
-                $container->get('runner.maintainers.matchers'),
-                $container->get('runner.maintainers.subject'),
-            ];
+            return array_map(
+                function ($serviceId) use ($container) {return $container->get($serviceId);},
+                $container->get('phpspec.servicelist.runner-maintainers')
+            );
         });
     }
 }

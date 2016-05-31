@@ -16,6 +16,7 @@ Feature: Developer uses extension
 
     use PhpSpec\Extension as PhpSpecExtension;
     use PhpSpec\Container\ServiceContainer;
+    use Interop\Container\ContainerInterface;
 
     class Extension implements PhpSpecExtension
     {
@@ -24,11 +25,18 @@ Feature: Developer uses extension
          */
         public function load(ServiceContainer $container)
         {
-            // Add new matcher to list of matchers in container
-            $container->set('phpspec.matchers', function (ServiceContainer $container) {
-                $matchers = $container->get('phpspec.matchers');
-                $matchers[] = new BeSevenMatcher($container->get('formatter.presenter'));
-                return $matchers;
+
+            // Inject new matcher
+            $container->set('matcher.beseven', function (ContainerInterface $container) {
+                return new BeSevenMatcher($container->get('formatter.presenter'));
+            });
+
+            // Add new matcher to list of matchers to be used
+            $matcherList = $container->get('phpspec.servicelist.matchers');
+            $matcherList[] = 'matcher.beseven';
+
+            $container->set('phpspec.servicelist.matchers', function (ServiceContainer $container) use ($matcherList) {
+                return $matcherList;
             });
         }
     }
