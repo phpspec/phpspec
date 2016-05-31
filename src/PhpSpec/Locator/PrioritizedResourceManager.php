@@ -14,6 +14,8 @@
 namespace PhpSpec\Locator;
 
 use PhpSpec\Exception\Locator\ResourceCreationException;
+use PhpSpec\Locator\Factory as LocatorFactory;
+use PhpSpec\Config\Manager as ConfigManager;
 
 final class PrioritizedResourceManager implements ResourceManager
 {
@@ -23,11 +25,26 @@ final class PrioritizedResourceManager implements ResourceManager
     private $locators = array();
 
     /**
-     * @param ResourceLocator $locator
+     * @var LocatorFactory
      */
-    public function registerLocator(ResourceLocator $locator)
+    private $locatorFactory;
+
+    /**
+     * @var ConfigManager
+     */
+    private $configManager;
+
+    public function __construct(LocatorFactory $locatorFactory, ConfigManager $configManager)
     {
-        $this->locators[] = $locator;
+        $this->locatorFactory = $locatorFactory;
+        $this->configManager = $configManager;
+    }
+
+    private function registerLocators()
+    {
+        foreach ($this->configManager->optionsConfig()->getSuites() as $suite) {
+            $this->locators[] = $this->locatorFactory->buildLocatorForSuite($suite);
+        }
 
         @usort($this->locators, function (ResourceLocator $locator1, ResourceLocator $locator2) {
             return $locator2->getPriority() - $locator1->getPriority();
@@ -41,6 +58,10 @@ final class PrioritizedResourceManager implements ResourceManager
      */
     public function locateResources($query)
     {
+        if (empty($this->locators)) {
+            $this->registerLocators();
+        }
+
         $resources = array();
         foreach ($this->locators as $locator) {
             if (empty($query)) {
@@ -67,6 +88,10 @@ final class PrioritizedResourceManager implements ResourceManager
      */
     public function createResource($classname)
     {
+        if (empty($this->locators)) {
+            $this->registerLocators();
+        }
+
         foreach ($this->locators as $locator) {
             if ($locator->supportsClass($classname)) {
                 return $locator->createResource($classname);

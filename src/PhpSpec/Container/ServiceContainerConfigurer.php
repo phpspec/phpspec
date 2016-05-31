@@ -11,24 +11,30 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Console;
+namespace PhpSpec\Container;
 
 use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
 use PhpSpec\CodeAnalysis\StaticRejectingNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
+use PhpSpec\Config\Manager as ConfigManger;
+use PhpSpec\Console\Manager as ConsoleManager;
 use PhpSpec\Console\Assembler\PresenterAssembler;
+use PhpSpec\Console\Command;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Console\Prompter\Question;
+use PhpSpec\Console\ResultConverter;
 use PhpSpec\Factory\ReflectionFactory;
+use PhpSpec\Process\Context\JsonExecutionContext;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
+use PhpSpec\Process\Shutdown\UpdateConsoleAction;
 use PhpSpec\Util\ClassFileAnalyser;
 use PhpSpec\Util\Filesystem;
 use PhpSpec\Util\ReservedWordsMethodNameChecker;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use PhpSpec\ServiceContainer;
 use PhpSpec\CodeGenerator;
 use PhpSpec\Formatter as SpecFormatter;
 use PhpSpec\Listener;
@@ -37,18 +43,20 @@ use PhpSpec\Locator;
 use PhpSpec\Matcher;
 use PhpSpec\Runner;
 use PhpSpec\Wrapper;
-use PhpSpec\Config\OptionsConfig;
 use Symfony\Component\Process\PhpExecutableFinder;
 use PhpSpec\Message\CurrentExampleTracker;
 use PhpSpec\Process\Shutdown\Shutdown;
 
-class ContainerAssembler
+class ServiceContainerConfigurer
 {
     /**
      * @param ServiceContainer $container
      */
     public function build(ServiceContainer $container)
     {
+        $this->setupConfigManager($container);
+        $this->setupConsoleManager($container);
+        $this->setupExecutionContext($container);
         $this->setupIO($container);
         $this->setupEventDispatcher($container);
         $this->setupConsoleEventDispatcher($container);
@@ -62,33 +70,44 @@ class ContainerAssembler
         $this->setupResultConverter($container);
         $this->setupRerunner($container);
         $this->setupMatchers($container);
-        $this->setupSubscribers($container);
         $this->setupCurrentExample($container);
         $this->setupShutdown($container);
     }
 
+    private function setupConfigManager(ServiceContainer $container)
+    {
+        $container->setShared('phpspec.config-manager', function (ServiceContainer $container) {
+            return new ConfigManger();
+        });
+    }
+
+    private function setupConsoleManager(ServiceContainer $container)
+    {
+        $container->setShared('phpspec.console-manager', function (ServiceContainer $container) {
+            return new ConsoleManager();
+        });
+    }
+
+    private function setupExecutionContext(ServiceContainer $container)
+    {
+        $container->setShared('process.executioncontext', function () {
+            return JsonExecutionContext::fromEnv($_SERVER);
+        });
+    }
+
     private function setupIO(ServiceContainer $container)
     {
-        if (!$container->isDefined('console.prompter')) {
+        if (!$container->has('console.prompter')) {
             $container->setShared('console.prompter', function ($c) {
                 return new Question(
-                    $c->get('console.input'),
-                    $c->get('console.output'),
-                    $c->get('console.helper_set')->get('question')
+                    $c->get('phpspec.console-manager')
                 );
             });
         }
         $container->setShared('console.io', function (ServiceContainer $c) {
             return new ConsoleIO(
-                $c->get('console.input'),
-                $c->get('console.output'),
-                new OptionsConfig(
-                    $c->getParam('stop_on_failure', false),
-                    $c->getParam('code_generation', true),
-                    $c->getParam('rerun', true),
-                    $c->getParam('fake', false),
-                    $c->getParam('bootstrap', false)
-                ),
+                $c->get('phpspec.console-manager'),
+                $c->get('phpspec.config-manager'),
                 $c->get('console.prompter')
             );
         });
@@ -329,21 +348,11 @@ class ContainerAssembler
             $renderer = new CodeGenerator\TemplateRenderer(
                 $c->get('util.filesystem')
             );
-            $renderer->setLocations($c->getParam('code_generator.templates.paths', array()));
+            $templatePaths = $c->get('phpspec.config-manager')->optionsConfig()->getCodeGeneratorTemplatePaths();
+            $renderer->setLocations($templatePaths);
 
             return $renderer;
         });
-
-        if (!empty($_SERVER['HOMEDRIVE']) && !empty($_SERVER['HOMEPATH'])) {
-            $home = $_SERVER['HOMEDRIVE'].$_SERVER['HOMEPATH'];
-        } else {
-            $home = getenv('HOME');
-        }
-
-        $container->setParam('code_generator.templates.paths', array(
-            rtrim(getcwd(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
-            rtrim($home, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
-        ));
     }
 
     /**
@@ -361,52 +370,14 @@ class ContainerAssembler
     private function setupLocator(ServiceContainer $container)
     {
         $container->setShared('locator.resource_manager', function (ServiceContainer $c) {
-            $manager = new Locator\PrioritizedResourceManager();
-
-            array_map(
-                array($manager, 'registerLocator'),
-                $c->getByPrefix('locator.locators')
-            );
-
-            return $manager;
+            $locatorFactory = $c->get('phpspec.locator-factory');
+            $configManager = $c->get('phpspec.config-manager');
+            return new Locator\PrioritizedResourceManager($locatorFactory, $configManager);
         });
 
-        $container->addConfigurator(function (ServiceContainer $c) {
-            $suites = $c->getParam('suites', array('main' => ''));
-
-            foreach ($suites as $name => $suite) {
-                $suite      = is_array($suite) ? $suite : array('namespace' => $suite);
-                $defaults = array(
-                    'namespace'     => '',
-                    'spec_prefix'   => 'spec',
-                    'src_path'      => 'src',
-                    'spec_path'     => '.',
-                    'psr4_prefix'   => null
-                );
-
-                $config = array_merge($defaults, $suite);
-
-                if (!is_dir($config['src_path'])) {
-                    mkdir($config['src_path'], 0777, true);
-                }
-                if (!is_dir($config['spec_path'])) {
-                    mkdir($config['spec_path'], 0777, true);
-                }
-
-                $c->set(
-                    sprintf('locator.locators.%s_suite', $name),
-                    function (ServiceContainer $c) use ($config) {
-                        return new Locator\PSR0\PSR0Locator(
-                            $c->get('util.filesystem'),
-                            $config['namespace'],
-                            $config['spec_prefix'],
-                            $config['src_path'],
-                            $config['spec_path'],
-                            $config['psr4_prefix']
-                        );
-                    }
-                );
-            }
+        $container->setShared('phpspec.locator-factory', function (ServiceContainer $c) {
+            $fileSystem = $c->get('util.filesystem');
+            return new Locator\Factory($fileSystem);
         });
     }
 
@@ -426,16 +397,16 @@ class ContainerAssembler
                 return new Loader\Transformer\TypeHintRewriter($c->get('analysis.typehintrewriter'));
             });
         }
-        $container->setShared('analysis.typehintrewriter', function($c) {
+        $container->setShared('analysis.typehintrewriter', function ($c) {
             return new TokenizedTypeHintRewriter(
                 $c->get('loader.transformer.typehintindex'),
                 $c->get('analysis.namespaceresolver')
             );
         });
-        $container->setShared('loader.transformer.typehintindex', function() {
+        $container->setShared('loader.transformer.typehintindex', function () {
             return new Loader\Transformer\InMemoryTypeHintIndex();
         });
-        $container->setShared('analysis.namespaceresolver.tokenized', function() {
+        $container->setShared('analysis.namespaceresolver.tokenized', function () {
             return new TokenizedNamespaceResolver();
         });
         $container->setShared('analysis.namespaceresolver', function ($c) {
@@ -525,21 +496,6 @@ class ContainerAssembler
                 return $c->get('formatter.formatters.html');
             }
         );
-
-        $container->addConfigurator(function (ServiceContainer $c) {
-            $formatterName = $c->getParam('formatter.name', 'progress');
-
-            $c->get('console.output')->setFormatter(new Formatter(
-                $c->get('console.output')->isDecorated()
-            ));
-
-            try {
-                $formatter = $c->get('formatter.formatters.'.$formatterName);
-            } catch (\InvalidArgumentException $e) {
-                throw new \RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
-            }
-            $c->set('event_dispatcher.listeners.formatter', $formatter);
-        });
     }
 
     /**
@@ -577,7 +533,7 @@ class ContainerAssembler
 
         $container->set('runner.maintainers.errors', function (ServiceContainer $c) {
             return new Runner\Maintainer\ErrorMaintainer(
-                $c->getParam('runner.maintainers.errors.level', E_ALL ^ E_STRICT)
+                $c->get('phpspec.config-manager')->optionsConfig()->getErrorLevel()
             );
         });
         $container->set('runner.maintainers.collaborators', function (ServiceContainer $c) {
@@ -611,15 +567,15 @@ class ContainerAssembler
             return new Wrapper\Unwrapper();
         });
 
-        $container->setShared('access_inspector', function($c) {
+        $container->setShared('access_inspector', function ($c) {
             return $c->get('access_inspector.magic');
         });
 
-        $container->setShared('access_inspector.magic', function($c) {
+        $container->setShared('access_inspector.magic', function ($c) {
             return new MagicAwareAccessInspector($c->get('access_inspector.visibility'));
         });
 
-        $container->setShared('access_inspector.visibility', function() {
+        $container->setShared('access_inspector.visibility', function () {
             return new VisibilityAccessInspector();
         });
     }
@@ -685,7 +641,7 @@ class ContainerAssembler
             );
         });
 
-        if ($container->isDefined('process.rerunner.platformspecific')) {
+        if ($container->has('process.rerunner.platformspecific')) {
             return;
         }
 
@@ -720,19 +676,6 @@ class ContainerAssembler
     /**
      * @param ServiceContainer $container
      */
-    private function setupSubscribers(ServiceContainer $container)
-    {
-        $container->addConfigurator(function (ServiceContainer $c) {
-            array_map(
-                array($c->get('event_dispatcher'), 'addSubscriber'),
-                $c->getByPrefix('event_dispatcher.listeners')
-            );
-        });
-    }
-
-    /**
-     * @param ServiceContainer $container
-     */
     private function setupCurrentExample(ServiceContainer $container)
     {
         $container->setShared('current_example', function () {
@@ -745,8 +688,21 @@ class ContainerAssembler
    */
     private function setupShutdown(ServiceContainer $container)
     {
-        $container->setShared('process.shutdown', function() {
-            return new Shutdown();
+        $container->setShared('process.shutdown', function (ServiceContainer $container) {
+
+            $shutdown = new Shutdown();
+            
+            $formatterName = $container->get('phpspec.config-manager')->optionsConfig()->getFormatterName();
+
+            $currentFormatter = $container->get('formatter.formatters.'.$formatterName);
+            
+            $shutdown->registerAction(
+                new UpdateConsoleAction(
+                    $container->get('current_example'),
+                    $currentFormatter
+                )
+            );
+            return $shutdown;
         });
     }
 }
