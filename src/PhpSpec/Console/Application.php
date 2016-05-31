@@ -16,7 +16,6 @@ namespace PhpSpec\Console;
 use PhpSpec\Container\ServiceContainerConfigurer;
 use PhpSpec\Extension;
 use PhpSpec\Loader\StreamWrapper;
-use PhpSpec\Process\Context\JsonExecutionContext;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;

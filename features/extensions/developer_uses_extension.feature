@@ -24,8 +24,15 @@ Feature: Developer uses extension
          */
         public function load(ServiceContainer $container)
         {
+            // Add new matcher to container
             $container->set('matchers.seven', function (ServiceContainer $c) {
                 return new BeSevenMatcher($c->get('formatter.presenter'));
+            });
+
+            // Add new matcher to list of matchers in container
+            $matchers = $container->get('phpspec.matchers');
+            $container->set('phpspec.matchers', function (ServiceContainer $c) use ($matchers) {
+                return array_merge($matchers, [$c->get('matchers.seven')]);
             });
         }
     }

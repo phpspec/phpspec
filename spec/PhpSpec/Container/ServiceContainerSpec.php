@@ -43,13 +43,4 @@ class ServiceContainerSpec extends ObjectBehavior
 
         $number2->shouldBe($number1);
     }
-
-    function it_provides_a_way_to_retrieve_services_by_prefix($service1, $service2, $service3)
-    {
-        $this->set('collection1.serv1', $service1);
-        $this->set('collection1.serv2', $service2);
-        $this->set('collection2.serv3', $service3);
-
-        $this->getByPrefix('collection1')->shouldReturn(array($service1, $service2));
-    }
 }

@@ -131,27 +131,6 @@ class ServiceContainer implements ContainerInterface
     }
 
     /**
-     * Retrieves a list of services of a given prefix
-     *
-     * @param string $prefix
-     *
-     * @return array
-     */
-    public function getByPrefix($prefix)
-    {
-        if (!array_key_exists($prefix, $this->prefixed)) {
-            return array();
-        }
-
-        $services = array();
-        foreach ($this->prefixed[$prefix] as $id) {
-            $services[] = $this->get($id);
-        }
-
-        return $services;
-    }
-
-    /**
      * Retrieves the prefix and sid of a given service
      *
      * @param string $id

@@ -145,7 +145,7 @@ class ServiceContainerConfigurer
 
             array_map(
                 array($dispatcher, 'addSubscriber'),
-                $c->getByPrefix('console_event_dispatcher.listeners')
+                $c->get('phpspec.console-event-listeners')
             );
 
             return $dispatcher;
@@ -253,7 +253,7 @@ class ServiceContainerConfigurer
 
             array_map(
                 array($generator, 'registerGenerator'),
-                $c->getByPrefix('code_generator.generators')
+                $c->get('phpspec.code-generators')
             );
 
             return $generator;
@@ -526,7 +526,7 @@ class ServiceContainerConfigurer
 
             array_map(
                 array($runner, 'registerMaintainer'),
-                $c->getByPrefix('runner.maintainers')
+                $c->get('phpspec.runner-maintainers')
             );
 
             return $runner;
@@ -548,7 +548,7 @@ class ServiceContainerConfigurer
         });
 
         $container->set('runner.maintainers.matchers', function (ServiceContainer $c) {
-            $matchers = $c->getByPrefix('matchers');
+            $matchers = $c->get('phpspec.matchers');
             return new Runner\Maintainer\MatchersMaintainer(
                 $c->get('formatter.presenter'),
                 $matchers
@@ -648,7 +648,7 @@ class ServiceContainerConfigurer
 
         $container->setShared('process.rerunner.platformspecific', function (ServiceContainer $c) {
             return new ReRunner\CompositeReRunner(
-                $c->getByPrefix('process.rerunner.platformspecific')
+                $c->get('phpspec.process.platform-specific-rerunners')
             );
         });
         $container->setShared('process.rerunner.platformspecific.pcntl', function (ServiceContainer $c) {
@@ -740,6 +740,76 @@ class ServiceContainerConfigurer
                 $container->get('formatter.presenter.value.null_type_presenter'),
                 $container->get('formatter.presenter.value.object_type_presenter'),
                 $container->get('formatter.presenter.value.string_type_presenter'),
+            ];
+        });
+
+        $container->setShared('phpspec.event-listeners', function (ServiceContainer $container) {
+            return [
+                $container->get('event_dispatcher.listeners.bootstrap'),
+                $container->get('event_dispatcher.listeners.class_not_found'),
+                $container->get('event_dispatcher.listeners.collaborator_method_not_found'),
+                $container->get('event_dispatcher.listeners.collaborator_not_found'),
+                $container->get('event_dispatcher.listeners.current_example_listener'),
+                $container->get('event_dispatcher.listeners.method_not_found'),
+                $container->get('event_dispatcher.listeners.method_returned_null'),
+                $container->get('event_dispatcher.listeners.named_constructor_not_found'),
+                $container->get('event_dispatcher.listeners.rerun'),
+                $container->get('event_dispatcher.listeners.stats'),
+                $container->get('event_dispatcher.listeners.stop_on_failure'),
+            ];
+        });
+
+        $container->setShared('phpspec.console-event-listeners', function (ServiceContainer $container) {
+            return [];
+        });
+
+        $container->setShared('phpspec.process.platform-specific-rerunners', function (ServiceContainer $container) {
+            return [
+                $container->get('process.rerunner.platformspecific.pcntl'),
+                $container->get('process.rerunner.platformspecific.passthru'),
+                $container->get('process.rerunner.platformspecific.windowspassthru'),
+            ];
+        });
+
+        $container->setShared('phpspec.code-generators', function (ServiceContainer $container) {
+            return [
+                $container->get('code_generator.generators.class'),
+                $container->get('code_generator.generators.interface'),
+                $container->get('code_generator.generators.method'),
+                $container->get('code_generator.generators.methodSignature'),
+                $container->get('code_generator.generators.named_constructor'),
+                $container->get('code_generator.generators.private_constructor'),
+                $container->get('code_generator.generators.returnConstant'),
+                $container->get('code_generator.generators.specification'),
+            ];
+        });
+
+        $container->setShared('phpspec.matchers', function (ServiceContainer $container) {
+            return [
+                $container->get('matchers.identity'),
+                $container->get('matchers.comparison'),
+                $container->get('matchers.throwm'),
+                $container->get('matchers.type'),
+                $container->get('matchers.object_state'),
+                $container->get('matchers.scalar'),
+                $container->get('matchers.array_count'),
+                $container->get('matchers.array_key'),
+                $container->get('matchers.array_key_with_value'),
+                $container->get('matchers.array_contain'),
+                $container->get('matchers.string_start'),
+                $container->get('matchers.string_end'),
+                $container->get('matchers.string_regex'),
+                $container->get('matchers.string_contain'),
+            ];
+        });
+
+        $container->setShared('phpspec.runner-maintainers', function (ServiceContainer $container) {
+            return [
+                $container->get('runner.maintainers.errors'),
+                $container->get('runner.maintainers.collaborators'),
+                $container->get('runner.maintainers.let_letgo'),
+                $container->get('runner.maintainers.matchers'),
+                $container->get('runner.maintainers.subject'),
             ];
         });
     }

@@ -13,10 +13,10 @@
 
 namespace PhpSpec\Console\Command;
 
+use Interop\Container\ContainerInterface;
 use PhpSpec\Console\Formatter;
 use PhpSpec\Container\ServiceNotFound;
 use PhpSpec\Formatter\FatalPresenter;
-use PhpSpec\Container\ServiceContainer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
@@ -137,7 +137,7 @@ EOF
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $container = $this->getApplication()->getContainer();
+        $container = $this->getContainer();
 
         $formatterName = $container->get('phpspec.config-manager')->optionsConfig()->getFormatterName();
 
@@ -163,14 +163,22 @@ EOF
         );
     }
 
-    private function initialiseEventManagement(ServiceContainer $container)
+    /**
+     * @return ContainerInterface
+     */
+    private function getContainer()
+    {
+        return $this->getApplication()->getContainer();
+    }
+
+    private function initialiseEventManagement(ContainerInterface $container)
     {
         $this->addTypePresentersToValuePresenter($container);
         $formatter = $this->getFormatter($container);
         $this->registerEventSubscribers($container, $formatter);
     }
 
-    private function addTypePresentersToValuePresenter(ServiceContainer $container)
+    private function addTypePresentersToValuePresenter(ContainerInterface $container)
     {
         array_map(
             array($container->get('formatter.presenter.value_presenter'), 'addTypePresenter'),
@@ -178,7 +186,7 @@ EOF
         );
     }
 
-    private function getFormatter(ServiceContainer $container)
+    private function getFormatter(ContainerInterface $container)
     {
         $formatterName = $container->get('phpspec.config-manager')->optionsConfig()->getFormatterName();
         $output = $container->get('phpspec.console-manager')->getOutput();
@@ -191,11 +199,11 @@ EOF
         }
     }
 
-    private function registerEventSubscribers($container, $formatter)
+    private function registerEventSubscribers(ContainerInterface $container, $formatter)
     {
         array_map(
             array($container->get('event_dispatcher'), 'addSubscriber'),
-            $container->getByPrefix('event_dispatcher.listeners')
+            $container->get('phpspec.event-listeners')
         );
 
         $container->get('event_dispatcher')->addSubscriber($formatter);
