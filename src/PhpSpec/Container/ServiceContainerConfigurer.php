@@ -381,44 +381,6 @@ class ServiceContainerConfigurer
             $fileSystem = $c->get('util.filesystem');
             return new Locator\Factory($fileSystem);
         });
-
-        $container->addConfigurator(function (ServiceContainer $c) {
-            $suites = $c->get('phpspec.config-manager')->optionsConfig()->getSuites();
-
-            foreach ($suites as $name => $suite) {
-                $suite      = is_array($suite) ? $suite : array('namespace' => $suite);
-                $defaults = array(
-                    'namespace'     => '',
-                    'spec_prefix'   => 'spec',
-                    'src_path'      => 'src',
-                    'spec_path'     => '.',
-                    'psr4_prefix'   => null
-                );
-
-                $config = array_merge($defaults, $suite);
-
-                if (!is_dir($config['src_path'])) {
-                    mkdir($config['src_path'], 0777, true);
-                }
-                if (!is_dir($config['spec_path'])) {
-                    mkdir($config['spec_path'], 0777, true);
-                }
-
-                $c->set(
-                    sprintf('locator.locators.%s_suite', $name),
-                    function (ServiceContainer $c) use ($config) {
-                        return new Locator\PSR0\PSR0Locator(
-                            $c->get('util.filesystem'),
-                            $config['namespace'],
-                            $config['spec_prefix'],
-                            $config['src_path'],
-                            $config['spec_path'],
-                            $config['psr4_prefix']
-                        );
-                    }
-                );
-            }
-        });
     }
 
     /**
@@ -768,8 +730,6 @@ class ServiceContainerConfigurer
                     $currentFormatter
                 )
             );
-            
-            
             return $shutdown;
         });
     }
