@@ -128,8 +128,12 @@ class ServiceContainerConfigurer
 
     private function setupCommands(Container $container)
     {
-        $container->set('console.commands.run', function () {
-            return new Command\RunCommand();
+        $container->set('console.commands.run', function (ContainerInterface $container) {
+            $configManager = $container->get('phpspec.config-manager');
+            $consoleManager = $container->get('phpspec.console-manager');
+            $shutdown = $container->get('process.shutdown');
+            $suiteRunner = $container->get('runner.suite');
+            return new Command\RunCommand($configManager, $consoleManager, $shutdown, $suiteRunner);
         });
 
         $container->set('console.commands.describe', function (ContainerInterface $container) {

@@ -22,12 +22,49 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Interop\Container\Exception\NotFoundException;
+use PhpSpec\Process\Shutdown\Shutdown;
+use PhpSpec\Console\Manager as ConsoleManager;
+use PhpSpec\Config\Manager as ConfigManager;
+use PhpSpec\Runner\SuiteRunner;
 
 /**
  * Main command, responsible for running the specs
  */
 class RunCommand extends Command
 {
+    /**
+     * @var Shutdown
+     */
+    private $shutdown;
+
+    /**
+     * @var ConsoleManager
+     */
+    private $consoleManager;
+
+    /**
+     * @var ConfigManager
+     */
+    private $configManager;
+
+    /**
+     * @var SuiteRunner
+     */
+    private $suiteRunner;
+
+    public function __construct(
+        ConfigManager $configManager,
+        ConsoleManager $consoleManager,
+        Shutdown $shutdown,
+        SuiteRunner $suiteRunner
+    ) {
+        $this->configManager = $configManager;
+        $this->consoleManager = $consoleManager;
+        $this->shutdown = $shutdown;
+        $this->suiteRunner = $suiteRunner;
+        parent::__construct();
+    }
+
     protected function configure()
     {
         $this
@@ -138,12 +175,12 @@ EOF
     {
         $container = $this->getContainer();
 
-        $formatterName = $container->get('phpspec.config-manager')->optionsConfig()->getFormatterName();
+        $formatterName = $this->configManager->optionsConfig()->getFormatterName();
 
         $currentFormatter = $container->get('formatter.formatters.'.$formatterName);
 
         if ($currentFormatter instanceof FatalPresenter) {
-            $container->get('process.shutdown')->registerShutdown();
+            $this->shutdown->registerShutdown();
         }
 
         $this->initialiseEventManagement($container);
@@ -154,11 +191,10 @@ EOF
             list($_, $locator, $linenum) = $matches;
         }
 
-        $suite       = $container->get('loader.resource_loader')->load($locator, $linenum);
-        $suiteRunner = $container->get('runner.suite');
+        $suite = $container->get('loader.resource_loader')->load($locator, $linenum);
 
         return $container->get('console.result_converter')->convert(
-            $suiteRunner->run($suite)
+            $this->suiteRunner->run($suite)
         );
     }
 
@@ -187,8 +223,8 @@ EOF
 
     private function getFormatter(ContainerInterface $container)
     {
-        $formatterName = $container->get('phpspec.config-manager')->optionsConfig()->getFormatterName();
-        $output = $container->get('phpspec.console-manager')->getOutput();
+        $formatterName = $this->configManager->optionsConfig()->getFormatterName();
+        $output = $this->consoleManager->getOutput();
         $output->setFormatter(new Formatter($output->isDecorated()));
 
         try {
