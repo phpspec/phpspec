@@ -3,7 +3,7 @@ Feature: Developer is shown a parse error
   I want to know if a parse error was thrown
   So that I can know that I can handle pass errors
 
-  @isolated @php-version @php5.4 @php7
+  @isolated @php:~5.4||~7.0
   Scenario: Spec attempts to call an undeclared function and outputs to stderr
     Given the spec file "spec/Message/Fatal/ParseSpec.php" contains:
       """
