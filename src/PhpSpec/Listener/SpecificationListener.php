@@ -3,8 +3,9 @@
 namespace PhpSpec\Listener;
 
 use PhpSpec\Event\SpecificationEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-interface SpecificationListener
+interface SpecificationListener extends EventSubscriberInterface
 {
     /**
      * @param SpecificationEvent $event

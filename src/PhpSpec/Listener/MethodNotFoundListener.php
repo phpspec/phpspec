@@ -14,15 +14,13 @@
 namespace PhpSpec\Listener;
 
 use PhpSpec\Util\NameChecker;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
-use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
-final class MethodNotFoundListener implements EventSubscriberInterface, ExampleListener, SuiteListener
+final class MethodNotFoundListener implements ExampleListener, SuiteListener
 {
     private $io;
     private $resources;

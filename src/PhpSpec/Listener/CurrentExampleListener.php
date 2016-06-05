@@ -16,9 +16,8 @@ namespace PhpSpec\Listener;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Message\CurrentExampleTracker;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final class CurrentExampleListener implements EventSubscriberInterface, ExampleListener, SuiteListener
+final class CurrentExampleListener implements ExampleListener, SuiteListener
 {
     /**
      * @var CurrentExampleTracker

@@ -4,9 +4,8 @@ namespace PhpSpec\Listener;
 
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\SuiteEvent;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class BootstrapListener implements EventSubscriberInterface, SuiteListener
+class BootstrapListener implements SuiteListener
 {
     /**
      * @var ConsoleIO

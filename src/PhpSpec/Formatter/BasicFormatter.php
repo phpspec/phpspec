@@ -22,9 +22,8 @@ use PhpSpec\Listener\SpecificationListener;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-abstract class BasicFormatter implements EventSubscriberInterface, ExampleListener, SuiteListener, SpecificationListener
+abstract class BasicFormatter implements ExampleListener, SuiteListener, SpecificationListener
 {
     /**
      * @var IO

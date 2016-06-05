@@ -3,8 +3,10 @@
 namespace PhpSpec\Listener;
 
 use PhpSpec\Event\ExampleEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-interface ExampleListener
+interface ExampleListener extends EventSubscriberInterface
+
 {
     /**
      * @param ExampleEvent $event

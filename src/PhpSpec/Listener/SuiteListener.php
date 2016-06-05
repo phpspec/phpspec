@@ -3,8 +3,9 @@
 namespace PhpSpec\Listener;
 
 use PhpSpec\Event\SuiteEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-interface SuiteListener
+interface SuiteListener extends EventSubscriberInterface
 {
     /**
      * @param SuiteEvent $suiteEvent

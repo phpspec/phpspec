@@ -19,9 +19,8 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\NamedConstructorNotFoundException;
 use PhpSpec\Locator\ResourceManager;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final class NamedConstructorNotFoundListener implements EventSubscriberInterface, ExampleListener, SuiteListener
+final class NamedConstructorNotFoundListener implements ExampleListener, SuiteListener
 {
     private $io;
     private $resources;

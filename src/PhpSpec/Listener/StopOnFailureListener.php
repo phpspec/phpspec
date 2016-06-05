@@ -13,12 +13,11 @@
 
 namespace PhpSpec\Listener;
 
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\StopOnFailureException;
 use PhpSpec\Console\ConsoleIO;
 
-final class StopOnFailureListener implements EventSubscriberInterface, ExampleListener
+final class StopOnFailureListener implements ExampleListener
 {
     /**
      * @var ConsoleIO

@@ -22,9 +22,8 @@ use PhpSpec\Locator\ResourceManager;
 use PhpSpec\Util\NameChecker;
 use Prophecy\Argument\ArgumentsWildcard;
 use Prophecy\Exception\Doubler\MethodNotFoundException;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final class CollaboratorMethodNotFoundListener implements EventSubscriberInterface, ExampleListener, SuiteListener
+final class CollaboratorMethodNotFoundListener implements ExampleListener, SuiteListener
 {
     const PROMPT = 'Would you like me to generate a method signature `%s::%s()` for you?';
 
