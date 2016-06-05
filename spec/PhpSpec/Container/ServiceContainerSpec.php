@@ -1,6 +1,6 @@
 <?php
 
-namespace spec\PhpSpec;
+namespace spec\PhpSpec\Container;
 
 use PhpSpec\ObjectBehavior;
 

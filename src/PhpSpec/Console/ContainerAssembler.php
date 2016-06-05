@@ -28,7 +28,7 @@ use PhpSpec\Util\ReservedWordsMethodNameChecker;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Util\MethodAnalyser;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use PhpSpec\ServiceContainer;
+use PhpSpec\Container\ServiceContainer;
 use PhpSpec\CodeGenerator;
 use PhpSpec\Formatter as SpecFormatter;
 use PhpSpec\Listener;
@@ -69,7 +69,7 @@ class ContainerAssembler
 
     private function setupIO(ServiceContainer $container)
     {
-        if (!$container->isDefined('console.prompter')) {
+        if (!$container->has('console.prompter')) {
             $container->setShared('console.prompter', function ($c) {
                 return new Question(
                     $c->get('console.input'),
@@ -685,7 +685,7 @@ class ContainerAssembler
             );
         });
 
-        if ($container->isDefined('process.rerunner.platformspecific')) {
+        if ($container->has('process.rerunner.platformspecific')) {
             return;
         }
 

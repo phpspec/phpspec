@@ -15,7 +15,7 @@ Feature: Developer uses extension
     namespace Example1\PhpSpec\MatcherExtension;
 
     use PhpSpec\Extension as PhpSpecExtension;
-    use PhpSpec\ServiceContainer;
+    use PhpSpec\Container\ServiceContainer;
 
     class Extension implements PhpSpecExtension
     {

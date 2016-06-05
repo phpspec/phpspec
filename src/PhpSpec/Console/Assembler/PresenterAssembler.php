@@ -34,7 +34,7 @@ use PhpSpec\Formatter\Presenter\Value\NullTypePresenter;
 use PhpSpec\Formatter\Presenter\Value\ObjectTypePresenter;
 use PhpSpec\Formatter\Presenter\Value\QuotingStringTypePresenter;
 use PhpSpec\Formatter\Presenter\Value\TruncatingStringTypePresenter;
-use PhpSpec\ServiceContainer;
+use PhpSpec\Container\ServiceContainer;
 use SebastianBergmann\Exporter\Exporter;
 
 class PresenterAssembler

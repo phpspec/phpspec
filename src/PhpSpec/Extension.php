@@ -13,6 +13,8 @@
 
 namespace PhpSpec;
 
+use PhpSpec\Container\ServiceContainer;
+
 /**
  * Interface Extension is used for PhpSpec extensions to interface with PhpSpec
  * through the service container

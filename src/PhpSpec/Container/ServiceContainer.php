@@ -11,15 +11,17 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec;
+namespace PhpSpec\Container;
 
+use Interop\Container\ContainerInterface;
 use InvalidArgumentException;
+use UltraLite\Container\Exception\DiServiceNotFound;
 
 /**
  * The Service Container is a lightweight container based on Pimple to handle
  * object creation of PhpSpec services.
  */
-class ServiceContainer
+class ServiceContainer implements ContainerInterface
 {
     /**
      * @var array
@@ -127,19 +129,19 @@ class ServiceContainer
     /**
      * Retrieves a service from the container
      *
-     * @param string $id
+     * @param string $serviceId
      *
-     * @return object
+     * @return mixed
      *
-     * @throws \InvalidArgumentException if service is not defined
+     * @throws DiServiceNotFound
      */
-    public function get($id)
+    public function get($serviceId)
     {
-        if (!array_key_exists($id, $this->services)) {
-            throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
+        if (!array_key_exists($serviceId, $this->services)) {
+            throw DiServiceNotFound::createFromServiceId($serviceId);
         }
 
-        $value = $this->services[$id];
+        $value = $this->services[$serviceId];
         if (is_callable($value)) {
             return call_user_func($value, $this);
         }
@@ -148,12 +150,12 @@ class ServiceContainer
     }
 
     /**
-     * @param $id
+     * @param $serviceId
      * @return bool
      */
-    public function isDefined($id)
+    public function has($serviceId)
     {
-        return array_key_exists($id, $this->services);
+        return array_key_exists($serviceId, $this->services);
     }
 
     /**
