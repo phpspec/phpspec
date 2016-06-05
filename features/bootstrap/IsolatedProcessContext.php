@@ -102,20 +102,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
             $this->buildPhpSpecCmd() . " --format=$formatter run"
         );
         $process->run();
-        $this->lastOutput = $process->getErrorOutput();
-
-    }
-
-    /**
-     * @When I run phpspec on HHVM with the :formatter formatter
-     */
-    public function iRunPhpspecOnHhvmWithThe($formatter)
-    {
-        $process = new Process(
-            $this->buildPhpSpecCmd() . " --format=$formatter run"
-        );
-        $process->run();
-        $this->lastOutput = $process->getOutput();
+        $this->lastOutput = $process->getErrorOutput().$process->getOutput();
 
     }
 
