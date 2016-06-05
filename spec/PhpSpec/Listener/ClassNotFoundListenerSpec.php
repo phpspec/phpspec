@@ -11,7 +11,7 @@ use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\ClassNotFoundException as PhpSpecClassException;
-use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\Locator\Resource;
 
 use Prophecy\Exception\Doubler\ClassNotFoundException as ProphecyClassException;
 
@@ -69,7 +69,7 @@ class ClassNotFoundListenerSpec extends ObjectBehavior
         $io->askConfirmation(Argument::any())->shouldHaveBeenCalled();
     }
 
-    function it_marks_as_worth_rerunning_if_phpspec_classnotfoundexception_was_thrown_and_developer_confirms_class_generation($exampleEvent, $suiteEvent, $io, PhpspecClassException $exception, ResourceManager $resourceManager, ResourceInterface $resource)
+    function it_marks_as_worth_rerunning_if_phpspec_classnotfoundexception_was_thrown_and_developer_confirms_class_generation($exampleEvent, $suiteEvent, $io, PhpspecClassException $exception, ResourceManager $resourceManager, Resource $resource)
     {
         $exampleEvent->getException()->willReturn($exception);
         $io->isCodeGenerationEnabled()->willReturn(true);
