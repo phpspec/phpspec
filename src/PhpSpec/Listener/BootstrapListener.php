@@ -3,9 +3,10 @@
 namespace PhpSpec\Listener;
 
 use PhpSpec\Console\ConsoleIO;
+use PhpSpec\Event\SuiteEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final class BootstrapListener implements EventSubscriberInterface
+class BootstrapListener implements EventSubscriberInterface, SuiteListener
 {
     /**
      * @var ConsoleIO
@@ -22,7 +23,7 @@ final class BootstrapListener implements EventSubscriberInterface
         return array('beforeSuite' => array('beforeSuite', 1100));
     }
 
-    public function beforeSuite()
+    public function beforeSuite(SuiteEvent $suiteEvent)
     {
         if ($bootstrap = $this->io->getBootstrapPath()) {
             if (!is_file($bootstrap)) {
@@ -31,5 +32,9 @@ final class BootstrapListener implements EventSubscriberInterface
 
             require $bootstrap;
         }
+    }
+
+    public function afterSuite(SuiteEvent $suiteEvent)
+    {
     }
 }

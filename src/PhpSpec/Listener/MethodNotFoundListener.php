@@ -22,7 +22,7 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
-final class MethodNotFoundListener implements EventSubscriberInterface
+final class MethodNotFoundListener implements EventSubscriberInterface, ExampleListener, SuiteListener
 {
     private $io;
     private $resources;
@@ -60,6 +60,10 @@ final class MethodNotFoundListener implements EventSubscriberInterface
         );
     }
 
+    public function beforeExample(ExampleEvent $event)
+    {
+    }
+
     public function afterExample(ExampleEvent $event)
     {
         if (null === $exception = $event->getException()) {
@@ -74,6 +78,10 @@ final class MethodNotFoundListener implements EventSubscriberInterface
         $methodName = $exception->getMethodName();
         $this->methods[$classname .'::'.$methodName] = $exception->getArguments();
         $this->checkIfMethodNameAllowed($methodName);
+    }
+
+    public function beforeSuite(SuiteEvent $event)
+    {
     }
 
     public function afterSuite(SuiteEvent $event)

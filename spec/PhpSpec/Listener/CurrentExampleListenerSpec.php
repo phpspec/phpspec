@@ -32,7 +32,7 @@ class CurrentExampleListenerSpec extends ObjectBehavior
         $fatalError = 'Fatal error happened before example';
         $example->getTitle()->willReturn($fatalError);
         $currentExample->setCurrentExample($fatalError);
-        $this->beforeCurrentExample($example);
+        $this->beforeExample($example);
         $example->getTitle()->shouldHaveBeenCalled();
     }
 
@@ -41,7 +41,7 @@ class CurrentExampleListenerSpec extends ObjectBehavior
         $currentExample = new CurrentExampleTracker();
         $currentExample->setCurrentExample(null);
         $example->getTitle()->willReturn(null);
-        $this->afterCurrentExample($example);
+        $this->afterExample($example);
         $example->getTitle()->shouldNotHaveBeenCalled();
     }
 
@@ -51,7 +51,7 @@ class CurrentExampleListenerSpec extends ObjectBehavior
         $currentExample = new CurrentExampleTracker();
         $currentExample->setCurrentExample("Exited with code: " . $fatalError);
         $example->getResult()->willReturn($fatalError);
-        $this->afterSuiteEvent($example);
+        $this->afterSuite($example);
         $example->getResult()->shouldHaveBeenCalled();
     }
 }
