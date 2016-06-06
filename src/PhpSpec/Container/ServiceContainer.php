@@ -44,6 +44,11 @@ class ServiceContainer implements ContainerInterface
     private $configurators = array();
 
     /**
+     * @var ContainerInterface
+     */
+    private $compositeContainer;
+
+    /**
      * Sets a param in the container
      *
      * @param string $id
@@ -143,7 +148,7 @@ class ServiceContainer implements ContainerInterface
 
         $value = $this->services[$serviceId];
         if (is_callable($value)) {
-            return call_user_func($value, $this);
+            return call_user_func($value, $this->compositeContainer ?: $this);
         }
 
         return $value;
@@ -246,5 +251,10 @@ class ServiceContainer implements ContainerInterface
         $prefix = implode('.', $parts);
 
         return array($prefix, $sid);
+    }
+
+    public function setCompositeContainer(ContainerInterface $compositeContainer)
+    {
+        $this->compositeContainer = $compositeContainer;
     }
 }
