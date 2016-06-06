@@ -1,7 +1,8 @@
 2.5 - Upcoming
 ==============
 
-*  [fixed] Describing a class providing a namespace with leading backslash
+*  [fixed] Describing a class providing a namespace with leading backslash (@mheki)
+*  [fixed] Bug in DotFormatter when number of rows is multiple of column width (@bendavies)
 
 2.5.0 / 2016-03-20
 ==================
