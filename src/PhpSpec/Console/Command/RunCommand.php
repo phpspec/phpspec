@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Console\Command;
 
+use PhpSpec\Console\Application;
 use PhpSpec\Formatter\FatalPresenter;
 use PhpSpec\Process\Shutdown\UpdateConsoleAction;
 use PhpSpec\Container\ServiceContainer;
@@ -136,32 +137,35 @@ EOF
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $container = $this->getApplication()->getContainer();
+        $configObject = $this->getApplication()->getConfigObject();
+        $serviceLocator = $this->getApplication()->getServiceLocator();
+        $lateConfigurationServiceLocator = $this->getApplication()->getLocatorConfiguredMidExecution();
+        $registry = $this->getApplication()->getRegistry();
 
-        $container->setParam(
+        $configObject->setParam(
             'formatter.name',
-            $input->getOption('format') ?: $container->getParam('formatter.name')
+            $input->getOption('format') ?: $configObject->getParam('formatter.name')
         );
 
-        $formatterName = $container->getParam('formatter.name', 'progress');
-        $currentFormatter = $container->get('formatter.formatters.'.$formatterName);
+        $formatterName = $configObject->getParam('formatter.name', 'progress');
+        $currentFormatter = $serviceLocator->get('formatter.formatters.'.$formatterName);
 
         if ($currentFormatter instanceof FatalPresenter) {
 
-            $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) use ($currentFormatter) {
+            $registry->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) use ($currentFormatter) {
                 return new UpdateConsoleAction(
                     $c->get('current_example'),
                     $currentFormatter
                 );
             });
 
-            $container->get('process.shutdown')->registerAction(
-                $container->get('process.shutdown.update_console_action')
+            $serviceLocator->get('process.shutdown')->registerAction(
+                $serviceLocator->get('process.shutdown.update_console_action')
             );
-            $container->get('process.shutdown')->registerShutdown();
+            $serviceLocator->get('process.shutdown')->registerShutdown();
         }
 
-        $container->configure();
+        $lateConfigurationServiceLocator->configure();
 
         $locator = $input->getArgument('spec');
         $linenum = null;
@@ -169,11 +173,19 @@ EOF
             list($_, $locator, $linenum) = $matches;
         }
 
-        $suite       = $container->get('loader.resource_loader')->load($locator, $linenum);
-        $suiteRunner = $container->get('runner.suite');
+        $suite       = $serviceLocator->get('loader.resource_loader')->load($locator, $linenum);
+        $suiteRunner = $serviceLocator->get('runner.suite');
 
-        return $container->get('console.result_converter')->convert(
+        return $serviceLocator->get('console.result_converter')->convert(
             $suiteRunner->run($suite)
         );
+    }
+
+    /**
+     * @return Application
+     */
+    public function getApplication()
+    {
+        return parent::getApplication();
     }
 }

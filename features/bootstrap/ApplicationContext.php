@@ -60,13 +60,13 @@ class ApplicationContext implements Context
     {
         $this->prompter = new Prompter();
 
-        $this->application->getContainer()->set('console.prompter', $this->prompter);
+        $this->application->getRegistry()->set('console.prompter', $this->prompter);
     }
 
     private function setupReRunner()
     {
         $this->reRunner = new ReRunner;
-        $this->application->getContainer()->set('process.rerunner.platformspecific', $this->reRunner);
+        $this->application->getRegistry()->set('process.rerunner.platformspecific', $this->reRunner);
     }
 
     /**

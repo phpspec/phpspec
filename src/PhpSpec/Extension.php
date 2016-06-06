@@ -13,7 +13,7 @@
 
 namespace PhpSpec;
 
-use PhpSpec\Container\ServiceContainer;
+use PhpSpec\Container\ServiceContainer\ContainerPassedToExtensions;
 
 /**
  * Interface Extension is used for PhpSpec extensions to interface with PhpSpec
@@ -22,7 +22,7 @@ use PhpSpec\Container\ServiceContainer;
 interface Extension
 {
     /**
-     * @param ServiceContainer $container
+     * @param ContainerPassedToExtensions $container
      */
-    public function load(ServiceContainer $container);
+    public function load(ContainerPassedToExtensions $container);
 }

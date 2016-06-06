@@ -22,6 +22,11 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 use PhpSpec\Container\ServiceContainer;
+use PhpSpec\Container\ServiceContainer\ConfigObject;
+use PhpSpec\Container\ServiceContainer\ServiceLocator;
+use PhpSpec\Container\ServiceContainer\Registry;
+use PhpSpec\Container\ServiceContainer\LocatorConfiguredMidExecution;
+use PhpSpec\Container\ServiceContainer\ContainerPassedToExtensions;
 use PhpSpec\Extension;
 use RuntimeException;
 
@@ -31,26 +36,18 @@ use RuntimeException;
 class Application extends BaseApplication
 {
     /**
-     * @var ServiceContainer
+     * @var ContainerBuilder
      */
-    private $container;
+    private $containerBuilder;
 
     /**
      * @param string $version
      */
     public function __construct($version)
     {
-        $containerBuilder = new ContainerBuilder();
-        $this->container = $containerBuilder->buildContainer();
+        $this->containerBuilder = new ContainerBuilder();
+        $this->containerBuilder->buildContainer();
         parent::__construct('phpspec', $version);
-    }
-
-    /**
-     * @return ServiceContainer
-     */
-    public function getContainer()
-    {
-        return $this->container;
     }
 
     /**
@@ -62,26 +59,26 @@ class Application extends BaseApplication
     public function doRun(InputInterface $input, OutputInterface $output)
     {
         $helperSet = $this->getHelperSet();
-        $this->container->set('console.input', $input);
-        $this->container->set('console.output', $output);
-        $this->container->set('console.helper_set', $helperSet);
+        $this->containerBuilder->getRegistry()->set('console.input', $input);
+        $this->containerBuilder->getRegistry()->set('console.output', $output);
+        $this->containerBuilder->getRegistry()->set('console.helper_set', $helperSet);
 
-        $this->container->setShared('process.executioncontext', function () {
+        $this->containerBuilder->getRegistry()->setShared('process.executioncontext', function () {
             return JsonExecutionContext::fromEnv($_SERVER);
         });
 
-        $this->loadConfigurationFile($input, $this->container);
+        $this->loadConfigurationFile($input, $this->getConfigObject(), $this->getContainerPassedToExtensions());
 
-        foreach ($this->container->getByPrefix('console.commands') as $command) {
+        foreach ($this->containerBuilder->getServiceLocator()->getByPrefix('console.commands') as $command) {
             $this->add($command);
         }
 
-        $this->setDispatcher($this->container->get('console_event_dispatcher'));
+        $this->setDispatcher($this->containerBuilder->getServiceLocator()->get('console_event_dispatcher'));
 
-        $this->container->get('console.io')->setConsoleWidth($this->getTerminalWidth());
+        $this->containerBuilder->getServiceLocator()->get('console.io')->setConsoleWidth($this->getTerminalWidth());
 
         StreamWrapper::reset();
-        foreach ($this->container->getByPrefix('loader.resource_loader.spec_transformer') as $transformer) {
+        foreach ($this->containerBuilder->getServiceLocator()->getByPrefix('loader.resource_loader.spec_transformer') as $transformer) {
             StreamWrapper::addTransformer($transformer);
         }
         StreamWrapper::register();
@@ -123,12 +120,13 @@ class Application extends BaseApplication
     }
 
     /**
-     * @param InputInterface   $input
-     * @param ServiceContainer $container
+     * @param InputInterface              $input
+     * @param ConfigObject                $configObject
+     * @param ContainerPassedToExtensions $containerPassedToExtensions
      *
      * @throws \RuntimeException
      */
-    protected function loadConfigurationFile(InputInterface $input, ServiceContainer $container)
+    protected function loadConfigurationFile(InputInterface $input, ConfigObject $configObject, ContainerPassedToExtensions $containerPassedToExtensions)
     {
         $config = $this->parseConfigurationFile($input);
 
@@ -144,10 +142,10 @@ class Application extends BaseApplication
                         ));
                     }
 
-                    $extension->load($container);
+                    $extension->load($containerPassedToExtensions);
                 }
             } else {
-                $container->setParam($key, $val);
+                $configObject->setParam($key, $val);
             }
         }
     }
@@ -225,5 +223,42 @@ class Application extends BaseApplication
         }
 
         return $config;
+    }
+
+    /**
+     * @return ServiceLocator
+     */
+    public function getServiceLocator()
+    {
+        return $this->containerBuilder->getServiceLocator();
+    }
+
+    /**
+     * @return LocatorConfiguredMidExecution
+     */
+    public function getLocatorConfiguredMidExecution()
+    {
+        return $this->containerBuilder->getLocatorConfiguredMidExecution();
+    }
+
+    /**
+     * @return Registry
+     */
+    public function getRegistry()
+    {
+        return $this->containerBuilder->getRegistry();
+    }
+
+    /**
+     * @return ConfigObject
+     */
+    public function getConfigObject()
+    {
+        return $this->containerBuilder->getConfigObject();
+    }
+
+    private function getContainerPassedToExtensions()
+    {
+        return $this->containerBuilder->getContainerPassedToExtensions();
     }
 }

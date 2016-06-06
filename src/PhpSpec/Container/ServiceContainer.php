@@ -15,13 +15,20 @@ namespace PhpSpec\Container;
 
 use Interop\Container\ContainerInterface;
 use InvalidArgumentException;
+use PhpSpec\Container\ServiceContainer\ConfigObject;
+use PhpSpec\Container\ServiceContainer\ContainerPassedToExtensions;
+use PhpSpec\Container\ServiceContainer\DiContainer;
+use PhpSpec\Container\ServiceContainer\LocatorConfiguredMidExecution;
+use PhpSpec\Container\ServiceContainer\Registry;
+use PhpSpec\Container\ServiceContainer\ServiceLocator;
 use UltraLite\Container\Exception\DiServiceNotFound;
 
 /**
  * The Service Container is a lightweight container based on Pimple to handle
  * object creation of PhpSpec services.
  */
-class ServiceContainer implements ContainerInterface
+class ServiceContainer implements 
+    DiContainer, Registry, ServiceLocator, ConfigObject, LocatorConfiguredMidExecution, ContainerPassedToExtensions
 {
     /**
      * @var array
@@ -111,15 +118,8 @@ class ServiceContainer implements ContainerInterface
      *
      * @throws \InvalidArgumentException if service is not a callable
      */
-    public function setShared($id, $callable)
+    public function setShared($id, callable $callable)
     {
-        if (!is_callable($callable)) {
-            throw new InvalidArgumentException(sprintf(
-                'Service should be callable, "%s" given.',
-                gettype($callable)
-            ));
-        }
-
         $this->set($id, function ($container) use ($callable) {
             static $instance;
 
