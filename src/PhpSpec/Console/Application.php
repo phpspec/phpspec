@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Console;
 
+use PhpSpec\Container\ContainerBuilder;
 use PhpSpec\Loader\StreamWrapper;
 use PhpSpec\Process\Context\JsonExecutionContext;
 use Symfony\Component\Console\Application as BaseApplication;
@@ -39,7 +40,8 @@ class Application extends BaseApplication
      */
     public function __construct($version)
     {
-        $this->container = new ServiceContainer();
+        $containerBuilder = new ContainerBuilder();
+        $this->container = $containerBuilder->buildContainer();
         parent::__construct('phpspec', $version);
     }
 
@@ -67,9 +69,6 @@ class Application extends BaseApplication
         $this->container->setShared('process.executioncontext', function () {
             return JsonExecutionContext::fromEnv($_SERVER);
         });
-
-        $assembler = new ContainerAssembler();
-        $assembler->build($this->container);
 
         $this->loadConfigurationFile($input, $this->container);
 

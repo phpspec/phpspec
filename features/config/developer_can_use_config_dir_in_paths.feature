@@ -60,6 +60,7 @@ Feature: Config directory can be used in spec and src paths
 
       """
 
+  @isolated
   Scenario: Using %paths.config% variable in src_path
     Given the config file located in "Awesome" contains:
       """
@@ -82,6 +83,7 @@ Feature: Config directory can be used in spec and src paths
 
       """
 
+  @isolated
   Scenario: Not using %paths.config% variable in src_path
     Given the config file located in "Awesome" contains:
       """

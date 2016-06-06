@@ -3,6 +3,7 @@ Feature: Developer runs the specs
   I want to run the specs
   In order to get feedback on a state of my application
 
+  @isolated
   Scenario: Running a spec with a class that doesn't exist
     Given I have started describing the "Runner/SpecExample1/Markdown" class
     When I run phpspec
