@@ -229,6 +229,7 @@ class ApplicationContext implements Context
     public function theExitCodeShouldBe($code)
     {
         if ($this->lastExitCode !== (int)$code) {
+            var_dump($this->normalize($this->tester->getDisplay(true)));exit;
             throw new \Exception(sprintf(
                 'The application existed with an unexpected code: expected: %s, actual: %s',
                 $code,

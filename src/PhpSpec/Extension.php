@@ -13,7 +13,7 @@
 
 namespace PhpSpec;
 
-use PhpSpec\Container\CompositeContainer;
+use Interop\Container\ContainerInterface;
 
 /**
  * Interface Extension is used for PhpSpec extensions to interface with PhpSpec
@@ -22,7 +22,8 @@ use PhpSpec\Container\CompositeContainer;
 interface Extension
 {
     /**
-     * @param CompositeContainer $container
+     * @param ContainerInterface $container
+     * @return ContainerInterface|null
      */
-    public function load(CompositeContainer $container);
+    public function load(ContainerInterface $container);
 }

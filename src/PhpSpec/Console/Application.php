@@ -120,11 +120,11 @@ class Application extends BaseApplication
     /**
      * @param InputInterface     $input
      * @param ConfigObject       $configObject
-     * @param ContainerInterface $containerPassedToExtensions
+     * @param CompositeContainer $containerPassedToExtensions
      *
      * @throws \RuntimeException
      */
-    protected function loadConfigurationFile(InputInterface $input, ConfigObject $configObject, ContainerInterface $containerPassedToExtensions)
+    protected function loadConfigurationFile(InputInterface $input, ConfigObject $configObject, CompositeContainer $containerPassedToExtensions)
     {
         $config = $this->parseConfigurationFile($input);
 
@@ -140,7 +140,10 @@ class Application extends BaseApplication
                         ));
                     }
 
-                    $extension->load($containerPassedToExtensions);
+                    $containerReceived = $extension->load($containerPassedToExtensions);
+                    if ($containerReceived instanceof ContainerInterface) {
+                        $containerPassedToExtensions->addPriorityContainer($containerReceived);
+                    }
                 }
             } else {
                 $configObject->setParam($key, $val);

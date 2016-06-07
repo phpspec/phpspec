@@ -622,12 +622,33 @@ class ServiceProvider
             return new Runner\Maintainer\LetAndLetgoMaintainer();
         });
 
-        $container->set('runner.maintainers.matchers', function (CompositeContainer $compositeContainer) {
-            $matchers = $compositeContainer->getServiceLocator()->getByPrefix('matchers');
+        $container->set('runner.maintainers.matchers', function (ContainerInterface $container) {
+            $matcherServiceList = $container->get('phpspec.servicelist.matchers');
+            $matchers = array_map([$container, 'get'], $matcherServiceList);
+
             return new Runner\Maintainer\MatchersMaintainer(
-                $compositeContainer->get('formatter.presenter'),
+                $container->get('formatter.presenter'),
                 $matchers
             );
+        });
+
+        $container->set('phpspec.servicelist.matchers', function (ContainerInterface $container) {
+            return [
+                'matchers.identity',
+                'matchers.comparison',
+                'matchers.throwm',
+                'matchers.type',
+                'matchers.object_state',
+                'matchers.scalar',
+                'matchers.array_count',
+                'matchers.array_key',
+                'matchers.array_key_with_value',
+                'matchers.array_contain',
+                'matchers.string_start',
+                'matchers.string_end',
+                'matchers.string_regex',
+                'matchers.string_contain'
+            ];
         });
 
         $container->set('runner.maintainers.subject', function (ContainerInterface $c) {
