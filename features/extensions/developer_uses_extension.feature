@@ -179,11 +179,11 @@ Feature: Developer uses extension
     namespace Example2\PhpSpec\Extensions;
 
     use PhpSpec\Extension as PhpSpecExtension;
-    use PhpSpec\ServiceContainer;
+    use Interop\Container\ContainerInterface;
 
     class EventSubscriberExtension implements PhpSpecExtension
     {
-        public function load(ServiceContainer $compositeContainer)
+        public function load(ContainerInterface $compositeContainer)
         {
             $io = $compositeContainer->get('console.io');
             $eventDispatcher = $compositeContainer->get('event_dispatcher');

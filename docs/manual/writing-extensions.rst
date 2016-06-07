@@ -95,7 +95,7 @@ If you want to hook into **phpspec**'s event listener, here is a way of doing th
     {
         public function load(ContainerInterface $compositeContainer)
         {
-            $eventDispatcher = $compositeContainer->get('console_event_dispatcher');
+            $eventDispatcher = $compositeContainer->get('event_dispatcher');
             $eventDispatcher->addSubscriber(new MyEventSubscriber());
         }
     }
