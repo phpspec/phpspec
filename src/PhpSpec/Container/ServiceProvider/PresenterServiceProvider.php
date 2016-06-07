@@ -11,7 +11,7 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Console\Assembler;
+namespace PhpSpec\Container\ServiceProvider;
 
 use PhpSpec\Container\CompositeContainer;
 use PhpSpec\Formatter\Presenter\Differ\ArrayEngine;
@@ -39,7 +39,7 @@ use PhpSpec\Container\ServiceContainer;
 use SebastianBergmann\Exporter\Exporter;
 use Interop\Container\ContainerInterface;
 
-class PresenterAssembler
+class PresenterServiceProvider
 {
     /**
      * @param ServiceContainer $container

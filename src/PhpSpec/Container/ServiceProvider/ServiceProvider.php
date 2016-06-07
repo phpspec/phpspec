@@ -11,15 +11,19 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Console;
+namespace PhpSpec\Container\ServiceProvider;
 
 use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
 use PhpSpec\CodeAnalysis\StaticRejectingNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
-use PhpSpec\Console\Assembler\PresenterAssembler;
+use PhpSpec\Container\ServiceProvider\PresenterServiceProvider;
+use PhpSpec\Console\Command;
+use PhpSpec\Console\ConsoleIO;
+use PhpSpec\Console\Formatter;
 use PhpSpec\Console\Prompter\Question;
+use PhpSpec\Console\ResultConverter;
 use PhpSpec\Factory\ReflectionFactory;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
 use PhpSpec\Util\ClassFileAnalyser;
@@ -44,7 +48,7 @@ use PhpSpec\Process\Shutdown\Shutdown;
 use Interop\Container\ContainerInterface;
 use PhpSpec\Container\CompositeContainer;
 
-class ContainerAssembler
+class ServiceProvider
 {
     /**
      * @param ServiceContainer $container
@@ -377,7 +381,7 @@ class ContainerAssembler
      */
     private function setupPresenter(ServiceContainer $container)
     {
-        $presenterAssembler = new PresenterAssembler();
+        $presenterAssembler = new PresenterServiceProvider();
         $presenterAssembler->assemble($container);
     }
 

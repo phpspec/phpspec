@@ -2,7 +2,7 @@
 
 namespace PhpSpec\Container;
 
-use PhpSpec\Console\ContainerAssembler;
+use PhpSpec\Container\ServiceProvider\ServiceProvider;
 use PhpSpec\Container\ServiceContainer;
 
 class ContainerBuilder
@@ -18,7 +18,7 @@ class ContainerBuilder
 
         $container = new ServiceContainer();
         $this->compositeContainer->setPhpSpecContainer($container);
-        $containerConfig = new ContainerAssembler();
+        $containerConfig = new ServiceProvider();
         $containerConfig->build($container);
 
         $container->setCompositeContainer($this->compositeContainer);
