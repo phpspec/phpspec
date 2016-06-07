@@ -26,8 +26,7 @@ use UltraLite\Container\Exception\DiServiceNotFound;
  * The Service Container is a lightweight container based on Pimple to handle
  * object creation of PhpSpec services.
  */
-class ServiceContainer implements 
-    DiContainer, Registry, ServiceLocator, ConfigObject, LocatorConfiguredMidExecution
+class ServiceContainer implements DiContainer, Registry, ServiceLocator, ConfigObject, LocatorConfiguredMidExecution
 {
     /**
      * @var array
