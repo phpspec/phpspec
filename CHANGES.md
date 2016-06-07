@@ -1,11 +1,12 @@
 3.0 - Upcoming
 ==============
 
-* Allow to describe a class providing a namespace with leading backslash (@mheki)
 * Default template now uses `::class` (@ciaranmcnulty)
 * No longer declare variables/constants in global scope (@ciaranmcnulty)
 * Remove usage of `phpspec2-expect` lib in test suite (@shanethehat)
-* Fixed bug where rerun test suite was uncoloured (@ciaranmcnulty)
+* [fixed] Describing a class providing a namespace with leading backslash (@mheki)
+* [fixed] bug where rerun test suite was uncoloured (@ciaranmcnulty)
+* [fixed] Bug in DotFormatter when number of rows is multiple of column width (@bendavies)
 * [BC break] Removed support for @param for creating doubles (@Sam-Burns)
 * [BC break] Bumped dependency versions (see migration guide) (@ciaranmcnulty)
 * [BC break] Removed various code braches for support of older dependecies (@ciaranmcnulty)
