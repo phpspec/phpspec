@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Console\Command;
 
+use Interop\Container\ContainerInterface;
 use PhpSpec\Console\Application;
 use PhpSpec\Formatter\FatalPresenter;
 use PhpSpec\Process\Shutdown\UpdateConsoleAction;
@@ -137,10 +138,11 @@ EOF
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $configObject = $this->getApplication()->getConfigObject();
-        $serviceLocator = $this->getApplication()->getServiceLocator();
-        $lateConfigurationServiceLocator = $this->getApplication()->getLocatorConfiguredMidExecution();
-        $registry = $this->getApplication()->getRegistry();
+        $compositeContainer = $this->getApplication()->getCompositeContainer();
+        $configObject = $compositeContainer->getConfigObject();
+        $serviceLocator = $compositeContainer->getServiceLocator();
+        $lateConfigurationServiceLocator = $compositeContainer->getLocatorConfiguredMidExecution();
+        $registry = $compositeContainer->getRegistry();
 
         $configObject->setParam(
             'formatter.name',
@@ -152,7 +154,7 @@ EOF
 
         if ($currentFormatter instanceof FatalPresenter) {
 
-            $registry->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) use ($currentFormatter) {
+            $registry->setShared('process.shutdown.update_console_action', function (ContainerInterface $c) use ($currentFormatter) {
                 return new UpdateConsoleAction(
                     $c->get('current_example'),
                     $currentFormatter

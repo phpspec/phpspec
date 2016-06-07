@@ -16,7 +16,6 @@ namespace PhpSpec\Container;
 use Interop\Container\ContainerInterface;
 use InvalidArgumentException;
 use PhpSpec\Container\ServiceContainer\ConfigObject;
-use PhpSpec\Container\ServiceContainer\ContainerPassedToExtensions;
 use PhpSpec\Container\ServiceContainer\DiContainer;
 use PhpSpec\Container\ServiceContainer\LocatorConfiguredMidExecution;
 use PhpSpec\Container\ServiceContainer\Registry;
@@ -28,7 +27,7 @@ use UltraLite\Container\Exception\DiServiceNotFound;
  * object creation of PhpSpec services.
  */
 class ServiceContainer implements 
-    DiContainer, Registry, ServiceLocator, ConfigObject, LocatorConfiguredMidExecution, ContainerPassedToExtensions
+    DiContainer, Registry, ServiceLocator, ConfigObject, LocatorConfiguredMidExecution
 {
     /**
      * @var array
@@ -148,7 +147,7 @@ class ServiceContainer implements
 
         $value = $this->services[$serviceId];
         if (is_callable($value)) {
-            return call_user_func($value, $this->compositeContainer ?: $this);
+            return call_user_func($value, $this->compositeContainer);
         }
 
         return $value;
@@ -230,7 +229,7 @@ class ServiceContainer implements
     public function configure()
     {
         foreach ($this->configurators as $configurator) {
-            call_user_func($configurator, $this);
+            call_user_func($configurator, $this->compositeContainer);
         }
     }
 

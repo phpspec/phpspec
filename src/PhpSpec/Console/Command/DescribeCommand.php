@@ -60,8 +60,8 @@ EOF
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $serviceLocator = $this->getApplication()->getServiceLocator();
-        $lateConfigurationServiceContainer = $this->getApplication()->getLocatorConfiguredMidExecution();
+        $serviceLocator = $this->getApplication()->getCompositeContainer()->getServiceLocator();
+        $lateConfigurationServiceContainer = $this->getApplication()->getCompositeContainer()->getLocatorConfiguredMidExecution();
         $lateConfigurationServiceContainer->configure();
 
         $classname = $input->getArgument('class');

@@ -71,14 +71,4 @@ class ServiceContainerSpec extends ObjectBehavior
         $this->shouldThrow()->duringGet('collection1.some_service');
         $this->getByPrefix('collection1')->shouldHaveCount(0);
     }
-
-    function it_supports_custom_service_configurators()
-    {
-        $this->addConfigurator(function ($c) {
-            $c->setParam('name', 'Jim');
-        });
-        $this->configure();
-
-        $this->getParam('name')->shouldReturn('Jim');
-    }
 }

@@ -4,63 +4,26 @@ namespace PhpSpec\Container;
 
 use PhpSpec\Console\ContainerAssembler;
 use PhpSpec\Container\ServiceContainer;
-use PhpSpec\Container\ServiceContainer\Registry;
-use PhpSpec\Container\ServiceContainer\ServiceLocator;
-use PhpSpec\Container\ServiceContainer\LocatorConfiguredMidExecution;
-use PhpSpec\Container\ServiceContainer\ConfigObject;
-use PhpSpec\Container\ServiceContainer\ContainerPassedToExtensions;
 
 class ContainerBuilder
 {
     /**
-     * @var ServiceContainer
+     * @var CompositeContainer
      */
-    private $container;
+    private $compositeContainer;
 
     public function buildContainer()
     {
-        $this->container = new ServiceContainer();
+        $this->compositeContainer = new CompositeContainer();
+
+        $container = new ServiceContainer();
+        $this->compositeContainer->setPhpSpecContainer($container);
         $containerConfig = new ContainerAssembler();
-        $containerConfig->build($this->container);
-    }
+        $containerConfig->build($container);
 
-    /**
-     * @return Registry
-     */
-    public function getRegistry()
-    {
-        return $this->container;
-    }
+        $container->setCompositeContainer($this->compositeContainer);
+        $this->compositeContainer->addContainer($container);
 
-    /**
-     * @return ServiceLocator
-     */
-    public function getServiceLocator()
-    {
-        return $this->container;
-    }
-
-    /**
-     * @return LocatorConfiguredMidExecution
-     */
-    public function getLocatorConfiguredMidExecution()
-    {
-        return $this->container;
-    }
-
-    /**
-     * @return ConfigObject
-     */
-    public function getConfigObject()
-    {
-        return $this->container;
-    }
-
-    /**
-     * @return ContainerPassedToExtensions
-     */
-    public function getContainerPassedToExtensions()
-    {
-        return $this->container;
+        return $this->compositeContainer;
     }
 }

@@ -42,6 +42,7 @@ use Symfony\Component\Process\PhpExecutableFinder;
 use PhpSpec\Message\CurrentExampleTracker;
 use PhpSpec\Process\Shutdown\Shutdown;
 use Interop\Container\ContainerInterface;
+use PhpSpec\Container\CompositeContainer;
 
 class ContainerAssembler
 {
@@ -144,12 +145,12 @@ class ContainerAssembler
      */
     private function setupConsoleEventDispatcher(ServiceContainer $container)
     {
-        $container->setShared('console_event_dispatcher', function (ServiceContainer $c) {
+        $container->setShared('console_event_dispatcher', function (CompositeContainer $compositeContainer) {
             $dispatcher = new EventDispatcher();
 
             array_map(
                 array($dispatcher, 'addSubscriber'),
-                $c->getByPrefix('console_event_dispatcher.listeners')
+                $compositeContainer->getServiceLocator()->getByPrefix('console_event_dispatcher.listeners')
             );
 
             return $dispatcher;
@@ -252,12 +253,12 @@ class ContainerAssembler
      */
     private function setupGenerators(ServiceContainer $container)
     {
-        $container->setShared('code_generator', function (ServiceContainer $c) {
+        $container->setShared('code_generator', function (CompositeContainer $compositeContainer) {
             $generator = new CodeGenerator\GeneratorManager();
 
             array_map(
                 array($generator, 'registerGenerator'),
-                $c->getByPrefix('code_generator.generators')
+                $compositeContainer->getServiceLocator()->getByPrefix('code_generator.generators')
             );
 
             return $generator;
@@ -397,8 +398,8 @@ class ContainerAssembler
             return $manager;
         });
 
-        $container->addConfigurator(function (ServiceContainer $c) {
-            $suites = $c->getParam('suites', array('main' => ''));
+        $container->addConfigurator(function (CompositeContainer $compositeContainer) {
+            $suites = $compositeContainer->getConfigObject()->getParam('suites', array('main' => ''));
 
             foreach ($suites as $name => $suite) {
                 $suite      = is_array($suite) ? $suite : array('namespace' => $suite);
@@ -419,9 +420,9 @@ class ContainerAssembler
                     mkdir($config['spec_path'], 0777, true);
                 }
 
-                $c->set(
+                $compositeContainer->getRegistry()->set(
                     sprintf('locator.locators.%s_suite', $name),
-                    function (ServiceContainer $c) use ($config) {
+                    function (ContainerInterface $c) use ($config) {
                         return new Locator\PSR0\PSR0Locator(
                             $c->get('util.filesystem'),
                             $config['namespace'],
@@ -552,19 +553,19 @@ class ContainerAssembler
             }
         );
 
-        $container->addConfigurator(function (ServiceContainer $c) {
-            $formatterName = $c->getParam('formatter.name', 'progress');
+        $container->addConfigurator(function (CompositeContainer $compositeContainer) {
+            $formatterName = $compositeContainer->getConfigObject()->getParam('formatter.name', 'progress');
 
-            $c->get('console.output')->setFormatter(new Formatter(
-                $c->get('console.output')->isDecorated()
+            $compositeContainer->get('console.output')->setFormatter(new Formatter(
+                $compositeContainer->get('console.output')->isDecorated()
             ));
 
             try {
-                $formatter = $c->get('formatter.formatters.'.$formatterName);
+                $formatter = $compositeContainer->get('formatter.formatters.'.$formatterName);
             } catch (\InvalidArgumentException $e) {
                 throw new \RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
             }
-            $c->set('event_dispatcher.listeners.formatter', $formatter);
+            $compositeContainer->getRegistry()->set('event_dispatcher.listeners.formatter', $formatter);
         });
     }
 
@@ -587,15 +588,15 @@ class ContainerAssembler
             );
         });
 
-        $container->setShared('runner.example', function (ContainerInterface $c) {
+        $container->setShared('runner.example', function (CompositeContainer $compositeContainer) {
             $runner = new Runner\ExampleRunner(
-                $c->get('event_dispatcher'),
-                $c->get('formatter.presenter')
+                $compositeContainer->get('event_dispatcher'),
+                $compositeContainer->get('formatter.presenter')
             );
 
             array_map(
                 array($runner, 'registerMaintainer'),
-                $c->getByPrefix('runner.maintainers')
+                $compositeContainer->getServiceLocator()->getByPrefix('runner.maintainers')
             );
 
             return $runner;
@@ -617,10 +618,10 @@ class ContainerAssembler
             return new Runner\Maintainer\LetAndLetgoMaintainer();
         });
 
-        $container->set('runner.maintainers.matchers', function (ServiceContainer $c) {
-            $matchers = $c->getByPrefix('matchers');
+        $container->set('runner.maintainers.matchers', function (CompositeContainer $compositeContainer) {
+            $matchers = $compositeContainer->getServiceLocator()->getByPrefix('matchers');
             return new Runner\Maintainer\MatchersMaintainer(
-                $c->get('formatter.presenter'),
+                $compositeContainer->get('formatter.presenter'),
                 $matchers
             );
         });
@@ -638,7 +639,7 @@ class ContainerAssembler
             return new Wrapper\Unwrapper();
         });
 
-        $container->setShared('access_inspector', function($c) {
+        $container->setShared('access_inspector', function(ContainerInterface $c) {
             return $c->get('access_inspector.magic');
         });
 
@@ -716,9 +717,9 @@ class ContainerAssembler
             return;
         }
 
-        $container->setShared('process.rerunner.platformspecific', function (ServiceContainer $c) {
+        $container->setShared('process.rerunner.platformspecific', function (CompositeContainer $compositeContainer) {
             return new ReRunner\CompositeReRunner(
-                $c->getByPrefix('process.rerunner.platformspecific')
+                $compositeContainer->getServiceLocator()->getByPrefix('process.rerunner.platformspecific')
             );
         });
         $container->setShared('process.rerunner.platformspecific.pcntl', function (ContainerInterface $c) {
@@ -749,10 +750,10 @@ class ContainerAssembler
      */
     private function setupSubscribers(ServiceContainer $container)
     {
-        $container->addConfigurator(function (ServiceContainer $c) {
+        $container->addConfigurator(function (CompositeContainer $compositeContainer) {
             array_map(
-                array($c->get('event_dispatcher'), 'addSubscriber'),
-                $c->getByPrefix('event_dispatcher.listeners')
+                array($compositeContainer->get('event_dispatcher'), 'addSubscriber'),
+                $compositeContainer->getServiceLocator()->getByPrefix('event_dispatcher.listeners')
             );
         });
     }
