@@ -459,10 +459,10 @@ class ServiceProvider
                 $c->get('analysis.namespaceresolver')
             );
         });
-        $container->setShared('loader.transformer.typehintindex', function() {
+        $container->setShared('loader.transformer.typehintindex', function () {
             return new Loader\Transformer\InMemoryTypeHintIndex();
         });
-        $container->setShared('analysis.namespaceresolver.tokenized', function() {
+        $container->setShared('analysis.namespaceresolver.tokenized', function () {
             return new TokenizedNamespaceResolver();
         });
         $container->setShared('analysis.namespaceresolver', function (ContainerInterface $c) {
@@ -660,15 +660,15 @@ class ServiceProvider
             return new Wrapper\Unwrapper();
         });
 
-        $container->setShared('access_inspector', function(ContainerInterface $c) {
+        $container->setShared('access_inspector', function (ContainerInterface $c) {
             return $c->get('access_inspector.magic');
         });
 
-        $container->setShared('access_inspector.magic', function(ContainerInterface $c) {
+        $container->setShared('access_inspector.magic', function (ContainerInterface $c) {
             return new MagicAwareAccessInspector($c->get('access_inspector.visibility'));
         });
 
-        $container->setShared('access_inspector.visibility', function() {
+        $container->setShared('access_inspector.visibility', function () {
             return new VisibilityAccessInspector();
         });
     }
@@ -794,7 +794,7 @@ class ServiceProvider
    */
     private function setupShutdown(ServiceContainer $container)
     {
-        $container->setShared('process.shutdown', function() {
+        $container->setShared('process.shutdown', function () {
             return new Shutdown();
         });
     }
