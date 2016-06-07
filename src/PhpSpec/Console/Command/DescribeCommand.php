@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Console\Command;
 
+use PhpSpec\CodeGenerator\GeneratorManager;
+use PhpSpec\Locator\ResourceManager;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
@@ -24,6 +26,23 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class DescribeCommand extends Command
 {
+    /**
+     * @var ResourceManager
+     */
+    private $resourceManager;
+
+    /**
+     * @var GeneratorManager
+     */
+    private $codeGenerator;
+    
+    public function __construct(ResourceManager $resourceManager, GeneratorManager $codeGenerator)
+    {
+        $this->resourceManager = $resourceManager;
+        $this->codeGenerator = $codeGenerator;
+        parent::__construct();
+    }
+
     protected function configure()
     {
         $this
@@ -59,12 +78,9 @@ EOF
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $container = $this->getApplication()->getContainer();
-        $container->configure();
-
         $classname = $input->getArgument('class');
-        $resource  = $container->get('locator.resource_manager')->createResource($classname);
+        $resource  = $this->resourceManager->createResource($classname);
 
-        $container->get('code_generator')->generate($resource, 'specification');
+        $this->codeGenerator->generate($resource, 'specification');
     }
 }

@@ -15,17 +15,28 @@ Feature: Developer uses extension
     namespace Example1\PhpSpec\MatcherExtension;
 
     use PhpSpec\Extension as PhpSpecExtension;
-    use PhpSpec\ServiceContainer;
+    use UltraLite\Container\Container;
+    use Interop\Container\ContainerInterface;
 
     class Extension implements PhpSpecExtension
     {
         /**
          * @param ServiceContainer $container
          */
-        public function load(ServiceContainer $container)
+        public function load(Container $container)
         {
-            $container->set('matchers.seven', function (ServiceContainer $c) {
-                return new BeSevenMatcher($c->get('formatter.presenter'));
+
+            // Inject new matcher
+            $container->set('matcher.beseven', function (ContainerInterface $container) {
+                return new BeSevenMatcher($container->get('formatter.presenter'));
+            });
+
+            // Add new matcher to list of matchers to be used
+            $matcherList = $container->get('phpspec.servicelist.matchers');
+            $matcherList[] = 'matcher.beseven';
+
+            $container->set('phpspec.servicelist.matchers', function (ContainerInterface $container) use ($matcherList) {
+                return $matcherList;
             });
         }
     }

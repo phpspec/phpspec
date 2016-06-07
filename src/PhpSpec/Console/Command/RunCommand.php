@@ -13,21 +13,58 @@
 
 namespace PhpSpec\Console\Command;
 
+use Interop\Container\ContainerInterface;
+use PhpSpec\Console\Formatter;
 use PhpSpec\Formatter\FatalPresenter;
-use PhpSpec\Process\Shutdown\UpdateConsoleAction;
-use PhpSpec\ServiceContainer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-
+use Interop\Container\Exception\NotFoundException;
+use PhpSpec\Process\Shutdown\Shutdown;
+use PhpSpec\Console\Manager as ConsoleManager;
+use PhpSpec\Config\Manager as ConfigManager;
+use PhpSpec\Runner\SuiteRunner;
 
 /**
  * Main command, responsible for running the specs
  */
 class RunCommand extends Command
 {
+    /**
+     * @var Shutdown
+     */
+    private $shutdown;
+
+    /**
+     * @var ConsoleManager
+     */
+    private $consoleManager;
+
+    /**
+     * @var ConfigManager
+     */
+    private $configManager;
+
+    /**
+     * @var SuiteRunner
+     */
+    private $suiteRunner;
+
+    public function __construct(
+        ConfigManager $configManager,
+        ConsoleManager $consoleManager,
+        Shutdown $shutdown,
+        SuiteRunner $suiteRunner
+    ) {
+        $this->configManager = $configManager;
+        $this->consoleManager = $consoleManager;
+        $this->shutdown = $shutdown;
+        $this->suiteRunner = $suiteRunner;
+        parent::__construct();
+    }
+
     protected function configure()
     {
         $this
@@ -136,32 +173,17 @@ EOF
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $container = $this->getApplication()->getContainer();
+        $container = $this->getContainer();
 
-        $container->setParam(
-            'formatter.name',
-            $input->getOption('format') ?: $container->getParam('formatter.name')
-        );
+        $formatterName = $this->configManager->optionsConfig()->getFormatterName();
 
-        $formatterName = $container->getParam('formatter.name', 'progress');
         $currentFormatter = $container->get('formatter.formatters.'.$formatterName);
 
         if ($currentFormatter instanceof FatalPresenter) {
-
-            $container->setShared('process.shutdown.update_console_action', function(ServiceContainer $c) use ($currentFormatter) {
-                return new UpdateConsoleAction(
-                    $c->get('current_example'),
-                    $currentFormatter
-                );
-            });
-
-            $container->get('process.shutdown')->registerAction(
-                $container->get('process.shutdown.update_console_action')
-            );
-            $container->get('process.shutdown')->registerShutdown();
+            $this->shutdown->registerShutdown();
         }
 
-        $container->configure();
+        $this->initialiseEventManagement($container);
 
         $locator = $input->getArgument('spec');
         $linenum = null;
@@ -169,11 +191,56 @@ EOF
             list($_, $locator, $linenum) = $matches;
         }
 
-        $suite       = $container->get('loader.resource_loader')->load($locator, $linenum);
-        $suiteRunner = $container->get('runner.suite');
+        $suite = $container->get('loader.resource_loader')->load($locator, $linenum);
 
         return $container->get('console.result_converter')->convert(
-            $suiteRunner->run($suite)
+            $this->suiteRunner->run($suite)
         );
+    }
+
+    /**
+     * @return ContainerInterface
+     */
+    private function getContainer()
+    {
+        return $this->getApplication()->getContainer();
+    }
+
+    private function initialiseEventManagement(ContainerInterface $container)
+    {
+        $this->addTypePresentersToValuePresenter($container);
+        $formatter = $this->getFormatter($container);
+        $this->registerEventSubscribers($container, $formatter);
+    }
+
+    private function addTypePresentersToValuePresenter(ContainerInterface $container)
+    {
+        array_map(
+            array($container->get('formatter.presenter.value_presenter'), 'addTypePresenter'),
+            $container->get('phpspec.formatter.presenters')
+        );
+    }
+
+    private function getFormatter(ContainerInterface $container)
+    {
+        $formatterName = $this->configManager->optionsConfig()->getFormatterName();
+        $output = $this->consoleManager->getOutput();
+        $output->setFormatter(new Formatter($output->isDecorated()));
+
+        try {
+            return $container->get('formatter.formatters.'.$formatterName);
+        } catch (NotFoundException $e) {
+            throw new \RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
+        }
+    }
+
+    private function registerEventSubscribers(ContainerInterface $container, $formatter)
+    {
+        array_map(
+            array($container->get('event_dispatcher'), 'addSubscriber'),
+            $container->get('phpspec.event-listeners')
+        );
+
+        $container->get('event_dispatcher')->addSubscriber($formatter);
     }
 }
