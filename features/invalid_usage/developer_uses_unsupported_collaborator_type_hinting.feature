@@ -43,7 +43,7 @@ Feature: Developer uses unsupported collaborator type hinting
             spec\InvalidUsage\InvalidUsageExample1\StorageSpec::it_can_store_data.
       """
 
-  @php-version @php5.4
+  @php:~5.4||~7.0
   Scenario: Callable collaborator type hinting
     Given the spec file "spec/InvalidUsage/InvalidUsageExample2/InvokerSpec.php" contains:
       """
@@ -86,7 +86,7 @@ Feature: Developer uses unsupported collaborator type hinting
       """
 
 
-  @php-version @php7
+  @php:~7.0
   Scenario: Integer collaborator type hinting
     Given the spec file "spec/InvalidUsage/InvalidUsageExample3/StorageSpec.php" contains:
       """

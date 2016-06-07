@@ -44,8 +44,8 @@ Feature: Developer is notified of which scenario caused a fatal error
     Then I should see "Fatal error happened while executing the following"
     And  I should see "it fatals when calling an undeclared function"
 
-  @isolated @php-version @php5.4 @php7
-  Scenario: Fatal error writer message not shown, when formatter does not support it, outputs to stderr.
+  @isolated @php:~5.4||~7.0
+  Scenario: Fatal error writer message not shown, when formatter does not support it.
     Given the spec file "spec/Message/Fatal/Fatal2Spec.php" contains:
       """
       <?php
@@ -82,45 +82,4 @@ Feature: Developer is notified of which scenario caused a fatal error
 
       """
     When I run phpspec with the "junit" formatter
-    Then I should see "Call to undefined function"
-
-
-  @isolated @hhvm
-  Scenario: Fatal error writer message not shown, when formatter does not support it, outputs to stdout.
-    Given the spec file "spec/Message/Fatal/FatalHhvmSpec.php" contains:
-      """
-      <?php
-
-      namespace spec\Message\Fatal;
-
-      use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
-
-      class FatalHhvmSpec extends ObjectBehavior
-      {
-          function it_fatals_when_calling_an_undeclared_function()
-          {
-              anything();
-          }
-      }
-
-      """
-    And the class file "src/Message/Fatal/FatalHhvm.php" contains:
-      """
-      <?php
-
-      namespace Message\Fatal;
-
-      class FatalHhvm
-      {
-          public function __construct($param)
-          {
-              if ($param == 'throw') {
-                  throw new \Exception();
-              }
-          }
-      }
-
-      """
-    When I run phpspec on HHVM with the "junit" formatter
     Then I should see "Call to undefined function"
