@@ -71,7 +71,10 @@ class Application extends BaseApplication
             $this->add($command);
         }
 
-        $this->setDispatcher($this->compositeContainer->getServiceLocator()->get('console_event_dispatcher'));
+        $eventDispatcher = $this->compositeContainer->getServiceLocator()->get('console_event_dispatcher');
+        $eventSubscribers = $this->compositeContainer->getServiceLocator()->get('phspec.console-event-subscribers');
+        array_map([$eventDispatcher, 'addSubscriber'], $eventSubscribers);
+        $this->setDispatcher($eventDispatcher);
 
         $this->compositeContainer->getServiceLocator()->get('console.io')->setConsoleWidth($this->getTerminalWidth());
 

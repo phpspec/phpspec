@@ -18,7 +18,6 @@ use PhpSpec\CodeAnalysis\StaticRejectingNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
-use PhpSpec\Container\ServiceProvider\PresenterServiceProvider;
 use PhpSpec\Console\Command;
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Console\Formatter;
@@ -149,15 +148,12 @@ class ServiceProvider
      */
     private function setupConsoleEventDispatcher(ServiceContainer $container)
     {
-        $container->setShared('console_event_dispatcher', function (CompositeContainer $compositeContainer) {
-            $dispatcher = new EventDispatcher();
+        $container->setShared('console_event_dispatcher', function (ContainerInterface $container) {
+            return new EventDispatcher();
+        });
 
-            array_map(
-                array($dispatcher, 'addSubscriber'),
-                $compositeContainer->getServiceLocator()->getByPrefix('console_event_dispatcher.listeners')
-            );
-
-            return $dispatcher;
+        $container->setShared('phpspec.console_event_subscribers', function (CompositeContainer $compositeContainer) {
+            return $compositeContainer->getServiceLocator()->getByPrefix('console_event_dispatcher.listeners');
         });
     }
 
