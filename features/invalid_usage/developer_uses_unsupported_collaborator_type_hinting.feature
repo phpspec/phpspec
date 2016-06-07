@@ -85,7 +85,7 @@ Feature: Developer uses unsupported collaborator type hinting
       """
 
 
-  @php-version @php7
+  @php:~7.0
   Scenario: Integer collaborator type hinting
     Given the spec file "spec/InvalidUsage/InvalidUsageExample3/StorageSpec.php" contains:
       """
