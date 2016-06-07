@@ -52,11 +52,11 @@ final class ProcOpenReRunner extends PhpExecutableReRunner
         $args = $_SERVER['argv'];
         $command = $this->buildArgString() . escapeshellcmd($this->getExecutablePath()).' '.join(' ', array_map('escapeshellarg', $args)) . ' 2>&1';
 
-        $desc = [
-            0 => ['file', 'php://stdin', 'r'],
-            1 => ['file', 'php://stdout', 'w'],
-            2 => ['file', 'php://stderr', 'w'],
-        ];
+        $desc = array(
+            0 => array('file', 'php://stdin', 'r'),
+            1 => array('file', 'php://stdout', 'w'),
+            2 => array('file', 'php://stderr', 'w'),
+        );
         $proc = proc_open( $command, $desc, $pipes );
 
         do {
