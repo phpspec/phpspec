@@ -72,7 +72,7 @@ class Application extends BaseApplication
         }
 
         $eventDispatcher = $this->compositeContainer->getServiceLocator()->get('console_event_dispatcher');
-        $eventSubscribers = $this->compositeContainer->getServiceLocator()->get('phspec.console-event-subscribers');
+        $eventSubscribers = $this->compositeContainer->getServiceLocator()->get('phpspec.console-event-subscribers');
         array_map([$eventDispatcher, 'addSubscriber'], $eventSubscribers);
         $this->setDispatcher($eventDispatcher);
 

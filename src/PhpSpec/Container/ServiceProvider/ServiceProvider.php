@@ -152,7 +152,7 @@ class ServiceProvider
             return new EventDispatcher();
         });
 
-        $container->setShared('phpspec.console_event_subscribers', function (CompositeContainer $compositeContainer) {
+        $container->setShared('phpspec.console-event-subscribers', function (CompositeContainer $compositeContainer) {
             return $compositeContainer->getServiceLocator()->getByPrefix('console_event_dispatcher.listeners');
         });
     }
