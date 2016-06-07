@@ -1,5 +1,5 @@
-Writing extensions for PhpSpec 3
-================================
+Writing extensions for PhpSpec
+==============================
 
 Here is a guide to writing extensions for **phpspec** 3.  Your extension will
 integrate with core **phpspec** using the `Container-Interop <https://github.com/container-interop/container-interop>`_
