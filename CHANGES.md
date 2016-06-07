@@ -3,7 +3,6 @@
 
 * Default template now uses `::class` (@ciaranmcnulty)
 * No longer declare variables/constants in global scope (@ciaranmcnulty)
-* Remove usage of `phpspec2-expect` lib in test suite (@shanethehat)
 * [fixed] Describing a class providing a namespace with leading backslash (@mheki)
 * [fixed] bug where rerun test suite was uncoloured (@ciaranmcnulty)
 * [fixed] Bug in DotFormatter when number of rows is multiple of column width (@bendavies)
@@ -13,7 +12,6 @@
 * [BC break] Made classes final or abstract in simple cases (@ciaranmcnulty)
 * [BC break] Remove `*Interface` from all interfaces (@shanethehat)
 * [BC break] Remove deprecated code / optional interfaces (@mheki)
-
 
 2.5 - Upcoming
 ==============
