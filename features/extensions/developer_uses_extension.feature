@@ -158,3 +158,92 @@ Feature: Developer uses extension
     """
     When I run phpspec
     Then the suite should pass
+
+
+  Scenario: Extension using an extension with an event listener
+    Given the config file contains:
+    """
+    extensions:
+      - Example2\PhpSpec\Extensions\EventSubscriberExtension
+    """
+    And the class file "src/Example2/PhpSpec/Extensions/EventSubscriberExtension.php" contains:
+    """
+    <?php
+
+    namespace Example2\PhpSpec\Extensions;
+
+    use PhpSpec\Extension as PhpSpecExtension;
+    use PhpSpec\ServiceContainer;
+
+    class EventSubscriberExtension implements PhpSpecExtension
+    {
+        public function load(ServiceContainer $compositeContainer)
+        {
+            $io = $compositeContainer->get('console.io');
+            $eventDispatcher = $compositeContainer->get('event_dispatcher');
+            $eventDispatcher->addSubscriber(new MyEventSubscriber($io));
+        }
+    }
+
+    """
+    And the class file "src/Example1/PhpSpec/MatcherExtension/BeSevenMatcher.php" contains:
+    """
+    <?php
+
+    namespace Example2\PhpSpec\Extensions;
+
+    use PhpSpec\Event\SuiteEvent;
+    use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+
+    class MyEventSubscriber implements EventSubscriberInterface
+    {
+        private $io;
+
+        public function __construct($io)
+        {
+            $this->io = $io;
+        }
+
+        public static function getSubscribedEvents()
+        {
+            return ['afterSuite' => array('afterSuite', 11)];
+        }
+
+        public function afterSuite(SuiteEvent $event)
+        {
+            $this->io->writeln('Omg suite ran! :-)');
+        }
+    }
+
+    """
+    And the spec file "spec/Example2/DummySpec.php" contains:
+    """
+    <?php
+
+    namespace spec\Example2;
+
+    use PhpSpec\ObjectBehavior;
+    use Prophecy\Argument;
+
+    class DummySpec extends ObjectBehavior
+    {
+        function it_is_initializable()
+        {
+            $this->shouldHaveType('Example2\Dummy');
+        }
+    }
+
+    """
+    And the class file "src/Example2/Dummy.php" contains:
+    """
+    <?php
+
+    namespace Example2;
+
+    class Dummy
+    {
+    }
+
+    """
+    When I run phpspec
+    Then I should see "Omg suite ran! :-)"
