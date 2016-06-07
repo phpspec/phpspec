@@ -15,6 +15,7 @@ namespace PhpSpec\Console\Command;
 
 use Interop\Container\ContainerInterface;
 use PhpSpec\Console\Application;
+use PhpSpec\Container\CompositeContainer;
 use PhpSpec\Formatter\FatalPresenter;
 use PhpSpec\Process\Shutdown\UpdateConsoleAction;
 use PhpSpec\Container\ServiceContainer;
@@ -138,7 +139,7 @@ EOF
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $compositeContainer = $this->getApplication()->getCompositeContainer();
+        $compositeContainer = $this->getCompositeContainer();
         $configObject = $compositeContainer->getConfigObject();
         $serviceLocator = $compositeContainer->getServiceLocator();
         $lateConfigurationServiceLocator = $compositeContainer->getLocatorConfiguredMidExecution();
@@ -184,10 +185,10 @@ EOF
     }
 
     /**
-     * @return Application
+     * @return CompositeContainer
      */
-    public function getApplication()
+    public function getCompositeContainer()
     {
-        return parent::getApplication();
+        return $this->getApplication()->getCompositeContainer();
     }
 }
