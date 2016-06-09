@@ -160,7 +160,7 @@ Feature: Developer uses extension
     Then the suite should pass
 
 
-  Scenario: Extension using an extension with an event listener
+  Scenario: Using an extension with an event listener
     Given the config file contains:
     """
     extensions:
@@ -186,7 +186,7 @@ Feature: Developer uses extension
     }
 
     """
-    And the class file "src/Example1/PhpSpec/MatcherExtension/BeSevenMatcher.php" contains:
+    And the class file "src/Example2/PhpSpec/Extensions/MyEventSubscriber.php" contains:
     """
     <?php
 
@@ -206,7 +206,7 @@ Feature: Developer uses extension
 
         public static function getSubscribedEvents()
         {
-            return ['afterSuite' => array('afterSuite', 11)];
+            return ['afterSuite' => ['afterSuite', 11]];
         }
 
         public function afterSuite(SuiteEvent $event)
@@ -224,12 +224,13 @@ Feature: Developer uses extension
 
     use PhpSpec\ObjectBehavior;
     use Prophecy\Argument;
+    use Example2\Dummy;
 
     class DummySpec extends ObjectBehavior
     {
         function it_is_initializable()
         {
-            $this->shouldHaveType('Example2\Dummy');
+            $this->shouldHaveType(Dummy::class);
         }
     }
 
