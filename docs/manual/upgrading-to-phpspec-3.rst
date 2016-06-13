@@ -45,8 +45,7 @@ changes you will need to make in your code.
   *PhpSpec\Formatter\Presenter\Presenter*
 - *PhpSpec\CodeGenerator\Generator\GeneratorInterface* is now
   *PhpSpec\CodeGenerator\Generator\Generator*
-- *PhpSpec\Extension\ExtensionInterface* is now *PhpSpec\Extension\Extension*
-- *PhpSpec\Extension\ExtensionInterface* is now *PhpSpec\Extension\Extension*
+- *PhpSpec\Extension\ExtensionInterface* is now *PhpSpec\Extension*
 - *Phpspec\CodeAnalysis\AccessInspectorInterface* is now *Phpspec\CodeAnalysis\AccessInspector*
 - *Phpspec\Event\EventInterface* is now *Phpspec\Event\PhpSpecEvent*
 - *PhpSpec\Formatter\Presenter\Differ\EngineInterface* is now *PhpSpec\Formatter\Presenter\Differ\DifferEngine*
