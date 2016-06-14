@@ -140,10 +140,11 @@ Feature: Developer generates a spec
   Scenario: Generating a spec for a class with psr4 prefix
     Given the config file contains:
       """
-      suites:
-        behat_suite:
-          namespace: Behat\CodeGeneration
-          psr4_prefix: Behat\CodeGeneration
+      phpspec:
+        suites:
+          behat_suite:
+            namespace: Behat\CodeGeneration
+            psr4_prefix: Behat\CodeGeneration
       """
     When I start describing the "Behat/CodeGeneration/Markdown" class
     Then a new spec should be generated in the "spec/MarkdownSpec.php":

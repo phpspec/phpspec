@@ -195,10 +195,11 @@ Feature: Developer runs the specs
       """
     And the config file located in "Psr4" contains:
       """
-      suites:
-        behat_suite:
-          namespace: Psr4
-          psr4_prefix: Psr4
+      phpspec:
+        suites:
+          behat_suite:
+            namespace: Psr4
+            psr4_prefix: Psr4
       """
     When I run phpspec with the spec "Psr4\Runner\TestNamespace\Example2" and the config "Psr4/phpspec.yml"
     Then the suite should pass

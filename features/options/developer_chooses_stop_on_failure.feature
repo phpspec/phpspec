@@ -50,7 +50,8 @@ Feature: Developer chooses stop on failure
   Scenario: stop-on-failure is specified in the config
     Given the config file contains:
       """
-      stop_on_failure: true
+      phpspec:
+        stop_on_failure: true
       """
     And the spec file "spec/SkipOnFailure/SpecExample2/FirstFailSpec.php" contains:
       """
@@ -98,7 +99,8 @@ Feature: Developer chooses stop on failure
   Scenario: stop-on-failure at command line overrides config
     Given the config file contains:
       """
-      stop_on_failure: false
+      phpspec:
+        stop_on_failure: false
       """
     And the spec file "spec/SkipOnFailure/SpecExample3/FirstFailSpec.php" contains:
       """

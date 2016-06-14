@@ -6,12 +6,13 @@ Feature: Developer runs specs with the given specs path configured to be the sam
   Scenario: Reporting success when running a spec with correctly implemented class, passing spec path as an argument
     Given the config file contains:
       """
-      suites:
-        code_generator_suite:
-          namespace: Runner\SpecPathExample
-          psr4_prefix: Runner\SpecPathExample
-          src_path: src/Runner/SpecPathExample
-          spec_path: src/Runner/SpecPathExample
+      phpspec:
+        suites:
+          code_generator_suite:
+            namespace: Runner\SpecPathExample
+            psr4_prefix: Runner\SpecPathExample
+            src_path: src/Runner/SpecPathExample
+            spec_path: src/Runner/SpecPathExample
 
       """
     And the spec file "src/Runner/SpecPathExample/spec/MarkdownSpec.php" contains:

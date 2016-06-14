@@ -30,7 +30,8 @@ Feature: Developer chooses no code generation
   Scenario: code-generation is specified in the config
     Given the config file contains:
       """
-      code_generation: false
+      phpspec:
+        code_generation: false
       """
     And the spec file "spec/NoCodeGeneration/SpecExample2/NewClassSpec.php" contains:
       """
@@ -57,7 +58,8 @@ Feature: Developer chooses no code generation
   Scenario: code-generation on the command line takes priority
     Given the config file contains:
       """
-      code_generation: true
+      phpspec:
+        code_generation: true
       """
     And the spec file "spec/NoCodeGeneration/SpecExample3/NewClassSpec.php" contains:
       """

@@ -56,7 +56,8 @@ Feature: Developer generates a class
     Given I have started describing the "CodeGeneration/RerunExample5/Markdown" class
     And the config file contains:
       """
-      rerun: false
+      phpspec:
+        rerun: false
       """
     When I run phpspec and answer "y" when asked if I want to generate the code
     Then the tests should not be rerun

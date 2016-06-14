@@ -70,10 +70,11 @@ Feature: Developer generates a method
       """
     And the config file contains:
       """
-      suites:
-        behat_suite:
-          namespace: Behat\Tests\MyNamespace
-          psr4_prefix: Behat\Tests
+      phpspec:
+        suites:
+          behat_suite:
+            namespace: Behat\Tests\MyNamespace
+            psr4_prefix: Behat\Tests
       """
     And the class file "src/MyNamespace/Prefix.php" contains:
       """
