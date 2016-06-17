@@ -33,11 +33,46 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     }
 
     /**
+     * @Given I have started describing the :class class with the :pathToConfig custom config
+     */
+    public function iHaveStartedDescribingTheClassWithTheCustomConfig($class, $pathToConfig)
+    {
+        $command = $this->buildPhpSpecCmd() . ' describe -c ' . $pathToConfig . ' ' . escapeshellarg($class);
+
+        $process = new Process($command);
+
+        $process->run();
+
+        if ($process->getExitCode() !== 0) {
+            throw new \Exception('The describe process ended with an error');
+        }
+    }
+
+    /**
      * @When I run phpspec and answer :answer when asked if I want to generate the code
      */
     public function iRunPhpspecAndAnswerWhenAskedIfIWantToGenerateTheCode($answer)
     {
         $command = sprintf('%s %s', $this->buildPhpSpecCmd(), 'run');
+        $env = array(
+            'SHELL_INTERACTIVE' => true,
+            'HOME' => getenv('HOME'),
+            'PATH' => getenv('PATH'),
+        );
+
+        $this->process = $process = new Process($command);
+
+        $process->setEnv($env);
+        $process->setInput($answer);
+        $process->run();
+    }
+
+    /**
+     * @When I run phpspec with the :pathToConfig custom config and answer :answer when asked if I want to generate the code
+     */
+    public function iRunPhpspecWithTheCustomConfigAndAnswerWhenAskedIfIWantToGenerateTheCode($pathToConfig, $answer)
+    {
+        $command = $this->buildPhpSpecCmd() . ' run -c ' . $pathToConfig;
         $env = array(
             'SHELL_INTERACTIVE' => true,
             'HOME' => getenv('HOME'),

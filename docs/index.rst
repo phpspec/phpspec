@@ -41,6 +41,7 @@ Learn more from :doc:`the documentation <manual/introduction>`.
    manual/prophet-objects
    manual/let-and-letgo
    manual/upgrading-to-phpspec-3
+   manual/writing-extensions.rst
 
 .. toctree::
    :hidden:
@@ -53,3 +54,4 @@ Learn more from :doc:`the documentation <manual/introduction>`.
    cookbook/templates
    cookbook/extensions
    cookbook/wrapped-objects
+   manual/writing-extensions.rst

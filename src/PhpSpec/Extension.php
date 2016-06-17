@@ -13,6 +13,8 @@
 
 namespace PhpSpec;
 
+use Interop\Container\ContainerInterface;
+
 /**
  * Interface Extension is used for PhpSpec extensions to interface with PhpSpec
  * through the service container
@@ -20,7 +22,8 @@ namespace PhpSpec;
 interface Extension
 {
     /**
-     * @param ServiceContainer $container
+     * @param ContainerInterface $container
+     * @return ContainerInterface|null
      */
-    public function load(ServiceContainer $container);
+    public function load(ContainerInterface $container);
 }

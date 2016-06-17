@@ -11,15 +11,22 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec;
+namespace PhpSpec\Container;
 
+use Interop\Container\ContainerInterface;
 use InvalidArgumentException;
+use PhpSpec\Container\ServiceContainer\ConfigObject;
+use PhpSpec\Container\ServiceContainer\DiContainer;
+use PhpSpec\Container\ServiceContainer\LocatorConfiguredMidExecution;
+use PhpSpec\Container\ServiceContainer\Registry;
+use PhpSpec\Container\ServiceContainer\ServiceLocator;
+use UltraLite\Container\Exception\DiServiceNotFound;
 
 /**
  * The Service Container is a lightweight container based on Pimple to handle
  * object creation of PhpSpec services.
  */
-class ServiceContainer
+class ServiceContainer implements DiContainer, Registry, ServiceLocator, ConfigObject, LocatorConfiguredMidExecution
 {
     /**
      * @var array
@@ -40,6 +47,11 @@ class ServiceContainer
      * @var array
      */
     private $configurators = array();
+
+    /**
+     * @var ContainerInterface
+     */
+    private $compositeContainer;
 
     /**
      * Sets a param in the container
@@ -104,15 +116,8 @@ class ServiceContainer
      *
      * @throws \InvalidArgumentException if service is not a callable
      */
-    public function setShared($id, $callable)
+    public function setShared($id, callable $callable)
     {
-        if (!is_callable($callable)) {
-            throw new InvalidArgumentException(sprintf(
-                'Service should be callable, "%s" given.',
-                gettype($callable)
-            ));
-        }
-
         $this->set($id, function ($container) use ($callable) {
             static $instance;
 
@@ -127,33 +132,33 @@ class ServiceContainer
     /**
      * Retrieves a service from the container
      *
-     * @param string $id
+     * @param string $serviceId
      *
-     * @return object
+     * @return mixed
      *
-     * @throws \InvalidArgumentException if service is not defined
+     * @throws DiServiceNotFound
      */
-    public function get($id)
+    public function get($serviceId)
     {
-        if (!array_key_exists($id, $this->services)) {
-            throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
+        if (!array_key_exists($serviceId, $this->services)) {
+            throw DiServiceNotFound::createFromServiceId($serviceId);
         }
 
-        $value = $this->services[$id];
+        $value = $this->services[$serviceId];
         if (is_callable($value)) {
-            return call_user_func($value, $this);
+            return call_user_func($value, $this->compositeContainer);
         }
 
         return $value;
     }
 
     /**
-     * @param $id
+     * @param $serviceId
      * @return bool
      */
-    public function isDefined($id)
+    public function has($serviceId)
     {
-        return array_key_exists($id, $this->services);
+        return array_key_exists($serviceId, $this->services);
     }
 
     /**
@@ -223,7 +228,7 @@ class ServiceContainer
     public function configure()
     {
         foreach ($this->configurators as $configurator) {
-            call_user_func($configurator, $this);
+            call_user_func($configurator, $this->compositeContainer);
         }
     }
 
@@ -244,5 +249,10 @@ class ServiceContainer
         $prefix = implode('.', $parts);
 
         return array($prefix, $sid);
+    }
+
+    public function setCompositeContainer(ContainerInterface $compositeContainer)
+    {
+        $this->compositeContainer = $compositeContainer;
     }
 }

@@ -3,7 +3,7 @@ Feature: Developer generates a class
   I want to automate creating classes
   In order to avoid repetitive tasks and interruptions in development flow
 
-  @smoke
+  @smoke @isolated
   Scenario: Generating a class
     Given I have started describing the "CodeGeneration/ClassExample1/Markdown" class
     When I run phpspec and answer "y" when asked if I want to generate the code
@@ -19,7 +19,7 @@ Feature: Developer generates a class
 
       """
 
-  @issue269
+  @issue269 @isolated
   Scenario: Generating a class with psr4 prefix
     Given the config file contains:
     """
@@ -42,7 +42,7 @@ Feature: Developer generates a class
 
     """
 
-  @issue127
+  @issue127 @isolated
   Scenario: Generating a class with PSR0 must convert classname underscores to directory separator
     Given I have started describing the "CodeGeneration/ClassExample1/Text_Markdown" class
     When I run phpspec and answer "y" when asked if I want to generate the code
@@ -58,7 +58,7 @@ Feature: Developer generates a class
 
       """
 
-  @issue127
+  @issue127 @isolated
   Scenario: Generating a class with PSR0 must not convert namespace underscores to directory separator
     Given I have started describing the "CodeGeneration/Class_Example2/Text_Markdown" class
     When I run phpspec and answer "y" when asked if I want to generate the code
@@ -74,6 +74,7 @@ Feature: Developer generates a class
 
       """
 
+  @isolated
   Scenario: Generating a class when expectations on collaborator are defined
     Given the spec file "spec/CodeGeneration/MethodExample2/ForgotPasswordSpec.php" contains:
     """

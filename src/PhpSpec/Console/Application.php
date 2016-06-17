@@ -13,6 +13,9 @@
 
 namespace PhpSpec\Console;
 
+use Interop\Container\ContainerInterface;
+use PhpSpec\Container\CompositeContainer;
+use PhpSpec\Container\ContainerBuilder;
 use PhpSpec\Loader\StreamWrapper;
 use PhpSpec\Process\Context\JsonExecutionContext;
 use Symfony\Component\Console\Application as BaseApplication;
@@ -20,7 +23,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
-use PhpSpec\ServiceContainer;
+use PhpSpec\Container\ServiceContainer;
+use PhpSpec\Container\ServiceContainer\ConfigObject;
 use PhpSpec\Extension;
 use RuntimeException;
 
@@ -30,25 +34,18 @@ use RuntimeException;
 class Application extends BaseApplication
 {
     /**
-     * @var ServiceContainer
+     * @var CompositeContainer
      */
-    private $container;
+    private $compositeContainer;
 
     /**
      * @param string $version
      */
     public function __construct($version)
     {
-        $this->container = new ServiceContainer();
+        $containerBuilder = new ContainerBuilder();
+        $this->compositeContainer = $containerBuilder->buildContainer();
         parent::__construct('phpspec', $version);
-    }
-
-    /**
-     * @return ServiceContainer
-     */
-    public function getContainer()
-    {
-        return $this->container;
     }
 
     /**
@@ -60,29 +57,29 @@ class Application extends BaseApplication
     public function doRun(InputInterface $input, OutputInterface $output)
     {
         $helperSet = $this->getHelperSet();
-        $this->container->set('console.input', $input);
-        $this->container->set('console.output', $output);
-        $this->container->set('console.helper_set', $helperSet);
+        $this->compositeContainer->getRegistry()->set('console.input', $input);
+        $this->compositeContainer->getRegistry()->set('console.output', $output);
+        $this->compositeContainer->getRegistry()->set('console.helper_set', $helperSet);
 
-        $this->container->setShared('process.executioncontext', function () {
+        $this->compositeContainer->getRegistry()->setShared('process.executioncontext', function () {
             return JsonExecutionContext::fromEnv($_SERVER);
         });
 
-        $assembler = new ContainerAssembler();
-        $assembler->build($this->container);
+        $this->loadConfigurationFile($input, $this->compositeContainer->getConfigObject(), $this->compositeContainer->getContainerPassedToExtensions());
 
-        $this->loadConfigurationFile($input, $this->container);
-
-        foreach ($this->container->getByPrefix('console.commands') as $command) {
+        foreach ($this->compositeContainer->getServiceLocator()->getByPrefix('console.commands') as $command) {
             $this->add($command);
         }
 
-        $this->setDispatcher($this->container->get('console_event_dispatcher'));
+        $eventDispatcher = $this->compositeContainer->getServiceLocator()->get('console_event_dispatcher');
+        $eventSubscribers = $this->compositeContainer->getServiceLocator()->get('phpspec.console-event-subscribers');
+        array_map([$eventDispatcher, 'addSubscriber'], $eventSubscribers);
+        $this->setDispatcher($eventDispatcher);
 
-        $this->container->get('console.io')->setConsoleWidth($this->getTerminalWidth());
+        $this->compositeContainer->getServiceLocator()->get('console.io')->setConsoleWidth($this->getTerminalWidth());
 
         StreamWrapper::reset();
-        foreach ($this->container->getByPrefix('loader.resource_loader.spec_transformer') as $transformer) {
+        foreach ($this->compositeContainer->getServiceLocator()->getByPrefix('loader.resource_loader.spec_transformer') as $transformer) {
             StreamWrapper::addTransformer($transformer);
         }
         StreamWrapper::register();
@@ -124,12 +121,13 @@ class Application extends BaseApplication
     }
 
     /**
-     * @param InputInterface   $input
-     * @param ServiceContainer $container
+     * @param InputInterface     $input
+     * @param ConfigObject       $configObject
+     * @param CompositeContainer $containerPassedToExtensions
      *
      * @throws \RuntimeException
      */
-    protected function loadConfigurationFile(InputInterface $input, ServiceContainer $container)
+    protected function loadConfigurationFile(InputInterface $input, ConfigObject $configObject, CompositeContainer $containerPassedToExtensions)
     {
         $config = $this->parseConfigurationFile($input);
 
@@ -145,10 +143,13 @@ class Application extends BaseApplication
                         ));
                     }
 
-                    $extension->load($container);
+                    $containerReceived = $extension->load($containerPassedToExtensions);
+                    if ($containerReceived instanceof ContainerInterface) {
+                        $containerPassedToExtensions->addPriorityContainer($containerReceived);
+                    }
                 }
             } else {
-                $container->setParam($key, $val);
+                $configObject->setParam($key, $val);
             }
         }
     }
@@ -226,5 +227,13 @@ class Application extends BaseApplication
         }
 
         return $config;
+    }
+
+    /**
+     * @return CompositeContainer
+     */
+    public function getCompositeContainer()
+    {
+        return $this->compositeContainer;
     }
 }

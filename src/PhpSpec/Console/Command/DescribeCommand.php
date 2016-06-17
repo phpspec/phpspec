@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Console\Command;
 
+use PhpSpec\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
@@ -59,12 +60,21 @@ EOF
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $container = $this->getApplication()->getContainer();
-        $container->configure();
+        $serviceLocator = $this->getApplication()->getCompositeContainer()->getServiceLocator();
+        $lateConfigurationServiceContainer = $this->getApplication()->getCompositeContainer()->getLocatorConfiguredMidExecution();
+        $lateConfigurationServiceContainer->configure();
 
         $classname = $input->getArgument('class');
-        $resource  = $container->get('locator.resource_manager')->createResource($classname);
+        $resource  = $serviceLocator->get('locator.resource_manager')->createResource($classname);
 
-        $container->get('code_generator')->generate($resource, 'specification');
+        $serviceLocator->get('code_generator')->generate($resource, 'specification');
+    }
+
+    /**
+     * @return Application
+     */
+    public function getApplication()
+    {
+        return parent::getApplication();
     }
 }
