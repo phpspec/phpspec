@@ -59,4 +59,24 @@ class ExpectationFactorySpec extends ObjectBehavior
 
         $expectation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\NegativeThrow');
     }
+
+    function it_creates_positive_trigger_expectations(MatcherManager $matchers, Matcher $matcher, Subject $subject)
+    {
+        $matchers->find(Argument::cetera())->willReturn($matcher);
+
+        $subject->__call('getWrappedObject', array())->willReturn(new \stdClass());
+        $expectation = $this->create('shouldTrigger', $subject);
+
+        $expectation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\PositiveTrigger');
+    }
+
+    function it_creates_negative_trigger_expectations(MatcherManager $matchers, Matcher $matcher, Subject $subject)
+    {
+        $matchers->find(Argument::cetera())->willReturn($matcher);
+
+        $subject->__call('getWrappedObject', array())->willReturn(new \stdClass());
+        $expectation = $this->create('shouldNotTrigger', $subject);
+
+        $expectation->shouldHaveType('PhpSpec\Wrapper\Subject\Expectation\NegativeTrigger');
+    }
 }
