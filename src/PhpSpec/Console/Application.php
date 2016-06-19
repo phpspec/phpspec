@@ -136,7 +136,7 @@ class Application extends BaseApplication
         foreach ($config as $key => $val) {
             if ('extensions' === $key && is_array($val)) {
                 foreach ($val as $class => $extensionConfig) {
-                    $this->loadExtension($container, $class, $extensionConfig);
+                    $this->loadExtension($container, $class, $extensionConfig ?: []);
                 }
             } else {
                 $container->setParam($key, $val);
@@ -144,32 +144,21 @@ class Application extends BaseApplication
         }
     }
 
-    private function loadExtension(ServiceContainer $container, $class, $extensionConfig)
+    private function loadExtension(ServiceContainer $container, $extensionClass, $config)
     {
-        if (is_integer($class)) {
-            $class = $extensionConfig;
-            $extensionConfig = array();
+        if (!class_exists($extensionClass)) {
+            throw new RuntimeException(sprintf('Extension class `%s` does not exist.', $extensionClass));
         }
 
-        if (!class_exists($class)) {
-            throw new RuntimeException(sprintf('`%s` must be an existent class.', $class));
-        }
-
-        if (!is_array($extensionConfig) && null !== $extensionConfig) {
+        if (!is_array($config)) {
             throw new RuntimeException('Extension configuration must be an array or null.');
         }
 
-        if (is_a($class, 'PhpSpec\Extension\ExtensionInterface', true)) {
-            $extension = new $class;
-            return $extension->load($container);
+        if (!is_a($extensionClass, Extension::class, true)) {
+            throw new RuntimeException(sprintf('Extension class `%s` must implement Extension interface', $extensionClass));
         }
 
-        if (is_a($class, 'PhpSpec\Extension\ParametrizedExtensionInterface', true)) {
-            $extension = new $class;
-            return $extension->load($container, $extensionConfig ?: array());
-        }
-
-        throw new RuntimeException(sprintf('`%s` class must implement ExtensionInterface or ParametrizedExtensionInterface.', $class));
+        return (new $extensionClass)->load($container, $config);
     }
 
     /**
