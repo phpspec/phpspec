@@ -154,9 +154,8 @@ class Application extends BaseApplication
 
                     $extension->load($container);
                 }
-            } else {
-                $container->setParam($key, $val);
             }
+            $container->setParam($key, $val);
         }
     }
 
