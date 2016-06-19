@@ -138,9 +138,8 @@ class Application extends BaseApplication
                 foreach ($val as $class => $extensionConfig) {
                     $this->loadExtension($container, $class, $extensionConfig ?: []);
                 }
-            } else {
-                $container->setParam($key, $val);
             }
+            $container->setParam($key, $val);
         }
     }
 
