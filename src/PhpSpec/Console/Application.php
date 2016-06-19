@@ -157,7 +157,7 @@ class Application extends BaseApplication
             throw new RuntimeException(sprintf('Extension class `%s` must implement Extension interface', $extensionClass));
         }
 
-        return (new $extensionClass)->load($container, $config);
+        (new $extensionClass)->load($container, $config);
     }
 
     /**
