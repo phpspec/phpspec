@@ -66,37 +66,27 @@ class ServiceContainer
     }
 
     /**
-     * Sets a object or a callable for the object creation. A callable will be invoked
-     * every time get is called.
+     * Sets a object to be used as a service
      *
-     * @param string          $id
-     * @param object|callable $value
+     * @param string $id
+     * @param object $value
      *
      * @throws \InvalidArgumentException if service is not an object or callable
      */
     public function set($id, $value)
     {
-        if (!is_object($value) && !is_callable($value)) {
+        if (!is_object($value)) {
             throw new InvalidArgumentException(sprintf(
-                'Service should be callable or object, but %s given.',
+                'Service should be an object, but %s given.',
                 gettype($value)
             ));
         }
 
-        list($prefix, $sid) = $this->getPrefixAndSid($id);
-        if ($prefix) {
-            if (!isset($this->prefixed[$prefix])) {
-                $this->prefixed[$prefix] = array();
-            }
-
-            $this->prefixed[$prefix][$sid] = $id;
-        }
-
-        $this->services[$id] = $value;
+        $this->addToIndex($id, $value);
     }
 
     /**
-     * Sets a callable for the object creation. The same object will
+     * Sets a callable for the service creation. The same service will
      * be returned every time
      *
      * @param string   $id
@@ -113,7 +103,7 @@ class ServiceContainer
             ));
         }
 
-        $this->set($id, function ($container) use ($callable) {
+        $this->addToIndex($id, function ($container) use ($callable) {
             static $instance;
 
             if (null === $instance) {
@@ -250,5 +240,25 @@ class ServiceContainer
         $prefix = implode('.', $parts);
 
         return array($prefix, $sid);
+    }
+
+    /**
+     * Adds a service or service definition to the index
+     *
+     * @param string $id
+     * @param mixed  $value
+     */
+    private function addToIndex($id, $value)
+    {
+        list($prefix, $sid) = $this->getPrefixAndSid($id);
+        if ($prefix) {
+            if (!isset($this->prefixed[$prefix])) {
+                $this->prefixed[$prefix] = array();
+            }
+
+            $this->prefixed[$prefix][$sid] = $id;
+        }
+
+        $this->services[$id] = $value;
     }
 }
