@@ -150,7 +150,7 @@ EOF
 
         if ($currentFormatter instanceof FatalPresenter) {
 
-            $container->define('process.shutdown.update_console_action', function(IndexedServiceContainer $c) use ($currentFormatter) {
+            $container->define('process.shutdown.update_console_action', function (IndexedServiceContainer $c) use ($currentFormatter) {
                 return new UpdateConsoleAction(
                     $c->get('current_example'),
                     $currentFormatter

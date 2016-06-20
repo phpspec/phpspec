@@ -429,16 +429,16 @@ final class ContainerAssembler
                 return new Loader\Transformer\TypeHintRewriter($c->get('analysis.typehintrewriter'));
             });
         }
-        $container->define('analysis.typehintrewriter', function($c) {
+        $container->define('analysis.typehintrewriter', function ($c) {
             return new TokenizedTypeHintRewriter(
                 $c->get('loader.transformer.typehintindex'),
                 $c->get('analysis.namespaceresolver')
             );
         });
-        $container->define('loader.transformer.typehintindex', function() {
+        $container->define('loader.transformer.typehintindex', function () {
             return new Loader\Transformer\InMemoryTypeHintIndex();
         });
-        $container->define('analysis.namespaceresolver.tokenized', function() {
+        $container->define('analysis.namespaceresolver.tokenized', function () {
             return new TokenizedNamespaceResolver();
         });
         $container->define('analysis.namespaceresolver', function ($c) {
@@ -614,15 +614,15 @@ final class ContainerAssembler
             return new Wrapper\Unwrapper();
         });
 
-        $container->define('access_inspector', function($c) {
+        $container->define('access_inspector', function ($c) {
             return $c->get('access_inspector.magic');
         });
 
-        $container->define('access_inspector.magic', function($c) {
+        $container->define('access_inspector.magic', function ($c) {
             return new MagicAwareAccessInspector($c->get('access_inspector.visibility'));
         });
 
-        $container->define('access_inspector.visibility', function() {
+        $container->define('access_inspector.visibility', function () {
             return new VisibilityAccessInspector();
         });
     }
@@ -748,7 +748,7 @@ final class ContainerAssembler
    */
     private function setupShutdown(IndexedServiceContainer $container)
     {
-        $container->define('process.shutdown', function() {
+        $container->define('process.shutdown', function () {
             return new Shutdown();
         });
     }
