@@ -76,15 +76,15 @@ final class PresenterAssembler
      */
     private function assembleDifferEngines(ServiceContainer $container)
     {
-        $container->set('formatter.presenter.differ.engines.string', function () {
+        $container->define('formatter.presenter.differ.engines.string', function () {
             return new StringEngine();
         });
 
-        $container->set('formatter.presenter.differ.engines.array', function () {
+        $container->define('formatter.presenter.differ.engines.array', function () {
             return new ArrayEngine();
         });
 
-        $container->set('formatter.presenter.differ.engines.object', function (ServiceContainer $c) {
+        $container->define('formatter.presenter.differ.engines.object', function (ServiceContainer $c) {
             return new ObjectEngine(
                 new Exporter(),
                 $c->get('formatter.presenter.differ.engines.string')

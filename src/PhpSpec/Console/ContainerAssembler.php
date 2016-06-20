@@ -242,7 +242,7 @@ final class ContainerAssembler
             return $generator;
         });
 
-        $container->set('code_generator.generators.specification', function (ServiceContainer $c) {
+        $container->define('code_generator.generators.specification', function (ServiceContainer $c) {
             $specificationGenerator =  new CodeGenerator\Generator\SpecificationGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
@@ -256,7 +256,7 @@ final class ContainerAssembler
                 $c->get('util.filesystem')
             );
         });
-        $container->set('code_generator.generators.class', function (ServiceContainer $c) {
+        $container->define('code_generator.generators.class', function (ServiceContainer $c) {
             $classGenerator = new CodeGenerator\Generator\ClassGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
@@ -270,7 +270,7 @@ final class ContainerAssembler
                 $c->get('util.filesystem')
             );
         });
-        $container->set('code_generator.generators.interface', function (ServiceContainer $c) {
+        $container->define('code_generator.generators.interface', function (ServiceContainer $c) {
             $interfaceGenerator = new CodeGenerator\Generator\InterfaceGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
@@ -284,10 +284,10 @@ final class ContainerAssembler
                 $c->get('util.filesystem')
             );
         });
-        $container->set('code_generator.writers.tokenized', function () {
+        $container->define('code_generator.writers.tokenized', function () {
             return new CodeGenerator\Writer\TokenizedCodeWriter(new ClassFileAnalyser());
         });
-        $container->set('code_generator.generators.method', function (ServiceContainer $c) {
+        $container->define('code_generator.generators.method', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\MethodGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
@@ -295,14 +295,14 @@ final class ContainerAssembler
                 $c->get('code_generator.writers.tokenized')
             );
         });
-        $container->set('code_generator.generators.methodSignature', function (ServiceContainer $c) {
+        $container->define('code_generator.generators.methodSignature', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\MethodSignatureGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem')
             );
         });
-        $container->set('code_generator.generators.returnConstant', function (ServiceContainer $c) {
+        $container->define('code_generator.generators.returnConstant', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\ReturnConstantGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
@@ -310,7 +310,7 @@ final class ContainerAssembler
             );
         });
 
-        $container->set('code_generator.generators.named_constructor', function (ServiceContainer $c) {
+        $container->define('code_generator.generators.named_constructor', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\NamedConstructorGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
@@ -319,7 +319,7 @@ final class ContainerAssembler
             );
         });
 
-        $container->set('code_generator.generators.private_constructor', function (ServiceContainer $c) {
+        $container->define('code_generator.generators.private_constructor', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\PrivateConstructorGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
@@ -578,22 +578,22 @@ final class ContainerAssembler
             return $runner;
         });
 
-        $container->set('runner.maintainers.errors', function (ServiceContainer $c) {
+        $container->define('runner.maintainers.errors', function (ServiceContainer $c) {
             return new Runner\Maintainer\ErrorMaintainer(
                 $c->getParam('runner.maintainers.errors.level', E_ALL ^ E_STRICT)
             );
         });
-        $container->set('runner.maintainers.collaborators', function (ServiceContainer $c) {
+        $container->define('runner.maintainers.collaborators', function (ServiceContainer $c) {
             return new Runner\Maintainer\CollaboratorsMaintainer(
                 $c->get('unwrapper'),
                 $c->get('loader.transformer.typehintindex')
             );
         });
-        $container->set('runner.maintainers.let_letgo', function () {
+        $container->define('runner.maintainers.let_letgo', function () {
             return new Runner\Maintainer\LetAndLetgoMaintainer();
         });
 
-        $container->set('runner.maintainers.matchers', function (ServiceContainer $c) {
+        $container->define('runner.maintainers.matchers', function (ServiceContainer $c) {
             $matchers = $c->getByPrefix('matchers');
             return new Runner\Maintainer\MatchersMaintainer(
                 $c->get('formatter.presenter'),
@@ -601,7 +601,7 @@ final class ContainerAssembler
             );
         });
 
-        $container->set('runner.maintainers.subject', function (ServiceContainer $c) {
+        $container->define('runner.maintainers.subject', function (ServiceContainer $c) {
             return new Runner\Maintainer\SubjectMaintainer(
                 $c->get('formatter.presenter'),
                 $c->get('unwrapper'),
@@ -632,46 +632,46 @@ final class ContainerAssembler
      */
     private function setupMatchers(ServiceContainer $container)
     {
-        $container->set('matchers.identity', function (ServiceContainer $c) {
+        $container->define('matchers.identity', function (ServiceContainer $c) {
             return new Matcher\IdentityMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.comparison', function (ServiceContainer $c) {
+        $container->define('matchers.comparison', function (ServiceContainer $c) {
             return new Matcher\ComparisonMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.throwm', function (ServiceContainer $c) {
+        $container->define('matchers.throwm', function (ServiceContainer $c) {
             return new Matcher\ThrowMatcher($c->get('unwrapper'), $c->get('formatter.presenter'), new ReflectionFactory());
         });
-        $container->set('matchers.type', function (ServiceContainer $c) {
+        $container->define('matchers.type', function (ServiceContainer $c) {
             return new Matcher\TypeMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.object_state', function (ServiceContainer $c) {
+        $container->define('matchers.object_state', function (ServiceContainer $c) {
             return new Matcher\ObjectStateMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.scalar', function (ServiceContainer $c) {
+        $container->define('matchers.scalar', function (ServiceContainer $c) {
             return new Matcher\ScalarMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.array_count', function (ServiceContainer $c) {
+        $container->define('matchers.array_count', function (ServiceContainer $c) {
             return new Matcher\ArrayCountMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.array_key', function (ServiceContainer $c) {
+        $container->define('matchers.array_key', function (ServiceContainer $c) {
             return new Matcher\ArrayKeyMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.array_key_with_value', function (ServiceContainer $c) {
+        $container->define('matchers.array_key_with_value', function (ServiceContainer $c) {
             return new Matcher\ArrayKeyValueMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.array_contain', function (ServiceContainer $c) {
+        $container->define('matchers.array_contain', function (ServiceContainer $c) {
             return new Matcher\ArrayContainMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.string_start', function (ServiceContainer $c) {
+        $container->define('matchers.string_start', function (ServiceContainer $c) {
             return new Matcher\StringStartMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.string_end', function (ServiceContainer $c) {
+        $container->define('matchers.string_end', function (ServiceContainer $c) {
             return new Matcher\StringEndMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.string_regex', function (ServiceContainer $c) {
+        $container->define('matchers.string_regex', function (ServiceContainer $c) {
             return new Matcher\StringRegexMatcher($c->get('formatter.presenter'));
         });
-        $container->set('matchers.string_contain', function (ServiceContainer $c) {
+        $container->define('matchers.string_contain', function (ServiceContainer $c) {
             return new Matcher\StringContainMatcher($c->get('formatter.presenter'));
         });
     }
