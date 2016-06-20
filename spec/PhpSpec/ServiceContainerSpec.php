@@ -33,18 +33,6 @@ class ServiceContainerSpec extends ObjectBehavior
         $this->shouldThrow('InvalidArgumentException')->duringGet('unexisting');
     }
 
-    function it_evaluates_factory_function_set_as_service()
-    {
-        $this->set('random_number', function () { return rand(); });
-        $number1 = $this->get('random_number');
-        $number2 = $this->get('random_number');
-
-        $number1->shouldBeInteger();
-        $number2->shouldBeInteger();
-
-        $number2->shouldNotBe($number1);
-    }
-
     function it_evaluates_factory_function_only_once_for_shared_services()
     {
         $this->setShared('random_number', function () { return rand(); });
