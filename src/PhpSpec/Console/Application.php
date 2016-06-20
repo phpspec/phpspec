@@ -26,8 +26,10 @@ use RuntimeException;
 
 /**
  * The command line application entry point
+ *
+ * @Internal
  */
-class Application extends BaseApplication
+final class Application extends BaseApplication
 {
     /**
      * @var ServiceContainer

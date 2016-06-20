@@ -37,7 +37,10 @@ use PhpSpec\Formatter\Presenter\Value\TruncatingStringTypePresenter;
 use PhpSpec\ServiceContainer;
 use SebastianBergmann\Exporter\Exporter;
 
-class PresenterAssembler
+/**
+ * @Internal
+ */
+final class PresenterAssembler
 {
     /**
      * @param ServiceContainer $container
