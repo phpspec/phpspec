@@ -84,7 +84,13 @@ final class IndexedServiceContainer implements ServiceContainer
             ));
         }
 
-        $this->addToIndex($id, $value, $tags);
+        $this->addToIndex(
+            $id,
+            function() use ($value) {
+                return $value;
+            },
+            $tags
+        );
     }
 
     /**
@@ -136,12 +142,7 @@ final class IndexedServiceContainer implements ServiceContainer
             throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
         }
 
-        $value = $this->services[$id];
-        if (is_callable($value)) {
-            return call_user_func($value, $this);
-        }
-
-        return $value;
+        return call_user_func($this->services[$id], $this);
     }
 
     /**

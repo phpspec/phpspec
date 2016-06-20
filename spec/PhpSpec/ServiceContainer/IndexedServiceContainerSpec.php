@@ -72,6 +72,12 @@ class IndexedServiceContainerSpec extends ObjectBehavior
         $number2->shouldBe($number1);
     }
 
+    function it_does_not_evaluate_callables_that_are_set()
+    {
+        $this->set('some_service', function(){ return 100; });
+        $this->get('some_service')->shouldNotBe(100);
+    }
+
     function it_provides_a_way_to_remove_service_by_key($service)
     {
         $this->set('collection1.some_service', $service);

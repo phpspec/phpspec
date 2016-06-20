@@ -396,7 +396,7 @@ final class ContainerAssembler
                     mkdir($config['spec_path'], 0777, true);
                 }
 
-                $c->set(
+                $c->define(
                     sprintf('locator.locators.%s_suite', $name),
                     function (IndexedServiceContainer $c) use ($config) {
                         return new Locator\PSR0\PSR0Locator(
@@ -457,7 +457,7 @@ final class ContainerAssembler
      */
     protected function setupFormatter(IndexedServiceContainer $container)
     {
-        $container->set(
+        $container->define(
             'formatter.formatters.progress',
             function (IndexedServiceContainer $c) {
                 return new SpecFormatter\ProgressFormatter(
@@ -467,7 +467,7 @@ final class ContainerAssembler
                 );
             }
         );
-        $container->set(
+        $container->define(
             'formatter.formatters.pretty',
             function (IndexedServiceContainer $c) {
                 return new SpecFormatter\PrettyFormatter(
@@ -477,7 +477,7 @@ final class ContainerAssembler
                 );
             }
         );
-        $container->set(
+        $container->define(
             'formatter.formatters.junit',
             function (IndexedServiceContainer $c) {
                 return new SpecFormatter\JUnitFormatter(
@@ -487,7 +487,7 @@ final class ContainerAssembler
                 );
             }
         );
-        $container->set(
+        $container->define(
             'formatter.formatters.dot',
             function (IndexedServiceContainer $c) {
                 return new SpecFormatter\DotFormatter(
@@ -497,7 +497,7 @@ final class ContainerAssembler
                 );
             }
         );
-        $container->set(
+        $container->define(
             'formatter.formatters.tap',
             function (IndexedServiceContainer $c) {
                 return new SpecFormatter\TapFormatter(
@@ -507,7 +507,7 @@ final class ContainerAssembler
                 );
             }
         );
-        $container->set(
+        $container->define(
             'formatter.formatters.html',
             function (IndexedServiceContainer $c) {
                 $io = new SpecFormatter\Html\HtmlIO();
@@ -523,7 +523,7 @@ final class ContainerAssembler
                 );
             }
         );
-        $container->set(
+        $container->define(
             'formatter.formatters.h',
             function (IndexedServiceContainer $c) {
                 return $c->get('formatter.formatters.html');
