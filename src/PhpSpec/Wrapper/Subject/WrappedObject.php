@@ -200,11 +200,8 @@ class WrappedObject
         if ($this->factoryMethod) {
             $this->instance = $this->instantiateFromCallback($this->factoryMethod);
         } else {
-            $reflection = new \ReflectionClass($this->classname);
-
-            $this->instance = empty($this->arguments) ?
-                $reflection->newInstance() :
-                $reflection->newInstanceArgs($this->arguments);
+            $classname = $this->classname;
+            $this->instance = new $classname(...$this->arguments);
         }
 
         $this->isInstantiated = true;

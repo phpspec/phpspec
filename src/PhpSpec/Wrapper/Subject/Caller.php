@@ -15,6 +15,7 @@ namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\CodeAnalysis\AccessInspector;
 use PhpSpec\Exception\ExceptionFactory;
+use PhpSpec\Exception\Fracture\MethodNotFoundException;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Wrapper\Subject;
 use PhpSpec\Wrapper\Wrapper;
@@ -226,13 +227,7 @@ class Caller
             return $this->newInstanceWithFactoryMethod();
         }
 
-        $reflection = new ReflectionClass($this->wrappedObject->getClassName());
-
-        if (count($this->wrappedObject->getArguments())) {
-            return $this->newInstanceWithArguments($reflection);
-        }
-
-        return $reflection->newInstance();
+        return $this->newInstanceWithArguments();
     }
 
     /**
@@ -270,8 +265,6 @@ class Caller
     }
 
     /**
-     * @param ReflectionClass $reflection
-     *
      * @return object
      *
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
@@ -279,11 +272,13 @@ class Caller
      * @throws \Exception
      * @throws \ReflectionException
      */
-    private function newInstanceWithArguments(ReflectionClass $reflection)
+    private function newInstanceWithArguments()
     {
         try {
-            return $reflection->newInstanceArgs($this->wrappedObject->getArguments());
-        } catch (ReflectionException $e) {
+            $classname = $this->wrappedObject->getClassName();
+            $constructorParameters = $this->wrappedObject->getArguments();
+            return new $classname(...$constructorParameters);
+        } catch (\Exception $e) {
             if ($this->detectMissingConstructorMessage($e)) {
                 throw $this->methodNotFound(
                     '__construct',
