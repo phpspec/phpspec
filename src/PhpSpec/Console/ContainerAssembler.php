@@ -39,7 +39,10 @@ use Symfony\Component\Process\PhpExecutableFinder;
 use PhpSpec\Message\CurrentExampleTracker;
 use PhpSpec\Process\Shutdown\Shutdown;
 
-class ContainerAssembler
+/**
+ * @Internal
+ */
+final class ContainerAssembler
 {
     /**
      * @param ServiceContainer $container

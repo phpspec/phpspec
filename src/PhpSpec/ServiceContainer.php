@@ -201,6 +201,8 @@ class ServiceContainer
     /**
      * Adds a configurator, that can configure many services in one callable
      *
+     * @internal
+     *
      * @param callable $configurator
      *
      * @throws \InvalidArgumentException if configurator is not a callable
@@ -219,6 +221,8 @@ class ServiceContainer
 
     /**
      * Loop through all configurators and invoke them
+     *
+     * @internal
      */
     public function configure()
     {

@@ -25,8 +25,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Main command, responsible for running the specs
+ *
+ * @Internal
  */
-class RunCommand extends Command
+final class RunCommand extends Command
 {
     protected function configure()
     {
