@@ -25,22 +25,22 @@ final class IndexedServiceContainer implements ServiceContainer
     /**
      * @var array
      */
-    private $parameters = array();
+    private $parameters = [];
 
     /**
      * @var array
      */
-    private $services = array();
+    private $services = [];
 
     /**
      * @var array
      */
-    private $prefixed = array();
+    private $tags = [];
 
     /**
      * @var array
      */
-    private $configurators = array();
+    private $configurators = [];
 
     /**
      * Sets a param in the container
@@ -71,10 +71,11 @@ final class IndexedServiceContainer implements ServiceContainer
      *
      * @param string $id
      * @param object $value
+     * @param array  $tags
      *
      * @throws \InvalidArgumentException if service is not an object or callable
      */
-    public function set($id, $value)
+    public function set($id, $value, $tags=[])
     {
         if (!is_object($value)) {
             throw new InvalidArgumentException(sprintf(
@@ -83,7 +84,7 @@ final class IndexedServiceContainer implements ServiceContainer
             ));
         }
 
-        $this->addToIndex($id, $value);
+        $this->addToIndex($id, $value, $tags);
     }
 
     /**
@@ -92,10 +93,11 @@ final class IndexedServiceContainer implements ServiceContainer
      *
      * @param string   $id
      * @param callable $callable
+     * @param array    $tags
      *
      * @throws \InvalidArgumentException if service is not a callable
      */
-    public function define($id, $callable)
+    public function define($id, $callable, $tags = [])
     {
         if (!is_callable($callable)) {
             throw new InvalidArgumentException(sprintf(
@@ -104,15 +106,19 @@ final class IndexedServiceContainer implements ServiceContainer
             ));
         }
 
-        $this->addToIndex($id, function ($container) use ($callable) {
-            static $instance;
+        $this->addToIndex(
+            $id,
+            function ($container) use ($callable) {
+                static $instance;
 
-            if (null === $instance) {
-                $instance = call_user_func($callable, $container);
-            }
+                if (null === $instance) {
+                    $instance = call_user_func($callable, $container);
+                }
 
-            return $instance;
-        });
+                return $instance;
+            },
+            $tags
+        );
     }
 
     /**
@@ -150,27 +156,6 @@ final class IndexedServiceContainer implements ServiceContainer
     }
 
     /**
-     * Retrieves a list of services of a given prefix
-     *
-     * @param string $prefix
-     *
-     * @return array
-     */
-    public function getByPrefix($prefix)
-    {
-        if (!array_key_exists($prefix, $this->prefixed)) {
-            return array();
-        }
-
-        $services = array();
-        foreach ($this->prefixed[$prefix] as $id) {
-            $services[] = $this->get($id);
-        }
-
-        return $services;
-    }
-
-    /**
      * Removes a service from the container
      *
      * @param string $id
@@ -183,12 +168,38 @@ final class IndexedServiceContainer implements ServiceContainer
             throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
         }
 
-        list($prefix, $sid) = $this->getPrefixAndSid($id);
-        if ($prefix) {
-            unset($this->prefixed[$prefix][$sid]);
+        unset($this->services[$id]);
+    }
+
+    /**
+     * Adds a service or service definition to the index
+     *
+     * @param string $id
+     * @param mixed  $value
+     * @param array  $tags
+     */
+    private function addToIndex($id, $value, array $tags)
+    {
+        foreach ($tags as $tag) {
+            if (!isset($this->tags[$tag])) {
+                $this->tags[$tag] = [];
+            }
+            $this->tags[$tag][] = $id;
         }
 
-        unset($this->services[$id]);
+        $this->services[$id] = $value;
+    }
+
+    /**
+     * Finds all services tagged with a particular string
+     *
+     * @param string $tag
+     *
+     * @return array
+     */
+    public function getByTag($tag)
+    {
+        return array_map([$this, 'get'], isset($this->tags[$tag]) ? $this->tags[$tag] : []);
     }
 
     /**
@@ -222,44 +233,5 @@ final class IndexedServiceContainer implements ServiceContainer
         foreach ($this->configurators as $configurator) {
             call_user_func($configurator, $this);
         }
-    }
-
-    /**
-     * Retrieves the prefix and sid of a given service
-     *
-     * @param string $id
-     *
-     * @return array
-     */
-    private function getPrefixAndSid($id)
-    {
-        if (count($parts = explode('.', $id)) < 2) {
-            return array(null, $id);
-        }
-
-        $sid    = array_pop($parts);
-        $prefix = implode('.', $parts);
-
-        return array($prefix, $sid);
-    }
-
-    /**
-     * Adds a service or service definition to the index
-     *
-     * @param string $id
-     * @param mixed  $value
-     */
-    private function addToIndex($id, $value)
-    {
-        list($prefix, $sid) = $this->getPrefixAndSid($id);
-        if ($prefix) {
-            if (!isset($this->prefixed[$prefix])) {
-                $this->prefixed[$prefix] = array();
-            }
-
-            $this->prefixed[$prefix][$sid] = $id;
-        }
-
-        $this->services[$id] = $value;
     }
 }

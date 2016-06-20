@@ -64,7 +64,7 @@ final class PresenterAssembler
 
             array_map(
                 array($differ, 'addEngine'),
-                $c->getByPrefix('formatter.presenter.differ.engines')
+                $c->getByTag('formatter.presenter.differ.engines')
             );
 
             return $differ;
@@ -78,18 +78,18 @@ final class PresenterAssembler
     {
         $container->define('formatter.presenter.differ.engines.string', function () {
             return new StringEngine();
-        });
+        }, ['formatter.presenter.differ.engines']);
 
         $container->define('formatter.presenter.differ.engines.array', function () {
             return new ArrayEngine();
-        });
+        }, ['formatter.presenter.differ.engines']);
 
         $container->define('formatter.presenter.differ.engines.object', function (IndexedServiceContainer $c) {
             return new ObjectEngine(
                 new Exporter(),
                 $c->get('formatter.presenter.differ.engines.string')
             );
-        });
+        }, ['formatter.presenter.differ.engines']);
     }
 
     /**
@@ -99,36 +99,36 @@ final class PresenterAssembler
     {
         $container->define('formatter.presenter.value.array_type_presenter', function () {
             return new ArrayTypePresenter();
-        });
+        }, ['formatter.presenter.value']);
 
         $container->define('formatter.presenter.value.boolean_type_presenter', function () {
             return new BooleanTypePresenter();
-        });
+        }, ['formatter.presenter.value']);
 
         $container->define('formatter.presenter.value.callable_type_presenter', function (IndexedServiceContainer $c) {
             return new CallableTypePresenter($c->get('formatter.presenter'));
-        });
+        }, ['formatter.presenter.value']);
 
         $container->define('formatter.presenter.value.exception_type_presenter', function () {
             return new BaseExceptionTypePresenter();
-        });
+        }, ['formatter.presenter.value']);
 
         $container->define('formatter.presenter.value.null_type_presenter', function () {
             return new NullTypePresenter();
-        });
+        }, ['formatter.presenter.value']);
 
         $container->define('formatter.presenter.value.object_type_presenter', function () {
             return new ObjectTypePresenter();
-        });
+        }, ['formatter.presenter.value']);
 
         $container->define('formatter.presenter.value.string_type_presenter', function () {
             return new TruncatingStringTypePresenter(new QuotingStringTypePresenter());
-        });
+        }, ['formatter.presenter.value']);
 
         $container->addConfigurator(function (IndexedServiceContainer $c) {
             array_map(
                 array($c->get('formatter.presenter.value_presenter'), 'addTypePresenter'),
-                $c->getByPrefix('formatter.presenter.value')
+                $c->getByTag('formatter.presenter.value')
             );
         });
     }

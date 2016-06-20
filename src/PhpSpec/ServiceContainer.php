@@ -67,15 +67,6 @@ interface ServiceContainer
     public function has($id);
 
     /**
-     * Retrieves a list of services of a given prefix
-     *
-     * @param string $prefix
-     *
-     * @return array
-     */
-    public function getByPrefix($prefix);
-
-    /**
      * Removes a service from the container
      *
      * @param string $id
@@ -83,4 +74,13 @@ interface ServiceContainer
      * @throws \InvalidArgumentException if service is not defined
      */
     public function remove($id);
+
+    /**
+     * Finds all services tagged with a particular string
+     *
+     * @param string $tag
+     *
+     * @return array
+     */
+    public function getByTag($tag);
 }

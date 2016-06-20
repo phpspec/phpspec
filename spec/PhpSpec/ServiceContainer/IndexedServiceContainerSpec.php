@@ -39,6 +39,25 @@ class IndexedServiceContainerSpec extends ObjectBehavior
         $this->has('some_service')->shouldReturn(true);
     }
 
+    function it_returns_nothing_when_no_services_are_tagged()
+    {
+        $this->getByTag('some_tag')->shouldReturn([]);
+    }
+
+    function it_returns_services_which_are_set_using_tags($service)
+    {
+        $obj = new \StdClass();
+        $this->set('some_service', $obj, ['some_tag']);
+        $this->getByTag('some_tag')->shouldReturn([$obj]);
+    }
+
+    function it_returns_services_which_are_defined_using_tags()
+    {
+        $obj = new \StdClass();
+        $this->define('some_service', function () use ($obj) { return $obj; }, ['some_tag']);
+        $this->getByTag('some_tag')->shouldReturn([$obj]);
+    }
+
     function it_throws_exception_when_trying_to_get_unexisting_service()
     {
         $this->shouldThrow('InvalidArgumentException')->duringGet('unexisting');
@@ -53,22 +72,12 @@ class IndexedServiceContainerSpec extends ObjectBehavior
         $number2->shouldBe($number1);
     }
 
-    function it_provides_a_way_to_retrieve_services_by_prefix($service1, $service2, $service3)
-    {
-        $this->set('collection1.serv1', $service1);
-        $this->set('collection1.serv2', $service2);
-        $this->set('collection2.serv3', $service3);
-
-        $this->getByPrefix('collection1')->shouldReturn(array($service1, $service2));
-    }
-
     function it_provides_a_way_to_remove_service_by_key($service)
     {
         $this->set('collection1.some_service', $service);
         $this->remove('collection1.some_service');
 
         $this->shouldThrow()->duringGet('collection1.some_service');
-        $this->getByPrefix('collection1')->shouldHaveCount(0);
     }
 
     function it_supports_custom_service_configurators()

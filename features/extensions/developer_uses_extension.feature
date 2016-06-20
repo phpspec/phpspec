@@ -26,7 +26,7 @@ Feature: Developer uses extension
         {
             $container->set('matchers.seven', function (ServiceContainer $c) {
                 return new BeSevenMatcher($c->get('formatter.presenter'));
-            });
+            }, ['matchers']);
         }
     }
 

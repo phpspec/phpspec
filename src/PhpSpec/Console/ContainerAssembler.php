@@ -111,11 +111,11 @@ final class ContainerAssembler
     {
         $container->define('console.commands.run', function () {
             return new Command\RunCommand();
-        });
+        }, ['console.commands']);
 
         $container->define('console.commands.describe', function () {
             return new Command\DescribeCommand();
-        });
+        }, ['console.commands']);
     }
 
     /**
@@ -128,7 +128,7 @@ final class ContainerAssembler
 
             array_map(
                 array($dispatcher, 'addSubscriber'),
-                $c->getByPrefix('console_event_dispatcher.listeners')
+                $c->getByTag('console_event_dispatcher.listeners')
             );
 
             return $dispatcher;
@@ -146,21 +146,21 @@ final class ContainerAssembler
 
         $container->define('event_dispatcher.listeners.stats', function () {
             return new Listener\StatisticsCollector();
-        });
+        }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.class_not_found', function (IndexedServiceContainer $c) {
             return new Listener\ClassNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator')
             );
-        });
+        }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.collaborator_not_found', function (IndexedServiceContainer $c) {
             return new Listener\CollaboratorNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator')
             );
-        });
+        }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.collaborator_method_not_found', function (IndexedServiceContainer $c) {
             return new Listener\CollaboratorMethodNotFoundListener(
                 $c->get('console.io'),
@@ -168,14 +168,14 @@ final class ContainerAssembler
                 $c->get('code_generator'),
                 $c->get('util.reserved_words_checker')
             );
-        });
+        }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.named_constructor_not_found', function (IndexedServiceContainer $c) {
             return new Listener\NamedConstructorNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator')
             );
-        });
+        }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.method_not_found', function (IndexedServiceContainer $c) {
             return new Listener\MethodNotFoundListener(
                 $c->get('console.io'),
@@ -183,18 +183,18 @@ final class ContainerAssembler
                 $c->get('code_generator'),
                 $c->get('util.reserved_words_checker')
             );
-        });
+        }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.stop_on_failure', function (IndexedServiceContainer $c) {
             return new Listener\StopOnFailureListener(
                 $c->get('console.io')
             );
-        });
+        }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.rerun', function (IndexedServiceContainer $c) {
             return new Listener\RerunListener(
                 $c->get('process.rerunner'),
                 $c->get('process.prerequisites')
             );
-        });
+        }, ['event_dispatcher.listeners']);
         $container->define('process.prerequisites', function (IndexedServiceContainer $c) {
             return new SuitePrerequisites(
                 $c->get('process.executioncontext')
@@ -207,7 +207,7 @@ final class ContainerAssembler
                 $c->get('code_generator'),
                 $c->get('util.method_analyser')
             );
-        });
+        }, ['event_dispatcher.listeners']);
         $container->define('util.method_analyser', function () {
             return new MethodAnalyser();
         });
@@ -218,12 +218,12 @@ final class ContainerAssembler
             return new Listener\BootstrapListener(
                 $c->get('console.io')
             );
-        });
+        }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.current_example_listener', function (IndexedServiceContainer $c) {
             return new Listener\CurrentExampleListener(
                 $c->get('current_example')
             );
-        });
+        }, ['event_dispatcher.listeners']);
     }
 
     /**
@@ -236,7 +236,7 @@ final class ContainerAssembler
 
             array_map(
                 array($generator, 'registerGenerator'),
-                $c->getByPrefix('code_generator.generators')
+                $c->getByTag('code_generator.generators')
             );
 
             return $generator;
@@ -255,7 +255,7 @@ final class ContainerAssembler
                 $c->get('event_dispatcher'),
                 $c->get('util.filesystem')
             );
-        });
+        }, ['code_generator.generators']);
         $container->define('code_generator.generators.class', function (IndexedServiceContainer $c) {
             $classGenerator = new CodeGenerator\Generator\ClassGenerator(
                 $c->get('console.io'),
@@ -269,7 +269,7 @@ final class ContainerAssembler
                 $c->get('event_dispatcher'),
                 $c->get('util.filesystem')
             );
-        });
+        }, ['code_generator.generators']);
         $container->define('code_generator.generators.interface', function (IndexedServiceContainer $c) {
             $interfaceGenerator = new CodeGenerator\Generator\InterfaceGenerator(
                 $c->get('console.io'),
@@ -283,7 +283,7 @@ final class ContainerAssembler
                 $c->get('event_dispatcher'),
                 $c->get('util.filesystem')
             );
-        });
+        }, ['code_generator.generators']);
         $container->define('code_generator.writers.tokenized', function () {
             return new CodeGenerator\Writer\TokenizedCodeWriter(new ClassFileAnalyser());
         });
@@ -294,21 +294,21 @@ final class ContainerAssembler
                 $c->get('util.filesystem'),
                 $c->get('code_generator.writers.tokenized')
             );
-        });
+        }, ['code_generator.generators']);
         $container->define('code_generator.generators.methodSignature', function (IndexedServiceContainer $c) {
             return new CodeGenerator\Generator\MethodSignatureGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem')
             );
-        });
+        }, ['code_generator.generators']);
         $container->define('code_generator.generators.returnConstant', function (IndexedServiceContainer $c) {
             return new CodeGenerator\Generator\ReturnConstantGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem')
             );
-        });
+        }, ['code_generator.generators']);
 
         $container->define('code_generator.generators.named_constructor', function (IndexedServiceContainer $c) {
             return new CodeGenerator\Generator\NamedConstructorGenerator(
@@ -317,7 +317,7 @@ final class ContainerAssembler
                 $c->get('util.filesystem'),
                 $c->get('code_generator.writers.tokenized')
             );
-        });
+        }, ['code_generator.generators']);
 
         $container->define('code_generator.generators.private_constructor', function (IndexedServiceContainer $c) {
             return new CodeGenerator\Generator\PrivateConstructorGenerator(
@@ -326,7 +326,7 @@ final class ContainerAssembler
                 $c->get('util.filesystem'),
                 $c->get('code_generator.writers.tokenized')
             );
-        });
+        }, ['code_generator.generators']);
 
         $container->define('code_generator.templates', function (IndexedServiceContainer $c) {
             $renderer = new CodeGenerator\TemplateRenderer(
@@ -368,7 +368,7 @@ final class ContainerAssembler
 
             array_map(
                 array($manager, 'registerLocator'),
-                $c->getByPrefix('locator.locators')
+                $c->getByTag('locator.locators')
             );
 
             return $manager;
@@ -407,7 +407,8 @@ final class ContainerAssembler
                             $config['spec_path'],
                             $config['psr4_prefix']
                         );
-                    }
+                    },
+                    ['locator.locators']
                 );
             }
         });
@@ -427,7 +428,7 @@ final class ContainerAssembler
         if (PHP_VERSION >= 7) {
             $container->define('loader.resource_loader.spec_transformer.typehint_rewriter', function (IndexedServiceContainer $c) {
                 return new Loader\Transformer\TypeHintRewriter($c->get('analysis.typehintrewriter'));
-            });
+            }, ['loader.resource_loader.spec_transformer']);
         }
         $container->define('analysis.typehintrewriter', function ($c) {
             return new TokenizedTypeHintRewriter(
@@ -541,7 +542,7 @@ final class ContainerAssembler
             } catch (\InvalidArgumentException $e) {
                 throw new \RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
             }
-            $c->set('event_dispatcher.listeners.formatter', $formatter);
+            $c->set('event_dispatcher.listeners.formatter', $formatter, ['event_dispatcher.listeners']);
         });
     }
 
@@ -572,7 +573,7 @@ final class ContainerAssembler
 
             array_map(
                 array($runner, 'registerMaintainer'),
-                $c->getByPrefix('runner.maintainers')
+                $c->getByTag('runner.maintainers')
             );
 
             return $runner;
@@ -582,24 +583,24 @@ final class ContainerAssembler
             return new Runner\Maintainer\ErrorMaintainer(
                 $c->getParam('runner.maintainers.errors.level', E_ALL ^ E_STRICT)
             );
-        });
+        }, ['runner.maintainers']);
         $container->define('runner.maintainers.collaborators', function (IndexedServiceContainer $c) {
             return new Runner\Maintainer\CollaboratorsMaintainer(
                 $c->get('unwrapper'),
                 $c->get('loader.transformer.typehintindex')
             );
-        });
+        }, ['runner.maintainers']);
         $container->define('runner.maintainers.let_letgo', function () {
             return new Runner\Maintainer\LetAndLetgoMaintainer();
-        });
+        }, ['runner.maintainers']);
 
         $container->define('runner.maintainers.matchers', function (IndexedServiceContainer $c) {
-            $matchers = $c->getByPrefix('matchers');
+            $matchers = $c->getByTag('matchers');
             return new Runner\Maintainer\MatchersMaintainer(
                 $c->get('formatter.presenter'),
                 $matchers
             );
-        });
+        }, ['runner.maintainers']);
 
         $container->define('runner.maintainers.subject', function (IndexedServiceContainer $c) {
             return new Runner\Maintainer\SubjectMaintainer(
@@ -608,7 +609,7 @@ final class ContainerAssembler
                 $c->get('event_dispatcher'),
                 $c->get('access_inspector')
             );
-        });
+        }, ['runner.maintainers']);
 
         $container->define('unwrapper', function () {
             return new Wrapper\Unwrapper();
@@ -634,46 +635,46 @@ final class ContainerAssembler
     {
         $container->define('matchers.identity', function (IndexedServiceContainer $c) {
             return new Matcher\IdentityMatcher($c->get('formatter.presenter'));
-        });
+        }, ['matchers']);
         $container->define('matchers.comparison', function (IndexedServiceContainer $c) {
             return new Matcher\ComparisonMatcher($c->get('formatter.presenter'));
-        });
+        }, ['matchers']);
         $container->define('matchers.throwm', function (IndexedServiceContainer $c) {
             return new Matcher\ThrowMatcher($c->get('unwrapper'), $c->get('formatter.presenter'), new ReflectionFactory());
-        });
+        }, ['matchers']);
         $container->define('matchers.type', function (IndexedServiceContainer $c) {
             return new Matcher\TypeMatcher($c->get('formatter.presenter'));
-        });
+        }, ['matchers']);
         $container->define('matchers.object_state', function (IndexedServiceContainer $c) {
             return new Matcher\ObjectStateMatcher($c->get('formatter.presenter'));
-        });
+        }, ['matchers']);
         $container->define('matchers.scalar', function (IndexedServiceContainer $c) {
             return new Matcher\ScalarMatcher($c->get('formatter.presenter'));
-        });
+        }, ['matchers']);
         $container->define('matchers.array_count', function (IndexedServiceContainer $c) {
             return new Matcher\ArrayCountMatcher($c->get('formatter.presenter'));
-        });
+        }, ['matchers']);
         $container->define('matchers.array_key', function (IndexedServiceContainer $c) {
             return new Matcher\ArrayKeyMatcher($c->get('formatter.presenter'));
-        });
+        }, ['matchers']);
         $container->define('matchers.array_key_with_value', function (IndexedServiceContainer $c) {
             return new Matcher\ArrayKeyValueMatcher($c->get('formatter.presenter'));
-        });
+        }, ['matchers']);
         $container->define('matchers.array_contain', function (IndexedServiceContainer $c) {
             return new Matcher\ArrayContainMatcher($c->get('formatter.presenter'));
-        });
+        }, ['matchers']);
         $container->define('matchers.string_start', function (IndexedServiceContainer $c) {
             return new Matcher\StringStartMatcher($c->get('formatter.presenter'));
-        });
+        }, ['matchers']);
         $container->define('matchers.string_end', function (IndexedServiceContainer $c) {
             return new Matcher\StringEndMatcher($c->get('formatter.presenter'));
-        });
+        }, ['matchers']);
         $container->define('matchers.string_regex', function (IndexedServiceContainer $c) {
             return new Matcher\StringRegexMatcher($c->get('formatter.presenter'));
-        });
+        }, ['matchers']);
         $container->define('matchers.string_contain', function (IndexedServiceContainer $c) {
             return new Matcher\StringContainMatcher($c->get('formatter.presenter'));
-        });
+        }, ['matchers']);
     }
 
     /**
@@ -694,7 +695,7 @@ final class ContainerAssembler
 
         $container->define('process.rerunner.platformspecific', function (IndexedServiceContainer $c) {
             return new ReRunner\CompositeReRunner(
-                $c->getByPrefix('process.rerunner.platformspecific')
+                $c->getByTag('process.rerunner.platformspecific')
             );
         });
         $container->define('process.rerunner.platformspecific.pcntl', function (IndexedServiceContainer $c) {
@@ -702,19 +703,19 @@ final class ContainerAssembler
                 $c->get('process.phpexecutablefinder'),
                 $c->get('process.executioncontext')
             );
-        });
+        }, ['process.rerunner.platformspecific']);
         $container->define('process.rerunner.platformspecific.passthru', function (IndexedServiceContainer $c) {
             return ReRunner\ProcOpenReRunner::withExecutionContext(
                 $c->get('process.phpexecutablefinder'),
                 $c->get('process.executioncontext')
             );
-        });
+        }, ['process.rerunner.platformspecific']);
         $container->define('process.rerunner.platformspecific.windowspassthru', function (IndexedServiceContainer $c) {
             return ReRunner\WindowsPassthruReRunner::withExecutionContext(
                 $c->get('process.phpexecutablefinder'),
                 $c->get('process.executioncontext')
             );
-        });
+        }, ['process.rerunner.platformspecific']);
         $container->define('process.phpexecutablefinder', function () {
             return new PhpExecutableFinder();
         });
@@ -728,7 +729,7 @@ final class ContainerAssembler
         $container->addConfigurator(function (IndexedServiceContainer $c) {
             array_map(
                 array($c->get('event_dispatcher'), 'addSubscriber'),
-                $c->getByPrefix('event_dispatcher.listeners')
+                $c->getByTag('event_dispatcher.listeners')
             );
         });
     }

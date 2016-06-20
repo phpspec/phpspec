@@ -75,7 +75,7 @@ final class Application extends BaseApplication
 
         $this->loadConfigurationFile($input, $this->container);
 
-        foreach ($this->container->getByPrefix('console.commands') as $command) {
+        foreach ($this->container->getByTag('console.commands') as $command) {
             $this->add($command);
         }
 
@@ -84,7 +84,7 @@ final class Application extends BaseApplication
         $this->container->get('console.io')->setConsoleWidth($this->getTerminalWidth());
 
         StreamWrapper::reset();
-        foreach ($this->container->getByPrefix('loader.resource_loader.spec_transformer') as $transformer) {
+        foreach ($this->container->getByTag('loader.resource_loader.spec_transformer') as $transformer) {
             StreamWrapper::addTransformer($transformer);
         }
         StreamWrapper::register();
