@@ -104,7 +104,7 @@ class ServiceContainer
      *
      * @throws \InvalidArgumentException if service is not a callable
      */
-    public function setShared($id, $callable)
+    public function define($id, $callable)
     {
         if (!is_callable($callable)) {
             throw new InvalidArgumentException(sprintf(
@@ -148,10 +148,12 @@ class ServiceContainer
     }
 
     /**
+     * Determines whether a service is defined
+     *
      * @param $id
      * @return bool
      */
-    public function isDefined($id)
+    public function has($id)
     {
         return array_key_exists($id, $this->services);
     }

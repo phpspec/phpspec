@@ -28,6 +28,17 @@ class ServiceContainerSpec extends ObjectBehavior
         $this->get('some_service')->shouldReturn($service);
     }
 
+    function it_knows_when_services_are_not_defined()
+    {
+        $this->has('some_service')->shouldReturn(false);
+    }
+
+    function it_knows_when_services_are_defined($service)
+    {
+        $this->set('some_service', $service);
+        $this->has('some_service')->shouldReturn(true);
+    }
+
     function it_throws_exception_when_trying_to_get_unexisting_service()
     {
         $this->shouldThrow('InvalidArgumentException')->duringGet('unexisting');
@@ -47,7 +58,7 @@ class ServiceContainerSpec extends ObjectBehavior
 
     function it_evaluates_factory_function_only_once_for_shared_services()
     {
-        $this->setShared('random_number', function () { return rand(); });
+        $this->define('random_number', function () { return rand(); });
         $number1 = $this->get('random_number');
         $number2 = $this->get('random_number');
 

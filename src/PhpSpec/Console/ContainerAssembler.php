@@ -72,8 +72,8 @@ final class ContainerAssembler
 
     private function setupIO(ServiceContainer $container)
     {
-        if (!$container->isDefined('console.prompter')) {
-            $container->setShared('console.prompter', function ($c) {
+        if (!$container->has('console.prompter')) {
+            $container->define('console.prompter', function ($c) {
                 return new Question(
                     $c->get('console.input'),
                     $c->get('console.output'),
@@ -81,7 +81,7 @@ final class ContainerAssembler
                 );
             });
         }
-        $container->setShared('console.io', function (ServiceContainer $c) {
+        $container->define('console.io', function (ServiceContainer $c) {
             return new ConsoleIO(
                 $c->get('console.input'),
                 $c->get('console.output'),
@@ -95,25 +95,25 @@ final class ContainerAssembler
                 $c->get('console.prompter')
             );
         });
-        $container->setShared('util.filesystem', function () {
+        $container->define('util.filesystem', function () {
             return new Filesystem();
         });
     }
 
     private function setupResultConverter(ServiceContainer $container)
     {
-        $container->setShared('console.result_converter', function () {
+        $container->define('console.result_converter', function () {
             return new ResultConverter();
         });
     }
 
     private function setupCommands(ServiceContainer $container)
     {
-        $container->setShared('console.commands.run', function () {
+        $container->define('console.commands.run', function () {
             return new Command\RunCommand();
         });
 
-        $container->setShared('console.commands.describe', function () {
+        $container->define('console.commands.describe', function () {
             return new Command\DescribeCommand();
         });
     }
@@ -123,7 +123,7 @@ final class ContainerAssembler
      */
     private function setupConsoleEventDispatcher(ServiceContainer $container)
     {
-        $container->setShared('console_event_dispatcher', function (ServiceContainer $c) {
+        $container->define('console_event_dispatcher', function (ServiceContainer $c) {
             $dispatcher = new EventDispatcher();
 
             array_map(
@@ -140,28 +140,28 @@ final class ContainerAssembler
      */
     private function setupEventDispatcher(ServiceContainer $container)
     {
-        $container->setShared('event_dispatcher', function () {
+        $container->define('event_dispatcher', function () {
             return new EventDispatcher();
         });
 
-        $container->setShared('event_dispatcher.listeners.stats', function () {
+        $container->define('event_dispatcher.listeners.stats', function () {
             return new Listener\StatisticsCollector();
         });
-        $container->setShared('event_dispatcher.listeners.class_not_found', function (ServiceContainer $c) {
+        $container->define('event_dispatcher.listeners.class_not_found', function (ServiceContainer $c) {
             return new Listener\ClassNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator')
             );
         });
-        $container->setShared('event_dispatcher.listeners.collaborator_not_found', function (ServiceContainer $c) {
+        $container->define('event_dispatcher.listeners.collaborator_not_found', function (ServiceContainer $c) {
             return new Listener\CollaboratorNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator')
             );
         });
-        $container->setShared('event_dispatcher.listeners.collaborator_method_not_found', function (ServiceContainer $c) {
+        $container->define('event_dispatcher.listeners.collaborator_method_not_found', function (ServiceContainer $c) {
             return new Listener\CollaboratorMethodNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
@@ -169,14 +169,14 @@ final class ContainerAssembler
                 $c->get('util.reserved_words_checker')
             );
         });
-        $container->setShared('event_dispatcher.listeners.named_constructor_not_found', function (ServiceContainer $c) {
+        $container->define('event_dispatcher.listeners.named_constructor_not_found', function (ServiceContainer $c) {
             return new Listener\NamedConstructorNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator')
             );
         });
-        $container->setShared('event_dispatcher.listeners.method_not_found', function (ServiceContainer $c) {
+        $container->define('event_dispatcher.listeners.method_not_found', function (ServiceContainer $c) {
             return new Listener\MethodNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
@@ -184,23 +184,23 @@ final class ContainerAssembler
                 $c->get('util.reserved_words_checker')
             );
         });
-        $container->setShared('event_dispatcher.listeners.stop_on_failure', function (ServiceContainer $c) {
+        $container->define('event_dispatcher.listeners.stop_on_failure', function (ServiceContainer $c) {
             return new Listener\StopOnFailureListener(
                 $c->get('console.io')
             );
         });
-        $container->setShared('event_dispatcher.listeners.rerun', function (ServiceContainer $c) {
+        $container->define('event_dispatcher.listeners.rerun', function (ServiceContainer $c) {
             return new Listener\RerunListener(
                 $c->get('process.rerunner'),
                 $c->get('process.prerequisites')
             );
         });
-        $container->setShared('process.prerequisites', function (ServiceContainer $c) {
+        $container->define('process.prerequisites', function (ServiceContainer $c) {
             return new SuitePrerequisites(
                 $c->get('process.executioncontext')
             );
         });
-        $container->setShared('event_dispatcher.listeners.method_returned_null', function (ServiceContainer $c) {
+        $container->define('event_dispatcher.listeners.method_returned_null', function (ServiceContainer $c) {
             return new Listener\MethodReturnedNullListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
@@ -208,18 +208,18 @@ final class ContainerAssembler
                 $c->get('util.method_analyser')
             );
         });
-        $container->setShared('util.method_analyser', function () {
+        $container->define('util.method_analyser', function () {
             return new MethodAnalyser();
         });
-        $container->setShared('util.reserved_words_checker', function () {
+        $container->define('util.reserved_words_checker', function () {
             return new ReservedWordsMethodNameChecker();
         });
-        $container->setShared('event_dispatcher.listeners.bootstrap', function (ServiceContainer $c) {
+        $container->define('event_dispatcher.listeners.bootstrap', function (ServiceContainer $c) {
             return new Listener\BootstrapListener(
                 $c->get('console.io')
             );
         });
-        $container->setShared('event_dispatcher.listeners.current_example_listener', function (ServiceContainer $c) {
+        $container->define('event_dispatcher.listeners.current_example_listener', function (ServiceContainer $c) {
             return new Listener\CurrentExampleListener(
                 $c->get('current_example')
             );
@@ -231,7 +231,7 @@ final class ContainerAssembler
      */
     private function setupGenerators(ServiceContainer $container)
     {
-        $container->setShared('code_generator', function (ServiceContainer $c) {
+        $container->define('code_generator', function (ServiceContainer $c) {
             $generator = new CodeGenerator\GeneratorManager();
 
             array_map(
@@ -328,7 +328,7 @@ final class ContainerAssembler
             );
         });
 
-        $container->setShared('code_generator.templates', function (ServiceContainer $c) {
+        $container->define('code_generator.templates', function (ServiceContainer $c) {
             $renderer = new CodeGenerator\TemplateRenderer(
                 $c->get('util.filesystem')
             );
@@ -363,7 +363,7 @@ final class ContainerAssembler
      */
     private function setupLocator(ServiceContainer $container)
     {
-        $container->setShared('locator.resource_manager', function (ServiceContainer $c) {
+        $container->define('locator.resource_manager', function (ServiceContainer $c) {
             $manager = new Locator\PrioritizedResourceManager();
 
             array_map(
@@ -418,30 +418,30 @@ final class ContainerAssembler
      */
     private function setupLoader(ServiceContainer $container)
     {
-        $container->setShared('loader.resource_loader', function (ServiceContainer $c) {
+        $container->define('loader.resource_loader', function (ServiceContainer $c) {
             return new Loader\ResourceLoader(
                 $c->get('locator.resource_manager'),
                 $c->get('util.method_analyser')
             );
         });
         if (PHP_VERSION >= 7) {
-            $container->setShared('loader.resource_loader.spec_transformer.typehint_rewriter', function (ServiceContainer $c) {
+            $container->define('loader.resource_loader.spec_transformer.typehint_rewriter', function (ServiceContainer $c) {
                 return new Loader\Transformer\TypeHintRewriter($c->get('analysis.typehintrewriter'));
             });
         }
-        $container->setShared('analysis.typehintrewriter', function($c) {
+        $container->define('analysis.typehintrewriter', function($c) {
             return new TokenizedTypeHintRewriter(
                 $c->get('loader.transformer.typehintindex'),
                 $c->get('analysis.namespaceresolver')
             );
         });
-        $container->setShared('loader.transformer.typehintindex', function() {
+        $container->define('loader.transformer.typehintindex', function() {
             return new Loader\Transformer\InMemoryTypeHintIndex();
         });
-        $container->setShared('analysis.namespaceresolver.tokenized', function() {
+        $container->define('analysis.namespaceresolver.tokenized', function() {
             return new TokenizedNamespaceResolver();
         });
-        $container->setShared('analysis.namespaceresolver', function ($c) {
+        $container->define('analysis.namespaceresolver', function ($c) {
             if (PHP_VERSION >= 7) {
                 return new StaticRejectingNamespaceResolver($c->get('analysis.namespaceresolver.tokenized'));
             }
@@ -550,21 +550,21 @@ final class ContainerAssembler
      */
     private function setupRunner(ServiceContainer $container)
     {
-        $container->setShared('runner.suite', function (ServiceContainer $c) {
+        $container->define('runner.suite', function (ServiceContainer $c) {
             return new Runner\SuiteRunner(
                 $c->get('event_dispatcher'),
                 $c->get('runner.specification')
             );
         });
 
-        $container->setShared('runner.specification', function (ServiceContainer $c) {
+        $container->define('runner.specification', function (ServiceContainer $c) {
             return new Runner\SpecificationRunner(
                 $c->get('event_dispatcher'),
                 $c->get('runner.example')
             );
         });
 
-        $container->setShared('runner.example', function (ServiceContainer $c) {
+        $container->define('runner.example', function (ServiceContainer $c) {
             $runner = new Runner\ExampleRunner(
                 $c->get('event_dispatcher'),
                 $c->get('formatter.presenter')
@@ -610,19 +610,19 @@ final class ContainerAssembler
             );
         });
 
-        $container->setShared('unwrapper', function () {
+        $container->define('unwrapper', function () {
             return new Wrapper\Unwrapper();
         });
 
-        $container->setShared('access_inspector', function($c) {
+        $container->define('access_inspector', function($c) {
             return $c->get('access_inspector.magic');
         });
 
-        $container->setShared('access_inspector.magic', function($c) {
+        $container->define('access_inspector.magic', function($c) {
             return new MagicAwareAccessInspector($c->get('access_inspector.visibility'));
         });
 
-        $container->setShared('access_inspector.visibility', function() {
+        $container->define('access_inspector.visibility', function() {
             return new VisibilityAccessInspector();
         });
     }
@@ -681,41 +681,41 @@ final class ContainerAssembler
      */
     private function setupRerunner(ServiceContainer $container)
     {
-        $container->setShared('process.rerunner', function (ServiceContainer $c) {
+        $container->define('process.rerunner', function (ServiceContainer $c) {
             return new ReRunner\OptionalReRunner(
                 $c->get('process.rerunner.platformspecific'),
                 $c->get('console.io')
             );
         });
 
-        if ($container->isDefined('process.rerunner.platformspecific')) {
+        if ($container->has('process.rerunner.platformspecific')) {
             return;
         }
 
-        $container->setShared('process.rerunner.platformspecific', function (ServiceContainer $c) {
+        $container->define('process.rerunner.platformspecific', function (ServiceContainer $c) {
             return new ReRunner\CompositeReRunner(
                 $c->getByPrefix('process.rerunner.platformspecific')
             );
         });
-        $container->setShared('process.rerunner.platformspecific.pcntl', function (ServiceContainer $c) {
+        $container->define('process.rerunner.platformspecific.pcntl', function (ServiceContainer $c) {
             return ReRunner\PcntlReRunner::withExecutionContext(
                 $c->get('process.phpexecutablefinder'),
                 $c->get('process.executioncontext')
             );
         });
-        $container->setShared('process.rerunner.platformspecific.passthru', function (ServiceContainer $c) {
+        $container->define('process.rerunner.platformspecific.passthru', function (ServiceContainer $c) {
             return ReRunner\ProcOpenReRunner::withExecutionContext(
                 $c->get('process.phpexecutablefinder'),
                 $c->get('process.executioncontext')
             );
         });
-        $container->setShared('process.rerunner.platformspecific.windowspassthru', function (ServiceContainer $c) {
+        $container->define('process.rerunner.platformspecific.windowspassthru', function (ServiceContainer $c) {
             return ReRunner\WindowsPassthruReRunner::withExecutionContext(
                 $c->get('process.phpexecutablefinder'),
                 $c->get('process.executioncontext')
             );
         });
-        $container->setShared('process.phpexecutablefinder', function () {
+        $container->define('process.phpexecutablefinder', function () {
             return new PhpExecutableFinder();
         });
     }
@@ -738,7 +738,7 @@ final class ContainerAssembler
      */
     private function setupCurrentExample(ServiceContainer $container)
     {
-        $container->setShared('current_example', function () {
+        $container->define('current_example', function () {
             return new CurrentExampleTracker();
         });
     }
@@ -748,7 +748,7 @@ final class ContainerAssembler
    */
     private function setupShutdown(ServiceContainer $container)
     {
-        $container->setShared('process.shutdown', function() {
+        $container->define('process.shutdown', function() {
             return new Shutdown();
         });
     }

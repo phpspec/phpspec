@@ -66,7 +66,7 @@ final class Application extends BaseApplication
         $this->container->set('console.output', $output);
         $this->container->set('console.helper_set', $helperSet);
 
-        $this->container->setShared('process.executioncontext', function () {
+        $this->container->define('process.executioncontext', function () {
             return JsonExecutionContext::fromEnv($_SERVER);
         });
 
