@@ -1,10 +1,10 @@
 <?php
 
-namespace spec\PhpSpec;
+namespace spec\PhpSpec\ServiceContainer;
 
 use PhpSpec\ObjectBehavior;
 
-class ServiceContainerSpec extends ObjectBehavior
+class IndexedServiceContainerSpec extends ObjectBehavior
 {
     function it_stores_parameters()
     {

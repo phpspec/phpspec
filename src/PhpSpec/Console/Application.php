@@ -20,7 +20,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
-use PhpSpec\ServiceContainer;
+use PhpSpec\ServiceContainer\IndexedServiceContainer;
 use PhpSpec\Extension;
 use RuntimeException;
 
@@ -32,7 +32,7 @@ use RuntimeException;
 final class Application extends BaseApplication
 {
     /**
-     * @var ServiceContainer
+     * @var IndexedServiceContainer
      */
     private $container;
 
@@ -41,12 +41,12 @@ final class Application extends BaseApplication
      */
     public function __construct($version)
     {
-        $this->container = new ServiceContainer();
+        $this->container = new IndexedServiceContainer();
         parent::__construct('phpspec', $version);
     }
 
     /**
-     * @return ServiceContainer
+     * @return IndexedServiceContainer
      */
     public function getContainer()
     {
@@ -127,11 +127,11 @@ final class Application extends BaseApplication
 
     /**
      * @param InputInterface   $input
-     * @param ServiceContainer $container
+     * @param IndexedServiceContainer $container
      *
      * @throws \RuntimeException
      */
-    protected function loadConfigurationFile(InputInterface $input, ServiceContainer $container)
+    protected function loadConfigurationFile(InputInterface $input, IndexedServiceContainer $container)
     {
         $config = $this->parseConfigurationFile($input);
 
