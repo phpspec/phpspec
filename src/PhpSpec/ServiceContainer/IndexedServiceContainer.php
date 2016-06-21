@@ -171,9 +171,6 @@ final class IndexedServiceContainer implements ServiceContainer
     private function indexTags($id, array $tags)
     {
         foreach ($tags as $tag) {
-            if (!isset($this->tags[$tag])) {
-                $this->tags[$tag] = [];
-            }
             $this->tags[$tag][] = $id;
         }
     }
