@@ -30,22 +30,24 @@ interface ServiceContainer
      * Sets a object to be used as a service
      *
      * @param string $id
-     * @param object $value
+     * @param object $service
+     * @param array  $tags
      *
      * @throws \InvalidArgumentException if service is not an object
      */
-    public function set($id, $value);
+    public function set($id, $service, $tags = []);
 
     /**
      * Sets a factory for the service creation. The same service will
      * be returned every time
      *
-     * @param string $id
-     * @param value $value
+     * @param string   $id
+     * @param callable $definition
+     * @param array    $tags
      *
      * @throws \InvalidArgumentException if service is not a callable
      */
-    public function define($id, $value);
+    public function define($id, callable $definition, $tags = []);
 
     /**
      * Retrieves a service from the container

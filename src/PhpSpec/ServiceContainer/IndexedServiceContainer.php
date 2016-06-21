@@ -75,21 +75,21 @@ final class IndexedServiceContainer implements ServiceContainer
      * Sets a object to be used as a service
      *
      * @param string $id
-     * @param object $object
+     * @param object $service
      * @param array  $tags
      *
      * @throws \InvalidArgumentException if service is not an object
      */
-    public function set($id, $object, $tags=[])
+    public function set($id, $service, $tags = [])
     {
-        if (!is_object($object)) {
+        if (!is_object($service)) {
             throw new InvalidArgumentException(sprintf(
                 'Service should be an object, but %s given.',
-                gettype($object)
+                gettype($service)
             ));
         }
 
-        $this->services[$id] = $object;
+        $this->services[$id] = $service;
         unset($this->definitions[$id]);
 
         $this->indexTags($id, $tags);
@@ -100,14 +100,14 @@ final class IndexedServiceContainer implements ServiceContainer
      * be returned every time
      *
      * @param string   $id
-     * @param callable $value
+     * @param callable $definition
      * @param array    $tags
      *
      * @throws \InvalidArgumentException if service is not a callable
      */
-    public function define($id, $value, $tags = [])
+    public function define($id, callable $definition, $tags = [])
     {
-        $this->definitions[$id] = $value;
+        $this->definitions[$id] = $definition;
         unset($this->services[$id]);
 
         $this->indexTags($id, $tags);
