@@ -39,7 +39,7 @@ use PhpSpec\ServiceContainer;
 use SebastianBergmann\Exporter\Exporter;
 
 /**
- * @Internal
+ * @internal
  */
 final class PresenterAssembler
 {

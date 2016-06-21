@@ -15,6 +15,7 @@ namespace PhpSpec\Console;
 
 use PhpSpec\Loader\StreamWrapper;
 use PhpSpec\Process\Context\JsonExecutionContext;
+use PhpSpec\ServiceContainer;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -27,7 +28,7 @@ use RuntimeException;
 /**
  * The command line application entry point
  *
- * @Internal
+ * @internal
  */
 final class Application extends BaseApplication
 {

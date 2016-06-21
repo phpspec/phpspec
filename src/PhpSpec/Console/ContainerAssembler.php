@@ -40,7 +40,7 @@ use PhpSpec\Message\CurrentExampleTracker;
 use PhpSpec\Process\Shutdown\Shutdown;
 
 /**
- * @Internal
+ * @internal
  */
 final class ContainerAssembler
 {
