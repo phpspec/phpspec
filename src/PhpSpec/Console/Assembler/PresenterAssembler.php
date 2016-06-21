@@ -38,7 +38,7 @@ use PhpSpec\ServiceContainer\IndexedServiceContainer;
 use SebastianBergmann\Exporter\Exporter;
 
 /**
- * @Internal
+ * @internal
  */
 final class PresenterAssembler
 {

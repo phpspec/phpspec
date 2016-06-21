@@ -26,7 +26,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * Main command, responsible for running the specs
  *
- * @Internal
+ * @internal
  */
 final class RunCommand extends Command
 {
