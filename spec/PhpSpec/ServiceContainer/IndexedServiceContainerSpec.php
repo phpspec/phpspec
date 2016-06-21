@@ -72,6 +72,18 @@ class IndexedServiceContainerSpec extends ObjectBehavior
         $number2->shouldBe($number1);
     }
 
+    function it_uses_new_definition_when_a_service_is_redefined()
+    {
+        $this->define('some_service', function () { return 1; });
+        $this->get('some_service');
+
+
+        $this->define('some_service', function () { return 2; });
+
+        $this->get('some_service')->shouldBe(2);
+    }
+
+
     function it_does_not_evaluate_callables_that_are_set()
     {
         $this->set('some_service', function(){ return 100; });

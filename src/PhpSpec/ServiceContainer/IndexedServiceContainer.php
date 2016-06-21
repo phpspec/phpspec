@@ -30,6 +30,11 @@ final class IndexedServiceContainer implements ServiceContainer
     /**
      * @var array
      */
+    private $definitions = [];
+
+    /**
+     * @var array
+     */
     private $services = [];
 
     /**
@@ -70,61 +75,42 @@ final class IndexedServiceContainer implements ServiceContainer
      * Sets a object to be used as a service
      *
      * @param string $id
-     * @param object $value
+     * @param object $object
      * @param array  $tags
      *
-     * @throws \InvalidArgumentException if service is not an object or callable
+     * @throws \InvalidArgumentException if service is not an object
      */
-    public function set($id, $value, $tags=[])
+    public function set($id, $object, $tags=[])
     {
-        if (!is_object($value)) {
+        if (!is_object($object)) {
             throw new InvalidArgumentException(sprintf(
                 'Service should be an object, but %s given.',
-                gettype($value)
+                gettype($object)
             ));
         }
 
-        $this->addToIndex(
-            $id,
-            function() use ($value) {
-                return $value;
-            },
-            $tags
-        );
+        $this->services[$id] = $object;
+        unset($this->definitions[$id]);
+
+        $this->indexTags($id, $tags);
     }
 
     /**
-     * Sets a callable for the service creation. The same service will
+     * Sets a factory for the service creation. The same service will
      * be returned every time
      *
      * @param string   $id
-     * @param callable $callable
+     * @param callable $value
      * @param array    $tags
      *
      * @throws \InvalidArgumentException if service is not a callable
      */
-    public function define($id, $callable, $tags = [])
+    public function define($id, $value, $tags = [])
     {
-        if (!is_callable($callable)) {
-            throw new InvalidArgumentException(sprintf(
-                'Service should be callable, "%s" given.',
-                gettype($callable)
-            ));
-        }
+        $this->definitions[$id] = $value;
+        unset($this->services[$id]);
 
-        $this->addToIndex(
-            $id,
-            function ($container) use ($callable) {
-                static $instance;
-
-                if (null === $instance) {
-                    $instance = call_user_func($callable, $container);
-                }
-
-                return $instance;
-            },
-            $tags
-        );
+        $this->indexTags($id, $tags);
     }
 
     /**
@@ -139,21 +125,25 @@ final class IndexedServiceContainer implements ServiceContainer
     public function get($id)
     {
         if (!array_key_exists($id, $this->services)) {
-            throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
+            if (!array_key_exists($id, $this->definitions)) {
+                throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
+            }
+
+            $this->services[$id] = call_user_func($this->definitions[$id], $this);
         }
 
-        return call_user_func($this->services[$id], $this);
+        return $this->services[$id];
     }
 
     /**
      * Determines whether a service is defined
      *
-     * @param $id
+     * @param string $id
      * @return bool
      */
     public function has($id)
     {
-        return array_key_exists($id, $this->services);
+        return array_key_exists($id, $this->definitions) || array_key_exists($id, $this->services) ;
     }
 
     /**
@@ -165,21 +155,20 @@ final class IndexedServiceContainer implements ServiceContainer
      */
     public function remove($id)
     {
-        if (!array_key_exists($id, $this->services)) {
+        if (!$this->has($id)) {
             throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
         }
 
-        unset($this->services[$id]);
+        unset($this->services[$id], $this->definitions[$id]);
     }
 
     /**
      * Adds a service or service definition to the index
      *
      * @param string $id
-     * @param mixed  $value
      * @param array  $tags
      */
-    private function addToIndex($id, $value, array $tags)
+    private function indexTags($id, array $tags)
     {
         foreach ($tags as $tag) {
             if (!isset($this->tags[$tag])) {
@@ -187,8 +176,6 @@ final class IndexedServiceContainer implements ServiceContainer
             }
             $this->tags[$tag][] = $id;
         }
-
-        $this->services[$id] = $value;
     }
 
     /**
@@ -204,23 +191,16 @@ final class IndexedServiceContainer implements ServiceContainer
     }
 
     /**
-     * Adds a configurator, that can configure many services in one callable
+     * Adds a configurator, that can configure many services in one value
      *
      * @internal
      *
      * @param callable $configurator
      *
-     * @throws \InvalidArgumentException if configurator is not a callable
+     * @throws \InvalidArgumentException if configurator is not a value
      */
-    public function addConfigurator($configurator)
+    public function addConfigurator(callable $configurator)
     {
-        if (!is_callable($configurator)) {
-            throw new InvalidArgumentException(sprintf(
-                'Configurator should be callable, but %s given.',
-                gettype($configurator)
-            ));
-        }
-
         $this->configurators[] = $configurator;
     }
 
