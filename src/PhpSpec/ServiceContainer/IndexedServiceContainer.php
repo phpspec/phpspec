@@ -102,8 +102,6 @@ final class IndexedServiceContainer implements ServiceContainer
      * @param string   $id
      * @param callable $definition
      * @param array    $tags
-     *
-     * @throws \InvalidArgumentException if service is not a callable
      */
     public function define($id, callable $definition, $tags = [])
     {
