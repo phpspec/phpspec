@@ -18,14 +18,15 @@ class StringEngineSpec extends ObjectBehavior
 
     function it_calculates_strings_diff()
     {
-        $expected = <<<DIFF
+        $expected = str_replace("\n", PHP_EOL, <<<DIFF
 <code>
 @@ -1,1 +1,1 @@
 <diff-del>-string1</diff-del>
 <diff-add>+string2</diff-add>
 </code>
-DIFF;
+DIFF
+);
 
-        $this->compare('string1', 'string2')->shouldReturn($expected);
+        $this->compare('string1', 'string2')->shouldBe($expected);
     }
 }
