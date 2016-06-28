@@ -22,8 +22,8 @@ class StringEngine implements DifferEngine
 
     public function compare($expected, $actual)
     {
-        $expected = explode("\n", (string) $expected);
-        $actual   = explode("\n", (string) $actual);
+        $expected = explode(PHP_EOL, (string) $expected);
+        $actual   = explode(PHP_EOL, (string) $actual);
 
         $diff = new \Diff($expected, $actual, array());
 
@@ -31,7 +31,7 @@ class StringEngine implements DifferEngine
         $text = $diff->render($renderer);
 
         $lines = array();
-        foreach (explode("\n", $text) as $line) {
+        foreach (explode(PHP_EOL, $text) as $line) {
             if (0 === strpos($line, '-')) {
                 $lines[] = sprintf('<diff-del>%s</diff-del>', $line);
             } elseif (0 === strpos($line, '+')) {

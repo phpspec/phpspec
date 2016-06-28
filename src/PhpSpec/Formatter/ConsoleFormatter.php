@@ -78,7 +78,7 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
         $title = str_replace('\\', DIRECTORY_SEPARATOR, $event->getSpecification()->getTitle());
         $message = $this->getPresenter()->presentException($event->getException(), $this->io->isVerbose());
 
-        foreach (explode("\n", wordwrap($title, $this->io->getBlockWidth(), "\n", true)) as $line) {
+        foreach (explode(PHP_EOL, wordwrap($title, $this->io->getBlockWidth(), "\n", true)) as $line) {
             $this->io->writeln(sprintf('<%s-bg>%s</%s-bg>', $type, str_pad($line, $this->io->getBlockWidth()), $type));
         }
 

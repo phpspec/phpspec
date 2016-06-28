@@ -44,7 +44,7 @@ final class TruncatingStringTypePresenter implements StringTypePresenter
             return $this->stringTypePresenter->present($value);
         }
 
-        $lines = explode("\n", $value);
+        $lines = explode(PHP_EOL, $value);
         return $this->stringTypePresenter->present(sprintf('%s...', substr($lines[0], 0, 25)));
     }
 

@@ -83,9 +83,9 @@ final class TokenizedCodeWriter implements CodeWriter
      */
     private function insertStringAfterLine($target, $toInsert, $line, $leadingNewline = true)
     {
-        $lines = explode("\n", $target);
+        $lines = explode(PHP_EOL, $target);
         $lastLines = array_slice($lines, $line);
-        $toInsert = trim($toInsert, "\n\r");
+        $toInsert = trim($toInsert, PHP_EOL);
         if ($leadingNewline) {
             $toInsert = "\n" . $toInsert;
         }
@@ -104,9 +104,9 @@ final class TokenizedCodeWriter implements CodeWriter
     private function insertStringBeforeLine($target, $toInsert, $line)
     {
         $line--;
-        $lines = explode("\n", $target);
+        $lines = explode(PHP_EOL, $target);
         $lastLines = array_slice($lines, $line);
-        array_unshift($lastLines, trim($toInsert, "\n\r") . "\n");
+        array_unshift($lastLines, trim($toInsert, PHP_EOL) . "\n");
         array_splice($lines, $line, count($lines), $lastLines);
 
         return implode("\n", $lines);
