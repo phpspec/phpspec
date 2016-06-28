@@ -25,7 +25,8 @@ class StringEngineSpec extends ObjectBehavior
 <diff-add>+string2</diff-add>
 </code>
 DIFF;
+        $normalizedExpected = preg_replace('/['.PHP_EOL.']/', "\n", $expected);
 
-        $this->compare('string1', 'string2')->shouldReturn($expected);
+        $this->compare('string1', 'string2')->shouldReturn($normalizedExpected);
     }
 }
