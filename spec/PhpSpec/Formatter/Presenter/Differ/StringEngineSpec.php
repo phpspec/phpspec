@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\Formatter\Presenter\Differ;
 
+use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\ObjectBehavior;
 
 class StringEngineSpec extends ObjectBehavior
@@ -25,8 +26,22 @@ class StringEngineSpec extends ObjectBehavior
 <diff-add>+string2</diff-add>
 </code>
 DIFF;
-        $normalizedExpected = preg_replace('/['.PHP_EOL.']/', "\n", $expected);
 
-        $this->compare('string1', 'string2')->shouldReturn($normalizedExpected);
+        $this->compare('string1', 'string2')->shouldBeEqualRegardlessOfLineEndings($expected);
     }
+
+    public function getMatchers()
+    {
+        return [
+            'beEqualRegardlessOfLineEndings' => function ($actual, $expected) {
+                $actual = str_replace("\r", '', $actual);
+                if ($actual !== $expected) {
+                    throw new FailureException('Strings are not equal.');
+                }
+
+                return true;
+            }
+        ];
+    }
+
 }
