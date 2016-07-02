@@ -144,10 +144,9 @@ final class Application extends BaseApplication
             }
             elseif ('matchers' === $key && is_array($val)) {
                 foreach ($val as $class) {
-                    $id = strtolower(str_replace('Matcher', '', substr($class, strrpos($class, '\\') + 1)));
-                    $container->set(sprintf('matchers.%s', $id), function (ServiceContainer $c) use ($class) {
+                    $container->define(sprintf('matchers.%s', $class), function () use ($class) {
                         return new $class();
-                    });
+                    }, ['matchers']);
                 }
             }
             else {
