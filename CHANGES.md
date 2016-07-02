@@ -3,6 +3,7 @@
 
 * Default template now uses `::class` (@ciaranmcnulty)
 * No longer declare variables/constants in global scope (@ciaranmcnulty)
+* Ability to register matchers quickly via the config file (@gquemener)
 * [fixed] Describing a class providing a namespace with leading backslash (@mheki)
 * [fixed] Bug where rerun test suite was uncoloured (@ciaranmcnulty)
 * [fixed] Bug in DotFormatter when number of rows is multiple of column width (@bendavies)
@@ -13,6 +14,7 @@
 * [BC break] Removed `*Interface` from all interfaces (@shanethehat)
 * [BC break] Removed deprecated code / optional interfaces (@mheki)
 * [BC break] Changed extension config format so parameters are scoped to extensions (@docteurklein)
+* [BC break] New Extension and ServiceContainer interfaces
 
 2.5 - Upcoming
 ==============
