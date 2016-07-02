@@ -357,6 +357,7 @@ class ApplicationContext implements Context
     private function normalize($string)
     {
         $string = preg_replace('/\([0-9]+ms\)/', '', $string);
+        $string = str_replace("\r", '', $string);
 
         return $string;
     }
