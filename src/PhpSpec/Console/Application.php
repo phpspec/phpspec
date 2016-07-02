@@ -139,7 +139,17 @@ class Application extends BaseApplication
                     $this->loadExtension($container, $class, $extensionConfig ?: []);
                 }
             }
-            $container->setParam($key, $val);
+            elseif ('matchers' === $key && is_array($val)) {
+                foreach ($val as $class) {
+                    $id = strtolower(str_replace('Matcher', '', substr($class, strrpos($class, '\\') + 1)));
+                    $container->set(sprintf('matchers.%s', $id), function (ServiceContainer $c) use ($class) {
+                        return new $class();
+                    });
+                }
+            }
+            else {
+                $container->setParam($key, $val);
+            }
         }
     }
 
