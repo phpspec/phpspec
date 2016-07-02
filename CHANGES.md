@@ -4,20 +4,21 @@
 * Default template now uses `::class` (@ciaranmcnulty)
 * No longer declare variables/constants in global scope (@ciaranmcnulty)
 * [fixed] Describing a class providing a namespace with leading backslash (@mheki)
-* [fixed] bug where rerun test suite was uncoloured (@ciaranmcnulty)
+* [fixed] Bug where rerun test suite was uncoloured (@ciaranmcnulty)
 * [fixed] Bug in DotFormatter when number of rows is multiple of column width (@bendavies)
 * [BC break] Removed support for @param for creating doubles (@Sam-Burns)
 * [BC break] Bumped dependency versions (see migration guide) (@ciaranmcnulty)
-* [BC break] Removed various code braches for support of older dependecies (@ciaranmcnulty)
+* [BC break] Removed various code branches for support of older dependencies (@ciaranmcnulty)
 * [BC break] Made classes final or abstract in simple cases (@ciaranmcnulty)
-* [BC break] Remove `*Interface` from all interfaces (@shanethehat)
-* [BC break] Remove deprecated code / optional interfaces (@mheki)
+* [BC break] Removed `*Interface` from all interfaces (@shanethehat)
+* [BC break] Removed deprecated code / optional interfaces (@mheki)
+* [BC break] Changed extension config format so parameters are scoped to extensions (@docteurklein)
 
 2.5 - Upcoming
 ==============
 
 * [fixed] Describing a class providing a namespace with leading backslash (@mheki)
-* [fixed] bug where rerun test suite was uncoloured (@ciaranmcnulty)
+* [fixed] Bug where rerun test suite was uncoloured (@ciaranmcnulty)
 * [fixed] Bug in DotFormatter when number of rows is multiple of column width (@bendavies)
 
 2.5.0 / 2016-03-20

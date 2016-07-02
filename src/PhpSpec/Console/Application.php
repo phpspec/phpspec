@@ -135,22 +135,29 @@ class Application extends BaseApplication
 
         foreach ($config as $key => $val) {
             if ('extensions' === $key && is_array($val)) {
-                foreach ($val as $class) {
-                    $extension = new $class();
-
-                    if (!$extension instanceof Extension) {
-                        throw new RuntimeException(sprintf(
-                            'Extension class must implement PhpSpec\Extension. But `%s` is not.',
-                            $class
-                        ));
-                    }
-
-                    $extension->load($container);
+                foreach ($val as $class => $extensionConfig) {
+                    $this->loadExtension($container, $class, $extensionConfig ?: []);
                 }
-            } else {
-                $container->setParam($key, $val);
             }
+            $container->setParam($key, $val);
         }
+    }
+
+    private function loadExtension(ServiceContainer $container, $extensionClass, $config)
+    {
+        if (!class_exists($extensionClass)) {
+            throw new RuntimeException(sprintf('Extension class `%s` does not exist.', $extensionClass));
+        }
+
+        if (!is_array($config)) {
+            throw new RuntimeException('Extension configuration must be an array or null.');
+        }
+
+        if (!is_a($extensionClass, Extension::class, true)) {
+            throw new RuntimeException(sprintf('Extension class `%s` must implement Extension interface', $extensionClass));
+        }
+
+        (new $extensionClass)->load($container, $config);
     }
 
     /**
