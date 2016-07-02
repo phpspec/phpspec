@@ -21,8 +21,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * Command line command responsible to signal to generators we will need to
  * generate a new spec
+ *
+ * @Internal
  */
-class DescribeCommand extends Command
+final class DescribeCommand extends Command
 {
     protected function configure()
     {

@@ -21,9 +21,9 @@ Feature: Developer uses extension
     {
         public function load(ServiceContainer $container, array $params)
         {
-            $container->set('matchers.seven', function (ServiceContainer $c) {
+            $container->define('matchers.seven', function (ServiceContainer $c) {
                 return new BeSevenMatcher($c->get('formatter.presenter'));
-            });
+            }, ['matchers']);
         }
     }
 

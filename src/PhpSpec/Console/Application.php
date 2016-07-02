@@ -15,22 +15,25 @@ namespace PhpSpec\Console;
 
 use PhpSpec\Loader\StreamWrapper;
 use PhpSpec\Process\Context\JsonExecutionContext;
+use PhpSpec\ServiceContainer;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
-use PhpSpec\ServiceContainer;
+use PhpSpec\ServiceContainer\IndexedServiceContainer;
 use PhpSpec\Extension;
 use RuntimeException;
 
 /**
  * The command line application entry point
+ *
+ * @internal
  */
-class Application extends BaseApplication
+final class Application extends BaseApplication
 {
     /**
-     * @var ServiceContainer
+     * @var IndexedServiceContainer
      */
     private $container;
 
@@ -39,7 +42,7 @@ class Application extends BaseApplication
      */
     public function __construct($version)
     {
-        $this->container = new ServiceContainer();
+        $this->container = new IndexedServiceContainer();
         parent::__construct('phpspec', $version);
     }
 
@@ -64,7 +67,7 @@ class Application extends BaseApplication
         $this->container->set('console.output', $output);
         $this->container->set('console.helper_set', $helperSet);
 
-        $this->container->setShared('process.executioncontext', function () {
+        $this->container->define('process.executioncontext', function () {
             return JsonExecutionContext::fromEnv($_SERVER);
         });
 
@@ -73,7 +76,7 @@ class Application extends BaseApplication
 
         $this->loadConfigurationFile($input, $this->container);
 
-        foreach ($this->container->getByPrefix('console.commands') as $command) {
+        foreach ($this->container->getByTag('console.commands') as $command) {
             $this->add($command);
         }
 
@@ -82,7 +85,7 @@ class Application extends BaseApplication
         $this->container->get('console.io')->setConsoleWidth($this->getTerminalWidth());
 
         StreamWrapper::reset();
-        foreach ($this->container->getByPrefix('loader.resource_loader.spec_transformer') as $transformer) {
+        foreach ($this->container->getByTag('loader.resource_loader.spec_transformer') as $transformer) {
             StreamWrapper::addTransformer($transformer);
         }
         StreamWrapper::register();
@@ -125,11 +128,11 @@ class Application extends BaseApplication
 
     /**
      * @param InputInterface   $input
-     * @param ServiceContainer $container
+     * @param IndexedServiceContainer $container
      *
      * @throws \RuntimeException
      */
-    protected function loadConfigurationFile(InputInterface $input, ServiceContainer $container)
+    protected function loadConfigurationFile(InputInterface $input, IndexedServiceContainer $container)
     {
         $config = $this->parseConfigurationFile($input);
 
