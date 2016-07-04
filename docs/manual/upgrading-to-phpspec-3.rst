@@ -46,7 +46,7 @@ To:
 
     extensions:
         SomeExtension:
-            some_config:foo
+            some_config: foo
 
         SomeOtherExtension: ~
 
