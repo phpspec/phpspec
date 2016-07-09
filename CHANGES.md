@@ -14,7 +14,7 @@
 * [BC break] Removed `*Interface` from all interfaces (@shanethehat)
 * [BC break] Removed deprecated code / optional interfaces (@mheki)
 * [BC break] Changed extension config format so parameters are scoped to extensions (@docteurklein)
-* [BC break] New Extension and ServiceContainer interfaces
+* [BC break] New Extension and ServiceContainer interfaces (@ciaranmcnulty)
 
 2.5 - Upcoming
 ==============
