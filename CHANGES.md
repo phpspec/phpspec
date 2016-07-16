@@ -1,5 +1,5 @@
-3.0 - Upcoming
-==============
+3.0.0 / 2016-07-16
+==================
 
 * Default template now uses `::class` (@ciaranmcnulty)
 * No longer declare variables/constants in global scope (@ciaranmcnulty)
