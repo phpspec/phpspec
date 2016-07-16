@@ -16,8 +16,8 @@
 * [BC break] Changed extension config format so parameters are scoped to extensions (@docteurklein)
 * [BC break] New Extension and ServiceContainer interfaces (@ciaranmcnulty)
 
-2.5 - Upcoming
-==============
+2.5.1 / 2016-07-16
+==================
 
 * [fixed] Describing a class providing a namespace with leading backslash (@mheki)
 * [fixed] Bug where rerun test suite was uncoloured (@ciaranmcnulty)
