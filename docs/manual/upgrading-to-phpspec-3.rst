@@ -30,6 +30,26 @@ Change to:
 
     function it_does_something_with_a_stdclass(\stdClass $collaborator)
 
+Extension configured in your ``phpspec.yml`` needs to be changed from:
+
+.. code-block:: yml
+
+    some_extension_config: foo
+
+    extensions:
+        - SomeExtension
+        - SomeOtherExtension
+
+To:
+
+.. code-block:: yml
+
+    extensions:
+        SomeExtension:
+            some_config: foo
+
+        SomeOtherExtension: ~
+
 Upgrading for Extension Authors
 -------------------------------
 
@@ -51,9 +71,19 @@ changes you will need to make in your code.
 - ``PhpSpec\Formatter\Presenter\Differ\EngineInterface` is now ``PhpSpec\Formatter\Presenter\Differ\DifferEngine``
 - ``PhpSpec\Matcher\MatcherInterface`` is now ``PhpSpec\Matcher\Matcher``
 
+Some methods have a different signature:
+
+- ``PhpSpec\CodeGenerator\Generator\PromptingGenerator#__construct``'s third and
+  fourth arguments are now mandatory
+- ``PhpSpec\Matcher\ThrowMatcher#__construct``'s third argument is now mndatory
+- `PhpSpec\Extension#load`` has now an additional mandatory `array $params` argument.
+
+A few methods have been renamed in **phpspec** 3.0:
+
+- ``PhpSpec\ServiceContainer#set`` is now ``PhpSpec\ServiceContainer#define``
+- ``PhpSpec\ServiceContainer#setShared`` is now ``PhpSpec\ServiceContainer#define``
+
 Other things to bear in mind:
 
-- ``PhpSpec\CodeGenerator\Generator\PromptingGenerator`` now has a different
-  method signature for its constructor.
-- ``PhpSpec\Matcher\ThrowMatcher`` now has a different method signature for its
-  constructor.
+- ``PhpSpec\ServiceContainer`` is now an interface (available implementation:
+  ``PhpSpec\ServiceContainer\IndexedServiceContainer``)
