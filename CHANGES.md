@@ -1,5 +1,5 @@
-2.5 - Upcoming
-==============
+2.5.1 / 2016-07-16
+==================
 
 * [fixed] Describing a class providing a namespace with leading backslash (@mheki)
 * [fixed] bug where rerun test suite was uncoloured (@ciaranmcnulty)
