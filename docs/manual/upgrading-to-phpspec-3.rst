@@ -1,8 +1,8 @@
 Upgrading to phpspec 3
 ======================
 
-phpspec 3.0 is still in development, but here is a guide to upgrading a test
-suite or an extension, based on BC-breaking changes made so far.
+Here is a guide to upgrading a test suite or an extension, based on BC-breaking
+changes made in phpspec 3.
 
 Upgrading for Users
 -------------------
