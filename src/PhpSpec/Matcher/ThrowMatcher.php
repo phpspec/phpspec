@@ -123,14 +123,7 @@ class ThrowMatcher implements MatcherInterface
         if (!$exceptionThrown instanceof $exception) {
             $format = 'Expected exception of class %s, but got %s.';
 
-            // Show full error message if the thrown exception is an instance of Error.
-            // See https://github.com/phpspec/phpspec/issues/908
             if ($exceptionThrown instanceof \Error) {
-                // TODO: Can we can use $this->presenter->presentValue() rather
-                // than adding the raw Error message in quotes here? Currently
-                // not included since presentValue() truncates the string to 25
-                // characters but we want to show the full Error message for
-                // debugging purposes.
                 $format = 'Expected exception of class %s, but got %s with the message: "%s"';
             }
 
