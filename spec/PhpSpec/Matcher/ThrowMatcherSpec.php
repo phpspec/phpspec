@@ -69,4 +69,22 @@ class ThrowMatcherSpec extends ObjectBehavior
 
         $this->negativeMatch('throw', $arr, array('\Error'))->during('ksort', array());
     }
+
+    function it_throws_a_failure_exception_with_the_thrown_exceptions_message_if_a_positive_match_failed(Presenter $presenter)
+    {
+        $actually_thrown_error = new \Error('This is a test Error');
+
+        $callable = function () use ($actually_thrown_error) { throw $actually_thrown_error; };
+
+        $expected_error = new \PhpSpec\Exception\Example\FailureException(
+            'Expected exception of class Exception, but got Error with the message: "This is a test Error"'
+        );
+
+        $incorrectly_matched_exception = new \Exception('This is the exception I expect to be thrown.');
+
+        $presenter->presentValue($actually_thrown_error)->willReturn('Error');
+        $presenter->presentValue($incorrectly_matched_exception)->willReturn('Exception');
+
+        $this->shouldThrow($expected_error)->during('verifyPositive', [$callable, [], $incorrectly_matched_exception]);
+    }
 }
