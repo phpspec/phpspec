@@ -72,6 +72,10 @@ class ThrowMatcherSpec extends ObjectBehavior
 
     function it_throws_a_failure_exception_with_the_thrown_exceptions_message_if_a_positive_match_failed(Presenter $presenter)
     {
+        if (!class_exists('\Error')) {
+            throw new SkippingException('The class Error, introduced in PHP 7, does not exist');
+        }
+
         $actually_thrown_error = new \Error('This is a test Error');
 
         $callable = function () use ($actually_thrown_error) { throw $actually_thrown_error; };
