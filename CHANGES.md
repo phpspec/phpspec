@@ -1,3 +1,8 @@
+Upcoming 3.x
+============
+
+* [fixed] Shows Error message even when Exception was expected (@harrisonbro)
+
 3.0.0 / 2016-07-16
 ==================
 
