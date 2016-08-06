@@ -121,11 +121,18 @@ final class ThrowMatcher implements Matcher
         }
 
         if (!$exceptionThrown instanceof $exception) {
+            $format = 'Expected exception of class %s, but got %s.';
+
+            if ($exceptionThrown instanceof \Error) {
+                $format = 'Expected exception of class %s, but got %s with the message: "%s"';
+            }
+
             throw new FailureException(
                 sprintf(
-                    'Expected exception of class %s, but got %s.',
+                    $format,
                     $this->presenter->presentValue($exception),
-                    $this->presenter->presentValue($exceptionThrown)
+                    $this->presenter->presentValue($exceptionThrown),
+                    $exceptionThrown->getMessage()
                 )
             );
         }
