@@ -32,6 +32,7 @@ navigate to the spec folder and see the spec there:
 
     namespace spec;
 
+    use Markdown;
     use PhpSpec\ObjectBehavior;
     use Prophecy\Argument;
 
@@ -39,7 +40,7 @@ navigate to the spec folder and see the spec there:
     {
         function it_is_initializable()
         {
-            $this->shouldHaveType('Markdown');
+            $this->shouldHaveType(Markdown::class);
         }
     }
 
