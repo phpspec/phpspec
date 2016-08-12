@@ -68,15 +68,15 @@ changes you will need to make in your code.
 - ``PhpSpec\Extension\ExtensionInterface`` is now ``PhpSpec\Extension``
 - ``Phpspec\CodeAnalysis\AccessInspectorInterface`` is now ``Phpspec\CodeAnalysis\AccessInspector``
 - ``Phpspec\Event\EventInterface`` is now ``Phpspec\Event\PhpSpecEvent``
-- ``PhpSpec\Formatter\Presenter\Differ\EngineInterface` is now ``PhpSpec\Formatter\Presenter\Differ\DifferEngine``
+- ``PhpSpec\Formatter\Presenter\Differ\EngineInterface`` is now ``PhpSpec\Formatter\Presenter\Differ\DifferEngine``
 - ``PhpSpec\Matcher\MatcherInterface`` is now ``PhpSpec\Matcher\Matcher``
 
 Some methods have a different signature:
 
 - ``PhpSpec\CodeGenerator\Generator\PromptingGenerator#__construct``'s third and
   fourth arguments are now mandatory
-- ``PhpSpec\Matcher\ThrowMatcher#__construct``'s third argument is now mndatory
-- `PhpSpec\Extension#load`` has now an additional mandatory `array $params` argument.
+- ``PhpSpec\Matcher\ThrowMatcher#__construct``'s third argument is now mandatory
+- ``PhpSpec\Extension#load`` has now an additional mandatory ``array $params`` argument.
 
 A few methods have been renamed in **phpspec** 3.0:
 
