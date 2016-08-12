@@ -20,19 +20,19 @@ can do this by adding it to the config file:
 .. code-block:: yaml
 
     extensions:
-        - MageTest\PhpSpec\MagentoExtension\Extension
+        MageTest\PhpSpec\MagentoExtension\Extension: ~
 
 You can pass options to the extension as well:
 
 .. code-block:: yaml
 
     extensions:
-        - MageTest\PhpSpec\MagentoExtension\Extension
-    mage_locator:
-        spec_prefix: spec
-        src_path: public/app/code
-        spec_path: spec/public/app/code
-        code_pool: community
+        MageTest\PhpSpec\MagentoExtension\Extension:
+            mage_locator:
+                spec_prefix: spec
+                src_path: public/app/code
+                spec_path: spec/public/app/code
+                code_pool: community
 
 See the :doc:`Configuration Cookbook </cookbook/configuration>` for more about config files.
 
