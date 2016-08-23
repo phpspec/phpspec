@@ -29,7 +29,7 @@ class CollaboratorNotFoundListenerSpec extends ObjectBehavior
 
         $io->isCodeGenerationEnabled()->willReturn(true);
         $io->askConfirmation(Argument::any())->willReturn(false);
-        $io->writeln(Argument::any())->willReturn(null);
+        $io->writeln(Argument::cetera())->willReturn(null);
     }
 
     function it_listens_to_afterexample_and_aftersuite_events()
@@ -114,6 +114,38 @@ class CollaboratorNotFoundListenerSpec extends ObjectBehavior
 
         $generator->generate($resource, 'interface')->shouldHaveBeenCalled();
         $suiteEvent->markAsWorthRerunning()->shouldHaveBeenCalled();
+    }
+    
+    function it_notifies_user_when_it_generated_interface(
+        ConsoleIO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent,
+        GeneratorManager $generator, Resource $resource
+    )
+    {
+        $io->askConfirmation(
+            'Would you like me to generate an interface `Example\ExampleClass` for you?'
+        )->willReturn(true);
+        $generator->generate($resource, 'interface')->willReturn($message = 'Non-empty string');
+
+        $this->afterExample($exampleEvent);
+        $this->afterSuite($suiteEvent);
+
+        $io->writeln($message, Argument::any())->shouldHaveBeenCalled();
+    }
+    
+    function it_doesnt_output_empty_line_when_generator_has_no_output(
+        ConsoleIO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent,
+        GeneratorManager $generator, Resource $resource
+    )
+    {
+        $io->askConfirmation(
+            'Would you like me to generate an interface `Example\ExampleClass` for you?'
+        )->willReturn(true);
+        $generator->generate($resource, 'interface')->willReturn($message = '');
+
+        $this->afterExample($exampleEvent);
+        $this->afterSuite($suiteEvent);
+
+        $io->writeln($message, Argument::any())->shouldNotHaveBeenCalled();
     }
 
     function it_does_not_generate_interface_when_prompt_is_answered_with_no(

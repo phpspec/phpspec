@@ -150,7 +150,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
                 }
 
                 if ($this->io->askConfirmation(sprintf(self::PROMPT, $interface, $method))) {
-                    $this->generator->generate(
+                    $output = $this->generator->generate(
                         $resource,
                         'method-signature',
                         array(
@@ -158,6 +158,11 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
                             'arguments' => $this->getRealArguments($arguments)
                         )
                     );
+    
+                    if (!empty($output)) {
+                        $this->io->writeln($output, 2);
+                    }
+                    
                     $event->markAsWorthRerunning();
                 }
             }

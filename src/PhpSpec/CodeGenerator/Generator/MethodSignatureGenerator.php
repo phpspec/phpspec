@@ -24,11 +24,6 @@ use PhpSpec\Locator\Resource;
 final class MethodSignatureGenerator implements Generator
 {
     /**
-     * @var ConsoleIO
-     */
-    private $io;
-
-    /**
      * @var TemplateRenderer
      */
     private $templates;
@@ -39,13 +34,11 @@ final class MethodSignatureGenerator implements Generator
     private $filesystem;
 
     /**
-     * @param ConsoleIO               $io
      * @param TemplateRenderer $templates
      * @param Filesystem       $filesystem
      */
-    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem)
+    public function __construct(TemplateRenderer $templates, Filesystem $filesystem)
     {
-        $this->io         = $io;
         $this->templates  = $templates;
         $this->filesystem = $filesystem;
     }
@@ -64,7 +57,9 @@ final class MethodSignatureGenerator implements Generator
 
     /**
      * @param Resource $resource
-     * @param array             $data
+     * @param array    $data
+     *
+     * @return string
      */
     public function generate(Resource $resource, array $data = array())
     {
@@ -83,10 +78,11 @@ final class MethodSignatureGenerator implements Generator
 
         $this->insertMethodSignature($filepath, $content);
 
-        $this->io->writeln(sprintf(
+        return sprintf(
             "<info>Method signature <value>%s::%s()</value> has been created.</info>\n",
-            $resource->getSrcClassname(), $name
-        ), 2);
+            $resource->getSrcClassname(),
+            $name
+        );
     }
 
     /**

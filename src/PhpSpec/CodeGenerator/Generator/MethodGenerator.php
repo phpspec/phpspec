@@ -25,11 +25,6 @@ use PhpSpec\Locator\Resource;
 final class MethodGenerator implements Generator
 {
     /**
-     * @var ConsoleIO
-     */
-    private $io;
-
-    /**
      * @var TemplateRenderer
      */
     private $templates;
@@ -45,14 +40,12 @@ final class MethodGenerator implements Generator
     private $codeWriter;
 
     /**
-     * @param ConsoleIO $io
      * @param TemplateRenderer $templates
      * @param Filesystem $filesystem
      * @param CodeWriter $codeWriter
      */
-    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, CodeWriter $codeWriter)
+    public function __construct(TemplateRenderer $templates, Filesystem $filesystem, CodeWriter $codeWriter)
     {
-        $this->io         = $io;
         $this->templates  = $templates;
         $this->filesystem = $filesystem;
         $this->codeWriter = $codeWriter;
@@ -72,7 +65,9 @@ final class MethodGenerator implements Generator
 
     /**
      * @param Resource $resource
-     * @param array             $data
+     * @param array    $data
+     *
+     * @return string
      */
     public function generate(Resource $resource, array $data = array())
     {
@@ -95,12 +90,12 @@ final class MethodGenerator implements Generator
 
         $code = $this->filesystem->getFileContents($filepath);
         $this->filesystem->putFileContents($filepath, $this->getUpdatedCode($name, $content, $code));
-
-        $this->io->writeln(sprintf(
+        
+        return sprintf(
             "<info>Method <value>%s::%s()</value> has been created.</info>\n",
             $resource->getSrcClassname(),
             $name
-        ), 2);
+        );
     }
 
     /**

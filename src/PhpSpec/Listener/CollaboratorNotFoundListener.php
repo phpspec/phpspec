@@ -96,7 +96,12 @@ final class CollaboratorNotFoundListener implements EventSubscriberInterface
             if ($this->io->askConfirmation(
                 sprintf('Would you like me to generate an interface `%s` for you?', $exception->getCollaboratorName())
             )) {
-                $this->generator->generate($resource, 'interface');
+                $output = $this->generator->generate($resource, 'interface');
+    
+                if (!empty($output)) {
+                    $this->io->writeln($output, 2);
+                }
+                
                 $event->markAsWorthRerunning();
             }
         }

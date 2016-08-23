@@ -23,11 +23,6 @@ use PhpSpec\Util\Filesystem;
 final class NamedConstructorGenerator implements Generator
 {
     /**
-     * @var ConsoleIO
-     */
-    private $io;
-
-    /**
      * @var TemplateRenderer
      */
     private $templates;
@@ -42,14 +37,12 @@ final class NamedConstructorGenerator implements Generator
     private $codeWriter;
 
     /**
-     * @param ConsoleIO $io
      * @param TemplateRenderer $templates
      * @param Filesystem $filesystem
      * @param CodeWriter $codeWriter
      */
-    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, CodeWriter $codeWriter)
+    public function __construct(TemplateRenderer $templates, Filesystem $filesystem, CodeWriter $codeWriter)
     {
-        $this->io         = $io;
         $this->templates  = $templates;
         $this->filesystem = $filesystem;
         $this->codeWriter = $codeWriter;
@@ -86,11 +79,11 @@ final class NamedConstructorGenerator implements Generator
         );
         $this->filesystem->putFileContents($filepath, $code);
 
-        $this->io->writeln(sprintf(
+        return sprintf(
             "<info>Method <value>%s::%s()</value> has been created.</info>\n",
             $resource->getSrcClassname(),
             $methodName
-        ), 2);
+        );
     }
 
     /**

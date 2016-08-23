@@ -50,7 +50,9 @@ final class NewFileNotifyingGenerator implements Generator
 
     /**
      * @param Resource $resource
-     * @param array $data
+     * @param array    $data
+     *
+     * @return string
      */
     public function generate(Resource $resource, array $data)
     {
@@ -58,9 +60,11 @@ final class NewFileNotifyingGenerator implements Generator
 
         $fileExisted = $this->fileExists($filePath);
 
-        $this->generator->generate($resource, $data);
+        $output = $this->generator->generate($resource, $data);
 
         $this->dispatchEventIfFileWasCreated($fileExisted, $filePath);
+        
+        return $output;
     }
 
     /**

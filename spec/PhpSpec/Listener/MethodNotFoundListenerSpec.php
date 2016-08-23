@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\Listener;
 
+use PhpSpec\Locator\Resource;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
@@ -21,10 +22,13 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         GeneratorManager $generatorManager,
         SuiteEvent $suiteEvent,
         ExampleEvent $exampleEvent,
-        NameChecker $nameChecker
+        NameChecker $nameChecker,
+        Resource $resource
     ) {
-        $io->writeln(Argument::any())->willReturn();
+        $io->writeln(Argument::cetera())->willReturn();
         $io->askConfirmation(Argument::any())->willReturn();
+        $resourceManager->createResource(Argument::any())->willReturn($resource);
+        $generatorManager->generate($resource, Argument::cetera())->willReturn();
 
         $this->beConstructedWith($io, $resourceManager, $generatorManager, $nameChecker);
         $io->isCodeGenerationEnabled()->willReturn(true);
@@ -103,6 +107,68 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         $suiteEvent->markAsNotWorthRerunning()->shouldBeCalled();
 
         $this->afterSuite($suiteEvent);
+    }
+    
+    function it_generates_the_method_when_prompt_is_answered_with_yes(
+        $exampleEvent,
+        $suiteEvent,
+        $io,
+        $generatorManager,
+        $resource,
+        NameChecker $nameChecker
+    ) {
+        $io->askConfirmation(Argument::any())->willReturn(true);
+        $exception = new MethodNotFoundException('Error', new \stdClass(), 'bar');
+    
+        $exampleEvent->getException()->willReturn($exception);
+        $nameChecker->isNameValid('bar')->willReturn(true);
+    
+        $this->afterExample($exampleEvent);
+        $this->afterSuite($suiteEvent);
+    
+        $generatorManager->generate($resource, Argument::cetera())->shouldHaveBeenCalled();
+    }
+    
+    function it_notifies_the_user_when_it_generated_the_method(
+        $exampleEvent,
+        $suiteEvent,
+        $io,
+        $generatorManager,
+        $resource,
+        NameChecker $nameChecker
+    ) {
+        $io->askConfirmation(Argument::any())->willReturn(true);
+        $generatorManager->generate($resource, Argument::cetera())->willReturn($message = 'Non-empty string');
+        $exception = new MethodNotFoundException('Error', new \stdClass(), 'bar');
+    
+        $exampleEvent->getException()->willReturn($exception);
+        $nameChecker->isNameValid('bar')->willReturn(true);
+    
+        $this->afterExample($exampleEvent);
+        $this->afterSuite($suiteEvent);
+    
+        $io->writeln($message, Argument::any())->shouldHaveBeenCalled();
+    }
+    
+    function it_doesnt_output_empty_line_when_the_generator_has_no_output(
+        $exampleEvent,
+        $suiteEvent,
+        $io,
+        $generatorManager,
+        $resource,
+        NameChecker $nameChecker
+    ) {
+        $io->askConfirmation(Argument::any())->willReturn(true);
+        $generatorManager->generate($resource, Argument::cetera())->willReturn($message = '');
+        $exception = new MethodNotFoundException('Error', new \stdClass(), 'bar');
+    
+        $exampleEvent->getException()->willReturn($exception);
+        $nameChecker->isNameValid('bar')->willReturn(true);
+    
+        $this->afterExample($exampleEvent);
+        $this->afterSuite($suiteEvent);
+    
+        $io->writeln($message, Argument::any())->shouldNotHaveBeenCalled();
     }
 
     private function callAfterExample($exampleEvent, $nameChecker, $method, $isNameValid = true)

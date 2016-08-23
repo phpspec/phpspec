@@ -13,9 +13,9 @@ use PhpSpec\Locator\Resource;
 
 class MethodGeneratorSpec extends ObjectBehavior
 {
-    function let(ConsoleIO $io, TemplateRenderer $tpl, Filesystem $fs, CodeWriter $codeWriter)
+    function let(TemplateRenderer $tpl, Filesystem $fs, CodeWriter $codeWriter)
     {
-        $this->beConstructedWith($io, $tpl, $fs, $codeWriter);
+        $this->beConstructedWith($tpl, $fs, $codeWriter);
     }
 
     function it_is_a_generator()
@@ -38,7 +38,7 @@ class MethodGeneratorSpec extends ObjectBehavior
         $this->getPriority()->shouldReturn(0);
     }
 
-    function it_generates_class_method_from_resource($io, $tpl, $fs, Resource $resource, CodeWriter $codeWriter)
+    function it_generates_class_method_from_resource($tpl, $fs, Resource $resource, CodeWriter $codeWriter)
     {
         $codeWithoutMethod = <<<CODE
 <?php

@@ -11,9 +11,9 @@ use PhpSpec\Locator\Resource;
 
 class ReturnConstantGeneratorSpec extends ObjectBehavior
 {
-    function let(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem)
+    function let(TemplateRenderer $templates, Filesystem $filesystem)
     {
-        $this->beConstructedWith($io, $templates, $filesystem);
+        $this->beConstructedWith($templates, $filesystem);
     }
 
     function it_is_a_generator()

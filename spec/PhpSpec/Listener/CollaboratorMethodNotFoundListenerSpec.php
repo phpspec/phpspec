@@ -187,6 +187,42 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
 
         $this->afterSuite($suiteEvent);
     }
+    
+    function it_notifies_the_user_when_it_generated_the_method_signature(
+        ConsoleIO $io, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception,
+        Resource $resource, GeneratorManager $generator
+    )
+    {
+        $io->writeln(Argument::cetera())->willReturn();
+        $io->askConfirmation(Argument::any())->willReturn(true);
+        $generator->generate($resource, 'method-signature', Argument::any())->willReturn($message = 'Non-empty string');
+        
+        $exception->getClassname()->willReturn('spec\PhpSpec\Listener\DoubleOfInterface');
+        $exception->getMethodName()->willReturn('aMethod');
+        
+        $this->afterExample($event);
+        $this->afterSuite($suiteEvent);
+        
+        $io->writeln($message, Argument::any())->shouldHaveBeenCalled();
+    }
+    
+    function it_doesnt_output_an_empty_line_when_the_generator_has_no_output(
+        ConsoleIO $io, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception,
+        Resource $resource, GeneratorManager $generator
+    )
+    {
+        $io->writeln(Argument::cetera())->willReturn();
+        $io->askConfirmation(Argument::any())->willReturn(true);
+        $generator->generate($resource, 'method-signature', Argument::any())->willReturn($message = '');
+        
+        $exception->getClassname()->willReturn('spec\PhpSpec\Listener\DoubleOfInterface');
+        $exception->getMethodName()->willReturn('aMethod');
+        
+        $this->afterExample($event);
+        $this->afterSuite($suiteEvent);
+        
+        $io->writeln($message, Argument::any())->shouldNotHaveBeenCalled();
+    }
 
     private function callAfterExample($event, $nameChecker, $method, $isNameValid = true)
     {
