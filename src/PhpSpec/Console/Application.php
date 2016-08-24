@@ -182,15 +182,15 @@ final class Application extends BaseApplication
     private function loadExtension(ServiceContainer $container, $extensionClass, $config)
     {
         if (!class_exists($extensionClass)) {
-            throw new RuntimeException(sprintf('Extension class `%s` does not exist.', $extensionClass));
+            throw new InvalidConfigurationException(sprintf('Extension class `%s` does not exist.', $extensionClass));
         }
 
         if (!is_array($config)) {
-            throw new RuntimeException('Extension configuration must be an array or null.');
+            throw new InvalidConfigurationException('Extension configuration must be an array or null.');
         }
 
         if (!is_a($extensionClass, Extension::class, true)) {
-            throw new RuntimeException(sprintf('Extension class `%s` must implement Extension interface', $extensionClass));
+            throw new InvalidConfigurationException(sprintf('Extension class `%s` must implement Extension interface', $extensionClass));
         }
 
         (new $extensionClass)->load($container, $config);
