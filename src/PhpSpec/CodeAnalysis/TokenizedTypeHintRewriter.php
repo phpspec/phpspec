@@ -176,7 +176,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                     $token[1],
                     $typehintFcqn
                 );
-            } catch (DisallowedScalarTypehintException $e) {
+            } catch (DisallowedNonObjectTypehintException $e) {
                 $this->typeHintIndex->addInvalid(
                     $class,
                     trim($this->currentFunction),

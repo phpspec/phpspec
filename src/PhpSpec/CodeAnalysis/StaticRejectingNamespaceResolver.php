@@ -32,7 +32,7 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
 
     public function resolve($typeAlias)
     {
-        $this->guardScalarTypeHints($typeAlias);
+        $this->guardNonObjectTypeHints($typeAlias);
 
         return $this->namespaceResolver->resolve($typeAlias);
     }
@@ -41,9 +41,9 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
      * @param $typeAlias
      * @throws \Exception
      */
-    private function guardScalarTypeHints($typeAlias)
+    private function guardNonObjectTypeHints($typeAlias)
     {
-        $scalarTypes = [
+        $nonObjectTypes = [
             'int',
             'float',
             'string',
@@ -51,8 +51,8 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
             'iterable',
         ];
 
-        if (in_array($typeAlias, $scalarTypes, true)) {
-            throw new DisallowedScalarTypehintException("Scalar type $typeAlias cannot be resolved within a namespace");
+        if (in_array($typeAlias, $nonObjectTypes, true)) {
+            throw new DisallowedNonObjectTypehintException("Non-object type $typeAlias cannot be resolved within a namespace");
         }
     }
 }
