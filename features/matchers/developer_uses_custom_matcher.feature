@@ -88,3 +88,12 @@ Feature: Developer uses custom matcher
     """
     When I run phpspec
     Then the suite should pass
+
+  Scenario: Developer adds class that is not Matcher to custom matchers list
+    Given the config file contains:
+      """
+      matchers:
+          - ArrayObject
+      """
+    When I run phpspec
+    Then I should see "Custom matcher ArrayObject must implement PhpSpec\Matcher\Matcher interface, but it does not"
