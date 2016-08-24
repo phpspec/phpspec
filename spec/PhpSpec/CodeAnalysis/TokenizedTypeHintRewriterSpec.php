@@ -2,7 +2,7 @@
 
 namespace spec\PhpSpec\CodeAnalysis;
 
-use PhpSpec\CodeAnalysis\DisallowedScalarTypehintException;
+use PhpSpec\CodeAnalysis\DisallowedNonObjectTypehintException;
 use PhpSpec\CodeAnalysis\NamespaceResolver;
 use PhpSpec\Loader\Transformer\TypeHintIndex;
 use PhpSpec\ObjectBehavior;
@@ -156,7 +156,7 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
         TypeHintIndex $typeHintIndex,
         NamespaceResolver $namespaceResolver
     ) {
-        $e = new DisallowedScalarTypehintException();
+        $e = new DisallowedNonObjectTypehintException();
         $namespaceResolver->analyse(Argument::any())->shouldBeCalled();
 
         $namespaceResolver->resolve('FooSpec')->willReturn('FooSpec');

@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Runner\Maintainer;
 
-use PhpSpec\CodeAnalysis\DisallowedScalarTypehintException;
+use PhpSpec\CodeAnalysis\DisallowedNonObjectTypehintException;
 use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
 use PhpSpec\Exception\Wrapper\InvalidCollaboratorTypeException;
 use PhpSpec\Loader\Node\ExampleNode;
@@ -135,7 +135,7 @@ class CollaboratorsMaintainer implements MaintainerInterface
             catch (ClassNotFoundException $e) {
                 $this->throwCollaboratorNotFound($e, null, $e->getClassname());
             }
-            catch (DisallowedScalarTypehintException $e) {
+            catch (DisallowedNonObjectTypehintException $e) {
                 throw new InvalidCollaboratorTypeException($parameter, $function);
             }
         }

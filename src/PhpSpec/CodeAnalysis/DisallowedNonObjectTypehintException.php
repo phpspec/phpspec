@@ -13,6 +13,6 @@
 
 namespace PhpSpec\CodeAnalysis;
 
-class DisallowedScalarTypehintException extends \Exception
+class DisallowedNonObjectTypehintException extends \Exception
 {
 }
