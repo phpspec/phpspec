@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\CodeAnalysis;
 
+use PhpSpec\CodeAnalysis\DisallowedScalarTypehintException;
 use PhpSpec\CodeAnalysis\NamespaceResolver;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
@@ -34,9 +35,10 @@ class StaticRejectingNamespaceResolverSpec extends ObjectBehavior
 
     function it_does_not_allow_resolution_of_scalar_types()
     {
-        $this->shouldThrow('PhpSpec\CodeAnalysis\DisallowedScalarTypehintException')->duringResolve('int');
-        $this->shouldThrow('PhpSpec\CodeAnalysis\DisallowedScalarTypehintException')->duringResolve('float');
-        $this->shouldThrow('PhpSpec\CodeAnalysis\DisallowedScalarTypehintException')->duringResolve('string');
-        $this->shouldThrow('PhpSpec\CodeAnalysis\DisallowedScalarTypehintException')->duringResolve('bool');
+        $this->shouldThrow(DisallowedScalarTypehintException::class)->duringResolve('int');
+        $this->shouldThrow(DisallowedScalarTypehintException::class)->duringResolve('float');
+        $this->shouldThrow(DisallowedScalarTypehintException::class)->duringResolve('string');
+        $this->shouldThrow(DisallowedScalarTypehintException::class)->duringResolve('bool');
+        $this->shouldThrow(DisallowedScalarTypehintException::class)->duringResolve('iterable');
     }
 }
