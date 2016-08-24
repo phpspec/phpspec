@@ -13,7 +13,9 @@
 
 namespace PhpSpec\Console;
 
+use PhpSpec\Exception\Configuration\InvalidConfigurationException;
 use PhpSpec\Loader\StreamWrapper;
+use PhpSpec\Matcher\Matcher;
 use PhpSpec\Process\Context\JsonExecutionContext;
 use PhpSpec\ServiceContainer;
 use Symfony\Component\Console\Application as BaseApplication;
@@ -143,15 +145,37 @@ final class Application extends BaseApplication
                 }
             }
             elseif ('matchers' === $key && is_array($val)) {
-                foreach ($val as $class) {
-                    $container->define(sprintf('matchers.%s', $class), function () use ($class) {
-                        return new $class();
-                    }, ['matchers']);
-                }
+                $this->registerCustomMatchers($container, $val);
             }
             else {
                 $container->setParam($key, $val);
             }
+        }
+    }
+
+    private function registerCustomMatchers(IndexedServiceContainer $container, array $matchersClassnames)
+    {
+        foreach ($matchersClassnames as $class) {
+            $this->ensureIsValidMatcherClass($class);
+
+            $container->define(sprintf('matchers.%s', $class), function () use ($class) {
+                return new $class();
+            }, ['matchers']);
+        }
+    }
+
+    private function ensureIsValidMatcherClass($class)
+    {
+        if (!class_exists($class)) {
+            throw new InvalidConfigurationException(sprintf('Custom matcher %s does not exist.', $class));
+        }
+
+        if (!is_subclass_of($class, Matcher::class)) {
+            throw new InvalidConfigurationException(sprintf(
+                'Custom matcher %s must implement %s interface, but it does not.',
+                $class,
+                Matcher::class
+            ));
         }
     }
 
