@@ -43,7 +43,15 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
      */
     private function guardScalarTypeHints($typeAlias)
     {
-        if (in_array($typeAlias, array('int', 'float', 'string', 'bool'))) {
+        $scalarTypes = [
+            'int',
+            'float',
+            'string',
+            'bool',
+            'iterable',
+        ];
+
+        if (in_array($typeAlias, $scalarTypes, true)) {
             throw new DisallowedScalarTypehintException("Scalar type $typeAlias cannot be resolved within a namespace");
         }
     }
