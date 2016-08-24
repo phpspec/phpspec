@@ -197,6 +197,19 @@ array of extension classes:
     extensions:
         - PhpSpec\Symfony2Extension\Extension
 
+Custom matchers
+---------------
+
+You may want to make custom matchers available in all specs.
+Custom matchers can be registered by extension, but there is a simplier way: use the ``matchers`` setting and
+provide an array of matcher classes. Each of them must implement ``PhpSpec\Matcher\Matcher`` interface:
+
+.. code-block:: yaml
+
+    matchers:
+        - Acme\Matchers\ValidJsonMatcher
+        - Acme\Matchers\PositiveIntegerMatcher
+
 Bootstrapping
 -------------
 
