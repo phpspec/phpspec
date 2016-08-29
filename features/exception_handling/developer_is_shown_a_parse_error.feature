@@ -80,3 +80,42 @@ Feature: Developer is shown a parse error
       """
     When I run phpspec
     Then I should see "1 broken"
+
+  @php:~7.0
+  Scenario: Parse error in spec
+    Given the spec file "spec/Message/Fatal2/ParseSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Message\Fatal2;
+
+      use Parse;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class ParseSpec extends ObjectBehavior
+      {
+          function it_thro ws_a_syntax_error()
+          {
+              $this->cool();
+          }
+      }
+
+      """
+    And the spec file "src/Message/Fatal2/Parse.php" contains:
+      """
+      <?php
+
+      namespace Message\Parse2;
+
+      class Parse
+      {
+          public function cool()
+          {
+              return true;
+          }
+      }
+
+      """
+    When I run phpspec
+    Then I should see "1 broken"

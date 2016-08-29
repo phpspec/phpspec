@@ -146,7 +146,12 @@ class ExampleRunner
         $reflection = $example->getFunctionReflection();
 
         try {
-            $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
+            if ($reflection instanceof \ReflectionMethod) {
+                $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
+            }
+            else {
+                $reflection->invokeArgs($collaborators->getArgumentsFor($reflection));
+            }
         } catch (\Exception $e) {
             $this->runMaintainersTeardown(
                 $this->searchExceptionMaintainers($maintainers),

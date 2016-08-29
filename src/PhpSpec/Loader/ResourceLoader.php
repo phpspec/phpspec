@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Loader;
 
+use PhpSpec\Specification\ErrorSpecification;
 use PhpSpec\Util\MethodAnalyser;
 use PhpSpec\Locator\ResourceManager;
 use ReflectionClass;
@@ -50,7 +51,21 @@ class ResourceLoader
         $suite = new Suite();
         foreach ($this->manager->locateResources($locator) as $resource) {
             if (!class_exists($resource->getSpecClassname(), false) && is_file($resource->getSpecFilename())) {
-                require_once StreamWrapper::wrapPath($resource->getSpecFilename());
+                try {
+                    require_once StreamWrapper::wrapPath($resource->getSpecFilename());
+                }
+                catch (\Error $e) {
+                    $reflection = new ReflectionClass(ErrorSpecification::class);
+                    $spec = new Node\SpecificationNode($resource->getSrcClassname(),$reflection, $resource);
+
+                    $errorFunction = new \ReflectionFunction(function () use ($e) { throw $e; });
+                    $example = new Node\ExampleNode('Loading specification', $errorFunction);
+
+                    $spec->addExample($example);
+                    $suite->addSpecification($spec);
+
+                    continue;
+                }
             }
             if (!class_exists($resource->getSpecClassname(), false)) {
                 continue;
