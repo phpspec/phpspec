@@ -11,6 +11,8 @@ instead of verifying output. You use the matchers prefixed by ``should`` or
 matchers have aliases which you can use to make your specifications easy to
 read.
 
+Custom matchers classes can be registered in :doc:`configuration<cookbook/configuration>`.
+
 Identity Matcher
 ----------------
 
