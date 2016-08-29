@@ -1,3 +1,4 @@
+@php:~5.6
 Feature: Developer is notified of which scenario caused a fatal error
   As a Developer
   I want to know in which scenario or example my script was running
