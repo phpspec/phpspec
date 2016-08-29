@@ -17,6 +17,9 @@ final class ErrorException extends \Exception
 {
     public function __construct(\Error $error)
     {
-        parent::__construct($error->getMessage());
+        parent::__construct($error->getMessage(), $error->getCode(), $error);
+
+        $this->line = $error->getLine();
+        $this->file = $error->getFile();
     }
 }
