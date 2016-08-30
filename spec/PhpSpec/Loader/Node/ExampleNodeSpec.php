@@ -13,6 +13,7 @@ class ExampleNodeSpec extends ObjectBehavior
 {
     function let(ReflectionFunctionAbstract $function)
     {
+        $function->isClosure()->willReturn(false);
         $this->beConstructedWith('example node', $function);
     }
 
@@ -53,5 +54,21 @@ class ExampleNodeSpec extends ObjectBehavior
     {
         $this->markAsPending(false);
         $this->isPending()->shouldReturn(false);
+    }
+
+    function it_returns_its_line_number(\ReflectionFunctionAbstract $function)
+    {
+        $function->getStartLine()->willReturn(100);
+
+        $this->getLineNumber()->shouldReturn(100);
+    }
+
+    function it_returns_its_line_number_as_zero_if_constructed_with_closure(
+        \ReflectionFunctionAbstract $function
+    )
+    {
+        $function->isClosure()->willReturn(true);
+
+        $this->getLineNumber()->shouldReturn(0);
     }
 }
