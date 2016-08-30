@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Formatter\Presenter\Value;
 
+use PhpSpec\Exception\ErrorException;
+
 final class BaseExceptionTypePresenter implements ExceptionTypePresenter
 {
     /**
@@ -30,8 +32,16 @@ final class BaseExceptionTypePresenter implements ExceptionTypePresenter
      */
     public function present($value)
     {
+        $label = 'exc';
+
+        if ($value instanceof ErrorException) {
+            $value = $value->getPrevious();
+            $label = 'err';
+        }
+
         return sprintf(
-            '[exc:%s("%s")]',
+            '[%s:%s("%s")]',
+            $label,
             get_class($value),
             $value->getMessage()
         );
