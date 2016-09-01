@@ -4,6 +4,12 @@ Upcoming 3.x
 * Validates that matchers specified in config are valid matchers (@avant1)
 * Shows Error message even when Exception was expected (@harrisonbro)
 * Disallows doubling of PHP 7.1's `iterable` type (@avant1)
+* [fixed] Exceptions are properly highlighted in error messages (@ciaranmcnulty)
+
+Upcoming 2.5.x
+==============
+
+* [fixed] Exceptions are properly highlighted in error messages (@ciaranmcnulty)
 
 3.0.0 / 2016-07-16
 ==================

@@ -49,6 +49,7 @@ class Formatter extends OutputFormatter
         $this->setStyle('value', new OutputFormatterStyle('yellow'));
         $this->setStyle('lineno', new OutputFormatterStyle(null, 'black'));
         $this->setStyle('code', new OutputFormatterStyle('white'));
+        $this->setStyle('label', new OutputFormatterStyle('white', null, array('bold')));
         $this->setStyle('hl', new OutputFormatterStyle('black', 'yellow', array('bold')));
         $this->setStyle('question', new OutputFormatterStyle('black', 'yellow', array('bold')));
 
