@@ -1,3 +1,8 @@
+Upcoming 2.5.x
+==============
+
+* [fixed] Exceptions are properly highlighted in error messages (@ciaranmcnulty)
+
 2.5.1 / 2016-07-16
 ==================
 
