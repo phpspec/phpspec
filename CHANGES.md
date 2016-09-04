@@ -1,5 +1,5 @@
-Upcoming 3.x
-============
+3.1.0-beta / 2017-09-04
+=======================
 
 * Fatal errors are now caught and reported (@ciaranmcnulty)
 * Validates that matchers specified in config are valid matchers (@avant1)
