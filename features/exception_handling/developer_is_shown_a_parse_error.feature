@@ -119,3 +119,4 @@ Feature: Developer is shown a parse error
       """
     When I run phpspec
     Then I should see "1 broken"
+    And I should see "syntax error"
