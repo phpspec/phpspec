@@ -7,8 +7,8 @@ Upcoming 3.x
 * Disallows doubling of PHP 7.1's `iterable` type (@avant1)
 * [fixed] Exceptions are properly highlighted in error messages (@ciaranmcnulty)
 
-Upcoming 2.5.x
-==============
+2.5.2 / 2017-09-04
+==================
 
 * [fixed] Exceptions are properly highlighted in error messages (@ciaranmcnulty)
 
