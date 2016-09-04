@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Runner;
 
+use Error;
+use PhpSpec\Exception\ErrorException;
 use PhpSpec\Runner\Maintainer\Maintainer;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Runner\Maintainer\LetAndLetgoMaintainer;
@@ -98,6 +100,9 @@ class ExampleRunner
         } catch (Exception $e) {
             $status    = ExampleEvent::BROKEN;
             $exception = $e;
+        } catch (Error $e) {
+            $status    = ExampleEvent::BROKEN;
+            $exception = new ErrorException($e);
         }
 
         if ($exception instanceof PhpSpecException) {
@@ -141,7 +146,12 @@ class ExampleRunner
         $reflection = $example->getFunctionReflection();
 
         try {
-            $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
+            if ($reflection instanceof \ReflectionMethod) {
+                $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
+            }
+            else {
+                $reflection->invokeArgs($collaborators->getArgumentsFor($reflection));
+            }
         } catch (\Exception $e) {
             $this->runMaintainersTeardown(
                 $this->searchExceptionMaintainers($maintainers),

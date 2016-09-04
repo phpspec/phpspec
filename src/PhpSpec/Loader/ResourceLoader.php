@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Loader;
 
+use PhpSpec\Locator\Resource;
+use PhpSpec\Specification\ErrorSpecification;
 use PhpSpec\Util\MethodAnalyser;
 use PhpSpec\Locator\ResourceManager;
 use ReflectionClass;
@@ -50,7 +52,13 @@ class ResourceLoader
         $suite = new Suite();
         foreach ($this->manager->locateResources($locator) as $resource) {
             if (!class_exists($resource->getSpecClassname(), false) && is_file($resource->getSpecFilename())) {
-                require_once StreamWrapper::wrapPath($resource->getSpecFilename());
+                try {
+                    require_once StreamWrapper::wrapPath($resource->getSpecFilename());
+                }
+                catch (\Error $e) {
+                    $this->addErrorThrowingExampleToSuite($resource, $suite, $e);
+                    continue;
+                }
             }
             if (!class_exists($resource->getSpecClassname(), false)) {
                 continue;
@@ -100,5 +108,21 @@ class ResourceLoader
         $line = intval($line);
 
         return $line >= $method->getStartLine() && $line <= $method->getEndLine();
+    }
+
+    private function addErrorThrowingExampleToSuite(Resource $resource, Suite $suite, \Error $error)
+    {
+        $reflection = new ReflectionClass(ErrorSpecification::class);
+        $spec = new Node\SpecificationNode($resource->getSrcClassname(), $reflection, $resource);
+
+        $errorFunction = new \ReflectionFunction(
+            function () use ($error) {
+                throw $error;
+            }
+        );
+        $example = new Node\ExampleNode('Loading specification', $errorFunction);
+
+        $spec->addExample($example);
+        $suite->addSpecification($spec);
     }
 }

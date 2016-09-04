@@ -84,7 +84,7 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
 
         $this->io->writeln(sprintf(
             '<lineno>%4d</lineno>  <%s>- %s</%s>',
-            $event->getExample()->getFunctionReflection()->getStartLine(),
+            $event->getExample()->getLineNumber(),
             $type,
             $event->getExample()->getTitle(),
             $type

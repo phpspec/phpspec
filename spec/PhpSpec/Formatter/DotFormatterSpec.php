@@ -108,11 +108,9 @@ class DotFormatterSpec extends ObjectBehavior
         ConsoleIO $io,
         StatisticsCollector $stats,
         SpecificationNode $specification,
-        ExampleNode $example,
-        ReflectionFunctionAbstract $reflectionFunction
+        ExampleNode $example
     ) {
-        $reflectionFunction->getStartLine()->willReturn(37);
-        $example->getFunctionReflection()->willReturn($reflectionFunction);
+        $example->getLineNumber()->willReturn(37);
         $example->getTitle()->willReturn('it tests something');
         $pendingEvent->getException()->willReturn(new PendingException());
         $pendingEvent->getSpecification()->willReturn($specification);
