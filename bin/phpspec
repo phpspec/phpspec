@@ -3,12 +3,12 @@
 
 call_user_func(function ($version) {
 
-    $COMPOSER_AUTOLOAD='';
+    // modified by post-install hook, do not change manually
+    $COMPOSER_AUTOLOAD = '../vendor/autoload.php';
 
-    // Load composer autoloader
-    if (!@include($COMPOSER_AUTOLOAD)) {
+    if (!@include(__DIR__ . '/' . $COMPOSER_AUTOLOAD)) {
         fwrite(STDERR,
-            'You must set up the PhpSpec project dependencies, using composer (http://getcomposer.org)'
+            "You must set up the PhpSpec project dependencies, using composer (http://getcomposer.org)\n"
         );
         exit(1);
     }

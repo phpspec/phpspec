@@ -12,14 +12,23 @@ class AutoloaderFixer
         $autoloaderPath = $event->getComposer()->getConfig()->get('vendor-dir') . '/autoload.php';
         $binPath = $event->getComposer()->getConfig()->get('bin-dir') . '/phpspec';
 
-        $binary = file_get_contents($binPath );
+        $relPath = self::getRelativePath($autoloaderPath, $binPath);
 
-        $newBinary = preg_replace(
-            "/(COMPOSER_AUTOLOAD=')[^']*(')/",
-            '\1' . $autoloaderPath .'\2',
-            $binary
-        );
+        file_put_contents($binPath, preg_replace(
+            "/(COMPOSER_AUTOLOAD = ')[^']*(')/",
+            '\1' . $relPath .'\2',
+            file_get_contents($binPath)
+        ));
+    }
 
-        file_put_contents($binPath, $newBinary);
+    private static function getRelativePath($to, $from)
+    {
+        for ($i=0; isset($to{$i}); $i++) {
+            if (!isset($from{$i}) || $to{$i} != $from{$i}) {
+                break;
+            }
+        }
+
+        return '..' . substr($to, strrpos(substr($to, 0, $i), '/'));
     }
 }
