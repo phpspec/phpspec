@@ -4,3 +4,5 @@ behat.yml
 vendor
 composer.lock
 phpspec.phar
+bin/*
+!bin/phpspec/
