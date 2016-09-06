@@ -64,5 +64,11 @@
         "branch-alias": {
             "dev-master": "3.0.x-dev"
         }
+    },
+    "scripts" : {
+        "post-autoload-dump" : "PhpSpec\\Composer\\AutoloaderFixer::postUpdate"
+    },
+    "config" : {
+        "bin-dir" : "bin"
     }
 }
