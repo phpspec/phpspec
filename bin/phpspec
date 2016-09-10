@@ -25,4 +25,4 @@ call_user_func(function ($version) {
     $app = new PhpSpec\Console\Application($version);
     $app->run();
 
-}, '3.1.0-beta');
+}, '3.1.0-rc1');
