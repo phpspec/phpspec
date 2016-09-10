@@ -1,7 +1,12 @@
+3.1.0-rc1 / 2017-09-10
+======================
+
+* No changes since beta
+
 3.1.0-beta / 2017-09-04
 =======================
 
-* Fatal errors are now caught and reported (@ciaranmcnulty)
+* Many errors are now caught and handled without ending suite execution (@ciaranmcnulty)
 * Validates that matchers specified in config are valid matchers (@avant1)
 * Shows Error message even when Exception was expected (@harrisonbro)
 * Disallows doubling of PHP 7.1's `iterable` type (@avant1)
