@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\Matcher;
 
+use PhpSpec\Exception\Example\TypeFailureException;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
@@ -54,15 +55,15 @@ class TypeMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_wrong_class(ArrayObject $object)
     {
-        $this->shouldThrow(new FailureException(
-            'Expected an instance of stdClass, but got object.'
+        $this->shouldThrow(new TypeFailureException(
+            'Expected an instance of stdClass, but got object.', $object->getWrappedObject(), 'stdClass'
         ))->duringPositiveMatch('haveType', $object, array('stdClass'));
     }
 
     function it_does_not_match_wrong_interface(ArrayObject $object)
     {
-        $this->shouldThrow(new FailureException(
-            'Expected an instance of SessionHandlerInterface, but got object.'
+        $this->shouldThrow(new TypeFailureException(
+            'Expected an instance of SessionHandlerInterface, but got object.', $object->getWrappedObject(), 'SessionHandlerInterface'
         ))->duringPositiveMatch('haveType', $object, array('SessionHandlerInterface'));
     }
 

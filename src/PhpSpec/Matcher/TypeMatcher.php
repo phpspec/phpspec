@@ -13,8 +13,9 @@
 
 namespace PhpSpec\Matcher;
 
-use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Exception\Example\TypeFailureException;
+use PhpSpec\Formatter\Presenter\Presenter;
 
 final class TypeMatcher extends BasicMatcher
 {
@@ -70,15 +71,15 @@ final class TypeMatcher extends BasicMatcher
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return FailureException
+     * @return TypeFailureException
      */
     protected function getFailureException($name, $subject, array $arguments)
     {
-        return new FailureException(sprintf(
+        return new TypeFailureException(sprintf(
             'Expected an instance of %s, but got %s.',
             $this->presenter->presentString($arguments[0]),
             $this->presenter->presentValue($subject)
-        ));
+        ), $subject, $arguments[0]);
     }
 
     /**

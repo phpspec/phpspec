@@ -233,6 +233,13 @@ final class ContainerAssembler
                 $c->get('current_example')
             );
         }, ['event_dispatcher.listeners']);
+        $container->define('event_dispatcher.listeners.invalid_type', function (IndexedServiceContainer $c) {
+            return new Listener\InvalidTypeListener(
+                $c->get('console.io'),
+                $c->get('code_generator'),
+                $c->get('locator.resource_manager')
+            );
+        }, ['event_dispatcher.listeners']);
     }
 
     /**
