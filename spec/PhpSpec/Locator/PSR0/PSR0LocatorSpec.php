@@ -503,6 +503,18 @@ class PSR0LocatorSpec extends ObjectBehavior
         $this->shouldThrow($exception)->duringCreateResource('Namespace/');
     }
 
+    function it_throws_an_exception_on_PSR0_resource_with_line_breaks_at_end(Filesystem $fs)
+    {
+        $this->beConstructedWith($fs, '', 'spec', $this->srcPath, $this->specPath);
+
+        $exception = new \InvalidArgumentException(
+            'String "Namespace\Classname'.PHP_EOL.'" is not a valid class name.'.PHP_EOL.
+            'Please see reference document: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md'
+        );
+
+        $this->shouldThrow($exception)->duringCreateResource('Namespace\Classname'.PHP_EOL);
+    }
+
     function it_throws_an_exception_on_PSR4_prefix_not_matching_namespace(Filesystem $fs)
     {
         $exception = new \InvalidArgumentException(
