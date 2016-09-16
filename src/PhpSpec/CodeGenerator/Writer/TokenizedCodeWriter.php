@@ -75,6 +75,24 @@ final class TokenizedCodeWriter implements CodeWriter
     }
 
     /**
+     * @param string $class
+     * @param string $interface
+     */
+    public function addImplementsInClass($class, $interface)
+    {
+        $namespace = '';
+
+        if (false !== strpos($interface, '\\')) {
+            $parts = explode('\\', $interface);
+            array_pop($parts);
+
+            $namespace = join('\\', $parts);
+        }
+
+        $line = $this->analyser->getLineOfClassDeclaration();
+    }
+
+    /**
      * @param string $target
      * @param string $toInsert
      * @param int $line

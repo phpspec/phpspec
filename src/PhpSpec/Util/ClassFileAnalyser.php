@@ -75,6 +75,18 @@ final class ClassFileAnalyser
     }
 
     /**
+     * @param string $class
+     */
+    public function getLineOfClassDeclaration($class)
+    {
+        $tokens = $this->getTokensForClass($class);
+
+        $index = $this->findIndexOfClassDeclaration($tokens);
+
+        return $tokens[$index][2];
+    }
+
+    /**
      * @param array $tokens
      * @return int
      */
@@ -236,9 +248,7 @@ final class ClassFileAnalyser
      */
     private function findIndexOfClassEnd(array $tokens)
     {
-        $classTokens = array_filter($tokens, function ($token) {
-            return is_array($token) && $token[0] === T_CLASS;
-        });
+        $classTokens = $this->filterTokensForClassTokens($tokens);
         $classTokenIndex = key($classTokens);
         return $this->findIndexOfMethodOrClassEnd($tokens, $classTokenIndex) - 1;
     }
@@ -256,5 +266,31 @@ final class ClassFileAnalyser
             }
         }
         throw new NoMethodFoundInClass();
+    }
+
+    /**
+     * @param array $tokens
+     *
+     * @return int
+     */
+    private function findIndexOfClassDeclaration(array $tokens)
+    {
+        $classTokens = $this->filterTokensForClassTokens($tokens);
+
+        return key($classTokens);
+    }
+
+    /**
+     * @param array $tokens
+     *
+     * @return array
+     */
+    private function filterTokensForClassTokens(array $tokens)
+    {
+        $classTokens = array_filter($tokens, function ($token) {
+            return is_array($token) && $token[0] === T_CLASS;
+        });
+
+        return $classTokens;
     }
 }

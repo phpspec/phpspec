@@ -37,6 +37,12 @@ class ClassFileAnalyserSpec extends ObjectBehavior
     	$this->getEndLineOfLastMethod($class)->shouldReturn(12);
     }
 
+    function it_should_return_the_line_number_of_the_class_declaration()
+    {
+        $class = $this->getClassWithNoMethods();
+        $this->getLineOfClassDeclaration($class)->shouldReturn(5);
+    }
+
     private function getSingleMethodClass()
     {
         return <<<SINGLE_METHOD_CLASS
