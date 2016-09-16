@@ -350,6 +350,13 @@ final class ContainerAssembler
             );
         }, ['code_generator.generators']);
 
+        $container->define('code_generator.generators.implements', function (IndexedServiceContainer $c) {
+            return new CodeGenerator\Generator\ImplementsGenerator(
+                $c->get('util.filesystem'),
+                $c->get('code_generator.writers.tokenized')
+            );
+        }, ['code_generator.generators']);
+
         $container->define('code_generator.templates', function (IndexedServiceContainer $c) {
             $renderer = new CodeGenerator\TemplateRenderer(
                 $c->get('util.filesystem')

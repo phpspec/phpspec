@@ -64,12 +64,12 @@ final class InvalidTypeListener implements EventSubscriberInterface
         $reflection = new \ReflectionClass($typeClassName);
 
         if (count($reflection->getMethods())) {
-            $this->methodsToImplement[$typeClassName] = [];
+            $this->methodsToImplement[$subjectClassName][$typeClassName] = [];
         }
 
         /** @var \ReflectionMethod $method */
         foreach ($reflection->getMethods() as $method) {
-            $this->methodsToImplement[$subjectClassName . '::' . $method->getName()] = $method->getParameters();
+            $this->methodsToImplement[$subjectClassName][$typeClassName][$method->getName()] = $method->getParameters();
         }
     }
 
@@ -79,25 +79,28 @@ final class InvalidTypeListener implements EventSubscriberInterface
             return;
         }
 
-        foreach ($this->methodsToImplement as $type => $calls) {
+        foreach ($this->methodsToImplement as $class => $types) {
 
-            $message = sprintf('Do you want me to implement the methods in `%s` for you?', $type);
-            if ($this->io->askConfirmation($message)) {
-                foreach ($calls as $call => $arguments) {
-                    list($className, $methodName) = explode('::', $call);
+            try {
+                $classResource = $this->resources->createResource($class);
+            } catch (\RuntimeException $e) {
+                continue;
+            }
 
-                    try {
-                        $resource = $this->resources->createResource($className);
-                    } catch (\RuntimeException $e) {
-                        continue;
+            foreach ($types as $type => $methods) {
+                $message = sprintf('Do you want me to implement the methods from `%s` in `%s` for you?', $type, $class);
+
+                if ($this->io->askConfirmation($message)) {
+                    $this->generator->generate($classResource, 'implements', ['interface' => $type]);
+
+                    foreach ($methods as $method => $arguments) {
+                        $this->generator->generate($classResource, 'method', array(
+                            'name'      => $method,
+                            'arguments' => $arguments
+                        ));
+
+                        $event->markAsWorthRerunning();
                     }
-
-                    $this->generator->generate($resource, 'method', array(
-                        'name'      => $methodName,
-                        'arguments' => $arguments
-                    ));
-
-                    $event->markAsWorthRerunning();
                 }
             }
         }
