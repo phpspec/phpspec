@@ -83,7 +83,7 @@ class TokenizedCodeWriterSpec extends ObjectBehavior
         $interface = 'MyNamespace\Bar';
         $result = $this->getClassWithImplementedInterfaceInSameNamespace();
 
-        $this->addImplementsInClass($class, $interface)->shouldReturn($result);
+        $this->insertImplementsInClass($class, $interface)->shouldReturn($result);
     }
 
     private function getSingleMethodClass()

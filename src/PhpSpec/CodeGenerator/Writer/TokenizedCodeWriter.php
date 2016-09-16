@@ -80,7 +80,7 @@ final class TokenizedCodeWriter implements CodeWriter
      *
      * @return string
      */
-    public function addImplementsInClass($class, $interface)
+    public function insertImplementsInClass($class, $interface)
     {
         $interfaceNamespace = '';
 

@@ -36,4 +36,12 @@ interface CodeWriter
      * @return string
      */
     public function insertAfterMethod($class, $methodName, $method);
+
+    /**
+     * @param string $class
+     * @param string $interface
+     *
+     * @return string
+     */
+    public function insertImplementsInClass($class, $interface);
 }
