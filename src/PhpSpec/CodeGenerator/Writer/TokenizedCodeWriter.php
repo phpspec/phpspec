@@ -77,19 +77,32 @@ final class TokenizedCodeWriter implements CodeWriter
     /**
      * @param string $class
      * @param string $interface
+     *
+     * @return string
      */
     public function addImplementsInClass($class, $interface)
     {
-        $namespace = '';
+        $interfaceNamespace = '';
 
         if (false !== strpos($interface, '\\')) {
             $parts = explode('\\', $interface);
             array_pop($parts);
 
-            $namespace = join('\\', $parts);
+            $interfaceNamespace = join('\\', $parts);
         }
 
-        $line = $this->analyser->getLineOfClassDeclaration();
+        $classNamespace = $this->analyser->getClassNamespace($class);
+
+        if ($classNamespace === $interfaceNamespace) {
+            $interface = ltrim(str_replace($classNamespace, '', $interface), '\\');
+        }
+
+        $line = $this->analyser->getLineOfClassDeclaration($class);
+
+        $classLines = explode(PHP_EOL, $class);
+        $classLines[$line - 1] .= ' implements ' . $interface;
+
+        return join(PHP_EOL, $classLines);
     }
 
     /**

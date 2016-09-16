@@ -77,6 +77,15 @@ class TokenizedCodeWriterSpec extends ObjectBehavior
         $this->insertMethodLastInClass($class, $method)->shouldReturn($result);
     }
 
+    function it_should_generate_an_implements_for_a_class_in_same_namespace()
+    {
+        $class = $this->getClassWithNoInterfaces();
+        $interface = 'MyNamespace\Bar';
+        $result = $this->getClassWithImplementedInterfaceInSameNamespace();
+
+        $this->addImplementsInClass($class, $interface)->shouldReturn($result);
+    }
+
     private function getSingleMethodClass()
     {
         return <<<SINGLE_METHOD_CLASS
@@ -285,5 +294,38 @@ final class MyClass
     }
 }
 BRACE_TEXT_RESULT_CLASS;
+    }
+
+    private function getClassWithNoInterfaces()
+    {
+        return <<<'NO_INTERFACES'
+<?php
+
+namespace MyNamespace;
+
+final class Foo
+{
+    public function __construct()
+    {
+    }
+}
+NO_INTERFACES;
+    }
+
+    private function getClassWithImplementedInterfaceInSameNamespace()
+    {
+        return <<<'CLASS_WITH_INTERFACE'
+<?php
+
+namespace MyNamespace;
+
+final class Foo implements Bar
+{
+    public function __construct()
+    {
+    }
+}
+CLASS_WITH_INTERFACE;
+
     }
 }
