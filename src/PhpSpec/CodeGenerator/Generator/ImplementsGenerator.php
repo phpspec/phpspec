@@ -13,10 +13,32 @@
 
 namespace PhpSpec\CodeGenerator\Generator;
 
+use PhpSpec\CodeGenerator\Writer\CodeWriter;
 use PhpSpec\Locator\Resource;
+use PhpSpec\Util\Filesystem;
 
 final class ImplementsGenerator implements Generator
 {
+    /**
+     * @var Filesystem
+     */
+    private $fs;
+
+    /**
+     * @var CodeWriter
+     */
+    private $codeWriter;
+
+    /**
+     * @param Filesystem $fs
+     * @param CodeWriter $codeWriter
+     */
+    public function __construct(Filesystem $fs, CodeWriter $codeWriter)
+    {
+        $this->fs = $fs;
+        $this->codeWriter = $codeWriter;
+    }
+
     /**
      * @param Resource $resource
      * @param string   $generation
@@ -35,7 +57,12 @@ final class ImplementsGenerator implements Generator
      */
     public function generate(Resource $resource, array $data)
     {
-        // TODO: Implement generate() method.
+        $filepath = $resource->getSrcFilename();
+        $interface = $data['interface'];
+
+        $code = $this->fs->getFileContents($filepath);
+
+        $this->fs->putFileContents($filepath, $this->codeWriter->insertImplementsInClass($code, $interface));
     }
 
     /**
