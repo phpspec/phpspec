@@ -10,7 +10,6 @@ Feature: Developer generates abstract type methods
 
       namespace spec\CodeGeneration\AbstractTypeMethods;
 
-      use CodeGeneration\AbstractTypeMethods\Types\CanSpeak;
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
 
@@ -22,15 +21,15 @@ Feature: Developer generates abstract type methods
           }
       }
       """
-    And the class file "src/CodeGeneration/AbstractTypeMethods/Types/CanSpeak.php" contains:
+    And the class file "src/CodeGeneration/AbstractTypeMethods/CanSpeak.php" contains:
       """
       <?php
 
-      namespace CodeGeneration\AbstractTypeMethods\Types;
+      namespace CodeGeneration\AbstractTypeMethods;
 
       interface CanSpeak
       {
-          public function sayHello($phrase);
+          public function sayHello();
       }
       """
     And the class file "src/CodeGeneration/AbstractTypeMethods/Person.php" contains:
