@@ -76,6 +76,8 @@ final class ClassFileAnalyser
 
     /**
      * @param string $class
+     *
+     * @return int
      */
     public function getLineOfClassDeclaration($class)
     {
@@ -84,6 +86,35 @@ final class ClassFileAnalyser
         $index = $this->findIndexOfClassDeclaration($tokens);
 
         return $tokens[$index][2];
+    }
+
+    /**
+     * @param string $class
+     *
+     * @return string
+     */
+    public function getClassNamespace($class)
+    {
+        $tokens = $this->getTokensForClass($class);
+
+        $isNamespaceLine = false;
+        foreach ($tokens as $token) {
+            if (!is_array($token)) {
+                continue;
+            }
+
+            if (T_NAMESPACE === $token[0]) {
+                $isNamespaceLine = true;
+
+                continue;
+            }
+
+            if (true === $isNamespaceLine && T_STRING === $token[0]) {
+                return $token[1];
+            }
+        }
+
+        return '';
     }
 
     /**
