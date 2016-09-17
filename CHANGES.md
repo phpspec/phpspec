@@ -1,10 +1,5 @@
-3.1.0-rc1 / 2017-09-10
+3.1.0 / 2017-09-17
 ======================
-
-* No changes since beta
-
-3.1.0-beta / 2017-09-04
-=======================
 
 * Many errors are now caught and handled without ending suite execution (@ciaranmcnulty)
 * Validates that matchers specified in config are valid matchers (@avant1)
