@@ -1,4 +1,4 @@
-Feature: Developer generates abstract type methods
+Feature: Developer implements interface
   As a Developer
   I want to automate creating abstract type methods
   In order to avoid repetitive tasks and interruptions in development flow
