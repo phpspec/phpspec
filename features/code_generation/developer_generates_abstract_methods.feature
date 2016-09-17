@@ -10,6 +10,7 @@ Feature: Developer generates abstract type methods
 
       namespace spec\CodeGeneration\AbstractTypeMethods;
 
+      use CodeGeneration\AbstractTypeMethods\CanSpeak;
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
 

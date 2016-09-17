@@ -97,24 +97,32 @@ final class ClassFileAnalyser
     {
         $tokens = $this->getTokensForClass($class);
 
-        $isNamespaceLine = false;
-        foreach ($tokens as $token) {
+        $namespaceParts = [];
+        while ($token = next($tokens)) {
             if (!is_array($token)) {
                 continue;
             }
 
             if (T_NAMESPACE === $token[0]) {
-                $isNamespaceLine = true;
+                $namespaceLineNumber = $token[2];
 
-                continue;
-            }
+                while ($namespaceToken = next($tokens)) {
+                    if (!is_array($namespaceToken)) {
+                        continue;
+                    }
 
-            if (true === $isNamespaceLine && T_STRING === $token[0]) {
-                return $token[1];
+                    if ($namespaceLineNumber !== $namespaceToken[2]) {
+                        return join('\\', $namespaceParts);
+                    }
+
+                    if (T_STRING === $namespaceToken[0]) {
+                        $namespaceParts[] = $namespaceToken[1];
+                    }
+                }
             }
         }
 
-        return '';
+        return join('\\', $namespaceParts);
     }
 
     /**

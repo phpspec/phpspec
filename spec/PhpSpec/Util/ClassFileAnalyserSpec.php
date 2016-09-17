@@ -46,7 +46,7 @@ class ClassFileAnalyserSpec extends ObjectBehavior
     function it_should_return_the_namespace_of_a_class()
     {
         $class = $this->getClassWithNoMethods();
-        $this->getClassNamespace($class)->shouldReturn('MyNamespace');
+        $this->getClassNamespace($class)->shouldReturn('Foo\Bar');
     }
 
     private function getSingleMethodClass()
@@ -74,7 +74,7 @@ SINGLE_METHOD_CLASS;
         return <<<NO_METHOD_CLASS
 <?php
 
-namespace MyNamespace;
+namespace Foo\Bar;
 
 final class MyClass
 {
