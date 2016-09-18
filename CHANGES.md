@@ -7,6 +7,7 @@ Upcoming 2.5
 ============
 
 * [fixed] Accidental linebreaks in spec name are not allowed (@randompixel)
+* [performance] Phar version now has an optimised autoloader
 
 3.1.0 / 2017-09-17
 ======================

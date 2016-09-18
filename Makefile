@@ -7,7 +7,7 @@ build-phar:
 	@echo "--> Cleaning vendor directory"
 	rm -Rfv vendor
 	@echo "--> Installing dependencies without dev"
-	composer install --no-dev
+	composer install --no-dev -o
 	@echo "--> Building Phar"
 	box build
 	@echo "--> Success"
