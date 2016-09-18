@@ -1,3 +1,13 @@
+Upcoming 3.1
+============
+
+* [fixed] Accidental linebreaks in spec name are not allowed (@randompixel)
+
+Upcoming 2.5
+============
+
+* [fixed] Accidental linebreaks in spec name are not allowed (@randompixel)
+
 3.1.0 / 2017-09-17
 ======================
 
