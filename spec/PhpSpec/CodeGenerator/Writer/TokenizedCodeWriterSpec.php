@@ -86,6 +86,15 @@ class TokenizedCodeWriterSpec extends ObjectBehavior
         $this->insertImplementsInClass($class, $interface)->shouldReturn($result);
     }
 
+    function it_should_generate_an_implements_for_a_class_with_existing_implements_declaration()
+    {
+        $class = $this->getClassWithImplementsOnMultipleLines();
+        $interface = 'MyNamespace\Bar';
+        $result = $this->getExceptedClassWithImplementsOnMultipleLines();
+
+        $this->insertImplementsInClass($class, $interface)->shouldReturn($result);
+    }
+
     private function getSingleMethodClass()
     {
         return <<<SINGLE_METHOD_CLASS
@@ -298,7 +307,7 @@ BRACE_TEXT_RESULT_CLASS;
 
     private function getClassWithNoInterfaces()
     {
-        return <<<'NO_INTERFACES'
+        return <<<NO_INTERFACES
 <?php
 
 namespace MyNamespace;
@@ -314,7 +323,7 @@ NO_INTERFACES;
 
     private function getClassWithImplementedInterfaceInSameNamespace()
     {
-        return <<<'CLASS_WITH_INTERFACE'
+        return <<<CLASS_WITH_INTERFACE
 <?php
 
 namespace MyNamespace;
@@ -327,5 +336,44 @@ final class Foo implements Bar
 }
 CLASS_WITH_INTERFACE;
 
+    }
+
+    private function getClassWithImplementsOnMultipleLines()
+    {
+        return <<<CLASS_WITH_MULTILINE_IMPLEMENTS
+<?php
+
+namespace MyNamespace;
+
+final class Foo implements
+    Bar,
+    \ArrayAccess,
+    \Countable
+{
+    public function __construct()
+    {
+    }
+}
+CLASS_WITH_MULTILINE_IMPLEMENTS;
+    }
+
+    private function getExceptedClassWithImplementsOnMultipleLines()
+    {
+        return <<<CLASS_WITH_MULTILINE_IMPLEMENTS
+<?php
+
+namespace MyNamespace;
+
+final class Foo implements
+    Bar,
+    \ArrayAccess,
+    \Countable,
+    Bar
+{
+    public function __construct()
+    {
+    }
+}
+CLASS_WITH_MULTILINE_IMPLEMENTS;
     }
 }

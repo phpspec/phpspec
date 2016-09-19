@@ -37,16 +37,22 @@ class ClassFileAnalyserSpec extends ObjectBehavior
     	$this->getEndLineOfLastMethod($class)->shouldReturn(12);
     }
 
-    function it_should_return_the_line_number_of_the_class_declaration()
-    {
-        $class = $this->getClassWithNoMethods();
-        $this->getLineOfClassDeclaration($class)->shouldReturn(5);
-    }
-
     function it_should_return_the_namespace_of_a_class()
     {
         $class = $this->getClassWithNoMethods();
         $this->getClassNamespace($class)->shouldReturn('Foo\Bar');
+    }
+
+    function it_should_return_the_last_line_of_the_class_declaration()
+    {
+        $this->getLastLineOfClassDeclaration($this->getClassThatImplementsInterface())->shouldReturn(5);
+        $this->getLastLineOfClassDeclaration($this->getClassThatImplementsInterfaceOnMultiLine())->shouldReturn(7);
+    }
+
+    function it_should_detect_if_class_implements_an_interface()
+    {
+        $this->classImplementsInterface($this->getClassThatImplementsInterface())->shouldReturn(true);
+        $this->classImplementsInterface($this->getClassWithNoMethods())->shouldReturn(false);
     }
 
     private function getSingleMethodClass()
@@ -104,5 +110,33 @@ class MyClass
  */
 
 SINGLE_METHOD_CLASS_CONTAINING_ANONYMOUS_FUNCTION;
+    }
+
+    private function getClassThatImplementsInterface()
+    {
+        return <<<CLASS_IMPLEMENTING_INTERFACE
+<?php
+
+namespace Foo\Bar;
+
+final class MyClass implements MyInterface
+{
+}
+CLASS_IMPLEMENTING_INTERFACE;
+    }
+
+    private function getClassThatImplementsInterfaceOnMultiLine()
+    {
+        return <<<CLASS_IMPLEMENTING_INTERFACE
+<?php
+
+namespace Foo\Bar;
+
+final class MyClass implements
+    \ArrayAccess
+    MyInterface
+{
+}
+CLASS_IMPLEMENTING_INTERFACE;
     }
 }

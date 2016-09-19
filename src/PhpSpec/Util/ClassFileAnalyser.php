@@ -79,13 +79,33 @@ final class ClassFileAnalyser
      *
      * @return int
      */
-    public function getLineOfClassDeclaration($class)
+    public function getLastLineOfClassDeclaration($class)
     {
         $tokens = $this->getTokensForClass($class);
 
-        $index = $this->findIndexOfClassDeclaration($tokens);
+        if (null === $index = $this->findEndOfImplementsDeclaration($tokens)) {
+            $index = $this->findIndexOfClassDeclaration($tokens);
+        }
 
         return $tokens[$index][2];
+    }
+
+    /**
+     * @param string $class
+     *
+     * @return bool
+     */
+    public function classImplementsInterface($class)
+    {
+        $tokens = $this->getTokensForClass($class);
+
+        foreach ($tokens as $token) {
+            if (is_array($token) && T_IMPLEMENTS === $token[0]) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -317,6 +337,35 @@ final class ClassFileAnalyser
         $classTokens = $this->filterTokensForClassTokens($tokens);
 
         return key($classTokens);
+    }
+
+    /**
+     * @param array $tokens
+     *
+     * @return int
+     */
+    private function findEndOfImplementsDeclaration(array $tokens)
+    {
+        $i = 0;
+        while ($token = next($tokens)) {
+            if (!is_array($token)) {
+                continue;
+            }
+
+            if (T_IMPLEMENTS === $token[0]) {
+                while ($token = next($tokens)) {
+                    if (!is_array($token) && '{' === $token) {
+                        return $i + 1;
+                    }
+
+                    $i++;
+                }
+            }
+
+            $i++;
+        }
+
+        return null;
     }
 
     /**
