@@ -3,7 +3,7 @@ Feature: Developer implements interface
   I want to automate creating abstract type methods
   In order to avoid repetitive tasks and interruptions in development flow
 
-  Scenario: Generating interface methods in an empty class
+  Scenario: Generating methods from an interface in an empty class that share the same namespace
     Given the spec file "spec/CodeGeneration/AbstractTypeMethods/PersonSpec.php" contains:
       """
       <?php
@@ -30,7 +30,7 @@ Feature: Developer implements interface
 
       interface CanSpeak
       {
-          public function sayHello();
+          public function say($phrase);
       }
       """
     And the class file "src/CodeGeneration/AbstractTypeMethods/Person.php" contains:
@@ -44,18 +44,15 @@ Feature: Developer implements interface
       }
       """
     When I run phpspec and answer "y" when asked if I want to generate the code
-    Then the suite should pass
-     And the class in "src/CodeGeneration/AbstractTypeMethods/Person.php" should contain:
+    Then the class in "src/CodeGeneration/AbstractTypeMethods/Person.php" should contain:
       """
       <?php
 
       namespace CodeGeneration\AbstractTypeMethods;
 
-      use CodeGeneration\AbstractTypes\Types\CanSpeak;
-
       class Person implements CanSpeak
       {
-          public function sayHello($phrase)
+          public function say($argument1)
           {
               // TODO: write logic here
           }
