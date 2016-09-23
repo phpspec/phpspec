@@ -58,3 +58,64 @@ Feature: Developer implements interface
           }
       }
       """
+
+  Scenario: Generating methods from an interface in an empty class that have different namespaces
+    Given the spec file "spec/CodeGeneration/AbstractTypeMethods/EngineerSpec.php" contains:
+     """
+     <?php
+
+      namespace spec\CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods\Engineering\CanWriteCode;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class EngineerSpec extends ObjectBehavior
+      {
+          function it_can_write_code()
+          {
+              $this->shouldHaveType(CanWriteCode::class);
+          }
+      }
+     """
+
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Engineering/CanWriteCode.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods\Engineering;
+
+      interface CanWriteCode
+      {
+          public function writeCode($code);
+      }
+      """
+
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Engineer.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      class Engineer
+      {
+      }
+      """
+
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/AbstractTypeMethods/Engineer.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods\Engineering\CanWriteCode;
+
+      class Person implements CanWriteCode
+      {
+          public function writeCode($argument1)
+          {
+              // TODO: write logic here
+          }
+      }
+      """
