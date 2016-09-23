@@ -61,6 +61,11 @@ class ClassFileAnalyserSpec extends ObjectBehavior
         $this->getLastLineOfUseStatements($this->getClassWithNoMethods())->shouldReturn(null);
     }
 
+    function it_should_return_the_line_number_of_the_namespace_declaration()
+    {
+        $this->getLineOfNamespaceDeclaration($this->getClassContainingUseStatements())->shouldReturn(3);
+    }
+
     private function getSingleMethodClass()
     {
         return <<<SINGLE_METHOD_CLASS

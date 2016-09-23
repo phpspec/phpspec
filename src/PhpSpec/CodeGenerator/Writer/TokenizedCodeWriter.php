@@ -100,12 +100,16 @@ final class TokenizedCodeWriter implements CodeWriter
         } else {
             $interfaceParts = explode('\\', $interface);
             $interfaceName = array_pop($interfaceParts);
-
+            $useStatement = sprintf('use %s;', $interface);
 
             $lastLineOfUseStatements = $this->analyser->getLastLineOfUseStatements($class);
             if (null !== $lastLineOfUseStatements) {
-                array_splice($classLines, $lastLineOfUseStatements, 0, [sprintf('use %s;', $interface)]);
+                array_splice($classLines, $lastLineOfUseStatements, 0, [$useStatement]);
                 $lastLineOfClassDeclaration++;
+            } else {
+                $lineOfNamespaceDeclaration = $this->analyser->getLineOfNamespaceDeclaration($class);
+                array_splice($classLines, $lineOfNamespaceDeclaration, 0, ['', $useStatement]);
+                $lastLineOfClassDeclaration += 2;
             }
         }
 

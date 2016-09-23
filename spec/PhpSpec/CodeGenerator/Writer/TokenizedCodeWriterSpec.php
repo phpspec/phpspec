@@ -97,11 +97,17 @@ class TokenizedCodeWriterSpec extends ObjectBehavior
 
     function it_should_generate_an_implements_for_a_class_in_another_namespace()
     {
-        $class = $this->getClassWithUseStatements();
         $interface = 'MyNamespace\Types\Baz';
+
+        $classWithUseStatements = $this->getClassWithUseStatements();
         $result = $this->getClassWithUseStatementsAndImplementedInterfaceInDifferentNamespace();
 
-        $this->insertImplementsInClass($class, $interface)->shouldReturn($result);
+        $this->insertImplementsInClass($classWithUseStatements, $interface)->shouldReturn($result);
+
+        $classWithoutUseStatements = $this->getClassWithNoInterfaces();
+        $result = $this->getClassWithImplementedInterfaceInDifferentNamespace();
+
+        $this->insertImplementsInClass($classWithoutUseStatements, $interface)->shouldReturn($result);
     }
 
     private function getSingleMethodClass()
@@ -422,5 +428,24 @@ final class Foo implements Baz
     }
 }
 CLASS_WITH_INTERFACE;
+    }
+
+    private function getClassWithImplementedInterfaceInDifferentNamespace()
+    {
+        return <<<CLASS_WITH_INTERFACE
+<?php
+
+namespace MyNamespace;
+
+use MyNamespace\Types\Baz;
+
+final class Foo implements Baz
+{
+    public function __construct()
+    {
+    }
+}
+CLASS_WITH_INTERFACE;
+
     }
 }

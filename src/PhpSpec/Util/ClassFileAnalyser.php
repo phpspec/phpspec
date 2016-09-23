@@ -175,6 +175,28 @@ final class ClassFileAnalyser
     }
 
     /**
+     * @param string $class
+     *
+     * @return int
+     */
+    public function getLineOfNamespaceDeclaration($class)
+    {
+        $tokens = $this->getTokensForClass($class);
+
+        while ($token = next($tokens)) {
+            if (!is_array($token)) {
+                continue;
+            }
+
+            if (T_NAMESPACE === $token[0]) {
+                return $token[2];
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @param array $tokens
      * @return int
      */
