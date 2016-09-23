@@ -111,7 +111,7 @@ Feature: Developer implements interface
 
       use CodeGeneration\AbstractTypeMethods\Engineering\CanWriteCode;
 
-      class Person implements CanWriteCode
+      class Engineer implements CanWriteCode
       {
           public function writeCode($argument1)
           {
