@@ -55,6 +55,12 @@ class ClassFileAnalyserSpec extends ObjectBehavior
         $this->classImplementsInterface($this->getClassWithNoMethods())->shouldReturn(false);
     }
 
+    function it_should_return_the_line_number_of_the_last_use_statement()
+    {
+        $this->getLastLineOfUseStatements($this->getClassContainingUseStatements())->shouldReturn(6);
+        $this->getLastLineOfUseStatements($this->getClassWithNoMethods())->shouldReturn(null);
+    }
+
     private function getSingleMethodClass()
     {
         return <<<SINGLE_METHOD_CLASS
@@ -138,5 +144,22 @@ final class MyClass implements
 {
 }
 CLASS_IMPLEMENTING_INTERFACE;
+    }
+
+    private function getClassContainingUseStatements()
+    {
+        return <<<CLASS_WITH_USE_STATEMENTS
+<?php
+
+namespace Foo\Bar;
+
+use Foo\Bar\Baz;
+use Baz\Foo\Bar;
+
+class MyClass implements Baz, Bar
+{
+}
+CLASS_WITH_USE_STATEMENTS;
+
     }
 }

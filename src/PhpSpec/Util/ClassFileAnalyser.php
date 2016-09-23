@@ -146,6 +146,35 @@ final class ClassFileAnalyser
     }
 
     /**
+     * @param string $class
+     *
+     * @return int
+     */
+    public function getLastLineOfUseStatements($class)
+    {
+        $tokens = $this->getTokensForClass($class);
+
+        $lastUseStatementLine = null;
+        while ($token = next($tokens)) {
+            if (!is_array($token)) {
+                continue;
+            }
+
+            if (T_USE === $token[0]) {
+                $lastUseStatementLine = $token[2];
+
+                continue;
+            }
+
+            if (T_CLASS === $token[0]) {
+                return $lastUseStatementLine;
+            }
+        }
+
+        return $lastUseStatementLine;
+    }
+
+    /**
      * @param array $tokens
      * @return int
      */

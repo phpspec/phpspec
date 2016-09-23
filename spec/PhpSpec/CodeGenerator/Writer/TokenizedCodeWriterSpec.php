@@ -95,6 +95,15 @@ class TokenizedCodeWriterSpec extends ObjectBehavior
         $this->insertImplementsInClass($class, $interface)->shouldReturn($result);
     }
 
+    function it_should_generate_an_implements_for_a_class_in_another_namespace()
+    {
+        $class = $this->getClassWithUseStatements();
+        $interface = 'MyNamespace\Types\Baz';
+        $result = $this->getClassWithUseStatementsAndImplementedInterfaceInDifferentNamespace();
+
+        $this->insertImplementsInClass($class, $interface)->shouldReturn($result);
+    }
+
     private function getSingleMethodClass()
     {
         return <<<SINGLE_METHOD_CLASS
@@ -375,5 +384,43 @@ final class Foo implements
     }
 }
 CLASS_WITH_MULTILINE_IMPLEMENTS;
+    }
+
+    private function getClassWithUseStatements()
+    {
+        return <<<CLASS_WITH_USE_STATEMENTS
+<?php
+
+namespace MyNamespace;
+
+use MyNamespace\Types\Bar;
+
+final class Foo
+{
+    public function __construct()
+    {
+    }
+}
+CLASS_WITH_USE_STATEMENTS;
+
+    }
+
+    private function getClassWithUseStatementsAndImplementedInterfaceInDifferentNamespace()
+    {
+        return <<<CLASS_WITH_INTERFACE
+<?php
+
+namespace MyNamespace;
+
+use MyNamespace\Types\Bar;
+use MyNamespace\Types\Baz;
+
+final class Foo implements Baz
+{
+    public function __construct()
+    {
+    }
+}
+CLASS_WITH_INTERFACE;
     }
 }

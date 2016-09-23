@@ -82,6 +82,7 @@ final class TokenizedCodeWriter implements CodeWriter
      */
     public function insertImplementsInClass($class, $interface)
     {
+        $classLines = explode(PHP_EOL, $class);
         $interfaceNamespace = '';
 
         if (false !== strpos($interface, '\\')) {
@@ -92,25 +93,32 @@ final class TokenizedCodeWriter implements CodeWriter
         }
 
         $classNamespace = $this->analyser->getClassNamespace($class);
+        $lastLineOfClassDeclaration = $this->analyser->getLastLineOfClassDeclaration($class);
 
         if ($classNamespace === $interfaceNamespace) {
-            $interface = ltrim(str_replace($classNamespace, '', $interface), '\\');
+            $interfaceName = ltrim(str_replace($classNamespace, '', $interface), '\\');
+        } else {
+            $interfaceParts = explode('\\', $interface);
+            $interfaceName = array_pop($interfaceParts);
+
+
+            $lastLineOfUseStatements = $this->analyser->getLastLineOfUseStatements($class);
+            if (null !== $lastLineOfUseStatements) {
+                array_splice($classLines, $lastLineOfUseStatements, 0, [sprintf('use %s;', $interface)]);
+                $lastLineOfClassDeclaration++;
+            }
         }
 
-        $line = $this->analyser->getLastLineOfClassDeclaration($class);
-
-        $classLines = explode(PHP_EOL, $class);
-
-        $lastClassDeclarationLine = $classLines[$line - 1];
+        $lastClassDeclarationLine = $classLines[$lastLineOfClassDeclaration - 1];
         $newLineModifier = (false === strpos($lastClassDeclarationLine, 'class ')) ? PHP_EOL . '    ' : '';
 
         if ($this->analyser->classImplementsInterface($class)) {
-            $lastClassDeclarationLine .= ',' . $newLineModifier . $interface;
+            $lastClassDeclarationLine .= ',' . $newLineModifier . $interfaceName;
         } else {
-            $lastClassDeclarationLine .= ' implements ' . $interface;
+            $lastClassDeclarationLine .= ' implements ' . $interfaceName;
         }
 
-        $classLines[$line - 1] = $lastClassDeclarationLine;
+        $classLines[$lastLineOfClassDeclaration - 1] = $lastClassDeclarationLine;
 
         return join(PHP_EOL, $classLines);
     }
