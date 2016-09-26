@@ -5,8 +5,8 @@ Upcoming 3.1
 * [fixed] Throwable can be passed as instance to shouldThrow (@jameshalsall)
 * [performance] Phar version now has an optimised autoloader
 
-Upcoming 2.5
-============
+2.5.3 / 2016-09-26
+==================
 
 * [fixed] Accidental linebreaks in spec name are not allowed (@randompixel)
 * [fixed] Throwable can be passed as instance to shouldThrow (@jameshalsall)
@@ -21,7 +21,7 @@ Upcoming 2.5
 * Disallows doubling of PHP 7.1's `iterable` type (@avant1)
 * [fixed] Exceptions are properly highlighted in error messages (@ciaranmcnulty)
 
-2.5.2 / 2017-09-04
+2.5.2 / 2016-09-04
 ==================
 
 * [fixed] Exceptions are properly highlighted in error messages (@ciaranmcnulty)
