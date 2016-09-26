@@ -87,3 +87,4 @@ Other things to bear in mind:
 
 - ``PhpSpec\ServiceContainer`` is now an interface (available implementation:
   ``PhpSpec\ServiceContainer\IndexedServiceContainer``)
+- ``PhpSpec\ServiceContainer\ServiceContainer#getByPrefix`` has been replaced by ``PhpSpec\ServiceContainer\ServiceContainer#getByTag``. Tags can be set via ``PhpSpec\ServiceContainer\ServiceContainer#define``'s third argument
