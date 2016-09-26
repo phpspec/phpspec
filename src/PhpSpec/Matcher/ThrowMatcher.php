@@ -284,7 +284,7 @@ class ThrowMatcher implements MatcherInterface
         }
 
         if (is_object($arguments[0])) {
-            if (class_exists('\Throwable') && $arguments[0] instanceof \Throwable) {
+            if ($arguments[0] instanceof \Throwable) {
                 return $arguments[0];
             } elseif ($arguments[0] instanceof \Exception) {
                 return $arguments[0];
