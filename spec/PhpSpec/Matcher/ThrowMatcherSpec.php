@@ -42,6 +42,10 @@ class ThrowMatcherSpec extends ObjectBehavior
         $arr->ksort()->willThrow('\Error');
 
         $this->positiveMatch('throw', $arr, array('\Error'))->during('ksort', array());
+
+        $arr->ksort()->willThrow(new \Error());
+
+        $this->positiveMatch('throw', $arr, array('\Error'))->during('ksort', array());
     }
 
     function it_accepts_a_method_during_which_an_exception_should_not_be_thrown(ArrayObject $arr)
