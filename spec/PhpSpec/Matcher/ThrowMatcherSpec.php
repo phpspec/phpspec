@@ -50,7 +50,7 @@ class ThrowMatcherSpec extends ObjectBehavior
             throw new SkippingException('The class Error, introduced in PHP 7, does not exist');
         }
 
-        $arr->ksort()->willThrow(new \Error());
+        $arr->ksort()->will(function(){ throw new \Error(); });
 
         $this->positiveMatch('throw', $arr, array(new \Error()))->during('ksort', array());
     }
