@@ -45,13 +45,15 @@ class ThrowMatcherSpec extends ObjectBehavior
         $this->positiveMatch('throw', $arr, array('\Error'))->during('ksort', array());
     }
 
-    function it_accepts_a_method_during_which_an_error_specified_by_instance_should_be_thrown(ArrayObject $arr)
+    function it_accepts_a_method_during_which_an_error_specified_by_instance_should_be_thrown(ArrayObject $arr, ReflectionFactory $factory)
     {
         if (!class_exists('\Error')) {
             throw new SkippingException('The class Error, introduced in PHP 7, does not exist');
         }
 
-        $arr->ksort()->will(function(){ throw new \Error(); });
+        $error = new \Error();
+        $arr->ksort()->will(function() use ($error) { throw $error; });
+        $factory->create(Argument::any())->willReturn(new \ReflectionClass($error));
 
         $this->positiveMatch('throw', $arr, array(new \Error()))->during('ksort', array());
     }
