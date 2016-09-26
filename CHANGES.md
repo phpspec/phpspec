@@ -1,5 +1,5 @@
-Upcoming 3.1
-============
+3.1.1 / 2016-09-26
+==================
 
 * [fixed] Accidental linebreaks in spec name are not allowed (@randompixel)
 * [fixed] Throwable can be passed as instance to shouldThrow (@jameshalsall)
