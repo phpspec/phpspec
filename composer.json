@@ -43,7 +43,7 @@
     },
 
     "suggest": {
-        "phpspec/nyan-formatters": "~1.0 – Adds Nyan formatters"
+        "phpspec/nyan-formatters": "Adds Nyan formatters"
     },
 
     "autoload": {
