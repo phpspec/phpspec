@@ -1,3 +1,8 @@
+Upcoming 3.x
+============
+
+* [fixed] No longer suggests an outdated version of Nyan formatters (@unfunco)
+
 3.1.1 / 2016-09-26
 ==================
 
