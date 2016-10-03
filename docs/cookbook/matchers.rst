@@ -176,7 +176,7 @@ You can also use the Throw matcher with named constructors.
 Trigger Matcher
 ---------------
 
-Let's say you have the following class and method which is deprecated
+Let's say you have the following class and a method which is deprecated
 
 .. code-block:: php
 
@@ -213,7 +213,7 @@ the example easier to read.
         }
     }
 
-You may want to specify against the message of the error. You can do this by
+You may want to specify the message of the error. You can do this by
 adding a string parameter to the `shouldTrigger` method :
 
 .. code-block:: php
@@ -235,8 +235,8 @@ adding a string parameter to the `shouldTrigger` method :
 .. note::
    
     As with the Throw matcher, you can also use the `during` syntax described
-    in the Throw section, or use the instanciation mecanisms (such as
-    duringInstanciation, ... etc)
+    in the Throw section, or use the instantiation mechanisms (such as
+    duringInstantiation, ... etc)
 
 
 Type Matcher
