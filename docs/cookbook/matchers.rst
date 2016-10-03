@@ -173,6 +173,72 @@ You can also use the Throw matcher with named constructors.
     }
 
 
+Trigger Matcher
+---------------
+
+Let's say you have the following class and method which is deprecated
+
+.. code-block:: php
+
+    <?php
+
+    class Movie
+    {
+        function setStars($value)
+        {
+            trigger_error('The method setStars is deprecated. Use setRating instead', E_USER_DEPRECATED);
+
+            $this->rating = $value * 4;
+        }
+    }
+
+
+You can describe an object triggering an error using the Trigger matcher.
+You use the Trigger matcher by calling it straight from ``$this``, making
+the example easier to read.
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function set_stars_should_be_deprecated()
+        {
+            $this->shouldTrigger(E_USER_DEPRECATED)->duringSetStars(4);
+        }
+    }
+
+You may want to specify against the message of the error. You can do this by
+adding a string parameter to the `shouldTrigger` method :
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function set_stars_should_be_deprecated()
+        {
+            $this->shouldTrigger(E_USER_DEPRECATED, 'The method setStars is deprecated. Use setRating instead')->duringSetRating(4);
+        }
+    }
+
+.. note::
+   
+    As with the Throw matcher, you can also use the `during` syntax described
+    in the Throw section, or use the instanciation mecanisms (such as
+    duringInstanciation, ... etc)
+
+
 Type Matcher
 ------------
 
