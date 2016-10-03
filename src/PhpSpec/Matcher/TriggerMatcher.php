@@ -158,7 +158,7 @@ final class TriggerMatcher implements Matcher
     private function getDelayedCall($check, $subject, array $arguments)
     {
         $unwrapper = $this->unwrapper;
-        list($level, $message) = $arguments;
+        list($level, $message) = $this->unpackArguments($arguments);
 
         return new DelayedCall(
             function ($method, $arguments) use ($check, $subject, $level, $message, $unwrapper) {
@@ -181,5 +181,34 @@ final class TriggerMatcher implements Matcher
                 return call_user_func($check, $callable, $arguments, $level, $message);
             }
         );
+    }
+
+    /**
+     * @return array
+     */
+    private function unpackArguments(array $arguments)
+    {
+        $count = count($arguments);
+
+        if (0 === $count) {
+            return array(null, null);
+        }
+
+        if (1 === $count) {
+            return array($arguments[0], null);
+        }
+
+        if (2 !== $count) {
+            throw new MatcherException(
+                sprintf(
+                    "Wrong argument count provided in trigger matcher.\n".
+                    "Up to two arguments expected,\n".
+                    "Got %d.",
+                    $count
+                )
+            );
+        }
+
+        return array($arguments[0], $arguments[1]);
     }
 }
