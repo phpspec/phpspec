@@ -1,6 +1,7 @@
 Upcoming 3.x
 ============
 
+* New `shouldTrigger` matcher for specifying a warning is triggered (@Taluu)
 * [fixed] No longer suggests an outdated version of Nyan formatters (@unfunco)
 
 3.1.1 / 2016-09-26
