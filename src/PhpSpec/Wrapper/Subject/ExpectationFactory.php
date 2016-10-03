@@ -82,6 +82,10 @@ class ExpectationFactory
             return $this->createDecoratedExpectation("PositiveThrow", $name, $subject, $arguments);
         }
 
+        if (strtolower($name) === 'trigger') {
+            return $this->createDecoratedExpectation("PositiveTrigger", $name, $subject, $arguments);
+        }
+
         return $this->createDecoratedExpectation("Positive", $name, $subject, $arguments);
     }
 
@@ -96,6 +100,10 @@ class ExpectationFactory
     {
         if (strtolower($name) === 'throw') {
             return $this->createDecoratedExpectation("NegativeThrow", $name, $subject, $arguments);
+        }
+
+        if (strtolower($name) === 'trigger') {
+            return $this->createDecoratedExpectation("NegativeTrigger", $name, $subject, $arguments);
         }
 
         return $this->createDecoratedExpectation("Negative", $name, $subject, $arguments);

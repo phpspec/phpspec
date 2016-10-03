@@ -41,6 +41,7 @@ use ArrayAccess;
  *
  * @method Subject\Expectation\DuringCall shouldThrow($exception = null)
  * @method Subject\Expectation\DuringCall shouldNotThrow($exception = null)
+ * @method Subject\Expectation\DuringCall shouldTrigger($level = null, $message = null)
  *
  * @method void shouldHaveCount($count)
  * @method void shouldNotHaveCount($count)

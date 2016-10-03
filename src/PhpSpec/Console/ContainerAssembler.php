@@ -642,6 +642,9 @@ final class ContainerAssembler
         $container->define('matchers.throwm', function (IndexedServiceContainer $c) {
             return new Matcher\ThrowMatcher($c->get('unwrapper'), $c->get('formatter.presenter'), new ReflectionFactory());
         }, ['matchers']);
+        $container->define('matchers.trigger', function (IndexedServiceContainer $c) {
+            return new Matcher\TriggerMatcher($c->get('unwrapper'));
+        }, ['matchers']);
         $container->define('matchers.type', function (IndexedServiceContainer $c) {
             return new Matcher\TypeMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
