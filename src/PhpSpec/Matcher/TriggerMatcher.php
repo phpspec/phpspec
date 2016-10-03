@@ -77,7 +77,7 @@ final class TriggerMatcher implements Matcher
      *
      * @throws \PhpSpec\Exception\Example\FailureException
      */
-    public function verifyPositive($callable, array $arguments, $level = null, $message = null)
+    public function verifyPositive(callable $callable, array $arguments, $level = null, $message = null)
     {
         $triggered = 0;
 
@@ -110,7 +110,7 @@ final class TriggerMatcher implements Matcher
      *
      * @throws \PhpSpec\Exception\Example\FailureException
      */
-    public function verifyNegative($callable, array $arguments, $level = null, $message = null)
+    public function verifyNegative(callable $callable, array $arguments, $level = null, $message = null)
     {
         $triggered = 0;
 
