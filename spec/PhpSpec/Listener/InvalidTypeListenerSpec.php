@@ -8,6 +8,7 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Example\TypeFailureException;
 use PhpSpec\Listener\InvalidTypeListener;
+use PhpSpec\Locator\Resource;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
@@ -48,17 +49,22 @@ class InvalidTypeListenerSpec extends ObjectBehavior
     function it_prompts_for_method_generation_if_correct_exception_was_thrown_and_input_is_interactive(
         ExampleEvent $exampleEvent,
         SuiteEvent $suiteEvent,
-        ConsoleIO $io
+        ConsoleIO $io,
+        ResourceManager $resources,
+        Resource $classResource
     ) {
         $exception = new TypeFailureException('Error', new \stdClass(), \IteratorAggregate::class);
 
         $exampleEvent->getException()->willReturn($exception);
         $io->isCodeGenerationEnabled()->willReturn(true);
+        $io->askConfirmation('Do you want me to implement the methods from `IteratorAggregate` in `stdClass` for you?')->willReturn(true);
+
+        $resources->createResource('stdClass')->willReturn($classResource);
 
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
 
-        $io->askConfirmation(Argument::any())->shouldHaveBeenCalled();
+        $suiteEvent->markAsWorthRerunning()->shouldBeCalled();
     }
 
     function it_does_not_prompt_for_method_generation_if_code_generation_is_not_enabled(
