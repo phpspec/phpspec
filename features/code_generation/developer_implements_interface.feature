@@ -390,3 +390,83 @@ Feature: Developer implements interface
           }
       }
       """
+
+  Scenario: Generating methods from an interface in a class that already implements another interface
+    Given the spec file "spec/CodeGeneration/AbstractTypeMethods/UserSpec.php" contains:
+     """
+     <?php
+
+      namespace spec\CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods\Auth\TokenAware;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class UserSpec extends ObjectBehavior
+      {
+          function it_is_aware_of_tokens()
+          {
+              $this->shouldHaveType(TokenAware::class);
+          }
+      }
+     """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Exceptions/TokenAware.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods\Auth;
+
+      interface TokenAware
+      {
+          public function getToken();
+      }
+      """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Exceptions/UsernameAware.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods\Auth;
+
+      interface UsernameAware
+      {
+          public function getUsername();
+      }
+      """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/User.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods\Auth\UsernameAware;
+
+      class User implements UsernameAware
+      {
+          public function getUsername()
+          {
+          }
+      }
+      """
+
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/AbstractTypeMethods/User.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods\Auth\UsernameAware;
+      use CodeGeneration\AbstractTypeMethods\Auth\TokenAware;
+
+      class UserFriendlyException implements UsernameAware, TokenAware
+      {
+          public function getUsername()
+          {
+          }
+
+          public function getToken()
+          {
+              // TODO: write logic here
+          }
+      }
+      """
