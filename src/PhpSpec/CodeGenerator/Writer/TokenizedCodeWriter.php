@@ -114,10 +114,10 @@ final class TokenizedCodeWriter implements CodeWriter
         }
 
         $lastClassDeclarationLine = $classLines[$lastLineOfClassDeclaration - 1];
-        $newLineModifier = (false === strpos($lastClassDeclarationLine, 'class ')) ? PHP_EOL . '    ' : '';
+        $newLineModifier = (false === strpos($lastClassDeclarationLine, 'class ')) ? PHP_EOL . '    ' : ' ';
 
         if ($this->analyser->classImplementsInterface($class)) {
-            $lastClassDeclarationLine .= ', ' . $newLineModifier . $interfaceName;
+            $lastClassDeclarationLine .= ',' . $newLineModifier . $interfaceName;
         } else {
             $lastClassDeclarationLine .= ' implements ' . $interfaceName;
         }
