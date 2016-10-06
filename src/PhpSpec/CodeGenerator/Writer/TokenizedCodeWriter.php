@@ -117,7 +117,7 @@ final class TokenizedCodeWriter implements CodeWriter
         $newLineModifier = (false === strpos($lastClassDeclarationLine, 'class ')) ? PHP_EOL . '    ' : '';
 
         if ($this->analyser->classImplementsInterface($class)) {
-            $lastClassDeclarationLine .= ',' . $newLineModifier . $interfaceName;
+            $lastClassDeclarationLine .= ', ' . $newLineModifier . $interfaceName;
         } else {
             $lastClassDeclarationLine .= ' implements ' . $interfaceName;
         }
