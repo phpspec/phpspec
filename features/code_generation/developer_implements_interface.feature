@@ -59,6 +59,84 @@ Feature: Developer implements interface
       }
       """
 
+  Scenario: Generating methods from an interface in a non-empty class that share the same namespace
+    Given the spec file "spec/CodeGeneration/AbstractTypeMethods/ManagerSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods\CanManage;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class ManagerSpec extends ObjectBehavior
+      {
+          function it_can_speak()
+          {
+              $this->shouldHaveType(CanManage::class);
+          }
+      }
+      """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/CanManage.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      interface CanManage
+      {
+          public function manage($what, $how);
+
+          public function delegate($what, $who);
+      }
+      """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Manager.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      class Manager
+      {
+          public function foo()
+          {
+          }
+
+          private function bar()
+          {
+          }
+      }
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/AbstractTypeMethods/Manager.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      class Manager implements CanManage
+      {
+          public function foo()
+          {
+          }
+
+          private function bar()
+          {
+          }
+
+          public function manage($argument1, $argument2)
+          {
+              // TODO: write logic here
+          }
+
+          public function delegate($argument1, $argument2)
+          {
+              // TODO: write logic here
+          }
+      }
+      """
+
   Scenario: Generating methods from an interface in an empty class that have different namespaces
     Given the spec file "spec/CodeGeneration/AbstractTypeMethods/EngineerSpec.php" contains:
      """
