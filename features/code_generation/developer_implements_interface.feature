@@ -458,7 +458,7 @@ Feature: Developer implements interface
       use CodeGeneration\AbstractTypeMethods\Auth\UsernameAware;
       use CodeGeneration\AbstractTypeMethods\Auth\TokenAware;
 
-      class UserFriendlyException implements UsernameAware, TokenAware
+      class User implements UsernameAware, TokenAware
       {
           public function getUsername()
           {
