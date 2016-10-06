@@ -470,3 +470,47 @@ Feature: Developer implements interface
           }
       }
       """
+
+  Scenario: Specifying an abstract class for a concrete class does not prompt for code generation
+    Given the spec file "spec/CodeGeneration/AbstractTypeMethods/KnightSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods\GamePiece;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class KnightSpec extends ObjectBehavior
+      {
+          function it_is_a_game_piece()
+          {
+              $this->shouldHaveType(GamePiece::class);
+          }
+      }
+      """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/GamePiece.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      abstract class GamePiece
+      {
+          abstract public function getName();
+      }
+      """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Knight.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      class Knight
+      {
+      }
+      """
+    When I run phpspec
+    Then I should not be prompted for code generation
+     And the suite should not pass
