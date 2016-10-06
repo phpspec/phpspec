@@ -197,3 +197,64 @@ Feature: Developer implements interface
           }
       }
       """
+
+  Scenario: Generating methods from an interface in a class that has a parent
+    Given the spec file "spec/CodeGeneration/AbstractTypeMethods/UserFriendlyExceptionSpec.php" contains:
+     """
+     <?php
+
+      namespace spec\CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods\Exceptions\FriendlyMessageException;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class UserFriendlyExceptionSpec extends ObjectBehavior
+      {
+          function it_is_a_friendly_exception()
+          {
+              $this->shouldHaveType(FriendlyMessageException::class);
+          }
+      }
+     """
+
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Exceptions/FriendlyMessageException.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods\Exceptions;
+
+      interface FriendlyMessageException
+      {
+          public function getFriendlyMessage();
+      }
+      """
+
+    And the class file "src/CodeGeneration/AbstractTypeMethods/UserFriendlyException.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      class UserFriendlyException extends \RuntimeException
+      {
+      }
+      """
+
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/AbstractTypeMethods/UserFriendlyException.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods\Exceptions\FriendlyMessageException;
+
+      class UserFriendlyException extends \RuntimeException implements FriendlyMessageException
+      {
+          public function getFriendlyMessage()
+          {
+              // TODO: write logic here
+          }
+      }
+      """
