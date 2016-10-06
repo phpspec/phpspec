@@ -86,11 +86,20 @@ class TokenizedCodeWriterSpec extends ObjectBehavior
         $this->insertImplementsInClass($class, $interface)->shouldReturn($result);
     }
 
-    function it_should_generate_an_implements_for_a_class_with_existing_implements_declaration()
+    function it_should_generate_an_implements_for_a_class_with_existing_implements_declaration_on_multiple_lines()
     {
         $class = $this->getClassWithImplementsOnMultipleLines();
         $interface = 'MyNamespace\Bar';
-        $result = $this->getExceptedClassWithImplementsOnMultipleLines();
+        $result = $this->getExpectedClassWithImplementsOnMultipleLines();
+
+        $this->insertImplementsInClass($class, $interface)->shouldReturn($result);
+    }
+
+    function it_should_generate_an_implements_for_a_class_with_existing_implements_declaration()
+    {
+        $class = $this->getClassWithImplementedInterfaceInDifferentNamespace();
+        $interface = 'MyNamespace\Bar';
+        $result = $this->getExpectedClassWithImplements();
 
         $this->insertImplementsInClass($class, $interface)->shouldReturn($result);
     }
@@ -372,7 +381,7 @@ final class Foo implements
 CLASS_WITH_MULTILINE_IMPLEMENTS;
     }
 
-    private function getExceptedClassWithImplementsOnMultipleLines()
+    private function getExpectedClassWithImplementsOnMultipleLines()
     {
         return <<<CLASS_WITH_MULTILINE_IMPLEMENTS
 <?php
@@ -390,6 +399,25 @@ final class Foo implements
     }
 }
 CLASS_WITH_MULTILINE_IMPLEMENTS;
+    }
+
+    private function getExpectedClassWithImplements()
+    {
+        return <<<CLASS_WITH_IMPLEMENTS
+<?php
+
+namespace MyNamespace;
+
+use MyNamespace\Types\Baz;
+
+final class Foo implements Baz, Bar
+{
+    public function __construct()
+    {
+    }
+}
+CLASS_WITH_IMPLEMENTS;
+
     }
 
     private function getClassWithUseStatements()
