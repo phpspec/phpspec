@@ -313,3 +313,80 @@ Feature: Developer implements interface
       """
     When I run phpspec
     Then I should not be prompted for code generation
+
+  Scenario: Generating methods from an interface that has a parent in a class
+    Given the spec file "spec/CodeGeneration/AbstractTypeMethods/UserActionExceptionSpec.php" contains:
+     """
+     <?php
+
+      namespace spec\CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods\Auth\AuthorisedUserException;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class UserActionExceptionSpec extends ObjectBehavior
+      {
+          function it_is_an_authorised_user_exception()
+          {
+              $this->shouldHaveType(AuthorisedUserException::class);
+          }
+      }
+     """
+
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Exceptions/UserException.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods\Auth;
+
+      interface UserException
+      {
+          public function getUser();
+      }
+      """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Exceptions/AuthorisedUserException.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods\Auth;
+
+      interface AuthorisedUserException extends UserException
+      {
+          public function getToken();
+      }
+      """
+
+    And the class file "src/CodeGeneration/AbstractTypeMethods/UserActionException.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      class UserActionException
+      {
+      }
+      """
+
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/AbstractTypeMethods/UserActionException.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods\Auth\AuthorisedUserException;
+
+      class UserActionException implements AuthorisedUserException
+      {
+          public function getToken()
+          {
+              // TODO: write logic here
+          }
+
+          public function getUser()
+          {
+              // TODO: write logic here
+          }
+      }
+      """
