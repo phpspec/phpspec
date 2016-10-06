@@ -258,3 +258,58 @@ Feature: Developer implements interface
           }
       }
       """
+
+  Scenario: Specifying an interface for a class that has a parent already implementing that interface
+    Given the spec file "spec/CodeGeneration/AbstractTypeMethods/AbstractTypeSpec.php" contains:
+     """
+     <?php
+
+      namespace spec\CodeGeneration\AbstractTypeMethods;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class AbstractTypeSpec extends ObjectBehavior
+      {
+          function it_is_a_type()
+          {
+              $this->shouldHaveType(Type::class);
+          }
+      }
+     """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Type.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      interface Type
+      {
+          public function getType();
+      }
+      """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/AbstractType.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      abstract class AbstractType implements Type
+      {
+          public function getType()
+          {
+          }
+      }
+      """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/ConcreteType.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      class ConcreteType extends AbstractType
+      {
+      }
+      """
+    When I run phpspec
+    Then I should not be prompted for code generation
