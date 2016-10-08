@@ -33,3 +33,21 @@ script:
    - bin/phpspec run --format=pretty
    - ./vendor/bin/phpunit --testdox
    - ./vendor/bin/behat --format=pretty
+
+before_deploy:
+  - curl -LSs https://box-project.github.io/box2/installer.php | php
+  - chmod +x box.phar
+  - mv box.phar box
+  - export PATH=.:$PATH
+  - make build-phar
+
+deploy:
+  provider: releases
+  api_key:
+    secure: kuNoMV1YPvdIQvKwf7NgYIFP4ZskFrZCRgq/+iTzP/vbyeB1mu/hyNkHtdl0Fj/2LpN1IcWm+C7hZ29NjQJGyrEkGnD8HWnUEn6k+FLhETg+BlckDTwSyhauXRIoaJeNUItNYFydG8MjEMBQgWQpsT6lWNSRAa3uC82K2zjQAx0=
+  file: phpspec.phar
+  skip_cleanup: true
+  on:
+    tags: true
+    php: 5.6
+    condition: $DEPENDENCIES != "low"
