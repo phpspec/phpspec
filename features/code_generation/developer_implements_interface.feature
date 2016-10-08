@@ -514,3 +514,56 @@ Feature: Developer implements interface
     When I run phpspec
     Then I should not be prompted for code generation
      And the suite should not pass
+
+  Scenario: Not generating methods from an interface in a class
+    Given the spec file "spec/CodeGeneration/AbstractTypeMethods/CarSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods\Vehicle;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class CarSpec extends ObjectBehavior
+      {
+          function it_is_a_vehicle()
+          {
+              $this->shouldHaveType(Vehicle::class);
+          }
+      }
+      """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Vehicle.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      interface Vehicle
+      {
+          public function move($destination);
+      }
+      """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Car.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      class Car
+      {
+      }
+      """
+    When I run phpspec and answer "n" when asked if I want to generate the code
+    Then the suite should not pass
+     And the class in "src/CodeGeneration/AbstractTypeMethods/Car.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      class Car
+      {
+      }
+      """
