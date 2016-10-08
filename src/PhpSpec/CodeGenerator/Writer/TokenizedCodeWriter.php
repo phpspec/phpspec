@@ -82,7 +82,7 @@ final class TokenizedCodeWriter implements CodeWriter
      */
     public function insertImplementsInClass($class, $interface)
     {
-        $classLines = explode(PHP_EOL, $class);
+        $classLines = explode("\n", $class);
         $interfaceNamespace = '';
 
         if (false !== strpos($interface, '\\')) {
@@ -124,7 +124,7 @@ final class TokenizedCodeWriter implements CodeWriter
 
         $classLines[$lastLineOfClassDeclaration - 1] = $lastClassDeclarationLine;
 
-        return join(PHP_EOL, $classLines);
+        return implode("\n", $classLines);
     }
 
     /**
