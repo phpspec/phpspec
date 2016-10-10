@@ -76,22 +76,7 @@ final class InvalidTypeListener implements EventSubscriberInterface
                 continue;
             }
 
-            foreach ($types as $type => $methods) {
-                $message = sprintf('Do you want me to implement the methods from `%s` in `%s` for you?', $type, $class);
-
-                if ($this->io->askConfirmation($message)) {
-                    $this->generator->generate($classResource, 'implements', ['interface' => $type]);
-
-                    foreach ($methods as $method => $arguments) {
-                        $this->generator->generate($classResource, 'method', array(
-                            'name'      => $method,
-                            'arguments' => $arguments
-                        ));
-
-                        $event->markAsWorthRerunning();
-                    }
-                }
-            }
+            $this->promptUserToImplementMethods($event, $types, $class, $classResource);
         }
     }
 
@@ -107,6 +92,27 @@ final class InvalidTypeListener implements EventSubscriberInterface
         /** @var \ReflectionMethod $method */
         foreach ($reflection->getMethods() as $method) {
             $this->methodsToImplement[$subjectClassName][$typeClassName][$method->getName()] = $method->getParameters();
+        }
+    }
+
+    private function promptUserToImplementMethods(SuiteEvent $event, array $typesAndMethods, $class, $classResource)
+    {
+        foreach ($typesAndMethods as $type => $methods) {
+
+            $message = sprintf('Do you want me to implement the methods from `%s` in `%s` for you?', $type, $class);
+
+            if ($this->io->askConfirmation($message)) {
+                $this->generator->generate($classResource, 'implements', ['interface' => $type]);
+
+                foreach ($methods as $method => $arguments) {
+                    $this->generator->generate($classResource, 'method', array(
+                        'name' => $method,
+                        'arguments' => $arguments
+                    ));
+
+                    $event->markAsWorthRerunning();
+                }
+            }
         }
     }
 }
