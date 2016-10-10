@@ -60,17 +60,7 @@ final class InvalidTypeListener implements EventSubscriberInterface
             return;
         }
 
-        $subjectClassName = get_class($exception->getSubject());
-        $reflection = new \ReflectionClass($typeClassName);
-
-        if (count($reflection->getMethods())) {
-            $this->methodsToImplement[$subjectClassName][$typeClassName] = [];
-        }
-
-        /** @var \ReflectionMethod $method */
-        foreach ($reflection->getMethods() as $method) {
-            $this->methodsToImplement[$subjectClassName][$typeClassName][$method->getName()] = $method->getParameters();
-        }
+        $this->storeMethodsToImplement($exception->getSubject(), $typeClassName);
     }
 
     public function afterSuite(SuiteEvent $event)
@@ -80,7 +70,6 @@ final class InvalidTypeListener implements EventSubscriberInterface
         }
 
         foreach ($this->methodsToImplement as $class => $types) {
-
             try {
                 $classResource = $this->resources->createResource($class);
             } catch (\RuntimeException $e) {
@@ -103,6 +92,21 @@ final class InvalidTypeListener implements EventSubscriberInterface
                     }
                 }
             }
+        }
+    }
+
+    private function storeMethodsToImplement($subject, $typeClassName)
+    {
+        $subjectClassName = get_class($subject);
+        $reflection = new \ReflectionClass($typeClassName);
+
+        if (count($reflection->getMethods())) {
+            $this->methodsToImplement[$subjectClassName][$typeClassName] = [];
+        }
+
+        /** @var \ReflectionMethod $method */
+        foreach ($reflection->getMethods() as $method) {
+            $this->methodsToImplement[$subjectClassName][$typeClassName][$method->getName()] = $method->getParameters();
         }
     }
 }
