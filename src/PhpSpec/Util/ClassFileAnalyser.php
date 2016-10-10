@@ -120,21 +120,7 @@ final class ClassFileAnalyser
         $namespaceParts = [];
         while ($token = next($tokens)) {
             if (is_array($token) && T_NAMESPACE === $token[0]) {
-                $namespaceLineNumber = $token[2];
-
-                while ($namespaceToken = next($tokens)) {
-                    if (!is_array($namespaceToken)) {
-                        continue;
-                    }
-
-                    if ($namespaceLineNumber !== $namespaceToken[2]) {
-                        break;
-                    }
-
-                    if (T_STRING === $namespaceToken[0]) {
-                        $namespaceParts[] = $namespaceToken[1];
-                    }
-                }
+                $namespaceParts = $this->extractNamespacePartsFromNamespaceLine($namespaceParts, $tokens);
             }
         }
 
@@ -419,5 +405,27 @@ final class ClassFileAnalyser
         });
 
         return $classTokens;
+    }
+
+    private function extractNamespacePartsFromNamespaceLine($namespaceParts, array $tokens)
+    {
+        $currentToken = current($tokens);
+        $currentLineNumber = $currentToken[2];
+
+        while ($namespaceToken = next($tokens)) {
+            if (!is_array($namespaceToken)) {
+                continue;
+            }
+
+            if ($currentLineNumber !== $namespaceToken[2]) {
+                break;
+            }
+
+            if (T_STRING === $namespaceToken[0]) {
+                $namespaceParts[] = $namespaceToken[1];
+            }
+        }
+
+        return $namespaceParts;
     }
 }
