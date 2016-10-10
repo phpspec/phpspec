@@ -119,11 +119,7 @@ final class ClassFileAnalyser
 
         $namespaceParts = [];
         while ($token = next($tokens)) {
-            if (!is_array($token)) {
-                continue;
-            }
-
-            if (T_NAMESPACE === $token[0]) {
+            if (is_array($token) && T_NAMESPACE === $token[0]) {
                 $namespaceLineNumber = $token[2];
 
                 while ($namespaceToken = next($tokens)) {
@@ -132,7 +128,7 @@ final class ClassFileAnalyser
                     }
 
                     if ($namespaceLineNumber !== $namespaceToken[2]) {
-                        return join('\\', $namespaceParts);
+                        break;
                     }
 
                     if (T_STRING === $namespaceToken[0]) {
@@ -142,7 +138,7 @@ final class ClassFileAnalyser
             }
         }
 
-        return join('\\', $namespaceParts);
+        return implode('\\', $namespaceParts);
     }
 
     /**
@@ -184,11 +180,7 @@ final class ClassFileAnalyser
         $tokens = $this->getTokensForClass($class);
 
         while ($token = next($tokens)) {
-            if (!is_array($token)) {
-                continue;
-            }
-
-            if (T_NAMESPACE === $token[0]) {
+            if (is_array($token) && T_NAMESPACE === $token[0]) {
                 return $token[2];
             }
         }
@@ -399,11 +391,7 @@ final class ClassFileAnalyser
     {
         $i = 0;
         while ($token = next($tokens)) {
-            if (!is_array($token)) {
-                continue;
-            }
-
-            if (T_IMPLEMENTS === $token[0]) {
+            if (is_array($token) && T_IMPLEMENTS === $token[0]) {
                 while ($token = next($tokens)) {
                     if (!is_array($token) && '{' === $token) {
                         return $i + 1;
