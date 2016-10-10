@@ -41,6 +41,6 @@ install:
 
 test_script:
     - cd c:\projects\phpspec
-    - php bin\phpspec run --format=dot
+    - php bin\phpspec run --format=dot -vvv
     - php vendor\phpunit\phpunit\phpunit
     - php vendor\behat\behat\bin\behat --format=progress --tags="~@php-version,@php5.4&&~@hhvm"
