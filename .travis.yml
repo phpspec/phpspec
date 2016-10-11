@@ -13,15 +13,15 @@ matrix:
     - php: 5.6
     - php: hhvm
     - php: 7.0
-    - php: 7.1
-    - php: 7.1
+    - php: nightly
+    - php: nightly
       env: DEPENDENCIES='dev'
   allow_failures:
-    - env: DEPENDENCIES='dev'
+    - php: nightly
   fast_finish: true
 
 before_install:
-  - if [ ${TRAVIS_PHP_VERSION:0:4} != "hhvm" ] && [ ${TRAVIS_PHP_VERSION:0:3} != "7.1" ]; then phpenv config-rm xdebug.ini; fi
+  - if [ ${TRAVIS_PHP_VERSION:0:4} != "hhvm" ] && [ ${TRAVIS_PHP_VERSION:0:7} != "nightly" ]; then phpenv config-rm xdebug.ini; fi
 
 install:
   - export COMPOSER_ROOT_VERSION=dev-master
