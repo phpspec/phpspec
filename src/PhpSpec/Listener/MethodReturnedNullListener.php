@@ -110,7 +110,8 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
             return;
         }
 
-        $class = get_class($this->lastMethodCallEvent->getSubject());
+        $subject = $this->lastMethodCallEvent->getSubject();
+        $class = null === $subject ? get_class() : get_class($subject);
         $method = $this->lastMethodCallEvent->getMethod();
 
         if (!$this->methodAnalyser->methodIsEmpty($class, $method)) {
