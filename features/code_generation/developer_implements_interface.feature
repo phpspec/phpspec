@@ -59,6 +59,55 @@ Feature: Developer implements interface
       }
       """
 
+  Scenario: Generating methods from an interface in an empty class that is in the global namespace
+    Given the spec file "spec/PersonSpec.php" contains:
+      """
+      <?php
+
+      namespace spec;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class PersonSpec extends ObjectBehavior
+      {
+          function it_can_speak()
+          {
+              $this->shouldHaveType(\CanSpeak::class);
+          }
+      }
+      """
+    And the class file "src/CanSpeak.php" contains:
+      """
+      <?php
+
+      interface CanSpeak
+      {
+          public function say($phrase);
+      }
+      """
+    And the class file "src/Person.php" contains:
+      """
+      <?php
+
+      class Person
+      {
+      }
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/Person.php" should contain:
+      """
+      <?php
+
+      class Person implements CanSpeak
+      {
+          public function say($argument1)
+          {
+              // TODO: write logic here
+          }
+      }
+      """
+
   Scenario: Generating methods from an interface in a non-empty class that share the same namespace
     Given the spec file "spec/CodeGeneration/AbstractTypeMethods/ManagerSpec.php" contains:
       """
