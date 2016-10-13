@@ -11,7 +11,7 @@ The main website with documentation is at `http://www.phpspec.net <http://www.ph
    :target: https://scrutinizer-ci.com/g/phpspec/phpspec/build-status/master
    :alt: Master Scrutinizer Quality Score
 
-.. image:: https://img.shields.io/appveyor/ci/ciaranmcnulty/phpspec.svg
+.. image:: https://img.shields.io/appveyor/ci/ciaranmcnulty/phpspec/master.svg
    :target: https://ci.appveyor.com/project/ciaranmcnulty/phpspec/branch/master
    :alt: AppVeyor build status
 
