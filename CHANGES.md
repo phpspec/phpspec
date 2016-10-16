@@ -1,3 +1,8 @@
+Upcoming 2.5
+============
+
+* [performance] Reduced size of Phar (@unfunco)
+
 2.5.3 / 2016-09-26
 ==================
 
