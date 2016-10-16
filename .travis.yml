@@ -37,10 +37,10 @@ script:
 
 before_deploy:
   - curl -LSs https://box-project.github.io/box2/installer.php | php
-  - chmod +x box.phar
-  - mv box.phar box
   - export PATH=.:$PATH
-  - make build-phar
+  - rm -Rfv ./vendor
+  - composer install --no-dev -o
+  - box.phar build
 
 deploy:
   provider: releases
