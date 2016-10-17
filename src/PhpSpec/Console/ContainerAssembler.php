@@ -681,6 +681,9 @@ final class ContainerAssembler
         $container->define('matchers.traversable_count', function (IndexedServiceContainer $c) {
             return new Matcher\TraversableCountMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
+        $container->define('matchers.traversable_key', function (IndexedServiceContainer $c) {
+            return new Matcher\TraversableKeyMatcher($c->get('formatter.presenter'));
+        }, ['matchers']);
         $container->define('matchers.traversable_contain', function (IndexedServiceContainer $c) {
             return new Matcher\TraversableContainMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
