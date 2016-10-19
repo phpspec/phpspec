@@ -17,7 +17,7 @@ use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 use ArrayAccess;
 
-final class IterateMatcher extends BasicMatcher
+final class IterateMatcher implements Matcher
 {
     /**
      * @var Presenter
@@ -47,7 +47,7 @@ final class IterateMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    protected function matches($subject, array $arguments)
+    public function positiveMatch($name, $subject, array $arguments)
     {
         $expected = $arguments[0];
         if (is_array($expected)) {
@@ -56,43 +56,52 @@ final class IterateMatcher extends BasicMatcher
 
         $expectedIterator = new \IteratorIterator($expected);
 
+        $count = 0;
         $expectedIterator->rewind();
         foreach ($subject as $subjectKey => $subjectValue) {
             if (!$expectedIterator->valid()) {
-                return false;
+                throw new FailureException('Expect subject to have the same count than matched value, but it has more records.');
             }
 
             if ($subjectKey !== $expectedIterator->key() || $subjectValue !== $expectedIterator->current()) {
-                return false;
+                throw new FailureException(sprintf(
+                    'Expected subject to have record #%d with key %s and value %s, but got key %s and value %s.',
+                    $count,
+                    $this->presenter->presentValue($expectedIterator->key()),
+                    $this->presenter->presentValue($expectedIterator->current()),
+                    $this->presenter->presentValue($subjectKey),
+                    $this->presenter->presentValue($subjectValue)
+                ));
             }
 
             $expectedIterator->next();
+            ++$count;
         }
 
-        return !$expected->valid();
+        if ($expectedIterator->valid()) {
+            throw new FailureException('Expect subject to have the same count than matched value, but it has less records.');
+        }
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function getFailureException($name, $subject, array $arguments)
+    public function negativeMatch($name, $subject, array $arguments)
     {
-        return new FailureException(sprintf(
-            'Expected %s to iterate the same as %s, but it does not.',
-            $this->presenter->presentValue($subject),
-            $this->presenter->presentValue($arguments[0])
-        ));
+        try {
+            $this->positiveMatch($name, $subject, $arguments);
+        } catch (FailureException $exception) {
+            return;
+        }
+
+        throw new FailureException('Expected subject not to iterate the same as matched value, but it does.');
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function getNegativeFailureException($name, $subject, array $arguments)
+    public function getPriority()
     {
-        return new FailureException(sprintf(
-            'Expected %s to iterate the same as %s, but it does.',
-            $this->presenter->presentValue($subject),
-            $this->presenter->presentValue($arguments[0])
-        ));
+        return 100;
     }
 }

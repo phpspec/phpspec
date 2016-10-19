@@ -12,7 +12,9 @@ final class IterateMatcherSpec extends ObjectBehavior
 {
     function let(Presenter $presenter)
     {
-        $presenter->presentValue(Argument::any())->willReturn('traversable');
+        $presenter->presentValue(Argument::any())->will(function ($subject) {
+            return '"' . $subject[0] . '"';
+        });
 
         $this->beConstructedWith($presenter);
     }
@@ -51,7 +53,7 @@ final class IterateMatcherSpec extends ObjectBehavior
     function it_does_not_positive_match_generator_while_not_iterating_the_same()
     {
         $this
-            ->shouldThrow(FailureException::class)
+            ->shouldThrow(new FailureException('Expected subject to have record #1 with key "c" and value "e", but got key "c" and value "d".'))
             ->during('positiveMatch', [
                 'iterate',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
@@ -60,16 +62,16 @@ final class IterateMatcherSpec extends ObjectBehavior
         ;
 
         $this
-            ->shouldThrow(FailureException::class)
+            ->shouldThrow(new FailureException('Expected subject to have record #1 with key "e" and value "d", but got key "c" and value "d".'))
             ->during('positiveMatch', [
                 'iterate',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
-                [$this->createGeneratorReturningArray(['a' => 'b', 'c' => 'e'])],
+                [$this->createGeneratorReturningArray(['a' => 'b', 'e' => 'd'])],
             ])
         ;
 
         $this
-            ->shouldThrow(FailureException::class)
+            ->shouldThrow(new FailureException('Expect subject to have the same count than matched value, but it has less records.'))
             ->during('positiveMatch', [
                 'iterate',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
@@ -78,7 +80,7 @@ final class IterateMatcherSpec extends ObjectBehavior
         ;
 
         $this
-            ->shouldThrow(FailureException::class)
+            ->shouldThrow(new FailureException('Expect subject to have the same count than matched value, but it has more records.'))
             ->during('positiveMatch', [
                 'iterate',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
