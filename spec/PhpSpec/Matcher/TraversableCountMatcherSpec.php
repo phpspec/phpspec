@@ -36,11 +36,24 @@ final class TraversableCountMatcherSpec extends ObjectBehavior
         ;
     }
 
+    function it_does_not_positive_match_infinite_generator()
+    {
+        $this
+            ->shouldThrow(new FailureException('Expected traversable to have 10 items, but got more than that.'))
+            ->during('positiveMatch', ['haveCount', $this->createInifiteGenerator(), [10]])
+        ;
+    }
+
     function it_does_not_positive_match_wrong_generator_count()
     {
         $this
-            ->shouldThrow(new FailureException('Expected traversable to have 2 items, but got 3.'))
+            ->shouldThrow(new FailureException('Expected traversable to have 2 items, but got more than that.'))
             ->during('positiveMatch', ['haveCount', $this->createGeneratorWithCount(3), [2]])
+        ;
+
+        $this
+            ->shouldThrow(new FailureException('Expected traversable to have 2 items, but got less than that.'))
+            ->during('positiveMatch', ['haveCount', $this->createGeneratorWithCount(1), [2]])
         ;
     }
 
@@ -49,6 +62,14 @@ final class TraversableCountMatcherSpec extends ObjectBehavior
         $this
             ->shouldNotThrow()
             ->during('negativeMatch', ['haveCount', $this->createGeneratorWithCount(3), [2]])
+        ;
+    }
+
+    function it_negative_matches_infinite_generator()
+    {
+        $this
+            ->shouldNotThrow()
+            ->during('negativeMatch', ['haveCount', $this->createInifiteGenerator(), [10]])
         ;
     }
 
@@ -69,6 +90,16 @@ final class TraversableCountMatcherSpec extends ObjectBehavior
     {
         for ($i = 0; $i < $count; ++$i) {
             yield $i;
+        }
+    }
+
+    /**
+     * @return \Generator
+     */
+    private function createInifiteGenerator()
+    {
+        while (true) {
+            yield 42;
         }
     }
 }

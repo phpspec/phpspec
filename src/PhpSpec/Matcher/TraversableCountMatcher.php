@@ -18,6 +18,10 @@ use PhpSpec\Exception\Example\FailureException;
 
 final class TraversableCountMatcher implements Matcher
 {
+    const LESS_THAN = 0;
+    const EQUAL = 1;
+    const MORE_THAN = 2;
+
     /**
      * @var Presenter
      */
@@ -47,14 +51,14 @@ final class TraversableCountMatcher implements Matcher
      */
     public function positiveMatch($name, $subject, array $arguments)
     {
-        $count = $this->count($subject);
+        $countDifference = $this->countDifference($subject, (int) $arguments[0]);
 
-        if ($arguments[0] !== $count) {
+        if (self::EQUAL !== $countDifference) {
             throw new FailureException(sprintf(
-                'Expected %s to have %s items, but got %s.',
+                'Expected %s to have %s items, but got %s than that.',
                 $this->presenter->presentValue($subject),
                 $this->presenter->presentString((int) $arguments[0]),
-                $this->presenter->presentString($count)
+                self::MORE_THAN === $countDifference ? 'more' : 'less'
             ));
         }
 
@@ -66,9 +70,9 @@ final class TraversableCountMatcher implements Matcher
      */
     public function negativeMatch($name, $subject, array $arguments)
     {
-        $count = $this->count($subject);
+        $count = $this->countDifference($subject, (int) $arguments[0]);
 
-        if ($arguments[0] === $count) {
+        if (self::EQUAL === $count) {
             throw new FailureException(sprintf(
                 'Expected %s not to have %s items, but got it.',
                 $this->presenter->presentValue($subject),
@@ -89,16 +93,21 @@ final class TraversableCountMatcher implements Matcher
 
     /**
      * @param \Traversable $subject
+     * @param int $expected
      *
-     * @return int
+     * @return int self::*
      */
-    private function count(\Traversable $subject)
+    private function countDifference(\Traversable $subject, $expected)
     {
         $count = 0;
         foreach ($subject as $value) {
             ++$count;
+
+            if ($count > $expected) {
+                return self::MORE_THAN;
+            }
         }
 
-        return $count;
+        return $count === $expected ? self::EQUAL : self::LESS_THAN;
     }
 }
