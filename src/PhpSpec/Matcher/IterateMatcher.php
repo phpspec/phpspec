@@ -46,7 +46,7 @@ final class IterateMatcher implements Matcher
     {
         return 'iterate' === $name
             && 1 === count($arguments)
-            && $subject instanceof \Traversable
+            && ($subject instanceof \Traversable || is_array($subject))
             && ($arguments[0] instanceof \Traversable || is_array($arguments[0]))
         ;
     }
