@@ -71,7 +71,7 @@ final class IterateMatcherSpec extends ObjectBehavior
         ;
 
         $this
-            ->shouldThrow(new FailureException('Expect subject to have the same count than matched value, but it has less records.'))
+            ->shouldThrow(new FailureException('Expected subject to have the same count than matched value, but it has less records.'))
             ->during('positiveMatch', [
                 'iterate',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
@@ -80,7 +80,7 @@ final class IterateMatcherSpec extends ObjectBehavior
         ;
 
         $this
-            ->shouldThrow(new FailureException('Expect subject to have the same count than matched value, but it has more records.'))
+            ->shouldThrow(new FailureException('Expected subject to have the same count than matched value, but it has more records.'))
             ->during('positiveMatch', [
                 'iterate',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),

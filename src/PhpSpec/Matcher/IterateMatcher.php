@@ -16,6 +16,7 @@ namespace PhpSpec\Matcher;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 use ArrayAccess;
+use PhpSpec\Matcher\Iterate\IterablesMatcher;
 
 final class IterateMatcher implements Matcher
 {
@@ -25,11 +26,17 @@ final class IterateMatcher implements Matcher
     private $presenter;
 
     /**
+     * @var IterablesMatcher
+     */
+    private $iterablesMatcher;
+
+    /**
      * @param Presenter $presenter
      */
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
+        $this->iterablesMatcher = new IterablesMatcher();
     }
 
     /**
@@ -49,37 +56,21 @@ final class IterateMatcher implements Matcher
      */
     public function positiveMatch($name, $subject, array $arguments)
     {
-        $expected = $arguments[0];
-        if (is_array($expected)) {
-            $expected = new \ArrayIterator($expected);
-        }
-
-        $expectedIterator = new \IteratorIterator($expected);
-
-        $count = 0;
-        $expectedIterator->rewind();
-        foreach ($subject as $subjectKey => $subjectValue) {
-            if (!$expectedIterator->valid()) {
-                throw new FailureException('Expect subject to have the same count than matched value, but it has more records.');
-            }
-
-            if ($subjectKey !== $expectedIterator->key() || $subjectValue !== $expectedIterator->current()) {
-                throw new FailureException(sprintf(
-                    'Expected subject to have record #%d with key %s and value %s, but got key %s and value %s.',
-                    $count,
-                    $this->presenter->presentValue($expectedIterator->key()),
-                    $this->presenter->presentValue($expectedIterator->current()),
-                    $this->presenter->presentValue($subjectKey),
-                    $this->presenter->presentValue($subjectValue)
-                ));
-            }
-
-            $expectedIterator->next();
-            ++$count;
-        }
-
-        if ($expectedIterator->valid()) {
-            throw new FailureException('Expect subject to have the same count than matched value, but it has less records.');
+        try {
+            $this->iterablesMatcher->match($subject, $arguments[0]);
+        } catch (Iterate\SubjectHasLessElementsException $exception) {
+            throw new FailureException('Expected subject to have the same count than matched value, but it has less records.', 0, $exception);
+        } catch (Iterate\SubjectHasMoreElementsException $exception) {
+            throw new FailureException('Expected subject to have the same count than matched value, but it has more records.', 0, $exception);
+        } catch (Iterate\SubjectElementDoesNotMatchException $exception) {
+            throw new FailureException(sprintf(
+                'Expected subject to have record #%d with key %s and value %s, but got key %s and value %s.',
+                $exception->getElementNumber(),
+                $this->presenter->presentValue($exception->getExpectedKey()),
+                $this->presenter->presentValue($exception->getExpectedValue()),
+                $this->presenter->presentValue($exception->getSubjectKey()),
+                $this->presenter->presentValue($exception->getSubjectValue())
+            ), 0, $exception);
         }
     }
 
