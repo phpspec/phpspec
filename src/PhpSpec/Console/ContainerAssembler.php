@@ -690,6 +690,9 @@ final class ContainerAssembler
         $container->define('matchers.traversable_contain', function (IndexedServiceContainer $c) {
             return new Matcher\TraversableContainMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
+        $container->define('matchers.iterate', function (IndexedServiceContainer $c) {
+            return new Matcher\IterateMatcher($c->get('formatter.presenter'));
+        }, ['matchers']);
     }
 
     /**
