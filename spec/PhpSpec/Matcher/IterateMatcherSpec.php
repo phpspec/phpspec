@@ -61,7 +61,7 @@ final class IterateMatcherSpec extends ObjectBehavior
     function it_does_not_positive_match_generator_while_not_iterating_the_same()
     {
         $this
-            ->shouldThrow(new FailureException('Expected subject to have record #1 with key "c" and value "e", but got key "c" and value "d".'))
+            ->shouldThrow(new FailureException('Expected subject to have element #1 with key "c" and value "e", but got key "c" and value "d".'))
             ->during('positiveMatch', [
                 'iterate',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
@@ -70,7 +70,7 @@ final class IterateMatcherSpec extends ObjectBehavior
         ;
 
         $this
-            ->shouldThrow(new FailureException('Expected subject to have record #1 with key "e" and value "d", but got key "c" and value "d".'))
+            ->shouldThrow(new FailureException('Expected subject to have element #1 with key "e" and value "d", but got key "c" and value "d".'))
             ->during('positiveMatch', [
                 'iterate',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
@@ -79,7 +79,7 @@ final class IterateMatcherSpec extends ObjectBehavior
         ;
 
         $this
-            ->shouldThrow(new FailureException('Expected subject to have the same count than matched value, but it has less records.'))
+            ->shouldThrow(new FailureException('Expected subject to have the same number of elements than matched value, but it has less.'))
             ->during('positiveMatch', [
                 'iterate',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
@@ -88,7 +88,7 @@ final class IterateMatcherSpec extends ObjectBehavior
         ;
 
         $this
-            ->shouldThrow(new FailureException('Expected subject to have the same count than matched value, but it has more records.'))
+            ->shouldThrow(new FailureException('Expected subject to have the same number of elements than matched value, but it has more.'))
             ->during('positiveMatch', [
                 'iterate',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),

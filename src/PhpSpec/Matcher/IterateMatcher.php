@@ -59,12 +59,12 @@ final class IterateMatcher implements Matcher
         try {
             $this->iterablesMatcher->match($subject, $arguments[0]);
         } catch (Iterate\SubjectHasLessElementsException $exception) {
-            throw new FailureException('Expected subject to have the same count than matched value, but it has less records.', 0, $exception);
+            throw new FailureException('Expected subject to have the same number of elements than matched value, but it has less.', 0, $exception);
         } catch (Iterate\SubjectHasMoreElementsException $exception) {
-            throw new FailureException('Expected subject to have the same count than matched value, but it has more records.', 0, $exception);
+            throw new FailureException('Expected subject to have the same number of elements than matched value, but it has more.', 0, $exception);
         } catch (Iterate\SubjectElementDoesNotMatchException $exception) {
             throw new FailureException(sprintf(
-                'Expected subject to have record #%d with key %s and value %s, but got key %s and value %s.',
+                'Expected subject to have element #%d with key %s and value %s, but got key %s and value %s.',
                 $exception->getElementNumber(),
                 $this->presenter->presentValue($exception->getExpectedKey()),
                 $this->presenter->presentValue($exception->getExpectedValue()),

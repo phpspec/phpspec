@@ -1,4 +1,3 @@
-
 Feature: Developer uses iterate matcher
   As a Developer
   I want an iterate matcher

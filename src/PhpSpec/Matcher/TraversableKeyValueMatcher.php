@@ -63,7 +63,7 @@ final class TraversableKeyValueMatcher extends BasicMatcher
     protected function getFailureException($name, $subject, array $arguments)
     {
         return new FailureException(sprintf(
-            'Expected %s to have a record with %s key and %s value, but it does not.',
+            'Expected %s to have an element with %s key and %s value, but it does not.',
             $this->presenter->presentValue($subject),
             $this->presenter->presentValue($arguments[0]),
             $this->presenter->presentValue($arguments[1])
@@ -76,7 +76,7 @@ final class TraversableKeyValueMatcher extends BasicMatcher
     protected function getNegativeFailureException($name, $subject, array $arguments)
     {
         return new FailureException(sprintf(
-            'Expected %s not to have a record with %s key and %s value, but it does.',
+            'Expected %s not to have an element with %s key and %s value, but it does.',
             $this->presenter->presentValue($subject),
             $this->presenter->presentValue($arguments[0]),
             $this->presenter->presentValue($arguments[1])
