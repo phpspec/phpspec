@@ -10,7 +10,7 @@ final class IterablesMatcher
      *
      * @throws \InvalidArgumentException
      * @throws SubjectElementDoesNotMatchException
-     * @throws SubjectHasLessElementsException
+     * @throws SubjectHasFewerElementsException
      * @throws SubjectHasMoreElementsException
      */
     public function match($subject, $expected)
@@ -46,7 +46,7 @@ final class IterablesMatcher
         }
 
         if ($expectedIterator->valid()) {
-            throw new SubjectHasLessElementsException();
+            throw new SubjectHasFewerElementsException();
         }
     }
 
@@ -61,17 +61,17 @@ final class IterablesMatcher
     }
 
     /**
-     * @param array|\Traversable $expected
+     * @param array|\Traversable $iterable
      *
      * @return \Iterator
      */
-    private function createIteratorFromIterable($expected)
+    private function createIteratorFromIterable($iterable)
     {
-        if (is_array($expected)) {
-            return new \ArrayIterator($expected);
+        if (is_array($iterable)) {
+            return new \ArrayIterator($iterable);
         }
 
-        $iterator = new \IteratorIterator($expected);
+        $iterator = new \IteratorIterator($iterable);
         $iterator->rewind();
 
         return $iterator;

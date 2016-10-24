@@ -8,7 +8,7 @@ use PhpSpec\Matcher\Matcher;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-final class IterateMatcherSpec extends ObjectBehavior
+final class IterateAsMatcherSpec extends ObjectBehavior
 {
     function let(Presenter $presenter)
     {
@@ -26,15 +26,15 @@ final class IterateMatcherSpec extends ObjectBehavior
 
     function it_responds_to_iterate()
     {
-        $this->supports('iterate', [], [[]])->shouldReturn(true);
+        $this->supports('iterateAs', [], [[]])->shouldReturn(true);
 
-        $this->supports('iterate', new \ArrayObject([]), [[]])->shouldReturn(true);
-        $this->supports('iterate', new \ArrayIterator([]), [[]])->shouldReturn(true);
-        $this->supports('iterate', $this->createGeneratorReturningArray([]), [[]])->shouldReturn(true);
+        $this->supports('iterateAs', new \ArrayObject([]), [[]])->shouldReturn(true);
+        $this->supports('iterateAs', new \ArrayIterator([]), [[]])->shouldReturn(true);
+        $this->supports('iterateAs', $this->createGeneratorReturningArray([]), [[]])->shouldReturn(true);
 
-        $this->supports('iterate', [], [new \ArrayIterator([])])->shouldReturn(true);
-        $this->supports('iterate', [], [new \ArrayObject([])])->shouldReturn(true);
-        $this->supports('iterate', [], [$this->createGeneratorReturningArray([])])->shouldReturn(true);
+        $this->supports('iterateAs', [], [new \ArrayIterator([])])->shouldReturn(true);
+        $this->supports('iterateAs', [], [new \ArrayObject([])])->shouldReturn(true);
+        $this->supports('iterateAs', [], [$this->createGeneratorReturningArray([])])->shouldReturn(true);
     }
 
     function it_positive_matches_generator_while_iterating_the_same()
@@ -42,7 +42,7 @@ final class IterateMatcherSpec extends ObjectBehavior
         $this
             ->shouldNotThrow()
             ->during('positiveMatch', [
-                'iterate',
+                'iterateAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [['a' => 'b', 'c' => 'd']],
             ])
@@ -51,7 +51,7 @@ final class IterateMatcherSpec extends ObjectBehavior
         $this
             ->shouldNotThrow()
             ->during('positiveMatch', [
-                'iterate',
+                'iterateAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [$this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd'])],
             ])
@@ -63,7 +63,7 @@ final class IterateMatcherSpec extends ObjectBehavior
         $this
             ->shouldThrow(new FailureException('Expected subject to have element #1 with key "c" and value "e", but got key "c" and value "d".'))
             ->during('positiveMatch', [
-                'iterate',
+                'iterateAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [['a' => 'b', 'c' => 'e']],
             ])
@@ -72,16 +72,16 @@ final class IterateMatcherSpec extends ObjectBehavior
         $this
             ->shouldThrow(new FailureException('Expected subject to have element #1 with key "e" and value "d", but got key "c" and value "d".'))
             ->during('positiveMatch', [
-                'iterate',
+                'iterateAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [$this->createGeneratorReturningArray(['a' => 'b', 'e' => 'd'])],
             ])
         ;
 
         $this
-            ->shouldThrow(new FailureException('Expected subject to have the same number of elements than matched value, but it has less.'))
+            ->shouldThrow(new FailureException('Expected subject to have the same number of elements than matched value, but it has fewer.'))
             ->during('positiveMatch', [
-                'iterate',
+                'iterateAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [['a' => 'b', 'c' => 'd', 'e' => 'f']],
             ])
@@ -90,7 +90,7 @@ final class IterateMatcherSpec extends ObjectBehavior
         $this
             ->shouldThrow(new FailureException('Expected subject to have the same number of elements than matched value, but it has more.'))
             ->during('positiveMatch', [
-                'iterate',
+                'iterateAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [['a' => 'b']],
             ])
@@ -102,7 +102,7 @@ final class IterateMatcherSpec extends ObjectBehavior
         $this
             ->shouldNotThrow()
             ->during('negativeMatch', [
-                'iterate',
+                'iterateAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [['a' => 'b', 'c' => 'e']],
             ])
@@ -111,7 +111,7 @@ final class IterateMatcherSpec extends ObjectBehavior
         $this
             ->shouldNotThrow()
             ->during('negativeMatch', [
-                'iterate',
+                'iterateAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [$this->createGeneratorReturningArray(['a' => 'b', 'c' => 'e'])],
             ])
@@ -123,7 +123,7 @@ final class IterateMatcherSpec extends ObjectBehavior
         $this
             ->shouldThrow(FailureException::class)
             ->during('negativeMatch', [
-                'iterate',
+                'iterateAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [['a' => 'b', 'c' => 'd']],
             ])
@@ -132,7 +132,7 @@ final class IterateMatcherSpec extends ObjectBehavior
         $this
             ->shouldThrow(FailureException::class)
             ->during('negativeMatch', [
-                'iterate',
+                'iterateAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [$this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd'])],
             ])

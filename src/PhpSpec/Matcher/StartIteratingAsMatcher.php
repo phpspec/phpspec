@@ -18,7 +18,7 @@ use PhpSpec\Exception\Example\FailureException;
 use ArrayAccess;
 use PhpSpec\Matcher\Iterate\IterablesMatcher;
 
-final class IterateMatcher implements Matcher
+final class StartIteratingAsMatcher implements Matcher
 {
     /**
      * @var Presenter
@@ -44,7 +44,7 @@ final class IterateMatcher implements Matcher
      */
     public function supports($name, $subject, array $arguments)
     {
-        return 'iterate' === $name
+        return 'startIteratingAs' === $name
             && 1 === count($arguments)
             && ($subject instanceof \Traversable || is_array($subject))
             && ($arguments[0] instanceof \Traversable || is_array($arguments[0]))
@@ -58,10 +58,10 @@ final class IterateMatcher implements Matcher
     {
         try {
             $this->iterablesMatcher->match($subject, $arguments[0]);
-        } catch (Iterate\SubjectHasLessElementsException $exception) {
-            throw new FailureException('Expected subject to have the same number of elements than matched value, but it has less.', 0, $exception);
         } catch (Iterate\SubjectHasMoreElementsException $exception) {
-            throw new FailureException('Expected subject to have the same number of elements than matched value, but it has more.', 0, $exception);
+            // everything's all right
+        } catch (Iterate\SubjectHasFewerElementsException $exception) {
+            throw new FailureException('Expected subject to have the same or more elements than matched value, but it has fewer.', 0, $exception);
         } catch (Iterate\SubjectElementDoesNotMatchException $exception) {
             throw new FailureException(sprintf(
                 'Expected subject to have element #%d with key %s and value %s, but got key %s and value %s.',
@@ -85,7 +85,7 @@ final class IterateMatcher implements Matcher
             return;
         }
 
-        throw new FailureException('Expected subject not to iterate the same as matched value, but it does.');
+        throw new FailureException('Expected subject not to start iterating the same as matched value, but it does.');
     }
 
     /**

@@ -1,9 +1,9 @@
-Feature: Developer uses iterate matcher
+Feature: Developer uses iterate-as matcher
   As a Developer
-  I want an iterate matcher
+  I want an iterate-as matcher
   In order to confirm an traversable the expected value for a key
 
-  Scenario: "Iterate" alias matches using the iterate matcher
+  Scenario: "Iterate" alias matches using the iterate-as matcher
     Given the spec file "spec/Matchers/IterateExample1/MovieSpec.php" contains:
     """
     <?php
@@ -17,7 +17,7 @@ Feature: Developer uses iterate matcher
     {
         function it_should_contain_jane_smith_in_the_cast()
         {
-            $this->getCast()->shouldIterate(['supportingRole' => 'Jane Smith', 'leadRole' => 'John Smith']);
+            $this->getCast()->shouldIterateAs(['supportingRole' => 'Jane Smith', 'leadRole' => 'John Smith']);
         }
     }
     """

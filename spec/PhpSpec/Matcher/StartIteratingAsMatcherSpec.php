@@ -8,7 +8,7 @@ use PhpSpec\Matcher\Matcher;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-final class StartIteratingMatcherSpec extends ObjectBehavior
+final class StartIteratingAsMatcherSpec extends ObjectBehavior
 {
     function let(Presenter $presenter)
     {
@@ -26,15 +26,15 @@ final class StartIteratingMatcherSpec extends ObjectBehavior
 
     function it_responds_to_startIterating()
     {
-        $this->supports('startIterating', [], [[]])->shouldReturn(true);
+        $this->supports('startIteratingAs', [], [[]])->shouldReturn(true);
 
-        $this->supports('startIterating', new \ArrayObject([]), [[]])->shouldReturn(true);
-        $this->supports('startIterating', new \ArrayIterator([]), [[]])->shouldReturn(true);
-        $this->supports('startIterating', $this->createGeneratorReturningArray([]), [[]])->shouldReturn(true);
+        $this->supports('startIteratingAs', new \ArrayObject([]), [[]])->shouldReturn(true);
+        $this->supports('startIteratingAs', new \ArrayIterator([]), [[]])->shouldReturn(true);
+        $this->supports('startIteratingAs', $this->createGeneratorReturningArray([]), [[]])->shouldReturn(true);
 
-        $this->supports('startIterating', [], [new \ArrayIterator([])])->shouldReturn(true);
-        $this->supports('startIterating', [], [new \ArrayObject([])])->shouldReturn(true);
-        $this->supports('startIterating', [], [$this->createGeneratorReturningArray([])])->shouldReturn(true);
+        $this->supports('startIteratingAs', [], [new \ArrayIterator([])])->shouldReturn(true);
+        $this->supports('startIteratingAs', [], [new \ArrayObject([])])->shouldReturn(true);
+        $this->supports('startIteratingAs', [], [$this->createGeneratorReturningArray([])])->shouldReturn(true);
     }
 
     function it_positive_matches_generator_while_starting_iterating_the_same()
@@ -42,7 +42,7 @@ final class StartIteratingMatcherSpec extends ObjectBehavior
         $this
             ->shouldNotThrow()
             ->during('positiveMatch', [
-                'startIterating',
+                'startIteratingAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [['a' => 'b']],
             ])
@@ -51,19 +51,19 @@ final class StartIteratingMatcherSpec extends ObjectBehavior
         $this
             ->shouldNotThrow()
             ->during('positiveMatch', [
-                'startIterating',
+                'startIteratingAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [$this->createGeneratorReturningArray(['a' => 'b'])],
             ])
         ;
     }
 
-    function it_positive_matches_infitite_generator_while_starting_iterating_the_same()
+    function it_positive_matches_infinite_generator_while_starting_iterating_the_same()
     {
         $this
             ->shouldNotThrow()
             ->during('positiveMatch', [
-                'startIterating',
+                'startIteratingAs',
                 $this->createInfiniteGenerator(),
                 [[0 => 0, 1 => 1]]
             ])
@@ -75,7 +75,7 @@ final class StartIteratingMatcherSpec extends ObjectBehavior
         $this
             ->shouldThrow(new FailureException('Expected subject to have element #1 with key "c" and value "e", but got key "c" and value "d".'))
             ->during('positiveMatch', [
-                'startIterating',
+                'startIteratingAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [['a' => 'b', 'c' => 'e']],
             ])
@@ -87,7 +87,7 @@ final class StartIteratingMatcherSpec extends ObjectBehavior
         $this
             ->shouldNotThrow()
             ->during('negativeMatch', [
-                'startIterating',
+                'startIteratingAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [['a' => 'b', 'c' => 'e']],
             ])
@@ -96,7 +96,7 @@ final class StartIteratingMatcherSpec extends ObjectBehavior
         $this
             ->shouldNotThrow()
             ->during('negativeMatch', [
-                'startIterating',
+                'startIteratingAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [$this->createGeneratorReturningArray(['a' => 'b', 'c' => 'e'])],
             ])
@@ -108,7 +108,7 @@ final class StartIteratingMatcherSpec extends ObjectBehavior
         $this
             ->shouldNotThrow()
             ->during('negativeMatch', [
-                'startIterating',
+                'startIteratingAs',
                 $this->createInfiniteGenerator(),
                 [[0 => 0, 1 => 1, 3 => 3]],
             ])
@@ -120,7 +120,7 @@ final class StartIteratingMatcherSpec extends ObjectBehavior
         $this
             ->shouldThrow(FailureException::class)
             ->during('negativeMatch', [
-                'startIterating',
+                'startIteratingAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
                 [['a' => 'b']],
             ])
@@ -129,7 +129,7 @@ final class StartIteratingMatcherSpec extends ObjectBehavior
         $this
             ->shouldThrow(FailureException::class)
             ->during('negativeMatch', [
-                'startIterating',
+                'startIteratingAs',
                 $this->createInfiniteGenerator(),
                 [[0 => 0, 1 => 1]],
             ])

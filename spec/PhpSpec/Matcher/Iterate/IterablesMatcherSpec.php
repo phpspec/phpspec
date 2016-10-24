@@ -3,7 +3,7 @@
 namespace spec\PhpSpec\Matcher\Iterate;
 
 use PhpSpec\Matcher\Iterate\SubjectElementDoesNotMatchException;
-use PhpSpec\Matcher\Iterate\SubjectHasLessElementsException;
+use PhpSpec\Matcher\Iterate\SubjectHasFewerElementsException;
 use PhpSpec\Matcher\Iterate\SubjectHasMoreElementsException;
 use PhpSpec\ObjectBehavior;
 
@@ -51,7 +51,7 @@ final class IterablesMatcherSpec extends ObjectBehavior
     function it_should_throw_an_exception_if_subject_has_less_elements_than_expected()
     {
         $this
-            ->shouldThrow(new SubjectHasLessElementsException())
+            ->shouldThrow(new SubjectHasFewerElementsException())
             ->during('match', [['a' => 'b'], ['a' => 'b', 'c' => 'd']])
         ;
     }

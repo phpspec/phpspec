@@ -13,10 +13,10 @@
 
 namespace PhpSpec\Matcher\Iterate;
 
-class SubjectHasLessElementsException extends \LengthException
+class SubjectHasFewerElementsException extends \LengthException
 {
     public function __construct()
     {
-        parent::__construct('Subject has less elements than expected.');
+        parent::__construct('Subject has fewer elements than expected.');
     }
 }

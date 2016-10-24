@@ -1,9 +1,9 @@
-Feature: Developer uses start-iterate matcher
+Feature: Developer uses start-iterate-as matcher
   As a Developer
-  I want an start-iterate matcher
+  I want an start-iterate-as matcher
   In order to confirm an traversable the expected value for a key
 
-  Scenario: "StartIterating" alias matches using the start-iterate matcher
+  Scenario: "StartIterating" alias matches using the start-iterate-as matcher
     Given the spec file "spec/Matchers/StartIteratingExample1/MovieSpec.php" contains:
     """
     <?php
@@ -17,7 +17,7 @@ Feature: Developer uses start-iterate matcher
     {
         function it_should_contain_jane_smith_in_the_cast()
         {
-            $this->getCast()->shouldStartIterating(['supportingRole' => 'Jane Smith', 'leadRole' => 'John Smith']);
+            $this->getCast()->shouldStartIteratingAs(['supportingRole' => 'Jane Smith', 'leadRole' => 'John Smith']);
         }
     }
     """

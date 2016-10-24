@@ -691,10 +691,10 @@ final class ContainerAssembler
             return new Matcher\TraversableContainMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.iterate', function (IndexedServiceContainer $c) {
-            return new Matcher\IterateMatcher($c->get('formatter.presenter'));
+            return new Matcher\IterateAsMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.start_iterating', function (IndexedServiceContainer $c) {
-            return new Matcher\StartIteratingMatcher($c->get('formatter.presenter'));
+            return new Matcher\StartIteratingAsMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
     }
 
