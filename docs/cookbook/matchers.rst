@@ -233,7 +233,7 @@ adding a string parameter to the `shouldTrigger` method :
     }
 
 .. note::
-   
+
     As with the Throw matcher, you can also use the `during` syntax described
     in the Throw section, or use the instanciation mecanisms (such as
     duringInstanciation, ... etc)
@@ -325,7 +325,7 @@ Count Matcher
 
 You can check the number of items in the return value using the Count matcher.
 The returned value could be an array or an object that implements the
-``\Countable`` interface.
+``\Countable`` or ``\Traversable`` interface.
 
 .. code-block:: php
 
@@ -373,11 +373,11 @@ e.g, ``is_bool``, ``is_integer``, ``is_float``, etc.
     }
 
 
-ArrayContain Matcher
---------------------
+IterableContain Matcher
+-----------------------
 
-You can specify that a method should return an array that contains a given
-value with the ArrayContain matcher. **phpspec** matches the value by
+You can specify that a method should return an array or an implementor of ``\Traversable`` that contains a given
+value with the IterableContain matcher. **phpspec** matches the value by
 identity (``===``).
 
 .. code-block:: php
@@ -397,10 +397,12 @@ identity (``===``).
     }
 
 
-ArrayKeyWithValue Matcher
---------------------
+IterableKeyWithValue Matcher
+----------------------------
 
-This matcher lets you assert a specific value for a specific key on a method that returns an array or an implementor of ``\ArrayAccess``.
+This matcher lets you assert a specific value for a specific key on a method that returns
+an array or an implementor of ``\ArrayAccess`` or ``\Traversable``.
+**phpspec** matches both the key and value by identity (``===``).
 
 .. code-block:: php
 
@@ -419,11 +421,11 @@ This matcher lets you assert a specific value for a specific key on a method tha
     }
 
 
-ArrayKey Matcher
-----------------
+IterableKey Matcher
+-------------------
 
-You can specify that a method should return an array or an object implementing ``\ArrayAccess``
-with a specific key using the ArrayKey matcher.
+You can specify that a method should return an array or an object implementing ``\ArrayAccess`` or ``\Traversable``
+with a specific key using the IterableKey matcher. **phpspec** matches the key by identity (``===``).
 
 .. code-block:: php
 
@@ -441,6 +443,50 @@ with a specific key using the ArrayKey matcher.
         }
     }
 
+
+IterateAs Matcher
+-----------------
+
+This matcher lets you specify that a method should return an array or an object implementing ``\Traversable`` that
+iterates just as the argument you passed to it. **phpspec** matches both the key and the value by identity (``===``).
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_contain_jane_smith_and_john_smith_in_the_cast()
+        {
+            $this->getCast()->shouldIterateAs(new \ArrayIterator(['Jane Smith', 'John Smith']));
+        }
+    }
+
+StartIteratingAs Matcher
+------------------------
+
+This matcher lets you specify that a method should return an array or an object implementing ``\Traversable`` that
+starts iterating just as the argument you passed to it. **phpspec** matches both the key and the value by identity (``===``).
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_contain_at_least_jane_smith_in_the_cast()
+        {
+            $this->getCast()->shouldStartIteratingAs(new \ArrayIterator(['Jane Smith']));
+        }
+    }
 
 StringContain Matcher
 ---------------------
