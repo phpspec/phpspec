@@ -2,8 +2,23 @@
 
 namespace PhpSpec\Matcher\Iterate;
 
+use PhpSpec\Formatter\Presenter\Presenter;
+
 final class IterablesMatcher
 {
+    /**
+     * @var Presenter
+     */
+    private $presenter;
+
+    /**
+     * @param Presenter $presenter
+     */
+    public function __construct(Presenter $presenter)
+    {
+        $this->presenter = $presenter;
+    }
+
     /**
      * @param array|\Traversable $subject
      * @param array|\Traversable $expected
@@ -34,10 +49,10 @@ final class IterablesMatcher
             if ($subjectKey !== $expectedIterator->key() || $subjectValue !== $expectedIterator->current()) {
                 throw new SubjectElementDoesNotMatchException(
                     $count,
-                    $subjectKey,
-                    $subjectValue,
-                    $expectedIterator->key(),
-                    $expectedIterator->current()
+                    $this->presenter->presentValue($subjectKey),
+                    $this->presenter->presentValue($subjectValue),
+                    $this->presenter->presentValue($expectedIterator->key()),
+                    $this->presenter->presentValue($expectedIterator->current())
                 );
             }
 

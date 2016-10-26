@@ -15,16 +15,10 @@ namespace PhpSpec\Matcher;
 
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
-use ArrayAccess;
 use PhpSpec\Matcher\Iterate\IterablesMatcher;
 
 final class StartIteratingAsMatcher implements Matcher
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-
     /**
      * @var IterablesMatcher
      */
@@ -35,8 +29,7 @@ final class StartIteratingAsMatcher implements Matcher
      */
     public function __construct(Presenter $presenter)
     {
-        $this->presenter = $presenter;
-        $this->iterablesMatcher = new IterablesMatcher();
+        $this->iterablesMatcher = new IterablesMatcher($presenter);
     }
 
     /**
@@ -62,15 +55,6 @@ final class StartIteratingAsMatcher implements Matcher
             // everything's all right
         } catch (Iterate\SubjectHasFewerElementsException $exception) {
             throw new FailureException('Expected subject to have the same or more elements than matched value, but it has fewer.', 0, $exception);
-        } catch (Iterate\SubjectElementDoesNotMatchException $exception) {
-            throw new FailureException(sprintf(
-                'Expected subject to have element #%d with key %s and value %s, but got key %s and value %s.',
-                $exception->getElementNumber(),
-                $this->presenter->presentValue($exception->getExpectedKey()),
-                $this->presenter->presentValue($exception->getExpectedValue()),
-                $this->presenter->presentValue($exception->getSubjectKey()),
-                $this->presenter->presentValue($exception->getSubjectValue())
-            ), 0, $exception);
         }
     }
 

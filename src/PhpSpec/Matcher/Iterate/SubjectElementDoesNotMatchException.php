@@ -13,33 +13,10 @@
 
 namespace PhpSpec\Matcher\Iterate;
 
-class SubjectElementDoesNotMatchException extends \RuntimeException
+use PhpSpec\Exception\Example\FailureException;
+
+class SubjectElementDoesNotMatchException extends FailureException
 {
-    /**
-     * @var int
-     */
-    private $elementNumber;
-
-    /**
-     * @var string
-     */
-    private $subjectKey;
-
-    /**
-     * @var string
-     */
-    private $subjectValue;
-
-    /**
-     * @var string
-     */
-    private $expectedKey;
-
-    /**
-     * @var string
-     */
-    private $expectedValue;
-
     /**
      * @param int $elementNumber
      * @param string $subjectKey
@@ -49,52 +26,13 @@ class SubjectElementDoesNotMatchException extends \RuntimeException
      */
     public function __construct($elementNumber, $subjectKey, $subjectValue, $expectedKey, $expectedValue)
     {
-        $this->elementNumber = $elementNumber;
-        $this->subjectKey = $subjectKey;
-        $this->subjectValue = $subjectValue;
-        $this->expectedKey = $expectedKey;
-        $this->expectedValue = $expectedValue;
-
-        parent::__construct('Subject element does not match with expected element.');
-    }
-
-    /**
-     * @return int
-     */
-    public function getElementNumber()
-    {
-        return $this->elementNumber;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSubjectKey()
-    {
-        return $this->subjectKey;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSubjectValue()
-    {
-        return $this->subjectValue;
-    }
-
-    /**
-     * @return string
-     */
-    public function getExpectedKey()
-    {
-        return $this->expectedKey;
-    }
-
-    /**
-     * @return string
-     */
-    public function getExpectedValue()
-    {
-        return $this->expectedValue;
+        parent::__construct(sprintf(
+            'Expected subject to have element #%d with key %s and value %s, but got key %s and value %s.',
+            $elementNumber,
+            $expectedKey,
+            $expectedValue,
+            $subjectKey,
+            $subjectValue
+        ));
     }
 }

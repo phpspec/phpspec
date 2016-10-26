@@ -4,6 +4,7 @@ namespace spec\PhpSpec\Matcher;
 
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Formatter\Presenter\Presenter;
+use PhpSpec\Matcher\Iterate\SubjectElementDoesNotMatchException;
 use PhpSpec\Matcher\Matcher;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
@@ -73,7 +74,7 @@ final class StartIteratingAsMatcherSpec extends ObjectBehavior
     function it_does_not_positive_match_generator_while_not_starting_iterating_the_same()
     {
         $this
-            ->shouldThrow(new FailureException('Expected subject to have element #1 with key "c" and value "e", but got key "c" and value "d".'))
+            ->shouldThrow(new SubjectElementDoesNotMatchException(1, '"c"', '"d"', '"c"', '"e"'))
             ->during('positiveMatch', [
                 'startIteratingAs',
                 $this->createGeneratorReturningArray(['a' => 'b', 'c' => 'd']),
