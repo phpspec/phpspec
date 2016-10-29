@@ -678,6 +678,24 @@ final class ContainerAssembler
         $container->define('matchers.string_contain', function (IndexedServiceContainer $c) {
             return new Matcher\StringContainMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
+        $container->define('matchers.traversable_count', function (IndexedServiceContainer $c) {
+            return new Matcher\TraversableCountMatcher($c->get('formatter.presenter'));
+        }, ['matchers']);
+        $container->define('matchers.traversable_key', function (IndexedServiceContainer $c) {
+            return new Matcher\TraversableKeyMatcher($c->get('formatter.presenter'));
+        }, ['matchers']);
+        $container->define('matchers.traversable_key_with_value', function (IndexedServiceContainer $c) {
+            return new Matcher\TraversableKeyValueMatcher($c->get('formatter.presenter'));
+        }, ['matchers']);
+        $container->define('matchers.traversable_contain', function (IndexedServiceContainer $c) {
+            return new Matcher\TraversableContainMatcher($c->get('formatter.presenter'));
+        }, ['matchers']);
+        $container->define('matchers.iterate', function (IndexedServiceContainer $c) {
+            return new Matcher\IterateAsMatcher($c->get('formatter.presenter'));
+        }, ['matchers']);
+        $container->define('matchers.start_iterating', function (IndexedServiceContainer $c) {
+            return new Matcher\StartIteratingAsMatcher($c->get('formatter.presenter'));
+        }, ['matchers']);
     }
 
     /**
