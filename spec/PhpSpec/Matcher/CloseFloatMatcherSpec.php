@@ -19,11 +19,6 @@ class CloseFloatMatcherSpec extends ObjectBehavior
         $this->shouldBeAnInstanceOf('PhpSpec\Matcher\Matcher');
     }
 
-    function it_responds_to_beApproximately()
-    {
-        $this->supports('shouldBeACloseFloat', '', array(123.999, 2))->shouldReturn(true);
-    }
-
     function it_matches_same_float()
     {
         $this->shouldNotThrow()->duringPositiveMatch('shouldBeACloseFloat', 1.4444444444, array(1.4444444444, 9));
