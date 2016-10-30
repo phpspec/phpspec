@@ -84,6 +84,8 @@ use ArrayAccess;
  * @method void shouldBeInfinite()
  * @method void shouldNotBeInfinite()
  *
+ * @method void shouldBeACloseFloat($value, $precision)
+ *
  * @method void shouldContain($value)
  * @method void shouldNotContain($value)
  *
