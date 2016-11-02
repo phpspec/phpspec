@@ -390,7 +390,7 @@ final class ContainerAssembler
     private function setupLocator(IndexedServiceContainer $container)
     {
         $container->define('locator.resource_manager', function (IndexedServiceContainer $c) {
-            $manager = new Locator\PrioritizedResourceManager();
+            $manager = new Locator\BestMatchResourceManager();
 
             array_map(
                 array($manager, 'registerLocator'),

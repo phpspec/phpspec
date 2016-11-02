@@ -82,9 +82,22 @@ class ApplicationContext implements Context
      */
     public function iDescribeTheClass($class)
     {
-        $arguments = array(
-            'command' => 'describe',
-            'class' => $class
+        $arguments = $this->getCommonDescribeCommandArguments($class);
+
+        if ($this->tester->run($arguments, array('interactive' => false)) !== 0) {
+            throw new \Exception('Test runner exited with an error');
+        }
+    }
+
+    /**
+     * @Given I have started describing the :class class and specified :suite suite
+     * @Given I start describing the :class class and specified :suite suite
+     */
+    public function iDescribeTheClassAndSpecifiedSuite($class, $suite)
+    {
+        $arguments = array_merge(
+            $this->getCommonDescribeCommandArguments($class),
+            ['--suite' => $suite]
         );
 
         if ($this->tester->run($arguments, array('interactive' => false)) !== 0) {
@@ -397,4 +410,30 @@ class ApplicationContext implements Context
         $this->checkApplicationOutput('name contains reserved keyword');
     }
 
+    /**
+     * @When I describe the :class class, I should see a :exception error
+     */
+    public function iDescribeTheClassThenIShouldSeeAError($class, $exception)
+    {
+        $arguments = $this->getCommonDescribeCommandArguments($class);
+
+        if ($this->tester->run($arguments, array('interactive' => false)) === 0) {
+            throw new \Exception('Test runner was expecting an error but none was thrown');
+        }
+
+        $this->checkApplicationOutput((string)$exception);
+    }
+
+    /**
+     * @param  string $class
+     *
+     * @return array
+     */
+    private function getCommonDescribeCommandArguments($class)
+    {
+        return array(
+            'command' => 'describe',
+            'class' => $class
+        );
+    }
 }

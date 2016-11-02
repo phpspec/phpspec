@@ -5,6 +5,7 @@ namespace spec\PhpSpec\Locator\PSR0;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Util\Filesystem;
 
+use Prophecy\Argument;
 use SplFileInfo;
 
 class PSR0LocatorSpec extends ObjectBehavior
@@ -552,5 +553,41 @@ class PSR0LocatorSpec extends ObjectBehavior
         }
 
         return str_replace('/', DIRECTORY_SEPARATOR, $path);
+    }
+
+    function it_calculates_match_score_for_unsupported_class_as_0(Filesystem $fs)
+    {
+        $this->beConstructedWith($fs, 'PhpSpec', 'spec', $this->srcPath, $this->specPath);
+        $this->calculateMatchScore('Acme\Any')->shouldReturn(0);
+    }
+
+    function it_calculates_match_score_for_empty_srcNamespace_as_1(Filesystem $fs)
+    {
+        $fullClassName = 'Acme\\Any';
+        $relativeSpecBasename = str_replace('\\', DIRECTORY_SEPARATOR, $fullClassName.'Spec.php');
+        $fs->pathExists(Argument::containingString($relativeSpecBasename))->willReturn(false);
+
+        $this->beConstructedWith($fs, '', 'spec', dirname(__DIR__), __DIR__);
+        $this->calculateMatchScore($fullClassName)->shouldReturn(1);
+    }
+
+    function it_calculates_match_score_for_srcNamespace_by_its_separator_count_plus_1(Filesystem $fs)
+    {
+        $fullClassName = 'Foo\\Bar\\Baz\\Nice';
+        $relativeSpecBasename = str_replace('\\', DIRECTORY_SEPARATOR, $fullClassName.'Spec.php');
+        $fs->pathExists(Argument::containingString($relativeSpecBasename))->willReturn(false);
+
+        $this->beConstructedWith($fs, 'Foo\\Bar\\Baz', 'spec', dirname(__DIR__), __DIR__);
+        $this->calculateMatchScore($fullClassName)->shouldReturn(3);
+    }
+
+    function it_calculates_match_score_for_classes_with_existing_spec_file_plus_1(Filesystem $fs)
+    {
+        $class = 'Foo\\Bar\\Baz\\Nice';
+        $relativeSpecBasename = str_replace('\\', DIRECTORY_SEPARATOR, $class) . 'Spec.php';
+        $fs->pathExists(Argument::containingString($relativeSpecBasename))->willReturn(true);
+
+        $this->beConstructedWith($fs, 'Foo\\Bar\\Baz', 'spec', dirname(__DIR__), __DIR__);
+        $this->calculateMatchScore($class)->shouldReturn(4);
     }
 }

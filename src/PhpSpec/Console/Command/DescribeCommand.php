@@ -13,9 +13,12 @@
 
 namespace PhpSpec\Console\Command;
 
+use PhpSpec\ServiceContainer;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Exception\InvalidOptionException;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -32,6 +35,7 @@ final class DescribeCommand extends Command
             ->setName('describe')
             ->setDefinition(array(
                     new InputArgument('class', InputArgument::REQUIRED, 'Class to describe'),
+                    new InputOption('suite', 's', InputOption::VALUE_REQUIRED, 'Suite')
                 ))
             ->setDescription('Creates a specification for a class')
             ->setHelp(<<<EOF
@@ -42,6 +46,11 @@ The <info>%command.name%</info> command creates a specification for a class:
 Will generate a specification ClassNameSpec in the spec directory.
 
   <info>php %command.full_name% Namespace/ClassName</info>
+
+Will generate a specification ClassNameSpec in the <info>spec_path</info>
+as specified in the suite configuration.
+
+  <info>php %command.full_name% Namespace/ClassName --suite=<suite_name></info>
 
 Will generate a namespaced specification Namespace\ClassNameSpec.
 Note that / is used as the separator. To use \ it must be quoted:
@@ -61,12 +70,50 @@ EOF
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $classname = $input->getArgument('class');
+        if ($suite = $input->getOption('suite')) {
+            return $this->executeWithSpecifiedSuite($suite, $classname);
+        }
+
+        return $this->executeWithoutSuite($classname);
+    }
+
+    /**
+     * @return ServiceContainer
+     */
+    private function getConfiguredContainer()
+    {
         $container = $this->getApplication()->getContainer();
         $container->configure();
+        return $container;
+    }
 
-        $classname = $input->getArgument('class');
-        $resource  = $container->get('locator.resource_manager')->createResource($classname);
+    /**
+     * @param  string $classname
+     *
+     * @return mixed
+     */
+    private function executeWithoutSuite($classname)
+    {
+        $container = $this->getConfiguredContainer();
+        $resource = $container->get('locator.resource_manager')->createResource($classname);
+        return $container->get('code_generator')->generate($resource, 'specification');
+    }
 
-        $container->get('code_generator')->generate($resource, 'specification');
+    /**
+     * @param  string $suite
+     * @param  string $classname
+     *
+     * @return mixed
+     */
+    private function executeWithSpecifiedSuite($suite, $classname)
+    {
+        $container = $this->getConfiguredContainer();
+        if (!$container->has($suiteLocatorId = sprintf('locator.locators.%s_suite', $suite))) {
+            throw new InvalidOptionException(sprintf('Invalid suite specified: `%s`', $suite));
+        }
+
+        $locator = $container->get($suiteLocatorId);
+        return $container->get('code_generator')->generate($locator->createResource($classname), 'specification');
     }
 }

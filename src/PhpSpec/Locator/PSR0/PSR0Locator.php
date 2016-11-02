@@ -223,6 +223,19 @@ class PSR0Locator implements ResourceLocator
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function calculateMatchScore(string $classname): int
+    {
+        if ($this->supportsClass($classname)) {
+            $score = substr_count(str_replace(['\\', '/'], '\\', trim($this->srcNamespace, '\\')), '\\');
+            return $score + (($this->supportsQuery($classname)) ? 2 : 1);
+        }
+
+        return 0;
+    }
+
+    /**
      * @param string $classname
      *
      * @return null|PSR0Resource

@@ -170,3 +170,125 @@ Feature: Developer generates a spec
     Given I have started describing the "Namespace/ClassExample1/Markdown" class
     Then I should an error about invalid class name "Namespace\ClassExample1\Markdown" to generate spec for
     And there should be no file "spec/Namespace/ClassExample1/MarkdownSpec.php"
+
+  Scenario: Error is thrown when generating a spec for a class that matches multiple suites
+    Given the config file contains:
+      """
+      suites:
+        spec_a:
+          src_path:    %paths.config%/src-a
+          spec_path:   %paths.config%/spec-a
+
+        spec_b:
+          src_path:    %paths.config%/src-b
+          spec_path:   %paths.config%/spec-b
+
+        spec_match:
+          namespace:   Behat\CodeGeneration
+
+      """
+    When I describe the "ClassThatMatchMultipleSuite" class, I should see a "Can not find appropriate suite scope" error
+
+  Scenario: Generating a spec for a class matching a namespace
+    Given the config file contains:
+      """
+      suites:
+        spec_a:
+          src_path:    %paths.config%/src-a
+          spec_path:   %paths.config%/spec-a
+
+        spec_b:
+          src_path:    %paths.config%/src-b
+          spec_path:   %paths.config%/spec-b
+
+        spec_match:
+          namespace:   Behat\CodeGeneration
+
+      """
+    When I start describing the "Behat\CodeGeneration\MarkDown" class
+    Then a new spec should be generated in the "spec/Behat/CodeGeneration/MarkDownSpec.php":
+      """
+      <?php
+
+      namespace spec\Behat\CodeGeneration;
+
+      use Behat\CodeGeneration\MarkDown;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class MarkDownSpec extends ObjectBehavior
+      {
+          function it_is_initializable()
+          {
+              $this->shouldHaveType(MarkDown::class);
+          }
+      }
+
+      """
+
+  Scenario: Generating a spec for a class matching a deeper namespace
+    Given the config file contains:
+      """
+      suites:
+        spec_shallow:
+          namespace: Behat
+          spec_path: spec-shallow
+        spec_deep:
+          namespace: Behat\CodeGeneration
+          spec_path: spec-deep
+
+      """
+    When I start describing the "Behat\CodeGeneration\MarkDown" class
+    Then a new spec should be generated in the "spec-deep/spec/Behat/CodeGeneration/MarkDownSpec.php":
+      """
+      <?php
+
+      namespace spec\Behat\CodeGeneration;
+
+      use Behat\CodeGeneration\MarkDown;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class MarkDownSpec extends ObjectBehavior
+      {
+          function it_is_initializable()
+          {
+              $this->shouldHaveType(MarkDown::class);
+          }
+      }
+
+      """
+
+  Scenario: Generating a spec for a class with specified suite
+    Given the config file contains:
+      """
+      suites:
+        spec_a:
+          src_path:    %paths.config%/src-a
+          spec_path:   %paths.config%/spec-a
+
+        spec_b:
+          src_path:    %paths.config%/src-b
+          spec_path:   %paths.config%/spec-b
+
+      """
+    When I start describing the "Behat\CodeGeneration\MarkDown" class and specified "spec_b" suite
+    Then a new spec should be generated in the "spec-b/spec/Behat/CodeGeneration/MarkDownSpec.php":
+      """
+      <?php
+
+      namespace spec\Behat\CodeGeneration;
+
+      use Behat\CodeGeneration\MarkDown;
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class MarkDownSpec extends ObjectBehavior
+      {
+          function it_is_initializable()
+          {
+              $this->shouldHaveType(MarkDown::class);
+          }
+      }
+
+      """

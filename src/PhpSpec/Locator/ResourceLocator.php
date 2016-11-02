@@ -52,4 +52,11 @@ interface ResourceLocator
      * @return integer
      */
     public function getPriority(): int;
+
+    /**
+     * @param  string $classname
+     *
+     * @return int
+     */
+    public function calculateMatchScore(string $classname): int;
 }
