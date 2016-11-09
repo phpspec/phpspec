@@ -49,10 +49,10 @@ final class ErrorMaintainer implements Maintainer
     }
 
     /**
-     * @param ExampleNode            $example
-     * @param Specification $context
-     * @param MatcherManager         $matchers
-     * @param CollaboratorManager    $collaborators
+     * @param ExampleNode         $example
+     * @param Specification       $context
+     * @param MatcherManager      $matchers
+     * @param CollaboratorManager $collaborators
      */
     public function prepare(
         ExampleNode $example,
@@ -60,14 +60,14 @@ final class ErrorMaintainer implements Maintainer
         MatcherManager $matchers,
         CollaboratorManager $collaborators
     ) {
-        $this->errorHandler = set_error_handler(array($this, 'errorHandler'), $this->errorLevel);
+        $this->errorHandler = set_error_handler([$this, 'errorHandler'], $this->errorLevel);
     }
 
     /**
-     * @param ExampleNode            $example
-     * @param Specification $context
-     * @param MatcherManager         $matchers
-     * @param CollaboratorManager    $collaborators
+     * @param ExampleNode         $example
+     * @param Specification       $context
+     * @param MatcherManager      $matchers
+     * @param CollaboratorManager $collaborators
      */
     public function teardown(
         ExampleNode $example,
@@ -100,11 +100,11 @@ final class ErrorMaintainer implements Maintainer
      * @param string  $file
      * @param integer $line
      *
-     * @return Boolean
+     * @return bool
      *
      * @throws ExampleException\ErrorException
      */
-    final public function errorHandler($level, $message, $file, $line)
+    public function errorHandler($level, $message, $file, $line)
     {
         $regex = '/^Argument (\d)+ passed to (?:(?P<class>[\w\\\]+)::)?(\w+)\(\)' .
                  ' must (?:be an instance of|implement interface) ([\w\\\]+),(?: instance of)? ([\w\\\]+) given/';

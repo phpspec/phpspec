@@ -3,19 +3,21 @@
 namespace spec\PhpSpec\Process\Shutdown;
 
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Process\Shutdown\Shutdown;
 use PhpSpec\Process\Shutdown\ShutdownAction;
 use Prophecy\Argument;
 
 class ShutdownSpec extends ObjectBehavior
 {
-    function it_has_type_shutdown()
+    function it_is_initializable()
     {
-        $this->beAnInstanceOf('PhpSpec/Process/Shutdown/Shutdown');
+        $this->shouldHaveType(Shutdown::class);
     }
 
-    function it_runs_through_all_registered_actions(ShutdownAction $action)
+    function it_runs_no_shutdown_actions_when_there_is_no_error(ShutdownAction $action)
     {
-        $action->runAction(null)->shouldBeCalled();
+        $action->runAction(Argument::any())->shouldNotBeCalled();
+
         $this->registerAction($action);
         $this->runShutdown();
     }
