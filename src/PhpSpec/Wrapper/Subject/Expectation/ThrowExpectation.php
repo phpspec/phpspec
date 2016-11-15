@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
-interface ThrowExpectation
+interface ThrowExpectation extends Expectation
 {
     /**
      * @param string $method
