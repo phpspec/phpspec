@@ -5,29 +5,18 @@ The main website with documentation is at `http://www.phpspec.net <http://www.ph
 
 [![Master Travis Build Status](https://travis-ci.org/phpspec/phpspec.svg?branch=master)](https://travis-ci.org/phpspec/phpspec)
 
-.. image:: https://img.shields.io/scrutinizer/g/phpspec/phpspec.svg
-   :target: https://scrutinizer-ci.com/g/phpspec/phpspec/build-status/master
-   :alt: Master Scrutinizer Quality Score
+[![Master Scrutinizer Quality Score](https://img.shields.io/scrutinizer/g/phpspec/phpspec.svg)](https://scrutinizer-ci.com/g/phpspec/phpspec/build-status/master)
 
-.. image:: https://img.shields.io/appveyor/ci/ciaranmcnulty/phpspec/master.svg
-   :target: https://ci.appveyor.com/project/ciaranmcnulty/phpspec/branch/master
-   :alt: AppVeyor build status
+[![AppVeyor build status](https://img.shields.io/appveyor/ci/ciaranmcnulty/phpspec/master.svg)](https://ci.appveyor.com/project/ciaranmcnulty/phpspec/branch/master)
 
-.. image:: https://poser.pugx.org/phpspec/phpspec/downloads.png
-   :target: https://poser.pugx.org/phpspec/phpspec/downloads
-   :alt: Total downloads
+[![Total downloads](https://poser.pugx.org/phpspec/phpspec/downloads.png)](https://poser.pugx.org/phpspec/phpspec/downloads)
 
-.. image:: https://poser.pugx.org/phpspec/phpspec/v/stable.png
-   :target: https://poser.pugx.org/phpspec/phpspec/v/stable
-   :alt: Latest stable version
+[![Latest stable version](https://poser.pugx.org/phpspec/phpspec/v/stable.png)](https://poser.pugx.org/phpspec/phpspec/v/stable)
 
-.. image:: https://poser.pugx.org/phpspec/phpspec/v/unstable.png
-   :target: https://poser.pugx.org/phpspec/phpspec/v/unstable
-   :alt: Latest unstable version
+[![Latest unstable version](https://poser.pugx.org/phpspec/phpspec/v/unstable.png)](https://poser.pugx.org/phpspec/phpspec/v/unstable)
 
-.. image:: https://poser.pugx.org/phpspec/phpspec/license.png
-   :target: https://poser.pugx.org/phpspec/phpspec/license
-   :alt: Software license
+[![Software license](https://poser.pugx.org/phpspec/phpspec/license.png)](https://poser.pugx.org/phpspec/phpspec/license)
+
 
 Installing Dependencies
 -----------------------
