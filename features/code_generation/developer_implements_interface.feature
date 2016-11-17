@@ -83,7 +83,7 @@ Feature: Developer implements interface
 
       interface CanSpeak
       {
-          public function say($phrase);
+          public function say(Phrase $phrase);
       }
       """
     And the class file "src/Person.php" contains:
@@ -94,6 +94,14 @@ Feature: Developer implements interface
       {
       }
       """
+    And the class file "src/Phrase.php" contains:
+      """
+      <?php
+
+      interface Phrase
+      {
+      }
+      """
     When I run phpspec and answer "y" when asked if I want to generate the code
     Then the class in "src/Person.php" should contain:
       """
@@ -101,7 +109,7 @@ Feature: Developer implements interface
 
       class Person implements CanSpeak
       {
-          public function say($argument1)
+          public function say(Phrase $argument1)
           {
               // TODO: write logic here
           }
