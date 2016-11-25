@@ -696,8 +696,8 @@ final class ContainerAssembler
         $container->define('matchers.start_iterating', function (IndexedServiceContainer $c) {
             return new Matcher\StartIteratingAsMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
-        $container->define('matchers.close_float', function (IndexedServiceContainer $c) {
-            return new Matcher\CloseFloatMatcher($c->get('formatter.presenter'));
+        $container->define('matchers.approximately', function (IndexedServiceContainer $c) {
+            return new Matcher\ApproximatelyMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
     }
 

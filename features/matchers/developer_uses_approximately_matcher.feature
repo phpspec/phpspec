@@ -1,10 +1,10 @@
-Feature: Developer uses close-float matcher
+Feature: Developer uses approximately matcher
   As a Developer
-  I want an close-float matcher
+  I want an approximately matcher
   In order to verify if two floats can be close
 
   @issue581
-  Scenario: "CloseFloat" alias matches using the close-float matcher
+  Scenario: "Approximately" alias matches using the approximately matcher
     Given the spec file "spec/Matchers/FloatApproximatelyExample1/GeoCoordSpec.php" contains:
     """
     <?php
@@ -18,7 +18,7 @@ Feature: Developer uses close-float matcher
     {
         function it_should_have_lat_approximate()
         {
-            $this->getLat()->shouldBeACloseFloat(1.4477, 2);
+            $this->getLat()->shouldBeApproximately(1.4477, 1.0e-2);
         }
     }
     """

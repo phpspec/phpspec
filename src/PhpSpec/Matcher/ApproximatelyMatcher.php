@@ -17,14 +17,14 @@ use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Formatter\Presenter\Presenter;
 
-final class CloseFloatMatcher extends BasicMatcher
+final class ApproximatelyMatcher extends BasicMatcher
 {
 
     /**
      * @var array
      */
     private static $keywords = array(
-        'beACloseFloat'
+        'beApproximately'
     );
 
     /**
@@ -49,8 +49,7 @@ final class CloseFloatMatcher extends BasicMatcher
      */
     public function supports($name, $subject, array $arguments)
     {
-        return in_array($name, self::$keywords)
-        && 2 == count($arguments);
+        return in_array($name, self::$keywords) && 2 == count($arguments);
     }
 
     /**
@@ -61,9 +60,8 @@ final class CloseFloatMatcher extends BasicMatcher
      */
     protected function matches($subject, array $arguments)
     {
-        $value = (double)$arguments[0];
-        $precisionFactor = pow(10, -1 * (int)$arguments[1]);
-        return (abs($subject - $value) < $precisionFactor);
+        $value = (float)$arguments[0];
+        return (abs($subject - $value) < $arguments[1]);
     }
 
 
