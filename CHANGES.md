@@ -1,4 +1,4 @@
-3.1.2 / 2016-11-27
+3.2.0 / 2016-11-27
 ==================
 
 * New `shouldTrigger` matcher for specifying a warning is triggered (@Taluu)
