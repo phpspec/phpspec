@@ -36,6 +36,9 @@ final class IterateAsMatcherSpec extends ObjectBehavior
         $this->supports('iterateAs', [], [new \ArrayIterator([])])->shouldReturn(true);
         $this->supports('iterateAs', [], [new \ArrayObject([])])->shouldReturn(true);
         $this->supports('iterateAs', [], [$this->createGeneratorReturningArray([])])->shouldReturn(true);
+
+
+        $this->supports('yield', [], [[]])->shouldReturn(true);
     }
 
     function it_positive_matches_generator_while_iterating_the_same()

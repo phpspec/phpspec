@@ -24,7 +24,10 @@ final class ApproximatelyMatcher extends BasicMatcher
      * @var array
      */
     private static $keywords = array(
-        'beApproximately'
+        'beApproximately',
+        'beEqualToApproximately',
+        'equalApproximately',
+        'returnApproximately'
     );
 
     /**

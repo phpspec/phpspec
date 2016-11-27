@@ -19,6 +19,14 @@ class ApproximatelyMatcherSpec extends ObjectBehavior
         $this->shouldBeAnInstanceOf('PhpSpec\Matcher\Matcher');
     }
 
+    function it_supports_various_aliases()
+    {
+        $this->supports('beApproximately', 1.0, [1.0, 5])->shouldReturn(true);
+        $this->supports('beEqualToApproximately', 1.0, [1.0, 5])->shouldReturn(true);
+        $this->supports('equalApproximately', 1.0, [1.0, 5])->shouldReturn(true);
+        $this->supports('returnApproximately', 1.0, [1.0, 5])->shouldReturn(true);
+    }
+
     function it_matches_same_float()
     {
         $this->shouldNotThrow()->duringPositiveMatch('shouldBeApproximately', 1.4444444444, array(1.4444444445,  1.0e-9));
