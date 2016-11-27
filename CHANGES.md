@@ -1,5 +1,5 @@
-Upcoming 3.x
-============
+3.1.2 / 2016-11-27
+==================
 
 * New `shouldTrigger` matcher for specifying a warning is triggered (@Taluu)
 * New `shouldIterateAs` matcher for specifying how a class is iterated (@pamil)
