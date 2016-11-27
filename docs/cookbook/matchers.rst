@@ -68,6 +68,28 @@ follows the PHP rules for loose type comparison.
 Using ``shouldBeLike`` it does not matter whether ``StarWars::getRating()`` returns
 an integer or a string. The spec will pass for 5 and "5".
 
+Approximately Matcher
+--------------------------
+If you want to specify that a method returns a value that approximates to
+a certain precision the given value, you can use the Approximately matcher.
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_return_a_near_value()
+        {
+            $this->getRating()->shouldBeApproximately(1.444447777, 1.0e-9);
+        }
+    }
+
+The first argument is the value we expect, the second is the delta.
 
 Throw Matcher
 -------------
