@@ -38,7 +38,7 @@ the Identity matcher. It compares the result using the identity operator: ``===`
         }
     }
 
-All four ways of these ways of using the Identity matcher are equivalent.
+All four of these ways of using the Identity matcher are equivalent.
 There is no difference in how they work, this lets you choose the one which
 makes your specification easier to read.
 
