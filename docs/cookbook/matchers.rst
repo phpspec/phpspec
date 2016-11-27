@@ -70,6 +70,7 @@ an integer or a string. The spec will pass for 5 and "5".
 
 Approximately Matcher
 --------------------------
+
 If you want to specify that a method returns a value that approximates to
 a certain precision the given value, you can use the Approximately matcher.
 
@@ -86,10 +87,16 @@ a certain precision the given value, you can use the Approximately matcher.
         function it_should_return_a_near_value()
         {
             $this->getRating()->shouldBeApproximately(1.444447777, 1.0e-9);
+            $this->getRating()->shouldBeEqualToApproximately(1.444447777, 1.0e-9);
+            $this->getRating()->shouldEqualApproximately(1.444447777, 1.0e-9);
+            $this->getRating()->shouldReturnApproximately(1.444447777, 1.0e-9);
         }
     }
 
 The first argument is the value we expect, the second is the delta.
+
+All four of these ways of using the Approximately matcher are equivalent. There is no difference in how they work,
+this lets you choose the one which makes your specification easier to read.
 
 Throw Matcher
 -------------
