@@ -3,6 +3,7 @@ Upcoming 3.x
 
 * New `shouldTrigger` matcher for specifying a warning is triggered (@Taluu)
 * New `shouldIterateAs` matcher for specifying how a class is iterated (@pamil)
+* New `shouldBeApproximately` matcher for comparing floats (@brainrepo)
 * [fixed] No longer suggests an outdated version of Nyan formatters (@unfunco)
 * [performance] Reduced size of Phar (@unfunco)
 
