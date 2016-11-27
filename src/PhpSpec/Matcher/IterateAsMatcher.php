@@ -37,7 +37,7 @@ final class IterateAsMatcher implements Matcher
      */
     public function supports($name, $subject, array $arguments)
     {
-        return 'iterateAs' === $name
+        return in_array($name, ['iterateAs', 'yield'])
             && 1 === count($arguments)
             && ($subject instanceof \Traversable || is_array($subject))
             && ($arguments[0] instanceof \Traversable || is_array($arguments[0]))

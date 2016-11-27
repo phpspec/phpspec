@@ -492,8 +492,14 @@ iterates just as the argument you passed to it. **phpspec** matches both the key
         function it_should_contain_jane_smith_and_john_smith_in_the_cast()
         {
             $this->getCast()->shouldIterateAs(new \ArrayIterator(['Jane Smith', 'John Smith']));
+            $this->getCast()->shouldYield(new \ArrayIterator(['Jane Smith', 'John Smith']));
         }
     }
+
+Both of these ways of using the IterateAs matcher are equivalent.
+There is no difference in how they work, this lets you choose the one which
+makes your specification easier to read.
+
 
 StartIteratingAs Matcher
 ------------------------
@@ -514,8 +520,14 @@ starts iterating just as the argument you passed to it. **phpspec** matches both
         function it_should_contain_at_least_jane_smith_in_the_cast()
         {
             $this->getCast()->shouldStartIteratingAs(new \ArrayIterator(['Jane Smith']));
+            $this->getCast()->shouldStartYielding(new \ArrayIterator(['Jane Smith']));
         }
     }
+
+Both of these ways of using the StartIteratingAs matcher are equivalent.
+There is no difference in how they work, this lets you choose the one which
+makes your specification easier to read.
+
 
 StringContain Matcher
 ---------------------
