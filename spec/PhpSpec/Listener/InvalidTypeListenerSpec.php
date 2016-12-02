@@ -32,7 +32,7 @@ class InvalidTypeListenerSpec extends ObjectBehavior
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
 
-        $io->askConfirmation(Argument::any())->shouldNotBeenCalled();
+        $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 
     function it_does_not_prompt_for_method_generation_if_wrong_exception_was_thrown(ExampleEvent $exampleEvent, SuiteEvent $suiteEvent, ConsoleIO $io)
@@ -43,7 +43,7 @@ class InvalidTypeListenerSpec extends ObjectBehavior
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
 
-        $io->askConfirmation(Argument::any())->shouldNotBeenCalled();
+        $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 
     function it_prompts_for_method_generation_if_correct_exception_was_thrown_and_input_is_interactive(
@@ -64,7 +64,7 @@ class InvalidTypeListenerSpec extends ObjectBehavior
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
 
-        $suiteEvent->markAsWorthRerunning()->shouldBeCalled();
+        $suiteEvent->markAsWorthRerunning()->shouldHaveBeenCalled();
     }
 
     function it_does_not_prompt_for_method_generation_if_code_generation_is_not_enabled(
@@ -80,6 +80,6 @@ class InvalidTypeListenerSpec extends ObjectBehavior
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
 
-        $io->askConfirmation(Argument::any())->shouldNotBeenCalled();
+        $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 }
