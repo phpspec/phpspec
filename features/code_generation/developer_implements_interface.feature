@@ -411,6 +411,8 @@ Feature: Developer implements interface
       interface AuthorisedUserException extends UserException
       {
           public function getToken();
+
+          public function setToken(Token $token);
       }
       """
 
@@ -425,6 +427,17 @@ Feature: Developer implements interface
       }
       """
 
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Auth/Token.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods\Auth;
+
+      interface Token
+      {
+      }
+      """
+
     When I run phpspec and answer "y" when asked if I want to generate the code
     Then the class in "src/CodeGeneration/AbstractTypeMethods/UserActionException.php" should contain:
       """
@@ -433,10 +446,16 @@ Feature: Developer implements interface
       namespace CodeGeneration\AbstractTypeMethods;
 
       use CodeGeneration\AbstractTypeMethods\Auth\AuthorisedUserException;
+      use CodeGeneration\AbstractTypeMethods\Auth\Token;
 
       class UserActionException implements AuthorisedUserException
       {
           public function getToken()
+          {
+              // TODO: write logic here
+          }
+
+          public function setToken(Token $token)
           {
               // TODO: write logic here
           }
