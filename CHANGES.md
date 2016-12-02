@@ -1,6 +1,7 @@
-Upcoming 2.5
-============
+2.5.4 / 2016-12-02
+==================
 
+* [fixed] Prevent deprecation warning in Symfony 3.2.0 (@veewee)
 * [performance] Reduced size of Phar (@unfunco)
 
 2.5.3 / 2016-09-26
