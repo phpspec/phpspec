@@ -1,3 +1,8 @@
+3.2.1 / 2016-12-02
+==================
+
+* [fixed] Prevent deprecation warning in Symfony 3.2.0 (@veewee)
+
 3.2.0 / 2016-11-27
 ==================
 
