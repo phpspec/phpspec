@@ -19,6 +19,33 @@ Feature: Developer generates a class
 
       """
 
+  @issue1008
+  Scenario: Generating a class with a custom template
+    Given I have started describing the "CodeGeneration/CustomExample/Markdown" class
+    And I have a custom "class" template that contains:
+      """
+      <?php
+
+      /* Custom class template */%namespace_block%
+
+      final class %name%
+      {
+      }
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then a new class should be generated in the "src/CodeGeneration/CustomExample/Markdown.php":
+      """
+      <?php
+
+      /* Custom class template */
+
+      namespace CodeGeneration\CustomExample;
+
+      final class Markdown
+      {
+      }
+      """
+
   @issue269
   Scenario: Generating a class with psr4 prefix
     Given the config file contains:

@@ -35,6 +35,15 @@ class FilesystemContext implements Context
         $this->filesystem->mkdir($this->workingDirectory);
         chdir($this->workingDirectory);
 
+        $fakeHomeDirectory = sprintf('%s/fake-home/', $this->workingDirectory);
+        $this->filesystem->mkdir($fakeHomeDirectory . '.phpspec');
+
+        if (!empty($_SERVER['HOMEDRIVE']) && !empty($_SERVER['HOMEPATH'])) {
+            $_SERVER['HOMEPATH'] = substr($fakeHomeDirectory, 2);
+        } else {
+            putenv(sprintf('HOME=%s', $fakeHomeDirectory));
+        }
+
         $this->filesystem->mkdir($this->workingDirectory . '/vendor');
         $this->filesystem->copy(
             __DIR__ . '/autoloader/autoload.php',
@@ -52,6 +61,14 @@ class FilesystemContext implements Context
         } catch (IOException $e) {
             //ignoring exception
         }
+    }
+
+    /**
+     * @Given I have a custom :template template that contains:
+     */
+    public function iHaveACustomTemplateThatContains($template, PyStringNode $contents)
+    {
+        $this->filesystem->dumpFile(sprintf('fake-home/.phpspec/%s.tpl', $template), $contents);
     }
 
     /**
