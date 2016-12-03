@@ -20,7 +20,6 @@ use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Terminal;
 use Symfony\Component\Yaml\Yaml;
 use PhpSpec\ServiceContainer;
 use PhpSpec\Extension;
@@ -87,9 +86,14 @@ class Application extends BaseApplication
 
         $this->setDispatcher($this->container->get('console_event_dispatcher'));
 
-        $this->container->get('console.io')->setConsoleWidth(
-            class_exists(Terminal::class) ? (new Terminal())->getWidth() : $this->getTerminalWidth()
-        );
+        if (class_exists('\Symfony\Component\Console\Terminal')) {
+            $terminal = new \Symfony\Component\Console\Terminal();
+            $consoleWidth = $terminal->getWidth();
+        } else {
+            $consoleWidth = $this->getTerminalWidth();
+        }
+
+        $this->container->get('console.io')->setConsoleWidth($consoleWidth);
 
         StreamWrapper::reset();
         foreach ($this->container->getByPrefix('loader.resource_loader.spec_transformer') as $transformer) {
