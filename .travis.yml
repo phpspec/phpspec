@@ -23,7 +23,7 @@ matrix:
   fast_finish: true
 
 before_install:
-  - if [[ ${TRAVIS_PHP_VERSION:0:4} != "hhvm" ]]; then phpenv config-rm xdebug.ini; fi
+  - phpenv config-rm xdebug.ini || true
 
 install:
   - export COMPOSER_ROOT_VERSION=dev-master
