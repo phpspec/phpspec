@@ -1,7 +1,7 @@
 2.5.5 / 2016-12-04
 ==================
 
-* [fixed] PHP 5.3 support was broken
+* [fixed] PHP 5.3 support was broken (@unfunco)
 
 2.5.4 / 2016-12-02
 ==================
