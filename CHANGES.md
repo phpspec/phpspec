@@ -1,7 +1,18 @@
+2.5.5 / 2016-12-04
+==================
+
+* [fixed] PHP 5.3 support was broken (@unfunco)
+
 3.2.1 / 2016-12-02
 ==================
 
 * [fixed] Prevent deprecation warning in Symfony 3.2.0 (@veewee)
+
+2.5.4 / 2016-12-02
+==================
+
+* [fixed] Prevent deprecation warning in Symfony 3.2.0 (@veewee)
+* [performance] Reduced size of Phar (@unfunco)
 
 3.2.0 / 2016-11-27
 ==================
@@ -10,12 +21,6 @@
 * New `shouldIterateAs` matcher for specifying how a class is iterated (@pamil)
 * New `shouldBeApproximately` matcher for comparing floats (@brainrepo)
 * [fixed] No longer suggests an outdated version of Nyan formatters (@unfunco)
-* [performance] Reduced size of Phar (@unfunco)
-
-2.5.4 / 2016-12-02
-==================
-
-* [fixed] Prevent deprecation warning in Symfony 3.2.0 (@veewee)
 * [performance] Reduced size of Phar (@unfunco)
 
 3.1.1 / 2016-09-26
