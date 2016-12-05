@@ -46,7 +46,7 @@ before_deploy:
 deploy:
   provider: releases
   api_key:
-    secure: kuNoMV1YPvdIQvKwf7NgYIFP4ZskFrZCRgq/+iTzP/vbyeB1mu/hyNkHtdl0Fj/2LpN1IcWm+C7hZ29NjQJGyrEkGnD8HWnUEn6k+FLhETg+BlckDTwSyhauXRIoaJeNUItNYFydG8MjEMBQgWQpsT6lWNSRAa3uC82K2zjQAx0=
+    secure: eTlXM76IvH1Ws57gtBi5Q7trQ3rEXjt+7wOH4HLw6WhhywMF4THMuQQC0j5DhWtiLJlVYHaIfNbapbG+DVUqyXZZA+aXQSuh9aNM1fbkEShbWFpOrCd+Y3I1lXNvOcGZ5hvJieDVgWSc0osNLCQzaza17fhYUtbKsj4Qwc5ek8k=
   file: phpspec.phar
   skip_cleanup: true
   on:
