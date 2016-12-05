@@ -39,7 +39,7 @@ script:
 before_deploy:
   - curl -LSs https://box-project.github.io/box2/installer.php | php
   - export PATH=.:$PATH
-  - rm -Rfv ./vendor
+  - rm -Rf ./vendor
   - composer install --no-dev -o
   - box.phar build
 
