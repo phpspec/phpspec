@@ -1,5 +1,5 @@
-Upcoming 3.x
-============
+3.2.2 / 2016-12-04
+==================
 
 * Support sebastian/exporter 2.0 providing PHPUnit 5.7 compatibility (@mattsches)
 
