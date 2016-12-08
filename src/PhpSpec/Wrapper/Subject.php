@@ -105,9 +105,13 @@ use ArrayAccess;
  * @method void shouldNotMatch($regex)
  *
  * @method void shouldIterateAs($iterable)
+ * @method void shouldYield($iterable)
  * @method void shouldNotIterateAs($iterable)
+ * @method void shouldNotYield($iterable)
  * @method void shouldStartIteratingAs($iterable)
+ * @method void shouldStartYielding($iterable)
  * @method void shouldNotStartIteratingAs($iterable)
+ * @method void shouldNotStartYielding($iterable)
  */
 class Subject implements ArrayAccess, ObjectWrapper
 {
