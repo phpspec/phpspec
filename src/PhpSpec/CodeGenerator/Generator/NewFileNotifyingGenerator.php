@@ -3,7 +3,7 @@
 namespace PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\Event\FileCreationEvent;
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 use PhpSpec\Util\Filesystem;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -37,22 +37,22 @@ final class NewFileNotifyingGenerator implements Generator
     }
 
     /**
-     * @param Resource $resource
-     * @param string $generation
-     * @param array $data
+     * @param CompositeResource $resource
+     * @param string            $generation
+     * @param array             $data
      *
      * @return bool
      */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(CompositeResource $resource, $generation, array $data)
     {
         return $this->generator->supports($resource, $generation, $data);
     }
 
     /**
-     * @param Resource $resource
-     * @param array $data
+     * @param CompositeResource $resource
+     * @param array             $data
      */
-    public function generate(Resource $resource, array $data)
+    public function generate(CompositeResource $resource, array $data)
     {
         $filePath = $this->getFilePath($resource);
 
@@ -72,10 +72,10 @@ final class NewFileNotifyingGenerator implements Generator
     }
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @return string
      */
-    private function getFilePath(Resource $resource)
+    private function getFilePath(CompositeResource $resource)
     {
         if ($this->generator->supports($resource, 'specification', array())) {
             return $resource->getSpecFilename();

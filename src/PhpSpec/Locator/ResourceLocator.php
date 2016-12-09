@@ -16,40 +16,40 @@ namespace PhpSpec\Locator;
 interface ResourceLocator
 {
     /**
-     * @return Resource[]
+     * @return CompositeResource[]
      */
     public function getAllResources();
 
     /**
      * @param string $query
      *
-     * @return boolean
+     * @return bool
      */
     public function supportsQuery($query);
 
     /**
      * @param string $query
      *
-     * @return Resource[]
+     * @return CompositeResource[]
      */
     public function findResources($query);
 
     /**
      * @param string $classname
      *
-     * @return boolean
+     * @return bool
      */
     public function supportsClass($classname);
 
     /**
      * @param string $classname
      *
-     * @return Resource|null
+     * @return CompositeResource|null
      */
     public function createResource($classname);
 
     /**
-     * @return integer
+     * @return int
      */
     public function getPriority();
 }

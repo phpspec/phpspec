@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Loader;
 
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 use PhpSpec\Specification\ErrorSpecification;
 use PhpSpec\Util\MethodAnalyser;
 use PhpSpec\Locator\ResourceManager;
@@ -110,7 +110,7 @@ class ResourceLoader
         return $line >= $method->getStartLine() && $line <= $method->getEndLine();
     }
 
-    private function addErrorThrowingExampleToSuite(Resource $resource, Suite $suite, \Error $error)
+    private function addErrorThrowingExampleToSuite(CompositeResource $resource, Suite $suite, \Error $error)
     {
         $reflection = new ReflectionClass(ErrorSpecification::class);
         $spec = new Node\SpecificationNode($resource->getSrcClassname(), $reflection, $resource);

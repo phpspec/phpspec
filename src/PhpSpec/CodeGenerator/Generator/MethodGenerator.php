@@ -17,7 +17,7 @@ use PhpSpec\Console\ConsoleIO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\CodeGenerator\Writer\CodeWriter;
 use PhpSpec\Util\Filesystem;
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 
 /**
  * Generates class methods from a resource
@@ -59,22 +59,22 @@ final class MethodGenerator implements Generator
     }
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param string            $generation
      * @param array             $data
      *
      * @return bool
      */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(CompositeResource $resource, $generation, array $data)
     {
         return 'method' === $generation;
     }
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param array             $data
      */
-    public function generate(Resource $resource, array $data = array())
+    public function generate(CompositeResource $resource, array $data = array())
     {
         $filepath  = $resource->getSrcFilename();
         $name      = $data['name'];

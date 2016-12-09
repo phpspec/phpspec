@@ -13,9 +13,9 @@
 
 namespace PhpSpec\Locator\PSR0;
 
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 
-final class PSR0Resource implements Resource
+final class PSR0Resource implements CompositeResource
 {
     /**
      * @var array

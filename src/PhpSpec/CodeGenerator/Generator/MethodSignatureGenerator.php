@@ -16,7 +16,7 @@ namespace PhpSpec\CodeGenerator\Generator;
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Util\Filesystem;
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 
 /**
  * Generates interface method signatures from a resource
@@ -51,22 +51,22 @@ final class MethodSignatureGenerator implements Generator
     }
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param string            $generation
      * @param array             $data
      *
      * @return bool
      */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(CompositeResource $resource, $generation, array $data)
     {
         return 'method-signature' === $generation;
     }
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param array             $data
      */
-    public function generate(Resource $resource, array $data = array())
+    public function generate(CompositeResource $resource, array $data = array())
     {
         $filepath  = $resource->getSrcFilename();
         $name      = $data['name'];

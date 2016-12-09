@@ -16,7 +16,7 @@ namespace PhpSpec\CodeGenerator\Generator;
 use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Exception\Generator\NamedMethodNotFoundException;
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 use PhpSpec\CodeGenerator\Writer\CodeWriter;
 use PhpSpec\Util\Filesystem;
 
@@ -56,22 +56,22 @@ final class NamedConstructorGenerator implements Generator
     }
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param string            $generation
      * @param array             $data
      *
      * @return bool
      */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(CompositeResource $resource, $generation, array $data)
     {
         return 'named_constructor' === $generation;
     }
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param array             $data
      */
-    public function generate(Resource $resource, array $data = array())
+    public function generate(CompositeResource $resource, array $data = array())
     {
         $filepath   = $resource->getSrcFilename();
         $methodName = $data['name'];
@@ -102,12 +102,12 @@ final class NamedConstructorGenerator implements Generator
     }
 
     /**
-     * @param  Resource $resource
+     * @param  CompositeResource $resource
      * @param  string            $methodName
      * @param  array             $arguments
      * @return string
      */
-    private function getContent(Resource $resource, $methodName, $arguments)
+    private function getContent(CompositeResource $resource, $methodName, $arguments)
     {
         $className = $resource->getName();
         $class = $resource->getSrcClassname();

@@ -7,7 +7,7 @@ use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Locator\ResourceCreationException;
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Util\NameChecker;
@@ -19,7 +19,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
 {
     function let(
         ConsoleIO $io, ResourceManager $resources, ExampleEvent $event,
-        MethodNotFoundException $exception, Resource $resource, GeneratorManager $generator,
+        MethodNotFoundException $exception, CompositeResource $resource, GeneratorManager $generator,
         NameChecker $nameChecker
     ) {
         $this->beConstructedWith($io, $resources, $generator, $nameChecker);
@@ -125,7 +125,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
 
     function it_generates_the_method_signature_when_user_says_yes_at_prompt(
         ConsoleIO $io, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception,
-        Resource $resource, GeneratorManager $generator
+        CompositeResource $resource, GeneratorManager $generator
     )
     {
         $io->askConfirmation(Argument::any())->willReturn(true);

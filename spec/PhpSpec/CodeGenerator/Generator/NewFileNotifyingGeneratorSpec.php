@@ -4,7 +4,7 @@ namespace spec\PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\CodeGenerator\Generator\Generator;
 use PhpSpec\Event\FileCreationEvent;
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Util\Filesystem;
 use Prophecy\Argument;
@@ -24,7 +24,7 @@ class NewFileNotifyingGeneratorSpec extends ObjectBehavior
         $this->shouldImplement('PhpSpec\CodeGenerator\Generator\Generator');
     }
 
-    function it_should_proxy_the_support_call_to_the_decorated_object($generator, Resource $resource)
+    function it_should_proxy_the_support_call_to_the_decorated_object($generator, CompositeResource $resource)
     {
         $generator->supports($resource, 'foo', array('bar'))->willReturn(true);
         $this->supports($resource, 'foo', array('bar'))->shouldReturn(true);
@@ -36,13 +36,13 @@ class NewFileNotifyingGeneratorSpec extends ObjectBehavior
         $this->getPriority()->shouldReturn(5);
     }
 
-    function it_should_proxy_the_generate_call_to_the_decorated_object($generator, Resource $resource)
+    function it_should_proxy_the_generate_call_to_the_decorated_object($generator, CompositeResource $resource)
     {
         $this->generate($resource, array());
         $generator->generate($resource, array())->shouldHaveBeenCalled();
     }
 
-    function it_should_dispatch_an_event_when_a_file_is_created($dispatcher, $filesystem, Resource $resource)
+    function it_should_dispatch_an_event_when_a_file_is_created($dispatcher, $filesystem, CompositeResource $resource)
     {
         $path = '/foo';
         $resource->getSrcFilename()->willReturn($path);
@@ -54,7 +54,7 @@ class NewFileNotifyingGeneratorSpec extends ObjectBehavior
         $dispatcher->dispatch('afterFileCreation', $event)->shouldHaveBeenCalled();
     }
 
-    function it_should_dispatch_an_event_with_the_spec_path_when_a_spec_is_created($generator, $dispatcher, $filesystem, Resource $resource)
+    function it_should_dispatch_an_event_with_the_spec_path_when_a_spec_is_created($generator, $dispatcher, $filesystem, CompositeResource $resource)
     {
         $path = '/foo';
         $generator->supports($resource, 'specification', array())->willReturn(true);
@@ -68,7 +68,7 @@ class NewFileNotifyingGeneratorSpec extends ObjectBehavior
         $dispatcher->dispatch('afterFileCreation', $event)->shouldHaveBeenCalled();
     }
 
-    function it_should_check_that_the_file_was_created($generator, $filesystem, Resource $resource)
+    function it_should_check_that_the_file_was_created($generator, $filesystem, CompositeResource $resource)
     {
         $path = '/foo';
         $resource->getSrcFilename()->willReturn($path);
@@ -83,7 +83,7 @@ class NewFileNotifyingGeneratorSpec extends ObjectBehavior
         $this->generate($resource, array());
     }
 
-    function it_should_not_dispatch_an_event_if_the_file_was_not_created($dispatcher, $filesystem, Resource $resource)
+    function it_should_not_dispatch_an_event_if_the_file_was_not_created($dispatcher, $filesystem, CompositeResource $resource)
     {
         $path = '/foo';
         $resource->getSrcFilename()->willReturn($path);
@@ -95,7 +95,7 @@ class NewFileNotifyingGeneratorSpec extends ObjectBehavior
         $dispatcher->dispatch('afterFileCreation', Argument::any())->shouldNotHaveBeenCalled();
     }
 
-    function it_should_not_dispatch_an_event_if_the_file_already_existed($dispatcher, $filesystem, Resource $resource)
+    function it_should_not_dispatch_an_event_if_the_file_already_existed($dispatcher, $filesystem, CompositeResource $resource)
     {
         $path = '/foo';
         $resource->getSrcFilename()->willReturn($path);

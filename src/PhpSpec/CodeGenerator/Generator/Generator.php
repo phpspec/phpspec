@@ -13,7 +13,7 @@
 
 namespace PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 
 /**
  * Interface that all Generators need to implement in PhpSpec
@@ -21,19 +21,19 @@ use PhpSpec\Locator\Resource;
 interface Generator
 {
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param string            $generation
      * @param array             $data
      *
      * @return bool
      */
-    public function supports(Resource $resource, $generation, array $data);
+    public function supports(CompositeResource $resource, $generation, array $data);
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param array             $data
      */
-    public function generate(Resource $resource, array $data);
+    public function generate(CompositeResource $resource, array $data);
 
     /**
      * @return int

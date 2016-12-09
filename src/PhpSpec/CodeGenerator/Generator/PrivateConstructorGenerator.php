@@ -16,7 +16,7 @@ namespace PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Console\ConsoleIO;
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 use PhpSpec\CodeGenerator\Writer\CodeWriter;
 use PhpSpec\Util\Filesystem;
 
@@ -57,22 +57,22 @@ final class PrivateConstructorGenerator implements Generator
     }
 
     /**
-     * @param Resource $resource
-     * @param string $generation
-     * @param array $data
+     * @param CompositeResource $resource
+     * @param string            $generation
+     * @param array             $data
      *
      * @return bool
      */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(CompositeResource $resource, $generation, array $data)
     {
         return 'private-constructor' === $generation;
     }
 
     /**
-     * @param Resource $resource
-     * @param array $data
+     * @param CompositeResource $resource
+     * @param array             $data
      */
-    public function generate(Resource $resource, array $data)
+    public function generate(CompositeResource $resource, array $data)
     {
         $filepath  = $resource->getSrcFilename();
 

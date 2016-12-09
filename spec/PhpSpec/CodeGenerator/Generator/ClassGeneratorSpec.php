@@ -9,7 +9,7 @@ use Prophecy\Argument;
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Util\Filesystem;
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 
 class ClassGeneratorSpec extends ObjectBehavior
 {
@@ -23,12 +23,12 @@ class ClassGeneratorSpec extends ObjectBehavior
         $this->shouldBeAnInstanceOf('PhpSpec\CodeGenerator\Generator\Generator');
     }
 
-    function it_supports_class_generation(Resource $resource)
+    function it_supports_class_generation(CompositeResource $resource)
     {
         $this->supports($resource, 'class', array())->shouldReturn(true);
     }
 
-    function it_does_not_support_anything_else(Resource $resource)
+    function it_does_not_support_anything_else(CompositeResource $resource)
     {
         $this->supports($resource, 'anything_else', array())->shouldReturn(false);
     }
@@ -39,7 +39,7 @@ class ClassGeneratorSpec extends ObjectBehavior
     }
 
     function it_generates_class_from_resource_and_puts_it_into_appropriate_folder(
-        $io, $tpl, $fs, Resource $resource
+        $io, $tpl, $fs, CompositeResource $resource
     ) {
         $resource->getName()->willReturn('App');
         $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
@@ -64,7 +64,7 @@ class ClassGeneratorSpec extends ObjectBehavior
     }
 
     function it_uses_template_provided_by_templating_system_if_there_is_one(
-        $io, $tpl, $fs, Resource $resource
+        $io, $tpl, $fs, CompositeResource $resource
     ) {
         $resource->getName()->willReturn('App');
         $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
@@ -88,7 +88,7 @@ class ClassGeneratorSpec extends ObjectBehavior
         $this->generate($resource);
     }
 
-    function it_creates_folder_for_class_if_needed($io, $tpl, $fs, Resource $resource)
+    function it_creates_folder_for_class_if_needed($io, $tpl, $fs, CompositeResource $resource)
     {
         $resource->getName()->willReturn('App');
         $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
@@ -104,7 +104,7 @@ class ClassGeneratorSpec extends ObjectBehavior
     }
 
     function it_asks_confirmation_if_class_already_exists(
-        $io, $tpl, $fs, Resource $resource
+        $io, $tpl, $fs, CompositeResource $resource
     ) {
         $resource->getName()->willReturn('App');
         $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
@@ -119,7 +119,7 @@ class ClassGeneratorSpec extends ObjectBehavior
         $this->generate($resource);
     }
 
-    function it_records_that_class_was_created_in_executioncontext(Resource $resource, ExecutionContext $executionContext)
+    function it_records_that_class_was_created_in_executioncontext(CompositeResource $resource, ExecutionContext $executionContext)
     {
         $resource->getName()->willReturn('App');
         $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');

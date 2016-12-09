@@ -18,14 +18,14 @@ interface ResourceManager
     /**
      * @param string $query
      *
-     * @return \PhpSpec\Locator\Resource[]
+     * @return \PhpSpec\Locator\CompositeResource[]
      */
     public function locateResources($query);
 
     /**
      * @param string $classname
      *
-     * @return \PhpSpec\Locator\Resource
+     * @return \PhpSpec\Locator\CompositeResource
      */
     public function createResource($classname);
 }
