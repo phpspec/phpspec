@@ -14,7 +14,7 @@
 namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Exception\Fracture\FactoryDoesNotReturnObjectException;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Exception\Wrapper\SubjectException;
 
@@ -25,7 +25,7 @@ class WrappedObject
      */
     private $instance;
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
     /**
@@ -47,9 +47,9 @@ class WrappedObject
 
     /**
      * @param object|null        $instance
-     * @param PresenterInterface $presenter
+     * @param Presenter $presenter
      */
-    public function __construct($instance, PresenterInterface $presenter)
+    public function __construct($instance, Presenter $presenter)
     {
         $this->instance = $instance;
         $this->presenter = $presenter;

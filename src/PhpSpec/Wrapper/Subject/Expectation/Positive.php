@@ -13,19 +13,19 @@
 
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
-use PhpSpec\Matcher\MatcherInterface;
+use PhpSpec\Matcher\Matcher;
 
-class Positive implements ExpectationInterface
+final class Positive implements Expectation
 {
     /**
-     * @var MatcherInterface
+     * @var Matcher
      */
     private $matcher;
 
     /**
-     * @param MatcherInterface $matcher
+     * @param Matcher $matcher
      */
-    public function __construct(MatcherInterface $matcher)
+    public function __construct(Matcher $matcher)
     {
         $this->matcher = $matcher;
     }

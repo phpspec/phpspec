@@ -13,9 +13,7 @@
 
 namespace PhpSpec\Wrapper\Subject;
 
-use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
-use PhpSpec\CodeAnalysis\AccessInspectorInterface;
-use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
+use PhpSpec\CodeAnalysis\AccessInspector;
 use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Wrapper\Subject;
@@ -49,7 +47,7 @@ class Caller
      */
     private $exceptionFactory;
     /**
-     * @var AccessInspectorInterface
+     * @var AccessInspector
      */
     private $accessInspector;
 
@@ -59,7 +57,7 @@ class Caller
      * @param Dispatcher $dispatcher
      * @param ExceptionFactory $exceptions
      * @param Wrapper $wrapper
-     * @param AccessInspectorInterface $accessInspector
+     * @param AccessInspector $accessInspector
      */
     public function __construct(
         WrappedObject $wrappedObject,
@@ -67,14 +65,14 @@ class Caller
         Dispatcher $dispatcher,
         ExceptionFactory $exceptions,
         Wrapper $wrapper,
-        AccessInspectorInterface $accessInspector = null
+        AccessInspector $accessInspector
     ) {
         $this->wrappedObject    = $wrappedObject;
         $this->example          = $example;
         $this->dispatcher       = $dispatcher;
         $this->wrapper          = $wrapper;
         $this->exceptionFactory = $exceptions;
-        $this->accessInspector  = $accessInspector ?: new MagicAwareAccessInspector(new VisibilityAccessInspector());
+        $this->accessInspector  = $accessInspector;
     }
 
     /**

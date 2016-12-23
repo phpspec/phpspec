@@ -20,19 +20,19 @@ can do this by adding it to the config file:
 .. code-block:: yaml
 
     extensions:
-        - MageTest\PhpSpec\MagentoExtension\Extension
+        MageTest\PhpSpec\MagentoExtension\Extension: ~
 
 You can pass options to the extension as well:
 
 .. code-block:: yaml
 
     extensions:
-        - MageTest\PhpSpec\MagentoExtension\Extension
-    mage_locator:
-        spec_prefix: spec
-        src_path: public/app/code
-        spec_path: spec/public/app/code
-        code_pool: community
+        MageTest\PhpSpec\MagentoExtension\Extension:
+            mage_locator:
+                spec_prefix: spec
+                src_path: public/app/code
+                spec_path: spec/public/app/code
+                code_pool: community
 
 See the :doc:`Configuration Cookbook </cookbook/configuration>` for more about config files.
 
@@ -63,11 +63,16 @@ Metrics
 
  * `Code coverage <https://github.com/henrikbjorn/PhpSpecCodeCoverageExtension>`_
 
+Matchers
+~~~~~~~~
+
+ * `Coduo matcher extension <https://github.com/coduo/phpspec-matcher-extension>`_
+ * `Array Contains matcher extension <https://github.com/jameshalsall/phpspec-array-contains-matchers>`_
+
 Miscellaneous
 ~~~~~~~~~~~~~
 
  * `Prepare <https://github.com/coduo/phpspec-prepare-extension>`_
  * `Data provider <https://github.com/coduo/phpspec-data-provider-extension>`_
- * `Matcher extension <https://github.com/coduo/phpspec-matcher-extension>`_
  * `Behat Integration <https://github.com/richardmiller/BehatSpec>`_
  * `Example skipping through annotation <https://github.com/akeneo/PhpSpecSkipExampleExtension>`_

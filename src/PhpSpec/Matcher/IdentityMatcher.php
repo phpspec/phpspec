@@ -13,11 +13,11 @@
 
 namespace PhpSpec\Matcher;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\Example\NotEqualException;
 
-class IdentityMatcher extends BasicMatcher
+final class IdentityMatcher extends BasicMatcher
 {
     /**
      * @var array
@@ -29,14 +29,14 @@ class IdentityMatcher extends BasicMatcher
         'beEqualTo'
     );
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
 
     /**
-     * @param PresenterInterface $presenter
+     * @param Presenter $presenter
      */
-    public function __construct(PresenterInterface $presenter)
+    public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }

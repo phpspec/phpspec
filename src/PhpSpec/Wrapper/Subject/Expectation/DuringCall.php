@@ -14,14 +14,14 @@
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Exception\Example\MatcherException;
-use PhpSpec\Matcher\MatcherInterface;
+use PhpSpec\Matcher\Matcher;
 use PhpSpec\Util\Instantiator;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 
 abstract class DuringCall
 {
     /**
-     * @var MatcherInterface
+     * @var Matcher
      */
     private $matcher;
     /**
@@ -38,9 +38,9 @@ abstract class DuringCall
     private $wrappedObject;
 
     /**
-     * @param MatcherInterface $matcher
+     * @param Matcher $matcher
      */
-    public function __construct(MatcherInterface $matcher)
+    public function __construct(Matcher $matcher)
     {
         $this->matcher = $matcher;
     }
@@ -72,7 +72,7 @@ abstract class DuringCall
     public function during($method, array $arguments = array())
     {
         if ($method === '__construct') {
-            $this->subject->beAnInstanceOf($this->wrappedObject->getClassname(), $arguments);
+            $this->subject->beAnInstanceOf($this->wrappedObject->getClassName(), $arguments);
 
             return $this->duringInstantiation();
         }
@@ -93,7 +93,7 @@ abstract class DuringCall
             $method = '__construct';
         }
         $instantiator = new Instantiator();
-        $object = $instantiator->instantiate($this->wrappedObject->getClassname());
+        $object = $instantiator->instantiate($this->wrappedObject->getClassName());
 
         return $this->runDuring($object, $method, $this->wrappedObject->getArguments());
     }
@@ -129,7 +129,7 @@ abstract class DuringCall
     }
 
     /**
-     * @return MatcherInterface
+     * @return Matcher
      */
     protected function getMatcher()
     {

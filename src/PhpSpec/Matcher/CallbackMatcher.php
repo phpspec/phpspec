@@ -13,10 +13,10 @@
 
 namespace PhpSpec\Matcher;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 
-class CallbackMatcher extends BasicMatcher
+final class CallbackMatcher extends BasicMatcher
 {
     /**
      * @var string
@@ -27,16 +27,16 @@ class CallbackMatcher extends BasicMatcher
      */
     private $callback;
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
 
     /**
      * @param string             $name
      * @param callable           $callback
-     * @param PresenterInterface $presenter
+     * @param Presenter $presenter
      */
-    public function __construct($name, $callback, PresenterInterface $presenter)
+    public function __construct($name, $callback, Presenter $presenter)
     {
         $this->name      = $name;
         $this->callback  = $callback;

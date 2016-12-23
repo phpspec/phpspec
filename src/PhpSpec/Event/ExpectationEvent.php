@@ -15,12 +15,12 @@ namespace PhpSpec\Event;
 
 use Symfony\Component\EventDispatcher\Event;
 use PhpSpec\Loader\Node\ExampleNode;
-use PhpSpec\Matcher\MatcherInterface;
+use PhpSpec\Matcher\Matcher;
 
 /**
  * Class ExpectationEvent holds information about the expectation event
  */
-class ExpectationEvent extends Event implements EventInterface
+final class ExpectationEvent extends Event implements PhpSpecEvent
 {
     /**
      * Expectation passed
@@ -43,7 +43,7 @@ class ExpectationEvent extends Event implements EventInterface
     private $example;
 
     /**
-     * @var MatcherInterface
+     * @var Matcher
      */
     private $matcher;
 
@@ -74,7 +74,7 @@ class ExpectationEvent extends Event implements EventInterface
 
     /**
      * @param ExampleNode      $example
-     * @param MatcherInterface $matcher
+     * @param Matcher $matcher
      * @param mixed            $subject
      * @param string           $method
      * @param array            $arguments
@@ -83,7 +83,7 @@ class ExpectationEvent extends Event implements EventInterface
      */
     public function __construct(
         ExampleNode $example,
-        MatcherInterface $matcher,
+        Matcher $matcher,
         $subject,
         $method,
         $arguments,
@@ -100,7 +100,7 @@ class ExpectationEvent extends Event implements EventInterface
     }
 
     /**
-     * @return MatcherInterface
+     * @return Matcher
      */
     public function getMatcher()
     {

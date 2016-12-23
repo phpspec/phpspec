@@ -14,14 +14,14 @@
 namespace PhpSpec\Runner;
 
 use PhpSpec\Exception\Wrapper\CollaboratorException;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Wrapper\Collaborator;
 use ReflectionFunctionAbstract;
 
 class CollaboratorManager
 {
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
     /**
@@ -30,9 +30,9 @@ class CollaboratorManager
     private $collaborators = array();
 
     /**
-     * @param PresenterInterface $presenter
+     * @param Presenter $presenter
      */
-    public function __construct(PresenterInterface $presenter)
+    public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }

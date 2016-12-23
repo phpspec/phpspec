@@ -49,6 +49,7 @@ class ApplicationContext implements Context
 
         $this->application = new Application('2.1-dev');
         $this->application->setAutoExit(false);
+        $this->application->setTerminalDimensions(130, 30);
 
         $this->tester = new ApplicationTester($this->application);
 
@@ -357,6 +358,7 @@ class ApplicationContext implements Context
     private function normalize($string)
     {
         $string = preg_replace('/\([0-9]+ms\)/', '', $string);
+        $string = str_replace("\r", '', $string);
 
         return $string;
     }

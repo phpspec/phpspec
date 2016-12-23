@@ -32,6 +32,7 @@ navigate to the spec folder and see the spec there:
 
     namespace spec;
 
+    use Markdown;
     use PhpSpec\ObjectBehavior;
     use Prophecy\Argument;
 
@@ -39,7 +40,7 @@ navigate to the spec folder and see the spec there:
     {
         function it_is_initializable()
         {
-            $this->shouldHaveType('Markdown');
+            $this->shouldHaveType(Markdown::class);
         }
     }
 
@@ -52,9 +53,10 @@ Examples
 --------
 
 The object behavior is made up of examples. Examples are encased in public methods,
-started with ``it_``.
-or ``its_``.
+started with ``it_`` or ``its_``.
+
 **phpspec** searches for these methods in your specification to run.
+
 Why are underscores used in example names? ``just_because_its_much_easier_to_read``
 than ``someLongCamelCasingLikeThat``.
 
@@ -172,7 +174,7 @@ And voilà:
     247ms
 
 There are heaps of resources out there already if you would like to read more about
-the TDD/SpecBDD cycle. Here are just a couple for you look at:
+the TDD/SpecBDD cycle. Here are just a couple for you to look at:
 
 
 1. `The Rspec Book <http://www.amazon.com/RSpec-Book-Behaviour-Development-Cucumber/dp/1934356379>`_

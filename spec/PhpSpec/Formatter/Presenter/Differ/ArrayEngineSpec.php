@@ -9,7 +9,7 @@ class ArrayEngineSpec extends ObjectBehavior
 {
     function it_is_a_diff_engine()
     {
-        $this->shouldBeAnInstanceOf('PhpSpec\Formatter\Presenter\Differ\EngineInterface');
+        $this->shouldBeAnInstanceOf('PhpSpec\Formatter\Presenter\Differ\DifferEngine');
     }
 
     function it_supports_arrays()

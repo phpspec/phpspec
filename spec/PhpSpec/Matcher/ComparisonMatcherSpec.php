@@ -5,12 +5,12 @@ namespace spec\PhpSpec\Matcher;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 
 class ComparisonMatcherSpec extends ObjectBehavior
 {
-    function let(PresenterInterface $presenter)
+    function let(Presenter $presenter)
     {
         $presenter->presentValue(Argument::any())->willReturn('val1', 'val2');
 
@@ -19,7 +19,7 @@ class ComparisonMatcherSpec extends ObjectBehavior
 
     function it_is_a_matcher()
     {
-        $this->shouldBeAnInstanceOf('PhpSpec\Matcher\MatcherInterface');
+        $this->shouldBeAnInstanceOf('PhpSpec\Matcher\Matcher');
     }
 
     function it_responds_to_beLike()

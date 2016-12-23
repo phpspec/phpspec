@@ -11,6 +11,8 @@ instead of verifying output. You use the matchers prefixed by ``should`` or
 matchers have aliases which you can use to make your specifications easy to
 read.
 
+Custom matchers classes can be registered in :doc:`configuration<cookbook/configuration>`.
+
 Identity Matcher
 ----------------
 
@@ -36,7 +38,7 @@ the Identity matcher. It compares the result using the identity operator: ``===`
         }
     }
 
-All four ways of these ways of using the Identity matcher are equivalent.
+All four of these ways of using the Identity matcher are equivalent.
 There is no difference in how they work, this lets you choose the one which
 makes your specification easier to read.
 
@@ -66,6 +68,35 @@ follows the PHP rules for loose type comparison.
 Using ``shouldBeLike`` it does not matter whether ``StarWars::getRating()`` returns
 an integer or a string. The spec will pass for 5 and "5".
 
+Approximately Matcher
+--------------------------
+
+If you want to specify that a method returns a value that approximates to
+a certain precision the given value, you can use the Approximately matcher.
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_return_a_near_value()
+        {
+            $this->getRating()->shouldBeApproximately(1.444447777, 1.0e-9);
+            $this->getRating()->shouldBeEqualToApproximately(1.444447777, 1.0e-9);
+            $this->getRating()->shouldEqualApproximately(1.444447777, 1.0e-9);
+            $this->getRating()->shouldReturnApproximately(1.444447777, 1.0e-9);
+        }
+    }
+
+The first argument is the value we expect, the second is the delta.
+
+All four of these ways of using the Approximately matcher are equivalent. There is no difference in how they work,
+this lets you choose the one which makes your specification easier to read.
 
 Throw Matcher
 -------------
@@ -171,6 +202,72 @@ You can also use the Throw matcher with named constructors.
     }
 
 
+Trigger Matcher
+---------------
+
+Let's say you have the following class and a method which is deprecated
+
+.. code-block:: php
+
+    <?php
+
+    class Movie
+    {
+        function setStars($value)
+        {
+            trigger_error('The method setStars is deprecated. Use setRating instead', E_USER_DEPRECATED);
+
+            $this->rating = $value * 4;
+        }
+    }
+
+
+You can describe an object triggering an error using the Trigger matcher.
+You use the Trigger matcher by calling it straight from ``$this``, making
+the example easier to read.
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function set_stars_should_be_deprecated()
+        {
+            $this->shouldTrigger(E_USER_DEPRECATED)->duringSetStars(4);
+        }
+    }
+
+You may want to specify the message of the error. You can do this by
+adding a string parameter to the `shouldTrigger` method :
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function set_stars_should_be_deprecated()
+        {
+            $this->shouldTrigger(E_USER_DEPRECATED, 'The method setStars is deprecated. Use setRating instead')->duringSetRating(4);
+        }
+    }
+
+.. note::
+
+    As with the Throw matcher, you can also use the `during` syntax described
+    in the Throw section, or use the instantiation mechanisms (such as
+    duringInstantiation, ... etc)
+
+
 Type Matcher
 ------------
 
@@ -257,7 +354,7 @@ Count Matcher
 
 You can check the number of items in the return value using the Count matcher.
 The returned value could be an array or an object that implements the
-``\Countable`` interface.
+``\Countable`` or ``\Traversable`` interface.
 
 .. code-block:: php
 
@@ -305,11 +402,11 @@ e.g, ``is_bool``, ``is_integer``, ``is_float``, etc.
     }
 
 
-ArrayContain Matcher
---------------------
+IterableContain Matcher
+-----------------------
 
-You can specify that a method should return an array that contains a given
-value with the ArrayContain matcher. **phpspec** matches the value by
+You can specify that a method should return an array or an implementor of ``\Traversable`` that contains a given
+value with the IterableContain matcher. **phpspec** matches the value by
 identity (``===``).
 
 .. code-block:: php
@@ -329,10 +426,12 @@ identity (``===``).
     }
 
 
-ArrayKeyWithValue Matcher
---------------------
+IterableKeyWithValue Matcher
+----------------------------
 
-This matcher lets you assert a specific value for a specific key on a method that returns an array or an implementor of ArrayAccess.
+This matcher lets you assert a specific value for a specific key on a method that returns
+an array or an implementor of ``\ArrayAccess`` or ``\Traversable``.
+**phpspec** matches both the key and value by identity (``===``).
 
 .. code-block:: php
 
@@ -351,11 +450,11 @@ This matcher lets you assert a specific value for a specific key on a method tha
     }
 
 
-ArrayKey Matcher
-----------------
+IterableKey Matcher
+-------------------
 
-You can specify that a method should return an array or an ArrayAccess object
-with a specific key using the ArrayKey matcher.
+You can specify that a method should return an array or an object implementing ``\ArrayAccess`` or ``\Traversable``
+with a specific key using the IterableKey matcher. **phpspec** matches the key by identity (``===``).
 
 .. code-block:: php
 
@@ -372,6 +471,62 @@ with a specific key using the ArrayKey matcher.
             $this->getReleaseDates()->shouldHaveKey('France');
         }
     }
+
+
+IterateAs Matcher
+-----------------
+
+This matcher lets you specify that a method should return an array or an object implementing ``\Traversable`` that
+iterates just as the argument you passed to it. **phpspec** matches both the key and the value by identity (``===``).
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_contain_jane_smith_and_john_smith_in_the_cast()
+        {
+            $this->getCast()->shouldIterateAs(new \ArrayIterator(['Jane Smith', 'John Smith']));
+            $this->getCast()->shouldYield(new \ArrayIterator(['Jane Smith', 'John Smith']));
+        }
+    }
+
+Both of these ways of using the IterateAs matcher are equivalent.
+There is no difference in how they work, this lets you choose the one which
+makes your specification easier to read.
+
+
+StartIteratingAs Matcher
+------------------------
+
+This matcher lets you specify that a method should return an array or an object implementing ``\Traversable`` that
+starts iterating just as the argument you passed to it. **phpspec** matches both the key and the value by identity (``===``).
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_contain_at_least_jane_smith_in_the_cast()
+        {
+            $this->getCast()->shouldStartIteratingAs(new \ArrayIterator(['Jane Smith']));
+            $this->getCast()->shouldStartYielding(new \ArrayIterator(['Jane Smith']));
+        }
+    }
+
+Both of these ways of using the StartIteratingAs matcher are equivalent.
+There is no difference in how they work, this lets you choose the one which
+makes your specification easier to read.
 
 
 StringContain Matcher
@@ -400,7 +555,7 @@ containing a given substring. This matcher is case sensitive.
 StringStart Matcher
 -------------------
 
-The StringStarts matcher lets you specify that a method should return a string
+The StringStart matcher lets you specify that a method should return a string
 starting with a given substring.
 
 .. code-block:: php
@@ -469,7 +624,7 @@ matching a given regular expression.
 Inline Matcher
 --------------
 
-You can create custom matchers using the Inline matcher.
+You can create custom matchers by providing them in ``getMatchers`` method.
 
 .. code-block:: php
 
@@ -478,7 +633,6 @@ You can create custom matchers using the Inline matcher.
     namespace spec;
 
     use PhpSpec\ObjectBehavior;
-    use PhpSpec\Matcher\InlineMatcher;
 
     class MovieSpec extends ObjectBehavior
     {
@@ -511,7 +665,6 @@ your inline matcher should throw `FailureException`:
     namespace spec;
 
     use PhpSpec\ObjectBehavior;
-    use PhpSpec\Matcher\InlineMatcher;
     use PhpSpec\Exception\Example\FailureException;
 
     class MovieSpec extends ObjectBehavior

@@ -13,25 +13,29 @@
 
 namespace PhpSpec\Console;
 
-use PhpSpec\Console\Prompter\Factory;
+use PhpSpec\Exception\Configuration\InvalidConfigurationException;
 use PhpSpec\Loader\StreamWrapper;
+use PhpSpec\Matcher\Matcher;
 use PhpSpec\Process\Context\JsonExecutionContext;
+use PhpSpec\ServiceContainer;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
-use PhpSpec\ServiceContainer;
+use PhpSpec\ServiceContainer\IndexedServiceContainer;
 use PhpSpec\Extension;
 use RuntimeException;
 
 /**
  * The command line application entry point
+ *
+ * @internal
  */
-class Application extends BaseApplication
+final class Application extends BaseApplication
 {
     /**
-     * @var ServiceContainer
+     * @var IndexedServiceContainer
      */
     private $container;
 
@@ -40,7 +44,7 @@ class Application extends BaseApplication
      */
     public function __construct($version)
     {
-        $this->container = new ServiceContainer();
+        $this->container = new IndexedServiceContainer();
         parent::__construct('phpspec', $version);
     }
 
@@ -63,15 +67,9 @@ class Application extends BaseApplication
         $helperSet = $this->getHelperSet();
         $this->container->set('console.input', $input);
         $this->container->set('console.output', $output);
-        $this->container->setShared('console.prompter.factory', function ($c) use ($helperSet) {
-            return new Factory(
-                $c->get('console.input'),
-                $c->get('console.output'),
-                $helperSet
-            );
-        });
+        $this->container->set('console.helper_set', $helperSet);
 
-        $this->container->setShared('process.executioncontext', function () {
+        $this->container->define('process.executioncontext', function () {
             return JsonExecutionContext::fromEnv($_SERVER);
         });
 
@@ -80,7 +78,7 @@ class Application extends BaseApplication
 
         $this->loadConfigurationFile($input, $this->container);
 
-        foreach ($this->container->getByPrefix('console.commands') as $command) {
+        foreach ($this->container->getByTag('console.commands') as $command) {
             $this->add($command);
         }
 
@@ -96,7 +94,7 @@ class Application extends BaseApplication
         $this->container->get('console.io')->setConsoleWidth($consoleWidth);
 
         StreamWrapper::reset();
-        foreach ($this->container->getByPrefix('loader.resource_loader.spec_transformer') as $transformer) {
+        foreach ($this->container->getByTag('loader.resource_loader.spec_transformer') as $transformer) {
             StreamWrapper::addTransformer($transformer);
         }
         StreamWrapper::register();
@@ -139,32 +137,70 @@ class Application extends BaseApplication
 
     /**
      * @param InputInterface   $input
-     * @param ServiceContainer $container
+     * @param IndexedServiceContainer $container
      *
      * @throws \RuntimeException
      */
-    protected function loadConfigurationFile(InputInterface $input, ServiceContainer $container)
+    protected function loadConfigurationFile(InputInterface $input, IndexedServiceContainer $container)
     {
         $config = $this->parseConfigurationFile($input);
 
         foreach ($config as $key => $val) {
             if ('extensions' === $key && is_array($val)) {
-                foreach ($val as $class) {
-                    $extension = new $class();
-
-                    if (!$extension instanceof Extension\ExtensionInterface) {
-                        throw new RuntimeException(sprintf(
-                            'Extension class must implement ExtensionInterface. But `%s` is not.',
-                            $class
-                        ));
-                    }
-
-                    $extension->load($container);
+                foreach ($val as $class => $extensionConfig) {
+                    $this->loadExtension($container, $class, $extensionConfig ?: []);
                 }
-            } else {
+            }
+            elseif ('matchers' === $key && is_array($val)) {
+                $this->registerCustomMatchers($container, $val);
+            }
+            else {
                 $container->setParam($key, $val);
             }
         }
+    }
+
+    private function registerCustomMatchers(IndexedServiceContainer $container, array $matchersClassnames)
+    {
+        foreach ($matchersClassnames as $class) {
+            $this->ensureIsValidMatcherClass($class);
+
+            $container->define(sprintf('matchers.%s', $class), function () use ($class) {
+                return new $class();
+            }, ['matchers']);
+        }
+    }
+
+    private function ensureIsValidMatcherClass($class)
+    {
+        if (!class_exists($class)) {
+            throw new InvalidConfigurationException(sprintf('Custom matcher %s does not exist.', $class));
+        }
+
+        if (!is_subclass_of($class, Matcher::class)) {
+            throw new InvalidConfigurationException(sprintf(
+                'Custom matcher %s must implement %s interface, but it does not.',
+                $class,
+                Matcher::class
+            ));
+        }
+    }
+
+    private function loadExtension(ServiceContainer $container, $extensionClass, $config)
+    {
+        if (!class_exists($extensionClass)) {
+            throw new InvalidConfigurationException(sprintf('Extension class `%s` does not exist.', $extensionClass));
+        }
+
+        if (!is_array($config)) {
+            throw new InvalidConfigurationException('Extension configuration must be an array or null.');
+        }
+
+        if (!is_a($extensionClass, Extension::class, true)) {
+            throw new InvalidConfigurationException(sprintf('Extension class `%s` must implement Extension interface', $extensionClass));
+        }
+
+        (new $extensionClass)->load($container, $config);
     }
 
     /**

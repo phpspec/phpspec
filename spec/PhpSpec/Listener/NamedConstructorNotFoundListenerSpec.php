@@ -3,7 +3,7 @@
 namespace spec\PhpSpec\Listener;
 
 use PhpSpec\CodeGenerator\GeneratorManager;
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\NamedConstructorNotFoundException;
@@ -13,7 +13,7 @@ use Prophecy\Argument;
 
 class NamedConstructorNotFoundListenerSpec extends ObjectBehavior
 {
-    function let(IO $io, ResourceManager $resourceManager, GeneratorManager $generatorManager,
+    function let(ConsoleIO $io, ResourceManager $resourceManager, GeneratorManager $generatorManager,
                  SuiteEvent $suiteEvent, ExampleEvent $exampleEvent)
     {
         $io->writeln(Argument::any())->willReturn();

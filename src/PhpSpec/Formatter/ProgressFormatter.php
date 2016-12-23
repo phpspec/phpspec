@@ -13,11 +13,11 @@
 
 namespace PhpSpec\Formatter;
 
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
 
-class ProgressFormatter extends ConsoleFormatter
+final class ProgressFormatter extends ConsoleFormatter
 {
     const FPS = 10;
 
@@ -142,11 +142,11 @@ class ProgressFormatter extends ConsoleFormatter
     }
 
     /**
-     * @param IO    $io
-     * @param array $progress
-     * @param int   $total
+     * @param ConsoleIO $io
+     * @param array     $progress
+     * @param int       $total
      */
-    private function updateProgressBar(IO $io, array $progress, $total)
+    private function updateProgressBar(ConsoleIO $io, array $progress, $total)
     {
         if ($io->isDecorated()) {
             $progressBar = implode('', $progress);

@@ -9,7 +9,7 @@ class ReservedWordsMethodNameCheckerSpec extends ObjectBehavior
 {
     function it_is_restriction_provider()
     {
-        $this->shouldHaveType('PhpSpec\Util\NameCheckerInterface');
+        $this->shouldHaveType('PhpSpec\Util\NameChecker');
     }
 
     function it_returns_true_for_not_php_restricted_name()

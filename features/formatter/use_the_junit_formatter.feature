@@ -41,7 +41,7 @@ Feature: Use the JUnit formatter
           // skipped
           function it_does_some_incompatible_things()
           {
-              throw new \PhpSpec\Exception\Example\SkippingException();
+              throw new \PhpSpec\Exception\Example\SkippingException('skipped');
           }
       }
 

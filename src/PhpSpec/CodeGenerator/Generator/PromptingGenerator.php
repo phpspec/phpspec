@@ -13,20 +13,19 @@
 
 namespace PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
-use PhpSpec\Process\Context\JsonExecutionContext;
-use PhpSpec\Process\Context\ExecutionContextInterface;
+use PhpSpec\Process\Context\ExecutionContext;
 use PhpSpec\Util\Filesystem;
-use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\Locator\Resource;
 
 /**
  * Base class with common behaviour for generating class and spec class
  */
-abstract class PromptingGenerator implements GeneratorInterface
+abstract class PromptingGenerator implements Generator
 {
     /**
-     * @var IO
+     * @var ConsoleIO
      */
     private $io;
 
@@ -41,29 +40,29 @@ abstract class PromptingGenerator implements GeneratorInterface
     private $filesystem;
 
     /**
-     * @var ExecutionContextInterface
+     * @var ExecutionContext
      */
     private $executionContext;
 
     /**
-     * @param IO $io
+     * @param ConsoleIO $io
      * @param TemplateRenderer $templates
      * @param Filesystem $filesystem
-     * @param ExecutionContextInterface $executionContext
+     * @param ExecutionContext $executionContext
      */
-    public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null, ExecutionContextInterface $executionContext = null)
+    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, ExecutionContext $executionContext)
     {
         $this->io         = $io;
         $this->templates  = $templates;
-        $this->filesystem = $filesystem ?: new Filesystem();
-        $this->executionContext = $executionContext ?: new JsonExecutionContext();
+        $this->filesystem = $filesystem;
+        $this->executionContext = $executionContext;
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param array             $data
      */
-    public function generate(ResourceInterface $resource, array $data = array())
+    public function generate(Resource $resource, array $data = array())
     {
         $filepath = $this->getFilePath($resource);
 
@@ -89,27 +88,27 @@ abstract class PromptingGenerator implements GeneratorInterface
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      *
      * @return string
      */
-    abstract protected function getFilePath(ResourceInterface $resource);
+    abstract protected function getFilePath(Resource $resource);
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $filepath
      *
      * @return string
      */
-    abstract protected function renderTemplate(ResourceInterface $resource, $filepath);
+    abstract protected function renderTemplate(Resource $resource, $filepath);
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $filepath
      *
      * @return string
      */
-    abstract protected function getGeneratedMessage(ResourceInterface $resource, $filepath);
+    abstract protected function getGeneratedMessage(Resource $resource, $filepath);
 
     /**
      * @param string $filepath
@@ -145,10 +144,10 @@ abstract class PromptingGenerator implements GeneratorInterface
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $filepath
      */
-    private function generateFileAndRenderTemplate(ResourceInterface $resource, $filepath)
+    private function generateFileAndRenderTemplate(Resource $resource, $filepath)
     {
         $content = $this->renderTemplate($resource, $filepath);
 

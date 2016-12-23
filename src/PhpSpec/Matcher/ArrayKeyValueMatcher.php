@@ -15,19 +15,19 @@ namespace PhpSpec\Matcher;
 
 use ArrayAccess;
 use PhpSpec\Exception\Example\FailureException;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 
-class ArrayKeyValueMatcher extends BasicMatcher
+final class ArrayKeyValueMatcher extends BasicMatcher
 {
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
 
     /**
-     * @param PresenterInterface $presenter
+     * @param Presenter $presenter
      */
-    public function __construct(PresenterInterface $presenter)
+    public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }

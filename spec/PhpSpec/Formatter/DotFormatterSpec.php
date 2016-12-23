@@ -2,8 +2,8 @@
 
 namespace spec\PhpSpec\Formatter;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\Console\IO;
+use PhpSpec\Formatter\Presenter\Presenter;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
@@ -16,7 +16,7 @@ use ReflectionFunctionAbstract;
 
 class DotFormatterSpec extends ObjectBehavior
 {
-    function let(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
+    function let(Presenter $presenter, ConsoleIO $io, StatisticsCollector $stats)
     {
         $this->beConstructedWith($presenter, $io, $stats);
     }
@@ -28,7 +28,7 @@ class DotFormatterSpec extends ObjectBehavior
 
     function it_outputs_a_dot_for_a_passed_example(
         ExampleEvent $event,
-        IO $io,
+        ConsoleIO $io,
         StatisticsCollector $stats
     ) {
         $event->getResult()->willReturn(ExampleEvent::PASSED);
@@ -40,7 +40,7 @@ class DotFormatterSpec extends ObjectBehavior
 
     function it_outputs_a_p_for_a_pending_example(
         ExampleEvent $event,
-        IO $io,
+        ConsoleIO $io,
         StatisticsCollector $stats
     ) {
         $event->getResult()->willReturn(ExampleEvent::PENDING);
@@ -52,7 +52,7 @@ class DotFormatterSpec extends ObjectBehavior
 
     function it_outputs_an_s_for_a_skipped_example(
         ExampleEvent $event,
-        IO $io,
+        ConsoleIO $io,
         StatisticsCollector $stats
     ) {
         $event->getResult()->willReturn(ExampleEvent::SKIPPED);
@@ -64,7 +64,7 @@ class DotFormatterSpec extends ObjectBehavior
 
     function it_outputs_an_f_for_a_failed_example(
         ExampleEvent $event,
-        IO $io,
+        ConsoleIO $io,
         StatisticsCollector $stats
     ) {
         $event->getResult()->willReturn(ExampleEvent::FAILED);
@@ -76,7 +76,7 @@ class DotFormatterSpec extends ObjectBehavior
 
     function it_outputs_a_b_for_a_broken_example(
         ExampleEvent $event,
-        IO $io,
+        ConsoleIO $io,
         StatisticsCollector $stats
     ) {
         $event->getResult()->willReturn(ExampleEvent::BROKEN);
@@ -89,7 +89,7 @@ class DotFormatterSpec extends ObjectBehavior
     function it_outputs_the_progress_every_50_examples(
         ExampleEvent $exampleEvent,
         SuiteEvent $suiteEvent,
-        IO $io,
+        ConsoleIO $io,
         StatisticsCollector $stats
     ) {
         $exampleEvent->getResult()->willReturn(ExampleEvent::PASSED);
@@ -105,14 +105,12 @@ class DotFormatterSpec extends ObjectBehavior
     function it_outputs_exceptions_for_failed_examples(
         SuiteEvent $event,
         ExampleEvent $pendingEvent,
-        IO $io,
+        ConsoleIO $io,
         StatisticsCollector $stats,
         SpecificationNode $specification,
-        ExampleNode $example,
-        ReflectionFunctionAbstract $reflectionFunction
+        ExampleNode $example
     ) {
-        $reflectionFunction->getStartLine()->willReturn(37);
-        $example->getFunctionReflection()->willReturn($reflectionFunction);
+        $example->getLineNumber()->willReturn(37);
         $example->getTitle()->willReturn('it tests something');
         $pendingEvent->getException()->willReturn(new PendingException());
         $pendingEvent->getSpecification()->willReturn($specification);
@@ -141,7 +139,7 @@ class DotFormatterSpec extends ObjectBehavior
 
     function it_outputs_a_suite_summary(
         SuiteEvent $event,
-        IO $io,
+        ConsoleIO $io,
         StatisticsCollector $stats
     ) {
         $stats->getEventsCount()->willReturn(1);

@@ -13,22 +13,22 @@
 
 namespace PhpSpec\Process\ReRunner;
 
-use PhpSpec\Process\Context\ExecutionContextInterface;
+use PhpSpec\Process\Context\ExecutionContext;
 use Symfony\Component\Process\PhpExecutableFinder;
 
 final class ProcOpenReRunner extends PhpExecutableReRunner
 {
     /**
-     * @var ExecutionContextInterface
+     * @var ExecutionContext
      */
     private $executionContext;
 
     /**
      * @param PhpExecutableFinder $phpExecutableFinder
-     * @param ExecutionContextInterface $executionContext
+     * @param ExecutionContext $executionContext
      * @return static
      */
-    public static function withExecutionContext(PhpExecutableFinder $phpExecutableFinder, ExecutionContextInterface $executionContext)
+    public static function withExecutionContext(PhpExecutableFinder $phpExecutableFinder, ExecutionContext $executionContext)
     {
         $reRunner = new static($phpExecutableFinder);
         $reRunner->executionContext = $executionContext;
@@ -52,11 +52,11 @@ final class ProcOpenReRunner extends PhpExecutableReRunner
         $args = $_SERVER['argv'];
         $command = $this->buildArgString() . escapeshellcmd($this->getExecutablePath()).' '.join(' ', array_map('escapeshellarg', $args)) . ' 2>&1';
 
-        $desc = array(
-            0 => array('file', 'php://stdin', 'r'),
-            1 => array('file', 'php://stdout', 'w'),
-            2 => array('file', 'php://stderr', 'w'),
-        );
+        $desc = [
+            0 => ['file', 'php://stdin', 'r'],
+            1 => ['file', 'php://stdout', 'w'],
+            2 => ['file', 'php://stderr', 'w'],
+        ];
         $proc = proc_open( $command, $desc, $pipes );
 
         do {

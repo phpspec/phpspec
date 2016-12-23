@@ -7,7 +7,7 @@ use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Formatter\Template;
-use PhpSpec\Formatter\Presenter\PresenterInterface as Presenter;
+use PhpSpec\Formatter\Presenter\Presenter;
 
 class ReportItemFactorySpec extends ObjectBehavior
 {

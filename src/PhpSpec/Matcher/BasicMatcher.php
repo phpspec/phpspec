@@ -15,7 +15,7 @@ namespace PhpSpec\Matcher;
 
 use PhpSpec\Exception\Example\FailureException;
 
-abstract class BasicMatcher implements MatcherInterface
+abstract class BasicMatcher implements Matcher
 {
     /**
      * @param string $name

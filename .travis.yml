@@ -8,18 +8,16 @@ cache:
 
 matrix:
   include:
-    - php: 5.3
-    - php: 5.3
-      env: DEPENDENCIES='low'
-    - php: 5.4
-    - php: 5.5
     - php: 5.6
-      env: DEPENDENCIES='dev'
+      env: DEPENDENCIES='low'
     - php: 5.6
     - php: hhvm
     - php: 7.0
+    - php: 7.1
+      env: DEPENDENCIES='dev'
+    - php: nightly
   allow_failures:
-    - env: DEPENDENCIES='dev'
+    - php: nightly
   fast_finish: true
 
 before_install:

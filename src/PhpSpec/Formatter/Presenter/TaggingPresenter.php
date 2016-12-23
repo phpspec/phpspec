@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Formatter\Presenter;
 
-final class TaggingPresenter implements PresenterInterface
+final class TaggingPresenter implements Presenter
 {
     /**
      * @var Presenter

@@ -5,14 +5,14 @@ namespace spec\PhpSpec\Matcher;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 
 use ArrayObject;
 
 class ArrayCountMatcherSpec extends ObjectBehavior
 {
-    function let(PresenterInterface $presenter)
+    function let(Presenter $presenter)
     {
         $presenter->presentValue(Argument::any())->willReturn('countable');
         $presenter->presentString(Argument::any())->willReturnArgument();
@@ -22,7 +22,7 @@ class ArrayCountMatcherSpec extends ObjectBehavior
 
     function it_is_a_matcher()
     {
-        $this->shouldBeAnInstanceOf('PhpSpec\Matcher\MatcherInterface');
+        $this->shouldBeAnInstanceOf('PhpSpec\Matcher\Matcher');
     }
 
     function it_responds_to_haveCount()

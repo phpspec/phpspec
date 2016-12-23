@@ -81,23 +81,4 @@ class Filesystem
 
         return iterator_to_array($finder);
     }
-
-    /**
-     * @param $path
-     *
-     * @deprecated deprecated since 2.1
-     * @return array
-     */
-    public function findPhpFilesIn($path)
-    {
-        $finder = Finder::create()
-            ->files()
-            ->name('*.php')
-            ->followLinks()
-            ->sortByName()
-            ->in($path)
-        ;
-
-        return iterator_to_array($finder);
-    }
 }

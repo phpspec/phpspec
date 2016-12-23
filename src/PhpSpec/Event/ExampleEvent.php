@@ -19,7 +19,7 @@ use PhpSpec\Loader\Node\ExampleNode;
 /**
  * Class ExampleEvent holds the information about the example event
  */
-class ExampleEvent extends Event implements EventInterface
+class ExampleEvent extends Event implements PhpSpecEvent
 {
     /**
      * Spec passed

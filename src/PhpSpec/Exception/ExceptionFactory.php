@@ -14,7 +14,7 @@
 namespace PhpSpec\Exception;
 
 use PhpSpec\Exception\Wrapper\SubjectException;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Util\Instantiator;
 
 /**
@@ -23,14 +23,14 @@ use PhpSpec\Util\Instantiator;
 class ExceptionFactory
 {
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
 
     /**
-     * @param PresenterInterface $presenter
+     * @param Presenter $presenter
      */
-    public function __construct(PresenterInterface $presenter)
+    public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }

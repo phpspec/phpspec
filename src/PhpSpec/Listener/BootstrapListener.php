@@ -2,17 +2,17 @@
 
 namespace PhpSpec\Listener;
 
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class BootstrapListener implements EventSubscriberInterface
+final class BootstrapListener implements EventSubscriberInterface
 {
     /**
-     * @var IO
+     * @var ConsoleIO
      */
     private $io;
 
-    public function __construct(IO $io)
+    public function __construct(ConsoleIO $io)
     {
         $this->io = $io;
     }

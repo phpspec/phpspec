@@ -20,7 +20,96 @@ use PhpSpec\Wrapper\Subject\ExpectationFactory;
 use PhpSpec\Util\Instantiator;
 use ArrayAccess;
 
-class Subject implements ArrayAccess, WrapperInterface
+/**
+ * @method void shouldHaveType($type)
+ * @method void shouldNotHaveType($type)
+ * @method void shouldReturnAnInstanceOf($type)
+ * @method void shouldNotReturnAnInstanceOf($type)
+ * @method void shouldBeAnInstanceOf($type)
+ * @method void shouldNotBeAnInstanceOf($type)
+ * @method void shouldImplement($interface)
+ * @method void shouldNotImplement($interface)
+ *
+ * @method void shouldBe($value)
+ * @method void shouldNotBe($value)
+ * @method void shouldBeEqualTo($value)
+ * @method void shouldNotBeEqualTo($value)
+ * @method void shouldReturn($value)
+ * @method void shouldNotReturn($value)
+ * @method void shouldEqual($value)
+ * @method void shouldNotEqual($value)
+ *
+ * @method void shouldBeLike($value)
+ * @method void shouldNotBeLike($value)
+ *
+ * @method void shouldHaveCount($count)
+ * @method void shouldNotHaveCount($count)
+ *
+ * @method void shouldBeArray()
+ * @method void shouldNotBeArray()
+ * @method void shouldBeBool()
+ * @method void shouldNotBeBool()
+ * @method void shouldBeBoolean()
+ * @method void shouldNotBeBoolean()
+ * @method void shouldBeCallable()
+ * @method void shouldNotBeCallable()
+ * @method void shouldBeDouble()
+ * @method void shouldNotBeDouble()
+ * @method void shouldBeFloat()
+ * @method void shouldNotBeFloat()
+ * @method void shouldBeInt()
+ * @method void shouldNotBeInt()
+ * @method void shouldBeInteger()
+ * @method void shouldNotBeInteger()
+ * @method void shouldBeLong()
+ * @method void shouldNotBeLong()
+ * @method void shouldBeNull()
+ * @method void shouldNotBeNull()
+ * @method void shouldBeNumeric()
+ * @method void shouldNotBeNumeric()
+ * @method void shouldBeObject()
+ * @method void shouldNotBeObject()
+ * @method void shouldBeReal()
+ * @method void shouldNotBeReal()
+ * @method void shouldBeResource()
+ * @method void shouldNotBeResource()
+ * @method void shouldBeScalar()
+ * @method void shouldNotBeScalar()
+ * @method void shouldBeString()
+ * @method void shouldNotBeString()
+ * @method void shouldBeNan()
+ * @method void shouldNotBeNan()
+ * @method void shouldBeFinite()
+ * @method void shouldNotBeFinite()
+ * @method void shouldBeInfinite()
+ * @method void shouldNotBeInfinite()
+ *
+ * @method void shouldBeApproximately($value, $precision)
+ *
+ * @method void shouldContain($value)
+ * @method void shouldNotContain($value)
+ *
+ * @method void shouldHaveKeyWithValue($key, $value)
+ * @method void shouldNotHaveKeyWithValue($key, $value)
+ *
+ * @method void shouldHaveKey($key)
+ * @method void shouldNotHaveKey($key)
+ *
+ * @method void shouldStartWith($string)
+ * @method void shouldNotStartWith($string)
+ *
+ * @method void shouldEndWith($string)
+ * @method void shouldNotEndWith($string)
+ *
+ * @method void shouldMatch($regex)
+ * @method void shouldNotMatch($regex)
+ *
+ * @method void shouldIterateAs($iterable)
+ * @method void shouldNotIterateAs($iterable)
+ * @method void shouldStartIteratingAs($iterable)
+ * @method void shouldNotStartIteratingAs($iterable)
+ */
+class Subject implements ArrayAccess, ObjectWrapper
 {
     /**
      * @var mixed
@@ -148,7 +237,7 @@ class Subject implements ArrayAccess, WrapperInterface
      */
     public function offsetExists($key)
     {
-        return $this->wrap($this->arrayAccess->offSetExists($key));
+        return $this->wrap($this->arrayAccess->offsetExists($key));
     }
 
     /**
@@ -264,10 +353,10 @@ class Subject implements ArrayAccess, WrapperInterface
      */
     private function makeSureWeHaveASubject()
     {
-        if (null === $this->subject && $this->wrappedObject->getClassname()) {
+        if (null === $this->subject && $this->wrappedObject->getClassName()) {
             $instantiator = new Instantiator();
 
-            return $instantiator->instantiate($this->wrappedObject->getClassname());
+            return $instantiator->instantiate($this->wrappedObject->getClassName());
         }
 
         return $this->subject;

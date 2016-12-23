@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Formatter\Presenter\Differ;
 
-class ArrayEngine extends StringEngine
+final class ArrayEngine extends StringEngine
 {
     public function supports($expected, $actual)
     {

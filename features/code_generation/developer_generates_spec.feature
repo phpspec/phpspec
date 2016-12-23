@@ -11,6 +11,7 @@ Feature: Developer generates a spec
 
       namespace spec\CodeGeneration\SpecExample1;
 
+      use CodeGeneration\SpecExample1\Markdown;
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
 
@@ -18,7 +19,7 @@ Feature: Developer generates a spec
       {
           function it_is_initializable()
           {
-              $this->shouldHaveType('CodeGeneration\SpecExample1\Markdown');
+              $this->shouldHaveType(Markdown::class);
           }
       }
 
@@ -43,6 +44,7 @@ Feature: Developer generates a spec
 
     namespace CodeGeneration\SpecExample2;
 
+    use CodeGeneration\SpecExample2\Markdown;
     use PhpSpec\ObjectBehavior;
     use Prophecy\Argument;
 
@@ -50,7 +52,7 @@ Feature: Developer generates a spec
     {
         function it_is_initializable()
         {
-            $this->shouldHaveType('CodeGeneration\SpecExample2\Markdown');
+            $this->shouldHaveType(Markdown::class);
         }
     }
 
@@ -75,6 +77,7 @@ Feature: Developer generates a spec
 
     namespace CodeGeneration\SpecExample2;
 
+    use CodeGeneration\SpecExample2\Markdown;
     use PhpSpec\ObjectBehavior;
     use Prophecy\Argument;
 
@@ -82,7 +85,7 @@ Feature: Developer generates a spec
     {
         function it_is_initializable()
         {
-            $this->shouldHaveType('CodeGeneration\SpecExample2\Markdown');
+            $this->shouldHaveType(Markdown::class);
         }
     }
 
@@ -97,6 +100,7 @@ Feature: Developer generates a spec
 
       namespace spec\CodeGeneration\SpecExample1;
 
+      use CodeGeneration\SpecExample1\Text_Markdown;
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
 
@@ -104,7 +108,7 @@ Feature: Developer generates a spec
       {
           function it_is_initializable()
           {
-              $this->shouldHaveType('CodeGeneration\SpecExample1\Text_Markdown');
+              $this->shouldHaveType(Text_Markdown::class);
           }
       }
 
@@ -119,6 +123,7 @@ Feature: Developer generates a spec
 
       namespace spec\CodeGeneration\Spec_Example2;
 
+      use CodeGeneration\Spec_Example2\Text_Markdown;
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
 
@@ -126,7 +131,7 @@ Feature: Developer generates a spec
       {
           function it_is_initializable()
           {
-              $this->shouldHaveType('CodeGeneration\Spec_Example2\Text_Markdown');
+              $this->shouldHaveType(Text_Markdown::class);
           }
       }
 
@@ -147,6 +152,7 @@ Feature: Developer generates a spec
 
       namespace spec\Behat\CodeGeneration;
 
+      use Behat\CodeGeneration\Markdown;
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
 
@@ -154,7 +160,7 @@ Feature: Developer generates a spec
       {
           function it_is_initializable()
           {
-              $this->shouldHaveType('Behat\CodeGeneration\Markdown');
+              $this->shouldHaveType(Markdown::class);
           }
       }
 

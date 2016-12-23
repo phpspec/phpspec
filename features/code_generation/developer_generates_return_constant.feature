@@ -260,7 +260,6 @@ Feature: Developer generates a method returning a constant
     When I run phpspec interactively
     Then I should be prompted for code generation
 
-  @php:~5.4||~7.0
   Scenario: Generating a scalar return type when method is in trait
     Given the spec file "spec/CodeGeneration/ConstantExample7/MarkdownSpec.php" contains:
       """
