@@ -8,14 +8,13 @@ cache:
 
 matrix:
   include:
-    - php: 5.6
+    - php: 7.0
       env: DEPENDENCIES='low'
-    - php: 5.6
-    - php: hhvm
     - php: 7.0
     - php: 7.1
       env: DEPENDENCIES='dev'
     - php: nightly
+    - php: hhvm
   allow_failures:
     - php: nightly
   fast_finish: true
@@ -49,5 +48,5 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
-    php: 5.6
+    php: 7.0
     condition: $DEPENDENCIES != "low"
