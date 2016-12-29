@@ -12,9 +12,9 @@ matrix:
       env: DEPENDENCIES='low'
     - php: 7.0
     - php: 7.1
+    - php: 7.1
       env: DEPENDENCIES='dev'
     - php: nightly
-    - php: hhvm
   allow_failures:
     - php: nightly
   fast_finish: true
