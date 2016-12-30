@@ -1,7 +1,10 @@
-<phpunit bootstrap="vendor/autoload.php">
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/5.7/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true">
     <testsuites>
-        <testsuite>
-            <directory>integration</directory>
+        <testsuite name="PhpSpec">
+            <directory suffix="Test.php">integration</directory>
         </testsuite>
     </testsuites>
 </phpunit>
