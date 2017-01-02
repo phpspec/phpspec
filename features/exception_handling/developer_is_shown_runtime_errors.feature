@@ -1,4 +1,3 @@
-@php:~7.0
 Feature: Developer is shown runtime errors
   As a developer
   To debug fatal errors better

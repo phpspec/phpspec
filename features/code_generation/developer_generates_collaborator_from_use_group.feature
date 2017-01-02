@@ -1,4 +1,3 @@
-@php:~7.0
 Feature: Developer generates a collaborator
   As a Developer
   I want to automate creating collaborators
