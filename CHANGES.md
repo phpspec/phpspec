@@ -3,6 +3,11 @@
 
 * Dropped support for PHP versions less than 7.0 (@ciaranmcnulty)
 
+3.2.3 / 2016-01-29
+==================
+
+* Typehint support for shouldYield/shouldYieldAs
+
 3.2.2 / 2016-12-04
 ==================
 
