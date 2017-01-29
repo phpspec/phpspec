@@ -22,6 +22,7 @@ use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Terminal;
 use Symfony\Component\Yaml\Yaml;
 use PhpSpec\ServiceContainer\IndexedServiceContainer;
 use PhpSpec\Extension;
@@ -84,12 +85,7 @@ final class Application extends BaseApplication
 
         $this->setDispatcher($this->container->get('console_event_dispatcher'));
 
-        if (class_exists('\Symfony\Component\Console\Terminal')) {
-            $terminal = new \Symfony\Component\Console\Terminal();
-            $consoleWidth = $terminal->getWidth();
-        } else {
-            $consoleWidth = $this->getTerminalWidth();
-        }
+        $consoleWidth = (new Terminal)->getWidth();
 
         $this->container->get('console.io')->setConsoleWidth($consoleWidth);
 
