@@ -79,8 +79,8 @@ template you are overriding:
    - ``%filepath%`` the file path of the class
    - ``%name%``  the specification name
    - ``%namespace%`` the specification namespace
-   - ``%subject%`` the name of the class being specified
-   - ``%subject_class%`` the name of the subject class being specified
+   - ``%subject%`` the fully-qualified name of the class being specified
+   - ``%subject_class%`` the name of the class being specified
 
 **class**
    - ``%filepath%`` the file path of the class
