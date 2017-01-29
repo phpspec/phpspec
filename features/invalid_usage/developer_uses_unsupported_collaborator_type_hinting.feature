@@ -84,8 +84,6 @@ Feature: Developer uses unsupported collaborator type hinting
             spec\InvalidUsage\InvalidUsageExample2\InvokerSpec::it_invokes_callable.
       """
 
-
-  @php:~7.0
   Scenario: Integer collaborator type hinting
     Given the spec file "spec/InvalidUsage/InvalidUsageExample3/StorageSpec.php" contains:
       """

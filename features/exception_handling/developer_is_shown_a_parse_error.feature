@@ -42,7 +42,6 @@ Feature: Developer is shown a parse error
     When I run phpspec with the "junit" formatter
     Then I should see "syntax error"
 
-  @php:~7.0
   Scenario: Parse error in class
     Given the spec file "spec/Message/Fatal/ParseSpec.php" contains:
       """
@@ -81,7 +80,6 @@ Feature: Developer is shown a parse error
     When I run phpspec
     Then I should see "1 broken"
 
-  @php:~7.0
   Scenario: Parse error in spec
     Given the spec file "spec/Message/Fatal2/ParseSpec.php" contains:
       """
