@@ -1,7 +1,7 @@
 3.2.3 / 2016-01-29
 ==================
 
-* Typehint support for shouldYield/shouldYieldAs
+* Typehint support for shouldYield/shouldYieldAs (@pamil)
 
 3.2.2 / 2016-12-04
 ==================
