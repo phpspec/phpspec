@@ -135,7 +135,7 @@ class ApplicationContext implements Context
      */
     public function iRunPhpspecAndAnswerToTheThreeQuestions($answer)
     {
-        $this->runPhpSpecAndAnswerQuestions($answer, 5);
+        $this->runPhpSpecAndAnswerQuestions($answer, 3);
     }
 
     /**
