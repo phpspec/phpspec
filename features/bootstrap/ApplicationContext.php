@@ -119,15 +119,7 @@ class ApplicationContext implements Context
      */
     public function iRunPhpspecAndAnswerWhenAskedIfIWantToGenerateTheCode($answer, $option=null)
     {
-        $arguments = array (
-            'command' => 'run'
-        );
-
-        $this->addOptionToArguments($option, $arguments);
-
-        $this->prompter->setAnswer($answer=='y');
-
-        $this->lastExitCode = $this->tester->run($arguments, array('interactive' => true));
+        $this->runPhpSpecAndAnswerQuestions($answer, 1, $option);
     }
 
     /**
@@ -135,12 +127,34 @@ class ApplicationContext implements Context
      */
     public function iRunPhpspecAndAnswerToBothQuestions($answer)
     {
+        $this->runPhpSpecAndAnswerQuestions($answer, 2);
+    }
+
+    /**
+     * @When I run phpspec and answer :answer to the three questions
+     */
+    public function iRunPhpspecAndAnswerToTheThreeQuestions($answer)
+    {
+        $this->runPhpSpecAndAnswerQuestions($answer, 5);
+    }
+
+    /**
+     * @param string  $answer
+     * @param integer $times
+     * @param string  $option
+     */
+    private function runPhpSpecAndAnswerQuestions($answer, $times, $option = null)
+    {
         $arguments = array (
             'command' => 'run'
         );
 
-        $this->prompter->setAnswer($answer=='y');
-        $this->prompter->setAnswer($answer=='y');
+        $this->addOptionToArguments($option, $arguments);
+
+        $i = 0;
+        while ($i++ < $times) {
+            $this->prompter->setAnswer($answer=='y');
+        }
 
         $this->lastExitCode = $this->tester->run($arguments, array('interactive' => true));
     }
