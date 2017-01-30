@@ -291,10 +291,12 @@ class ContainerAssembler
             );
         });
 
-        $container->set('code_generator.generators.private_constructor', function (ServiceContainer $c) {
+        $container->define('code_generator.generators.private_constructor', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\PrivateConstructorGenerator(
                 $c->get('console.io'),
-                $c->get('code_generator.templates')
+                $c->get('code_generator.templates'),
+                $c->get('util.filesystem'),
+                $c->get('code_generator.writers.tokenized')
             );
         });
 
