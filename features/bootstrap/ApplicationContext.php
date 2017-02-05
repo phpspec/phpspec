@@ -123,19 +123,11 @@ class ApplicationContext implements Context
     }
 
     /**
-     * @When I run phpspec and answer :answer to both questions
+     * @When I run phpspec and answer :answer to (the) :amount questions
      */
-    public function iRunPhpspecAndAnswerToBothQuestions($answer)
+    public function iRunPhpspecAndAnswerToBothQuestions($amount, $answer)
     {
-        $this->runPhpSpecAndAnswerQuestions($answer, 2);
-    }
-
-    /**
-     * @When I run phpspec and answer :answer to the three questions
-     */
-    public function iRunPhpspecAndAnswerToTheThreeQuestions($answer)
-    {
-        $this->runPhpSpecAndAnswerQuestions($answer, 3);
+        $this->runPhpSpecAndAnswerQuestions($answer, ($amount === 'both' ? 2 : 3));
     }
 
     /**
