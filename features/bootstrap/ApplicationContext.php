@@ -366,4 +366,16 @@ class ApplicationContext implements Context
 
         return $string;
     }
+    
+    /**
+     * @Then I should not be prompted for more questions
+     */
+    public function iShouldNotBePromptedForMoreQuestions()
+    {
+        if ($this->prompter->hasUnansweredQuestions()) {
+            throw new \Exception(
+                'Not all questions were answered. This might lead into further code generation not reflected in the scenario.'
+            );
+        }
+    }
 }

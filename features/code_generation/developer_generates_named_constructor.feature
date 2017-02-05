@@ -443,7 +443,7 @@ Feature: Developer generates a named constructor
 
       """
 
-  Scenario: Generating multiple private constructors at once
+  Scenario: Generating multiple named constructors at once
     Given the spec file "spec/CodeGeneration/PrivateConstructor/AgeSpec.php" contains:
       """
       <?php
@@ -481,7 +481,8 @@ Feature: Developer generates a named constructor
 
       """
     When I run phpspec and answer "y" to the three questions
-    Then the class in "src/CodeGeneration/PrivateConstructor/Age.php" should contain:
+    Then I should not be prompted for more questions
+    And the class in "src/CodeGeneration/PrivateConstructor/Age.php" should contain:
       """
       <?php
 
