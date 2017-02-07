@@ -7,8 +7,9 @@ use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\Loader\StreamWrapper;
 use PhpSpec\Loader\Transformer\InMemoryTypeHintIndex;
 use PhpSpec\Loader\Transformer\TypeHintRewriter;
+use PHPUnit\Framework\TestCase;
 
-class StreamWrapperTest extends \PHPUnit_Framework_Testcase
+class StreamWrapperTest extends TestCase
 {
     function setUp()
     {
