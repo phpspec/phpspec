@@ -17,6 +17,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\Question;
 
 /**
  * Command line command responsible to signal to generators we will need to
@@ -31,7 +32,7 @@ final class DescribeCommand extends Command
         $this
             ->setName('describe')
             ->setDefinition(array(
-                    new InputArgument('class', InputArgument::REQUIRED, 'Class to describe'),
+                    new InputArgument('class', InputArgument::OPTIONAL, 'Class to describe'),
                 ))
             ->setDescription('Creates a specification for a class')
             ->setHelp(<<<EOF
@@ -64,9 +65,43 @@ EOF
         $container = $this->getApplication()->getContainer();
         $container->configure();
 
-        $classname = $input->getArgument('class');
-        $resource  = $container->get('locator.resource_manager')->createResource($classname);
+        if ($input->getArgument('class')) {
+            $classname = $input->getArgument('class');
+        } else {
+            $questionHelper = $this->getApplication()->getHelperSet()->get('question');
+            $question = new Question('<info>Enter class to describe: </info>');
+
+            $question->setAutocompleterValues($this->getNamespaces());
+            $classname = $questionHelper->ask($input, $output, $question);
+        }
+
+        $resource = $container->get('locator.resource_manager')->createResource($classname);
 
         $container->get('code_generator')->generate($resource, 'specification');
+    }
+
+    private function getNamespaces()
+    {
+        $vendorPath = realpath(__DIR__.'/../../../../../../');
+        $classmapPath = $vendorPath.'/composer/autoload_classmap.php';
+
+        if (!file_exists($classmapPath)) {
+            return array();
+        }
+
+        $classmap = require $classmapPath;
+        $namespaces = array();
+
+        foreach ($classmap as $class => $file) {
+            if (strpos($file, $vendorPath) !== false) {
+                continue;
+            }
+
+            $classParts = explode('\\', $class);
+            unset($classParts[count($classParts) - 1]);
+            $namespaces[] = implode('/', $classParts).'/';
+        }
+
+        return $namespaces;
     }
 }
