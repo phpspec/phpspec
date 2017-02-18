@@ -18,6 +18,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
+use Composer\Autoload\ClassLoader;
 
 /**
  * Command line command responsible to signal to generators we will need to
@@ -80,28 +81,34 @@ EOF
         $container->get('code_generator')->generate($resource, 'specification');
     }
 
+
+    /**
+     * Get composer class loader namespaces.
+     *
+     * @return array
+     */
     private function getNamespaces()
     {
-        $vendorPath = realpath(__DIR__.'/../../../../../../');
-        $classmapPath = $vendorPath.'/composer/autoload_classmap.php';
-
-        if (!file_exists($classmapPath)) {
-            return array();
-        }
-
-        $classmap = require $classmapPath;
+        $autoloadFunctions = spl_autoload_functions();
+        $classLoader = null;
         $namespaces = array();
 
-        foreach ($classmap as $class => $file) {
-            if (strpos($file, $vendorPath) !== false) {
-                continue;
+        foreach ($autoloadFunctions as $function) {
+            if ($function[0] instanceof ClassLoader) {
+                $classLoader = $function[0];
             }
+        }
 
+        if (!$classLoader) {
+            return $namespaces;
+        }
+
+        foreach ($classLoader->getClassMap() as $class => $file) {
             $classParts = explode('\\', $class);
             unset($classParts[count($classParts) - 1]);
             $namespaces[] = implode('/', $classParts).'/';
         }
 
-        return $namespaces;
+        return array_unique($namespaces);
     }
 }
