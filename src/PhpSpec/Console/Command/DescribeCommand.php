@@ -19,6 +19,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 use Composer\Autoload\ClassLoader;
+use Symfony\Component\Finder\Finder;
 
 /**
  * Command line command responsible to signal to generators we will need to
@@ -81,33 +82,36 @@ EOF
         $container->get('code_generator')->generate($resource, 'specification');
     }
 
-
     /**
-     * Get composer class loader namespaces.
+     * Get suites namespaces.
      *
      * @return array
      */
     private function getNamespaces()
     {
-        $autoloadFunctions = spl_autoload_functions();
-        $classLoader = null;
+        $container = $this->getApplication()->getContainer();
+        $srcPaths = array();
         $namespaces = array();
 
-        foreach ($autoloadFunctions as $function) {
-            if ($function[0] instanceof ClassLoader) {
-                $classLoader = $function[0];
+        foreach ($container->getByTag('locator.locators') as $locator) {
+            if ($locator instanceof \PhpSpec\Locator\PSR0\PSR0Locator) {
+                $srcPaths[] = $locator->getSrcPath();
             }
         }
 
-        if (!$classLoader) {
-            return $namespaces;
+        $finder = new Finder();
+        foreach ($finder->files()->name('*.php')->in($srcPaths) as $phpFile) {
+            preg_match('/namespace\s+(.*);/', $phpFile->getContents(), $matches);
+
+            if ($matches) {
+                $namespaces[] = $matches[1];
+            }
         }
 
-        foreach ($classLoader->getClassMap() as $class => $file) {
-            $classParts = explode('\\', $class);
-            unset($classParts[count($classParts) - 1]);
-            $namespaces[] = implode('/', $classParts).'/';
-        }
+        $namespaces = array_map(function($ns) {
+            $nsParts = explode('\\', $ns);
+            return implode('/', $nsParts).'/';
+        }, $namespaces);
 
         return array_unique($namespaces);
     }
