@@ -357,7 +357,7 @@ class ContainerAssembler
 
                 $config = array_merge($defaults, $suite);
 
-                if (!is_dir($config['src_path']) && !empty($config['src_path'])) {
+                if (!empty($config['src_path']) && !is_dir($config['src_path'])) {
                     mkdir($config['src_path'], 0777, true);
                 }
                 if (!is_dir($config['spec_path'])) {
