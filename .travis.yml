@@ -18,6 +18,8 @@ matrix:
     - php: 5.6
     - php: hhvm
     - php: 7.0
+    - php: 7.1
+      env: DEPENDENCIES='low'
   allow_failures:
     - env: DEPENDENCIES='dev'
   fast_finish: true
