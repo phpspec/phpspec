@@ -91,7 +91,6 @@ EOF
     {
         $container = $this->getApplication()->getContainer();
         $srcPaths = array();
-        $namespaces = array();
 
         foreach ($container->getByTag('locator.locators') as $locator) {
             if ($locator instanceof \PhpSpec\Locator\PSR0\PSR0Locator) {
@@ -99,20 +98,6 @@ EOF
             }
         }
 
-        $finder = new Finder();
-        foreach ($finder->files()->name('*.php')->in($srcPaths) as $phpFile) {
-            preg_match('/namespace\s+(.*);/', $phpFile->getContents(), $matches);
-
-            if ($matches) {
-                $namespaces[] = $matches[1];
-            }
-        }
-
-        $namespaces = array_map(function($ns) {
-            $nsParts = explode('\\', $ns);
-            return implode('/', $nsParts).'/';
-        }, $namespaces);
-
-        return array_unique($namespaces);
+        return $container->get('console.autocomplete_provider')->getNamespaces($srcPaths);
     }
 }
