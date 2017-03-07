@@ -1,3 +1,8 @@
+Upcoming 3.0
+============
+
+* Support sebastian/exporter 3.0 (@remicollet)
+
 Upcoming 2.5
 ============
 
