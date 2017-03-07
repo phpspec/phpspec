@@ -36,9 +36,9 @@
     },
 
     "require-dev": {
-        "behat/behat":           "^3.2",
+        "behat/behat":           "^3.3",
         "symfony/filesystem":    "^3.2",
-        "phpunit/phpunit":       "^5.7",
+        "phpunit/phpunit":       "^5.7|^6.0",
         "ciaranmcnulty/versionbasedtestskipper": "^0.2.1"
     },
 

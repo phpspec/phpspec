@@ -1,7 +1,14 @@
+<<<<<<< HEAD
 4.0 - Upcoming
 ==============
 
 * Dropped support for PHP versions less than 7.0 (@ciaranmcnulty)
+=======
+Upcoming 2.5
+============
+
+* Support sebastian/exporter 2.0 providing PHPUnit 5.7 compatibility (@mattsches)
+>>>>>>> master
 
 3.2.3 / 2016-01-29
 ==================

@@ -68,6 +68,7 @@ Matchers
 
  * `Coduo matcher extension <https://github.com/coduo/phpspec-matcher-extension>`_
  * `Array Contains matcher extension <https://github.com/jameshalsall/phpspec-array-contains-matchers>`_
+ * `Collection of custom matchers <https://github.com/karriereat/phpspec-matchers>`_
 
 Miscellaneous
 ~~~~~~~~~~~~~

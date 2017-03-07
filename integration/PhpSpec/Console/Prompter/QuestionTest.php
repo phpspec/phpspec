@@ -3,12 +3,13 @@
 namespace integration\PhpSpec\Console\Prompter;
 
 use PhpSpec\Console\Prompter\Question;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
  * @requires function \Symfony\Component\Console\Helper\QuestionHelper::ask
  */
-class QuestionTest extends \PHPUnit_Framework_TestCase
+class QuestionTest extends TestCase
 {
     /**
      * @var \Symfony\Component\Console\Input\InputInterface
