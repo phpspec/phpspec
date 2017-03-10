@@ -372,7 +372,8 @@ Feature: Developer generates a method
 
       """
 
-  Scenario: Generating a method named with a restricted keyword
+  @php:~5.6
+  Scenario: Restricted generation of a method named with a reserved keyword
     Given the spec file "spec/MyNamespace/RestrictedSpec.php" contains:
       """
       <?php
@@ -415,3 +416,53 @@ Feature: Developer generates a method
       }
 
       """
+
+  @php:~7 @isolated
+  Scenario: Successful generation of a method named with a reserved keyword in previous PHP versions
+    Given the spec file "spec/MyNamespace/KeywordMethodSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\MyNamespace;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class KeywordMethodSpec extends ObjectBehavior
+      {
+          function it_tries_to_call_wrong_method()
+          {
+              $this->throw()->shouldReturn(null);
+          }
+      }
+
+      """
+    And the class file "src/MyNamespace/KeywordMethod.php" contains:
+      """
+      <?php
+
+      namespace MyNamespace;
+
+      class KeywordMethod
+      {
+      }
+
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/MyNamespace/KeywordMethod.php" should contain:
+      """
+      <?php
+
+      namespace MyNamespace;
+
+      class KeywordMethod
+      {
+          public function throw()
+          {
+              // TODO: write logic here
+          }
+      }
+
+      """
+    Then the tests should be rerun
+    Then the suite should pass
