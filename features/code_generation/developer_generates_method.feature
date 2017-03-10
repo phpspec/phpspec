@@ -464,5 +464,4 @@ Feature: Developer generates a method
       }
 
       """
-    Then the tests should be rerun
-    Then the suite should pass
+    And the suite should pass
