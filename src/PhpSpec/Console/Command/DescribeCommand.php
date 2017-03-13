@@ -18,8 +18,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
-use Composer\Autoload\ClassLoader;
-use Symfony\Component\Finder\Finder;
 
 /**
  * Command line command responsible to signal to generators we will need to
