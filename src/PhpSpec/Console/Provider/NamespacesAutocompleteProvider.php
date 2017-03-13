@@ -34,9 +34,9 @@ final class NamespacesAutocompleteProvider
      *
      * @return array of namespases
      */
-    public function getNamespaces($paths)
+    public function getNamespaces(array $paths)
     {
-        $namespaces = array();
+        $namespaces = [];
         foreach ($this->finder->files()->name('*.php')->in($paths) as $phpFile) {
             $tokens = token_get_all($phpFile->getContents());
             foreach ($tokens as $index => $token) {
