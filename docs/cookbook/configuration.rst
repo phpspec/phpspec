@@ -220,3 +220,5 @@ To load a custom bootstrap when running phpspec, use the ``bootstrap`` setting:
 .. code-block:: yaml
 
     bootstrap: path/to/different-bootstrap.php
+
+This setting should be in the root of the config file (i.e. not nested under ``suites`` or anything else).
