@@ -15,8 +15,8 @@ class BestMatchResourceManagerSpec extends ObjectBehavior
         $locator2->getPriority()->willReturn(10);
     }
 
-    function it_locates_resources_using_all_registered_locators($locator1, $locator2,
-        Resource $resource1, Resource $resource2, Resource $resource3
+    function it_locates_resources_using_all_registered_locators(
+        $locator1, $locator2, Resource $resource1, Resource $resource2, Resource $resource3
     ) {
         $this->registerLocator($locator1);
         $this->registerLocator($locator2);
@@ -33,8 +33,8 @@ class BestMatchResourceManagerSpec extends ObjectBehavior
         $this->locateResources('s:query')->shouldReturn(array($resource1, $resource3, $resource2));
     }
 
-    function it_locates_all_locators_resources_if_query_string_is_empty($locator1, $locator2,
-                                                                        Resource $resource1, Resource $resource2, Resource $resource3
+    function it_locates_all_locators_resources_if_query_string_is_empty(
+        $locator1, $locator2, Resource $resource1, Resource $resource2, Resource $resource3
     ) {
         $this->registerLocator($locator1);
         $this->registerLocator($locator2);
