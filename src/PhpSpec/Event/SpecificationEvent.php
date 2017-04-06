@@ -19,7 +19,7 @@ use PhpSpec\Loader\Node\SpecificationNode;
 /**
  * Class SpecificationEvent holds information about the specification event
  */
-class SpecificationEvent extends Event implements EventInterface
+class SpecificationEvent extends Event implements PhpSpecEvent
 {
     /**
      * @var SpecificationNode

@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Formatter;
 
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\PendingException;
 use PhpSpec\Exception\Example\SkippingException;
@@ -24,23 +24,23 @@ use PhpSpec\Message\CurrentExampleTracker;
 abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
 {
     /**
-     * @var IO
+     * @var ConsoleIO
      */
     private $io;
 
     /**
      * @param Presenter           $presenter
-     * @param IO                  $io
+     * @param ConsoleIO           $io
      * @param StatisticsCollector $stats
      */
-    public function __construct(Presenter $presenter, IO $io, StatisticsCollector $stats)
+    public function __construct(Presenter $presenter, ConsoleIO $io, StatisticsCollector $stats)
     {
         parent::__construct($presenter, $io, $stats);
         $this->io = $io;
     }
 
     /**
-     * @return IO
+     * @return ConsoleIO
      */
     protected function getIO()
     {

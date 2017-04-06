@@ -13,9 +13,9 @@
 
 namespace PhpSpec\Locator\PSR0;
 
-use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\Locator\Resource;
 
-class PSR0Resource implements ResourceInterface
+final class PSR0Resource implements Resource
 {
     /**
      * @var array

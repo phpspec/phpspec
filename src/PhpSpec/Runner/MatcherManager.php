@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Runner;
 
-use PhpSpec\Matcher\MatcherInterface;
+use PhpSpec\Matcher\Matcher;
 use PhpSpec\Exception\Wrapper\MatcherNotFoundException;
 use PhpSpec\Formatter\Presenter\Presenter;
 
@@ -24,7 +24,7 @@ class MatcherManager
      */
     private $presenter;
     /**
-     * @var MatcherInterface[]
+     * @var Matcher[]
      */
     private $matchers = array();
 
@@ -37,12 +37,12 @@ class MatcherManager
     }
 
     /**
-     * @param MatcherInterface $matcher
+     * @param Matcher $matcher
      */
-    public function add(MatcherInterface $matcher)
+    public function add(Matcher $matcher)
     {
         $this->matchers[] = $matcher;
-        @usort($this->matchers, function ($matcher1, $matcher2) {
+        @usort($this->matchers, function (Matcher $matcher1, Matcher $matcher2) {
             return $matcher2->getPriority() - $matcher1->getPriority();
         });
     }
@@ -50,7 +50,7 @@ class MatcherManager
     /**
      * Replaces matchers with an already-sorted list
      *
-     * @param MatcherInterface[] $matchers
+     * @param Matcher[] $matchers
      */
     public function replace(array $matchers)
     {
@@ -62,7 +62,7 @@ class MatcherManager
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return MatcherInterface
+     * @return Matcher
      *
      * @throws \PhpSpec\Exception\Wrapper\MatcherNotFoundException
      */

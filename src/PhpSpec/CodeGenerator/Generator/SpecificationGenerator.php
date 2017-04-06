@@ -13,22 +13,22 @@
 
 namespace PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\Locator\Resource;
 
 /**
  * Generates spec classes from resources and puts them into the appropriate
  * folder using the appropriate template.
  */
-class SpecificationGenerator extends PromptingGenerator
+final class SpecificationGenerator extends PromptingGenerator
 {
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $generation
      * @param array             $data
      *
      * @return bool
      */
-    public function supports(ResourceInterface $resource, $generation, array $data)
+    public function supports(Resource $resource, $generation, array $data)
     {
         return 'specification' === $generation;
     }
@@ -42,12 +42,12 @@ class SpecificationGenerator extends PromptingGenerator
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $filepath
      *
      * @return string
      */
-    protected function renderTemplate(ResourceInterface $resource, $filepath)
+    protected function renderTemplate(Resource $resource, $filepath)
     {
         $values = array(
             '%filepath%'      => $filepath,
@@ -73,21 +73,21 @@ class SpecificationGenerator extends PromptingGenerator
     }
 
     /**
-     * @param  ResourceInterface $resource
+     * @param  Resource $resource
      * @return mixed
      */
-    protected function getFilePath(ResourceInterface $resource)
+    protected function getFilePath(Resource $resource)
     {
         return $resource->getSpecFilename();
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $filepath
      *
      * @return string
      */
-    protected function getGeneratedMessage(ResourceInterface $resource, $filepath)
+    protected function getGeneratedMessage(Resource $resource, $filepath)
     {
         return sprintf(
             "<info>Specification for <value>%s</value> created in <value>%s</value>.</info>\n",

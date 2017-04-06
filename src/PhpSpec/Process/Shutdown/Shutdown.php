@@ -28,7 +28,7 @@ final class Shutdown
         register_shutdown_function(array($this, 'runShutdown'));
     }
 
-    public function registerAction(ShutdownActionInterface $action)
+    public function registerAction(ShutdownAction $action)
     {
         $this->actions[] = $action;
     }

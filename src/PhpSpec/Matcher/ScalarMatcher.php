@@ -16,7 +16,7 @@ namespace PhpSpec\Matcher;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 
-class ScalarMatcher implements MatcherInterface
+final class ScalarMatcher implements Matcher
 {
     /**
      * @var Presenter

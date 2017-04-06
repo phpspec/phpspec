@@ -6,7 +6,7 @@ Feature: Developer uses extension
     Given the config file contains:
     """
     extensions:
-      - Example1\PhpSpec\MatcherExtension\Extension
+      Example1\PhpSpec\MatcherExtension\Extension: ~
     """
     And the class file "src/Example1/PhpSpec/MatcherExtension/Extension.php" contains:
     """
@@ -14,19 +14,16 @@ Feature: Developer uses extension
 
     namespace Example1\PhpSpec\MatcherExtension;
 
-    use PhpSpec\Extension\ExtensionInterface;
+    use PhpSpec\Extension as PhpSpecExtension;
     use PhpSpec\ServiceContainer;
 
-    class Extension implements ExtensionInterface
+    class Extension implements PhpSpecExtension
     {
-        /**
-         * @param ServiceContainer $container
-         */
-        public function load(ServiceContainer $container)
+        public function load(ServiceContainer $container, array $params)
         {
-            $container->set('matchers.seven', function (ServiceContainer $c) {
+            $container->define('matchers.seven', function (ServiceContainer $c) {
                 return new BeSevenMatcher($c->get('formatter.presenter'));
-            });
+            }, ['matchers']);
         }
     }
 
@@ -164,7 +161,7 @@ Feature: Developer uses extension
     Given the config file contains:
     """
     extensions:
-      - Example2\PhpSpec\Extensions\EventSubscriberExtension
+      Example2\PhpSpec\Extensions\EventSubscriberExtension: ~
     """
     And the class file "src/Example2/PhpSpec/Extensions/EventSubscriberExtension.php" contains:
     """
@@ -177,7 +174,7 @@ Feature: Developer uses extension
 
     class EventSubscriberExtension implements PhpSpecExtension
     {
-        public function load(ServiceContainer $compositeContainer)
+        public function load(ServiceContainer $compositeContainer, array $params)
         {
             $io = $compositeContainer->get('console.io');
             $eventDispatcher = $compositeContainer->get('event_dispatcher');

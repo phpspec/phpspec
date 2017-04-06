@@ -14,18 +14,17 @@
 namespace PhpSpec\Listener;
 
 use PhpSpec\CodeGenerator\GeneratorManager;
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
-use PhpSpec\Locator\ResourceInterface;
-use PhpSpec\Locator\ResourceManagerInterface;
+use PhpSpec\Locator\ResourceManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class CollaboratorNotFoundListener implements EventSubscriberInterface
+final class CollaboratorNotFoundListener implements EventSubscriberInterface
 {
     /**
-     * @var IO
+     * @var ConsoleIO
      */
     private $io;
 
@@ -35,7 +34,7 @@ class CollaboratorNotFoundListener implements EventSubscriberInterface
     private $exceptions = array();
 
     /**
-     * @var ResourceManagerInterface
+     * @var ResourceManager
      */
     private $resources;
 
@@ -45,11 +44,11 @@ class CollaboratorNotFoundListener implements EventSubscriberInterface
     private $generator;
 
     /**
-     * @param IO $io
-     * @param ResourceManagerInterface $resources
+     * @param ConsoleIO $io
+     * @param ResourceManager $resources
      * @param GeneratorManager $generator
      */
-    public function __construct(IO $io, ResourceManagerInterface $resources, GeneratorManager $generator)
+    public function __construct(ConsoleIO $io, ResourceManager $resources, GeneratorManager $generator)
     {
         $this->io = $io;
         $this->resources = $resources;
@@ -105,7 +104,7 @@ class CollaboratorNotFoundListener implements EventSubscriberInterface
 
     /**
      * @param CollaboratorNotFoundException $exception
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @return bool
      */
     private function resourceIsInSpecNamespace($exception, $resource)

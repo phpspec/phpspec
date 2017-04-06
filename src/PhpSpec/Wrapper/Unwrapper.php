@@ -47,7 +47,7 @@ class Unwrapper implements RevealerInterface
             return $argument;
         }
 
-        if ($argument instanceof WrapperInterface) {
+        if ($argument instanceof ObjectWrapper) {
             return $argument->getWrappedObject();
         }
 

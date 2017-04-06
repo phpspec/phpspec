@@ -14,21 +14,21 @@
 namespace PhpSpec\Listener;
 
 use PhpSpec\CodeGenerator\GeneratorManager;
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\NamedConstructorNotFoundException;
 use PhpSpec\Locator\ResourceManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class NamedConstructorNotFoundListener implements EventSubscriberInterface
+final class NamedConstructorNotFoundListener implements EventSubscriberInterface
 {
     private $io;
     private $resources;
     private $generator;
     private $methods = array();
 
-    public function __construct(IO $io, ResourceManager $resources, GeneratorManager $generator)
+    public function __construct(ConsoleIO $io, ResourceManager $resources, GeneratorManager $generator)
     {
         $this->io        = $io;
         $this->resources = $resources;

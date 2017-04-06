@@ -18,7 +18,7 @@ use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
 use PhpSpec\Exception\Wrapper\InvalidCollaboratorTypeException;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Loader\Transformer\TypeHintIndex;
-use PhpSpec\SpecificationInterface;
+use PhpSpec\Specification;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
 use PhpSpec\Wrapper\Collaborator;
@@ -27,7 +27,7 @@ use Prophecy\Exception\Doubler\ClassNotFoundException;
 use Prophecy\Prophet;
 use ReflectionException;
 
-class CollaboratorsMaintainer implements MaintainerInterface
+final class CollaboratorsMaintainer implements Maintainer
 {
     /**
      * @var string
@@ -69,13 +69,13 @@ class CollaboratorsMaintainer implements MaintainerInterface
 
     /**
      * @param ExampleNode            $example
-     * @param SpecificationInterface $context
+     * @param Specification $context
      * @param MatcherManager         $matchers
      * @param CollaboratorManager    $collaborators
      */
     public function prepare(
         ExampleNode $example,
-        SpecificationInterface $context,
+        Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
     ) {
@@ -92,13 +92,13 @@ class CollaboratorsMaintainer implements MaintainerInterface
 
     /**
      * @param ExampleNode            $example
-     * @param SpecificationInterface $context
+     * @param Specification $context
      * @param MatcherManager         $matchers
      * @param CollaboratorManager    $collaborators
      */
     public function teardown(
         ExampleNode $example,
-        SpecificationInterface $context,
+        Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
     ) {
@@ -163,8 +163,8 @@ class CollaboratorsMaintainer implements MaintainerInterface
     }
 
     /**
-     * @param Exception $e
-     * @param ReflectionParameter|null $parameter
+     * @param \Exception $e
+     * @param \ReflectionParameter|null $parameter
      * @param string $className
      * @throws CollaboratorNotFoundException
      */

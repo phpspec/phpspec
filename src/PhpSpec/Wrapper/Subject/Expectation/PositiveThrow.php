@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
-class PositiveThrow extends DuringCall implements ThrowExpectation
+final class PositiveThrow extends DuringCall implements ThrowExpectation
 {
     /**
      * @param object $object

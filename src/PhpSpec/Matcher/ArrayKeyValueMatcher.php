@@ -17,7 +17,7 @@ use ArrayAccess;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Formatter\Presenter\Presenter;
 
-class ArrayKeyValueMatcher extends BasicMatcher
+final class ArrayKeyValueMatcher extends BasicMatcher
 {
     /**
      * @var Presenter

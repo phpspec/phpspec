@@ -13,9 +13,9 @@
 
 namespace PhpSpec;
 
-use PhpSpec\Matcher\MatchersProviderInterface;
-use PhpSpec\Wrapper\WrapperInterface;
-use PhpSpec\Wrapper\SubjectContainerInterface;
+use PhpSpec\Matcher\MatchersProvider;
+use PhpSpec\Wrapper\ObjectWrapper;
+use PhpSpec\Wrapper\SubjectContainer;
 use PhpSpec\Wrapper\Subject;
 use ArrayAccess;
 
@@ -31,16 +31,33 @@ use ArrayAccess;
  * @method void beConstructedWith(...$arguments)
  * @method void beConstructedThrough($factoryMethod, array $constructorArguments = array())
  * @method void beAnInstanceOf($class)
+ *
  * @method void shouldHaveType($type)
+ * @method void shouldNotHaveType($type)
+ * @method void shouldBeAnInstanceOf($type)
+ * @method void shouldNotBeAnInstanceOf($type)
  * @method void shouldImplement($interface)
+ * @method void shouldNotImplement($interface)
+ *
  * @method Subject\Expectation\DuringCall shouldThrow($exception = null)
+ * @method Subject\Expectation\DuringCall shouldNotThrow($exception = null)
+ * @method Subject\Expectation\DuringCall shouldTrigger($level = null, $message = null)
+ *
+ * @method void shouldHaveCount($count)
+ * @method void shouldNotHaveCount($count)
+ *
+ * @method void shouldHaveKeyWithValue($key, $value)
+ * @method void shouldNotHaveKeyWithValue($key, $value)
+ *
+ * @method void shouldHaveKey($key)
+ * @method void shouldNotHaveKey($key)
  */
 abstract class ObjectBehavior implements
     ArrayAccess,
-    MatchersProviderInterface,
-    SubjectContainerInterface,
-    WrapperInterface,
-    SpecificationInterface
+    MatchersProvider,
+    SubjectContainer,
+    ObjectWrapper,
+    Specification
 {
     /**
      * @var Subject

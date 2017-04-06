@@ -16,19 +16,19 @@ namespace PhpSpec\Listener;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\StopOnFailureException;
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 
-class StopOnFailureListener implements EventSubscriberInterface
+final class StopOnFailureListener implements EventSubscriberInterface
 {
     /**
-     * @var IO
+     * @var ConsoleIO
      */
     private $io;
 
     /**
-     * @param IO $io
+     * @param ConsoleIO $io
      */
-    public function __construct(IO $io)
+    public function __construct(ConsoleIO $io)
     {
         $this->io = $io;
     }

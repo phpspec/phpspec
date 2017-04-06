@@ -13,18 +13,18 @@
 
 namespace PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Util\Filesystem;
-use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\Locator\Resource;
 
 /**
  * Generates interface method signatures from a resource
  */
-class MethodSignatureGenerator implements GeneratorInterface
+final class MethodSignatureGenerator implements Generator
 {
     /**
-     * @var IO
+     * @var ConsoleIO
      */
     private $io;
 
@@ -39,34 +39,34 @@ class MethodSignatureGenerator implements GeneratorInterface
     private $filesystem;
 
     /**
-     * @param IO               $io
+     * @param ConsoleIO               $io
      * @param TemplateRenderer $templates
      * @param Filesystem       $filesystem
      */
-    public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null)
+    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem)
     {
         $this->io         = $io;
         $this->templates  = $templates;
-        $this->filesystem = $filesystem ?: new Filesystem();
+        $this->filesystem = $filesystem;
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $generation
      * @param array             $data
      *
      * @return bool
      */
-    public function supports(ResourceInterface $resource, $generation, array $data)
+    public function supports(Resource $resource, $generation, array $data)
     {
         return 'method-signature' === $generation;
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param array             $data
      */
-    public function generate(ResourceInterface $resource, array $data = array())
+    public function generate(Resource $resource, array $data = array())
     {
         $filepath  = $resource->getSrcFilename();
         $name      = $data['name'];

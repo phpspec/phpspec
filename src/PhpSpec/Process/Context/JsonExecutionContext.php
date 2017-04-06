@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Process\Context;
 
-final class JsonExecutionContext implements ExecutionContextInterface
+final class JsonExecutionContext implements ExecutionContext
 {
     const ENV_NAME = 'PHPSPEC_EXECUTION_CONTEXT';
     /**

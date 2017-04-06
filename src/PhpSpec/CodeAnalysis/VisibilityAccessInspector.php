@@ -16,7 +16,7 @@ namespace PhpSpec\CodeAnalysis;
 use ReflectionMethod;
 use ReflectionProperty;
 
-final class VisibilityAccessInspector implements AccessInspectorInterface
+final class VisibilityAccessInspector implements AccessInspector
 {
     /**
      * @param object $object

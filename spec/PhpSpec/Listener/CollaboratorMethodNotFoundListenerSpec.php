@@ -3,15 +3,14 @@
 namespace spec\PhpSpec\Listener;
 
 use PhpSpec\CodeGenerator\GeneratorManager;
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Locator\ResourceCreationException;
-use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\Locator\Resource;
 use PhpSpec\Locator\ResourceManager;
-use PhpSpec\Locator\ResourceManagerInterface;
 use PhpSpec\ObjectBehavior;
-use PhpSpec\Util\NameCheckerInterface;
+use PhpSpec\Util\NameChecker;
 use Prophecy\Argument;
 use Prophecy\Doubler\DoubleInterface;
 use Prophecy\Exception\Doubler\MethodNotFoundException;
@@ -19,9 +18,9 @@ use Prophecy\Exception\Doubler\MethodNotFoundException;
 class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
 {
     function let(
-        IO $io, ResourceManagerInterface $resources, ExampleEvent $event,
-        MethodNotFoundException $exception, ResourceInterface $resource, GeneratorManager $generator,
-        NameCheckerInterface $nameChecker
+        ConsoleIO $io, ResourceManager $resources, ExampleEvent $event,
+        MethodNotFoundException $exception, Resource $resource, GeneratorManager $generator,
+        NameChecker $nameChecker
     ) {
         $this->beConstructedWith($io, $resources, $generator, $nameChecker);
         $event->getException()->willReturn($exception);
@@ -48,7 +47,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
         ));
     }
 
-    function it_does_not_prompt_when_no_exception_is_thrown(IO $io, ExampleEvent $event, SuiteEvent $suiteEvent)
+    function it_does_not_prompt_when_no_exception_is_thrown(ConsoleIO $io, ExampleEvent $event, SuiteEvent $suiteEvent)
     {
         $event->getException()->willReturn(null);
 
@@ -59,7 +58,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
     }
 
     function it_prompts_the_user_when_a_prophecy_method_exception_is_thrown(
-        IO $io, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception
+        ConsoleIO $io, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception
     )
     {
         $exception->getClassname()->willReturn('spec\PhpSpec\Listener\DoubleOfInterface');
@@ -71,7 +70,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
         $io->askConfirmation(Argument::any())->shouldHaveBeenCalled();
     }
 
-    function it_does_not_prompt_when_wrong_exception_is_thrown(IO $io, ExampleEvent $event, SuiteEvent $suiteEvent)
+    function it_does_not_prompt_when_wrong_exception_is_thrown(ConsoleIO $io, ExampleEvent $event, SuiteEvent $suiteEvent)
     {
         $event->getException()->willReturn(new \RuntimeException());
 
@@ -82,7 +81,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
     }
 
     function it_does_not_prompt_when_collaborator_is_not_an_interface(
-        IO $io, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception
+        ConsoleIO $io, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception
     )
     {
         $exception->getClassname()->willReturn('spec\PhpSpec\Listener\DoubleOfStdClass');
@@ -95,7 +94,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
     }
 
     function it_does_not_prompt_when_code_generation_is_disabled(
-        IO $io, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception
+        ConsoleIO $io, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception
     )
     {
         $io->isCodeGenerationEnabled()->willReturn(false);
@@ -110,7 +109,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
     }
 
     function it_does_not_prompt_if_it_cannot_generate_the_resource(
-        IO $io, ResourceManager $resources, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception
+        ConsoleIO $io, ResourceManager $resources, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception
     )
     {
         $resources->createResource(Argument::any())->willThrow(new ResourceCreationException());
@@ -125,8 +124,8 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
     }
 
     function it_generates_the_method_signature_when_user_says_yes_at_prompt(
-        IO $io, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception,
-        ResourceInterface $resource, GeneratorManager $generator
+        ConsoleIO $io, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception,
+        Resource $resource, GeneratorManager $generator
     )
     {
         $io->askConfirmation(Argument::any())->willReturn(true);
@@ -141,7 +140,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
     }
 
     function it_marks_the_suite_as_being_worth_rerunning_when_generation_happens(
-        IO $io, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception
+        ConsoleIO $io, ExampleEvent $event, SuiteEvent $suiteEvent, MethodNotFoundException $exception
     )
     {
         $io->askConfirmation(Argument::any())->willReturn(true);
@@ -158,8 +157,8 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
     function it_warns_if_a_method_name_is_wrong(
         ExampleEvent $event,
         SuiteEvent $suiteEvent,
-        IO $io,
-        NameCheckerInterface $nameChecker
+        ConsoleIO $io,
+        NameChecker $nameChecker
     ) {
         $exception = new MethodNotFoundException('Error', new DoubleOfInterface(), 'throw');
 
@@ -176,8 +175,8 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
     function it_prompts_and_warns_when_one_method_name_is_correct_but_other_reserved(
         ExampleEvent $event,
         SuiteEvent $suiteEvent,
-        IO $io,
-        NameCheckerInterface $nameChecker
+        ConsoleIO $io,
+        NameChecker $nameChecker
     ) {
         $this->callAfterExample($event, $nameChecker, 'throw', false);
         $this->callAfterExample($event, $nameChecker, 'foo');

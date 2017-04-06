@@ -14,11 +14,11 @@
 namespace PhpSpec\Listener;
 
 use PhpSpec\Event\SuiteEvent;
-use PhpSpec\Process\Prerequisites\SuitePrerequisitesInterface;
+use PhpSpec\Process\Prerequisites\PrerequisiteTester;
 use PhpSpec\Process\ReRunner;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class RerunListener implements EventSubscriberInterface
+final class RerunListener implements EventSubscriberInterface
 {
     /**
      * @var ReRunner
@@ -26,15 +26,15 @@ class RerunListener implements EventSubscriberInterface
     private $reRunner;
 
     /**
-     * @var SuitePrerequisitesInterface
+     * @var PrerequisiteTester
      */
     private $suitePrerequisites;
 
     /**
      * @param ReRunner $reRunner
-     * @param SuitePrerequisitesInterface $suitePrerequisites
+     * @param PrerequisiteTester $suitePrerequisites
      */
-    public function __construct(ReRunner $reRunner, SuitePrerequisitesInterface $suitePrerequisites)
+    public function __construct(ReRunner $reRunner, PrerequisiteTester $suitePrerequisites)
     {
         $this->reRunner = $reRunner;
         $this->suitePrerequisites = $suitePrerequisites;

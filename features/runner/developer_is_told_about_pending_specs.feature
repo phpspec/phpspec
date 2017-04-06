@@ -89,7 +89,6 @@ Feature: Developer is told about pending specs
       1 examples (1 passed)
       """
 
-  @php:~5.4||~7.0
   Scenario: Spec defined in trait does not cause pending
     Given the trait file "spec/Runner/PendingExample4/PartialSpecTrait.php" contains:
       """

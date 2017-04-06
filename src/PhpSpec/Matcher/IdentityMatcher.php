@@ -17,7 +17,7 @@ use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\Example\NotEqualException;
 
-class IdentityMatcher extends BasicMatcher
+final class IdentityMatcher extends BasicMatcher
 {
     /**
      * @var array

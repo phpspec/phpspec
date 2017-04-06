@@ -5,23 +5,23 @@ namespace spec\PhpSpec\Listener;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-use PhpSpec\Console\IO;
-use PhpSpec\Locator\ResourceManager;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
-use PhpSpec\Util\NameCheckerInterface;
+use PhpSpec\Locator\ResourceManager;
+use PhpSpec\Util\NameChecker;
 
 class MethodNotFoundListenerSpec extends ObjectBehavior
 {
     function let(
-        IO $io,
+        ConsoleIO $io,
         ResourceManager $resourceManager,
         GeneratorManager $generatorManager,
         SuiteEvent $suiteEvent,
         ExampleEvent $exampleEvent,
-        NameCheckerInterface $nameChecker
+        NameChecker $nameChecker
     ) {
         $io->writeln(Argument::any())->willReturn();
         $io->askConfirmation(Argument::any())->willReturn();
@@ -52,7 +52,7 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         $exampleEvent,
         $suiteEvent,
         $io,
-        NameCheckerInterface $nameChecker
+        NameChecker $nameChecker
     ) {
         $exception = new MethodNotFoundException('Error', new \stdClass(), 'bar');
 
@@ -79,8 +79,8 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
     function it_warns_when_method_name_is_reserved(
         $exampleEvent,
         $suiteEvent,
-        IO $io,
-        NameCheckerInterface $nameChecker
+        ConsoleIO $io,
+        NameChecker $nameChecker
     ) {
         $this->callAfterExample($exampleEvent, $nameChecker, 'throw', false);
 
@@ -92,8 +92,8 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
     function it_prompts_and_warns_when_one_method_name_is_correct_but_other_reserved(
         $exampleEvent,
         SuiteEvent $suiteEvent,
-        IO $io,
-        NameCheckerInterface $nameChecker
+        ConsoleIO $io,
+        NameChecker $nameChecker
     ) {
         $this->callAfterExample($exampleEvent, $nameChecker, 'throw', false);
         $this->callAfterExample($exampleEvent, $nameChecker, 'foo');

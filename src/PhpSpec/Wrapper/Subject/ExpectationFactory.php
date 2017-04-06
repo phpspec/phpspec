@@ -14,10 +14,11 @@
 namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Loader\Node\ExampleNode;
-use PhpSpec\Matcher\MatcherInterface;
+use PhpSpec\Matcher\Matcher;
 use PhpSpec\Wrapper\Subject\Expectation\ConstructorDecorator;
 use PhpSpec\Wrapper\Subject\Expectation\DispatcherDecorator;
-use PhpSpec\Wrapper\Subject\Expectation\ExpectationInterface;
+use PhpSpec\Wrapper\Subject\Expectation\Expectation;
+use PhpSpec\Wrapper\Subject\Expectation\ThrowExpectation;
 use PhpSpec\Wrapper\Subject\Expectation\UnwrapDecorator;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Runner\MatcherManager;
@@ -55,7 +56,7 @@ class ExpectationFactory
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return ExpectationInterface
+     * @return Expectation
      */
     public function create($expectation, $subject, array $arguments = array())
     {
@@ -73,7 +74,7 @@ class ExpectationFactory
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return ExpectationInterface
+     * @return Expectation
      */
     private function createPositive($name, $subject, array $arguments = array())
     {
@@ -93,7 +94,7 @@ class ExpectationFactory
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return ExpectationInterface
+     * @return Expectation
      */
     private function createNegative($name, $subject, array $arguments = array())
     {
@@ -114,7 +115,7 @@ class ExpectationFactory
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return ExpectationInterface
+     * @return Expectation
      */
     private function createDecoratedExpectation($expectation, $name, $subject, array $arguments)
     {
@@ -123,7 +124,7 @@ class ExpectationFactory
 
         $expectation = new $expectation($matcher);
 
-        if ($expectation instanceof Expectation\ThrowExpectation) {
+        if ($expectation instanceof ThrowExpectation) {
             return $expectation;
         }
 
@@ -135,7 +136,7 @@ class ExpectationFactory
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return MatcherInterface
+     * @return Matcher
      */
     private function findMatcher($name, $subject, array $arguments = array())
     {
@@ -146,12 +147,12 @@ class ExpectationFactory
     }
 
     /**
-     * @param ExpectationInterface $expectation
-     * @param MatcherInterface     $matcher
+     * @param Expectation $expectation
+     * @param Matcher     $matcher
      *
      * @return ConstructorDecorator
      */
-    private function decoratedExpectation(ExpectationInterface $expectation, MatcherInterface $matcher)
+    private function decoratedExpectation(Expectation $expectation, Matcher $matcher)
     {
         $dispatcherDecorator = new DispatcherDecorator($expectation, $this->dispatcher, $matcher, $this->example);
         $unwrapperDecorator = new UnwrapDecorator($dispatcherDecorator, new Unwrapper());
