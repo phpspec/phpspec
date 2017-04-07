@@ -57,9 +57,16 @@ Note that ``/`` is used as the separator. To use ``\`` it must be quoted:
 
     $ bin/phpspec describe "Namespace\ClassName"
 
-The ``describe`` command has no additional options. It will create a spec class in the `spec`
-directory. To configure a different path to the specs you can use :ref:`suites <configuration-suites>`
-in the configuration file.
+By default, the ``describe`` will create a spec class in the `spec` directory. To configure a different path to the
+specs you can use :ref:`suites <configuration-suites>` in the configuration file. If multiple suites are defined,
+**phpspec** will attempt to match a give ClassName to its appropriate suite. On cases where a ClassName matches
+multiple suites, a suite must be specified:
+
+.. code-block:: bash
+
+    $ bin/phpspec describe "Namespace\ClassName" --suite=<suite_name>
+
+.. attention:: Describing a ClassName that matches multiple suite and not specifying the suite will result to an error.
 
 Run Command
 -----------

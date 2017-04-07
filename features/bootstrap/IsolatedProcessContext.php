@@ -33,6 +33,28 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     }
 
     /**
+     * @Given I have started describing the :class class and specified :suite suite
+     * @Given I start describing the :class class and specified :suite suite
+     */
+    public function iHaveStartedDescribingTheClassAndSpecifiedSuite($class, $suite)
+    {
+        $command = sprintf(
+            '%s %s %s %s',
+            $this->buildPhpSpecCmd(),
+            'describe', escapeshellarg($class),
+            "--suite={$suite}"
+        );
+
+        $process = new Process($command);
+
+        $process->run();
+
+        if ($process->getExitCode() !== 0) {
+            throw new \Exception('The describe process ended with an error');
+        }
+    }
+
+    /**
      * @When I run phpspec and answer :answer when asked if I want to generate the code
      */
     public function iRunPhpspecAndAnswerWhenAskedIfIWantToGenerateTheCode($answer)

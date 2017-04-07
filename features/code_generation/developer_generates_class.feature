@@ -165,3 +165,30 @@ Feature: Developer generates a class
     But I have not configured an autoloader
     When I run phpspec and answer "y" when asked if I want to generate the code
     Then I should see an error about the missing autoloader
+
+  @isolated
+  Scenario: Generating a class from spec described using suite option
+    Given the config file contains:
+    """
+    suites:
+      spec_a:
+        src_path:    %paths.config%/src-a
+        spec_path:   %paths.config%/spec-a
+
+      spec_b:
+        src_path:    %paths.config%/src-b
+        spec_path:   %paths.config%/spec-b
+    """
+    And I have started describing the "Behat\Tests\MyNamespace\Markdown" class and specified "spec_a" suite
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then a new class should be generated in the "src-a/Behat/Tests/MyNamespace/Markdown.php":
+    """
+    <?php
+
+    namespace Behat\Tests\MyNamespace;
+
+    class Markdown
+    {
+    }
+
+    """

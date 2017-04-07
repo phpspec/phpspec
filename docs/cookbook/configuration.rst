@@ -68,8 +68,8 @@ describing. In phpspec, you can group specification files by a certain namespace
   specifications. The complete namespace for specifications is
   ``%spec_prefix%\%namespace%``;
 * ``src_path`` [**default**: ``src``] - The path to store the generated
-  classes. By default paths are relative to the location where **phpspec** was 
-  invoked. **phpspec** creates the directories if they do not exist. This does 
+  classes. By default paths are relative to the location where **phpspec** was
+  invoked. **phpspec** creates the directories if they do not exist. This does
   not include the namespace directories;
 * ``spec_path`` [**default**: ``.``] - The path of the specifications. This
   does not include the spec prefix or namespace.
@@ -148,6 +148,31 @@ running:
     $ bin/phpspec describe Acme/Text/Markdown
 
 will create the spec in the file ``acme_spec/spec/Acme/Text/MarkdownSpec.php``
+
+Namespace in Multiple Directories
+---------------------------------
+
+**phpspec** supports classes with namespace in multiple directories. Simply
+specify multiple suites in your configuration:
+
+.. code-block:: yaml
+    suites:
+        acme_one:
+            src_path:  %paths.config%/src-one
+            spec_path: %paths.config%/spec-one
+
+        acme_two:
+          src_path:    %paths.config%/src-two
+          spec_path:   %paths.config%/spec-two
+
+Given the configuration above, running:
+
+.. code-block:: bash
+
+    $ bin/phpspec describe Acme/Text/Markdown --suite=acme_one
+
+will create the spec in the file ``spec-one/spec/Acme/Text/MarkdownSpec.php`` and the class will be created
+in ``src-one/Markdown.php``.
 
 Formatter
 ---------
