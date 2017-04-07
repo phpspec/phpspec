@@ -26,7 +26,7 @@ class MethodCallEventSpec extends ObjectBehavior
     function it_is_an_event()
     {
         $this->shouldBeAnInstanceOf('Symfony\Component\EventDispatcher\Event');
-        $this->shouldBeAnInstanceOf('PhpSpec\Event\EventInterface');
+        $this->shouldBeAnInstanceOf('PhpSpec\Event\PhpSpecEvent');
     }
 
     function it_provides_a_link_to_example($example)

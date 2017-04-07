@@ -15,7 +15,7 @@ namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Wrapper\Unwrapper;
 
-class UnwrapDecorator extends Decorator implements ExpectationInterface
+final class UnwrapDecorator extends Decorator implements Expectation
 {
     /**
      * @var Unwrapper
@@ -23,10 +23,10 @@ class UnwrapDecorator extends Decorator implements ExpectationInterface
     private $unwrapper;
 
     /**
-     * @param ExpectationInterface $expectation
+     * @param Expectation $expectation
      * @param Unwrapper            $unwrapper
      */
-    public function __construct(ExpectationInterface $expectation, Unwrapper $unwrapper)
+    public function __construct(Expectation $expectation, Unwrapper $unwrapper)
     {
         $this->setExpectation($expectation);
         $this->unwrapper = $unwrapper;

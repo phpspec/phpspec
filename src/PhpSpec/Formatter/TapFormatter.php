@@ -18,7 +18,7 @@ use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
 use Symfony\Component\Yaml\Yaml;
 
-class TapFormatter extends ConsoleFormatter
+final class TapFormatter extends ConsoleFormatter
 {
 
     const VERSION = 'TAP version 13';

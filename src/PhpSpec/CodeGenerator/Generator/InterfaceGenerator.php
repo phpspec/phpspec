@@ -13,22 +13,22 @@
 
 namespace PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\Locator\Resource;
 
 /**
  * The Interface Generator is responsible for generating the interface from a resource
  * in the appropriate folder using the template provided
  */
-class InterfaceGenerator extends PromptingGenerator
+final class InterfaceGenerator extends PromptingGenerator
 {
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $generation
      * @param array             $data
      *
      * @return bool
      */
-    public function supports(ResourceInterface $resource, $generation, array $data)
+    public function supports(Resource $resource, $generation, array $data)
     {
         return 'interface' === $generation;
     }
@@ -42,12 +42,12 @@ class InterfaceGenerator extends PromptingGenerator
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $filepath
      *
      * @return string
      */
-    protected function renderTemplate(ResourceInterface $resource, $filepath)
+    protected function renderTemplate(Resource $resource, $filepath)
     {
         $values = array(
             '%filepath%'        => $filepath,
@@ -76,22 +76,22 @@ class InterfaceGenerator extends PromptingGenerator
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      *
      * @return string
      */
-    protected function getFilePath(ResourceInterface $resource)
+    protected function getFilePath(Resource $resource)
     {
         return $resource->getSrcFilename();
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $filepath
      *
      * @return string
      */
-    protected function getGeneratedMessage(ResourceInterface $resource, $filepath)
+    protected function getGeneratedMessage(Resource $resource, $filepath)
     {
         return sprintf(
             "<info>Interface <value>%s</value> created in <value>%s</value>.</info>\n",

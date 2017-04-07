@@ -9,7 +9,7 @@ class VisibilityAccessInspectorSpec extends ObjectBehavior
 {
     function it_should_be_an_access_inspector()
     {
-        $this->shouldImplement('PhpSpec\CodeAnalysis\AccessInspectorInterface');
+        $this->shouldImplement('PhpSpec\CodeAnalysis\AccessInspector');
     }
 
     function it_should_reject_an_object_if_the_property_does_not_exist()

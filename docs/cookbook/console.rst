@@ -19,7 +19,7 @@ or:
 
 Read more about this in the :doc:`Configuration Cookbook </cookbook/configuration>`
 
-Also of note is that using the `--no-interaction` command means that no
+Also of note is that using the ``--no-interaction`` option means that no
 code generation will be done.
 
 
@@ -38,50 +38,57 @@ or:
 Describe Command
 ----------------
 
-The describe command creates a specification for a class:
+The ``describe`` command creates a specification for a class:
 
 .. code-block:: bash
 
-    $ php bin/phpspec describe ClassName
+    $ bin/phpspec describe ClassName
 
 Will generate a specification ClassNameSpec in the spec directory.
 
 .. code-block:: bash
 
-    $ php bin/phpspec describe Namespace/ClassName
+    $ bin/phpspec describe Namespace/ClassName
 
 Will generate a namespaced specification Namespace\ClassNameSpec.
-Note that / is used as the separator. To use \ it must be quoted:
+Note that ``/`` is used as the separator. To use ``\`` it must be quoted:
 
 .. code-block:: bash
 
-    $ php bin/phpspec describe "Namespace\ClassName"
+    $ bin/phpspec describe "Namespace\ClassName"
 
-The describe command has no additional options. It will create a spec class in the `spec`
+The ``describe`` command has no additional options. It will create a spec class in the `spec`
 directory. To configure a different path to the specs you can use :ref:`suites <configuration-suites>`
 in the configuration file.
 
 Run Command
 -----------
 
-The run command runs the specs:
+The ``run`` command runs the specs:
 
 .. code-block:: bash
 
-    $ php bin/phpspec run
+    $ bin/phpspec run
 
 Will run all the specs in the `spec` directory.
 
 .. code-block:: bash
 
-    $ php bin/phpspec run spec/ClassNameSpec.php
+    $ bin/phpspec run spec/ClassNameSpec.php
 
-Will run only the ClassNameSpec. You can run just the specs in a directory
-with:
+Will run only the ClassNameSpec.
 
 .. code-block:: bash
 
-    $ php bin/phpspec run spec/Markdown
+    $ bin/phpspec run spec/ClassNameSpec.php:56
+
+Will run only specification defined in the ClassNameSpec on line 56.
+
+You can run just the specs in a directory with:
+
+.. code-block:: bash
+
+    $ bin/phpspec run spec/Markdown
 
 Which will run any specs found in `spec/Markdown` and its subdirectories.
 Note that it is the spec location and not namespaces that are used to decide which
@@ -94,14 +101,14 @@ to generate code with:
 
 .. code-block:: bash
 
-    $ php bin/phpspec run --no-code-generation
+    $ bin/phpspec run --no-code-generation
 
 You can choose to stop on failure and avoid running the remaining
 specs with:
 
 .. code-block:: bash
 
-    $ php bin/phpspec run --stop-on-failure
+    $ bin/phpspec run --stop-on-failure
 
 TDD work cycle can be described using three steps: Fail, Pass, Refactor.
 If you create a failing spec for a new method, the next step will be to make it pass.
@@ -113,13 +120,13 @@ You can opt to automatically fake return values with:
 
 .. code-block:: bash
 
-    $ php bin/phpspec run --fake
+    $ bin/phpspec run --fake
 
-You can choose the output format with the format option e.g.:
+You can choose the output format with the ``--format`` option e.g.:
 
 .. code-block:: bash
 
-    $ php bin/phpspec run --format=dot
+    $ bin/phpspec run --format=dot
 
 The formatters available by default are:
 

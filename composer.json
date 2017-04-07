@@ -1,6 +1,6 @@
 {
     "name":         "phpspec/phpspec",
-    "description":  "Specification-oriented BDD framework for PHP 5.3+",
+    "description":  "Specification-oriented BDD framework for PHP 5.6+",
     "keywords":     ["BDD", "SpecBDD", "TDD", "spec", "specification", "tests", "testing"],
     "homepage":     "http://phpspec.net/",
     "type":         "library",
@@ -14,32 +14,36 @@
         {
             "name":      "Marcello Duarte",
             "homepage":  "http://marcelloduarte.net/"
+        },
+        {
+            "name":      "Ciaran McNulty",
+            "homepage":  "https://ciaranmcnulty.com/"
         }
     ],
 
     "require": {
-        "php":                      ">=5.3.3",
-        "phpspec/prophecy":         "~1.4",
-        "phpspec/php-diff":         "~1.0.0",
-        "sebastian/exporter":       "~1.0|~2.0",
-        "symfony/console":          "~2.3|~3.0",
-        "symfony/event-dispatcher": "~2.1|~3.0",
-        "symfony/process":          "^2.6|~3.0",
-        "symfony/finder":           "~2.1|~3.0",
-        "symfony/yaml":             "~2.1|~3.0",
+        "php":                      "^5.6 || ^7.0",
+        "phpspec/prophecy":         "^1.5",
+        "phpspec/php-diff":         "^1.0.0",
+        "sebastian/exporter":       "^1.0 || ^2.0 || ^3.0",
+        "symfony/console":          "^2.7 || ^3.0",
+        "symfony/event-dispatcher": "^2.7 || ^3.0",
+        "symfony/process":          "^2.7 || ^3.0",
+        "symfony/finder":           "^2.7 || ^3.0",
+        "symfony/yaml":             "^2.7 || ^3.0",
         "doctrine/instantiator":    "^1.0.1",
         "ext-tokenizer":            "*"
     },
 
     "require-dev": {
-        "behat/behat":           "^3.0.11",
-        "symfony/filesystem":    "~2.1|~3.0",
-        "phpunit/phpunit":       "~4.4",
+        "behat/behat":           "^3.3",
+        "symfony/filesystem":    "^3.0",
+        "phpunit/phpunit":       "^5.5|^6.0",
         "ciaranmcnulty/versionbasedtestskipper": "^0.2.1"
     },
 
     "suggest": {
-        "phpspec/nyan-formatters": "~1.0 – Adds Nyan formatters"
+        "phpspec/nyan-formatters": "Adds Nyan formatters"
     },
 
     "autoload": {
@@ -58,7 +62,7 @@
 
     "extra": {
         "branch-alias": {
-            "dev-master": "2.5.x-dev"
+            "dev-master": "3.0.x-dev"
         }
     }
 }

@@ -13,17 +13,16 @@
 
 namespace PhpSpec\Listener;
 
-use PhpSpec\Util\ReservedWordsMethodNameChecker;
-use PhpSpec\Util\NameCheckerInterface;
+use PhpSpec\Util\NameChecker;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use PhpSpec\Console\IO;
-use PhpSpec\Locator\ResourceManagerInterface;
+use PhpSpec\Console\ConsoleIO;
+use PhpSpec\Locator\ResourceManager;
 use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
-class MethodNotFoundListener implements EventSubscriberInterface
+final class MethodNotFoundListener implements EventSubscriberInterface
 {
     private $io;
     private $resources;
@@ -31,26 +30,26 @@ class MethodNotFoundListener implements EventSubscriberInterface
     private $methods = array();
     private $wrongMethodNames = array();
     /**
-     * @var NameCheckerInterface
+     * @var NameChecker
      */
     private $nameChecker;
 
     /**
-     * @param IO $io
-     * @param ResourceManagerInterface $resources
+     * @param ConsoleIO $io
+     * @param ResourceManager $resources
      * @param GeneratorManager $generator
-     * @param NameCheckerInterface $nameChecker
+     * @param NameChecker $nameChecker
      */
     public function __construct(
-        IO $io,
-        ResourceManagerInterface $resources,
+        ConsoleIO $io,
+        ResourceManager $resources,
         GeneratorManager $generator,
-        NameCheckerInterface $nameChecker = null
+        NameChecker $nameChecker
     ) {
         $this->io        = $io;
         $this->resources = $resources;
         $this->generator = $generator;
-        $this->nameChecker = $nameChecker ?: new ReservedWordsMethodNameChecker();
+        $this->nameChecker = $nameChecker;
     }
 
     public static function getSubscribedEvents()

@@ -19,12 +19,12 @@ use PhpSpec\Exception\Fracture\FractureException;
 use PhpSpec\Util\Instantiator;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 
-class ConstructorDecorator extends Decorator implements ExpectationInterface
+final class ConstructorDecorator extends Decorator implements Expectation
 {
     /**
-     * @param ExpectationInterface $expectation
+     * @param Expectation $expectation
      */
-    public function __construct(ExpectationInterface $expectation)
+    public function __construct(Expectation $expectation)
     {
         $this->setExpectation($expectation);
     }

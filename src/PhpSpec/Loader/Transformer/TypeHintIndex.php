@@ -27,7 +27,7 @@ interface TypeHintIndex
      * @param string $class
      * @param string $method
      * @param string $argument
-     * @param Exception $exception
+     * @param \Exception $exception
      */
     public function addInvalid($class, $method, $argument, \Exception $exception);
 

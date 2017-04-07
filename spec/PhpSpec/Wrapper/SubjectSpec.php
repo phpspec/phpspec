@@ -2,7 +2,7 @@
 
 namespace spec\PhpSpec\Wrapper;
 
-use Phpspec\CodeAnalysis\AccessInspectorInterface;
+use Phpspec\CodeAnalysis\AccessInspector;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
@@ -11,12 +11,12 @@ use PhpSpec\Wrapper\Subject\WrappedObject;
 use PhpSpec\Wrapper\Subject\Caller;
 use PhpSpec\Wrapper\Subject\SubjectWithArrayAccess;
 use PhpSpec\Wrapper\Subject\ExpectationFactory;
-use PhpSpec\Wrapper\Subject\Expectation\ExpectationInterface;
+use PhpSpec\Wrapper\Subject\Expectation\Expectation;
 
 class SubjectSpec extends ObjectBehavior
 {
     function let(Wrapper $wrapper, WrappedObject $wrappedObject, Caller $caller, SubjectWithArrayAccess $arrayAccess,
-                 ExpectationFactory $expectationFactory, AccessInspectorInterface $accessInspector)
+                 ExpectationFactory $expectationFactory, AccessInspector $accessInspector)
     {
         $this->beConstructedWith(
             null,
@@ -30,7 +30,7 @@ class SubjectSpec extends ObjectBehavior
     }
 
     function it_passes_the_created_subject_to_expectation(WrappedObject $wrappedObject,
-        ExpectationFactory $expectationFactory, ExpectationInterface $expectation)
+        ExpectationFactory $expectationFactory, Expectation $expectation)
     {
         $expectation->match(Argument::cetera())->willReturn(true);
         $wrappedObject->getClassName()->willReturn('spec\PhpSpec\Wrapper\Everything');
@@ -41,7 +41,7 @@ class SubjectSpec extends ObjectBehavior
     }
 
     function it_passes_the_existing_subject_to_expectation(Wrapper $wrapper, WrappedObject $wrappedObject, Caller $caller,
-        SubjectWithArrayAccess $arrayAccess, ExpectationFactory $expectationFactory, ExpectationInterface $expectation)
+        SubjectWithArrayAccess $arrayAccess, ExpectationFactory $expectationFactory, Expectation $expectation)
     {
         $existingSubject = new \ArrayObject();
         $this->beConstructedWith($existingSubject, $wrapper, $wrappedObject, $caller, $arrayAccess, $expectationFactory);

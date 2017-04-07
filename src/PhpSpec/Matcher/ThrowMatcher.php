@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Matcher;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Wrapper\DelayedCall;
 use PhpSpec\Factory\ReflectionFactory;
@@ -22,7 +22,7 @@ use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
-class ThrowMatcher implements MatcherInterface
+final class ThrowMatcher implements Matcher
 {
     /**
      * @var array
@@ -35,7 +35,7 @@ class ThrowMatcher implements MatcherInterface
     private $unwrapper;
 
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
 
@@ -46,14 +46,14 @@ class ThrowMatcher implements MatcherInterface
 
     /**
      * @param Unwrapper              $unwrapper
-     * @param PresenterInterface     $presenter
+     * @param Presenter              $presenter
      * @param ReflectionFactory|null $factory
      */
-    public function __construct(Unwrapper $unwrapper, PresenterInterface $presenter, ReflectionFactory $factory = null)
+    public function __construct(Unwrapper $unwrapper, Presenter $presenter, ReflectionFactory $factory)
     {
         $this->unwrapper = $unwrapper;
         $this->presenter = $presenter;
-        $this->factory   = $factory ?: new ReflectionFactory();
+        $this->factory   = $factory;
     }
 
     /**
@@ -121,11 +121,18 @@ class ThrowMatcher implements MatcherInterface
         }
 
         if (!$exceptionThrown instanceof $exception) {
+            $format = 'Expected exception of class %s, but got %s.';
+
+            if ($exceptionThrown instanceof \Error) {
+                $format = 'Expected exception of class %s, but got %s with the message: "%s"';
+            }
+
             throw new FailureException(
                 sprintf(
-                    'Expected exception of class %s, but got %s.',
+                    $format,
                     $this->presenter->presentValue($exception),
-                    $this->presenter->presentValue($exceptionThrown)
+                    $this->presenter->presentValue($exceptionThrown),
+                    $exceptionThrown->getMessage()
                 )
             );
         }

@@ -18,6 +18,7 @@ Feature: Config directory can be used in spec and src paths
 
       namespace spec\MilkyWay\OrionCygnusArm;
 
+      use MilkyWay\OrionCygnusArm\LocalBubble;
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
 
@@ -25,7 +26,7 @@ Feature: Config directory can be used in spec and src paths
       {
           function it_is_initializable()
           {
-              $this->shouldHaveType('MilkyWay\OrionCygnusArm\LocalBubble');
+              $this->shouldHaveType(LocalBubble::class);
           }
       }
 
@@ -45,6 +46,7 @@ Feature: Config directory can be used in spec and src paths
 
       namespace spec\MilkyWay\OrionCygnusArm;
 
+      use MilkyWay\OrionCygnusArm\ButterflyCluster;
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
 
@@ -52,7 +54,7 @@ Feature: Config directory can be used in spec and src paths
       {
           function it_is_initializable()
           {
-              $this->shouldHaveType('MilkyWay\OrionCygnusArm\ButterflyCluster');
+              $this->shouldHaveType(ButterflyCluster::class);
           }
       }
 

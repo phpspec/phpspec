@@ -13,89 +13,19 @@
 
 namespace PhpSpec\Locator;
 
-use PhpSpec\Exception\Locator\ResourceCreationException;
-
-class ResourceManager implements ResourceManagerInterface
+interface ResourceManager
 {
-    /**
-     * @var ResourceLocatorInterface[]
-     */
-    private $locators = array();
-
-    /**
-     * @param ResourceLocatorInterface $locator
-     */
-    public function registerLocator(ResourceLocatorInterface $locator)
-    {
-        $this->locators[] = $locator;
-
-        @usort($this->locators, function ($locator1, $locator2) {
-            return $locator2->getPriority() - $locator1->getPriority();
-        });
-    }
-
     /**
      * @param string $query
      *
-     * @return ResourceInterface[]
+     * @return \PhpSpec\Locator\Resource[]
      */
-    public function locateResources($query)
-    {
-        $resources = array();
-        foreach ($this->locators as $locator) {
-            if (empty($query)) {
-                $resources = array_merge($resources, $locator->getAllResources());
-                continue;
-            }
-
-            if (!$locator->supportsQuery($query)) {
-                continue;
-            }
-
-            $resources = array_merge($resources, $locator->findResources($query));
-        }
-
-        return $this->removeDuplicateResources($resources);
-    }
+    public function locateResources($query);
 
     /**
      * @param string $classname
      *
-     * @return ResourceInterface
-     *
-     * @throws \RuntimeException
+     * @return \PhpSpec\Locator\Resource
      */
-    public function createResource($classname)
-    {
-        foreach ($this->locators as $locator) {
-            if ($locator->supportsClass($classname)) {
-                return $locator->createResource($classname);
-            }
-        }
-
-        throw new ResourceCreationException(
-            sprintf(
-                'Can not find appropriate suite scope for class `%s`.',
-                $classname
-            )
-        );
-    }
-
-    /**
-     * @param array $resources
-     *
-     * @return ResourceInterface[]
-     */
-    private function removeDuplicateResources(array $resources)
-    {
-        $filteredResources = array();
-
-        foreach ($resources as $resource) {
-            if (!array_key_exists($resource->getSpecClassname(), $filteredResources)) {
-                $filteredResources[$resource->getSpecClassname()] = $resource;
-            }
-        }
-
-        return array_values($filteredResources);
-    }
+    public function createResource($classname);
 }

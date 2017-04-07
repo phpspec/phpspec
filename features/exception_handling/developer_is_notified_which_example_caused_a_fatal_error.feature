@@ -1,3 +1,4 @@
+@php:~5.6
 Feature: Developer is notified of which scenario caused a fatal error
   As a Developer
   I want to know in which scenario or example my script was running
@@ -44,7 +45,7 @@ Feature: Developer is notified of which scenario caused a fatal error
     Then I should see "Fatal error happened while executing the following"
     And  I should see "it fatals when calling an undeclared function"
 
-  @isolated @php:~5.4||~7.0
+  @isolated
   Scenario: Fatal error writer message not shown, when formatter does not support it.
     Given the spec file "spec/Message/Fatal/Fatal2Spec.php" contains:
       """

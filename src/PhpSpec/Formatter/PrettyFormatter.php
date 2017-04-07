@@ -17,7 +17,7 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\ExampleEvent;
 
-class PrettyFormatter extends ConsoleFormatter
+final class PrettyFormatter extends ConsoleFormatter
 {
     public function beforeSpecification(SpecificationEvent $event)
     {

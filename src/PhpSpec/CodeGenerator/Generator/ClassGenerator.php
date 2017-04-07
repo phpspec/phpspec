@@ -13,22 +13,22 @@
 
 namespace PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\Locator\Resource;
 
 /**
  * The Class Generator is responsible for generating the classes from a resource
  * in the appropriate folder using the template provided
  */
-class ClassGenerator extends PromptingGenerator
+final class ClassGenerator extends PromptingGenerator
 {
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $generation
      * @param array             $data
      *
      * @return bool
      */
-    public function supports(ResourceInterface $resource, $generation, array $data)
+    public function supports(Resource $resource, $generation, array $data)
     {
         return 'class' === $generation;
     }
@@ -42,12 +42,12 @@ class ClassGenerator extends PromptingGenerator
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $filepath
      *
      * @return string
      */
-    protected function renderTemplate(ResourceInterface $resource, $filepath)
+    protected function renderTemplate(Resource $resource, $filepath)
     {
         $values = array(
             '%filepath%'        => $filepath,
@@ -77,22 +77,22 @@ class ClassGenerator extends PromptingGenerator
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      *
      * @return string
      */
-    protected function getFilePath(ResourceInterface $resource)
+    protected function getFilePath(Resource $resource)
     {
         return $resource->getSrcFilename();
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $filepath
      *
      * @return string
      */
-    protected function getGeneratedMessage(ResourceInterface $resource, $filepath)
+    protected function getGeneratedMessage(Resource $resource, $filepath)
     {
         return sprintf(
             "<info>Class <value>%s</value> created in <value>%s</value>.</info>\n",

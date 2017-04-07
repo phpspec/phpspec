@@ -14,14 +14,14 @@
 namespace PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\CodeGenerator\TemplateRenderer;
-use PhpSpec\Console\IO;
-use PhpSpec\Locator\ResourceInterface;
+use PhpSpec\Console\ConsoleIO;
+use PhpSpec\Locator\Resource;
 use PhpSpec\Util\Filesystem;
 
-class ReturnConstantGenerator implements GeneratorInterface
+final class ReturnConstantGenerator implements Generator
 {
     /**
-     * @var IO
+     * @var ConsoleIO
      */
     private $io;
     /**
@@ -34,34 +34,34 @@ class ReturnConstantGenerator implements GeneratorInterface
     private $filesystem;
 
     /**
-     * @param IO               $io
+     * @param ConsoleIO        $io
      * @param TemplateRenderer $templates
      * @param Filesystem       $filesystem
      */
-    public function __construct(IO $io, TemplateRenderer $templates, Filesystem $filesystem = null)
+    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem)
     {
         $this->io = $io;
         $this->templates = $templates;
-        $this->filesystem = $filesystem ?: new Filesystem();
+        $this->filesystem = $filesystem;
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param string            $generation
      * @param array             $data
      *
      * @return bool
      */
-    public function supports(ResourceInterface $resource, $generation, array $data)
+    public function supports(Resource $resource, $generation, array $data)
     {
         return 'returnConstant' == $generation;
     }
 
     /**
-     * @param ResourceInterface $resource
+     * @param Resource $resource
      * @param array             $data
      */
-    public function generate(ResourceInterface $resource, array $data)
+    public function generate(Resource $resource, array $data)
     {
         $method = $data['method'];
         $expected = $data['expected'];

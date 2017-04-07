@@ -13,20 +13,20 @@
 
 namespace PhpSpec\Runner\Maintainer;
 
-use PhpSpec\CodeAnalysis\AccessInspectorInterface;
+use PhpSpec\CodeAnalysis\AccessInspector;
 use PhpSpec\Loader\Node\ExampleNode;
-use PhpSpec\SpecificationInterface;
+use PhpSpec\Specification;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Wrapper\Wrapper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
-class SubjectMaintainer implements MaintainerInterface
+final class SubjectMaintainer implements Maintainer
 {
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
     /**
@@ -38,20 +38,20 @@ class SubjectMaintainer implements MaintainerInterface
      */
     private $dispatcher;
     /**
-     * @var AccessInspectorInterface
+     * @var AccessInspector
      */
     private $accessInspector;
 
     /**
-     * @param PresenterInterface       $presenter
+     * @param Presenter       $presenter
      * @param Unwrapper                $unwrapper
      * @param EventDispatcherInterface $dispatcher
      */
     public function __construct(
-        PresenterInterface $presenter,
+        Presenter $presenter,
         Unwrapper $unwrapper,
         EventDispatcherInterface $dispatcher,
-        AccessInspectorInterface $accessInspector
+        AccessInspector $accessInspector
     ) {
         $this->presenter = $presenter;
         $this->unwrapper = $unwrapper;
@@ -67,19 +67,19 @@ class SubjectMaintainer implements MaintainerInterface
     public function supports(ExampleNode $example)
     {
         return $example->getSpecification()->getClassReflection()->implementsInterface(
-            'PhpSpec\Wrapper\SubjectContainerInterface'
+            'PhpSpec\Wrapper\SubjectContainer'
         );
     }
 
     /**
      * @param ExampleNode            $example
-     * @param SpecificationInterface $context
+     * @param Specification $context
      * @param MatcherManager         $matchers
      * @param CollaboratorManager    $collaborators
      */
     public function prepare(
         ExampleNode $example,
-        SpecificationInterface $context,
+        Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
     ) {
@@ -94,13 +94,13 @@ class SubjectMaintainer implements MaintainerInterface
 
     /**
      * @param ExampleNode            $example
-     * @param SpecificationInterface $context
+     * @param Specification $context
      * @param MatcherManager         $matchers
      * @param CollaboratorManager    $collaborators
      */
     public function teardown(
         ExampleNode $example,
-        SpecificationInterface $context,
+        Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
     ) {

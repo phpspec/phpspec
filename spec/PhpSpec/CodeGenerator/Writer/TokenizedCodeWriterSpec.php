@@ -4,10 +4,16 @@ namespace spec\PhpSpec\CodeGenerator\Writer;
 
 use PhpSpec\Exception\Generator\NamedMethodNotFoundException;
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Util\ClassFileAnalyser;
 use Prophecy\Argument;
 
 class TokenizedCodeWriterSpec extends ObjectBehavior
 {
+    function let()
+    {
+        $this->beConstructedWith(new ClassFileAnalyser());
+    }
+
     function it_should_write_the_content_after_the_last_method()
     {
         $class = $this->getSingleMethodClass();

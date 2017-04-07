@@ -6,13 +6,13 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 use PhpSpec\Formatter\BasicFormatter;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
-use PhpSpec\IO\IOInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
+use PhpSpec\IO\IO;
 use PhpSpec\Listener\StatisticsCollector;
 
 class BasicFormatterSpec extends ObjectBehavior
 {
-    function let(PresenterInterface $presenter, IOInterface $io, StatisticsCollector $stats)
+    function let(Presenter $presenter, IO $io, StatisticsCollector $stats)
     {
         $this->beAnInstanceOf('spec\PhpSpec\Formatter\TestableBasicFormatter');
         $this->beConstructedWith($presenter, $io, $stats);

@@ -2,11 +2,11 @@
 
 namespace spec\PhpSpec\Listener;
 
+use PhpSpec\Locator\ResourceManager;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-use PhpSpec\Console\IO;
-use PhpSpec\Locator\ResourceManager;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
@@ -16,7 +16,7 @@ use Prophecy\Exception\Doubler\ClassNotFoundException as ProphecyClassException;
 
 class ClassNotFoundListenerSpec extends ObjectBehavior
 {
-    function let(IO $io, ResourceManager $resourceManager, GeneratorManager $generatorManager,
+    function let(ConsoleIO $io, ResourceManager $resourceManager, GeneratorManager $generatorManager,
                  SuiteEvent $suiteEvent, ExampleEvent $exampleEvent)
     {
         $io->writeln(Argument::any())->willReturn();

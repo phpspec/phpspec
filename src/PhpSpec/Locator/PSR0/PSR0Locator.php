@@ -13,12 +13,11 @@
 
 namespace PhpSpec\Locator\PSR0;
 
-use PhpSpec\Locator\ResourceInterface;
-use PhpSpec\Locator\ResourceLocatorInterface;
+use PhpSpec\Locator\ResourceLocator;
 use PhpSpec\Util\Filesystem;
 use InvalidArgumentException;
 
-class PSR0Locator implements ResourceLocatorInterface
+class PSR0Locator implements ResourceLocator
 {
     /**
      * @var string
@@ -55,22 +54,22 @@ class PSR0Locator implements ResourceLocatorInterface
     private $psr4Prefix;
 
     /**
+     * @param Filesystem $filesystem
      * @param string     $srcNamespace
      * @param string     $specNamespacePrefix
      * @param string     $srcPath
      * @param string     $specPath
-     * @param Filesystem $filesystem
      * @param string     $psr4Prefix
      */
     public function __construct(
+        Filesystem $filesystem,
         $srcNamespace = '',
         $specNamespacePrefix = 'spec',
         $srcPath = 'src',
         $specPath = '.',
-        Filesystem $filesystem = null,
         $psr4Prefix = null
     ) {
-        $this->filesystem = $filesystem ?: new Filesystem();
+        $this->filesystem = $filesystem;
         $sepr = DIRECTORY_SEPARATOR;
 
         $this->srcPath       = rtrim(realpath($srcPath), '/\\').$sepr;
@@ -141,7 +140,7 @@ class PSR0Locator implements ResourceLocatorInterface
     }
 
     /**
-     * @return ResourceInterface[]
+     * @return Resource[]
      */
     public function getAllResources()
     {
@@ -177,7 +176,7 @@ class PSR0Locator implements ResourceLocatorInterface
     /**
      * @param string $query
      *
-     * @return ResourceInterface[]
+     * @return Resource[]
      */
     public function findResources($query)
     {

@@ -7,7 +7,7 @@ Create a ``composer.json`` file:
 
     {
         "require-dev": {
-            "phpspec/phpspec": "~2.0"
+            "phpspec/phpspec": "^3.0"
         },
         "config": {
             "bin-dir": "bin"
@@ -15,11 +15,12 @@ Create a ``composer.json`` file:
         "autoload": {"psr-0": {"": "src"}}
     }
 
+Follow the instructions on this page to install composer: `<https://getcomposer.org/download/>`_.  
+
 Install **phpspec** with composer:
 
 .. code-block:: bash
 
-    curl http://getcomposer.org/installer | php
     php composer.phar install
 
 Start writing specs:
@@ -39,6 +40,7 @@ Learn more from :doc:`the documentation <manual/introduction>`.
    manual/getting-started
    manual/prophet-objects
    manual/let-and-letgo
+   manual/upgrading-to-phpspec-3
 
 .. toctree::
    :hidden:

@@ -13,10 +13,10 @@
 
 namespace PhpSpec\Wrapper;
 
-use PhpSpec\CodeAnalysis\AccessInspectorInterface;
+use PhpSpec\CodeAnalysis\AccessInspector;
 use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Runner\MatcherManager;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Wrapper\Subject\WrappedObject;
@@ -31,7 +31,7 @@ class Wrapper
      */
     private $matchers;
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
     /**
@@ -43,23 +43,23 @@ class Wrapper
      */
     private $example;
     /**
-     * @var AccessInspectorInterface
+     * @var AccessInspector
      */
     private $accessInspector;
 
     /**
      * @param MatcherManager $matchers
-     * @param PresenterInterface $presenter
+     * @param Presenter $presenter
      * @param EventDispatcherInterface $dispatcher
      * @param ExampleNode $example
-     * @param AccessInspectorInterface $accessInspector
+     * @param AccessInspector $accessInspector
      */
     public function __construct(
         MatcherManager $matchers,
-        PresenterInterface $presenter,
+        Presenter $presenter,
         EventDispatcherInterface $dispatcher,
         ExampleNode $example,
-        AccessInspectorInterface $accessInspector = null
+        AccessInspector $accessInspector = null
     ) {
         $this->matchers = $matchers;
         $this->presenter = $presenter;

@@ -12,7 +12,7 @@ You can use a different config file name and path with the ``--config`` option:
     $ bin/phpspec run --config path/to/different-phpspec.yml
 
 You can also specify default values for config variables across all repositories by creating
-the file ``.phpspec.yml`` in your home folder (Unix systems). Phpspec will use your personal preference for
+the file ``.phpspec.yml`` in your home folder (Unix systems). phpspec will use your personal preference for
 all settings that are not defined in the project's configuration.
 
 .. _configuration-suites:
@@ -68,7 +68,7 @@ describing. In phpspec, you can group specification files by a certain namespace
   specifications. The complete namespace for specifications is
   ``%spec_prefix%\%namespace%``;
 * ``src_path`` [**default**: ``src``] - The path to store the generated
-  classes. By default Paths are relative to the location where ***phpspec*** was 
+  classes. By default paths are relative to the location where **phpspec** was 
   invoked. **phpspec** creates the directories if they do not exist. This does 
   not include the namespace directories;
 * ``spec_path`` [**default**: ``.``] - The path of the specifications. This
@@ -197,12 +197,25 @@ array of extension classes:
     extensions:
         - PhpSpec\Symfony2Extension\Extension
 
+Custom matchers
+---------------
+
+You may want to make custom matchers available in all specs.
+Custom matchers can be registered by extension, but there is a simplier way: use the ``matchers`` setting and
+provide an array of matcher classes. Each of them must implement ``PhpSpec\Matcher\Matcher`` interface:
+
+.. code-block:: yaml
+
+    matchers:
+        - Acme\Matchers\ValidJsonMatcher
+        - Acme\Matchers\PositiveIntegerMatcher
+
 Bootstrapping
 -------------
 
 There are times when you would be required to load classes and execute additional statements that the Composer-generated autoloader may not provide, which is likely for a legacy project that wants to introduce phpspec for designing new classes that may rely on some legacy collaborators.
 
-To load a custom bootstrap when running phpspec, use the ``console.io.bootstrap`` setting:
+To load a custom bootstrap when running phpspec, use the ``bootstrap`` setting:
 
 .. code-block:: yaml
 

@@ -13,13 +13,13 @@
 
 namespace PhpSpec\Process\ReRunner;
 
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Process\ReRunner;
 
-class OptionalReRunner implements ReRunner
+final class OptionalReRunner implements ReRunner
 {
     /**
-     * @var IO
+     * @var ConsoleIO
      */
     private $io;
     /**
@@ -28,9 +28,9 @@ class OptionalReRunner implements ReRunner
     private $decoratedRerunner;
 
     /**
-     * @param IO $io
+     * @param ConsoleIO $io
      */
-    public function __construct(ReRunner $decoratedRerunner, IO $io)
+    public function __construct(ReRunner $decoratedRerunner, ConsoleIO $io)
     {
         $this->io = $io;
         $this->decoratedRerunner = $decoratedRerunner;

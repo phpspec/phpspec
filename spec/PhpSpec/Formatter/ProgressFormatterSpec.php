@@ -2,16 +2,16 @@
 
 namespace spec\PhpSpec\Formatter;
 
-use PhpSpec\Console\IO;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 class ProgressFormatterSpec extends ObjectBehavior
 {
-    function let(PresenterInterface $presenter, IO $io, StatisticsCollector $stats)
+    function let(Presenter $presenter, ConsoleIO $io, StatisticsCollector $stats)
     {
         $this->beConstructedWith($presenter, $io, $stats);
     }
@@ -21,7 +21,7 @@ class ProgressFormatterSpec extends ObjectBehavior
         $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
     }
 
-    function it_outputs_progress_as_0_when_0_examples_have_run(ExampleEvent $event, IO $io, StatisticsCollector $stats)
+    function it_outputs_progress_as_0_when_0_examples_have_run(ExampleEvent $event, ConsoleIO $io, StatisticsCollector $stats)
     {
         $stats->getEventsCount()->willReturn(0);
         $stats->getCountsHash()->willReturn(array(
@@ -40,7 +40,7 @@ class ProgressFormatterSpec extends ObjectBehavior
         $io->writeTemp($expected)->shouldHaveBeenCalled();
     }
 
-    function it_outputs_progress_as_0_when_0_examples_have_passed(ExampleEvent $event, IO $io, StatisticsCollector $stats)
+    function it_outputs_progress_as_0_when_0_examples_have_passed(ExampleEvent $event, ConsoleIO $io, StatisticsCollector $stats)
     {
         $stats->getEventsCount()->willReturn(1);
         $stats->getCountsHash()->willReturn(array(
@@ -59,7 +59,7 @@ class ProgressFormatterSpec extends ObjectBehavior
         $io->writeTemp($expected)->shouldHaveBeenCalled();
     }
 
-    function it_outputs_progress_as_100_when_1_of_3_examples_have_passed(ExampleEvent $event, IO $io, StatisticsCollector $stats)
+    function it_outputs_progress_as_100_when_1_of_3_examples_have_passed(ExampleEvent $event, ConsoleIO $io, StatisticsCollector $stats)
     {
         $stats->getEventsCount()->willReturn(1);
         $stats->getCountsHash()->willReturn(array(
@@ -78,7 +78,7 @@ class ProgressFormatterSpec extends ObjectBehavior
         $io->writeTemp($expected)->shouldHaveBeenCalled();
     }
 
-    function it_outputs_progress_as_33_when_3_of_3_examples_have_run_and_one_passed(ExampleEvent $event, IO $io, StatisticsCollector $stats)
+    function it_outputs_progress_as_33_when_3_of_3_examples_have_run_and_one_passed(ExampleEvent $event, ConsoleIO $io, StatisticsCollector $stats)
     {
         $stats->getEventsCount()->willReturn(3);
         $stats->getCountsHash()->willReturn(array(

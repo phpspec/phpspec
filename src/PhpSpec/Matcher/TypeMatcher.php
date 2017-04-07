@@ -13,10 +13,10 @@
 
 namespace PhpSpec\Matcher;
 
-use PhpSpec\Formatter\Presenter\PresenterInterface;
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 
-class TypeMatcher extends BasicMatcher
+final class TypeMatcher extends BasicMatcher
 {
     /**
      * @var array
@@ -28,14 +28,14 @@ class TypeMatcher extends BasicMatcher
         'implement'
     );
     /**
-     * @var PresenterInterface
+     * @var Presenter
      */
     private $presenter;
 
     /**
-     * @param PresenterInterface $presenter
+     * @param Presenter $presenter
      */
-    public function __construct(PresenterInterface $presenter)
+    public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }

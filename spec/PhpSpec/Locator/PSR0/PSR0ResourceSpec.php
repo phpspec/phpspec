@@ -27,7 +27,7 @@ class PSR0ResourceSpec extends ObjectBehavior
 
     function it_is_a_resource()
     {
-        $this->shouldBeAnInstanceOf('PhpSpec\Locator\ResourceInterface');
+        $this->shouldBeAnInstanceOf('PhpSpec\Locator\Resource');
     }
 
     function it_generates_src_filename_from_provided_parts_using_locator($locator)

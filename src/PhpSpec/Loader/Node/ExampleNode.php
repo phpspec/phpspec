@@ -91,4 +91,12 @@ class ExampleNode
     {
         return $this->specification;
     }
+
+    /**
+     * @return int
+     */
+    public function getLineNumber()
+    {
+        return $this->function->isClosure() ? 0 : $this->function->getStartLine();
+    }
 }
