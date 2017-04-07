@@ -172,7 +172,7 @@ Given the configuration above, running:
     $ bin/phpspec describe Acme/Text/Markdown --suite=acme_one
 
 will create the spec in the file ``spec-one/spec/Acme/Text/MarkdownSpec.php`` and the class will be created
-in ``src-one/Markdown.php``.
+in ``src-one/Acme/Text/MarkdownSpec.php``.
 
 Formatter
 ---------
