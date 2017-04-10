@@ -90,13 +90,18 @@ class CallerSpec extends ObjectBehavior
             ->duringGetWrappedObject();
     }
 
-    function it_delegates_throwing_method_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
-    {
+    function it_delegates_throwing_method_not_found_exception(
+        WrappedObject $wrappedObject,
+        ExceptionFactory $exceptions,
+        AccessInspector $accessInspector
+    ) {
         $obj = new \ArrayObject();
 
         $wrappedObject->isInstantiated()->willReturn(true);
         $wrappedObject->getInstance()->willReturn($obj);
         $wrappedObject->getClassName()->willReturn('ArrayObject');
+
+        $accessInspector->isMethodCallable($obj,'foo')->willReturn(false);
 
         $exceptions->methodNotFound('ArrayObject', 'foo', array())
             ->willReturn(new \PhpSpec\Exception\Fracture\MethodNotFoundException(
@@ -158,13 +163,18 @@ class CallerSpec extends ObjectBehavior
             ->duringCall('foo');
     }
 
-    function it_delegates_throwing_method_not_visible_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
-    {
+    function it_delegates_throwing_method_not_visible_exception(
+        WrappedObject $wrappedObject,
+        ExceptionFactory $exceptions,
+        AccessInspector $accessInspector
+    ) {
         $obj = new ExampleClass();
 
         $wrappedObject->isInstantiated()->willReturn(true);
         $wrappedObject->getInstance()->willReturn($obj);
         $wrappedObject->getClassName()->willReturn('spec\PhpSpec\Wrapper\Subject\ExampleClass');
+
+        $accessInspector->isMethodCallable($obj,'privateMethod')->willReturn(false);
 
         $exceptions->methodNotVisible('spec\PhpSpec\Wrapper\Subject\ExampleClass', 'privateMethod', array())
             ->willReturn(new \PhpSpec\Exception\Fracture\MethodNotVisibleException(
@@ -179,12 +189,17 @@ class CallerSpec extends ObjectBehavior
             ->duringCall('privateMethod');
     }
 
-    function it_delegates_throwing_property_not_found_exception(WrappedObject $wrappedObject, ExceptionFactory $exceptions)
-    {
+    function it_delegates_throwing_property_not_found_exception(
+        WrappedObject $wrappedObject,
+        ExceptionFactory $exceptions,
+        AccessInspector $accessInspector
+    ) {
         $obj = new ExampleClass();
 
         $wrappedObject->isInstantiated()->willReturn(true);
         $wrappedObject->getInstance()->willReturn($obj);
+
+        $accessInspector->isPropertyWritable($obj,'nonExistentProperty')->willReturn(false);
 
         $exceptions->propertyNotFound($obj, 'nonExistentProperty')
             ->willReturn(new \PhpSpec\Exception\Fracture\PropertyNotFoundException(

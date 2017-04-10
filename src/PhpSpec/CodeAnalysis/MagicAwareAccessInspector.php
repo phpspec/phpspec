@@ -30,33 +30,24 @@ final class MagicAwareAccessInspector implements AccessInspector
 
     /**
      * @param object $object
-     * @param string $property
-     *
-     * @return bool
      */
-    public function isPropertyReadable($object, $property)
+    public function isPropertyReadable($object, string $property) : bool
     {
         return method_exists($object, '__get') || $this->accessInspector->isPropertyReadable($object, $property);
     }
 
     /**
      * @param object $object
-     * @param string $property
-     *
-     * @return bool
      */
-    public function isPropertyWritable($object, $property)
+    public function isPropertyWritable($object, string $property) : bool
     {
         return method_exists($object, '__set') || $this->accessInspector->isPropertyWritable($object, $property);
     }
 
     /**
      * @param object $object
-     * @param string $method
-     *
-     * @return bool
      */
-    public function isMethodCallable($object, $method)
+    public function isMethodCallable($object, string $method) : bool
     {
         return method_exists($object, '__call') || $this->accessInspector->isMethodCallable($object, $method);
     }

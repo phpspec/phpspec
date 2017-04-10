@@ -25,12 +25,12 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
         $this->namespaceResolver = $namespaceResolver;
     }
 
-    public function analyse($code)
+    public function analyse(string $code)
     {
         $this->namespaceResolver->analyse($code);
     }
 
-    public function resolve($typeAlias)
+    public function resolve(string $typeAlias)
     {
         $this->guardNonObjectTypeHints($typeAlias);
 
@@ -38,10 +38,9 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
     }
 
     /**
-     * @param $typeAlias
      * @throws \Exception
      */
-    private function guardNonObjectTypeHints($typeAlias)
+    private function guardNonObjectTypeHints(string $typeAlias)
     {
         $nonObjectTypes = [
             'int',
