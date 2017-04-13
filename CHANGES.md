@@ -2,6 +2,7 @@ Upcoming 3.0
 ============
 
 * Support sebastian/exporter 3.0 (@remicollet)
+* Support `.phpspec.yml` as a filename (@shrikeh)
 
 Upcoming 2.5
 ============
