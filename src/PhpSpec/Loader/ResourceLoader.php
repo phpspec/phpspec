@@ -74,15 +74,46 @@ class ResourceLoader
             }
 
             $spec = new Node\SpecificationNode($resource->getSrcClassname(), $reflection, $resource);
+
             foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-                if (!preg_match('/^(it|its)[^a-zA-Z]/', $method->getName())) {
-                    continue;
+                $specAnnotation = null;
+
+                $methodDocComment = $method->getDocComment();
+
+                if (!empty($methodDocComment)) {
+                    foreach (preg_split('/\R[^*]*/', $methodDocComment) as $docLine) {
+                        if (
+                            0 !== strpos($docLine, '* @it ')
+                            && 0 !== strpos($docLine, '* @its ')
+                        ) {
+                            continue;
+                        }
+
+                        $specAnnotation = str_replace('* @', '', $docLine);
+                        break;
+                    }
                 }
+
+
+
+                if (null === $specAnnotation) {
+                    $specAnnotation = $method->getName();
+
+                    if (
+                        0 !== strpos($specAnnotation, 'it_') 
+                        && 0 !== strpos($specAnnotation, 'its_')
+                    ) {
+                        continue;
+                    }
+
+                    $specAnnotation = str_replace('_', ' ', $specAnnotation);
+                }
+
                 if (null !== $line && !$this->lineIsInsideMethod($line, $method)) {
                     continue;
                 }
 
-                $example = new Node\ExampleNode(str_replace('_', ' ', $method->getName()), $method);
+                $example = new Node\ExampleNode($specAnnotation, $method);
 
                 if ($this->methodAnalyser->reflectionMethodIsEmpty($method)) {
                     $example->markAsPending();
