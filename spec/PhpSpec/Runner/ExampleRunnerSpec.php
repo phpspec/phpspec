@@ -151,4 +151,29 @@ class ExampleRunnerSpec extends ObjectBehavior
         $this->registerMaintainer($maintainer);
         $this->run($example);
     }
+
+    function it_runs_all_supported_maintainers_before_and_after_each_example_if_the_example_throws_an_exception(
+        ExampleNode $example, SpecificationNode $specification, ReflectionClass $specReflection,
+        $context, ReflectionMethod $exampReflection, MaintainerInterface $maintainer,
+        SpecificationInterface $context
+    )
+    {
+        $example->isPending()->willReturn(false);
+        $example->getFunctionReflection()->willReturn($exampReflection);
+        $example->getSpecification()->willReturn($specification);
+        $specification->getClassReflection()->willReturn($specReflection);
+        $specReflection->newInstanceArgs()->willReturn($context);
+
+        $exampReflection->getParameters()->willReturn(array());
+        $exampReflection->invokeArgs($context, array())->willThrow('RuntimeException');
+
+        $maintainer->getPriority()->willReturn(1);
+        $maintainer->supports($example)->willReturn(true);
+
+        $maintainer->prepare($example, Argument::cetera())->shouldBeCalled();
+        $maintainer->teardown($example, Argument::cetera())->shouldBeCalled();
+
+        $this->registerMaintainer($maintainer);
+        $this->run($example);
+    }
 }
