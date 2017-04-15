@@ -55,6 +55,13 @@ class Unwrapper implements RevealerInterface
             $argument = $argument->reveal();
         }
 
+        if (is_object($argument) && $argument instanceof \Traversable && $argument instanceof \ArrayAccess) {
+            foreach ($argument as $key => $value) {
+                $argument[$key] = $this->unwrapOne($value);
+            }
+            return $argument;
+        }
+
         return $argument;
     }
 
