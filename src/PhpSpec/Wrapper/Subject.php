@@ -179,6 +179,7 @@ class Subject implements ArrayAccess, ObjectWrapper
     public function beConstructedWith()
     {
         $this->wrappedObject->beConstructedWith(func_get_args());
+        return $this;
     }
 
     /**
