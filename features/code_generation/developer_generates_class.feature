@@ -13,7 +13,7 @@ Feature: Developer generates a class
 
       namespace CodeGeneration\ClassExample1;
 
-      class Markdown
+      final class Markdown
       {
       }
 
@@ -63,7 +63,7 @@ Feature: Developer generates a class
 
     namespace Behat\Tests\MyNamespace;
 
-    class Markdown
+    final class Markdown
     {
     }
 
@@ -79,7 +79,7 @@ Feature: Developer generates a class
 
       namespace CodeGeneration\ClassExample1;
 
-      class Text_Markdown
+      final class Text_Markdown
       {
       }
 
@@ -95,7 +95,7 @@ Feature: Developer generates a class
 
       namespace CodeGeneration\Class_Example2;
 
-      class Text_Markdown
+      final class Text_Markdown
       {
       }
 
@@ -153,7 +153,7 @@ Feature: Developer generates a class
 
     namespace CodeGeneration\MethodExample2;
 
-    class ForgotPassword
+    final class ForgotPassword
     {
     }
 
