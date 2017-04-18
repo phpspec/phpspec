@@ -101,10 +101,6 @@ class ConsoleIO implements IO
      */
     public function isCodeGenerationEnabled()
     {
-        if (!$this->isInteractive()) {
-            return false;
-        }
-
         return $this->config->isCodeGenerationEnabled()
             && !$this->input->getOption('no-code-generation');
     }
