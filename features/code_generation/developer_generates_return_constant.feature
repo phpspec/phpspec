@@ -255,7 +255,8 @@ Feature: Developer generates a method returning a constant
       """
     And the config file contains:
       """
-      fake: true
+      phpspec:
+        fake: true
       """
     When I run phpspec interactively
     Then I should be prompted for code generation

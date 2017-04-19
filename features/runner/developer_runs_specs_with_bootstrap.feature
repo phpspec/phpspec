@@ -20,7 +20,8 @@ Feature: Developer runs the specs with bootstrap option
       """
     And the config file contains:
       """
-      bootstrap: bootstrap.php
+      phpspec:
+        bootstrap: bootstrap.php
       """
     When I run phpspec
     Then I should see "bootstrap file is loaded"

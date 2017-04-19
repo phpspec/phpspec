@@ -50,10 +50,11 @@ Feature: Developer generates a class
   Scenario: Generating a class with psr4 prefix
     Given the config file contains:
     """
-    suites:
-      behat_suite:
-        namespace: Behat\Tests\MyNamespace
-        psr4_prefix: Behat\Tests
+    phpspec:
+      suites:
+        behat_suite:
+          namespace: Behat\Tests\MyNamespace
+          psr4_prefix: Behat\Tests
     """
     And I have started describing the "Behat/Tests/MyNamespace/Markdown" class
     When I run phpspec and answer "y" when asked if I want to generate the code

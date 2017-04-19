@@ -6,10 +6,11 @@ Feature: Config directory can be used in spec and src paths
   Scenario: Using %paths.config% variable in spec_path
     Given the config file located in "Awesome" contains:
       """
-      suites:
-        behat_suite:
-          namespace: MilkyWay\OrionCygnusArm
-          spec_path: %paths.config%
+      phpspec:
+        suites:
+          behat_suite:
+            namespace: MilkyWay\OrionCygnusArm
+            spec_path: %paths.config%
       """
     When I start describing the "MilkyWay/OrionCygnusArm/LocalBubble" class with the "Awesome/phpspec.yml" custom config
     Then a new spec should be generated in the "Awesome/spec/MilkyWay/OrionCygnusArm/LocalBubbleSpec.php":
@@ -35,9 +36,10 @@ Feature: Config directory can be used in spec and src paths
   Scenario: Not using %paths.config% variable in spec_path
     Given the config file located in "Awesome" contains:
       """
-      suites:
-        behat_suite:
-          namespace: MilkyWay\OrionCygnusArm
+      phpspec:
+        suites:
+          behat_suite:
+            namespace: MilkyWay\OrionCygnusArm
       """
     When I start describing the "MilkyWay/OrionCygnusArm/ButterflyCluster" class with the "Awesome/phpspec.yml" custom config
     Then a new spec should be generated in the "spec/MilkyWay/OrionCygnusArm/ButterflyClusterSpec.php":
@@ -63,10 +65,11 @@ Feature: Config directory can be used in spec and src paths
   Scenario: Using %paths.config% variable in src_path
     Given the config file located in "Awesome" contains:
       """
-      suites:
-        behat_suite:
-          namespace: MilkyWay\OrionCygnusArm
-          src_path: %paths.config%/src
+      phpspec:
+        suites:
+          behat_suite:
+            namespace: MilkyWay\OrionCygnusArm
+            src_path: %paths.config%/src
       """
     And I have started describing the "MilkyWay/OrionCygnusArm/Pleiades/Alcyone" class with the "Awesome/phpspec.yml" custom config
     When I run phpspec with the "Awesome/phpspec.yml" custom config and answer "y" when asked if I want to generate the code
@@ -85,9 +88,10 @@ Feature: Config directory can be used in spec and src paths
   Scenario: Not using %paths.config% variable in src_path
     Given the config file located in "Awesome" contains:
       """
-      suites:
-        behat_suite:
-          namespace: MilkyWay\OrionCygnusArm
+      phpspec:
+        suites:
+          behat_suite:
+            namespace: MilkyWay\OrionCygnusArm
       """
     And I have started describing the "MilkyWay/OrionCygnusArm/BehiveCluster" class with the "Awesome/phpspec.yml" custom config
     When I run phpspec with the "Awesome/phpspec.yml" custom config and answer "y" when asked if I want to generate the code
