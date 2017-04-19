@@ -120,8 +120,10 @@ class CallerSpec extends ObjectBehavior
         $wrappedObject->getArguments()->willReturn(array($argument));
         $wrappedObject->getClassName()->willReturn('spec\PhpSpec\Wrapper\Subject\ExampleClass');
         $wrappedObject->getFactoryMethod()->willReturn(null);
+        $wrappedObject->setInstance($obj)->shouldBeCalled();
+        $wrappedObject->setInstantiated(true)->shouldBeCalled();
 
-        $exceptions->methodNotFound('spec\PhpSpec\Wrapper\Subject\ExampleClass', '__construct', array($argument))
+        $exceptions->methodNotFound('spec\PhpSpec\Wrapper\Subject\ExampleClass', '__construct', array())
             ->willReturn(new \PhpSpec\Exception\Fracture\MethodNotFoundException(
                     'Method "__construct" not found.',
                     $obj,
