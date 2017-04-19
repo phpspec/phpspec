@@ -271,7 +271,7 @@ class ConsoleIO implements IO
     {
         $lines   = array();
         $lines[] = '<question>'.str_repeat(' ', $this->getBlockWidth())."</question>";
-        foreach (explode("\n", wordwrap($question, $this->getBlockWidth() - 4, "\n", true)) as $line) {
+        foreach (explode(PHP_EOL, wordwrap($question, $this->getBlockWidth() - 4, "\n", true)) as $line) {
             $lines[] = '<question>  '.str_pad($line, $this->getBlockWidth() - 2).'</question>';
         }
         $lines[] = '<question>'.str_repeat(' ', $this->getBlockWidth() - 8).'</question> <value>'.
@@ -294,7 +294,7 @@ class ConsoleIO implements IO
             function ($line) use ($indent) {
                 return str_repeat(' ', $indent).$line;
             },
-            explode("\n", $text)
+            explode(PHP_EOL, $text)
         ));
     }
 
@@ -357,7 +357,7 @@ class ConsoleIO implements IO
 
         $this->output->writeln("<broken-bg>".str_repeat(" ", $this->getBlockWidth())."</broken-bg>");
 
-        foreach (explode("\n", $message) as $line) {
+        foreach (explode(PHP_EOL, $message) as $line) {
             $this->output->writeln("<broken-bg>".str_pad($line, $this->getBlockWidth(), ' ')."</broken-bg>");
         }
 
