@@ -98,10 +98,15 @@ final class MethodNotFoundListener implements EventSubscriberInterface
             }
 
             if ($this->io->askConfirmation($message)) {
-                $this->generator->generate($resource, 'method', array(
+                $output = $this->generator->generate($resource, 'method', array(
                     'name'      => $method,
                     'arguments' => $arguments
                 ));
+                
+                if (!empty($output)) {
+                    $this->io->writeln($output, 2);
+                }
+                
                 $event->markAsWorthRerunning();
             }
         }

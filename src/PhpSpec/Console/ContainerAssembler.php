@@ -289,7 +289,6 @@ final class ContainerAssembler
         });
         $container->define('code_generator.generators.method', function (IndexedServiceContainer $c) {
             return new CodeGenerator\Generator\MethodGenerator(
-                $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem'),
                 $c->get('code_generator.writers.tokenized')
@@ -297,14 +296,12 @@ final class ContainerAssembler
         }, ['code_generator.generators']);
         $container->define('code_generator.generators.methodSignature', function (IndexedServiceContainer $c) {
             return new CodeGenerator\Generator\MethodSignatureGenerator(
-                $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem')
             );
         }, ['code_generator.generators']);
         $container->define('code_generator.generators.returnConstant', function (IndexedServiceContainer $c) {
             return new CodeGenerator\Generator\ReturnConstantGenerator(
-                $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem')
             );
@@ -312,7 +309,6 @@ final class ContainerAssembler
 
         $container->define('code_generator.generators.named_constructor', function (IndexedServiceContainer $c) {
             return new CodeGenerator\Generator\NamedConstructorGenerator(
-                $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem'),
                 $c->get('code_generator.writers.tokenized')
@@ -321,7 +317,6 @@ final class ContainerAssembler
 
         $container->define('code_generator.generators.private_constructor', function (IndexedServiceContainer $c) {
             return new CodeGenerator\Generator\PrivateConstructorGenerator(
-                $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem'),
                 $c->get('code_generator.writers.tokenized')

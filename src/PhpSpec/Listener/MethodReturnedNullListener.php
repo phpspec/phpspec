@@ -163,11 +163,16 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
             }
 
             if ($this->io->askConfirmation($message)) {
-                $this->generator->generate(
+                $output = $this->generator->generate(
                     $resource,
                     'returnConstant',
                     array('method' => $failedCall['method'], 'expected' => $expected)
                 );
+                
+                if (!empty($output)) {
+                    $this->io->writeln($output, 2);
+                }
+                
                 $event->markAsWorthRerunning();
             }
         }

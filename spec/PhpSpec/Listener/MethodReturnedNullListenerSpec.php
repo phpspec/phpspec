@@ -206,4 +206,44 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         $generatorManager->generate($resource, 'returnConstant', array('method' => 'myMethod', 'expected' => 100))
             ->shouldHaveBeenCalled();
     }
+    
+    function it_notifies_user_when_it_generated_the_method(
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io,
+        GeneratorManager $generatorManager, ResourceManager $resourceManager, Resource $resource, SuiteEvent $event
+    ) {
+        $io->askConfirmation(Argument::any())->willReturn(true);
+        $io->writeln(Argument::cetera())->willReturn();
+        $resourceManager->createResource(Argument::any())->willReturn($resource);
+        $generatorManager->generate($resource, 'returnConstant', array('method' => 'myMethod', 'expected' => 100))
+            ->willReturn($message = 'Non-empty string');
+
+        $methodCallEvent->getSubject()->willReturn(new \StdClass());
+        $methodCallEvent->getMethod()->willReturn('myMethod');
+
+        $this->afterMethodCall($methodCallEvent);
+        $this->afterExample($exampleEvent);
+        $this->afterSuite($event);
+
+        $io->writeln($message, Argument::any())->shouldHaveBeenCalled();
+    }
+    
+    function it_doesnt_output_empty_line_when_generator_has_no_output(
+        MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io,
+        GeneratorManager $generatorManager, ResourceManager $resourceManager, Resource $resource, SuiteEvent $event
+    ) {
+        $io->askConfirmation(Argument::any())->willReturn(true);
+        $io->writeln(Argument::cetera())->willReturn();
+        $resourceManager->createResource(Argument::any())->willReturn($resource);
+        $generatorManager->generate($resource, 'returnConstant', array('method' => 'myMethod', 'expected' => 100))
+            ->willReturn($message = '');
+
+        $methodCallEvent->getSubject()->willReturn(new \StdClass());
+        $methodCallEvent->getMethod()->willReturn('myMethod');
+
+        $this->afterMethodCall($methodCallEvent);
+        $this->afterExample($exampleEvent);
+        $this->afterSuite($event);
+
+        $io->writeln($message, Argument::any())->shouldNotHaveBeenCalled();
+    }
 }

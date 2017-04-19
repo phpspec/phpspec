@@ -31,7 +31,9 @@ interface Generator
 
     /**
      * @param Resource $resource
-     * @param array             $data
+     * @param array    $data
+     *
+     * @return string
      */
     public function generate(Resource $resource, array $data);
 

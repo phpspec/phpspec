@@ -21,10 +21,6 @@ use PhpSpec\Util\Filesystem;
 final class ReturnConstantGenerator implements Generator
 {
     /**
-     * @var ConsoleIO
-     */
-    private $io;
-    /**
      * @var TemplateRenderer
      */
     private $templates;
@@ -34,13 +30,11 @@ final class ReturnConstantGenerator implements Generator
     private $filesystem;
 
     /**
-     * @param ConsoleIO        $io
      * @param TemplateRenderer $templates
      * @param Filesystem       $filesystem
      */
-    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem)
+    public function __construct(TemplateRenderer $templates, Filesystem $filesystem)
     {
-        $this->io = $io;
         $this->templates = $templates;
         $this->filesystem = $filesystem;
     }
@@ -59,7 +53,9 @@ final class ReturnConstantGenerator implements Generator
 
     /**
      * @param Resource $resource
-     * @param array             $data
+     * @param array    $data
+     *
+     * @return string
      */
     public function generate(Resource $resource, array $data)
     {
@@ -83,11 +79,11 @@ final class ReturnConstantGenerator implements Generator
 
         $this->filesystem->putFileContents($resource->getSrcFilename(), $modifiedCode);
 
-        $this->io->writeln(sprintf(
+        return sprintf(
             "<info>Method <value>%s::%s()</value> has been modified.</info>\n",
             $resource->getSrcClassname(),
             $method
-        ), 2);
+        );
     }
 
     /**

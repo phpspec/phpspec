@@ -60,7 +60,9 @@ abstract class PromptingGenerator implements Generator
 
     /**
      * @param Resource $resource
-     * @param array             $data
+     * @param array    $data
+     *
+     * @return string
      */
     public function generate(Resource $resource, array $data = array())
     {
@@ -75,8 +77,10 @@ abstract class PromptingGenerator implements Generator
         }
 
         $this->createDirectoryIfItDoesExist($filepath);
-        $this->generateFileAndRenderTemplate($resource, $filepath);
+        $output = $this->generateFileAndRenderTemplate($resource, $filepath);
         $this->executionContext->addGeneratedType($resource->getSrcClassname());
+        
+        return $output;
     }
 
     /**
@@ -145,13 +149,16 @@ abstract class PromptingGenerator implements Generator
 
     /**
      * @param Resource $resource
-     * @param string            $filepath
+     * @param string   $filepath
+     *
+     * @return string
      */
     private function generateFileAndRenderTemplate(Resource $resource, $filepath)
     {
         $content = $this->renderTemplate($resource, $filepath);
 
         $this->filesystem->putFileContents($filepath, $content);
-        $this->io->writeln($this->getGeneratedMessage($resource, $filepath));
+        
+        return $this->getGeneratedMessage($resource, $filepath);
     }
 }

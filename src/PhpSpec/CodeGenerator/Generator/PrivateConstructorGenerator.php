@@ -23,11 +23,6 @@ use PhpSpec\Util\Filesystem;
 final class PrivateConstructorGenerator implements Generator
 {
     /**
-     * @var ConsoleIO
-     */
-    private $io;
-
-    /**
      * @var TemplateRenderer
      */
     private $templates;
@@ -43,14 +38,12 @@ final class PrivateConstructorGenerator implements Generator
     private $codeWriter;
 
     /**
-     * @param ConsoleIO $io
      * @param TemplateRenderer $templates
      * @param Filesystem $filesystem
      * @param CodeWriter $codeWriter
      */
-    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, CodeWriter $codeWriter)
+    public function __construct(TemplateRenderer $templates, Filesystem $filesystem, CodeWriter $codeWriter)
     {
-        $this->io         = $io;
         $this->templates  = $templates;
         $this->filesystem = $filesystem;
         $this->codeWriter = $codeWriter;
@@ -70,7 +63,9 @@ final class PrivateConstructorGenerator implements Generator
 
     /**
      * @param Resource $resource
-     * @param array $data
+     * @param array    $data
+     *
+     * @return string
      */
     public function generate(Resource $resource, array $data)
     {
@@ -87,7 +82,7 @@ final class PrivateConstructorGenerator implements Generator
         $code = $this->codeWriter->insertMethodFirstInClass($code, $content);
         $this->filesystem->putFileContents($filepath, $code);
 
-        $this->io->writeln("<info>Private constructor has been created.</info>\n", 2);
+        return "<info>Private constructor has been created.</info>\n";
     }
 
     /**

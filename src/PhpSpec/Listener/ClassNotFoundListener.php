@@ -88,7 +88,12 @@ final class ClassNotFoundListener implements EventSubscriberInterface
             }
 
             if ($this->io->askConfirmation($message)) {
-                $this->generator->generate($resource, 'class');
+                $output = $this->generator->generate($resource, 'class');
+                
+                if (!empty($output)) {
+                    $this->io->writeln($output, 2);
+                }
+                
                 $event->markAsWorthRerunning();
             }
         }
