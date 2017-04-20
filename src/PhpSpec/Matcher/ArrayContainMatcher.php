@@ -42,7 +42,7 @@ final class ArrayContainMatcher extends BasicMatcher
     {
         return 'contain' === $name
             && 1 == count($arguments)
-            && is_array($subject)
+            && (is_array($subject) || $subject instanceof \ArrayObject)
         ;
     }
 
@@ -54,6 +54,10 @@ final class ArrayContainMatcher extends BasicMatcher
      */
     protected function matches($subject, array $arguments)
     {
+        if ($subject instanceof \ArrayObject) {
+            $subject = $subject->getArrayCopy();
+        }
+
         return in_array($arguments[0], $subject, true);
     }
 
