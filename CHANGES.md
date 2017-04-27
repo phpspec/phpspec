@@ -1,5 +1,5 @@
-Upcoming 2.5
-============
+2.5.6 / 2017-04-27
+==================
 
 * Support sebastian/exporter 2.0 and 3.0 (@mattsches and @remicollet)
 
