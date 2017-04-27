@@ -22,7 +22,6 @@
         exit(1);
     }
 
-    $app = new PhpSpec\Console\Application($version);
-    $app->run();
+    (new PhpSpec\Console\Application($version))->run();
 
 })('4.0.0-alpha');
