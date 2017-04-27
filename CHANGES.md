@@ -3,15 +3,16 @@
 
 * Dropped support for PHP versions less than 7.0 (@ciaranmcnulty)
 
-Upcoming 3.0
-============
+3.3.0 / 2017-04-27
+==================
 
 * Support sebastian/exporter 3.0 (@remicollet)
+* Support `.phpspec.yml` as a filename (@shrikeh)
 
-Upcoming 2.5
-============
+2.5.6 / 2017-04-27
+==================
 
-* Support sebastian/exporter 2.0 providing PHPUnit 5.7 compatibility (@mattsches)
+* Support sebastian/exporter 2.0 and 3.0 (@mattsches and @remicollet)
 
 3.2.3 / 2016-01-29
 ==================
