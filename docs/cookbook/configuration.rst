@@ -1,7 +1,7 @@
 Configuration
 =============
 
-Some things in phpspec can be configured in a ``phpspec.yml`` or
+Some things in phpspec can be configured in a ``phpspec.yml``, ``.phpspec.yml``, or
 ``phpspec.yml.dist`` file in the root of your project (the directory where you
 run the ``phpspec`` command).
 
