@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-call_user_func(function ($version) {
+(function ($version) {
 
     if (is_file($autoload = getcwd() . '/vendor/autoload.php')) {
         require $autoload;
@@ -22,7 +22,6 @@ call_user_func(function ($version) {
         exit(1);
     }
 
-    $app = new PhpSpec\Console\Application($version);
-    $app->run();
+    (new PhpSpec\Console\Application($version))->run();
 
-}, '4.0.0-alpha');
+})('4.0.0-alpha');
