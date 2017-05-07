@@ -120,4 +120,16 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
         }
     }
 
+    /**
+     * @Then the suite should pass
+     */
+    public function theSuiteShouldPass()
+    {
+        $exitCode = $this->process->getExitCode();
+        if ($exitCode !== 0) {
+            throw new \Exception(sprintf('Expected that tests will pass, but exit code was %s.', $exitCode));
+        }
+    }
+
+
 }

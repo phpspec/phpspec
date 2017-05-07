@@ -212,6 +212,7 @@ Feature: Developer generates a collaborator's method
     When I run phpspec and answer "n" when asked if I want to generate the code
     Then I should not be prompted for code generation
 
+  @php:5.6
   Scenario: Being warned when a collaborator method is a restricted word
     Given the spec file "spec/CodeGeneration/CollaboratorMethodExample6/MarkdownSpec.php" contains:
       """
