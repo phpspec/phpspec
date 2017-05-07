@@ -1,3 +1,8 @@
+Upcoming 3.0
+============
+
+* Support methods with reserved names on PHP 7 (@avant1)
+
 3.3.0 / 2017-04-27
 ==================
 
