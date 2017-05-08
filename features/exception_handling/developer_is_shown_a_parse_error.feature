@@ -3,45 +3,6 @@ Feature: Developer is shown a parse error
   I want to know if a parse error was thrown
   So that I can know that I can handle pass errors
 
-  @php:~5.6 @isolated
-  Scenario: Parse error in spec
-    Given the spec file "spec/Message/Fatal/ParseSpec.php" contains:
-      """
-      <?php
-
-      namespace spec\Message\Fatal;
-
-      use Parse;
-      use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
-
-      class ParseSpec extends ObjectBehavior
-      {
-          function it_thro ws_a_syntax_error()
-          {
-              $this->cool();
-          }
-      }
-
-      """
-    And the spec file "src/Message/Fatal/Parse.php" contains:
-      """
-      <?php
-
-      namespace Message\Parse;
-
-      class Parse
-      {
-          public function cool()
-          {
-              return true;
-          }
-      }
-
-      """
-    When I run phpspec with the "junit" formatter
-    Then I should see "syntax error"
-
   Scenario: Parse error in class
     Given the spec file "spec/Message/Fatal/ParseSpec.php" contains:
       """
