@@ -13,13 +13,13 @@
 
 namespace PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\Console\ConsoleIO;
-use PhpSpec\Locator\Resource;
+use PhpSpec\Console\IO;
+use PhpSpec\Locator\ResourceInterface;
 
-final class ConfirmingGenerator implements Generator
+final class ConfirmingGenerator implements GeneratorInterface
 {
     /**
-     * @var ConsoleIO
+     * @var IO
      */
     private $io;
 
@@ -29,16 +29,16 @@ final class ConfirmingGenerator implements Generator
     private $message;
 
     /**
-     * @var Generator
+     * @var GeneratorInterface
      */
     private $generator;
 
     /**
-     * @param ConsoleIO $io
-     * @param string    $message
-     * @param Generator $generator
+     * @param IO                 $io
+     * @param string             $message
+     * @param GeneratorInterface $generator
      */
-    public function __construct(ConsoleIO $io, $message, Generator $generator)
+    public function __construct(IO $io, $message, GeneratorInterface $generator)
     {
         $this->io = $io;
         $this->message = $message;
@@ -48,7 +48,7 @@ final class ConfirmingGenerator implements Generator
     /**
      * {@inheritdoc}
      */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(ResourceInterface $resource, $generation, array $data)
     {
         return $this->generator->supports($resource, $generation, $data);
     }
@@ -56,7 +56,7 @@ final class ConfirmingGenerator implements Generator
     /**
      * {@inheritdoc}
      */
-    public function generate(Resource $resource, array $data)
+    public function generate(ResourceInterface $resource, array $data)
     {
         if ($this->io->askConfirmation($this->composeMessage($resource))) {
             $this->generator->generate($resource, $data);
@@ -64,11 +64,11 @@ final class ConfirmingGenerator implements Generator
     }
 
     /**
-     * @param Resource $resource
+     * @param ResourceInterface $resource
      *
      * @return string
      */
-    private function composeMessage(Resource $resource)
+    private function composeMessage(ResourceInterface $resource)
     {
         return str_replace('{CLASSNAME}', $resource->getSrcClassname(), $this->message);
     }

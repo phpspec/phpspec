@@ -64,7 +64,7 @@ class ContainerAssembler
         $this->setupShutdown($container);
     }
 
-    private function setupParameters(IndexedServiceContainer $container)
+    private function setupParameters(ServiceContainer $container)
     {
         $container->setParam(
             'generator.private-constructor.message',
@@ -300,16 +300,14 @@ class ContainerAssembler
             );
         });
 
-        $container->define('code_generator.generators.private_constructor', function (ServiceContainer $c) {
+        $container->set('code_generator.generators.private_constructor', function (ServiceContainer $c) {
             return new CodeGenerator\Generator\OneTimeGenerator(
                 new CodeGenerator\Generator\ConfirmingGenerator(
                     $c->get('console.io'),
                     $c->getParam('generator.private-constructor.message'),
                     new CodeGenerator\Generator\PrivateConstructorGenerator(
                         $c->get('console.io'),
-                        $c->get('code_generator.templates'),
-                        $c->get('util.filesystem'),
-                        $c->get('code_generator.writers.tokenized')
+                        $c->get('code_generator.templates')
                     )
                 )
             );
