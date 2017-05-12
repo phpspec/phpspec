@@ -1,5 +1,5 @@
-Upcoming 2.5
-============
+2.5.7 / 2017-05-12
+==================
 
 * [fixed] constructor no longer generated multuple tiles (@CarlosV2)
 * [fixed] warning when src_path is empty (@vitorf7)
