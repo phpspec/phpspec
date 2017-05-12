@@ -442,3 +442,75 @@ Feature: Developer generates a named constructor
       }
 
       """
+
+  Scenario: Generating multiple named constructors at once
+    Given the spec file "spec/CodeGeneration/PrivateConstructor/AgeSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\PrivateConstructor;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class AgeSpec extends ObjectBehavior
+      {
+          function it_is_constructed_from_string()
+          {
+              $this->beConstructedFromString('30');
+              $this->getAge()->shouldReturn(30);
+          }
+
+          function it_is_constructed_from_integer()
+          {
+              $this->beConstructedFromInteger(30);
+              $this->getAge()->shouldReturn(30);
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/PrivateConstructor/Age.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\PrivateConstructor;
+
+      class Age
+      {
+      }
+
+      """
+    When I run phpspec and answer "y" to the three questions
+    Then I should not be prompted for more questions
+    And the class in "src/CodeGeneration/PrivateConstructor/Age.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\PrivateConstructor;
+
+      class Age
+      {
+          private function __construct()
+          {
+          }
+
+          public static function fromInteger($argument1)
+          {
+              $age = new Age();
+
+              // TODO: write logic here
+
+              return $age;
+          }
+
+          public static function fromString($argument1)
+          {
+              $age = new Age();
+
+              // TODO: write logic here
+
+              return $age;
+          }
+      }
+
+      """

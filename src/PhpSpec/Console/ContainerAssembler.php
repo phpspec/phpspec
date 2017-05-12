@@ -52,6 +52,7 @@ final class ContainerAssembler
      */
     public function build(IndexedServiceContainer $container)
     {
+        $this->setupParameters($container);
         $this->setupIO($container);
         $this->setupEventDispatcher($container);
         $this->setupConsoleEventDispatcher($container);
@@ -68,6 +69,14 @@ final class ContainerAssembler
         $this->setupSubscribers($container);
         $this->setupCurrentExample($container);
         $this->setupShutdown($container);
+    }
+
+    private function setupParameters(IndexedServiceContainer $container)
+    {
+        $container->setParam(
+            'generator.private-constructor.message',
+            'Do you want me to make the constructor of {CLASSNAME} private for you?'
+        );
     }
 
     private function setupIO(IndexedServiceContainer $container)
@@ -243,7 +252,7 @@ final class ContainerAssembler
         });
 
         $container->define('code_generator.generators.specification', function (IndexedServiceContainer $c) {
-            $specificationGenerator =  new CodeGenerator\Generator\SpecificationGenerator(
+            $specificationGenerator = new CodeGenerator\Generator\SpecificationGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem'),
@@ -320,11 +329,17 @@ final class ContainerAssembler
         }, ['code_generator.generators']);
 
         $container->define('code_generator.generators.private_constructor', function (IndexedServiceContainer $c) {
-            return new CodeGenerator\Generator\PrivateConstructorGenerator(
-                $c->get('console.io'),
-                $c->get('code_generator.templates'),
-                $c->get('util.filesystem'),
-                $c->get('code_generator.writers.tokenized')
+            return new CodeGenerator\Generator\OneTimeGenerator(
+                new CodeGenerator\Generator\ConfirmingGenerator(
+                    $c->get('console.io'),
+                    $c->getParam('generator.private-constructor.message'),
+                    new CodeGenerator\Generator\PrivateConstructorGenerator(
+                        $c->get('console.io'),
+                        $c->get('code_generator.templates'),
+                        $c->get('util.filesystem'),
+                        $c->get('code_generator.writers.tokenized')
+                    )
+                )
             );
         }, ['code_generator.generators']);
 
@@ -389,7 +404,7 @@ final class ContainerAssembler
 
                 $config = array_merge($defaults, $suite);
 
-                if (!is_dir($config['src_path'])) {
+                if (!empty($config['src_path']) && !is_dir($config['src_path'])) {
                     mkdir($config['src_path'], 0777, true);
                 }
                 if (!is_dir($config['spec_path'])) {
