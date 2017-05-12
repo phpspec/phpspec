@@ -9,6 +9,7 @@ class Prompter implements PrompterInterface
     private $answers = array();
     private $hasBeenAsked = false;
     private $question;
+    private $unansweredQuestions = false;
 
     public function setAnswer($answer)
     {
@@ -19,6 +20,8 @@ class Prompter implements PrompterInterface
     {
         $this->hasBeenAsked = true;
         $this->question = $question;
+
+        $this->unansweredQuestions = count($this->answers) > 1;
         return (bool)array_shift($this->answers);
     }
 
@@ -30,6 +33,11 @@ class Prompter implements PrompterInterface
 
         return $this->hasBeenAsked
             && $this->normalise($this->question) == $this->normalise($question);
+    }
+
+    public function hasUnansweredQuestions()
+    {
+        return $this->unansweredQuestions;
     }
 
     /**

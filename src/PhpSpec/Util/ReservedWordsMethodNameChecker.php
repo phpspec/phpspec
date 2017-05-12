@@ -91,6 +91,13 @@ final class ReservedWordsMethodNameChecker implements NameChecker
         '__trait__',
     );
 
+    public function __construct()
+    {
+        if (\PHP_VERSION_ID >= 70000) {
+            $this->reservedWords = ['__halt_compiler'];
+        }
+    }
+
     /**
      * {@inheritdoc}
      */

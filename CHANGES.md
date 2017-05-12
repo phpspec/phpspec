@@ -1,7 +1,12 @@
-4.0 - Upcoming
-==============
+Upcoming 4.0
+============
 
 * Dropped support for PHP versions less than 7.0 (@ciaranmcnulty)
+
+Upcoming 3.0
+============
+
+* Support methods with reserved names on PHP 7 (@avant1)
 
 3.3.0 / 2017-04-27
 ==================
