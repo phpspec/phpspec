@@ -5,8 +5,8 @@ Upcoming 3.0
 * [fixed] warning when src_path is empty (@vitorf7)
 * Support methods with reserved names on PHP 7 (@avant1)
 
-Upcoming 2.5
-============
+2.5.7 / 2017-05-12
+==================
 
 * [fixed] constructor no longer generated multuple tiles (@CarlosV2)
 * [fixed] warning when src_path is empty (@vitorf7)
