@@ -39,7 +39,7 @@ class ClassGeneratorSpec extends ObjectBehavior
     }
 
     function it_generates_class_from_resource_and_puts_it_into_appropriate_folder(
-        $io, $tpl, $fs, Resource $resource
+        $io, TemplateRenderer $tpl, $fs, Resource $resource
     ) {
         $resource->getName()->willReturn('App');
         $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
@@ -53,7 +53,7 @@ class ClassGeneratorSpec extends ObjectBehavior
             '%namespace_block%' => "\n\nnamespace Acme;",
         );
 
-        $tpl->render('class', $values)->willReturn(null);
+        $tpl->render('class', $values)->willReturn('');
         $tpl->renderString(Argument::type('string'), $values)->willReturn('generated code');
 
         $fs->pathExists('/project/src/Acme/App.php')->willReturn(false);

@@ -55,7 +55,7 @@ class SpecificationGeneratorSpec extends ObjectBehavior
             '%subject_class%'  => 'App'
         );
 
-        $tpl->render('specification', $values)->willReturn(null);
+        $tpl->render('specification', $values)->willReturn('');
         $tpl->renderString(Argument::type('string'), $values)->willReturn('generated code');
 
         $fs->pathExists('/project/spec/Acme/AppSpec.php')->willReturn(false);
