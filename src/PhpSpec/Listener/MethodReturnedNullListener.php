@@ -21,9 +21,8 @@ use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\Util\MethodAnalyser;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final class MethodReturnedNullListener implements EventSubscriberInterface
+final class MethodReturnedNullListener implements ExampleListener, SuiteListener
 {
     /**
      * @var ConsoleIO
@@ -87,6 +86,10 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
         $this->lastMethodCallEvent = $methodCallEvent;
     }
 
+    public function beforeExample(ExampleEvent $event)
+    {
+    }
+
     public function afterExample(ExampleEvent $exampleEvent)
     {
         $exception = $exampleEvent->getException();
@@ -128,6 +131,10 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
         }
 
         $this->nullMethods[$key]['expected'][] = $exception->getExpected();
+    }
+
+    public function beforeSuite(SuiteEvent $suiteEvent)
+    {
     }
 
     public function afterSuite(SuiteEvent $event)

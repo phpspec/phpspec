@@ -18,7 +18,7 @@ class ProgressFormatterSpec extends ObjectBehavior
 
     function it_is_an_event_subscriber()
     {
-        $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
+        $this->shouldHaveType('PhpSpec\Listener\ExampleListener');
     }
 
     function it_outputs_progress_as_0_when_0_examples_have_run(ExampleEvent $event, ConsoleIO $io, StatisticsCollector $stats)

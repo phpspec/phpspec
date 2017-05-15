@@ -19,9 +19,8 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
 use PhpSpec\Locator\ResourceManager;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final class CollaboratorNotFoundListener implements EventSubscriberInterface
+final class CollaboratorNotFoundListener implements ExampleListener, SuiteListener
 {
     /**
      * @var ConsoleIO
@@ -66,6 +65,10 @@ final class CollaboratorNotFoundListener implements EventSubscriberInterface
         );
     }
 
+    public function beforeExample(ExampleEvent $event)
+    {
+    }
+
     /**
      * @param ExampleEvent $event
      */
@@ -75,6 +78,10 @@ final class CollaboratorNotFoundListener implements EventSubscriberInterface
             ($exception instanceof CollaboratorNotFoundException)) {
             $this->exceptions[$exception->getCollaboratorName()] = $exception;
         }
+    }
+
+    public function beforeSuite(SuiteEvent $suiteEvent)
+    {
     }
 
     /**

@@ -14,11 +14,10 @@
 namespace PhpSpec\Listener;
 
 use PhpSpec\Event\SuiteEvent;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SpecificationEvent;
 
-class StatisticsCollector implements EventSubscriberInterface
+class StatisticsCollector implements ExampleListener, SuiteListener
 {
     private $globalResult    = 0;
     private $totalSpecs      = 0;
@@ -43,6 +42,10 @@ class StatisticsCollector implements EventSubscriberInterface
     public function afterSpecification(SpecificationEvent $event)
     {
         $this->totalSpecs++;
+    }
+
+    public function beforeExample(ExampleEvent $event)
+    {
     }
 
     public function afterExample(ExampleEvent $event)
@@ -71,6 +74,10 @@ class StatisticsCollector implements EventSubscriberInterface
     public function beforeSuite(SuiteEvent $suiteEvent)
     {
         $this->totalSpecsCount = count($suiteEvent->getSuite()->getSpecifications());
+    }
+
+    public function afterSuite(SuiteEvent $suiteEvent)
+    {
     }
 
     public function getGlobalResult()

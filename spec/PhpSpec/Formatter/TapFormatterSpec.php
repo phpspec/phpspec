@@ -22,7 +22,8 @@ class TapFormatterSpec extends ObjectBehavior
 
     function it_is_an_event_subscriber()
     {
-        $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
+        $this->shouldHaveType('PhpSpec\Listener\ExampleListener');
+        $this->shouldHaveType('PhpSpec\Listener\SuiteListener');
     }
 
     function it_outputs_version_on_beforesuite_event(SuiteEvent $event, ConsoleIO $io)

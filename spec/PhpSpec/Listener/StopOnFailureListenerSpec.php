@@ -18,7 +18,7 @@ class StopOnFailureListenerSpec extends ObjectBehavior
 
     function it_is_an_event_subscriber()
     {
-        $this->shouldHaveType('Symfony\Component\EventDispatcher\EventSubscriberInterface');
+        $this->shouldHaveType('PhpSpec\Listener\ExampleListener');
     }
 
     function it_does_not_throw_any_exception_when_example_succeeds(ExampleEvent $event)
