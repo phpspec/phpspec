@@ -13,8 +13,5 @@ As PHP 5 is no longer supported language versions, you will need to upgrade to P
 Upgrading for Extension Authors
 -------------------------------
 
-Several internal interfaces have had scalar typehints and return typehinting added.  This includes:
-
-- ``PhpSpec\CodeAnalysis\AccessInspector``
-- ``PhpSpec\CodeAnalysis\NamespaceResolver``
-- ``PhpSpec\CodeAnalysis\TypeHintRewriter.php``
+Many PhpSpec interfaces and internal classes have had scalar typehints and return typehinting added.  You will need to
+update your implementations of these interfaces to the new method signature.
