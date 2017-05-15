@@ -44,18 +44,15 @@ class CreateObjectTemplate
         return $content;
     }
 
-    /**
-     * @return string
-     */
-    private function getTemplate()
+    private function getTemplate() : string
     {
         return file_get_contents(__DIR__.'/templates/named_constructor_create_object.template');
     }
 
     /**
-     * @return array
+     * @return string[]
      */
-    private function getValues()
+    private function getValues() : array
     {
         $argString = count($this->arguments)
             ? '$argument'.implode(', $argument', range(1, count($this->arguments)))

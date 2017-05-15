@@ -33,22 +33,14 @@ final class ConfirmingGenerator implements Generator
      */
     private $generator;
 
-    /**
-     * @param IO                 $io
-     * @param string             $message
-     * @param Generator $generator
-     */
-    public function __construct(IO $io, $message, Generator $generator)
+    public function __construct(IO $io, string $message, Generator $generator)
     {
         $this->io = $io;
         $this->message = $message;
         $this->generator = $generator;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(Resource $resource, string $generation, array $data) : bool
     {
         return $this->generator->supports($resource, $generation, $data);
     }
@@ -63,20 +55,12 @@ final class ConfirmingGenerator implements Generator
         }
     }
 
-    /**
-     * @param Resource $resource
-     *
-     * @return string
-     */
-    private function composeMessage(Resource $resource)
+    private function composeMessage(Resource $resource) : string
     {
         return str_replace('{CLASSNAME}', $resource->getSrcClassname(), $this->message);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getPriority()
+    public function getPriority() : int
     {
         return $this->generator->getPriority();
     }

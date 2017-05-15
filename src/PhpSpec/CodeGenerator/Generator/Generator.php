@@ -20,23 +20,9 @@ use PhpSpec\Locator\Resource;
  */
 interface Generator
 {
-    /**
-     * @param Resource $resource
-     * @param string            $generation
-     * @param array             $data
-     *
-     * @return bool
-     */
-    public function supports(Resource $resource, $generation, array $data);
+    public function supports(Resource $resource, string $generation, array $data) : bool;
 
-    /**
-     * @param Resource $resource
-     * @param array             $data
-     */
     public function generate(Resource $resource, array $data);
 
-    /**
-     * @return int
-     */
-    public function getPriority();
+    public function getPriority() : int;
 }

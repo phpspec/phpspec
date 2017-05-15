@@ -88,8 +88,9 @@ class ClassGeneratorSpec extends ObjectBehavior
         $this->generate($resource);
     }
 
-    function it_creates_folder_for_class_if_needed($io, $tpl, $fs, Resource $resource)
+    function it_creates_folder_for_class_if_needed($io, TemplateRenderer $tpl, $fs, Resource $resource)
     {
+        $tpl->render('class', Argument::type('array'))->willReturn('rendered string');
         $resource->getName()->willReturn('App');
         $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
         $resource->getSrcNamespace()->willReturn('Acme');
@@ -119,8 +120,17 @@ class ClassGeneratorSpec extends ObjectBehavior
         $this->generate($resource);
     }
 
-    function it_records_that_class_was_created_in_executioncontext(Resource $resource, ExecutionContext $executionContext)
-    {
+    function it_records_that_class_was_created_in_executioncontext(
+        Resource $resource,
+        ExecutionContext $executionContext,
+        TemplateRenderer $tpl,
+        Filesystem $fs
+    ) {
+        $tpl->render('class', Argument::type('array'))->willReturn('rendered string');
+        $fs->isDirectory('/project/src/Acme')->willReturn(true);
+        $fs->pathExists('/project/src/Acme/App.php')->willReturn(false);
+        $fs->putFileContents('/project/src/Acme/App.php', Argument::any())->shouldBeCalled();
+
         $resource->getName()->willReturn('App');
         $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
         $resource->getSrcNamespace()->willReturn('Acme');

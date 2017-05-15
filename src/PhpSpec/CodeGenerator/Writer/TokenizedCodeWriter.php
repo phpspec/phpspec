@@ -30,12 +30,7 @@ final class TokenizedCodeWriter implements CodeWriter
         $this->analyser = $analyser;
     }
 
-    /**
-     * @param string $class
-     * @param string $method
-     * @return string
-     */
-    public function insertMethodFirstInClass($class, $method)
+    public function insertMethodFirstInClass(string $class, string $method) : string
     {
         if (!$this->analyser->classHasMethods($class)) {
             return $this->writeAtEndOfClass($class, $method);
@@ -46,12 +41,7 @@ final class TokenizedCodeWriter implements CodeWriter
         return $this->insertStringBeforeLine($class, $method, $line);
     }
 
-    /**
-     * @param string $class
-     * @param string $method
-     * @return string
-     */
-    public function insertMethodLastInClass($class, $method)
+    public function insertMethodLastInClass(string $class, string $method) : string
     {
         if ($this->analyser->classHasMethods($class)) {
             $line = $this->analyser->getEndLineOfLastMethod($class);
@@ -61,27 +51,14 @@ final class TokenizedCodeWriter implements CodeWriter
         return $this->writeAtEndOfClass($class, $method);
     }
 
-    /**
-     * @param string $class
-     * @param string $methodName
-     * @param string $method
-     * @return string
-     */
-    public function insertAfterMethod($class, $methodName, $method)
+    public function insertAfterMethod(string $class, string $methodName, string $method) : string
     {
         $line = $this->analyser->getEndLineOfNamedMethod($class, $methodName);
 
         return $this->insertStringAfterLine($class, $method, $line);
     }
 
-    /**
-     * @param string $target
-     * @param string $toInsert
-     * @param int $line
-     * @param bool $leadingNewline
-     * @return string
-     */
-    private function insertStringAfterLine($target, $toInsert, $line, $leadingNewline = true)
+    private function insertStringAfterLine(string $target, string $toInsert, int $line, bool $leadingNewline = true) : string
     {
         $lines = explode("\n", $target);
         $lastLines = array_slice($lines, $line);
@@ -95,13 +72,7 @@ final class TokenizedCodeWriter implements CodeWriter
         return implode("\n", $lines);
     }
 
-    /**
-     * @param string $target
-     * @param string $toInsert
-     * @param int $line
-     * @return string
-     */
-    private function insertStringBeforeLine($target, $toInsert, $line)
+    private function insertStringBeforeLine(string $target, string $toInsert, int $line) : string
     {
         $line--;
         $lines = explode("\n", $target);
@@ -112,13 +83,7 @@ final class TokenizedCodeWriter implements CodeWriter
         return implode("\n", $lines);
     }
 
-    /**
-     * @param string $class
-     * @param string $method
-     * @param bool $prependNewLine
-     * @return string
-     */
-    private function writeAtEndOfClass($class, $method, $prependNewLine = false)
+    private function writeAtEndOfClass(string $class, string $method, bool $prependNewLine = false) : string
     {
         $tokens = token_get_all($class);
         $searching = false;
@@ -160,9 +125,8 @@ final class TokenizedCodeWriter implements CodeWriter
 
     /**
      * @param $token
-     * @return bool
      */
-    private function isWritePoint($token)
+    private function isWritePoint($token) : bool
     {
         return is_array($token) && ($token[1] === "\n" || $token[0] === T_COMMENT);
     }

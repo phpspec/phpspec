@@ -39,14 +39,10 @@ class GeneratorManager
     }
 
     /**
-     * @param Resource $resource
-     * @param string            $name
-     * @param array             $data
-     *
      * @return mixed
      * @throws \InvalidArgumentException
      */
-    public function generate(Resource $resource, $name, array $data = array())
+    public function generate(Resource $resource, string $name, array $data = array())
     {
         foreach ($this->generators as $generator) {
             if ($generator->supports($resource, $name, $data)) {

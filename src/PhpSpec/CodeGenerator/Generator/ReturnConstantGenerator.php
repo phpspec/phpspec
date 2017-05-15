@@ -45,14 +45,7 @@ final class ReturnConstantGenerator implements Generator
         $this->filesystem = $filesystem;
     }
 
-    /**
-     * @param Resource $resource
-     * @param string            $generation
-     * @param array             $data
-     *
-     * @return bool
-     */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(Resource $resource, string $generation, array $data) : bool
     {
         return 'returnConstant' == $generation;
     }
@@ -90,18 +83,12 @@ final class ReturnConstantGenerator implements Generator
         ), 2);
     }
 
-    /**
-     * @return int
-     */
-    public function getPriority()
+    public function getPriority() : int
     {
         return 0;
     }
 
-    /**
-     * @return string
-     */
-    protected function getTemplate()
+    protected function getTemplate() : string
     {
         return file_get_contents(__DIR__.'/templates/returnconstant.template');
     }

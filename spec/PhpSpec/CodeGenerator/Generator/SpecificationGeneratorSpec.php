@@ -92,8 +92,9 @@ class SpecificationGeneratorSpec extends ObjectBehavior
         $this->generate($resource);
     }
 
-    function it_creates_folder_for_spec_if_needed($io, $tpl, $fs, Resource $resource)
+    function it_creates_folder_for_spec_if_needed($io, TemplateRenderer $tpl, $fs, Resource $resource)
     {
+        $tpl->render('specification', Argument::type('array'))->willReturn('rendered string');
         $resource->getSpecName()->willReturn('AppAppSpec');
         $resource->getSpecFilename()->willReturn('/project/spec/Acme/AppSpec.php');
         $resource->getSpecNamespace()->willReturn('spec\Acme');

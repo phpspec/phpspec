@@ -36,22 +36,11 @@ final class NewFileNotifyingGenerator implements Generator
         $this->filesystem = $filesystem;
     }
 
-    /**
-     * @param Resource $resource
-     * @param string $generation
-     * @param array $data
-     *
-     * @return bool
-     */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(Resource $resource, string $generation, array $data) : bool
     {
         return $this->generator->supports($resource, $generation, $data);
     }
 
-    /**
-     * @param Resource $resource
-     * @param array $data
-     */
     public function generate(Resource $resource, array $data)
     {
         $filePath = $this->getFilePath($resource);
@@ -63,19 +52,12 @@ final class NewFileNotifyingGenerator implements Generator
         $this->dispatchEventIfFileWasCreated($fileExisted, $filePath);
     }
 
-    /**
-     * @return int
-     */
-    public function getPriority()
+    public function getPriority() : int
     {
         return $this->generator->getPriority();
     }
 
-    /**
-     * @param Resource $resource
-     * @return string
-     */
-    private function getFilePath(Resource $resource)
+    private function getFilePath(Resource $resource) : string
     {
         if ($this->generator->supports($resource, 'specification', array())) {
             return $resource->getSpecFilename();
@@ -84,20 +66,12 @@ final class NewFileNotifyingGenerator implements Generator
         return $resource->getSrcFilename();
     }
 
-    /**
-     * @param string $filePath
-     * @return bool
-     */
-    private function fileExists($filePath)
+    private function fileExists(string $filePath) : bool
     {
         return $this->filesystem->pathExists($filePath);
     }
 
-    /**
-     * @param bool $fileExisted
-     * @param string $filePath
-     */
-    private function dispatchEventIfFileWasCreated($fileExisted, $filePath)
+    private function dispatchEventIfFileWasCreated(bool $fileExisted, string $filePath)
     {
         if (!$fileExisted && $this->fileExists($filePath)) {
             $event = new FileCreationEvent($filePath);
