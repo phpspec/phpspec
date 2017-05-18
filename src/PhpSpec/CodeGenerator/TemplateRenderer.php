@@ -47,37 +47,22 @@ class TemplateRenderer
         $this->locations = array_map(array($this, 'normalizeLocation'), $locations);
     }
 
-    /**
-     * @param string $location
-     */
-    public function prependLocation($location)
+    public function prependLocation(string $location)
     {
         array_unshift($this->locations, $this->normalizeLocation($location));
     }
 
-    /**
-     * @param string $location
-     */
-    public function appendLocation($location)
+    public function appendLocation(string $location)
     {
         array_push($this->locations, $this->normalizeLocation($location));
     }
 
-    /**
-     * @return array
-     */
-    public function getLocations()
+    public function getLocations() : array
     {
         return $this->locations;
     }
 
-    /**
-     * @param string $name
-     * @param array  $values
-     *
-     * @return string
-     */
-    public function render($name, array $values = array())
+    public function render(string $name, array $values = array()) : string
     {
         foreach ($this->locations as $location) {
             $path = $location.DIRECTORY_SEPARATOR.$this->normalizeLocation($name, true).'.tpl';
@@ -86,26 +71,15 @@ class TemplateRenderer
                 return $this->renderString($this->filesystem->getFileContents($path), $values);
             }
         }
+        return '';
     }
 
-    /**
-     * @param string $template
-     * @param array  $values
-     *
-     * @return string
-     */
-    public function renderString($template, array $values = array())
+    public function renderString(string $template, array $values = array()) : string
     {
         return strtr($template, $values);
     }
 
-    /**
-     * @param string $location
-     * @param bool   $trimLeft
-     *
-     * @return string
-     */
-    private function normalizeLocation($location, $trimLeft = false)
+    private function normalizeLocation(string $location, bool $trimLeft = false) : string
     {
         $location = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $location);
         $location = rtrim($location, DIRECTORY_SEPARATOR);

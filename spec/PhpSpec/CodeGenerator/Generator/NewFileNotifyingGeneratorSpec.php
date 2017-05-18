@@ -36,18 +36,25 @@ class NewFileNotifyingGeneratorSpec extends ObjectBehavior
         $this->getPriority()->shouldReturn(5);
     }
 
-    function it_should_proxy_the_generate_call_to_the_decorated_object($generator, Resource $resource)
+    function it_should_proxy_the_generate_call_to_the_decorated_object(Generator $generator, Resource $resource, Filesystem $filesystem)
     {
+        $generator->supports(Argument::cetera())->willReturn(true);
+        $resource->getSpecFilename()->willReturn('');
+        $filesystem->pathExists(Argument::any())->willReturn(true);
+
+        $generator->generate($resource, array())->shouldBeCalled();
+
         $this->generate($resource, array());
-        $generator->generate($resource, array())->shouldHaveBeenCalled();
     }
 
-    function it_should_dispatch_an_event_when_a_file_is_created($dispatcher, $filesystem, Resource $resource)
+    function it_should_dispatch_an_event_when_a_file_is_created(Generator $generator, $dispatcher, $filesystem, Resource $resource)
     {
+        $generator->supports(Argument::cetera())->willReturn(false);
         $path = '/foo';
         $resource->getSrcFilename()->willReturn($path);
         $event = new FileCreationEvent($path);
         $filesystem->pathExists($path)->willReturn(false, true);
+        $generator->generate($resource, array())->shouldBeCalled();
 
         $this->generate($resource, array());
 
@@ -83,11 +90,12 @@ class NewFileNotifyingGeneratorSpec extends ObjectBehavior
         $this->generate($resource, array());
     }
 
-    function it_should_not_dispatch_an_event_if_the_file_was_not_created($dispatcher, $filesystem, Resource $resource)
+    function it_should_not_dispatch_an_event_if_the_file_was_not_created(Generator $generator, $dispatcher, $filesystem, Resource $resource)
     {
+        $generator->supports(Argument::cetera())->willReturn(false);
+        $generator->generate($resource, array())->shouldBeCalled();
         $path = '/foo';
         $resource->getSrcFilename()->willReturn($path);
-
         $filesystem->pathExists($path)->willReturn(false);
 
         $this->generate($resource, array());
@@ -95,8 +103,10 @@ class NewFileNotifyingGeneratorSpec extends ObjectBehavior
         $dispatcher->dispatch('afterFileCreation', Argument::any())->shouldNotHaveBeenCalled();
     }
 
-    function it_should_not_dispatch_an_event_if_the_file_already_existed($dispatcher, $filesystem, Resource $resource)
+    function it_should_not_dispatch_an_event_if_the_file_already_existed(Generator $generator, $dispatcher, $filesystem, Resource $resource)
     {
+        $generator->supports(Argument::cetera())->willReturn(false);
+        $generator->generate($resource, array())->shouldBeCalled();
         $path = '/foo';
         $resource->getSrcFilename()->willReturn($path);
 

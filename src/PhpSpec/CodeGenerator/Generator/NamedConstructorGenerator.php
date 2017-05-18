@@ -55,14 +55,7 @@ final class NamedConstructorGenerator implements Generator
         $this->codeWriter = $codeWriter;
     }
 
-    /**
-     * @param Resource $resource
-     * @param string            $generation
-     * @param array             $data
-     *
-     * @return bool
-     */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(Resource $resource, string $generation, array $data) : bool
     {
         return 'named_constructor' === $generation;
     }
@@ -93,21 +86,12 @@ final class NamedConstructorGenerator implements Generator
         ), 2);
     }
 
-    /**
-     * @return int
-     */
-    public function getPriority()
+    public function getPriority() : int
     {
         return 0;
     }
 
-    /**
-     * @param  Resource $resource
-     * @param  string            $methodName
-     * @param  array             $arguments
-     * @return string
-     */
-    private function getContent(Resource $resource, $methodName, $arguments)
+    private function getContent(Resource $resource, string $methodName, array $arguments) : string
     {
         $className = $resource->getName();
         $class = $resource->getSrcClassname();
@@ -127,12 +111,7 @@ final class NamedConstructorGenerator implements Generator
         return $template->getContent();
     }
 
-    /**
-     * @param string $code
-     * @param string $method
-     * @return string
-     */
-    private function appendMethodToCode($code, $method)
+    private function appendMethodToCode(string $code, string $method) : string
     {
         try {
             return $this->codeWriter->insertAfterMethod($code, '__construct', $method);

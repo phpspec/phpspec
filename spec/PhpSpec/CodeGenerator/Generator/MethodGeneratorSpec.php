@@ -69,7 +69,7 @@ CODE;
         $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
         $resource->getSrcClassname()->willReturn('Acme\App');
 
-        $tpl->render('method', $values)->willReturn(null);
+        $tpl->render('method', $values)->willReturn('');
         $tpl->renderString(Argument::type('string'), $values)->willReturn('METHOD');
 
         $codeWriter->insertMethodLastInClass($codeWithoutMethod, 'METHOD')->willReturn($codeWithMethod);

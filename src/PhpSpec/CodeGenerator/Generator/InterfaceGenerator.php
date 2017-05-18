@@ -21,33 +21,17 @@ use PhpSpec\Locator\Resource;
  */
 final class InterfaceGenerator extends PromptingGenerator
 {
-    /**
-     * @param Resource $resource
-     * @param string            $generation
-     * @param array             $data
-     *
-     * @return bool
-     */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(Resource $resource, string $generation, array $data) : bool
     {
         return 'interface' === $generation;
     }
 
-    /**
-     * @return int
-     */
-    public function getPriority()
+    public function getPriority() : int
     {
         return 0;
     }
 
-    /**
-     * @param Resource $resource
-     * @param string            $filepath
-     *
-     * @return string
-     */
-    protected function renderTemplate(Resource $resource, $filepath)
+    protected function renderTemplate(Resource $resource, string $filepath) : string
     {
         $values = array(
             '%filepath%'        => $filepath,
@@ -67,31 +51,17 @@ final class InterfaceGenerator extends PromptingGenerator
         return $content;
     }
 
-    /**
-     * @return string
-     */
-    protected function getTemplate()
+    protected function getTemplate() : string
     {
         return file_get_contents(__DIR__.'/templates/interface.template');
     }
 
-    /**
-     * @param Resource $resource
-     *
-     * @return string
-     */
-    protected function getFilePath(Resource $resource)
+    protected function getFilePath(Resource $resource) : string
     {
         return $resource->getSrcFilename();
     }
 
-    /**
-     * @param Resource $resource
-     * @param string            $filepath
-     *
-     * @return string
-     */
-    protected function getGeneratedMessage(Resource $resource, $filepath)
+    protected function getGeneratedMessage(Resource $resource, string $filepath) : string
     {
         return sprintf(
             "<info>Interface <value>%s</value> created in <value>%s</value>.</info>\n",
