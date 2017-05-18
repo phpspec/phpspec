@@ -372,51 +372,6 @@ Feature: Developer generates a method
 
       """
 
-  @php:~5.6
-  Scenario: Restricted generation of a method named with a reserved keyword
-    Given the spec file "spec/MyNamespace/RestrictedSpec.php" contains:
-      """
-      <?php
-
-      namespace spec\MyNamespace;
-
-      use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
-
-      class RestrictedSpec extends ObjectBehavior
-      {
-          function it_tries_to_call_wrong_method()
-          {
-              $this->throw()->shouldReturn();
-          }
-      }
-
-      """
-    And the class file "src/MyNamespace/Restricted.php" contains:
-      """
-      <?php
-
-      namespace MyNamespace;
-
-      class Restricted
-      {
-      }
-
-      """
-    When I run phpspec interactively
-    Then I should see "I cannot generate the method 'throw' for you"
-    And the class in "src/MyNamespace/Restricted.php" should contain:
-      """
-      <?php
-
-      namespace MyNamespace;
-
-      class Restricted
-      {
-      }
-
-      """
-
   @php:~7 @isolated
   Scenario: Successful generation of a method named with a reserved keyword in previous PHP versions
     Given the spec file "spec/MyNamespace/KeywordMethodSpec.php" contains:
