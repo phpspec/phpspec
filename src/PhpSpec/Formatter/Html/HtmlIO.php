@@ -18,9 +18,11 @@ use PhpSpec\IO\IO;
 final class HtmlIO implements IO
 {
     /**
-     * @param $message
+     * @param string       $message
+     * @param integer|null $indent
+     * @param bool         $newline
      */
-    public function write($message)
+    public function write($message, $indent = null, $newline = false)
     {
         echo $message;
     }
