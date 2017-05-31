@@ -26,7 +26,7 @@ before_install:
 
 install:
   - export COMPOSER_ROOT_VERSION=dev-master
-  - if [ "$DEPENDENCIES" == "dev" ]; then perl -pi -e 's/^}$/,"minimum-stability":"dev"}/' composer.json; fi;
+  - if [ "$DEPENDENCIES" == "dev" ]; then composer config minimum-stability dev; fi;
   - composer update $COMPOSER_FLAGS
 
 script:
