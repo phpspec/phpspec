@@ -38,6 +38,8 @@ use ArrayAccess;
  * @method void shouldNotBeAnInstanceOf($type)
  * @method void shouldImplement($interface)
  * @method void shouldNotImplement($interface)
+ * @method void shouldThrowWhenIterating($exception = null)
+ * @method void shouldNotThrowWhenIterating($exception = null)
  *
  * @method Subject\Expectation\DuringCall shouldThrow($exception = null)
  * @method Subject\Expectation\DuringCall shouldNotThrow($exception = null)
