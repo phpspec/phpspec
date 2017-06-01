@@ -16,9 +16,11 @@ namespace PhpSpec\IO;
 interface IO
 {
     /**
-     * @param string $message
+     * @param string       $message
+     * @param integer|null $indent
+     * @param bool         $newline
      */
-    public function write($message);
+    public function write($message, $indent = null, $newline = false);
 
     /**
      * @return bool
