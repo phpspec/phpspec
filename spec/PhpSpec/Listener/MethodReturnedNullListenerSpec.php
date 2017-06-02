@@ -108,6 +108,8 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io, ResourceManager $resourceManager, SuiteEvent $event
     ) {
         $resourceManager->createResource(Argument::any())->willThrow(new \RuntimeException());
+        $methodCallEvent->getSubject()->willReturn(new \stdClass());
+        $methodCallEvent->getMethod()->willReturn('');
 
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
@@ -120,6 +122,8 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io, SuiteEvent $event
     ) {
         $io->isCodeGenerationEnabled()->willReturn(false);
+        $methodCallEvent->getSubject()->willReturn(new \stdClass());
+        $methodCallEvent->getMethod()->willReturn('');
 
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
@@ -156,6 +160,9 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         $notEqualException->getExpected()->willReturn('foo');
         $notEqualException2->getExpected()->willReturn('bar');
 
+        $methodCallEvent->getSubject()->willReturn(new \stdClass());
+        $methodCallEvent->getMethod()->willReturn('');
+
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
 
@@ -171,6 +178,8 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io, SuiteEvent $event
     ) {
         $io->isFakingEnabled()->willReturn(false);
+        $methodCallEvent->getSubject()->willReturn(new \stdClass());
+        $methodCallEvent->getMethod()->willReturn('');
 
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
@@ -182,6 +191,9 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
     function it_prompts_when_correct_type_of_exception_is_thrown(
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io, SuiteEvent $event
     ) {
+        $methodCallEvent->getSubject()->willReturn(new \stdClass());
+        $methodCallEvent->getMethod()->willReturn('');
+
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
         $this->afterSuite($event);
