@@ -67,7 +67,7 @@ class WrappedObjectSpec extends ObjectBehavior
 
         $this->callOnWrappedObject('beConstructedWith', array(array('now')));
         $this->callOnWrappedObject('instantiate', array());
-        $this->shouldThrow('PhpSpec\Exception\Wrapper\SubjectException')->duringBeConstructedWith('tomorrow');
+        $this->shouldThrow('PhpSpec\Exception\Wrapper\SubjectException')->duringBeConstructedWith(['tomorrow']);
     }
 
     function it_throws_an_exception_when_trying_to_change_factory_method_after_instantiation()
@@ -96,6 +96,6 @@ class WrappedObjectSpec extends ObjectBehavior
 
         $this->callOnWrappedObject('beConstructedThrough', array('createFromFormat',array('d-m-Y', '01-01-1980')));
         $this->callOnWrappedObject('instantiate', array());
-        $this->shouldThrow('PhpSpec\Exception\Wrapper\SubjectException')->duringBeConstructedWith('tomorrow');
+        $this->shouldThrow('PhpSpec\Exception\Wrapper\SubjectException')->duringBeConstructedWith(['tomorrow']);
     }
 }

@@ -19,7 +19,7 @@ class ComposerPsrNamespaceProvider
      */
     private $specPrefix;
 
-    public function __construct($rootDirectory, $specPrefix)
+    public function __construct(string $rootDirectory, string $specPrefix)
     {
         $this->rootDirectory = $rootDirectory;
         $this->specPrefix = $specPrefix;
@@ -32,7 +32,7 @@ class ComposerPsrNamespaceProvider
      *                      'My\PSR0Namespace' => '',
      *                  ]
      */
-    public function getNamespaces()
+    public function getNamespaces() : array
     {
         $vendors = array();
         foreach (get_declared_classes() as $class) {

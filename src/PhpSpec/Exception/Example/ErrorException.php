@@ -39,7 +39,7 @@ class ErrorException extends ExampleException
      * @param string $file    error file
      * @param string $line    error line
      */
-    public function __construct($level, $message, $file, $line)
+    public function __construct(string $level, string $message, string $file, string $line)
     {
         parent::__construct(sprintf(
             '%s: %s in %s line %d',

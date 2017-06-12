@@ -14,6 +14,8 @@
 namespace PhpSpec\Event;
 
 use PhpSpec\Loader\Node\ExampleNode;
+use PhpSpec\Loader\Node\SpecificationNode;
+use PhpSpec\Loader\Suite;
 use Symfony\Component\EventDispatcher\Event;
 
 /**
@@ -65,23 +67,23 @@ class MethodCallEvent extends Event implements PhpSpecEvent
     /**
      * @return ExampleNode
      */
-    public function getExample()
+    public function getExample(): ExampleNode
     {
         return $this->example;
     }
 
     /**
-     * @return \PhpSpec\Loader\Node\SpecificationNode
+     * @return SpecificationNode
      */
-    public function getSpecification()
+    public function getSpecification(): SpecificationNode
     {
         return $this->example->getSpecification();
     }
 
     /**
-     * @return \PhpSpec\Loader\Suite
+     * @return Suite
      */
-    public function getSuite()
+    public function getSuite(): Suite
     {
         return $this->example->getSpecification()->getSuite();
     }
@@ -97,7 +99,7 @@ class MethodCallEvent extends Event implements PhpSpecEvent
     /**
      * @return string
      */
-    public function getMethod()
+    public function getMethod(): string
     {
         return $this->method;
     }
@@ -105,7 +107,7 @@ class MethodCallEvent extends Event implements PhpSpecEvent
     /**
      * @return array
      */
-    public function getArguments()
+    public function getArguments(): array
     {
         return $this->arguments;
     }

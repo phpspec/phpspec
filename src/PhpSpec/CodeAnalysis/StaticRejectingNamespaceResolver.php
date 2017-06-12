@@ -30,7 +30,7 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
         $this->namespaceResolver->analyse($code);
     }
 
-    public function resolve(string $typeAlias)
+    public function resolve(string $typeAlias) : string
     {
         $this->guardNonObjectTypeHints($typeAlias);
 

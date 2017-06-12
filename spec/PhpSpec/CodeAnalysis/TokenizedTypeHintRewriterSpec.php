@@ -13,6 +13,8 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
     function let(TypeHintIndex $typeHintIndex, NamespaceResolver $namespaceResolver)
     {
         $this->beConstructedWith($typeHintIndex, $namespaceResolver);
+        $namespaceResolver->resolve(Argument::cetera())->willReturn('someClass');
+        $namespaceResolver->analyse(Argument::any())->willReturn();
     }
 
     function it_is_a_typehint_rewriter()

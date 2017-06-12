@@ -33,7 +33,7 @@ class DecoratorSpec extends ObjectBehavior
 
 class Decorator extends AbstractDecorator
 {
-    public function match($alias, $subject, array $arguments = array())
+    public function match(string $alias, $subject, array $arguments = array())
     {
     }
 }

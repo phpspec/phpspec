@@ -52,7 +52,7 @@ final class MatchersMaintainer implements Maintainer
      *
      * @return bool
      */
-    public function supports(ExampleNode $example)
+    public function supports(ExampleNode $example): bool
     {
         return true;
     }
@@ -106,7 +106,7 @@ final class MatchersMaintainer implements Maintainer
     /**
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 50;
     }

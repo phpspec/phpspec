@@ -60,7 +60,7 @@ Feature: Developer uses extension
          *
          * @return bool
          */
-        public function supports($name, $subject, array $arguments)
+        public function supports(string $name, $subject, array $arguments): bool
         {
             return 'beSeven' === $name
                 && is_int($subject)
@@ -74,7 +74,7 @@ Feature: Developer uses extension
          *
          * @return bool
          */
-        protected function matches($subject, array $arguments)
+        protected function matches($subject, array $arguments): bool
         {
             return ($subject === 7);
         }
@@ -86,7 +86,7 @@ Feature: Developer uses extension
          *
          * @return FailureException
          */
-        protected function getFailureException($name, $subject, array $arguments)
+        protected function getFailureException(string $name, $subject, array $arguments): FailureException
         {
             return new FailureException(sprintf(
                 'Seven expected %s to be 7, but it is not.',
@@ -101,7 +101,7 @@ Feature: Developer uses extension
          *
          * @return FailureException
          */
-        protected function getNegativeFailureException($name, $subject, array $arguments)
+        protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
         {
             return new FailureException(sprintf(
                 'Seven did not expect %s to 7, but it is.',

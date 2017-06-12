@@ -64,7 +64,7 @@ final class SubjectMaintainer implements Maintainer
      *
      * @return boolean
      */
-    public function supports(ExampleNode $example)
+    public function supports(ExampleNode $example): bool
     {
         return $example->getSpecification()->getClassReflection()->implementsInterface(
             'PhpSpec\Wrapper\SubjectContainer'
@@ -109,7 +109,7 @@ final class SubjectMaintainer implements Maintainer
     /**
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 100;
     }

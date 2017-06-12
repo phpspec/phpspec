@@ -54,7 +54,7 @@ abstract class DuringCall
      *
      * @return $this
      */
-    public function match($alias, $subject, array $arguments = array(), $wrappedObject = null)
+    public function match(string $alias, $subject, array $arguments = array(), $wrappedObject = null)
     {
         $this->subject = $subject;
         $this->arguments = $arguments;
@@ -69,7 +69,7 @@ abstract class DuringCall
      *
      * @return mixed
      */
-    public function during($method, array $arguments = array())
+    public function during(string $method, array $arguments = array())
     {
         if ($method === '__construct') {
             $this->subject->beAnInstanceOf($this->wrappedObject->getClassName(), $arguments);
@@ -106,7 +106,7 @@ abstract class DuringCall
      *
      * @throws MatcherException
      */
-    public function __call($method, array $arguments = array())
+    public function __call(string $method, array $arguments = array())
     {
         if (preg_match('/^during(.+)$/', $method, $matches)) {
             return $this->during(lcfirst($matches[1]), $arguments);
@@ -123,7 +123,7 @@ abstract class DuringCall
     /**
      * @return array
      */
-    protected function getArguments()
+    protected function getArguments(): array
     {
         return $this->arguments;
     }
@@ -131,7 +131,7 @@ abstract class DuringCall
     /**
      * @return Matcher
      */
-    protected function getMatcher()
+    protected function getMatcher(): Matcher
     {
         return $this->matcher;
     }

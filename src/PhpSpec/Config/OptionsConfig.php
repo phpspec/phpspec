@@ -47,10 +47,10 @@ class OptionsConfig
      * @param string|bool $bootstrapPath
      */
     public function __construct(
-        $stopOnFailureEnabled,
-        $codeGenerationEnabled,
-        $reRunEnabled,
-        $fakingEnabled,
+        bool $stopOnFailureEnabled,
+        bool $codeGenerationEnabled,
+        bool $reRunEnabled,
+        bool $fakingEnabled,
         $bootstrapPath
     ) {
         $this->stopOnFailureEnabled  = $stopOnFailureEnabled;
@@ -63,7 +63,7 @@ class OptionsConfig
     /**
      * @return bool
      */
-    public function isStopOnFailureEnabled()
+    public function isStopOnFailureEnabled(): bool
     {
         return $this->stopOnFailureEnabled;
     }
@@ -71,7 +71,7 @@ class OptionsConfig
     /**
      * @return bool
      */
-    public function isCodeGenerationEnabled()
+    public function isCodeGenerationEnabled(): bool
     {
         return $this->codeGenerationEnabled;
     }

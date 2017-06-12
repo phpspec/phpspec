@@ -69,7 +69,7 @@ class ExampleRunner
      *
      * @return int
      */
-    public function run(ExampleNode $example)
+    public function run(ExampleNode $example): int
     {
         $startTime = microtime(true);
         $this->dispatcher->dispatch(

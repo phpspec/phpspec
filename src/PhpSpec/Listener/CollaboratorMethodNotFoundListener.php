@@ -79,7 +79,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
     /**
      * @return array
      */
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return array(
             'afterExample' => array('afterExample', 10),
@@ -113,7 +113,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
      * @param string $classname
      * @return mixed
      */
-    private function getDoubledInterface($classname)
+    private function getDoubledInterface(string $classname)
     {
         if (class_parents($classname) !== array('stdClass'=>'stdClass')) {
             return;
@@ -173,7 +173,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
      * @param mixed $prophecyArguments
      * @return array
      */
-    private function getRealArguments($prophecyArguments)
+    private function getRealArguments($prophecyArguments): array
     {
         if ($prophecyArguments instanceof ArgumentsWildcard) {
             return $prophecyArguments->getTokens();

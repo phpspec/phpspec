@@ -35,7 +35,7 @@ final class TraversableKeyValueMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    public function supports($name, $subject, array $arguments)
+    public function supports(string $name, $subject, array $arguments) : bool
     {
         return 'haveKeyWithValue' === $name
             && 2 === count($arguments)
@@ -46,7 +46,7 @@ final class TraversableKeyValueMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    protected function matches($subject, array $arguments)
+    protected function matches($subject, array $arguments) : bool
     {
         foreach ($subject as $key => $value) {
             if ($key === $arguments[0] && $value === $arguments[1]) {
@@ -60,7 +60,7 @@ final class TraversableKeyValueMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    protected function getFailureException($name, $subject, array $arguments)
+    protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s to have an element with %s key and %s value, but it does not.',
@@ -73,7 +73,7 @@ final class TraversableKeyValueMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    protected function getNegativeFailureException($name, $subject, array $arguments)
+    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s not to have an element with %s key and %s value, but it does.',

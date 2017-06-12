@@ -58,7 +58,7 @@ class ExpectationFactory
      *
      * @return Expectation
      */
-    public function create($expectation, $subject, array $arguments = array())
+    public function create(string $expectation, $subject, array $arguments = array()): Expectation
     {
         if (0 === strpos($expectation, 'shouldNot')) {
             return $this->createNegative(lcfirst(substr($expectation, 9)), $subject, $arguments);
@@ -76,7 +76,7 @@ class ExpectationFactory
      *
      * @return Expectation
      */
-    private function createPositive($name, $subject, array $arguments = array())
+    private function createPositive(string $name, $subject, array $arguments = array()): Expectation
     {
         if (strtolower($name) === 'throw') {
             return $this->createDecoratedExpectation("PositiveThrow", $name, $subject, $arguments);
@@ -96,7 +96,7 @@ class ExpectationFactory
      *
      * @return Expectation
      */
-    private function createNegative($name, $subject, array $arguments = array())
+    private function createNegative(string $name, $subject, array $arguments = array()): Expectation
     {
         if (strtolower($name) === 'throw') {
             return $this->createDecoratedExpectation("NegativeThrow", $name, $subject, $arguments);
@@ -117,7 +117,7 @@ class ExpectationFactory
      *
      * @return Expectation
      */
-    private function createDecoratedExpectation($expectation, $name, $subject, array $arguments)
+    private function createDecoratedExpectation(string $expectation, string $name, $subject, array $arguments): Expectation
     {
         $matcher = $this->findMatcher($name, $subject, $arguments);
         $expectation = "\\PhpSpec\\Wrapper\\Subject\\Expectation\\".$expectation;
@@ -138,7 +138,7 @@ class ExpectationFactory
      *
      * @return Matcher
      */
-    private function findMatcher($name, $subject, array $arguments = array())
+    private function findMatcher(string $name, $subject, array $arguments = array()): Matcher
     {
         $unwrapper = new Unwrapper();
         $arguments = $unwrapper->unwrapAll($arguments);
@@ -152,7 +152,7 @@ class ExpectationFactory
      *
      * @return ConstructorDecorator
      */
-    private function decoratedExpectation(Expectation $expectation, Matcher $matcher)
+    private function decoratedExpectation(Expectation $expectation, Matcher $matcher): ConstructorDecorator
     {
         $dispatcherDecorator = new DispatcherDecorator($expectation, $this->dispatcher, $matcher, $this->example);
         $unwrapperDecorator = new UnwrapDecorator($dispatcherDecorator, new Unwrapper());

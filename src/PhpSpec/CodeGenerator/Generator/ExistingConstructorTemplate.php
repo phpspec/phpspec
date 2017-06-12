@@ -108,7 +108,7 @@ class ExistingConstructorTemplate
     /**
      * @return string
      */
-    private function getCreateObjectTemplate()
+    private function getCreateObjectTemplate(): string
     {
         return file_get_contents(__DIR__.'/templates/named_constructor_create_object.template');
     }
@@ -116,7 +116,7 @@ class ExistingConstructorTemplate
     /**
      * @return string
      */
-    private function getExceptionTemplate()
+    private function getExceptionTemplate(): string
     {
         return file_get_contents(__DIR__.'/templates/named_constructor_exception.template');
     }

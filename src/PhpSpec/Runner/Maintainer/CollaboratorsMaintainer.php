@@ -62,7 +62,7 @@ final class CollaboratorsMaintainer implements Maintainer
      *
      * @return bool
      */
-    public function supports(ExampleNode $example)
+    public function supports(ExampleNode $example): bool
     {
         return true;
     }
@@ -108,7 +108,7 @@ final class CollaboratorsMaintainer implements Maintainer
     /**
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 50;
     }
@@ -152,7 +152,7 @@ final class CollaboratorsMaintainer implements Maintainer
      *
      * @return Collaborator
      */
-    private function getOrCreateCollaborator(CollaboratorManager $collaborators, $name)
+    private function getOrCreateCollaborator(CollaboratorManager $collaborators, string $name): Collaborator
     {
         if (!$collaborators->has($name)) {
             $collaborator = new Collaborator($this->prophet->prophesize());
@@ -168,7 +168,7 @@ final class CollaboratorsMaintainer implements Maintainer
      * @param string $className
      * @throws CollaboratorNotFoundException
      */
-    private function throwCollaboratorNotFound($e, $parameter, $className = null)
+    private function throwCollaboratorNotFound(\Exception $e, \ReflectionParameter $parameter = null, string $className = null)
     {
         throw new CollaboratorNotFoundException(
             sprintf('Collaborator does not exist '),
@@ -184,7 +184,7 @@ final class CollaboratorsMaintainer implements Maintainer
      *
      * @return string
      */
-    private function getParameterTypeFromIndex(\ReflectionClass $classRefl, \ReflectionParameter $parameter)
+    private function getParameterTypeFromIndex(\ReflectionClass $classRefl, \ReflectionParameter $parameter): string
     {
         return $this->typeHintIndex->lookup(
             $classRefl->getName(),
@@ -198,11 +198,11 @@ final class CollaboratorsMaintainer implements Maintainer
      *
      * @return string
      */
-    private function getParameterTypeFromReflection(\ReflectionParameter $parameter)
+    private function getParameterTypeFromReflection(\ReflectionParameter $parameter): string
     {
         try {
             if (null === $class = $parameter->getClass()) {
-                return null;
+                return '';
             }
 
             return $class->getName();

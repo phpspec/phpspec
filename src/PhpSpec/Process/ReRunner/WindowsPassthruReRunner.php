@@ -39,7 +39,7 @@ final class WindowsPassthruReRunner extends PhpExecutableReRunner
     /**
      * @return boolean
      */
-    public function isSupported()
+    public function isSupported(): bool
     {
         return (php_sapi_name() == 'cli')
             && $this->getExecutablePath()

@@ -23,7 +23,7 @@ class MethodAnalyser
      *
      * @return boolean
      */
-    public function methodIsEmpty($class, $method)
+    public function methodIsEmpty(string $class, string $method): bool
     {
         return $this->reflectionMethodIsEmpty(new \ReflectionMethod($class, $method));
     }
@@ -33,7 +33,7 @@ class MethodAnalyser
      *
      * @return bool
      */
-    public function reflectionMethodIsEmpty(\ReflectionMethod $method)
+    public function reflectionMethodIsEmpty(\ReflectionMethod $method): bool
     {
         if ($this->isNotImplementedInPhp($method)) {
             return false;
@@ -51,7 +51,7 @@ class MethodAnalyser
      *
      * @return string
      */
-    public function getMethodOwnerName($class, $method)
+    public function getMethodOwnerName(string $class, string $method): string
     {
         $reflectionMethod = new \ReflectionMethod($class, $method);
         $startLine = $reflectionMethod->getStartLine();
@@ -66,7 +66,7 @@ class MethodAnalyser
      *
      * @return string
      */
-    private function getCodeBody(\ReflectionMethod $reflectionMethod)
+    private function getCodeBody(\ReflectionMethod $reflectionMethod): string
     {
         $endLine = $reflectionMethod->getEndLine();
         $startLine = $reflectionMethod->getStartLine();
@@ -86,7 +86,7 @@ class MethodAnalyser
      *
      * @return \ReflectionClass
      */
-    private function getMethodOwner(\ReflectionMethod $reflectionMethod, $methodStartLine, $methodEndLine)
+    private function getMethodOwner(\ReflectionMethod $reflectionMethod, int $methodStartLine, int $methodEndLine): \ReflectionClass
     {
         $reflectionClass = $reflectionMethod->getDeclaringClass();
 
@@ -104,7 +104,7 @@ class MethodAnalyser
      *
      * @return null|\ReflectionClass
      */
-    private function getDeclaringTrait(array $traits, $file, $start, $end)
+    private function getDeclaringTrait(array $traits, string $file, int $start, int $end)
     {
         foreach ($traits as $trait) {
             if ($trait->getFileName() == $file && $trait->getStartLine() <= $start && $trait->getEndLine() >= $end) {
@@ -122,7 +122,7 @@ class MethodAnalyser
      * @param  string $code
      * @return string
      */
-    private function stripComments($code)
+    private function stripComments(string $code): string
     {
         $tokens = token_get_all('<?php ' . $code);
 
@@ -146,7 +146,7 @@ class MethodAnalyser
      * @param  string $codeWithoutComments
      * @return bool
      */
-    private function codeIsOnlyBlocksAndWhitespace($codeWithoutComments)
+    private function codeIsOnlyBlocksAndWhitespace(string $codeWithoutComments): bool
     {
         return (bool) preg_match('/^[\s{}]*$/s', $codeWithoutComments);
     }
@@ -155,7 +155,7 @@ class MethodAnalyser
      * @param  \ReflectionMethod $method
      * @return bool
      */
-    private function isNotImplementedInPhp(\ReflectionMethod $method)
+    private function isNotImplementedInPhp(\ReflectionMethod $method): bool
     {
         $filename = $method->getDeclaringClass()->getFileName();
 
