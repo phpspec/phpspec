@@ -154,20 +154,15 @@ final class Application extends BaseApplication
                 }
             }
             elseif ('matchers' === $key && is_array($val)) {
-                foreach ($val as $class) {
-                    $container->define(sprintf('matchers.%s', $class), function () use ($class) {
-                        return new $class();
-                    }, ['matchers']);
-                }
+                $this->registerCustomMatchers($container, $val);
             }
-
         }
     }
 
     private function populateContainerParameters(IndexedServiceContainer $container, array $config)
     {
         foreach ($config as $key => $val) {
-            if ('extensions' !== $key && 'matchers'!== $key) {
+            if ('extensions' !== $key && 'matchers' !== $key) {
                 $container->setParam($key, $val);
             }
         }
