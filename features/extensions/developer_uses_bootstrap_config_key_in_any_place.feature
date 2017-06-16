@@ -28,7 +28,7 @@ Feature: Developer uses bootstrap config key in any place
     }
 
     """
-    And the spec file "spec/Example1/DummySpec.php" contains:
+    And the spec file "spec/Example1/TestConfigSpec.php" contains:
     """
     <?php
 
@@ -37,22 +37,22 @@ Feature: Developer uses bootstrap config key in any place
     use PhpSpec\ObjectBehavior;
     use Prophecy\Argument;
 
-    class DummySpec extends ObjectBehavior
+    class TestConfigSpec extends ObjectBehavior
     {
         function it_is_initializable()
         {
-            $this->shouldHaveType('Example1\Dummy');
+            $this->shouldHaveType('Example1\TestConfig');
         }
     }
 
     """
-    And the class file "src/Example1/Dummy.php" contains:
+    And the class file "src/Example1/TestConfig.php" contains:
     """
     <?php
 
     namespace Example1;
 
-    class Dummy
+    class TestConfig
     {
     }
 
