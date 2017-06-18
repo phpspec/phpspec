@@ -59,4 +59,3 @@ Feature: Developer uses bootstrap config key in any place
     """
     When I run phpspec
     Then I should see "Bootstrap file 'NotExisting.php' does not exist"
-    And the suite should not pass
