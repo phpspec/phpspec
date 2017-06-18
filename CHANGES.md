@@ -1,3 +1,8 @@
+Upcoming 2.x
+============
+
+* [fixed] parameters after extensions ignored in config file (@borNfreee)
+
 2.5.7 / 2017-05-12
 ==================
 
