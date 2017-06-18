@@ -46,7 +46,7 @@ class SuiteEvent extends Event implements PhpSpecEvent
      * @param float   $time
      * @param integer $result
      */
-    public function __construct(Suite $suite, $time = null, $result = null)
+    public function __construct(Suite $suite, float $time = null, int $result = null)
     {
         $this->suite  = $suite;
         $this->time   = $time;
@@ -56,7 +56,7 @@ class SuiteEvent extends Event implements PhpSpecEvent
     /**
      * @return Suite
      */
-    public function getSuite()
+    public function getSuite(): Suite
     {
         return $this->suite;
     }
@@ -64,7 +64,7 @@ class SuiteEvent extends Event implements PhpSpecEvent
     /**
      * @return float
      */
-    public function getTime()
+    public function getTime(): float
     {
         return $this->time;
     }
@@ -72,7 +72,7 @@ class SuiteEvent extends Event implements PhpSpecEvent
     /**
      * @return integer
      */
-    public function getResult()
+    public function getResult(): int
     {
         return $this->result;
     }
@@ -80,7 +80,7 @@ class SuiteEvent extends Event implements PhpSpecEvent
     /**
      * @return bool
      */
-    public function isWorthRerunning()
+    public function isWorthRerunning(): bool
     {
         return $this->worthRerunning;
     }

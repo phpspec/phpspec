@@ -43,7 +43,7 @@ final class ObjectStateMatcher implements Matcher
      *
      * @return bool
      */
-    public function supports($name, $subject, array $arguments)
+    public function supports(string $name, $subject, array $arguments): bool
     {
         return is_object($subject) && !is_callable($subject)
             && (0 === strpos($name, 'be') || 0 === strpos($name, 'have'))
@@ -58,7 +58,7 @@ final class ObjectStateMatcher implements Matcher
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      */
-    public function positiveMatch($name, $subject, array $arguments)
+    public function positiveMatch(string $name, $subject, array $arguments)
     {
         preg_match(self::$regex, $name, $matches);
         $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);
@@ -84,7 +84,7 @@ final class ObjectStateMatcher implements Matcher
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      */
-    public function negativeMatch($name, $subject, array $arguments)
+    public function negativeMatch(string $name, $subject, array $arguments)
     {
         preg_match(self::$regex, $name, $matches);
         $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);
@@ -105,7 +105,7 @@ final class ObjectStateMatcher implements Matcher
     /**
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 50;
     }
@@ -117,7 +117,7 @@ final class ObjectStateMatcher implements Matcher
      *
      * @return FailureException
      */
-    private function getFailureExceptionFor($callable, $expectedBool, $result)
+    private function getFailureExceptionFor(callable $callable, bool $expectedBool, bool $result): FailureException
     {
         return new FailureException(sprintf(
             "Expected %s to return %s, but got %s.",

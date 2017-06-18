@@ -65,7 +65,7 @@ class WrappedObject
      *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      */
-    public function beAnInstanceOf($classname, array $arguments = array())
+    public function beAnInstanceOf(string $classname, array $arguments = array())
     {
         if (!is_string($classname)) {
             throw new SubjectException(sprintf(
@@ -86,7 +86,7 @@ class WrappedObject
      *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      */
-    public function beConstructedWith($args)
+    public function beConstructedWith(array $args)
     {
         if (null === $this->classname) {
             throw new SubjectException(sprintf(
@@ -135,7 +135,7 @@ class WrappedObject
     /**
      * @return bool
      */
-    public function isInstantiated()
+    public function isInstantiated(): bool
     {
         return $this->isInstantiated;
     }
@@ -143,13 +143,13 @@ class WrappedObject
     /**
      * @param boolean $instantiated
      */
-    public function setInstantiated($instantiated)
+    public function setInstantiated(bool $instantiated)
     {
         $this->isInstantiated = $instantiated;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getClassName()
     {
@@ -159,7 +159,7 @@ class WrappedObject
     /**
      * @param string $classname
      */
-    public function setClassName($classname)
+    public function setClassName(string $classname)
     {
         $this->classname = $classname;
     }
@@ -167,7 +167,7 @@ class WrappedObject
     /**
      * @return array
      */
-    public function getArguments()
+    public function getArguments(): array
     {
         return $this->arguments;
     }
@@ -217,7 +217,7 @@ class WrappedObject
      *
      * @return object
      */
-    private function instantiateFromCallback($factoryCallable)
+    private function instantiateFromCallback(callable $factoryCallable)
     {
         $instance = call_user_func_array($factoryCallable, $this->arguments);
 

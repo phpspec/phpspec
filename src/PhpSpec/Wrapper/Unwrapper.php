@@ -23,7 +23,7 @@ class Unwrapper implements RevealerInterface
      *
      * @return array
      */
-    public function unwrapAll(array $arguments)
+    public function unwrapAll(array $arguments): array
     {
         if (null === $arguments) {
             return array();

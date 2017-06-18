@@ -18,15 +18,15 @@ interface ExecutionContext
     /**
      * @param string $type
      */
-    public function addGeneratedType($type);
+    public function addGeneratedType(string $type);
 
     /**
      * @return array
      */
-    public function getGeneratedTypes();
+    public function getGeneratedTypes(): array;
 
     /**
      * @return array
      */
-    public function asEnv();
+    public function asEnv(): array;
 }

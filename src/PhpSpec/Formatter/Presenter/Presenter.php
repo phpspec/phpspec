@@ -23,5 +23,5 @@ interface Presenter extends ExceptionPresenter, ValuePresenter
      *
      * @return string
      */
-    public function presentString($string);
+    public function presentString(string $string): string;
 }

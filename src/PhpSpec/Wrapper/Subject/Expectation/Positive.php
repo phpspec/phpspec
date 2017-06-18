@@ -37,7 +37,7 @@ final class Positive implements Expectation
      *
      * @return mixed
      */
-    public function match($alias, $subject, array $arguments = array())
+    public function match(string $alias, $subject, array $arguments = array())
     {
         return $this->matcher->positiveMatch($alias, $subject, $arguments);
     }

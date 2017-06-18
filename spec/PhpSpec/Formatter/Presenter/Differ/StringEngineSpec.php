@@ -30,7 +30,7 @@ DIFF;
         $this->compare('string1', 'string2')->shouldBeEqualRegardlessOfLineEndings($expected);
     }
 
-    public function getMatchers()
+    public function getMatchers() : array
     {
         return [
             'beEqualRegardlessOfLineEndings' => function ($actual, $expected) {

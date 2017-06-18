@@ -21,7 +21,7 @@ interface DifferEngine
      *
      * @return bool
      */
-    public function supports($expected, $actual);
+    public function supports($expected, $actual): bool;
 
     /**
      * @param mixed $expected
@@ -29,5 +29,5 @@ interface DifferEngine
      *
      * @return string
      */
-    public function compare($expected, $actual);
+    public function compare($expected, $actual): string;
 }

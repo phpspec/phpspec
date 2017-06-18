@@ -101,7 +101,7 @@ final class ReservedWordsMethodNameChecker implements NameChecker
     /**
      * {@inheritdoc}
      */
-    public function isNameValid($name)
+    public function isNameValid(string $name): bool
     {
         return !in_array(strtolower($name), $this->reservedWords);
     }

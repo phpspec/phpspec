@@ -15,12 +15,12 @@ namespace PhpSpec\Formatter\Presenter\Differ;
 
 final class ArrayEngine extends StringEngine
 {
-    public function supports($expected, $actual)
+    public function supports($expected, $actual) : bool
     {
         return is_array($expected) && is_array($actual);
     }
 
-    public function compare($expected, $actual)
+    public function compare($expected, $actual) : string
     {
         $expectedString = $this->convertArrayToString($expected);
         $actualString   = $this->convertArrayToString($actual);

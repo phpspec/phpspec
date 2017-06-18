@@ -17,5 +17,5 @@ interface NamespaceResolver
 {
     public function analyse(string $code);
 
-    public function resolve(string $typeAlias);
+    public function resolve(string $typeAlias) : string;
 }

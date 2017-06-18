@@ -66,7 +66,7 @@ class MatcherManager
      *
      * @throws \PhpSpec\Exception\Wrapper\MatcherNotFoundException
      */
-    public function find($keyword, $subject, array $arguments)
+    public function find(string $keyword, $subject, array $arguments): Matcher
     {
         foreach ($this->matchers as $matcher) {
             if (true === $matcher->supports($keyword, $subject, $arguments)) {

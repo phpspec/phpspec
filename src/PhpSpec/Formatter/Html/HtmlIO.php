@@ -28,7 +28,7 @@ final class HtmlIO implements IO
     /**
      * @return bool
      */
-    public function isVerbose()
+    public function isVerbose(): bool
     {
         return true;
     }

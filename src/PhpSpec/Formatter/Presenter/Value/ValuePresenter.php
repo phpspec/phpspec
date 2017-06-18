@@ -20,5 +20,5 @@ interface ValuePresenter
      * @param mixed $value
      * @return string
      */
-    public function presentValue($value);
+    public function presentValue($value): string;
 }

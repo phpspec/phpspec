@@ -39,7 +39,7 @@ final class ComparisonMatcher extends BasicMatcher
      *
      * @return bool
      */
-    public function supports($name, $subject, array $arguments)
+    public function supports(string $name, $subject, array $arguments): bool
     {
         return 'beLike' === $name
             && 1 == count($arguments)
@@ -52,7 +52,7 @@ final class ComparisonMatcher extends BasicMatcher
      *
      * @return bool
      */
-    protected function matches($subject, array $arguments)
+    protected function matches($subject, array $arguments): bool
     {
         return $subject == $arguments[0];
     }
@@ -64,7 +64,7 @@ final class ComparisonMatcher extends BasicMatcher
      *
      * @return NotEqualException
      */
-    protected function getFailureException($name, $subject, array $arguments)
+    protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new NotEqualException(sprintf(
             'Expected %s, but got %s.',
@@ -80,7 +80,7 @@ final class ComparisonMatcher extends BasicMatcher
      *
      * @return FailureException
      */
-    protected function getNegativeFailureException($name, $subject, array $arguments)
+    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Did not expect %s, but got one.',

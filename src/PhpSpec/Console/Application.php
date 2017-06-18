@@ -46,7 +46,7 @@ final class Application extends BaseApplication
         parent::__construct('phpspec', $version);
     }
 
-    public function getContainer() : ServiceContainer
+    public function getContainer(): ServiceContainer
     {
         return $this->container;
     }
@@ -54,7 +54,7 @@ final class Application extends BaseApplication
     /**
      * @return int
      */
-    public function doRun(InputInterface $input, OutputInterface $output)
+    public function doRun(InputInterface $input, OutputInterface $output): int
     {
         $helperSet = $this->getHelperSet();
         $this->container->set('console.input', $input);
@@ -194,7 +194,7 @@ final class Application extends BaseApplication
      *
      * @throws \RuntimeException
      */
-    protected function parseConfigurationFile(InputInterface $input)
+    protected function parseConfigurationFile(InputInterface $input): array
     {
         $paths = array('phpspec.yml','phpspec.yml.dist', '.phpspec.yml');
 

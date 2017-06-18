@@ -18,10 +18,17 @@ use Prophecy\Argument;
 class CallerSpec extends ObjectBehavior
 {
     function let(WrappedObject $wrappedObject, ExampleNode $example, Dispatcher $dispatcher,
-                 ExceptionFactory $exceptions, Wrapper $wrapper, AccessInspector $accessInspector)
+                 ExceptionFactory $exceptions, Wrapper $wrapper, AccessInspector $accessInspector, Subject $subject)
     {
         $this->beConstructedWith($wrappedObject, $example, $dispatcher,
             $exceptions, $wrapper, $accessInspector);
+        $wrapper->wrap(Argument::cetera())->willReturn($subject);
+
+        $wrappedObject->isInstantiated()->willReturn(false);
+        $wrappedObject->getClassName()->willReturn(null);
+        $wrappedObject->getInstance()->willReturn(null);
+
+        $accessInspector->isMethodCallable(Argument::cetera())->willReturn(false);
     }
 
     function it_dispatches_method_call_events(Dispatcher $dispatcher, WrappedObject $wrappedObject,
