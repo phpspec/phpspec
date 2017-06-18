@@ -68,6 +68,9 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
     function it_does_not_prompt_for_method_generation_if_input_is_not_interactive($exampleEvent, $suiteEvent, $io, MethodNotFoundException $exception)
     {
         $exampleEvent->getException()->willReturn($exception);
+        $exception->getSubject()->willReturn(new \stdClass());
+        $exception->getMethodName()->willReturn('');
+        $exception->getArguments()->willReturn([]);
         $io->isCodeGenerationEnabled()->willReturn(false);
 
         $this->afterExample($exampleEvent);
