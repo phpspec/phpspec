@@ -62,6 +62,10 @@ class NamedConstructorNotFoundListenerSpec extends ObjectBehavior
         $io->isCodeGenerationEnabled()->willReturn(true);
         $io->askConfirmation(Argument::any())->willReturn(false);
 
+        $exception->getSubject()->willReturn(new \stdClass());
+        $exception->getMethodName()->willReturn('');
+        $exception->getArguments()->willReturn([]);
+
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
 
@@ -72,6 +76,10 @@ class NamedConstructorNotFoundListenerSpec extends ObjectBehavior
     {
         $exampleEvent->getException()->willReturn($exception);
         $io->isCodeGenerationEnabled()->willReturn(false);
+
+        $exception->getSubject()->willReturn(new \stdClass());
+        $exception->getMethodName()->willReturn('');
+        $exception->getArguments()->willReturn([]);
 
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
