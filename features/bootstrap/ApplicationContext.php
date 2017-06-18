@@ -369,7 +369,7 @@ class ApplicationContext implements Context
 
         return $string;
     }
-    
+
     /**
      * @Then I should not be prompted for more questions
      */

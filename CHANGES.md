@@ -1,8 +1,20 @@
-Upcoming 4.0
+Upcoming 4.x
 ============
 
 * Dropped support for PHP versions less than 7.0 (@ciaranmcnulty)
 * Added scalar types and return types (@Sam-Burns, @ciaranmcnulty)
+* [fixed] parameters after extensions ignored in config file (@borNfreee)
+
+Upcoming 3.x
+============
+
+* [fixed] parameters after extensions ignored in config file (@borNfreee)
+
+Upcoming 2.x
+============
+
+* [fixed] parameters after extensions ignored in config file (@borNfreee)
+>>>>>>> master
 
 3.4.0 / 2017-05-12
 ==================
