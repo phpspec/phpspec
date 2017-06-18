@@ -19,13 +19,12 @@ final class Shutdown
 
     public function __construct()
     {
-        $this->actions = array();
+        $this->actions = [];
     }
 
     public function registerShutdown()
     {
-        error_reporting(error_reporting() & ~E_ERROR);
-        register_shutdown_function(array($this, 'runShutdown'));
+        register_shutdown_function([$this, 'runShutdown']);
     }
 
     public function registerAction(ShutdownAction $action)
@@ -35,10 +34,10 @@ final class Shutdown
 
     public function runShutdown()
     {
-        $error = $this->getFatalError();
-
-        foreach ($this->actions as $fatalErrorActions) {
-            $fatalErrorActions->runAction($error);
+        if ($error = $this->getFatalError()) {
+            foreach ($this->actions as $fatalErrorActions) {
+                $fatalErrorActions->runAction($error);
+            }
         }
     }
 
@@ -46,6 +45,6 @@ final class Shutdown
     {
         $error = error_get_last();
 
-        return (null !== $error) && (bool) (E_ERROR & $error['type']) ? $error : null;
+        return $error;
     }
 }

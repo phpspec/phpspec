@@ -26,6 +26,7 @@ use PhpSpec\Exception\Exception as PhpSpecException;
 use PhpSpec\Exception\Example as ExampleException;
 use Prophecy\Exception as ProphecyException;
 use Exception;
+use Throwable;
 
 class ExampleRunner
 {
@@ -95,14 +96,14 @@ class ExampleRunner
             $status    = ExampleEvent::FAILED;
             $exception = $e;
         } catch (ExampleException\FailureException $e) {
-            $status    = ExampleEvent::FAILED;
-            $exception = $e;
-        } catch (Exception $e) {
-            $status    = ExampleEvent::BROKEN;
+            $status = ExampleEvent::FAILED;
             $exception = $e;
         } catch (Error $e) {
             $status    = ExampleEvent::BROKEN;
             $exception = new ErrorException($e);
+        } catch (Exception $e) {
+            $status = ExampleEvent::BROKEN;
+            $exception = $e;
         }
 
         if ($exception instanceof PhpSpecException) {
@@ -148,10 +149,18 @@ class ExampleRunner
         try {
             if ($reflection instanceof \ReflectionMethod) {
                 $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
-            }
-            else {
+            } else {
                 $reflection->invokeArgs($collaborators->getArgumentsFor($reflection));
             }
+        } catch (Throwable $e) {
+            $this->runMaintainersTeardown(
+                $this->searchExceptionMaintainers($maintainers),
+                $example,
+                $context,
+                $matchers,
+                $collaborators
+            );
+            throw $e;
         } catch (\Exception $e) {
             $this->runMaintainersTeardown(
                 $this->searchExceptionMaintainers($maintainers),
