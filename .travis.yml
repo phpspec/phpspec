@@ -17,6 +17,7 @@ matrix:
       env: DEPENDENCIES='dev'
     - php: 5.6
     - php: hhvm
+      dist: trusty
     - php: 7.0
   allow_failures:
     - env: DEPENDENCIES='dev'
