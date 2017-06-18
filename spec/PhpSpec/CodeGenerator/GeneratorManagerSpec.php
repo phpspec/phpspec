@@ -6,12 +6,12 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 use PhpSpec\CodeGenerator\Generator\Generator;
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 
 class GeneratorManagerSpec extends ObjectBehavior
 {
     function it_uses_registered_generators_to_generate_code(
-        Generator $generator, Resource $resource
+        Generator $generator, CompositeResource $resource
     ) {
         $generator->getPriority()->willReturn(0);
         $generator->supports($resource, 'specification', array())->willReturn(true);
@@ -22,7 +22,7 @@ class GeneratorManagerSpec extends ObjectBehavior
     }
 
     function it_chooses_generator_by_priority(
-        Generator $generator1, Generator $generator2, Resource $resource
+        Generator $generator1, Generator $generator2, CompositeResource $resource
     ) {
         $generator1->supports($resource, 'class', array('class' => 'CustomLoader'))
             ->willReturn(true);
@@ -39,7 +39,7 @@ class GeneratorManagerSpec extends ObjectBehavior
         $this->generate($resource, 'class', array('class' => 'CustomLoader'));
     }
 
-    function it_throws_exception_if_no_generator_found(Resource $resource)
+    function it_throws_exception_if_no_generator_found(CompositeResource $resource)
     {
         $this->shouldThrow()->duringGenerate($resource, 'class', array('class' => 'CustomLoader'));
     }

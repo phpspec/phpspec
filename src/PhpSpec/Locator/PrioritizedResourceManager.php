@@ -37,7 +37,7 @@ final class PrioritizedResourceManager implements ResourceManager
     /**
      * @param string $query
      *
-     * @return Resource[]
+     * @return CompositeResource[]
      */
     public function locateResources($query)
     {
@@ -61,7 +61,7 @@ final class PrioritizedResourceManager implements ResourceManager
     /**
      * @param string $classname
      *
-     * @return Resource
+     * @return CompositeResource
      *
      * @throws \RuntimeException
      */
@@ -84,7 +84,7 @@ final class PrioritizedResourceManager implements ResourceManager
     /**
      * @param array $resources
      *
-     * @return Resource[]
+     * @return CompositeResource[]
      */
     private function removeDuplicateResources(array $resources)
     {

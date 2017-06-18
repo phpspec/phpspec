@@ -15,9 +15,9 @@ namespace PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
+use PhpSpec\Locator\CompositeResource;
 use PhpSpec\Process\Context\ExecutionContext;
 use PhpSpec\Util\Filesystem;
-use PhpSpec\Locator\Resource;
 
 /**
  * Base class with common behaviour for generating class and spec class
@@ -59,10 +59,10 @@ abstract class PromptingGenerator implements Generator
     }
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param array             $data
      */
-    public function generate(Resource $resource, array $data = array())
+    public function generate(CompositeResource $resource, array $data = array())
     {
         $filepath = $this->getFilePath($resource);
 
@@ -88,27 +88,27 @@ abstract class PromptingGenerator implements Generator
     }
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      *
      * @return string
      */
-    abstract protected function getFilePath(Resource $resource);
+    abstract protected function getFilePath(CompositeResource $resource);
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param string            $filepath
      *
      * @return string
      */
-    abstract protected function renderTemplate(Resource $resource, $filepath);
+    abstract protected function renderTemplate(CompositeResource $resource, $filepath);
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param string            $filepath
      *
      * @return string
      */
-    abstract protected function getGeneratedMessage(Resource $resource, $filepath);
+    abstract protected function getGeneratedMessage(CompositeResource $resource, $filepath);
 
     /**
      * @param string $filepath
@@ -144,10 +144,10 @@ abstract class PromptingGenerator implements Generator
     }
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param string            $filepath
      */
-    private function generateFileAndRenderTemplate(Resource $resource, $filepath)
+    private function generateFileAndRenderTemplate(CompositeResource $resource, $filepath)
     {
         $content = $this->renderTemplate($resource, $filepath);
 

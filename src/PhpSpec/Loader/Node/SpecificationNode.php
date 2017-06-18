@@ -14,7 +14,7 @@
 namespace PhpSpec\Loader\Node;
 
 use PhpSpec\Loader\Suite;
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 use ReflectionClass;
 
 class SpecificationNode implements \Countable
@@ -28,7 +28,7 @@ class SpecificationNode implements \Countable
      */
     private $class;
     /**
-     * @var Resource
+     * @var CompositeResource
      */
     private $resource;
     /**
@@ -43,9 +43,9 @@ class SpecificationNode implements \Countable
     /**
      * @param string            $title
      * @param ReflectionClass   $class
-     * @param Resource $resource
+     * @param CompositeResource $resource
      */
-    public function __construct($title, ReflectionClass $class, Resource $resource)
+    public function __construct($title, ReflectionClass $class, CompositeResource $resource)
     {
         $this->title    = $title;
         $this->class    = $class;
@@ -69,7 +69,7 @@ class SpecificationNode implements \Countable
     }
 
     /**
-     * @return Resource
+     * @return CompositeResource
      */
     public function getResource()
     {

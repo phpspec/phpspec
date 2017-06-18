@@ -18,6 +18,7 @@ use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
+use PhpSpec\Locator\CompositeResource;
 use PhpSpec\Locator\ResourceManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -104,7 +105,7 @@ final class CollaboratorNotFoundListener implements EventSubscriberInterface
 
     /**
      * @param CollaboratorNotFoundException $exception
-     * @param Resource $resource
+     * @param CompositeResource             $resource
      * @return bool
      */
     private function resourceIsInSpecNamespace($exception, $resource)

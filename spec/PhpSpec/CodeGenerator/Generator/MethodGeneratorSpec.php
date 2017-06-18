@@ -9,7 +9,7 @@ use Prophecy\Argument;
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\Util\Filesystem;
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 
 class MethodGeneratorSpec extends ObjectBehavior
 {
@@ -23,12 +23,12 @@ class MethodGeneratorSpec extends ObjectBehavior
         $this->shouldBeAnInstanceOf('PhpSpec\CodeGenerator\Generator\Generator');
     }
 
-    function it_supports_method_generation(Resource $resource)
+    function it_supports_method_generation(CompositeResource $resource)
     {
         $this->supports($resource, 'method', array())->shouldReturn(true);
     }
 
-    function it_does_not_support_anything_else(Resource $resource)
+    function it_does_not_support_anything_else(CompositeResource $resource)
     {
         $this->supports($resource, 'anything_else', array())->shouldReturn(false);
     }
@@ -38,7 +38,7 @@ class MethodGeneratorSpec extends ObjectBehavior
         $this->getPriority()->shouldReturn(0);
     }
 
-    function it_generates_class_method_from_resource($io, $tpl, $fs, Resource $resource, CodeWriter $codeWriter)
+    function it_generates_class_method_from_resource($io, $tpl, $fs, CompositeResource $resource, CodeWriter $codeWriter)
     {
         $codeWithoutMethod = <<<CODE
 <?php

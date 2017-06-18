@@ -7,7 +7,7 @@ use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
@@ -16,7 +16,7 @@ class CollaboratorNotFoundListenerSpec extends ObjectBehavior
 {
     function let(
         ConsoleIO $io, CollaboratorNotFoundException $exception, ExampleEvent $exampleEvent,
-        ResourceManager $resources, GeneratorManager $generator, Resource $resource
+        ResourceManager $resources, GeneratorManager $generator, CompositeResource $resource
     )
     {
         $this->beConstructedWith($io, $resources, $generator);
@@ -102,7 +102,7 @@ class CollaboratorNotFoundListenerSpec extends ObjectBehavior
 
     function it_generates_interface_when_prompt_is_answered_with_yes(
         ConsoleIO $io, ExampleEvent $exampleEvent, SuiteEvent $suiteEvent,
-        GeneratorManager $generator, Resource $resource
+        GeneratorManager $generator, CompositeResource $resource
     )
     {
         $io->askConfirmation(

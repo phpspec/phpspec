@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Locator\PSR0;
 
+use PhpSpec\Locator\CompositeResource;
 use PhpSpec\Locator\ResourceLocator;
 use PhpSpec\Util\Filesystem;
 use InvalidArgumentException;
@@ -140,7 +141,7 @@ class PSR0Locator implements ResourceLocator
     }
 
     /**
-     * @return Resource[]
+     * @return CompositeResource[]
      */
     public function getAllResources()
     {
@@ -176,7 +177,7 @@ class PSR0Locator implements ResourceLocator
     /**
      * @param string $query
      *
-     * @return Resource[]
+     * @return CompositeResource[]
      */
     public function findResources($query)
     {

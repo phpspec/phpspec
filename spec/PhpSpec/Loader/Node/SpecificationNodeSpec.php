@@ -5,7 +5,7 @@ namespace spec\PhpSpec\Loader\Node;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Loader\Suite;
 
@@ -13,7 +13,7 @@ use ReflectionClass;
 
 class SpecificationNodeSpec extends ObjectBehavior
 {
-    public function let(ReflectionClass $class, Resource $resource)
+    public function let(ReflectionClass $class, CompositeResource $resource)
     {
         $this->beConstructedWith('specification node', $class, $resource);
     }

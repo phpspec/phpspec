@@ -13,7 +13,7 @@
 
 namespace PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 
 /**
  * The Interface Generator is responsible for generating the interface from a resource
@@ -22,13 +22,13 @@ use PhpSpec\Locator\Resource;
 final class InterfaceGenerator extends PromptingGenerator
 {
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param string            $generation
      * @param array             $data
      *
      * @return bool
      */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(CompositeResource $resource, $generation, array $data)
     {
         return 'interface' === $generation;
     }
@@ -42,12 +42,12 @@ final class InterfaceGenerator extends PromptingGenerator
     }
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param string            $filepath
      *
      * @return string
      */
-    protected function renderTemplate(Resource $resource, $filepath)
+    protected function renderTemplate(CompositeResource $resource, $filepath)
     {
         $values = array(
             '%filepath%'        => $filepath,
@@ -76,22 +76,22 @@ final class InterfaceGenerator extends PromptingGenerator
     }
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      *
      * @return string
      */
-    protected function getFilePath(Resource $resource)
+    protected function getFilePath(CompositeResource $resource)
     {
         return $resource->getSrcFilename();
     }
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param string            $filepath
      *
      * @return string
      */
-    protected function getGeneratedMessage(Resource $resource, $filepath)
+    protected function getGeneratedMessage(CompositeResource $resource, $filepath)
     {
         return sprintf(
             "<info>Interface <value>%s</value> created in <value>%s</value>.</info>\n",

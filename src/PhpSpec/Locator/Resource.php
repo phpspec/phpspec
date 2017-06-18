@@ -13,45 +13,9 @@
 
 namespace PhpSpec\Locator;
 
-interface Resource
+/**
+ * @deprecated The Resource interface will be replaced with CompositeResource in PhpSpec 4.0
+ */
+interface Resource extends CompositeResource
 {
-    /**
-     * @return string
-     */
-    public function getName();
-
-    /**
-     * @return string
-     */
-    public function getSpecName();
-
-    /**
-     * @return string
-     */
-    public function getSrcFilename();
-
-    /**
-     * @return string
-     */
-    public function getSrcNamespace();
-
-    /**
-     * @return string
-     */
-    public function getSrcClassname();
-
-    /**
-     * @return string
-     */
-    public function getSpecFilename();
-
-    /**
-     * @return string
-     */
-    public function getSpecNamespace();
-
-    /**
-     * @return string
-     */
-    public function getSpecClassname();
 }

@@ -8,7 +8,7 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\MethodCallEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Example\NotEqualException;
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Util\MethodAnalyser;
@@ -203,7 +203,7 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
 
     function it_invokes_method_body_generation_when_prompt_is_answered_yes(
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io,
-        GeneratorManager $generatorManager, ResourceManager $resourceManager, Resource $resource, SuiteEvent $event
+        GeneratorManager $generatorManager, ResourceManager $resourceManager, CompositeResource $resource, SuiteEvent $event
     ) {
         $io->askConfirmation(Argument::any())->willReturn(true);
         $resourceManager->createResource(Argument::any())->willReturn($resource);

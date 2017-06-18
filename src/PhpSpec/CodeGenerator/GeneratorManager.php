@@ -13,7 +13,7 @@
 
 namespace PhpSpec\CodeGenerator;
 
-use PhpSpec\Locator\Resource;
+use PhpSpec\Locator\CompositeResource;
 use InvalidArgumentException;
 use PhpSpec\CodeGenerator\Generator\Generator;
 
@@ -39,14 +39,14 @@ class GeneratorManager
     }
 
     /**
-     * @param Resource $resource
+     * @param CompositeResource $resource
      * @param string            $name
      * @param array             $data
      *
      * @return mixed
      * @throws \InvalidArgumentException
      */
-    public function generate(Resource $resource, $name, array $data = array())
+    public function generate(CompositeResource $resource, $name, array $data = array())
     {
         foreach ($this->generators as $generator) {
             if ($generator->supports($resource, $name, $data)) {
