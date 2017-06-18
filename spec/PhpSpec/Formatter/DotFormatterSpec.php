@@ -116,6 +116,11 @@ class DotFormatterSpec extends ObjectBehavior
         $pendingEvent->getSpecification()->willReturn($specification);
         $pendingEvent->getExample()->willReturn($example);
 
+        $io->isVerbose()->willReturn(false);
+        $io->getBlockWidth()->willReturn(0);
+        $io->write(Argument::type('string'))->willReturn();
+        $io->writeln(Argument::cetera())->willReturn();
+
         $stats->getEventsCount()->willReturn(1);
         $stats->getFailedEvents()->willReturn(array());
         $stats->getBrokenEvents()->willReturn(array());

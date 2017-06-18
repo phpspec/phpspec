@@ -47,6 +47,7 @@ class NamedConstructorNotFoundListenerSpec extends ObjectBehavior
     {
         $exampleEvent->getException()->willReturn($exception);
         $io->isCodeGenerationEnabled()->willReturn(true);
+        $io->askConfirmation(Argument::any())->willReturn(false);
 
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);

@@ -51,10 +51,10 @@ class ClassNotFoundListenerSpec extends ObjectBehavior
         $exampleEvent->getException()->willReturn($exception);
         $io->isCodeGenerationEnabled()->willReturn(true);
 
+        $io->askConfirmation(Argument::any())->shouldBeCalled()->willReturn(false);
+
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
-
-        $io->askConfirmation(Argument::any())->shouldHaveBeenCalled();
     }
 
     function it_prompts_for_method_generation_if_phpspec_classnotfoundexception_was_thrown_and_input_is_interactive($exampleEvent, $suiteEvent, $io, PhpspecClassException $exception)
@@ -62,10 +62,10 @@ class ClassNotFoundListenerSpec extends ObjectBehavior
         $exampleEvent->getException()->willReturn($exception);
         $io->isCodeGenerationEnabled()->willReturn(true);
 
+        $io->askConfirmation(Argument::any())->shouldBeCalled()->willReturn(false);
+
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
-
-        $io->askConfirmation(Argument::any())->shouldHaveBeenCalled();
     }
 
     function it_does_not_prompt_for_class_generation_if_input_is_not_interactive($exampleEvent, $suiteEvent, $io, PhpspecClassException $exception)
