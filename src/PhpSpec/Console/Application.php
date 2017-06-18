@@ -145,6 +145,8 @@ final class Application extends BaseApplication
     {
         $config = $this->parseConfigurationFile($input);
 
+        $this->populateContainerParameters($container, $config);
+
         foreach ($config as $key => $val) {
             if ('extensions' === $key && is_array($val)) {
                 foreach ($val as $class => $extensionConfig) {
@@ -154,7 +156,13 @@ final class Application extends BaseApplication
             elseif ('matchers' === $key && is_array($val)) {
                 $this->registerCustomMatchers($container, $val);
             }
-            else {
+        }
+    }
+
+    private function populateContainerParameters(IndexedServiceContainer $container, array $config)
+    {
+        foreach ($config as $key => $val) {
+            if ('extensions' !== $key && 'matchers' !== $key) {
                 $container->setParam($key, $val);
             }
         }
