@@ -1,3 +1,13 @@
+Upcoming 3.x
+============
+
+* [fixed] parameters after extensions ignored in config file (@borNfreee)
+
+Upcoming 2.x
+============
+
+* [fixed] parameters after extensions ignored in config file (@borNfreee)
+
 3.4.0 / 2017-05-12
 ==================
 
