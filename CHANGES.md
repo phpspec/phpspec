@@ -14,7 +14,6 @@ Upcoming 2.x
 ============
 
 * [fixed] parameters after extensions ignored in config file (@borNfreee)
->>>>>>> master
 
 3.4.0 / 2017-05-12
 ==================
