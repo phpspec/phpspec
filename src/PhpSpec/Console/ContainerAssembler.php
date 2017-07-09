@@ -29,6 +29,8 @@ use PhpSpec\Loader;
 use PhpSpec\Locator;
 use PhpSpec\Matcher;
 use PhpSpec\Message\CurrentExampleTracker;
+use PhpSpec\NamespaceProvider\Factory;
+use PhpSpec\NamespaceProvider\NamespaceProvider;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
 use PhpSpec\Process\ReRunner;
 use PhpSpec\Process\Shutdown\Shutdown;
@@ -401,8 +403,31 @@ final class ContainerAssembler
         });
 
         $container->addConfigurator(function (IndexedServiceContainer $c) {
-            $suites = $c->getParam('suites', array('main' => ''));
+            $suites = [];
+            $namespaceProviderFactory = new Factory();
+            foreach ($c->getParam('namespace_providers', []) as $namespaceProviderId => $namespaceProviderConfig) {
+                $namespaceProvider = $namespaceProviderFactory->getProvider(
+                    $namespaceProviderId,
+                    $namespaceProviderConfig
+                );
+                foreach ($namespaceProvider->getNamespaces() as $namespace => $namespaceLocation) {
+                    $psr4Prefix = null;
+                    if ($namespaceLocation->getAutoloadingStandard() === NamespaceProvider::AUTOLOADING_STANDARD_PSR4) {
+                        $psr4Prefix = $namespace;
+                    }
+                    $suites[str_replace('\\', '_', strtolower($namespace)).'suite'] =  [
+                        'namespace' => $namespace,
+                        'src_path' => $namespaceLocation->getLocation(),
+                        'psr4_prefix' => $psr4Prefix,
+                    ];
+                }
+            }
 
+            $suites += $c->getParam('suites', array());
+
+            if (count($suites) === 0) {
+                $suites = array('main' => '');
+            }
             foreach ($suites as $name => $suite) {
                 $suite      = \is_array($suite) ? $suite : array('namespace' => $suite);
                 $defaults = array(

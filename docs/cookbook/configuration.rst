@@ -20,7 +20,10 @@ all settings that are not defined in the project's configuration.
 PSR-4
 -----
 
-**phpspec** assumes a PSR-0 mapping of namespaces to the src and spec directories by default.
+**phpspec** can try to autodetect your naming scheme by querying Composer for
+autoload rules you can define in the Composer manifest. If unsuccessful, it
+assumes a PSR-0 mapping of namespaces to the src and spec directories by
+default.
 So for example running:
 
 .. code-block:: bash
@@ -48,6 +51,15 @@ With this config running:
 
 will now put the spec in ``spec/MarkdownSpec.php`` and the class will be created
 in  ``src/Markdown.php``.
+
+Alternatively, you can choose to use Composer to provide the necessary
+configuration:
+
+.. code-block:: yaml
+
+    namespace_providers:
+      - composer: ~
+
 
 Spec and source locations
 -------------------------
