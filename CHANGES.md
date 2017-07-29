@@ -3,8 +3,9 @@ Upcoming 3.x
 
 * [fixed] parameters after extensions ignored in config file (@borNfreee)
 
-Upcoming 2.x
-============
+
+2.5.8 / 2017-07-29
+==================
 
 * [fixed] parameters after extensions ignored in config file (@borNfreee)
 

@@ -2,7 +2,6 @@
 <?php
 
 call_user_func(function ($version) {
-
     if (is_file($autoload = getcwd() . '/vendor/autoload.php')) {
         require $autoload;
     } elseif (is_file($autoload = getcwd() . '/../../autoload.php')) {
