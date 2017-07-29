@@ -22,5 +22,5 @@ interface PlatformSpecificReRunner extends ReRunner
      *
      * @return bool
      */
-    public function isSupported();
+    public function isSupported(): bool;
 }

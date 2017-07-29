@@ -27,7 +27,7 @@ class Formatter extends OutputFormatter
      *
      * @param array $styles
      */
-    public function __construct($decorated = false, array $styles = array())
+    public function __construct(bool $decorated = false, array $styles = array())
     {
         parent::__construct($decorated, $styles);
 

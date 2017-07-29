@@ -30,7 +30,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
     /**
      * @param string $code
      */
-    public function analyse($code)
+    public function analyse(string $code)
     {
         $this->state = self::STATE_DEFAULT;
         $this->currentUse = null;
@@ -95,12 +95,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
         }
     }
 
-    /**
-     * @param string $typeAlias
-     *
-     * @return string
-     */
-    public function resolve($typeAlias)
+    public function resolve(string $typeAlias) : string
     {
         if (strpos($typeAlias, '\\') === 0) {
             return substr($typeAlias, 1);

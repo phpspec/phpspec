@@ -21,7 +21,7 @@ abstract class AbstractPhpSpecExceptionPresenter
      * @param Exception $exception
      * @return string
      */
-    public function presentException(Exception $exception)
+    public function presentException(Exception $exception): string
     {
         list($file, $line) = $this->getExceptionExamplePosition($exception);
 
@@ -32,7 +32,7 @@ abstract class AbstractPhpSpecExceptionPresenter
      * @param Exception $exception
      * @return array
      */
-    private function getExceptionExamplePosition(Exception $exception)
+    private function getExceptionExamplePosition(Exception $exception): array
     {
         $cause = $exception->getCause();
 
@@ -56,5 +56,5 @@ abstract class AbstractPhpSpecExceptionPresenter
      *
      * @return string
      */
-    abstract protected function presentFileCode($file, $lineno, $context = 6);
+    abstract protected function presentFileCode(string $file, int $lineno, int $context = 6): string;
 }

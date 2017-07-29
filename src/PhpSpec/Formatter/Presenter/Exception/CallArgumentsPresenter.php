@@ -37,7 +37,7 @@ class CallArgumentsPresenter
      * @param UnexpectedCallException $exception
      * @return string
      */
-    public function presentDifference(UnexpectedCallException $exception)
+    public function presentDifference(UnexpectedCallException $exception): string
     {
         $actualArguments = $exception->getArguments();
         $methodProphecies = $exception->getObjectProphecy()->getMethodProphecies($exception->getMethodName());
@@ -66,7 +66,7 @@ class CallArgumentsPresenter
      * @param MethodProphecy[] $methodProphecies
      * @return bool
      */
-    private function noMethodPropheciesForUnexpectedCall(array $methodProphecies)
+    private function noMethodPropheciesForUnexpectedCall(array $methodProphecies): bool
     {
         return count($methodProphecies) === 0;
     }
@@ -75,12 +75,12 @@ class CallArgumentsPresenter
      * @param MethodProphecy[] $methodProphecies
      * @param UnexpectedCallException $exception
      *
-     * @return MethodProphecy
+     * @return MethodProphecy|null
      */
     private function findFirstUnexpectedArgumentsCallProphecy(
         array $methodProphecies,
         UnexpectedCallException $exception
-    ) {
+    ){
         $objectProphecy = $exception->getObjectProphecy();
 
         foreach ($methodProphecies as $methodProphecy) {
@@ -95,6 +95,8 @@ class CallArgumentsPresenter
 
             return $methodProphecy;
         }
+
+        return null;
     }
 
     /**
@@ -103,7 +105,7 @@ class CallArgumentsPresenter
      *
      * @return bool
      */
-    private function parametersCountMismatch(array $expectedTokens, array $actualArguments)
+    private function parametersCountMismatch(array $expectedTokens, array $actualArguments): bool
     {
         return count($expectedTokens) !== count($actualArguments);
     }
@@ -113,7 +115,7 @@ class CallArgumentsPresenter
      *
      * @return array
      */
-    private function convertArgumentTokensToDiffableValues(array $tokens)
+    private function convertArgumentTokensToDiffableValues(array $tokens): array
     {
         $values = array();
         foreach ($tokens as $token) {
@@ -133,7 +135,7 @@ class CallArgumentsPresenter
      *
      * @return string
      */
-    private function generateArgumentsDifferenceText(array $actualArguments, array $expectedArguments)
+    private function generateArgumentsDifferenceText(array $actualArguments, array $expectedArguments): string
     {
         $text = '';
         foreach($actualArguments as $i => $actualArgument) {

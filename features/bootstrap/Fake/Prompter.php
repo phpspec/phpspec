@@ -16,7 +16,7 @@ class Prompter implements PrompterInterface
         $this->answers[] = $answer;
     }
 
-    public function askConfirmation($question, $default = true)
+    public function askConfirmation(string $question, bool $default = true) : bool
     {
         $this->hasBeenAsked = true;
         $this->question = $question;

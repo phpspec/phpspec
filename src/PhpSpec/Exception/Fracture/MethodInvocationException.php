@@ -40,7 +40,7 @@ abstract class MethodInvocationException extends FractureException
      * @param string $method
      * @param array  $arguments
      */
-    public function __construct($message, $subject, $method, array $arguments = array())
+    public function __construct(string $message, $subject, $method, array $arguments = array())
     {
         parent::__construct($message);
 
@@ -60,7 +60,7 @@ abstract class MethodInvocationException extends FractureException
     /**
      * @return string
      */
-    public function getMethodName()
+    public function getMethodName(): string
     {
         return $this->method;
     }
@@ -68,7 +68,7 @@ abstract class MethodInvocationException extends FractureException
     /**
      * @return array
      */
-    public function getArguments()
+    public function getArguments(): array
     {
         return $this->arguments;
     }

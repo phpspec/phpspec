@@ -33,7 +33,7 @@ class NotEqualException extends FailureException
      * @param mixed  $expected
      * @param mixed  $actual
      */
-    public function __construct($message, $expected, $actual)
+    public function __construct(string $message, $expected, $actual)
     {
         parent::__construct($message);
 
@@ -60,7 +60,7 @@ class NotEqualException extends FailureException
     /**
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         return var_export(array($this->expected, $this->actual), true);
     }

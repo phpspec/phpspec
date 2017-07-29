@@ -54,7 +54,7 @@ class SubjectWithArrayAccess
      *
      * @return bool
      */
-    public function offsetExists($key)
+    public function offsetExists($key): bool
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -129,7 +129,7 @@ class SubjectWithArrayAccess
     /**
      * @return InterfaceNotImplementedException
      */
-    private function interfaceNotImplemented()
+    private function interfaceNotImplemented(): InterfaceNotImplementedException
     {
         return new InterfaceNotImplementedException(
             sprintf(
@@ -147,7 +147,7 @@ class SubjectWithArrayAccess
      *
      * @return SubjectException
      */
-    private function cantUseAsArray($subject)
+    private function cantUseAsArray($subject): SubjectException
     {
         return new SubjectException(sprintf(
             'Can not use %s as array.',

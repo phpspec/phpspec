@@ -28,7 +28,7 @@ class Exception extends \Exception
     /**
      * @return ReflectionFunctionAbstract
      */
-    public function getCause()
+    public function getCause(): ReflectionFunctionAbstract
     {
         return $this->cause;
     }

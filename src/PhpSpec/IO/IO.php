@@ -15,13 +15,7 @@ namespace PhpSpec\IO;
 
 interface IO
 {
-    /**
-     * @param string $message
-     */
-    public function write($message);
+    public function write(string $message);
 
-    /**
-     * @return bool
-     */
-    public function isVerbose();
+    public function isVerbose() : bool;
 }

@@ -21,7 +21,7 @@ final class BaseExceptionTypePresenter implements ExceptionTypePresenter
      * @param mixed $value
      * @return bool
      */
-    public function supports($value)
+    public function supports($value): bool
     {
         return $value instanceof \Exception;
     }
@@ -30,7 +30,7 @@ final class BaseExceptionTypePresenter implements ExceptionTypePresenter
      * @param mixed $value
      * @return string
      */
-    public function present($value)
+    public function present($value): string
     {
         $label = 'exc';
 
@@ -50,7 +50,7 @@ final class BaseExceptionTypePresenter implements ExceptionTypePresenter
     /**
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 60;
     }

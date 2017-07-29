@@ -20,5 +20,5 @@ interface TypeHintRewriter
      *
      * @return string
      */
-    public function rewrite($classDefinition);
+    public function rewrite(string $classDefinition) : string;
 }

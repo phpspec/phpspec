@@ -15,6 +15,7 @@ class CollaboratorManagerSpec extends ObjectBehavior
     function let(Presenter $presenter)
     {
         $this->beConstructedWith($presenter);
+        $presenter->presentString(Argument::cetera())->willReturn('someString');
     }
 
     function it_stores_collaborators_by_name($collaborator)

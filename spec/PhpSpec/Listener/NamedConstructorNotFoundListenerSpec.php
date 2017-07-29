@@ -7,19 +7,32 @@ use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\NamedConstructorNotFoundException;
+use PhpSpec\Locator\Resource;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 class NamedConstructorNotFoundListenerSpec extends ObjectBehavior
 {
-    function let(ConsoleIO $io, ResourceManager $resourceManager, GeneratorManager $generatorManager,
-                 SuiteEvent $suiteEvent, ExampleEvent $exampleEvent)
+    function let(
+        ConsoleIO $io,
+        ResourceManager $resourceManager,
+        Resource $resource,
+        GeneratorManager $generatorManager,
+        SuiteEvent $suiteEvent,
+        ExampleEvent $exampleEvent,
+        NamedConstructorNotFoundException $exception)
     {
         $io->writeln(Argument::any())->willReturn();
-        $io->askConfirmation(Argument::any())->willReturn();
+        $io->askConfirmation(Argument::any())->willReturn(false);
 
         $this->beConstructedWith($io, $resourceManager, $generatorManager);
+
+        $exception->getMethodName()->willReturn('someMethod');
+        $exception->getSubject()->willReturn(new \stdClass());
+        $exception->getArguments()->willReturn([]);
+
+        $resourceManager->createResource(Argument::cetera())->willReturn($resource);
     }
 
     function it_does_not_prompt_for_method_generation_if_no_exception_was_thrown($exampleEvent, $suiteEvent, $io)
@@ -32,9 +45,9 @@ class NamedConstructorNotFoundListenerSpec extends ObjectBehavior
         $io->askConfirmation(Argument::any())->shouldNotBeenCalled();
     }
 
-    function it_does_not_prompt_for_method_generation_if_non_namedconstructornotfoundexception_was_thrown($exampleEvent, $suiteEvent, $io, \InvalidArgumentException $exception)
+    function it_does_not_prompt_for_method_generation_if_non_namedconstructornotfoundexception_was_thrown($exampleEvent, $suiteEvent, $io, \InvalidArgumentException $invalidArgumentException)
     {
-        $exampleEvent->getException()->willReturn($exception);
+        $exampleEvent->getException()->willReturn($invalidArgumentException);
         $io->isCodeGenerationEnabled()->willReturn(true);
 
         $this->afterExample($exampleEvent);
@@ -47,6 +60,7 @@ class NamedConstructorNotFoundListenerSpec extends ObjectBehavior
     {
         $exampleEvent->getException()->willReturn($exception);
         $io->isCodeGenerationEnabled()->willReturn(true);
+        $io->askConfirmation(Argument::any())->willReturn(false);
 
         $exception->getSubject()->willReturn(new \stdClass());
         $exception->getMethodName()->willReturn('');

@@ -43,7 +43,7 @@ class ExampleEventSpec extends ObjectBehavior
 
     function it_provides_a_link_to_time()
     {
-        $this->getTime()->shouldReturn(10);
+        $this->getTime()->shouldReturn((double)10.0);
     }
 
     function it_provides_a_link_to_result()

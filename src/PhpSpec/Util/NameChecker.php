@@ -20,5 +20,5 @@ interface NameChecker
      *
      * @return bool
      */
-    public function isNameValid($name);
+    public function isNameValid(string $name): bool;
 }

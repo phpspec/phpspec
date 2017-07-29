@@ -39,7 +39,7 @@ final class PrioritizedResourceManager implements ResourceManager
      *
      * @return Resource[]
      */
-    public function locateResources($query)
+    public function locateResources(string $query)
     {
         $resources = array();
         foreach ($this->locators as $locator) {
@@ -65,7 +65,7 @@ final class PrioritizedResourceManager implements ResourceManager
      *
      * @throws \RuntimeException
      */
-    public function createResource($classname)
+    public function createResource(string $classname): Resource
     {
         foreach ($this->locators as $locator) {
             if ($locator->supportsClass($classname)) {

@@ -44,7 +44,7 @@ class SuiteRunner
      *
      * @return integer
      */
-    public function run(Suite $suite)
+    public function run(Suite $suite): int
     {
         $this->dispatcher->dispatch('beforeSuite', new SuiteEvent($suite));
 

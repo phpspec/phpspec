@@ -42,7 +42,7 @@ class ExceptionFactory
      *
      * @return Fracture\NamedConstructorNotFoundException
      */
-    public function namedConstructorNotFound($classname, $method, array $arguments = array())
+    public function namedConstructorNotFound(string $classname, string $method, array $arguments = array()): Fracture\NamedConstructorNotFoundException
     {
         $instantiator = new Instantiator();
         $subject = $instantiator->instantiate($classname);
@@ -64,7 +64,7 @@ class ExceptionFactory
      *
      * @return Fracture\MethodNotFoundException
      */
-    public function methodNotFound($classname, $method, array $arguments = array())
+    public function methodNotFound(string $classname, string $method, array $arguments = array()): Fracture\MethodNotFoundException
     {
         $instantiator = new Instantiator();
         $subject = $instantiator->instantiate($classname);
@@ -85,7 +85,7 @@ class ExceptionFactory
      *
      * @return Fracture\MethodNotVisibleException
      */
-    public function methodNotVisible($classname, $method, array $arguments = array())
+    public function methodNotVisible(string $classname, string $method, array $arguments = array()): Fracture\MethodNotVisibleException
     {
         $instantiator = new Instantiator();
         $subject = $instantiator->instantiate($classname);
@@ -104,7 +104,7 @@ class ExceptionFactory
      *
      * @return Fracture\ClassNotFoundException
      */
-    public function classNotFound($classname)
+    public function classNotFound(string $classname): Fracture\ClassNotFoundException
     {
         $message = sprintf('Class %s does not exist.', $this->presenter->presentString($classname));
 
@@ -117,7 +117,7 @@ class ExceptionFactory
      *
      * @return Fracture\PropertyNotFoundException
      */
-    public function propertyNotFound($subject, $property)
+    public function propertyNotFound($subject, $property): Fracture\PropertyNotFoundException
     {
         $message = sprintf('Property %s not found.', $this->presenter->presentString($property));
 
@@ -129,7 +129,7 @@ class ExceptionFactory
      *
      * @return SubjectException
      */
-    public function callingMethodOnNonObject($method)
+    public function callingMethodOnNonObject(string $method): SubjectException
     {
         return new SubjectException(sprintf(
             'Call to a member function %s on a non-object.',
@@ -142,7 +142,7 @@ class ExceptionFactory
      *
      * @return SubjectException
      */
-    public function settingPropertyOnNonObject($property)
+    public function settingPropertyOnNonObject(string $property): SubjectException
     {
         return new SubjectException(sprintf(
             'Setting property %s on a non-object.',
@@ -155,7 +155,7 @@ class ExceptionFactory
      *
      * @return SubjectException
      */
-    public function gettingPropertyOnNonObject($property)
+    public function gettingPropertyOnNonObject(string $property): SubjectException
     {
         return new SubjectException(sprintf(
             'Getting property %s on a non-object.',

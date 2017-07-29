@@ -38,9 +38,9 @@ class Suite implements \Countable
     }
 
     /**
-     * @return number
+     * @return int
      */
-    public function count()
+    public function count(): int
     {
         return array_sum(array_map('count', $this->specs));
     }
