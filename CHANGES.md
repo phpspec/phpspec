@@ -1,5 +1,5 @@
-Upcoming 4.x
-============
+4.0.0 / 2017-07-29
+==================
 
 * Dropped support for PHP versions less than 7.0 (@ciaranmcnulty)
 * Added scalar types and return types (@Sam-Burns, @ciaranmcnulty)
