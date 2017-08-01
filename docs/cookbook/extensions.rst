@@ -29,10 +29,8 @@ You can pass options to the extension as well:
     extensions:
         MageTest\PhpSpec\MagentoExtension\Extension:
             mage_locator:
-                spec_prefix: spec
                 src_path: public/app/code
                 spec_path: spec/public/app/code
-                code_pool: community
 
 See the :doc:`Configuration Cookbook </cookbook/configuration>` for more about config files.
 
