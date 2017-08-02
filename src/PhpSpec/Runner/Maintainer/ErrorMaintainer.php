@@ -100,11 +100,11 @@ final class ErrorMaintainer implements Maintainer
      * @param string  $file
      * @param integer $line
      *
-     * @return Boolean
+     * @return bool
      *
      * @throws ExampleException\ErrorException
      */
-    final public function errorHandler(int $level, string $message, string $file, int $line): Boolean
+    final public function errorHandler(int $level, string $message, string $file, int $line): bool
     {
         $regex = '/^Argument (\d)+ passed to (?:(?P<class>[\w\\\]+)::)?(\w+)\(\)' .
                  ' must (?:be an instance of|implement interface) ([\w\\\]+),(?: instance of)? ([\w\\\]+) given/';
