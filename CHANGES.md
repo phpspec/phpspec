@@ -1,3 +1,8 @@
+Upcoming 4.x
+============
+
+* [fixed] type error when handling errors
+
 4.0.0 / 2017-07-29
 ==================
 
