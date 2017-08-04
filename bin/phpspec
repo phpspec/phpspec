@@ -24,4 +24,4 @@
 
     (new PhpSpec\Console\Application($version))->run();
 
-})('4.0.0');
+})('4.0.1');

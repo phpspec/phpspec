@@ -1,5 +1,5 @@
-Upcoming 4.x
-============
+4.0.1 / 2017-07-04
+==================
 
 * [fixed] type error when handling errors (@nightlinus)
 
