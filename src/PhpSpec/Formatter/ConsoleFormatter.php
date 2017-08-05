@@ -60,7 +60,7 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
             $this->printSpecificException($event, 'pending');
         } elseif ($exception instanceof SkippingException) {
             if ($this->io->isVerbose()) {
-                $this->printSpecificException($event, 'skipped ');
+                $this->printSpecificException($event, 'skipped');
             }
         } elseif (ExampleEvent::FAILED === $event->getResult()) {
             $this->printSpecificException($event, 'failed');
