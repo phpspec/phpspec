@@ -47,7 +47,7 @@ class ResourceLoader
      *
      * @return Suite
      */
-    public function load($locator, $line = null)
+    public function load(string $locator = '', int $line = null): Suite
     {
         $suite = new Suite();
         foreach ($this->manager->locateResources($locator) as $resource) {
@@ -103,7 +103,7 @@ class ResourceLoader
      *
      * @return bool
      */
-    private function lineIsInsideMethod($line, ReflectionMethod $method)
+    private function lineIsInsideMethod(int $line, ReflectionMethod $method): bool
     {
         $line = intval($line);
 

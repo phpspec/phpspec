@@ -45,7 +45,7 @@ class SpecificationNode implements \Countable
      * @param ReflectionClass   $class
      * @param Resource $resource
      */
-    public function __construct($title, ReflectionClass $class, Resource $resource)
+    public function __construct(string $title, ReflectionClass $class, Resource $resource)
     {
         $this->title    = $title;
         $this->class    = $class;
@@ -55,7 +55,7 @@ class SpecificationNode implements \Countable
     /**
      * @return string
      */
-    public function getTitle()
+    public function getTitle(): string
     {
         return $this->title;
     }
@@ -63,7 +63,7 @@ class SpecificationNode implements \Countable
     /**
      * @return ReflectionClass
      */
-    public function getClassReflection()
+    public function getClassReflection(): ReflectionClass
     {
         return $this->class;
     }
@@ -71,7 +71,7 @@ class SpecificationNode implements \Countable
     /**
      * @return Resource
      */
-    public function getResource()
+    public function getResource(): Resource
     {
         return $this->resource;
     }
@@ -112,7 +112,7 @@ class SpecificationNode implements \Countable
     /**
      * @return int
      */
-    public function count()
+    public function count(): int
     {
         return count($this->examples);
     }

@@ -31,7 +31,7 @@ abstract class Decorator implements Expectation
     /**
      * @return Expectation
      */
-    public function getExpectation()
+    public function getExpectation(): Expectation
     {
         return $this->expectation;
     }
@@ -47,7 +47,7 @@ abstract class Decorator implements Expectation
     /**
      * @return Expectation
      */
-    public function getNestedExpectation()
+    public function getNestedExpectation(): Expectation
     {
         $expectation = $this->getExpectation();
         while ($expectation instanceof Decorator) {

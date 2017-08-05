@@ -1,3 +1,15 @@
+4.0.1 / 2017-07-04
+==================
+
+* [fixed] type error when handling errors (@nightlinus)
+
+4.0.0 / 2017-07-29
+==================
+
+* Dropped support for PHP versions less than 7.0 (@ciaranmcnulty)
+* Added scalar types and return types (@Sam-Burns, @ciaranmcnulty)
+* [fixed] parameters after extensions ignored in config file (@borNfreee)
+
 3.4.1 / 2017-07-29
 ==================
 

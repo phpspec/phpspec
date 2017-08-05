@@ -21,22 +21,12 @@ use PhpSpec\Locator\Resource;
  */
 final class SpecificationGenerator extends PromptingGenerator
 {
-    /**
-     * @param Resource $resource
-     * @param string            $generation
-     * @param array             $data
-     *
-     * @return bool
-     */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(Resource $resource, string $generation, array $data) : bool
     {
         return 'specification' === $generation;
     }
 
-    /**
-     * @return int
-     */
-    public function getPriority()
+    public function getPriority() : int
     {
         return 0;
     }
@@ -47,7 +37,7 @@ final class SpecificationGenerator extends PromptingGenerator
      *
      * @return string
      */
-    protected function renderTemplate(Resource $resource, $filepath)
+    protected function renderTemplate(Resource $resource, string $filepath) : string
     {
         $values = array(
             '%filepath%'      => $filepath,
@@ -64,30 +54,17 @@ final class SpecificationGenerator extends PromptingGenerator
         return $content;
     }
 
-    /**
-     * @return string
-     */
-    protected function getTemplate()
+    protected function getTemplate() : string
     {
         return file_get_contents(__DIR__.'/templates/specification.template');
     }
 
-    /**
-     * @param  Resource $resource
-     * @return mixed
-     */
-    protected function getFilePath(Resource $resource)
+    protected function getFilePath(Resource $resource) : string
     {
         return $resource->getSpecFilename();
     }
 
-    /**
-     * @param Resource $resource
-     * @param string            $filepath
-     *
-     * @return string
-     */
-    protected function getGeneratedMessage(Resource $resource, $filepath)
+    protected function getGeneratedMessage(Resource $resource, string $filepath) : string
     {
         return sprintf(
             "<info>Specification for <value>%s</value> created in <value>%s</value>.</info>\n",

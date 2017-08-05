@@ -642,7 +642,7 @@ You can create custom matchers by providing them in ``getMatchers`` method.
             $this->getOptions()->shouldHaveValue('diegoholiveira');
         }
 
-        public function getMatchers()
+        public function getMatchers(): array
         {
             return [
                 'haveKey' => function ($subject, $key) {
@@ -675,7 +675,7 @@ your inline matcher should throw `FailureException`:
             $this->getOptions()->shouldHaveValue('diegoholiveira');
         }
 
-        public function getMatchers()
+        public function getMatchers(): array
         {
             return [
                 'haveKey' => function ($subject, $key) {

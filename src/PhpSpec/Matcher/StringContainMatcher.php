@@ -34,7 +34,7 @@ final class StringContainMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    public function supports($name, $subject, array $arguments)
+    public function supports(string $name, $subject, array $arguments) : bool
     {
         return 'contain' === $name
             && is_string($subject)
@@ -45,7 +45,7 @@ final class StringContainMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    protected function matches($subject, array $arguments)
+    protected function matches($subject, array $arguments) : bool
     {
         return false !== strpos($subject, $arguments[0]);
     }
@@ -53,7 +53,7 @@ final class StringContainMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    protected function getFailureException($name, $subject, array $arguments)
+    protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s to contain %s, but it does not.',
@@ -65,7 +65,7 @@ final class StringContainMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    protected function getNegativeFailureException($name, $subject, array $arguments)
+    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s not to contain %s, but it does.',

@@ -63,7 +63,7 @@ final class ThrowMatcher implements Matcher
      *
      * @return bool
      */
-    public function supports($name, $subject, array $arguments)
+    public function supports(string $name, $subject, array $arguments): bool
     {
         return 'throw' === $name;
     }
@@ -75,7 +75,7 @@ final class ThrowMatcher implements Matcher
      *
      * @return DelayedCall
      */
-    public function positiveMatch($name, $subject, array $arguments)
+    public function positiveMatch(string $name, $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyPositive'), $subject, $arguments);
     }
@@ -87,7 +87,7 @@ final class ThrowMatcher implements Matcher
      *
      * @return DelayedCall
      */
-    public function negativeMatch($name, $subject, array $arguments)
+    public function negativeMatch(string $name, $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyNegative'), $subject, $arguments);
     }
@@ -100,7 +100,7 @@ final class ThrowMatcher implements Matcher
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \PhpSpec\Exception\Example\NotEqualException
      */
-    public function verifyPositive($callable, array $arguments, $exception = null)
+    public function verifyPositive(callable $callable, array $arguments, $exception = null)
     {
         $exceptionThrown = null;
 
@@ -169,7 +169,7 @@ final class ThrowMatcher implements Matcher
      *
      * @throws \PhpSpec\Exception\Example\FailureException
      */
-    public function verifyNegative($callable, array $arguments, $exception = null)
+    public function verifyNegative(callable $callable, array $arguments, $exception = null)
     {
         $exceptionThrown = null;
 
@@ -234,7 +234,7 @@ final class ThrowMatcher implements Matcher
     /**
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 1;
     }
@@ -246,7 +246,7 @@ final class ThrowMatcher implements Matcher
      *
      * @return DelayedCall
      */
-    private function getDelayedCall($check, $subject, array $arguments)
+    private function getDelayedCall(callable $check, $subject, array $arguments): DelayedCall
     {
         $exception = $this->getException($arguments);
         $unwrapper = $this->unwrapper;

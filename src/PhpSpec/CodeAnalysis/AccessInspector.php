@@ -17,25 +17,16 @@ interface AccessInspector
 {
     /**
      * @param object $object
-     * @param string $property
-     *
-     * @return bool
      */
-    public function isPropertyReadable($object, $property);
+    public function isPropertyReadable($object, string $property) : bool;
 
     /**
      * @param object $object
-     * @param string $property
-     *
-     * @return bool
      */
-    public function isPropertyWritable($object, $property);
+    public function isPropertyWritable($object, string $property) : bool;
 
     /**
      * @param object $object
-     * @param string $method
-     *
-     * @return bool
      */
-    public function isMethodCallable($object, $method);
+    public function isMethodCallable($object, string $method) : bool;
 }

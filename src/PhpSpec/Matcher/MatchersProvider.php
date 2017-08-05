@@ -18,5 +18,5 @@ interface MatchersProvider
     /**
      * @return array
      */
-    public function getMatchers();
+    public function getMatchers(): array;
 }

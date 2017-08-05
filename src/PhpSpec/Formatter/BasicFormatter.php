@@ -48,7 +48,7 @@ abstract class BasicFormatter implements EventSubscriberInterface
     /**
      * @return array
      */
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         $events = array(
             'beforeSuite', 'afterSuite',
@@ -62,7 +62,7 @@ abstract class BasicFormatter implements EventSubscriberInterface
     /**
      * @return IO
      */
-    protected function getIO()
+    protected function getIO(): IO
     {
         return $this->io;
     }
@@ -70,7 +70,7 @@ abstract class BasicFormatter implements EventSubscriberInterface
     /**
      * @return Presenter
      */
-    protected function getPresenter()
+    protected function getPresenter(): Presenter
     {
         return $this->presenter;
     }
@@ -78,7 +78,7 @@ abstract class BasicFormatter implements EventSubscriberInterface
     /**
      * @return StatisticsCollector
      */
-    protected function getStatisticsCollector()
+    protected function getStatisticsCollector(): StatisticsCollector
     {
         return $this->stats;
     }

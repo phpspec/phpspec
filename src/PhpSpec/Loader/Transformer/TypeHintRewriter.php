@@ -36,7 +36,7 @@ final class TypeHintRewriter implements SpecTransformer
      *
      * @return string
      */
-    function transform($spec)
+    function transform(string $spec): string
     {
         return $this->rewriter->rewrite($spec);
     }

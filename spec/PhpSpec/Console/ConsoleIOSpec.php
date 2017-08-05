@@ -128,7 +128,7 @@ class ConsoleIOSpec extends ObjectBehavior
         $input->getOption('bootstrap')->willReturn(null);
         $config->getBootstrapPath()->willReturn(false);
 
-        $this->getBootstrapPath()->shouldReturn(false);
+        $this->getBootstrapPath()->shouldReturn(null);
     }
 
     function it_will_report_bootstrap_path_when_one_is_in_the_config_file($input, $config)

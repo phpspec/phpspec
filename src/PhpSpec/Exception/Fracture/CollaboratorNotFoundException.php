@@ -33,11 +33,11 @@ class CollaboratorNotFoundException extends FractureException
      * @param string|null $className
      */
     public function __construct(
-        $message,
-        $code = 0,
+        string $message,
+        int $code = 0,
         Exception $previous = null,
         ReflectionParameter $reflectionParameter = null,
-        $className = null
+        string $className = null
     ) {
         if ($reflectionParameter) {
             $this->collaboratorName = $this->extractCollaboratorName($reflectionParameter);
@@ -52,7 +52,7 @@ class CollaboratorNotFoundException extends FractureException
     /**
      * @return string
      */
-    public function getCollaboratorName()
+    public function getCollaboratorName(): string
     {
         return $this->collaboratorName;
     }
@@ -62,7 +62,7 @@ class CollaboratorNotFoundException extends FractureException
      *
      * @return string
      */
-    private function extractCollaboratorName(ReflectionParameter $parameter)
+    private function extractCollaboratorName(ReflectionParameter $parameter): string
     {
         if (preg_match(self::CLASSNAME_REGEX, (string)$parameter, $matches)) {
             return $matches['classname'];

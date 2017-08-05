@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Event;
 
+use PhpSpec\Loader\Suite;
 use Symfony\Component\EventDispatcher\Event;
 use PhpSpec\Loader\Node\SpecificationNode;
 
@@ -41,7 +42,7 @@ class SpecificationEvent extends Event implements PhpSpecEvent
      * @param float             $time
      * @param integer           $result
      */
-    public function __construct(SpecificationNode $specification, $time = null, $result = null)
+    public function __construct(SpecificationNode $specification, float $time = null, int $result = null)
     {
         $this->specification = $specification;
         $this->time          = $time;
@@ -51,7 +52,7 @@ class SpecificationEvent extends Event implements PhpSpecEvent
     /**
      * @return SpecificationNode
      */
-    public function getSpecification()
+    public function getSpecification(): SpecificationNode
     {
         return $this->specification;
     }
@@ -59,15 +60,15 @@ class SpecificationEvent extends Event implements PhpSpecEvent
     /**
      * @return string
      */
-    public function getTitle()
+    public function getTitle(): string
     {
         return $this->specification->getTitle();
     }
 
     /**
-     * @return \PhpSpec\Loader\Suite
+     * @return Suite
      */
-    public function getSuite()
+    public function getSuite(): Suite
     {
         return $this->specification->getSuite();
     }
@@ -75,7 +76,7 @@ class SpecificationEvent extends Event implements PhpSpecEvent
     /**
      * @return float
      */
-    public function getTime()
+    public function getTime(): float
     {
         return $this->time;
     }
@@ -83,7 +84,7 @@ class SpecificationEvent extends Event implements PhpSpecEvent
     /**
      * @return integer
      */
-    public function getResult()
+    public function getResult(): int
     {
         return $this->result;
     }

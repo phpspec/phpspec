@@ -57,13 +57,13 @@ final class DispatcherDecorator extends Decorator implements Expectation
      * @param  string  $alias
      * @param  mixed   $subject
      * @param  array   $arguments
-     * @return boolean
+     * @return mixed
      *
      * @throws \Exception
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \Exception
      */
-    public function match($alias, $subject, array $arguments = array())
+    public function match(string $alias, $subject, array $arguments = array())
     {
         $this->dispatcher->dispatch(
             'beforeExpectation',

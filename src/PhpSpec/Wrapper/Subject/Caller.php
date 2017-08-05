@@ -85,7 +85,7 @@ class Caller
      * @throws \PhpSpec\Exception\Fracture\MethodNotVisibleException
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      */
-    public function call($method, array $arguments = array())
+    public function call(string $method, array $arguments = array()): Subject
     {
         if (null === $this->getWrappedObject()) {
             throw $this->callingMethodOnNonObject($method);
@@ -111,7 +111,7 @@ class Caller
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      * @throws \PhpSpec\Exception\Fracture\PropertyNotFoundException
      */
-    public function set($property, $value = null)
+    public function set(string $property, $value = null)
     {
         if (null === $this->getWrappedObject()) {
             throw $this->settingPropertyOnNonObject($property);
@@ -135,7 +135,7 @@ class Caller
      * @throws \PhpSpec\Exception\Fracture\PropertyNotFoundException
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      */
-    public function get($property)
+    public function get(string $property)
     {
         if ($this->lookingForConstants($property) && $this->constantDefined($property)) {
             return constant($this->wrappedObject->getClassName().'::'.$property);
@@ -188,7 +188,7 @@ class Caller
      *
      * @return bool
      */
-    private function isObjectPropertyReadable($property)
+    private function isObjectPropertyReadable(string $property): bool
     {
         $subject = $this->getWrappedObject();
 
@@ -200,7 +200,7 @@ class Caller
      *
      * @return bool
      */
-    private function isObjectPropertyWritable($property)
+    private function isObjectPropertyWritable(string $property): bool
     {
         $subject = $this->getWrappedObject();
 
@@ -212,7 +212,7 @@ class Caller
      *
      * @return bool
      */
-    private function isObjectMethodCallable($method)
+    private function isObjectMethodCallable(string $method): bool
     {
         return $this->accessInspector->isMethodCallable($this->getWrappedObject(), $method);
     }
@@ -242,7 +242,7 @@ class Caller
      *
      * @return Subject
      */
-    private function invokeAndWrapMethodResult($subject, $method, array $arguments = array())
+    private function invokeAndWrapMethodResult($subject, $method, array $arguments = array()): Subject
     {
         $this->dispatcher->dispatch(
             'beforeMethodCall',
@@ -264,7 +264,7 @@ class Caller
      *
      * @return Subject
      */
-    private function wrap($value)
+    private function wrap($value): Subject
     {
         return $this->wrapper->wrap($value);
     }
@@ -321,7 +321,7 @@ class Caller
      *
      * @return bool
      */
-    private function detectMissingConstructorMessage(ReflectionException $exception)
+    private function detectMissingConstructorMessage(ReflectionException $exception): bool
     {
         return strpos(
             $exception->getMessage(),
@@ -332,7 +332,7 @@ class Caller
     /**
      * @return \PhpSpec\Exception\Fracture\ClassNotFoundException
      */
-    private function classNotFound()
+    private function classNotFound(): \PhpSpec\Exception\Fracture\ClassNotFoundException
     {
         return $this->exceptionFactory->classNotFound($this->wrappedObject->getClassName());
     }
@@ -343,7 +343,7 @@ class Caller
      *
      * @return \PhpSpec\Exception\Fracture\MethodNotFoundException|\PhpSpec\Exception\Fracture\MethodNotVisibleException
      */
-    private function namedConstructorNotFound($method, array $arguments = array())
+    private function namedConstructorNotFound(string $method, array $arguments = array())
     {
         $className = $this->wrappedObject->getClassName();
 
@@ -371,7 +371,7 @@ class Caller
      *
      * @return \PhpSpec\Exception\Fracture\PropertyNotFoundException
      */
-    private function propertyNotFound($property)
+    private function propertyNotFound(string $property): \PhpSpec\Exception\Fracture\PropertyNotFoundException
     {
         return $this->exceptionFactory->propertyNotFound($this->getWrappedObject(), $property);
     }
@@ -381,7 +381,7 @@ class Caller
      *
      * @return \PhpSpec\Exception\Wrapper\SubjectException
      */
-    private function callingMethodOnNonObject($method)
+    private function callingMethodOnNonObject(string $method): \PhpSpec\Exception\Wrapper\SubjectException
     {
         return $this->exceptionFactory->callingMethodOnNonObject($method);
     }
@@ -391,7 +391,7 @@ class Caller
      *
      * @return \PhpSpec\Exception\Wrapper\SubjectException
      */
-    private function settingPropertyOnNonObject($property)
+    private function settingPropertyOnNonObject(string $property): \PhpSpec\Exception\Wrapper\SubjectException
     {
         return $this->exceptionFactory->settingPropertyOnNonObject($property);
     }
@@ -401,7 +401,7 @@ class Caller
      *
      * @return \PhpSpec\Exception\Wrapper\SubjectException
      */
-    private function accessingPropertyOnNonObject($property)
+    private function accessingPropertyOnNonObject(string $property): \PhpSpec\Exception\Wrapper\SubjectException
     {
         return $this->exceptionFactory->gettingPropertyOnNonObject($property);
     }
@@ -411,7 +411,7 @@ class Caller
      *
      * @return bool
      */
-    private function lookingForConstants($property)
+    private function lookingForConstants(string $property): bool
     {
         return null !== $this->wrappedObject->getClassName() &&
             $property === strtoupper($property);
@@ -422,7 +422,7 @@ class Caller
      *
      * @return bool
      */
-    public function constantDefined($property)
+    public function constantDefined(string $property): bool
     {
         return defined($this->wrappedObject->getClassName().'::'.$property);
     }

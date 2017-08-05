@@ -14,7 +14,7 @@ interface ServiceContainer
      * @param string $id
      * @param mixed $value
      */
-    public function setParam($id, $value);
+    public function setParam(string $id, $value);
 
     /**
      * Gets a param from the container or a default value.
@@ -24,7 +24,7 @@ interface ServiceContainer
      *
      * @return mixed
      */
-    public function getParam($id, $default = null);
+    public function getParam(string $id, $default = null);
 
     /**
      * Sets a object to be used as a service
@@ -35,7 +35,7 @@ interface ServiceContainer
      *
      * @throws \InvalidArgumentException if service is not an object
      */
-    public function set($id, $service, $tags = []);
+    public function set(string $id, $service, array $tags = []);
 
     /**
      * Sets a factory for the service creation. The same service will
@@ -47,7 +47,7 @@ interface ServiceContainer
      *
      * @throws \InvalidArgumentException if service is not a callable
      */
-    public function define($id, callable $definition, $tags = []);
+    public function define(string $id, callable $definition, array $tags = []);
 
     /**
      * Retrieves a service from the container
@@ -58,15 +58,15 @@ interface ServiceContainer
      *
      * @throws \InvalidArgumentException if service is not defined
      */
-    public function get($id);
+    public function get(string $id);
 
     /**
      * Determines whether a service is defined
      *
-     * @param $id
+     * @param string $id
      * @return bool
      */
-    public function has($id);
+    public function has(string $id): bool;
 
     /**
      * Removes a service from the container
@@ -75,7 +75,7 @@ interface ServiceContainer
      *
      * @throws \InvalidArgumentException if service is not defined
      */
-    public function remove($id);
+    public function remove(string $id);
 
     /**
      * Finds all services tagged with a particular string
@@ -84,5 +84,5 @@ interface ServiceContainer
      *
      * @return array
      */
-    public function getByTag($tag);
+    public function getByTag(string $tag): array;
 }

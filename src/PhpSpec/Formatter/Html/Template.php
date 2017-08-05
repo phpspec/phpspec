@@ -37,7 +37,7 @@ final class Template implements TemplateInterface
      * @param string $text
      * @param array  $templateVars
      */
-    public function render($text, array $templateVars = array())
+    public function render(string $text, array $templateVars = array())
     {
         if (file_exists($text)) {
             $text = file_get_contents($text);
@@ -52,7 +52,7 @@ final class Template implements TemplateInterface
      *
      * @return array
      */
-    private function extractKeys(array $templateVars)
+    private function extractKeys(array $templateVars): array
     {
         return array_map(function ($e) {
             return '{'.$e.'}';

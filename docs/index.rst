@@ -7,7 +7,7 @@ Create a ``composer.json`` file:
 
     {
         "require-dev": {
-            "phpspec/phpspec": "^3.0"
+            "phpspec/phpspec": "^4.0"
         },
         "config": {
             "bin-dir": "bin"
@@ -40,6 +40,7 @@ Learn more from :doc:`the documentation <manual/introduction>`.
    manual/getting-started
    manual/prophet-objects
    manual/let-and-letgo
+   manual/upgrading-to-phpspec-4
    manual/upgrading-to-phpspec-3
 
 .. toctree::

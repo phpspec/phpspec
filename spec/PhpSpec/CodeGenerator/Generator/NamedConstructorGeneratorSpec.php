@@ -72,7 +72,7 @@ CODE;
         $resource->getSrcClassname()->willReturn('Acme\App');
         $resource->getName()->willReturn('App');
 
-        $tpl->render('named_constructor_create_object', $values)->willReturn(null);
+        $tpl->render('named_constructor_create_object', $values)->willReturn('');
         $tpl->renderString(Argument::type('string'), $values)->willReturn('METHOD');
 
         $codeWriter->insertAfterMethod($codeWithoutMethod, '__construct', 'METHOD')->willReturn($codeWithMethod);

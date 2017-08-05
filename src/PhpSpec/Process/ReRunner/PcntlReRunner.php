@@ -39,7 +39,7 @@ final class PcntlReRunner extends PhpExecutableReRunner
     /**
      * @return bool
      */
-    public function isSupported()
+    public function isSupported(): bool
     {
         return (php_sapi_name() == 'cli')
             && $this->getExecutablePath()

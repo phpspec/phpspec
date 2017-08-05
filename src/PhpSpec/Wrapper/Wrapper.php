@@ -73,7 +73,7 @@ class Wrapper
      *
      * @return Subject
      */
-    public function wrap($value = null)
+    public function wrap($value = null): Subject
     {
         $wrappedObject = new WrappedObject($value, $this->presenter);
         $caller = $this->createCaller($wrappedObject);
@@ -95,7 +95,7 @@ class Wrapper
      *
      * @return Caller
      */
-    private function createCaller(WrappedObject $wrappedObject)
+    private function createCaller(WrappedObject $wrappedObject): Caller
     {
         $exceptionFactory = new ExceptionFactory($this->presenter);
 

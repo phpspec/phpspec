@@ -20,26 +20,26 @@ interface ExceptionElementPresenter
      * @param \Exception $exception
      * @return string
      */
-    public function presentExceptionThrownMessage(\Exception $exception);
+    public function presentExceptionThrownMessage(\Exception $exception): string;
 
     /**
      * @param string $number
      * @param string $line
      * @return string
      */
-    public function presentCodeLine($number, $line);
+    public function presentCodeLine(string $number, string $line): string;
 
     /**
      * @param string $line
      * @return string
      */
-    public function presentHighlight($line);
+    public function presentHighlight(string $line): string;
 
     /**
      * @param string $header
      * @return string
      */
-    public function presentExceptionTraceHeader($header);
+    public function presentExceptionTraceHeader(string $header): string;
 
     /**
      * @param string $class
@@ -48,12 +48,12 @@ interface ExceptionElementPresenter
      * @param array $args
      * @return string
      */
-    public function presentExceptionTraceMethod($class, $type, $method, array $args);
+    public function presentExceptionTraceMethod(string $class, string $type, string $method, array $args): string;
 
     /**
      * @param string $function
      * @param array $args
      * @return string
      */
-    public function presentExceptionTraceFunction($function, array $args);
+    public function presentExceptionTraceFunction(string $function, array $args): string;
 }

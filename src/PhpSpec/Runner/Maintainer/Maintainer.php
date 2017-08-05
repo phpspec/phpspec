@@ -25,7 +25,7 @@ interface Maintainer
      *
      * @return boolean
      */
-    public function supports(ExampleNode $example);
+    public function supports(ExampleNode $example): bool;
 
     /**
      * @param ExampleNode            $example
@@ -56,5 +56,5 @@ interface Maintainer
     /**
      * @return integer
      */
-    public function getPriority();
+    public function getPriority(): int;
 }

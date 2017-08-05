@@ -42,9 +42,6 @@ use SebastianBergmann\Exporter\Exporter;
  */
 final class PresenterAssembler
 {
-    /**
-     * @param IndexedServiceContainer $container
-     */
     public function assemble(IndexedServiceContainer $container)
     {
         $this->assembleDiffer($container);
@@ -54,9 +51,6 @@ final class PresenterAssembler
         $this->assembleHtmlPresenter($container);
     }
 
-    /**
-     * @param IndexedServiceContainer $container
-     */
     private function assembleDiffer(IndexedServiceContainer $container)
     {
         $container->define('formatter.presenter.differ', function (IndexedServiceContainer $c) {
@@ -71,9 +65,6 @@ final class PresenterAssembler
         });
     }
 
-    /**
-     * @param IndexedServiceContainer $container
-     */
     private function assembleDifferEngines(IndexedServiceContainer $container)
     {
         $container->define('formatter.presenter.differ.engines.string', function () {
@@ -92,9 +83,6 @@ final class PresenterAssembler
         }, ['formatter.presenter.differ.engines']);
     }
 
-    /**
-     * @param IndexedServiceContainer $container
-     */
     private function assembleTypePresenters(IndexedServiceContainer $container)
     {
         $container->define('formatter.presenter.value.array_type_presenter', function () {
@@ -133,9 +121,6 @@ final class PresenterAssembler
         });
     }
 
-    /**
-     * @param IndexedServiceContainer $container
-     */
     private function assemblePresenter(IndexedServiceContainer $container)
     {
         $container->define('formatter.presenter', function (IndexedServiceContainer $c) {
@@ -170,9 +155,6 @@ final class PresenterAssembler
         });
     }
 
-    /**
-     * @param IndexedServiceContainer $container
-     */
     private function assembleHtmlPresenter(IndexedServiceContainer $container)
     {
         $container->define('formatter.presenter.html', function (IndexedServiceContainer $c) {

@@ -79,20 +79,14 @@ abstract class PromptingGenerator implements Generator
         $this->executionContext->addGeneratedType($resource->getSrcClassname());
     }
 
-    /**
-     * @return TemplateRenderer
-     */
-    protected function getTemplateRenderer()
+    protected function getTemplateRenderer() : TemplateRenderer
     {
         return $this->templates;
     }
 
-    /**
-     * @param Resource $resource
-     *
-     * @return string
-     */
-    abstract protected function getFilePath(Resource $resource);
+    abstract protected function getFilePath(Resource $resource) : string;
+
+    abstract protected function renderTemplate(Resource $resource, string $filepath) : string;
 
     /**
      * @param Resource $resource
@@ -100,42 +94,21 @@ abstract class PromptingGenerator implements Generator
      *
      * @return string
      */
-    abstract protected function renderTemplate(Resource $resource, $filepath);
+    abstract protected function getGeneratedMessage(Resource $resource, string $filepath) : string;
 
-    /**
-     * @param Resource $resource
-     * @param string            $filepath
-     *
-     * @return string
-     */
-    abstract protected function getGeneratedMessage(Resource $resource, $filepath);
-
-    /**
-     * @param string $filepath
-     *
-     * @return bool
-     */
-    private function fileAlreadyExists($filepath)
+    private function fileAlreadyExists(string $filepath) : bool
     {
         return $this->filesystem->pathExists($filepath);
     }
 
-    /**
-     * @param string $filepath
-     *
-     * @return bool
-     */
-    private function userAborts($filepath)
+    private function userAborts(string $filepath) : bool
     {
         $message = sprintf('File "%s" already exists. Overwrite?', basename($filepath));
 
         return !$this->io->askConfirmation($message, false);
     }
 
-    /**
-     * @param string $filepath
-     */
-    private function createDirectoryIfItDoesExist($filepath)
+    private function createDirectoryIfItDoesExist(string $filepath)
     {
         $path = dirname($filepath);
         if (!$this->filesystem->isDirectory($path)) {
@@ -143,11 +116,7 @@ abstract class PromptingGenerator implements Generator
         }
     }
 
-    /**
-     * @param Resource $resource
-     * @param string            $filepath
-     */
-    private function generateFileAndRenderTemplate(Resource $resource, $filepath)
+    private function generateFileAndRenderTemplate(Resource $resource, string $filepath)
     {
         $content = $this->renderTemplate($resource, $filepath);
 

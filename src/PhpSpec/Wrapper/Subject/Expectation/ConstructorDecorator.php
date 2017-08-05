@@ -35,14 +35,14 @@ final class ConstructorDecorator extends Decorator implements Expectation
      * @param array         $arguments
      * @param WrappedObject $wrappedObject
      *
-     * @return boolean
+     * @return mixed
      *
      * @throws \Exception
      * @throws \PhpSpec\Exception\Example\ErrorException
      * @throws \Exception
      * @throws \PhpSpec\Exception\Fracture\FractureException
      */
-    public function match($alias, $subject, array $arguments = array(), WrappedObject $wrappedObject = null)
+    public function match(string $alias, $subject, array $arguments = array(), WrappedObject $wrappedObject = null)
     {
         try {
             $wrapped = $subject->getWrappedObject();

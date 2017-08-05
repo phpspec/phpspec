@@ -74,7 +74,7 @@ final class JUnitFormatter extends BasicFormatter
      *
      * @return array
      */
-    public function getTestCaseNodes()
+    public function getTestCaseNodes(): array
     {
         return $this->testCaseNodes;
     }
@@ -94,7 +94,7 @@ final class JUnitFormatter extends BasicFormatter
      *
      * @return array
      */
-    public function getTestSuiteNodes()
+    public function getTestSuiteNodes(): array
     {
         return $this->testSuiteNodes;
     }
@@ -114,7 +114,7 @@ final class JUnitFormatter extends BasicFormatter
      *
      * @return array
      */
-    public function getExampleStatusCounts()
+    public function getExampleStatusCounts(): array
     {
         return $this->exampleStatusCounts;
     }

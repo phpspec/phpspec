@@ -13,6 +13,8 @@ class MatcherManagerSpec extends ObjectBehavior
     function let(Presenter $presenter)
     {
         $this->beConstructedWith($presenter);
+        $presenter->presentString(Argument::cetera())->willReturn('some strong');
+        $presenter->presentValue(Argument::cetera())->willReturn('some value');
     }
 
     function it_searches_in_registered_matchers(Matcher $matcher)

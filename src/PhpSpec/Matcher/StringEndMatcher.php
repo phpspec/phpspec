@@ -38,7 +38,7 @@ final class StringEndMatcher extends BasicMatcher
      *
      * @return bool
      */
-    public function supports($name, $subject, array $arguments)
+    public function supports(string $name, $subject, array $arguments): bool
     {
         return 'endWith' === $name
             && is_string($subject)
@@ -52,7 +52,7 @@ final class StringEndMatcher extends BasicMatcher
      *
      * @return bool
      */
-    protected function matches($subject, array $arguments)
+    protected function matches($subject, array $arguments): bool
     {
         return $arguments[0] === substr($subject, 0 - strlen($arguments[0]));
     }
@@ -64,7 +64,7 @@ final class StringEndMatcher extends BasicMatcher
      *
      * @return FailureException
      */
-    protected function getFailureException($name, $subject, array $arguments)
+    protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s to end with %s, but it does not.',
@@ -80,7 +80,7 @@ final class StringEndMatcher extends BasicMatcher
      *
      * @return FailureException
      */
-    protected function getNegativeFailureException($name, $subject, array $arguments)
+    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s not to end with %s, but it does.',

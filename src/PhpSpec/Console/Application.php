@@ -22,6 +22,7 @@ use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Terminal;
 use Symfony\Component\Yaml\Yaml;
 use PhpSpec\ServiceContainer\IndexedServiceContainer;
 use PhpSpec\Extension;
@@ -39,30 +40,21 @@ final class Application extends BaseApplication
      */
     private $container;
 
-    /**
-     * @param string $version
-     */
-    public function __construct($version)
+    public function __construct(string $version)
     {
         $this->container = new IndexedServiceContainer();
         parent::__construct('phpspec', $version);
     }
 
-    /**
-     * @return ServiceContainer
-     */
-    public function getContainer()
+    public function getContainer(): ServiceContainer
     {
         return $this->container;
     }
 
     /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
      * @return int
      */
-    public function doRun(InputInterface $input, OutputInterface $output)
+    public function doRun(InputInterface $input, OutputInterface $output): int
     {
         $helperSet = $this->getHelperSet();
         $this->container->set('console.input', $input);
@@ -84,12 +76,7 @@ final class Application extends BaseApplication
 
         $this->setDispatcher($this->container->get('console_event_dispatcher'));
 
-        if (class_exists('\Symfony\Component\Console\Terminal')) {
-            $terminal = new \Symfony\Component\Console\Terminal();
-            $consoleWidth = $terminal->getWidth();
-        } else {
-            $consoleWidth = $this->getTerminalWidth();
-        }
+        $consoleWidth = (new Terminal)->getWidth();
 
         $this->container->get('console.io')->setConsoleWidth($consoleWidth);
 
@@ -136,9 +123,6 @@ final class Application extends BaseApplication
     }
 
     /**
-     * @param InputInterface   $input
-     * @param IndexedServiceContainer $container
-     *
      * @throws \RuntimeException
      */
     protected function loadConfigurationFile(InputInterface $input, IndexedServiceContainer $container)
@@ -179,7 +163,7 @@ final class Application extends BaseApplication
         }
     }
 
-    private function ensureIsValidMatcherClass($class)
+    private function ensureIsValidMatcherClass(string $class)
     {
         if (!class_exists($class)) {
             throw new InvalidConfigurationException(sprintf('Custom matcher %s does not exist.', $class));
@@ -194,7 +178,7 @@ final class Application extends BaseApplication
         }
     }
 
-    private function loadExtension(ServiceContainer $container, $extensionClass, $config)
+    private function loadExtension(ServiceContainer $container, string $extensionClass, $config)
     {
         if (!class_exists($extensionClass)) {
             throw new InvalidConfigurationException(sprintf('Extension class `%s` does not exist.', $extensionClass));
@@ -218,7 +202,7 @@ final class Application extends BaseApplication
      *
      * @throws \RuntimeException
      */
-    protected function parseConfigurationFile(InputInterface $input)
+    protected function parseConfigurationFile(InputInterface $input): array
     {
         $paths = array('phpspec.yml','phpspec.yml.dist', '.phpspec.yml');
 
@@ -238,12 +222,7 @@ final class Application extends BaseApplication
         return $config;
     }
 
-    /**
-     * @param array $paths
-     *
-     * @return array
-     */
-    private function extractConfigFromFirstParsablePath(array $paths)
+    private function extractConfigFromFirstParsablePath(array $paths) : array
     {
         foreach ($paths as $path) {
             $config = $this->parseConfigFromExistingPath($path);
@@ -260,7 +239,7 @@ final class Application extends BaseApplication
      *
      * @return array
      */
-    private function parseConfigFromExistingPath($path)
+    private function parseConfigFromExistingPath(string $path) : array
     {
         if (!file_exists($path)) {
             return array();
@@ -269,13 +248,7 @@ final class Application extends BaseApplication
         return Yaml::parse(file_get_contents($path));
     }
 
-    /**
-     * @param string $configDir
-     * @param array $config
-     *
-     * @return array
-     */
-    private function addPathsToEachSuiteConfig($configDir, $config)
+    private function addPathsToEachSuiteConfig(string $configDir, array $config) : array
     {
         if (isset($config['suites']) && is_array($config['suites'])) {
             foreach ($config['suites'] as $suiteKey => $suiteConfig) {

@@ -22,7 +22,7 @@ class Filesystem
      *
      * @return bool
      */
-    public function pathExists($path)
+    public function pathExists(string $path): bool
     {
         return file_exists($path);
     }
@@ -32,7 +32,7 @@ class Filesystem
      *
      * @return string
      */
-    public function getFileContents($path)
+    public function getFileContents(string $path): string
     {
         return file_get_contents($path);
     }
@@ -41,7 +41,7 @@ class Filesystem
      * @param string $path
      * @param string $content
      */
-    public function putFileContents($path, $content)
+    public function putFileContents(string $path, string $content)
     {
         file_put_contents($path, $content);
     }
@@ -51,7 +51,7 @@ class Filesystem
      *
      * @return bool
      */
-    public function isDirectory($path)
+    public function isDirectory(string $path): bool
     {
         return is_dir($path);
     }
@@ -59,7 +59,7 @@ class Filesystem
     /**
      * @param string $path
      */
-    public function makeDirectory($path)
+    public function makeDirectory(string $path)
     {
         mkdir($path, 0777, true);
     }
@@ -69,7 +69,7 @@ class Filesystem
      *
      * @return \SplFileInfo[]
      */
-    public function findSpecFilesIn($path)
+    public function findSpecFilesIn(string $path)
     {
         $finder = Finder::create()
             ->files()

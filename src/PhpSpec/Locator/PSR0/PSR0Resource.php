@@ -37,9 +37,9 @@ final class PSR0Resource implements Resource
     }
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getName()
+    public function getName() : string
     {
         return end($this->parts);
     }
@@ -47,7 +47,7 @@ final class PSR0Resource implements Resource
     /**
      * @return string
      */
-    public function getSpecName()
+    public function getSpecName(): string
     {
         return $this->getName().'Spec';
     }
@@ -55,7 +55,7 @@ final class PSR0Resource implements Resource
     /**
      * @return string
      */
-    public function getSrcFilename()
+    public function getSrcFilename(): string
     {
         if ($this->locator->isPSR4()) {
             return $this->locator->getFullSrcPath().implode(DIRECTORY_SEPARATOR, $this->parts).'.php';
@@ -71,7 +71,7 @@ final class PSR0Resource implements Resource
     /**
      * @return string
      */
-    public function getSrcNamespace()
+    public function getSrcNamespace(): string
     {
         $nsParts = $this->parts;
         array_pop($nsParts);
@@ -82,7 +82,7 @@ final class PSR0Resource implements Resource
     /**
      * @return string
      */
-    public function getSrcClassname()
+    public function getSrcClassname(): string
     {
         return $this->locator->getSrcNamespace().implode('\\', $this->parts);
     }
@@ -90,7 +90,7 @@ final class PSR0Resource implements Resource
     /**
      * @return string
      */
-    public function getSpecFilename()
+    public function getSpecFilename(): string
     {
         if ($this->locator->isPSR4()) {
             return $this->locator->getFullSpecPath().
@@ -108,7 +108,7 @@ final class PSR0Resource implements Resource
     /**
      * @return string
      */
-    public function getSpecNamespace()
+    public function getSpecNamespace(): string
     {
         $nsParts = $this->parts;
         array_pop($nsParts);
@@ -119,7 +119,7 @@ final class PSR0Resource implements Resource
     /**
      * @return string
      */
-    public function getSpecClassname()
+    public function getSpecClassname(): string
     {
         return $this->locator->getSpecNamespace().implode('\\', $this->parts).'Spec';
     }

@@ -33,7 +33,7 @@ final class ErrorMaintainer implements Maintainer
     /**
      * @param integer $errorLevel
      */
-    public function __construct($errorLevel)
+    public function __construct(int $errorLevel)
     {
         $this->errorLevel = $errorLevel;
     }
@@ -43,7 +43,7 @@ final class ErrorMaintainer implements Maintainer
      *
      * @return bool
      */
-    public function supports(ExampleNode $example)
+    public function supports(ExampleNode $example): bool
     {
         return true;
     }
@@ -83,7 +83,7 @@ final class ErrorMaintainer implements Maintainer
     /**
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 999;
     }
@@ -100,11 +100,11 @@ final class ErrorMaintainer implements Maintainer
      * @param string  $file
      * @param integer $line
      *
-     * @return Boolean
+     * @return bool
      *
      * @throws ExampleException\ErrorException
      */
-    final public function errorHandler($level, $message, $file, $line)
+    final public function errorHandler(int $level, string $message, string $file, int $line): bool
     {
         $regex = '/^Argument (\d)+ passed to (?:(?P<class>[\w\\\]+)::)?(\w+)\(\)' .
                  ' must (?:be an instance of|implement interface) ([\w\\\]+),(?: instance of)? ([\w\\\]+) given/';
