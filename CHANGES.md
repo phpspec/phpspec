@@ -1,3 +1,8 @@
+Upcoming 3.4.x
+==============
+
+* [fixed] Illegible text when using a white terminal background (@MarcelloDuarte)
+
 3.4.1 / 2017-07-29
 ==================
 
