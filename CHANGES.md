@@ -1,5 +1,5 @@
-Upcoming 4.x
-============
+4.0.2 / 2017-08-05
+==================
 
 * [fixed] Illegible text when using a white terminal background (@MarcelloDuarte)
 
