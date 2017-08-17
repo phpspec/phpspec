@@ -15,9 +15,8 @@ matrix:
     - php: 7.0
     - php: 7.1
     - php: 7.2
-      env: COMPOSER_FLAGS='--ignore-platform-reqs'
     - php: 7.2
-      env: DEPENDENCIES='dev' COMPOSER_FLAGS='--ignore-platform-reqs'
+      env: DEPENDENCIES='dev'
     - php: nightly
       env: COMPOSER_FLAGS='--ignore-platform-reqs'
   allow_failures:
