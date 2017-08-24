@@ -89,7 +89,7 @@ final class ExpectationEvent extends Event implements PhpSpecEvent
         $subject,
         $method,
         $arguments,
-        $result = null,
+        $result = self::PASSED,
         $exception = null
     ) {
         $this->example = $example;

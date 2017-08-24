@@ -42,7 +42,7 @@ class SpecificationEvent extends Event implements PhpSpecEvent
      * @param float             $time
      * @param integer           $result
      */
-    public function __construct(SpecificationNode $specification, float $time = null, int $result = null)
+    public function __construct(SpecificationNode $specification, float $time = 0.0, int $result = 0)
     {
         $this->specification = $specification;
         $this->time          = $time;

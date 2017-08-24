@@ -55,4 +55,18 @@ class ExampleEventSpec extends ObjectBehavior
     {
         $this->getException()->shouldReturn($exception);
     }
+
+    function it_initializes_a_default_result(ExampleNode $example)
+    {
+        $this->beConstructedWith($example);
+
+        $this->getResult()->shouldReturn($this->PASSED);
+    }
+
+    function it_initializes_a_default_time(ExampleNode $example)
+    {
+        $this->beConstructedWith($example);
+
+        $this->getTime()->shouldReturn((double)0.0);
+    }
 }

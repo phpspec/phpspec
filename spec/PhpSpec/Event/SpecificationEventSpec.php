@@ -42,4 +42,18 @@ class SpecificationEventSpec extends ObjectBehavior
     {
         $this->getResult()->shouldReturn(Example::FAILED);
     }
+
+    function it_initializes_a_default_result(SpecificationNode $specification)
+    {
+        $this->beConstructedWith($specification);
+
+        $this->getResult()->shouldReturn(Example::PASSED);
+    }
+
+    function it_initializes_a_default_time(SpecificationNode $specification)
+    {
+        $this->beConstructedWith($specification);
+
+        $this->getTime()->shouldReturn((double) 0.0);
+    }
 }
