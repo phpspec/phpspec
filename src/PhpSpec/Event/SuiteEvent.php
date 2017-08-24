@@ -46,7 +46,7 @@ class SuiteEvent extends Event implements PhpSpecEvent
      * @param float   $time
      * @param integer $result
      */
-    public function __construct(Suite $suite, float $time = null, int $result = null)
+    public function __construct(Suite $suite, float $time = 0.0, int $result = 0)
     {
         $this->suite  = $suite;
         $this->time   = $time;

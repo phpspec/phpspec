@@ -76,8 +76,8 @@ class ExampleEvent extends Event implements PhpSpecEvent
      */
     public function __construct(
         ExampleNode $example,
-        float $time = null,
-        int $result = null,
+        float $time = 0.0,
+        int $result = self::PASSED,
         \Exception $exception = null
     ) {
         $this->example   = $example;
