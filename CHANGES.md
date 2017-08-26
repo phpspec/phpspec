@@ -2,6 +2,8 @@ Upcoming 4.x
 ============
 
 * [fixed] TypeError thrown when calling `ExampleEvent::getTime()` on event constructed w/ nullable `$time` (@oxkhar)
+* [fixed] TypeError thrown when presenting diff in verbose mode (@avant1)
+
 
 4.0.2 / 2017-08-05
 ==================
