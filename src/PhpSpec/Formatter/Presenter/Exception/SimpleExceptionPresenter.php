@@ -127,7 +127,9 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
      */
     private function presentExceptionDifference(NotEqualException $exception): string
     {
-        return $this->differ->compare($exception->getExpected(), $exception->getActual());
+        $diff = $this->differ->compare($exception->getExpected(), $exception->getActual());
+
+        return $diff === null ? '' : $diff;
     }
 
     /**
