@@ -434,3 +434,65 @@ Feature: Developer specifies object construction
     """
     When I run phpspec
     Then I should see "you can not change object construction method when it is already instantiated"
+
+  Scenario: Using the same argument name with different objects
+    Given the spec file "spec/Runner/ConstructorExample11/ClassWithConstructorSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Runner\ConstructorExample11;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use Runner\ConstructorExample11\Foo;
+      use Runner\ConstructorExample11\Bar;
+
+      class ClassWithConstructorSpec extends ObjectBehavior
+      {
+          function let(Foo $object)
+          {
+              $this->beConstructedWith($object);
+          }
+
+          function it_should_be_callable(Bar $object)
+          {
+              $this->method($object);
+          }
+      }
+
+      """
+    And the class file "src/Runner/ConstructorExample11/ClassWithConstructor.php" contains:
+      """
+      <?php
+
+      namespace Runner\ConstructorExample11;
+
+      class ClassWithConstructor
+      {
+          public function __construct(Foo $object)
+          {}
+
+          public function method(Bar $object)
+          {}
+      }
+      """
+    And the class file "src/Runner/ConstructorExample11/Foo.php" contains:
+      """
+      <?php
+
+      namespace Runner\ConstructorExample11;
+
+      interface Foo
+      {}
+      """
+    And the class file "src/Runner/ConstructorExample11/Bar.php" contains:
+      """
+      <?php
+
+      namespace Runner\ConstructorExample11;
+
+      interface Bar extends Foo
+      {}
+      """
+    When I run phpspec
+    Then the suite should pass
