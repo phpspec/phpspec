@@ -137,7 +137,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     private function tokensToString(array $tokens) : string
     {
         return join('', array_map(function ($token) {
-            return is_array($token) ? $token[1] : $token;
+            return ((array) $token === $token) ? $token[1] : $token;
         }, $tokens));
     }
 
@@ -178,7 +178,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
      */
     private function tokenHasType($token, string $type) : bool
     {
-        return is_array($token) && $type == $token[0];
+        return ((array) $token === $token) && $type == $token[0];
     }
 
     private function shouldExtractTokensOfClass(string $className) : bool
@@ -191,6 +191,6 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
      */
     private function isToken($token, string $string) : bool
     {
-        return $token == $string || (is_array($token) && $token[1] == $string);
+        return $token == $string || (((array) $token === $token) && $token[1] == $string);
     }
 }
