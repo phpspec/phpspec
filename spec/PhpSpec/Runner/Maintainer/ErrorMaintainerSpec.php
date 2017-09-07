@@ -1,6 +1,6 @@
 <?php
 
-namespace spec\Phpspec\Runner\Maintainer;
+namespace spec\PhpSpec\Runner\Maintainer;
 
 use PhpSpec\Exception\Example as ExampleException;
 use PhpSpec\ObjectBehavior;
