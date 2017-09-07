@@ -1,3 +1,8 @@
+Upcoming 4.x
+============
+
+* [performance] Faster parsing of specs (@bendavies)
+
 4.0.3 / 2017-08-26
 ==================
 
