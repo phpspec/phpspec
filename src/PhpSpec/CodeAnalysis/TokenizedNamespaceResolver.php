@@ -47,7 +47,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
                         $this->currentNamespace = trim($this->currentNamespace);
                         $this->state = self::STATE_DEFAULT;
                     }
-                    elseif (((array) $token === $token)) {
+                    elseif ((array) $token === $token) {
                         $this->currentNamespace .= $token[1];
                     }
                     break;
@@ -59,7 +59,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
                     elseif (',' == $token) {
                         $this->storeCurrentUse();
                     }
-                    elseif (((array) $token === $token)) {
+                    elseif ((array) $token === $token) {
                         $this->currentUse = $this->currentUseGroup . trim($token[1]);
                     }
                     break;
@@ -76,7 +76,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
                     elseif (',' == $token) {
                         $this->storeCurrentUse();
                     }
-                    elseif (((array) $token === $token)) {
+                    elseif ((array) $token === $token) {
                         $this->currentUse .= $token[1];
                     }
                     break;
