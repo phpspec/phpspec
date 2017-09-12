@@ -105,7 +105,7 @@ final class ThrowMatcher implements Matcher
         $exceptionThrown = null;
 
         try {
-            call_user_func_array($callable, $arguments);
+            \call_user_func_array($callable, $arguments);
         } catch (\Exception $e) {
             $exceptionThrown = $e;
         } catch (\Throwable $e) {
@@ -137,10 +137,10 @@ final class ThrowMatcher implements Matcher
             );
         }
 
-        if (is_object($exception)) {
+        if (\is_object($exception)) {
             $exceptionRefl = $this->factory->create($exception);
             foreach ($exceptionRefl->getProperties() as $property) {
-                if (in_array($property->getName(), self::$ignoredProperties, true)) {
+                if (\in_array($property->getName(), self::$ignoredProperties, true)) {
                     continue;
                 }
 
@@ -174,7 +174,7 @@ final class ThrowMatcher implements Matcher
         $exceptionThrown = null;
 
         try {
-            call_user_func_array($callable, $arguments);
+            \call_user_func_array($callable, $arguments);
         } catch (\Exception $e) {
             $exceptionThrown = $e;
         } catch (\Throwable $e) {
@@ -192,10 +192,10 @@ final class ThrowMatcher implements Matcher
 
         if ($exceptionThrown && $exceptionThrown instanceof $exception) {
             $invalidProperties = array();
-            if (is_object($exception)) {
+            if (\is_object($exception)) {
                 $exceptionRefl = $this->factory->create($exception);
                 foreach ($exceptionRefl->getProperties() as $property) {
-                    if (in_array($property->getName(), self::$ignoredProperties, true)) {
+                    if (\in_array($property->getName(), self::$ignoredProperties, true)) {
                         continue;
                     }
 
@@ -214,7 +214,7 @@ final class ThrowMatcher implements Matcher
             }
 
             $withProperties = '';
-            if (count($invalidProperties) > 0) {
+            if (\count($invalidProperties) > 0) {
                 $withProperties = sprintf(
                     ' with'.PHP_EOL.'%s,'.PHP_EOL,
                     implode(",\n", $invalidProperties)
@@ -262,14 +262,14 @@ final class ThrowMatcher implements Matcher
                 list($class, $methodName) = array($subject, $methodName);
                 if (!method_exists($class, $methodName) && !method_exists($class, '__call')) {
                     throw new MethodNotFoundException(
-                        sprintf('Method %s::%s not found.', get_class($class), $methodName),
+                        sprintf('Method %s::%s not found.', \get_class($class), $methodName),
                         $class,
                         $methodName,
                         $arguments
                     );
                 }
 
-                return call_user_func($check, $callable, $arguments, $exception);
+                return \call_user_func($check, $callable, $arguments, $exception);
             }
         );
     }
@@ -282,15 +282,15 @@ final class ThrowMatcher implements Matcher
      */
     private function getException(array $arguments)
     {
-        if (0 === count($arguments)) {
+        if (0 === \count($arguments)) {
             return null;
         }
 
-        if (is_string($arguments[0])) {
+        if (\is_string($arguments[0])) {
             return $arguments[0];
         }
 
-        if (is_object($arguments[0])) {
+        if (\is_object($arguments[0])) {
             if ($arguments[0] instanceof \Throwable) {
                 return $arguments[0];
             } elseif ($arguments[0] instanceof \Exception) {

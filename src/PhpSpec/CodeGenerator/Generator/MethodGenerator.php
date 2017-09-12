@@ -73,8 +73,8 @@ final class MethodGenerator implements Generator
         $name      = $data['name'];
         $arguments = $data['arguments'];
 
-        $argString = count($arguments)
-            ? '$argument'.implode(', $argument', range(1, count($arguments)))
+        $argString = \count($arguments)
+            ? '$argument'.implode(', $argument', range(1, \count($arguments)))
             : ''
         ;
 

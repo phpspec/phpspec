@@ -41,8 +41,8 @@ final class ArrayContainMatcher extends BasicMatcher
     public function supports(string $name, $subject, array $arguments): bool
     {
         return 'contain' === $name
-            && 1 == count($arguments)
-            && is_array($subject)
+            && 1 == \count($arguments)
+            && \is_array($subject)
         ;
     }
 
@@ -54,7 +54,7 @@ final class ArrayContainMatcher extends BasicMatcher
      */
     protected function matches($subject, array $arguments): bool
     {
-        return in_array($arguments[0], $subject, true);
+        return \in_array($arguments[0], $subject, true);
     }
 
     /**

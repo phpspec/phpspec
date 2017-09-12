@@ -45,7 +45,7 @@ final class ObjectStateMatcher implements Matcher
      */
     public function supports(string $name, $subject, array $arguments): bool
     {
-        return is_object($subject) && !is_callable($subject)
+        return \is_object($subject) && !is_callable($subject)
             && (0 === strpos($name, 'be') || 0 === strpos($name, 'have'))
         ;
     }
@@ -71,7 +71,7 @@ final class ObjectStateMatcher implements Matcher
             ), $subject, $method, $arguments);
         }
 
-        if (true !== $result = call_user_func_array($callable, $arguments)) {
+        if (true !== $result = \call_user_func_array($callable, $arguments)) {
             throw $this->getFailureExceptionFor($callable, true, $result);
         }
     }
@@ -97,7 +97,7 @@ final class ObjectStateMatcher implements Matcher
             ), $subject, $method, $arguments);
         }
 
-        if (false !== $result = call_user_func_array($callable, $arguments)) {
+        if (false !== $result = \call_user_func_array($callable, $arguments)) {
             throw $this->getFailureExceptionFor($callable, false, $result);
         }
     }

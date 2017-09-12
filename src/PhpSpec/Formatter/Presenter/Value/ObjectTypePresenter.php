@@ -21,7 +21,7 @@ final class ObjectTypePresenter implements TypePresenter
      */
     public function supports($value): bool
     {
-        return 'object' === strtolower(gettype($value));
+        return 'object' === strtolower(\gettype($value));
     }
 
     /**
@@ -30,7 +30,7 @@ final class ObjectTypePresenter implements TypePresenter
      */
     public function present($value): string
     {
-        return sprintf('[obj:%s]', get_class($value));
+        return sprintf('[obj:%s]', \get_class($value));
     }
 
     /**

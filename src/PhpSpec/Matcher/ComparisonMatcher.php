@@ -42,7 +42,7 @@ final class ComparisonMatcher extends BasicMatcher
     public function supports(string $name, $subject, array $arguments): bool
     {
         return 'beLike' === $name
-            && 1 == count($arguments)
+            && 1 == \count($arguments)
         ;
     }
 

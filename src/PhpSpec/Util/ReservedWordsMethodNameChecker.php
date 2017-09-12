@@ -103,6 +103,6 @@ final class ReservedWordsMethodNameChecker implements NameChecker
      */
     public function isNameValid(string $name): bool
     {
-        return !in_array(strtolower($name), $this->reservedWords);
+        return !\in_array(strtolower($name), $this->reservedWords);
     }
 }

@@ -74,7 +74,7 @@ class MethodAnalyser
 
         $length = $endLine - $startLine;
         $lines = file(StreamWrapper::wrapPath($reflectionClass->getFileName()));
-        $code = join(PHP_EOL, array_slice($lines, $startLine - 1, $length + 1));
+        $code = join(PHP_EOL, \array_slice($lines, $startLine - 1, $length + 1));
 
         return preg_replace('/.*function[^{]+{/s', '', $code);
     }
@@ -133,7 +133,7 @@ class MethodAnalyser
             array_filter(
                 $tokens,
                 function ($token) {
-                    return is_array($token) && in_array($token[0], array(T_COMMENT, T_DOC_COMMENT));
+                    return \is_array($token) && \in_array($token[0], array(T_COMMENT, T_DOC_COMMENT));
                 })
         );
 

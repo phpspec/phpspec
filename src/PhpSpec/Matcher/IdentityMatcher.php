@@ -50,8 +50,8 @@ final class IdentityMatcher extends BasicMatcher
      */
     public function supports(string $name, $subject, array $arguments): bool
     {
-        return in_array($name, self::$keywords)
-            && 1 == count($arguments)
+        return \in_array($name, self::$keywords)
+            && 1 == \count($arguments)
         ;
     }
 

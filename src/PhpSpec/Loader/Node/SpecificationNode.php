@@ -114,6 +114,6 @@ class SpecificationNode implements \Countable
      */
     public function count(): int
     {
-        return count($this->examples);
+        return \count($this->examples);
     }
 }

@@ -105,7 +105,7 @@ class ResourceLoader
      */
     private function lineIsInsideMethod(int $line, ReflectionMethod $method): bool
     {
-        $line = intval($line);
+        $line = \intval($line);
 
         return $line >= $method->getStartLine() && $line <= $method->getEndLine();
     }

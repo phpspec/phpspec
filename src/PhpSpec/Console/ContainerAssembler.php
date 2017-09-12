@@ -393,7 +393,7 @@ final class ContainerAssembler
             $suites = $c->getParam('suites', array('main' => ''));
 
             foreach ($suites as $name => $suite) {
-                $suite      = is_array($suite) ? $suite : array('namespace' => $suite);
+                $suite      = \is_array($suite) ? $suite : array('namespace' => $suite);
                 $defaults = array(
                     'namespace'     => '',
                     'spec_prefix'   => 'spec',

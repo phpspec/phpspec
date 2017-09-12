@@ -42,7 +42,7 @@ final class BaseExceptionTypePresenter implements ExceptionTypePresenter
         return sprintf(
             '[%s:%s("%s")]',
             $label,
-            get_class($value),
+            \get_class($value),
             $value->getMessage()
         );
     }

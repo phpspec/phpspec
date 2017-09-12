@@ -21,7 +21,7 @@ final class BooleanTypePresenter implements TypePresenter
      */
     public function supports($value): bool
     {
-        return 'boolean' === strtolower(gettype($value));
+        return 'boolean' === strtolower(\gettype($value));
     }
 
     /**

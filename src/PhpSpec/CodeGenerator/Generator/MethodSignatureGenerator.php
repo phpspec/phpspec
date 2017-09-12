@@ -97,8 +97,8 @@ final class MethodSignatureGenerator implements Generator
 
     private function buildArgumentString(array $arguments) : string
     {
-        $argString = count($arguments)
-            ? '$argument' . implode(', $argument', range(1, count($arguments)))
+        $argString = \count($arguments)
+            ? '$argument' . implode(', $argument', range(1, \count($arguments)))
             : '';
         return $argString;
     }

@@ -152,7 +152,7 @@ abstract class ObjectBehavior implements
      */
     public function __call(string $method, array $arguments = array())
     {
-        return call_user_func_array(array($this->object, $method), $arguments);
+        return \call_user_func_array(array($this->object, $method), $arguments);
     }
 
     /**
@@ -185,6 +185,6 @@ abstract class ObjectBehavior implements
      */
     public function __invoke()
     {
-        return call_user_func_array(array($this->object, '__invoke'), func_get_args());
+        return \call_user_func_array(array($this->object, '__invoke'), \func_get_args());
     }
 }

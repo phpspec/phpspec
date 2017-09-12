@@ -41,8 +41,8 @@ final class StringStartMatcher extends BasicMatcher
     public function supports(string $name, $subject, array $arguments): bool
     {
         return 'startWith' === $name
-            && is_string($subject)
-            && 1 == count($arguments)
+            && \is_string($subject)
+            && 1 == \count($arguments)
         ;
     }
 

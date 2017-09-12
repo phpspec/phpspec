@@ -99,9 +99,9 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
             return;
         }
 
-        if (is_object($exception->getExpected())
-         || is_array($exception->getExpected())
-         || is_resource($exception->getExpected())
+        if (\is_object($exception->getExpected())
+         || \is_array($exception->getExpected())
+         || \is_resource($exception->getExpected())
         ) {
             return;
         }
@@ -110,7 +110,7 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
             return;
         }
 
-        $class = get_class($this->lastMethodCallEvent->getSubject());
+        $class = \get_class($this->lastMethodCallEvent->getSubject());
         $method = $this->lastMethodCallEvent->getMethod();
 
         if (!$this->methodAnalyser->methodIsEmpty($class, $method)) {
@@ -143,7 +143,7 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
         foreach ($this->nullMethods as $methodString => $failedCall) {
             $failedCall['expected'] = array_unique($failedCall['expected']);
 
-            if (count($failedCall['expected'])>1) {
+            if (\count($failedCall['expected'])>1) {
                 continue;
             }
 

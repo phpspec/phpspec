@@ -21,7 +21,7 @@ final class QuotingStringTypePresenter implements StringTypePresenter
      */
     public function supports($value): bool
     {
-        return 'string' === strtolower(gettype($value));
+        return 'string' === strtolower(\gettype($value));
     }
 
     /**

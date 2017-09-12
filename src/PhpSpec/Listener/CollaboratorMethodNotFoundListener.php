@@ -125,7 +125,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
             }
         );
 
-        if (count($interfaces) !== 1) {
+        if (\count($interfaces) !== 1) {
             return;
         }
 
@@ -145,7 +145,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
             }
 
             foreach ($methods as $method => $arguments) {
-                if (in_array($method, $this->wrongMethodNames)) {
+                if (\in_array($method, $this->wrongMethodNames)) {
                     continue;
                 }
 

@@ -44,6 +44,6 @@ final class ComposedValuePresenter implements ValuePresenter
             }
         }
 
-        return sprintf('[%s:%s]', strtolower(gettype($value)), $value);
+        return sprintf('[%s:%s]', strtolower(\gettype($value)), $value);
     }
 }

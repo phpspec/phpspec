@@ -44,7 +44,7 @@ final class ObjectEngine implements DifferEngine
      */
     public function supports($expected, $actual): bool
     {
-        return is_object($expected) && is_object($actual);
+        return \is_object($expected) && \is_object($actual);
     }
 
     /**

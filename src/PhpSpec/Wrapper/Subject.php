@@ -178,7 +178,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      */
     public function beConstructedWith()
     {
-        $this->wrappedObject->beConstructedWith(func_get_args());
+        $this->wrappedObject->beConstructedWith(\func_get_args());
     }
 
     /**
@@ -299,7 +299,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      */
     public function __invoke(): Subject
     {
-        return $this->caller->call('__invoke', func_get_args());
+        return $this->caller->call('__invoke', \func_get_args());
     }
 
     /**

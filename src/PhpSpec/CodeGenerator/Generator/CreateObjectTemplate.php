@@ -54,8 +54,8 @@ class CreateObjectTemplate
      */
     private function getValues() : array
     {
-        $argString = count($this->arguments)
-            ? '$argument'.implode(', $argument', range(1, count($this->arguments)))
+        $argString = \count($this->arguments)
+            ? '$argument'.implode(', $argument', range(1, \count($this->arguments)))
             : ''
         ;
 

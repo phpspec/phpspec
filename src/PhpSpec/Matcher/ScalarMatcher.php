@@ -61,7 +61,7 @@ final class ScalarMatcher implements Matcher
     {
         $checker = $this->getCheckerName($name);
 
-        if (!call_user_func($checker, $subject)) {
+        if (!\call_user_func($checker, $subject)) {
             throw new FailureException(sprintf(
                 '%s expected to return %s, but it did not.',
                 $this->presenter->presentString(sprintf(
@@ -88,7 +88,7 @@ final class ScalarMatcher implements Matcher
     {
         $checker = $this->getCheckerName($name);
 
-        if (call_user_func($checker, $subject)) {
+        if (\call_user_func($checker, $subject)) {
             throw new FailureException(sprintf(
                 '%s not expected to return %s, but it did.',
                 $this->presenter->presentString(sprintf(

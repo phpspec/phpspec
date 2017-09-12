@@ -88,7 +88,7 @@ abstract class DuringCall
     public function duringInstantiation()
     {
         if ($factoryMethod = $this->wrappedObject->getFactoryMethod()) {
-            $method = is_array($factoryMethod) ? $factoryMethod[1] : $factoryMethod;
+            $method = \is_array($factoryMethod) ? $factoryMethod[1] : $factoryMethod;
         } else {
             $method = '__construct';
         }

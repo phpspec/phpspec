@@ -46,7 +46,7 @@ final class OneTimeGenerator implements Generator
     public function generate(Resource $resource, array $data)
     {
         $classname = $resource->getSrcClassname();
-        if (in_array($classname, $this->alreadyGenerated)) {
+        if (\in_array($classname, $this->alreadyGenerated)) {
             return;
         }
 

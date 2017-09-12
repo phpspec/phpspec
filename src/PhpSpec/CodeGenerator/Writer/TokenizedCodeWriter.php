@@ -61,13 +61,13 @@ final class TokenizedCodeWriter implements CodeWriter
     private function insertStringAfterLine(string $target, string $toInsert, int $line, bool $leadingNewline = true) : string
     {
         $lines = explode("\n", $target);
-        $lastLines = array_slice($lines, $line);
+        $lastLines = \array_slice($lines, $line);
         $toInsert = trim($toInsert, "\n\r");
         if ($leadingNewline) {
             $toInsert = "\n" . $toInsert;
         }
         array_unshift($lastLines, $toInsert);
-        array_splice($lines, $line, count($lines), $lastLines);
+        array_splice($lines, $line, \count($lines), $lastLines);
 
         return implode("\n", $lines);
     }
@@ -76,9 +76,9 @@ final class TokenizedCodeWriter implements CodeWriter
     {
         $line--;
         $lines = explode("\n", $target);
-        $lastLines = array_slice($lines, $line);
+        $lastLines = \array_slice($lines, $line);
         array_unshift($lastLines, trim($toInsert, "\n\r") . "\n");
-        array_splice($lines, $line, count($lines), $lastLines);
+        array_splice($lines, $line, \count($lines), $lastLines);
 
         return implode("\n", $lines);
     }
@@ -90,7 +90,7 @@ final class TokenizedCodeWriter implements CodeWriter
         $inString = false;
         $searchPattern = array();
 
-        for ($i = count($tokens) - 1; $i >= 0; $i--) {
+        for ($i = \count($tokens) - 1; $i >= 0; $i--) {
             $token = $tokens[$i];
 
             if ($token === '}' && !$inString) {
@@ -112,11 +112,11 @@ final class TokenizedCodeWriter implements CodeWriter
                 return $this->insertStringAfterLine($class, $method, $line, $token[0] === T_COMMENT ?: $prependNewLine);
             }
 
-            array_unshift($searchPattern, is_array($token) ? $token[1] : $token);
+            array_unshift($searchPattern, \is_array($token) ? $token[1] : $token);
 
             if ($token === '{') {
                 $search = implode('', $searchPattern);
-                $position = strpos($class, $search) + strlen($search) - 1;
+                $position = strpos($class, $search) + \strlen($search) - 1;
 
                 return substr_replace($class, "\n" . $method . "\n", $position, 0);
             }
@@ -128,6 +128,6 @@ final class TokenizedCodeWriter implements CodeWriter
      */
     private function isWritePoint($token) : bool
     {
-        return is_array($token) && ($token[1] === "\n" || $token[0] === T_COMMENT);
+        return \is_array($token) && ($token[1] === "\n" || $token[0] === T_COMMENT);
     }
 }

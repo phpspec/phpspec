@@ -17,7 +17,7 @@ final class ArrayEngine extends StringEngine
 {
     public function supports($expected, $actual) : bool
     {
-        return is_array($expected) && is_array($actual);
+        return \is_array($expected) && \is_array($actual);
     }
 
     public function compare($expected, $actual) : string
@@ -32,7 +32,7 @@ final class ArrayEngine extends StringEngine
     {
         $str = str_pad('', $pad, ' ').'[';
         foreach ($a as $key => $val) {
-            switch ($type = strtolower(gettype($val))) {
+            switch ($type = strtolower(\gettype($val))) {
                 case 'array':
                     $line = sprintf(
                         '%s => %s,',
@@ -50,7 +50,7 @@ final class ArrayEngine extends StringEngine
                     $line = sprintf(
                         '%s => %s#%s,',
                         $key,
-                        get_class($val),
+                        \get_class($val),
                         spl_object_hash($val)
                     );
                     break;

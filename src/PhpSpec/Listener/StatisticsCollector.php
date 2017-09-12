@@ -70,7 +70,7 @@ class StatisticsCollector implements EventSubscriberInterface
 
     public function beforeSuite(SuiteEvent $suiteEvent)
     {
-        $this->totalSpecsCount = count($suiteEvent->getSuite()->getSpecifications());
+        $this->totalSpecsCount = \count($suiteEvent->getSuite()->getSpecifications());
     }
 
     public function getGlobalResult()
@@ -117,11 +117,11 @@ class StatisticsCollector implements EventSubscriberInterface
     public function getCountsHash()
     {
         return array(
-            'passed'  => count($this->getPassedEvents()),
-            'pending' => count($this->getPendingEvents()),
-            'skipped' => count($this->getSkippedEvents()),
-            'failed'  => count($this->getFailedEvents()),
-            'broken'  => count($this->getBrokenEvents()),
+            'passed'  => \count($this->getPassedEvents()),
+            'pending' => \count($this->getPendingEvents()),
+            'skipped' => \count($this->getSkippedEvents()),
+            'failed'  => \count($this->getFailedEvents()),
+            'broken'  => \count($this->getBrokenEvents()),
         );
     }
 
@@ -132,7 +132,7 @@ class StatisticsCollector implements EventSubscriberInterface
 
     public function getEventsCount()
     {
-        return count($this->getAllEvents());
+        return \count($this->getAllEvents());
     }
 
     public function getTotalSpecsCount()

@@ -26,7 +26,7 @@ final class HtmlPhpSpecExceptionPresenter extends AbstractPhpSpecExceptionPresen
     {
         $lines  = explode(PHP_EOL, file_get_contents($file));
         $offset = max(0, $lineno - ceil($context / 2));
-        $lines  = array_slice($lines, $offset, $context);
+        $lines  = \array_slice($lines, $offset, $context);
 
         $text = PHP_EOL;
 

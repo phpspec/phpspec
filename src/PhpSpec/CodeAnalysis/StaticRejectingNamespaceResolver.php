@@ -50,7 +50,7 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
             'iterable',
         ];
 
-        if (in_array($typeAlias, $nonObjectTypes, true)) {
+        if (\in_array($typeAlias, $nonObjectTypes, true)) {
             throw new DisallowedNonObjectTypehintException("Non-object type $typeAlias cannot be resolved within a namespace");
         }
     }

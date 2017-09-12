@@ -64,7 +64,7 @@ class ComposerPsrNamespaceProvider
                 if (strpos($namespace, $this->specPrefix) !== 0) {
                     $namespaces[$namespace] = substr(
                         realpath($location),
-                        strlen(realpath($this->rootDirectory)) + 1 // trailing slash
+                        \strlen(realpath($this->rootDirectory)) + 1 // trailing slash
                     );
                 }
             }
