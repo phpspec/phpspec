@@ -37,7 +37,7 @@ final class TraversableContainMatcher extends BasicMatcher
     public function supports(string $name, $subject, array $arguments): bool
     {
         return 'contain' === $name
-            && 1 === count($arguments)
+            && 1 === \count($arguments)
             && $subject instanceof \Traversable
         ;
     }

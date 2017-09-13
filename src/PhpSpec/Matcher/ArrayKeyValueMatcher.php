@@ -42,9 +42,9 @@ final class ArrayKeyValueMatcher extends BasicMatcher
     public function supports(string $name, $subject, array $arguments): bool
     {
         return
-            (is_array($subject) || $subject instanceof \ArrayAccess) &&
+            (\is_array($subject) || $subject instanceof \ArrayAccess) &&
             'haveKeyWithValue' === $name &&
-            2 == count($arguments)
+            2 == \count($arguments)
         ;
     }
 

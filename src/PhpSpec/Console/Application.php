@@ -132,12 +132,12 @@ final class Application extends BaseApplication
         $this->populateContainerParameters($container, $config);
 
         foreach ($config as $key => $val) {
-            if ('extensions' === $key && is_array($val)) {
+            if ('extensions' === $key && \is_array($val)) {
                 foreach ($val as $class => $extensionConfig) {
                     $this->loadExtension($container, $class, $extensionConfig ?: []);
                 }
             }
-            elseif ('matchers' === $key && is_array($val)) {
+            elseif ('matchers' === $key && \is_array($val)) {
                 $this->registerCustomMatchers($container, $val);
             }
         }
@@ -184,7 +184,7 @@ final class Application extends BaseApplication
             throw new InvalidConfigurationException(sprintf('Extension class `%s` does not exist.', $extensionClass));
         }
 
-        if (!is_array($config)) {
+        if (!\is_array($config)) {
             throw new InvalidConfigurationException('Extension configuration must be an array or null.');
         }
 
@@ -250,7 +250,7 @@ final class Application extends BaseApplication
 
     private function addPathsToEachSuiteConfig(string $configDir, array $config) : array
     {
-        if (isset($config['suites']) && is_array($config['suites'])) {
+        if (isset($config['suites']) && \is_array($config['suites'])) {
             foreach ($config['suites'] as $suiteKey => $suiteConfig) {
                 $config['suites'][$suiteKey] = str_replace('%paths.config%', $configDir, $suiteConfig);
             }

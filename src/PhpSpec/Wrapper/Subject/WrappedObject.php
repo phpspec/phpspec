@@ -53,8 +53,8 @@ class WrappedObject
     {
         $this->instance = $instance;
         $this->presenter = $presenter;
-        if (is_object($this->instance)) {
-            $this->classname = get_class($this->instance);
+        if (\is_object($this->instance)) {
+            $this->classname = \get_class($this->instance);
             $this->isInstantiated = true;
         }
     }
@@ -67,7 +67,7 @@ class WrappedObject
      */
     public function beAnInstanceOf(string $classname, array $arguments = array())
     {
-        if (!is_string($classname)) {
+        if (!\is_string($classname)) {
             throw new SubjectException(sprintf(
                 'Behavior subject classname should be a string, %s given.',
                 $this->presenter->presentValue($classname)
@@ -108,7 +108,7 @@ class WrappedObject
      */
     public function beConstructedThrough($factoryMethod, array $arguments = array())
     {
-        if (is_string($factoryMethod) &&
+        if (\is_string($factoryMethod) &&
             false === strpos($factoryMethod, '::') &&
             method_exists($this->classname, $factoryMethod)
         ) {
@@ -219,14 +219,14 @@ class WrappedObject
      */
     private function instantiateFromCallback(callable $factoryCallable)
     {
-        $instance = call_user_func_array($factoryCallable, $this->arguments);
+        $instance = \call_user_func_array($factoryCallable, $this->arguments);
 
-        if (!is_object($instance)) {
+        if (!\is_object($instance)) {
             throw new FactoryDoesNotReturnObjectException(sprintf(
                 'The method %s::%s did not return an object, returned %s instead',
                 $this->factoryMethod[0],
                 $this->factoryMethod[1],
-                gettype($instance)
+                \gettype($instance)
             ));
         }
 

@@ -72,7 +72,7 @@ final class IterablesMatcher
      */
     private function isIterable($variable): bool
     {
-        return is_array($variable) || $variable instanceof \Traversable;
+        return \is_array($variable) || $variable instanceof \Traversable;
     }
 
     /**
@@ -82,7 +82,7 @@ final class IterablesMatcher
      */
     private function createIteratorFromIterable($iterable): \Iterator
     {
-        if (is_array($iterable)) {
+        if (\is_array($iterable)) {
             return new \ArrayIterator($iterable);
         }
 

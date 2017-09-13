@@ -38,7 +38,7 @@ final class TraversableKeyValueMatcher extends BasicMatcher
     public function supports(string $name, $subject, array $arguments) : bool
     {
         return 'haveKeyWithValue' === $name
-            && 2 === count($arguments)
+            && 2 === \count($arguments)
             && $subject instanceof \Traversable
         ;
     }

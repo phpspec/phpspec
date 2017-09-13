@@ -47,7 +47,7 @@ class CallArgumentsPresenter
         }
 
         $presentedMethodProphecy = $this->findFirstUnexpectedArgumentsCallProphecy($methodProphecies, $exception);
-        if (is_null($presentedMethodProphecy)) {
+        if (\is_null($presentedMethodProphecy)) {
             return '';
         }
 
@@ -68,7 +68,7 @@ class CallArgumentsPresenter
      */
     private function noMethodPropheciesForUnexpectedCall(array $methodProphecies): bool
     {
-        return count($methodProphecies) === 0;
+        return \count($methodProphecies) === 0;
     }
 
     /**
@@ -89,7 +89,7 @@ class CallArgumentsPresenter
                 $methodProphecy->getArgumentsWildcard()
             );
 
-            if (count($calls)) {
+            if (\count($calls)) {
                 continue;
             }
 
@@ -107,7 +107,7 @@ class CallArgumentsPresenter
      */
     private function parametersCountMismatch(array $expectedTokens, array $actualArguments): bool
     {
-        return count($expectedTokens) !== count($actualArguments);
+        return \count($expectedTokens) !== \count($actualArguments);
     }
 
     /**
@@ -140,8 +140,8 @@ class CallArgumentsPresenter
         $text = '';
         foreach($actualArguments as $i => $actualArgument) {
             $expectedArgument = $expectedArguments[$i];
-            $actualArgument = is_null($actualArgument) ? 'null' : $actualArgument;
-            $expectedArgument = is_null($expectedArgument) ? 'null' : $expectedArgument;
+            $actualArgument = \is_null($actualArgument) ? 'null' : $actualArgument;
+            $expectedArgument = \is_null($expectedArgument) ? 'null' : $expectedArgument;
 
             $text .= $this->differ->compare($expectedArgument, $actualArgument);
         }

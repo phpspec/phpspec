@@ -137,14 +137,14 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     private function tokensToString(array $tokens) : string
     {
         return join('', array_map(function ($token) {
-            return is_array($token) ? $token[1] : $token;
+            return \is_array($token) ? $token[1] : $token;
         }, $tokens));
     }
 
     private function extractTypehints(array &$tokens, int $index, array $token)
     {
         $typehint = '';
-        for ($i = $index - 1; in_array($tokens[$i][0], $this->typehintTokens); $i--) {
+        for ($i = $index - 1; \in_array($tokens[$i][0], $this->typehintTokens); $i--) {
             $typehint = $tokens[$i][1] . $typehint;
 
             if (T_WHITESPACE !== $tokens[$i][0]) {
@@ -178,7 +178,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
      */
     private function tokenHasType($token, string $type) : bool
     {
-        return is_array($token) && $type == $token[0];
+        return \is_array($token) && $type == $token[0];
     }
 
     private function shouldExtractTokensOfClass(string $className) : bool
@@ -191,6 +191,6 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
      */
     private function isToken($token, string $string) : bool
     {
-        return $token == $string || (is_array($token) && $token[1] == $string);
+        return $token == $string || (\is_array($token) && $token[1] == $string);
     }
 }

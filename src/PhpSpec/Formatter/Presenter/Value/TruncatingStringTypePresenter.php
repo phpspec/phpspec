@@ -40,7 +40,7 @@ final class TruncatingStringTypePresenter implements StringTypePresenter
      */
     public function present($value): string
     {
-        if (25 > strlen($value) && false === strpos($value, "\n")) {
+        if (25 > \strlen($value) && false === strpos($value, "\n")) {
             return $this->stringTypePresenter->present($value);
         }
 

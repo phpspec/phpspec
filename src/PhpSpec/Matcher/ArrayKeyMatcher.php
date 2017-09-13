@@ -42,8 +42,8 @@ final class ArrayKeyMatcher extends BasicMatcher
     public function supports(string $name, $subject, array $arguments): bool
     {
         return 'haveKey' === $name
-            && 1 == count($arguments)
-            && (is_array($subject) || $subject instanceof ArrayAccess)
+            && 1 == \count($arguments)
+            && (\is_array($subject) || $subject instanceof ArrayAccess)
         ;
     }
 

@@ -21,7 +21,7 @@ final class ArrayTypePresenter implements TypePresenter
      */
     public function supports($value): bool
     {
-        return 'array' === strtolower(gettype($value));
+        return 'array' === strtolower(\gettype($value));
     }
 
     /**
@@ -30,7 +30,7 @@ final class ArrayTypePresenter implements TypePresenter
      */
     public function present($value): string
     {
-        return sprintf('[array:%d]', count($value));
+        return sprintf('[array:%d]', \count($value));
     }
 
     /**

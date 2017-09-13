@@ -37,9 +37,9 @@ final class StringContainMatcher extends BasicMatcher
     public function supports(string $name, $subject, array $arguments) : bool
     {
         return 'contain' === $name
-            && is_string($subject)
-            && 1 === count($arguments)
-            && is_string($arguments[0]);
+            && \is_string($subject)
+            && 1 === \count($arguments)
+            && \is_string($arguments[0]);
     }
 
     /**

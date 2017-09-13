@@ -55,7 +55,7 @@ class ExistingConstructorTemplate
             }
         }
 
-        return $constructorArguments == count($this->arguments);
+        return $constructorArguments == \count($this->arguments);
     }
 
     private function getExceptionContent() : string
@@ -91,8 +91,8 @@ class ExistingConstructorTemplate
      */
     private function getValues(bool $constructorArguments = false) : array
     {
-        $argString = count($this->arguments)
-            ? '$argument'.implode(', $argument', range(1, count($this->arguments)))
+        $argString = \count($this->arguments)
+            ? '$argument'.implode(', $argument', range(1, \count($this->arguments)))
             : ''
         ;
 

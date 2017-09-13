@@ -41,7 +41,7 @@ final class TraversableCountMatcher implements Matcher
     public function supports(string $name, $subject, array $arguments): bool
     {
         return 'haveCount' === $name
-            && 1 === count($arguments)
+            && 1 === \count($arguments)
             && $subject instanceof \Traversable
         ;
     }

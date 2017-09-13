@@ -52,7 +52,7 @@ final class ApproximatelyMatcher extends BasicMatcher
      */
     public function supports(string $name, $subject, array $arguments): bool
     {
-        return in_array($name, self::$keywords) && 2 == count($arguments);
+        return \in_array($name, self::$keywords) && 2 == \count($arguments);
     }
 
     /**

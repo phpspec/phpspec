@@ -163,7 +163,7 @@ class Caller
             return $this->wrappedObject->getInstance();
         }
 
-        if (null === $this->wrappedObject->getClassName() || !is_string($this->wrappedObject->getClassName())) {
+        if (null === $this->wrappedObject->getClassName() || !\is_string($this->wrappedObject->getClassName())) {
             return $this->wrappedObject->getInstance();
         }
 
@@ -171,7 +171,7 @@ class Caller
             throw $this->classNotFound();
         }
 
-        if (is_object($this->wrappedObject->getInstance())) {
+        if (\is_object($this->wrappedObject->getInstance())) {
             $this->wrappedObject->setInstantiated(true);
             $instance = $this->wrappedObject->getInstance();
         } else {
@@ -192,7 +192,7 @@ class Caller
     {
         $subject = $this->getWrappedObject();
 
-        return is_object($subject) && $this->accessInspector->isPropertyReadable($subject, $property);
+        return \is_object($subject) && $this->accessInspector->isPropertyReadable($subject, $property);
     }
 
     /**
@@ -204,7 +204,7 @@ class Caller
     {
         $subject = $this->getWrappedObject();
 
-        return is_object($subject) && $this->accessInspector->isPropertyWritable($subject, $property);
+        return \is_object($subject) && $this->accessInspector->isPropertyWritable($subject, $property);
     }
 
     /**
@@ -228,7 +228,7 @@ class Caller
 
         $reflection = new ReflectionClass($this->wrappedObject->getClassName());
 
-        if (count($this->wrappedObject->getArguments())) {
+        if (\count($this->wrappedObject->getArguments())) {
             return $this->newInstanceWithArguments($reflection);
         }
 
@@ -249,7 +249,7 @@ class Caller
             new MethodCallEvent($this->example, $subject, $method, $arguments)
         );
 
-        $returnValue = call_user_func_array(array($subject, $method), $arguments);
+        $returnValue = \call_user_func_array(array($subject, $method), $arguments);
 
         $this->dispatcher->dispatch(
             'afterMethodCall',
@@ -302,10 +302,10 @@ class Caller
     {
         $method = $this->wrappedObject->getFactoryMethod();
 
-        if (!is_array($method)) {
+        if (!\is_array($method)) {
             $className = $this->wrappedObject->getClassName();
 
-            if (is_string($method) && !method_exists($className, $method)) {
+            if (\is_string($method) && !method_exists($className, $method)) {
                 throw $this->namedConstructorNotFound(
                     $method,
                     $this->wrappedObject->getArguments()
@@ -313,7 +313,7 @@ class Caller
             }
         }
 
-        return call_user_func_array($method, $this->wrappedObject->getArguments());
+        return \call_user_func_array($method, $this->wrappedObject->getArguments());
     }
 
     /**
@@ -424,6 +424,6 @@ class Caller
      */
     public function constantDefined(string $property): bool
     {
-        return defined($this->wrappedObject->getClassName().'::'.$property);
+        return \defined($this->wrappedObject->getClassName().'::'.$property);
     }
 }

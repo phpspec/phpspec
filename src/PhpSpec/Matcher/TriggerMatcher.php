@@ -83,17 +83,17 @@ final class TriggerMatcher implements Matcher
 
         $prevHandler = set_error_handler(function ($type, $str, $file, $line, $context) use (&$prevHandler, $level, $message, &$triggered) {
             if (null !== $level && $level !== $type) {
-                return null !== $prevHandler && call_user_func($prevHandler, $type, $str, $file, $line, $context);
+                return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
             if (null !== $message && false === strpos($str, $message)) {
-                return null !== $prevHandler && call_user_func($prevHandler, $type, $str, $file, $line, $context);
+                return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
             ++$triggered;
         });
 
-        call_user_func_array($callable, $arguments);
+        \call_user_func_array($callable, $arguments);
 
         restore_error_handler();
 
@@ -116,17 +116,17 @@ final class TriggerMatcher implements Matcher
 
         $prevHandler = set_error_handler(function ($type, $str, $file, $line, $context) use (&$prevHandler, $level, $message, &$triggered) {
             if (null !== $level && $level !== $type) {
-                return null !== $prevHandler && call_user_func($prevHandler, $type, $str, $file, $line, $context);
+                return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
             if (null !== $message && false === strpos($str, $message)) {
-                return null !== $prevHandler && call_user_func($prevHandler, $type, $str, $file, $line, $context);
+                return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
             ++$triggered;
         });
 
-        call_user_func_array($callable, $arguments);
+        \call_user_func_array($callable, $arguments);
 
         restore_error_handler();
 
@@ -171,14 +171,14 @@ final class TriggerMatcher implements Matcher
                 list($class, $methodName) = array($subject, $methodName);
                 if (!method_exists($class, $methodName) && !method_exists($class, '__call')) {
                     throw new MethodNotFoundException(
-                        sprintf('Method %s::%s not found.', get_class($class), $methodName),
+                        sprintf('Method %s::%s not found.', \get_class($class), $methodName),
                         $class,
                         $methodName,
                         $arguments
                     );
                 }
 
-                return call_user_func($check, $callable, $arguments, $level, $message);
+                return \call_user_func($check, $callable, $arguments, $level, $message);
             }
         );
     }
@@ -188,7 +188,7 @@ final class TriggerMatcher implements Matcher
      */
     private function unpackArguments(array $arguments): array
     {
-        $count = count($arguments);
+        $count = \count($arguments);
 
         if (0 === $count) {
             return array(null, null);

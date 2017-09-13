@@ -76,12 +76,12 @@ class PSR0Locator implements ResourceLocator
         $this->specPath      = rtrim(realpath($specPath), '/\\').$sepr;
         $this->srcNamespace  = ltrim(trim($srcNamespace, ' \\').'\\', '\\');
         $this->psr4Prefix    = (null === $psr4Prefix) ? null : ltrim(trim($psr4Prefix, ' \\').'\\', '\\');
-        if (null !== $this->psr4Prefix  && substr($this->srcNamespace, 0, strlen($psr4Prefix)) !== $psr4Prefix) {
+        if (null !== $this->psr4Prefix  && substr($this->srcNamespace, 0, \strlen($psr4Prefix)) !== $psr4Prefix) {
             throw new InvalidArgumentException('PSR4 prefix doesn\'t match given class namespace.'.PHP_EOL);
         }
         $srcNamespacePath = null === $this->psr4Prefix ?
             $this->srcNamespace :
-            substr($this->srcNamespace, strlen($this->psr4Prefix));
+            substr($this->srcNamespace, \strlen($this->psr4Prefix));
         $this->specNamespace = $specNamespacePrefix ?
             trim($specNamespacePrefix, ' \\').'\\'.$this->srcNamespace :
             $this->srcNamespace;
@@ -191,14 +191,14 @@ class PSR0Locator implements ResourceLocator
         }
 
         if ($path && 0 === strpos($path, $this->fullSrcPath)) {
-            $path = $this->fullSpecPath.substr($path, strlen($this->fullSrcPath));
+            $path = $this->fullSpecPath.substr($path, \strlen($this->fullSrcPath));
             $path = preg_replace('/\.php/', 'Spec.php', $path);
 
             return $this->findSpecResources($path);
         }
 
         if ($path && 0 === strpos($path, $this->srcPath)) {
-            $path = $this->fullSpecPath.substr($path, strlen($this->srcPath));
+            $path = $this->fullSpecPath.substr($path, \strlen($this->srcPath));
             $path = preg_replace('/\.php/', 'Spec.php', $path);
 
             return $this->findSpecResources($path);
@@ -235,13 +235,13 @@ class PSR0Locator implements ResourceLocator
         $classname = str_replace('/', '\\', $classname);
 
         if (0 === strpos($classname, $this->specNamespace)) {
-            $relative = substr($classname, strlen($this->specNamespace));
+            $relative = substr($classname, \strlen($this->specNamespace));
 
             return new PSR0Resource(explode('\\', $relative), $this);
         }
 
         if ('' === $this->srcNamespace || 0 === strpos($classname, $this->srcNamespace)) {
-            $relative = substr($classname, strlen($this->srcNamespace));
+            $relative = substr($classname, \strlen($this->srcNamespace));
 
             return new PSR0Resource(explode('\\', $relative), $this);
         }
@@ -291,7 +291,7 @@ class PSR0Locator implements ResourceLocator
         $namespace = '';
         $content   = $this->filesystem->getFileContents($path);
         $tokens    = token_get_all($content);
-        $count     = count($tokens);
+        $count     = \count($tokens);
 
         for ($i = 0; $i < $count; $i++) {
             if ($tokens[$i][0] === T_NAMESPACE) {
@@ -341,7 +341,7 @@ class PSR0Locator implements ResourceLocator
             ));
         }
 
-        $classname = substr($classname, strlen($specNamespace));
+        $classname = substr($classname, \strlen($specNamespace));
 
         // cut "Spec" from the end
         $classname = preg_replace('/Spec$/', '', $classname);
@@ -381,7 +381,7 @@ class PSR0Locator implements ResourceLocator
         if ($this->queryContainsQualifiedClassName($query)) {
             $namespacedQuery = null === $this->psr4Prefix ?
                 $replacedQuery :
-                substr($replacedQuery, strlen($this->srcNamespace));
+                substr($replacedQuery, \strlen($this->srcNamespace));
 
             $path = $this->fullSpecPath . $namespacedQuery . 'Spec.php';
 

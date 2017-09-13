@@ -174,15 +174,15 @@ class ConsoleIO implements IO
         }
 
         $commonPrefix = $this->getCommonPrefix($message, $this->lastMessage);
-        $newSuffix = substr($message, strlen($commonPrefix));
-        $oldSuffix = substr($this->lastMessage, strlen($commonPrefix));
+        $newSuffix = substr($message, \strlen($commonPrefix));
+        $oldSuffix = substr($this->lastMessage, \strlen($commonPrefix));
 
-        $overwriteLength = strlen(strip_tags($oldSuffix));
+        $overwriteLength = \strlen(strip_tags($oldSuffix));
 
         $this->write(str_repeat("\x08", $overwriteLength));
         $this->write($newSuffix);
 
-        $fill = $overwriteLength - strlen(strip_tags($newSuffix));
+        $fill = $overwriteLength - \strlen(strip_tags($newSuffix));
         if ($fill > 0) {
             $this->write(str_repeat(' ', $fill));
             $this->write(str_repeat("\x08", $fill));
@@ -197,7 +197,7 @@ class ConsoleIO implements IO
 
     private function getCommonPrefix(string $stringA, string $stringB)
     {
-        for ($i = 0, $len = min(strlen($stringA), strlen($stringB)); $i<$len; $i++) {
+        for ($i = 0, $len = min(\strlen($stringA), \strlen($stringB)); $i<$len; $i++) {
             if ($stringA[$i] != $stringB[$i]) {
                 break;
             }

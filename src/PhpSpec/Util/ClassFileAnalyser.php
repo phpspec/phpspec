@@ -49,7 +49,7 @@ final class ClassFileAnalyser
     public function classHasMethods(string $class): bool
     {
         foreach ($this->getTokensForClass($class) as $token) {
-            if (!is_array($token)) {
+            if (!\is_array($token)) {
                 continue;
             }
 
@@ -80,7 +80,7 @@ final class ClassFileAnalyser
      */
     private function findIndexOfFirstMethod(array $tokens): int
     {
-        for ($i = 0, $max = count($tokens); $i < $max; $i++) {
+        for ($i = 0, $max = \count($tokens); $i < $max; $i++) {
             if ($this->tokenIsFunction($tokens[$i])) {
                 return $i;
             }
@@ -107,11 +107,11 @@ final class ClassFileAnalyser
         for ($i = $index - 1; $i >= 0; $i--) {
             $token = $tokens[$i];
 
-            if (!is_array($token)) {
+            if (!\is_array($token)) {
                 return $index;
             }
 
-            if (in_array($token[0], $allowedTokens)) {
+            if (\in_array($token[0], $allowedTokens)) {
                 continue;
             }
 
@@ -131,7 +131,7 @@ final class ClassFileAnalyser
     {
         $hash = md5($class);
 
-        if (!in_array($hash, $this->tokenLists)) {
+        if (!\in_array($hash, $this->tokenLists)) {
             $this->tokenLists[$hash] = token_get_all($class);
         }
 
@@ -159,10 +159,10 @@ final class ClassFileAnalyser
     {
         $searching = false;
 
-        for ($i = 0, $max = count($tokens); $i < $max; $i++) {
+        for ($i = 0, $max = \count($tokens); $i < $max; $i++) {
             $token = $tokens[$i];
 
-            if (!is_array($token)) {
+            if (!\is_array($token)) {
                 continue;
             }
 
@@ -195,7 +195,7 @@ final class ClassFileAnalyser
     {
         $braceCount = 0;
 
-        for ($i = $index, $max = count($tokens); $i < $max; $i++) {
+        for ($i = $index, $max = \count($tokens); $i < $max; $i++) {
             $token = $tokens[$i];
 
             if ('{' === $token || $this->isSpecialBraceToken($token)) {
@@ -214,7 +214,7 @@ final class ClassFileAnalyser
 
     private function isSpecialBraceToken($token)
     {
-        if (!is_array($token)) {
+        if (!\is_array($token)) {
             return false;
         }
 
@@ -227,7 +227,7 @@ final class ClassFileAnalyser
      */
     private function tokenIsFunction($token): bool
     {
-        return is_array($token) && $token[0] === T_FUNCTION;
+        return \is_array($token) && $token[0] === T_FUNCTION;
     }
 
     /**
@@ -237,7 +237,7 @@ final class ClassFileAnalyser
     private function findIndexOfClassEnd(array $tokens): int
     {
         $classTokens = array_filter($tokens, function ($token) {
-            return is_array($token) && $token[0] === T_CLASS;
+            return \is_array($token) && $token[0] === T_CLASS;
         });
         $classTokenIndex = key($classTokens);
         return $this->findIndexOfMethodOrClassEnd($tokens, $classTokenIndex) - 1;

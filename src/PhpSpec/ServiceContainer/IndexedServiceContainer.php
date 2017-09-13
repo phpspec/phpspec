@@ -82,10 +82,10 @@ final class IndexedServiceContainer implements ServiceContainer
      */
     public function set(string $id, $service, array $tags = [])
     {
-        if (!is_object($service)) {
+        if (!\is_object($service)) {
             throw new InvalidArgumentException(sprintf(
                 'Service should be an object, but %s given.',
-                gettype($service)
+                \gettype($service)
             ));
         }
 
@@ -127,7 +127,7 @@ final class IndexedServiceContainer implements ServiceContainer
                 throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
             }
 
-            $this->services[$id] = call_user_func($this->definitions[$id], $this);
+            $this->services[$id] = \call_user_func($this->definitions[$id], $this);
         }
 
         return $this->services[$id];
@@ -207,7 +207,7 @@ final class IndexedServiceContainer implements ServiceContainer
     public function configure()
     {
         foreach ($this->configurators as $configurator) {
-            call_user_func($configurator, $this);
+            \call_user_func($configurator, $this);
         }
     }
 }

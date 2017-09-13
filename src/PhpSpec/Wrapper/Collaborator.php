@@ -66,7 +66,7 @@ final class Collaborator implements ObjectWrapper
      */
     public function __call(string $method, array $arguments)
     {
-        return call_user_func_array(array($this->prophecy, '__call'), array($method, $arguments));
+        return \call_user_func_array(array($this->prophecy, '__call'), array($method, $arguments));
     }
 
     /**

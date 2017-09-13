@@ -36,6 +36,6 @@ class DelayedCall
      */
     public function __call(string $method, array $arguments)
     {
-        return call_user_func($this->callable, $method, $arguments);
+        return \call_user_func($this->callable, $method, $arguments);
     }
 }
