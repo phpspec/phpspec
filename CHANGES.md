@@ -1,6 +1,7 @@
 Upcoming 4.x
 ============
 
+* Allow installation on PHP 7.2 (@ciaranmcnulty)
 * [performance] Improved speed when invoking native functions (@bendavies)
 
 4.0.3 / 2017-08-26
