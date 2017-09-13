@@ -1,6 +1,8 @@
 Upcoming 4.x
 ============
 
+* [performance] Improved speed when invoking native functions (@bendavies)
+
 4.0.3 / 2017-08-26
 ==================
 
