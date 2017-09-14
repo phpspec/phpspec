@@ -25,31 +25,31 @@ interface ResourceLocator
      *
      * @return boolean
      */
-    public function supportsQuery($query);
+    public function supportsQuery(string $query): bool;
 
     /**
      * @param string $query
      *
      * @return Resource[]
      */
-    public function findResources($query);
+    public function findResources(string $query);
 
     /**
      * @param string $classname
      *
      * @return boolean
      */
-    public function supportsClass($classname);
+    public function supportsClass(string $classname): bool;
 
     /**
      * @param string $classname
      *
      * @return Resource|null
      */
-    public function createResource($classname);
+    public function createResource(string $classname);
 
     /**
      * @return integer
      */
-    public function getPriority();
+    public function getPriority(): int;
 }

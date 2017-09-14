@@ -23,7 +23,7 @@ class Unwrapper implements RevealerInterface
      *
      * @return array
      */
-    public function unwrapAll(array $arguments)
+    public function unwrapAll(array $arguments): array
     {
         if (null === $arguments) {
             return array();
@@ -39,11 +39,11 @@ class Unwrapper implements RevealerInterface
      */
     public function unwrapOne($argument)
     {
-        if (is_array($argument)) {
+        if (\is_array($argument)) {
             return array_map(array($this, 'unwrapOne'), $argument);
         }
 
-        if (!is_object($argument)) {
+        if (!\is_object($argument)) {
             return $argument;
         }
 

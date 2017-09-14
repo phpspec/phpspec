@@ -22,7 +22,7 @@ class Instantiator
      *
      * @return object
      */
-    public function instantiate($className)
+    public function instantiate(string $className)
     {
         if (!class_exists($className)) {
             throw new ClassNotFoundException("Class $className does not exist.", $className);

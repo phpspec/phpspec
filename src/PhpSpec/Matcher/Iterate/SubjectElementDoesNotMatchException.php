@@ -24,7 +24,7 @@ class SubjectElementDoesNotMatchException extends FailureException
      * @param string $expectedKey
      * @param string $expectedValue
      */
-    public function __construct($elementNumber, $subjectKey, $subjectValue, $expectedKey, $expectedValue)
+    public function __construct(int $elementNumber, string $subjectKey, string $subjectValue, string $expectedKey, string $expectedValue)
     {
         parent::__construct(sprintf(
             'Expected subject to have element #%d with key %s and value %s, but got key %s and value %s.',

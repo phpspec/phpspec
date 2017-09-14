@@ -24,14 +24,7 @@ class ExistingConstructorTemplate
     private $arguments;
     private $methodName;
 
-    /**
-     * @param TemplateRenderer $templates
-     * @param string           $class
-     * @param string           $className
-     * @param array            $arguments
-     * @param string           $methodName
-     */
-    public function __construct(TemplateRenderer $templates, $methodName, array $arguments, $className, $class)
+    public function __construct(TemplateRenderer $templates, string $methodName, array $arguments, string $className, string $class)
     {
         $this->templates  = $templates;
         $this->class      = $class;
@@ -40,10 +33,7 @@ class ExistingConstructorTemplate
         $this->methodName = $methodName;
     }
 
-    /**
-     * @return string
-     */
-    public function getContent()
+    public function getContent() : string
     {
         if (!$this->numberOfConstructorArgumentsMatchMethod()) {
             return $this->getExceptionContent();
@@ -52,10 +42,7 @@ class ExistingConstructorTemplate
         return $this->getCreateObjectContent();
     }
 
-    /**
-     * @return bool
-     */
-    private function numberOfConstructorArgumentsMatchMethod()
+    private function numberOfConstructorArgumentsMatchMethod() : bool
     {
         $constructorArguments = 0;
 
@@ -68,13 +55,10 @@ class ExistingConstructorTemplate
             }
         }
 
-        return $constructorArguments == count($this->arguments);
+        return $constructorArguments == \count($this->arguments);
     }
 
-    /**
-     * @return string
-     */
-    private function getExceptionContent()
+    private function getExceptionContent() : string
     {
         $values = $this->getValues();
 
@@ -88,10 +72,7 @@ class ExistingConstructorTemplate
         return $content;
     }
 
-    /**
-     * @return string
-     */
-    private function getCreateObjectContent()
+    private function getCreateObjectContent() : string
     {
         $values = $this->getValues(true);
 
@@ -106,13 +87,12 @@ class ExistingConstructorTemplate
     }
 
     /**
-     * @param  bool  $constructorArguments
-     * @return array
+     * @return string[]
      */
-    private function getValues($constructorArguments = false)
+    private function getValues(bool $constructorArguments = false) : array
     {
-        $argString = count($this->arguments)
-            ? '$argument'.implode(', $argument', range(1, count($this->arguments)))
+        $argString = \count($this->arguments)
+            ? '$argument'.implode(', $argument', range(1, \count($this->arguments)))
             : ''
         ;
 
@@ -128,7 +108,7 @@ class ExistingConstructorTemplate
     /**
      * @return string
      */
-    private function getCreateObjectTemplate()
+    private function getCreateObjectTemplate(): string
     {
         return file_get_contents(__DIR__.'/templates/named_constructor_create_object.template');
     }
@@ -136,7 +116,7 @@ class ExistingConstructorTemplate
     /**
      * @return string
      */
-    private function getExceptionTemplate()
+    private function getExceptionTemplate(): string
     {
         return file_get_contents(__DIR__.'/templates/named_constructor_exception.template');
     }

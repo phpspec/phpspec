@@ -42,9 +42,9 @@ final class ObjectEngine implements DifferEngine
      *
      * @return bool
      */
-    public function supports($expected, $actual)
+    public function supports($expected, $actual): bool
     {
-        return is_object($expected) && is_object($actual);
+        return \is_object($expected) && \is_object($actual);
     }
 
     /**
@@ -53,7 +53,7 @@ final class ObjectEngine implements DifferEngine
      *
      * @return string
      */
-    public function compare($expected, $actual)
+    public function compare($expected, $actual): string
     {
         return $this->stringDiffer->compare(
             $this->exporter->export($expected),

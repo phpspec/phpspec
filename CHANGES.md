@@ -1,3 +1,47 @@
+Upcoming 4.x
+============
+
+* Allow installation on PHP 7.2 (@ciaranmcnulty)
+* [performance] Improved speed when invoking native functions (@bendavies)
+
+4.0.3 / 2017-08-26
+==================
+
+* [fixed] TypeError thrown when calling `ExampleEvent::getTime()` on event constructed w/ nullable `$time` (@oxkhar)
+* [fixed] TypeError thrown when presenting diff in verbose mode (@avant1)
+
+4.0.2 / 2017-08-05
+==================
+
+* [fixed] Illegible text when using a white terminal background (@MarcelloDuarte)
+
+3.4.2 / 2017-08-05
+==================
+
+* [fixed] Illegible text when using a white terminal background (@MarcelloDuarte)
+
+4.0.1 / 2017-07-04
+==================
+
+* [fixed] type error when handling errors (@nightlinus)
+
+4.0.0 / 2017-07-29
+==================
+
+* Dropped support for PHP versions less than 7.0 (@ciaranmcnulty)
+* Added scalar types and return types (@Sam-Burns, @ciaranmcnulty)
+* [fixed] parameters after extensions ignored in config file (@borNfreee)
+
+3.4.1 / 2017-07-29
+==================
+
+* [fixed] parameters after extensions ignored in config file (@borNfreee)
+
+2.5.8 / 2017-07-29
+==================
+
+* [fixed] parameters after extensions ignored in config file (@borNfreee)
+
 3.4.0 / 2017-05-12
 ==================
 

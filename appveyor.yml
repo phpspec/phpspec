@@ -5,7 +5,7 @@ clone_folder: c:\projects\phpspec
 
 environment:
     matrix:
-        - PHP_DOWNLOAD_FILE: php-5.6.14-nts-Win32-VC11-x86.zip
+        - PHP_DOWNLOAD_FILE: php-7.0.13-Win32-VC14-x86.zip
 
 skip_commits:
     message: /\[ci skip\]/

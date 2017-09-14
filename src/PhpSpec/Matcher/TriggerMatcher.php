@@ -40,7 +40,7 @@ final class TriggerMatcher implements Matcher
      *
      * @return bool
      */
-    public function supports($name, $subject, array $arguments)
+    public function supports(string $name, $subject, array $arguments): bool
     {
         return 'trigger' === $name;
     }
@@ -52,7 +52,7 @@ final class TriggerMatcher implements Matcher
      *
      * @return DelayedCall
      */
-    public function positiveMatch($name, $subject, array $arguments)
+    public function positiveMatch(string $name, $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyPositive'), $subject, $arguments);
     }
@@ -64,7 +64,7 @@ final class TriggerMatcher implements Matcher
      *
      * @return DelayedCall
      */
-    public function negativeMatch($name, $subject, array $arguments)
+    public function negativeMatch(string $name, $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyNegative'), $subject, $arguments);
     }
@@ -77,23 +77,23 @@ final class TriggerMatcher implements Matcher
      *
      * @throws \PhpSpec\Exception\Example\FailureException
      */
-    public function verifyPositive(callable $callable, array $arguments, $level = null, $message = null)
+    public function verifyPositive(callable $callable, array $arguments, int $level = null, string $message = null)
     {
         $triggered = 0;
 
         $prevHandler = set_error_handler(function ($type, $str, $file, $line, $context) use (&$prevHandler, $level, $message, &$triggered) {
             if (null !== $level && $level !== $type) {
-                return null !== $prevHandler && call_user_func($prevHandler, $type, $str, $file, $line, $context);
+                return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
             if (null !== $message && false === strpos($str, $message)) {
-                return null !== $prevHandler && call_user_func($prevHandler, $type, $str, $file, $line, $context);
+                return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
             ++$triggered;
         });
 
-        call_user_func_array($callable, $arguments);
+        \call_user_func_array($callable, $arguments);
 
         restore_error_handler();
 
@@ -110,23 +110,23 @@ final class TriggerMatcher implements Matcher
      *
      * @throws \PhpSpec\Exception\Example\FailureException
      */
-    public function verifyNegative(callable $callable, array $arguments, $level = null, $message = null)
+    public function verifyNegative(callable $callable, array $arguments, int $level = null, string $message = null)
     {
         $triggered = 0;
 
         $prevHandler = set_error_handler(function ($type, $str, $file, $line, $context) use (&$prevHandler, $level, $message, &$triggered) {
             if (null !== $level && $level !== $type) {
-                return null !== $prevHandler && call_user_func($prevHandler, $type, $str, $file, $line, $context);
+                return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
             if (null !== $message && false === strpos($str, $message)) {
-                return null !== $prevHandler && call_user_func($prevHandler, $type, $str, $file, $line, $context);
+                return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
             ++$triggered;
         });
 
-        call_user_func_array($callable, $arguments);
+        \call_user_func_array($callable, $arguments);
 
         restore_error_handler();
 
@@ -143,7 +143,7 @@ final class TriggerMatcher implements Matcher
     /**
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 1;
     }
@@ -155,7 +155,7 @@ final class TriggerMatcher implements Matcher
      *
      * @return DelayedCall
      */
-    private function getDelayedCall($check, $subject, array $arguments)
+    private function getDelayedCall(callable $check, $subject, array $arguments): DelayedCall
     {
         $unwrapper = $this->unwrapper;
         list($level, $message) = $this->unpackArguments($arguments);
@@ -171,14 +171,14 @@ final class TriggerMatcher implements Matcher
                 list($class, $methodName) = array($subject, $methodName);
                 if (!method_exists($class, $methodName) && !method_exists($class, '__call')) {
                     throw new MethodNotFoundException(
-                        sprintf('Method %s::%s not found.', get_class($class), $methodName),
+                        sprintf('Method %s::%s not found.', \get_class($class), $methodName),
                         $class,
                         $methodName,
                         $arguments
                     );
                 }
 
-                return call_user_func($check, $callable, $arguments, $level, $message);
+                return \call_user_func($check, $callable, $arguments, $level, $message);
             }
         );
     }
@@ -186,9 +186,9 @@ final class TriggerMatcher implements Matcher
     /**
      * @return array
      */
-    private function unpackArguments(array $arguments)
+    private function unpackArguments(array $arguments): array
     {
-        $count = count($arguments);
+        $count = \count($arguments);
 
         if (0 === $count) {
             return array(null, null);

@@ -79,7 +79,7 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
      * @param bool $verbose
      * @return string
      */
-    public function presentException(\Exception $exception, $verbose = false)
+    public function presentException(\Exception $exception, bool $verbose = false): string
     {
         if ($exception instanceof PhpSpecException) {
             $presentation = wordwrap($exception->getMessage(), 120);
@@ -101,7 +101,7 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
      * @param string $presentation
      * @return string
      */
-    private function getVerbosePresentation(\Exception $exception, $presentation)
+    private function getVerbosePresentation(\Exception $exception, string $presentation): string
     {
         if ($exception instanceof NotEqualException) {
             if ($diff = $this->presentExceptionDifference($exception)) {
@@ -125,9 +125,11 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
      *
      * @return string
      */
-    private function presentExceptionDifference(NotEqualException $exception)
+    private function presentExceptionDifference(NotEqualException $exception): string
     {
-        return $this->differ->compare($exception->getExpected(), $exception->getActual());
+        $diff = $this->differ->compare($exception->getExpected(), $exception->getActual());
+
+        return $diff === null ? '' : $diff;
     }
 
     /**
@@ -135,14 +137,14 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
      *
      * @return string
      */
-    private function presentExceptionStackTrace(\Exception $exception)
+    private function presentExceptionStackTrace(\Exception $exception): string
     {
         $offset = 0;
         $text = '';
 
         $text .= $this->presentExceptionTraceLocation($offset++, $exception->getFile(), $exception->getLine());
         $text .= $this->presentExceptionTraceFunction(
-            'throw new '.get_class($exception),
+            'throw new '.\get_class($exception),
             array($exception->getMessage())
         );
 
@@ -166,7 +168,7 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
      *
      * @return string
      */
-    private function presentExceptionTraceHeader($header)
+    private function presentExceptionTraceHeader(string $header): string
     {
         return $this->exceptionElementPresenter->presentExceptionTraceHeader($header) . PHP_EOL;
     }
@@ -179,7 +181,7 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
      *
      * @return string
      */
-    private function presentExceptionTraceMethod($class, $type, $method, array $args)
+    private function presentExceptionTraceMethod(string $class, string $type, string $method, array $args): string
     {
         return $this->exceptionElementPresenter->presentExceptionTraceMethod($class, $type, $method, $args) . PHP_EOL;
     }
@@ -190,7 +192,7 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
      *
      * @return string
      */
-    private function presentExceptionTraceFunction($function, array $args)
+    private function presentExceptionTraceFunction(string $function, array $args): string
     {
         return $this->exceptionElementPresenter->presentExceptionTraceFunction($function, $args) . PHP_EOL;
     }
@@ -202,7 +204,7 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
      *
      * @return string
      */
-    private function presentExceptionTraceLocation($offset, $file, $line)
+    private function presentExceptionTraceLocation(int $offset, string $file, int $line): string
     {
         return $this->presentExceptionTraceHeader(sprintf(
             "%2d %s:%d",
@@ -216,7 +218,7 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
      * @param array $call
      * @return bool
      */
-    private function shouldStopTracePresentation(array $call)
+    private function shouldStopTracePresentation(array $call): bool
     {
         return isset($call['file']) && false !== strpos($call['file'], $this->runnerPath);
     }
@@ -225,7 +227,7 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
      * @param array $call
      * @return bool
      */
-    private function shouldSkipTracePresentation(array $call)
+    private function shouldSkipTracePresentation(array $call): bool
     {
         if (isset($call['file']) && 0 === strpos($call['file'], $this->phpspecPath)) {
             return true;
@@ -239,7 +241,7 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
      * @param int $offset
      * @return string
      */
-    private function presentExceptionTraceDetails(array $call, $offset)
+    private function presentExceptionTraceDetails(array $call, int $offset): string
     {
         $text = '';
 

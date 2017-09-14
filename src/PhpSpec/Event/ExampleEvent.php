@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Event;
 
+use PhpSpec\Loader\Node\SpecificationNode;
+use PhpSpec\Loader\Suite;
 use Symfony\Component\EventDispatcher\Event;
 use PhpSpec\Loader\Node\ExampleNode;
 
@@ -74,8 +76,8 @@ class ExampleEvent extends Event implements PhpSpecEvent
      */
     public function __construct(
         ExampleNode $example,
-        $time = null,
-        $result = null,
+        float $time = 0.0,
+        int $result = self::PASSED,
         \Exception $exception = null
     ) {
         $this->example   = $example;
@@ -87,23 +89,23 @@ class ExampleEvent extends Event implements PhpSpecEvent
     /**
      * @return ExampleNode
      */
-    public function getExample()
+    public function getExample(): ExampleNode
     {
         return $this->example;
     }
 
     /**
-     * @return \PhpSpec\Loader\Node\SpecificationNode
+     * @return SpecificationNode
      */
-    public function getSpecification()
+    public function getSpecification(): SpecificationNode
     {
         return $this->example->getSpecification();
     }
 
     /**
-     * @return \PhpSpec\Loader\Suite
+     * @return Suite
      */
-    public function getSuite()
+    public function getSuite(): Suite
     {
         return $this->getSpecification()->getSuite();
     }
@@ -111,7 +113,7 @@ class ExampleEvent extends Event implements PhpSpecEvent
     /**
      * @return string
      */
-    public function getTitle()
+    public function getTitle(): string
     {
         return $this->example->getTitle();
     }
@@ -119,7 +121,7 @@ class ExampleEvent extends Event implements PhpSpecEvent
     /**
      * @return string
      */
-    public function getMessage()
+    public function getMessage(): string
     {
         return $this->exception->getMessage();
     }
@@ -127,7 +129,7 @@ class ExampleEvent extends Event implements PhpSpecEvent
     /**
      * @return array
      */
-    public function getBacktrace()
+    public function getBacktrace(): array
     {
         return $this->exception->getTrace();
     }
@@ -135,7 +137,7 @@ class ExampleEvent extends Event implements PhpSpecEvent
     /**
      * @return float
      */
-    public function getTime()
+    public function getTime(): float
     {
         return $this->time;
     }
@@ -143,13 +145,13 @@ class ExampleEvent extends Event implements PhpSpecEvent
     /**
      * @return integer
      */
-    public function getResult()
+    public function getResult(): int
     {
         return $this->result;
     }
 
     /**
-     * @return \Exception
+     * @return \Exception|null
      */
     public function getException()
     {

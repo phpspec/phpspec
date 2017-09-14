@@ -48,10 +48,10 @@ final class IdentityMatcher extends BasicMatcher
      *
      * @return bool
      */
-    public function supports($name, $subject, array $arguments)
+    public function supports(string $name, $subject, array $arguments): bool
     {
-        return in_array($name, self::$keywords)
-            && 1 == count($arguments)
+        return \in_array($name, self::$keywords)
+            && 1 == \count($arguments)
         ;
     }
 
@@ -61,7 +61,7 @@ final class IdentityMatcher extends BasicMatcher
      *
      * @return bool
      */
-    protected function matches($subject, array $arguments)
+    protected function matches($subject, array $arguments): bool
     {
         return $subject === $arguments[0];
     }
@@ -71,9 +71,9 @@ final class IdentityMatcher extends BasicMatcher
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return NotEqualException
+     * @return FailureException
      */
-    protected function getFailureException($name, $subject, array $arguments)
+    protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new NotEqualException(sprintf(
             'Expected %s, but got %s.',
@@ -89,7 +89,7 @@ final class IdentityMatcher extends BasicMatcher
      *
      * @return FailureException
      */
-    protected function getNegativeFailureException($name, $subject, array $arguments)
+    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Did not expect %s, but got one.',

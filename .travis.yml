@@ -2,20 +2,23 @@ language: php
 
 sudo: false
 
+dist: trusty
+
 cache:
   directories:
     - $HOME/.composer/cache
 
 matrix:
   include:
-    - php: 5.6
-      env: DEPENDENCIES='low'
-    - php: 5.6
-    - php: hhvm
+    - php: 7.0
+      env: COMPOSER_FLAGS='--prefer-lowest'
     - php: 7.0
     - php: 7.1
+    - php: 7.2
+    - php: 7.2
       env: DEPENDENCIES='dev'
     - php: nightly
+      env: COMPOSER_FLAGS='--ignore-platform-reqs'
   allow_failures:
     - php: nightly
   fast_finish: true
@@ -25,9 +28,8 @@ before_install:
 
 install:
   - export COMPOSER_ROOT_VERSION=dev-master
-  - if [ "$DEPENDENCIES" == "dev" ]; then perl -pi -e 's/^}$/,"minimum-stability":"dev"}/' composer.json; fi;
-  - if [ "$DEPENDENCIES" != "low" ]; then composer update; fi;
-  - if [ "$DEPENDENCIES" == "low" ]; then composer update --prefer-lowest; fi;
+  - if [ "$DEPENDENCIES" == "dev" ]; then composer config minimum-stability dev; fi;
+  - composer update $COMPOSER_FLAGS
 
 script:
    - bin/phpspec run --format=dot
@@ -49,5 +51,5 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
-    php: 5.6
-    condition: $DEPENDENCIES != "low"
+    php: 7.0
+    condition: COMPOSER_FLAGS != "--prefer-lowest"

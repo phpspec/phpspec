@@ -58,14 +58,7 @@ final class MethodGenerator implements Generator
         $this->codeWriter = $codeWriter;
     }
 
-    /**
-     * @param Resource $resource
-     * @param string            $generation
-     * @param array             $data
-     *
-     * @return bool
-     */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(Resource $resource, string $generation, array $data) : bool
     {
         return 'method' === $generation;
     }
@@ -80,8 +73,8 @@ final class MethodGenerator implements Generator
         $name      = $data['name'];
         $arguments = $data['arguments'];
 
-        $argString = count($arguments)
-            ? '$argument'.implode(', $argument', range(1, count($arguments)))
+        $argString = \count($arguments)
+            ? '$argument'.implode(', $argument', range(1, \count($arguments)))
             : ''
         ;
 
@@ -103,29 +96,17 @@ final class MethodGenerator implements Generator
         ), 2);
     }
 
-    /**
-     * @return int
-     */
-    public function getPriority()
+    public function getPriority() : int
     {
         return 0;
     }
 
-    /**
-     * @return string
-     */
-    protected function getTemplate()
+    protected function getTemplate() : string
     {
         return file_get_contents(__DIR__.'/templates/method.template');
     }
 
-    /**
-     * @param string $methodName
-     * @param string $snippetToInsert
-     * @param string $code
-     * @return string
-     */
-    private function getUpdatedCode($methodName, $snippetToInsert, $code)
+    private function getUpdatedCode(string $methodName, string $snippetToInsert, string $code) : string
     {
         if ('__construct' === $methodName) {
             return $this->codeWriter->insertMethodFirstInClass($code, $snippetToInsert);

@@ -53,7 +53,7 @@ final class IndexedServiceContainer implements ServiceContainer
      * @param string $id
      * @param mixed  $value
      */
-    public function setParam($id, $value)
+    public function setParam(string $id, $value)
     {
         $this->parameters[$id] = $value;
     }
@@ -66,7 +66,7 @@ final class IndexedServiceContainer implements ServiceContainer
      *
      * @return mixed
      */
-    public function getParam($id, $default = null)
+    public function getParam(string $id, $default = null)
     {
         return isset($this->parameters[$id]) ? $this->parameters[$id] : $default;
     }
@@ -80,12 +80,12 @@ final class IndexedServiceContainer implements ServiceContainer
      *
      * @throws \InvalidArgumentException if service is not an object
      */
-    public function set($id, $service, $tags = [])
+    public function set(string $id, $service, array $tags = [])
     {
-        if (!is_object($service)) {
+        if (!\is_object($service)) {
             throw new InvalidArgumentException(sprintf(
                 'Service should be an object, but %s given.',
-                gettype($service)
+                \gettype($service)
             ));
         }
 
@@ -103,7 +103,7 @@ final class IndexedServiceContainer implements ServiceContainer
      * @param callable $definition
      * @param array    $tags
      */
-    public function define($id, callable $definition, $tags = [])
+    public function define(string $id, callable $definition, array $tags = [])
     {
         $this->definitions[$id] = $definition;
         unset($this->services[$id]);
@@ -120,14 +120,14 @@ final class IndexedServiceContainer implements ServiceContainer
      *
      * @throws \InvalidArgumentException if service is not defined
      */
-    public function get($id)
+    public function get(string $id)
     {
         if (!array_key_exists($id, $this->services)) {
             if (!array_key_exists($id, $this->definitions)) {
                 throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
             }
 
-            $this->services[$id] = call_user_func($this->definitions[$id], $this);
+            $this->services[$id] = \call_user_func($this->definitions[$id], $this);
         }
 
         return $this->services[$id];
@@ -139,7 +139,7 @@ final class IndexedServiceContainer implements ServiceContainer
      * @param string $id
      * @return bool
      */
-    public function has($id)
+    public function has(string $id): bool
     {
         return array_key_exists($id, $this->definitions) || array_key_exists($id, $this->services) ;
     }
@@ -151,7 +151,7 @@ final class IndexedServiceContainer implements ServiceContainer
      *
      * @throws \InvalidArgumentException if service is not defined
      */
-    public function remove($id)
+    public function remove(string $id)
     {
         if (!$this->has($id)) {
             throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
@@ -166,7 +166,7 @@ final class IndexedServiceContainer implements ServiceContainer
      * @param string $id
      * @param array  $tags
      */
-    private function indexTags($id, array $tags)
+    private function indexTags(string $id, array $tags)
     {
         foreach ($tags as $tag) {
             $this->tags[$tag][] = $id;
@@ -180,7 +180,7 @@ final class IndexedServiceContainer implements ServiceContainer
      *
      * @return array
      */
-    public function getByTag($tag)
+    public function getByTag(string $tag): array
     {
         return array_map([$this, 'get'], isset($this->tags[$tag]) ? $this->tags[$tag] : []);
     }
@@ -207,7 +207,7 @@ final class IndexedServiceContainer implements ServiceContainer
     public function configure()
     {
         foreach ($this->configurators as $configurator) {
-            call_user_func($configurator, $this);
+            \call_user_func($configurator, $this);
         }
     }
 }

@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Event;
 
+use PhpSpec\Loader\Node\SpecificationNode;
+use PhpSpec\Loader\Suite;
 use Symfony\Component\EventDispatcher\Event;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Matcher\Matcher;
@@ -87,7 +89,7 @@ final class ExpectationEvent extends Event implements PhpSpecEvent
         $subject,
         $method,
         $arguments,
-        $result = null,
+        $result = self::PASSED,
         $exception = null
     ) {
         $this->example = $example;
@@ -102,7 +104,7 @@ final class ExpectationEvent extends Event implements PhpSpecEvent
     /**
      * @return Matcher
      */
-    public function getMatcher()
+    public function getMatcher(): Matcher
     {
         return $this->matcher;
     }
@@ -110,23 +112,23 @@ final class ExpectationEvent extends Event implements PhpSpecEvent
     /**
      * @return ExampleNode
      */
-    public function getExample()
+    public function getExample(): ExampleNode
     {
         return $this->example;
     }
 
     /**
-     * @return \PhpSpec\Loader\Node\SpecificationNode
+     * @return SpecificationNode
      */
-    public function getSpecification()
+    public function getSpecification(): SpecificationNode
     {
         return $this->example->getSpecification();
     }
 
     /**
-     * @return \PhpSpec\Loader\Suite
+     * @return Suite
      */
-    public function getSuite()
+    public function getSuite(): Suite
     {
         return $this->example->getSpecification()->getSuite();
     }
@@ -142,7 +144,7 @@ final class ExpectationEvent extends Event implements PhpSpecEvent
     /**
      * @return string
      */
-    public function getMethod()
+    public function getMethod(): string
     {
         return $this->method;
     }
@@ -150,13 +152,13 @@ final class ExpectationEvent extends Event implements PhpSpecEvent
     /**
      * @return array
      */
-    public function getArguments()
+    public function getArguments(): array
     {
         return $this->arguments;
     }
 
     /**
-     * @return \Exception
+     * @return \Exception|null
      */
     public function getException()
     {
@@ -166,7 +168,7 @@ final class ExpectationEvent extends Event implements PhpSpecEvent
     /**
      * @return integer
      */
-    public function getResult()
+    public function getResult(): int
     {
         return $this->result;
     }

@@ -15,12 +15,12 @@ namespace PhpSpec\Formatter\Presenter\Differ;
 
 class StringEngine implements DifferEngine
 {
-    public function supports($expected, $actual)
+    public function supports($expected, $actual): bool
     {
-        return is_string($expected) && is_string($actual);
+        return \is_string($expected) && \is_string($actual);
     }
 
-    public function compare($expected, $actual)
+    public function compare($expected, $actual): string
     {
         $expected = explode("\n", (string) $expected);
         $actual   = explode("\n", (string) $actual);

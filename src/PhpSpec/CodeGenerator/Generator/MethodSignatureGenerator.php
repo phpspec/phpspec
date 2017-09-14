@@ -50,22 +50,11 @@ final class MethodSignatureGenerator implements Generator
         $this->filesystem = $filesystem;
     }
 
-    /**
-     * @param Resource $resource
-     * @param string            $generation
-     * @param array             $data
-     *
-     * @return bool
-     */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(Resource $resource, string $generation, array $data) : bool
     {
         return 'method-signature' === $generation;
     }
 
-    /**
-     * @param Resource $resource
-     * @param array             $data
-     */
     public function generate(Resource $resource, array $data = array())
     {
         $filepath  = $resource->getSrcFilename();
@@ -89,41 +78,27 @@ final class MethodSignatureGenerator implements Generator
         ), 2);
     }
 
-    /**
-     * @return int
-     */
-    public function getPriority()
+    public function getPriority() : int
     {
         return 0;
     }
 
-    /**
-     * @return string
-     */
-    protected function getTemplate()
+    protected function getTemplate() : string
     {
         return file_get_contents(__DIR__.'/templates/interface_method_signature.template');
     }
 
-    /**
-     * @param string $filepath
-     * @param string $content
-     */
-    private function insertMethodSignature($filepath, $content)
+    private function insertMethodSignature(string $filepath, string $content)
     {
         $code = $this->filesystem->getFileContents($filepath);
         $code = preg_replace('/}[ \n]*$/', rtrim($content) . "\n}\n", trim($code));
         $this->filesystem->putFileContents($filepath, $code);
     }
 
-    /**
-     * @param array $arguments
-     * @return string
-     */
-    private function buildArgumentString($arguments)
+    private function buildArgumentString(array $arguments) : string
     {
-        $argString = count($arguments)
-            ? '$argument' . implode(', $argument', range(1, count($arguments)))
+        $argString = \count($arguments)
+            ? '$argument' . implode(', $argument', range(1, \count($arguments)))
             : '';
         return $argString;
     }

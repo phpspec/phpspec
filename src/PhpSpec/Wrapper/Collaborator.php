@@ -33,7 +33,7 @@ final class Collaborator implements ObjectWrapper
     /**
      * @param string $classOrInterface
      */
-    public function beADoubleOf($classOrInterface)
+    public function beADoubleOf(string $classOrInterface)
     {
         if (interface_exists($classOrInterface)) {
             $this->prophecy->willImplement($classOrInterface);
@@ -53,7 +53,7 @@ final class Collaborator implements ObjectWrapper
     /**
      * @param string $interface
      */
-    public function implement($interface)
+    public function implement(string $interface)
     {
         $this->prophecy->willImplement($interface);
     }
@@ -64,16 +64,16 @@ final class Collaborator implements ObjectWrapper
      *
      * @return mixed
      */
-    public function __call($method, array $arguments)
+    public function __call(string $method, array $arguments)
     {
-        return call_user_func_array(array($this->prophecy, '__call'), array($method, $arguments));
+        return \call_user_func_array(array($this->prophecy, '__call'), array($method, $arguments));
     }
 
     /**
      * @param string $parameter
      * @param mixed  $value
      */
-    public function __set($parameter, $value)
+    public function __set(string $parameter, $value)
     {
         $this->prophecy->$parameter = $value;
     }
@@ -83,7 +83,7 @@ final class Collaborator implements ObjectWrapper
      *
      * @return mixed
      */
-    public function __get($parameter)
+    public function __get(string $parameter)
     {
         return $this->prophecy->$parameter;
     }

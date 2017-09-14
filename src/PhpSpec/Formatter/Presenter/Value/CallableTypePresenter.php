@@ -34,7 +34,7 @@ final class CallableTypePresenter implements TypePresenter
      * @param mixed $value
      * @return bool
      */
-    public function supports($value)
+    public function supports($value): bool
     {
         return is_callable($value);
     }
@@ -43,10 +43,10 @@ final class CallableTypePresenter implements TypePresenter
      * @param mixed $value
      * @return string
      */
-    public function present($value)
+    public function present($value): string
     {
-        if (is_array($value)) {
-            $type = is_object($value[0]) ? $this->presenter->presentValue($value[0]) : $value[0];
+        if (\is_array($value)) {
+            $type = \is_object($value[0]) ? $this->presenter->presentValue($value[0]) : $value[0];
             return sprintf('%s::%s()', $type, $value[1]);
         }
 
@@ -54,8 +54,8 @@ final class CallableTypePresenter implements TypePresenter
             return '[closure]';
         }
 
-        if (is_object($value)) {
-            return sprintf('[obj:%s]', get_class($value));
+        if (\is_object($value)) {
+            return sprintf('[obj:%s]', \get_class($value));
         }
 
         return sprintf('[%s()]', $value);
@@ -64,7 +64,7 @@ final class CallableTypePresenter implements TypePresenter
     /**
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 70;
     }

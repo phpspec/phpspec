@@ -171,7 +171,7 @@ EOF
             list($_, $locator, $linenum) = $matches;
         }
 
-        $suite       = $container->get('loader.resource_loader')->load($locator, $linenum);
+        $suite       = $container->get('loader.resource_loader')->load((string)$locator, $linenum);
         $suiteRunner = $container->get('runner.suite');
 
         return $container->get('console.result_converter')->convert(

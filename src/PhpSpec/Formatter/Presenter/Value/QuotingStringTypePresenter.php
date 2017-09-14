@@ -19,16 +19,16 @@ final class QuotingStringTypePresenter implements StringTypePresenter
      * @param mixed $value
      * @return bool
      */
-    public function supports($value)
+    public function supports($value): bool
     {
-        return 'string' === strtolower(gettype($value));
+        return 'string' === strtolower(\gettype($value));
     }
 
     /**
      * @param mixed $value
      * @return string
      */
-    public function present($value)
+    public function present($value): string
     {
         return sprintf('"%s"', $value);
     }
@@ -36,7 +36,7 @@ final class QuotingStringTypePresenter implements StringTypePresenter
     /**
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 10;
     }

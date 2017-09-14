@@ -17,14 +17,23 @@ use Prophecy\Argument;
 class MethodReturnedNullListenerSpec extends ObjectBehavior
 {
     function let(
-        ConsoleIO $io, ResourceManager $resourceManager, GeneratorManager $generatorManager,
-        ExampleEvent $exampleEvent, NotEqualException $notEqualException, MethodAnalyser $methodAnalyser
+        ConsoleIO $io,
+        ResourceManager $resourceManager,
+        Resource $resource,
+        GeneratorManager $generatorManager,
+        ExampleEvent $exampleEvent,
+        NotEqualException $notEqualException,
+        MethodAnalyser $methodAnalyser,
+        MethodCallEvent $methodCallEvent
     ) {
         $this->beConstructedWith($io, $resourceManager, $generatorManager, $methodAnalyser);
 
         $exampleEvent->getException()->willReturn($notEqualException);
         $notEqualException->getActual()->willReturn(null);
         $notEqualException->getExpected()->willReturn(100);
+
+        $methodCallEvent->getMethod()->willReturn('foo');
+        $methodCallEvent->getSubject()->willReturn(new \stdClass);
 
         $io->isCodeGenerationEnabled()->willReturn(true);
 
@@ -33,7 +42,9 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         $io->isFakingEnabled()->willReturn(true);
 
         $methodAnalyser->methodIsEmpty(Argument::cetera())->willReturn(true);
-        $methodAnalyser->getMethodOwnerName(Argument::cetera())->willReturn('Foo');;
+        $methodAnalyser->getMethodOwnerName(Argument::cetera())->willReturn('Foo');
+
+        $resourceManager->createResource(Argument::cetera())->willReturn($resource);
     }
 
     function it_is_an_event_listener()
@@ -108,6 +119,8 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io, ResourceManager $resourceManager, SuiteEvent $event
     ) {
         $resourceManager->createResource(Argument::any())->willThrow(new \RuntimeException());
+        $methodCallEvent->getSubject()->willReturn(new \stdClass());
+        $methodCallEvent->getMethod()->willReturn('');
 
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
@@ -120,6 +133,8 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io, SuiteEvent $event
     ) {
         $io->isCodeGenerationEnabled()->willReturn(false);
+        $methodCallEvent->getSubject()->willReturn(new \stdClass());
+        $methodCallEvent->getMethod()->willReturn('');
 
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
@@ -156,6 +171,9 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         $notEqualException->getExpected()->willReturn('foo');
         $notEqualException2->getExpected()->willReturn('bar');
 
+        $methodCallEvent->getSubject()->willReturn(new \stdClass());
+        $methodCallEvent->getMethod()->willReturn('');
+
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
 
@@ -171,6 +189,8 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io, SuiteEvent $event
     ) {
         $io->isFakingEnabled()->willReturn(false);
+        $methodCallEvent->getSubject()->willReturn(new \stdClass());
+        $methodCallEvent->getMethod()->willReturn('');
 
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
@@ -182,6 +202,9 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
     function it_prompts_when_correct_type_of_exception_is_thrown(
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io, SuiteEvent $event
     ) {
+        $methodCallEvent->getSubject()->willReturn(new \stdClass());
+        $methodCallEvent->getMethod()->willReturn('');
+
         $this->afterMethodCall($methodCallEvent);
         $this->afterExample($exampleEvent);
         $this->afterSuite($event);

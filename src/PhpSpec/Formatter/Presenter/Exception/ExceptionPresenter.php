@@ -20,5 +20,5 @@ interface ExceptionPresenter
      * @param bool $verbose
      * @return string
      */
-    public function presentException(\Exception $exception, $verbose = false);
+    public function presentException(\Exception $exception, bool $verbose = false): string;
 }

@@ -168,7 +168,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      * @param string $className
      * @param array  $arguments
      */
-    public function beAnInstanceOf($className, array $arguments = array())
+    public function beAnInstanceOf(string $className, array $arguments = array())
     {
         $this->wrappedObject->beAnInstanceOf($className, $arguments);
     }
@@ -178,7 +178,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      */
     public function beConstructedWith()
     {
-        $this->wrappedObject->beConstructedWith(func_get_args());
+        $this->wrappedObject->beConstructedWith(\func_get_args());
     }
 
     /**
@@ -208,7 +208,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      *
      * @return Subject
      */
-    public function callOnWrappedObject($method, array $arguments = array())
+    public function callOnWrappedObject(string $method, array $arguments = array()): Subject
     {
         return $this->caller->call($method, $arguments);
     }
@@ -219,7 +219,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      *
      * @return mixed
      */
-    public function setToWrappedObject($property, $value = null)
+    public function setToWrappedObject(string $property, $value = null)
     {
         return $this->caller->set($property, $value);
     }
@@ -229,7 +229,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      *
      * @return string|Subject
      */
-    public function getFromWrappedObject($property)
+    public function getFromWrappedObject(string $property)
     {
         return $this->caller->get($property);
     }
@@ -239,7 +239,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      *
      * @return Subject
      */
-    public function offsetExists($key)
+    public function offsetExists($key): Subject
     {
         return $this->wrap($this->arrayAccess->offsetExists($key));
     }
@@ -249,7 +249,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      *
      * @return Subject
      */
-    public function offsetGet($key)
+    public function offsetGet($key): Subject
     {
         return $this->wrap($this->arrayAccess->offsetGet($key));
     }
@@ -277,7 +277,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      *
      * @return mixed|Subject
      */
-    public function __call($method, array $arguments = array())
+    public function __call(string $method, array $arguments = array())
     {
         if (0 === strpos($method, 'should')) {
             return $this->callExpectation($method, $arguments);
@@ -297,9 +297,9 @@ class Subject implements ArrayAccess, ObjectWrapper
     /**
      * @return Subject
      */
-    public function __invoke()
+    public function __invoke(): Subject
     {
-        return $this->caller->call('__invoke', func_get_args());
+        return $this->caller->call('__invoke', \func_get_args());
     }
 
     /**
@@ -308,7 +308,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      *
      * @return mixed
      */
-    public function __set($property, $value = null)
+    public function __set(string $property, $value = null)
     {
         return $this->caller->set($property, $value);
     }
@@ -318,17 +318,17 @@ class Subject implements ArrayAccess, ObjectWrapper
      *
      * @return string|Subject
      */
-    public function __get($property)
+    public function __get(string $property)
     {
         return $this->caller->get($property);
     }
 
     /**
-     * @param string $value
+     * @param mixed $value
      *
      * @return Subject
      */
-    private function wrap($value)
+    private function wrap($value) : Subject
     {
         return $this->wrapper->wrap($value);
     }
@@ -339,7 +339,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      *
      * @return mixed
      */
-    private function callExpectation($method, array $arguments)
+    private function callExpectation(string $method, array $arguments)
     {
         $subject = $this->makeSureWeHaveASubject();
 

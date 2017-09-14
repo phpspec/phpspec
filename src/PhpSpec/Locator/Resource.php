@@ -18,40 +18,40 @@ interface Resource
     /**
      * @return string
      */
-    public function getName();
+    public function getName(): string;
 
     /**
      * @return string
      */
-    public function getSpecName();
+    public function getSpecName(): string;
 
     /**
      * @return string
      */
-    public function getSrcFilename();
+    public function getSrcFilename(): string;
 
     /**
      * @return string
      */
-    public function getSrcNamespace();
+    public function getSrcNamespace(): string;
 
     /**
      * @return string
      */
-    public function getSrcClassname();
+    public function getSrcClassname(): string;
 
     /**
      * @return string
      */
-    public function getSpecFilename();
+    public function getSpecFilename(): string;
 
     /**
      * @return string
      */
-    public function getSpecNamespace();
+    public function getSpecNamespace(): string;
 
     /**
      * @return string
      */
-    public function getSpecClassname();
+    public function getSpecClassname(): string;
 }

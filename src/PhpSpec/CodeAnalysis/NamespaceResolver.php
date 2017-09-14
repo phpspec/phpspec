@@ -15,7 +15,7 @@ namespace PhpSpec\CodeAnalysis;
 
 interface NamespaceResolver
 {
-    public function analyse($code);
+    public function analyse(string $code);
 
-    public function resolve($typeAlias);
+    public function resolve(string $typeAlias) : string;
 }

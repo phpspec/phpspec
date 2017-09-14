@@ -123,7 +123,7 @@ final class TapFormatter extends ConsoleFormatter
      * @param int $result
      * @return string
      */
-    private function getResultData(ExampleEvent $event, $result = null)
+    private function getResultData(ExampleEvent $event, int $result = null): string
     {
         if (null === $result) {
             return $this->stripNewlines($event->getException()->getMessage());
@@ -159,7 +159,7 @@ final class TapFormatter extends ConsoleFormatter
      * @param string $string
      * @return string
      */
-    private function stripNewlines($string)
+    private function stripNewlines(string $string): string
     {
         return str_replace(array("\r\n", "\n", "\r"), ' / ', $string);
     }
@@ -168,7 +168,7 @@ final class TapFormatter extends ConsoleFormatter
      * @param string $string
      * @return string
      */
-    private function indent($string)
+    private function indent(string $string): string
     {
         return preg_replace(
             array("%(^[^\n\r])%", "%([\n\r]{1,2})%", "%\s+...[\n\r]{1,2}\s+---%"),

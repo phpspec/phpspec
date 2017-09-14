@@ -36,7 +36,7 @@ final class ComposedValuePresenter implements ValuePresenter
      * @param mixed $value
      * @return string
      */
-    public function presentValue($value)
+    public function presentValue($value): string
     {
         foreach ($this->typePresenters as $typePresenter) {
             if ($typePresenter->supports($value)) {
@@ -44,6 +44,6 @@ final class ComposedValuePresenter implements ValuePresenter
             }
         }
 
-        return sprintf('[%s:%s]', strtolower(gettype($value)), $value);
+        return sprintf('[%s:%s]', strtolower(\gettype($value)), $value);
     }
 }

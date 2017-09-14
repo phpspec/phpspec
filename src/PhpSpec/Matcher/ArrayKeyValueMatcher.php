@@ -39,12 +39,12 @@ final class ArrayKeyValueMatcher extends BasicMatcher
      *
      * @return bool
      */
-    public function supports($name, $subject, array $arguments)
+    public function supports(string $name, $subject, array $arguments): bool
     {
         return
-            (is_array($subject) || $subject instanceof \ArrayAccess) &&
+            (\is_array($subject) || $subject instanceof \ArrayAccess) &&
             'haveKeyWithValue' === $name &&
-            2 == count($arguments)
+            2 == \count($arguments)
         ;
     }
 
@@ -54,7 +54,7 @@ final class ArrayKeyValueMatcher extends BasicMatcher
      *
      * @return bool
      */
-    protected function matches($subject, array $arguments)
+    protected function matches($subject, array $arguments): bool
     {
         $key = $arguments[0];
         $value  = $arguments[1];
@@ -73,7 +73,7 @@ final class ArrayKeyValueMatcher extends BasicMatcher
      *
      * @return FailureException
      */
-    protected function getFailureException($name, $subject, array $arguments)
+    protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         $key = $arguments[0];
 
@@ -100,7 +100,7 @@ final class ArrayKeyValueMatcher extends BasicMatcher
      *
      * @return FailureException
      */
-    protected function getNegativeFailureException($name, $subject, array $arguments)
+    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s not to have %s key, but it does.',

@@ -25,12 +25,12 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
         $this->namespaceResolver = $namespaceResolver;
     }
 
-    public function analyse($code)
+    public function analyse(string $code)
     {
         $this->namespaceResolver->analyse($code);
     }
 
-    public function resolve($typeAlias)
+    public function resolve(string $typeAlias) : string
     {
         $this->guardNonObjectTypeHints($typeAlias);
 
@@ -38,10 +38,9 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
     }
 
     /**
-     * @param $typeAlias
      * @throws \Exception
      */
-    private function guardNonObjectTypeHints($typeAlias)
+    private function guardNonObjectTypeHints(string $typeAlias)
     {
         $nonObjectTypes = [
             'int',
@@ -51,7 +50,7 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
             'iterable',
         ];
 
-        if (in_array($typeAlias, $nonObjectTypes, true)) {
+        if (\in_array($typeAlias, $nonObjectTypes, true)) {
             throw new DisallowedNonObjectTypehintException("Non-object type $typeAlias cannot be resolved within a namespace");
         }
     }

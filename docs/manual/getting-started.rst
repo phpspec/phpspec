@@ -189,3 +189,36 @@ In the example here you specified the value the ``toHtml`` method should
 return by using one of **phpspec's** matchers. There are several other
 matchers available, you can read more about these in the :doc:`Matchers Cookbook </cookbook/matchers>`
 
+Skipping examples
+-----------------
+
+It may happen that some of your examples will depend on some environment requirements.
+For example, it might need a php extension or a minimal php version.
+In that case, you don't want your examples to fail because **phpspec** is unable to run them.
+ 
+**phpspec** allows to easily skip an example by throwing a `SkippingException` wherever you feel the
+need for it.
+ 
+.. code-block:: php
+ 
+    <?php
+ 
+    namespace spec;
+ 
+    use PhpSpec\ObjectBehavior;
+    use PhpSpec\Exception\Example\SkippingException;
+
+    class RocketSpec extends ObjectBehavior
+    {
+        function it_flies_around_the_moon()
+        {
+            if (!function_exists('rocket_launch')) {
+                throw new SkippingException(
+                    'The rocket extension is not installed'
+                );
+            }
+            $this->flyToTheMoon();
+        }
+    }
+
+An extension is also available to skip examples regarding a class/interface was not found. It can be found here: https://github.com/akeneo/PhpSpecSkipExampleExtension

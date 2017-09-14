@@ -18,6 +18,7 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Exception\Example\PendingException;
 use PhpSpec\Exception\Example\SkippingException;
 use PhpSpec\Formatter\Presenter\Presenter;
+use PhpSpec\IO\IO;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\Message\CurrentExampleTracker;
 
@@ -40,9 +41,9 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
     }
 
     /**
-     * @return ConsoleIO
+     * @return IO
      */
-    protected function getIO()
+    protected function getIO(): IO
     {
         return $this->io;
     }
@@ -60,7 +61,7 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
             $this->printSpecificException($event, 'pending');
         } elseif ($exception instanceof SkippingException) {
             if ($this->io->isVerbose()) {
-                $this->printSpecificException($event, 'skipped ');
+                $this->printSpecificException($event, 'skipped');
             }
         } elseif (ExampleEvent::FAILED === $event->getResult()) {
             $this->printSpecificException($event, 'failed');
@@ -73,7 +74,7 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
      * @param ExampleEvent $event
      * @param string $type
      */
-    protected function printSpecificException(ExampleEvent $event, $type)
+    protected function printSpecificException(ExampleEvent $event, string $type)
     {
         $title = str_replace('\\', DIRECTORY_SEPARATOR, $event->getSpecification()->getTitle());
         $message = $this->getPresenter()->presentException($event->getException(), $this->io->isVerbose());
@@ -97,7 +98,7 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
     {
         if (
             (null !== $error && ($currentExample->getCurrentExample() || $error['type'] == E_ERROR)) ||
-            (is_null($currentExample->getCurrentExample()) && defined('HHVM_VERSION'))
+            (\is_null($currentExample->getCurrentExample()) && \defined('HHVM_VERSION'))
         ) {
             ini_set('display_errors', "stderr");
             $failedOpen = ($this->io->isDecorated()) ? '<failed>' : '';

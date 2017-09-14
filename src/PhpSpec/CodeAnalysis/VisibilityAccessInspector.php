@@ -20,33 +20,24 @@ final class VisibilityAccessInspector implements AccessInspector
 {
     /**
      * @param object $object
-     * @param string $property
-     *
-     * @return bool
      */
-    public function isPropertyReadable($object, $property)
+    public function isPropertyReadable($object, string $property) : bool
     {
         return $this->isExistingPublicProperty($object, $property);
     }
 
     /**
      * @param object $object
-     * @param string $property
-     *
-     * @return bool
      */
-    public function isPropertyWritable($object, $property)
+    public function isPropertyWritable($object, string $property) : bool
     {
         return $this->isExistingPublicProperty($object, $property);
     }
 
     /**
      * @param object $object
-     * @param string $property
-     *
-     * @return bool
      */
-    private function isExistingPublicProperty($object, $property)
+    private function isExistingPublicProperty($object, string $property) : bool
     {
         if (!property_exists($object, $property)) {
             return false;
@@ -59,22 +50,16 @@ final class VisibilityAccessInspector implements AccessInspector
 
     /**
      * @param object $object
-     * @param string $method
-     *
-     * @return bool
      */
-    public function isMethodCallable($object, $method)
+    public function isMethodCallable($object, string $method) : bool
     {
         return $this->isExistingPublicMethod($object, $method);
     }
 
     /**
      * @param object $object
-     * @param string $method
-     *
-     * @return bool
      */
-    private function isExistingPublicMethod($object, $method)
+    private function isExistingPublicMethod($object, string $method) : bool
     {
         if (!method_exists($object, $method)) {
             return false;

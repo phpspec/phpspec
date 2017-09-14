@@ -70,6 +70,7 @@ changes you will need to make in your code.
 - ``Phpspec\Event\EventInterface`` is now ``Phpspec\Event\PhpSpecEvent``
 - ``PhpSpec\Formatter\Presenter\Differ\EngineInterface`` is now ``PhpSpec\Formatter\Presenter\Differ\DifferEngine``
 - ``PhpSpec\Matcher\MatcherInterface`` is now ``PhpSpec\Matcher\Matcher``
+- ``PhpSpec\Matcher\MatchersProviderInterface`` is now ``PhpSpec\Matcher\MatchersProvider``
 
 Some methods have a different signature:
 

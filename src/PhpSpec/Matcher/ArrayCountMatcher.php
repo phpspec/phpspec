@@ -38,11 +38,11 @@ final class ArrayCountMatcher extends BasicMatcher
      *
      * @return bool
      */
-    public function supports($name, $subject, array $arguments)
+    public function supports(string $name, $subject, array $arguments): bool
     {
         return 'haveCount' === $name
-            && 1 == count($arguments)
-            && (is_array($subject) || $subject instanceof \Countable)
+            && 1 == \count($arguments)
+            && (\is_array($subject) || $subject instanceof \Countable)
         ;
     }
 
@@ -52,9 +52,9 @@ final class ArrayCountMatcher extends BasicMatcher
      *
      * @return bool
      */
-    protected function matches($subject, array $arguments)
+    protected function matches($subject, array $arguments): bool
     {
-        return $arguments[0] === count($subject);
+        return $arguments[0] === \count($subject);
     }
 
     /**
@@ -64,13 +64,13 @@ final class ArrayCountMatcher extends BasicMatcher
      *
      * @return FailureException
      */
-    protected function getFailureException($name, $subject, array $arguments)
+    protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s to have %s items, but got %s.',
             $this->presenter->presentValue($subject),
-            $this->presenter->presentString(intval($arguments[0])),
-            $this->presenter->presentString(count($subject))
+            $this->presenter->presentString(\intval($arguments[0])),
+            $this->presenter->presentString(\count($subject))
         ));
     }
 
@@ -81,12 +81,12 @@ final class ArrayCountMatcher extends BasicMatcher
      *
      * @return FailureException
      */
-    protected function getNegativeFailureException($name, $subject, array $arguments)
+    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s not to have %s items, but got it.',
             $this->presenter->presentValue($subject),
-            $this->presenter->presentString(intval($arguments[0]))
+            $this->presenter->presentString(\intval($arguments[0]))
         ));
     }
 }

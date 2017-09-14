@@ -19,24 +19,24 @@ final class ArrayTypePresenter implements TypePresenter
      * @param mixed $value
      * @return bool
      */
-    public function supports($value)
+    public function supports($value): bool
     {
-        return 'array' === strtolower(gettype($value));
+        return 'array' === strtolower(\gettype($value));
     }
 
     /**
      * @param mixed $value
      * @return string
      */
-    public function present($value)
+    public function present($value): string
     {
-        return sprintf('[array:%d]', count($value));
+        return sprintf('[array:%d]', \count($value));
     }
 
     /**
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 20;
     }

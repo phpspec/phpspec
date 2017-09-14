@@ -56,14 +56,7 @@ final class PrivateConstructorGenerator implements Generator
         $this->codeWriter = $codeWriter;
     }
 
-    /**
-     * @param Resource $resource
-     * @param string $generation
-     * @param array $data
-     *
-     * @return bool
-     */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(Resource $resource, string $generation, array $data) : bool
     {
         return 'private-constructor' === $generation;
     }
@@ -90,18 +83,12 @@ final class PrivateConstructorGenerator implements Generator
         $this->io->writeln("<info>Private constructor has been created.</info>\n", 2);
     }
 
-    /**
-     * @return int
-     */
-    public function getPriority()
+    public function getPriority() : int
     {
         return 0;
     }
 
-    /**
-     * @return string
-     */
-    protected function getTemplate()
+    protected function getTemplate() : string
     {
         return file_get_contents(__DIR__.'/templates/private-constructor.template');
     }

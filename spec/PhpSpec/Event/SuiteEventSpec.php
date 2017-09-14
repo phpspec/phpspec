@@ -27,7 +27,7 @@ class SuiteEventSpec extends ObjectBehavior
 
     function it_provides_a_link_to_time()
     {
-        $this->getTime()->shouldReturn(10);
+        $this->getTime()->shouldReturn(10.0);
     }
 
     function it_provides_a_link_to_result()
@@ -52,5 +52,19 @@ class SuiteEventSpec extends ObjectBehavior
         $this->markAsNotWorthRerunning();
 
         $this->isWorthRerunning()->shouldReturn(false);
+    }
+
+    function it_initializes_a_default_result(Suite $suite)
+    {
+        $this->beConstructedWith($suite);
+
+        $this->getResult()->shouldReturn(Example::PASSED);
+    }
+
+    function it_initializes_a_default_time(Suite $suite)
+    {
+        $this->beConstructedWith($suite);
+
+        $this->getTime()->shouldReturn((double) 0.0);
     }
 }

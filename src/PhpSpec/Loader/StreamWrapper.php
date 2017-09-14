@@ -22,7 +22,7 @@ class StreamWrapper
 
     public static function register()
     {
-        if (in_array('phpspec', stream_get_wrappers())) {
+        if (\in_array('phpspec', stream_get_wrappers())) {
             stream_wrapper_unregister('phpspec');
         }
         stream_wrapper_register('phpspec', 'PhpSpec\Loader\StreamWrapper');
@@ -40,7 +40,7 @@ class StreamWrapper
 
     public static function wrapPath($path)
     {
-        if (!defined('HHVM_VERSION'))
+        if (!\defined('HHVM_VERSION'))
         {
             return 'phpspec://' . $path;
         }

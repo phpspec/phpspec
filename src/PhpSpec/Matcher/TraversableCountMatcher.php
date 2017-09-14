@@ -38,10 +38,10 @@ final class TraversableCountMatcher implements Matcher
     /**
      * {@inheritdoc}
      */
-    public function supports($name, $subject, array $arguments)
+    public function supports(string $name, $subject, array $arguments): bool
     {
         return 'haveCount' === $name
-            && 1 === count($arguments)
+            && 1 === \count($arguments)
             && $subject instanceof \Traversable
         ;
     }
@@ -49,7 +49,7 @@ final class TraversableCountMatcher implements Matcher
     /**
      * {@inheritdoc}
      */
-    public function positiveMatch($name, $subject, array $arguments)
+    public function positiveMatch(string $name, $subject, array $arguments)
     {
         $countDifference = $this->countDifference($subject, (int) $arguments[0]);
 
@@ -68,7 +68,7 @@ final class TraversableCountMatcher implements Matcher
     /**
      * {@inheritdoc}
      */
-    public function negativeMatch($name, $subject, array $arguments)
+    public function negativeMatch(string $name, $subject, array $arguments)
     {
         $count = $this->countDifference($subject, (int) $arguments[0]);
 
@@ -86,7 +86,7 @@ final class TraversableCountMatcher implements Matcher
     /**
      * {@inheritdoc}
      */
-    public function getPriority()
+    public function getPriority() : int
     {
         return 100;
     }
@@ -97,7 +97,7 @@ final class TraversableCountMatcher implements Matcher
      *
      * @return int self::*
      */
-    private function countDifference(\Traversable $subject, $expected)
+    private function countDifference(\Traversable $subject, int $expected): int
     {
         $count = 0;
         foreach ($subject as $value) {

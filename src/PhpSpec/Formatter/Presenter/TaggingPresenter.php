@@ -33,7 +33,7 @@ final class TaggingPresenter implements Presenter
      * @param bool $verbose
      * @return string
      */
-    public function presentException(\Exception $exception, $verbose = false)
+    public function presentException(\Exception $exception, bool $verbose = false): string
     {
         return $this->presenter->presentException($exception, $verbose);
     }
@@ -43,7 +43,7 @@ final class TaggingPresenter implements Presenter
      *
      * @return string
      */
-    public function presentString($string)
+    public function presentString(string $string): string
     {
         return sprintf('<value>%s</value>', $string);
     }
@@ -52,7 +52,7 @@ final class TaggingPresenter implements Presenter
      * @param mixed $value
      * @return string
      */
-    public function presentValue($value)
+    public function presentValue($value): string
     {
         return $this->presentString($this->presenter->presentValue($value));
     }

@@ -21,5 +21,5 @@ interface ThrowExpectation extends Expectation
      *
      * @return mixed
      */
-    public function during($method, array $arguments = array());
+    public function during(string $method, array $arguments = array());
 }

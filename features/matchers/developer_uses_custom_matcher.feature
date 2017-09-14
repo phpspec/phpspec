@@ -33,7 +33,7 @@ Feature: Developer uses custom matcher
 
     class TotalizeMatcher extends BasicMatcher
     {
-        public function supports($name, $subject, array $arguments)
+        public function supports(string $name, $subject, array $arguments): bool
         {
             return 'totalize' === $name &&
                 is_array($subject) &&
@@ -42,12 +42,12 @@ Feature: Developer uses custom matcher
             ;
         }
 
-        protected function matches($subject, array $arguments)
+        protected function matches($subject, array $arguments): bool
         {
             return array_sum($subject) === $arguments[0];
         }
 
-        protected function getFailureException($name, $subject, array $arguments)
+        protected function getFailureException(string $name, $subject, array $arguments): FailureException
         {
             return new FailureException(sprintf(
                 'Expected to totalize %d, but got %d.',
@@ -56,7 +56,7 @@ Feature: Developer uses custom matcher
             ));
         }
 
-        protected function getNegativeFailureException($name, $subject, array $arguments)
+        protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
         {
             return new FailureException(sprintf(
                 'Expected to not totalize %d, but it does.',

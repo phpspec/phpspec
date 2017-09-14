@@ -18,6 +18,7 @@ use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
+use PhpSpec\Locator\Resource;
 use PhpSpec\Locator\ResourceManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -58,7 +59,7 @@ final class CollaboratorNotFoundListener implements EventSubscriberInterface
     /**
      * @return array
      */
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return array(
             'afterExample' => array('afterExample', 10),
@@ -107,7 +108,7 @@ final class CollaboratorNotFoundListener implements EventSubscriberInterface
      * @param Resource $resource
      * @return bool
      */
-    private function resourceIsInSpecNamespace($exception, $resource)
+    private function resourceIsInSpecNamespace(CollaboratorNotFoundException $exception, Resource $resource): bool
     {
         return strpos($exception->getCollaboratorName(), $resource->getSpecNamespace()) === 0;
     }

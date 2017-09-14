@@ -407,7 +407,7 @@ final class ContainerAssembler
             $suites = $c->getParam('suites', array('main' => ''));
 
             foreach ($suites as $name => $suite) {
-                $suite      = is_array($suite) ? $suite : array('namespace' => $suite);
+                $suite      = \is_array($suite) ? $suite : array('namespace' => $suite);
                 $defaults = array(
                     'namespace'     => '',
                     'spec_prefix'   => 'spec',
@@ -454,11 +454,11 @@ final class ContainerAssembler
                 $c->get('util.method_analyser')
             );
         });
-        if (PHP_VERSION >= 7) {
-            $container->define('loader.resource_loader.spec_transformer.typehint_rewriter', function (IndexedServiceContainer $c) {
-                return new Loader\Transformer\TypeHintRewriter($c->get('analysis.typehintrewriter'));
-            }, ['loader.resource_loader.spec_transformer']);
-        }
+
+        $container->define('loader.resource_loader.spec_transformer.typehint_rewriter', function (IndexedServiceContainer $c) {
+            return new Loader\Transformer\TypeHintRewriter($c->get('analysis.typehintrewriter'));
+        }, ['loader.resource_loader.spec_transformer']);
+
         $container->define('analysis.typehintrewriter', function ($c) {
             return new TokenizedTypeHintRewriter(
                 $c->get('loader.transformer.typehintindex'),
@@ -472,10 +472,7 @@ final class ContainerAssembler
             return new TokenizedNamespaceResolver();
         });
         $container->define('analysis.namespaceresolver', function ($c) {
-            if (PHP_VERSION >= 7) {
-                return new StaticRejectingNamespaceResolver($c->get('analysis.namespaceresolver.tokenized'));
-            }
-            return $c->get('analysis.namespaceresolver.tokenized');
+            return new StaticRejectingNamespaceResolver($c->get('analysis.namespaceresolver.tokenized'));
         });
     }
 

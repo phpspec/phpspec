@@ -70,7 +70,7 @@ abstract class ObjectBehavior implements
      * @link http://phpspec.net/cookbook/matchers.html Matchers cookbook
      * @return array a list of inline matchers
      */
-    public function getMatchers()
+    public function getMatchers() : array
     {
         return array();
     }
@@ -104,7 +104,7 @@ abstract class ObjectBehavior implements
      *
      * @return Subject
      */
-    public function offsetExists($key)
+    public function offsetExists($key): Subject
     {
         return $this->object->offsetExists($key);
     }
@@ -116,7 +116,7 @@ abstract class ObjectBehavior implements
      *
      * @return Subject
      */
-    public function offsetGet($key)
+    public function offsetGet($key): Subject
     {
         return $this->object->offsetGet($key);
     }
@@ -150,9 +150,9 @@ abstract class ObjectBehavior implements
      *
      * @return mixed
      */
-    public function __call($method, array $arguments = array())
+    public function __call(string $method, array $arguments = array())
     {
-        return call_user_func_array(array($this->object, $method), $arguments);
+        return \call_user_func_array(array($this->object, $method), $arguments);
     }
 
     /**
@@ -161,7 +161,7 @@ abstract class ObjectBehavior implements
      * @param string $property
      * @param mixed  $value
      */
-    public function __set($property, $value)
+    public function __set(string $property, $value)
     {
         $this->object->$property = $value;
     }
@@ -173,7 +173,7 @@ abstract class ObjectBehavior implements
      *
      * @return mixed
      */
-    public function __get($property)
+    public function __get(string $property)
     {
         return $this->object->$property;
     }
@@ -185,6 +185,6 @@ abstract class ObjectBehavior implements
      */
     public function __invoke()
     {
-        return call_user_func_array(array($this->object, '__invoke'), func_get_args());
+        return \call_user_func_array(array($this->object, '__invoke'), \func_get_args());
     }
 }

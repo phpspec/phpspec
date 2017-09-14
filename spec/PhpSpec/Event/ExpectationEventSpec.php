@@ -74,4 +74,14 @@ class ExpectationEventSpec extends ObjectBehavior
     {
         $this->getException()->shouldReturn($exception);
     }
+
+    function it_initializes_a_default_result(ExampleNode $example, Matcher $matcher, $subject)
+    {
+        $method = 'calledMethod';
+        $arguments = array('methodArguments');
+
+        $this->beConstructedWith($example, $matcher, $subject, $method, $arguments);
+
+        $this->getResult()->shouldReturn($this->PASSED);
+    }
 }

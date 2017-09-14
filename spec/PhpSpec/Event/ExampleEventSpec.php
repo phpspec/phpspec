@@ -43,7 +43,7 @@ class ExampleEventSpec extends ObjectBehavior
 
     function it_provides_a_link_to_time()
     {
-        $this->getTime()->shouldReturn(10);
+        $this->getTime()->shouldReturn((double)10.0);
     }
 
     function it_provides_a_link_to_result()
@@ -54,5 +54,19 @@ class ExampleEventSpec extends ObjectBehavior
     function it_provides_a_link_to_exception($exception)
     {
         $this->getException()->shouldReturn($exception);
+    }
+
+    function it_initializes_a_default_result(ExampleNode $example)
+    {
+        $this->beConstructedWith($example);
+
+        $this->getResult()->shouldReturn($this->PASSED);
+    }
+
+    function it_initializes_a_default_time(ExampleNode $example)
+    {
+        $this->beConstructedWith($example);
+
+        $this->getTime()->shouldReturn((double)0.0);
     }
 }

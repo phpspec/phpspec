@@ -564,3 +564,43 @@ Feature: Developer is shown diffs
             +            Integer euismod in nunc nec lobortis",
                ]
       """
+
+  Scenario: Integer diff in verbose mode
+    Given the spec file "spec/Diffs/DiffExample11/CalculatorSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Diffs\DiffExample11;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class CalculatorSpec extends ObjectBehavior
+      {
+          function it_is_equal()
+          {
+              $this->calculate()->shouldReturn(2);
+          }
+      }
+
+      """
+    And the class file "src/Diffs/DiffExample11/Calculator.php" contains:
+      """
+      <?php
+
+      namespace Diffs\DiffExample11;
+
+      class Calculator
+      {
+          public function calculate()
+          {
+              return 1;
+          }
+      }
+
+      """
+    When I run phpspec with the "verbose" option
+    Then I should see:
+      """
+        expected [integer:2], but got [integer:1]
+      """

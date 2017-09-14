@@ -4,13 +4,12 @@ namespace spec\PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\CodeGenerator\Generator\Generator;
 use PhpSpec\Console\ConsoleIO;
-use PhpSpec\IO\IO;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Locator\Resource;
 
 class ConfirmingGeneratorSpec extends ObjectBehavior
 {
-    function let(IO $io, Generator $generator)
+    function let(ConsoleIO $io, Generator $generator)
     {
         $this->beConstructedWith($io, 'Question for {CLASSNAME}', $generator);
     }

@@ -46,7 +46,7 @@ final class ImplementsGenerator implements Generator
      *
      * @return bool
      */
-    public function supports(Resource $resource, $generation, array $data)
+    public function supports(Resource $resource, string $generation, array $data) : bool
     {
         return 'implements' === $generation;
     }
@@ -68,7 +68,7 @@ final class ImplementsGenerator implements Generator
     /**
      * @return int
      */
-    public function getPriority()
+    public function getPriority() : int
     {
         return 0;
     }

@@ -60,7 +60,7 @@ class ReportItemFactory
      *
      * @throws InvalidExampleResultException
      */
-    private function invalidResultException($result)
+    private function invalidResultException(int $result)
     {
         throw new InvalidExampleResultException(
             "Unrecognised example result $result"

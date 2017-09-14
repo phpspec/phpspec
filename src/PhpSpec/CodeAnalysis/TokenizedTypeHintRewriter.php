@@ -52,12 +52,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         $this->namespaceResolver = $namespaceResolver;
     }
 
-    /**
-     * @param string $classDefinition
-     *
-     * @return string
-     */
-    public function rewrite($classDefinition)
+    public function rewrite(string $classDefinition) : string
     {
         $this->namespaceResolver->analyse($classDefinition);
 
@@ -75,11 +70,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         $this->currentFunction = '';
     }
 
-    /**
-     * @param array $tokens
-     * @return array $tokens
-     */
-    private function stripTypeHints($tokens)
+    private function stripTypeHints(array $tokens) : array
     {
         foreach ($tokens as $index => $token) {
             if ($this->isToken($token, '{')) {
@@ -143,22 +134,17 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
      * @param array $tokens
      * @return string
      */
-    private function tokensToString($tokens)
+    private function tokensToString(array $tokens) : string
     {
         return join('', array_map(function ($token) {
-            return is_array($token) ? $token[1] : $token;
+            return \is_array($token) ? $token[1] : $token;
         }, $tokens));
     }
 
-    /**
-     * @param array $tokens
-     * @param integer $index
-     * @param array $token
-     */
-    private function extractTypehints(&$tokens, $index, $token)
+    private function extractTypehints(array &$tokens, int $index, array $token)
     {
         $typehint = '';
-        for ($i = $index - 1; in_array($tokens[$i][0], $this->typehintTokens); $i--) {
+        for ($i = $index - 1; \in_array($tokens[$i][0], $this->typehintTokens); $i--) {
             $typehint = $tokens[$i][1] . $typehint;
 
             if (T_WHITESPACE !== $tokens[$i][0]) {
@@ -189,33 +175,22 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
 
     /**
      * @param array|string $token
-     * @param string $type
-     *
-     * @return bool
      */
-    private function tokenHasType($token, $type)
+    private function tokenHasType($token, string $type) : bool
     {
-        return is_array($token) && $type == $token[0];
+        return \is_array($token) && $type == $token[0];
     }
 
-    /**
-     * @param string $className
-     *
-     * @return bool
-     */
-    private function shouldExtractTokensOfClass($className)
+    private function shouldExtractTokensOfClass(string $className) : bool
     {
         return substr($className, -4) == 'Spec';
     }
 
     /**
      * @param array|string $token
-     * @param string $string
-     *
-     * @return bool
      */
-    private function isToken($token, $string)
+    private function isToken($token, string $string) : bool
     {
-        return $token == $string || (is_array($token) && $token[1] == $string);
+        return $token == $string || (\is_array($token) && $token[1] == $string);
     }
 }

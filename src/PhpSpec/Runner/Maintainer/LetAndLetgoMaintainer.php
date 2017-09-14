@@ -25,7 +25,7 @@ class LetAndLetgoMaintainer implements Maintainer
      *
      * @return bool
      */
-    public function supports(ExampleNode $example)
+    public function supports(ExampleNode $example): bool
     {
         return $example->getSpecification()->getClassReflection()->hasMethod('let')
             || $example->getSpecification()->getClassReflection()->hasMethod('letgo')
@@ -75,7 +75,7 @@ class LetAndLetgoMaintainer implements Maintainer
     /**
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 10;
     }

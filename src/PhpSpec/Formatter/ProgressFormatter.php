@@ -55,7 +55,7 @@ final class ProgressFormatter extends ConsoleFormatter
         $count = $stats->getEventsCount();
         $plural = $count !== 1 ? 's' : '';
         $io->write(sprintf("%d example%s ", $count, $plural));
-        if (count($counts)) {
+        if (\count($counts)) {
             $io->write(sprintf("(%s)", implode(', ', $counts)));
         }
 
@@ -68,7 +68,7 @@ final class ProgressFormatter extends ConsoleFormatter
      * @param $counts
      * @return array
      */
-    private function getPercentages($total, $counts)
+    private function getPercentages($total, $counts): array
     {
         return array_map(
             function ($count) use ($total) {
@@ -88,7 +88,7 @@ final class ProgressFormatter extends ConsoleFormatter
      * @param array $counts
      * @return array
      */
-    private function getBarLengths($counts)
+    private function getBarLengths(array $counts): array
     {
         $stats = $this->getStatisticsCollector();
         $totalSpecsCount = $stats->getTotalSpecsCount();
@@ -109,7 +109,7 @@ final class ProgressFormatter extends ConsoleFormatter
      * @param  boolean $isDecorated
      * @return array
      */
-    private function formatProgressOutput($barLengths, $percents, $isDecorated)
+    private function formatProgressOutput(array $barLengths, array $percents, bool $isDecorated): array
     {
         $size = $this->getIO()->getBlockWidth();
         $progress = array();
@@ -120,7 +120,7 @@ final class ProgressFormatter extends ConsoleFormatter
             $size = $size - $length;
 
             if ($isDecorated) {
-                if ($length > strlen($text) + 2) {
+                if ($length > \strlen($text) + 2) {
                     $text = str_pad($text, $length, ' ', STR_PAD_BOTH);
                 } else {
                     $text = str_pad('', $length, ' ');
@@ -146,11 +146,11 @@ final class ProgressFormatter extends ConsoleFormatter
      * @param array     $progress
      * @param int       $total
      */
-    private function updateProgressBar(ConsoleIO $io, array $progress, $total)
+    private function updateProgressBar(ConsoleIO $io, array $progress, int $total)
     {
         if ($io->isDecorated()) {
             $progressBar = implode('', $progress);
-            $pad = $this->getIO()->getBlockWidth() - strlen(strip_tags($progressBar));
+            $pad = $this->getIO()->getBlockWidth() - \strlen(strip_tags($progressBar));
             $io->writeTemp($progressBar.str_repeat(' ', $pad + 1).$total);
         } else {
             $io->writeTemp('/'.implode('/', $progress).'/  '.$total.' examples');

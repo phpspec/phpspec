@@ -26,7 +26,7 @@ abstract class BasicMatcher implements Matcher
      *
      *   @throws FailureException
      */
-    final public function positiveMatch($name, $subject, array $arguments)
+    final public function positiveMatch(string $name, $subject, array $arguments)
     {
         if (false === $this->matches($subject, $arguments)) {
             throw $this->getFailureException($name, $subject, $arguments);
@@ -44,7 +44,7 @@ abstract class BasicMatcher implements Matcher
      *
      * @throws FailureException
      */
-    final public function negativeMatch($name, $subject, array $arguments)
+    final public function negativeMatch(string $name, $subject, array $arguments)
     {
         if (true === $this->matches($subject, $arguments)) {
             throw $this->getNegativeFailureException($name, $subject, $arguments);
@@ -56,7 +56,7 @@ abstract class BasicMatcher implements Matcher
     /**
      * @return int
      */
-    public function getPriority()
+    public function getPriority(): int
     {
         return 100;
     }
@@ -67,7 +67,7 @@ abstract class BasicMatcher implements Matcher
      *
      * @return boolean
      */
-    abstract protected function matches($subject, array $arguments);
+    abstract protected function matches($subject, array $arguments): bool;
 
     /**
      * @param string $name
@@ -76,7 +76,7 @@ abstract class BasicMatcher implements Matcher
      *
      * @return FailureException
      */
-    abstract protected function getFailureException($name, $subject, array $arguments);
+    abstract protected function getFailureException(string $name, $subject, array $arguments): FailureException;
 
     /**
      * @param string $name
@@ -85,5 +85,5 @@ abstract class BasicMatcher implements Matcher
      *
      * @return FailureException
      */
-    abstract protected function getNegativeFailureException($name, $subject, array $arguments);
+    abstract protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException;
 }

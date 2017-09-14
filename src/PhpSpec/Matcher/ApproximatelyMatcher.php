@@ -50,9 +50,9 @@ final class ApproximatelyMatcher extends BasicMatcher
      *
      * @return bool
      */
-    public function supports($name, $subject, array $arguments)
+    public function supports(string $name, $subject, array $arguments): bool
     {
-        return in_array($name, self::$keywords) && 2 == count($arguments);
+        return \in_array($name, self::$keywords) && 2 == \count($arguments);
     }
 
     /**
@@ -61,14 +61,14 @@ final class ApproximatelyMatcher extends BasicMatcher
      *
      * @return bool
      */
-    protected function matches($subject, array $arguments)
+    protected function matches($subject, array $arguments): bool
     {
         $value = (float)$arguments[0];
         return (abs($subject - $value) < $arguments[1]);
     }
 
 
-    protected function getFailureException($name, $subject, array $arguments)
+    protected function getFailureException(string $name, $subject, array $arguments) : FailureException
     {
         return new FailureException(sprintf(
             'Expected an approximated value of %s, but got %s',
@@ -77,7 +77,7 @@ final class ApproximatelyMatcher extends BasicMatcher
         ));
     }
 
-    protected function getNegativeFailureException($name, $subject, array $arguments)
+    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Did Not expect an approximated value of %s, but got %s',
