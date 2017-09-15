@@ -95,7 +95,7 @@ final class ClassFileAnalyser
      *
      * @return bool
      */
-    public function classImplementsInterface($class)
+    public function classImplementsAnyInterface(string $class): bool
     {
         $tokens = $this->getTokensForClass($class);
 

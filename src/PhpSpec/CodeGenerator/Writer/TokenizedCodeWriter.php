@@ -94,7 +94,7 @@ final class TokenizedCodeWriter implements CodeWriter
         $lastClassDeclarationLine = $classLines[$lastLineOfClassDeclaration - 1];
         $newLineModifier = (false === strpos($lastClassDeclarationLine, 'class ')) ? "\n" . '    ' : ' ';
 
-        if ($this->analyser->classImplementsInterface($class)) {
+        if ($this->analyser->classImplementsAnyInterface($class)) {
             $lastClassDeclarationLine .= ',' . $newLineModifier . $interfaceName;
         } else {
             $lastClassDeclarationLine .= ' implements ' . $interfaceName;
