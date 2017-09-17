@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\CodeGenerator\Generator;
 
+use PhpSpec\CodeGenerator\Generator\Argument\StringBuilder;
 use PhpSpec\CodeGenerator\Writer\CodeWriter;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
@@ -13,9 +14,14 @@ use PhpSpec\Locator\Resource;
 
 class MethodGeneratorSpec extends ObjectBehavior
 {
-    function let(ConsoleIO $io, TemplateRenderer $tpl, Filesystem $fs, CodeWriter $codeWriter)
-    {
-        $this->beConstructedWith($io, $tpl, $fs, $codeWriter);
+    function let(
+        ConsoleIO $io,
+        TemplateRenderer $tpl,
+        Filesystem $fs,
+        CodeWriter $codeWriter,
+        StringBuilder $argBuilder
+    ) {
+        $this->beConstructedWith($io, $tpl, $fs, $codeWriter, $argBuilder);
     }
 
     function it_is_a_generator()

@@ -308,7 +308,8 @@ final class ContainerAssembler
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem'),
-                $c->get('code_generator.writers.tokenized')
+                $c->get('code_generator.writers.tokenized'),
+                new CodeGenerator\Generator\Argument\StringBuilder()
             );
         }, ['code_generator.generators']);
         $container->define('code_generator.generators.methodSignature', function (IndexedServiceContainer $c) {
@@ -353,7 +354,8 @@ final class ContainerAssembler
         $container->define('code_generator.generators.implements', function (IndexedServiceContainer $c) {
             return new CodeGenerator\Generator\ImplementsGenerator(
                 $c->get('util.filesystem'),
-                $c->get('code_generator.writers.tokenized')
+                $c->get('code_generator.writers.tokenized'),
+                $c->get('code_generator.generators.method')
             );
         }, ['code_generator.generators']);
 

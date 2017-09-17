@@ -104,10 +104,10 @@ final class InvalidTypeListener implements EventSubscriberInterface
             if ($this->io->askConfirmation($message)) {
                 $this->generator->generate($classResource, 'implements', ['interface' => $type]);
 
-                foreach ($methods as $method => $arguments) {
+                foreach ($methods as $method => $parameters) {
                     $this->generator->generate($classResource, 'method', array(
                         'name' => $method,
-                        'arguments' => $arguments
+                        'reflection_parameters' => $parameters
                     ));
 
                     $event->markAsWorthRerunning();

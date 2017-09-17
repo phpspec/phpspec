@@ -13,6 +13,7 @@
 
 namespace PhpSpec\CodeGenerator\Generator;
 
+use PhpSpec\CodeGenerator\Generator\Argument\StringBuilder;
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\CodeGenerator\Writer\CodeWriter;
@@ -45,17 +46,29 @@ final class MethodGenerator implements Generator
     private $codeWriter;
 
     /**
-     * @param ConsoleIO $io
-     * @param TemplateRenderer $templates
-     * @param Filesystem $filesystem
-     * @param CodeWriter $codeWriter
+     * @var StringBuilder
      */
-    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, CodeWriter $codeWriter)
-    {
-        $this->io         = $io;
-        $this->templates  = $templates;
+    private $argumentBuilder;
+
+    /**
+     * @param ConsoleIO        $io
+     * @param TemplateRenderer $templates
+     * @param Filesystem       $filesystem
+     * @param CodeWriter       $codeWriter
+     * @param StringBuilder    $argumentBuilder
+     */
+    public function __construct(
+        ConsoleIO $io,
+        TemplateRenderer $templates,
+        Filesystem $filesystem,
+        CodeWriter $codeWriter,
+        StringBuilder $argumentBuilder
+    ) {
+        $this->io = $io;
+        $this->templates = $templates;
         $this->filesystem = $filesystem;
         $this->codeWriter = $codeWriter;
+        $this->argumentBuilder = $argumentBuilder;
     }
 
     public function supports(Resource $resource, string $generation, array $data) : bool
@@ -65,18 +78,21 @@ final class MethodGenerator implements Generator
 
     /**
      * @param Resource $resource
-     * @param array             $data
+     * @param array    $data
      */
     public function generate(Resource $resource, array $data = array())
     {
-        $filepath  = $resource->getSrcFilename();
-        $name      = $data['name'];
-        $arguments = $data['arguments'];
+        $filepath = $resource->getSrcFilename();
+        $name = $data['name'];
 
-        $argString = \count($arguments)
-            ? '$argument'.implode(', $argument', range(1, \count($arguments)))
-            : ''
-        ;
+        if (isset($data['reflection_parameters'])) {
+            $argString = $this->argumentBuilder->buildFromReflectionParameters($data['reflection_parameters']);
+        } else {
+            $arguments = $data['arguments'];
+            $argString = \count($arguments)
+                ? '$argument' . implode(', $argument', range(1, \count($arguments)))
+                : '';
+        }
 
         $values = array('%name%' => $name, '%arguments%' => $argString);
         if (!$content = $this->templates->render('method', $values)) {
@@ -111,6 +127,7 @@ final class MethodGenerator implements Generator
         if ('__construct' === $methodName) {
             return $this->codeWriter->insertMethodFirstInClass($code, $snippetToInsert);
         }
+
         return $this->codeWriter->insertMethodLastInClass($code, $snippetToInsert);
     }
 }

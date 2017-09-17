@@ -3,8 +3,11 @@
 namespace spec\PhpSpec\Util;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
+use PhpSpec\Util\ClassFileAnalyser;
 
+/**
+ * @mixin ClassFileAnalyser
+ */
 class ClassFileAnalyserSpec extends ObjectBehavior
 {
     function it_should_return_the_line_number_of_the_start_of_the_first_method()
@@ -51,8 +54,8 @@ class ClassFileAnalyserSpec extends ObjectBehavior
 
     function it_should_detect_if_class_implements_an_interface()
     {
-        $this->classImplementsInterface($this->getClassThatImplementsInterface())->shouldReturn(true);
-        $this->classImplementsInterface($this->getClassWithNoMethods())->shouldReturn(false);
+        $this->classImplementsAnyInterface($this->getClassThatImplementsInterface())->shouldReturn(true);
+        $this->classImplementsAnyInterface($this->getClassWithNoMethods())->shouldReturn(false);
     }
 
     function it_should_return_the_line_number_of_the_last_use_statement()

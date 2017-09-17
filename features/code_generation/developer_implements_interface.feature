@@ -109,7 +109,7 @@ Feature: Developer implements interface
 
       class Person implements CanSpeak
       {
-          public function say(Phrase $argument1)
+          public function say(Phrase $phrase)
           {
               // TODO: write logic here
           }
