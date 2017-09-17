@@ -30,6 +30,30 @@ class StringBuilderSpec extends ObjectBehavior
 
         $this->buildFromReflectionParameters($parameters)->shouldReturn('\Iterator $iterator, \SplFixedArray $array');
     }
+
+    function it_builds_an_argument_string_for_a_nullable_type_hinted_argument()
+    {
+        $reflectionClass = new \ReflectionClass(Foo::class);
+        $parameters = $reflectionClass->getMethod('typeHintedWithNullable')->getParameters();
+
+        $this->buildFromReflectionParameters($parameters)->shouldReturn('\Iterator $iterator = null');
+    }
+
+    function it_builds_an_argument_string_for_scalar_type_hinted_arguments()
+    {
+        $reflectionClass = new \ReflectionClass(Foo::class);
+        $parameters = $reflectionClass->getMethod('scalarTypeHinted')->getParameters();
+
+        $this->buildFromReflectionParameters($parameters)->shouldReturn('string $message, int $option');
+    }
+
+    function it_builds_an_argument_string_for_nullable_scalar_type_hinted_arguments()
+    {
+        $reflectionClass = new \ReflectionClass(Foo::class);
+        $parameters = $reflectionClass->getMethod('nullableScalarTypeHinted')->getParameters();
+
+        $this->buildFromReflectionParameters($parameters)->shouldReturn('?string $message, ?int $option');
+    }
 }
 
 class Foo
@@ -43,6 +67,14 @@ class Foo
     }
 
     public function typeHintedWithNullable(\Iterator $iterator = null)
+    {
+    }
+
+    public function scalarTypeHinted(string $message, int $option)
+    {
+    }
+
+    public function nullableScalarTypeHinted(?string $message, ?int $option)
     {
     }
 }
