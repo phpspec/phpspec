@@ -52,7 +52,7 @@ Feature: Developer implements interface
 
       class Person implements CanSpeak
       {
-          public function say($argument1)
+          public function say($phrase)
           {
               // TODO: write logic here
           }
@@ -182,12 +182,12 @@ Feature: Developer implements interface
           {
           }
 
-          public function manage($argument1, $argument2)
+          public function manage($what, $how)
           {
               // TODO: write logic here
           }
 
-          public function delegate($argument1, $argument2)
+          public function delegate($what, $who)
           {
               // TODO: write logic here
           }
@@ -248,7 +248,7 @@ Feature: Developer implements interface
 
       class Engineer implements CanWriteCode
       {
-          public function writeCode($argument1)
+          public function writeCode($code)
           {
               // TODO: write logic here
           }
@@ -446,7 +446,6 @@ Feature: Developer implements interface
       namespace CodeGeneration\AbstractTypeMethods;
 
       use CodeGeneration\AbstractTypeMethods\Auth\AuthorisedUserException;
-      use CodeGeneration\AbstractTypeMethods\Auth\Token;
 
       class UserActionException implements AuthorisedUserException
       {
@@ -455,7 +454,7 @@ Feature: Developer implements interface
               // TODO: write logic here
           }
 
-          public function setToken(Token $token)
+          public function setToken(\CodeGeneration\AbstractTypeMethods\Auth\Token $token)
           {
               // TODO: write logic here
           }
