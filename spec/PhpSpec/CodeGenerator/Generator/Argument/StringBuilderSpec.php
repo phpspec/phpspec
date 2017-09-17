@@ -54,6 +54,14 @@ class StringBuilderSpec extends ObjectBehavior
 
         $this->buildFromReflectionParameters($parameters, __NAMESPACE__)->shouldReturn('Bar $bar');
     }
+
+    function it_builds_an_argument_string_for_classes_in_a_different_namespace()
+    {
+        $reflectionClass = new \ReflectionClass(Foo::class);
+        $parameters = $reflectionClass->getMethod('differentNamespaceClassTypeHint')->getParameters();
+
+        $this->buildFromReflectionParameters($parameters, __NAMESPACE__)->shouldReturn('\PhpSpec\Event\PhpSpecEvent $event');
+    }
 }
 
 class Foo
@@ -75,6 +83,10 @@ class Foo
     }
 
     public function sameNamespaceClassTypeHint(Bar $bar)
+    {
+    }
+
+    public function differentNamespaceClassTypeHint(\PhpSpec\Event\PhpSpecEvent $event)
     {
     }
 }
