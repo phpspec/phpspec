@@ -86,7 +86,7 @@ final class MethodGenerator implements Generator
         $name = $data['name'];
 
         if (isset($data['reflection_parameters'])) {
-            $argString = $this->argumentBuilder->buildFromReflectionParameters($data['reflection_parameters']);
+            $argString = $this->argumentBuilder->buildFromReflectionParameters($data['reflection_parameters'], $resource->getSrcNamespace());
         } else {
             $arguments = $data['arguments'];
             $argString = \count($arguments)

@@ -11,14 +11,14 @@ class StringBuilder
      *
      * @return string
      */
-    public function buildFromReflectionParameters(array $parameters) : string
+    public function buildFromReflectionParameters(array $parameters, string $targetClassNamespace) : string
     {
-        return implode(', ', array_map(function (\ReflectionParameter $parameter) {
-            return $this->buildArgument($parameter);
+        return implode(', ', array_map(function (\ReflectionParameter $parameter) use ($targetClassNamespace) {
+            return $this->buildArgument($parameter, $targetClassNamespace);
         }, $parameters));
     }
 
-    private function buildArgument(\ReflectionParameter $parameter) : string
+    private function buildArgument(\ReflectionParameter $parameter, string $targetClassNamespace) : string
     {
         $parameterName = '$' . $parameter->getName();
 
@@ -26,7 +26,7 @@ class StringBuilder
 
         switch (true) {
             case (class_exists($type) || interface_exists($type)):
-                $typeHint = sprintf('\\%s ', $type);
+                $typeHint = $this->getResolvedClassTypeHint($parameter->getClass(), $targetClassNamespace) . ' ';
                 break;
             case (strlen($type) > 0):
                 $typeHint = $type . ' ';
@@ -52,5 +52,14 @@ class StringBuilder
     {
         return $parameter->allowsNull() &&
                 (strlen($typeHint) > 0) && !$parameter->isDefaultValueAvailable() ? self::NULLABLE_OPERATOR : '';
+    }
+
+    private function getResolvedClassTypeHint(\ReflectionClass $class, string $targetClassNamespace) : string
+    {
+        if ($class->getNamespaceName() === $targetClassNamespace) {
+            return $class->getShortName();
+        }
+
+        return sprintf('\\%s', $class->getName());
     }
 }
