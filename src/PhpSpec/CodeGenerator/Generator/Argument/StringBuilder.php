@@ -4,6 +4,8 @@ namespace PhpSpec\CodeGenerator\Generator\Argument;
 
 class StringBuilder
 {
+    const NULLABLE_OPERATOR = '?';
+
     /**
      * @param \ReflectionParameter[] $parameters
      *
@@ -33,16 +35,22 @@ class StringBuilder
                 $typeHint = '';
         }
 
-        $nullableOperator = $parameter->allowsNull() && (strlen($typeHint) > 0) && !$parameter->isDefaultValueAvailable() ? '?' : '';
-        $defaultValueString = $this->getDefaultValueStringFromParameter($parameter);
+        $nullableOperator = $this->getNullableOperator($parameter, $typeHint);
+        $defaultValueString = $this->getDefaultValueStringFrom($parameter);
 
         return $nullableOperator . $typeHint . $parameterName . $defaultValueString;
     }
 
-    private function getDefaultValueStringFromParameter(\ReflectionParameter $parameter) : string
+    private function getDefaultValueStringFrom(\ReflectionParameter $parameter) : string
     {
         $type = $parameter->getType();
 
         return $type && $parameter->isDefaultValueAvailable() ? sprintf(' = %s', strtolower(gettype($parameter->getDefaultValue()))) : '';
+    }
+
+    private function getNullableOperator(\ReflectionParameter $parameter, $typeHint) : string
+    {
+        return $parameter->allowsNull() &&
+                (strlen($typeHint) > 0) && !$parameter->isDefaultValueAvailable() ? self::NULLABLE_OPERATOR : '';
     }
 }
