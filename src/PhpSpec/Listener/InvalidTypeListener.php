@@ -98,7 +98,6 @@ final class InvalidTypeListener implements EventSubscriberInterface
     private function promptUserToImplementMethods(SuiteEvent $event, array $typesAndMethods, $class, $classResource)
     {
         foreach ($typesAndMethods as $type => $methods) {
-
             $message = sprintf('Do you want me to implement the methods from `%s` in `%s` for you?', $type, $class);
 
             if ($this->io->askConfirmation($message)) {
