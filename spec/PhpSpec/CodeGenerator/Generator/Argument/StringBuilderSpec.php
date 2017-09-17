@@ -47,14 +47,6 @@ class StringBuilderSpec extends ObjectBehavior
         $this->buildFromReflectionParameters($parameters, __NAMESPACE__)->shouldReturn('string $message, int $option');
     }
 
-    function it_builds_an_argument_string_for_nullable_scalar_type_hinted_arguments()
-    {
-        $reflectionClass = new \ReflectionClass(Foo::class);
-        $parameters = $reflectionClass->getMethod('nullableScalarTypeHinted')->getParameters();
-
-        $this->buildFromReflectionParameters($parameters, __NAMESPACE__)->shouldReturn('?string $message, ?int $option');
-    }
-
     function it_builds_an_argument_string_for_classes_in_the_same_namespace()
     {
         $reflectionClass = new \ReflectionClass(Foo::class);
@@ -79,10 +71,6 @@ class Foo
     }
 
     public function scalarTypeHinted(string $message, int $option)
-    {
-    }
-
-    public function nullableScalarTypeHinted(?string $message, ?int $option)
     {
     }
 
