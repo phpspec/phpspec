@@ -73,6 +73,7 @@ Feature: Config directory can be used in spec and src paths
     Then a new class should be generated in the "Awesome/src/MilkyWay/OrionCygnusArm/Pleiades/Alcyone.php":
       """
       <?php
+      declare(strict_types=1);
 
       namespace MilkyWay\OrionCygnusArm\Pleiades;
 
@@ -94,6 +95,7 @@ Feature: Config directory can be used in spec and src paths
     Then a new class should be generated in the "src/MilkyWay/OrionCygnusArm/BehiveCluster.php":
       """
       <?php
+      declare(strict_types=1);
 
       namespace MilkyWay\OrionCygnusArm;
 

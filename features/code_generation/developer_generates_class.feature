@@ -10,6 +10,7 @@ Feature: Developer generates a class
     Then a new class should be generated in the "src/CodeGeneration/ClassExample1/Markdown.php":
       """
       <?php
+      declare(strict_types=1);
 
       namespace CodeGeneration\ClassExample1;
 
@@ -60,6 +61,7 @@ Feature: Developer generates a class
     Then a new class should be generated in the "src/MyNamespace/Markdown.php":
     """
     <?php
+    declare(strict_types=1);
 
     namespace Behat\Tests\MyNamespace;
 
@@ -76,6 +78,7 @@ Feature: Developer generates a class
     Then a new class should be generated in the "src/CodeGeneration/ClassExample1/Text/Markdown.php":
       """
       <?php
+      declare(strict_types=1);
 
       namespace CodeGeneration\ClassExample1;
 
@@ -92,6 +95,7 @@ Feature: Developer generates a class
     Then a new class should be generated in the "src/CodeGeneration/Class_Example2/Text/Markdown.php":
       """
       <?php
+      declare(strict_types=1);
 
       namespace CodeGeneration\Class_Example2;
 
@@ -150,6 +154,7 @@ Feature: Developer generates a class
     Then the class in "src/CodeGeneration/MethodExample2/ForgotPassword.php" should contain:
     """
     <?php
+    declare(strict_types=1);
 
     namespace CodeGeneration\MethodExample2;
 
