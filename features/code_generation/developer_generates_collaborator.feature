@@ -77,6 +77,7 @@ Feature: Developer generates a collaborator
     Then the class in "src/CodeGeneration/CollaboratorExample2/Parser.php" should contain:
       """
       <?php
+      declare(strict_types=1);
 
       namespace CodeGeneration\CollaboratorExample2;
 
