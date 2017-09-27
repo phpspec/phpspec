@@ -82,6 +82,7 @@ class FilesystemContext implements Context
     /**
      * @Given the class file :file contains:
      * @Given the trait file :file contains:
+     * @Given the interface file :file contains:
      */
     public function theClassOrTraitFileContains($file, PyStringNode $contents)
     {

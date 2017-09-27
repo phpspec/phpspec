@@ -22,7 +22,7 @@ Feature: Developer implements interface
           }
       }
       """
-    And the class file "src/CodeGeneration/AbstractTypeMethods/CanSpeak.php" contains:
+    And the interface file "src/CodeGeneration/AbstractTypeMethods/CanSpeak.php" contains:
       """
       <?php
 
@@ -77,7 +77,7 @@ Feature: Developer implements interface
           }
       }
       """
-    And the class file "src/CanSpeak.php" contains:
+    And the interface file "src/CanSpeak.php" contains:
       """
       <?php
 
@@ -94,7 +94,7 @@ Feature: Developer implements interface
       {
       }
       """
-    And the class file "src/Phrase.php" contains:
+    And the interface file "src/Phrase.php" contains:
       """
       <?php
 
@@ -135,7 +135,7 @@ Feature: Developer implements interface
           }
       }
       """
-    And the class file "src/CodeGeneration/AbstractTypeMethods/CanManage.php" contains:
+    And the interface file "src/CodeGeneration/AbstractTypeMethods/CanManage.php" contains:
       """
       <?php
 
@@ -213,8 +213,7 @@ Feature: Developer implements interface
           }
       }
      """
-
-    And the class file "src/CodeGeneration/AbstractTypeMethods/Engineering/CanWriteCode.php" contains:
+    And the interface file "src/CodeGeneration/AbstractTypeMethods/Engineering/CanWriteCode.php" contains:
       """
       <?php
 
@@ -225,7 +224,6 @@ Feature: Developer implements interface
           public function writeCode($code);
       }
       """
-
     And the class file "src/CodeGeneration/AbstractTypeMethods/Engineer.php" contains:
       """
       <?php
@@ -274,8 +272,7 @@ Feature: Developer implements interface
           }
       }
      """
-
-    And the class file "src/CodeGeneration/AbstractTypeMethods/Exceptions/FriendlyMessageException.php" contains:
+    And the interface file "src/CodeGeneration/AbstractTypeMethods/Exceptions/FriendlyMessageException.php" contains:
       """
       <?php
 
@@ -286,7 +283,6 @@ Feature: Developer implements interface
           public function getFriendlyMessage();
       }
       """
-
     And the class file "src/CodeGeneration/AbstractTypeMethods/UserFriendlyException.php" contains:
       """
       <?php
@@ -297,7 +293,6 @@ Feature: Developer implements interface
       {
       }
       """
-
     When I run phpspec and answer "y" when asked if I want to generate the code
     Then the class in "src/CodeGeneration/AbstractTypeMethods/UserFriendlyException.php" should contain:
       """
@@ -334,7 +329,7 @@ Feature: Developer implements interface
           }
       }
      """
-    And the class file "src/CodeGeneration/AbstractTypeMethods/Type.php" contains:
+    And the interface file "src/CodeGeneration/AbstractTypeMethods/Type.php" contains:
       """
       <?php
 
@@ -390,8 +385,7 @@ Feature: Developer implements interface
           }
       }
      """
-
-    And the class file "src/CodeGeneration/AbstractTypeMethods/Exceptions/UserException.php" contains:
+    And the interface file "src/CodeGeneration/AbstractTypeMethods/Exceptions/UserException.php" contains:
       """
       <?php
 
@@ -402,7 +396,7 @@ Feature: Developer implements interface
           public function getUser();
       }
       """
-    And the class file "src/CodeGeneration/AbstractTypeMethods/Exceptions/AuthorisedUserException.php" contains:
+    And the interface file "src/CodeGeneration/AbstractTypeMethods/Exceptions/AuthorisedUserException.php" contains:
       """
       <?php
 
@@ -415,7 +409,6 @@ Feature: Developer implements interface
           public function setToken(Token $token);
       }
       """
-
     And the class file "src/CodeGeneration/AbstractTypeMethods/UserActionException.php" contains:
       """
       <?php
@@ -426,8 +419,7 @@ Feature: Developer implements interface
       {
       }
       """
-
-    And the class file "src/CodeGeneration/AbstractTypeMethods/Auth/Token.php" contains:
+    And the interface file "src/CodeGeneration/AbstractTypeMethods/Auth/Token.php" contains:
       """
       <?php
 
@@ -437,7 +429,6 @@ Feature: Developer implements interface
       {
       }
       """
-
     When I run phpspec and answer "y" when asked if I want to generate the code
     Then the class in "src/CodeGeneration/AbstractTypeMethods/UserActionException.php" should contain:
       """
@@ -485,7 +476,7 @@ Feature: Developer implements interface
           }
       }
      """
-    And the class file "src/CodeGeneration/AbstractTypeMethods/Exceptions/TokenAware.php" contains:
+    And the interface file "src/CodeGeneration/AbstractTypeMethods/Exceptions/TokenAware.php" contains:
       """
       <?php
 
@@ -496,7 +487,7 @@ Feature: Developer implements interface
           public function getToken();
       }
       """
-    And the class file "src/CodeGeneration/AbstractTypeMethods/Exceptions/UsernameAware.php" contains:
+    And the interface file "src/CodeGeneration/AbstractTypeMethods/Exceptions/UsernameAware.php" contains:
       """
       <?php
 
@@ -522,7 +513,6 @@ Feature: Developer implements interface
           }
       }
       """
-
     When I run phpspec and answer "y" when asked if I want to generate the code
     Then the class in "src/CodeGeneration/AbstractTypeMethods/User.php" should contain:
       """
@@ -609,7 +599,7 @@ Feature: Developer implements interface
           }
       }
       """
-    And the class file "src/CodeGeneration/AbstractTypeMethods/Vehicle.php" contains:
+    And the interface file "src/CodeGeneration/AbstractTypeMethods/Vehicle.php" contains:
       """
       <?php
 
