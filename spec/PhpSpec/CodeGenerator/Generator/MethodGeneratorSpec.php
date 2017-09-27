@@ -2,7 +2,7 @@
 
 namespace spec\PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\CodeGenerator\Generator\Argument\StringBuilder;
+use PhpSpec\CodeGenerator\Generator\Argument\StringConverter;
 use PhpSpec\CodeGenerator\Writer\CodeWriter;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
@@ -19,9 +19,9 @@ class MethodGeneratorSpec extends ObjectBehavior
         TemplateRenderer $tpl,
         Filesystem $fs,
         CodeWriter $codeWriter,
-        StringBuilder $argBuilder
+        StringConverter $argStringConverter
     ) {
-        $this->beConstructedWith($io, $tpl, $fs, $codeWriter, $argBuilder);
+        $this->beConstructedWith($io, $tpl, $fs, $codeWriter, $argStringConverter);
     }
 
     function it_is_a_generator()

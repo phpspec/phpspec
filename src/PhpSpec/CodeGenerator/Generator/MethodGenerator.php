@@ -13,7 +13,7 @@
 
 namespace PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\CodeGenerator\Generator\Argument\StringBuilder;
+use PhpSpec\CodeGenerator\Generator\Argument\StringConverter;
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\CodeGenerator\TemplateRenderer;
 use PhpSpec\CodeGenerator\Writer\CodeWriter;
@@ -46,29 +46,29 @@ final class MethodGenerator implements Generator
     private $codeWriter;
 
     /**
-     * @var StringBuilder
+     * @var StringConverter
      */
-    private $argumentBuilder;
+    private $argumentStringConverter;
 
     /**
      * @param ConsoleIO        $io
      * @param TemplateRenderer $templates
      * @param Filesystem       $filesystem
      * @param CodeWriter       $codeWriter
-     * @param StringBuilder    $argumentBuilder
+     * @param StringConverter  $argumentStringConverter
      */
     public function __construct(
         ConsoleIO $io,
         TemplateRenderer $templates,
         Filesystem $filesystem,
         CodeWriter $codeWriter,
-        StringBuilder $argumentBuilder
+        StringConverter $argumentStringConverter
     ) {
         $this->io = $io;
         $this->templates = $templates;
         $this->filesystem = $filesystem;
         $this->codeWriter = $codeWriter;
-        $this->argumentBuilder = $argumentBuilder;
+        $this->argumentStringConverter = $argumentStringConverter;
     }
 
     public function supports(Resource $resource, string $generation, array $data) : bool
@@ -86,7 +86,7 @@ final class MethodGenerator implements Generator
         $name = $data['name'];
 
         if (isset($data['reflection_parameters'])) {
-            $argString = $this->argumentBuilder->buildFromReflectionParameters($data['reflection_parameters'], $resource->getSrcNamespace());
+            $argString = $this->argumentStringConverter->convertFromReflectionParams($data['reflection_parameters'], $resource->getSrcNamespace());
         } else {
             $arguments = $data['arguments'];
             $argString = \count($arguments)

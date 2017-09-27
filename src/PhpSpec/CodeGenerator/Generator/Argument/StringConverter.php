@@ -2,21 +2,21 @@
 
 namespace PhpSpec\CodeGenerator\Generator\Argument;
 
-class StringBuilder
+class StringConverter
 {
     /**
      * @param \ReflectionParameter[] $parameters
      *
      * @return string
      */
-    public function buildFromReflectionParameters(array $parameters, string $targetClassNamespace) : string
+    public function convertFromReflectionParams(array $parameters, string $targetClassNamespace) : string
     {
         return implode(', ', array_map(function (\ReflectionParameter $parameter) use ($targetClassNamespace) {
-            return $this->buildArgument($parameter, $targetClassNamespace);
+            return $this->convertArgument($parameter, $targetClassNamespace);
         }, $parameters));
     }
 
-    private function buildArgument(\ReflectionParameter $parameter, string $targetClassNamespace) : string
+    private function convertArgument(\ReflectionParameter $parameter, string $targetClassNamespace) : string
     {
         $parameterName = '$' . $parameter->getName();
 

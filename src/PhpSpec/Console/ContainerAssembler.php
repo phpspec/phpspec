@@ -303,13 +303,16 @@ final class ContainerAssembler
         $container->define('code_generator.writers.tokenized', function () {
             return new CodeGenerator\Writer\TokenizedCodeWriter(new ClassFileAnalyser());
         });
+        $container->define('code_generator.generators.argument.string', function () {
+            return new CodeGenerator\Generator\Argument\StringConverter();
+        });
         $container->define('code_generator.generators.method', function (IndexedServiceContainer $c) {
             return new CodeGenerator\Generator\MethodGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem'),
                 $c->get('code_generator.writers.tokenized'),
-                new CodeGenerator\Generator\Argument\StringBuilder()
+                $c->get('code_generator.generators.argument.string')
             );
         }, ['code_generator.generators']);
         $container->define('code_generator.generators.methodSignature', function (IndexedServiceContainer $c) {
