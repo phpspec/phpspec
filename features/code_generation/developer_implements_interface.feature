@@ -234,7 +234,6 @@ Feature: Developer implements interface
       {
       }
       """
-
     When I run phpspec and answer "y" when asked if I want to generate the code
     Then the class in "src/CodeGeneration/AbstractTypeMethods/Engineer.php" should contain:
       """
