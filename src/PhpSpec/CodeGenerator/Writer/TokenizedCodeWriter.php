@@ -61,14 +61,7 @@ final class TokenizedCodeWriter implements CodeWriter
     public function insertImplementsInClass(string $class, string $interface) : string
     {
         $classLines = explode("\n", $class);
-        $interfaceNamespace = '';
-
-        if (false !== strpos($interface, '\\')) {
-            $parts = explode('\\', $interface);
-            array_pop($parts);
-
-            $interfaceNamespace = join('\\', $parts);
-        }
+        $interfaceNamespace = $this->extractNamespaceFromFQN($interface);
 
         $classNamespace = $this->analyser->getClassNamespace($class);
         $lastLineOfClassDeclaration = $this->analyser->getLastLineOfClassDeclaration($class);
@@ -76,8 +69,7 @@ final class TokenizedCodeWriter implements CodeWriter
         if ($classNamespace === $interfaceNamespace) {
             $interfaceName = ltrim(str_replace($classNamespace, '', $interface), '\\');
         } else {
-            $interfaceParts = explode('\\', $interface);
-            $interfaceName = array_pop($interfaceParts);
+            $interfaceName = $this->extractShortNameFromFQN($interface);
             $useStatement = sprintf('use %s;', $interface);
 
             $lastLineOfUseStatements = $this->analyser->getLastLineOfUseStatements($class);
@@ -176,5 +168,24 @@ final class TokenizedCodeWriter implements CodeWriter
     private function isWritePoint($token) : bool
     {
         return \is_array($token) && ($token[1] === "\n" || $token[0] === T_COMMENT);
+    }
+
+    private function extractShortNameFromFQN(string $fullyQualifiedName): string
+    {
+        preg_match('/\\\(\w+)$/', $fullyQualifiedName, $matches);
+
+        return $matches[1];
+    }
+
+    private function extractNamespaceFromFQN(string $fullyQualifiedName):string
+    {
+        if (false === strpos($fullyQualifiedName, '\\')) {
+            return '';
+        }
+
+        $parts = explode('\\', $fullyQualifiedName);
+        array_pop($parts);
+
+        return join('\\', $parts);
     }
 }
