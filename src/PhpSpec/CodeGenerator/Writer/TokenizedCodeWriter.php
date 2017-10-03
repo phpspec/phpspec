@@ -61,15 +61,14 @@ final class TokenizedCodeWriter implements CodeWriter
     public function insertImplementsInClass(string $class, string $interface) : string
     {
         $classLines = explode("\n", $class);
+
         $interfaceNamespace = $this->extractNamespaceFromFQN($interface);
+        $interfaceName = $this->extractShortNameFromFQN($interface);
 
         $classNamespace = $this->analyser->getClassNamespace($class);
         $lastLineOfClassDeclaration = $this->analyser->getLastLineOfClassDeclaration($class);
 
-        if ($classNamespace === $interfaceNamespace) {
-            $interfaceName = ltrim(str_replace($classNamespace, '', $interface), '\\');
-        } else {
-            $interfaceName = $this->extractShortNameFromFQN($interface);
+        if ($classNamespace !== $interfaceNamespace) {
             $useStatement = sprintf('use %s;', $interface);
 
             $lastLineOfUseStatements = $this->analyser->getLastLineOfUseStatements($class);
