@@ -14,7 +14,7 @@ final class IterateLikeMatcherSpec extends ObjectBehavior
     function let(Presenter $presenter)
     {
         $presenter->presentValue(Argument::any())->will(function ($subject) {
-            return '"' . $subject[0] . '"';
+            return '"' . var_export($subject[0], true) . '"';
         });
 
         $this->beConstructedWith($presenter);
