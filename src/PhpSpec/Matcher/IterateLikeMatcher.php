@@ -37,7 +37,7 @@ final class IterateLikeMatcher implements Matcher
      */
     public function supports(string $name, $subject, array $arguments): bool
     {
-        return \in_array($name, ['iterateLike'])
+        return \in_array($name, ['iterateLike', 'yieldLike'])
             && 1 === \count($arguments)
             && ($subject instanceof \Traversable || \is_array($subject))
             && ($arguments[0] instanceof \Traversable || \is_array($arguments[0]))
