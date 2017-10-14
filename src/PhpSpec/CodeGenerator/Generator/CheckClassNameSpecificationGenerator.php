@@ -42,7 +42,6 @@ final class CheckClassNameSpecificationGenerator implements Generator
         $className = $resource->getSrcClassname();
 
         if (!$this->classNameChecker->isNameValid($className)) {
-            //todo add used keyword to message too
             $this->writeInvalidClassNameError($className);
             return;
         }
