@@ -264,7 +264,7 @@ final class ContainerAssembler
                 $c->get('process.executioncontext')
             );
 
-            $classNameCheckGenerator = new CodeGenerator\Generator\CheckClassNameSpecificationGenerator(
+            $classNameCheckGenerator = new CodeGenerator\Generator\ValidateClassNameSpecificationGenerator(
                 $c->get('util.class_name_checker'),
                 $io,
                 $specificationGenerator

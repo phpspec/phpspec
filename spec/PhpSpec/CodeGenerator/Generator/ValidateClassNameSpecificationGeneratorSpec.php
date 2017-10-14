@@ -2,7 +2,7 @@
 
 namespace spec\PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\CodeGenerator\Generator\CheckClassNameSpecificationGenerator;
+use PhpSpec\CodeGenerator\Generator\ValidateClassNameSpecificationGenerator;
 use PhpSpec\CodeGenerator\Generator\Generator;
 use PhpSpec\CodeGenerator\Generator\SpecificationGenerator;
 use PhpSpec\Console\ConsoleIO;
@@ -11,7 +11,7 @@ use PhpSpec\ObjectBehavior;
 use PhpSpec\Util\NameChecker;
 use Prophecy\Argument;
 
-class CheckClassNameSpecificationGeneratorSpec extends ObjectBehavior
+class ValidateClassNameSpecificationGeneratorSpec extends ObjectBehavior
 {
 
     function let(NameChecker $classNameChecker, ConsoleIO $io, Generator $originalGenerator)
@@ -21,7 +21,7 @@ class CheckClassNameSpecificationGeneratorSpec extends ObjectBehavior
 
     function it_is_initializable()
     {
-        $this->shouldHaveType(CheckClassNameSpecificationGenerator::class);
+        $this->shouldHaveType(ValidateClassNameSpecificationGenerator::class);
     }
 
     function it_supports_generation_when_original_generator_supports_it(

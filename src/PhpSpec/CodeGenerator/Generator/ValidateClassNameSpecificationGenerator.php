@@ -18,7 +18,7 @@ use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Util\NameChecker;
 use PhpSpec\Locator\Resource;
 
-final class CheckClassNameSpecificationGenerator implements Generator
+final class ValidateClassNameSpecificationGenerator implements Generator
 {
 
     private $classNameChecker;
