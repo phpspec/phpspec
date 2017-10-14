@@ -387,7 +387,7 @@ class ApplicationContext implements Context
      */
     public function iShouldAnErrorAboutImpossibleSpecGenerationForClass($className)
     {
-        $this->checkApplicationOutput("I cannot generate class '$className' for you cause it");
+        $this->checkApplicationOutput("I cannot generate spec for '$className' cause it");
         $this->checkApplicationOutput('contains reserved keyword');
     }
 
