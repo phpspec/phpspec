@@ -381,4 +381,14 @@ class ApplicationContext implements Context
             );
         }
     }
+
+    /**
+     * @Then I should an error about impossible spec generation for class name :className
+     */
+    public function iShouldAnErrorAboutImpossibleSpecGenerationForClass($className)
+    {
+        $this->checkApplicationOutput("I cannot generate class '$className' for you cause it");
+        $this->checkApplicationOutput('contains reserved keyword');
+    }
+
 }
