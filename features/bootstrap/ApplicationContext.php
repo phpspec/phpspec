@@ -49,12 +49,18 @@ class ApplicationContext implements Context
 
         $this->application = new Application('2.1-dev');
         $this->application->setAutoExit(false);
-        $this->application->setTerminalDimensions(130, 30);
+        $this->setFixedTerminalDimensions();
 
         $this->tester = new ApplicationTester($this->application);
 
         $this->setupReRunner();
         $this->setupPrompter();
+    }
+
+    private function setFixedTerminalDimensions()
+    {
+        putenv('COLUMNS=130');
+        putenv('LINES=30');
     }
 
     private function setupPrompter()
