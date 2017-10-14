@@ -15,88 +15,9 @@ namespace PhpSpec\Util;
 
 final class ReservedWordsMethodNameChecker implements NameChecker
 {
-    private $reservedWords = array(
+    private $reservedWords = [
         '__halt_compiler',
-        'abstract',
-        'and',
-        'array',
-        'as',
-        'break',
-        'callable',
-        'case',
-        'catch',
-        'class',
-        'clone',
-        'const',
-        'continue',
-        'declare',
-        'default',
-        'die',
-        'do',
-        'echo',
-        'else',
-        'elseif',
-        'empty',
-        'enddeclare',
-        'endfor',
-        'endforeach',
-        'endif',
-        'endswitch',
-        'endwhile',
-        'eval',
-        'exit',
-        'extends',
-        'final',
-        'for',
-        'foreach',
-        'function',
-        'global',
-        'goto',
-        'if',
-        'implements',
-        'include',
-        'include_once',
-        'instanceof',
-        'insteadof',
-        'interface',
-        'isset',
-        'list',
-        'namespace',
-        'new',
-        'or',
-        'print',
-        'private',
-        'protected',
-        'public',
-        'require',
-        'require_once',
-        'return',
-        'static',
-        'switch',
-        'throw',
-        'trait',
-        'try',
-        'unset',
-        'use',
-        'var',
-        'while',
-        'xor',
-        '__class__',
-        '__dir__',
-        '__file__',
-        '__function__',
-        '__line__',
-        '__method__',
-        '__namespace__',
-        '__trait__',
-    );
-
-    public function __construct()
-    {
-        if (\PHP_VERSION_ID >= 70000) {
-            $this->reservedWords = ['__halt_compiler'];
-        }
-    }
+    ];
 
     /**
      * {@inheritdoc}
