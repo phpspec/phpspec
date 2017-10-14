@@ -165,3 +165,8 @@ Feature: Developer generates a spec
       }
 
       """
+
+  Scenario: Generating a spec for class with namespace containing reserved keyword
+    Given I have started describing the "Namespace/ClassExample1/Markdown" class
+    Then I should see "I cannot generate class 'Namespace/ClassExample1/Markdown' for you cause it contains reserved keyword 'Namespace'"
+    And there should be no file "spec/Namespace/ClassExample1/MarkdownSpec.php"

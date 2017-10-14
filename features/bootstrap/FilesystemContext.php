@@ -2,6 +2,7 @@
 
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
+use PHPUnit\Framework\Assert;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -156,5 +157,13 @@ class FilesystemContext implements Context
     public function iHaveNotConfiguredAnAutoloader()
     {
         $this->filesystem->remove($this->workingDirectory . '/vendor/autoload.php');
+    }
+
+    /**
+     * @Given there should be no file :path
+     */
+    public function thereShouldBeNoFile($path)
+    {
+        Assert::assertFileNotExists($path);
     }
 }
