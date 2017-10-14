@@ -51,7 +51,7 @@ final class ValidateClassNameSpecificationGenerator implements Generator
 
     private function writeInvalidClassNameError(string $className): void
     {
-        $error = "I cannot generate spec for '$className' cause it contains reserved keyword";
+        $error = "I cannot generate spec for '$className' because class name contains reserved keyword";
         $this->io->writeBrokenCodeBlock($error, 2);
     }
 

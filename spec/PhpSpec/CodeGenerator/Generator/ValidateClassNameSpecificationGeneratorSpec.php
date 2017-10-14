@@ -66,7 +66,7 @@ class ValidateClassNameSpecificationGeneratorSpec extends ObjectBehavior
         $resource->getSrcClassname()->willReturn($className);
         $classNameChecker->isNameValid($className)->willReturn(false);
 
-        $io->writeBrokenCodeBlock(Argument::containingString('it contains reserved keyword'), 2)->shouldBeCalled();
+        $io->writeBrokenCodeBlock(Argument::containingString('because class name contains reserved keyword'), 2)->shouldBeCalled();
         $originalGenerator->generate($resource, [])->shouldNotBeCalled();
 
         $this->generate($resource, []);
