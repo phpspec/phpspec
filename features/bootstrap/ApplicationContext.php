@@ -383,7 +383,7 @@ class ApplicationContext implements Context
     }
 
     /**
-     * @Then I should an error about impossible spec generation for class name :className
+     * @Then I should an error about invalid class name :className to generate spec for
      */
     public function iShouldAnErrorAboutImpossibleSpecGenerationForClass($className)
     {
