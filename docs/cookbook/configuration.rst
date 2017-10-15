@@ -57,8 +57,9 @@ configuration:
 
 .. code-block:: yaml
 
-    namespace_providers:
-      - composer: ~
+    composer_namespace_provider: true # translates to:
+                                      # - root_directory: '.'
+                                      # - spec_prefix: spec
 
 
 Spec and source locations

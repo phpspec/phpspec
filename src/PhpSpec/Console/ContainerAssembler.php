@@ -29,7 +29,7 @@ use PhpSpec\Loader;
 use PhpSpec\Locator;
 use PhpSpec\Matcher;
 use PhpSpec\Message\CurrentExampleTracker;
-use PhpSpec\NamespaceProvider\Factory;
+use PhpSpec\NamespaceProvider\ComposerPsrNamespaceProvider;
 use PhpSpec\NamespaceProvider\NamespaceProvider;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
 use PhpSpec\Process\ReRunner;
@@ -404,11 +404,18 @@ final class ContainerAssembler
 
         $container->addConfigurator(function (IndexedServiceContainer $c) {
             $suites = [];
-            $namespaceProviderFactory = new Factory();
-            foreach ($c->getParam('namespace_providers', []) as $namespaceProviderId => $namespaceProviderConfig) {
-                $namespaceProvider = $namespaceProviderFactory->getProvider(
-                    $namespaceProviderId,
-                    $namespaceProviderConfig
+            $arguments = $c->getParam('composer_namespace_provider', false);
+            if ($arguments !== false) {
+                if ($arguments === true) {
+                    $arguments = [];
+                }
+                $arguments = array_merge(array(
+                    'root_directory' => '.',
+                    'spec_prefix' => 'spec',
+                ), (array) $arguments);
+                $namespaceProvider = new ComposerPsrNamespaceProvider(
+                    $arguments['root_directory'],
+                    $arguments['spec_prefix']
                 );
                 foreach ($namespaceProvider->getNamespaces() as $namespace => $namespaceLocation) {
                     $psr4Prefix = null;

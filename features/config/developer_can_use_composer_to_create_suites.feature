@@ -7,8 +7,7 @@ Feature: Composer can be leveraged to create suites
   Scenario: Using composer as namespace_provider in a PSR0 namespace
     Given the config file located in "." contains:
       """
-      namespace_providers:
-          - composer: ~
+      composer_namespace_provider: true
       """
     When I start describing the "Andromeda/N4S4Arm/Gazorpazorp" class with the "phpspec.yml" custom config
     Then a new spec should be generated in the "spec/Andromeda/N4S4Arm/GazorpazorpSpec.php":
@@ -34,8 +33,7 @@ Feature: Composer can be leveraged to create suites
   Scenario: Using composer as namespace_provider in a PSR4 namespace
     Given the config file located in "." contains:
       """
-      namespace_providers:
-          - composer: ~
+      composer_namespace_provider: true
       """
     When I start describing the "MilkyWay/OrionCygnusArm/LocalBubble" class with the "phpspec.yml" custom config
     Then a new spec should be generated in the "spec/LocalBubbleSpec.php":
