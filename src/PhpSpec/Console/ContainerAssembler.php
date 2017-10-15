@@ -23,6 +23,7 @@ use PhpSpec\Console\Prompter\Question;
 use PhpSpec\Factory\ReflectionFactory;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
 use PhpSpec\Util\ClassFileAnalyser;
+use PhpSpec\Util\ClassNameChecker;
 use PhpSpec\Util\Filesystem;
 use PhpSpec\Util\ReservedWordsMethodNameChecker;
 use PhpSpec\Process\ReRunner;
@@ -223,6 +224,9 @@ final class ContainerAssembler
         $container->define('util.reserved_words_checker', function () {
             return new ReservedWordsMethodNameChecker();
         });
+        $container->define('util.class_name_checker', function () {
+            return new ClassNameChecker();
+        });
         $container->define('event_dispatcher.listeners.bootstrap', function (IndexedServiceContainer $c) {
             return new Listener\BootstrapListener(
                 $c->get('console.io')
@@ -252,15 +256,22 @@ final class ContainerAssembler
         });
 
         $container->define('code_generator.generators.specification', function (IndexedServiceContainer $c) {
+            $io = $c->get('console.io');
             $specificationGenerator = new CodeGenerator\Generator\SpecificationGenerator(
-                $c->get('console.io'),
+                $io,
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem'),
                 $c->get('process.executioncontext')
             );
 
+            $classNameCheckGenerator = new CodeGenerator\Generator\ValidateClassNameSpecificationGenerator(
+                $c->get('util.class_name_checker'),
+                $io,
+                $specificationGenerator
+            );
+
             return new CodeGenerator\Generator\NewFileNotifyingGenerator(
-                $specificationGenerator,
+                $classNameCheckGenerator,
                 $c->get('event_dispatcher'),
                 $c->get('util.filesystem')
             );
