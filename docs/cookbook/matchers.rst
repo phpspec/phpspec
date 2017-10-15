@@ -500,6 +500,33 @@ Both of these ways of using the IterateAs matcher are equivalent.
 There is no difference in how they work, this lets you choose the one which
 makes your specification easier to read.
 
+IterateLike Matcher
+-------------------
+
+
+This matcher lets you specify that a method should return an array or an object implementing ``\Traversable`` that
+iterates equal to the arguments you passed to it. **phpspec** matches both the key and the element by value (``==``).
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+
+    class MovieSpec extends ObjectBehavior
+    {
+        function it_should_contain_jane_smith_and_john_smith_in_the_cast()
+        {
+            $this->getCast()->shouldIterateLike(new \ArrayIterator(['Jane Smith', 'John Smith']));
+            $this->getCast()->shouldYieldLike(new \ArrayIterator(['Jane Smith', 'John Smith']));
+        }
+    }
+
+Both of these ways of using the IterateAs matcher are equivalent.
+There is no difference in how they work, this lets you choose the one which
+makes your specification easier to read.
 
 StartIteratingAs Matcher
 ------------------------
