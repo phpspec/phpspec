@@ -1,3 +1,8 @@
+Upcoming 4.x
+============
+
+* New `shouldIterateLike`/`shouldYieldLike` matcher (@sroze)
+
 4.0.4 / 2017-09-13
 ==================
 
