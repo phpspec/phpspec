@@ -29,7 +29,7 @@ final class IterablesMatcher
      * @throws SubjectHasFewerElementsException
      * @throws SubjectHasMoreElementsException
      */
-    public function match($subject, $expected, bool $strict = false)
+    public function match($subject, $expected, bool $strict = true)
     {
         if (!$this->isIterable($subject)) {
             throw new \InvalidArgumentException('Subject value should be an array or implement \Traversable.');
