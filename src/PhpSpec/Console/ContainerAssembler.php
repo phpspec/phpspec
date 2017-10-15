@@ -705,6 +705,9 @@ final class ContainerAssembler
         $container->define('matchers.iterate', function (IndexedServiceContainer $c) {
             return new Matcher\IterateAsMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
+        $container->define('matchers.iterate_like', function (IndexedServiceContainer $c) {
+            return new Matcher\IterateLikeMatcher($c->get('formatter.presenter'));
+        }, ['matchers']);
         $container->define('matchers.start_iterating', function (IndexedServiceContainer $c) {
             return new Matcher\StartIteratingAsMatcher($c->get('formatter.presenter'));
         }, ['matchers']);

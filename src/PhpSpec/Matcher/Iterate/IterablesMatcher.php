@@ -22,13 +22,14 @@ final class IterablesMatcher
     /**
      * @param array|\Traversable $subject
      * @param array|\Traversable $expected
+     * @param bool               $strict
      *
      * @throws \InvalidArgumentException
      * @throws SubjectElementDoesNotMatchException
      * @throws SubjectHasFewerElementsException
      * @throws SubjectHasMoreElementsException
      */
-    public function match($subject, $expected)
+    public function match($subject, $expected, bool $strict = true)
     {
         if (!$this->isIterable($subject)) {
             throw new \InvalidArgumentException('Subject value should be an array or implement \Traversable.');
@@ -46,7 +47,7 @@ final class IterablesMatcher
                 throw new SubjectHasMoreElementsException();
             }
 
-            if ($subjectKey !== $expectedIterator->key() || $subjectValue !== $expectedIterator->current()) {
+            if ($subjectKey !== $expectedIterator->key() || !$this->valueIsEqual($subjectValue, $expectedIterator->current(), $strict)) {
                 throw new SubjectElementDoesNotMatchException(
                     $count,
                     $this->presenter->presentValue($subjectKey),
@@ -90,5 +91,10 @@ final class IterablesMatcher
         $iterator->rewind();
 
         return $iterator;
+    }
+
+    private function valueIsEqual($expected, $value, bool $strict) : bool
+    {
+        return $strict ? $expected === $value : $expected == $value;
     }
 }
