@@ -9,6 +9,7 @@ Feature: Composer can be leveraged to create suites
       """
       composer_namespace_provider: true
       """
+      And there is a PSR-0 namespace "Andromeda\N4S4Arm\" configured for the "src" folder
     When I start describing the "Andromeda/N4S4Arm/Gazorpazorp" class with the "phpspec.yml" custom config
     Then a new spec should be generated in the "spec/Andromeda/N4S4Arm/GazorpazorpSpec.php":
       """
@@ -35,6 +36,7 @@ Feature: Composer can be leveraged to create suites
       """
       composer_namespace_provider: true
       """
+      And there is a PSR-4 namespace "MilkyWay\OrionCygnusArm\" configured for the "src" folder
     When I start describing the "MilkyWay/OrionCygnusArm/LocalBubble" class with the "phpspec.yml" custom config
     Then a new spec should be generated in the "spec/LocalBubbleSpec.php":
       """
