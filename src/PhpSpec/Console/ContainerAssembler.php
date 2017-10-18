@@ -18,30 +18,32 @@ use PhpSpec\CodeAnalysis\StaticRejectingNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\CodeAnalysis\VisibilityAccessInspector;
+use PhpSpec\CodeGenerator;
+use PhpSpec\Config\OptionsConfig;
 use PhpSpec\Console\Assembler\PresenterAssembler;
 use PhpSpec\Console\Prompter\Question;
 use PhpSpec\Factory\ReflectionFactory;
-use PhpSpec\Process\Prerequisites\SuitePrerequisites;
-use PhpSpec\Util\ClassFileAnalyser;
-use PhpSpec\Util\ClassNameChecker;
-use PhpSpec\Util\Filesystem;
-use PhpSpec\Util\ReservedWordsMethodNameChecker;
-use PhpSpec\Process\ReRunner;
-use PhpSpec\Util\MethodAnalyser;
-use Symfony\Component\EventDispatcher\EventDispatcher;
-use PhpSpec\ServiceContainer\IndexedServiceContainer;
-use PhpSpec\CodeGenerator;
 use PhpSpec\Formatter as SpecFormatter;
 use PhpSpec\Listener;
 use PhpSpec\Loader;
 use PhpSpec\Locator;
 use PhpSpec\Matcher;
-use PhpSpec\Runner;
-use PhpSpec\Wrapper;
-use PhpSpec\Config\OptionsConfig;
-use Symfony\Component\Process\PhpExecutableFinder;
 use PhpSpec\Message\CurrentExampleTracker;
+use PhpSpec\NamespaceProvider\ComposerPsrNamespaceProvider;
+use PhpSpec\NamespaceProvider\NamespaceProvider;
+use PhpSpec\Process\Prerequisites\SuitePrerequisites;
+use PhpSpec\Process\ReRunner;
 use PhpSpec\Process\Shutdown\Shutdown;
+use PhpSpec\Runner;
+use PhpSpec\ServiceContainer\IndexedServiceContainer;
+use PhpSpec\Util\ClassFileAnalyser;
+use PhpSpec\Util\ClassNameChecker;
+use PhpSpec\Util\Filesystem;
+use PhpSpec\Util\MethodAnalyser;
+use PhpSpec\Util\ReservedWordsMethodNameChecker;
+use PhpSpec\Wrapper;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\Process\PhpExecutableFinder;
 
 /**
  * @internal
@@ -401,8 +403,38 @@ final class ContainerAssembler
         });
 
         $container->addConfigurator(function (IndexedServiceContainer $c) {
-            $suites = $c->getParam('suites', array('main' => ''));
+            $suites = [];
+            $arguments = $c->getParam('composer_namespace_provider', false);
+            if ($arguments !== false) {
+                if ($arguments === true) {
+                    $arguments = [];
+                }
+                $arguments = array_merge(array(
+                    'root_directory' => '.',
+                    'spec_prefix' => 'spec',
+                ), (array) $arguments);
+                $namespaceProvider = new ComposerPsrNamespaceProvider(
+                    $arguments['root_directory'],
+                    $arguments['spec_prefix']
+                );
+                foreach ($namespaceProvider->getNamespaces() as $namespace => $namespaceLocation) {
+                    $psr4Prefix = null;
+                    if ($namespaceLocation->getAutoloadingStandard() === NamespaceProvider::AUTOLOADING_STANDARD_PSR4) {
+                        $psr4Prefix = $namespace;
+                    }
+                    $suites[str_replace('\\', '_', strtolower($namespace)).'suite'] =  [
+                        'namespace' => $namespace,
+                        'src_path' => $namespaceLocation->getLocation(),
+                        'psr4_prefix' => $psr4Prefix,
+                    ];
+                }
+            }
 
+            $suites += $c->getParam('suites', array());
+
+            if (count($suites) === 0) {
+                $suites = array('main' => '');
+            }
             foreach ($suites as $name => $suite) {
                 $suite      = \is_array($suite) ? $suite : array('namespace' => $suite);
                 $defaults = array(

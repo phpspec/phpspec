@@ -313,6 +313,15 @@ class ApplicationContext implements Context
     }
 
     /**
+     * @Given there is a PSR-:namespaceType namespace :namespace configured for the :source folder
+     */
+    public function thereIsAPsrNamespaceConfiguredForTheFolder($namespaceType, $namespace, $source)
+    {
+        require_once __DIR__ .'/autoloader/fake_autoload.php';
+    }
+
+
+    /**
      * @When I run phpspec with the :config (custom) config and answer :answer when asked if I want to generate the code
      */
     public function iRunPhpspecWithConfigAndAnswerIfIWantToGenerateTheCode($config, $answer)

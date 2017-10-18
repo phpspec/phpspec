@@ -45,13 +45,23 @@ class ComposerPsrNamespaceProvider
             }
         }
         $classLoader = require $this->rootDirectory . '/vendor/autoload.php';
-        return
-            $this->getNamespacesFromPrefixes($classLoader->getPrefixes(), $vendors)
-            +
-            $this->getNamespacesFromPrefixes($classLoader->getPrefixesPsr4(), $vendors);
+
+        $namespaces = array();
+        foreach (array(
+            NamespaceProvider::AUTOLOADING_STANDARD_PSR0 => $classLoader->getPrefixes(),
+            NamespaceProvider::AUTOLOADING_STANDARD_PSR4 => $classLoader->getPrefixesPsr4(),
+        ) as $standard => $prefixes) {
+            $namespaces = array_merge($namespaces, $this->getNamespacesFromPrefixes(
+                $prefixes,
+                $vendors,
+                $standard
+            ));
+        }
+
+        return $namespaces;
     }
 
-    private function getNamespacesFromPrefixes(array $prefixes, array $vendors)
+    private function getNamespacesFromPrefixes(array $prefixes, array $vendors, $standard)
     {
         $namespaces = array();
         foreach ($prefixes as $namespace => $psrPrefix) {
@@ -62,9 +72,13 @@ class ComposerPsrNamespaceProvider
                     }
                 }
                 if (strpos($namespace, $this->specPrefix) !== 0) {
-                    $namespaces[$namespace] = substr(
-                        realpath($location),
-                        \strlen(realpath($this->rootDirectory)) + 1 // trailing slash
+                    $namespaces[$namespace] = new NamespaceLocation(
+                        $namespace,
+                        substr(
+                            realpath($location),
+                            \strlen(realpath($this->rootDirectory)) + 1 // trailing slash
+                        ),
+                        $standard
                     );
                 }
             }

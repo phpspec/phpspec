@@ -3,6 +3,8 @@
 namespace spec\PhpSpec\NamespaceProvider;
 
 use PhpSpec\NamespaceProvider\ComposerPsrNamespaceProvider;
+use PhpSpec\NamespaceProvider\NamespaceLocation;
+use PhpSpec\NamespaceProvider\NamespaceProvider;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
@@ -20,6 +22,31 @@ class ComposerPsrNamespaceProviderSpec extends ObjectBehavior
 
     public function it_should_return_a_map_of_locations()
     {
-        $this->getNamespaces()->shouldReturn(array('PhpSpec' => 'src'));
+        $this->getNamespaces()->shouldHaveKey('PhpSpec');
+        $this->getNamespaces()->shouldHaveNamespaceLocation(
+            'PhpSpec',
+            'src',
+            NamespaceProvider::AUTOLOADING_STANDARD_PSR0
+        );
+    }
+
+    public function getMatchers() : array
+    {
+        return array(
+            'haveNamespaceLocation' => function ($subject, $namespace, $location, $standard) {
+                $expectedNamespaceLocation = new NamespaceLocation(
+                    $namespace,
+                    $location,
+                    $standard
+                );
+                foreach ($subject as $namespaceLocation) {
+                    if ($namespaceLocation == $expectedNamespaceLocation) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        );
     }
 }
