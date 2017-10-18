@@ -1,3 +1,8 @@
+Upcoming 4.x
+============
+
+* Detect autoloader from composer to automatically define spec locations, reducing need for suites with PSR-4 (@greg0ire)
+
 4.1.0 / 2017-10-18
 ==================
 
