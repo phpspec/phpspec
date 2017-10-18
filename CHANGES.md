@@ -1,5 +1,5 @@
-Upcoming 4.x
-============
+4.1.0 / 2017-10-18
+==================
 
 * New `shouldIterateLike`/`shouldYieldLike` matcher (@sroze)
 * Checks class name is not a reserved word when creating spec (@avant1)
