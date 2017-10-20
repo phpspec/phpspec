@@ -22,6 +22,7 @@ use PhpSpec\CodeGenerator;
 use PhpSpec\Config\OptionsConfig;
 use PhpSpec\Console\Assembler\PresenterAssembler;
 use PhpSpec\Console\Prompter\Question;
+use PhpSpec\Console\Provider\NamespacesAutocompleteProvider;
 use PhpSpec\Factory\ReflectionFactory;
 use PhpSpec\Formatter as SpecFormatter;
 use PhpSpec\Listener;
@@ -33,7 +34,6 @@ use PhpSpec\NamespaceProvider\ComposerPsrNamespaceProvider;
 use PhpSpec\NamespaceProvider\NamespaceProvider;
 use PhpSpec\Process\Prerequisites\SuitePrerequisites;
 use PhpSpec\Process\ReRunner;
-use PhpSpec\Process\Shutdown\Shutdown;
 use PhpSpec\Runner;
 use PhpSpec\ServiceContainer\IndexedServiceContainer;
 use PhpSpec\Util\ClassFileAnalyser;
@@ -44,6 +44,8 @@ use PhpSpec\Util\ReservedWordsMethodNameChecker;
 use PhpSpec\Wrapper;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Process\PhpExecutableFinder;
+use Symfony\Component\Finder\Finder;
+use PhpSpec\Process\Shutdown\Shutdown;
 
 /**
  * @internal
@@ -109,6 +111,9 @@ final class ContainerAssembler
         });
         $container->define('util.filesystem', function () {
             return new Filesystem();
+        });
+        $container->define('console.autocomplete_provider', function () {
+            return new NamespacesAutocompleteProvider(new Finder());
         });
     }
 

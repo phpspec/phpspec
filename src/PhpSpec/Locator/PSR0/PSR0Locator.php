@@ -118,6 +118,14 @@ class PSR0Locator implements ResourceLocator
     /**
      * @return string
      */
+    public function getSrcPath()
+    {
+        return $this->srcPath;
+    }
+
+    /**
+     * @return string
+     */
     public function getFullSpecPath(): string
     {
         return $this->fullSpecPath;
