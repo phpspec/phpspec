@@ -2,7 +2,6 @@
 
 namespace spec\PhpSpec\Runner;
 
-use PhpSpec\Exception\Example\SkippingException;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Runner\Maintainer\LetAndLetgoMaintainer;
 use Prophecy\Argument;
@@ -93,10 +92,6 @@ class ExampleRunnerSpec extends ObjectBehavior
         EventDispatcherInterface $dispatcher,
         ExampleNode $example, ReflectionMethod $exampReflection, Specification $context
     ) {
-        if (!class_exists('\Error')) {
-            throw new SkippingException('The class Error, introduced in PHP 7, does not exist');
-        }
-
         $example->isPending()->willReturn(false);
 
         $exampReflection->getParameters()->willReturn(array());
