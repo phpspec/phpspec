@@ -40,20 +40,13 @@ final class ThrowMatcher implements Matcher
     private $presenter;
 
     /**
-     * @var ReflectionFactory
-     */
-    private $factory;
-
-    /**
      * @param Unwrapper              $unwrapper
      * @param Presenter              $presenter
-     * @param ReflectionFactory|null $factory
      */
-    public function __construct(Unwrapper $unwrapper, Presenter $presenter, ReflectionFactory $factory)
+    public function __construct(Unwrapper $unwrapper, Presenter $presenter)
     {
         $this->unwrapper = $unwrapper;
         $this->presenter = $presenter;
-        $this->factory   = $factory;
     }
 
     /**
@@ -138,7 +131,7 @@ final class ThrowMatcher implements Matcher
         }
 
         if (\is_object($exception)) {
-            $exceptionRefl = $this->factory->create($exception);
+            $exceptionRefl = new \ReflectionClass($exception);
             foreach ($exceptionRefl->getProperties() as $property) {
                 if (\in_array($property->getName(), self::$ignoredProperties, true)) {
                     continue;
@@ -193,7 +186,7 @@ final class ThrowMatcher implements Matcher
         if ($exceptionThrown && $exceptionThrown instanceof $exception) {
             $invalidProperties = array();
             if (\is_object($exception)) {
-                $exceptionRefl = $this->factory->create($exception);
+                $exceptionRefl = new \ReflectionClass($exception);
                 foreach ($exceptionRefl->getProperties() as $property) {
                     if (\in_array($property->getName(), self::$ignoredProperties, true)) {
                         continue;

@@ -2,7 +2,6 @@
 
 namespace PhpSpec\Extensions\DefaultMatchers;
 
-use PhpSpec\Factory\ReflectionFactory;
 use PhpSpec\Matcher;
 use PhpSpec\ServiceContainer;
 use PhpSpec\ServiceContainer\IndexedServiceContainer;
@@ -22,7 +21,7 @@ class Extension implements \PhpSpec\Extension
             return new Matcher\ComparisonMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.throwm', function (IndexedServiceContainer $c) {
-            return new Matcher\ThrowMatcher($c->get('unwrapper'), $c->get('formatter.presenter'), new ReflectionFactory());
+            return new Matcher\ThrowMatcher($c->get('unwrapper'), $c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.trigger', function (IndexedServiceContainer $c) {
             return new Matcher\TriggerMatcher($c->get('unwrapper'));

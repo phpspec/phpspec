@@ -16,6 +16,8 @@ namespace PhpSpec\Factory;
 /**
  * Class ReflectionFactory is a simple factory wrapper to create reflection
  * classes
+ *
+ * @deprecated
  */
 class ReflectionFactory
 {
