@@ -63,7 +63,7 @@ final class TokenizedCodeWriter implements CodeWriter
         $classLines = explode("\n", $class);
 
         $interfaceNamespace = $this->extractNamespaceFromFQN($interface);
-        $interfaceName = $this->extractShortNameFromFQN($interface);
+        $interfaceShortName = $this->extractShortNameFromFQN($interface);
 
         $classNamespace = $this->analyser->getClassNamespace($class);
         $lastLineOfClassDeclaration = $this->analyser->getLastLineOfClassDeclaration($class);
@@ -86,9 +86,9 @@ final class TokenizedCodeWriter implements CodeWriter
         $newLineModifier = (false === strpos($lastClassDeclarationLine, 'class ')) ? "\n" . '    ' : ' ';
 
         if ($this->analyser->classImplementsAnyInterface($class)) {
-            $lastClassDeclarationLine .= ',' . $newLineModifier . $interfaceName;
+            $lastClassDeclarationLine .= ',' . $newLineModifier . $interfaceShortName;
         } else {
-            $lastClassDeclarationLine .= ' implements ' . $interfaceName;
+            $lastClassDeclarationLine .= ' implements ' . $interfaceShortName;
         }
 
         $classLines[$lastLineOfClassDeclaration - 1] = $lastClassDeclarationLine;
@@ -161,22 +161,19 @@ final class TokenizedCodeWriter implements CodeWriter
         }
     }
 
-    /**
-     * @param $token
-     */
     private function isWritePoint($token) : bool
     {
         return \is_array($token) && ($token[1] === "\n" || $token[0] === T_COMMENT);
     }
 
-    private function extractShortNameFromFQN(string $fullyQualifiedName): string
+    private function extractShortNameFromFQN(string $fullyQualifiedName) : string
     {
         preg_match('/\\\(\w+)$/', $fullyQualifiedName, $matches);
 
-        return $matches[1];
+        return $matches[1] ?? $fullyQualifiedName;
     }
 
-    private function extractNamespaceFromFQN(string $fullyQualifiedName):string
+    private function extractNamespaceFromFQN(string $fullyQualifiedName) : string
     {
         if (false === strpos($fullyQualifiedName, '\\')) {
             return '';
