@@ -49,7 +49,7 @@ class Argument
         return $this->hasDefaultValue;
     }
 
-    public function setDefaultValue($defaultValue): void
+    public function setDefaultValue($defaultValue)
     {
         $this->defaultValue = $defaultValue;
         $this->hasDefaultValue = true;
