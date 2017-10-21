@@ -48,6 +48,19 @@ class FactorySpec extends ObjectBehavior
 
         $this->fromReflectionParams($reflectionParams)->shouldBeLike($expectedArguments);
     }
+
+    function it_can_create_numbered_arguments_from_call_time_values()
+    {
+        $argumentValues = ['hello', 1, null];
+
+        $this->fromValues($argumentValues)->shouldBeLike(
+            [
+                new Argument('argument1', ''),
+                new Argument('argument2', ''),
+                new Argument('argument3', '')
+            ]
+        );
+    }
 }
 
 interface Fixture

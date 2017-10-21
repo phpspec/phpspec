@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Listener;
 
+use PhpSpec\CodeGenerator\Generator\Argument\Factory as ArgumentFactory;
 use PhpSpec\Util\NameChecker;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use PhpSpec\Console\ConsoleIO;
@@ -27,29 +28,31 @@ final class MethodNotFoundListener implements EventSubscriberInterface
     private $io;
     private $resources;
     private $generator;
+    private $nameChecker;
+    private $argumentFactory;
+
     private $methods = array();
     private $wrongMethodNames = array();
-    /**
-     * @var NameChecker
-     */
-    private $nameChecker;
 
     /**
-     * @param ConsoleIO $io
-     * @param ResourceManager $resources
+     * @param ConsoleIO        $io
+     * @param ResourceManager  $resources
      * @param GeneratorManager $generator
-     * @param NameChecker $nameChecker
+     * @param NameChecker      $nameChecker
+     * @param ArgumentFactory  $argumentFactory
      */
     public function __construct(
         ConsoleIO $io,
         ResourceManager $resources,
         GeneratorManager $generator,
-        NameChecker $nameChecker
+        NameChecker $nameChecker,
+        ArgumentFactory $argumentFactory
     ) {
         $this->io        = $io;
         $this->resources = $resources;
         $this->generator = $generator;
         $this->nameChecker = $nameChecker;
+        $this->argumentFactory = $argumentFactory;
     }
 
     public static function getSubscribedEvents()
@@ -82,7 +85,7 @@ final class MethodNotFoundListener implements EventSubscriberInterface
             return;
         }
 
-        foreach ($this->methods as $call => $arguments) {
+        foreach ($this->methods as $call => $argumentValues) {
             list($classname, $method) = explode('::', $call);
 
             if (\in_array($method, $this->wrongMethodNames)) {
@@ -100,7 +103,7 @@ final class MethodNotFoundListener implements EventSubscriberInterface
             if ($this->io->askConfirmation($message)) {
                 $this->generator->generate($resource, 'method', array(
                     'name'      => $method,
-                    'arguments' => $arguments
+                    'arguments' => $this->argumentFactory->fromValues($argumentValues)
                 ));
                 $event->markAsWorthRerunning();
             }

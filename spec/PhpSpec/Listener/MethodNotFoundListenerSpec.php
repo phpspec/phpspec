@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\Listener;
 
+use PhpSpec\CodeGenerator\Generator\Argument\Factory;
 use PhpSpec\Locator\Resource;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
@@ -23,12 +24,15 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         GeneratorManager $generatorManager,
         SuiteEvent $suiteEvent,
         ExampleEvent $exampleEvent,
-        NameChecker $nameChecker
+        NameChecker $nameChecker,
+        Factory $argumentFactory
     ) {
         $io->writeln(Argument::any())->willReturn();
         $io->askConfirmation(Argument::any())->willReturn(false);
 
-        $this->beConstructedWith($io, $resourceManager, $generatorManager, $nameChecker);
+        $argumentFactory->fromValues(Argument::type('array'))->willReturn([]);
+
+        $this->beConstructedWith($io, $resourceManager, $generatorManager, $nameChecker, $argumentFactory);
         $io->isCodeGenerationEnabled()->willReturn(true);
 
         $nameChecker->isNameValid(Argument::any())->willReturn(false);

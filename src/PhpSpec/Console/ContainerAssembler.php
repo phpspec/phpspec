@@ -190,7 +190,8 @@ final class ContainerAssembler
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator'),
-                $c->get('util.reserved_words_checker')
+                $c->get('util.reserved_words_checker'),
+                $c->get('code_generator.factory.argument')
             );
         }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.stop_on_failure', function (IndexedServiceContainer $c) {
