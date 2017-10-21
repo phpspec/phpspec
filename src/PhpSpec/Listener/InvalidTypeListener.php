@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Listener;
 
+use PhpSpec\CodeGenerator\Generator\Argument\Factory as ArgumentFactory;
 use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
@@ -27,14 +28,16 @@ final class InvalidTypeListener implements EventSubscriberInterface
     private $io;
     private $generator;
     private $resources;
+    private $argumentFactory;
 
     private $methodsToImplement = [];
 
-    public function __construct(ConsoleIO $io, GeneratorManager $generator, ResourceManager $resources)
+    public function __construct(ConsoleIO $io, GeneratorManager $generator, ResourceManager $resources, ArgumentFactory $argumentFactory)
     {
         $this->io = $io;
         $this->generator = $generator;
         $this->resources = $resources;
+        $this->argumentFactory = $argumentFactory;
     }
 
     public static function getSubscribedEvents()
@@ -107,7 +110,7 @@ final class InvalidTypeListener implements EventSubscriberInterface
                 foreach ($methods as $method => $parameters) {
                     $this->generator->generate($classResource, 'method', array(
                         'name' => $method,
-                        'reflection_parameters' => $parameters
+                        'arguments' => $this->argumentFactory->fromReflectionParams($parameters)
                     ));
 
                     $event->markAsWorthRerunning();

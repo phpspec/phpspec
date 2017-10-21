@@ -237,7 +237,8 @@ final class ContainerAssembler
             return new Listener\InvalidTypeListener(
                 $c->get('console.io'),
                 $c->get('code_generator'),
-                $c->get('locator.resource_manager')
+                $c->get('locator.resource_manager'),
+                $c->get('code_generator.factory.argument')
             );
         }, ['event_dispatcher.listeners']);
     }
@@ -381,6 +382,10 @@ final class ContainerAssembler
             rtrim(getcwd(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
             rtrim($home, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
         ));
+
+        $container->define('code_generator.factory.argument', function () {
+            return new CodeGenerator\Generator\Argument\Factory();
+        });
     }
 
     /**

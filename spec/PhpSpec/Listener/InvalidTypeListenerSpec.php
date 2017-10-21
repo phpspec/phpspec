@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\Listener;
 
+use PhpSpec\CodeGenerator\Generator\Argument\Factory;
 use PhpSpec\CodeGenerator\GeneratorManager;
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
@@ -15,9 +16,9 @@ use Prophecy\Argument;
 
 class InvalidTypeListenerSpec extends ObjectBehavior
 {
-    function let(ConsoleIO $io, GeneratorManager $generator, ResourceManager $resources)
+    function let(ConsoleIO $io, GeneratorManager $generator, ResourceManager $resources, Factory $argumentFactory)
     {
-        $this->beConstructedWith($io, $generator, $resources);
+        $this->beConstructedWith($io, $generator, $resources, $argumentFactory);
     }
 
     function it_is_initializable()
@@ -51,7 +52,8 @@ class InvalidTypeListenerSpec extends ObjectBehavior
         SuiteEvent $suiteEvent,
         ConsoleIO $io,
         ResourceManager $resources,
-        Resource $classResource
+        Resource $classResource,
+        Factory $argumentFactory
     ) {
         $exception = new TypeFailureException('Error', new \stdClass(), \IteratorAggregate::class);
 
@@ -60,6 +62,8 @@ class InvalidTypeListenerSpec extends ObjectBehavior
         $io->askConfirmation('Do you want me to implement the methods from `IteratorAggregate` in `stdClass` for you?')->willReturn(true);
 
         $resources->createResource('stdClass')->willReturn($classResource);
+
+        $argumentFactory->fromReflectionParams(Argument::type('array'))->willReturn([]);
 
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
