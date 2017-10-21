@@ -18,6 +18,7 @@ use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Exception\Example\TypeFailureException;
+use PhpSpec\Locator\Resource;
 use PhpSpec\Locator\ResourceManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -95,7 +96,7 @@ final class InvalidTypeListener implements EventSubscriberInterface
         }
     }
 
-    private function promptUserToImplementMethods(SuiteEvent $event, array $typesAndMethods, $class, $classResource)
+    private function promptUserToImplementMethods(SuiteEvent $event, array $typesAndMethods, string $class, Resource $classResource)
     {
         foreach ($typesAndMethods as $type => $methods) {
             $message = sprintf('Do you want me to implement the methods from `%s` in `%s` for you?', $type, $class);

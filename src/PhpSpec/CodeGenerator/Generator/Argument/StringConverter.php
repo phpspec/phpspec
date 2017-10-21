@@ -4,11 +4,6 @@ namespace PhpSpec\CodeGenerator\Generator\Argument;
 
 class StringConverter
 {
-    /**
-     * @param \ReflectionParameter[] $parameters
-     *
-     * @return string
-     */
     public function convertFromReflectionParams(array $parameters, string $targetClassNamespace) : string
     {
         return implode(', ', array_map(function (\ReflectionParameter $parameter) use ($targetClassNamespace) {
