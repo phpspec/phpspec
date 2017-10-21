@@ -4,22 +4,28 @@ namespace PhpSpec\CodeGenerator\Generator\Argument;
 
 class StringConverter
 {
-    public function convertFromReflectionParams(array $parameters, string $targetClassNamespace) : string
+    /**
+     * @param Argument[]  $arguments
+     * @param string      $targetClassNamespace
+     *
+     * @return string
+     */
+    public function convertFromArguments(array $arguments, string $targetClassNamespace) : string
     {
-        return implode(', ', array_map(function (\ReflectionParameter $parameter) use ($targetClassNamespace) {
-            return $this->convertArgument($parameter, $targetClassNamespace);
-        }, $parameters));
+        return implode(', ', array_map(function (Argument $argument) use ($targetClassNamespace) {
+            return $this->convertArgument($argument, $targetClassNamespace);
+        }, $arguments));
     }
 
-    private function convertArgument(\ReflectionParameter $parameter, string $targetClassNamespace) : string
+    private function convertArgument(Argument $argument, string $targetClassNamespace) : string
     {
-        $parameterName = '$' . $parameter->getName();
+        $argumentName = '$' . $argument->getName();
 
-        $type = $parameter->getType();
+        $type = $argument->getType();
 
         switch (true) {
-            case (class_exists($type) || interface_exists($type)):
-                $typeHint = $this->getResolvedClassTypeHint($parameter->getClass(), $targetClassNamespace) . ' ';
+            case ($type instanceof \ReflectionClass):
+                $typeHint = $this->getResolvedClassTypeHint($type, $targetClassNamespace) . ' ';
                 break;
             case (strlen($type) > 0):
                 $typeHint = $type . ' ';
@@ -28,16 +34,16 @@ class StringConverter
                 $typeHint = '';
         }
 
-        $defaultValueString = $this->getDefaultValueStringFrom($parameter);
+        $defaultValueString = $this->getDefaultValueStringFrom($argument);
 
-        return $typeHint . $parameterName . $defaultValueString;
+        return $typeHint . $argumentName . $defaultValueString;
     }
 
-    private function getDefaultValueStringFrom(\ReflectionParameter $parameter) : string
+    private function getDefaultValueStringFrom(Argument $argument) : string
     {
-        $type = $parameter->getType();
+        $type = $argument->getType();
 
-        return $type && $parameter->isDefaultValueAvailable() ? sprintf(' = %s', strtolower(gettype($parameter->getDefaultValue()))) : '';
+        return $type && $argument->hasDefaultValue() ? sprintf(' = %s', strtolower(gettype($argument->getDefaultValue()))) : '';
     }
 
     private function getResolvedClassTypeHint(\ReflectionClass $class, string $targetClassNamespace) : string

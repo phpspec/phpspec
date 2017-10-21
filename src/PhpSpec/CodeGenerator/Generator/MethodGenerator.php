@@ -85,14 +85,7 @@ final class MethodGenerator implements Generator
         $filepath = $resource->getSrcFilename();
         $name = $data['name'];
 
-        if (isset($data['reflection_parameters'])) {
-            $argString = $this->argumentStringConverter->convertFromReflectionParams($data['reflection_parameters'], $resource->getSrcNamespace());
-        } else {
-            $arguments = $data['arguments'];
-            $argString = \count($arguments)
-                ? '$argument' . implode(', $argument', range(1, \count($arguments)))
-                : '';
-        }
+        $argString = $this->argumentStringConverter->convertFromArguments($data['arguments'], $resource->getSrcNamespace());
 
         $values = array('%name%' => $name, '%arguments%' => $argString);
         if (!$content = $this->templates->render('method', $values)) {

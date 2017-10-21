@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\CodeGenerator\Generator;
 
+use PhpSpec\CodeGenerator\Generator\Argument\Argument as MethodArgument;
 use PhpSpec\CodeGenerator\Generator\Argument\StringConverter;
 use PhpSpec\CodeGenerator\Writer\CodeWriter;
 use PhpSpec\ObjectBehavior;
@@ -44,8 +45,14 @@ class MethodGeneratorSpec extends ObjectBehavior
         $this->getPriority()->shouldReturn(0);
     }
 
-    function it_generates_class_method_from_resource($io, $tpl, $fs, Resource $resource, CodeWriter $codeWriter)
-    {
+    function it_generates_class_method_from_resource(
+        $io,
+        $tpl,
+        $fs,
+        Resource $resource,
+        CodeWriter $codeWriter,
+        StringConverter $argStringConverter
+    ) {
         $codeWithoutMethod = <<<CODE
 <?php
 
@@ -72,6 +79,10 @@ CODE;
             '%arguments%' => '$argument1',
         );
 
+        $argument = new MethodArgument('argument1', '');
+        $argStringConverter->convertFromArguments([$argument], 'Acme')->willReturn('$argument1');
+
+        $resource->getSrcNamespace()->willReturn('Acme');
         $resource->getSrcFilename()->willReturn('/project/src/Acme/App.php');
         $resource->getSrcClassname()->willReturn('Acme\App');
 
@@ -83,6 +94,6 @@ CODE;
         $fs->getFileContents('/project/src/Acme/App.php')->willReturn($codeWithoutMethod);
         $fs->putFileContents('/project/src/Acme/App.php', $codeWithMethod)->shouldBeCalled();
 
-        $this->generate($resource, array('name' => 'setName', 'arguments' => array('everzet')));
+        $this->generate($resource, array('name' => 'setName', 'arguments' => [$argument]));
     }
 }

@@ -2,7 +2,9 @@
 
 namespace spec\PhpSpec\CodeGenerator\Generator\Argument;
 
+use PhpSpec\CodeGenerator\Generator\Argument\Argument;
 use PhpSpec\CodeGenerator\Generator\Argument\StringConverter;
+use PhpSpec\Event\PhpSpecEvent;
 use PhpSpec\ObjectBehavior;
 
 /**
@@ -15,79 +17,65 @@ class StringConverterSpec extends ObjectBehavior
         $this->shouldHaveType(StringConverter::class);
     }
 
+    function it_builds_empty_string_when_there_are_no_arguments()
+    {
+        $this->convertFromArguments([], __NAMESPACE__)->shouldReturn('');
+    }
+
     function it_builds_an_argument_string_for_non_type_hinted_arguments()
     {
-        $reflectionClass = new \ReflectionClass(Foo::class);
-        $parameters = $reflectionClass->getMethod('nonTypeHinted')->getParameters();
+        $arguments = [
+            new Argument('bar', ''),
+            new Argument('baz', '')
+        ];
 
-        $this->convertFromReflectionParams($parameters, __NAMESPACE__)->shouldReturn('$bar, $baz');
+        $this->convertFromArguments($arguments, __NAMESPACE__)->shouldReturn('$bar, $baz');
     }
 
     function it_builds_an_argument_string_for_type_hinted_arguments()
     {
-        $reflectionClass = new \ReflectionClass(Foo::class);
-        $parameters = $reflectionClass->getMethod('typeHinted')->getParameters();
+        $arguments = [
+            new Argument('iterator', new \ReflectionClass(\Iterator::class)),
+            new Argument('array', new \ReflectionClass(\SplFixedArray::class)),
+        ];
 
-        $this->convertFromReflectionParams($parameters, __NAMESPACE__)->shouldReturn('\Iterator $iterator, \SplFixedArray $array');
+        $this->convertFromArguments($arguments, __NAMESPACE__)->shouldReturn('\Iterator $iterator, \SplFixedArray $array');
     }
 
     function it_builds_an_argument_string_for_a_nullable_type_hinted_argument()
     {
-        $reflectionClass = new \ReflectionClass(Foo::class);
-        $parameters = $reflectionClass->getMethod('typeHintedWithNullable')->getParameters();
+        $iteratorArg = new Argument('iterator', new \ReflectionClass(\Iterator::class));
+        $iteratorArg->setDefaultValue(null);
 
-        $this->convertFromReflectionParams($parameters, __NAMESPACE__)->shouldReturn('\Iterator $iterator = null');
+        $this->convertFromArguments([$iteratorArg], __NAMESPACE__)->shouldReturn('\Iterator $iterator = null');
     }
 
     function it_builds_an_argument_string_for_scalar_type_hinted_arguments()
     {
-        $reflectionClass = new \ReflectionClass(Foo::class);
-        $parameters = $reflectionClass->getMethod('scalarTypeHinted')->getParameters();
+        $arguments = [
+            new Argument('message', 'string'),
+            new Argument('option', 'int'),
+        ];
 
-        $this->convertFromReflectionParams($parameters, __NAMESPACE__)->shouldReturn('string $message, int $option');
+        $this->convertFromArguments($arguments, __NAMESPACE__)->shouldReturn('string $message, int $option');
     }
 
     function it_builds_an_argument_string_for_classes_in_the_same_namespace()
     {
-        $reflectionClass = new \ReflectionClass(Foo::class);
-        $parameters = $reflectionClass->getMethod('sameNamespaceClassTypeHint')->getParameters();
+        $arguments = [
+            new Argument('bar', new \ReflectionClass(Bar::class))
+        ];
 
-        $this->convertFromReflectionParams($parameters, __NAMESPACE__)->shouldReturn('Bar $bar');
+        $this->convertFromArguments($arguments, __NAMESPACE__)->shouldReturn('Bar $bar');
     }
 
     function it_builds_an_argument_string_for_classes_in_a_different_namespace()
     {
-        $reflectionClass = new \ReflectionClass(Foo::class);
-        $parameters = $reflectionClass->getMethod('differentNamespaceClassTypeHint')->getParameters();
+        $parameters = [
+            new Argument('event', new \ReflectionClass(PhpSpecEvent::class))
+        ];
 
-        $this->convertFromReflectionParams($parameters, __NAMESPACE__)->shouldReturn('\PhpSpec\Event\PhpSpecEvent $event');
-    }
-}
-
-class Foo
-{
-    public function nonTypeHinted($bar, $baz)
-    {
-    }
-
-    public function typeHinted(\Iterator $iterator, \SplFixedArray $array)
-    {
-    }
-
-    public function typeHintedWithNullable(\Iterator $iterator = null)
-    {
-    }
-
-    public function scalarTypeHinted(string $message, int $option)
-    {
-    }
-
-    public function sameNamespaceClassTypeHint(Bar $bar)
-    {
-    }
-
-    public function differentNamespaceClassTypeHint(\PhpSpec\Event\PhpSpecEvent $event)
-    {
+        $this->convertFromArguments($parameters, __NAMESPACE__)->shouldReturn('\PhpSpec\Event\PhpSpecEvent $event');
     }
 }
 
