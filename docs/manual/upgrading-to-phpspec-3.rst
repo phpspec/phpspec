@@ -71,6 +71,8 @@ changes you will need to make in your code.
 - ``PhpSpec\Formatter\Presenter\Differ\EngineInterface`` is now ``PhpSpec\Formatter\Presenter\Differ\DifferEngine``
 - ``PhpSpec\Matcher\MatcherInterface`` is now ``PhpSpec\Matcher\Matcher``
 - ``PhpSpec\Matcher\MatchersProviderInterface`` is now ``PhpSpec\Matcher\MatchersProvider``
+- ``PhpSpec\SpecificationInterface`` is now ``PhpSpec\Specification``
+- ``PhpSpec\Runner\Maintainer\MaintainerInterface`` is now ``PhpSpec\Runner\Maintainer\Maintainer``
 
 Some methods have a different signature:
 
