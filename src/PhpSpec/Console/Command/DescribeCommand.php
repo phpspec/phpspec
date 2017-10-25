@@ -87,16 +87,7 @@ EOF
      */
     private function getNamespaces()
     {
-        $container = $this->getApplication()->getContainer();
-        $srcPaths = array();
-
-        foreach ($container->getByTag('locator.locators') as $locator) {
-            if ($locator instanceof \PhpSpec\Locator\SrcPathLocator) {
-                $srcPaths[] = $locator->getFullSrcPath();
-            }
-        }
-
-        return $container->get('console.autocomplete_provider')->getNamespaces($srcPaths);
+        return $this->getApplication()->getContainer()->get('console.autocomplete_provider')->getNamespaces();
     }
 
     /**

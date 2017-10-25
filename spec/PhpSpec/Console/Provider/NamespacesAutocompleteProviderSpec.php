@@ -2,7 +2,7 @@
 
 namespace spec\PhpSpec\Console\Provider;
 
-use PhpSpec\Console\Provider\NamespacesAutocompleteProvider;
+use PhpSpec\Locator\SrcPathLocator;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 use Symfony\Component\Finder\Finder;
@@ -10,9 +10,10 @@ use Symfony\Component\Finder\SplFileInfo;
 
 class NamespacesAutocompleteProviderSpec extends ObjectBehavior
 {
-    function let(Finder $finder)
+    function let(Finder $finder, SrcPathLocator $locator)
     {
-        $this->beConstructedWith($finder);
+        $this->beConstructedWith($finder, [$locator]);
+        $locator->getFullSrcPath()->willReturn('/app/src');
     }
 
     function it_returns_empty_array_if_nothing_found($finder)
@@ -21,7 +22,7 @@ class NamespacesAutocompleteProviderSpec extends ObjectBehavior
         $finder->name('*.php')->willReturn($finder);
         $finder->in(['/app/src'])->willReturn([]);
 
-        $namespaces = $this->getNamespaces(['/app/src'])->shouldHaveCount(0);
+        $this->getNamespaces()->shouldHaveCount(0);
     }
 
     function it_returns_namespaces_from_php_files(
@@ -38,7 +39,7 @@ class NamespacesAutocompleteProviderSpec extends ObjectBehavior
         $file2->getContents()->willReturn('<?php namespace App\Foo; class Bar {}');
         $file3->getContents()->willReturn('<?php namespace App\Bar; class Foo {}');
 
-        $namespaces = $this->getNamespaces(['/app/src']);
+        $namespaces = $this->getNamespaces();
 
         $namespaces->shouldHaveCount(3);
         $namespaces->shouldContain('App\\');
