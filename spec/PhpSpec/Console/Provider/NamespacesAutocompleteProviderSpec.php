@@ -41,8 +41,8 @@ class NamespacesAutocompleteProviderSpec extends ObjectBehavior
         $namespaces = $this->getNamespaces(['/app/src']);
 
         $namespaces->shouldHaveCount(3);
-        $namespaces->shouldContain('App');
-        $namespaces->shouldContain('App\Foo');
-        $namespaces->shouldContain('App\Bar');
+        $namespaces->shouldContain('App\\');
+        $namespaces->shouldContain('App\\Foo\\');
+        $namespaces->shouldContain('App\\Bar\\');
     }
 }

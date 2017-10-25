@@ -57,8 +57,8 @@ final class NamespacesAutocompleteProvider
 
                 foreach ($namespaceParts as $part) {
                     $namespace .= $part;
-                    $namespaces[] = $namespace;
                     $namespace .= '\\';
+                    $namespaces[] = $namespace;
                 }
 
                 break;
