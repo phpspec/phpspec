@@ -91,8 +91,8 @@ EOF
         $srcPaths = array();
 
         foreach ($container->getByTag('locator.locators') as $locator) {
-            if ($locator instanceof \PhpSpec\Locator\PSR0\PSR0Locator) {
-                $srcPaths[] = $locator->getSrcPath();
+            if ($locator instanceof \PhpSpec\Locator\SrcPathLocator) {
+                $srcPaths[] = $locator->getFullSrcPath();
             }
         }
 
