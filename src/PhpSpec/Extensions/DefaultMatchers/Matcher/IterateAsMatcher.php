@@ -11,13 +11,14 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Matcher;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher;
 
+use PhpSpec\Extensions\DefaultMatchers\Matcher\Iterate\IterablesMatcher;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
-use PhpSpec\Matcher\Iterate\IterablesMatcher;
+use PhpSpec\Matcher\Matcher;
 
-final class StartIteratingAsMatcher implements Matcher
+final class IterateAsMatcher implements Matcher
 {
     /**
      * @var IterablesMatcher
@@ -37,7 +38,7 @@ final class StartIteratingAsMatcher implements Matcher
      */
     public function supports(string $name, $subject, array $arguments): bool
     {
-        return \in_array($name, ['startIteratingAs', 'startYielding'])
+        return \in_array($name, ['iterateAs', 'yield'])
             && 1 === \count($arguments)
             && ($subject instanceof \Traversable || \is_array($subject))
             && ($arguments[0] instanceof \Traversable || \is_array($arguments[0]))
@@ -51,10 +52,10 @@ final class StartIteratingAsMatcher implements Matcher
     {
         try {
             $this->iterablesMatcher->match($subject, $arguments[0]);
-        } catch (Iterate\SubjectHasMoreElementsException $exception) {
-            // everything's all right
         } catch (Iterate\SubjectHasFewerElementsException $exception) {
-            throw new FailureException('Expected subject to have the same or more elements than matched value, but it has fewer.', 0, $exception);
+            throw new FailureException('Expected subject to have the same number of elements than matched value, but it has fewer.', 0, $exception);
+        } catch (Iterate\SubjectHasMoreElementsException $exception) {
+            throw new FailureException('Expected subject to have the same number of elements than matched value, but it has more.', 0, $exception);
         }
     }
 
@@ -69,7 +70,7 @@ final class StartIteratingAsMatcher implements Matcher
             return;
         }
 
-        throw new FailureException('Expected subject not to start iterating the same as matched value, but it does.');
+        throw new FailureException('Expected subject not to iterate the same as matched value, but it does.');
     }
 
     /**

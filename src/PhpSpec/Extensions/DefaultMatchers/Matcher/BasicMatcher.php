@@ -11,9 +11,10 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Matcher;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher;
 
 use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Matcher\Matcher;
 
 abstract class BasicMatcher implements Matcher
 {

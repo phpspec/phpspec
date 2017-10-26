@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpSpec\Matcher\Iterate;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher\Iterate;
 
 use PhpSpec\Formatter\Presenter\Presenter;
 

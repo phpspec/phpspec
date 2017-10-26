@@ -11,35 +11,33 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Matcher;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher;
 
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Exception\Example\NotEqualException;
 
-final class CallbackMatcher extends BasicMatcher
+final class IdentityMatcher extends BasicMatcher
 {
     /**
-     * @var string
+     * @var array
      */
-    private $name;
-    /**
-     * @var callable
-     */
-    private $callback;
+    private static $keywords = array(
+        'return',
+        'be',
+        'equal',
+        'beEqualTo'
+    );
     /**
      * @var Presenter
      */
     private $presenter;
 
     /**
-     * @param string             $name
-     * @param callable           $callback
      * @param Presenter $presenter
      */
-    public function __construct(string $name, callable $callback, Presenter $presenter)
+    public function __construct(Presenter $presenter)
     {
-        $this->name      = $name;
-        $this->callback  = $callback;
         $this->presenter = $presenter;
     }
 
@@ -52,7 +50,9 @@ final class CallbackMatcher extends BasicMatcher
      */
     public function supports(string $name, $subject, array $arguments): bool
     {
-        return $name === $this->name;
+        return \in_array($name, self::$keywords)
+            && 1 == \count($arguments)
+        ;
     }
 
     /**
@@ -63,9 +63,7 @@ final class CallbackMatcher extends BasicMatcher
      */
     protected function matches($subject, array $arguments): bool
     {
-        array_unshift($arguments, $subject);
-
-        return (Boolean) \call_user_func_array($this->callback, $arguments);
+        return $subject === $arguments[0];
     }
 
     /**
@@ -77,12 +75,11 @@ final class CallbackMatcher extends BasicMatcher
      */
     protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
-        return new FailureException(sprintf(
-            '%s expected to %s(%s), but it is not.',
-            $this->presenter->presentValue($subject),
-            $this->presenter->presentString($name),
-            implode(', ', array_map(array($this->presenter, 'presentValue'), $arguments))
-        ));
+        return new NotEqualException(sprintf(
+            'Expected %s, but got %s.',
+            $this->presenter->presentValue($arguments[0]),
+            $this->presenter->presentValue($subject)
+        ), $arguments[0], $subject);
     }
 
     /**
@@ -95,10 +92,8 @@ final class CallbackMatcher extends BasicMatcher
     protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
-            '%s not expected to %s(%s), but it did.',
-            $this->presenter->presentValue($subject),
-            $this->presenter->presentString($name),
-            implode(', ', array_map(array($this->presenter, 'presentValue'), $arguments))
+            'Did not expect %s, but got one.',
+            $this->presenter->presentValue($subject)
         ));
     }
 }

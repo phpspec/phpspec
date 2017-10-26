@@ -11,11 +11,12 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Matcher;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher;
 
+use PhpSpec\Extensions\DefaultMatchers\Matcher\Iterate\IterablesMatcher;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
-use PhpSpec\Matcher\Iterate\IterablesMatcher;
+use PhpSpec\Matcher\Matcher;
 
 final class IterateLikeMatcher implements Matcher
 {

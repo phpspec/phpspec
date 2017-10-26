@@ -11,22 +11,13 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Matcher;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher;
 
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 
-final class TypeMatcher extends BasicMatcher
+final class StringRegexMatcher extends BasicMatcher
 {
-    /**
-     * @var array
-     */
-    private static $keywords = array(
-        'beAnInstanceOf',
-        'returnAnInstanceOf',
-        'haveType',
-        'implement'
-    );
     /**
      * @var Presenter
      */
@@ -49,7 +40,8 @@ final class TypeMatcher extends BasicMatcher
      */
     public function supports(string $name, $subject, array $arguments): bool
     {
-        return \in_array($name, self::$keywords)
+        return 'match' === $name
+            && \is_string($subject)
             && 1 == \count($arguments)
         ;
     }
@@ -62,7 +54,7 @@ final class TypeMatcher extends BasicMatcher
      */
     protected function matches($subject, array $arguments): bool
     {
-        return (null !== $subject) && ($subject instanceof $arguments[0]);
+        return (Boolean) preg_match($arguments[0], $subject);
     }
 
     /**
@@ -75,9 +67,9 @@ final class TypeMatcher extends BasicMatcher
     protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
-            'Expected an instance of %s, but got %s.',
-            $this->presenter->presentString($arguments[0]),
-            $this->presenter->presentValue($subject)
+            'Expected %s to match %s regex, but it does not.',
+            $this->presenter->presentString($subject),
+            $this->presenter->presentString($arguments[0])
         ));
     }
 
@@ -91,9 +83,9 @@ final class TypeMatcher extends BasicMatcher
     protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
-            'Did not expect instance of %s, but got %s.',
-            $this->presenter->presentString($arguments[0]),
-            $this->presenter->presentValue($subject)
+            'Expected %s not to match %s regex, but it does.',
+            $this->presenter->presentString($subject),
+            $this->presenter->presentString($arguments[0])
         ));
     }
 }

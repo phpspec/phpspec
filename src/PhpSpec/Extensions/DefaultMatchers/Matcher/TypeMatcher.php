@@ -11,22 +11,21 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Matcher;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher;
 
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
-use PhpSpec\Exception\Example\NotEqualException;
 
-final class IdentityMatcher extends BasicMatcher
+final class TypeMatcher extends BasicMatcher
 {
     /**
      * @var array
      */
     private static $keywords = array(
-        'return',
-        'be',
-        'equal',
-        'beEqualTo'
+        'beAnInstanceOf',
+        'returnAnInstanceOf',
+        'haveType',
+        'implement'
     );
     /**
      * @var Presenter
@@ -63,7 +62,7 @@ final class IdentityMatcher extends BasicMatcher
      */
     protected function matches($subject, array $arguments): bool
     {
-        return $subject === $arguments[0];
+        return (null !== $subject) && ($subject instanceof $arguments[0]);
     }
 
     /**
@@ -75,11 +74,11 @@ final class IdentityMatcher extends BasicMatcher
      */
     protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
-        return new NotEqualException(sprintf(
-            'Expected %s, but got %s.',
-            $this->presenter->presentValue($arguments[0]),
+        return new FailureException(sprintf(
+            'Expected an instance of %s, but got %s.',
+            $this->presenter->presentString($arguments[0]),
             $this->presenter->presentValue($subject)
-        ), $arguments[0], $subject);
+        ));
     }
 
     /**
@@ -92,7 +91,8 @@ final class IdentityMatcher extends BasicMatcher
     protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
-            'Did not expect %s, but got one.',
+            'Did not expect instance of %s, but got %s.',
+            $this->presenter->presentString($arguments[0]),
             $this->presenter->presentValue($subject)
         ));
     }

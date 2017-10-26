@@ -11,12 +11,13 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Matcher;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher;
 
-use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Formatter\Presenter\Presenter;
+use PhpSpec\Exception\Example\FailureException;
+use ArrayAccess;
 
-final class StringContainMatcher extends BasicMatcher
+final class TraversableKeyMatcher extends BasicMatcher
 {
     /**
      * @var Presenter
@@ -34,20 +35,26 @@ final class StringContainMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    public function supports(string $name, $subject, array $arguments) : bool
+    public function supports(string $name, $subject, array $arguments): bool
     {
-        return 'contain' === $name
-            && \is_string($subject)
+        return 'haveKey' === $name
             && 1 === \count($arguments)
-            && \is_string($arguments[0]);
+            && $subject instanceof \Traversable
+        ;
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function matches($subject, array $arguments) : bool
+    protected function matches($subject, array $arguments): bool
     {
-        return false !== strpos($subject, $arguments[0]);
+        foreach ($subject as $key => $value) {
+            if ($key === $arguments[0]) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -56,9 +63,9 @@ final class StringContainMatcher extends BasicMatcher
     protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
-            'Expected %s to contain %s, but it does not.',
-            $this->presenter->presentString($subject),
-            $this->presenter->presentString($arguments[0])
+            'Expected %s to have %s key, but it does not.',
+            $this->presenter->presentValue($subject),
+            $this->presenter->presentValue($arguments[0])
         ));
     }
 
@@ -68,9 +75,9 @@ final class StringContainMatcher extends BasicMatcher
     protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
-            'Expected %s not to contain %s, but it does.',
-            $this->presenter->presentString($subject),
-            $this->presenter->presentString($arguments[0])
+            'Expected %s not to have %s key, but it does.',
+            $this->presenter->presentValue($subject),
+            $this->presenter->presentValue($arguments[0])
         ));
     }
 }

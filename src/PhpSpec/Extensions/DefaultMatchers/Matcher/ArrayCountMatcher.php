@@ -11,12 +11,12 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Matcher;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher;
 
-use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Formatter\Presenter\Presenter;
+use PhpSpec\Exception\Example\FailureException;
 
-final class TraversableContainMatcher extends BasicMatcher
+final class ArrayCountMatcher extends BasicMatcher
 {
     /**
      * @var Presenter
@@ -32,51 +32,61 @@ final class TraversableContainMatcher extends BasicMatcher
     }
 
     /**
-     * {@inheritdoc}
+     * @param string $name
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
+     * @return bool
      */
     public function supports(string $name, $subject, array $arguments): bool
     {
-        return 'contain' === $name
-            && 1 === \count($arguments)
-            && $subject instanceof \Traversable
+        return 'haveCount' === $name
+            && 1 == \count($arguments)
+            && (\is_array($subject) || $subject instanceof \Countable)
         ;
     }
 
     /**
-     * {@inheritdoc}
+     * @param mixed $subject
+     * @param array $arguments
+     *
+     * @return bool
      */
     protected function matches($subject, array $arguments): bool
     {
-        foreach ($subject as $value) {
-            if ($value === $arguments[0]) {
-                return true;
-            }
-        }
-
-        return false;
+        return $arguments[0] === \count($subject);
     }
 
     /**
-     * {@inheritdoc}
+     * @param string $name
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
+     * @return FailureException
      */
     protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
-            'Expected %s to contain %s, but it does not.',
+            'Expected %s to have %s items, but got %s.',
             $this->presenter->presentValue($subject),
-            $this->presenter->presentValue($arguments[0])
+            $this->presenter->presentString(\intval($arguments[0])),
+            $this->presenter->presentString(\count($subject))
         ));
     }
 
     /**
-     * {@inheritdoc}
+     * @param string $name
+     * @param mixed  $subject
+     * @param array  $arguments
+     *
+     * @return FailureException
      */
     protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
-            'Expected %s not to contain %s, but it does.',
+            'Expected %s not to have %s items, but got it.',
             $this->presenter->presentValue($subject),
-            $this->presenter->presentValue($arguments[0])
+            $this->presenter->presentString(\intval($arguments[0]))
         ));
     }
 }

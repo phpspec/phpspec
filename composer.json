@@ -48,7 +48,10 @@
     "autoload": {
         "psr-0": {
             "PhpSpec": "src/"
-        }
+        },
+        "files" : [
+            "src/deprecated.php"
+        ]
     },
 
     "autoload-dev": {

@@ -11,7 +11,7 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Matcher\Iterate;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher\Iterate;
 
 use PhpSpec\Exception\Example\FailureException;
 

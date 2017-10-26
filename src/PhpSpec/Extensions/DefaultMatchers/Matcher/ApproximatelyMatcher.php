@@ -11,14 +11,25 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Matcher;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher;
 
-use PhpSpec\Formatter\Presenter\Presenter;
-use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Exception\Example\NotEqualException;
+use PhpSpec\Formatter\Presenter\Presenter;
 
-final class ComparisonMatcher extends BasicMatcher
+final class ApproximatelyMatcher extends BasicMatcher
 {
+
+    /**
+     * @var array
+     */
+    private static $keywords = array(
+        'beApproximately',
+        'beEqualToApproximately',
+        'equalApproximately',
+        'returnApproximately'
+    );
+
     /**
      * @var Presenter
      */
@@ -34,16 +45,14 @@ final class ComparisonMatcher extends BasicMatcher
 
     /**
      * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
+     * @param mixed $subject
+     * @param array $arguments
      *
      * @return bool
      */
     public function supports(string $name, $subject, array $arguments): bool
     {
-        return 'beLike' === $name
-            && 1 == \count($arguments)
-        ;
+        return \in_array($name, self::$keywords) && 2 == \count($arguments);
     }
 
     /**
@@ -54,37 +63,28 @@ final class ComparisonMatcher extends BasicMatcher
      */
     protected function matches($subject, array $arguments): bool
     {
-        return $subject == $arguments[0];
+        $value = (float)$arguments[0];
+        return (abs($subject - $value) < $arguments[1]);
     }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return NotEqualException
-     */
-    protected function getFailureException(string $name, $subject, array $arguments): FailureException
-    {
-        return new NotEqualException(sprintf(
-            'Expected %s, but got %s.',
-            $this->presenter->presentValue($arguments[0]),
-            $this->presenter->presentValue($subject)
-        ), $arguments[0], $subject);
-    }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return FailureException
-     */
-    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getFailureException(string $name, $subject, array $arguments) : FailureException
     {
         return new FailureException(sprintf(
-            'Did not expect %s, but got one.',
+            'Expected an approximated value of %s, but got %s',
+            $this->presenter->presentValue($arguments[0]),
             $this->presenter->presentValue($subject)
         ));
     }
+
+    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
+    {
+        return new FailureException(sprintf(
+            'Did Not expect an approximated value of %s, but got %s',
+            $this->presenter->presentValue($arguments[0]),
+            $this->presenter->presentValue($subject)
+        ));
+    }
+
+
 }

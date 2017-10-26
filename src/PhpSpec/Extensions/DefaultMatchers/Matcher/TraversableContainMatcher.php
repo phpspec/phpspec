@@ -11,12 +11,12 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Matcher;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher;
 
-use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Formatter\Presenter\Presenter;
 
-final class StringStartMatcher extends BasicMatcher
+final class TraversableContainMatcher extends BasicMatcher
 {
     /**
      * @var Presenter
@@ -32,60 +32,51 @@ final class StringStartMatcher extends BasicMatcher
     }
 
     /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function supports(string $name, $subject, array $arguments): bool
     {
-        return 'startWith' === $name
-            && \is_string($subject)
-            && 1 == \count($arguments)
+        return 'contain' === $name
+            && 1 === \count($arguments)
+            && $subject instanceof \Traversable
         ;
     }
 
     /**
-     * @param mixed $subject
-     * @param array $arguments
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     protected function matches($subject, array $arguments): bool
     {
-        return 0 === strpos($subject, $arguments[0]);
+        foreach ($subject as $value) {
+            if ($value === $arguments[0]) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return FailureException
+     * {@inheritdoc}
      */
     protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
-            'Expected %s to start with %s, but it does not.',
-            $this->presenter->presentString($subject),
-            $this->presenter->presentString($arguments[0])
+            'Expected %s to contain %s, but it does not.',
+            $this->presenter->presentValue($subject),
+            $this->presenter->presentValue($arguments[0])
         ));
     }
 
     /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return FailureException
+     * {@inheritdoc}
      */
     protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
-            'Expected %s not to start with %s, but it does.',
-            $this->presenter->presentString($subject),
-            $this->presenter->presentString($arguments[0])
+            'Expected %s not to contain %s, but it does.',
+            $this->presenter->presentValue($subject),
+            $this->presenter->presentValue($arguments[0])
         ));
     }
 }

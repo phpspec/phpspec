@@ -11,12 +11,13 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Matcher;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher;
 
 use PhpSpec\Formatter\Presenter\Presenter;
+use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Example\FailureException;
 
-final class StringRegexMatcher extends BasicMatcher
+final class ComparisonMatcher extends BasicMatcher
 {
     /**
      * @var Presenter
@@ -40,8 +41,7 @@ final class StringRegexMatcher extends BasicMatcher
      */
     public function supports(string $name, $subject, array $arguments): bool
     {
-        return 'match' === $name
-            && \is_string($subject)
+        return 'beLike' === $name
             && 1 == \count($arguments)
         ;
     }
@@ -54,7 +54,7 @@ final class StringRegexMatcher extends BasicMatcher
      */
     protected function matches($subject, array $arguments): bool
     {
-        return (Boolean) preg_match($arguments[0], $subject);
+        return $subject == $arguments[0];
     }
 
     /**
@@ -62,15 +62,15 @@ final class StringRegexMatcher extends BasicMatcher
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return FailureException
+     * @return NotEqualException
      */
     protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
-        return new FailureException(sprintf(
-            'Expected %s to match %s regex, but it does not.',
-            $this->presenter->presentString($subject),
-            $this->presenter->presentString($arguments[0])
-        ));
+        return new NotEqualException(sprintf(
+            'Expected %s, but got %s.',
+            $this->presenter->presentValue($arguments[0]),
+            $this->presenter->presentValue($subject)
+        ), $arguments[0], $subject);
     }
 
     /**
@@ -83,9 +83,8 @@ final class StringRegexMatcher extends BasicMatcher
     protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
-            'Expected %s not to match %s regex, but it does.',
-            $this->presenter->presentString($subject),
-            $this->presenter->presentString($arguments[0])
+            'Did not expect %s, but got one.',
+            $this->presenter->presentValue($subject)
         ));
     }
 }

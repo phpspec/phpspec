@@ -11,12 +11,12 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Matcher;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher;
 
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 
-final class ArrayCountMatcher extends BasicMatcher
+final class ArrayContainMatcher extends BasicMatcher
 {
     /**
      * @var Presenter
@@ -40,9 +40,9 @@ final class ArrayCountMatcher extends BasicMatcher
      */
     public function supports(string $name, $subject, array $arguments): bool
     {
-        return 'haveCount' === $name
+        return 'contain' === $name
             && 1 == \count($arguments)
-            && (\is_array($subject) || $subject instanceof \Countable)
+            && \is_array($subject)
         ;
     }
 
@@ -54,7 +54,7 @@ final class ArrayCountMatcher extends BasicMatcher
      */
     protected function matches($subject, array $arguments): bool
     {
-        return $arguments[0] === \count($subject);
+        return \in_array($arguments[0], $subject, true);
     }
 
     /**
@@ -67,10 +67,9 @@ final class ArrayCountMatcher extends BasicMatcher
     protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
-            'Expected %s to have %s items, but got %s.',
+            'Expected %s to contain %s, but it does not.',
             $this->presenter->presentValue($subject),
-            $this->presenter->presentString(\intval($arguments[0])),
-            $this->presenter->presentString(\count($subject))
+            $this->presenter->presentValue($arguments[0])
         ));
     }
 
@@ -84,9 +83,9 @@ final class ArrayCountMatcher extends BasicMatcher
     protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
-            'Expected %s not to have %s items, but got it.',
+            'Expected %s not to contain %s, but it does.',
             $this->presenter->presentValue($subject),
-            $this->presenter->presentString(\intval($arguments[0]))
+            $this->presenter->presentValue($arguments[0])
         ));
     }
 }

@@ -11,12 +11,12 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Matcher\Iterate;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher\Iterate;
 
-class SubjectHasMoreElementsException extends \LengthException
+class SubjectHasFewerElementsException extends \LengthException
 {
     public function __construct()
     {
-        parent::__construct('Subject has more elements than expected.');
+        parent::__construct('Subject has fewer elements than expected.');
     }
 }
