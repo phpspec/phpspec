@@ -189,6 +189,109 @@ In the example here you specified the value the ``toHtml`` method should
 return by using one of **phpspec's** matchers. There are several other
 matchers available, you can read more about these in the :doc:`Matchers Cookbook </cookbook/matchers>`
 
+Implementing interfaces
+-----------------------
+
+If you are creating a class that should implement an interface (or multiple) then **phpspec** can help you
+by automatically generating method stubs from the interface. Let's look at an example to show this in action.
+
+Let's say we are building a game of chess, and we have a class representing our knight playing piece.
+
+.. code-block:: php
+
+    <?php
+
+    class Knight
+    {
+    }
+
+We want all of our playing pieces to implement an interface, that we already created up front. This might look
+something similar to the following
+
+.. code-block:: php
+
+    <?php
+
+    interface GamePiece
+    {
+        public function getName(): string;
+
+        public function setColour(string $colour);
+    }
+
+We can tell **phpspec** that our knight playing piece should implement the ``GamePiece`` interface by using the
+``shouldImplement`` (or ``shouldHaveType``) matcher.
+
+.. code-block:: php
+
+    <?php
+
+    namespace spec;
+
+    use PhpSpec\ObjectBehavior;
+    use GamePiece;
+
+    class KnightSpec extends ObjectBehavior
+    {
+        function it_is_a_game_piece()
+        {
+            $this->shouldImplement(GamePiece::class);
+        }
+    }
+
+
+When we run **phpspec** it will now tell us that ``Knight`` does not match the expected type (``GamePiece``) and offer
+to implement the method stubs for us in ``Knight``.
+
+.. code-block:: bash
+
+    $ bin/phpspec run
+
+    10  ✘ is a game piece
+          expected an instance of GamePiece, but got [obj:Knight].
+
+    ----  failed examples
+
+          Knight
+    10  ✘ is a game piece
+          expected an instance of GamePiece, but got [obj:Knight].
+
+
+    1 specs
+    1 examples (1 failed)
+    19ms
+
+When answering with "Y" **phpspec** will add the method stubs and re-run the suite, which should now pass.
+
+.. code-block:: bash
+
+    Method Knight::getName() has been created.
+
+    10  ✔ is a game piece
+
+    1 specs
+    1 examples (1 passed)
+    19ms
+
+If we take a look at our ``Knight`` class should contain method stubs for the 2 methods in the ``GamePiece`` interface.
+
+.. code-block:: php
+
+    <?php
+
+    class Knight implements GamePiece
+    {
+        public function getName(): string
+        {
+            // TODO: write logic here
+        }
+
+        public function setColour(string $colour)
+        {
+            // TODO: write logic here
+        }
+    }
+
 Skipping examples
 -----------------
 
