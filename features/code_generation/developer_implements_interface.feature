@@ -633,7 +633,7 @@ Feature: Developer implements interface
       """
 
   Scenario: Implementing an interface that does not exist yet
-    Given the spec file "spec/CodeGeneration/AbstractTypeMethods/CarSpec.php" contains:
+    Given the spec file "spec/CodeGeneration/AbstractTypeMethods/TruckSpec.php" contains:
       """
       <?php
 
@@ -643,7 +643,7 @@ Feature: Developer implements interface
       use PhpSpec\ObjectBehavior;
       use Prophecy\Argument;
 
-      class CarSpec extends ObjectBehavior
+      class TruckSpec extends ObjectBehavior
       {
           function it_is_a_vehicle()
           {
@@ -651,25 +651,25 @@ Feature: Developer implements interface
           }
       }
       """
-    And the class file "src/CodeGeneration/AbstractTypeMethods/Car.php" contains:
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Truck.php" contains:
       """
       <?php
 
       namespace CodeGeneration\AbstractTypeMethods;
 
-      class Car
+      class Truck
       {
       }
       """
     When I run phpspec
     Then the suite should not pass
-    And the class in "src/CodeGeneration/AbstractTypeMethods/Car.php" should contain:
+    And the class in "src/CodeGeneration/AbstractTypeMethods/Truck.php" should contain:
       """
       <?php
 
       namespace CodeGeneration\AbstractTypeMethods;
 
-      class Car
+      class Truck
       {
       }
       """
