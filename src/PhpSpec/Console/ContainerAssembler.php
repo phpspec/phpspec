@@ -412,7 +412,7 @@ final class ContainerAssembler
 
         $container->addConfigurator(function (IndexedServiceContainer $c) {
             $suites = [];
-            $arguments = $c->getParam('composer_namespace_provider', false);
+            $arguments = $c->getParam('composer_suite_detection', false);
             if ($arguments !== false) {
                 if ($arguments === true) {
                     $arguments = [];

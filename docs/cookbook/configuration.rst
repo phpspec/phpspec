@@ -57,7 +57,7 @@ configuration:
 
 .. code-block:: yaml
 
-    composer_namespace_provider: true # translates to:
+    composer_suite_detection: true # translates to:
                                       # - root_directory: '.'
                                       # - spec_prefix: spec
 

@@ -7,7 +7,7 @@ Feature: Composer can be leveraged to create suites
   Scenario: Using composer as namespace_provider in a PSR0 namespace
     Given the config file located in "." contains:
       """
-      composer_namespace_provider: true
+      composer_suite_detection: true
       """
       And there is a PSR-0 namespace "Andromeda\N4S4Arm\" configured for the "src" folder
     When I start describing the "Andromeda/N4S4Arm/Gazorpazorp" class with the "phpspec.yml" custom config
@@ -34,7 +34,7 @@ Feature: Composer can be leveraged to create suites
   Scenario: Using composer as namespace_provider in a PSR4 namespace
     Given the config file located in "." contains:
       """
-      composer_namespace_provider: true
+      composer_suite_detection : true
       """
       And there is a PSR-4 namespace "MilkyWay\OrionCygnusArm\" configured for the "src" folder
     When I start describing the "MilkyWay/OrionCygnusArm/LocalBubble" class with the "phpspec.yml" custom config
