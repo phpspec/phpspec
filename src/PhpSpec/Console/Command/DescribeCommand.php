@@ -71,7 +71,7 @@ EOF
             $questionHelper = $this->getApplication()->getHelperSet()->get('question');
             $question = new Question('<info>Enter class to describe: </info>');
 
-            $question->setAutocompleterValues($this->getNamespaces());
+            $question->setAutocompleterValues(array_map([$this, 'escapePathForTerminal'], $this->getNamespaces()));
             $classname = $questionHelper->ask($input, $output, $question);
         }
 
@@ -87,15 +87,14 @@ EOF
      */
     private function getNamespaces()
     {
-        $container = $this->getApplication()->getContainer();
-        $srcPaths = array();
+        return $this->getApplication()->getContainer()->get('console.autocomplete_provider')->getNamespaces();
+    }
 
-        foreach ($container->getByTag('locator.locators') as $locator) {
-            if ($locator instanceof \PhpSpec\Locator\PSR0\PSR0Locator) {
-                $srcPaths[] = $locator->getSrcPath();
-            }
-        }
-
-        return $container->get('console.autocomplete_provider')->getNamespaces($srcPaths);
+    /**
+     * Make path safe to echo to the terminal (to get around symfony/console issue #24652)
+     */
+    private function escapePathForTerminal(string $path) : string
+    {
+        return str_replace('\\', '/', $path);
     }
 }

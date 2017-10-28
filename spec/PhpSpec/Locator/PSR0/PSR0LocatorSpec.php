@@ -545,12 +545,6 @@ class PSR0LocatorSpec extends ObjectBehavior
         $this->supportsQuery('Test\\Namespace\\PhpSpec\\Console\\Application')->shouldReturn(true);
     }
 
-    function it_returns_src_path(Filesystem $filesystem)
-    {
-        $this->beConstructedWith($filesystem, '', 'spec', $this->srcPath, $this->specPath);
-        $this->getSrcPath()->shouldReturn($this->srcPath.DIRECTORY_SEPARATOR);
-    }
-
     private function convert_to_path($path)
     {
         if ('/' === DIRECTORY_SEPARATOR) {

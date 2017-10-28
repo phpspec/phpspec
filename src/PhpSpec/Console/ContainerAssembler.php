@@ -112,8 +112,11 @@ final class ContainerAssembler
         $container->define('util.filesystem', function () {
             return new Filesystem();
         });
-        $container->define('console.autocomplete_provider', function () {
-            return new NamespacesAutocompleteProvider(new Finder());
+        $container->define('console.autocomplete_provider', function (IndexedServiceContainer $container) {
+            return new NamespacesAutocompleteProvider(
+                new Finder(),
+                $container->getByTag('locator.locators')
+            );
         });
     }
 

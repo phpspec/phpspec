@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Console\Provider;
 
+use PhpSpec\Locator\ResourceLocator;
+use PhpSpec\Locator\SrcPathLocator;
 use Symfony\Component\Finder\Finder;
 
 final class NamespacesAutocompleteProvider
@@ -22,22 +24,28 @@ final class NamespacesAutocompleteProvider
      */
     private $finder;
 
-    public function __construct(Finder $finder)
+    private $paths = [];
+
+    public function __construct(Finder $finder, array $locators)
     {
+        foreach ($locators as $locator) {
+            if ($locator instanceof SrcPathLocator) {
+                $this->paths[] = $locator->getFullSrcPath();
+            }
+        }
+
         $this->finder = $finder;
     }
 
     /**
      * Get namespaces from paths.
      *
-     * @param  array $paths
-     *
      * @return array of namespases
      */
-    public function getNamespaces(array $paths)
+    public function getNamespaces()
     {
         $namespaces = [];
-        foreach ($this->finder->files()->name('*.php')->in($paths) as $phpFile) {
+        foreach ($this->finder->files()->name('*.php')->in($this->paths) as $phpFile) {
             $tokens = token_get_all($phpFile->getContents());
             foreach ($tokens as $index => $token) {
                 if (!is_array($token) || T_NAMESPACE !== $token[0]) {
@@ -57,8 +65,8 @@ final class NamespacesAutocompleteProvider
 
                 foreach ($namespaceParts as $part) {
                     $namespace .= $part;
-                    $namespaces[] = $namespace;
                     $namespace .= '\\';
+                    $namespaces[] = $namespace;
                 }
 
                 break;
