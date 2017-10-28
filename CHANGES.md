@@ -1,5 +1,5 @@
-Upcoming 4.x
-============
+4.2.0 / 2017-10-28
+==================
 
 * Detect autoloader from composer to automatically define spec locations, reducing need for suites with PSR-4 (@greg0ire)
 * Describe command without class now shows prompt with autocompleting input (@fullpipe)
