@@ -673,3 +673,80 @@ Feature: Developer implements interface
       {
       }
       """
+
+  Scenario: Generating methods with return types from an interface in a class
+    Given the spec file "spec/CodeGeneration/AbstractTypeMethods/HttpSpec.php" contains:
+     """
+     <?php
+
+      namespace spec\CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods\Client;
+      use PhpSpec\ObjectBehavior;
+
+      class HttpSpec extends ObjectBehavior
+      {
+          function it_is_a_client()
+          {
+              $this->shouldHaveType(Client::class);
+          }
+      }
+     """
+    And the interface file "src/CodeGeneration/AbstractTypeMethods/Client.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      interface Client
+      {
+          public function sendRequest() : Response;
+
+          public function getVersion() : string;
+      }
+      """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Response.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      class Response
+      {
+      }
+      """
+    And the class file "src/CodeGeneration/AbstractTypeMethods/Http.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods;
+
+      class Http
+      {
+      }
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the class in "src/CodeGeneration/AbstractTypeMethods/Http.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\AbstractTypeMethods;
+
+      use CodeGeneration\AbstractTypeMethods\Auth\UsernameAware;
+      use CodeGeneration\AbstractTypeMethods\Auth\TokenAware;
+
+      class Http implements Client
+      {
+          public function sendRequest() : Response
+          {
+              // TODO: write logic here
+          }
+
+          public function getVersion() : string
+          {
+              // TODO: write logic here
+          }
+      }
+      """
