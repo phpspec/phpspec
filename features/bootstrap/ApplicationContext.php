@@ -317,6 +317,9 @@ class ApplicationContext implements Context
      */
     public function thereIsAPsrNamespaceConfiguredForTheFolder($namespaceType, $namespace, $source)
     {
+        if (!is_dir(__DIR__ . '/src')) {
+            mkdir(__DIR__ . '/src');
+        }
         require_once __DIR__ .'/autoloader/fake_autoload.php';
     }
 

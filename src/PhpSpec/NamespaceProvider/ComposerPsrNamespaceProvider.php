@@ -67,7 +67,8 @@ class ComposerPsrNamespaceProvider
         foreach ($prefixes as $namespace => $psrPrefix) {
             foreach ($psrPrefix as $location) {
                 foreach ($vendors as $vendor) {
-                    if (strpos(realpath($location), $vendor) === 0) {
+                    $realPath = realpath($location);
+                    if ($realPath === false || strpos($realPath, $vendor) === 0) {
                         break 2;
                     }
                 }
