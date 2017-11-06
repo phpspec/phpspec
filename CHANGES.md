@@ -1,3 +1,8 @@
+Upcoming 4.x
+============
+
+* [fixed] Properly handle empty config file (@ciaranmcnulty)
+
 4.2.0 / 2017-10-28
 ==================
 
