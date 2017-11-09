@@ -226,9 +226,8 @@ final class Application extends BaseApplication
     {
         foreach ($paths as $path) {
             $config = $this->parseConfigFromExistingPath($path);
-            if (!empty($config)) {
-                return $this->addPathsToEachSuiteConfig(dirname($path), $config);
-            }
+
+            return $this->addPathsToEachSuiteConfig(dirname($path), $config);
         }
 
         return array();
@@ -245,7 +244,7 @@ final class Application extends BaseApplication
             return array();
         }
 
-        return Yaml::parse(file_get_contents($path));
+        return Yaml::parse(file_get_contents($path)) ?: [];
     }
 
     private function addPathsToEachSuiteConfig(string $configDir, array $config) : array
