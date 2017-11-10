@@ -1,5 +1,5 @@
-Upcoming 4.x
-============
+4.2.1 / 2017-11-10
+==================
 
 * [fixed] Properly handle empty config file (@ciaranmcnulty)
 * [fixed] Non-existent folders broke composer detection (@greg0ire)
