@@ -1,3 +1,8 @@
+Upcoming 4.x
+============
+
+* [fixed] Missing autocomplete for shouldIterateLike matchers (@pamil)
+
 4.2.1 / 2017-11-10
 ==================
 
