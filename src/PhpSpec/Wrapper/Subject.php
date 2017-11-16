@@ -108,6 +108,12 @@ use ArrayAccess;
  * @method void shouldYield($iterable)
  * @method void shouldNotIterateAs($iterable)
  * @method void shouldNotYield($iterable)
+ *
+ * @method void shouldIterateLike($iterable)
+ * @method void shouldYieldLike($iterable)
+ * @method void shouldNotIterateLike($iterable)
+ * @method void shouldNotYieldLike($iterable)
+ *
  * @method void shouldStartIteratingAs($iterable)
  * @method void shouldStartYielding($iterable)
  * @method void shouldNotStartIteratingAs($iterable)
