@@ -2,7 +2,7 @@
 ==================
 
 * [fixed] Missing autocomplete for shouldIterateLike matchers (@pamil)
-* [fixed[ Regression where config files called .dist or . prefix were not picked up (@jakzal)
+* [fixed] Regression where config files called .dist or . prefix were not picked up (@jakzal)
 
 4.2.1 / 2017-11-10
 ==================
