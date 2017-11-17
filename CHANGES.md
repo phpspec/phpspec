@@ -1,7 +1,8 @@
-Upcoming 4.x
-============
+4.2.2 / 2017-11-17
+==================
 
 * [fixed] Missing autocomplete for shouldIterateLike matchers (@pamil)
+* [fixed[ Regression where config files called .dist or . prefix were not picked up (@jakzal)
 
 4.2.1 / 2017-11-10
 ==================
