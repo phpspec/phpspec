@@ -225,6 +225,10 @@ final class Application extends BaseApplication
     private function extractConfigFromFirstParsablePath(array $paths) : array
     {
         foreach ($paths as $path) {
+            if (!file_exists($path)) {
+                continue;
+            }
+
             $config = $this->parseConfigFromExistingPath($path);
 
             return $this->addPathsToEachSuiteConfig(dirname($path), $config);
