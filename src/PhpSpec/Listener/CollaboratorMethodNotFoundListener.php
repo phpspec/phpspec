@@ -110,10 +110,10 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
     }
 
     /**
-     * @param string $classname
+     * @param string|object $classname
      * @return mixed
      */
-    private function getDoubledInterface(string $classname)
+    private function getDoubledInterface($classname)
     {
         if (class_parents($classname) !== array('stdClass'=>'stdClass')) {
             return;

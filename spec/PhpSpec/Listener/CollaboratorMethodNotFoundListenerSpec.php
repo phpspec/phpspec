@@ -160,7 +160,7 @@ class CollaboratorMethodNotFoundListenerSpec extends ObjectBehavior
         ConsoleIO $io,
         NameChecker $nameChecker
     ) {
-        $exception = new MethodNotFoundException('Error',DoubleOfInterface::class, 'throw');
+        $exception = new MethodNotFoundException('Error', new DoubleOfInterface(), 'throw');
 
         $event->getException()->willReturn($exception);
         $nameChecker->isNameValid('throw')->willReturn(false);
