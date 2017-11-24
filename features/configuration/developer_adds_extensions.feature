@@ -72,8 +72,6 @@ Feature: Developer enables extensions
     And the config file contains:
       """
       extensions:
-          Configuration\Extension4: test
-          Configuration\Extension4: [nope]
           Configuration\Extension4: ~
       """
     When I run phpspec
