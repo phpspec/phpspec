@@ -110,16 +110,16 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
     }
 
     /**
-     * @param string $classname
+     * @param string|object $classname
      * @return mixed
      */
-    private function getDoubledInterface(string $classname)
+    private function getDoubledInterface($class)
     {
-        if (class_parents($classname) !== array('stdClass'=>'stdClass')) {
+        if (class_parents($class) !== array('stdClass'=>'stdClass')) {
             return;
         }
 
-        $interfaces = array_filter(class_implements($classname),
+        $interfaces = array_filter(class_implements($class),
             function ($interface) {
                 return !preg_match('/^Prophecy/', $interface);
             }
