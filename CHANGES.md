@@ -1,7 +1,7 @@
 4.2.4 / 2017-11-24
 ==================
 
-* [fixed] Errors from incorrect type hint when collaborator method not found (@gregoire)
+* [fixed] Errors from incorrect type hint when collaborator method not found (@greg0ire)
 
 4.2.3 / 2017-11-24
 ==================
