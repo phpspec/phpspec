@@ -1,7 +1,7 @@
 4.2.3 / 2017-11-18
 ==================
 
-* [fixed] Allow installation with Symfony 4
+* [fixed] Allow installation with Symfony 4 (@sroze, @gnugat)
 
 4.2.2 / 2017-11-17
 ==================
