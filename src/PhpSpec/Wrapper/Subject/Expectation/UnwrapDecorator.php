@@ -28,7 +28,7 @@ final class UnwrapDecorator extends Decorator implements Expectation
      */
     public function __construct(Expectation $expectation, Unwrapper $unwrapper)
     {
-        $this->setExpectation($expectation);
+        parent::__construct($expectation);
         $this->unwrapper = $unwrapper;
     }
 
