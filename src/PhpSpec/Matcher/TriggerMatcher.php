@@ -16,6 +16,7 @@ namespace PhpSpec\Matcher;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Wrapper\DelayedCall;
 use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Exception\Example\MatcherException;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
 final class TriggerMatcher implements Matcher
