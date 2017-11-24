@@ -1,4 +1,9 @@
-4.2.3 / 2017-11-18
+4.2.4 / 2017-11-24
+==================
+
+* [fixed] Errors from incorrect type hint when collaborator method not found (@gregoire)
+
+4.2.3 / 2017-11-24
 ==================
 
 * [fixed] Allow installation with Symfony 4 (@sroze, @gnugat)
