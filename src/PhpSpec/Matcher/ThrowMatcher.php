@@ -277,7 +277,7 @@ final class ThrowMatcher implements Matcher
     /**
      * @param array $arguments
      *
-     * @return null|string
+     * @return null|string|\Throwable
      * @throws \PhpSpec\Exception\Example\MatcherException
      */
     private function getException(array $arguments)

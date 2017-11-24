@@ -196,7 +196,7 @@ final class CollaboratorsMaintainer implements Maintainer
     /**
      * @param \ReflectionParameter $parameter
      *
-     * @return string
+     * @return string|null
      */
     private function getParameterTypeFromReflection(\ReflectionParameter $parameter)
     {

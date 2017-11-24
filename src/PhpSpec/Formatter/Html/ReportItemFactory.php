@@ -36,7 +36,7 @@ class ReportItemFactory
      * @param ExampleEvent $event
      * @param Presenter    $presenter
      *
-     * @return ReportFailedItem|ReportPassedItem|ReportPendingItem
+     * @return ReportFailedItem|ReportPassedItem|ReportPendingItem|ReportSkippedItem
      */
     public function create(ExampleEvent $event, Presenter $presenter)
     {
