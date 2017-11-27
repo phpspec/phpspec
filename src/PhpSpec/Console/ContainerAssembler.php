@@ -23,12 +23,11 @@ use PhpSpec\Config\OptionsConfig;
 use PhpSpec\Console\Assembler\PresenterAssembler;
 use PhpSpec\Console\Prompter\Question;
 use PhpSpec\Console\Provider\NamespacesAutocompleteProvider;
-use PhpSpec\Factory\ReflectionFactory;
+use PhpSpec\Extensions\DefaultMatchers;
 use PhpSpec\Formatter as SpecFormatter;
 use PhpSpec\Listener;
 use PhpSpec\Loader;
 use PhpSpec\Locator;
-use PhpSpec\Matcher;
 use PhpSpec\Message\CurrentExampleTracker;
 use PhpSpec\NamespaceProvider\ComposerPsrNamespaceProvider;
 use PhpSpec\NamespaceProvider\NamespaceProvider;
@@ -57,6 +56,7 @@ final class ContainerAssembler
      */
     public function build(IndexedServiceContainer $container)
     {
+        $this->loadExtensions($container);
         $this->setupParameters($container);
         $this->setupIO($container);
         $this->setupEventDispatcher($container);
@@ -70,10 +70,20 @@ final class ContainerAssembler
         $this->setupCommands($container);
         $this->setupResultConverter($container);
         $this->setupRerunner($container);
-        $this->setupMatchers($container);
         $this->setupSubscribers($container);
         $this->setupCurrentExample($container);
         $this->setupShutdown($container);
+    }
+
+    private function loadExtensions(IndexedServiceContainer $container)
+    {
+        $extensions = [
+            new DefaultMatchers\Extension()
+        ];
+
+        foreach ($extensions as $extension) {
+            $extension->load($container, []);
+        }
     }
 
     private function setupParameters(IndexedServiceContainer $container)
@@ -689,82 +699,6 @@ final class ContainerAssembler
         $container->define('access_inspector.visibility', function () {
             return new VisibilityAccessInspector();
         });
-    }
-
-    /**
-     * @param IndexedServiceContainer $container
-     */
-    private function setupMatchers(IndexedServiceContainer $container)
-    {
-        $container->define('matchers.identity', function (IndexedServiceContainer $c) {
-            return new Matcher\IdentityMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.comparison', function (IndexedServiceContainer $c) {
-            return new Matcher\ComparisonMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.throwm', function (IndexedServiceContainer $c) {
-            return new Matcher\ThrowMatcher($c->get('unwrapper'), $c->get('formatter.presenter'), new ReflectionFactory());
-        }, ['matchers']);
-        $container->define('matchers.trigger', function (IndexedServiceContainer $c) {
-            return new Matcher\TriggerMatcher($c->get('unwrapper'));
-        }, ['matchers']);
-        $container->define('matchers.type', function (IndexedServiceContainer $c) {
-            return new Matcher\TypeMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.object_state', function (IndexedServiceContainer $c) {
-            return new Matcher\ObjectStateMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.scalar', function (IndexedServiceContainer $c) {
-            return new Matcher\ScalarMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.array_count', function (IndexedServiceContainer $c) {
-            return new Matcher\ArrayCountMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.array_key', function (IndexedServiceContainer $c) {
-            return new Matcher\ArrayKeyMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.array_key_with_value', function (IndexedServiceContainer $c) {
-            return new Matcher\ArrayKeyValueMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.array_contain', function (IndexedServiceContainer $c) {
-            return new Matcher\ArrayContainMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.string_start', function (IndexedServiceContainer $c) {
-            return new Matcher\StringStartMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.string_end', function (IndexedServiceContainer $c) {
-            return new Matcher\StringEndMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.string_regex', function (IndexedServiceContainer $c) {
-            return new Matcher\StringRegexMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.string_contain', function (IndexedServiceContainer $c) {
-            return new Matcher\StringContainMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.traversable_count', function (IndexedServiceContainer $c) {
-            return new Matcher\TraversableCountMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.traversable_key', function (IndexedServiceContainer $c) {
-            return new Matcher\TraversableKeyMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.traversable_key_with_value', function (IndexedServiceContainer $c) {
-            return new Matcher\TraversableKeyValueMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.traversable_contain', function (IndexedServiceContainer $c) {
-            return new Matcher\TraversableContainMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.iterate', function (IndexedServiceContainer $c) {
-            return new Matcher\IterateAsMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.iterate_like', function (IndexedServiceContainer $c) {
-            return new Matcher\IterateLikeMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.start_iterating', function (IndexedServiceContainer $c) {
-            return new Matcher\StartIteratingAsMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
-        $container->define('matchers.approximately', function (IndexedServiceContainer $c) {
-            return new Matcher\ApproximatelyMatcher($c->get('formatter.presenter'));
-        }, ['matchers']);
     }
 
     /**

@@ -2,7 +2,6 @@
 
 namespace spec\PhpSpec\Matcher;
 
-use PhpSpec\Factory\ReflectionFactory;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Wrapper\Unwrapper;
 use Prophecy\Argument;
@@ -11,12 +10,12 @@ use ArrayObject;
 
 class ThrowMatcherSpec extends ObjectBehavior
 {
-    function let(Unwrapper $unwrapper, Presenter $presenter, ReflectionFactory $factory)
+    function let(Unwrapper $unwrapper, Presenter $presenter)
     {
         $unwrapper->unwrapAll(Argument::any())->willReturnArgument();
         $presenter->presentValue(Argument::any())->willReturn('val1', 'val2');
 
-        $this->beConstructedWith($unwrapper, $presenter, $factory);
+        $this->beConstructedWith($unwrapper, $presenter);
     }
 
     function it_supports_the_throw_alias_for_object_and_exception_name()
@@ -38,11 +37,10 @@ class ThrowMatcherSpec extends ObjectBehavior
         $this->positiveMatch('throw', $arr, array('\Error'))->during('ksort', array());
     }
 
-    function it_accepts_a_method_during_which_an_error_specified_by_instance_should_be_thrown(ArrayObject $arr, ReflectionFactory $factory)
+    function it_accepts_a_method_during_which_an_error_specified_by_instance_should_be_thrown(ArrayObject $arr)
     {
         $error = new \Error();
         $arr->ksort()->will(function() use ($error) { throw $error; });
-        $factory->create(Argument::any())->willReturn(new \ReflectionClass($error));
 
         $this->positiveMatch('throw', $arr, array(new \Error()))->during('ksort', array());
     }

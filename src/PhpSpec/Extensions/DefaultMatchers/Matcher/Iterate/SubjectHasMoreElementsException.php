@@ -11,22 +11,12 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Factory;
+namespace PhpSpec\Extensions\DefaultMatchers\Matcher\Iterate;
 
-/**
- * Class ReflectionFactory is a simple factory wrapper to create reflection
- * classes
- *
- * @deprecated
- */
-class ReflectionFactory
+class SubjectHasMoreElementsException extends \LengthException
 {
-    /**
-     * @param $class
-     * @return \ReflectionClass
-     */
-    public function create($class): \ReflectionClass
+    public function __construct()
     {
-        return new \ReflectionClass($class);
+        parent::__construct('Subject has more elements than expected.');
     }
 }
