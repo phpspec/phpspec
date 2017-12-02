@@ -122,7 +122,15 @@ class ConsoleIO implements IO
     }
 
     /**
+<<<<<<< HEAD
      * @return ?string
+=======
+<<<<<<< HEAD
+     * @return null|string
+=======
+     * @return ?string
+>>>>>>> ef380ca0... Make phpdoc more accurate
+>>>>>>> 3.4
      */
     public function cutTemp()
     {
