@@ -1,3 +1,8 @@
+Upcoming 3.x
+============
+
+* [fixed] Undefined exception when giving wrong args to Trigger matcher (@greg0ire)
+
 3.4.2 / 2017-08-05
 ==================
 
