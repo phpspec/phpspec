@@ -184,7 +184,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
 
     /**
      * @param ExampleEvent $event
-     * @return bool|\Exception
+     * @return void|MethodNotFoundException
      */
     private function getMethodNotFoundException(ExampleEvent $event)
     {
