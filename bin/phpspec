@@ -24,4 +24,4 @@ call_user_func(function ($version) {
     $app = new PhpSpec\Console\Application($version);
     $app->run();
 
-}, '3.4.2');
+}, '3.4.3');

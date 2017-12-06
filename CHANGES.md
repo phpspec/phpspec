@@ -1,5 +1,5 @@
-Upcoming 3.x
-============
+3.4.3 / 2017-12-06
+==================
 
 * [fixed] Undefined exception when giving wrong args to Trigger matcher (@greg0ire)
 
