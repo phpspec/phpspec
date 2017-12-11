@@ -166,7 +166,7 @@ final class TriggerMatcher implements Matcher
                 $arguments = $unwrapper->unwrapAll($arguments);
 
                 $methodName = $arguments[0];
-                $arguments = isset($arguments[1]) ? $arguments[1] : array();
+                $arguments = $arguments[1] ?? array();
                 $callable = array($subject, $methodName);
 
                 list($class, $methodName) = array($subject, $methodName);

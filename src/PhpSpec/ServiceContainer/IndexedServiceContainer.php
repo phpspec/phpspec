@@ -68,7 +68,7 @@ final class IndexedServiceContainer implements ServiceContainer
      */
     public function getParam(string $id, $default = null)
     {
-        return isset($this->parameters[$id]) ? $this->parameters[$id] : $default;
+        return $this->parameters[$id] ?? $default;
     }
 
     /**
@@ -182,7 +182,7 @@ final class IndexedServiceContainer implements ServiceContainer
      */
     public function getByTag(string $tag): array
     {
-        return array_map([$this, 'get'], isset($this->tags[$tag]) ? $this->tags[$tag] : []);
+        return array_map([$this, 'get'], $this->tags[$tag] ?? []);
     }
 
     /**
