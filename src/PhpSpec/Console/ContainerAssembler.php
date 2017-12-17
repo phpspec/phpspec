@@ -430,9 +430,15 @@ final class ContainerAssembler
                     if ($namespaceLocation->getAutoloadingStandard() === NamespaceProvider::AUTOLOADING_STANDARD_PSR4) {
                         $psr4Prefix = $namespace;
                     }
+
+                    $location = $namespaceLocation->getLocation();
+                    if (!empty($location) && !is_dir($location)) {
+                        mkdir($location, 0777, true);
+                    }
+
                     $suites[str_replace('\\', '_', strtolower($namespace)).'suite'] =  [
                         'namespace' => $namespace,
-                        'src_path' => $namespaceLocation->getLocation(),
+                        'src_path' => $location,
                         'psr4_prefix' => $psr4Prefix,
                     ];
                 }
