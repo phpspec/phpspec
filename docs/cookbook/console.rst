@@ -5,7 +5,7 @@ The phpspec console command uses Symfony's console component. This means
 that it inherits the `default Symfony console command and options <http://symfony.com/doc/current/components/console/usage.html>`_.
 
 **phpspec** has an additional global option to let you specify a config file
-other than `phpspec.yml` or `phpspec.yml.dist`:
+other than `phpspec.yml`, `.phpspec.yml`, or `phpspec.yml.dist`:
 
 .. code-block:: bash
 
