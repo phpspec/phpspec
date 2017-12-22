@@ -1,3 +1,8 @@
+Upcoming 4.x
+============
+
+* Add support for .yaml file extension in config file (@unfunco)
+
 4.2.5 / 2017-12-06
 ==================
 
