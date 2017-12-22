@@ -1,5 +1,5 @@
-Upcoming 4.x
-============
+4.3.0 / 2017-12-22
+==================
 
 * Add support for .yaml file extension in config file (@unfunco)
 * [fixed] src folder is created when does not exist and using PSR-4 (@unfunco)
