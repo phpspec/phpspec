@@ -204,7 +204,7 @@ final class Application extends BaseApplication
      */
     protected function parseConfigurationFile(InputInterface $input): array
     {
-        $paths = array('phpspec.yml','phpspec.yml.dist', '.phpspec.yml');
+        $paths = array('phpspec.yml', '.phpspec.yml', 'phpspec.yml.dist', 'phpspec.yaml', '.phpspec.yaml', 'phpspec.yaml.dist');
 
         if ($customPath = $input->getParameterOption(array('-c','--config'))) {
             if (!file_exists($customPath)) {
