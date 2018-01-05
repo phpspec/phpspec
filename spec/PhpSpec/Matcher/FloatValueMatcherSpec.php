@@ -57,9 +57,9 @@ class FloatValueMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_different_float_values(Presenter $presenter)
     {
-        $presenter->presentValue(Argument::any())->willReturn('0.0000012', '0.0000011');
+        $presenter->presentValue(Argument::any())->willReturn('0.00010000000000002', '0.00010000000000001');
 
-        $this->shouldThrow(new FailureException('Expected 0.0000012, but got 0.0000011.'))
-            ->duringPositiveMatch('be', 0.0000012, [0.0000011]);
+        $this->shouldThrow(new FailureException('Expected 0.00010000000000002, but got 0.00010000000000001.'))
+            ->duringPositiveMatch('be', 0.00010000000000001, [0.00010000000000002]);
     }
 }

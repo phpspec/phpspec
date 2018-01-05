@@ -67,7 +67,7 @@ final class FloatValueMatcher extends BasicMatcher
     protected function matches($subject, array $arguments): bool
     {
         if (extension_loaded('bcmath')) {
-            return \bccomp($subject, $arguments[0], 20) === 0;
+            return \bccomp($subject, $arguments[0], 17) == 0;
         }
 
         return (string) $subject === (string) $arguments[0];
