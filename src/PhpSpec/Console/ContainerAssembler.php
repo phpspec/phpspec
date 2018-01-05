@@ -708,6 +708,9 @@ final class ContainerAssembler
         $container->define('matchers.comparison', function (IndexedServiceContainer $c) {
             return new Matcher\ComparisonMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
+        $container->define('matchers.float_value', function (IndexedServiceContainer $c) {
+            return new Matcher\FloatValueMatcher($c->get('formatter.presenter'));
+        }, ['matchers']);
         $container->define('matchers.throwm', function (IndexedServiceContainer $c) {
             return new Matcher\ThrowMatcher($c->get('unwrapper'), $c->get('formatter.presenter'), new ReflectionFactory());
         }, ['matchers']);
