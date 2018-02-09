@@ -40,8 +40,16 @@ class ExampleNode
      */
     public function __construct(string $title, ReflectionFunctionAbstract $function)
     {
-        $this->title    = $title;
+        $this->setTitle($title);
         $this->function = $function;
+    }
+
+    /**
+     * @param string $title
+     */
+    public function setTitle(string $title)
+    {
+      $this->title = $title;
     }
 
     /**
