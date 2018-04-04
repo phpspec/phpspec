@@ -61,6 +61,8 @@ class ResourceLoader
                 }
             }
             if (!class_exists($resource->getSpecClassname(), false)) {
+                $error = new \Error('Spec path does not match defined namespace.');
+                $this->addErrorThrowingExampleToSuite($resource, $suite, $error);
                 continue;
             }
 

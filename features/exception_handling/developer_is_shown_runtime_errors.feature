@@ -85,3 +85,19 @@ Feature: Developer is shown runtime errors
       """
     When I run phpspec
     Then I should see "1 passed, 1 broken"
+
+  Scenario: Runtime error when mismatched spec path and defined namespace
+    Given the spec file "spec/Message/Fatal3/RuntimeSpec.php" contains:
+    """
+    <?php
+
+    namespace spec\Message\MismatchedNamespace;
+
+    use PhpSpec\ObjectBehavior;
+
+    class RuntimeSpec extends ObjectBehavior
+    {
+    }
+    """
+    When I run phpspec
+    Then I should see "1 broken"
