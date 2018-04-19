@@ -22,7 +22,15 @@ class ExampleNodeSpec extends ObjectBehavior
         $this->getTitle()->shouldReturn('example node');
     }
 
-    function it_provides_a_link_to_function($function)
+    function it_can_set_a_title()
+    {
+      $this->setTitle('node example');
+      $this->getTitle()->shouldReturn('node example');
+      $this->setTitle('example node');
+    }
+
+
+  function it_provides_a_link_to_function($function)
     {
         $this->getFunctionReflection()->shouldReturn($function);
     }
