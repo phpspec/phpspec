@@ -1,3 +1,9 @@
+Upcoming 4.0
+============
+
+* Typehint iteration matchers for IDEs (@l3l0)
+* Extension point to help annotation extension (@drupol)
+
 4.3.0 / 2017-12-22
 ==================
 
