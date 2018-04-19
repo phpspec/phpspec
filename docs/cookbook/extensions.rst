@@ -75,3 +75,4 @@ Miscellaneous
  * `Data provider <https://github.com/coduo/phpspec-data-provider-extension>`_
  * `Behat Integration <https://github.com/richardmiller/BehatSpec>`_
  * `Example skipping through annotation <https://github.com/akeneo/PhpSpecSkipExampleExtension>`_
+ * `Annotation <https://github.com/drupol/phpspec-annotation>`_
