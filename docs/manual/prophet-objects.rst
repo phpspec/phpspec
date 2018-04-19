@@ -147,6 +147,10 @@ to get called with a particular value:
 Now if the method is not called with that value then the example will
 fail.
 
+The `shouldBeCalled` method should be used **before** any SUS (System Under Spec) calls in order to make an example fail if other mock methods are invoked. In the previous example, if other methods than `writeText` are called in `outputHTML` (that is the SUS) function, the test will fail.
+PHPSpec won't prevent you to use `shouldBeCalled` **after** SUS calls: this is not recommended as `shouldBeCalled` would behave as `shouldHaveBeenCalled`.
+To understand how `shouldHaveBeenCalled` behaves, please continue reading.
+
 Spies
 -----
 
@@ -172,6 +176,4 @@ what happened after the object's behaviour has happened:
         }
     }
 
-The difference is one of style. You may prefer to use mocks and say what
-should happen beforehand. You may prefer to use spies and say what should
-have happened afterwards.
+The difference is in behaviour: when using spies, you will not be forced to check every call that happens on double object
