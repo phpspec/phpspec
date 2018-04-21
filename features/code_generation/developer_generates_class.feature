@@ -172,12 +172,12 @@ Feature: Developer generates a class
     """
     suites:
       spec_a:
-        src_path:    %paths.config%/src-a
-        spec_path:   %paths.config%/spec-a
+        src_path:    '%paths.config%/src-a'
+        spec_path:   '%paths.config%/spec-a'
 
       spec_b:
-        src_path:    %paths.config%/src-b
-        spec_path:   %paths.config%/spec-b
+        src_path:    '%paths.config%/src-b'
+        spec_path:   '%paths.config%/spec-b'
     """
     And I have started describing the "Behat\Tests\MyNamespace\Markdown" class and specified "spec_a" suite
     When I run phpspec and answer "y" when asked if I want to generate the code

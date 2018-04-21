@@ -176,12 +176,12 @@ Feature: Developer generates a spec
       """
       suites:
         spec_a:
-          src_path:    %paths.config%/src-a
-          spec_path:   %paths.config%/spec-a
+          src_path:    '%paths.config%/src-a'
+          spec_path:   '%paths.config%/spec-a'
 
         spec_b:
-          src_path:    %paths.config%/src-b
-          spec_path:   %paths.config%/spec-b
+          src_path:    '%paths.config%/src-b'
+          spec_path:   '%paths.config%/spec-b'
 
         spec_match:
           namespace:   Behat\CodeGeneration
@@ -194,12 +194,12 @@ Feature: Developer generates a spec
       """
       suites:
         spec_a:
-          src_path:    %paths.config%/src-a
-          spec_path:   %paths.config%/spec-a
+          src_path:    '%paths.config%/src-a'
+          spec_path:   '%paths.config%/spec-a'
 
         spec_b:
-          src_path:    %paths.config%/src-b
-          spec_path:   %paths.config%/spec-b
+          src_path:    '%paths.config%/src-b'
+          spec_path:   '%paths.config%/spec-b'
 
         spec_match:
           namespace:   Behat\CodeGeneration
@@ -264,12 +264,12 @@ Feature: Developer generates a spec
       """
       suites:
         spec_a:
-          src_path:    %paths.config%/src-a
-          spec_path:   %paths.config%/spec-a
+          src_path:    '%paths.config%/src-a'
+          spec_path:   '%paths.config%/spec-a'
 
         spec_b:
-          src_path:    %paths.config%/src-b
-          spec_path:   %paths.config%/spec-b
+          src_path:    '%paths.config%/src-b'
+          spec_path:   '%paths.config%/spec-b'
 
       """
     When I start describing the "Behat\CodeGeneration\MarkDown" class and specified "spec_b" suite
