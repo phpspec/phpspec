@@ -2,12 +2,9 @@
 
 namespace spec\PhpSpec\Matcher;
 
-use PhpSpec\Factory\ReflectionFactory;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Wrapper\Unwrapper;
 use Prophecy\Argument;
-use PhpSpec\Formatter\Presenter\Presenter;
-use PhpSpec\Exception\Example\SkippingException;
 use ArrayObject;
 
 class TriggerMatcherSpec extends ObjectBehavior

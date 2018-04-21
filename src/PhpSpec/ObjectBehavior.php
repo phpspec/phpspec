@@ -39,16 +39,31 @@ use ArrayAccess;
  * @method void shouldImplement($interface)
  * @method void shouldNotImplement($interface)
  *
+ * @method void shouldIterateAs($iterable)
+ * @method void shouldYield($iterable)
+ * @method void shouldNotIterateAs($iterable)
+ * @method void shouldNotYield($iterable)
+ *
+ * @method void shouldIterateLike($iterable)
+ * @method void shouldYieldLike($iterable)
+ * @method void shouldNotIterateLike($iterable)
+ * @method void shouldNotYieldLike($iterable)
+ *
+ * @method void shouldStartIteratingAs($iterable)
+ * @method void shouldStartYielding($iterable)
+ * @method void shouldNotStartIteratingAs($iterable)
+ * @method void shouldNotStartYielding($iterable)
+ *
  * @method Subject\Expectation\DuringCall shouldThrow($exception = null)
  * @method Subject\Expectation\DuringCall shouldNotThrow($exception = null)
  * @method Subject\Expectation\DuringCall shouldTrigger($level = null, $message = null)
  *
  * @method void shouldHaveCount($count)
  * @method void shouldNotHaveCount($count)
- *
+ * @method void shouldContain($element)
+ * @method void shouldNotContain($element)
  * @method void shouldHaveKeyWithValue($key, $value)
  * @method void shouldNotHaveKeyWithValue($key, $value)
- *
  * @method void shouldHaveKey($key)
  * @method void shouldNotHaveKey($key)
  */

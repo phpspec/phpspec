@@ -20,6 +20,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\Question;
 
 /**
  * Command line command responsible to signal to generators we will need to
@@ -66,11 +67,12 @@ EOF
      * @param InputInterface  $input
      * @param OutputInterface $output
      *
-     * @return int|null|void
+     * @return int|null
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $classname = $input->getArgument('class');
+        $classname = $this->getClassNameFromArgumentOrQuestion($input, $output);
+
         if ($suite = $input->getOption('suite')) {
             return $this->executeWithSpecifiedSuite($suite, $classname);
         }
@@ -91,7 +93,7 @@ EOF
     /**
      * @param  string $classname
      *
-     * @return mixed
+     * @return int|null
      */
     private function executeWithoutSuite($classname)
     {
@@ -115,5 +117,19 @@ EOF
 
         $locator = $container->get($suiteLocatorId);
         return $container->get('code_generator')->generate($locator->createResource($classname), 'specification');
+    }
+
+    private function getClassNameFromArgumentOrQuestion(InputInterface $input, OutputInterface $output): string
+    {
+        if ($input->getArgument('class')) {
+            return $input->getArgument('class');
+        }
+
+        $questionHelper = $this->getApplication()->getHelperSet()->get('question');
+        $question = new Question('<info>Enter class to describe: </info>');
+
+        $question->setAutocompleterValues(array_map([$this, 'escapePathForTerminal'], $this->getNamespaces()));
+
+        return $questionHelper->ask($input, $output, $question);
     }
 }

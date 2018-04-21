@@ -16,6 +16,7 @@ namespace PhpSpec\Matcher;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Wrapper\DelayedCall;
 use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Exception\Example\MatcherException;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
 final class TriggerMatcher implements Matcher
@@ -165,7 +166,7 @@ final class TriggerMatcher implements Matcher
                 $arguments = $unwrapper->unwrapAll($arguments);
 
                 $methodName = $arguments[0];
-                $arguments = isset($arguments[1]) ? $arguments[1] : array();
+                $arguments = $arguments[1] ?? array();
                 $callable = array($subject, $methodName);
 
                 list($class, $methodName) = array($subject, $methodName);

@@ -14,10 +14,11 @@
 namespace PhpSpec\Locator\PSR0;
 
 use PhpSpec\Locator\ResourceLocator;
+use PhpSpec\Locator\SrcPathLocator;
 use PhpSpec\Util\Filesystem;
 use InvalidArgumentException;
 
-class PSR0Locator implements ResourceLocator
+class PSR0Locator implements ResourceLocator, SrcPathLocator
 {
     /**
      * @var string

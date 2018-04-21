@@ -11,6 +11,8 @@ You can use a different config file name and path with the ``--config`` option:
 
     $ bin/phpspec run --config path/to/different-phpspec.yml
 
+You can use the ``.yaml`` extension in place of ``.yml`` if preferred.
+
 You can also specify default values for config variables across all repositories by creating
 the file ``.phpspec.yml`` in your home folder (Unix systems). phpspec will use your personal preference for
 all settings that are not defined in the project's configuration.
@@ -20,7 +22,10 @@ all settings that are not defined in the project's configuration.
 PSR-4
 -----
 
-**phpspec** assumes a PSR-0 mapping of namespaces to the src and spec directories by default.
+**phpspec** can try to autodetect your naming scheme by querying Composer for
+autoload rules you can define in the Composer manifest. If unsuccessful, it
+assumes a PSR-0 mapping of namespaces to the src and spec directories by
+default.
 So for example running:
 
 .. code-block:: bash
@@ -48,6 +53,16 @@ With this config running:
 
 will now put the spec in ``spec/MarkdownSpec.php`` and the class will be created
 in  ``src/Markdown.php``.
+
+Alternatively, you can choose to use Composer to provide the necessary
+configuration:
+
+.. code-block:: yaml
+
+    composer_suite_detection: true # translates to:
+                                      # - root_directory: '.'
+                                      # - spec_prefix: spec
+
 
 Spec and source locations
 -------------------------

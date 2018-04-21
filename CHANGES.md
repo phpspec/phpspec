@@ -1,5 +1,55 @@
-Upcoming 4.x
+Upcoming 4.0
 ============
+
+* Typehint iteration matchers for IDEs (@l3l0)
+* Extension point to help annotation extension (@drupol)
+
+4.3.0 / 2017-12-22
+==================
+
+* Add support for .yaml file extension in config file (@unfunco)
+* [fixed] src folder is created when does not exist and using PSR-4 (@unfunco)
+
+4.2.5 / 2017-12-06
+==================
+
+* [fixed] Undefined exception when giving wrong args to Trigger matcher (@greg0ire)
+
+3.4.3 / 2017-12-06
+==================
+
+* [fixed] Undefined exception when giving wrong args to Trigger matcher (@greg0ire)
+
+4.2.4 / 2017-11-24
+==================
+
+* [fixed] Errors from incorrect type hint when collaborator method not found (@greg0ire)
+
+4.2.3 / 2017-11-24
+==================
+
+* [fixed] Allow installation with Symfony 4 (@sroze, @gnugat)
+
+4.2.2 / 2017-11-17
+==================
+
+* [fixed] Missing autocomplete for shouldIterateLike matchers (@pamil)
+* [fixed] Regression where config files called .dist or . prefix were not picked up (@jakzal)
+
+4.2.1 / 2017-11-10
+==================
+
+* [fixed] Properly handle empty config file (@ciaranmcnulty)
+* [fixed] Non-existent folders broke composer detection (@greg0ire)
+
+4.2.0 / 2017-10-28
+==================
+
+* Detect autoloader from composer to automatically define spec locations, reducing need for suites with PSR-4 (@greg0ire)
+* Describe command without class now shows prompt with autocompleting input (@fullpipe)
+
+4.1.0 / 2017-10-18
+==================
 
 * New `shouldIterateLike`/`shouldYieldLike` matcher (@sroze)
 * Checks class name is not a reserved word when creating spec (@avant1)

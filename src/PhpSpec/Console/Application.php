@@ -204,7 +204,7 @@ final class Application extends BaseApplication
      */
     protected function parseConfigurationFile(InputInterface $input): array
     {
-        $paths = array('phpspec.yml','phpspec.yml.dist', '.phpspec.yml');
+        $paths = array('phpspec.yml', '.phpspec.yml', 'phpspec.yml.dist', 'phpspec.yaml', '.phpspec.yaml', 'phpspec.yaml.dist');
 
         if ($customPath = $input->getParameterOption(array('-c','--config'))) {
             if (!file_exists($customPath)) {
@@ -225,10 +225,13 @@ final class Application extends BaseApplication
     private function extractConfigFromFirstParsablePath(array $paths) : array
     {
         foreach ($paths as $path) {
-            $config = $this->parseConfigFromExistingPath($path);
-            if (!empty($config)) {
-                return $this->addPathsToEachSuiteConfig(dirname($path), $config);
+            if (!file_exists($path)) {
+                continue;
             }
+
+            $config = $this->parseConfigFromExistingPath($path);
+
+            return $this->addPathsToEachSuiteConfig(dirname($path), $config);
         }
 
         return array();
@@ -245,7 +248,7 @@ final class Application extends BaseApplication
             return array();
         }
 
-        return Yaml::parse(file_get_contents($path));
+        return Yaml::parse(file_get_contents($path)) ?: [];
     }
 
     private function addPathsToEachSuiteConfig(string $configDir, array $config) : array

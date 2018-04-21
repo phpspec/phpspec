@@ -9,7 +9,7 @@ Feature: Config directory can be used in spec and src paths
       suites:
         behat_suite:
           namespace: MilkyWay\OrionCygnusArm
-          spec_path: %paths.config%
+          spec_path: "%paths.config%"
       """
     When I start describing the "MilkyWay/OrionCygnusArm/LocalBubble" class with the "Awesome/phpspec.yml" custom config
     Then a new spec should be generated in the "Awesome/spec/MilkyWay/OrionCygnusArm/LocalBubbleSpec.php":
@@ -66,7 +66,7 @@ Feature: Config directory can be used in spec and src paths
       suites:
         behat_suite:
           namespace: MilkyWay\OrionCygnusArm
-          src_path: %paths.config%/src
+          src_path: "%paths.config%/src"
       """
     And I have started describing the "MilkyWay/OrionCygnusArm/Pleiades/Alcyone" class with the "Awesome/phpspec.yml" custom config
     When I run phpspec with the "Awesome/phpspec.yml" custom config and answer "y" when asked if I want to generate the code

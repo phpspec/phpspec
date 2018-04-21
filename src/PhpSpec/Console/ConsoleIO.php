@@ -122,7 +122,7 @@ class ConsoleIO implements IO
     }
 
     /**
-     * @return string|null
+     * @return null|string
      */
     public function cutTemp()
     {
