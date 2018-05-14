@@ -110,12 +110,12 @@ class ConsoleIO implements IO
         return $this->lastMessage;
     }
 
-    public function writeln(string $message = '', int $indent = null)
+    public function writeln(string $message = '', int $indent = null) : void
     {
         $this->write($message, $indent, true);
     }
 
-    public function writeTemp(string $message, int $indent = null)
+    public function writeTemp(string $message, int $indent = null) : void
     {
         $this->write($message, $indent);
         $this->hasTempString = true;
@@ -144,12 +144,12 @@ class ConsoleIO implements IO
         return $message;
     }
 
-    public function freezeTemp()
+    public function freezeTemp() : void
     {
         $this->write($this->lastMessage);
     }
 
-    public function write(string $message, int $indent = null, bool $newline = false)
+    public function write(string $message, int $indent = null, bool $newline = false) : void
     {
         if ($this->hasTempString) {
             $this->hasTempString = false;
@@ -166,12 +166,12 @@ class ConsoleIO implements IO
         $this->lastMessage = $message.($newline ? "\n" : '');
     }
 
-    public function overwriteln(string $message = '', int $indent = null)
+    public function overwriteln(string $message = '', int $indent = null) : void
     {
         $this->overwrite($message, $indent, true);
     }
 
-    public function overwrite(string $message, int $indent = null, bool $newline = false)
+    public function overwrite(string $message, int $indent = null, bool $newline = false) : void
     {
         if (null !== $indent) {
             $message = $this->indentText($message, $indent);
@@ -270,7 +270,7 @@ class ConsoleIO implements IO
         return null;
     }
 
-    public function setConsoleWidth(int $width)
+    public function setConsoleWidth(int $width) : void
     {
         $this->consoleWidth = $width;
     }
@@ -291,7 +291,7 @@ class ConsoleIO implements IO
      * @param string $message
      * @param int $indent
      */
-    public function writeBrokenCodeBlock(string $message, int $indent = 0)
+    public function writeBrokenCodeBlock(string $message, int $indent = 0) : void
     {
         $message = wordwrap($message, $this->getBlockWidth() - ($indent * 2), "\n", true);
 

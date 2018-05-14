@@ -26,7 +26,7 @@ class ClassNotFoundListenerSpec extends ObjectBehavior
         Resource $resource
     )
     {
-        $io->writeln(Argument::any())->willReturn();
+        $io->writeln(Argument::any())->should(function () {});
         $io->askConfirmation(Argument::any())->willReturn(false);
 
         $exception->getClassname()->willReturn('SomeClass');

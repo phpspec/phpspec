@@ -29,7 +29,7 @@ class CollaboratorNotFoundListenerSpec extends ObjectBehavior
 
         $io->isCodeGenerationEnabled()->willReturn(true);
         $io->askConfirmation(Argument::any())->willReturn(false);
-        $io->writeln(Argument::any())->willReturn(null);
+        $io->writeln(Argument::any())->should(function() {});
     }
 
     function it_listens_to_afterexample_and_aftersuite_events()

@@ -41,7 +41,7 @@ final class NewFileNotifyingGenerator implements Generator
         return $this->generator->supports($resource, $generation, $data);
     }
 
-    public function generate(Resource $resource, array $data)
+    public function generate(Resource $resource, array $data) : void
     {
         $filePath = $this->getFilePath($resource);
 
@@ -71,7 +71,7 @@ final class NewFileNotifyingGenerator implements Generator
         return $this->filesystem->pathExists($filePath);
     }
 
-    private function dispatchEventIfFileWasCreated(bool $fileExisted, string $filePath)
+    private function dispatchEventIfFileWasCreated(bool $fileExisted, string $filePath) : void
     {
         if (!$fileExisted && $this->fileExists($filePath)) {
             $event = new FileCreationEvent($filePath);

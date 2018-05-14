@@ -43,7 +43,7 @@ final class OneTimeGenerator implements Generator
     /**
      * {@inheritdoc}
      */
-    public function generate(Resource $resource, array $data)
+    public function generate(Resource $resource, array $data) : void
     {
         $classname = $resource->getSrcClassname();
         if (\in_array($classname, $this->alreadyGenerated)) {

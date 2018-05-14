@@ -54,7 +54,7 @@ final class ReturnConstantGenerator implements Generator
      * @param Resource $resource
      * @param array             $data
      */
-    public function generate(Resource $resource, array $data)
+    public function generate(Resource $resource, array $data) : void
     {
         $method = $data['method'];
         $expected = $data['expected'];

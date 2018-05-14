@@ -67,7 +67,7 @@ final class MethodGenerator implements Generator
      * @param Resource $resource
      * @param array             $data
      */
-    public function generate(Resource $resource, array $data = array())
+    public function generate(Resource $resource, array $data = array()) : void
     {
         $filepath  = $resource->getSrcFilename();
         $name      = $data['name'];

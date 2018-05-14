@@ -62,7 +62,7 @@ abstract class PromptingGenerator implements Generator
      * @param Resource $resource
      * @param array             $data
      */
-    public function generate(Resource $resource, array $data = array())
+    public function generate(Resource $resource, array $data = array()) : void
     {
         $filepath = $this->getFilePath($resource);
 

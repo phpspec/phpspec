@@ -78,7 +78,7 @@ final class CollaboratorsMaintainer implements Maintainer
         Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
-    ) {
+    ): void {
         $this->prophet = new Prophet(null, $this->unwrapper, null);
 
         $classRefl = $example->getSpecification()->getClassReflection();
@@ -101,7 +101,7 @@ final class CollaboratorsMaintainer implements Maintainer
         Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
-    ) {
+    ): void {
         $this->prophet->checkPredictions();
     }
 
@@ -118,7 +118,7 @@ final class CollaboratorsMaintainer implements Maintainer
      * @param \ReflectionFunctionAbstract $function
      * @param \ReflectionClass            $classRefl
      */
-    private function generateCollaborators(CollaboratorManager $collaborators, \ReflectionFunctionAbstract $function, \ReflectionClass $classRefl)
+    private function generateCollaborators(CollaboratorManager $collaborators, \ReflectionFunctionAbstract $function, \ReflectionClass $classRefl): void
     {
         foreach ($function->getParameters() as $parameter) {
 
@@ -141,7 +141,7 @@ final class CollaboratorsMaintainer implements Maintainer
         }
     }
 
-    private function isUnsupportedTypeHinting(\ReflectionParameter $parameter)
+    private function isUnsupportedTypeHinting(\ReflectionParameter $parameter): bool
     {
         return $parameter->isArray() || $parameter->isCallable();
     }
@@ -168,7 +168,7 @@ final class CollaboratorsMaintainer implements Maintainer
      * @param string $className
      * @throws CollaboratorNotFoundException
      */
-    private function throwCollaboratorNotFound(\Exception $e, \ReflectionParameter $parameter = null, string $className = null)
+    private function throwCollaboratorNotFound(\Exception $e, \ReflectionParameter $parameter = null, string $className = null): void
     {
         throw new CollaboratorNotFoundException(
             sprintf('Collaborator does not exist '),

@@ -82,7 +82,7 @@ abstract class ObjectBehavior implements
      *
      * @param Subject $subject
      */
-    public function setSpecificationSubject(Subject $subject)
+    public function setSpecificationSubject(Subject $subject) : void
     {
         $this->object = $subject;
     }

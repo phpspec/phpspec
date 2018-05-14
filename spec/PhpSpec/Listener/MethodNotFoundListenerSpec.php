@@ -25,7 +25,7 @@ class MethodNotFoundListenerSpec extends ObjectBehavior
         ExampleEvent $exampleEvent,
         NameChecker $nameChecker
     ) {
-        $io->writeln(Argument::any())->willReturn();
+        $io->writeln(Argument::any())->should(function() {});
         $io->askConfirmation(Argument::any())->willReturn(false);
 
         $this->beConstructedWith($io, $resourceManager, $generatorManager, $nameChecker);

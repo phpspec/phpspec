@@ -19,11 +19,13 @@ class SuiteRunnerSpec extends ObjectBehavior
                  SpecificationNode $spec1, SpecificationNode $spec2)
     {
         $this->beConstructedWith($dispatcher, $specRunner);
-        $suite->getSpecifications()->willReturn( array($spec1, $spec2));
+        $suite->getSpecifications()->willReturn(array($spec1, $spec2));
     }
 
     function it_runs_all_specs_in_the_suite_through_the_specrunner($suite, $specRunner, $spec1, $spec2)
     {
+        $specRunner->run($spec1)->willReturn(ExampleEvent::PASSED);
+        $specRunner->run($spec2)->willReturn(ExampleEvent::PASSED);
         $this->run($suite);
 
         $specRunner->run($spec1)->shouldHaveBeenCalled();
@@ -63,8 +65,11 @@ class SuiteRunnerSpec extends ObjectBehavior
         $this->run($suite)->shouldReturn(ExampleEvent::FAILED);
     }
 
-    function it_dispatches_events_before_and_after_the_suite($suite, $dispatcher)
+    function it_dispatches_events_before_and_after_the_suite($suite, $specRunner, $spec1, $spec2, $dispatcher)
     {
+        $specRunner->run($spec1)->willReturn(ExampleEvent::PASSED);
+        $specRunner->run($spec2)->willReturn(ExampleEvent::PASSED);
+
         $this->run($suite);
 
         $dispatcher->dispatch('beforeSuite',

@@ -14,11 +14,15 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
     {
         $this->beConstructedWith($typeHintIndex, $namespaceResolver);
         $namespaceResolver->resolve(Argument::cetera())->willReturn('someClass');
-        $namespaceResolver->analyse(Argument::any())->willReturn();
+        $namespaceResolver->analyse(Argument::any())->shouldBeCalled();
     }
 
-    function it_is_a_typehint_rewriter()
+    function it_is_a_typehint_rewriter(TypeHintIndex $typeHintIndex, NamespaceResolver $namespaceResolver)
     {
+        $this->beConstructedWith($typeHintIndex, $namespaceResolver);
+        $namespaceResolver->resolve(Argument::cetera())->willReturn('someClass');
+        $namespaceResolver->analyse(Argument::any())->shouldNotBeCalled();
+
         $this->shouldHaveType('PhpSpec\CodeAnalysis\TypeHintRewriter');
     }
 

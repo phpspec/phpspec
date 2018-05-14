@@ -25,7 +25,7 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
         $this->namespaceResolver = $namespaceResolver;
     }
 
-    public function analyse(string $code)
+    public function analyse(string $code): void
     {
         $this->namespaceResolver->analyse($code);
     }

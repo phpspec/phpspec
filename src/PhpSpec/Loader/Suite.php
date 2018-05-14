@@ -23,7 +23,7 @@ class Suite implements \Countable
     /**
      * @param Node\SpecificationNode $spec
      */
-    public function addSpecification(Node\SpecificationNode $spec)
+    public function addSpecification(Node\SpecificationNode $spec) : void
     {
         $this->specs[] = $spec;
         $spec->setSuite($this);

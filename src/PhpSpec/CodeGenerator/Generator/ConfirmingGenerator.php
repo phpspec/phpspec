@@ -48,7 +48,7 @@ final class ConfirmingGenerator implements Generator
     /**
      * {@inheritdoc}
      */
-    public function generate(Resource $resource, array $data)
+    public function generate(Resource $resource, array $data): void
     {
         if ($this->io->askConfirmation($this->composeMessage($resource))) {
             $this->generator->generate($resource, $data);

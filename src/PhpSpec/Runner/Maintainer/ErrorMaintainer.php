@@ -59,7 +59,7 @@ final class ErrorMaintainer implements Maintainer
         Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
-    ) {
+    ): void {
         $this->errorHandler = set_error_handler(array($this, 'errorHandler'), $this->errorLevel);
     }
 
@@ -74,7 +74,7 @@ final class ErrorMaintainer implements Maintainer
         Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
-    ) {
+    ): void {
         if (null !== $this->errorHandler) {
             set_error_handler($this->errorHandler);
         }

@@ -64,7 +64,7 @@ final class NamedConstructorGenerator implements Generator
      * @param Resource $resource
      * @param array             $data
      */
-    public function generate(Resource $resource, array $data = array())
+    public function generate(Resource $resource, array $data = array()) : void
     {
         $filepath   = $resource->getSrcFilename();
         $methodName = $data['name'];

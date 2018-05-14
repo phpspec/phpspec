@@ -63,7 +63,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         return $tokensToString;
     }
 
-    private function reset()
+    private function reset(): void
     {
         $this->state = self::STATE_DEFAULT;
         $this->currentClass = '';
@@ -141,7 +141,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         }, $tokens));
     }
 
-    private function extractTypehints(array &$tokens, int $index, array $token)
+    private function extractTypehints(array &$tokens, int $index, array $token): void
     {
         $typehint = '';
         for ($i = $index - 1; \in_array($tokens[$i][0], $this->typehintTokens); $i--) {

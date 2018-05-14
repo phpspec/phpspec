@@ -27,7 +27,7 @@ use Symfony\Component\Console\Question\Question;
  */
 final class DescribeCommand extends Command
 {
-    protected function configure()
+    protected function configure() : void
     {
         $this
             ->setName('describe')

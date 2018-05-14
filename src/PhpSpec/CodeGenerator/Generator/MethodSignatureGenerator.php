@@ -55,7 +55,7 @@ final class MethodSignatureGenerator implements Generator
         return 'method-signature' === $generation;
     }
 
-    public function generate(Resource $resource, array $data = array())
+    public function generate(Resource $resource, array $data = array()) : void
     {
         $filepath  = $resource->getSrcFilename();
         $name      = $data['name'];

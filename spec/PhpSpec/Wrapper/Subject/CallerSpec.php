@@ -3,7 +3,9 @@
 namespace spec\PhpSpec\Wrapper\Subject;
 
 use Phpspec\CodeAnalysis\AccessInspector;
+use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\ExceptionFactory;
+use PhpSpec\Exception\Fracture\PropertyNotFoundException;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 use PhpSpec\Wrapper\Wrapper;
 use PhpSpec\Wrapper\Subject;
@@ -27,6 +29,7 @@ class CallerSpec extends ObjectBehavior
         $wrappedObject->isInstantiated()->willReturn(false);
         $wrappedObject->getClassName()->willReturn(null);
         $wrappedObject->getInstance()->willReturn(null);
+        $exceptions->propertyNotFound(Argument::cetera())->willReturn(new PropertyNotFoundException('Message', 'subject', 'prop'));
 
         $accessInspector->isMethodCallable(Argument::cetera())->willReturn(false);
     }
@@ -52,8 +55,10 @@ class CallerSpec extends ObjectBehavior
         $this->call('count');
     }
 
-    function it_sets_a_property_on_the_wrapped_object(WrappedObject $wrappedObject,
-                                                      AccessInspector $accessInspector)
+    function it_sets_a_property_on_the_wrapped_object(
+        WrappedObject $wrappedObject,
+        AccessInspector $accessInspector,
+        Wrapper $wrapper)
     {
         $obj = new \stdClass();
         $obj->id = 1;
@@ -62,10 +67,19 @@ class CallerSpec extends ObjectBehavior
             Argument::type('stdClass'), 'id'
         )->willReturn('true');
 
+        $accessInspector->isPropertyReadable(
+            Argument::type('stdClass'), 'id'
+        )->willReturn('true');
+
         $wrappedObject->isInstantiated()->willReturn(true);
         $wrappedObject->getInstance()->willReturn($obj);
 
-        $this->set('id', 2)->shouldReturn(2);
+        $wrapper->wrap(2)->willReturn(2);
+
+        $this->set('id', 2);
+        if ($obj->id !== 2) {
+            throw new FailureException();
+        }
     }
 
     function it_proxies_method_calls_to_wrapped_object(\ArrayObject $obj, WrappedObject $wrappedObject,

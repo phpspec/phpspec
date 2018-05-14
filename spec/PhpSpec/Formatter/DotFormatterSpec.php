@@ -13,6 +13,8 @@ use PhpSpec\Exception\Example\PendingException;
 use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Loader\Node\ExampleNode;
 use Prophecy\Argument;
+use Prophecy\Prophecy\MethodProphecy;
+use Prophecy\Prophecy\ObjectProphecy;
 use ReflectionFunctionAbstract;
 
 class DotFormatterSpec extends ObjectBehavior
@@ -29,8 +31,12 @@ class DotFormatterSpec extends ObjectBehavior
         $presenter->presentException(Argument::cetera())->willReturn('presented exception');
         $io->isVerbose()->willReturn(false);
         $io->askConfirmation(Argument::any())->willReturn(false);
-        $io->write(Argument::any())->willReturn(null);
-        $io->writeln(Argument::cetera())->willReturn(null);
+        $io->write(Argument::any())->should(function() {
+            return;
+        });
+        $io->writeln(Argument::cetera())->should(function() {
+            return;
+        });
         $io->getBlockWidth()->willReturn(80);
         $event->getTime()->willReturn(10.0);
     }
@@ -46,6 +52,7 @@ class DotFormatterSpec extends ObjectBehavior
         StatisticsCollector $stats
     ) {
         $event->getResult()->willReturn(ExampleEvent::PASSED);
+        $stats->getEventsCount()->willReturn(1);
 
         $this->afterExample($event);
 
@@ -58,6 +65,7 @@ class DotFormatterSpec extends ObjectBehavior
         StatisticsCollector $stats
     ) {
         $event->getResult()->willReturn(ExampleEvent::PENDING);
+        $stats->getEventsCount()->willReturn(1);
 
         $this->afterExample($event);
 
@@ -70,6 +78,7 @@ class DotFormatterSpec extends ObjectBehavior
         StatisticsCollector $stats
     ) {
         $event->getResult()->willReturn(ExampleEvent::SKIPPED);
+        $stats->getEventsCount()->willReturn(1);
 
         $this->afterExample($event);
 
@@ -82,6 +91,7 @@ class DotFormatterSpec extends ObjectBehavior
         StatisticsCollector $stats
     ) {
         $event->getResult()->willReturn(ExampleEvent::FAILED);
+        $stats->getEventsCount()->willReturn(1);
 
         $this->afterExample($event);
 
@@ -94,6 +104,7 @@ class DotFormatterSpec extends ObjectBehavior
         StatisticsCollector $stats
     ) {
         $event->getResult()->willReturn(ExampleEvent::BROKEN);
+        $stats->getEventsCount()->willReturn(1);
 
         $this->afterExample($event);
 
@@ -139,8 +150,8 @@ class DotFormatterSpec extends ObjectBehavior
 
         $io->isVerbose()->willReturn(false);
         $io->getBlockWidth()->willReturn(10);
-        $io->write(Argument::type('string'))->willReturn();
-        $io->writeln(Argument::cetera())->willReturn();
+        $io->write(Argument::type('string'))->should(function () {});
+        $io->writeln(Argument::cetera())->should(function () {});
 
         $stats->getEventsCount()->willReturn(1);
         $stats->getFailedEvents()->willReturn(array());

@@ -20,7 +20,7 @@ class StreamWrapper
 
     private static $specTransformers = array();
 
-    public static function register()
+    public static function register() : void
     {
         if (\in_array('phpspec', stream_get_wrappers())) {
             stream_wrapper_unregister('phpspec');
@@ -28,12 +28,12 @@ class StreamWrapper
         stream_wrapper_register('phpspec', 'PhpSpec\Loader\StreamWrapper');
     }
 
-    public static function reset()
+    public static function reset() : void
     {
         static::$specTransformers = array();
     }
 
-    public static function addTransformer(SpecTransformer $specTransformer)
+    public static function addTransformer(SpecTransformer $specTransformer) : void
     {
         static::$specTransformers[] = $specTransformer;
     }

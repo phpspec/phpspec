@@ -65,7 +65,7 @@ final class PrivateConstructorGenerator implements Generator
      * @param Resource $resource
      * @param array $data
      */
-    public function generate(Resource $resource, array $data)
+    public function generate(Resource $resource, array $data) : void
     {
         $filepath  = $resource->getSrcFilename();
 

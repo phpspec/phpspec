@@ -42,17 +42,17 @@ class TemplateRenderer
     /**
      * @param array $locations
      */
-    public function setLocations(array $locations)
+    public function setLocations(array $locations) : void
     {
         $this->locations = array_map(array($this, 'normalizeLocation'), $locations);
     }
 
-    public function prependLocation(string $location)
+    public function prependLocation(string $location) : void
     {
         array_unshift($this->locations, $this->normalizeLocation($location));
     }
 
-    public function appendLocation(string $location)
+    public function appendLocation(string $location) : void
     {
         array_push($this->locations, $this->normalizeLocation($location));
     }

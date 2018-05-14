@@ -16,7 +16,7 @@ class ReRunner implements BaseReRunner
         return true;
     }
 
-    public function reRunSuite()
+    public function reRunSuite() : void
     {
         $this->hasBeenReRun = true;
     }

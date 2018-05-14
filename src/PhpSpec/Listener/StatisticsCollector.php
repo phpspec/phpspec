@@ -40,12 +40,12 @@ class StatisticsCollector implements EventSubscriberInterface
         );
     }
 
-    public function afterSpecification(SpecificationEvent $event)
+    public function afterSpecification(SpecificationEvent $event) : void
     {
         $this->totalSpecs++;
     }
 
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event) : void
     {
         $this->globalResult = max($this->globalResult, $event->getResult());
 
@@ -68,7 +68,7 @@ class StatisticsCollector implements EventSubscriberInterface
         }
     }
 
-    public function beforeSuite(SuiteEvent $suiteEvent)
+    public function beforeSuite(SuiteEvent $suiteEvent) : void
     {
         $this->totalSpecsCount = \count($suiteEvent->getSuite()->getSpecifications());
     }

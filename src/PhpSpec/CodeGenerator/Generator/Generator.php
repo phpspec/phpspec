@@ -22,7 +22,7 @@ interface Generator
 {
     public function supports(Resource $resource, string $generation, array $data) : bool;
 
-    public function generate(Resource $resource, array $data);
+    public function generate(Resource $resource, array $data) : void;
 
     public function getPriority() : int;
 }
