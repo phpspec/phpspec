@@ -42,6 +42,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
             'SHELL_INTERACTIVE' => true,
             'HOME' => getenv('HOME'),
             'PATH' => getenv('PATH'),
+            'COLUMNS' => 80,
         );
 
         $this->process = $process = new Process($command);
