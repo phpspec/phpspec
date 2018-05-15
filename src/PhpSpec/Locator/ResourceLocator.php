@@ -18,7 +18,7 @@ interface ResourceLocator
     /**
      * @return Resource[]
      */
-    public function getAllResources() : array;
+    public function getAllResources(): array;
 
     /**
      * @param string $query

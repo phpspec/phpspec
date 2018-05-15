@@ -32,7 +32,7 @@ class Suite implements \Countable
     /**
      * @return Node\SpecificationNode[]
      */
-    public function getSpecifications() : array
+    public function getSpecifications(): array
     {
         return $this->specs;
     }

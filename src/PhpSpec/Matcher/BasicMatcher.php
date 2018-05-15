@@ -27,7 +27,7 @@ abstract class BasicMatcher implements Matcher
      *
      * @throws FailureException
      */
-    final public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall
+    final public function positiveMatch(string $name, $subject, array $arguments): ?DelayedCall
     {
         if (false === $this->matches($subject, $arguments)) {
             throw $this->getFailureException($name, $subject, $arguments);
@@ -45,7 +45,7 @@ abstract class BasicMatcher implements Matcher
      *
      * @throws FailureException
      */
-    final public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall
+    final public function negativeMatch(string $name, $subject, array $arguments): ?DelayedCall
     {
         if (true === $this->matches($subject, $arguments)) {
             throw $this->getNegativeFailureException($name, $subject, $arguments);

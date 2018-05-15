@@ -76,12 +76,12 @@ class OptionsConfig
         return $this->codeGenerationEnabled;
     }
 
-    public function isReRunEnabled() : bool
+    public function isReRunEnabled(): bool
     {
         return $this->reRunEnabled;
     }
 
-    public function isFakingEnabled() : bool
+    public function isFakingEnabled(): bool
     {
         return $this->fakingEnabled;
     }

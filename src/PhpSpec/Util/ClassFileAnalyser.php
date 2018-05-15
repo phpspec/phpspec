@@ -212,7 +212,7 @@ final class ClassFileAnalyser
         }
     }
 
-    private function isSpecialBraceToken($token) : bool
+    private function isSpecialBraceToken($token): bool
     {
         if (!\is_array($token)) {
             return false;
