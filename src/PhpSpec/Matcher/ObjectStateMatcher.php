@@ -16,6 +16,7 @@ namespace PhpSpec\Matcher;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
+use PhpSpec\Wrapper\DelayedCall;
 
 final class ObjectStateMatcher implements Matcher
 {
@@ -58,7 +59,7 @@ final class ObjectStateMatcher implements Matcher
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      */
-    public function positiveMatch(string $name, $subject, array $arguments)
+    public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
         preg_match(self::$regex, $name, $matches);
         $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);
@@ -74,6 +75,8 @@ final class ObjectStateMatcher implements Matcher
         if (true !== $result = \call_user_func_array($callable, $arguments)) {
             throw $this->getFailureExceptionFor($callable, true, $result);
         }
+
+        return null;
     }
 
     /**
@@ -84,7 +87,7 @@ final class ObjectStateMatcher implements Matcher
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      */
-    public function negativeMatch(string $name, $subject, array $arguments)
+    public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
         preg_match(self::$regex, $name, $matches);
         $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);

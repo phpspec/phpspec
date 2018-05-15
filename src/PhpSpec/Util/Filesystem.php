@@ -69,7 +69,7 @@ class Filesystem
      *
      * @return \SplFileInfo[]
      */
-    public function findSpecFilesIn(string $path)
+    public function findSpecFilesIn(string $path) : array
     {
         $finder = Finder::create()
             ->files()

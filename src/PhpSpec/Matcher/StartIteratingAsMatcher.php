@@ -16,6 +16,7 @@ namespace PhpSpec\Matcher;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Matcher\Iterate\IterablesMatcher;
+use PhpSpec\Wrapper\DelayedCall;
 
 final class StartIteratingAsMatcher implements Matcher
 {
@@ -47,7 +48,7 @@ final class StartIteratingAsMatcher implements Matcher
     /**
      * {@inheritdoc}
      */
-    public function positiveMatch(string $name, $subject, array $arguments)
+    public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
         try {
             $this->iterablesMatcher->match($subject, $arguments[0]);
@@ -56,17 +57,19 @@ final class StartIteratingAsMatcher implements Matcher
         } catch (Iterate\SubjectHasFewerElementsException $exception) {
             throw new FailureException('Expected subject to have the same or more elements than matched value, but it has fewer.', 0, $exception);
         }
+
+        return null;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function negativeMatch(string $name, $subject, array $arguments)
+    public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
         try {
             $this->positiveMatch($name, $subject, $arguments);
         } catch (FailureException $exception) {
-            return;
+            return null;
         }
 
         throw new FailureException('Expected subject not to start iterating the same as matched value, but it does.');

@@ -15,6 +15,7 @@ namespace PhpSpec\Matcher;
 
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Wrapper\DelayedCall;
 
 final class ScalarMatcher implements Matcher
 {
@@ -57,7 +58,7 @@ final class ScalarMatcher implements Matcher
      * @throws \PhpSpec\Exception\Example\FailureException
      * @return boolean
      */
-    public function positiveMatch(string $name, $subject, array $arguments)
+    public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
         $checker = $this->getCheckerName($name);
 
@@ -72,6 +73,8 @@ final class ScalarMatcher implements Matcher
                 $this->presenter->presentValue(true)
             ));
         }
+
+        return null;
     }
 
     /**
@@ -84,7 +87,7 @@ final class ScalarMatcher implements Matcher
      * @throws \PhpSpec\Exception\Example\FailureException
      * @return boolean
      */
-    public function negativeMatch(string $name, $subject, array $arguments)
+    public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
         $checker = $this->getCheckerName($name);
 

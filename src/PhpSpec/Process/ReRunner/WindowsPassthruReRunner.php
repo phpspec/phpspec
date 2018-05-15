@@ -56,7 +56,7 @@ final class WindowsPassthruReRunner extends PhpExecutableReRunner
         exit($exitCode);
     }
 
-    private function buildArgString()
+    private function buildArgString() : string
     {
         $argstring = '';
 

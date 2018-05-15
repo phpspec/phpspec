@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Matcher;
 
+use PhpSpec\Wrapper\DelayedCall;
+
 interface Matcher
 {
     /**
@@ -33,7 +35,7 @@ interface Matcher
      * @param mixed  $subject
      * @param array  $arguments
      */
-    public function positiveMatch(string $name, $subject, array $arguments);
+    public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall;
 
     /**
      * Evaluates negative match.
@@ -42,7 +44,7 @@ interface Matcher
      * @param mixed  $subject
      * @param array  $arguments
      */
-    public function negativeMatch(string $name, $subject, array $arguments);
+    public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall;
 
     /**
      * Returns matcher priority.
