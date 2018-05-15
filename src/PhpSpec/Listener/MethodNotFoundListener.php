@@ -60,7 +60,7 @@ final class MethodNotFoundListener implements EventSubscriberInterface
         );
     }
 
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event): void
     {
         if (null === $exception = $event->getException()) {
             return;
@@ -76,7 +76,7 @@ final class MethodNotFoundListener implements EventSubscriberInterface
         $this->checkIfMethodNameAllowed($methodName);
     }
 
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event): void
     {
         if (!$this->io->isCodeGenerationEnabled()) {
             return;
@@ -112,14 +112,14 @@ final class MethodNotFoundListener implements EventSubscriberInterface
         }
     }
 
-    private function checkIfMethodNameAllowed($methodName)
+    private function checkIfMethodNameAllowed($methodName): void
     {
         if (!$this->nameChecker->isNameValid($methodName)) {
             $this->wrongMethodNames[] = $methodName;
         }
     }
 
-    private function writeWrongMethodNameMessage()
+    private function writeWrongMethodNameMessage(): void
     {
         foreach ($this->wrongMethodNames as $methodName) {
             $message = sprintf("I cannot generate the method '%s' for you because it is a reserved keyword", $methodName);

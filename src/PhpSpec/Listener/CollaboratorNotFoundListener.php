@@ -70,7 +70,7 @@ final class CollaboratorNotFoundListener implements EventSubscriberInterface
     /**
      * @param ExampleEvent $event
      */
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event): void
     {
         if (($exception = $event->getException()) &&
             ($exception instanceof CollaboratorNotFoundException)) {
@@ -81,7 +81,7 @@ final class CollaboratorNotFoundListener implements EventSubscriberInterface
     /**
      * @param SuiteEvent $event
      */
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event): void
     {
         if (!$this->io->isCodeGenerationEnabled()) {
             return;

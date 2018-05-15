@@ -34,7 +34,7 @@ final class UpdateConsoleAction implements ShutdownAction
         $this->currentExampleWriter = $currentExampleWriter;
     }
 
-    public function runAction($error)
+    public function runAction($error): void
     {
         $this->currentExampleWriter->displayFatal($this->currentExample, $error);
     }

@@ -59,7 +59,7 @@ class Filesystem
     /**
      * @param string $path
      */
-    public function makeDirectory(string $path)
+    public function makeDirectory(string $path): void
     {
         mkdir($path, 0777, true);
     }

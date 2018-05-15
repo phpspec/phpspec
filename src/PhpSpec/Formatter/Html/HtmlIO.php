@@ -20,7 +20,7 @@ final class HtmlIO implements IO
     /**
      * @param $message
      */
-    public function write($message)
+    public function write(string $message): void
     {
         echo $message;
     }

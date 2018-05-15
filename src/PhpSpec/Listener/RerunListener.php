@@ -54,7 +54,7 @@ final class RerunListener implements EventSubscriberInterface
     /**
      * @param SuiteEvent $suiteEvent
      */
-    public function beforeSuite(SuiteEvent $suiteEvent)
+    public function beforeSuite(SuiteEvent $suiteEvent): void
     {
         $this->suitePrerequisites->guardPrerequisites();
     }
@@ -62,7 +62,7 @@ final class RerunListener implements EventSubscriberInterface
     /**
      * @param SuiteEvent $suiteEvent
      */
-    public function afterSuite(SuiteEvent $suiteEvent)
+    public function afterSuite(SuiteEvent $suiteEvent): void
     {
         if ($suiteEvent->isWorthRerunning()) {
             $this->reRunner->reRunSuite();

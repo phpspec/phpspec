@@ -174,7 +174,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      * @param string $className
      * @param array  $arguments
      */
-    public function beAnInstanceOf(string $className, array $arguments = array())
+    public function beAnInstanceOf(string $className, array $arguments = array()): void
     {
         $this->wrappedObject->beAnInstanceOf($className, $arguments);
     }
@@ -182,7 +182,7 @@ class Subject implements ArrayAccess, ObjectWrapper
     /**
      * @param ...$arguments
      */
-    public function beConstructedWith()
+    public function beConstructedWith(): void
     {
         $this->wrappedObject->beConstructedWith(\func_get_args());
     }
@@ -191,7 +191,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      * @param array|string $factoryMethod
      * @param array        $arguments
      */
-    public function beConstructedThrough($factoryMethod, array $arguments = array())
+    public function beConstructedThrough($factoryMethod, array $arguments = array()): void
     {
         $this->wrappedObject->beConstructedThrough($factoryMethod, $arguments);
     }
@@ -264,7 +264,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      * @param string|integer $key
      * @param mixed          $value
      */
-    public function offsetSet($key, $value)
+    public function offsetSet($key, $value): void
     {
         $this->arrayAccess->offsetSet($key, $value);
     }
@@ -272,7 +272,7 @@ class Subject implements ArrayAccess, ObjectWrapper
     /**
      * @param string|integer $key
      */
-    public function offsetUnset($key)
+    public function offsetUnset($key): void
     {
         $this->arrayAccess->offsetUnset($key);
     }
@@ -334,7 +334,7 @@ class Subject implements ArrayAccess, ObjectWrapper
      *
      * @return Subject
      */
-    private function wrap($value) : Subject
+    private function wrap($value): Subject
     {
         return $this->wrapper->wrap($value);
     }

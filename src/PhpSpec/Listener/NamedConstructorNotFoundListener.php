@@ -43,7 +43,7 @@ final class NamedConstructorNotFoundListener implements EventSubscriberInterface
         );
     }
 
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event): void
     {
         if (null === $exception = $event->getException()) {
             return;
@@ -57,7 +57,7 @@ final class NamedConstructorNotFoundListener implements EventSubscriberInterface
         $this->methods[$className .'::'.$exception->getMethodName()] = $exception->getArguments();
     }
 
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event): void
     {
         if (!$this->io->isCodeGenerationEnabled()) {
             return;

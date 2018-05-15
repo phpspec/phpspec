@@ -111,7 +111,7 @@ class Caller
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      * @throws \PhpSpec\Exception\Fracture\PropertyNotFoundException
      */
-    public function set(string $property, $value = null)
+    public function set(string $property, $value = null): void
     {
         if (null === $this->getWrappedObject()) {
             throw $this->settingPropertyOnNonObject($property);
@@ -121,7 +121,9 @@ class Caller
         $value = $unwrapper->unwrapOne($value);
 
         if ($this->isObjectPropertyWritable($property)) {
-            return $this->getWrappedObject()->$property = $value;
+            $this->getWrappedObject()->$property = $value;
+
+            return;
         }
 
         throw $this->propertyNotFound($property);

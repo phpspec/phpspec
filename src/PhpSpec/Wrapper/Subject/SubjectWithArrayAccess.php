@@ -85,7 +85,7 @@ class SubjectWithArrayAccess
      * @param string|integer $key
      * @param mixed          $value
      */
-    public function offsetSet($key, $value)
+    public function offsetSet($key, $value): void
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -100,7 +100,7 @@ class SubjectWithArrayAccess
     /**
      * @param string|integer $key
      */
-    public function offsetUnset($key)
+    public function offsetUnset($key): void
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -117,7 +117,7 @@ class SubjectWithArrayAccess
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      * @throws \PhpSpec\Exception\Fracture\InterfaceNotImplementedException
      */
-    private function checkIfSubjectImplementsArrayAccess($subject)
+    private function checkIfSubjectImplementsArrayAccess($subject): void
     {
         if (\is_object($subject) && !($subject instanceof \ArrayAccess)) {
             throw $this->interfaceNotImplemented();

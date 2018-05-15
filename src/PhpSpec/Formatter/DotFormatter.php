@@ -92,7 +92,7 @@ final class DotFormatter extends ConsoleFormatter
         $this->outputSuiteSummary($event);
     }
 
-    private function outputExceptions()
+    private function outputExceptions(): void
     {
         $stats = $this->getStatisticsCollector();
         $notPassed = array_filter(array(
@@ -107,7 +107,7 @@ final class DotFormatter extends ConsoleFormatter
         }
     }
 
-    private function outputSuiteSummary(SuiteEvent $event)
+    private function outputSuiteSummary(SuiteEvent $event): void
     {
         $this->outputTotalSpecCount();
         $this->outputTotalExamplesCount();
@@ -121,19 +121,19 @@ final class DotFormatter extends ConsoleFormatter
         return $count !== 1 ? 's' : '';
     }
 
-    private function outputTotalSpecCount()
+    private function outputTotalSpecCount(): void
     {
         $count = $this->getStatisticsCollector()->getTotalSpecs();
         $this->getIO()->writeln(sprintf("%d spec%s", $count, $this->plural($count)));
     }
 
-    private function outputTotalExamplesCount()
+    private function outputTotalExamplesCount(): void
     {
         $count = $this->getStatisticsCollector()->getEventsCount();
         $this->getIO()->write(sprintf("%d example%s ", $count, $this->plural($count)));
     }
 
-    private function outputSpecificExamplesCount()
+    private function outputSpecificExamplesCount(): void
     {
         $typesWithEvents = array_filter($this->getStatisticsCollector()->getCountsHash());
 

@@ -15,5 +15,5 @@ namespace PhpSpec\Process\Shutdown;
 
 interface ShutdownAction
 {
-    public function runAction($error);
+    public function runAction($error): void;
 }

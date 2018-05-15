@@ -53,7 +53,7 @@ final class IndexedServiceContainer implements ServiceContainer
      * @param string $id
      * @param mixed  $value
      */
-    public function setParam(string $id, $value)
+    public function setParam(string $id, $value): void
     {
         $this->parameters[$id] = $value;
     }
@@ -80,7 +80,7 @@ final class IndexedServiceContainer implements ServiceContainer
      *
      * @throws \InvalidArgumentException if service is not an object
      */
-    public function set(string $id, $service, array $tags = [])
+    public function set(string $id, $service, array $tags = []): void
     {
         if (!\is_object($service)) {
             throw new InvalidArgumentException(sprintf(
@@ -103,7 +103,7 @@ final class IndexedServiceContainer implements ServiceContainer
      * @param callable $definition
      * @param array    $tags
      */
-    public function define(string $id, callable $definition, array $tags = [])
+    public function define(string $id, callable $definition, array $tags = []): void
     {
         $this->definitions[$id] = $definition;
         unset($this->services[$id]);
@@ -151,7 +151,7 @@ final class IndexedServiceContainer implements ServiceContainer
      *
      * @throws \InvalidArgumentException if service is not defined
      */
-    public function remove(string $id)
+    public function remove(string $id): void
     {
         if (!$this->has($id)) {
             throw new InvalidArgumentException(sprintf('Service "%s" is not defined.', $id));
@@ -166,7 +166,7 @@ final class IndexedServiceContainer implements ServiceContainer
      * @param string $id
      * @param array  $tags
      */
-    private function indexTags(string $id, array $tags)
+    private function indexTags(string $id, array $tags): void
     {
         foreach ($tags as $tag) {
             $this->tags[$tag][] = $id;
@@ -194,7 +194,7 @@ final class IndexedServiceContainer implements ServiceContainer
      *
      * @throws \InvalidArgumentException if configurator is not a value
      */
-    public function addConfigurator(callable $configurator)
+    public function addConfigurator(callable $configurator): void
     {
         $this->configurators[] = $configurator;
     }
@@ -204,7 +204,7 @@ final class IndexedServiceContainer implements ServiceContainer
      *
      * @internal
      */
-    public function configure()
+    public function configure(): void
     {
         foreach ($this->configurators as $configurator) {
             \call_user_func($configurator, $this);

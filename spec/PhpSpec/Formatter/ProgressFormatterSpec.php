@@ -16,7 +16,7 @@ class ProgressFormatterSpec extends ObjectBehavior
         $this->beConstructedWith($presenter, $io, $stats);
         $io->getBlockWidth()->willReturn(80);
         $io->isDecorated()->willReturn(false);
-        $io->writeTemp(Argument::cetera())->willReturn();
+        $io->writeTemp(Argument::cetera())->should(function () {});
     }
 
     function it_is_an_event_subscriber()

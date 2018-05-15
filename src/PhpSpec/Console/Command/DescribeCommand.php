@@ -27,7 +27,7 @@ use Symfony\Component\Console\Question\Question;
  */
 final class DescribeCommand extends Command
 {
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('describe')
@@ -93,7 +93,7 @@ EOF
     /**
      * Make path safe to echo to the terminal (to get around symfony/console issue #24652)
      */
-    private function escapePathForTerminal(string $path) : string
+    private function escapePathForTerminal(string $path): string
     {
         return str_replace('\\', '/', $path);
     }

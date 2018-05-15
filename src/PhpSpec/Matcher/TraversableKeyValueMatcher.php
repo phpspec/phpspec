@@ -35,7 +35,7 @@ final class TraversableKeyValueMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    public function supports(string $name, $subject, array $arguments) : bool
+    public function supports(string $name, $subject, array $arguments): bool
     {
         return 'haveKeyWithValue' === $name
             && 2 === \count($arguments)
@@ -46,7 +46,7 @@ final class TraversableKeyValueMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    protected function matches($subject, array $arguments) : bool
+    protected function matches($subject, array $arguments): bool
     {
         foreach ($subject as $key => $value) {
             if ($key === $arguments[0] && $value === $arguments[1]) {

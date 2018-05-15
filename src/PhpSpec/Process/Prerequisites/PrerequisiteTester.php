@@ -18,5 +18,5 @@ interface PrerequisiteTester
     /**
      * @throws PrerequisiteFailedException
      */
-    public function guardPrerequisites();
+    public function guardPrerequisites(): void;
 }

@@ -31,7 +31,7 @@ final class MagicAwareAccessInspector implements AccessInspector
     /**
      * @param object $object
      */
-    public function isPropertyReadable($object, string $property) : bool
+    public function isPropertyReadable($object, string $property): bool
     {
         return method_exists($object, '__get') || $this->accessInspector->isPropertyReadable($object, $property);
     }
@@ -39,7 +39,7 @@ final class MagicAwareAccessInspector implements AccessInspector
     /**
      * @param object $object
      */
-    public function isPropertyWritable($object, string $property) : bool
+    public function isPropertyWritable($object, string $property): bool
     {
         return method_exists($object, '__set') || $this->accessInspector->isPropertyWritable($object, $property);
     }
@@ -47,7 +47,7 @@ final class MagicAwareAccessInspector implements AccessInspector
     /**
      * @param object $object
      */
-    public function isMethodCallable($object, string $method) : bool
+    public function isMethodCallable($object, string $method): bool
     {
         return method_exists($object, '__call') || $this->accessInspector->isMethodCallable($object, $method);
     }

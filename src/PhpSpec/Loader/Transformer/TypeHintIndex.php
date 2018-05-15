@@ -21,7 +21,7 @@ interface TypeHintIndex
      * @param string $argument
      * @param string $typehint
      */
-    public function add(string $class, string $method, string $argument, string $typehint);
+    public function add(string $class, string $method, string $argument, string $typehint): void;
 
     /**
      * @param string $class
@@ -29,7 +29,7 @@ interface TypeHintIndex
      * @param string $argument
      * @param \Exception $exception
      */
-    public function addInvalid(string $class, string $method, string $argument, \Exception $exception);
+    public function addInvalid(string $class, string $method, string $argument, \Exception $exception): void;
 
     /**
      * @param string $class

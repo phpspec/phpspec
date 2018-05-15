@@ -68,7 +68,7 @@ final class MatchersMaintainer implements Maintainer
         Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
-    ) {
+    ): void {
 
         $matchers->replace($this->defaultMatchers);
 
@@ -100,7 +100,7 @@ final class MatchersMaintainer implements Maintainer
         Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
-    ) {
+    ): void {
     }
 
     /**

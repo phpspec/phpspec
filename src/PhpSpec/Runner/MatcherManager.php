@@ -39,7 +39,7 @@ class MatcherManager
     /**
      * @param Matcher $matcher
      */
-    public function add(Matcher $matcher)
+    public function add(Matcher $matcher): void
     {
         $this->matchers[] = $matcher;
         @usort($this->matchers, function (Matcher $matcher1, Matcher $matcher2) {
@@ -52,7 +52,7 @@ class MatcherManager
      *
      * @param Matcher[] $matchers
      */
-    public function replace(array $matchers)
+    public function replace(array $matchers): void
     {
         $this->matchers = $matchers;
     }

@@ -18,5 +18,5 @@ interface SubjectContainer
     /**
      * @param Subject $subject
      */
-    public function setSpecificationSubject(Subject $subject);
+    public function setSpecificationSubject(Subject $subject): void;
 }

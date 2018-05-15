@@ -64,7 +64,7 @@ final class JUnitFormatter extends BasicFormatter
      *
      * @param array $testCaseNodes
      */
-    public function setTestCaseNodes(array $testCaseNodes)
+    public function setTestCaseNodes(array $testCaseNodes): void
     {
         $this->testCaseNodes = $testCaseNodes;
     }
@@ -210,7 +210,7 @@ final class JUnitFormatter extends BasicFormatter
     /**
      * Initialize test case nodes and example status counts
      */
-    protected function initTestCaseNodes()
+    protected function initTestCaseNodes(): void
     {
         $this->testCaseNodes       = array();
         $this->exampleStatusCounts = array(

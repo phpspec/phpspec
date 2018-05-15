@@ -39,7 +39,7 @@ final class PSR0Resource implements Resource
     /**
      * @return string
      */
-    public function getName() : string
+    public function getName(): string
     {
         return end($this->parts);
     }

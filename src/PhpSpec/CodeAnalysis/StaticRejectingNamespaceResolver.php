@@ -25,12 +25,12 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
         $this->namespaceResolver = $namespaceResolver;
     }
 
-    public function analyse(string $code)
+    public function analyse(string $code): void
     {
         $this->namespaceResolver->analyse($code);
     }
 
-    public function resolve(string $typeAlias) : string
+    public function resolve(string $typeAlias): string
     {
         $this->guardNonObjectTypeHints($typeAlias);
 

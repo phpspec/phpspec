@@ -82,7 +82,7 @@ final class SubjectMaintainer implements Maintainer
         Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
-    ) {
+    ): void {
         $subjectFactory = new Wrapper($matchers, $this->presenter, $this->dispatcher, $example, $this->accessInspector);
         $subject = $subjectFactory->wrap(null);
         $subject->beAnInstanceOf(
@@ -103,7 +103,7 @@ final class SubjectMaintainer implements Maintainer
         Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
-    ) {
+    ): void {
     }
 
     /**

@@ -109,7 +109,7 @@ final class PrettyFormatter extends ConsoleFormatter
         }
     }
 
-    protected function printException(ExampleEvent $event, $depth = null)
+    protected function printException(ExampleEvent $event, $depth = null): void
     {
         $io = $this->getIO();
 

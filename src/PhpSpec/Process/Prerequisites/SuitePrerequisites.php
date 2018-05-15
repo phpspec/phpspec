@@ -33,7 +33,7 @@ final class SuitePrerequisites implements PrerequisiteTester
     /**
      * @throws PrerequisiteFailedException
      */
-    public function guardPrerequisites()
+    public function guardPrerequisites(): void
     {
         $undefinedTypes = array();
 

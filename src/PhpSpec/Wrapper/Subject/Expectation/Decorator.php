@@ -39,7 +39,7 @@ abstract class Decorator implements Expectation
     /**
      * @param Expectation $expectation
      */
-    protected function setExpectation(Expectation $expectation)
+    protected function setExpectation(Expectation $expectation): void
     {
         $this->expectation = $expectation;
     }

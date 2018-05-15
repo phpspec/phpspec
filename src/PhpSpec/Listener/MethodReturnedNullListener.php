@@ -82,12 +82,12 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
         );
     }
 
-    public function afterMethodCall(MethodCallEvent $methodCallEvent)
+    public function afterMethodCall(MethodCallEvent $methodCallEvent): void
     {
         $this->lastMethodCallEvent = $methodCallEvent;
     }
 
-    public function afterExample(ExampleEvent $exampleEvent)
+    public function afterExample(ExampleEvent $exampleEvent): void
     {
         $exception = $exampleEvent->getException();
 
@@ -130,7 +130,7 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
         $this->nullMethods[$key]['expected'][] = $exception->getExpected();
     }
 
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event): void
     {
         if (!$this->io->isCodeGenerationEnabled()) {
             return;

@@ -14,7 +14,7 @@ interface ServiceContainer
      * @param string $id
      * @param mixed $value
      */
-    public function setParam(string $id, $value);
+    public function setParam(string $id, $value): void;
 
     /**
      * Gets a param from the container or a default value.
@@ -35,7 +35,7 @@ interface ServiceContainer
      *
      * @throws \InvalidArgumentException if service is not an object
      */
-    public function set(string $id, $service, array $tags = []);
+    public function set(string $id, $service, array $tags = []): void;
 
     /**
      * Sets a factory for the service creation. The same service will
@@ -47,7 +47,7 @@ interface ServiceContainer
      *
      * @throws \InvalidArgumentException if service is not a callable
      */
-    public function define(string $id, callable $definition, array $tags = []);
+    public function define(string $id, callable $definition, array $tags = []): void;
 
     /**
      * Retrieves a service from the container
@@ -75,7 +75,7 @@ interface ServiceContainer
      *
      * @throws \InvalidArgumentException if service is not defined
      */
-    public function remove(string $id);
+    public function remove(string $id): void;
 
     /**
      * Finds all services tagged with a particular string

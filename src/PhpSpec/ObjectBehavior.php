@@ -70,7 +70,7 @@ abstract class ObjectBehavior implements
      * @link http://phpspec.net/cookbook/matchers.html Matchers cookbook
      * @return array a list of inline matchers
      */
-    public function getMatchers() : array
+    public function getMatchers(): array
     {
         return array();
     }
@@ -82,7 +82,7 @@ abstract class ObjectBehavior implements
      *
      * @param Subject $subject
      */
-    public function setSpecificationSubject(Subject $subject)
+    public function setSpecificationSubject(Subject $subject): void
     {
         $this->object = $subject;
     }

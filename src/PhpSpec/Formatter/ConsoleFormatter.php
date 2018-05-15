@@ -51,7 +51,7 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
     /**
      * @param ExampleEvent $event
      */
-    protected function printException(ExampleEvent $event)
+    protected function printException(ExampleEvent $event): void
     {
         if (null === $exception = $event->getException()) {
             return;
@@ -74,7 +74,7 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
      * @param ExampleEvent $event
      * @param string $type
      */
-    protected function printSpecificException(ExampleEvent $event, string $type)
+    protected function printSpecificException(ExampleEvent $event, string $type): void
     {
         $title = str_replace('\\', DIRECTORY_SEPARATOR, $event->getSpecification()->getTitle());
         $message = $this->getPresenter()->presentException($event->getException(), $this->io->isVerbose());
@@ -94,7 +94,7 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
         $this->io->writeln();
     }
 
-    public function displayFatal(CurrentExampleTracker $currentExample, $error)
+    public function displayFatal(CurrentExampleTracker $currentExample, $error): void
     {
         if (
             (null !== $error && ($currentExample->getCurrentExample() || $error['type'] == E_ERROR)) ||

@@ -41,7 +41,7 @@ class CollaboratorManager
      * @param string       $name
      * @param object $collaborator
      */
-    public function set(string $name, $collaborator)
+    public function set(string $name, $collaborator): void
     {
         $this->collaborators[$name] = $collaborator;
     }

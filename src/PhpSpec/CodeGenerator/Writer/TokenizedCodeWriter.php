@@ -30,7 +30,7 @@ final class TokenizedCodeWriter implements CodeWriter
         $this->analyser = $analyser;
     }
 
-    public function insertMethodFirstInClass(string $class, string $method) : string
+    public function insertMethodFirstInClass(string $class, string $method): string
     {
         if (!$this->analyser->classHasMethods($class)) {
             return $this->writeAtEndOfClass($class, $method);
@@ -41,7 +41,7 @@ final class TokenizedCodeWriter implements CodeWriter
         return $this->insertStringBeforeLine($class, $method, $line);
     }
 
-    public function insertMethodLastInClass(string $class, string $method) : string
+    public function insertMethodLastInClass(string $class, string $method): string
     {
         if ($this->analyser->classHasMethods($class)) {
             $line = $this->analyser->getEndLineOfLastMethod($class);
@@ -51,14 +51,14 @@ final class TokenizedCodeWriter implements CodeWriter
         return $this->writeAtEndOfClass($class, $method);
     }
 
-    public function insertAfterMethod(string $class, string $methodName, string $method) : string
+    public function insertAfterMethod(string $class, string $methodName, string $method): string
     {
         $line = $this->analyser->getEndLineOfNamedMethod($class, $methodName);
 
         return $this->insertStringAfterLine($class, $method, $line);
     }
 
-    private function insertStringAfterLine(string $target, string $toInsert, int $line, bool $leadingNewline = true) : string
+    private function insertStringAfterLine(string $target, string $toInsert, int $line, bool $leadingNewline = true): string
     {
         $lines = explode("\n", $target);
         $lastLines = \array_slice($lines, $line);
@@ -72,7 +72,7 @@ final class TokenizedCodeWriter implements CodeWriter
         return implode("\n", $lines);
     }
 
-    private function insertStringBeforeLine(string $target, string $toInsert, int $line) : string
+    private function insertStringBeforeLine(string $target, string $toInsert, int $line): string
     {
         $line--;
         $lines = explode("\n", $target);
@@ -83,7 +83,7 @@ final class TokenizedCodeWriter implements CodeWriter
         return implode("\n", $lines);
     }
 
-    private function writeAtEndOfClass(string $class, string $method, bool $prependNewLine = false) : string
+    private function writeAtEndOfClass(string $class, string $method, bool $prependNewLine = false): string
     {
         $tokens = token_get_all($class);
         $searching = false;
@@ -126,7 +126,7 @@ final class TokenizedCodeWriter implements CodeWriter
     /**
      * @param $token
      */
-    private function isWritePoint($token) : bool
+    private function isWritePoint($token): bool
     {
         return \is_array($token) && ($token[1] === "\n" || $token[0] === T_COMMENT);
     }

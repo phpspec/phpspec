@@ -222,7 +222,7 @@ final class Application extends BaseApplication
         return $config;
     }
 
-    private function extractConfigFromFirstParsablePath(array $paths) : array
+    private function extractConfigFromFirstParsablePath(array $paths): array
     {
         foreach ($paths as $path) {
             if (!file_exists($path)) {
@@ -242,7 +242,7 @@ final class Application extends BaseApplication
      *
      * @return array
      */
-    private function parseConfigFromExistingPath(string $path) : array
+    private function parseConfigFromExistingPath(string $path): array
     {
         if (!file_exists($path)) {
             return array();
@@ -251,7 +251,7 @@ final class Application extends BaseApplication
         return Yaml::parse(file_get_contents($path)) ?: [];
     }
 
-    private function addPathsToEachSuiteConfig(string $configDir, array $config) : array
+    private function addPathsToEachSuiteConfig(string $configDir, array $config): array
     {
         if (isset($config['suites']) && \is_array($config['suites'])) {
             foreach ($config['suites'] as $suiteKey => $suiteConfig) {

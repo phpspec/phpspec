@@ -43,7 +43,7 @@ class LetAndLetgoMaintainer implements Maintainer
         Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
-    ) {
+    ): void {
         if (!$example->getSpecification()->getClassReflection()->hasMethod('let')) {
             return;
         }
@@ -63,7 +63,7 @@ class LetAndLetgoMaintainer implements Maintainer
         Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
-    ) {
+    ): void {
         if (!$example->getSpecification()->getClassReflection()->hasMethod('letgo')) {
             return;
         }

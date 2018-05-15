@@ -42,27 +42,27 @@ class TemplateRenderer
     /**
      * @param array $locations
      */
-    public function setLocations(array $locations)
+    public function setLocations(array $locations): void
     {
         $this->locations = array_map(array($this, 'normalizeLocation'), $locations);
     }
 
-    public function prependLocation(string $location)
+    public function prependLocation(string $location): void
     {
         array_unshift($this->locations, $this->normalizeLocation($location));
     }
 
-    public function appendLocation(string $location)
+    public function appendLocation(string $location): void
     {
         array_push($this->locations, $this->normalizeLocation($location));
     }
 
-    public function getLocations() : array
+    public function getLocations(): array
     {
         return $this->locations;
     }
 
-    public function render(string $name, array $values = array()) : string
+    public function render(string $name, array $values = array()): string
     {
         foreach ($this->locations as $location) {
             $path = $location.DIRECTORY_SEPARATOR.$this->normalizeLocation($name, true).'.tpl';
@@ -74,12 +74,12 @@ class TemplateRenderer
         return '';
     }
 
-    public function renderString(string $template, array $values = array()) : string
+    public function renderString(string $template, array $values = array()): string
     {
         return strtr($template, $values);
     }
 
-    private function normalizeLocation(string $location, bool $trimLeft = false) : string
+    private function normalizeLocation(string $location, bool $trimLeft = false): string
     {
         $location = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $location);
         $location = rtrim($location, DIRECTORY_SEPARATOR);

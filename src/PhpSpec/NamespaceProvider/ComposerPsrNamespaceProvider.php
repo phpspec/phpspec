@@ -32,7 +32,7 @@ class ComposerPsrNamespaceProvider
      *                      'My\PSR0Namespace' => '',
      *                  ]
      */
-    public function getNamespaces() : array
+    public function getNamespaces(): array
     {
         $vendors = array();
         foreach (get_declared_classes() as $class) {

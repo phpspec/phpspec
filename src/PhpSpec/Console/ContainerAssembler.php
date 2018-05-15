@@ -55,7 +55,7 @@ final class ContainerAssembler
     /**
      * @param IndexedServiceContainer $container
      */
-    public function build(IndexedServiceContainer $container)
+    public function build(IndexedServiceContainer $container): void
     {
         $this->setupParameters($container);
         $this->setupIO($container);
@@ -76,7 +76,7 @@ final class ContainerAssembler
         $this->setupShutdown($container);
     }
 
-    private function setupParameters(IndexedServiceContainer $container)
+    private function setupParameters(IndexedServiceContainer $container): void
     {
         $container->setParam(
             'generator.private-constructor.message',
@@ -84,7 +84,7 @@ final class ContainerAssembler
         );
     }
 
-    private function setupIO(IndexedServiceContainer $container)
+    private function setupIO(IndexedServiceContainer $container): void
     {
         if (!$container->has('console.prompter')) {
             $container->define('console.prompter', function ($c) {
@@ -120,14 +120,14 @@ final class ContainerAssembler
         });
     }
 
-    private function setupResultConverter(IndexedServiceContainer $container)
+    private function setupResultConverter(IndexedServiceContainer $container): void
     {
         $container->define('console.result_converter', function () {
             return new ResultConverter();
         });
     }
 
-    private function setupCommands(IndexedServiceContainer $container)
+    private function setupCommands(IndexedServiceContainer $container): void
     {
         $container->define('console.commands.run', function () {
             return new Command\RunCommand();
@@ -141,7 +141,7 @@ final class ContainerAssembler
     /**
      * @param IndexedServiceContainer $container
      */
-    private function setupConsoleEventDispatcher(IndexedServiceContainer $container)
+    private function setupConsoleEventDispatcher(IndexedServiceContainer $container): void
     {
         $container->define('console_event_dispatcher', function (IndexedServiceContainer $c) {
             $dispatcher = new EventDispatcher();
@@ -158,7 +158,7 @@ final class ContainerAssembler
     /**
      * @param IndexedServiceContainer $container
      */
-    private function setupEventDispatcher(IndexedServiceContainer $container)
+    private function setupEventDispatcher(IndexedServiceContainer $container): void
     {
         $container->define('event_dispatcher', function () {
             return new EventDispatcher();
@@ -252,7 +252,7 @@ final class ContainerAssembler
     /**
      * @param IndexedServiceContainer $container
      */
-    private function setupGenerators(IndexedServiceContainer $container)
+    private function setupGenerators(IndexedServiceContainer $container): void
     {
         $container->define('code_generator', function (IndexedServiceContainer $c) {
             $generator = new CodeGenerator\GeneratorManager();
@@ -388,7 +388,7 @@ final class ContainerAssembler
     /**
      * @param IndexedServiceContainer $container
      */
-    private function setupPresenter(IndexedServiceContainer $container)
+    private function setupPresenter(IndexedServiceContainer $container): void
     {
         $presenterAssembler = new PresenterAssembler();
         $presenterAssembler->assemble($container);
@@ -397,7 +397,7 @@ final class ContainerAssembler
     /**
      * @param IndexedServiceContainer $container
      */
-    private function setupLocator(IndexedServiceContainer $container)
+    private function setupLocator(IndexedServiceContainer $container): void
     {
         $container->define('locator.resource_manager', function (IndexedServiceContainer $c) {
             $manager = new Locator\PrioritizedResourceManager();
@@ -489,7 +489,7 @@ final class ContainerAssembler
     /**
      * @param IndexedServiceContainer $container
      */
-    private function setupLoader(IndexedServiceContainer $container)
+    private function setupLoader(IndexedServiceContainer $container): void
     {
         $container->define('loader.resource_loader', function (IndexedServiceContainer $c) {
             return new Loader\ResourceLoader(
@@ -524,7 +524,7 @@ final class ContainerAssembler
      *
      * @throws \RuntimeException
      */
-    protected function setupFormatter(IndexedServiceContainer $container)
+    protected function setupFormatter(IndexedServiceContainer $container): void
     {
         $container->define(
             'formatter.formatters.progress',
@@ -618,7 +618,7 @@ final class ContainerAssembler
     /**
      * @param IndexedServiceContainer $container
      */
-    private function setupRunner(IndexedServiceContainer $container)
+    private function setupRunner(IndexedServiceContainer $container): void
     {
         $container->define('runner.suite', function (IndexedServiceContainer $c) {
             return new Runner\SuiteRunner(
@@ -700,7 +700,7 @@ final class ContainerAssembler
     /**
      * @param IndexedServiceContainer $container
      */
-    private function setupMatchers(IndexedServiceContainer $container)
+    private function setupMatchers(IndexedServiceContainer $container): void
     {
         $container->define('matchers.identity', function (IndexedServiceContainer $c) {
             return new Matcher\IdentityMatcher($c->get('formatter.presenter'));
@@ -776,7 +776,7 @@ final class ContainerAssembler
     /**
      * @param IndexedServiceContainer $container
      */
-    private function setupRerunner(IndexedServiceContainer $container)
+    private function setupRerunner(IndexedServiceContainer $container): void
     {
         $container->define('process.rerunner', function (IndexedServiceContainer $c) {
             return new ReRunner\OptionalReRunner(
@@ -820,7 +820,7 @@ final class ContainerAssembler
     /**
      * @param IndexedServiceContainer $container
      */
-    private function setupSubscribers(IndexedServiceContainer $container)
+    private function setupSubscribers(IndexedServiceContainer $container): void
     {
         $container->addConfigurator(function (IndexedServiceContainer $c) {
             array_map(
@@ -833,7 +833,7 @@ final class ContainerAssembler
     /**
      * @param IndexedServiceContainer $container
      */
-    private function setupCurrentExample(IndexedServiceContainer $container)
+    private function setupCurrentExample(IndexedServiceContainer $container): void
     {
         $container->define('current_example', function () {
             return new CurrentExampleTracker();
@@ -843,7 +843,7 @@ final class ContainerAssembler
   /**
    * @param IndexedServiceContainer $container
    */
-    private function setupShutdown(IndexedServiceContainer $container)
+    private function setupShutdown(IndexedServiceContainer $container): void
     {
         $container->define('process.shutdown', function () {
             return new Shutdown();

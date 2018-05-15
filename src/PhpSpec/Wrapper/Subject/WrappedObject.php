@@ -65,7 +65,7 @@ class WrappedObject
      *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      */
-    public function beAnInstanceOf(string $classname, array $arguments = array())
+    public function beAnInstanceOf(string $classname, array $arguments = array()): void
     {
         if (!\is_string($classname)) {
             throw new SubjectException(sprintf(
@@ -86,7 +86,7 @@ class WrappedObject
      *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      */
-    public function beConstructedWith(array $args)
+    public function beConstructedWith(array $args): void
     {
         if (null === $this->classname) {
             throw new SubjectException(sprintf(
@@ -106,7 +106,7 @@ class WrappedObject
      * @param callable|string|null $factoryMethod
      * @param array                $arguments
      */
-    public function beConstructedThrough($factoryMethod, array $arguments = array())
+    public function beConstructedThrough($factoryMethod, array $arguments = array()): void
     {
         if (\is_string($factoryMethod) &&
             false === strpos($factoryMethod, '::') &&
@@ -143,7 +143,7 @@ class WrappedObject
     /**
      * @param boolean $instantiated
      */
-    public function setInstantiated(bool $instantiated)
+    public function setInstantiated(bool $instantiated): void
     {
         $this->isInstantiated = $instantiated;
     }
@@ -159,7 +159,7 @@ class WrappedObject
     /**
      * @param string $classname
      */
-    public function setClassName(string $classname)
+    public function setClassName(string $classname): void
     {
         $this->classname = $classname;
     }
@@ -183,7 +183,7 @@ class WrappedObject
     /**
      * @param object $instance
      */
-    public function setInstance($instance)
+    public function setInstance($instance): void
     {
         $this->instance = $instance;
     }

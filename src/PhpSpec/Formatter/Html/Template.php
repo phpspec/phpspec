@@ -37,7 +37,7 @@ final class Template implements TemplateInterface
      * @param string $text
      * @param array  $templateVars
      */
-    public function render(string $text, array $templateVars = array())
+    public function render(string $text, array $templateVars = array()): void
     {
         if (file_exists($text)) {
             $text = file_get_contents($text);

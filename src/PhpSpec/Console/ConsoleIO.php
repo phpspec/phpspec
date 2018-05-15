@@ -74,17 +74,17 @@ class ConsoleIO implements IO
         $this->prompter = $prompter;
     }
 
-    public function isInteractive() : bool
+    public function isInteractive(): bool
     {
         return $this->input->isInteractive();
     }
 
-    public function isDecorated() : bool
+    public function isDecorated(): bool
     {
         return $this->output->isDecorated();
     }
 
-    public function isCodeGenerationEnabled() : bool
+    public function isCodeGenerationEnabled(): bool
     {
         if (!$this->isInteractive()) {
             return false;
@@ -94,28 +94,28 @@ class ConsoleIO implements IO
             && !$this->input->getOption('no-code-generation');
     }
 
-    public function isStopOnFailureEnabled() : bool
+    public function isStopOnFailureEnabled(): bool
     {
         return $this->config->isStopOnFailureEnabled()
             || $this->input->getOption('stop-on-failure');
     }
 
-    public function isVerbose() : bool
+    public function isVerbose(): bool
     {
         return OutputInterface::VERBOSITY_VERBOSE <= $this->output->getVerbosity();
     }
 
-    public function getLastWrittenMessage() : string
+    public function getLastWrittenMessage(): string
     {
         return $this->lastMessage;
     }
 
-    public function writeln(string $message = '', int $indent = null)
+    public function writeln(string $message = '', int $indent = null): void
     {
         $this->write($message, $indent, true);
     }
 
-    public function writeTemp(string $message, int $indent = null)
+    public function writeTemp(string $message, int $indent = null): void
     {
         $this->write($message, $indent);
         $this->hasTempString = true;
@@ -144,12 +144,12 @@ class ConsoleIO implements IO
         return $message;
     }
 
-    public function freezeTemp()
+    public function freezeTemp(): void
     {
         $this->write($this->lastMessage);
     }
 
-    public function write(string $message, int $indent = null, bool $newline = false)
+    public function write(string $message, int $indent = null, bool $newline = false): void
     {
         if ($this->hasTempString) {
             $this->hasTempString = false;
@@ -166,12 +166,12 @@ class ConsoleIO implements IO
         $this->lastMessage = $message.($newline ? "\n" : '');
     }
 
-    public function overwriteln(string $message = '', int $indent = null)
+    public function overwriteln(string $message = '', int $indent = null): void
     {
         $this->overwrite($message, $indent, true);
     }
 
-    public function overwrite(string $message, int $indent = null, bool $newline = false)
+    public function overwrite(string $message, int $indent = null, bool $newline = false): void
     {
         if (null !== $indent) {
             $message = $this->indentText($message, $indent);
@@ -220,7 +220,7 @@ class ConsoleIO implements IO
         return $common;
     }
 
-    public function askConfirmation(string $question, bool $default = true) : bool
+    public function askConfirmation(string $question, bool $default = true): bool
     {
         $lines   = array();
         $lines[] = '<question>'.str_repeat(' ', $this->getBlockWidth())."</question>";
@@ -235,7 +235,7 @@ class ConsoleIO implements IO
         return $this->prompter->askConfirmation($formattedQuestion, $default);
     }
 
-    private function indentText(string $text, int $indent) : string
+    private function indentText(string $text, int $indent): string
     {
         return implode("\n", array_map(
             function ($line) use ($indent) {
@@ -245,12 +245,12 @@ class ConsoleIO implements IO
         ));
     }
 
-    public function isRerunEnabled() : bool
+    public function isRerunEnabled(): bool
     {
         return !$this->input->getOption('no-rerun') && $this->config->isReRunEnabled();
     }
 
-    public function isFakingEnabled() : bool
+    public function isFakingEnabled(): bool
     {
         return $this->input->getOption('fake') || $this->config->isFakingEnabled();
     }
@@ -270,12 +270,12 @@ class ConsoleIO implements IO
         return null;
     }
 
-    public function setConsoleWidth(int $width)
+    public function setConsoleWidth(int $width): void
     {
         $this->consoleWidth = $width;
     }
 
-    public function getBlockWidth() : int
+    public function getBlockWidth(): int
     {
         $width = self::COL_DEFAULT_WIDTH;
         if ($this->consoleWidth && ($this->consoleWidth - 10) > self::COL_MIN_WIDTH) {
@@ -291,7 +291,7 @@ class ConsoleIO implements IO
      * @param string $message
      * @param int $indent
      */
-    public function writeBrokenCodeBlock(string $message, int $indent = 0)
+    public function writeBrokenCodeBlock(string $message, int $indent = 0): void
     {
         $message = wordwrap($message, $this->getBlockWidth() - ($indent * 2), "\n", true);
 

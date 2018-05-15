@@ -55,7 +55,7 @@ class ExampleRunner
     /**
      * @param Maintainer $maintainer
      */
-    public function registerMaintainer(Maintainer $maintainer)
+    public function registerMaintainer(Maintainer $maintainer): void
     {
         $this->maintainers[] = $maintainer;
 
@@ -125,7 +125,7 @@ class ExampleRunner
      * @throws \PhpSpec\Exception\Example\PendingException
      * @throws \Exception
      */
-    protected function executeExample(Specification $context, ExampleNode $example)
+    protected function executeExample(Specification $context, ExampleNode $example): void
     {
         if ($example->isPending()) {
             throw new ExampleException\PendingException();
@@ -179,7 +179,7 @@ class ExampleRunner
         Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
-    ) {
+    ): void {
         foreach (array_reverse($maintainers) as $maintainer) {
             $maintainer->teardown($example, $context, $matchers, $collaborators);
         }

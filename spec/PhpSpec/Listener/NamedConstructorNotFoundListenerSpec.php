@@ -23,7 +23,7 @@ class NamedConstructorNotFoundListenerSpec extends ObjectBehavior
         ExampleEvent $exampleEvent,
         NamedConstructorNotFoundException $exception)
     {
-        $io->writeln(Argument::any())->willReturn();
+        $io->writeln(Argument::any())->should(function() {});;
         $io->askConfirmation(Argument::any())->willReturn(false);
 
         $this->beConstructedWith($io, $resourceManager, $generatorManager);

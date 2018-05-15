@@ -30,7 +30,7 @@ class ComposerPsrNamespaceProviderSpec extends ObjectBehavior
         );
     }
 
-    public function getMatchers() : array
+    public function getMatchers(): array
     {
         return array(
             'haveNamespaceLocation' => function ($subject, $namespace, $location, $standard) {

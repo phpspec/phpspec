@@ -18,5 +18,5 @@ interface NamespaceProvider
      *                     NamespaceProvider::SUPPORTED_AUTOLOADING_STANDARD
      *                  )]
      */
-    public function getNamespaces() : array;
+    public function getNamespaces(): array;
 }

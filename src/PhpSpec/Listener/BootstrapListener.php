@@ -22,7 +22,7 @@ final class BootstrapListener implements EventSubscriberInterface
         return array('beforeSuite' => array('beforeSuite', 1100));
     }
 
-    public function beforeSuite()
+    public function beforeSuite(): void
     {
         if ($bootstrap = $this->io->getBootstrapPath()) {
             if (!is_file($bootstrap)) {

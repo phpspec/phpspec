@@ -47,7 +47,7 @@ class CompositeReRunnerSpec extends ObjectBehavior
         $reRunner1->isSupported()->willReturn(false);
         $reRunner2->isSupported()->willReturn(true);
 
-        $reRunner2->reRunSuite()->willReturn();
+        $reRunner2->reRunSuite()->should(function() {});;
 
         $this->reRunSuite();
 

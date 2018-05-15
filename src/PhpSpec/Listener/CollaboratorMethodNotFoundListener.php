@@ -90,7 +90,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
     /**
      * @param ExampleEvent $event
      */
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event): void
     {
         if (!$exception = $this->getMethodNotFoundException($event)) {
             return;
@@ -135,7 +135,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
     /**
      * @param SuiteEvent $event
      */
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event): void
     {
         foreach ($this->interfaces as $interface => $methods) {
             try {
@@ -195,14 +195,14 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         }
     }
 
-    private function checkIfMethodNameAllowed($methodName)
+    private function checkIfMethodNameAllowed($methodName): void
     {
         if (!$this->nameChecker->isNameValid($methodName)) {
             $this->wrongMethodNames[] = $methodName;
         }
     }
 
-    private function writeErrorMessage()
+    private function writeErrorMessage(): void
     {
         foreach ($this->wrongMethodNames as $methodName) {
             $message = sprintf("I cannot generate the method '%s' for you because it is a reserved keyword", $methodName);

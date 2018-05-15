@@ -58,7 +58,7 @@ final class MethodGenerator implements Generator
         $this->codeWriter = $codeWriter;
     }
 
-    public function supports(Resource $resource, string $generation, array $data) : bool
+    public function supports(Resource $resource, string $generation, array $data): bool
     {
         return 'method' === $generation;
     }
@@ -67,7 +67,7 @@ final class MethodGenerator implements Generator
      * @param Resource $resource
      * @param array             $data
      */
-    public function generate(Resource $resource, array $data = array())
+    public function generate(Resource $resource, array $data = array()): void
     {
         $filepath  = $resource->getSrcFilename();
         $name      = $data['name'];
@@ -96,17 +96,17 @@ final class MethodGenerator implements Generator
         ), 2);
     }
 
-    public function getPriority() : int
+    public function getPriority(): int
     {
         return 0;
     }
 
-    protected function getTemplate() : string
+    protected function getTemplate(): string
     {
         return file_get_contents(__DIR__.'/templates/method.template');
     }
 
-    private function getUpdatedCode(string $methodName, string $snippetToInsert, string $code) : string
+    private function getUpdatedCode(string $methodName, string $snippetToInsert, string $code): string
     {
         if ('__construct' === $methodName) {
             return $this->codeWriter->insertMethodFirstInClass($code, $snippetToInsert);

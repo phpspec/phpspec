@@ -19,5 +19,5 @@ interface Template
      * @param string $text
      * @param array  $templateVars
      */
-    public function render(string $text, array $templateVars = array());
+    public function render(string $text, array $templateVars = array()): void;
 }
