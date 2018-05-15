@@ -52,7 +52,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         $this->namespaceResolver = $namespaceResolver;
     }
 
-    public function rewrite(string $classDefinition) : string
+    public function rewrite(string $classDefinition): string
     {
         $this->namespaceResolver->analyse($classDefinition);
 
@@ -70,7 +70,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         $this->currentFunction = '';
     }
 
-    private function stripTypeHints(array $tokens) : array
+    private function stripTypeHints(array $tokens): array
     {
         foreach ($tokens as $index => $token) {
             if ($this->isToken($token, '{')) {
@@ -134,7 +134,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
      * @param array $tokens
      * @return string
      */
-    private function tokensToString(array $tokens) : string
+    private function tokensToString(array $tokens): string
     {
         return join('', array_map(function ($token) {
             return \is_array($token) ? $token[1] : $token;
@@ -176,12 +176,12 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     /**
      * @param array|string $token
      */
-    private function tokenHasType($token, string $type) : bool
+    private function tokenHasType($token, string $type): bool
     {
         return \is_array($token) && $type == $token[0];
     }
 
-    private function shouldExtractTokensOfClass(string $className) : bool
+    private function shouldExtractTokensOfClass(string $className): bool
     {
         return substr($className, -4) == 'Spec';
     }
@@ -189,7 +189,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     /**
      * @param array|string $token
      */
-    private function isToken($token, string $string) : bool
+    private function isToken($token, string $string): bool
     {
         return $token == $string || (\is_array($token) && $token[1] == $string);
     }

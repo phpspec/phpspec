@@ -85,12 +85,12 @@ class SuiteEvent extends Event implements PhpSpecEvent
         return $this->worthRerunning;
     }
 
-    public function markAsWorthRerunning() : void
+    public function markAsWorthRerunning(): void
     {
         $this->worthRerunning = true;
     }
 
-    public function markAsNotWorthRerunning() : void
+    public function markAsNotWorthRerunning(): void
     {
         $this->worthRerunning = false;
     }

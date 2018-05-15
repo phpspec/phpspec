@@ -18,5 +18,5 @@ interface ReportItem
     /**
      * @return void
      */
-    public function write() : void;
+    public function write(): void;
 }

@@ -38,7 +38,7 @@ interface Maintainer
         Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
-    ) : void;
+    ): void;
 
     /**
      * @param ExampleNode            $example
@@ -51,7 +51,7 @@ interface Maintainer
         Specification $context,
         MatcherManager $matchers,
         CollaboratorManager $collaborators
-    ) : void;
+    ): void;
 
     /**
      * @return integer

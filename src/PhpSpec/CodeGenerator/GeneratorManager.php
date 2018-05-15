@@ -30,7 +30,7 @@ class GeneratorManager
     /**
      * @param Generator $generator
      */
-    public function registerGenerator(Generator $generator) : void
+    public function registerGenerator(Generator $generator): void
     {
         $this->generators[] = $generator;
         @usort($this->generators, function (Generator $generator1, Generator $generator2) {
@@ -42,7 +42,7 @@ class GeneratorManager
      * @return mixed
      * @throws \InvalidArgumentException
      */
-    public function generate(Resource $resource, string $name, array $data = array()) : void
+    public function generate(Resource $resource, string $name, array $data = array()): void
     {
         foreach ($this->generators as $generator) {
             if ($generator->supports($resource, $name, $data)) {

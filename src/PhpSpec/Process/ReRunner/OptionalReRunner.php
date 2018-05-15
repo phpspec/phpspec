@@ -36,7 +36,7 @@ final class OptionalReRunner implements ReRunner
         $this->decoratedRerunner = $decoratedRerunner;
     }
 
-    public function reRunSuite() : void
+    public function reRunSuite(): void
     {
         if ($this->io->isRerunEnabled()) {
             $this->decoratedRerunner->reRunSuite();

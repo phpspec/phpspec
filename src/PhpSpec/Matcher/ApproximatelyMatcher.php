@@ -68,7 +68,7 @@ final class ApproximatelyMatcher extends BasicMatcher
     }
 
 
-    protected function getFailureException(string $name, $subject, array $arguments) : FailureException
+    protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected an approximated value of %s, but got %s',

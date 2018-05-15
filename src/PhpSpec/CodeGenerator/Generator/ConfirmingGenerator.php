@@ -40,7 +40,7 @@ final class ConfirmingGenerator implements Generator
         $this->generator = $generator;
     }
 
-    public function supports(Resource $resource, string $generation, array $data) : bool
+    public function supports(Resource $resource, string $generation, array $data): bool
     {
         return $this->generator->supports($resource, $generation, $data);
     }
@@ -55,12 +55,12 @@ final class ConfirmingGenerator implements Generator
         }
     }
 
-    private function composeMessage(Resource $resource) : string
+    private function composeMessage(Resource $resource): string
     {
         return str_replace('{CLASSNAME}', $resource->getSrcClassname(), $this->message);
     }
 
-    public function getPriority() : int
+    public function getPriority(): int
     {
         return $this->generator->getPriority();
     }

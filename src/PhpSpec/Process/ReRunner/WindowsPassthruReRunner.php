@@ -47,7 +47,7 @@ final class WindowsPassthruReRunner extends PhpExecutableReRunner
             && (stripos(PHP_OS, "win") === 0);
     }
 
-    public function reRunSuite() : void
+    public function reRunSuite(): void
     {
         $args = $_SERVER['argv'];
         $command = $this->buildArgString() . escapeshellarg($this->getExecutablePath()) . ' ' . join(' ', array_map('escapeshellarg', $args));

@@ -35,7 +35,7 @@ final class CompositeReRunner implements ReRunner
         }
     }
 
-    public function reRunSuite() : void
+    public function reRunSuite(): void
     {
         $this->reRunner->reRunSuite();
     }

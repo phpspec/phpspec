@@ -15,5 +15,5 @@ namespace PhpSpec\Process;
 
 interface ReRunner
 {
-    public function reRunSuite() : void;
+    public function reRunSuite(): void;
 }

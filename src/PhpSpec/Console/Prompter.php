@@ -15,5 +15,5 @@ namespace PhpSpec\Console;
 
 interface Prompter
 {
-    public function askConfirmation(string $question, bool $default = true) : bool;
+    public function askConfirmation(string $question, bool $default = true): bool;
 }

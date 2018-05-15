@@ -37,7 +37,7 @@ class ReportPassedItem
         $this->event = $event;
     }
 
-    public function write() : void
+    public function write(): void
     {
         $this->template->render(Template::DIR.'/Template/ReportPass.html', array(
             'title' => $this->event->getTitle()

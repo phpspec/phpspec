@@ -75,7 +75,7 @@ final class IterateLikeMatcher implements Matcher
     /**
      * {@inheritdoc}
      */
-    public function getPriority() : int
+    public function getPriority(): int
     {
         return 100;
     }

@@ -50,7 +50,7 @@ final class PcntlReRunner extends PhpExecutableReRunner
     /**
      * Kills the current process and starts a new one
      */
-    public function reRunSuite() : void
+    public function reRunSuite(): void
     {
         $args = $_SERVER['argv'];
         $env = $this->executionContext ? $this->executionContext->asEnv() : array();

@@ -33,7 +33,7 @@ class ExistingConstructorTemplate
         $this->methodName = $methodName;
     }
 
-    public function getContent() : string
+    public function getContent(): string
     {
         if (!$this->numberOfConstructorArgumentsMatchMethod()) {
             return $this->getExceptionContent();
@@ -42,7 +42,7 @@ class ExistingConstructorTemplate
         return $this->getCreateObjectContent();
     }
 
-    private function numberOfConstructorArgumentsMatchMethod() : bool
+    private function numberOfConstructorArgumentsMatchMethod(): bool
     {
         $constructorArguments = 0;
 
@@ -58,7 +58,7 @@ class ExistingConstructorTemplate
         return $constructorArguments == \count($this->arguments);
     }
 
-    private function getExceptionContent() : string
+    private function getExceptionContent(): string
     {
         $values = $this->getValues();
 
@@ -72,7 +72,7 @@ class ExistingConstructorTemplate
         return $content;
     }
 
-    private function getCreateObjectContent() : string
+    private function getCreateObjectContent(): string
     {
         $values = $this->getValues(true);
 
@@ -89,7 +89,7 @@ class ExistingConstructorTemplate
     /**
      * @return string[]
      */
-    private function getValues(bool $constructorArguments = false) : array
+    private function getValues(bool $constructorArguments = false): array
     {
         $argString = \count($this->arguments)
             ? '$argument'.implode(', $argument', range(1, \count($this->arguments)))

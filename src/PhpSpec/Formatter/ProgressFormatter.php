@@ -146,7 +146,7 @@ final class ProgressFormatter extends ConsoleFormatter
      * @param array     $progress
      * @param int       $total
      */
-    private function updateProgressBar(ConsoleIO $io, array $progress, int $total) : void
+    private function updateProgressBar(ConsoleIO $io, array $progress, int $total): void
     {
         if ($io->isDecorated()) {
             $progressBar = implode('', $progress);
@@ -157,7 +157,7 @@ final class ProgressFormatter extends ConsoleFormatter
         }
     }
 
-    private function drawStats() : void
+    private function drawStats(): void
     {
         $io = $this->getIO();
         $stats = $this->getStatisticsCollector();
