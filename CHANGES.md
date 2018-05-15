@@ -1,3 +1,8 @@
+Upcoming 5.x
+============
+
+* Added void type hints to codebase (@kix)z
+
 4.3.0 / 2017-12-22
 ==================
 
