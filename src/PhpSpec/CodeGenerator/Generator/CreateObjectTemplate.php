@@ -30,7 +30,7 @@ class CreateObjectTemplate
         $this->className  = $className;
     }
 
-    public function getContent()
+    public function getContent(): string
     {
         $values = $this->getValues();
 

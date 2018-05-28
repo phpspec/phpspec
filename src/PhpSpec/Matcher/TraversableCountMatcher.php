@@ -15,6 +15,7 @@ namespace PhpSpec\Matcher;
 
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Wrapper\DelayedCall;
 
 final class TraversableCountMatcher implements Matcher
 {
@@ -49,7 +50,7 @@ final class TraversableCountMatcher implements Matcher
     /**
      * {@inheritdoc}
      */
-    public function positiveMatch(string $name, $subject, array $arguments)
+    public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
         $countDifference = $this->countDifference($subject, (int) $arguments[0]);
 
@@ -62,13 +63,13 @@ final class TraversableCountMatcher implements Matcher
             ));
         }
 
-        return $subject;
+        return null;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function negativeMatch(string $name, $subject, array $arguments)
+    public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
         $count = $this->countDifference($subject, (int) $arguments[0]);
 
@@ -80,7 +81,7 @@ final class TraversableCountMatcher implements Matcher
             ));
         }
 
-        return $subject;
+        return null;
     }
 
     /**

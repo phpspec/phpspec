@@ -70,7 +70,7 @@ class ReportFailedItem
     /**
      * @return string
      */
-    private function formatBacktrace(): string
+    private function formatBacktrace() : string
     {
         $backtrace = '';
         foreach ($this->event->getBacktrace() as $step) {

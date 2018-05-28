@@ -143,7 +143,7 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     /**
      * @return Resource[]
      */
-    public function getAllResources()
+    public function getAllResources(): array
     {
         return $this->findSpecResources($this->fullSpecPath);
     }

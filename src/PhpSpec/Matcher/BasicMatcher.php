@@ -14,6 +14,7 @@
 namespace PhpSpec\Matcher;
 
 use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Wrapper\DelayedCall;
 
 abstract class BasicMatcher implements Matcher
 {
@@ -22,17 +23,17 @@ abstract class BasicMatcher implements Matcher
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return mixed
+     * @return void
      *
-     *   @throws FailureException
+     * @throws FailureException
      */
-    final public function positiveMatch(string $name, $subject, array $arguments)
+    final public function positiveMatch(string $name, $subject, array $arguments): ?DelayedCall
     {
         if (false === $this->matches($subject, $arguments)) {
             throw $this->getFailureException($name, $subject, $arguments);
         }
 
-        return $subject;
+        return null;
     }
 
     /**
@@ -40,17 +41,17 @@ abstract class BasicMatcher implements Matcher
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @return mixed
+     * @return void
      *
      * @throws FailureException
      */
-    final public function negativeMatch(string $name, $subject, array $arguments)
+    final public function negativeMatch(string $name, $subject, array $arguments): ?DelayedCall
     {
         if (true === $this->matches($subject, $arguments)) {
             throw $this->getNegativeFailureException($name, $subject, $arguments);
         }
 
-        return $subject;
+        return null;
     }
 
     /**

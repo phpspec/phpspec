@@ -122,7 +122,7 @@ class ConsoleIO implements IO
     }
 
     /**
-     * @return null|string
+     * @return ?string
      */
     public function cutTemp()
     {
@@ -195,7 +195,7 @@ class ConsoleIO implements IO
         $this->lastMessage = $message.($newline ? "\n" : '');
     }
 
-    private function getCommonPrefix(string $stringA, string $stringB)
+    private function getCommonPrefix(string $stringA, string $stringB): string
     {
         for ($i = 0, $len = min(\strlen($stringA), \strlen($stringB)); $i<$len; $i++) {
             if ($stringA[$i] != $stringB[$i]) {
@@ -248,9 +248,9 @@ class ConsoleIO implements IO
     }
 
     /**
-     * @return string|null
+     * @return ?string
      */
-    public function getBootstrapPath()
+    public function getBootstrapPath(): ?string
     {
         if ($path = $this->input->getOption('bootstrap')) {
             return $path;

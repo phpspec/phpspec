@@ -42,7 +42,7 @@ class SpecificationRunner
      * @param  SpecificationNode $specification
      * @return int|mixed
      */
-    public function run(SpecificationNode $specification)
+    public function run(SpecificationNode $specification): int
     {
         $startTime = microtime(true);
         $this->dispatcher->dispatch(

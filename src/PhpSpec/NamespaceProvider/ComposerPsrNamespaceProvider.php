@@ -61,7 +61,7 @@ class ComposerPsrNamespaceProvider
         return $namespaces;
     }
 
-    private function getNamespacesFromPrefixes(array $prefixes, array $vendors, $standard)
+    private function getNamespacesFromPrefixes(array $prefixes, array $vendors, $standard) : array
     {
         $namespaces = array();
         foreach ($prefixes as $namespace => $psrPrefix) {

@@ -15,6 +15,7 @@ namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\CodeAnalysis\AccessInspector;
 use PhpSpec\Exception\ExceptionFactory;
+use PhpSpec\Exception\Fracture\NamedConstructorNotFoundException;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Wrapper\Subject;
 use PhpSpec\Wrapper\Wrapper;
@@ -339,13 +340,7 @@ class Caller
         return $this->exceptionFactory->classNotFound($this->wrappedObject->getClassName());
     }
 
-    /**
-     * @param string $method
-     * @param array  $arguments
-     *
-     * @return \PhpSpec\Exception\Fracture\MethodNotFoundException|\PhpSpec\Exception\Fracture\MethodNotVisibleException
-     */
-    private function namedConstructorNotFound(string $method, array $arguments = array())
+    private function namedConstructorNotFound(string $method, array $arguments = array()) : NamedConstructorNotFoundException
     {
         $className = $this->wrappedObject->getClassName();
 

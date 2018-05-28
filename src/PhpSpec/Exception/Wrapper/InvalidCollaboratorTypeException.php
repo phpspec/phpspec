@@ -30,7 +30,7 @@ class InvalidCollaboratorTypeException extends CollaboratorException
         parent::__construct($message);
     }
 
-    private function fetchFunctionIdentifier(\ReflectionFunctionAbstract $function)
+    private function fetchFunctionIdentifier(\ReflectionFunctionAbstract $function) : string
     {
         $functionIdentifier = $function->getName();
         if ($function instanceof \ReflectionMethod) {

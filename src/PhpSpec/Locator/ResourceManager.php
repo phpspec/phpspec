@@ -20,7 +20,7 @@ interface ResourceManager
      *
      * @return \PhpSpec\Locator\Resource[]
      */
-    public function locateResources(string $query);
+    public function locateResources(string $query): array;
 
     /**
      * @param string $classname

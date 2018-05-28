@@ -39,7 +39,7 @@ final class PrioritizedResourceManager implements ResourceManager
      *
      * @return Resource[]
      */
-    public function locateResources(string $query)
+    public function locateResources(string $query): array
     {
         $resources = array();
         foreach ($this->locators as $locator) {
@@ -86,7 +86,7 @@ final class PrioritizedResourceManager implements ResourceManager
      *
      * @return Resource[]
      */
-    private function removeDuplicateResources(array $resources)
+    private function removeDuplicateResources(array $resources): array
     {
         $filteredResources = array();
 

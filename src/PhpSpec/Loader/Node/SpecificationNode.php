@@ -88,7 +88,7 @@ class SpecificationNode implements \Countable
     /**
      * @return ExampleNode[]
      */
-    public function getExamples()
+    public function getExamples(): array
     {
         return $this->examples;
     }

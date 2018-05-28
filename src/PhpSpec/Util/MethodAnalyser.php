@@ -104,7 +104,7 @@ class MethodAnalyser
      *
      * @return null|\ReflectionClass
      */
-    private function getDeclaringTrait(array $traits, string $file, int $start, int $end)
+    private function getDeclaringTrait(array $traits, string $file, int $start, int $end): ?\ReflectionClass
     {
         foreach ($traits as $trait) {
             if ($trait->getFileName() == $file && $trait->getStartLine() <= $start && $trait->getEndLine() >= $end) {
