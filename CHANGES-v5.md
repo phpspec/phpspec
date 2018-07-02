@@ -8,3 +8,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
  - Bumped minimum PHP and Symfony dependences (@ciaranmcnulty)
  - Added void type hints to codebase (@kix)
+ - Typehint iteration matchers for IDEs (@l3l0)
+ - Extension point to help annotation extension (@drupol)
