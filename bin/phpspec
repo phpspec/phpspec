@@ -24,4 +24,4 @@
 
     (new PhpSpec\Console\Application($version))->run();
 
-})('5.0.0-rc1');
+})('5.0.0');
