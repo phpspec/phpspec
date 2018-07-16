@@ -103,6 +103,8 @@ final class ObjectStateMatcher implements Matcher
         if (false !== $result = \call_user_func_array($callable, $arguments)) {
             throw $this->getFailureExceptionFor($callable, false, $result);
         }
+
+        return null;
     }
 
     /**
