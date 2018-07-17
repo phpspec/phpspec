@@ -1,11 +1,11 @@
 <?php
+declare(strict_types = 1);
 
 namespace spec\PhpSpec\Matcher;
 
+use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
-
-use PhpSpec\Formatter\Presenter\Presenter;
 
 class ObjectStateMatcherSpec extends ObjectBehavior
 {
@@ -89,5 +89,31 @@ class ObjectStateMatcherSpec extends ObjectBehavior
         $subject = function () {};
 
         $this->supports('beCallable', $subject, array())->shouldReturn(false);
+    }
+
+    function it_does_not_throw_when_positive_match_true()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+                return true;
+            }
+        };
+
+        $this->positiveMatch('beMatched', $subject, [])->shouldBe(null);
+    }
+
+    function it_does_not_throw_when_negative_match_false()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+                return false;
+            }
+        };
+
+        $this->negativeMatch('beMatched', $subject, [])->shouldBe(null);
     }
 }
