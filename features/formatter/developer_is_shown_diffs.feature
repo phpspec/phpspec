@@ -394,9 +394,9 @@ Feature: Developer is shown diffs
     When I run phpspec with the "verbose" option
     Then I should see:
       """
-            method call:
+            unexpected method call on Double\Diffs\DiffExample7\ClassBeingMocked\P13:
               - methodTwo("value")
-            on Double\Diffs\DiffExample7\ClassBeingMocked\P13 was not expected, expected calls were:
+            expected calls were:
               - methodOne(exact("value"))
       """
 
@@ -458,9 +458,9 @@ Feature: Developer is shown diffs
     When I run phpspec with the "verbose" option
     Then I should see:
       """
-            method call:
+            unexpected method call on Double\Diffs\DiffExample8\ClassBeingMocked\P14:
               - methodTwo("another value")
-            on Double\Diffs\DiffExample8\ClassBeingMocked\P14 was not expected, expected calls were:
+            expected calls were:
               - methodTwo(exact("value"))
               - methodOne(exact("another value"))
       """
