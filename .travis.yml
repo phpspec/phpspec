@@ -14,6 +14,7 @@ matrix:
       env: COMPOSER_FLAGS='--prefer-lowest'
     - php: 7.1
     - php: 7.2
+    - php: 7.3
     - php: nightly
       env: DEPENDENCIES='dev'
       env: COMPOSER_FLAGS='--ignore-platform-reqs'
