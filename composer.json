@@ -27,7 +27,7 @@
         "symfony/process":          "^2.6|~3.0",
         "symfony/finder":           "~2.1|~3.0",
         "symfony/yaml":             "~2.1|~3.0",
-        "doctrine/instantiator":    "^1.0.1",
+        "doctrine/instantiator":    "~1.0.5",
         "ext-tokenizer":            "*"
     },
 
