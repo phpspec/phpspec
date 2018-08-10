@@ -87,7 +87,7 @@ class Caller
      */
     public function call(string $method, array $arguments = array()): Subject
     {
-        if (null === $this->getWrappedObject()) {
+        if (!is_object($this->getWrappedObject())) {
             throw $this->callingMethodOnNonObject($method);
         }
 
