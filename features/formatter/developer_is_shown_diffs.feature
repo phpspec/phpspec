@@ -97,6 +97,60 @@ Feature: Developer is shown diffs
                ]
       """
 
+  Scenario: Array of object diffing
+    Given the spec file "spec/Diffs/DiffExample2/ClassWithArraysOfObjectsSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Diffs\DiffExample2;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+
+      class ClassWithArraysOfObjectsSpec extends ObjectBehavior
+      {
+          function it_is_equal()
+          {
+              $std = new \stdClass;
+              $std->test = 'anotherProperty';
+              $this->getArray()->shouldBeLike([$std]);
+          }
+      }
+
+      """
+    And the class file "src/Diffs/DiffExample2/ClassWithArraysOfObjects.php" contains:
+      """
+      <?php
+
+      namespace Diffs\DiffExample2;
+
+      class ClassWithArraysOfObjects
+      {
+          public function getArray()
+          {
+              $std = new \stdClass;
+              $std->property = 'testValue';
+              $std->hash = 'fooHash';
+
+              return [$std];
+          }
+      }
+
+      """
+    When I run phpspec with the "verbose" option
+    Then I should see:
+      """
+          -        'test' => 'anotherProperty'
+      """
+    And I should see:
+      """
+          +        'property' => 'testValue'
+      """
+    And I should see:
+      """
+          +        'hash' => 'fooHash'
+      """
+
   Scenario: Object diffing
     Given the spec file "spec/Diffs/DiffExample3/ClassWithObjectsSpec.php" contains:
       """

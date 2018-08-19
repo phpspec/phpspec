@@ -72,7 +72,7 @@ final class PresenterAssembler
         }, ['formatter.presenter.differ.engines']);
 
         $container->define('formatter.presenter.differ.engines.array', function () {
-            return new ArrayEngine();
+            return new ArrayEngine(new Exporter());
         }, ['formatter.presenter.differ.engines']);
 
         $container->define('formatter.presenter.differ.engines.object', function (IndexedServiceContainer $c) {
