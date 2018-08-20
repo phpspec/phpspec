@@ -339,6 +339,7 @@ Feature: Developer is shown diffs
             +bar
       """
 
+  @prophecyAfter1.8.0
   Scenario: Unexpected method call
     Given the spec file "spec/Diffs/DiffExample7/ClassUnderSpecificationSpec.php" contains:
       """
@@ -394,12 +395,17 @@ Feature: Developer is shown diffs
     When I run phpspec with the "verbose" option
     Then I should see:
       """
-            method call:
-              - methodTwo("value")
-            on Double\Diffs\DiffExample7\ClassBeingMocked\P13 was not expected, expected calls were:
-              - methodOne(exact("value"))
+            unexpected method call on Double\Diffs\DiffExample7\ClassBeingMocked\P14:
+              - methodTwo(
+                    "value"
+                )
+            expected calls were:
+              - methodOne(
+                    exact("value")
+                )
       """
 
+  @prophecyAfter1.8.0
   Scenario: Unexpected method call when another prophecy for that call with not matching arguments exists
     Given the spec file "spec/Diffs/DiffExample8/ClassUnderSpecificationSpec.php" contains:
       """
@@ -456,11 +462,145 @@ Feature: Developer is shown diffs
       }
       """
     When I run phpspec with the "verbose" option
+    Then  I should see:
+      """
+            unexpected method call on Double\Diffs\DiffExample8\ClassBeingMocked\P14:
+              - methodTwo(
+                    "another value"
+                )
+            expected calls were:
+              - methodTwo(
+                    exact("value")
+                )
+              - methodOne(
+                    exact("another value")
+                )
+      """
+
+  @prophecyBefore1.8.0
+  Scenario: Unexpected method call
+    Given the spec file "spec/Diffs/DiffExample7_1/ClassUnderSpecificationSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Diffs\DiffExample7_1;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use Diffs\DiffExample7_1\ClassBeingMocked;
+
+      class ClassUnderSpecificationSpec extends ObjectBehavior
+      {
+          function it_can_do_work(ClassBeingMocked $objectBeingMocked)
+          {
+              $objectBeingMocked->methodOne('value')->shouldBeCalled();
+              $this->doWork($objectBeingMocked);
+          }
+      }
+      """
+    And the class file "src/Diffs/DiffExample7_1/ClassUnderSpecification.php" contains:
+      """
+      <?php
+
+      namespace Diffs\DiffExample7_1;
+
+      class ClassUnderSpecification
+      {
+          public function doWork(ClassBeingMocked $objectBeingMocked)
+          {
+              $objectBeingMocked->methodTwo('value');
+          }
+      }
+      """
+    And the class file "src/Diffs/DiffExample7_1/ClassBeingMocked.php" contains:
+      """
+      <?php
+
+      namespace Diffs\DiffExample7_1;
+
+      class ClassBeingMocked
+      {
+          public function methodOne($value)
+          {
+          }
+
+          public function methodTwo($value)
+          {
+          }
+
+      }
+      """
+    When I run phpspec with the "verbose" option
     Then I should see:
       """
             method call:
+              - methodTwo("value")
+            on Double\Diffs\DiffExample7_1\ClassBeingMocked\P13 was not expected, expected calls were:
+              - methodOne(exact("value"))
+      """
+
+  @prophecyBefore1.8.0
+  Scenario: Unexpected method call when another prophecy for that call with not matching arguments exists
+    Given the spec file "spec/Diffs/DiffExample8_1/ClassUnderSpecificationSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Diffs\DiffExample8_1;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use Diffs\DiffExample8_1\ClassBeingMocked;
+
+      class ClassUnderSpecificationSpec extends ObjectBehavior
+      {
+          function it_can_do_work(ClassBeingMocked $objectBeingMocked)
+          {
+              $objectBeingMocked->methodTwo('value')->shouldBeCalled();
+              $objectBeingMocked->methodOne('another value')->shouldBeCalled();
+
+              $this->doWork($objectBeingMocked);
+          }
+      }
+      """
+    And the class file "src/Diffs/DiffExample8_1/ClassUnderSpecification.php" contains:
+      """
+      <?php
+
+      namespace Diffs\DiffExample8_1;
+
+      class ClassUnderSpecification
+      {
+          public function doWork(ClassBeingMocked $objectBeingMocked)
+          {
+              $objectBeingMocked->methodTwo('value');
+              $objectBeingMocked->methodTwo('another value');
+          }
+      }
+      """
+    And the class file "src/Diffs/DiffExample8_1/ClassBeingMocked.php" contains:
+      """
+      <?php
+
+      namespace Diffs\DiffExample8_1;
+
+      class ClassBeingMocked
+      {
+          public function methodOne($value)
+          {
+          }
+
+          public function methodTwo($value)
+          {
+          }
+
+      }
+      """
+    When I run phpspec with the "verbose" option
+    Then  I should see:
+      """
+            method call:
               - methodTwo("another value")
-            on Double\Diffs\DiffExample8\ClassBeingMocked\P14 was not expected, expected calls were:
+            on Double\Diffs\DiffExample8_1\ClassBeingMocked\P14 was not expected, expected calls were:
               - methodTwo(exact("value"))
               - methodOne(exact("another value"))
       """
