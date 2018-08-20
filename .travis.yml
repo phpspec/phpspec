@@ -12,6 +12,7 @@ matrix:
   include:
     - php: 7.1
       env: COMPOSER_FLAGS='--prefer-lowest'
+      env: PROPHECY_BEFORE_1_8_0=1
     - php: 7.1
     - php: 7.2
     - php: nightly
@@ -33,6 +34,7 @@ script:
    - bin/phpspec run --format=dot
    - ./vendor/bin/phpunit
    - ./vendor/bin/behat --format=progress
+   - if [ "PROPHECY_BEFORE_1_8_0" == "1" ]; then ./vendor/bin/behat --format=progress -p old-prophecy; else ./vendor/bin/behat --format=progress; fi;
 
 before_deploy:
   - curl -LSs https://box-project.github.io/box2/installer.php | php

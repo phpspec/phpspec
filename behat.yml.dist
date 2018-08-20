@@ -1,4 +1,7 @@
 default:
+  gherkin:
+    filters:
+      tags: "~@prophecyBefore1.8.0"
   suites:
     application:
       contexts: [ ApplicationContext, FilesystemContext ]
@@ -13,3 +16,8 @@ default:
 no-smoke:
   suites:
     smoke: ~
+
+old-prophecy:
+  gherkin:
+    filters:
+      tags: "~@prophecyAfter1.8.0"

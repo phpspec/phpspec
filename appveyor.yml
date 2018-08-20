@@ -60,4 +60,4 @@ test_script:
     - cd c:\projects\phpspec
     - php bin\phpspec run --format=dot
     - php vendor\phpunit\phpunit\phpunit
-    - php vendor\behat\behat\bin\behat --format=progress --tags="~@php-version,@php5.4&&~@hhvm"
+    - php vendor\behat\behat\bin\behat --format=progress --tags="~@php-version,@php5.4&&~@hhvm&&~@prophecyBefore1.8.0"
