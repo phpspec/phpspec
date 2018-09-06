@@ -102,6 +102,8 @@ final class ScalarMatcher implements Matcher
                 $this->presenter->presentValue(true)
             ));
         }
+        
+        return null;
     }
 
     /**
