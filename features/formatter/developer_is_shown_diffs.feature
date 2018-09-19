@@ -392,13 +392,7 @@ Feature: Developer is shown diffs
       }
       """
     When I run phpspec with the "verbose" option
-    Then I should see:
-      """
-            method call:
-              - methodTwo("value")
-            on Double\Diffs\DiffExample7\ClassBeingMocked\P13 was not expected, expected calls were:
-              - methodOne(exact("value"))
-      """
+    Then I should see the error that 'methodTwo("value")' was not expected on "Double\Diffs\DiffExample7\ClassBeingMocked\P13"
 
   Scenario: Unexpected method call when another prophecy for that call with not matching arguments exists
     Given the spec file "spec/Diffs/DiffExample8/ClassUnderSpecificationSpec.php" contains:
@@ -456,14 +450,7 @@ Feature: Developer is shown diffs
       }
       """
     When I run phpspec with the "verbose" option
-    Then I should see:
-      """
-            method call:
-              - methodTwo("another value")
-            on Double\Diffs\DiffExample8\ClassBeingMocked\P14 was not expected, expected calls were:
-              - methodTwo(exact("value"))
-              - methodOne(exact("another value"))
-      """
+    Then I should see the error that 'methodTwo("another value")' was not expected on "Double\Diffs\DiffExample8\ClassBeingMocked\P14"
 
   Scenario: Array diffing with long strings
     Given the spec file "spec/Diffs/DiffExample9/ClassWithArraysSpec.php" contains:
