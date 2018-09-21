@@ -193,6 +193,24 @@ class ApplicationContext implements Context
     }
 
     /**
+     * @Then I should see the error that :methodCall was not expected on :class
+     */
+    public function iShouldSeeTheErrorThatWasNotExpectedOn($methodCall, $class)
+    {
+        $this->checkApplicationOutput((string)$methodCall);
+        $this->checkApplicationOutput((string)$this->normalize($class));
+
+        $output = $this->tester->getDisplay();
+
+        $containsOldProphecyMessage = strpos($output, 'was not expected') !== false;
+        $containsNewProphecyMessage = strpos($output, 'Unexpected method call') !== false;
+
+        if (!$containsOldProphecyMessage && !$containsNewProphecyMessage) {
+            throw new \Exception('Was expecting error message about an unexpected method call');
+        }
+    }
+
+    /**
      * @Then I should not be prompted for code generation
      */
     public function iShouldNotBePromptedForCodeGeneration()
