@@ -1,3 +1,8 @@
+Upcoming
+========
+
+* [fixed] Better error message when trying to call method on scalar return type (@ciaranmcnulty) 
+
 4.3.1 / 2018-07-02
 ==================
 
