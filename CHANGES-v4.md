@@ -1,5 +1,5 @@
-Upcoming
-========
+4.3.2 / 2018-09-24
+==================
 
 * [fixed] Better error message when trying to call method on scalar return type (@ciaranmcnulty) 
 
