@@ -68,11 +68,7 @@ final class IterateLikeMatcherSpec extends ObjectBehavior
         $second->foo = 'bar';
 
         $this
-            ->shouldThrow(new SubjectElementDoesNotMatchException(0, '"0"', '"stdClass::__set_state(array(
-   \'foo\' => \'foo\',
-))"', '"0"', '"stdClass::__set_state(array(
-   \'foo\' => \'bar\',
-))"'))
+            ->shouldThrow(SubjectElementDoesNotMatchException::class)
             ->during('positiveMatch', [
                 'iterateLike',
                 $this->createGeneratorReturningArray([$first]),
