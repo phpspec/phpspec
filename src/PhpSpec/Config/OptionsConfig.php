@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Config;
 
+use Symfony\Component\Console\Output\OutputInterface;
+
 class OptionsConfig
 {
     /**
@@ -34,10 +36,16 @@ class OptionsConfig
      * @var bool
      */
     private $fakingEnabled;
+
     /**
      * @var string|bool
      */
     private $bootstrapPath;
+
+    /**
+     * @var string
+     */
+    private $isVerbose;
 
     /**
      * @param bool $stopOnFailureEnabled
@@ -45,19 +53,22 @@ class OptionsConfig
      * @param bool $reRunEnabled
      * @param bool $fakingEnabled
      * @param string|bool $bootstrapPath
+     * @param bool $isVerbose
      */
     public function __construct(
         bool $stopOnFailureEnabled,
         bool $codeGenerationEnabled,
         bool $reRunEnabled,
         bool $fakingEnabled,
-        $bootstrapPath
+        $bootstrapPath,
+        $isVerbose
     ) {
         $this->stopOnFailureEnabled  = $stopOnFailureEnabled;
         $this->codeGenerationEnabled = $codeGenerationEnabled;
         $this->reRunEnabled = $reRunEnabled;
         $this->fakingEnabled = $fakingEnabled;
         $this->bootstrapPath = $bootstrapPath;
+        $this->isVerbose = $isVerbose;
     }
 
     /**
@@ -89,5 +100,10 @@ class OptionsConfig
     public function getBootstrapPath()
     {
         return $this->bootstrapPath;
+    }
+
+    public function isVerbose(): bool
+    {
+        return $this->isVerbose;
     }
 }

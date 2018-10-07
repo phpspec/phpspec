@@ -427,4 +427,40 @@ class ApplicationContext implements Context
         $this->checkApplicationOutput('name contains reserved keyword');
     }
 
+    /**
+     * @Then Output should contains:
+     */
+    public function outputShouldContains(PyStringNode $expectedOutputPart)
+    {
+        $this->checkApplicationOutput("$expectedOutputPart");
+    }
+
+    /**
+     * @Then Output should not be shown
+     */
+    public function outputShouldNotBeShown()
+    {
+        $outputLen = strlen($this->normalize($this->tester->getDisplay(true)));
+        if ($outputLen) {
+            throw new \Exception(
+                'Output was shown when not expected.'
+            );
+        }
+    }
+
+    /**
+     * @Then Output should not contains:
+     */
+    public function outputShouldNotContains(PyStringNode $expectedOutputPart)
+    {
+        $expected = $this->normalize($expectedOutputPart);
+        $actual = $this->normalize($this->tester->getDisplay(true));
+        if (strpos($actual, $expected) !== false) {
+            throw new \Exception(sprintf(
+                "Application output did contain not expected '%s'. Actual output:\n'%s'" ,
+                $expected,
+                $this->tester->getDisplay()
+            ));
+        }
+    }
 }

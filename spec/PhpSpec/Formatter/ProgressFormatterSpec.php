@@ -105,7 +105,6 @@ class ProgressFormatterSpec extends ObjectBehavior
 
         $io->isDecorated()->willReturn(false);
         $io->getBlockWidth()->willReturn(0);
-        $io->isVerbose()->willReturn(false);
 
         $expected = '/  skipped: 0%  /  pending: 0%  /  passed: 33%  /  failed: 66%  /  broken: 0%   /  3 examples';
         $io->writeTemp($expected)->shouldBeCalled();

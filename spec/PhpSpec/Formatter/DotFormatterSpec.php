@@ -29,7 +29,6 @@ class DotFormatterSpec extends ObjectBehavior
         $this->beConstructedWith($presenter, $io, $stats);
         $presenter->presentString(Argument::cetera())->willReturn('presented string');
         $presenter->presentException(Argument::cetera())->willReturn('presented exception');
-        $io->isVerbose()->willReturn(false);
         $io->askConfirmation(Argument::any())->willReturn(false);
         $io->write(Argument::any())->should(function() {
             return;

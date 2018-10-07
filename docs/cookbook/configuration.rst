@@ -83,8 +83,8 @@ describing. In phpspec, you can group specification files by a certain namespace
   specifications. The complete namespace for specifications is
   ``%spec_prefix%\%namespace%``;
 * ``src_path`` [**default**: ``src``] - The path to store the generated
-  classes. By default paths are relative to the location where **phpspec** was 
-  invoked. **phpspec** creates the directories if they do not exist. This does 
+  classes. By default paths are relative to the location where **phpspec** was
+  invoked. **phpspec** creates the directories if they do not exist. This does
   not include the namespace directories;
 * ``spec_path`` [**default**: ``.``] - The path of the specifications. This
   does not include the spec prefix or namespace.
@@ -200,6 +200,17 @@ You can also set your tests to stop on failure by setting ``stop_on_failure``:
 .. code-block:: yaml
 
     stop_on_failure: true
+
+Moreover you can turn on verbosity by setting ``verbose``:
+
+.. code-block:: yaml
+
+    verbose: true
+
+As PHPSpec does not have a distinction between canonicals verbosity levels (``-v``, ``-vv``, ``-vvv``)
+you cannot specify it through configuration file. As a matter of fact running PHPSpec with any of these flags
+as unix command option, will result in the same output.
+If you run the command with ``-q`` or ``--quite`` the ``verbose`` options will be overridden.
 
 Extensions
 ----------
