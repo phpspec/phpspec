@@ -428,9 +428,9 @@ class ApplicationContext implements Context
     }
 
     /**
-     * @Then Output should contains:
+     * @Then The output should contain:
      */
-    public function outputShouldContains(PyStringNode $expectedOutputPart)
+    public function outputShouldContain(PyStringNode $expectedOutputPart)
     {
         $this->checkApplicationOutput("$expectedOutputPart");
     }
@@ -449,9 +449,9 @@ class ApplicationContext implements Context
     }
 
     /**
-     * @Then Output should not contains:
+     * @Then The output should not contain:
      */
-    public function outputShouldNotContains(PyStringNode $expectedOutputPart)
+    public function outputShouldNotContain(PyStringNode $expectedOutputPart)
     {
         $expected = $this->normalize($expectedOutputPart);
         $actual = $this->normalize($this->tester->getDisplay(true));
