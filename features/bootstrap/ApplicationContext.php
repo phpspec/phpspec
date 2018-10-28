@@ -6,6 +6,7 @@ use Fake\Prompter;
 use Fake\ReRunner;
 use PhpSpec\Console\Application;
 use PhpSpec\Loader\StreamWrapper;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\ApplicationTester;
 
 /**
@@ -55,6 +56,7 @@ class ApplicationContext implements Context
 
         $this->setupReRunner();
         $this->setupPrompter();
+        $this->resetShellVerbosity();
     }
 
     private function setFixedTerminalDimensions()
@@ -74,6 +76,11 @@ class ApplicationContext implements Context
     {
         $this->reRunner = new ReRunner;
         $this->application->getContainer()->set('process.rerunner.platformspecific', $this->reRunner);
+    }
+
+    private function resetShellVerbosity()
+    {
+        putenv(sprintf('SHELL_VERBOSITY=%d', OutputInterface::VERBOSITY_NORMAL));
     }
 
     /**
