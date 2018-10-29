@@ -6,6 +6,7 @@ use Fake\Prompter;
 use Fake\ReRunner;
 use PhpSpec\Console\Application;
 use PhpSpec\Loader\StreamWrapper;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\ApplicationTester;
 
 /**
@@ -55,6 +56,7 @@ class ApplicationContext implements Context
 
         $this->setupReRunner();
         $this->setupPrompter();
+        $this->resetShellVerbosity();
     }
 
     private function setFixedTerminalDimensions()
@@ -74,6 +76,11 @@ class ApplicationContext implements Context
     {
         $this->reRunner = new ReRunner;
         $this->application->getContainer()->set('process.rerunner.platformspecific', $this->reRunner);
+    }
+
+    private function resetShellVerbosity()
+    {
+        putenv(sprintf('SHELL_VERBOSITY=%d', OutputInterface::VERBOSITY_NORMAL));
     }
 
     /**
@@ -427,4 +434,40 @@ class ApplicationContext implements Context
         $this->checkApplicationOutput('name contains reserved keyword');
     }
 
+    /**
+     * @Then The output should contain:
+     */
+    public function outputShouldContain(PyStringNode $expectedOutputPart)
+    {
+        $this->checkApplicationOutput("$expectedOutputPart");
+    }
+
+    /**
+     * @Then Output should not be shown
+     */
+    public function outputShouldNotBeShown()
+    {
+        $outputLen = strlen($this->normalize($this->tester->getDisplay(true)));
+        if ($outputLen) {
+            throw new \Exception(
+                'Output was shown when not expected.'
+            );
+        }
+    }
+
+    /**
+     * @Then The output should not contain:
+     */
+    public function outputShouldNotContain(PyStringNode $expectedOutputPart)
+    {
+        $expected = $this->normalize($expectedOutputPart);
+        $actual = $this->normalize($this->tester->getDisplay(true));
+        if (strpos($actual, $expected) !== false) {
+            throw new \Exception(sprintf(
+                "Application output did contain not expected '%s'. Actual output:\n'%s'" ,
+                $expected,
+                $this->tester->getDisplay()
+            ));
+        }
+    }
 }

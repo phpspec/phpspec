@@ -102,7 +102,8 @@ class ConsoleIO implements IO
 
     public function isVerbose(): bool
     {
-        return OutputInterface::VERBOSITY_VERBOSE <= $this->output->getVerbosity();
+        return $this->config->isVerbose()
+            || OutputInterface::VERBOSITY_VERBOSE <= $this->output->getVerbosity();
     }
 
     public function getLastWrittenMessage(): string

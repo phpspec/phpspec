@@ -212,4 +212,72 @@ class ConsoleIOSpec extends ObjectBehavior
 
         $this->writeBrokenCodeBlock($message, 2);
     }
+
+    function it_will_report_verbose_if_config_flag_is_set_and_console_setted_to_quiet(OutputInterface $output, OptionsConfig $config)
+    {
+        $output->getVerbosity()->willReturn(OutputInterface::VERBOSITY_QUIET);
+        $config->isVerbose()->willReturn(true);
+
+        $this->isVerbose()->shouldReturn(true);
+    }
+
+    function it_will_report_verbose_if_config_flag_is_set_and_console_setted_to_normal(
+        OutputInterface $output,
+        OptionsConfig $config
+    ) {
+        $output->getVerbosity()->willReturn(OutputInterface::VERBOSITY_NORMAL);
+        $config->isVerbose()->willReturn(true);
+
+        $this->isVerbose()->shouldReturn(true);
+    }
+
+    function it_will_not_report_verbose_if_config_flag_is_not_set_and_console_setted_to_quiet(
+        OutputInterface $output,
+        OptionsConfig $config
+    ) {
+        $output->getVerbosity()->willReturn(OutputInterface::VERBOSITY_QUIET);
+        $config->isVerbose()->willReturn(false);
+
+        $this->isVerbose()->shouldReturn(false);
+    }
+
+    function it_will_not_report_verbose_if_config_flag_is_not_set_and_console_setted_to_normal(
+        OutputInterface $output,
+        OptionsConfig $config
+    ) {
+        $output->getVerbosity()->willReturn(OutputInterface::VERBOSITY_NORMAL);
+        $config->isVerbose()->willReturn(false);
+
+        $this->isVerbose()->shouldReturn(false);
+    }
+
+    function it_will_report_verbose_if_config_flag_is_not_set_but_console_setted_to_verbose(
+        OutputInterface $output,
+        OptionsConfig $config
+    ) {
+        $output->getVerbosity()->willReturn(OutputInterface::VERBOSITY_VERBOSE);
+        $config->isVerbose()->willReturn(false);
+
+        $this->isVerbose()->shouldReturn(true);
+    }
+
+    function it_will_report_verbose_if_config_flag_is_not_set_but_console_setted_to_very_verbose(
+        OutputInterface $output,
+        OptionsConfig $config
+    ) {
+        $output->getVerbosity()->willReturn(OutputInterface::VERBOSITY_VERY_VERBOSE);
+        $config->isVerbose()->willReturn(false);
+
+        $this->isVerbose()->shouldReturn(true);
+    }
+
+    function it_will_report_verbose_if_config_flag_is_not_set_but_console_setted_to_debug(
+        OutputInterface $output,
+        OptionsConfig $config
+    ) {
+        $output->getVerbosity()->willReturn(OutputInterface::VERBOSITY_DEBUG);
+        $config->isVerbose()->willReturn(false);
+
+        $this->isVerbose()->shouldReturn(true);
+    }
 }
