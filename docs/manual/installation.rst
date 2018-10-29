@@ -23,8 +23,8 @@ this:
 .. code-block:: json
 
     "autoload": {
-        "psr-0": {
-            "": "src/"
+        "psr-4": {
+            "App\\": "src/"
         }
     }
 
@@ -53,8 +53,8 @@ If you prefer editing your ``composer.json`` file manually, add phpspec to your
             "bin-dir": "bin"
         },
         "autoload": {
-            "psr-0": {
-                "": "src/"
+            "psr-4": {
+                "App\\": "src/"
             }
         }
     }

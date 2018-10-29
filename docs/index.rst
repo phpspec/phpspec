@@ -12,7 +12,7 @@ Create a ``composer.json`` file:
         "config": {
             "bin-dir": "bin"
         },
-        "autoload": {"psr-0": {"": "src"}}
+        "autoload": {"psr-4": {"App\\": "src"}}
     }
 
 Follow the instructions on this page to install composer: `<https://getcomposer.org/download/>`_.  
