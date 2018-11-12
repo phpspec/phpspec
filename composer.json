@@ -1,6 +1,6 @@
 {
     "name":         "phpspec/phpspec",
-    "description":  "Specification-oriented BDD framework for PHP 5.6+",
+    "description":  "Specification-oriented BDD framework for PHP 7.1+",
     "keywords":     ["BDD", "SpecBDD", "TDD", "spec", "specification", "tests", "testing"],
     "homepage":     "http://phpspec.net/",
     "type":         "library",
