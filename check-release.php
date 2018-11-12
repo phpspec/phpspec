@@ -32,14 +32,14 @@ echo "👍 composer.json contains branch alias {$matches[0]}\n";
 
 $changelog = file_get_contents('CHANGES.md');
 
-if(!preg_match("/## \[$major.$minor.$patch\]/", $changelog, $matches)) {
+if (!preg_match("/## \[$major.$minor.$patch\]/", $changelog, $matches)) {
     echo "👎 CHANGES.md does not contain matching heading\n";
     exit(1);
 }
 
 echo "👍 CHANGES.md contains heading '{$matches[0]}'\n";
 
-if(!preg_match("/\[$major.$minor.$patch\]: https:\/\/github\.com.*$major.$minor.$patch/", $changelog, $matches)) {
+if (!preg_match("/\[$major.$minor.$patch\]: https:\/\/github\.com.*$major.$minor.$patch/", $changelog, $matches)) {
     echo "👎 CHANGES.md does not contain matching github diff\n";
     exit(1);
 }
