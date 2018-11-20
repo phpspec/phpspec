@@ -261,22 +261,22 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_matches_long()
     {
-        $this->shouldNotThrow()->duringPositiveMatch('beLong', 4209531264, ['']);
+        $this->shouldNotThrow()->duringPositiveMatch('beLong', PHP_INT_MAX, ['']);
     }
 
     function it_does_not_match_not_long()
     {
-        $this->shouldThrow()->duringPositiveMatch('beLong', Argument::not(4209531264), ['']);
+        $this->shouldThrow()->duringPositiveMatch('beLong', Argument::not(PHP_INT_MAX), ['']);
     }
 
     function it_mismatches_not_long()
     {
-        $this->shouldNotThrow()->duringNegativeMatch('beLong', Argument::not(4209531264), ['']);
+        $this->shouldNotThrow()->duringNegativeMatch('beLong', Argument::not(PHP_INT_MAX), ['']);
     }
 
     function it_does_not_mismatches_long()
     {
-        $this->shouldThrow()->duringNegativeMatch('beLong', 4209531264, ['']);
+        $this->shouldThrow()->duringNegativeMatch('beLong', PHP_INT_MAX, ['']);
     }
 
     function it_responds_to_be_null()
