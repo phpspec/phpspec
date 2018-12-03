@@ -77,7 +77,7 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
         $this->specPath      = rtrim(realpath($specPath), '/\\').$sepr;
         $this->srcNamespace  = ltrim(trim($srcNamespace, ' \\').'\\', '\\');
         $this->psr4Prefix    = (null === $psr4Prefix) ? null : ltrim(trim($psr4Prefix, ' \\').'\\', '\\');
-        if (null !== $this->psr4Prefix  && substr($this->srcNamespace, 0, \strlen($psr4Prefix)) !== $psr4Prefix) {
+        if (null !== $this->psr4Prefix  && substr($this->srcNamespace, 0, \strlen($this->psr4Prefix)) !== $this->psr4Prefix) {
             throw new InvalidArgumentException('PSR4 prefix doesn\'t match given class namespace.'.PHP_EOL);
         }
         $srcNamespacePath = null === $this->psr4Prefix ?
