@@ -14,6 +14,8 @@
 namespace PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\Locator\Resource;
+use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
 
 /**
  * Generates spec classes from resources and puts them into the appropriate
@@ -43,8 +45,9 @@ final class SpecificationGenerator extends PromptingGenerator
             '%filepath%'      => $filepath,
             '%name%'          => $resource->getSpecName(),
             '%namespace%'     => $resource->getSpecNamespace(),
+            '%imports%'       => $this->getImports($resource),
             '%subject%'       => $resource->getSrcClassname(),
-            '%subject_class%' => $resource->getName()
+            '%subject_class%' => $resource->getName(),
         );
 
         if (!$content = $this->getTemplateRenderer()->render('specification', $values)) {
@@ -71,5 +74,17 @@ final class SpecificationGenerator extends PromptingGenerator
             $resource->getSrcClassname(),
             $filepath
         );
+    }
+
+    protected function getImports(Resource $resource): string
+    {
+        $imports = [$resource->getSrcClassname(), ObjectBehavior::class, Argument::class];
+        asort($imports);
+
+        foreach ($imports as &$import) {
+            $import = sprintf('use %s;', $import);
+        }
+
+        return implode("\n", $imports);
     }
 }
