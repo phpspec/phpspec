@@ -50,5 +50,5 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
-    php: 7.0
+    php: 7.1
     condition: COMPOSER_FLAGS != "--prefer-lowest"
