@@ -77,6 +77,7 @@ template you are overriding:
 
 **specification**
    - ``%filepath%`` the file path of the class
+   - ``%imports%`` the alphabetically sorted imports
    - ``%name%``  the specification name
    - ``%namespace%`` the specification namespace
    - ``%subject%`` the fully-qualified name of the class being specified
