@@ -51,14 +51,17 @@ class SpecificationRunner
         );
 
         $result = Event\ExampleEvent::PASSED;
-        foreach ($specification->getExamples() as $example) {
-            $result = max($result, $this->exampleRunner->run($example));
+        
+        try {
+            foreach ($specification->getExamples() as $example) {
+                $result = max($result, $this->exampleRunner->run($example));
+            }
+        } finally {
+            $this->dispatcher->dispatch(
+                'afterSpecification',
+                new Event\SpecificationEvent($specification, microtime(true) - $startTime, $result)
+            );
         }
-
-        $this->dispatcher->dispatch(
-            'afterSpecification',
-            new Event\SpecificationEvent($specification, microtime(true) - $startTime, $result)
-        );
 
         return $result;
     }
