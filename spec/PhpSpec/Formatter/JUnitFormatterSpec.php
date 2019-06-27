@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Formatter;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\IO\IO;
 use PhpSpec\Listener\StatisticsCollector;

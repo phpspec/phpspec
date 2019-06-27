@@ -11,7 +11,6 @@ Feature: Developer specifies exception behaviour
       namespace spec\Runner\ExceptionExample3;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {

@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Console;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class ApplicationSpec extends ObjectBehavior
 {

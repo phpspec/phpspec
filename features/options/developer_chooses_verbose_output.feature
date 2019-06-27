@@ -15,7 +15,6 @@ Feature: Developer chooses verbosity output
       namespace spec\Verbose\SpecExample1;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ConfigVerbosityConsoleNotSetSpec extends ObjectBehavior
       {
@@ -60,7 +59,6 @@ Feature: Developer chooses verbosity output
       namespace spec\Verbose\SpecExample2;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ConfigVerbosityNotSetConsoleNotSetSpec extends ObjectBehavior
       {
@@ -109,7 +107,6 @@ Feature: Developer chooses verbosity output
       namespace spec\Verbose\SpecExample3;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ConsoleQuietVerbosityOverrideConfigVerbositySpec extends ObjectBehavior
       {
@@ -150,7 +147,6 @@ Feature: Developer chooses verbosity output
       namespace spec\Verbose\SpecExample4;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ConsoleVerbosityOverrideConfigVerbosityFalseSpec extends ObjectBehavior
       {

@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\CodeAnalysis;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class TokenizedNamespaceResolverSpec extends ObjectBehavior
 {

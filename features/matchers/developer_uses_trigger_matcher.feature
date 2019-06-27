@@ -11,7 +11,6 @@ Feature: Developer uses trigger matcher
     namespace spec\Matchers\TriggerExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class FooSpec extends ObjectBehavior
     {
@@ -46,7 +45,6 @@ Feature: Developer uses trigger matcher
     namespace spec\Matchers\TriggerExample3;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class FooSpec extends ObjectBehavior
     {
@@ -81,7 +79,6 @@ Feature: Developer uses trigger matcher
     namespace spec\Matchers\TriggerExample3;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class FooSpec extends ObjectBehavior
     {

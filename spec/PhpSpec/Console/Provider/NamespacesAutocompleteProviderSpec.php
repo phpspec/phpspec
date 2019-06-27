@@ -4,7 +4,6 @@ namespace spec\PhpSpec\Console\Provider;
 
 use PhpSpec\Locator\SrcPathLocator;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 

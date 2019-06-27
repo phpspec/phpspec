@@ -5,7 +5,6 @@ namespace spec\PhpSpec\Process\Shutdown;
 use PhpSpec\Formatter\FatalPresenter;
 use PhpSpec\Message\CurrentExampleTracker;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class UpdateConsoleActionSpec extends ObjectBehavior
 {

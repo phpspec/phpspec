@@ -20,7 +20,6 @@ Feature: Config directory can be used in spec and src paths
 
       use MilkyWay\OrionCygnusArm\LocalBubble;
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class LocalBubbleSpec extends ObjectBehavior
       {
@@ -48,7 +47,6 @@ Feature: Config directory can be used in spec and src paths
 
       use MilkyWay\OrionCygnusArm\ButterflyCluster;
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ButterflyClusterSpec extends ObjectBehavior
       {

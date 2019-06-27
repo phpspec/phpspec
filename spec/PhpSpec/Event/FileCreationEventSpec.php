@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Event;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class FileCreationEventSpec extends ObjectBehavior
 {

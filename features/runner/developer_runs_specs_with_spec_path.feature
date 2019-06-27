@@ -21,7 +21,6 @@ Feature: Developer runs specs with the given specs path configured to be the sam
       namespace spec\Runner\SpecPathExample;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {

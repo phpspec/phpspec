@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Formatter\Presenter\Value;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class NullTypePresenterSpec extends ObjectBehavior
 {

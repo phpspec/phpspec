@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Matcher\Iterate;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 final class SubjectHasMoreElementsExceptionSpec extends ObjectBehavior
 {

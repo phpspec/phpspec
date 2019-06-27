@@ -11,7 +11,6 @@ Feature: Developer uses array-contain matcher
     namespace spec\Matchers\ArrayContainExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class MovieSpec extends ObjectBehavior
     {

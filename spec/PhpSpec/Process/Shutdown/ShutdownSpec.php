@@ -4,7 +4,6 @@ namespace spec\PhpSpec\Process\Shutdown;
 
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Process\Shutdown\ShutdownAction;
-use Prophecy\Argument;
 
 class ShutdownSpec extends ObjectBehavior
 {

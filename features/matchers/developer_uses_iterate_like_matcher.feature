@@ -11,7 +11,6 @@ Feature: Developer uses iterate-as matcher
     namespace spec\Matchers\IterateLikeExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class IterSpec extends ObjectBehavior
     {

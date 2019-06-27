@@ -2,10 +2,8 @@
 
 namespace spec\PhpSpec\Util;
 
-use PhpSpec\Util\ClassNameChecker;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Util\NameChecker;
-use Prophecy\Argument;
 
 class ClassNameCheckerSpec extends ObjectBehavior
 {

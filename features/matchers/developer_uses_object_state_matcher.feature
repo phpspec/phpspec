@@ -11,7 +11,6 @@ Feature: Developer uses object-state matcher
     namespace spec\Matchers\ObjectStateExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class CarSpec extends ObjectBehavior
     {
@@ -48,7 +47,6 @@ Feature: Developer uses object-state matcher
     namespace spec\Matchers\ObjectStateExample2;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class CarSpec extends ObjectBehavior
     {

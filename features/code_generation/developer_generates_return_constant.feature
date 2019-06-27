@@ -11,7 +11,6 @@ Feature: Developer generates a method returning a constant
       namespace spec\CodeGeneration\ConstantExample1;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {
@@ -60,7 +59,6 @@ Feature: Developer generates a method returning a constant
       namespace spec\CodeGeneration\ConstantExample2;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {
@@ -114,7 +112,6 @@ Feature: Developer generates a method returning a constant
       namespace spec\CodeGeneration\ConstantExample3;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {
@@ -151,7 +148,6 @@ Feature: Developer generates a method returning a constant
       namespace spec\CodeGeneration\ConstantExample4;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {
@@ -192,7 +188,6 @@ Feature: Developer generates a method returning a constant
       namespace spec\CodeGeneration\ConstantExample5;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {
@@ -228,7 +223,6 @@ Feature: Developer generates a method returning a constant
       namespace spec\CodeGeneration\ConstantExample6;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {
@@ -268,7 +262,6 @@ Feature: Developer generates a method returning a constant
       namespace spec\CodeGeneration\ConstantExample7;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {

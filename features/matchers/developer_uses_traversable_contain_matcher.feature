@@ -11,7 +11,6 @@ Feature: Developer uses traversable-contain matcher
     namespace spec\Matchers\TraversableContainExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class MovieSpec extends ObjectBehavior
     {

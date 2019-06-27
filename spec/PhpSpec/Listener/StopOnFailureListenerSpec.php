@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Listener;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Console\ConsoleIO;

@@ -11,7 +11,6 @@ Feature: Developer uses traversable-count matcher
     namespace spec\Matchers\TraversableCountExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class CarSpec extends ObjectBehavior
     {

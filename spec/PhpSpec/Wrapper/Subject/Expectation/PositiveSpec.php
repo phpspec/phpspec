@@ -4,7 +4,6 @@ namespace spec\PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Matcher\Matcher;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class PositiveSpec extends ObjectBehavior
 {

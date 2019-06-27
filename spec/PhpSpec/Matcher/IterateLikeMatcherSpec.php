@@ -2,7 +2,6 @@
 
 namespace spec\PhpSpec\Matcher;
 
-use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Matcher\Iterate\SubjectElementDoesNotMatchException;
 use PhpSpec\Matcher\Matcher;

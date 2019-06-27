@@ -11,7 +11,6 @@ Feature: Developer uses string-end matcher
     namespace spec\Matchers\StringEndExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class MovieSpec extends ObjectBehavior
     {

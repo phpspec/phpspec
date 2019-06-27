@@ -15,7 +15,6 @@ namespace spec\PhpSpec\Process\ReRunner;
 
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Process\Context\ExecutionContext;
-use Prophecy\Argument;
 use Symfony\Component\Process\PhpExecutableFinder;
 
 class WindowsPassthruRerunnerSpec extends ObjectBehavior

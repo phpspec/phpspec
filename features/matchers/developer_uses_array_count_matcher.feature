@@ -11,7 +11,6 @@ Feature: Developer uses array-count matcher
     namespace spec\Matchers\ArrayCountExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class CarSpec extends ObjectBehavior
     {

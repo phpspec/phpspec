@@ -5,7 +5,6 @@ namespace spec\PhpSpec\CodeAnalysis;
 use PhpSpec\CodeAnalysis\DisallowedNonObjectTypehintException;
 use PhpSpec\CodeAnalysis\NamespaceResolver;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class StaticRejectingNamespaceResolverSpec extends ObjectBehavior
 {

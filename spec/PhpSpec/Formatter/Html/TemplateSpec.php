@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Formatter\Html;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 use PhpSpec\IO\IO;
 

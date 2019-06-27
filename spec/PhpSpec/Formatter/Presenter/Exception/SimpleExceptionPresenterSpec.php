@@ -7,7 +7,6 @@ use PhpSpec\Formatter\Presenter\Exception\CallArgumentsPresenter;
 use PhpSpec\Formatter\Presenter\Exception\ExceptionElementPresenter;
 use PhpSpec\Formatter\Presenter\Exception\PhpSpecExceptionPresenter;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class SimpleExceptionPresenterSpec extends ObjectBehavior
 {

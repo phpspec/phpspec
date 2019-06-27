@@ -11,7 +11,6 @@ Feature: Developer generates a method
       namespace spec\CodeGeneration\MethodExample1;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {
@@ -57,7 +56,6 @@ Feature: Developer generates a method
       namespace spec\Behat\Tests\MyNamespace;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class PrefixSpec extends ObjectBehavior
       {
@@ -110,7 +108,6 @@ Feature: Developer generates a method
       namespace spec\MyNamespace;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ConstructorSpec extends ObjectBehavior
       {
@@ -166,7 +163,6 @@ Feature: Developer generates a method
       namespace spec\MyNamespace;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ConstructorFirstSpec extends ObjectBehavior
       {
@@ -213,7 +209,6 @@ Feature: Developer generates a method
       namespace spec\MyNamespace;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ExistingMethodSpec extends ObjectBehavior
       {
@@ -270,7 +265,6 @@ Feature: Developer generates a method
       namespace spec\MyNamespace;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ExistingMethodAnonymousFunctionSpec extends ObjectBehavior
       {
@@ -331,7 +325,6 @@ Feature: Developer generates a method
       namespace spec\MyNamespace;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CommentMethodSpec extends ObjectBehavior
       {
@@ -381,7 +374,6 @@ Feature: Developer generates a method
       namespace spec\MyNamespace;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class KeywordMethodSpec extends ObjectBehavior
       {

@@ -16,7 +16,6 @@ namespace spec\PhpSpec\Formatter\Presenter;
 use PhpSpec\Formatter\Presenter\Exception\ExceptionPresenter;
 use PhpSpec\Formatter\Presenter\Value\ValuePresenter;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class SimplePresenterSpec extends ObjectBehavior
 {

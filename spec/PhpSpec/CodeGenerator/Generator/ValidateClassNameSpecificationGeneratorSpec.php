@@ -4,7 +4,6 @@ namespace spec\PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\CodeGenerator\Generator\ValidateClassNameSpecificationGenerator;
 use PhpSpec\CodeGenerator\Generator\Generator;
-use PhpSpec\CodeGenerator\Generator\SpecificationGenerator;
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Locator\Resource;
 use PhpSpec\ObjectBehavior;

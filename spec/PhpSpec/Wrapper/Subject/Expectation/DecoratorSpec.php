@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 use PhpSpec\Wrapper\Subject\Expectation\Decorator as AbstractDecorator;
 use PhpSpec\Wrapper\Subject\Expectation\Expectation;

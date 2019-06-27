@@ -3,9 +3,7 @@
 namespace spec\PhpSpec\Process\ReRunner;
 
 use PhpSpec\ObjectBehavior;
-use PhpSpec\Process\ReRunner;
 use PhpSpec\Process\ReRunner\PlatformSpecificReRunner;
-use Prophecy\Argument;
 
 class CompositeReRunnerSpec extends ObjectBehavior
 {
