@@ -2,9 +2,7 @@
 
 namespace %namespace%;
 
-use %subject%;
-use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
+%imports%
 
 class %name% extends ObjectBehavior
 {

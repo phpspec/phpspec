@@ -51,8 +51,9 @@ class SpecificationGeneratorSpec extends ObjectBehavior
             '%filepath%'  => '/project/spec/Acme/AppSpec.php',
             '%name%'      => 'AppSpec',
             '%namespace%' => 'spec\Acme',
+            '%imports%'   => "use Acme\App;\nuse PhpSpec\ObjectBehavior;\nuse Prophecy\Argument;",
             '%subject%'   => 'Acme\App',
-            '%subject_class%'  => 'App'
+            '%subject_class%'  => 'App',
         );
 
         $tpl->render('specification', $values)->willReturn('');
@@ -78,8 +79,9 @@ class SpecificationGeneratorSpec extends ObjectBehavior
             '%filepath%'  => '/project/spec/Acme/AppSpec.php',
             '%name%'      => 'AppSpec',
             '%namespace%' => 'spec\Acme',
+            '%imports%'   => "use Acme\App;\nuse PhpSpec\ObjectBehavior;\nuse Prophecy\Argument;",
             '%subject%'   => 'Acme\App',
-            '%subject_class%'  => 'App'
+            '%subject_class%'  => 'App',
         );
 
         $tpl->render('specification', $values)->willReturn('template code');

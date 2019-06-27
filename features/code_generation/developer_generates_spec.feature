@@ -25,6 +25,28 @@ Feature: Developer generates a spec
 
       """
 
+  @issue1210
+  Scenario: Generating a spec with alphabetised imports
+    When I start describing the "Zyzzyva/SpecExample/Example" class
+    Then a new spec should be generated in the "spec/Zyzzyva/SpecExample/ExampleSpec.php":
+      """
+      <?php
+
+      namespace spec\Zyzzyva\SpecExample;
+
+      use PhpSpec\ObjectBehavior;
+      use Prophecy\Argument;
+      use Zyzzyva\SpecExample\Example;
+
+      class ExampleSpec extends ObjectBehavior
+      {
+          function it_is_initializable()
+          {
+              $this->shouldHaveType(Example::class);
+          }
+      }
+
+      """
 
   @issue687
   Scenario: Generating a spec with the same namespace as the source
