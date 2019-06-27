@@ -114,8 +114,8 @@ Some examples:
         acme_suite:
             namespace: Acme\Text
             spec_prefix: acme_spec
-            src_path: %paths.config%/src
-            spec_path: %paths.config%
+            src_path: '%paths.config%/src'
+            spec_path: '%paths.config%'
 
 **phpspec** will use suite settings based on the namespaces.
 If you have suites with different spec directories then ``phpspec run``
