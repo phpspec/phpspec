@@ -59,7 +59,7 @@ Additional Formatters
 Metrics
 ~~~~~~~
 
- * `Code coverage <https://github.com/henrikbjorn/PhpSpecCodeCoverageExtension>`_
+ * `Code coverage <https://github.com/<maintainer_missing>/phpspec-code-coverage>`_
 
 Matchers
 ~~~~~~~~
