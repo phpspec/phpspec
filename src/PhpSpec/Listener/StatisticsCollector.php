@@ -132,7 +132,7 @@ class StatisticsCollector implements EventSubscriberInterface
 
     public function getEventsCount()
     {
-        return \count($this->getAllEvents());
+        return array_sum($this->getCountsHash());
     }
 
     public function getTotalSpecsCount()
