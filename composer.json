@@ -45,6 +45,10 @@
         "phpspec/nyan-formatters": "Adds Nyan formatters"
     },
 
+    "conflict": {
+        "sebastian/comparator" : "<1.2.4"
+    },
+
     "autoload": {
         "psr-0": {
             "PhpSpec": "src/"
