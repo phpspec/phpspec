@@ -56,11 +56,6 @@ Additional Formatters
 
  * `Nyan Formatters <https://github.com/phpspec/nyan-formatters>`_
 
-Metrics
-~~~~~~~
-
- * `Code coverage <https://github.com/<maintainer_missing>/phpspec-code-coverage>`_
-
 Matchers
 ~~~~~~~~
 
