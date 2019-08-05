@@ -1,3 +1,13 @@
+4.3.4 / 2019-08-05
+==================
+
+* [fixed] Revert accidental platform entry in composer.json (@ciaranmcnulty)
+
+4.3.3 / 2019-08-05
+==================
+
+* [fixed] Avoid memory error in DotFormatter with large number of events (@lombartec)
+
 4.3.2 / 2018-09-24
 ==================
 
