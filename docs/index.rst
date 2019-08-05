@@ -21,7 +21,7 @@ Install **phpspec** with composer:
 
 .. code-block:: bash
 
-    composer require --dev phpspec/phpspec
+    composer install
 
 Start writing specs:
 
