@@ -1,3 +1,8 @@
+4.3.4 / 2019-08-05
+==================
+
+* [fixed] Revert accidental platform entry in composer.json (@ciaranmcnulty)
+
 4.3.3 / 2019-08-05
 ==================
 
