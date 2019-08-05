@@ -21,7 +21,7 @@ Install **phpspec** with composer:
 
 .. code-block:: bash
 
-    php composer.phar install
+    composer install
 
 Start writing specs:
 
