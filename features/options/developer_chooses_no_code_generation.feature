@@ -12,7 +12,6 @@ Feature: Developer chooses no code generation
       namespace spec\NoCodeGeneration\SpecExample1;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class NewClassSpec extends ObjectBehavior
       {
@@ -39,7 +38,6 @@ Feature: Developer chooses no code generation
       namespace spec\NoCodeGeneration\SpecExample2;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class NewClassSpec extends ObjectBehavior
       {
@@ -66,7 +64,6 @@ Feature: Developer chooses no code generation
       namespace spec\NoCodeGeneration\SpecExample3;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class NewClassSpec extends ObjectBehavior
       {

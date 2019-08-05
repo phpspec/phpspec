@@ -11,7 +11,6 @@ Feature: Developer is shown diffs
       namespace spec\Diffs\DiffExample1;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ClassWithStringsSpec extends ObjectBehavior
       {
@@ -53,7 +52,6 @@ Feature: Developer is shown diffs
       namespace spec\Diffs\DiffExample2;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ClassWithArraysSpec extends ObjectBehavior
       {
@@ -105,7 +103,6 @@ Feature: Developer is shown diffs
       namespace spec\Diffs\DiffExample2;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ClassWithArraysOfObjectsSpec extends ObjectBehavior
       {
@@ -159,7 +156,6 @@ Feature: Developer is shown diffs
       namespace spec\Diffs\DiffExample3;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ClassWithObjectsSpec extends ObjectBehavior
       {
@@ -214,7 +210,6 @@ Feature: Developer is shown diffs
       namespace spec\Diffs\DiffExample4;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
       use Diffs\DiffExample4\ClassBeingMocked;
 
       class ClassUnderSpecificationSpec extends ObjectBehavior
@@ -270,7 +265,6 @@ Feature: Developer is shown diffs
       namespace spec\Diffs\DiffExample5;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
       use Diffs\DiffExample5\ClassBeingMocked;
 
       class ClassUnderSpecificationSpec extends ObjectBehavior
@@ -334,7 +328,6 @@ Feature: Developer is shown diffs
       namespace spec\Diffs\DiffExample6;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
       use Diffs\DiffExample6\ClassBeingMocked;
 
       class ClassUnderSpecificationSpec extends ObjectBehavior
@@ -401,7 +394,6 @@ Feature: Developer is shown diffs
       namespace spec\Diffs\DiffExample7;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
       use Diffs\DiffExample7\ClassBeingMocked;
 
       class ClassUnderSpecificationSpec extends ObjectBehavior
@@ -456,7 +448,6 @@ Feature: Developer is shown diffs
       namespace spec\Diffs\DiffExample8;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
       use Diffs\DiffExample8\ClassBeingMocked;
 
       class ClassUnderSpecificationSpec extends ObjectBehavior
@@ -514,7 +505,6 @@ Feature: Developer is shown diffs
       namespace spec\Diffs\DiffExample9;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ClassWithArraysSpec extends ObjectBehavior
       {
@@ -562,7 +552,6 @@ Feature: Developer is shown diffs
       namespace spec\Diffs\DiffExample10;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ClassWithArraysSpec extends ObjectBehavior
       {
@@ -614,7 +603,6 @@ Feature: Developer is shown diffs
       namespace spec\Diffs\DiffExample11;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {

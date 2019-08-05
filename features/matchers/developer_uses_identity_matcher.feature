@@ -11,7 +11,6 @@ Feature: Developer uses identity matcher
       namespace spec\Matchers\IdentityExample1;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {
@@ -48,7 +47,6 @@ Feature: Developer uses identity matcher
       namespace spec\Matchers\IdentityExample2;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {
@@ -85,7 +83,6 @@ Feature: Developer uses identity matcher
       namespace spec\Matchers\IdentityExample3;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {
@@ -122,7 +119,6 @@ Feature: Developer uses identity matcher
       namespace spec\Matchers\IdentityExample4;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {
@@ -159,7 +155,6 @@ Feature: Developer uses identity matcher
       namespace spec\Matchers\IdentityExample5;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {
@@ -196,7 +191,6 @@ Feature: Developer uses identity matcher
       namespace spec\Matchers\IdentityExample6;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {
@@ -233,7 +227,6 @@ Feature: Developer uses identity matcher
       namespace spec\Matchers\IdentityExample7;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {
@@ -270,7 +263,6 @@ Feature: Developer uses identity matcher
       namespace spec\Matchers\IdentityExample8;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {
@@ -307,7 +299,6 @@ Feature: Developer uses identity matcher
       namespace spec\Matchers\IdentityExample9;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {
@@ -344,7 +335,6 @@ Feature: Developer uses identity matcher
       namespace spec\Matchers\IdentityExample10;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {
@@ -381,7 +371,6 @@ Feature: Developer uses identity matcher
       namespace spec\Matchers\IdentityExample11;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {
@@ -418,7 +407,6 @@ Feature: Developer uses identity matcher
       namespace spec\Matchers\IdentityExample12;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {

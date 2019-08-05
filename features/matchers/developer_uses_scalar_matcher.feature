@@ -11,7 +11,6 @@ Feature: Developer uses scalar matcher
     namespace spec\Matchers\ScalarExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class CarSpec extends ObjectBehavior
     {

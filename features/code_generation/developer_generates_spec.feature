@@ -13,7 +13,6 @@ Feature: Developer generates a spec
 
       use CodeGeneration\SpecExample1\Markdown;
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {
@@ -35,7 +34,6 @@ Feature: Developer generates a spec
       namespace spec\Zyzzyva\SpecExample;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
       use Zyzzyva\SpecExample\Example;
 
       class ExampleSpec extends ObjectBehavior
@@ -68,7 +66,6 @@ Feature: Developer generates a spec
 
     use CodeGeneration\SpecExample2\Markdown;
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class MarkdownSpec extends ObjectBehavior
     {
@@ -101,7 +98,6 @@ Feature: Developer generates a spec
 
     use CodeGeneration\SpecExample2\Markdown;
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class MarkdownSpec extends ObjectBehavior
     {
@@ -124,7 +120,6 @@ Feature: Developer generates a spec
 
       use CodeGeneration\SpecExample1\Text_Markdown;
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class Text_MarkdownSpec extends ObjectBehavior
       {
@@ -147,7 +142,6 @@ Feature: Developer generates a spec
 
       use CodeGeneration\Spec_Example2\Text_Markdown;
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class Text_MarkdownSpec extends ObjectBehavior
       {
@@ -176,7 +170,6 @@ Feature: Developer generates a spec
 
       use Behat\CodeGeneration\Markdown;
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {

@@ -10,7 +10,6 @@ Feature: Developer uses unsupported collaborator type hinting
       namespace spec\InvalidUsage\InvalidUsageExample1;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class StorageSpec extends ObjectBehavior
       {
@@ -51,7 +50,6 @@ Feature: Developer uses unsupported collaborator type hinting
       namespace spec\InvalidUsage\InvalidUsageExample2;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class InvokerSpec extends ObjectBehavior
       {
@@ -92,7 +90,6 @@ Feature: Developer uses unsupported collaborator type hinting
       namespace spec\InvalidUsage\InvalidUsageExample3;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class StorageSpec extends ObjectBehavior
       {

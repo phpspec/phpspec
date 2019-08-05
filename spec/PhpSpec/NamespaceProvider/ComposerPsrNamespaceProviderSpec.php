@@ -6,7 +6,6 @@ use PhpSpec\NamespaceProvider\ComposerPsrNamespaceProvider;
 use PhpSpec\NamespaceProvider\NamespaceLocation;
 use PhpSpec\NamespaceProvider\NamespaceProvider;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class ComposerPsrNamespaceProviderSpec extends ObjectBehavior
 {

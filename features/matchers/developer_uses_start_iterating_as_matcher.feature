@@ -11,7 +11,6 @@ Feature: Developer uses start-iterate-as matcher
     namespace spec\Matchers\StartIteratingExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class MovieSpec extends ObjectBehavior
     {

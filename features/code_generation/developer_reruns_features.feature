@@ -17,7 +17,6 @@ Feature: Developer generates a class
       namespace spec\CodeGeneration\RerunExample2;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {

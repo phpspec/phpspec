@@ -4,7 +4,6 @@ namespace spec\PhpSpec\Loader\Transformer;
 
 use PhpSpec\CodeAnalysis\DisallowedNonObjectTypehintException;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class InMemoryTypeHintIndexSpec extends ObjectBehavior
 {

@@ -4,7 +4,6 @@ namespace spec\PhpSpec\Specification;
 
 use PhpSpec\Specification;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class ErrorSpecificationSpec extends ObjectBehavior
 {

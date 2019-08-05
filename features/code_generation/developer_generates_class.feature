@@ -111,7 +111,6 @@ Feature: Developer generates a class
     use CodeGeneration\MethodExample2\UserRepository;
     use CodeGeneration\MethodExample2\User;
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class ForgotPasswordSpec extends ObjectBehavior
     {

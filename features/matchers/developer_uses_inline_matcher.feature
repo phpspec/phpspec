@@ -11,7 +11,6 @@ Feature: Developer uses inline matcher
       namespace spec\Matchers\InlineExample1;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {
@@ -64,7 +63,6 @@ Feature: Developer uses inline matcher
       namespace spec\Matchers\InlineExample2;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {
@@ -117,7 +115,6 @@ Feature: Developer uses inline matcher
       namespace spec\Matchers\InlineExample3;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
       use PhpSpec\Exception\Example\FailureException;
 
       class CalculatorSpec extends ObjectBehavior

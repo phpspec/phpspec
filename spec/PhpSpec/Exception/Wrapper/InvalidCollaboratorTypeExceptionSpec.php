@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Exception\Wrapper;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class InvalidCollaboratorTypeExceptionSpec extends ObjectBehavior
 {

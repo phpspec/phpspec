@@ -11,7 +11,6 @@ Feature: Developer generates a collaborator's method
       namespace spec\CodeGeneration\CollaboratorMethodExample1;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
       use CodeGeneration\CollaboratorMethodExample1\Parser;
 
       class MarkdownSpec extends ObjectBehavior
@@ -61,7 +60,6 @@ Feature: Developer generates a collaborator's method
       namespace spec\CodeGeneration\CollaboratorMethodExample3;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
       use CodeGeneration\CollaboratorMethodExample3\Parser;
 
       class MarkdownSpec extends ObjectBehavior
@@ -118,7 +116,6 @@ Feature: Developer generates a collaborator's method
       namespace spec\CodeGeneration\CollaboratorMethodExample4;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
       use CodeGeneration\CollaboratorMethodExample4\Parser;
 
       class MarkdownSpec extends ObjectBehavior
@@ -175,7 +172,6 @@ Feature: Developer generates a collaborator's method
       namespace spec\CodeGeneration\CollaboratorMethodExample5;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
       use CodeGeneration\CollaboratorMethodExample5\Parser;
 
       class MarkdownSpec extends ObjectBehavior

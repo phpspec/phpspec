@@ -6,7 +6,6 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Message\CurrentExampleTracker;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class CurrentExampleListenerSpec extends ObjectBehavior
 {

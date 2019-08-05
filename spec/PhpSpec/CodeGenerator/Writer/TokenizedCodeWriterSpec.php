@@ -5,7 +5,6 @@ namespace spec\PhpSpec\CodeGenerator\Writer;
 use PhpSpec\Exception\Generator\NamedMethodNotFoundException;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Util\ClassFileAnalyser;
-use Prophecy\Argument;
 
 class TokenizedCodeWriterSpec extends ObjectBehavior
 {

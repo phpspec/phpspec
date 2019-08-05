@@ -4,7 +4,6 @@ namespace spec\PhpSpec\CodeAnalysis;
 
 use Phpspec\CodeAnalysis\AccessInspector;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class MagicAwareAccessInspectorSpec extends ObjectBehavior
 {

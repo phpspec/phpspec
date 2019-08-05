@@ -11,7 +11,6 @@ Feature: Developer uses string-contain matcher
     namespace spec\Matchers\StringContainExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class MovieSpec extends ObjectBehavior
     {

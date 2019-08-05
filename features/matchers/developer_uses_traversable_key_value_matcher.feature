@@ -11,7 +11,6 @@ Feature: Developer uses traversable-key-value matcher
     namespace spec\Matchers\TraversableKeyValueExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class MovieSpec extends ObjectBehavior
     {

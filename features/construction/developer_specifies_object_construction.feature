@@ -11,7 +11,6 @@ Feature: Developer specifies object construction
       namespace spec\Runner\ConstructorExample1;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ClassWithConstructorSpec extends ObjectBehavior
       {
@@ -55,7 +54,6 @@ Feature: Developer specifies object construction
       namespace spec\Runner\ConstructorExample2;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ClassWithStaticFactoryMethodSpec extends ObjectBehavior
       {
@@ -104,7 +102,6 @@ Feature: Developer specifies object construction
       namespace spec\Runner\ConstructorExample3;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ClassWithConstructorSpec extends ObjectBehavior
       {
@@ -155,7 +152,6 @@ Feature: Developer specifies object construction
       namespace spec\Runner\ConstructorExample4;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ClassWithStaticFactoryMethodSpec extends ObjectBehavior
       {
@@ -210,7 +206,6 @@ Feature: Developer specifies object construction
     namespace spec\Runner\ConstructorExample7;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class ClassWithStaticFactoryMethodAndConstructorSpec extends ObjectBehavior
     {
@@ -275,7 +270,6 @@ Feature: Developer specifies object construction
     namespace spec\Runner\ConstructorExample8;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class ClassWithStaticFactoryMethodAndConstructorSpec extends ObjectBehavior
     {
@@ -341,7 +335,6 @@ Feature: Developer specifies object construction
     namespace spec\Runner\ConstructorExample9;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class ClassConstructorSpec extends ObjectBehavior
     {
@@ -387,7 +380,6 @@ Feature: Developer specifies object construction
     namespace spec\Runner\ConstructorExample10;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class ClassWithFactoryMethodSpec extends ObjectBehavior
     {

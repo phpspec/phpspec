@@ -12,7 +12,6 @@ Feature: Developer is shown a parse error
 
       use Parse;
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ParseSpec extends ObjectBehavior
       {
@@ -50,7 +49,6 @@ Feature: Developer is shown a parse error
 
       use Parse;
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class ParseSpec extends ObjectBehavior
       {

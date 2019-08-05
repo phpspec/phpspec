@@ -11,7 +11,6 @@ Feature: Use the JUnit formatter
       namespace spec\Formatter\SpecExample;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {

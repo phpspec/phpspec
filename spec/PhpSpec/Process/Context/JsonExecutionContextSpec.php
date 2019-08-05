@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Process\Context;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class JsonExecutionContextSpec extends ObjectBehavior
 {

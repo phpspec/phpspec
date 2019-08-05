@@ -4,7 +4,6 @@ namespace spec\PhpSpec\Formatter\Presenter\Value;
 
 use PhpSpec\Formatter\Presenter\Value\StringTypePresenter;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class TruncatingStringTypePresenterSpec extends ObjectBehavior
 {

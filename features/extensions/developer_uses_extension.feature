@@ -118,7 +118,6 @@ Feature: Developer uses extension
     namespace spec\Example1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class DummySpec extends ObjectBehavior
     {
@@ -220,7 +219,6 @@ Feature: Developer uses extension
     namespace spec\Example2;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
     use Example2\Dummy;
 
     class DummySpec extends ObjectBehavior

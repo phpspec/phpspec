@@ -35,7 +35,6 @@ Feature: Developer uses bootstrap config key in any place
     namespace spec\Example1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class TestConfigSpec extends ObjectBehavior
     {

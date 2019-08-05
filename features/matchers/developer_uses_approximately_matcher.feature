@@ -12,7 +12,6 @@ Feature: Developer uses approximately matcher
     namespace spec\Matchers\FloatApproximatelyExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class GeoCoordSpec extends ObjectBehavior
     {

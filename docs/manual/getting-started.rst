@@ -34,7 +34,6 @@ navigate to the spec folder and see the spec there:
 
     use Markdown;
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class MarkdownSpec extends ObjectBehavior
     {

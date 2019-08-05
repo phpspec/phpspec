@@ -19,7 +19,6 @@ Feature: Composer can be leveraged to create suites
 
       use Andromeda\N4S4Arm\Gazorpazorp;
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class GazorpazorpSpec extends ObjectBehavior
       {
@@ -46,7 +45,6 @@ Feature: Composer can be leveraged to create suites
 
       use MilkyWay\OrionCygnusArm\LocalBubble;
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class LocalBubbleSpec extends ObjectBehavior
       {

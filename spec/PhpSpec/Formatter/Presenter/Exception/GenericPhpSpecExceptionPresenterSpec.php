@@ -4,7 +4,6 @@ namespace spec\PhpSpec\Formatter\Presenter\Exception;
 
 use PhpSpec\Formatter\Presenter\Exception\ExceptionElementPresenter;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class GenericPhpSpecExceptionPresenterSpec extends ObjectBehavior
 {

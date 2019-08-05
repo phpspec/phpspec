@@ -11,7 +11,6 @@ Feature: Developer uses throw matcher
     namespace spec\Matchers\ThrowExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class EmployeeSpec extends ObjectBehavior
     {
@@ -50,7 +49,6 @@ Feature: Developer uses throw matcher
     namespace spec\Matchers\ThrowExample2;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class EmployeeSpec extends ObjectBehavior
     {
@@ -90,7 +88,6 @@ Feature: Developer uses throw matcher
     namespace spec\Matchers\ThrowExample3;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class EmployeeSpec extends ObjectBehavior
     {
@@ -130,7 +127,6 @@ Feature: Developer uses throw matcher
     namespace spec\Runner\ThrowExample4;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class MarkdownSpec extends ObjectBehavior
     {
@@ -173,7 +169,6 @@ Feature: Developer uses throw matcher
       namespace spec\Runner\ThrowExample5;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {
@@ -222,7 +217,6 @@ Feature: Developer uses throw matcher
       namespace spec\Runner\ThrowExample6;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class CalculatorSpec extends ObjectBehavior
       {

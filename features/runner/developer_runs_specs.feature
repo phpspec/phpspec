@@ -16,7 +16,6 @@ Feature: Developer runs the specs
       namespace spec\Runner\SpecExample2;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {
@@ -54,7 +53,6 @@ Feature: Developer runs the specs
       namespace spec\Runner\SpecExample3;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {
@@ -97,7 +95,6 @@ Feature: Developer runs the specs
       namespace spec\Runner\SpecExample4;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class MarkdownSpec extends ObjectBehavior
       {
@@ -139,7 +136,6 @@ Feature: Developer runs the specs
       namespace spec\Runner\TestNamespace;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class Example1Spec extends ObjectBehavior
       {
@@ -171,7 +167,6 @@ Feature: Developer runs the specs
       namespace spec\Psr4\Runner\TestNamespace;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class Example2Spec extends ObjectBehavior
       {

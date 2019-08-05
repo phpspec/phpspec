@@ -11,7 +11,6 @@ Feature: Developer uses array-key matcher
     namespace spec\Matchers\ArrayKeyExample1;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class MovieSpec extends ObjectBehavior
     {

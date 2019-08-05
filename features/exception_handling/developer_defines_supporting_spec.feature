@@ -11,7 +11,6 @@ Feature: Developer has defined a supporting class and should not see a silent er
         namespace spec;
 
         use PhpSpec\ObjectBehavior;
-        use Prophecy\Argument;
 
         class SomethingSpec extends ObjectBehavior
         {

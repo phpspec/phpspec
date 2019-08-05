@@ -11,7 +11,6 @@ Feature: Developer generates a named constructor
     namespace spec\CodeGeneration\NamedConstructor;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class UserSpec extends ObjectBehavior
     {
@@ -63,7 +62,6 @@ Feature: Developer generates a named constructor
     namespace spec\CodeGeneration\NamedConstructor\TooManyArguments;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class UserSpec extends ObjectBehavior
     {
@@ -118,7 +116,6 @@ Feature: Developer generates a named constructor
     namespace spec\CodeGeneration\NamedConstructor\TooFewArguments;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class UserSpec extends ObjectBehavior
     {
@@ -173,7 +170,6 @@ Feature: Developer generates a named constructor
     namespace spec\CodeGeneration\NamedConstructor\EqualArguments;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class UserSpec extends ObjectBehavior
     {
@@ -232,7 +228,6 @@ Feature: Developer generates a named constructor
     namespace spec\CodeGeneration\NamedConstructor\OptionalArguments;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class UserSpec extends ObjectBehavior
     {
@@ -291,7 +286,6 @@ Feature: Developer generates a named constructor
       namespace spec\CodeGeneration\ShortSyntax;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class UserSpec extends ObjectBehavior
       {
@@ -343,7 +337,6 @@ Feature: Developer generates a named constructor
       namespace spec\CodeGeneration\ShortSyntax2;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class UserSpec extends ObjectBehavior
       {
@@ -395,7 +388,6 @@ Feature: Developer generates a named constructor
       namespace spec\CodeGeneration\PrivateConstructor;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class UserSpec extends ObjectBehavior
       {
@@ -451,7 +443,6 @@ Feature: Developer generates a named constructor
       namespace spec\CodeGeneration\PrivateConstructor;
 
       use PhpSpec\ObjectBehavior;
-      use Prophecy\Argument;
 
       class AgeSpec extends ObjectBehavior
       {

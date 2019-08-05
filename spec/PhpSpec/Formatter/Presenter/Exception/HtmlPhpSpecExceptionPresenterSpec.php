@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Formatter\Presenter\Exception;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 class HtmlPhpSpecExceptionPresenterSpec extends ObjectBehavior
 {

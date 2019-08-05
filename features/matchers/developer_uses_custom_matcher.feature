@@ -11,7 +11,6 @@ Feature: Developer uses custom matcher
     namespace spec\Matchers\Custom;
 
     use PhpSpec\ObjectBehavior;
-    use Prophecy\Argument;
 
     class MovieSpec extends ObjectBehavior
     {

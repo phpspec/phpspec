@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Loader\Node;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 
 use PhpSpec\Locator\Resource;
 use PhpSpec\Loader\Node\ExampleNode;
