@@ -10,68 +10,66 @@
  * file that was distributed with this source code.
  */
  
-namespace PhpSpec\Formatter
+namespace PhpSpec\Formatter;
+
+use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Event\SpecificationEvent;
+use PhpSpec\Event\SuiteEvent;
+
+final class JsonFormatter extends ConsoleFormatter
 {
-    use PhpSpec\Event\ExampleEvent;
-    use PhpSpec\Event\SpecificationEvent;
-    use PhpSpec\Event\SuiteEvent;
+    private $data = [];
 
-    final class JsonFormatter extends ConsoleFormatter
+    private const STATUS_NAME = [
+        ExampleEvent::PASSED  => 'passed',
+        ExampleEvent::PENDING => 'pending',
+        ExampleEvent::SKIPPED => 'skipped',
+        ExampleEvent::FAILED  => 'failed',
+        ExampleEvent::BROKEN  => 'broken',
+    ];
+
+    public function beforeSpecification(SpecificationEvent $event)
     {
-        private $data = [];
+        $this->data[$event->getSpecification()->getTitle()] = [];
+    }
 
-        private const STATUS_NAME = [
-            ExampleEvent::PASSED  => 'passed',
-            ExampleEvent::PENDING => 'pending',
-            ExampleEvent::SKIPPED => 'skipped',
-            ExampleEvent::FAILED  => 'failed',
-            ExampleEvent::BROKEN  => 'broken',
+    public function afterExample(ExampleEvent $event)
+    {
+        $specification = $event->getSpecification()->getTitle();
+        $example = $event->getTitle();
+
+        $this->data[$specification][$example] = [
+            'status' => self::STATUS_NAME[$event->getResult()],
+            'time' => $event->getTime(),
         ];
 
-        public function beforeSpecification(SpecificationEvent $event)
-        {
-            $this->data[$event->getSpecification()->getTitle()] = [];
+        $exception = $event->getException();
+
+        if ($exception === null) {
+            return;
         }
 
-        public function afterExample(ExampleEvent $event)
-        {
-            $specification = $event->getSpecification()->getTitle();
-            $example = $event->getTitle();
+        $this->data[$specification][$example]['@exception'] = [
+            'message' => $exception->getMessage(),
+            'trace' => $exception->getTrace(),
+        ];
+    }
 
-            $this->data[$specification][$example] = [
-                'status' => static::STATUS_NAME[$event->getResult()],
-                'time' => $event->getTime(),
-            ];
+    public function afterSpecification(SpecificationEvent $event)
+    {
+        $this->data[$event->getSpecification()->getTitle()]['@meta'] = [
+            'status' => self::STATUS_NAME[$event->getResult()],
+            'time' => $event->getTime(),
+        ];
+    }
 
-            $exception = $event->getException();
+    public function afterSuite(SuiteEvent $event)
+    {
+        $this->data['@meta'] = [
+            'result' => self::STATUS_NAME[$event->getResult()],
+            'time' => $event->getTime(),
+        ];
 
-            if($exception === null)
-            {
-                return;
-            }
-
-            $this->data[$specification][$example]['@exception'] = [
-                'message' => $exception->getMessage(),
-                'trace' => $exception->getTrace(),
-            ];
-        }
-
-        public function afterSpecification(SpecificationEvent $event)
-        {
-            $this->data[$event->getSpecification()->getTitle()]['@meta'] = [
-                'status' => static::STATUS_NAME[$event->getResult()],
-                'time' => $event->getTime(),
-            ];
-        }
-
-        public function afterSuite(SuiteEvent $event)
-        {
-            $this->data['@meta'] = [
-                'result' => static::STATUS_NAME[$event->getResult()],
-                'time' => $event->getTime(),
-            ];
-
-            $this->getIO()->write(json_encode($this->data));
-        }
+        $this->getIO()->write(json_encode($this->data));
     }
 }
