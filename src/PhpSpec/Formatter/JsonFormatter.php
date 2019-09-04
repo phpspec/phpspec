@@ -16,7 +16,7 @@ use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\SuiteEvent;
 
-final class JsonFormatter extends ConsoleFormatter
+final class JsonFormatter extends BasicFormatter
 {
     private $data = [];
 
