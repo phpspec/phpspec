@@ -73,7 +73,7 @@ final class JsonFormatter extends BasicFormatter
 
     public function afterSuite(SuiteEvent $event)
     {
-        $this->data['satus'] = self::STATUS_NAME[$event->getResult()];
+        $this->data['status'] = self::STATUS_NAME[$event->getResult()];
         $this->data['time'] = $event->getTime();
 
         $this->getIO()->write(json_encode($this->data));
