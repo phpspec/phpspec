@@ -4,7 +4,7 @@
  * This file is part of PhpSpec, A php toolset to drive emergent
  * design by specification.
  *
- * (c) Chris Kruining <chrise@keruining.eu>
+ * (c) Chris Kruining <chrise@kruining.eu>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
