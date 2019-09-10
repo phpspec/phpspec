@@ -18,7 +18,11 @@ use PhpSpec\Event\SuiteEvent;
 
 final class JsonFormatter extends BasicFormatter
 {
-    private $data = [];
+    private $data = [
+        'status' => '',
+        'time' => 0,
+        'specifications' => [],
+    ];
 
     private const STATUS_NAME = [
         ExampleEvent::PASSED  => 'passed',
@@ -30,7 +34,11 @@ final class JsonFormatter extends BasicFormatter
 
     public function beforeSpecification(SpecificationEvent $event)
     {
-        $this->data[$event->getSpecification()->getTitle()] = [];
+        $this->data['specifications'][$event->getSpecification()->getTitle()] = [
+            'status' => '',
+            'time' => 0,
+            'examples' => [],
+        ];
     }
 
     public function afterExample(ExampleEvent $event)
@@ -38,7 +46,7 @@ final class JsonFormatter extends BasicFormatter
         $specification = $event->getSpecification()->getTitle();
         $example = $event->getTitle();
 
-        $this->data[$specification][$example] = [
+        $this->data['specifications'][$specification]['examples'][$example] = [
             'status' => self::STATUS_NAME[$event->getResult()],
             'time' => $event->getTime(),
         ];
@@ -57,18 +65,16 @@ final class JsonFormatter extends BasicFormatter
 
     public function afterSpecification(SpecificationEvent $event)
     {
-        $this->data[$event->getSpecification()->getTitle()]['@meta'] = [
-            'status' => self::STATUS_NAME[$event->getResult()],
-            'time' => $event->getTime(),
-        ];
+        $specification = $event->getSpecification()->getTitle();
+        
+        $this->data['specifications'][$specification]['satus'] = self::STATUS_NAME[$event->getResult()];
+        $this->data['specifications'][$specification]['time'] = $event->getTime();
     }
 
     public function afterSuite(SuiteEvent $event)
     {
-        $this->data['@meta'] = [
-            'result' => self::STATUS_NAME[$event->getResult()],
-            'time' => $event->getTime(),
-        ];
+        $this->data['satus'] = self::STATUS_NAME[$event->getResult()];
+        $this->data['time'] = $event->getTime();
 
         $this->getIO()->write(json_encode($this->data));
     }
