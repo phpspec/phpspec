@@ -57,7 +57,7 @@ final class JsonFormatter extends BasicFormatter
             return;
         }
 
-        $this->data[$specification][$example]['@exception'] = [
+        $this->data['specifications'][$specification]['examples'][$example]['@exception'] = [
             'message' => $exception->getMessage(),
             'trace' => $exception->getTrace(),
         ];
