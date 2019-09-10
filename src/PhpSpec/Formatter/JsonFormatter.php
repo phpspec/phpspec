@@ -67,7 +67,7 @@ final class JsonFormatter extends BasicFormatter
     {
         $specification = $event->getSpecification()->getTitle();
         
-        $this->data['specifications'][$specification]['satus'] = self::STATUS_NAME[$event->getResult()];
+        $this->data['specifications'][$specification]['status'] = self::STATUS_NAME[$event->getResult()];
         $this->data['specifications'][$specification]['time'] = $event->getTime();
     }
 
