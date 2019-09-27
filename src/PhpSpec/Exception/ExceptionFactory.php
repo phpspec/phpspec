@@ -162,4 +162,12 @@ class ExceptionFactory
             $this->presenter->presentString($property)
         ));
     }
+
+    public function factoryMethodReturnedWrongValue(string $expectedClassName): SubjectException
+    {
+        return new SubjectException(sprintf(
+            'Factory method returned wrong value, expected %s.',
+            $this->presenter->presentString($expectedClassName)
+        ));
+    }
 }
