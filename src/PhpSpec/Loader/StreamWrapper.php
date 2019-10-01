@@ -89,7 +89,7 @@ class StreamWrapper
         return feof($this->fileResource);
     }
 
-    public function stream_set_option ( int $option , int $arg1 , int $arg2 ) : bool
+    public function stream_set_option(int $option, int $arg1, int $arg2): bool
     {
         return false;
     }
