@@ -5,6 +5,7 @@ namespace spec\PhpSpec\Wrapper\Subject;
 use Phpspec\CodeAnalysis\AccessInspector;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\ExceptionFactory;
+use PhpSpec\Exception\Fracture\FactoryDoesNotReturnObjectException;
 use PhpSpec\Exception\Fracture\PropertyNotFoundException;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 use PhpSpec\Wrapper\Wrapper;
@@ -268,11 +269,28 @@ class CallerSpec extends ObjectBehavior
         $this->shouldThrow('\PhpSpec\Exception\Wrapper\SubjectException')
             ->duringGet('foo');
     }
+
+    function it_delegates_throwing_factory_does_not_return_object_exception(
+        WrappedObject $wrappedObject
+    ) {
+        $wrappedObject->isInstantiated()->willReturn(false);
+        $wrappedObject->getInstance()->willReturn(null);
+        $wrappedObject->getClassName()->willReturn(\stdClass::class);
+        $wrappedObject->getFactoryMethod()->willReturn([ExampleClass::class, 'brokenFactory']);
+        $wrappedObject->getArguments()->willReturn([]);
+        $this->shouldThrow(FactoryDoesNotReturnObjectException::class)
+            ->during('getWrappedObject');
+    }
 }
 
 class ExampleClass
 {
     private function privateMethod()
     {
+    }
+
+    public static function brokenFactory()
+    {
+        return null;
     }
 }
