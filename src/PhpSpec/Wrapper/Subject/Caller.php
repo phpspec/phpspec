@@ -16,7 +16,7 @@ namespace PhpSpec\Wrapper\Subject;
 use PhpSpec\CodeAnalysis\AccessInspector;
 use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Exception\Fracture\NamedConstructorNotFoundException;
-use PhpSpec\Exception\Wrapper\SubjectException;
+use PhpSpec\Factory\ObjectFactory;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Wrapper\Subject;
 use PhpSpec\Wrapper\Wrapper;
@@ -301,7 +301,7 @@ class Caller
     /**
      * @return mixed
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
-     * @throws \PhpSpec\Exception\Wrapper\SubjectException
+     * @throws \PhpSpec\Exception\Fracture\FactoryDoesNotReturnObjectException
      */
     private function newInstanceWithFactoryMethod()
     {
@@ -318,16 +318,10 @@ class Caller
             }
         }
 
-        $instance = \call_user_func_array(
+        return ObjectFactory::instantiateFromCallable(
             $method,
             $this->wrappedObject->getArguments()
         );
-
-        if (!$instance instanceof $className) {
-            throw $this->factoryMethodReturnedWrongValue($className);
-        }
-
-        return $instance;
     }
 
     /**
@@ -412,11 +406,6 @@ class Caller
     private function accessingPropertyOnNonObject(string $property): \PhpSpec\Exception\Wrapper\SubjectException
     {
         return $this->exceptionFactory->gettingPropertyOnNonObject($property);
-    }
-
-    private function factoryMethodReturnedWrongValue(string $expectedClassName): \PhpSpec\Exception\Wrapper\SubjectException
-    {
-        return $this->exceptionFactory->factoryMethodReturnedWrongValue($expectedClassName);
     }
 
     /**

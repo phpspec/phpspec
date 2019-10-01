@@ -128,18 +128,6 @@ class ExceptionFactorySpec extends ObjectBehavior
         $exception->getMessage()->shouldBe($fixtureMessage);
     }
 
-    function it_creates_a_factory_method_returned_wrong_value_exception(Presenter $presenter)
-    {
-        $this->fixture->property = __CLASS__;
-        $presenter->presentString("{$this->fixture->property}")
-            ->shouldBeCalled()
-            ->willReturn("\"{$this->fixture->property}\"");
-        $fixtureMessage = "Factory method returned wrong value, expected \"{$this->fixture->property}\".";
-        $exception = $this->factoryMethodReturnedWrongValue($this->fixture->property);
-        $exception->shouldHaveType('PhpSpec\Exception\Wrapper\SubjectException');
-        $exception->getMessage()->shouldBe($fixtureMessage);
-    }
-
     function shouldCreateNamedConstructorNotFoundException()
     {
         $this->createdException->shouldHaveType('PhpSpec\Exception\Fracture\NamedConstructorNotFoundException');
