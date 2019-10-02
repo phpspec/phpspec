@@ -25,7 +25,7 @@ class ObjectFactory
     public function instantiateFromCallable(
         callable $callable,
         array $arguments = []
-    ): object {
+    ) {
         $instance = \call_user_func_array($callable, $arguments);
 
         if (!\is_object($instance)) {
