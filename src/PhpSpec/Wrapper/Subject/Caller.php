@@ -318,7 +318,7 @@ class Caller
             }
         }
 
-        return ObjectFactory::instantiateFromCallable(
+        return (new ObjectFactory())->instantiateFromCallable(
             $method,
             $this->wrappedObject->getArguments()
         );

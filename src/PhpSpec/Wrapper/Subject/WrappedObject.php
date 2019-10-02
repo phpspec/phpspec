@@ -198,7 +198,7 @@ class WrappedObject
         }
 
         if ($this->factoryMethod) {
-            $this->instance = ObjectFactory::instantiateFromCallable(
+            $this->instance = (new ObjectFactory())->instantiateFromCallable(
                 $this->factoryMethod,
                 $this->arguments
             );

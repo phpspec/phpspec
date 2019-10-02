@@ -22,7 +22,7 @@ class ObjectFactory
     /**
      * @throws FactoryDoesNotReturnObjectException when callable returns non object
      */
-    public static function instantiateFromCallable(
+    public function instantiateFromCallable(
         callable $callable,
         array $arguments = []
     ): object {
@@ -31,7 +31,7 @@ class ObjectFactory
         if (!\is_object($instance)) {
             throw new FactoryDoesNotReturnObjectException(sprintf(
                 'The %s did not return an object, returned %s instead',
-                self::callableToString($callable),
+                $this->callableToString($callable),
                 \gettype($instance)
             ));
         }
@@ -39,7 +39,7 @@ class ObjectFactory
         return $instance;
     }
 
-    private static function callableToString(callable $callable): string
+    private function callableToString(callable $callable): string
     {
         if (\is_array($callable)) {
             return 'method ' . $callable[0] . '::' . $callable[1];
