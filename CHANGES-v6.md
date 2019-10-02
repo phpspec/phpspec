@@ -10,5 +10,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - AfterSpecification event now always fires in case of failure (@chris-kruining)
  - Removed Prophecy\Argument use statement from templates (@DonCallisto)
 
-[Unreleased]: https://github.com/phpspec/phpspec/compare/5.1.1...master
+[Unreleased]: https://github.com/phpspec/phpspec/compare/5.1.2...master
 

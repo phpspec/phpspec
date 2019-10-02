@@ -24,4 +24,4 @@
 
     (new PhpSpec\Console\Application($version))->run();
 
-})('6.0.0-beta');
+})('6.0.0');
