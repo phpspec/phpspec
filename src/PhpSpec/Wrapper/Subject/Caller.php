@@ -16,6 +16,7 @@ namespace PhpSpec\Wrapper\Subject;
 use PhpSpec\CodeAnalysis\AccessInspector;
 use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Exception\Fracture\NamedConstructorNotFoundException;
+use PhpSpec\Factory\ObjectFactory;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Wrapper\Subject;
 use PhpSpec\Wrapper\Wrapper;
@@ -300,13 +301,14 @@ class Caller
     /**
      * @return mixed
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
+     * @throws \PhpSpec\Exception\Fracture\FactoryDoesNotReturnObjectException
      */
     private function newInstanceWithFactoryMethod()
     {
         $method = $this->wrappedObject->getFactoryMethod();
+        $className = $this->wrappedObject->getClassName();
 
         if (!\is_array($method)) {
-            $className = $this->wrappedObject->getClassName();
 
             if (\is_string($method) && !method_exists($className, $method)) {
                 throw $this->namedConstructorNotFound(
@@ -316,7 +318,10 @@ class Caller
             }
         }
 
-        return \call_user_func_array($method, $this->wrappedObject->getArguments());
+        return (new ObjectFactory())->instantiateFromCallable(
+            $method,
+            $this->wrappedObject->getArguments()
+        );
     }
 
     /**

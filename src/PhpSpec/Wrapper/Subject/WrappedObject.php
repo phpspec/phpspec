@@ -13,7 +13,7 @@
 
 namespace PhpSpec\Wrapper\Subject;
 
-use PhpSpec\Exception\Fracture\FactoryDoesNotReturnObjectException;
+use PhpSpec\Factory\ObjectFactory;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Exception\Wrapper\SubjectException;
@@ -198,7 +198,10 @@ class WrappedObject
         }
 
         if ($this->factoryMethod) {
-            $this->instance = $this->instantiateFromCallback($this->factoryMethod);
+            $this->instance = (new ObjectFactory())->instantiateFromCallable(
+                $this->factoryMethod,
+                $this->arguments
+            );
         } else {
             $reflection = new \ReflectionClass($this->classname);
 
@@ -210,26 +213,5 @@ class WrappedObject
         $this->isInstantiated = true;
 
         return $this->instance;
-    }
-
-    /**
-     * @param callable $factoryCallable
-     *
-     * @return object
-     */
-    private function instantiateFromCallback(callable $factoryCallable)
-    {
-        $instance = \call_user_func_array($factoryCallable, $this->arguments);
-
-        if (!\is_object($instance)) {
-            throw new FactoryDoesNotReturnObjectException(sprintf(
-                'The method %s::%s did not return an object, returned %s instead',
-                $this->factoryMethod[0],
-                $this->factoryMethod[1],
-                \gettype($instance)
-            ));
-        }
-
-        return $instance;
     }
 }
