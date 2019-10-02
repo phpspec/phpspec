@@ -42,8 +42,17 @@ class ObjectFactory
     private function callableToString(callable $callable): string
     {
         if (\is_array($callable)) {
-            return 'method ' . $callable[0] . '::' . $callable[1];
+            $className = \is_object($callable[0])
+                ? get_class($callable[0])
+                : $callable[0];
+
+            return 'method ' . $className . '::' . $callable[1];
         }
+
+        if ($callable instanceof \Closure) {
+            return 'closure';
+        }
+
         return 'function ' . $callable;
     }
 }
