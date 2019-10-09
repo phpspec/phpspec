@@ -47,7 +47,7 @@ class ConstructorDecoratorSpec extends ObjectBehavior
 
         $subject->__call('getWrappedObject', [])->willThrow(new Error());
         $wrapped->getClassName()->willReturn(\stdClass::class);
-        $expectation->match($alias, Argument::type('object'), $arguments)->shouldBeCalledOnce()->willReturn($match);
+        $expectation->match($alias, Argument::type('object'), $arguments)->shouldBeCalledTimes(1)->willReturn($match);
 
         $this->beConstructedWith($expectation);
 
