@@ -374,7 +374,13 @@ class ScalarMatcherSpec extends ObjectBehavior
     function it_matches_real()
     {
         $this->skipIfPhpVersionIsGreaterOrEqual74();
-        $this->shouldThrow()->duringPositiveMatch('beReal', 10.5, ['']);
+        $this->shouldNotThrow()->duringPositiveMatch('beReal', 10.5, ['']);
+    }
+
+    function it_does_not_match_real_when_php_is_greater_or_equal_74()
+    {
+        $this->skipIfPhpVersionIsGreaterOrEqual74();
+        $this->shouldNotThrow()->duringPositiveMatch('beReal', 10.5, ['']);
     }
 
     function it_does_not_match_not_real()
