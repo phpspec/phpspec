@@ -127,8 +127,8 @@ final class ScalarMatcher implements Matcher
             return false;
         }
 
-        if (PHP_VERSION_ID >= 70400 && $name === 'real') {
-            return false;
+        if ($name == 'beReal') {
+            trigger_error('`beReal` matcher is deprecated, please use `beFloat`', E_USER_DEPRECATED);
         }
 
         $expected = lcfirst(substr($name, 2));

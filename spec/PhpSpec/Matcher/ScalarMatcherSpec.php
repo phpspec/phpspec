@@ -365,40 +365,15 @@ class ScalarMatcherSpec extends ObjectBehavior
         $this->shouldThrow()->duringNegativeMatch('beObject', new \stdClass(), ['']);
     }
 
-    function it_responds_to_be_real()
+    function it_shows_that_real_is_deprecated()
     {
-        $this->skipIfPhpVersionIsGreaterOrEqual74();
-        $this->supports('beReal', '', [''])->shouldReturn(true);
-    }
-
-    function it_matches_real()
-    {
-        $this->skipIfPhpVersionIsGreaterOrEqual74();
-        $this->shouldNotThrow()->duringPositiveMatch('beReal', 10.5, ['']);
-    }
-
-    function it_does_not_match_real_when_php_is_greater_or_equal_74()
-    {
-        $this->skipIfPhpVersionIsGreaterOrEqual74();
-        $this->shouldNotThrow()->duringPositiveMatch('beReal', 10.5, ['']);
-    }
-
-    function it_does_not_match_not_real()
-    {
-        $this->skipIfPhpVersionIsGreaterOrEqual74();
-        $this->shouldThrow()->duringPositiveMatch('beReal', Argument::not(10.5), ['']);
-    }
-
-    function it_mismatches_not_real()
-    {
-        $this->skipIfPhpVersionIsGreaterOrEqual74();
-        $this->shouldNotThrow()->duringNegativeMatch('beReal', Argument::not(10.5), ['']);
-    }
-
-    function it_does_not_mismatches_real()
-    {
-        $this->skipIfPhpVersionIsGreaterOrEqual74();
-        $this->shouldThrow()->duringNegativeMatch('beReal', 10.5, ['']);
+        $exception = new \PhpSpec\Exception\Example\ErrorException(
+            E_USER_DEPRECATED,
+            '`beReal` matcher is deprecated, please use `beFloat`',
+            (new \ReflectionClass($this->getWrappedObject()))->getFileName(),
+            131
+        );
+        $this->shouldThrow($exception)->duringSupports('beReal', '', ['']);
     }
 
     function it_responds_to_be_resource()
@@ -478,14 +453,5 @@ class ScalarMatcherSpec extends ObjectBehavior
     function it_does_not_mismatches_string()
     {
         $this->shouldThrow()->duringNegativeMatch('beString', 'foo', ['']);
-    }
-
-    private function skipIfPhpVersionIsGreaterOrEqual74(): void
-    {
-        if (PHP_VERSION_ID >= 70400) {
-            throw new SkippingException(
-                'Matcher no longer supported on this PHP version'
-            );
-        }
     }
 }
