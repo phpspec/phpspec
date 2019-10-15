@@ -127,6 +127,10 @@ final class ScalarMatcher implements Matcher
             return false;
         }
 
+        if (PHP_VERSION_ID >= 70400 && $name === 'real') {
+            return false;
+        }
+
         $expected = lcfirst(substr($name, 2));
         if ($expected == 'boolean') {
             return 'is_bool';

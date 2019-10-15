@@ -111,6 +111,12 @@ final class ArrayKeyValueMatcher extends BasicMatcher
 
     private function offsetExists($key, $subject)
     {
-        return ($subject instanceof ArrayAccess && $subject->offsetExists($key)) || array_key_exists($key, $subject);
+        if ($subject instanceof ArrayAccess && $subject->offsetExists($key)) {
+            return true;
+        }
+        if (is_array($subject) && array_key_exists($key, $subject)) {
+            return true;
+        }
+        return false;
     }
 }

@@ -4,6 +4,7 @@
 namespace spec\PhpSpec\Matcher;
 
 
+use PhpSpec\Exception\Example\SkippingException;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Matcher\Matcher;
 use PhpSpec\ObjectBehavior;
@@ -366,26 +367,31 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_responds_to_be_real()
     {
+        $this->skipIfPhpVersionIsGreaterOrEqual74();
         $this->supports('beReal', '', [''])->shouldReturn(true);
     }
 
     function it_matches_real()
     {
-        $this->shouldNotThrow()->duringPositiveMatch('beReal', 10.5, ['']);
+        $this->skipIfPhpVersionIsGreaterOrEqual74();
+        $this->shouldThrow()->duringPositiveMatch('beReal', 10.5, ['']);
     }
 
     function it_does_not_match_not_real()
     {
+        $this->skipIfPhpVersionIsGreaterOrEqual74();
         $this->shouldThrow()->duringPositiveMatch('beReal', Argument::not(10.5), ['']);
     }
 
     function it_mismatches_not_real()
     {
+        $this->skipIfPhpVersionIsGreaterOrEqual74();
         $this->shouldNotThrow()->duringNegativeMatch('beReal', Argument::not(10.5), ['']);
     }
 
     function it_does_not_mismatches_real()
     {
+        $this->skipIfPhpVersionIsGreaterOrEqual74();
         $this->shouldThrow()->duringNegativeMatch('beReal', 10.5, ['']);
     }
 
@@ -466,5 +472,14 @@ class ScalarMatcherSpec extends ObjectBehavior
     function it_does_not_mismatches_string()
     {
         $this->shouldThrow()->duringNegativeMatch('beString', 'foo', ['']);
+    }
+
+    private function skipIfPhpVersionIsGreaterOrEqual74(): void
+    {
+        if (PHP_VERSION_ID >= 70400) {
+            throw new SkippingException(
+                'Matcher no longer supported on this PHP version'
+            );
+        }
     }
 }
