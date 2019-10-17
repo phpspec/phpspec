@@ -365,17 +365,6 @@ class ScalarMatcherSpec extends ObjectBehavior
         $this->shouldThrow()->duringNegativeMatch('beObject', new \stdClass(), ['']);
     }
 
-    function it_shows_that_real_is_deprecated()
-    {
-        $exception = new \PhpSpec\Exception\Example\ErrorException(
-            E_USER_DEPRECATED,
-            '`beReal` matcher is deprecated, please use `beFloat`',
-            (new \ReflectionClass($this->getWrappedObject()))->getFileName(),
-            131
-        );
-        $this->shouldThrow($exception)->duringSupports('beReal', '', ['']);
-    }
-
     function it_responds_to_be_resource()
     {
         $this->supports('beResource', '', [''])->shouldReturn(true);

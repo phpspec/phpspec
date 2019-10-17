@@ -127,13 +127,13 @@ final class ScalarMatcher implements Matcher
             return false;
         }
 
-        if ($name == 'beReal') {
-            trigger_error('`beReal` matcher is deprecated, please use `beFloat`', E_USER_DEPRECATED);
-        }
-
         $expected = lcfirst(substr($name, 2));
         if ($expected == 'boolean') {
             return 'is_bool';
+        }
+        if ($expected == 'real') {
+            @trigger_error('`beReal` matcher is deprecated, please use `beFloat`', E_USER_DEPRECATED);
+            return 'is_float';
         }
 
         return 'is_'.$expected;
