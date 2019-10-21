@@ -28,4 +28,17 @@ class BaseExceptionTypePresenterSpec extends ObjectBehavior
         $this->present(new ErrorException(new \Error('foo')))
             ->shouldReturn('[err:Error("foo")]');
     }
+
+    function it_should_present_a_parse_error_with_file_and_line_number()
+    {
+        $this->present(new ErrorException(new class() extends \ParseError {
+            public function __construct()
+            {
+                $this->message = 'Something is not correct';
+                $this->file = '/app/some/file.php';
+                $this->line = 42;
+            }
+        }))
+            ->shouldContain('Something is not correct in "/app/some/file.php" on line 42');
+    }
 }
