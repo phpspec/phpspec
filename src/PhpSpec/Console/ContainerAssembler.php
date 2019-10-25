@@ -495,7 +495,8 @@ final class ContainerAssembler
         $container->define('loader.resource_loader', function (IndexedServiceContainer $c) {
             return new Loader\ResourceLoader(
                 $c->get('locator.resource_manager'),
-                $c->get('util.method_analyser')
+                $c->get('util.method_analyser'),
+                $c->get('event_dispatcher')
             );
         });
 

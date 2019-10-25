@@ -48,7 +48,7 @@ class ApplicationContext implements Context
     {
         StreamWrapper::register();
 
-        $this->application = new Application('2.1-dev');
+        $this->application = new Application('6.0-dev');
         $this->application->setAutoExit(false);
         $this->setFixedTerminalDimensions();
 

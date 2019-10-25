@@ -17,26 +17,28 @@ use PhpSpec\Event\SuiteEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SpecificationEvent;
+use PhpSpec\Event\ResourceEvent;
 
 class StatisticsCollector implements EventSubscriberInterface
 {
-    private $globalResult    = 0;
-    private $totalSpecs      = 0;
+    private $globalResult = 0;
+    private $totalSpecs = 0;
     private $totalSpecsCount = 0;
 
-    private $passedEvents  = array();
+    private $passedEvents = array();
     private $pendingEvents = array();
     private $skippedEvents = array();
-    private $failedEvents  = array();
-    private $brokenEvents  = array();
+    private $failedEvents = array();
+    private $brokenEvents = array();
+    private $ignoredResources = array();
 
     public static function getSubscribedEvents()
     {
         return array(
             'afterSpecification' => array('afterSpecification', 10),
-            'afterExample'       => array('afterExample', 10),
-            'beforeSuite'       => array('beforeSuite', 10),
-
+            'afterExample' => array('afterExample', 10),
+            'beforeSuite' => array('beforeSuite', 10),
+            'afterResourceLoad' => array('afterResourceLoad', 1),
         );
     }
 
@@ -71,6 +73,13 @@ class StatisticsCollector implements EventSubscriberInterface
     public function beforeSuite(SuiteEvent $suiteEvent): void
     {
         $this->totalSpecsCount = \count($suiteEvent->getSuite()->getSpecifications());
+    }
+
+    public function afterResourceLoad(ResourceEvent $resourceEvent): void
+    {
+        if ($resourceEvent->isIgnored()) {
+            $this->ignoredResources[] = $resourceEvent->getResource();
+        }
     }
 
     public function getGlobalResult() : int
@@ -128,6 +137,16 @@ class StatisticsCollector implements EventSubscriberInterface
     public function getTotalSpecs() : int
     {
         return $this->totalSpecs;
+    }
+
+    public function getIgnoredResourcesCount(): int
+    {
+        return count($this->getIgnoredResources());
+    }
+
+    public function getIgnoredResources(): array
+    {
+        return $this->ignoredResources;
     }
 
     public function getEventsCount() : int

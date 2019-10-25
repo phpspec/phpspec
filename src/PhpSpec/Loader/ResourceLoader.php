@@ -19,6 +19,8 @@ use PhpSpec\Util\MethodAnalyser;
 use PhpSpec\Locator\ResourceManager;
 use ReflectionClass;
 use ReflectionMethod;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use PhpSpec\Event\ResourceEvent;
 
 class ResourceLoader
 {
@@ -30,15 +32,23 @@ class ResourceLoader
      * @var MethodAnalyser
      */
     private $methodAnalyser;
+    /**
+     * @var EventDispatcherInterface
+     */
+    private $dispatcher;
 
     /**
      * @param ResourceManager $manager
      * @param MethodAnalyser $methodAnalyser
      */
-    public function __construct(ResourceManager $manager, MethodAnalyser $methodAnalyser)
-    {
+    public function __construct(
+        ResourceManager $manager,
+        MethodAnalyser $methodAnalyser,
+        EventDispatcherInterface $dispatcher
+    ) {
         $this->manager = $manager;
         $this->methodAnalyser = $methodAnalyser;
+        $this->dispatcher = $dispatcher;
     }
 
     /**
@@ -54,12 +64,19 @@ class ResourceLoader
             if (!class_exists($resource->getSpecClassname(), false) && is_file($resource->getSpecFilename())) {
                 try {
                     require_once StreamWrapper::wrapPath($resource->getSpecFilename());
+                    $this->dispatcher->dispatch(
+                        'afterResourceLoad',
+                        new ResourceEvent($resource, ResourceEvent::LOADED)
+                    );
                 }
                 catch (\Error $e) {
                     $this->addErrorThrowingExampleToSuite($resource, $suite, $e);
                     continue;
                 }
+            } else {
+                $this->dispatcher->dispatch('afterResourceLoad', new ResourceEvent($resource, ResourceEvent::IGNORED));
             }
+
             if (!class_exists($resource->getSpecClassname(), false)) {
                 continue;
             }

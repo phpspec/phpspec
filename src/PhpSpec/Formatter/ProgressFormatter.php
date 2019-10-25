@@ -44,6 +44,21 @@ final class ProgressFormatter extends ConsoleFormatter
         $io->freezeTemp();
         $io->writeln();
 
+        if (0 !== $ignoredCount = $stats->getIgnoredResourcesCount()) {
+            $io->writeln();
+            $io->writeln(sprintf('<comment>%d ignored</comment>', $ignoredCount));
+            if ($io->isVerbose()) {
+                foreach ($stats->getIgnoredResources() as $resource) {
+                    $io->writeln(sprintf(
+                        '  <comment>!</comment> <info>%s</info> could not be loaded at path <comment>%s</comment>.',
+                        $resource->getSpecClassname(),
+                        $resource->getSpecFilename()
+                    ));
+                }
+                $io->writeln();
+            }
+        }
+
         $io->writeln(sprintf("%d specs", $stats->getTotalSpecs()));
 
         $counts = array();
