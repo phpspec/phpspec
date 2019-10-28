@@ -19,6 +19,7 @@ use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\IO\IO;
 use PhpSpec\Listener\StatisticsCollector;
+use PhpSpec\Locator\Resource;
 
 final class HtmlFormatter extends BasicFormatter
 {
@@ -48,7 +49,7 @@ final class HtmlFormatter extends BasicFormatter
      */
     public function beforeSuite(SuiteEvent $suite)
     {
-        include __DIR__."/Html/Template/ReportHeader.html";
+        include __DIR__.'/Html/Template/ReportHeader.html';
     }
 
     /**
@@ -58,7 +59,7 @@ final class HtmlFormatter extends BasicFormatter
     {
         $index = $this->index++;
         $name = $specification->getTitle();
-        include __DIR__."/Html/Template/ReportSpecificationStarts.html";
+        include __DIR__.'/Html/Template/ReportSpecificationStarts.html';
     }
 
     /**
@@ -66,7 +67,7 @@ final class HtmlFormatter extends BasicFormatter
      */
     public function afterSpecification(SpecificationEvent $specification)
     {
-        include __DIR__."/Html/Template/ReportSpecificationEnds.html";
+        include __DIR__.'/Html/Template/ReportSpecificationEnds.html';
     }
 
     /**
@@ -80,11 +81,24 @@ final class HtmlFormatter extends BasicFormatter
     }
 
     /**
-     * @param SuiteEvent $suite
+     * @param SuiteEvent $event
      */
-    public function afterSuite(SuiteEvent $suite)
+    public function afterSuite(SuiteEvent $event)
     {
-        include __DIR__."/Html/Template/ReportSummary.html";
-        include __DIR__."/Html/Template/ReportFooter.html";
+        $stats = $this->getStatisticsCollector();
+        $count = $stats->getEventsCount();
+        $totals = sprintf('%d example%s', $count, $count > 1 ? 's' : '');
+        $duration = sprintf('%sms', round($event->getTime() * 1000));
+
+        $ignoredSpecs = json_encode(array_map(function(Resource $resource) {
+            return addslashes(sprintf(
+                'Could not load class %s from path %s.',
+                $resource->getSpecClassname(),
+                $resource->getSpecFilename()
+            ));
+        }, $stats->getIgnoredResources()));
+
+        include __DIR__.'/Html/Template/ReportSummary.html';
+        include __DIR__.'/Html/Template/ReportFooter.html';
     }
 }

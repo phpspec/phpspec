@@ -46,6 +46,8 @@ class Formatter extends OutputFormatter
         $this->setStyle('passed', new OutputFormatterStyle('green'));
         $this->setStyle('passed-bg', new OutputFormatterStyle('black', 'green', array('bold')));
 
+        $this->setStyle('ignored', new OutputFormatterStyle('yellow'));
+
         $this->setStyle('value', new OutputFormatterStyle('yellow'));
         $this->setStyle('lineno', new OutputFormatterStyle(null));
         $this->setStyle('code', new OutputFormatterStyle(null));

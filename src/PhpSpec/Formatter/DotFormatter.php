@@ -109,6 +109,7 @@ final class DotFormatter extends ConsoleFormatter
 
     private function outputSuiteSummary(SuiteEvent $event): void
     {
+        $this->outputIgnoredSpecs();
         $this->outputTotalSpecCount();
         $this->outputTotalExamplesCount();
         $this->outputSpecificExamplesCount();
@@ -119,6 +120,26 @@ final class DotFormatter extends ConsoleFormatter
     private function plural($count)
     {
         return $count !== 1 ? 's' : '';
+    }
+
+    private function outputIgnoredSpecs(): void
+    {
+        $stats = $this->getStatisticsCollector();
+        $io = $this->getIO();
+
+        if (0 !== $ignoredCount = $stats->getIgnoredResourcesCount()) {
+            $io->writeln(sprintf('<ignored>%d ignored</ignored>', $ignoredCount));
+            if ($io->isVerbose()) {
+                foreach ($stats->getIgnoredResources() as $resource) {
+                    $io->writeln(sprintf(
+                        '  <ignored>! could not load class <label>%s</label> from path <label>%s</label>.</ignored>',
+                        $resource->getSpecClassname(),
+                        $resource->getSpecFilename()
+                    ));
+                }
+                $io->writeln();
+            }
+        }
     }
 
     private function outputTotalSpecCount(): void

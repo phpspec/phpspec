@@ -46,11 +46,11 @@ final class ProgressFormatter extends ConsoleFormatter
 
         if (0 !== $ignoredCount = $stats->getIgnoredResourcesCount()) {
             $io->writeln();
-            $io->writeln(sprintf('<comment>%d ignored</comment>', $ignoredCount));
+            $io->writeln(sprintf('<ignored>%d ignored</ignored>', $ignoredCount));
             if ($io->isVerbose()) {
                 foreach ($stats->getIgnoredResources() as $resource) {
                     $io->writeln(sprintf(
-                        '  <comment>!</comment> <info>%s</info> could not be loaded at path <comment>%s</comment>.',
+                        '  <ignored>! could not load class <label>%s</label> from path <label>%s</label>.</ignored>',
                         $resource->getSpecClassname(),
                         $resource->getSpecFilename()
                     ));

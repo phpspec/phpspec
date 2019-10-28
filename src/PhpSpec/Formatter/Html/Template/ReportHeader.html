@@ -48,6 +48,19 @@ body {
   background: #fff;
 }
 
+#phpspec-ignored {
+  display: none;
+  margin: 0 9px 5px 15px;
+  border-left: 5px solid #FAF834;
+  border-bottom: 1px solid #FAF834;
+  background: #FCFB98;
+  color: #131313;
+}
+
+#phpspec-ignored h3 {
+  padding: 10px 0 0 10px;
+}
+
 dl {
   margin: 0; padding: 0 0 5px;
   font: normal 11px "Georgia", Times, serif;
@@ -177,6 +190,30 @@ function makeYellow(element_id) {
   }
 }
 
+function setText(element_id, text) {
+    document.getElementById(element_id).textContent = text;
+}
+
+function setIgnoredMessages(json) {
+    var messages = JSON.parse(json);
+    var count = messages.length;
+    if (0 >= count) {
+        return;
+    }
+    var parent = document.getElementById('phpspec-ignored');
+    if (1 >= count) {
+        var header = count + ' specification was ignored';
+    } else {
+        var header = count + ' specifications were ignored';
+    }
+    parent.getElementsByClassName('count')[0].textContent = header;
+    var list = messages
+        .map(m => '<li>' + m + '</li>')
+        .reduce((acc, cur) => acc + cur, '');
+    parent.getElementsByClassName('list')[0].innerHTML = list;
+    parent.style.display = 'block';
+}
+
   </script>
 </head>
 <body>
@@ -191,6 +228,12 @@ function makeYellow(element_id) {
       <p id="totals">&nbsp;</p>
       <p id="duration">&nbsp;</p>
     </div>
+
   </div>
 
   <div class="results">
+
+    <div id="phpspec-ignored">
+        <h3 class="count"></h3>
+        <ul class="list"></ul>
+    </div>

@@ -59,12 +59,14 @@ final class PrettyFormatter extends ConsoleFormatter
     public function afterSuite(SuiteEvent $event)
     {
         $io = $this->getIO();
+        $stats = $this->getStatisticsCollector();
+
         $io->writeln();
 
         foreach (array(
-            'failed' => $this->getStatisticsCollector()->getFailedEvents(),
-            'broken' => $this->getStatisticsCollector()->getBrokenEvents(),
-            'skipped' => $this->getStatisticsCollector()->getSkippedEvents(),
+            'failed' => $stats->getFailedEvents(),
+            'broken' => $stats->getBrokenEvents(),
+            'skipped' => $stats->getSkippedEvents(),
         ) as $status => $events) {
             if (!\count($events)) {
                 continue;
@@ -81,16 +83,30 @@ final class PrettyFormatter extends ConsoleFormatter
             }
         }
 
-        $io->writeln(sprintf("\n%d specs", $this->getStatisticsCollector()->getTotalSpecs()));
+        if (0 !== $ignoredCount = $stats->getIgnoredResourcesCount()) {
+            $io->writeln("<ignored>----  ignored specifications</ignored>\n");
+            foreach ($stats->getIgnoredResources() as $resource) {
+                $io->writeln(sprintf(
+                    '%s',
+                    str_replace('\\', DIRECTORY_SEPARATOR, $resource->getSpecClassname())
+                ), 6);
+                $io->writeln(sprintf(
+                    "<lineno>0</lineno>  <ignored>! could not load class from path <label>%s</label>.</ignored>\n",
+                    $resource->getSpecFilename()
+                ), 3);
+            }
+        }
+
+        $io->writeln(sprintf('%d specs', $stats->getTotalSpecs()));
 
         $counts = array();
-        foreach ($this->getStatisticsCollector()->getCountsHash() as $type => $count) {
+        foreach ($stats->getCountsHash() as $type => $count) {
             if ($count) {
                 $counts[] = sprintf('<%s>%d %s</%s>', $type, $count, $type, $type);
             }
         }
 
-        $io->write(sprintf("%d examples ", $this->getStatisticsCollector()->getEventsCount()));
+        $io->write(sprintf("%d examples ", $stats->getEventsCount()));
         if (\count($counts)) {
             $io->write(sprintf("(%s)", implode(', ', $counts)));
         }
