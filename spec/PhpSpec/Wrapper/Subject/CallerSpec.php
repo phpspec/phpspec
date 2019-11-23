@@ -7,6 +7,7 @@ use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Exception\Fracture\FactoryDoesNotReturnObjectException;
 use PhpSpec\Exception\Fracture\PropertyNotFoundException;
+use PhpSpec\Util\DispatchTrait;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 use PhpSpec\Wrapper\Wrapper;
 use PhpSpec\Wrapper\Subject;
@@ -20,6 +21,8 @@ use Prophecy\Argument;
 
 class CallerSpec extends ObjectBehavior
 {
+    use DispatchTrait;
+
     function let(WrappedObject $wrappedObject, ExampleNode $example, Dispatcher $dispatcher,
                  ExceptionFactory $exceptions, Wrapper $wrapper, AccessInspector $accessInspector, Subject $subject)
     {
@@ -33,6 +36,7 @@ class CallerSpec extends ObjectBehavior
         $exceptions->propertyNotFound(Argument::cetera())->willReturn(new PropertyNotFoundException('Message', 'subject', 'prop'));
 
         $accessInspector->isMethodCallable(Argument::cetera())->willReturn(false);
+        $dispatcher->dispatch(Argument::any(), Argument::any())->willReturnArgument(0);
     }
 
     function it_dispatches_method_call_events(Dispatcher $dispatcher, WrappedObject $wrappedObject,
@@ -43,14 +47,16 @@ class CallerSpec extends ObjectBehavior
 
         $accessInspector->isMethodCallable(Argument::type('ArrayObject'), 'count')->willReturn(true);
 
-        $dispatcher->dispatch(
-            'beforeMethodCall',
-            Argument::type('PhpSpec\Event\MethodCallEvent')
+        $this->dispatch(
+            $dispatcher,
+            Argument::type('PhpSpec\Event\MethodCallEvent'),
+            'beforeMethodCall'
         )->shouldBeCalled();
 
-        $dispatcher->dispatch(
-            'afterMethodCall',
-            Argument::type('PhpSpec\Event\MethodCallEvent')
+        $this->dispatch(
+            $dispatcher,
+            Argument::type('PhpSpec\Event\MethodCallEvent'),
+            'afterMethodCall'
         )->shouldBeCalled();
 
         $this->call('count');

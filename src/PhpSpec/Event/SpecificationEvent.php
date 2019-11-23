@@ -14,13 +14,12 @@
 namespace PhpSpec\Event;
 
 use PhpSpec\Loader\Suite;
-use Symfony\Component\EventDispatcher\Event;
 use PhpSpec\Loader\Node\SpecificationNode;
 
 /**
  * Class SpecificationEvent holds information about the specification event
  */
-class SpecificationEvent extends Event implements PhpSpecEvent
+class SpecificationEvent extends BaseEvent implements PhpSpecEvent
 {
     /**
      * @var SpecificationNode
