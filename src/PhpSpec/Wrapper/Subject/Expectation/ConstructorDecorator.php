@@ -13,9 +13,6 @@
 
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
-use Exception;
-use PhpSpec\Exception\Example\ErrorException;
-use PhpSpec\Exception\Fracture\FractureException;
 use PhpSpec\Util\Instantiator;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 
@@ -30,31 +27,34 @@ final class ConstructorDecorator extends Decorator implements Expectation
     }
 
     /**
-     * @param string        $alias
-     * @param mixed         $subject
-     * @param array         $arguments
-     * @param WrappedObject $wrappedObject
+     * @param string             $alias
+     * @param mixed              $subject
+     * @param array              $arguments
+     * @param WrappedObject|null $wrappedObject
      *
      * @return mixed
      *
-     * @throws \Exception
+     * @throws \PhpSpec\Exception\ErrorException
      * @throws \PhpSpec\Exception\Example\ErrorException
-     * @throws \Exception
      * @throws \PhpSpec\Exception\Fracture\FractureException
      */
-    public function match(string $alias, $subject, array $arguments = array(), WrappedObject $wrappedObject = null)
+    public function match(string $alias, $subject, array $arguments = [], WrappedObject $wrappedObject = null)
     {
         try {
             $wrapped = $subject->getWrappedObject();
-        } catch (ErrorException $e) {
+        } catch (\PhpSpec\Exception\Example\ErrorException $e) {
             throw $e;
-        } catch (FractureException $e) {
+        } catch (\PhpSpec\Exception\Fracture\FractureException $e) {
             throw $e;
-        } catch (Exception $e) {
-            if (null !== $wrappedObject && $wrappedObject->getClassName()) {
-                $instantiator = new Instantiator();
-                $wrapped = $instantiator->instantiate($wrappedObject->getClassName());
+        } catch (\Error $e) {
+            if ($wrappedObject === null || $wrappedObject->getClassName() === null) {
+                throw new \PhpSpec\Exception\ErrorException($e);
             }
+
+            $instantiator = new Instantiator();
+            $wrapped = $instantiator->instantiate(
+                $wrappedObject->getClassName()
+            );
         }
 
         return $this->getExpectation()->match($alias, $wrapped, $arguments);
