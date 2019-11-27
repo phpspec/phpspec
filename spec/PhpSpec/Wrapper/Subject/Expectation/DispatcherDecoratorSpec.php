@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Util\DispatchTrait;
 use Prophecy\Argument;
 
 use PhpSpec\Wrapper\Subject\Expectation\Expectation;
@@ -14,8 +15,11 @@ use PhpSpec\Event\ExpectationEvent;
 
 class DispatcherDecoratorSpec extends ObjectBehavior
 {
+    use DispatchTrait;
+
     function let(Expectation $expectation, EventDispatcherInterface $dispatcher, Matcher $matcher, ExampleNode $example)
     {
+        $dispatcher->dispatch(Argument::any(), Argument::any())->willReturnArgument(0);
         $this->beConstructedWith($expectation, $dispatcher, $matcher, $example);
     }
 
@@ -30,8 +34,8 @@ class DispatcherDecoratorSpec extends ObjectBehavior
         $subject = new \stdClass();
         $arguments = array();
 
-        $dispatcher->dispatch('beforeExpectation', Argument::type('PhpSpec\Event\ExpectationEvent'))->shouldBeCalled();
-        $dispatcher->dispatch('afterExpectation', Argument::which('getResult', ExpectationEvent::PASSED))->shouldBeCalled();
+        $this->dispatch($dispatcher, Argument::type('PhpSpec\Event\ExpectationEvent'), 'beforeExpectation')->shouldBeCalled();
+        $this->dispatch($dispatcher, Argument::which('getResult', ExpectationEvent::PASSED), 'afterExpectation')->shouldBeCalled();
         $this->match($alias, $subject, $arguments);
     }
 
@@ -43,8 +47,8 @@ class DispatcherDecoratorSpec extends ObjectBehavior
 
         $expectation->match(Argument::cetera())->willThrow('PhpSpec\Exception\Example\FailureException');
 
-        $dispatcher->dispatch('beforeExpectation', Argument::type('PhpSpec\Event\ExpectationEvent'))->shouldBeCalled();
-        $dispatcher->dispatch('afterExpectation', Argument::which('getResult', ExpectationEvent::FAILED))->shouldBeCalled();
+        $this->dispatch($dispatcher, Argument::type('PhpSpec\Event\ExpectationEvent'), 'beforeExpectation')->shouldBeCalled();
+        $this->dispatch($dispatcher, Argument::which('getResult', ExpectationEvent::FAILED), 'afterExpectation')->shouldBeCalled();
 
         $this->shouldThrow('PhpSpec\Exception\Example\FailureException')->duringMatch($alias, $subject, $arguments);
     }
@@ -57,8 +61,8 @@ class DispatcherDecoratorSpec extends ObjectBehavior
 
         $expectation->match(Argument::cetera())->willThrow('\RuntimeException');
 
-        $dispatcher->dispatch('beforeExpectation', Argument::type('PhpSpec\Event\ExpectationEvent'))->shouldBeCalled();
-        $dispatcher->dispatch('afterExpectation', Argument::which('getResult', ExpectationEvent::BROKEN))->shouldBeCalled();
+        $this->dispatch($dispatcher, Argument::type('PhpSpec\Event\ExpectationEvent'), 'beforeExpectation')->shouldBeCalled();
+        $this->dispatch($dispatcher, Argument::which('getResult', ExpectationEvent::BROKEN), 'afterExpectation')->shouldBeCalled();
 
         $this->shouldThrow('\RuntimeException')->duringMatch($alias, $subject, $arguments);
     }

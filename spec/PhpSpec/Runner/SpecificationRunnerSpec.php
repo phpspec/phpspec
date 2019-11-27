@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\Runner;
 
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Util\DispatchTrait;
 use Prophecy\Argument;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -13,8 +14,11 @@ use PhpSpec\Loader\Node\ExampleNode;
 
 class SpecificationRunnerSpec extends ObjectBehavior
 {
+    use DispatchTrait;
+
     function let(EventDispatcherInterface $dispatcher, ExampleRunner $exampleRunner)
     {
+        $dispatcher->dispatch(Argument::any(), Argument::any())->willReturnArgument(0);
         $this->beConstructedWith($dispatcher, $exampleRunner);
     }
 
@@ -54,12 +58,12 @@ class SpecificationRunnerSpec extends ObjectBehavior
     ) {
         $specification->getExamples()->willReturn(array());
 
-        $dispatcher->dispatch('beforeSpecification',
-            Argument::type('PhpSpec\Event\SpecificationEvent')
+        $this->dispatch($dispatcher, Argument::type('PhpSpec\Event\SpecificationEvent'),
+            'beforeSpecification'
         )->shouldBeCalled();
 
-        $dispatcher->dispatch('afterSpecification',
-            Argument::type('PhpSpec\Event\SpecificationEvent')
+        $this->dispatch($dispatcher, Argument::type('PhpSpec\Event\SpecificationEvent'),
+            'afterSpecification'
         )->shouldBeCalled();
 
         $this->run($specification);

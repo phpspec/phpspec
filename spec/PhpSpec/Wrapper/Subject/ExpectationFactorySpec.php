@@ -15,6 +15,7 @@ class ExpectationFactorySpec extends ObjectBehavior
 {
     function let(ExampleNode $example, EventDispatcherInterface $dispatcher, MatcherManager $matchers)
     {
+        $dispatcher->dispatch(Argument::any(), Argument::any())->willReturnArgument(0);
         $this->beConstructedWith($example, $dispatcher, $matchers);
     }
 

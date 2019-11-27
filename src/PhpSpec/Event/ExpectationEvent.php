@@ -15,14 +15,13 @@ namespace PhpSpec\Event;
 
 use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Loader\Suite;
-use Symfony\Component\EventDispatcher\Event;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Matcher\Matcher;
 
 /**
  * Class ExpectationEvent holds information about the expectation event
  */
-final class ExpectationEvent extends Event implements PhpSpecEvent
+final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
 {
     /**
      * Expectation passed

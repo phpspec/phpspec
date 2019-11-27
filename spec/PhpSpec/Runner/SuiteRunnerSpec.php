@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\Runner;
 
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Util\DispatchTrait;
 use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
@@ -15,11 +16,14 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class SuiteRunnerSpec extends ObjectBehavior
 {
+    use DispatchTrait;
+
     function let(EventDispatcher $dispatcher, SpecificationRunner $specRunner, Suite $suite,
                  SpecificationNode $spec1, SpecificationNode $spec2)
     {
         $this->beConstructedWith($dispatcher, $specRunner);
         $suite->getSpecifications()->willReturn(array($spec1, $spec2));
+        $dispatcher->dispatch(Argument::any(), Argument::any())->willReturnArgument(0);
     }
 
     function it_runs_all_specs_in_the_suite_through_the_specrunner($suite, $specRunner, $spec1, $spec2)
@@ -72,12 +76,12 @@ class SuiteRunnerSpec extends ObjectBehavior
 
         $this->run($suite);
 
-        $dispatcher->dispatch('beforeSuite',
-            Argument::type('PhpSpec\Event\SuiteEvent')
+        $this->dispatch($dispatcher, Argument::type('PhpSpec\Event\SuiteEvent'),
+            'beforeSuite'
         )->shouldHaveBeenCalled();
 
-        $dispatcher->dispatch('afterSuite',
-            Argument::type('PhpSpec\Event\SuiteEvent')
+        $this->dispatch($dispatcher, Argument::type('PhpSpec\Event\SuiteEvent'),
+            'afterSuite'
         )->shouldHaveBeenCalled();
     }
 
@@ -92,13 +96,15 @@ class SuiteRunnerSpec extends ObjectBehavior
 
         $this->run($suite);
 
-        $dispatcher->dispatch('afterSuite',
+        $this->dispatch(
+            $dispatcher,
             Argument::that(
                 function ($event) {
                     return ($event->getTime() > 0)
                         && ($event->getResult() == ExampleEvent::FAILED);
                 }
-            )
+            ),
+            'afterSuite'
         )->shouldHaveBeenCalled();
     }
 }
