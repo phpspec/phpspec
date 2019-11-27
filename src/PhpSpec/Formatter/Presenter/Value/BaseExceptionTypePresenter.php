@@ -33,17 +33,27 @@ final class BaseExceptionTypePresenter implements ExceptionTypePresenter
     public function present($value): string
     {
         $label = 'exc';
+        $message = $value->getMessage();
 
         if ($value instanceof ErrorException) {
             $value = $value->getPrevious();
             $label = 'err';
         }
 
+        if ($value instanceof \ParseError) {
+            $message = sprintf(
+                '%s in "%s" on line %d',
+                $value->getMessage(),
+                $value->getFile(),
+                $value->getLine()
+            );
+        }
+
         return sprintf(
             '[%s:%s("%s")]',
             $label,
             \get_class($value),
-            $value->getMessage()
+            $message
         );
     }
 
