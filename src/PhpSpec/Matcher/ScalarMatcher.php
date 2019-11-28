@@ -132,7 +132,6 @@ final class ScalarMatcher implements Matcher
             return 'is_bool';
         }
         if ($expected == 'real') {
-            @trigger_error('`beReal` matcher is deprecated, please use `beFloat`', E_USER_DEPRECATED);
             return 'is_float';
         }
 
