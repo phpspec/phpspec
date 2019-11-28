@@ -13,9 +13,7 @@
 
 namespace PhpSpec\Event;
 
-use Symfony\Component\EventDispatcher\Event;
-
-final class FileCreationEvent extends Event implements PhpSpecEvent
+final class FileCreationEvent extends BaseEvent implements PhpSpecEvent
 {
     /**
      * @var string

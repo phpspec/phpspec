@@ -14,12 +14,11 @@
 namespace PhpSpec\Event;
 
 use PhpSpec\Loader\Suite;
-use Symfony\Component\EventDispatcher\Event;
 
 /**
  * Class SuiteEvent holds information about the suite event
  */
-class SuiteEvent extends Event implements PhpSpecEvent
+class SuiteEvent extends BaseEvent implements PhpSpecEvent
 {
     /**
      * @var Suite

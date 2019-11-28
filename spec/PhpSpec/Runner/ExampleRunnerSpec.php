@@ -4,6 +4,7 @@ namespace spec\PhpSpec\Runner;
 
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Runner\Maintainer\LetAndLetgoMaintainer;
+use PhpSpec\Util\DispatchTrait;
 use Prophecy\Argument;
 use PhpSpec\Specification;
 use PhpSpec\Formatter\Presenter\Presenter;
@@ -18,11 +19,14 @@ use ReflectionMethod;
 
 class ExampleRunnerSpec extends ObjectBehavior
 {
+    use DispatchTrait;
+
     function let(EventDispatcherInterface $dispatcher, Presenter $presenter, ExampleNode $example, SpecificationNode $specification, ReflectionClass $specReflection,
         ReflectionMethod $exampReflection, Specification $context)
     {
         $this->beConstructedWith($dispatcher, $presenter);
 
+        $dispatcher->dispatch(Argument::any(), Argument::any())->willReturnArgument(0);
         $example->getSpecification()->willReturn($specification);
         $example->getFunctionReflection()->willReturn($exampReflection);
         $specification->getClassReflection()->willReturn($specReflection);
@@ -45,9 +49,9 @@ class ExampleRunnerSpec extends ObjectBehavior
     ) {
         $example->isPending()->willReturn(true);
 
-        $dispatcher->dispatch('beforeExample', Argument::any())->shouldBeCalled();
-        $dispatcher->dispatch('afterExample',
-            Argument::which('getResult', ExampleEvent::PENDING)
+        $this->dispatch($dispatcher, Argument::any(), 'beforeExample')->shouldBeCalled();
+        $this->dispatch($dispatcher, Argument::which('getResult', ExampleEvent::PENDING),
+            'afterExample'
         )->shouldBeCalled();
 
         $this->run($example);
@@ -63,9 +67,11 @@ class ExampleRunnerSpec extends ObjectBehavior
         $exampReflection->invokeArgs($context, array())
             ->willThrow('PhpSpec\Exception\Example\FailureException');
 
-        $dispatcher->dispatch('beforeExample', Argument::any())->shouldBeCalled();
-        $dispatcher->dispatch('afterExample',
-            Argument::which('getResult', ExampleEvent::FAILED)
+        $this->dispatch($dispatcher, Argument::any(), 'beforeExample')->shouldBeCalled();
+        $this->dispatch(
+            $dispatcher,
+            Argument::which('getResult', ExampleEvent::FAILED),
+            'afterExample'
         )->shouldBeCalled();
 
         $this->run($example);
@@ -80,9 +86,9 @@ class ExampleRunnerSpec extends ObjectBehavior
         $exampReflection->getParameters()->willReturn(array());
         $exampReflection->invokeArgs($context, array())->willThrow('RuntimeException');
 
-        $dispatcher->dispatch('beforeExample', Argument::any())->shouldBeCalled();
-        $dispatcher->dispatch('afterExample',
-            Argument::which('getResult', ExampleEvent::BROKEN)
+        $this->dispatch($dispatcher, Argument::any(), 'beforeExample')->shouldBeCalled();
+        $this->dispatch($dispatcher, Argument::which('getResult', ExampleEvent::BROKEN),
+            'afterExample'
         )->shouldBeCalled();
 
         $this->run($example);
@@ -97,9 +103,9 @@ class ExampleRunnerSpec extends ObjectBehavior
         $exampReflection->getParameters()->willReturn(array());
         $exampReflection->invokeArgs($context, array())->willThrow('Error');
 
-        $dispatcher->dispatch('beforeExample', Argument::any())->shouldBeCalled();
-        $dispatcher->dispatch('afterExample',
-            Argument::which('getResult', ExampleEvent::BROKEN)
+        $this->dispatch($dispatcher, Argument::any(), 'beforeExample')->shouldBeCalled();
+        $this->dispatch($dispatcher, Argument::which('getResult', ExampleEvent::BROKEN),
+            'afterExample'
         )->shouldBeCalled();
 
         $this->run($example);

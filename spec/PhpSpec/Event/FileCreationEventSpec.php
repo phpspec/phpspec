@@ -15,7 +15,7 @@ class FileCreationEventSpec extends ObjectBehavior
 
     function it_should_be_a_symfony_event()
     {
-        $this->shouldHaveType('Symfony\Component\EventDispatcher\Event');
+        $this->shouldHaveType('PhpSpec\Event\BaseEvent');
     }
 
     function it_should_be_a_phpspec_event()

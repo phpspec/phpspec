@@ -3,19 +3,24 @@
 namespace spec\PhpSpec\CodeGenerator\Generator;
 
 use PhpSpec\CodeGenerator\Generator\Generator;
+use PhpSpec\Event\BaseEvent;
 use PhpSpec\Event\FileCreationEvent;
 use PhpSpec\Locator\Resource;
 use PhpSpec\ObjectBehavior;
+use PhpSpec\Util\DispatchTrait;
 use PhpSpec\Util\Filesystem;
 use Prophecy\Argument;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class NewFileNotifyingGeneratorSpec extends ObjectBehavior
 {
+    use DispatchTrait;
+
     const EVENT_CLASS = 'PhpSpec\Event\FileCreationEvent';
 
     public function let(Generator $generator, EventDispatcherInterface $dispatcher, Filesystem $filesystem)
     {
+        $dispatcher->dispatch(Argument::any(), Argument::any())->willReturnArgument(0);
         $this->beConstructedWith($generator, $dispatcher, $filesystem);
     }
 
@@ -58,7 +63,7 @@ class NewFileNotifyingGeneratorSpec extends ObjectBehavior
 
         $this->generate($resource, array());
 
-        $dispatcher->dispatch('afterFileCreation', $event)->shouldHaveBeenCalled();
+        $this->dispatch($dispatcher, $event, 'afterFileCreation')->willReturn($event);
     }
 
     function it_should_dispatch_an_event_with_the_spec_path_when_a_spec_is_created($generator, $dispatcher, $filesystem, Resource $resource)
@@ -72,7 +77,7 @@ class NewFileNotifyingGeneratorSpec extends ObjectBehavior
 
         $this->generate($resource, array());
 
-        $dispatcher->dispatch('afterFileCreation', $event)->shouldHaveBeenCalled();
+        $this->dispatch($dispatcher, $event, 'afterFileCreation')->shouldHaveBeenCalled();
     }
 
     function it_should_check_that_the_file_was_created($generator, $filesystem, Resource $resource)
@@ -100,7 +105,7 @@ class NewFileNotifyingGeneratorSpec extends ObjectBehavior
 
         $this->generate($resource, array());
 
-        $dispatcher->dispatch('afterFileCreation', Argument::any())->shouldNotHaveBeenCalled();
+        $this->dispatch($dispatcher, Argument::any(), 'afterFileCreation')->shouldNotHaveBeenCalled();
     }
 
     function it_should_not_dispatch_an_event_if_the_file_already_existed(Generator $generator, $dispatcher, $filesystem, Resource $resource)
@@ -114,6 +119,6 @@ class NewFileNotifyingGeneratorSpec extends ObjectBehavior
 
         $this->generate($resource, array());
 
-        $dispatcher->dispatch('afterFileCreation', Argument::any())->shouldNotHaveBeenCalled();
+        $this->dispatch($dispatcher, Argument::any(), 'afterFileCreation')->shouldNotHaveBeenCalled();
     }
 }

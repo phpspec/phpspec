@@ -15,13 +15,12 @@ namespace PhpSpec\Event;
 
 use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Loader\Suite;
-use Symfony\Component\EventDispatcher\Event;
 use PhpSpec\Loader\Node\ExampleNode;
 
 /**
  * Class ExampleEvent holds the information about the example event
  */
-class ExampleEvent extends Event implements PhpSpecEvent
+class ExampleEvent extends BaseEvent implements PhpSpecEvent
 {
     /**
      * Spec passed

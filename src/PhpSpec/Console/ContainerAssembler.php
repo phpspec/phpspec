@@ -558,6 +558,16 @@ final class ContainerAssembler
             }
         );
         $container->define(
+            'formatter.formatters.json',
+            function (IndexedServiceContainer $c) {
+                return new SpecFormatter\JsonFormatter(
+                    $c->get('formatter.presenter'),
+                    $c->get('console.io'),
+                    $c->get('event_dispatcher.listeners.stats')
+                );
+            }
+        );
+        $container->define(
             'formatter.formatters.dot',
             function (IndexedServiceContainer $c) {
                 return new SpecFormatter\DotFormatter(

@@ -16,6 +16,7 @@ namespace PhpSpec\Runner;
 use Error;
 use PhpSpec\Exception\ErrorException;
 use PhpSpec\Runner\Maintainer\Maintainer;
+use PhpSpec\Util\DispatchTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Runner\Maintainer\LetAndLetgoMaintainer;
 use PhpSpec\Formatter\Presenter\Presenter;
@@ -29,6 +30,8 @@ use Exception;
 
 class ExampleRunner
 {
+    use DispatchTrait;
+
     /**
      * @var EventDispatcherInterface
      */
@@ -72,9 +75,10 @@ class ExampleRunner
     public function run(ExampleNode $example): int
     {
         $startTime = microtime(true);
-        $this->dispatcher->dispatch(
-            'beforeExample',
-            new ExampleEvent($example)
+        $this->dispatch(
+            $this->dispatcher,
+            new ExampleEvent($example),
+            'beforeExample'
         );
 
         try {
@@ -110,9 +114,10 @@ class ExampleRunner
         }
 
         $runTime = microtime(true) - $startTime;
-        $this->dispatcher->dispatch(
-            'afterExample',
-            $event = new ExampleEvent($example, $runTime, $status, $exception)
+        $this->dispatch(
+            $this->dispatcher,
+            $event = new ExampleEvent($example, $runTime, $status, $exception),
+            'afterExample'
         );
 
         return $event->getResult();
