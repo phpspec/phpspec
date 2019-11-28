@@ -4,6 +4,7 @@
 namespace spec\PhpSpec\Matcher;
 
 
+use PhpSpec\Exception\Example\SkippingException;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Matcher\Matcher;
 use PhpSpec\ObjectBehavior;
@@ -362,31 +363,6 @@ class ScalarMatcherSpec extends ObjectBehavior
     function it_does_not_mismatches_object()
     {
         $this->shouldThrow()->duringNegativeMatch('beObject', new \stdClass(), ['']);
-    }
-
-    function it_responds_to_be_real()
-    {
-        $this->supports('beReal', '', [''])->shouldReturn(true);
-    }
-
-    function it_matches_real()
-    {
-        $this->shouldNotThrow()->duringPositiveMatch('beReal', 10.5, ['']);
-    }
-
-    function it_does_not_match_not_real()
-    {
-        $this->shouldThrow()->duringPositiveMatch('beReal', Argument::not(10.5), ['']);
-    }
-
-    function it_mismatches_not_real()
-    {
-        $this->shouldNotThrow()->duringNegativeMatch('beReal', Argument::not(10.5), ['']);
-    }
-
-    function it_does_not_mismatches_real()
-    {
-        $this->shouldThrow()->duringNegativeMatch('beReal', 10.5, ['']);
     }
 
     function it_responds_to_be_resource()

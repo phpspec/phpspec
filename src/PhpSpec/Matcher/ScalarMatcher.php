@@ -131,6 +131,9 @@ final class ScalarMatcher implements Matcher
         if ($expected == 'boolean') {
             return 'is_bool';
         }
+        if ($expected == 'real') {
+            return 'is_float';
+        }
 
         return 'is_'.$expected;
     }
