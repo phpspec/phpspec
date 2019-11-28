@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - JSON formatter [@chris-kruining](https://github.com/chris-kruining)
  - Add file and line number to parse error output [@gquemener](https://github.com/gquemener)
  - Symfony 5 compatibility [@alexander-schranz](https://github.com/alexander-schranz)
+ - PHP 7.4 compatibility [@ddziaduch](https://github.com/ddziaduch), [@ciaranmcnulty](https://github.com/ciaranmcnulty)
 
 ## [6.0.0]
 ### Changed
