@@ -4,7 +4,7 @@ Feature: Developer has defined a supporting class and should not see a silent er
   So that I can better trace where my changes caused a fatal error
 
   @isolated
-  Scenario: Spec attempts to run a class with an undeclared interface, outputs to stdout
+  Scenario: Spec attempts to run a class with trying to implement throwable, outputs to stdout
     Given the spec file "spec/SomethingSpec.php" contains:
       """
       <?php
@@ -20,7 +20,7 @@ Feature: Developer has defined a supporting class and should not see a silent er
             }
         }
 
-        class ExampleClass implements NotDefinedInterface
+        class ExampleClass implements \Throwable
         {
         }
 
