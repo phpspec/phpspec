@@ -55,6 +55,11 @@ final class PcntlReRunner extends PhpExecutableReRunner
         $args = $_SERVER['argv'];
         $env = $this->executionContext ? $this->executionContext->asEnv() : array();
 
-        pcntl_exec($this->getExecutablePath(), $args, array_merge($env, $_SERVER));
+        $env = array_filter(
+            array_merge($env, $_SERVER),
+            function($x): bool { return !is_array($x); }
+        );
+
+        pcntl_exec($this->getExecutablePath(), $args, $env);
     }
 }
