@@ -31,7 +31,7 @@ install:
 
 script:
    - bin/phpspec run --format=dot
-   - ./vendor/bin/phpunit
+   - ./vendor/bin/phpunit -v
    - ./vendor/bin/behat --format=progress
 
 before_deploy:

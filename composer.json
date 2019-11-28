@@ -38,7 +38,7 @@
     "require-dev": {
         "behat/behat":           "^3.3",
         "symfony/filesystem":    "^3.4 || ^4.0 || ^5.0",
-        "phpunit/phpunit":       "^5.7 || ^6.0"
+        "phpunit/phpunit":       "^7.0"
     },
 
     "suggest": {
