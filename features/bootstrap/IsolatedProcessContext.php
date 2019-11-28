@@ -116,7 +116,7 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
     public function iShouldSee($message)
     {
         if (strpos($this->lastOutput, $message) === false) {
-            throw new \Exception("Missing message: $message");
+            throw new \Exception("Missing message: $message\nActual: {$this->lastOutput}");
         }
     }
 
