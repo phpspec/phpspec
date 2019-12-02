@@ -426,3 +426,38 @@ Feature: Developer specifies object construction
     """
     When I run phpspec
     Then I should see "you can not change object construction method when it is already instantiated"
+
+  Scenario: Type checking does not trigger construction
+    Given the spec file "spec/Runner/ConstructorExample12/ClassWithPrivateConstructorSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Runner\ConstructorExample12;
+
+      use PhpSpec\ObjectBehavior;
+
+      class ClassWithPrivateConstructorSpec extends ObjectBehavior
+      {
+          function it_is_initializable()
+          {
+              $this->shouldHaveType('Runner\ConstructorExample12\ClassWithPrivateConstructor');
+          }
+      }
+
+      """
+    And the class file "src/Runner/ConstructorExample12/ClassWithPrivateConstructor.php" contains:
+      """
+      <?php
+
+      namespace Runner\ConstructorExample12;
+
+      class ClassWithPrivateConstructor
+      {
+          private function __construct()
+          {
+          }
+      }
+
+      """
+    When I run phpspec
+    Then the suite should pass
