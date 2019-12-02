@@ -46,9 +46,9 @@ final class ConstructorDecorator extends Decorator implements Expectation
             throw $e;
         } catch (\PhpSpec\Exception\Fracture\FractureException $e) {
             throw $e;
-        } catch (\Error $e) {
+        } catch (\Exception $e) {
             if ($wrappedObject === null || $wrappedObject->getClassName() === null) {
-                throw new \PhpSpec\Exception\ErrorException($e);
+                throw $e;
             }
 
             $instantiator = new Instantiator();
