@@ -22,35 +22,20 @@ class ConstructorDecoratorSpec extends ObjectBehavior
 
     function it_rethrows_php_errors_as_phpspec_error_exceptions(Subject $subject, WrappedObject $wrapped)
     {
-        $subject->__call('getWrappedObject', [])->willThrow(new Error());
-        $this->shouldThrow(ErrorException::class)->duringMatch('be', $subject, array(), $wrapped);
+        $subject->__call('getWrappedObject', array())->willThrow('PhpSpec\Exception\Example\ErrorException');
+        $this->shouldThrow('PhpSpec\Exception\Example\ErrorException')->duringMatch('be', $subject, array(), $wrapped);
     }
 
-    function it_rethrows_fracture_errors(Subject $subject, WrappedObject $wrapped)
+    function it_rethrows_fracture_errors_as_phpspec_error_exceptions(Subject $subject, WrappedObject $wrapped)
     {
-        $subject->__call('getWrappedObject', [])->willThrow(FractureException::class);
-        $this->shouldThrow(FractureException::class)->duringMatch('be', $subject, array(), $wrapped);
+        $subject->__call('getWrappedObject', array())->willThrow('PhpSpec\Exception\Fracture\FractureException');
+        $this->shouldThrow('PhpSpec\Exception\Fracture\FractureException')->duringMatch('be', $subject, array(), $wrapped);
     }
 
-    function it_throws_phpspec_error_exception_when_wrapped_object_not_provided(Subject $subject)
+    function it_ignores_any_other_exception(Subject $subject, WrappedObject $wrapped)
     {
-        $exception = new Exception();
-        $subject->__call('getWrappedObject', array())->willThrow($exception);
-        $this->shouldThrow($exception)->duringMatch('be', $subject);
-    }
-
-    function it_returns_match_from_expectation_when_subject_throws_error(Expectation $expectation, Subject $subject, WrappedObject $wrapped)
-    {
-        $alias = 'alias';
-        $match = new \stdClass();
-        $arguments = ['arg1'];
-
-        $subject->__call('getWrappedObject', [])->willThrow(new Error());
-        $wrapped->getClassName()->willReturn(\stdClass::class);
-        $expectation->match($alias, Argument::type('object'), $arguments)->shouldBeCalledTimes(1)->willReturn($match);
-
-        $this->beConstructedWith($expectation);
-
-        $this->match($alias, $subject, $arguments, $wrapped)->shouldReturn($match);
+        $subject->__call('getWrappedObject', array())->willThrow('\Exception');
+        $wrapped->getClassName()->willReturn('\stdClass');
+        $this->shouldNotThrow('\Exception')->duringMatch('be', $subject, array(), $wrapped);
     }
 }
