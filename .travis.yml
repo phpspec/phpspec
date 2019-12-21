@@ -1,8 +1,6 @@
 language: php
 
-sudo: false
-
-dist: trusty
+dist: bionic
 
 cache:
   directories:
@@ -15,8 +13,9 @@ matrix:
     - php: 7.2
     - php: 7.3
     - php: 7.3
+    - php: 7.4
+    - php: 7.4
       env: DEPENDENCIES='dev'
-    - php: 7.4snapshot
   allow_failures:
     - env: DEPENDENCIES='dev'
   fast_finish: true
