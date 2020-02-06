@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="{{ $.Site.LanguageCode }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="{{ .Description }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ if not .IsHome }}{{ .Title }} &#8212; {{ end }}{{ .Site.Title }} {{ .Site.Params.version }}</title>
+  <link rel="alternate" hreflang="{{ .Language.Lang }}" href="{{ .Permalink }}">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+  {{ $styleMain := resources.Get "styles.scss" | toCSS | minify | fingerprint }}
+  <style type="text/css" integrity="{{ $styleMain.Data.Integrity }}">{{ $styleMain.Content | safeCSS }}</style>
+</head>
+<body>
+  <section>
+    {{ partial "header.html" . }}
+    <main>
+      {{ block "main" . }}{{ end }}
+    </main>
+    <nav></nav>
+    {{ partial "footer.html" . }}
+  </section>
+</body>
+</html>

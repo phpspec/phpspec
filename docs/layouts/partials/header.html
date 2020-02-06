@@ -1,0 +1,17 @@
+<nav class="nav-main">
+  {{ $currentPage := . }}
+  <ul class="nav-item-main">
+    {{ range .Site.Menus.main }}
+    <li>
+      <a class="{{if $currentPage.IsMenuCurrent "main" . }}nav-active{{end}}" href="{{ .URL }}">{{ .Title }}</a>
+    </li>
+    {{ end }}
+  </ul>
+  <ul class="nav-item-github">
+    {{ range .Site.Menus.repo }}
+    <li>
+      <a href="{{ .URL }}" target="_blank">{{ .Name }}</a>
+    </li>
+    {{ end }}
+  </ul>
+</nav>

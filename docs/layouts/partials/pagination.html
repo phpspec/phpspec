@@ -1,0 +1,9 @@
+<div>
+  {{ if .Paginator.HasPrev }}
+  <a href="{{ .Paginator.Prev.URL }}">Previous Page</a>
+  {{ end }}
+  {{ .Paginator.PageNumber }} of {{ .Paginator.TotalPages }}
+  {{ if .Paginator.HasNext }}
+  <a href="{{ .Paginator.Next.URL }}">Next Page</a>
+  {{ end }}
+</div>
