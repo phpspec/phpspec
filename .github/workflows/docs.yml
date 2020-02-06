@@ -1,0 +1,26 @@
+name: Docs
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    deploy:
+        runs-on: ubuntu-20.04
+        name: Build and deploy docs
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v2
+            -   name: Setup Hugo
+                uses: peaceiris/actions-hugo@v2
+                with:
+                    hugo-version: '0.79.0'
+                    extended: true
+            -   name: Build docs
+                run: hugo --source docs/ --minify
+            -   name: Deploy
+                uses: peaceiris/actions-gh-pages@v3
+                with:
+                    github_token: ${{ secrets.GITHUB_TOKEN }}
+                    publish_dir: ./docs/public
