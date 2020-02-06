@@ -1,0 +1,24 @@
+<div class="nav-sidebar-headline">
+  <h3 class="h-chapter">Chapters</h3>
+  <button>Menu</button>
+</div>
+<nav class="nav-sidebar">
+  {{ $currentPage := . }}
+  <ul>
+    {{ range .Site.Menus.manual }}
+    <li class="{{if $currentPage.IsMenuCurrent "manual" . }}nav-active{{end}}">
+      <a href="{{ .URL }}">{{ .Title }}</a>
+      {{ .Page.TableOfContents }}
+    </li>
+    {{ end }}
+  </ul>
+  <hr>
+  <ul>
+    {{ range .Site.Menus.cookbook }}
+    <li class="{{if $currentPage.IsMenuCurrent "cookbook" . }}nav-active{{end}}">
+      <a href="{{ .URL }}">{{ .Title }}</a>
+      {{ .Page.TableOfContents }}
+    </li>
+    {{ end }}
+  </ul>
+</nav>
