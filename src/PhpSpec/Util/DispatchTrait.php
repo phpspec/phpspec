@@ -17,8 +17,8 @@ trait DispatchTrait
      */
     private function dispatch($eventDispatcher, $event, $eventName)
     {
-        // LegacyEventDispatcherProxy exists in Symfony >= 4.3
-        if (!$eventDispatcher instanceof \Symfony\Contracts\EventDispatcher\EventDispatcherInterface) {
+        // EventDispatcherInterface contract exists in Symfony >= 4.3
+        if ($eventDispatcher instanceof \Symfony\Contracts\EventDispatcher\EventDispatcherInterface) {
             return $eventDispatcher->dispatch($event, $eventName);
         }
 
