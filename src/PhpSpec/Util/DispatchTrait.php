@@ -3,7 +3,7 @@
 namespace PhpSpec\Util;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\EventDispatcher\LegacyEventDispatcherProxy;;
+use Symfony\Component\EventDispatcher\LegacyEventDispatcherProxy;
 
 /**
  * @internal
@@ -18,7 +18,7 @@ trait DispatchTrait
     private function dispatch($eventDispatcher, $event, $eventName)
     {
         // LegacyEventDispatcherProxy exists in Symfony >= 4.3
-        if (class_exists(LegacyEventDispatcherProxy::class)) {
+        if (!$eventDispatcher instanceof \Symfony\Contracts\EventDispatcher\EventDispatcherInterface) {
             return $eventDispatcher->dispatch($event, $eventName);
         }
 
