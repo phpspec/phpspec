@@ -4,6 +4,7 @@
 namespace spec\PhpSpec\Matcher;
 
 
+use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\Example\SkippingException;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Matcher\Matcher;
@@ -15,6 +16,7 @@ class ScalarMatcherSpec extends ObjectBehavior
     function let(Presenter $presenter)
     {
         $presenter->presentValue(Argument::any())->willReturn('val1', 'val2');
+        $presenter->presentString(Argument::any())->willReturn('str');
 
         $this->beConstructedWith($presenter);
     }
@@ -36,7 +38,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_array_with_be_array_matcher()
     {
-        $this->shouldThrow()->duringPositiveMatch('beArray', Argument::not([]), ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beArray', Argument::not([]), ['']);
     }
 
     function it_mismatches_not_array()
@@ -46,7 +48,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatch_array()
     {
-        $this->shouldThrow()->duringNegativeMatch('beArray', [], ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beArray', [], ['']);
     }
 
     function it_responds_to_be_bool()
@@ -61,7 +63,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_bool_with_be_bool_matcher()
     {
-        $this->shouldThrow()->duringPositiveMatch('beBool', Argument::not(false), ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beBool', Argument::not(false), ['']);
     }
 
     function it_mismatches_not_bool()
@@ -71,7 +73,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatch_bool()
     {
-        $this->shouldThrow()->duringNegativeMatch('beBool', false, ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beBool', false, ['']);
     }
 
     function it_responds_to_be_boolean()
@@ -86,7 +88,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_boolean()
     {
-        $this->shouldThrow()->duringPositiveMatch('beBoolean', Argument::not(false), ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beBoolean', Argument::not(false), ['']);
     }
 
     function it_mismatches_not_boolean()
@@ -96,7 +98,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatch_boolean()
     {
-        $this->shouldThrow()->duringNegativeMatch('beBoolean', false, ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beBoolean', false, ['']);
     }
 
     function it_responds_to_be_callable()
@@ -111,7 +113,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_callable()
     {
-        $this->shouldThrow()->duringPositiveMatch('beCallable', Argument::not(function () { return true; }), ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beCallable', Argument::not(function () { return true; }), ['']);
     }
 
     function it_mismatches_not_callable()
@@ -121,7 +123,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatch_callable()
     {
-        $this->shouldThrow()->duringNegativeMatch('beCallable', function () { return true; }, ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beCallable', function () { return true; }, ['']);
     }
 
 //    FROM PHP 7.3 - Implement also positive match and negative match
@@ -142,7 +144,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_double()
     {
-        $this->shouldThrow()->duringPositiveMatch('beDouble', Argument::not(doubleval(10.5)), ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beDouble', Argument::not(doubleval(10.5)), ['']);
     }
 
     function it_mismatches_not_double()
@@ -152,7 +154,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatches_double()
     {
-        $this->shouldThrow()->duringNegativeMatch('beDouble', doubleval(10.5), ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beDouble', doubleval(10.5), ['']);
     }
 
     function it_responds_to_be_float()
@@ -167,7 +169,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_float()
     {
-        $this->shouldThrow()->duringPositiveMatch('beFloat', Argument::not(10.5), ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beFloat', Argument::not(10.5), ['']);
     }
 
     function it_mismatches_not_float()
@@ -177,7 +179,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatches_float()
     {
-        $this->shouldThrow()->duringNegativeMatch('beFloat', 10.5, ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beFloat', 10.5, ['']);
     }
 
     function it_responds_to_be_int()
@@ -192,7 +194,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_int()
     {
-        $this->shouldThrow()->duringPositiveMatch('beInt', Argument::not(1), ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beInt', Argument::not(1), ['']);
     }
 
     function it_mismatches_not_int()
@@ -202,7 +204,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatches_int()
     {
-        $this->shouldThrow()->duringNegativeMatch('beInt', 1, ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beInt', 1, ['']);
     }
 
     function it_responds_to_be_integer()
@@ -217,7 +219,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_integer_match()
     {
-        $this->shouldThrow()->duringPositiveMatch('beInteger', Argument::not(1), ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beInteger', Argument::not(1), ['']);
     }
 
     function it_mismatches_not_integer()
@@ -227,7 +229,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatches_integer()
     {
-        $this->shouldThrow()->duringNegativeMatch('beInteger', 1, ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beInteger', 1, ['']);
     }
 
     function it_responds_to_be_iterable()
@@ -242,7 +244,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_iterable()
     {
-        $this->shouldThrow()->duringPositiveMatch('beIterable', Argument::not([]), ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beIterable', Argument::not([]), ['']);
     }
 
     function it_mismatches_not_iterable()
@@ -252,7 +254,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatches_iterable()
     {
-        $this->shouldThrow()->duringNegativeMatch('beIterable', [], ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beIterable', [], ['']);
     }
 
     function it_responds_to_be_long()
@@ -267,7 +269,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_long()
     {
-        $this->shouldThrow()->duringPositiveMatch('beLong', Argument::not(PHP_INT_MAX), ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beLong', Argument::not(PHP_INT_MAX), ['']);
     }
 
     function it_mismatches_not_long()
@@ -277,7 +279,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatches_long()
     {
-        $this->shouldThrow()->duringNegativeMatch('beLong', PHP_INT_MAX, ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beLong', PHP_INT_MAX, ['']);
     }
 
     function it_responds_to_be_null()
@@ -292,7 +294,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_null()
     {
-        $this->shouldThrow()->duringPositiveMatch('beNull', Argument::not(null), ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beNull', Argument::not(null), ['']);
     }
 
     function it_mismatches_not_null()
@@ -302,7 +304,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatches_null()
     {
-        $this->shouldThrow()->duringNegativeMatch('beNull', null, ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beNull', null, ['']);
     }
 
     function it_responds_to_be_numeric()
@@ -322,12 +324,12 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_numeric_string()
     {
-        $this->shouldThrow()->duringPositiveMatch('beNumeric', Argument::not('123'), ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beNumeric', Argument::not('123'), ['']);
     }
 
     function it_does_not_match_not_numeric()
     {
-        $this->shouldThrow()->duringPositiveMatch('beNumeric', Argument::not(123), ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beNumeric', Argument::not(123), ['']);
     }
 
     function it_mismatches_not_number()
@@ -337,7 +339,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatches_number()
     {
-        $this->shouldThrow()->duringNegativeMatch('beNumeric', 123, ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beNumeric', 123, ['']);
     }
 
     function it_responds_to_be_object()
@@ -352,7 +354,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_object()
     {
-        $this->shouldThrow()->duringPositiveMatch('beObject', null, ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beObject', null, ['']);
     }
 
     function it_mismatches_not_object()
@@ -362,7 +364,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatches_object()
     {
-        $this->shouldThrow()->duringNegativeMatch('beObject', new \stdClass(), ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beObject', new \stdClass(), ['']);
     }
 
     function it_responds_to_be_resource()
@@ -379,7 +381,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_resource()
     {
-        $this->shouldThrow()->duringPositiveMatch('beResource', null, ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beResource', null, ['']);
     }
 
     function it_mismatches_not_resource()
@@ -390,7 +392,7 @@ class ScalarMatcherSpec extends ObjectBehavior
     function it_does_not_mismatches_resource()
     {
         $fp = fopen(__FILE__, 'r');
-        $this->shouldThrow()->duringNegativeMatch('beResource', $fp, ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beResource', $fp, ['']);
         fclose($fp);
     }
 
@@ -406,7 +408,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_scalar()
     {
-        $this->shouldThrow()->duringPositiveMatch('beResource', null, ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beResource', null, ['']);
     }
 
     function it_mismatches_not_scalar()
@@ -416,7 +418,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatches_scalar()
     {
-        $this->shouldThrow()->duringNegativeMatch('beScalar', 'foo', ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beScalar', 'foo', ['']);
     }
 
     function it_responds_to_be_string()
@@ -431,7 +433,7 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_not_string()
     {
-        $this->shouldThrow()->duringPositiveMatch('beString', Argument::not('foo'), ['']);
+        $this->shouldThrow(FailureException::class)->duringPositiveMatch('beString', Argument::not('foo'), ['']);
     }
 
     function it_mismatches_not_stringt()
@@ -441,6 +443,6 @@ class ScalarMatcherSpec extends ObjectBehavior
 
     function it_does_not_mismatches_string()
     {
-        $this->shouldThrow()->duringNegativeMatch('beString', 'foo', ['']);
+        $this->shouldThrow(FailureException::class)->duringNegativeMatch('beString', 'foo', ['']);
     }
 }
