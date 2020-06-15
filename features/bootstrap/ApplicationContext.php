@@ -409,6 +409,7 @@ class ApplicationContext implements Context
         $string = preg_replace('/\([0-9]+ms\)/', '', $string);
         $string = str_replace("\r", '', $string);
         $string = preg_replace('#(Double\\\\.+?\\\\P)\d+#u', '$1', $string);
+        $string = preg_replace('/\(\s+("[^"]*")\s+\)/', '($1)', $string);
 
         return $string;
     }
