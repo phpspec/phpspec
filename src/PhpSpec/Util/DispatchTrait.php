@@ -3,7 +3,6 @@
 namespace PhpSpec\Util;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\EventDispatcher\LegacyEventDispatcherProxy;
 
 /**
  * @internal
