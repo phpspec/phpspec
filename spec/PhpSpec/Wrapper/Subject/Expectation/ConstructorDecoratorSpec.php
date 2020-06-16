@@ -18,7 +18,7 @@ class ConstructorDecoratorSpec extends ObjectBehavior
 
     function it_rethrows_php_errors_as_phpspec_error_exceptions(Subject $subject, WrappedObject $wrapped)
     {
-        $subject->callOnWrappedObject('getWrappedObject', array())->willThrow('PhpSpec\Exception\Example\ErrorException');
+        $subject->__call('getWrappedObject', array())->willThrow('PhpSpec\Exception\Example\ErrorException');
         $this->shouldThrow('PhpSpec\Exception\Example\ErrorException')->duringMatch('be', $subject, array(), $wrapped);
     }
 
@@ -30,7 +30,7 @@ class ConstructorDecoratorSpec extends ObjectBehavior
 
     function it_ignores_any_other_exception(Subject $subject, WrappedObject $wrapped)
     {
-        $subject->callOnWrappedObject('getWrappedObject', array())->willThrow('\Exception');
+        $subject->__call('getWrappedObject', array())->willThrow('\Exception');
         $wrapped->getClassName()->willReturn('\stdClass');
         $this->shouldNotThrow('\Exception')->duringMatch('be', $subject, array(), $wrapped);
     }
