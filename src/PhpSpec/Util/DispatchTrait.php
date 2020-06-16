@@ -2,8 +2,8 @@
 
 namespace PhpSpec\Util;
 
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\EventDispatcher\LegacyEventDispatcherProxy;;
+use PhpSpec\Wrapper\Collaborator;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @internal
@@ -17,11 +17,21 @@ trait DispatchTrait
      */
     private function dispatch($eventDispatcher, $event, $eventName)
     {
-        // LegacyEventDispatcherProxy exists in Symfony >= 4.3
-        if (class_exists(LegacyEventDispatcherProxy::class)) {
+        if ($this->isNewSymfonyContract($eventDispatcher)) {
             return $eventDispatcher->dispatch($event, $eventName);
         }
 
         return $eventDispatcher->dispatch($eventName, $event);
+    }
+
+    private function isNewSymfonyContract($eventDispatcher): bool
+    {
+        // This trait may be used with a double, in the tests
+        if ($eventDispatcher instanceof Collaborator) {
+            $eventDispatcher = $eventDispatcher->getWrappedObject();
+        }
+
+        // EventDispatcherInterface contract implemented in Symfony >= 4.3
+        return $eventDispatcher instanceof EventDispatcherInterface;
     }
 }
