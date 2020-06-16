@@ -7,7 +7,7 @@ Create a ``composer.json`` file:
 
     {
         "require-dev": {
-            "phpspec/phpspec": "^5.1"
+            "phpspec/phpspec": "^6.2"
         },
         "config": {
             "bin-dir": "bin"
