@@ -2,7 +2,8 @@
 
 namespace PhpSpec\Util;
 
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use PhpSpec\Wrapper\Collaborator;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @internal
@@ -17,7 +18,8 @@ trait DispatchTrait
     private function dispatch($eventDispatcher, $event, $eventName)
     {
         // EventDispatcherInterface contract implemented in Symfony >= 4.3
-        if ($eventDispatcher instanceof \Symfony\Contracts\EventDispatcher\EventDispatcherInterface) {
+        if ($eventDispatcher instanceof EventDispatcherInterface
+           || $eventDispatcher instanceof Collaborator && $eventDispatcher->getWrappedObject() instanceof EventDispatcherInterface) {
             return $eventDispatcher->dispatch($event, $eventName);
         }
 
