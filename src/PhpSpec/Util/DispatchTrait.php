@@ -17,12 +17,21 @@ trait DispatchTrait
      */
     private function dispatch($eventDispatcher, $event, $eventName)
     {
-        // EventDispatcherInterface contract implemented in Symfony >= 4.3
-        if ($eventDispatcher instanceof EventDispatcherInterface
-           || $eventDispatcher instanceof Collaborator && $eventDispatcher->getWrappedObject() instanceof EventDispatcherInterface) {
+        if ($this->isNewSymfonyContract($eventDispatcher)) {
             return $eventDispatcher->dispatch($event, $eventName);
         }
 
         return $eventDispatcher->dispatch($eventName, $event);
+    }
+
+    private function isNewSymfonyContract($eventDispatcher): bool
+    {
+        // This trait may be used with a double, in the tests
+        if ($eventDispatcher instanceof Collaborator) {
+            $eventDispatcher = $eventDispatcher->getWrappedObject();
+        }
+
+        // EventDispatcherInterface contract implemented in Symfony >= 4.3
+        return $eventDispatcher instanceof EventDispatcherInterface;
     }
 }
