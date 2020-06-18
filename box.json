@@ -12,5 +12,8 @@
             "in": "vendor"
         }
     ],
-    "output": "phpspec.phar"
+    "output": "phpspec.phar",
+    "compactors": [
+        "KevinGH\\Box\\Compactor\\PhpScoper"
+    ]
 }
