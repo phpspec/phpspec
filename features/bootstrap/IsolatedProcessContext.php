@@ -16,6 +16,8 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
 
     private $lastOutput;
 
+    protected $executablePath = __DIR__ . '/../../bin/phpspec';
+
     /**
      * @Given I have started describing the :class class
      */
@@ -57,8 +59,12 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
      */
     protected function buildPhpSpecCmd()
     {
+        if (!file_exists($this->executablePath)) {
+            throw new \RuntimeException('Could not find phpspec executable at ' . $this->executablePath);
+        }
+
         $isWindows = DIRECTORY_SEPARATOR === '\\';
-        $cmd = escapeshellcmd('' . __DIR__ . '/../../bin/phpspec');
+        $cmd = escapeshellcmd($this->executablePath);
         if ($isWindows) {
             $cmd = 'php ' . $cmd;
         }

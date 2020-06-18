@@ -10,3 +10,10 @@ default:
       contexts: [ IsolatedProcessContext, FilesystemContext ]
       filters: { tags: "@smoke && ~@isolated" }
 
+phar:
+  suites:
+    application: false
+    isolated:
+      contexts: [ PharProcessContext, FilesystemContext ]
+    smoke:
+      contexts: [ PharProcessContext, FilesystemContext ]
