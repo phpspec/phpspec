@@ -34,6 +34,7 @@ script:
    - bin/phpspec run --format=dot
    - ./vendor/bin/phpunit -v
    - ./vendor/bin/behat --format=progress
+   - composer config platform.php 7.2.0
    - ln -s `which composer` composer.phar
    - make phpspec.phar
 
