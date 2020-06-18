@@ -13,6 +13,7 @@ matrix:
     - php: 7.2
       env: COMPOSER_FLAGS='--prefer-lowest'
     - php: 7.2
+      env: BUILD_PHAR='yes'
     - php: 7.3
     - php: 7.3
       env: DEPENDENCIES='dev'
@@ -33,9 +34,7 @@ script:
    - bin/phpspec run --format=dot
    - ./vendor/bin/phpunit -v
    - ./vendor/bin/behat --format=progress
-
-before_deploy:
-  - make phpspec.phar
+   - if [ "$BUILD_PHAR" == "yes" ]; then make phpspec.phar; fi;
 
 deploy:
   provider: releases
@@ -45,5 +44,4 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
-    php: 7.2
-    condition: COMPOSER_FLAGS != "--prefer-lowest"
+    condition: BUILD_PHAR == "yes"
