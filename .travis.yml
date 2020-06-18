@@ -34,6 +34,7 @@ script:
    - bin/phpspec run --format=dot
    - ./vendor/bin/phpunit -v
    - ./vendor/bin/behat --format=progress
+   - ln -s `which composer` composer.phar
    - if [ "$BUILD_PHAR" == "yes" ]; then make phpspec.phar; fi;
 
 deploy:
