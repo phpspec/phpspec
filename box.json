@@ -1,5 +1,4 @@
 {
-    "chmod": "0755",
     "directories": [
         "src"
     ],
@@ -13,7 +12,5 @@
             "in": "vendor"
         }
     ],
-    "main": "bin/phpspec",
-    "output": "phpspec.phar",
-    "stub": true
+    "output": "phpspec.phar"
 }
