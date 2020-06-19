@@ -4,7 +4,7 @@ box.phar:
 
 phpspec.phar: box.phar vendor
 	./box.phar compile
-	vendor/bin/behat --profile=phar --format=progress || rm phpspec.phar
+	vendor/bin/behat --profile=phar --format=progress
 
 vendor: composer.phar
 	./composer.phar install
