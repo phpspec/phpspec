@@ -7,9 +7,12 @@ feel free to do this, but remember to follow this few simple rules:
 Branching strategy
 -------------------
 
-- For new features, or bugs that only affect the 6.x versions, base your changes on the `master` branch and open PRs against `master`
-- For bugs that affect 5.1.x versions, base your changes on the `5.1` branch and open PRs agains `5.1`
-- Bugs in previous versions are not going to be fixed, upgrade to `5.1` minimum.
+At any given point there are three active branches:
+
+* Bug fixes that apply to old versions should target the current bugfix branch, which will be named after the last minor 
+version supported (e.g. `5.3`, `6.2`)
+* New features, refactoring and general cleanup should target the `main` branch and maintain backward compatibility
+* Any changes or refactoring that would introduce a backward incompatibility should target the `next` branch
 
 Coverage
 --------
