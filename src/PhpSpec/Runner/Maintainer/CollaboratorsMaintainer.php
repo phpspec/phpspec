@@ -143,7 +143,7 @@ final class CollaboratorsMaintainer implements Maintainer
 
     private function isUnsupportedTypeHinting(\ReflectionParameter $parameter): bool
     {
-        return $parameter->isArray() || $parameter->isCallable();
+        return $parameter->getType() && in_array($parameter->getType()->getName(), ['array', 'callable']);
     }
 
     /**
@@ -201,7 +201,7 @@ final class CollaboratorsMaintainer implements Maintainer
     private function getParameterTypeFromReflection(\ReflectionParameter $parameter): string
     {
         try {
-            if (null === $class = $parameter->getClass()) {
+            if (null === $class = $parameter->getType()) {
                 return '';
             }
 
