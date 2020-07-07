@@ -209,7 +209,7 @@ final class CollaboratorsMaintainer implements Maintainer
         $type = $parameter->getType();
 
         if (null === $type) {
-            return null;
+            return '';
         }
 
         // this is safe due to isUnsupportedTypeHinting
