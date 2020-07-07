@@ -25,7 +25,7 @@ use PhpSpec\Wrapper\Collaborator;
 use PhpSpec\Wrapper\Unwrapper;
 use Prophecy\Exception\Doubler\ClassNotFoundException;
 use Prophecy\Prophet;
-use ReflectionException;
+use ReflectionNamedType;
 
 final class CollaboratorsMaintainer implements Maintainer
 {
@@ -143,7 +143,13 @@ final class CollaboratorsMaintainer implements Maintainer
 
     private function isUnsupportedTypeHinting(\ReflectionParameter $parameter): bool
     {
-        return $parameter->isArray() || $parameter->isCallable();
+        $type = $parameter->getType();
+
+        if (null === $type) {
+            return false;
+        }
+
+        return !$type instanceof ReflectionNamedType || in_array($type->getName(), ['array', 'callable'], true);
     }
 
     /**
@@ -200,16 +206,19 @@ final class CollaboratorsMaintainer implements Maintainer
      */
     private function getParameterTypeFromReflection(\ReflectionParameter $parameter): string
     {
-        try {
-            if (null === $class = $parameter->getClass()) {
-                return '';
-            }
+        $type = $parameter->getType();
 
-            return $class->getName();
+        if (null === $type) {
+            return '';
         }
-        catch (ReflectionException $e) {
-            $this->throwCollaboratorNotFound($e, $parameter);
+
+        // this is safe due to isUnsupportedTypeHinting
+        $name = $class->getName();
+
+        if ($type->isBuiltin() || class_exists($name)) {
+            return $name;
         }
+
+        $this->throwCollaboratorNotFound($e, $parameter);
     }
-
 }
