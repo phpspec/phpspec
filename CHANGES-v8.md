@@ -7,5 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Changed
  - Dropped support for PHP 7.3 [@ciaranmcnulty](https://github.com/ciaranmcnulty)
+ - Dropped support for Symfony 3 [@ciaranmcnulty](https://github.com/ciaranmcnulty)
  
 [Unreleased]: https://github.com/phpspec/phpspec/compare/main...next
