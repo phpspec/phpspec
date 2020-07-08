@@ -10,11 +10,6 @@ cache:
 
 matrix:
   include:
-    - php: 7.3
-      env: COMPOSER_FLAGS='--prefer-lowest'
-    - php: 7.3
-      env: COMPOSER_EXTRAS='symfony/event-dispatcher ^3.4 symfony/contracts ^2.0'
-    - php: 7.3
     - php: 7.4
     - php: 7.4
       env: DEPENDENCIES='dev'
@@ -27,7 +22,6 @@ before_install:
 
 install:
   - export COMPOSER_ROOT_VERSION=dev-master
-  - if [ -n "$COMPOSER_EXTRAS" ]; then composer require $COMPOSER_EXTRAS --no-update; fi;
   - if [ "$DEPENDENCIES" == "dev" ]; then composer config minimum-stability dev; fi;
   - composer update $COMPOSER_FLAGS
 
@@ -35,7 +29,7 @@ script:
    - bin/phpspec run --format=dot
    - ./vendor/bin/phpunit -v
    - ./vendor/bin/behat --format=progress
-   - composer config platform.php 7.3.0
+   - composer config platform.php 7.4.0
    - ln -s `which composer` composer.phar
    - make phpspec.phar
 
