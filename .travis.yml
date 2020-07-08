@@ -13,6 +13,8 @@ matrix:
     - php: 7.2
       env: COMPOSER_FLAGS='--prefer-lowest'
     - php: 7.2
+      env: COMPOSER_EXTRAS='symfony/event-dispatcher ^3.4 symfony/contracts ^2.0'
+    - php: 7.2
       env: DEPLOY_PHAR='yes'
     - php: 7.3
     - php: 7.3
@@ -27,6 +29,7 @@ before_install:
 
 install:
   - export COMPOSER_ROOT_VERSION=dev-master
+  - if [ -n "$COMPOSER_EXTRAS" ]; then composer require $COMPOSER_EXTRAS --no-update; fi;
   - if [ "$DEPENDENCIES" == "dev" ]; then composer config minimum-stability dev; fi;
   - composer update $COMPOSER_FLAGS
 
