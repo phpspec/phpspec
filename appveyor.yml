@@ -6,7 +6,7 @@ clone_folder: c:\projects\phpspec
 
 environment:
     matrix:
-        - php: 7.2
+        - php: 7.3
 
 skip_commits:
     message: /\[ci skip\]/
