@@ -31,6 +31,8 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         $exampleEvent->getException()->willReturn($notEqualException);
         $notEqualException->getActual()->willReturn(null);
         $notEqualException->getExpected()->willReturn(100);
+        $notEqualException->getSubject()->willReturn(null);
+        $notEqualException->getMethod()->willReturn(null);
 
         $methodCallEvent->getMethod()->willReturn('foo');
         $methodCallEvent->getSubject()->willReturn(new \stdClass);
@@ -107,8 +109,9 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         $io->askConfirmation(Argument::any())->shouldNotHaveBeenCalled();
     }
 
-    function it_does_not_prompt_if_no_method_was_called_beforehand(ExampleEvent $exampleEvent, ConsoleIO $io, SuiteEvent $event)
-    {
+    function it_does_not_prompt_if_no_method_was_called_beforehand(
+        ExampleEvent $exampleEvent, ConsoleIO $io, SuiteEvent $event
+    ) {
         $this->afterExample($exampleEvent);
         $this->afterSuite($event);
 
@@ -212,6 +215,18 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         $io->askConfirmation(Argument::any())->shouldHaveBeenCalled();
     }
 
+    function it_prompts_if_no_method_was_called_beforehand_but_subject_and_method_are_set_on_the_exception(
+        ExampleEvent $exampleEvent, ConsoleIO $io, SuiteEvent $event, NotEqualException $notEqualException)
+    {
+        $notEqualException->getSubject()->willReturn(new \stdClass());
+        $notEqualException->getMethod()->willReturn('myMethod');
+
+        $this->afterExample($exampleEvent);
+        $this->afterSuite($event);
+
+        $io->askConfirmation(Argument::any())->shouldHaveBeenCalled();
+    }
+
     function it_invokes_method_body_generation_when_prompt_is_answered_yes(
         MethodCallEvent $methodCallEvent, ExampleEvent $exampleEvent, ConsoleIO $io,
         GeneratorManager $generatorManager, ResourceManager $resourceManager, Resource $resource, SuiteEvent $event
@@ -228,5 +243,13 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
 
         $generatorManager->generate($resource, 'returnConstant', array('method' => 'myMethod', 'expected' => 100))
             ->shouldHaveBeenCalled();
+    }
+}
+
+class TestClass
+{
+    public function isActive()
+    {
+        return true;
     }
 }
