@@ -14,7 +14,7 @@
 namespace PhpSpec\Matcher;
 
 use PhpSpec\Formatter\Presenter\Presenter;
-use PhpSpec\Exception\Example\FailureException;
+use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Fracture\MethodNotFoundException;
 use PhpSpec\Wrapper\DelayedCall;
 
@@ -56,7 +56,7 @@ final class ObjectStateMatcher implements Matcher
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @throws \PhpSpec\Exception\Example\FailureException
+     * @throws \PhpSpec\Exception\Example\NotEqualException
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      */
     public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall
@@ -73,7 +73,7 @@ final class ObjectStateMatcher implements Matcher
         }
 
         if (true !== $result = \call_user_func_array($callable, $arguments)) {
-            throw $this->getFailureExceptionFor($callable, true, $result);
+            throw $this->getNotEqualExceptionFor($callable, true, $result);
         }
 
         return null;
@@ -84,7 +84,7 @@ final class ObjectStateMatcher implements Matcher
      * @param mixed  $subject
      * @param array  $arguments
      *
-     * @throws \PhpSpec\Exception\Example\FailureException
+     * @throws \PhpSpec\Exception\Example\NotEqualException
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      */
     public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall
@@ -101,7 +101,7 @@ final class ObjectStateMatcher implements Matcher
         }
 
         if (false !== $result = \call_user_func_array($callable, $arguments)) {
-            throw $this->getFailureExceptionFor($callable, false, $result);
+            throw $this->getNotEqualExceptionFor($callable, false, $result);
         }
 
         return null;
@@ -120,15 +120,15 @@ final class ObjectStateMatcher implements Matcher
      * @param boolean  $expectedBool
      * @param mixed    $result
      *
-     * @return FailureException
+     * @return NotEqualException
      */
-    private function getFailureExceptionFor(callable $callable, bool $expectedBool, $result): FailureException
+    private function getNotEqualExceptionFor(callable $callable, bool $expectedBool, $result): NotEqualException
     {
-        return new FailureException(sprintf(
+        return new NotEqualException(sprintf(
             "Expected %s to return %s, but got %s.",
             $this->presenter->presentValue($callable),
             $this->presenter->presentValue($expectedBool),
             $this->presenter->presentValue($result)
-        ));
+        ), $expectedBool, $result, $callable[0], $callable[1]);
     }
 }
