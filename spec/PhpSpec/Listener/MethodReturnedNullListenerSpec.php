@@ -245,11 +245,3 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
             ->shouldHaveBeenCalled();
     }
 }
-
-class TestClass
-{
-    public function isActive()
-    {
-        return true;
-    }
-}
