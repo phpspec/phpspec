@@ -216,8 +216,8 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
     }
 
     function it_prompts_if_no_method_was_called_beforehand_but_subject_and_method_are_set_on_the_exception(
-        ExampleEvent $exampleEvent, ConsoleIO $io, SuiteEvent $event, NotEqualException $notEqualException)
-    {
+        ExampleEvent $exampleEvent, ConsoleIO $io, SuiteEvent $event, NotEqualException $notEqualException
+    ) {
         $notEqualException->getSubject()->willReturn(new \stdClass());
         $notEqualException->getMethod()->willReturn('myMethod');
 
