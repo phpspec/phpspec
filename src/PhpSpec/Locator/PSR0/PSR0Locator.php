@@ -297,7 +297,7 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
         for ($i = 0; $i < $count; $i++) {
             if ($tokens[$i][0] === T_NAMESPACE) {
                 for ($j = $i + 1; $j < $count; $j++) {
-                    if ($tokens[$j][0] === T_STRING) {
+                    if ($tokens[$j][0] === T_STRING || $tokens[$j][0] === 314 || $tokens[$j][0] === 312) {
                         $namespace .= $tokens[$j][1].'\\';
                     } elseif ($tokens[$j] === '{' || $tokens[$j] === ';') {
                         break;
