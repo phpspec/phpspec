@@ -39,20 +39,17 @@ class ComparisonMatcherSpec extends ObjectBehavior
 
     function it_matches_empty_string_with_emptish_values_using_comparison_operator()
     {
-        if (PHP_VERSION_ID >= 80000) {
-            return;
-        }
+        $expectation = (\PHP_VERSION_ID >= 80000) ? $this->shouldThrow() : $this->shouldNotThrow();
 
-        $this->shouldNotThrow()->duringPositiveMatch('beLike', '', array(0));
+
+        $expectation->duringPositiveMatch('beLike', '', array(0));
     }
 
     function it_matches_zero_with_emptish_values_using_comparison_operator()
     {
-        if (PHP_VERSION_ID >= 80000) {
-            return;
-        }
+        $expectation = (\PHP_VERSION_ID >= 80000) ? $this->shouldThrow() : $this->shouldNotThrow();
 
-        $this->shouldNotThrow()->duringPositiveMatch('beLike', 0, array(''));
+        $expectation->duringPositiveMatch('beLike', 0, array(''));
     }
 
     function it_matches_null_with_emptish_values_using_comparison_operator()
@@ -91,12 +88,9 @@ class ComparisonMatcherSpec extends ObjectBehavior
 
     function it_mismatches_zero_with_emptish_values_using_comparison_operator()
     {
-        if (PHP_VERSION_ID >= 80000) {
-            return;
-        }
+        $expectation = (\PHP_VERSION_ID >= 80000) ? $this->shouldNotThrow() : $this->shouldThrow(new FailureException('Did not expect val1, but got one.'));
 
-        $this->shouldThrow(new FailureException('Did not expect val1, but got one.'))
-            ->duringNegativeMatch('beLike', 0, array(''));
+        $expectation->duringNegativeMatch('beLike', 0, array(''));
     }
 
     function it_mismatches_null_with_emptish_values_using_comparison_operator()
