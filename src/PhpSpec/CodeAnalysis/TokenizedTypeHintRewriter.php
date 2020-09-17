@@ -50,6 +50,11 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     {
         $this->typeHintIndex = $typeHintIndex;
         $this->namespaceResolver = $namespaceResolver;
+
+        if (\PHP_VERSION_ID >= 80000) {
+            $this->typehintTokens[] = T_NAME_FULLY_QUALIFIED;
+            $this->typehintTokens[] = T_NAME_QUALIFIED;
+        }
     }
 
     public function rewrite(string $classDefinition): string
