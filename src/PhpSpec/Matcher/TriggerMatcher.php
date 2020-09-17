@@ -82,7 +82,7 @@ final class TriggerMatcher implements Matcher
     {
         $triggered = 0;
 
-        $prevHandler = set_error_handler(function ($type, $str, $file, $line, $context) use (&$prevHandler, $level, $message, &$triggered) {
+        $prevHandler = set_error_handler(function ($type, $str, $file, $line, $context=[]) use (&$prevHandler, $level, $message, &$triggered) {
             if (null !== $level && $level !== $type) {
                 return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
