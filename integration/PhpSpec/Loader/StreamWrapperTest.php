@@ -31,6 +31,6 @@ class StreamWrapperTest extends TestCase
         $method = $reflection->getMethod('it_requires_a_stdclass');
         $parameters = $method->getParameters();
 
-        $this->assertNull($parameters[0]->getClass());
+        $this->assertNull($parameters[0]->getType());
     }
 }
