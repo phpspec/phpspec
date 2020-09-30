@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 class StreamWrapperTest extends TestCase
 {
-    function setUp()
+    function setUp() : void
     {
         $wrapper = new StreamWrapper();
         $wrapper->addTransformer(new TypeHintRewriter(new TokenizedTypeHintRewriter(new InMemoryTypeHintIndex(), new TokenizedNamespaceResolver())));
