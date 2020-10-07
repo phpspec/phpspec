@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\CodeAnalysis;
 
 use PhpSpec\CodeAnalysis\DisallowedNonObjectTypehintException;
+use PhpSpec\CodeAnalysis\DisallowedUnionTypehintException;
 use PhpSpec\CodeAnalysis\NamespaceResolver;
 use PhpSpec\Loader\Transformer\TypeHintIndex;
 use PhpSpec\ObjectBehavior;
@@ -110,6 +111,31 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
     }
 
     function it_removes_typehints_for_multiple_arguments_in_methods()
+    {
+        $this->rewrite('
+        <?php
+
+        class FooSpec
+        {
+            public function bar(Bar $bar, Baz $baz)
+            {
+            }
+        }
+
+        ')->shouldReturn('
+        <?php
+
+        class FooSpec
+        {
+            public function bar( $bar,  $baz)
+            {
+            }
+        }
+
+        ');
+    }
+
+    function it_removes_union_type_hints()
     {
         $this->rewrite('
         <?php
@@ -254,5 +280,89 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
         }
 
         ');
+    }
+
+    function it_removes_union_types()
+    {
+        if (PHP_VERSION_ID < 8000) {
+            return;
+        }
+
+        $this->rewrite('
+        <?php
+
+        class FooSpec
+        {
+            public function bar(Bar|Baz $bar)
+            {
+            }
+        }
+
+        ')->shouldReturn('
+        <?php
+
+        class FooSpec
+        {
+            public function bar( $bar)
+            {
+            }
+        }
+
+        ');
+    }
+
+    function it_removes_union_types_with_whitespace()
+    {
+        if (PHP_VERSION_ID < 8000) {
+            return;
+        }
+
+        $this->rewrite('
+        <?php
+
+        class FooSpec
+        {
+            public function bar(Bar | Baz $bar)
+            {
+            }
+        }
+
+        ')->shouldReturn('
+        <?php
+
+        class FooSpec
+        {
+            public function bar(   $bar)
+            {
+            }
+        }
+
+        ');
+    }
+
+    function it_indexes_union_types(TypeHintIndex $typeHintIndex)
+    {
+        if (PHP_VERSION_ID < 8000) {
+            return;
+        }
+
+        $this->rewrite('
+        <?php
+
+        class FooSpec
+        {
+            public function bar(Bar | Baz $bar)
+            {
+            }
+        }
+
+        ');
+
+        $typeHintIndex->addInvalid(
+            'someClass',
+            'bar',
+            '$bar',
+            Argument::type(DisallowedUnionTypehintException::class)
+        )->shouldHaveBeenCalled();
     }
 }
