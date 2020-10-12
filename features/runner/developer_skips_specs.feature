@@ -38,4 +38,46 @@ Feature: Developer skips examples
       """
     When I run phpspec using the "dot" format
     Then 1 example should have been skipped
-    But the suite should pass
+    And the suite should pass
+
+  Scenario: Skipping a spec file should not render the stack trace using verbose option
+    Given the spec file "spec/Runner/SpecExample/EmojiSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\Runner\SpecExample;
+
+      use PhpSpec\ObjectBehavior;
+      use PhpSpec\Exception\Example\SkippingException;
+
+      class EmojiSpec extends ObjectBehavior
+      {
+          function it_conversts_named_emoji_to_utf8()
+          {
+              throw new SkippingException('😏');
+          }
+      }
+
+      """
+    And the class file "src/Runner/SpecExample/Emoji.php" contains:
+      """
+      <?php
+
+      namespace Runner\SpecExample;
+
+      class Emoji
+      {
+          public function toUtf8($text)
+          {
+            // I don't have the time to implement this right now. 😤
+          }
+      }
+
+      """
+    When I run phpspec with the "verbose" option
+    Then 1 example should have been skipped
+    And the suite should pass
+    But The output should not contain:
+      """
+      spec/Runner/SpecExample/EmojiSpec.php:12
+      """
