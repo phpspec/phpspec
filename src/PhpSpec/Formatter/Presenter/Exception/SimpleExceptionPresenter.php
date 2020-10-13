@@ -16,6 +16,7 @@ namespace PhpSpec\Formatter\Presenter\Exception;
 use PhpSpec\Exception\Example\ErrorException;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Exception\Example\PendingException;
+use PhpSpec\Exception\Example\SkippingException;
 use PhpSpec\Exception\Exception as PhpSpecException;
 use PhpSpec\Formatter\Presenter\Differ\Differ;
 use Prophecy\Exception\Call\UnexpectedCallException;
@@ -103,6 +104,11 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
      */
     private function getVerbosePresentation(\Exception $exception, string $presentation): string
     {
+        // displaying skipped exception trace is not necessary and too verbose
+        if ($exception instanceof SkippingException) {
+            return '';
+        }
+
         if ($exception instanceof NotEqualException) {
             if ($diff = $this->presentExceptionDifference($exception)) {
                 $presentation .= PHP_EOL . $diff;
