@@ -75,10 +75,7 @@ class ComposerPsrNamespaceProvider
                 if (strpos($namespace, $this->specPrefix) !== 0) {
                     $namespaces[$namespace] = new NamespaceLocation(
                         $namespace,
-                        substr(
-                            realpath($location),
-                            \strlen(realpath($this->rootDirectory)) + 1 // trailing slash
-                        ),
+                        $this->normaliseLocation($location),
                         $standard
                     );
                 }
@@ -86,5 +83,14 @@ class ComposerPsrNamespaceProvider
         }
 
         return $namespaces;
+    }
+
+    private function normaliseLocation($location)
+    {
+        return strpos(realpath($location), realpath($this->rootDirectory)) === 0 ?
+            substr(
+                realpath($location),
+                \strlen(realpath($this->rootDirectory)) + 1 // trailing slash
+            ) : '';
     }
 }
