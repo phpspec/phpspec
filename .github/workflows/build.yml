@@ -1,0 +1,90 @@
+name: Build
+
+on:
+    push:
+        branches: [main, next, master, 2.5, 3.4, 4.3, 5.1, 6.2]
+    pull_request:
+    release:
+        types: [created]
+
+jobs:
+    tests:
+        runs-on: ubuntu-latest
+        name: Build and test
+        strategy:
+            matrix:
+                php: [7.2, 7.3, 7.4]
+                composer-flags: [""]
+                composer-extras: [""]
+                stability: ["stable"]
+                include:
+                    -   php: 7.2
+                        publish-phar: true
+                    -   php: 7.2
+                        composer-flags: --prefer-lowest
+                    -   php: 7.2
+                        composer-extras: "symfony/event-dispatcher ^3.4 symfony/contracts ^2.0"
+                    -   php: 7.4
+                        stability: "dev"
+
+        env:
+            COMPOSER_ROOT_VERSION: dev-master
+
+        steps:
+            -   uses: actions/checkout@v2
+
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: "${{ matrix.php }}"
+                    ini-values: "phar.readonly=0"
+
+            -   name: Install composer extras
+                if: matrix.composer-extras != ''
+                run: composer require ${{ matrix.composer-extras }} --no-update
+
+            -   name: Update the minimum stability
+                if: matrix.stability == 'dev'
+                run: composer config minimum-stability ${{ matrix.stability }}
+
+            -   name: Install dependencies
+                run: composer update ${{ matrix.composer-flags }}
+
+            -   name: Run tests (phpspec)
+                run: bin/phpspec run --format=dot
+
+            -   name: Run tests (phpunit)
+                run: ./vendor/bin/phpunit -v
+
+            -   name: Build the PHAR
+                run: |
+                    composer config platform.php 7.2.0 &&
+                    ln -s `which composer` composer.phar &&
+                    make phpspec.phar
+
+            -   uses: actions/upload-artifact@v1
+                name: Publish the PHAR
+                if: matrix.publish-phar
+                with:
+                    name: phpspec.phar
+                    path: phpspec.phar
+
+    publish-phar:
+        runs-on: ubuntu-latest
+        name: Publish the PHAR
+        needs: tests
+        if: github.event_name == 'release'
+        steps:
+            -   uses: actions/download-artifact@v1
+                with:
+                    name: phpspec.phar
+                    path: .
+            -   name: Upload phpspec.phar
+                uses: actions/upload-release-asset@v1
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                with:
+                    upload_url: ${{ github.event.release.upload_url }}
+                    asset_path: phpspec.phar
+                    asset_name: phpspec.phar
+                    asset_content_type: application/zip
