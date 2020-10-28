@@ -128,7 +128,7 @@ class FilesystemContext implements Context
         if (!file_exists($file)) {
             throw new \Exception(sprintf(
                 "File did not exist at path '%s'",
-                $file
+                (new SplFileInfo($file))->getRealPath()
             ));
         }
 
@@ -136,7 +136,7 @@ class FilesystemContext implements Context
         if ($expectedContents != file_get_contents($file)) {
             throw new \Exception(sprintf(
                 "File at '%s' did not contain expected contents.\nExpected: '%s'\nActual: '%s'",
-                realpath($file),
+                $file,
                 $expectedContents,
                 file_get_contents($file)
             ));
