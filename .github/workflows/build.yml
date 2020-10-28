@@ -14,6 +14,7 @@ jobs:
         strategy:
             matrix:
                 php: [7.3, 7.4]
+            fail-fast: false
                 composer-flags: [""]
                 composer-extras: [""]
                 stability: ["stable"]
@@ -56,9 +57,9 @@ jobs:
             -   name: Run tests (phpunit)
                 run: ./vendor/bin/phpunit -v
 
-            -   name: Build the PHAR
-                run: |
-                    composer config platform.php 7.3.0 &&
+            -   name: Run tests (behat)
+                run: ./vendor/bin/behat --format=progress
+
                     ln -s `which composer` composer.phar &&
                     make phpspec.phar
 

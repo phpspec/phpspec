@@ -117,12 +117,12 @@ final class ObjectStateMatcher implements Matcher
 
     /**
      * @param callable $callable
-     * @param Boolean  $expectedBool
-     * @param Boolean  $result
+     * @param boolean  $expectedBool
+     * @param mixed    $result
      *
      * @return FailureException
      */
-    private function getFailureExceptionFor(callable $callable, bool $expectedBool, bool $result): FailureException
+    private function getFailureExceptionFor(callable $callable, bool $expectedBool, $result): FailureException
     {
         return new FailureException(sprintf(
             "Expected %s to return %s, but got %s.",

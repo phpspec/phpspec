@@ -26,7 +26,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
     {
         $subject = new \ReflectionClass($this);
 
-        $this->supports('beAbstract', $subject, array())->shouldReturn(true);
+        $this->supports('beAbstract', $subject, [])->shouldReturn(true);
     }
 
     function it_throws_exception_if_checker_method_not_found()
@@ -34,29 +34,240 @@ class ObjectStateMatcherSpec extends ObjectBehavior
         $subject = new \ReflectionClass($this);
 
         $this->shouldThrow('PhpSpec\Exception\Fracture\MethodNotFoundException')
-            ->duringPositiveMatch('beSimple', $subject, array());
+            ->duringPositiveMatch('beSimple', $subject, []);
     }
 
-    function it_matches_if_state_checker_returns_true()
+    function it_positive_matches_if_state_checker_returns_true()
     {
         $subject = new \ReflectionClass($this);
 
-        $this->shouldNotThrow()->duringPositiveMatch('beUserDefined', $subject, array());
+        $this->shouldNotThrow()->duringPositiveMatch('beUserDefined', $subject, []);
     }
 
-    function it_does_not_match_if_state_checker_returns_false()
+    function it_does_not_positive_match_if_state_checker_returns_false()
     {
         $subject = new \ReflectionClass($this);
 
         $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
-            ->duringPositiveMatch('beFinal', $subject, array());
+            ->duringPositiveMatch('beFinal', $subject, []);
+    }
+
+    function it_does_not_positive_match_if_state_checker_returns_null()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringPositiveMatch('beMatched', $subject, []);
+    }
+
+    function it_does_not_positive_match_if_state_checker_returns_integer()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+                return 123;
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringPositiveMatch('beMatched', $subject, []);
+    }
+
+    function it_does_not_positive_match_if_state_checker_returns_float()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+                return 1.2;
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringPositiveMatch('beMatched', $subject, []);
+    }
+
+    function it_does_not_positive_match_if_state_checker_returns_string()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+                return '';
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringPositiveMatch('beMatched', $subject, []);
+    }
+
+    function it_does_not_positive_match_if_state_checker_returns_array()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+                return [];
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringPositiveMatch('beMatched', $subject, []);
+    }
+
+    function it_does_not_positive_match_if_state_checker_returns_object()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+                return $this;
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringPositiveMatch('beMatched', $subject, []);
+    }
+
+    function it_does_not_positive_match_if_state_checker_returns_resource()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+                return curl_init();
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringPositiveMatch('beMatched', $subject, []);
+    }
+
+    function it_negative_matches_if_state_checker_returns_false()
+    {
+        $subject = new \ReflectionClass($this);
+
+        $this->shouldNotThrow()->duringNegativeMatch('beFinal', $subject, []);
+    }
+
+    function it_does_not_negative_match_if_state_checker_returns_true()
+    {
+        $subject = new \ReflectionClass($this);
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('beUserDefined', $subject, []);
+    }
+
+    function it_does_not_negative_match_if_state_checker_returns_null()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('beMatched', $subject, []);
+    }
+
+    function it_does_not_negative_match_if_state_checker_returns_integer()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+                return 123;
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('beMatched', $subject, []);
+    }
+
+    function it_does_not_negative_match_if_state_checker_returns_float()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+                return 1.2;
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('beMatched', $subject, []);
+    }
+
+    function it_does_not_negative_match_if_state_checker_returns_string()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+                return '';
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('beMatched', $subject, []);
+    }
+
+    function it_does_not_negative_match_if_state_checker_returns_array()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+                return [];
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('beMatched', $subject, []);
+    }
+
+    function it_does_not_negative_match_if_state_checker_returns_object()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+                return $this;
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('beMatched', $subject, []);
+    }
+
+    function it_does_not_negative_match_if_state_checker_returns_resource()
+    {
+        $subject = new class
+        {
+            public function isMatched()
+            {
+                return curl_init();
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('beMatched', $subject, []);
     }
 
     function it_infers_matcher_alias_name_from_methods_prefixed_with_has()
     {
         $subject = new \ReflectionClass($this);
 
-        $this->supports('haveProperty', $subject, array('something'))->shouldReturn(true);
+        $this->supports('haveProperty', $subject, ['something'])->shouldReturn(true);
     }
 
     function it_throws_exception_if_has_checker_method_not_found()
@@ -64,31 +275,250 @@ class ObjectStateMatcherSpec extends ObjectBehavior
         $subject = new \ReflectionClass($this);
 
         $this->shouldThrow('PhpSpec\Exception\Fracture\MethodNotFoundException')
-            ->duringPositiveMatch('haveAnything', $subject, array('str'));
+            ->duringPositiveMatch('haveAnything', $subject, ['str']);
     }
 
-    function it_matches_if_has_checker_returns_true()
+    function it_positive_matches_if_has_checker_returns_true()
     {
         $subject = new \ReflectionClass($this);
 
         $this->shouldNotThrow()->duringPositiveMatch(
-            'haveMethod', $subject, array('it_matches_if_has_checker_returns_true')
+            'haveMethod', $subject, ['it_positive_matches_if_has_checker_returns_true']
         );
     }
 
-    function it_does_not_match_if_has_state_checker_returns_false()
+    function it_does_not_positive_match_if_has_state_checker_returns_false()
     {
         $subject = new \ReflectionClass($this);
 
         $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
-            ->duringPositiveMatch('haveProperty', $subject, array('other'));
+            ->duringPositiveMatch('haveProperty', $subject, ['other']);
+    }
+
+    function it_does_not_positive_match_if_has_checker_returns_null()
+    {
+        $subject = new class
+        {
+            public function hasMatch()
+            {
+
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringPositiveMatch('haveMatch', $subject, []);
+    }
+
+    function it_does_not_positive_match_if_has_checker_returns_integer()
+    {
+        $subject = new class
+        {
+            public function hasMatch()
+            {
+                return 123;
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringPositiveMatch('haveMatch', $subject, []);
+    }
+
+    function it_does_not_positive_match_if_has_checker_returns_float()
+    {
+        $subject = new class
+        {
+            public function hasMatch()
+            {
+                return 1.2;
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringPositiveMatch('haveMatch', $subject, []);
+    }
+
+    function it_does_not_positive_match_if_has_checker_returns_string()
+    {
+        $subject = new class
+        {
+            public function hasMatch()
+            {
+                return '';
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringPositiveMatch('haveMatch', $subject, []);
+    }
+
+    function it_does_not_positive_match_if_has_checker_returns_array()
+    {
+        $subject = new class
+        {
+            public function hasMatched()
+            {
+                return [];
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringPositiveMatch('haveMatched', $subject, []);
+    }
+
+    function it_does_not_positive_match_if_has_checker_returns_object()
+    {
+        $subject = new class
+        {
+            public function hasMatch()
+            {
+                return $this;
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringPositiveMatch('haveMatch', $subject, []);
+    }
+
+    function it_does_not_positive_match_if_has_checker_returns_resource()
+    {
+        $subject = new class
+        {
+            public function hasMatch()
+            {
+                return curl_init();
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringPositiveMatch('haveMatch', $subject, []);
+    }
+
+    function it_negative_matches_if_has_checker_returns_false()
+    {
+        $subject = new \ReflectionClass($this);
+
+        $this->shouldNotThrow()->duringNegativeMatch(
+            'haveMethod', $subject, ['other']
+        );
+    }
+
+    function it_does_not_negative_match_if_has_state_checker_returns_true()
+    {
+        $subject = new \ReflectionClass($this);
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch(
+                'haveMethod',
+                $subject,
+                [
+                    'it_does_not_negative_match_if_has_state_checker_returns_true'
+                ]
+            );
+    }
+
+    function it_does_not_negative_match_if_has_checker_returns_null()
+    {
+        $subject = new class
+        {
+            public function hasMatch()
+            {
+
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('haveMatch', $subject, []);
+    }
+
+    function it_does_not_negative_match_if_has_checker_returns_integer()
+    {
+        $subject = new class
+        {
+            public function hasMatch()
+            {
+                return 123;
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('haveMatch', $subject, []);
+    }
+
+    function it_does_not_negative_match_if_has_checker_returns_float()
+    {
+        $subject = new class
+        {
+            public function hasMatch()
+            {
+                return 1.2;
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('haveMatch', $subject, []);
+    }
+
+    function it_does_not_negative_match_if_has_checker_returns_string()
+    {
+        $subject = new class
+        {
+            public function hasMatch()
+            {
+                return '';
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('haveMatch', $subject, []);
+    }
+
+    function it_does_not_negative_match_if_has_checker_returns_array()
+    {
+        $subject = new class
+        {
+            public function hasMatched()
+            {
+                return [];
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('haveMatched', $subject, []);
+    }
+
+    function it_does_not_negative_match_if_has_checker_returns_object()
+    {
+        $subject = new class
+        {
+            public function hasMatch()
+            {
+                return $this;
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('haveMatch', $subject, []);
+    }
+
+    function it_does_not_negative_match_if_has_checker_returns_resource()
+    {
+        $subject = new class
+        {
+            public function hasMatch()
+            {
+                return curl_init();
+            }
+        };
+
+        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+            ->duringNegativeMatch('haveMatch', $subject, []);
     }
 
     function it_does_not_match_if_subject_is_callable()
     {
         $subject = function () {};
 
-        $this->supports('beCallable', $subject, array())->shouldReturn(false);
+        $this->supports('beCallable', $subject, [])->shouldReturn(false);
     }
 
     function it_does_not_throw_when_positive_match_true()

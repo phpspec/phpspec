@@ -3,9 +3,9 @@ phpspec
 
 The main website with documentation is at `http://www.phpspec.net <http://www.phpspec.net>`_.
 
-.. image:: https://travis-ci.org/phpspec/phpspec.svg?branch=master
-   :target: https://travis-ci.org/phpspec/phpspec
-   :alt: Master Travis Build Status
+.. image:: https://github.com/phpspec/phpspec/workflows/Build/badge.svg
+   :target: https://github.com/phpspec/phpspec/actions?query=workflow%3ABuild
+   :alt: Main Build Status
 
 .. image:: https://img.shields.io/scrutinizer/g/phpspec/phpspec.svg
    :target: https://scrutinizer-ci.com/g/phpspec/phpspec/build-status/master

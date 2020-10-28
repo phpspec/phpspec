@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 class StreamWrapperTest extends TestCase
 {
-    function setUp()
+    function setUp() : void
     {
         $wrapper = new StreamWrapper();
         $wrapper->addTransformer(new TypeHintRewriter(new TokenizedTypeHintRewriter(new InMemoryTypeHintIndex(), new TokenizedNamespaceResolver())));
@@ -31,6 +31,6 @@ class StreamWrapperTest extends TestCase
         $method = $reflection->getMethod('it_requires_a_stdclass');
         $parameters = $method->getParameters();
 
-        $this->assertNull($parameters[0]->getClass());
+        $this->assertNull($parameters[0]->getType());
     }
 }
