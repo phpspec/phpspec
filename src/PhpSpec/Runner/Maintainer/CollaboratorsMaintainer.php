@@ -14,6 +14,7 @@
 namespace PhpSpec\Runner\Maintainer;
 
 use PhpSpec\CodeAnalysis\DisallowedNonObjectTypehintException;
+use PhpSpec\CodeAnalysis\DisallowedUnionTypehintException;
 use PhpSpec\Exception\Fracture\CollaboratorNotFoundException;
 use PhpSpec\Exception\Wrapper\InvalidCollaboratorTypeException;
 use PhpSpec\Loader\Node\ExampleNode;
@@ -134,6 +135,9 @@ final class CollaboratorsMaintainer implements Maintainer
             }
             catch (ClassNotFoundException $e) {
                 $this->throwCollaboratorNotFound($e, null, $e->getClassname());
+            }
+            catch (DisallowedUnionTypehintException $e) {
+                throw new InvalidCollaboratorTypeException($parameter, $function, $e->getMessage(), 'Use a specific type');
             }
             catch (DisallowedNonObjectTypehintException $e) {
                 throw new InvalidCollaboratorTypeException($parameter, $function);

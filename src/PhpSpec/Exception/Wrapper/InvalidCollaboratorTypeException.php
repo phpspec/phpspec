@@ -17,11 +17,19 @@ namespace PhpSpec\Exception\Wrapper;
 class InvalidCollaboratorTypeException extends CollaboratorException
 {
 
-    public function __construct(\ReflectionParameter $parameter, \ReflectionFunctionAbstract $function)
+    public function __construct(
+        \ReflectionParameter $parameter,
+        \ReflectionFunctionAbstract $function,
+        ?string $reason = null,
+        ?string $prompt = null
+    )
     {
+        $reason = $reason ?? 'Collaborator must be an object';
+        $prompt = $prompt ?? 'You can create non-object values manually.';
+
         $message = sprintf(
-            'Collaborator must be an object: argument %s defined in %s. ' .
-            'You can create non-object values manually.',
+            $reason . ': argument %s defined in %s. ' .
+            $prompt,
             $parameter->getPosition(),
             $this->fetchFunctionIdentifier($function)
         );
