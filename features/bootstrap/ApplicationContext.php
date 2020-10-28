@@ -80,6 +80,7 @@ class ApplicationContext implements Context
 
     private function resetShellVerbosity()
     {
+        putenv('SHELL_INTERACTIVE=1');
         putenv(sprintf('SHELL_VERBOSITY=%d', OutputInterface::VERBOSITY_NORMAL));
     }
 
