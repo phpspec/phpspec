@@ -29,30 +29,16 @@ class NotEqualException extends FailureException
     private $actual;
 
     /**
-     * @var mixed
-     */
-    private $subject;
-
-    /**
-     * @var string
-     */
-    private $method;
-
-    /**
      * @param string $message
      * @param mixed  $expected
      * @param mixed  $actual
-     * @param mixed  $subject
-     * @param string $method
      */
-    public function __construct(string $message, $expected, $actual, $subject = null, $method = null)
+    public function __construct(string $message, $expected, $actual)
     {
         parent::__construct($message);
 
         $this->expected = $expected;
         $this->actual   = $actual;
-        $this->subject = $subject;
-        $this->method = $method;
     }
 
     /**
@@ -69,22 +55,6 @@ class NotEqualException extends FailureException
     public function getActual()
     {
         return $this->actual;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getSubject()
-    {
-        return $this->subject;
-    }
-
-    /**
-     * @return string
-     */
-    public function getMethod()
-    {
-        return $this->method;
     }
 
     /**

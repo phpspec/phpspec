@@ -13,6 +13,7 @@ use PhpSpec\Locator\ResourceManager;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Util\MethodAnalyser;
 use Prophecy\Argument;
+use PhpSpec\Exception\Example\MethodFailureException;
 
 class MethodReturnedNullListenerSpec extends ObjectBehavior
 {
@@ -22,17 +23,17 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         Resource $resource,
         GeneratorManager $generatorManager,
         ExampleEvent $exampleEvent,
-        NotEqualException $notEqualException,
+        MethodFailureException $methodFailureException,
         MethodAnalyser $methodAnalyser,
         MethodCallEvent $methodCallEvent
     ) {
         $this->beConstructedWith($io, $resourceManager, $generatorManager, $methodAnalyser);
 
-        $exampleEvent->getException()->willReturn($notEqualException);
-        $notEqualException->getActual()->willReturn(null);
-        $notEqualException->getExpected()->willReturn(100);
-        $notEqualException->getSubject()->willReturn(null);
-        $notEqualException->getMethod()->willReturn(null);
+        $exampleEvent->getException()->willReturn($methodFailureException);
+        $methodFailureException->getActual()->willReturn(null);
+        $methodFailureException->getExpected()->willReturn(100);
+        $methodFailureException->getSubject()->willReturn(null);
+        $methodFailureException->getMethod()->willReturn(null);
 
         $methodCallEvent->getMethod()->willReturn('foo');
         $methodCallEvent->getSubject()->willReturn(new \stdClass);
@@ -216,10 +217,10 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
     }
 
     function it_prompts_if_no_method_was_called_beforehand_but_subject_and_method_are_set_on_the_exception(
-        ExampleEvent $exampleEvent, ConsoleIO $io, SuiteEvent $event, NotEqualException $notEqualException
+        ExampleEvent $exampleEvent, ConsoleIO $io, SuiteEvent $event, MethodFailureException $methodFailureException
     ) {
-        $notEqualException->getSubject()->willReturn(new \stdClass());
-        $notEqualException->getMethod()->willReturn('myMethod');
+        $methodFailureException->getSubject()->willReturn(new \stdClass());
+        $methodFailureException->getMethod()->willReturn('myMethod');
 
         $this->afterExample($exampleEvent);
         $this->afterSuite($event);

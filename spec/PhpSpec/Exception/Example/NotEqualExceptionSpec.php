@@ -25,30 +25,4 @@ class NotEqualExceptionSpec extends ObjectBehavior
     {
         $this->getActual()->shouldReturn(5);
     }
-
-    function it_has_no_link_to_the_subject_by_default()
-    {
-        $this->getSubject()->shouldReturn(null);
-    }
-
-    function it_has_no_link_to_the_method_by_default()
-    {
-        $this->getMethod()->shouldReturn(null);
-    }
-
-    function it_provides_a_link_to_the_subject_if_present()
-    {
-        $subject = new \stdClass();
-        $this->beConstructedWith('Not equal', 2, 5, $subject);
-
-        $this->getSubject()->shouldReturn($subject);
-    }
-
-    function it_provides_a_link_to_the_method_if_present()
-    {
-        $method = 'methodName';
-        $this->beConstructedWith('Not equal', 2, 5, null, $method);
-
-        $this->getMethod()->shouldReturn($method);
-    }
 }
