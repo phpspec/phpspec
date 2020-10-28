@@ -12,9 +12,9 @@ jobs:
         runs-on: ubuntu-latest
         name: Build and test
         strategy:
+            fail-fast: false
             matrix:
                 php: [7.3, 7.4]
-                fail-fast: false
                 composer-flags: [""]
                 composer-extras: [""]
                 stability: ["stable"]
