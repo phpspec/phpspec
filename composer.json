@@ -38,7 +38,7 @@
     "require-dev": {
         "behat/behat":           "^3.3",
         "symfony/filesystem":    "^3.4 || ^4.0 || ^5.0",
-        "phpunit/phpunit":       "^7.0"
+        "phpunit/phpunit":       "^8.0 || ^9.0"
     },
 
     "suggest": {
@@ -65,7 +65,7 @@
 
     "extra": {
         "branch-alias": {
-            "dev-master": "8.0.x-dev"
+            "dev-next": "8.0.x-dev"
         }
     }
 

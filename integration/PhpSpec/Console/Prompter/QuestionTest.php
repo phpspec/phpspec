@@ -31,7 +31,7 @@ class QuestionTest extends TestCase
      */
     private $prompter;
 
-    protected function setUp()
+    protected function setUp() : void
     {
         $this->input = $this->createMock('Symfony\Component\Console\Input\InputInterface');
         $this->output = $this->createMock('Symfony\Component\Console\Output\OutputInterface');

@@ -50,6 +50,11 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     {
         $this->typeHintIndex = $typeHintIndex;
         $this->namespaceResolver = $namespaceResolver;
+
+        if (\PHP_VERSION_ID >= 80000) {
+            $this->typehintTokens[] = T_NAME_FULLY_QUALIFIED;
+            $this->typehintTokens[] = T_NAME_QUALIFIED;
+        }
     }
 
     public function rewrite(string $classDefinition): string
@@ -144,8 +149,8 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     private function extractTypehints(array &$tokens, int $index, array $token): void
     {
         $typehint = '';
-        for ($i = $index - 1; \in_array($tokens[$i][0], $this->typehintTokens); $i--) {
-            $typehint = $tokens[$i][1] . $typehint;
+        for ($i = $index - 1; !$this->haveNotReachedEndOfTypeHint($tokens[$i]); $i--) {
+            $typehint = (is_array($tokens[$i]) ? $tokens[$i][1] : $tokens[$i]) . $typehint;
 
             if (T_WHITESPACE !== $tokens[$i][0]) {
                 unset($tokens[$i]);
@@ -153,7 +158,20 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         }
 
         if ($typehint = trim($typehint)) {
+
             $class = $this->namespaceResolver->resolve($this->currentClass);
+
+            if (\strpos($typehint, '|') !== false) {
+                $this->typeHintIndex->addInvalid(
+                    $class,
+                    trim($this->currentFunction),
+                    $token[1],
+                    new DisallowedUnionTypehintException("Union type $typehint cannot be used to create a double")
+                );
+
+                return;
+            }
+
             try {
                 $typehintFcqn = $this->namespaceResolver->resolve($typehint);
                 $this->typeHintIndex->add(
@@ -171,6 +189,15 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                 );
             }
         }
+    }
+
+    private function haveNotReachedEndOfTypeHint($token) : bool
+    {
+        if ($token == '|') {
+            return false;
+        }
+
+        return !\in_array($token[0], $this->typehintTokens);
     }
 
     /**
