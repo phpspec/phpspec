@@ -58,7 +58,6 @@ jobs:
                 run: ./vendor/bin/phpunit -v
 
             -   name: Run tests (behat)
-                if: matrix.composer-flags == '' && matrix.composer-extras == ''
                 run: ./vendor/bin/behat --format=progress
 
             -   name: Build the PHAR
