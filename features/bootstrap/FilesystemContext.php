@@ -136,7 +136,7 @@ class FilesystemContext implements Context
         if ($expectedContents != file_get_contents($file)) {
             throw new \Exception(sprintf(
                 "File at '%s' did not contain expected contents.\nExpected: '%s'\nActual: '%s'",
-                $file,
+                realpath($file),
                 $expectedContents,
                 file_get_contents($file)
             ));
