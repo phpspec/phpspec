@@ -31,10 +31,7 @@ class ReportPendingItem
      */
     private static $pendingExamplesCount = 1;
 
-    /**
-     * @param TemplateInterface $template
-     * @param ExampleEvent      $event
-     */
+    
     public function __construct(TemplateInterface $template, ExampleEvent $event)
     {
         $this->template = $template;

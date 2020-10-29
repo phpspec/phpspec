@@ -38,11 +38,7 @@ final class MethodSignatureGenerator implements Generator
      */
     private $filesystem;
 
-    /**
-     * @param ConsoleIO               $io
-     * @param TemplateRenderer $templates
-     * @param Filesystem       $filesystem
-     */
+    
     public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem)
     {
         $this->io         = $io;

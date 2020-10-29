@@ -15,10 +15,6 @@ namespace PhpSpec\Formatter\Presenter\Exception;
 
 interface ExceptionPresenter
 {
-    /**
-     * @param \Exception $exception
-     * @param bool $verbose
-     * @return string
-     */
+    
     public function presentException(\Exception $exception, bool $verbose = false): string;
 }

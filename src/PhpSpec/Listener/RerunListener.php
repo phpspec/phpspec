@@ -30,10 +30,7 @@ final class RerunListener implements EventSubscriberInterface
      */
     private $suitePrerequisites;
 
-    /**
-     * @param ReRunner $reRunner
-     * @param PrerequisiteTester $suitePrerequisites
-     */
+    
     public function __construct(ReRunner $reRunner, PrerequisiteTester $suitePrerequisites)
     {
         $this->reRunner = $reRunner;
@@ -51,17 +48,13 @@ final class RerunListener implements EventSubscriberInterface
         );
     }
 
-    /**
-     * @param SuiteEvent $suiteEvent
-     */
+    
     public function beforeSuite(SuiteEvent $suiteEvent): void
     {
         $this->suitePrerequisites->guardPrerequisites();
     }
 
-    /**
-     * @param SuiteEvent $suiteEvent
-     */
+    
     public function afterSuite(SuiteEvent $suiteEvent): void
     {
         if ($suiteEvent->isWorthRerunning()) {

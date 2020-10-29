@@ -25,9 +25,7 @@ final class HtmlIO implements IO
         echo $message;
     }
 
-    /**
-     * @return bool
-     */
+    
     public function isVerbose(): bool
     {
         return true;

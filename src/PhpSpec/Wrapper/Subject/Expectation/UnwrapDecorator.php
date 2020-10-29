@@ -22,23 +22,14 @@ final class UnwrapDecorator extends Decorator implements Expectation
      */
     private $unwrapper;
 
-    /**
-     * @param Expectation $expectation
-     * @param Unwrapper            $unwrapper
-     */
+    
     public function __construct(Expectation $expectation, Unwrapper $unwrapper)
     {
         parent::__construct($expectation);
         $this->unwrapper = $unwrapper;
     }
 
-    /**
-     * @param string $alias
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return mixed
-     */
+    
     public function match(string $alias, $subject, array $arguments = array())
     {
         $arguments = $this->unwrapper->unwrapAll($arguments);

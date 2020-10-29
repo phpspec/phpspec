@@ -24,17 +24,13 @@ class ReportItemFactory
      */
     private $template;
 
-    /**
-     * @param TemplateInterface $template
-     */
+    
     public function __construct(TemplateInterface $template)
     {
         $this->template = $template;
     }
 
     /**
-     * @param ExampleEvent $event
-     * @param Presenter    $presenter
      *
      * @return ReportFailedItem|ReportPassedItem|ReportPendingItem|ReportSkippedItem
      */

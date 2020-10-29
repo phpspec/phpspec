@@ -15,27 +15,19 @@ namespace PhpSpec\Formatter\Presenter\Value;
 
 final class ObjectTypePresenter implements TypePresenter
 {
-    /**
-     * @param mixed $value
-     * @return bool
-     */
+    
     public function supports($value): bool
     {
         return 'object' === strtolower(\gettype($value));
     }
 
-    /**
-     * @param mixed $value
-     * @return string
-     */
+    
     public function present($value): string
     {
         return sprintf('[obj:%s]', \get_class($value));
     }
 
-    /**
-     * @return int
-     */
+    
     public function getPriority(): int
     {
         return 30;

@@ -31,11 +31,7 @@ final class CallbackMatcher extends BasicMatcher
      */
     private $presenter;
 
-    /**
-     * @param string             $name
-     * @param callable           $callback
-     * @param Presenter $presenter
-     */
+    
     public function __construct(string $name, callable $callback, Presenter $presenter)
     {
         $this->name      = $name;
@@ -43,24 +39,13 @@ final class CallbackMatcher extends BasicMatcher
         $this->presenter = $presenter;
     }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return bool
-     */
+    
     public function supports(string $name, $subject, array $arguments): bool
     {
         return $name === $this->name;
     }
 
-    /**
-     * @param mixed $subject
-     * @param array $arguments
-     *
-     * @return bool
-     */
+    
     protected function matches($subject, array $arguments): bool
     {
         array_unshift($arguments, $subject);
@@ -68,13 +53,7 @@ final class CallbackMatcher extends BasicMatcher
         return (Boolean) \call_user_func_array($this->callback, $arguments);
     }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return FailureException
-     */
+    
     protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
@@ -85,13 +64,7 @@ final class CallbackMatcher extends BasicMatcher
         ));
     }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return FailureException
-     */
+    
     protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(

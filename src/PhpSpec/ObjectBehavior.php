@@ -95,7 +95,6 @@ abstract class ObjectBehavior implements
      * to prepare the subject with all the needed collaborators for proxying
      * object behaviour
      *
-     * @param Subject $subject
      */
     public function setSpecificationSubject(Subject $subject): void
     {
@@ -117,7 +116,6 @@ abstract class ObjectBehavior implements
      *
      * @param string|integer $key
      *
-     * @return Subject
      */
     public function offsetExists($key): Subject
     {
@@ -129,7 +127,6 @@ abstract class ObjectBehavior implements
      *
      * @param string|integer $key
      *
-     * @return Subject
      */
     public function offsetGet($key): Subject
     {
@@ -140,7 +137,6 @@ abstract class ObjectBehavior implements
      * Sets the value in a particular position in the ArrayAccess object
      *
      * @param string|integer $key
-     * @param mixed          $value
      */
     public function offsetSet($key, $value)
     {
@@ -160,10 +156,7 @@ abstract class ObjectBehavior implements
     /**
      * Proxies all calls to the PhpSpec subject
      *
-     * @param string $method
-     * @param array  $arguments
      *
-     * @return mixed
      */
     public function __call(string $method, array $arguments = array())
     {
@@ -173,8 +166,6 @@ abstract class ObjectBehavior implements
     /**
      * Proxies setting to the PhpSpec subject
      *
-     * @param string $property
-     * @param mixed  $value
      */
     public function __set(string $property, $value)
     {
@@ -184,9 +175,7 @@ abstract class ObjectBehavior implements
     /**
      * Proxies getting to the PhpSpec subject
      *
-     * @param string $property
      *
-     * @return mixed
      */
     public function __get(string $property)
     {
@@ -196,7 +185,6 @@ abstract class ObjectBehavior implements
     /**
      * Proxies functor calls to PhpSpec subject
      *
-     * @return mixed
      */
     public function __invoke()
     {

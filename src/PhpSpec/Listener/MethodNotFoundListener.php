@@ -34,12 +34,7 @@ final class MethodNotFoundListener implements EventSubscriberInterface
      */
     private $nameChecker;
 
-    /**
-     * @param ConsoleIO $io
-     * @param ResourceManager $resources
-     * @param GeneratorManager $generator
-     * @param NameChecker $nameChecker
-     */
+    
     public function __construct(
         ConsoleIO $io,
         ResourceManager $resources,

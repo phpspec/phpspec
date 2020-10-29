@@ -15,19 +15,9 @@ namespace PhpSpec\Formatter\Presenter\Differ;
 
 interface DifferEngine
 {
-    /**
-     * @param mixed $expected
-     * @param mixed $actual
-     *
-     * @return bool
-     */
+    
     public function supports($expected, $actual): bool;
 
-    /**
-     * @param mixed $expected
-     * @param mixed $actual
-     *
-     * @return string
-     */
+    
     public function compare($expected, $actual): string;
 }

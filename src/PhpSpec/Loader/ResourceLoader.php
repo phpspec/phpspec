@@ -31,10 +31,7 @@ class ResourceLoader
      */
     private $methodAnalyser;
 
-    /**
-     * @param ResourceManager $manager
-     * @param MethodAnalyser $methodAnalyser
-     */
+    
     public function __construct(ResourceManager $manager, MethodAnalyser $methodAnalyser)
     {
         $this->manager = $manager;
@@ -42,10 +39,8 @@ class ResourceLoader
     }
 
     /**
-     * @param string       $locator
      * @param integer|null $line
      *
-     * @return Suite
      */
     public function load(string $locator = '', int $line = null): Suite
     {
@@ -97,12 +92,7 @@ class ResourceLoader
         return $suite;
     }
 
-    /**
-     * @param int              $line
-     * @param ReflectionMethod $method
-     *
-     * @return bool
-     */
+    
     private function lineIsInsideMethod(int $line, ReflectionMethod $method): bool
     {
         $line = \intval($line);

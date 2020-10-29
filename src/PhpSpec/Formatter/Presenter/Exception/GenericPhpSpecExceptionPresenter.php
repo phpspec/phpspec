@@ -20,20 +20,16 @@ final class GenericPhpSpecExceptionPresenter extends AbstractPhpSpecExceptionPre
      */
     private $exceptionElementPresenter;
 
-    /**
-     * @param ExceptionElementPresenter $exceptionElementPresenter
-     */
+    
     public function __construct(ExceptionElementPresenter $exceptionElementPresenter)
     {
         $this->exceptionElementPresenter = $exceptionElementPresenter;
     }
 
     /**
-     * @param string  $file
      * @param integer $lineno
      * @param integer $context
      *
-     * @return string
      */
     protected function presentFileCode(string $file, int $lineno, int $context = 6): string
     {

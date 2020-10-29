@@ -39,11 +39,7 @@ class ExpectationFactory
      */
     private $matchers;
 
-    /**
-     * @param ExampleNode              $example
-     * @param EventDispatcherInterface $dispatcher
-     * @param MatcherManager           $matchers
-     */
+    
     public function __construct(ExampleNode $example, EventDispatcherInterface $dispatcher, MatcherManager $matchers)
     {
         $this->example = $example;
@@ -51,13 +47,7 @@ class ExpectationFactory
         $this->matchers = $matchers;
     }
 
-    /**
-     * @param string $expectation
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return Expectation
-     */
+    
     public function create(string $expectation, $subject, array $arguments = array()): Expectation
     {
         if (0 === strpos($expectation, 'shouldNot')) {
@@ -69,13 +59,7 @@ class ExpectationFactory
         }
     }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return Expectation
-     */
+    
     private function createPositive(string $name, $subject, array $arguments = array()): Expectation
     {
         if (strtolower($name) === 'throw') {
@@ -89,13 +73,7 @@ class ExpectationFactory
         return $this->createDecoratedExpectation("Positive", $name, $subject, $arguments);
     }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return Expectation
-     */
+    
     private function createNegative(string $name, $subject, array $arguments = array()): Expectation
     {
         if (strtolower($name) === 'throw') {
@@ -109,14 +87,7 @@ class ExpectationFactory
         return $this->createDecoratedExpectation("Negative", $name, $subject, $arguments);
     }
 
-    /**
-     * @param string $expectation
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return Expectation
-     */
+    
     private function createDecoratedExpectation(string $expectation, string $name, $subject, array $arguments): Expectation
     {
         $matcher = $this->findMatcher($name, $subject, $arguments);
@@ -131,13 +102,7 @@ class ExpectationFactory
         return $this->decoratedExpectation($expectation, $matcher);
     }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return Matcher
-     */
+    
     private function findMatcher(string $name, $subject, array $arguments = array()): Matcher
     {
         $unwrapper = new Unwrapper();
@@ -146,12 +111,7 @@ class ExpectationFactory
         return $this->matchers->find($name, $subject, $arguments);
     }
 
-    /**
-     * @param Expectation $expectation
-     * @param Matcher     $matcher
-     *
-     * @return ConstructorDecorator
-     */
+    
     private function decoratedExpectation(Expectation $expectation, Matcher $matcher): ConstructorDecorator
     {
         $dispatcherDecorator = new DispatcherDecorator($expectation, $this->dispatcher, $matcher, $this->example);

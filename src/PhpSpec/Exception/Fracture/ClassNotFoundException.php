@@ -23,10 +23,7 @@ class ClassNotFoundException extends FractureException
      */
     private $classname;
 
-    /**
-     * @param string $message
-     * @param string $classname
-     */
+    
     public function __construct(string $message, string $classname)
     {
         parent::__construct($message);
@@ -34,9 +31,7 @@ class ClassNotFoundException extends FractureException
         $this->classname = $classname;
     }
 
-    /**
-     * @return string
-     */
+    
     public function getClassname(): string
     {
         return $this->classname;

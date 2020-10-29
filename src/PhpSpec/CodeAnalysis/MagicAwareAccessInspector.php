@@ -20,9 +20,7 @@ final class MagicAwareAccessInspector implements AccessInspector
      */
     private $accessInspector;
 
-    /**
-     * @param AccessInspector $accessInspector
-     */
+    
     public function __construct(AccessInspector $accessInspector)
     {
         $this->accessInspector = $accessInspector;

@@ -52,12 +52,7 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
      */
     private $methodAnalyser;
 
-    /**
-     * @param ConsoleIO $io
-     * @param ResourceManager $resources
-     * @param GeneratorManager $generator
-     * @param MethodAnalyser $methodAnalyser
-     */
+    
     public function __construct(
         ConsoleIO $io,
         ResourceManager $resources,

@@ -33,11 +33,7 @@ final class ReturnConstantGenerator implements Generator
      */
     private $filesystem;
 
-    /**
-     * @param ConsoleIO        $io
-     * @param TemplateRenderer $templates
-     * @param Filesystem       $filesystem
-     */
+    
     public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem)
     {
         $this->io = $io;
@@ -50,10 +46,7 @@ final class ReturnConstantGenerator implements Generator
         return 'returnConstant' == $generation;
     }
 
-    /**
-     * @param Resource $resource
-     * @param array             $data
-     */
+    
     public function generate(Resource $resource, array $data): void
     {
         $method = $data['method'];

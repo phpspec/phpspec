@@ -18,21 +18,14 @@ use PhpSpec\Wrapper\Subject\WrappedObject;
 
 final class ConstructorDecorator extends Decorator implements Expectation
 {
-    /**
-     * @param Expectation $expectation
-     */
+    
     public function __construct(Expectation $expectation)
     {
         $this->setExpectation($expectation);
     }
 
     /**
-     * @param string             $alias
-     * @param mixed              $subject
-     * @param array              $arguments
-     * @param WrappedObject|null $wrappedObject
      *
-     * @return mixed
      *
      * @throws \PhpSpec\Exception\ErrorException
      * @throws \PhpSpec\Exception\Example\ErrorException

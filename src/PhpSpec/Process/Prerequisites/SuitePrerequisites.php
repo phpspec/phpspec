@@ -22,9 +22,7 @@ final class SuitePrerequisites implements PrerequisiteTester
      */
     private $executionContext;
 
-    /**
-     * @param ExecutionContext $executionContext
-     */
+    
     public function __construct(ExecutionContext $executionContext)
     {
         $this->executionContext = $executionContext;

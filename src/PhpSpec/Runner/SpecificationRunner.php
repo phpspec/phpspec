@@ -31,10 +31,7 @@ class SpecificationRunner
      */
     private $exampleRunner;
 
-    /**
-     * @param EventDispatcherInterface $dispatcher
-     * @param ExampleRunner            $exampleRunner
-     */
+    
     public function __construct(EventDispatcherInterface $dispatcher, ExampleRunner $exampleRunner)
     {
         $this->dispatcher    = $dispatcher;
@@ -42,7 +39,6 @@ class SpecificationRunner
     }
 
     /**
-     * @param  SpecificationNode $specification
      * @return int|mixed
      */
     public function run(SpecificationNode $specification): int

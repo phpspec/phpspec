@@ -21,7 +21,6 @@ class ReflectionFactory
 {
     /**
      * @param $class
-     * @return \ReflectionClass
      */
     public function create($class): \ReflectionClass
     {

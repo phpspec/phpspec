@@ -280,10 +280,7 @@ class ConsoleIO implements IO
         return $width;
     }
 
-    /**
-     * @param string $message
-     * @param int $indent
-     */
+    
     public function writeBrokenCodeBlock(string $message, int $indent = 0): void
     {
         $message = wordwrap($message, $this->getBlockWidth() - ($indent * 2), "\n", true);

@@ -32,12 +32,7 @@ final class SpecificationGenerator extends PromptingGenerator
         return 0;
     }
 
-    /**
-     * @param Resource $resource
-     * @param string            $filepath
-     *
-     * @return string
-     */
+    
     protected function renderTemplate(Resource $resource, string $filepath): string
     {
         $values = array(

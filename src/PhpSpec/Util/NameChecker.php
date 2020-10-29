@@ -15,10 +15,6 @@ namespace PhpSpec\Util;
 
 interface NameChecker
 {
-    /**
-     * @param string $name
-     *
-     * @return bool
-     */
+    
     public function isNameValid(string $name): bool;
 }

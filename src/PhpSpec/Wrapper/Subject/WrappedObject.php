@@ -47,7 +47,6 @@ class WrappedObject
 
     /**
      * @param object|null        $instance
-     * @param Presenter $presenter
      */
     public function __construct($instance, Presenter $presenter)
     {
@@ -60,8 +59,6 @@ class WrappedObject
     }
 
     /**
-     * @param string $classname
-     * @param array  $arguments
      *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      */
@@ -82,7 +79,6 @@ class WrappedObject
     }
 
     /**
-     * @param array $args
      *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      */
@@ -104,7 +100,6 @@ class WrappedObject
 
     /**
      * @param callable|string|null $factoryMethod
-     * @param array                $arguments
      */
     public function beConstructedThrough($factoryMethod, array $arguments = array()): void
     {
@@ -132,9 +127,7 @@ class WrappedObject
         return $this->factoryMethod;
     }
 
-    /**
-     * @return bool
-     */
+    
     public function isInstantiated(): bool
     {
         return $this->isInstantiated;
@@ -156,17 +149,13 @@ class WrappedObject
         return $this->classname;
     }
 
-    /**
-     * @param string $classname
-     */
+    
     public function setClassName(string $classname): void
     {
         $this->classname = $classname;
     }
 
-    /**
-     * @return array
-     */
+    
     public function getArguments(): array
     {
         return $this->arguments;

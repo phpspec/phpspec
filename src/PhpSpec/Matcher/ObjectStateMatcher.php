@@ -29,21 +29,13 @@ final class ObjectStateMatcher implements Matcher
      */
     private $presenter;
 
-    /**
-     * @param Presenter $presenter
-     */
+    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return bool
-     */
+    
     public function supports(string $name, $subject, array $arguments): bool
     {
         return \is_object($subject) && !is_callable($subject)
@@ -52,9 +44,6 @@ final class ObjectStateMatcher implements Matcher
     }
 
     /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
      *
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
@@ -80,9 +69,6 @@ final class ObjectStateMatcher implements Matcher
     }
 
     /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
      *
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
@@ -107,20 +93,15 @@ final class ObjectStateMatcher implements Matcher
         return null;
     }
 
-    /**
-     * @return int
-     */
+    
     public function getPriority(): int
     {
         return 50;
     }
 
     /**
-     * @param callable $callable
      * @param boolean  $expectedBool
-     * @param mixed    $result
      *
-     * @return FailureException
      */
     private function getFailureExceptionFor(callable $callable, bool $expectedBool, $result): FailureException
     {

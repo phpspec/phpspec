@@ -25,9 +25,7 @@ final class IterateAsMatcher implements Matcher
      */
     private $iterablesMatcher;
 
-    /**
-     * @param Presenter $presenter
-     */
+    
     public function __construct(Presenter $presenter)
     {
         $this->iterablesMatcher = new IterablesMatcher($presenter);

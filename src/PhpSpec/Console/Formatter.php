@@ -25,7 +25,6 @@ class Formatter extends OutputFormatter
     /**
      * @param boolean $decorated
      *
-     * @param array $styles
      */
     public function __construct(bool $decorated = false, array $styles = array())
     {

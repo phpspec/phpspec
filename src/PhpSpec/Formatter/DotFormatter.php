@@ -23,17 +23,13 @@ final class DotFormatter extends ConsoleFormatter
      */
     private $examplesCount = 0;
 
-    /**
-     * @param SuiteEvent $event
-     */
+    
     public function beforeSuite(SuiteEvent $event)
     {
         $this->examplesCount = \count($event->getSuite());
     }
 
-    /**
-     * @param ExampleEvent $event
-     */
+    
     public function afterExample(ExampleEvent $event)
     {
         $io = $this->getIO();
@@ -81,9 +77,7 @@ final class DotFormatter extends ConsoleFormatter
         }
     }
 
-    /**
-     * @param SuiteEvent $event
-     */
+    
     public function afterSuite(SuiteEvent $event)
     {
         $this->getIO()->writeln("\n");
