@@ -61,6 +61,7 @@ jobs:
                 run: ./vendor/bin/behat --format=progress
 
             -   name: Build the PHAR
+                if: matrix.php != '8.0'
                 run: |
                     composer config platform.php 7.2.0 &&
                     ln -s `which composer` composer.phar &&
