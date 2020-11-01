@@ -14,7 +14,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php: [7.2, 7.3, 7.4]
+                php: [7.2, 7.3, 7.4, 8.0]
                 composer-flags: [""]
                 composer-extras: [""]
                 stability: ["stable"]
@@ -25,7 +25,7 @@ jobs:
                         composer-flags: --prefer-lowest
                     -   php: 7.2
                         composer-extras: "symfony/event-dispatcher ^3.4 symfony/contracts ^2.0"
-                    -   php: 7.4
+                    -   php: 8.0
                         stability: "dev"
 
         env:
@@ -61,6 +61,7 @@ jobs:
                 run: ./vendor/bin/behat --format=progress
 
             -   name: Build the PHAR
+                if: matrix.php != '8.0'
                 run: |
                     composer config platform.php 7.2.0 &&
                     ln -s `which composer` composer.phar &&
