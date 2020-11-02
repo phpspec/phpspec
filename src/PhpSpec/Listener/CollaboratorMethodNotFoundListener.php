@@ -58,12 +58,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
      */
     private $wrongMethodNames = array();
 
-    /**
-     * @param ConsoleIO $io
-     * @param ResourceManager $resources
-     * @param GeneratorManager $generator
-     * @param NameChecker $nameChecker
-     */
+    
     public function __construct(
         ConsoleIO $io,
         ResourceManager $resources,
@@ -76,9 +71,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         $this->nameChecker = $nameChecker;
     }
 
-    /**
-     * @return array
-     */
+    
     public static function getSubscribedEvents(): array
     {
         return array(
@@ -87,9 +80,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         );
     }
 
-    /**
-     * @param ExampleEvent $event
-     */
+    
     public function afterExample(ExampleEvent $event): void
     {
         if (!$exception = $this->getMethodNotFoundException($event)) {
@@ -109,10 +100,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         $this->checkIfMethodNameAllowed($methodName);
     }
 
-    /**
-     * @param string|object $classname
-     * @return mixed
-     */
+    
     private function getDoubledInterface($class)
     {
         if (class_parents($class) !== array('stdClass'=>'stdClass')) {
@@ -132,9 +120,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         return current($interfaces);
     }
 
-    /**
-     * @param SuiteEvent $event
-     */
+    
     public function afterSuite(SuiteEvent $event): void
     {
         foreach ($this->interfaces as $interface => $methods) {
@@ -169,10 +155,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         }
     }
 
-    /**
-     * @param mixed $prophecyArguments
-     * @return array
-     */
+    
     private function getRealArguments($prophecyArguments): array
     {
         if ($prophecyArguments instanceof ArgumentsWildcard) {
@@ -183,7 +166,6 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
     }
 
     /**
-     * @param ExampleEvent $event
      * @return void|MethodNotFoundException
      */
     private function getMethodNotFoundException(ExampleEvent $event)

@@ -44,12 +44,7 @@ abstract class PromptingGenerator implements Generator
      */
     private $executionContext;
 
-    /**
-     * @param ConsoleIO $io
-     * @param TemplateRenderer $templates
-     * @param Filesystem $filesystem
-     * @param ExecutionContext $executionContext
-     */
+    
     public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, ExecutionContext $executionContext)
     {
         $this->io         = $io;
@@ -58,10 +53,7 @@ abstract class PromptingGenerator implements Generator
         $this->executionContext = $executionContext;
     }
 
-    /**
-     * @param Resource $resource
-     * @param array             $data
-     */
+    
     public function generate(Resource $resource, array $data = array()): void
     {
         $filepath = $this->getFilePath($resource);
@@ -88,12 +80,7 @@ abstract class PromptingGenerator implements Generator
 
     abstract protected function renderTemplate(Resource $resource, string $filepath): string;
 
-    /**
-     * @param Resource $resource
-     * @param string            $filepath
-     *
-     * @return string
-     */
+    
     abstract protected function getGeneratedMessage(Resource $resource, string $filepath): string;
 
     private function fileAlreadyExists(string $filepath): bool

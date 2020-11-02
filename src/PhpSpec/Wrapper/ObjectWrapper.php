@@ -15,8 +15,6 @@ namespace PhpSpec\Wrapper;
 
 interface ObjectWrapper
 {
-    /**
-     * @return mixed
-     */
+    
     public function getWrappedObject();
 }

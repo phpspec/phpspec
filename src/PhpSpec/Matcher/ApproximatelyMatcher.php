@@ -35,32 +35,19 @@ final class ApproximatelyMatcher extends BasicMatcher
      */
     private $presenter;
 
-    /**
-     * @param Presenter $presenter
-     */
+    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }
 
-    /**
-     * @param string $name
-     * @param mixed $subject
-     * @param array $arguments
-     *
-     * @return bool
-     */
+    
     public function supports(string $name, $subject, array $arguments): bool
     {
         return \in_array($name, self::$keywords) && 2 == \count($arguments);
     }
 
-    /**
-     * @param mixed $subject
-     * @param array $arguments
-     *
-     * @return bool
-     */
+    
     protected function matches($subject, array $arguments): bool
     {
         $value = (float)$arguments[0];

@@ -27,11 +27,7 @@ final class NewFileNotifyingGenerator implements Generator
      */
     private $filesystem;
 
-    /**
-     * @param Generator $generator
-     * @param EventDispatcherInterface $dispatcher
-     * @param Filesystem $filesystem
-     */
+    
     public function __construct(Generator $generator, EventDispatcherInterface $dispatcher, Filesystem $filesystem)
     {
         $this->generator = $generator;

@@ -8,10 +8,7 @@ class ReRunner implements BaseReRunner
 {
     private $hasBeenReRun = false;
 
-    /**
-     * @return boolean
-     */
-    public function isSupported()
+    public function isSupported(): bool
     {
         return true;
     }

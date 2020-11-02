@@ -28,17 +28,13 @@ class MatcherManager
      */
     private $matchers = array();
 
-    /**
-     * @param Presenter $presenter
-     */
+    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }
 
-    /**
-     * @param Matcher $matcher
-     */
+    
     public function add(Matcher $matcher): void
     {
         $this->matchers[] = $matcher;
@@ -58,11 +54,7 @@ class MatcherManager
     }
 
     /**
-     * @param string $keyword
-     * @param mixed  $subject
-     * @param array  $arguments
      *
-     * @return Matcher
      *
      * @throws \PhpSpec\Exception\Wrapper\MatcherNotFoundException
      */

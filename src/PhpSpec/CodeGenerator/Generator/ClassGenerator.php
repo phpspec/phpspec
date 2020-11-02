@@ -21,13 +21,7 @@ use PhpSpec\Locator\Resource;
  */
 final class ClassGenerator extends PromptingGenerator
 {
-    /**
-     * @param Resource $resource
-     * @param string            $generation
-     * @param array             $data
-     *
-     * @return bool
-     */
+    
     public function supports(Resource $resource, string $generation, array $data): bool
     {
         return 'class' === $generation;

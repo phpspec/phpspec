@@ -22,9 +22,7 @@ final class TokenizedCodeWriter implements CodeWriter
      */
     private $analyser;
 
-    /**
-     * @param ClassFileAnalyser $analyser
-     */
+    
     public function __construct(ClassFileAnalyser $analyser)
     {
         $this->analyser = $analyser;

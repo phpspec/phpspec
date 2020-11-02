@@ -44,11 +44,7 @@ final class CollaboratorNotFoundListener implements EventSubscriberInterface
      */
     private $generator;
 
-    /**
-     * @param ConsoleIO $io
-     * @param ResourceManager $resources
-     * @param GeneratorManager $generator
-     */
+    
     public function __construct(ConsoleIO $io, ResourceManager $resources, GeneratorManager $generator)
     {
         $this->io = $io;
@@ -56,9 +52,7 @@ final class CollaboratorNotFoundListener implements EventSubscriberInterface
         $this->generator = $generator;
     }
 
-    /**
-     * @return array
-     */
+    
     public static function getSubscribedEvents(): array
     {
         return array(
@@ -67,9 +61,7 @@ final class CollaboratorNotFoundListener implements EventSubscriberInterface
         );
     }
 
-    /**
-     * @param ExampleEvent $event
-     */
+    
     public function afterExample(ExampleEvent $event): void
     {
         if (($exception = $event->getException()) &&
@@ -78,9 +70,7 @@ final class CollaboratorNotFoundListener implements EventSubscriberInterface
         }
     }
 
-    /**
-     * @param SuiteEvent $event
-     */
+    
     public function afterSuite(SuiteEvent $event): void
     {
         if (!$this->io->isCodeGenerationEnabled()) {
@@ -103,11 +93,7 @@ final class CollaboratorNotFoundListener implements EventSubscriberInterface
         }
     }
 
-    /**
-     * @param CollaboratorNotFoundException $exception
-     * @param Resource $resource
-     * @return bool
-     */
+    
     private function resourceIsInSpecNamespace(CollaboratorNotFoundException $exception, Resource $resource): bool
     {
         return strpos($exception->getCollaboratorName(), $resource->getSpecNamespace()) === 0;

@@ -24,8 +24,6 @@ final class WindowsPassthruReRunner extends PhpExecutableReRunner
     private $executionContext;
 
     /**
-     * @param PhpExecutableFinder $phpExecutableFinder
-     * @param ExecutionContext $executionContext
      * @return static
      */
     public static function withExecutionContext(PhpExecutableFinder $phpExecutableFinder, ExecutionContext $executionContext)
@@ -36,9 +34,6 @@ final class WindowsPassthruReRunner extends PhpExecutableReRunner
         return $reRunner;
     }
 
-    /**
-     * @return boolean
-     */
     public function isSupported(): bool
     {
         return (php_sapi_name() == 'cli')

@@ -38,22 +38,13 @@ final class ErrorMaintainer implements Maintainer
         $this->errorLevel = $errorLevel;
     }
 
-    /**
-     * @param ExampleNode $example
-     *
-     * @return bool
-     */
+    
     public function supports(ExampleNode $example): bool
     {
         return true;
     }
 
-    /**
-     * @param ExampleNode            $example
-     * @param Specification $context
-     * @param MatcherManager         $matchers
-     * @param CollaboratorManager    $collaborators
-     */
+    
     public function prepare(
         ExampleNode $example,
         Specification $context,
@@ -63,12 +54,7 @@ final class ErrorMaintainer implements Maintainer
         $this->errorHandler = set_error_handler(array($this, 'errorHandler'), $this->errorLevel);
     }
 
-    /**
-     * @param ExampleNode            $example
-     * @param Specification $context
-     * @param MatcherManager         $matchers
-     * @param CollaboratorManager    $collaborators
-     */
+    
     public function teardown(
         ExampleNode $example,
         Specification $context,
@@ -80,9 +66,7 @@ final class ErrorMaintainer implements Maintainer
         }
     }
 
-    /**
-     * @return int
-     */
+    
     public function getPriority(): int
     {
         return 999;
@@ -96,11 +80,8 @@ final class ErrorMaintainer implements Maintainer
      * @see set_error_handler()
      *
      * @param integer $level
-     * @param string  $message
-     * @param string  $file
      * @param integer $line
      *
-     * @return bool
      *
      * @throws ExampleException\ErrorException
      */

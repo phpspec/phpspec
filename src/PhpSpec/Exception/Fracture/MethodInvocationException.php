@@ -19,9 +19,7 @@ namespace PhpSpec\Exception\Fracture;
  */
 abstract class MethodInvocationException extends FractureException
 {
-    /**
-     * @var mixed
-     */
+    
     private $subject;
 
     /**
@@ -35,10 +33,7 @@ abstract class MethodInvocationException extends FractureException
     private $arguments;
 
     /**
-     * @param string $message
-     * @param mixed  $subject
      * @param string $method
-     * @param array  $arguments
      */
     public function __construct(string $message, $subject, $method, array $arguments = array())
     {
@@ -49,25 +44,19 @@ abstract class MethodInvocationException extends FractureException
         $this->arguments = $arguments;
     }
 
-    /**
-     * @return mixed
-     */
+    
     public function getSubject()
     {
         return $this->subject;
     }
 
-    /**
-     * @return string
-     */
+    
     public function getMethodName(): string
     {
         return $this->method;
     }
 
-    /**
-     * @return array
-     */
+    
     public function getArguments(): array
     {
         return $this->arguments;

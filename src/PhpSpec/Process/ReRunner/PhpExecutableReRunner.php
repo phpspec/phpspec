@@ -27,9 +27,7 @@ abstract class PhpExecutableReRunner implements PlatformSpecificReRunner
      */
     private $executablePath;
 
-    /**
-     * @param PhpExecutableFinder $executableFinder
-     */
+    
     public function __construct(PhpExecutableFinder $executableFinder)
     {
         $this->executableFinder = $executableFinder;

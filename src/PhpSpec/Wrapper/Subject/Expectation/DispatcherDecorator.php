@@ -38,12 +38,7 @@ final class DispatcherDecorator extends Decorator implements Expectation
      */
     private $example;
 
-    /**
-     * @param Expectation     $expectation
-     * @param EventDispatcherInterface $dispatcher
-     * @param Matcher         $matcher
-     * @param ExampleNode              $example
-     */
+    
     public function __construct(
         Expectation $expectation,
         EventDispatcherInterface $dispatcher,
@@ -57,10 +52,6 @@ final class DispatcherDecorator extends Decorator implements Expectation
     }
 
     /**
-     * @param  string  $alias
-     * @param  mixed   $subject
-     * @param  array   $arguments
-     * @return mixed
      *
      * @throws \Exception
      * @throws \PhpSpec\Exception\Example\FailureException

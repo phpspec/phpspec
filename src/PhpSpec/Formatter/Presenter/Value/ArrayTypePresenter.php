@@ -15,27 +15,19 @@ namespace PhpSpec\Formatter\Presenter\Value;
 
 final class ArrayTypePresenter implements TypePresenter
 {
-    /**
-     * @param mixed $value
-     * @return bool
-     */
+    
     public function supports($value): bool
     {
         return 'array' === strtolower(\gettype($value));
     }
 
-    /**
-     * @param mixed $value
-     * @return string
-     */
+    
     public function present($value): string
     {
         return sprintf('[array:%d]', \count($value));
     }
 
-    /**
-     * @return int
-     */
+    
     public function getPriority(): int
     {
         return 20;

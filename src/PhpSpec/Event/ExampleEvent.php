@@ -68,7 +68,6 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
     private $exception;
 
     /**
-     * @param ExampleNode  $example
      * @param float|null   $time
      * @param integer|null $result
      * @param \Exception   $exception
@@ -85,57 +84,43 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
         $this->exception = $exception;
     }
 
-    /**
-     * @return ExampleNode
-     */
+    
     public function getExample(): ExampleNode
     {
         return $this->example;
     }
 
-    /**
-     * @return SpecificationNode
-     */
+    
     public function getSpecification(): SpecificationNode
     {
         return $this->example->getSpecification();
     }
 
-    /**
-     * @return Suite
-     */
+    
     public function getSuite(): Suite
     {
         return $this->getSpecification()->getSuite();
     }
 
-    /**
-     * @return string
-     */
+    
     public function getTitle(): string
     {
         return $this->example->getTitle();
     }
 
-    /**
-     * @return string
-     */
+    
     public function getMessage(): string
     {
         return $this->exception->getMessage();
     }
 
-    /**
-     * @return array
-     */
+    
     public function getBacktrace(): array
     {
         return $this->exception->getTrace();
     }
 
-    /**
-     * @return float
-     */
+    
     public function getTime(): float
     {
         return $this->time;

@@ -41,8 +41,6 @@ class SuiteEvent extends BaseEvent implements PhpSpecEvent
     private $worthRerunning = false;
 
     /**
-     * @param Suite   $suite
-     * @param float   $time
      * @param integer $result
      */
     public function __construct(Suite $suite, float $time = 0.0, int $result = 0)
@@ -52,17 +50,13 @@ class SuiteEvent extends BaseEvent implements PhpSpecEvent
         $this->result = $result;
     }
 
-    /**
-     * @return Suite
-     */
+    
     public function getSuite(): Suite
     {
         return $this->suite;
     }
 
-    /**
-     * @return float
-     */
+    
     public function getTime(): float
     {
         return $this->time;
@@ -76,9 +70,7 @@ class SuiteEvent extends BaseEvent implements PhpSpecEvent
         return $this->result;
     }
 
-    /**
-     * @return bool
-     */
+    
     public function isWorthRerunning(): bool
     {
         return $this->worthRerunning;

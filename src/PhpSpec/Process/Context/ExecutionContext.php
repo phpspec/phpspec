@@ -15,18 +15,12 @@ namespace PhpSpec\Process\Context;
 
 interface ExecutionContext
 {
-    /**
-     * @param string $type
-     */
+    
     public function addGeneratedType(string $type);
 
-    /**
-     * @return array
-     */
+    
     public function getGeneratedTypes(): array;
 
-    /**
-     * @return array
-     */
+    
     public function asEnv(): array;
 }

@@ -29,28 +29,20 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
      */
     private $io;
 
-    /**
-     * @param Presenter           $presenter
-     * @param ConsoleIO           $io
-     * @param StatisticsCollector $stats
-     */
+    
     public function __construct(Presenter $presenter, ConsoleIO $io, StatisticsCollector $stats)
     {
         parent::__construct($presenter, $io, $stats);
         $this->io = $io;
     }
 
-    /**
-     * @return IO
-     */
+    
     protected function getIO(): IO
     {
         return $this->io;
     }
 
-    /**
-     * @param ExampleEvent $event
-     */
+    
     protected function printException(ExampleEvent $event): void
     {
         if (null === $exception = $event->getException()) {
@@ -70,10 +62,7 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
         }
     }
 
-    /**
-     * @param ExampleEvent $event
-     * @param string $type
-     */
+    
     protected function printSpecificException(ExampleEvent $event, string $type): void
     {
         $title = str_replace('\\', DIRECTORY_SEPARATOR, $event->getSpecification()->getTitle());

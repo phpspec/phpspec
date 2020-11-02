@@ -105,17 +105,13 @@ class ExistingConstructorTemplate
         );
     }
 
-    /**
-     * @return string
-     */
+    
     private function getCreateObjectTemplate(): string
     {
         return file_get_contents(__DIR__.'/templates/named_constructor_create_object.template');
     }
 
-    /**
-     * @return string
-     */
+    
     private function getExceptionTemplate(): string
     {
         return file_get_contents(__DIR__.'/templates/named_constructor_exception.template');

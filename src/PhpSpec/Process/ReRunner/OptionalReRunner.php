@@ -27,9 +27,7 @@ final class OptionalReRunner implements ReRunner
      */
     private $decoratedRerunner;
 
-    /**
-     * @param ConsoleIO $io
-     */
+    
     public function __construct(ReRunner $decoratedRerunner, ConsoleIO $io)
     {
         $this->io = $io;

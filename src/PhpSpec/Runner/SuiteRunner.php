@@ -32,10 +32,7 @@ class SuiteRunner
      */
     private $specRunner;
 
-    /**
-     * @param EventDispatcher     $dispatcher
-     * @param SpecificationRunner $specRunner
-     */
+    
     public function __construct(EventDispatcher $dispatcher, SpecificationRunner $specRunner)
     {
         $this->dispatcher = $dispatcher;
@@ -43,7 +40,6 @@ class SuiteRunner
     }
 
     /**
-     * @param Suite $suite
      *
      * @return integer
      */

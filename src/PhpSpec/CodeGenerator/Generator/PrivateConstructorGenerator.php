@@ -42,12 +42,7 @@ final class PrivateConstructorGenerator implements Generator
      */
     private $codeWriter;
 
-    /**
-     * @param ConsoleIO $io
-     * @param TemplateRenderer $templates
-     * @param Filesystem $filesystem
-     * @param CodeWriter $codeWriter
-     */
+    
     public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, CodeWriter $codeWriter)
     {
         $this->io         = $io;
@@ -61,10 +56,7 @@ final class PrivateConstructorGenerator implements Generator
         return 'private-constructor' === $generation;
     }
 
-    /**
-     * @param Resource $resource
-     * @param array $data
-     */
+    
     public function generate(Resource $resource, array $data): void
     {
         $filepath  = $resource->getSrcFilename();

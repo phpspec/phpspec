@@ -27,9 +27,7 @@ class GeneratorManager
      */
     private $generators = array();
 
-    /**
-     * @param Generator $generator
-     */
+    
     public function registerGenerator(Generator $generator): void
     {
         $this->generators[] = $generator;

@@ -20,11 +20,7 @@ use PhpSpec\Runner\CollaboratorManager;
 
 class LetAndLetgoMaintainer implements Maintainer
 {
-    /**
-     * @param ExampleNode $example
-     *
-     * @return bool
-     */
+    
     public function supports(ExampleNode $example): bool
     {
         return $example->getSpecification()->getClassReflection()->hasMethod('let')
@@ -32,12 +28,7 @@ class LetAndLetgoMaintainer implements Maintainer
         ;
     }
 
-    /**
-     * @param ExampleNode            $example
-     * @param Specification $context
-     * @param MatcherManager         $matchers
-     * @param CollaboratorManager    $collaborators
-     */
+    
     public function prepare(
         ExampleNode $example,
         Specification $context,
@@ -52,12 +43,7 @@ class LetAndLetgoMaintainer implements Maintainer
         $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
     }
 
-    /**
-     * @param ExampleNode            $example
-     * @param Specification $context
-     * @param MatcherManager         $matchers
-     * @param CollaboratorManager    $collaborators
-     */
+    
     public function teardown(
         ExampleNode $example,
         Specification $context,
@@ -72,9 +58,7 @@ class LetAndLetgoMaintainer implements Maintainer
         $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
     }
 
-    /**
-     * @return int
-     */
+    
     public function getPriority(): int
     {
         return 10;

@@ -48,10 +48,6 @@ class OptionsConfig
     private $isVerbose;
 
     /**
-     * @param bool $stopOnFailureEnabled
-     * @param bool $codeGenerationEnabled
-     * @param bool $reRunEnabled
-     * @param bool $fakingEnabled
      * @param string|bool $bootstrapPath
      * @param bool $isVerbose
      */
@@ -71,17 +67,13 @@ class OptionsConfig
         $this->isVerbose = $isVerbose;
     }
 
-    /**
-     * @return bool
-     */
+    
     public function isStopOnFailureEnabled(): bool
     {
         return $this->stopOnFailureEnabled;
     }
 
-    /**
-     * @return bool
-     */
+    
     public function isCodeGenerationEnabled(): bool
     {
         return $this->codeGenerationEnabled;

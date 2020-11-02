@@ -42,10 +42,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
      */
     private $namespaceResolver;
 
-    /**
-     * @param TypeHintIndex $typeHintIndex
-     * @param NamespaceResolver $namespaceResolver
-     */
+    
     public function __construct(TypeHintIndex $typeHintIndex, NamespaceResolver $namespaceResolver)
     {
         $this->typeHintIndex = $typeHintIndex;
@@ -135,10 +132,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         return $tokens;
     }
 
-    /**
-     * @param array $tokens
-     * @return string
-     */
+    
     private function tokensToString(array $tokens): string
     {
         return join('', array_map(function ($token) {

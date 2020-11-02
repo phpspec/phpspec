@@ -27,9 +27,7 @@ final class OneTimeGenerator implements Generator
      */
     private $alreadyGenerated = array();
 
-    /**
-     * @param Generator $generator
-     */
+    
     public function __construct(Generator $generator)
     {
         $this->generator = $generator;

@@ -51,25 +51,19 @@ final class TapFormatter extends ConsoleFormatter
      */
     private $currentSpecificationTitle;
 
-    /**
-     * @param SuiteEvent $event
-     */
+    
     public function beforeSuite(SuiteEvent $event)
     {
         $this->getIO()->writeln(self::VERSION);
     }
 
-    /**
-     * @param SpecificationEvent $event
-     */
+    
     public function beforeSpecification(SpecificationEvent $event)
     {
         $this->currentSpecificationTitle = $event->getSpecification()->getTitle();
     }
 
-    /**
-     * @param ExampleEvent $event
-     */
+    
     public function afterExample(ExampleEvent $event)
     {
         $this->examplesCount++;
@@ -104,9 +98,7 @@ final class TapFormatter extends ConsoleFormatter
         $this->getIO()->writeln($result);
     }
 
-    /**
-     * @param SuiteEvent $event
-     */
+    
     public function afterSuite(SuiteEvent $event)
     {
         $this->getIO()->writeln(sprintf(
@@ -119,9 +111,7 @@ final class TapFormatter extends ConsoleFormatter
      * Format message as two-space indented YAML when needed outside of a
      * SKIP or TODO directive.
      *
-     * @param ExampleEvent $event
      * @param int $result
-     * @return string
      */
     private function getResultData(ExampleEvent $event, int $result = null): string
     {
@@ -155,19 +145,13 @@ final class TapFormatter extends ConsoleFormatter
         return $message;
     }
 
-    /**
-     * @param string $string
-     * @return string
-     */
+    
     private function stripNewlines(string $string): string
     {
         return str_replace(array("\r\n", "\n", "\r"), ' / ', $string);
     }
 
-    /**
-     * @param string $string
-     * @return string
-     */
+    
     private function indent(string $string): string
     {
         return preg_replace(

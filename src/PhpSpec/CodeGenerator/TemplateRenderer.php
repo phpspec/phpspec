@@ -31,17 +31,13 @@ class TemplateRenderer
      */
     private $filesystem;
 
-    /**
-     * @param Filesystem $filesystem
-     */
+    
     public function __construct(Filesystem $filesystem)
     {
         $this->filesystem = $filesystem;
     }
 
-    /**
-     * @param array $locations
-     */
+    
     public function setLocations(array $locations): void
     {
         $this->locations = array_map(array($this, 'normalizeLocation'), $locations);

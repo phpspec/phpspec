@@ -15,8 +15,6 @@ namespace PhpSpec\Matcher;
 
 interface MatchersProvider
 {
-    /**
-     * @return array
-     */
+    
     public function getMatchers(): array;
 }

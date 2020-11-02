@@ -17,10 +17,7 @@ use PhpSpec\Exception\Exception;
 
 abstract class AbstractPhpSpecExceptionPresenter
 {
-    /**
-     * @param Exception $exception
-     * @return string
-     */
+    
     public function presentException(Exception $exception): string
     {
         list($file, $line) = $this->getExceptionExamplePosition($exception);
@@ -28,10 +25,7 @@ abstract class AbstractPhpSpecExceptionPresenter
         return $this->presentFileCode($file, $line);
     }
 
-    /**
-     * @param Exception $exception
-     * @return array
-     */
+    
     private function getExceptionExamplePosition(Exception $exception): array
     {
         $cause = $exception->getCause();
@@ -50,11 +44,9 @@ abstract class AbstractPhpSpecExceptionPresenter
     }
 
     /**
-     * @param string  $file
      * @param integer $lineno
      * @param integer $context
      *
-     * @return string
      */
     abstract protected function presentFileCode(string $file, int $lineno, int $context = 6): string;
 }

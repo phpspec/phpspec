@@ -15,12 +15,6 @@ namespace PhpSpec\Wrapper\Subject\Expectation;
 
 interface Expectation
 {
-    /**
-     * @param string $alias
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return mixed
-     */
+    
     public function match(string $alias, $subject, array $arguments = array());
 }

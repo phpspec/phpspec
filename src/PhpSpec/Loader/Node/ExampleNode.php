@@ -34,59 +34,44 @@ class ExampleNode
      */
     private $isPending = false;
 
-    /**
-     * @param string                     $title
-     * @param ReflectionFunctionAbstract $function
-     */
+    
     public function __construct(string $title, ReflectionFunctionAbstract $function)
     {
         $this->setTitle($title);
         $this->function = $function;
     }
 
-    /**
-     * @param string $title
-     */
+    
     public function setTitle(string $title)
     {
       $this->title = $title;
     }
 
-    /**
-     * @return string
-     */
+    
     public function getTitle(): string
     {
         return $this->title;
     }
 
-    /**
-     * @param bool $isPending
-     */
+    
     public function markAsPending(bool $isPending = true): void
     {
         $this->isPending = $isPending;
     }
 
-    /**
-     * @return bool
-     */
+    
     public function isPending(): bool
     {
         return $this->isPending;
     }
 
-    /**
-     * @return ReflectionFunctionAbstract
-     */
+    
     public function getFunctionReflection(): ReflectionFunctionAbstract
     {
         return $this->function;
     }
 
-    /**
-     * @param SpecificationNode $specification
-     */
+    
     public function setSpecification(SpecificationNode $specification): void
     {
         $this->specification = $specification;
@@ -100,9 +85,7 @@ class ExampleNode
         return $this->specification;
     }
 
-    /**
-     * @return int
-     */
+    
     public function getLineNumber(): int
     {
         return $this->function->isClosure() ? 0 : $this->function->getStartLine();

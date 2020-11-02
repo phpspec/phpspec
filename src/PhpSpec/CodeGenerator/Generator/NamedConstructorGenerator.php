@@ -41,12 +41,7 @@ final class NamedConstructorGenerator implements Generator
      */
     private $codeWriter;
 
-    /**
-     * @param ConsoleIO $io
-     * @param TemplateRenderer $templates
-     * @param Filesystem $filesystem
-     * @param CodeWriter $codeWriter
-     */
+    
     public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, CodeWriter $codeWriter)
     {
         $this->io         = $io;
@@ -60,10 +55,7 @@ final class NamedConstructorGenerator implements Generator
         return 'named_constructor' === $generation;
     }
 
-    /**
-     * @param Resource $resource
-     * @param array             $data
-     */
+    
     public function generate(Resource $resource, array $data = array()): void
     {
         $filepath   = $resource->getSrcFilename();
