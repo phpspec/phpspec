@@ -46,8 +46,7 @@ class SubjectWithArrayAccess
     }
 
     /**
-     * @param string|integer $key
-     *
+     * @param int|string $key
      */
     public function offsetExists($key): bool
     {
@@ -61,8 +60,7 @@ class SubjectWithArrayAccess
     }
 
     /**
-     * @param string|integer $key
-     *
+     * @param int|string $key
      */
     public function offsetGet($key)
     {
@@ -76,7 +74,7 @@ class SubjectWithArrayAccess
     }
 
     /**
-     * @param string|integer $key
+     * @param int|string $key
      */
     public function offsetSet($key, $value): void
     {
@@ -91,7 +89,7 @@ class SubjectWithArrayAccess
     }
 
     /**
-     * @param string|integer $key
+     * @param int|string $key
      */
     public function offsetUnset($key): void
     {
@@ -105,7 +103,6 @@ class SubjectWithArrayAccess
     }
 
     /**
-     *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      * @throws \PhpSpec\Exception\Fracture\InterfaceNotImplementedException
      */

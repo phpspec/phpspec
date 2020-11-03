@@ -38,7 +38,7 @@ class OptionsConfig
     private $fakingEnabled;
 
     /**
-     * @var string|bool
+     * @var bool|string
      */
     private $bootstrapPath;
 
@@ -48,7 +48,7 @@ class OptionsConfig
     private $isVerbose;
 
     /**
-     * @param string|bool $bootstrapPath
+     * @param bool|string $bootstrapPath
      * @param bool $isVerbose
      */
     public function __construct(

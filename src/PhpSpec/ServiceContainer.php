@@ -10,14 +10,11 @@ interface ServiceContainer
 {
     /**
      * Sets a param in the container
-     *
      */
     public function setParam(string $id, $value): void;
 
     /**
      * Gets a param from the container or a default value.
-     *
-     *
      */
     public function getParam(string $id, $default = null);
 
@@ -51,7 +48,6 @@ interface ServiceContainer
 
     /**
      * Determines whether a service is defined
-     *
      */
     public function has(string $id): bool;
 
@@ -65,8 +61,6 @@ interface ServiceContainer
 
     /**
      * Finds all services tagged with a particular string
-     *
-     *
      */
     public function getByTag(string $tag): array;
 }

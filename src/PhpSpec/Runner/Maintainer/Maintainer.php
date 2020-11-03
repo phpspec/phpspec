@@ -39,8 +39,6 @@ interface Maintainer
         CollaboratorManager $collaborators
     ): void;
 
-    /**
-     * @return integer
-     */
+    
     public function getPriority(): int;
 }

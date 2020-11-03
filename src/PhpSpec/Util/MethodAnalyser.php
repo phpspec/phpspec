@@ -74,7 +74,6 @@ class MethodAnalyser
 
     /**
      * @param  \ReflectionClass[] $traits
-     *
      */
     private function getDeclaringTrait(array $traits, string $file, int $start, int $end): ?\ReflectionClass
     {

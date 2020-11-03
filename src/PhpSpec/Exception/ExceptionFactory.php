@@ -89,7 +89,6 @@ class ExceptionFactory
 
     /**
      * @param string $property
-     *
      */
     public function propertyNotFound($subject, $property): Fracture\PropertyNotFoundException
     {

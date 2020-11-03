@@ -22,8 +22,7 @@ interface TypeHintIndex
     public function addInvalid(string $class, string $method, string $argument, \Exception $exception): void;
 
     /**
-     *
-     * @return string|null
+     * @return null|string
      */
     public function lookup(string $class, string $method, string $argument);
 }

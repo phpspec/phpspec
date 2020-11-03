@@ -21,7 +21,7 @@ use Exception;
 class StopOnFailureException extends ExampleException
 {
     /**
-     * @var integer
+     * @var int
      */
     private $result;
 

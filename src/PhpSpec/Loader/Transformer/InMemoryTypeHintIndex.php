@@ -50,8 +50,7 @@ final class InMemoryTypeHintIndex implements TypeHintIndex
     }
 
     /**
-     *
-     * @return string|false
+     * @return false|string
      */
     public function lookup(string $class, string $method, string $argument)
     {

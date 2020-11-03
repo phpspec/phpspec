@@ -19,7 +19,6 @@ interface PlatformSpecificReRunner extends ReRunner
 {
     /**
      * Does the current platform support this rerunner
-     *
      */
     public function isSupported(): bool;
 }

@@ -66,7 +66,6 @@ class Wrapper
 
     /**
      * @param object $value
-     *
      */
     public function wrap($value = null): Subject
     {

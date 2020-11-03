@@ -33,7 +33,6 @@ final class PrioritizedResourceManager implements ResourceManager
     }
 
     /**
-     *
      * @return Resource[]
      */
     public function locateResources(string $query): array
@@ -56,8 +55,6 @@ final class PrioritizedResourceManager implements ResourceManager
     }
 
     /**
-     *
-     *
      * @throws \RuntimeException
      */
     public function createResource(string $classname): Resource
@@ -77,7 +74,6 @@ final class PrioritizedResourceManager implements ResourceManager
     }
 
     /**
-     *
      * @return Resource[]
      */
     private function removeDuplicateResources(array $resources): array

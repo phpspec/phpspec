@@ -25,8 +25,6 @@ final class ConstructorDecorator extends Decorator implements Expectation
     }
 
     /**
-     *
-     *
      * @throws \PhpSpec\Exception\ErrorException
      * @throws \PhpSpec\Exception\Example\ErrorException
      * @throws \PhpSpec\Exception\Fracture\FractureException

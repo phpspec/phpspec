@@ -15,11 +15,7 @@ namespace PhpSpec\Formatter\Presenter\Exception;
 
 final class HtmlPhpSpecExceptionPresenter extends AbstractPhpSpecExceptionPresenter implements PhpSpecExceptionPresenter
 {
-    /**
-     * @param integer $lineno
-     * @param integer $context
-     *
-     */
+    
     protected function presentFileCode(string $file, int $lineno, int $context = 6): string
     {
         $lines  = explode(PHP_EOL, file_get_contents($file));

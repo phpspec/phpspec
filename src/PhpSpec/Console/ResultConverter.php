@@ -22,8 +22,6 @@ class ResultConverter
 {
     /**
      * Convert Example result into exit code
-     *
-     *
      */
     public function convert($result): int
     {

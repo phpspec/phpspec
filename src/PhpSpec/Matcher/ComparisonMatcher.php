@@ -45,7 +45,6 @@ final class ComparisonMatcher extends BasicMatcher
     }
 
     /**
-     *
      * @return NotEqualException
      */
     protected function getFailureException(string $name, $subject, array $arguments): FailureException

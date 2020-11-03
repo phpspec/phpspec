@@ -32,7 +32,6 @@ final class ScalarMatcher implements Matcher
 
     /**
      * Checks if matcher supports provided subject and matcher name.
-     *
      */
     public function supports(string $name, $subject, array $arguments): bool
     {
@@ -93,8 +92,6 @@ final class ScalarMatcher implements Matcher
 
     /**
      * Returns matcher priority.
-     *
-     * @return integer
      */
     public function getPriority(): int
     {
@@ -102,8 +99,7 @@ final class ScalarMatcher implements Matcher
     }
 
     /**
-     *
-     * @return string|boolean
+     * @return bool|string
      */
     private function getCheckerName(string $name)
     {

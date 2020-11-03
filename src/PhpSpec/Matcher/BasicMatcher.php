@@ -19,7 +19,6 @@ use PhpSpec\Wrapper\DelayedCall;
 abstract class BasicMatcher implements Matcher
 {
     /**
-     *
      * @return void
      *
      * @throws FailureException
@@ -34,7 +33,6 @@ abstract class BasicMatcher implements Matcher
     }
 
     /**
-     *
      * @return void
      *
      * @throws FailureException

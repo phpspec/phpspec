@@ -52,7 +52,6 @@ final class DispatcherDecorator extends Decorator implements Expectation
     }
 
     /**
-     *
      * @throws \Exception
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \Exception

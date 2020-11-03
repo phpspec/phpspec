@@ -31,18 +31,16 @@ class SuiteEvent extends BaseEvent implements PhpSpecEvent
     private $time;
 
     /**
-     * @var integer
+     * @var int
      */
     private $result;
 
     /**
-     * @var boolean
+     * @var bool
      */
     private $worthRerunning = false;
 
-    /**
-     * @param integer $result
-     */
+    
     public function __construct(Suite $suite, float $time = 0.0, int $result = 0)
     {
         $this->suite  = $suite;
@@ -62,9 +60,7 @@ class SuiteEvent extends BaseEvent implements PhpSpecEvent
         return $this->time;
     }
 
-    /**
-     * @return integer
-     */
+    
     public function getResult(): int
     {
         return $this->result;

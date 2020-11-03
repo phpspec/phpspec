@@ -507,7 +507,6 @@ final class ContainerAssembler
     }
 
     /**
-     *
      * @throws \RuntimeException
      */
     protected function setupFormatter(IndexedServiceContainer $container): void

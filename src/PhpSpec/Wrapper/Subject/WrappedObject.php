@@ -33,7 +33,7 @@ class WrappedObject
      */
     private $classname;
     /**
-     * @var callable|null
+     * @var null|callable
      */
     private $factoryMethod;
     /**
@@ -46,7 +46,7 @@ class WrappedObject
     private $isInstantiated = false;
 
     /**
-     * @param object|null        $instance
+     * @param null|object        $instance
      */
     public function __construct($instance, Presenter $presenter)
     {
@@ -59,7 +59,6 @@ class WrappedObject
     }
 
     /**
-     *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      */
     public function beAnInstanceOf(string $classname, array $arguments = array()): void
@@ -79,7 +78,6 @@ class WrappedObject
     }
 
     /**
-     *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      */
     public function beConstructedWith(array $args): void
@@ -99,7 +97,7 @@ class WrappedObject
     }
 
     /**
-     * @param callable|string|null $factoryMethod
+     * @param null|callable|string $factoryMethod
      */
     public function beConstructedThrough($factoryMethod, array $arguments = array()): void
     {
@@ -120,7 +118,7 @@ class WrappedObject
     }
 
     /**
-     * @return callable|null
+     * @return null|callable
      */
     public function getFactoryMethod()
     {
@@ -133,16 +131,14 @@ class WrappedObject
         return $this->isInstantiated;
     }
 
-    /**
-     * @param boolean $instantiated
-     */
+    
     public function setInstantiated(bool $instantiated): void
     {
         $this->isInstantiated = $instantiated;
     }
 
     /**
-     * @return string|null
+     * @return null|string
      */
     public function getClassName()
     {
@@ -162,7 +158,7 @@ class WrappedObject
     }
 
     /**
-     * @return object|null
+     * @return null|object
      */
     public function getInstance()
     {

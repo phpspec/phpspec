@@ -48,7 +48,6 @@ class Filesystem
     }
 
     /**
-     *
      * @return \SplFileInfo[]
      */
     public function findSpecFilesIn(string $path): array

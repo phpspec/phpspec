@@ -31,7 +31,6 @@ class ReportItemFactory
     }
 
     /**
-     *
      * @return ReportFailedItem|ReportPassedItem|ReportPendingItem|ReportSkippedItem
      */
     public function create(ExampleEvent $event, Presenter $presenter)
@@ -52,8 +51,6 @@ class ReportItemFactory
     }
 
     /**
-     * @param integer $result
-     *
      * @throws InvalidExampleResultException
      */
     private function invalidResultException(int $result): void

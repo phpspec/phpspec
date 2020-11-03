@@ -58,7 +58,7 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
     private $time;
 
     /**
-     * @var integer
+     * @var int
      */
     private $result;
 
@@ -68,8 +68,8 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
     private $exception;
 
     /**
-     * @param float|null   $time
-     * @param integer|null $result
+     * @param null|float   $time
+     * @param null|int $result
      * @param \Exception   $exception
      */
     public function __construct(
@@ -126,16 +126,14 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
         return $this->time;
     }
 
-    /**
-     * @return integer
-     */
+    
     public function getResult(): int
     {
         return $this->result;
     }
 
     /**
-     * @return \Exception|null
+     * @return null|\Exception
      */
     public function getException()
     {
