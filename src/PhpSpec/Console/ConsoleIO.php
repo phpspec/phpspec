@@ -53,7 +53,7 @@ class ConsoleIO implements IO
     private $config;
 
     /**
-     * @var integer
+     * @var int
      */
     private $consoleWidth;
 

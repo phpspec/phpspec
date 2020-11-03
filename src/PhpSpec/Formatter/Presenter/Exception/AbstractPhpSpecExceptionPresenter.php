@@ -43,10 +43,6 @@ abstract class AbstractPhpSpecExceptionPresenter
         return array($exception->getFile(), $exception->getLine());
     }
 
-    /**
-     * @param integer $lineno
-     * @param integer $context
-     *
-     */
+    
     abstract protected function presentFileCode(string $file, int $lineno, int $context = 6): string;
 }

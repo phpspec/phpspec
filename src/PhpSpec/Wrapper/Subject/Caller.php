@@ -74,8 +74,6 @@ class Caller
     }
 
     /**
-     *
-     *
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      * @throws \PhpSpec\Exception\Fracture\MethodNotVisibleException
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
@@ -98,7 +96,6 @@ class Caller
     }
 
     /**
-     *
      * @return mixed
      *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
@@ -123,8 +120,7 @@ class Caller
     }
 
     /**
-     *
-     * @return Subject|string
+     * @return string|Subject
      *
      * @throws \PhpSpec\Exception\Fracture\PropertyNotFoundException
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
@@ -220,7 +216,6 @@ class Caller
     /**
      * @param object $subject
      * @param string $method
-     *
      */
     private function invokeAndWrapMethodResult($subject, $method, array $arguments = array()): Subject
     {
@@ -248,7 +243,6 @@ class Caller
     }
 
     /**
-     *
      * @return object
      *
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
@@ -320,6 +314,7 @@ class Caller
 
     /**
      * @param $method
+     *
      * @return \PhpSpec\Exception\Fracture\MethodNotFoundException|\PhpSpec\Exception\Fracture\MethodNotVisibleException
      */
     private function methodNotFound($method, array $arguments = array())

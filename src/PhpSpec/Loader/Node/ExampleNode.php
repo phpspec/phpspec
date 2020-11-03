@@ -26,7 +26,7 @@ class ExampleNode
      */
     private $function;
     /**
-     * @var SpecificationNode|null
+     * @var null|SpecificationNode
      */
     private $specification;
     /**
@@ -78,7 +78,7 @@ class ExampleNode
     }
 
     /**
-     * @return SpecificationNode|null
+     * @return null|SpecificationNode
      */
     public function getSpecification()
     {

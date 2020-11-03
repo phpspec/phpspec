@@ -155,7 +155,6 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     }
 
     /**
-     *
      * @return Resource[]
      */
     public function findResources(string $query)
@@ -199,7 +198,6 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     }
 
     /**
-     *
      * @return null|PSR0Resource
      */
     public function createResource(string $classname)
@@ -231,7 +229,6 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     }
 
     /**
-     *
      * @return PSR0Resource[]
      */
     protected function findSpecResources(string $path)
@@ -320,7 +317,6 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     }
 
     /**
-     *
      * @throws InvalidArgumentException
      */
     private function validatePsr0Classname(string $classname)

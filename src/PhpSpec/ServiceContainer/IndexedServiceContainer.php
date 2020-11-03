@@ -49,7 +49,6 @@ final class IndexedServiceContainer implements ServiceContainer
 
     /**
      * Sets a param in the container
-     *
      */
     public function setParam(string $id, $value): void
     {
@@ -58,8 +57,6 @@ final class IndexedServiceContainer implements ServiceContainer
 
     /**
      * Gets a param from the container or a default value.
-     *
-     *
      */
     public function getParam(string $id, $default = null)
     {
@@ -91,7 +88,6 @@ final class IndexedServiceContainer implements ServiceContainer
     /**
      * Sets a factory for the service creation. The same service will
      * be returned every time
-     *
      */
     public function define(string $id, callable $definition, array $tags = []): void
     {
@@ -124,7 +120,6 @@ final class IndexedServiceContainer implements ServiceContainer
 
     /**
      * Determines whether a service is defined
-     *
      */
     public function has(string $id): bool
     {
@@ -148,7 +143,6 @@ final class IndexedServiceContainer implements ServiceContainer
 
     /**
      * Adds a service or service definition to the index
-     *
      */
     private function indexTags(string $id, array $tags): void
     {
@@ -159,8 +153,6 @@ final class IndexedServiceContainer implements ServiceContainer
 
     /**
      * Finds all services tagged with a particular string
-     *
-     *
      */
     public function getByTag(string $tag): array
     {
@@ -171,7 +163,6 @@ final class IndexedServiceContainer implements ServiceContainer
      * Adds a configurator, that can configure many services in one value
      *
      * @internal
-     *
      *
      * @throws \InvalidArgumentException if configurator is not a value
      */

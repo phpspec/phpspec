@@ -16,7 +16,6 @@ namespace PhpSpec\Locator;
 interface ResourceManager
 {
     /**
-     *
      * @return \PhpSpec\Locator\Resource[]
      */
     public function locateResources(string $query): array;

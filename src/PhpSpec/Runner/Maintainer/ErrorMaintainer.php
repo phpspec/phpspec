@@ -22,17 +22,15 @@ use PhpSpec\Exception\Example as ExampleException;
 final class ErrorMaintainer implements Maintainer
 {
     /**
-     * @var integer
+     * @var int
      */
     private $errorLevel;
     /**
-     * @var callable|null
+     * @var null|callable
      */
     private $errorHandler;
 
-    /**
-     * @param integer $errorLevel
-     */
+    
     public function __construct(int $errorLevel)
     {
         $this->errorLevel = $errorLevel;
@@ -78,10 +76,6 @@ final class ErrorMaintainer implements Maintainer
      * This method used as custom error handler when step is running.
      *
      * @see set_error_handler()
-     *
-     * @param integer $level
-     * @param integer $line
-     *
      *
      * @throws ExampleException\ErrorException
      */

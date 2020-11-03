@@ -41,8 +41,7 @@ final class ArrayKeyValueMatcher extends BasicMatcher
     }
 
     /**
-     * @param ArrayAccess|array $subject
-     *
+     * @param array|ArrayAccess $subject
      */
     protected function matches($subject, array $arguments): bool
     {

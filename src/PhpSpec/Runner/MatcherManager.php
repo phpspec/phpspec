@@ -54,8 +54,6 @@ class MatcherManager
     }
 
     /**
-     *
-     *
      * @throws \PhpSpec\Exception\Wrapper\MatcherNotFoundException
      */
     public function find(string $keyword, $subject, array $arguments): Matcher

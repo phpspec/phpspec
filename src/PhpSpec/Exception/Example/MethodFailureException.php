@@ -15,9 +15,7 @@ namespace PhpSpec\Exception\Example;
 
 class MethodFailureException extends NotEqualException
 {
-    /**
-     * @var mixed
-     */
+    
     private $subject;
 
     /**
@@ -26,10 +24,6 @@ class MethodFailureException extends NotEqualException
     private $method;
 
     /**
-     * @param string $message
-     * @param mixed  $expected
-     * @param mixed  $actual
-     * @param mixed  $subject
      * @param string $method
      */
     public function __construct(string $message, $expected, $actual, $subject, $method)
@@ -40,9 +34,7 @@ class MethodFailureException extends NotEqualException
         $this->method = $method;
     }
 
-    /**
-     * @return mixed
-     */
+    
     public function getSubject()
     {
         return $this->subject;

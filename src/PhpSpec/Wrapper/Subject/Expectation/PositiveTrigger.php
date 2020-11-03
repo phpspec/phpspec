@@ -18,7 +18,6 @@ final class PositiveTrigger extends DuringCall implements ThrowExpectation
     /**
      * @param object $object
      * @param string $method
-     *
      */
     protected function runDuring($object, $method, array $arguments = array())
     {

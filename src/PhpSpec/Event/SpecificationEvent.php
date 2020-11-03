@@ -32,13 +32,11 @@ class SpecificationEvent extends BaseEvent implements PhpSpecEvent
     private $time;
 
     /**
-     * @var integer
+     * @var int
      */
     private $result;
 
-    /**
-     * @param integer           $result
-     */
+    
     public function __construct(SpecificationNode $specification, float $time = 0.0, int $result = 0)
     {
         $this->specification = $specification;
@@ -70,9 +68,7 @@ class SpecificationEvent extends BaseEvent implements PhpSpecEvent
         return $this->time;
     }
 
-    /**
-     * @return integer
-     */
+    
     public function getResult(): int
     {
         return $this->result;

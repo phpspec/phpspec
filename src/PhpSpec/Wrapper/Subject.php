@@ -29,7 +29,6 @@ use ArrayAccess;
  * @method void shouldNotBeAnInstanceOf($type)
  * @method void shouldImplement($interface)
  * @method void shouldNotImplement($interface)
- *
  * @method void shouldBe($value)
  * @method void shouldNotBe($value)
  * @method void shouldBeEqualTo($value)
@@ -38,13 +37,10 @@ use ArrayAccess;
  * @method void shouldNotReturn($value)
  * @method void shouldEqual($value)
  * @method void shouldNotEqual($value)
- *
  * @method void shouldBeLike($value)
  * @method void shouldNotBeLike($value)
- *
  * @method void shouldHaveCount($count)
  * @method void shouldNotHaveCount($count)
- *
  * @method void shouldBeArray()
  * @method void shouldNotBeArray()
  * @method void shouldBeBool()
@@ -83,37 +79,27 @@ use ArrayAccess;
  * @method void shouldNotBeFinite()
  * @method void shouldBeInfinite()
  * @method void shouldNotBeInfinite()
- *
  * @method void shouldBeApproximately($value, $precision)
- *
  * @method void shouldContain($value)
  * @method void shouldNotContain($value)
- *
  * @method void shouldHaveKeyWithValue($key, $value)
  * @method void shouldNotHaveKeyWithValue($key, $value)
- *
  * @method void shouldHaveKey($key)
  * @method void shouldNotHaveKey($key)
- *
  * @method void shouldStartWith($string)
  * @method void shouldNotStartWith($string)
- *
  * @method void shouldEndWith($string)
  * @method void shouldNotEndWith($string)
- *
  * @method void shouldMatch($regex)
  * @method void shouldNotMatch($regex)
- *
  * @method void shouldIterateAs($iterable)
  * @method void shouldYield($iterable)
  * @method void shouldNotIterateAs($iterable)
  * @method void shouldNotYield($iterable)
- *
  * @method void shouldIterateLike($iterable)
  * @method void shouldYieldLike($iterable)
  * @method void shouldNotIterateLike($iterable)
  * @method void shouldNotYieldLike($iterable)
- *
  * @method void shouldStartIteratingAs($iterable)
  * @method void shouldStartYielding($iterable)
  * @method void shouldNotStartIteratingAs($iterable)
@@ -206,7 +192,6 @@ class Subject implements ArrayAccess, ObjectWrapper
     }
 
     /**
-     *
      * @return string|Subject
      */
     public function getFromWrappedObject(string $property)
@@ -215,8 +200,7 @@ class Subject implements ArrayAccess, ObjectWrapper
     }
 
     /**
-     * @param string|integer $key
-     *
+     * @param int|string $key
      */
     public function offsetExists($key): Subject
     {
@@ -224,8 +208,7 @@ class Subject implements ArrayAccess, ObjectWrapper
     }
 
     /**
-     * @param string|integer $key
-     *
+     * @param int|string $key
      */
     public function offsetGet($key): Subject
     {
@@ -233,7 +216,7 @@ class Subject implements ArrayAccess, ObjectWrapper
     }
 
     /**
-     * @param string|integer $key
+     * @param int|string $key
      */
     public function offsetSet($key, $value): void
     {
@@ -241,7 +224,7 @@ class Subject implements ArrayAccess, ObjectWrapper
     }
 
     /**
-     * @param string|integer $key
+     * @param int|string $key
      */
     public function offsetUnset($key): void
     {
@@ -249,7 +232,6 @@ class Subject implements ArrayAccess, ObjectWrapper
     }
 
     /**
-     *
      * @return mixed|Subject
      */
     public function __call(string $method, array $arguments = array())
@@ -282,7 +264,6 @@ class Subject implements ArrayAccess, ObjectWrapper
     }
 
     /**
-     *
      * @return string|Subject
      */
     public function __get(string $property)

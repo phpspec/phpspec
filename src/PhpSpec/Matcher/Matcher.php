@@ -19,26 +19,21 @@ interface Matcher
 {
     /**
      * Checks if matcher supports provided subject and matcher name.
-     *
      */
     public function supports(string $name, $subject, array $arguments): bool;
 
     /**
      * Evaluates positive match.
-     *
      */
     public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall;
 
     /**
      * Evaluates negative match.
-     *
      */
     public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall;
 
     /**
      * Returns matcher priority.
-     *
-     * @return integer
      */
     public function getPriority(): int;
 }

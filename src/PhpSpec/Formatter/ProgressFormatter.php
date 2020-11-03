@@ -99,9 +99,7 @@ final class ProgressFormatter extends ConsoleFormatter
         return $barLengths;
     }
 
-    /**
-     * @param  boolean $isDecorated
-     */
+    
     private function formatProgressOutput(array $barLengths, array $percents, bool $isDecorated): array
     {
         $size = $this->getIO()->getBlockWidth();

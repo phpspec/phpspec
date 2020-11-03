@@ -194,8 +194,6 @@ final class Application extends BaseApplication
     }
 
     /**
-     *
-     *
      * @throws \RuntimeException
      */
     protected function parseConfigurationFile(InputInterface $input): array

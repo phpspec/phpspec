@@ -115,7 +115,6 @@ class ExampleRunner
     }
 
     /**
-     *
      * @throws \PhpSpec\Exception\Example\PendingException
      * @throws \Exception
      */

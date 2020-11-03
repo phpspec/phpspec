@@ -42,7 +42,6 @@ final class ObjectEngine implements DifferEngine
     /**
      * @param object $expected
      * @param object $actual
-     *
      */
     public function compare($expected, $actual): string
     {

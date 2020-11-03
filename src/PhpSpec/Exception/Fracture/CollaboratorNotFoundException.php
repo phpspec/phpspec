@@ -26,7 +26,6 @@ class CollaboratorNotFoundException extends FractureException
     private $collaboratorName;
 
     /**
-     * @param integer $code
      * @param Exception $previous
      */
     public function __construct(

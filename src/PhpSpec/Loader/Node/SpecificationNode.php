@@ -88,7 +88,7 @@ class SpecificationNode implements \Countable
     }
 
     /**
-     * @return Suite|null
+     * @return null|Suite
      */
     public function getSuite()
     {

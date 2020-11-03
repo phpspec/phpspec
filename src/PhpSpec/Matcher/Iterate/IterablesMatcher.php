@@ -71,7 +71,6 @@ final class IterablesMatcher
 
     /**
      * @param array|\Traversable $iterable
-     *
      */
     private function createIteratorFromIterable($iterable): \Iterator
     {

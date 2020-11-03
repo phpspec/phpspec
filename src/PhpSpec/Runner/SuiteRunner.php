@@ -39,10 +39,7 @@ class SuiteRunner
         $this->specRunner = $specRunner;
     }
 
-    /**
-     *
-     * @return integer
-     */
+    
     public function run(Suite $suite): int
     {
         $this->dispatch($this->dispatcher, new SuiteEvent($suite), 'beforeSuite');

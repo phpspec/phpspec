@@ -36,7 +36,7 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
     private $nullMethods = array();
 
     /**
-     * @var MethodCallEvent|null
+     * @var null|MethodCallEvent
      */
     private $lastMethodCallEvent = null;
     /**

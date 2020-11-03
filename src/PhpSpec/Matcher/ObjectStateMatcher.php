@@ -44,7 +44,6 @@ final class ObjectStateMatcher implements Matcher
     }
 
     /**
-     *
      * @throws \PhpSpec\Exception\Example\MethodFailureException
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      */
@@ -69,7 +68,6 @@ final class ObjectStateMatcher implements Matcher
     }
 
     /**
-     *
      * @throws \PhpSpec\Exception\Example\MethodFailureException
      * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
      */

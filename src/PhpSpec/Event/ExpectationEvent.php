@@ -62,7 +62,7 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
     private $arguments;
 
     /**
-     * @var integer
+     * @var int
      */
     private $result;
 
@@ -74,7 +74,7 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
     /**
      * @param string           $method
      * @param array            $arguments
-     * @param integer          $result
+     * @param int          $result
      * @param \Exception       $exception
      */
     public function __construct(
@@ -138,16 +138,14 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
     }
 
     /**
-     * @return \Exception|null
+     * @return null|\Exception
      */
     public function getException()
     {
         return $this->exception;
     }
 
-    /**
-     * @return integer
-     */
+    
     public function getResult(): int
     {
         return $this->result;

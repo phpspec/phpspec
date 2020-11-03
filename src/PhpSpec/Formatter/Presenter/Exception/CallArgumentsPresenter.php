@@ -68,7 +68,7 @@ class CallArgumentsPresenter
     /**
      * @param MethodProphecy[] $methodProphecies
      *
-     * @return MethodProphecy|null
+     * @return null|MethodProphecy
      */
     private function findFirstUnexpectedArgumentsCallProphecy(
         array $methodProphecies,

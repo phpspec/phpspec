@@ -42,8 +42,7 @@ abstract class DuringCall
     }
 
     /**
-     *
-     * @param WrappedObject|null $wrappedObject
+     * @param null|WrappedObject $wrappedObject
      *
      * @return $this
      */
@@ -85,8 +84,6 @@ abstract class DuringCall
     }
 
     /**
-     *
-     *
      * @throws MatcherException
      */
     public function __call(string $method, array $arguments = array())
@@ -118,7 +115,6 @@ abstract class DuringCall
     /**
      * @param object $object
      * @param string $method
-     *
      */
     abstract protected function runDuring($object, $method, array $arguments = array());
 }

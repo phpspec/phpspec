@@ -38,10 +38,7 @@ class ResourceLoader
         $this->methodAnalyser = $methodAnalyser;
     }
 
-    /**
-     * @param integer|null $line
-     *
-     */
+    
     public function load(string $locator = '', int $line = null): Suite
     {
         $suite = new Suite();

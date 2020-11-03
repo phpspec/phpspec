@@ -45,7 +45,7 @@ final class ThrowMatcher implements Matcher
     private $factory;
 
     /**
-     * @param ReflectionFactory|null $factory
+     * @param null|ReflectionFactory $factory
      */
     public function __construct(Unwrapper $unwrapper, Presenter $presenter, ReflectionFactory $factory)
     {
@@ -141,7 +141,7 @@ final class ThrowMatcher implements Matcher
     }
 
     /**
-     * @param string|null|object $exception
+     * @param null|object|string $exception
      *
      * @throws \PhpSpec\Exception\Example\FailureException
      */
@@ -243,8 +243,8 @@ final class ThrowMatcher implements Matcher
     }
 
     /**
-     *
      * @return null|string|\Throwable
+     *
      * @throws \PhpSpec\Exception\Example\MatcherException
      */
     private function getException(array $arguments)

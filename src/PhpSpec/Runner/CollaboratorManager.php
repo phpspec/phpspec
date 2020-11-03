@@ -50,7 +50,6 @@ class CollaboratorManager
     }
 
     /**
-     *
      * @return object
      *
      * @throws \PhpSpec\Exception\Wrapper\CollaboratorException

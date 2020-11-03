@@ -24,7 +24,6 @@ interface ResourceLocator
     public function supportsQuery(string $query): bool;
 
     /**
-     *
      * @return Resource[]
      */
     public function findResources(string $query);
@@ -33,13 +32,10 @@ interface ResourceLocator
     public function supportsClass(string $classname): bool;
 
     /**
-     *
-     * @return Resource|null
+     * @return null|Resource
      */
     public function createResource(string $classname);
 
-    /**
-     * @return integer
-     */
+    
     public function getPriority(): int;
 }

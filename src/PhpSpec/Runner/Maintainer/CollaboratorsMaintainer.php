@@ -146,6 +146,7 @@ final class CollaboratorsMaintainer implements Maintainer
 
     /**
      * @param string $className
+     *
      * @throws CollaboratorNotFoundException
      */
     private function throwCollaboratorNotFound(\Exception $e, \ReflectionParameter $parameter = null, string $className = null): void
@@ -169,8 +170,7 @@ final class CollaboratorsMaintainer implements Maintainer
     }
 
     /**
-     *
-     * @return string|null
+     * @return null|string
      */
     private function getParameterTypeFromReflection(\ReflectionParameter $parameter): string
     {
