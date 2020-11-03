@@ -48,8 +48,19 @@ jobs:
                 if: matrix.stability == 'dev'
                 run: composer config minimum-stability ${{ matrix.stability }}
 
-            -   name: Install dependencies
-                run: composer update ${{ matrix.composer-flags }}
+            -   name: Resolve composer dependencies
+                run: composer update ${{ matrix.composer-flags }} --no-install
+
+            -   name: Cache composer
+                uses: actions/cache@v2
+                env:
+                    cache-name: cache-composer
+                with:
+                    path: ~/.composer
+                    key: ${{ hashFiles('composer.lock') }}
+
+            -   name: Install composer dependencies
+                run: composer install
 
             -   name: Run tests (phpspec)
                 run: bin/phpspec run --format=dot
