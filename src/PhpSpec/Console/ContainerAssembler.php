@@ -606,8 +606,18 @@ final class ContainerAssembler
             } catch (\InvalidArgumentException $e) {
                 throw new \RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
             }
+
             $c->set('event_dispatcher.listeners.formatter', $formatter, ['event_dispatcher.listeners']);
         });
+
+        if (getenv('GITHUB_ACTIONS')) {
+            $container->define('event_dispatcher.listeners.github', function(IndexedServiceContainer $c) {
+                return new SpecFormatter\GithubFormatter(
+                    $c->get('console.io'),
+                    getcwd()
+                );
+            }, ['event_dispatcher.listeners']);
+        }
     }
 
     

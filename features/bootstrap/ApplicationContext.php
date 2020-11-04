@@ -48,6 +48,8 @@ class ApplicationContext implements Context
     {
         StreamWrapper::register();
 
+        putenv('GITHUB_ACTIONS=0');
+
         $this->application = new Application('2.1-dev');
         $this->application->setAutoExit(false);
         $this->setFixedTerminalDimensions();

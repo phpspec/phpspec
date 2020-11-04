@@ -18,6 +18,16 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
 
     protected $executablePath = __DIR__ . '/../../bin/phpspec';
 
+    private $env = [];
+
+    /**
+     * @Given the :var environment variable is set to :value
+     */
+    public function theEnvironmentVariableIsSetTo($var, $value)
+    {
+        $this->env[$var] = $value;
+    }
+
     /**
      * @Given I have started describing the :class class
      */
@@ -118,9 +128,12 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
 
     /**
      * @Then I should see :message
+     * @Then I should see:
      */
     public function iShouldSee($message)
     {
+        $message = (string)$message;
+
         if (strpos($this->lastOutput, $message) === false) {
             throw new \Exception("Missing message: $message\nActual: {$this->lastOutput}");
         }
@@ -139,12 +152,14 @@ class IsolatedProcessContext implements Context, SnippetAcceptingContext
 
     private function createPhpSpecProcess(array $arguments)
     {
+
+
         $command = $this->buildPhpSpecCmd() . ' ' . implode(' ', $arguments);
 
         if (method_exists(Process::class, 'fromShellCommandline')) {
-            return Process::fromShellCommandline($command);
+            return Process::fromShellCommandline($command, null, $this->env);
         }
 
-        return new Process($command);
+        return new Process($command, null, $this->env);
     }
 }
