@@ -71,7 +71,7 @@ final class GithubFormatter implements EventSubscriberInterface
                     $this->getSpecFilename($event),
                     $event->getExample()->getLineNumber(),
                     $event->getResult() === ExampleEvent::FAILED ? 'Failed' : 'Broken',
-                    $event->getMessage()
+                    $this->escapeMessage($event->getMessage())
                 )
             );
         }
@@ -86,5 +86,10 @@ final class GithubFormatter implements EventSubscriberInterface
         }
 
         return $specFilename;
+    }
+
+    private function escapeMessage(string $message) : string
+    {
+        return strtr($message, ["%" => "%25", "\r" => '%0D', "\n" => '%0A']);
     }
 }
