@@ -48,7 +48,19 @@ jobs:
                 if: matrix.stability == 'dev'
                 run: composer config minimum-stability ${{ matrix.stability }}
 
-            -   name: Install dependencies
+            -   name: Locate composer cache
+                id: composercache
+                run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+            -   name: Cache composer dependencies
+                uses: actions/cache@v2
+                env:
+                    cache-name: cache-composer
+                with:
+                    path: ${{ steps.composercache.outputs.dir }}
+                    key: ${{ hashFiles('composer.json') }}
+
+            -   name: Install composer dependencies
                 run: composer update ${{ matrix.composer-flags }}
 
             -   name: Run tests (phpspec)
