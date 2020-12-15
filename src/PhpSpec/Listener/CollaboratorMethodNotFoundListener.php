@@ -22,6 +22,7 @@ use PhpSpec\Locator\ResourceManager;
 use PhpSpec\Util\NameChecker;
 use Prophecy\Argument\ArgumentsWildcard;
 use Prophecy\Exception\Doubler\MethodNotFoundException;
+use Prophecy\Prophecy\ObjectProphecy;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
@@ -87,7 +88,18 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
             return;
         }
 
-        if (!$interface = $this->getDoubledInterface($exception->getClassName())) {
+        $className = $exception->getClassName();
+
+        // Prophecy sometimes throws the exception with the Prophecy rather than the FCQN - in these cases we need to parse the error
+        if ($className instanceof ObjectProphecy) {
+            $method = preg_quote($exception->getMethodName());
+            $fcqnPattern = '(?:[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)(?:\\\\[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)*)';
+            if(preg_match("/(?<fcqn>$fcqnPattern::$method\(/", $exception->getMessage(), $matches)) {
+                $className = $matches['fcqn'];
+            }
+        }
+
+        if (!$interface = $this->getDoubledInterface($className)) {
             return;
         }
 
