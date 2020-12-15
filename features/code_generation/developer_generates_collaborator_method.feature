@@ -207,3 +207,63 @@ Feature: Developer generates a collaborator's method
       """
     When I run phpspec and answer "n" when asked if I want to generate the code
     Then I should not be prompted for code generation
+
+  Scenario: Collaborator method is generated when it's called by the class under test
+    Given the spec file "spec/CodeGeneration/CollaboratorMethodExample6/MarkdownSpec.php" contains:
+      """
+      <?php
+
+      namespace spec\CodeGeneration\CollaboratorMethodExample6;
+
+      use PhpSpec\ObjectBehavior;
+      use CodeGeneration\CollaboratorMethodExample6\Parser;
+
+      class MarkdownSpec extends ObjectBehavior
+      {
+          function it_interacts_with_a_collaborator(Parser $parser)
+          {
+              $this->foo($parser);
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/CollaboratorMethodExample6/Markdown.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\CollaboratorMethodExample6;
+
+      class Markdown
+      {
+          public function foo(Parser $parser)
+          {
+              $parser->parse();
+          }
+      }
+
+      """
+    And the class file "src/CodeGeneration/CollaboratorMethodExample6/Parser.php" contains:
+      """
+      <?php
+
+      namespace CodeGeneration\CollaboratorMethodExample6;
+
+      interface Parser
+      {
+      }
+
+      """
+    When I run phpspec and answer "y" when asked if I want to generate the code
+    Then the interface in "src/CodeGeneration/CollaboratorMethodExample6/Parser.php" should contain:
+      """
+      <?php
+
+      namespace CodeGeneration\CollaboratorMethodExample6;
+
+      interface Parser
+      {
+
+          public function parse();
+      }
+
+      """
