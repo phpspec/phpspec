@@ -92,8 +92,11 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
 
         // Prophecy sometimes throws the exception with the Prophecy rather than the FCQN - in these cases we need to parse the error
         if ($className instanceof ObjectProphecy) {
+
+            $classPattern = '[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*'; //from https://www.php.net/manual/en/language.oop5.basic.php
+            $fcqnPattern = "(?:$classPattern)(?:\\\\$classPattern)*)";
             $method = preg_quote($exception->getMethodName());
-            $fcqnPattern = '(?:[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)(?:\\\\[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)*)';
+
             if(preg_match("/(?<fcqn>$fcqnPattern::$method\(/", $exception->getMessage(), $matches)) {
                 $className = $matches['fcqn'];
             }
