@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [6.3.1]
+### Fixed
+ - Collaborator generation didn't happen in some cases [@ciaranmcnulty](https://github.com/ciaranmcnulty)
+ - Some error diffs caused a strict type error on PHP 8 [@ciaranmcnulty](https://github.com/ciaranmcnulty)
+
 ## [6.3.0]
 ### Added
  - PHP 8.0 support [@ciaranmcnulty](https://github.com/ciaranmcnulty)
@@ -42,6 +47,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - AfterSpecification event now always fires in case of failure [@chris-kruining](https://github.com/chris-kruining)
  - Removed Prophecy\Argument use statement from templates [@DonCallisto](https://github.com/DonCallisto)
 
+[6.3.1]: https://github.com/phpspec/phpspec/compare/6.3.0...6.3.1
 [6.3.0]: https://github.com/phpspec/phpspec/compare/6.2.2...6.3.0
 [6.2.2]: https://github.com/phpspec/phpspec/compare/6.2.1...6.2.2
 [6.2.1]: https://github.com/phpspec/phpspec/compare/6.2.0...6.2.1
