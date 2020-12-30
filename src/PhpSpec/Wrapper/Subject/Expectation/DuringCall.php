@@ -24,9 +24,7 @@ abstract class DuringCall
      * @var Matcher
      */
     private $matcher;
-    /**
-     * @var mixed
-     */
+
     private $subject;
     /**
      * @var array
@@ -37,20 +35,14 @@ abstract class DuringCall
      */
     private $wrappedObject;
 
-    /**
-     * @param Matcher $matcher
-     */
+
     public function __construct(Matcher $matcher)
     {
         $this->matcher = $matcher;
     }
 
     /**
-     * @param string $alias
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @param WrappedObject|null $wrappedObject
+     * @param null|WrappedObject $wrappedObject
      *
      * @return $this
      */
@@ -63,12 +55,7 @@ abstract class DuringCall
         return $this;
     }
 
-    /**
-     * @param string $method
-     * @param array  $arguments
-     *
-     * @return mixed
-     */
+
     public function during(string $method, array $arguments = array())
     {
         if ($method === '__construct') {
@@ -82,9 +69,7 @@ abstract class DuringCall
         return $this->runDuring($object, $method, $arguments);
     }
 
-    /**
-     * @return mixed
-     */
+
     public function duringInstantiation()
     {
         if ($factoryMethod = $this->wrappedObject->getFactoryMethod()) {
@@ -99,11 +84,6 @@ abstract class DuringCall
     }
 
     /**
-     * @param string $method
-     * @param array  $arguments
-     *
-     * @return mixed
-     *
      * @throws MatcherException
      */
     public function __call(string $method, array $arguments = array())
@@ -112,7 +92,7 @@ abstract class DuringCall
             return $this->during(lcfirst($matches[1]), $arguments);
         }
 
-        throw new MatcherException('Incorrect usage of matcher Throw, '.
+        throw new MatcherException('Incorrect usage of matcher, '.
             'either prefix the method with "during" and capitalize the '.
             'first character of the method or use ->during(\'callable\', '.
             'array(arguments)).'.PHP_EOL.'E.g.'.PHP_EOL.'->during'.
@@ -120,17 +100,13 @@ abstract class DuringCall
             '->during(\''.$method.'\', array(arguments))');
     }
 
-    /**
-     * @return array
-     */
+
     protected function getArguments(): array
     {
         return $this->arguments;
     }
 
-    /**
-     * @return Matcher
-     */
+
     protected function getMatcher(): Matcher
     {
         return $this->matcher;
@@ -139,9 +115,6 @@ abstract class DuringCall
     /**
      * @param object $object
      * @param string $method
-     * @param array  $arguments
-     *
-     * @return mixed
      */
     abstract protected function runDuring($object, $method, array $arguments = array());
 }

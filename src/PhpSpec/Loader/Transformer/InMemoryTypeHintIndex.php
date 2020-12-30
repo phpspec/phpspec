@@ -20,34 +20,19 @@ final class InMemoryTypeHintIndex implements TypeHintIndex
      */
     private $typehints = array();
 
-    /**
-     * @param string $class
-     * @param string $method
-     * @param string $argument
-     * @param string $typehint
-     */
+    
     public function add(string $class, string $method, string $argument, string $typehint): void
     {
         $this->store($class, $method, $argument, $typehint);
     }
 
-    /**
-     * @param string $class
-     * @param string $method
-     * @param string $argument
-     * @param \Exception $exception
-     */
+    
     public function addInvalid(string $class, string $method, string $argument, \Exception $exception): void
     {
         $this->store($class, $method, $argument, $exception);
     }
 
-    /**
-     * @param string $class
-     * @param string $method
-     * @param string $argument
-     * @param mixed $typehint
-     */
+    
     private function store(string $class, string $method, string $argument, $typehint): void
     {
         $class = strtolower($class);
@@ -65,11 +50,7 @@ final class InMemoryTypeHintIndex implements TypeHintIndex
     }
 
     /**
-     * @param string $class
-     * @param string $method
-     * @param string $argument
-     *
-     * @return string|false
+     * @return false|string
      */
     public function lookup(string $class, string $method, string $argument)
     {

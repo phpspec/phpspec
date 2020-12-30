@@ -31,33 +31,27 @@ use ArrayAccess;
  * @method void beConstructedWith(...$arguments)
  * @method void beConstructedThrough($factoryMethod, array $constructorArguments = array())
  * @method void beAnInstanceOf($class)
- *
  * @method void shouldHaveType($type)
  * @method void shouldNotHaveType($type)
  * @method void shouldBeAnInstanceOf($type)
  * @method void shouldNotBeAnInstanceOf($type)
  * @method void shouldImplement($interface)
  * @method void shouldNotImplement($interface)
- *
  * @method void shouldIterateAs($iterable)
  * @method void shouldYield($iterable)
  * @method void shouldNotIterateAs($iterable)
  * @method void shouldNotYield($iterable)
- *
  * @method void shouldIterateLike($iterable)
  * @method void shouldYieldLike($iterable)
  * @method void shouldNotIterateLike($iterable)
  * @method void shouldNotYieldLike($iterable)
- *
  * @method void shouldStartIteratingAs($iterable)
  * @method void shouldStartYielding($iterable)
  * @method void shouldNotStartIteratingAs($iterable)
  * @method void shouldNotStartYielding($iterable)
- *
  * @method Subject\Expectation\DuringCall shouldThrow($exception = null)
  * @method Subject\Expectation\DuringCall shouldNotThrow($exception = null)
  * @method Subject\Expectation\DuringCall shouldTrigger($level = null, $message = null)
- *
  * @method void shouldHaveCount($count)
  * @method void shouldNotHaveCount($count)
  * @method void shouldContain($element)
@@ -83,6 +77,7 @@ abstract class ObjectBehavior implements
      * Override this method to provide your own inline matchers
      *
      * @link http://phpspec.net/cookbook/matchers.html Matchers cookbook
+     *
      * @return array a list of inline matchers
      */
     public function getMatchers(): array
@@ -94,8 +89,6 @@ abstract class ObjectBehavior implements
      * Used by { @link PhpSpec\Runner\Maintainer\SubjectMaintainer::prepare() }
      * to prepare the subject with all the needed collaborators for proxying
      * object behaviour
-     *
-     * @param Subject $subject
      */
     public function setSpecificationSubject(Subject $subject): void
     {
@@ -115,9 +108,7 @@ abstract class ObjectBehavior implements
     /**
      * Checks if a key exists in case object implements ArrayAccess
      *
-     * @param string|integer $key
-     *
-     * @return Subject
+     * @param int|string $key
      */
     public function offsetExists($key): Subject
     {
@@ -127,9 +118,7 @@ abstract class ObjectBehavior implements
     /**
      * Gets the value in a particular position in the ArrayAccess object
      *
-     * @param string|integer $key
-     *
-     * @return Subject
+     * @param int|string $key
      */
     public function offsetGet($key): Subject
     {
@@ -139,8 +128,7 @@ abstract class ObjectBehavior implements
     /**
      * Sets the value in a particular position in the ArrayAccess object
      *
-     * @param string|integer $key
-     * @param mixed          $value
+     * @param int|string $key
      */
     public function offsetSet($key, $value)
     {
@@ -150,7 +138,7 @@ abstract class ObjectBehavior implements
     /**
      * Unsets a position in the ArrayAccess object
      *
-     * @param string|integer $key
+     * @param int|string $key
      */
     public function offsetUnset($key)
     {
@@ -159,11 +147,6 @@ abstract class ObjectBehavior implements
 
     /**
      * Proxies all calls to the PhpSpec subject
-     *
-     * @param string $method
-     * @param array  $arguments
-     *
-     * @return mixed
      */
     public function __call(string $method, array $arguments = array())
     {
@@ -172,9 +155,6 @@ abstract class ObjectBehavior implements
 
     /**
      * Proxies setting to the PhpSpec subject
-     *
-     * @param string $property
-     * @param mixed  $value
      */
     public function __set(string $property, $value)
     {
@@ -183,10 +163,6 @@ abstract class ObjectBehavior implements
 
     /**
      * Proxies getting to the PhpSpec subject
-     *
-     * @param string $property
-     *
-     * @return mixed
      */
     public function __get(string $property)
     {
@@ -195,8 +171,6 @@ abstract class ObjectBehavior implements
 
     /**
      * Proxies functor calls to PhpSpec subject
-     *
-     * @return mixed
      */
     public function __invoke()
     {

@@ -22,27 +22,19 @@ final class CallableTypePresenter implements TypePresenter
      */
     private $presenter;
 
-    /**
-     * @param Presenter $presenter
-     */
+    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }
 
-    /**
-     * @param mixed $value
-     * @return bool
-     */
+    
     public function supports($value): bool
     {
         return is_callable($value);
     }
 
-    /**
-     * @param mixed $value
-     * @return string
-     */
+    
     public function present($value): string
     {
         if (\is_array($value)) {
@@ -61,9 +53,7 @@ final class CallableTypePresenter implements TypePresenter
         return sprintf('[%s()]', $value);
     }
 
-    /**
-     * @return int
-     */
+    
     public function getPriority(): int
     {
         return 70;

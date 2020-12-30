@@ -22,21 +22,13 @@ final class Negative implements Expectation
      */
     private $matcher;
 
-    /**
-     * @param Matcher $matcher
-     */
+    
     public function __construct(Matcher $matcher)
     {
         $this->matcher = $matcher;
     }
 
-    /**
-     * @param string $alias
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return mixed
-     */
+    
     public function match(string $alias, $subject, array $arguments = array())
     {
         return $this->matcher->negativeMatch($alias, $subject, $arguments);

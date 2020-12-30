@@ -48,7 +48,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
     {
         $subject = new \ReflectionClass($this);
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('beFinal', $subject, []);
     }
 
@@ -62,7 +62,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('beMatched', $subject, []);
     }
 
@@ -76,7 +76,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('beMatched', $subject, []);
     }
 
@@ -90,7 +90,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('beMatched', $subject, []);
     }
 
@@ -104,7 +104,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('beMatched', $subject, []);
     }
 
@@ -118,7 +118,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('beMatched', $subject, []);
     }
 
@@ -132,7 +132,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('beMatched', $subject, []);
     }
 
@@ -146,7 +146,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('beMatched', $subject, []);
     }
 
@@ -161,7 +161,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
     {
         $subject = new \ReflectionClass($this);
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('beUserDefined', $subject, []);
     }
 
@@ -175,7 +175,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('beMatched', $subject, []);
     }
 
@@ -189,7 +189,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('beMatched', $subject, []);
     }
 
@@ -203,7 +203,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('beMatched', $subject, []);
     }
 
@@ -217,7 +217,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('beMatched', $subject, []);
     }
 
@@ -231,7 +231,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('beMatched', $subject, []);
     }
 
@@ -245,7 +245,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('beMatched', $subject, []);
     }
 
@@ -259,7 +259,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('beMatched', $subject, []);
     }
 
@@ -291,7 +291,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
     {
         $subject = new \ReflectionClass($this);
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('haveProperty', $subject, ['other']);
     }
 
@@ -305,7 +305,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('haveMatch', $subject, []);
     }
 
@@ -319,7 +319,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('haveMatch', $subject, []);
     }
 
@@ -333,7 +333,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('haveMatch', $subject, []);
     }
 
@@ -347,7 +347,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('haveMatch', $subject, []);
     }
 
@@ -361,7 +361,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('haveMatched', $subject, []);
     }
 
@@ -375,7 +375,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('haveMatch', $subject, []);
     }
 
@@ -389,7 +389,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringPositiveMatch('haveMatch', $subject, []);
     }
 
@@ -406,7 +406,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
     {
         $subject = new \ReflectionClass($this);
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch(
                 'haveMethod',
                 $subject,
@@ -426,7 +426,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('haveMatch', $subject, []);
     }
 
@@ -440,7 +440,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('haveMatch', $subject, []);
     }
 
@@ -454,7 +454,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('haveMatch', $subject, []);
     }
 
@@ -468,7 +468,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('haveMatch', $subject, []);
     }
 
@@ -482,7 +482,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('haveMatched', $subject, []);
     }
 
@@ -496,7 +496,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('haveMatch', $subject, []);
     }
 
@@ -510,7 +510,7 @@ class ObjectStateMatcherSpec extends ObjectBehavior
             }
         };
 
-        $this->shouldThrow('PhpSpec\Exception\Example\FailureException')
+        $this->shouldThrow('PhpSpec\Exception\Example\MethodFailureException')
             ->duringNegativeMatch('haveMatch', $subject, []);
     }
 

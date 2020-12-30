@@ -26,56 +26,31 @@ final class TriggerMatcher implements Matcher
      */
     private $unwrapper;
 
-    /**
-     * @param Unwrapper $unwrapper
-     */
+    
     public function __construct(Unwrapper $unwrapper)
     {
         $this->unwrapper = $unwrapper;
     }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return bool
-     */
+    
     public function supports(string $name, $subject, array $arguments): bool
     {
         return 'trigger' === $name;
     }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return DelayedCall
-     */
+    
     public function positiveMatch(string $name, $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyPositive'), $subject, $arguments);
     }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return DelayedCall
-     */
+    
     public function negativeMatch(string $name, $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyNegative'), $subject, $arguments);
     }
 
     /**
-     * @param callable    $callable
-     * @param array       $arguments
-     * @param int|null    $level
-     * @param string|null $message
-     *
      * @throws \PhpSpec\Exception\Example\FailureException
      */
     public function verifyPositive(callable $callable, array $arguments, int $level = null, string $message = null)
@@ -104,11 +79,6 @@ final class TriggerMatcher implements Matcher
     }
 
     /**
-     * @param callable    $callable
-     * @param array       $arguments
-     * @param int|null    $level
-     * @param string|null $message
-     *
      * @throws \PhpSpec\Exception\Example\FailureException
      */
     public function verifyNegative(callable $callable, array $arguments, int $level = null, string $message = null)
@@ -141,21 +111,13 @@ final class TriggerMatcher implements Matcher
         }
     }
 
-    /**
-     * @return int
-     */
+    
     public function getPriority(): int
     {
         return 1;
     }
 
-    /**
-     * @param callable $check
-     * @param mixed    $subject
-     * @param array    $arguments
-     *
-     * @return DelayedCall
-     */
+    
     private function getDelayedCall(callable $check, $subject, array $arguments): DelayedCall
     {
         $unwrapper = $this->unwrapper;
@@ -184,9 +146,7 @@ final class TriggerMatcher implements Matcher
         );
     }
 
-    /**
-     * @return array
-     */
+    
     private function unpackArguments(array $arguments): array
     {
         $count = \count($arguments);

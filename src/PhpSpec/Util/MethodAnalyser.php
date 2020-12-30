@@ -17,22 +17,13 @@ use PhpSpec\Loader\StreamWrapper;
 
 class MethodAnalyser
 {
-    /**
-     * @param string $class
-     * @param string $method
-     *
-     * @return boolean
-     */
+    
     public function methodIsEmpty(string $class, string $method): bool
     {
         return $this->reflectionMethodIsEmpty(new \ReflectionMethod($class, $method));
     }
 
-    /**
-     * @param \ReflectionMethod $method
-     *
-     * @return bool
-     */
+    
     public function reflectionMethodIsEmpty(\ReflectionMethod $method): bool
     {
         if ($this->isNotImplementedInPhp($method)) {
@@ -45,12 +36,7 @@ class MethodAnalyser
         return $this->codeIsOnlyBlocksAndWhitespace($codeWithoutComments);
     }
 
-    /**
-     * @param string $class
-     * @param string $method
-     *
-     * @return string
-     */
+    
     public function getMethodOwnerName(string $class, string $method): string
     {
         $reflectionMethod = new \ReflectionMethod($class, $method);
@@ -61,11 +47,7 @@ class MethodAnalyser
         return $reflectionClass->getName();
     }
 
-    /**
-     * @param \ReflectionMethod $reflectionMethod
-     *
-     * @return string
-     */
+    
     private function getCodeBody(\ReflectionMethod $reflectionMethod): string
     {
         $endLine = $reflectionMethod->getEndLine();
@@ -79,13 +61,7 @@ class MethodAnalyser
         return preg_replace('/.*function[^{]+{/s', '', $code);
     }
 
-    /**
-     * @param  \ReflectionMethod $reflectionMethod
-     * @param  int $methodStartLine
-     * @param  int $methodEndLine
-     *
-     * @return \ReflectionClass
-     */
+    
     private function getMethodOwner(\ReflectionMethod $reflectionMethod, int $methodStartLine, int $methodEndLine): \ReflectionClass
     {
         $reflectionClass = $reflectionMethod->getDeclaringClass();
@@ -98,11 +74,6 @@ class MethodAnalyser
 
     /**
      * @param  \ReflectionClass[] $traits
-     * @param  string  $file
-     * @param  int $start
-     * @param  int $end
-     *
-     * @return null|\ReflectionClass
      */
     private function getDeclaringTrait(array $traits, string $file, int $start, int $end): ?\ReflectionClass
     {
@@ -118,10 +89,7 @@ class MethodAnalyser
         return null;
     }
 
-    /**
-     * @param  string $code
-     * @return string
-     */
+    
     private function stripComments(string $code): string
     {
         $tokens = token_get_all('<?php ' . $code);
@@ -142,19 +110,13 @@ class MethodAnalyser
         return $commentless;
     }
 
-    /**
-     * @param  string $codeWithoutComments
-     * @return bool
-     */
+    
     private function codeIsOnlyBlocksAndWhitespace(string $codeWithoutComments): bool
     {
         return (bool) preg_match('/^[\s{}]*$/s', $codeWithoutComments);
     }
 
-    /**
-     * @param  \ReflectionMethod $method
-     * @return bool
-     */
+    
     private function isNotImplementedInPhp(\ReflectionMethod $method): bool
     {
         $filename = $method->getDeclaringClass()->getFileName();

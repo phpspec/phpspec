@@ -22,10 +22,6 @@ class ResultConverter
 {
     /**
      * Convert Example result into exit code
-     *
-     * @param mixed $result
-     *
-     * @return int
      */
     public function convert($result): int
     {

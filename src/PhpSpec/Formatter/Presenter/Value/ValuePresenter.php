@@ -16,9 +16,6 @@ namespace PhpSpec\Formatter\Presenter\Value;
 
 interface ValuePresenter
 {
-    /**
-     * @param mixed $value
-     * @return string
-     */
+    
     public function presentValue($value): string;
 }

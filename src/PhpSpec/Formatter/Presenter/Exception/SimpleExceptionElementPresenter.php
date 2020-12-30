@@ -28,20 +28,14 @@ final class SimpleExceptionElementPresenter implements ExceptionElementPresenter
      */
     private $valuePresenter;
 
-    /**
-     * @param ExceptionTypePresenter $exceptionTypePresenter
-     * @param ValuePresenter $valuePresenter
-     */
+    
     public function __construct(ExceptionTypePresenter $exceptionTypePresenter, ValuePresenter $valuePresenter)
     {
         $this->exceptionTypePresenter = $exceptionTypePresenter;
         $this->valuePresenter = $valuePresenter;
     }
 
-    /**
-     * @param \Exception $exception
-     * @return string
-     */
+    
     public function presentExceptionThrownMessage(\Exception $exception): string
     {
         return sprintf(
@@ -50,60 +44,37 @@ final class SimpleExceptionElementPresenter implements ExceptionElementPresenter
         );
     }
 
-    /**
-     * @param string $number
-     * @param string $line
-     * @return string
-     */
+    
     public function presentCodeLine(string $number, string $line): string
     {
         return sprintf('%s %s', $number, $line);
     }
 
-    /**
-     * @param string $line
-     * @return string
-     */
+    
     public function presentHighlight(string $line): string
     {
         return $line;
     }
 
-    /**
-     * @param string $header
-     * @return string
-     */
+    
     public function presentExceptionTraceHeader(string $header): string
     {
         return $header;
     }
 
-    /**
-     * @param string $class
-     * @param string $type
-     * @param string $method
-     * @param array $args
-     * @return string
-     */
+    
     public function presentExceptionTraceMethod(string $class, string $type, string $method, array $args): string
     {
         return sprintf('   %s%s%s(%s)', $class, $type, $method, $this->presentExceptionTraceArguments($args));
     }
 
-    /**
-     * @param string $function
-     * @param array $args
-     * @return string
-     */
+    
     public function presentExceptionTraceFunction(string $function, array $args): string
     {
         return sprintf('   %s(%s)', $function, $this->presentExceptionTraceArguments($args));
     }
 
-    /**
-     * @param array $args
-     * @return string
-     */
+    
     private function presentExceptionTraceArguments(array $args): string
     {
         return implode(', ', array_map(array($this->valuePresenter, 'presentValue'), $args));

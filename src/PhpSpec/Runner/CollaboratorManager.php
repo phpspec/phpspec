@@ -29,16 +29,13 @@ class CollaboratorManager
      */
     private $collaborators = array();
 
-    /**
-     * @param Presenter $presenter
-     */
+    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }
 
     /**
-     * @param string       $name
      * @param object $collaborator
      */
     public function set(string $name, $collaborator): void
@@ -46,19 +43,13 @@ class CollaboratorManager
         $this->collaborators[$name] = $collaborator;
     }
 
-    /**
-     * @param string $name
-     *
-     * @return bool
-     */
+    
     public function has(string $name): bool
     {
         return isset($this->collaborators[$name]);
     }
 
     /**
-     * @param string $name
-     *
      * @return object
      *
      * @throws \PhpSpec\Exception\Wrapper\CollaboratorException
@@ -74,11 +65,7 @@ class CollaboratorManager
         return $this->collaborators[$name];
     }
 
-    /**
-     * @param ReflectionFunctionAbstract $function
-     *
-     * @return array
-     */
+    
     public function getArgumentsFor(ReflectionFunctionAbstract $function): array
     {
         $parameters = array();

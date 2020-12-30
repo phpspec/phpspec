@@ -42,11 +42,7 @@ final class SubjectMaintainer implements Maintainer
      */
     private $accessInspector;
 
-    /**
-     * @param Presenter       $presenter
-     * @param Unwrapper                $unwrapper
-     * @param EventDispatcherInterface $dispatcher
-     */
+    
     public function __construct(
         Presenter $presenter,
         Unwrapper $unwrapper,
@@ -59,11 +55,7 @@ final class SubjectMaintainer implements Maintainer
         $this->accessInspector = $accessInspector;
     }
 
-    /**
-     * @param ExampleNode $example
-     *
-     * @return boolean
-     */
+    
     public function supports(ExampleNode $example): bool
     {
         return $example->getSpecification()->getClassReflection()->implementsInterface(
@@ -71,12 +63,7 @@ final class SubjectMaintainer implements Maintainer
         );
     }
 
-    /**
-     * @param ExampleNode            $example
-     * @param Specification $context
-     * @param MatcherManager         $matchers
-     * @param CollaboratorManager    $collaborators
-     */
+    
     public function prepare(
         ExampleNode $example,
         Specification $context,
@@ -92,12 +79,7 @@ final class SubjectMaintainer implements Maintainer
         $context->setSpecificationSubject($subject);
     }
 
-    /**
-     * @param ExampleNode            $example
-     * @param Specification $context
-     * @param MatcherManager         $matchers
-     * @param CollaboratorManager    $collaborators
-     */
+    
     public function teardown(
         ExampleNode $example,
         Specification $context,
@@ -106,9 +88,7 @@ final class SubjectMaintainer implements Maintainer
     ): void {
     }
 
-    /**
-     * @return int
-     */
+    
     public function getPriority(): int
     {
         return 100;

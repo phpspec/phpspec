@@ -24,18 +24,13 @@ class ReportItemFactory
      */
     private $template;
 
-    /**
-     * @param TemplateInterface $template
-     */
+    
     public function __construct(TemplateInterface $template)
     {
         $this->template = $template;
     }
 
     /**
-     * @param ExampleEvent $event
-     * @param Presenter    $presenter
-     *
      * @return ReportFailedItem|ReportPassedItem|ReportPendingItem|ReportSkippedItem
      */
     public function create(ExampleEvent $event, Presenter $presenter)
@@ -56,8 +51,6 @@ class ReportItemFactory
     }
 
     /**
-     * @param integer $result
-     *
      * @throws InvalidExampleResultException
      */
     private function invalidResultException(int $result): void

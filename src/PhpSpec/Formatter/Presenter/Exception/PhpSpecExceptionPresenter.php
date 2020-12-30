@@ -18,9 +18,6 @@ use PhpSpec\Exception\Exception;
 
 interface PhpSpecExceptionPresenter
 {
-    /**
-     * @param Exception $exception
-     * @return string
-     */
+    
     public function presentException(Exception $exception): string;
 }

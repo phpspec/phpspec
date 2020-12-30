@@ -61,8 +61,6 @@ final class JUnitFormatter extends BasicFormatter
 
     /**
      * Set testcase nodes
-     *
-     * @param array $testCaseNodes
      */
     public function setTestCaseNodes(array $testCaseNodes): void
     {
@@ -71,8 +69,6 @@ final class JUnitFormatter extends BasicFormatter
 
     /**
      * Get testcase nodes
-     *
-     * @return array
      */
     public function getTestCaseNodes(): array
     {
@@ -81,8 +77,6 @@ final class JUnitFormatter extends BasicFormatter
 
     /**
      * Set testsuite nodes
-     *
-     * @param array $testSuiteNodes
      */
     public function setTestSuiteNodes(array $testSuiteNodes)
     {
@@ -91,8 +85,6 @@ final class JUnitFormatter extends BasicFormatter
 
     /**
      * Get testsuite nodes
-     *
-     * @return array
      */
     public function getTestSuiteNodes(): array
     {
@@ -101,8 +93,6 @@ final class JUnitFormatter extends BasicFormatter
 
     /**
      * Set example status counts
-     *
-     * @param array $exampleStatusCounts
      */
     public function setExampleStatusCounts(array $exampleStatusCounts)
     {
@@ -111,8 +101,6 @@ final class JUnitFormatter extends BasicFormatter
 
     /**
      * Get example status counts
-     *
-     * @return array
      */
     public function getExampleStatusCounts(): array
     {

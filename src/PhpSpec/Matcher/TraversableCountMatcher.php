@@ -28,9 +28,7 @@ final class TraversableCountMatcher implements Matcher
      */
     private $presenter;
 
-    /**
-     * @param Presenter $presenter
-     */
+    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
@@ -93,9 +91,6 @@ final class TraversableCountMatcher implements Matcher
     }
 
     /**
-     * @param \Traversable $subject
-     * @param int $expected
-     *
      * @return int self::*
      */
     private function countDifference(\Traversable $subject, int $expected): int

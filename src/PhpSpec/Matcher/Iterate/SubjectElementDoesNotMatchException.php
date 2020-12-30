@@ -17,13 +17,7 @@ use PhpSpec\Exception\Example\FailureException;
 
 class SubjectElementDoesNotMatchException extends FailureException
 {
-    /**
-     * @param int $elementNumber
-     * @param string $subjectKey
-     * @param string $subjectValue
-     * @param string $expectedKey
-     * @param string $expectedValue
-     */
+    
     public function __construct(int $elementNumber, string $subjectKey, string $subjectValue, string $expectedKey, string $expectedValue)
     {
         parent::__construct(sprintf(

@@ -25,18 +25,13 @@ class CallArgumentsPresenter
      */
     private $differ;
 
-    /**
-     * @param Differ $differ
-     */
+    
     public function __construct(Differ $differ)
     {
         $this->differ = $differ;
     }
 
-    /**
-     * @param UnexpectedCallException $exception
-     * @return string
-     */
+    
     public function presentDifference(UnexpectedCallException $exception): string
     {
         $actualArguments = $exception->getArguments();
@@ -64,7 +59,6 @@ class CallArgumentsPresenter
 
     /**
      * @param MethodProphecy[] $methodProphecies
-     * @return bool
      */
     private function noMethodPropheciesForUnexpectedCall(array $methodProphecies): bool
     {
@@ -73,9 +67,8 @@ class CallArgumentsPresenter
 
     /**
      * @param MethodProphecy[] $methodProphecies
-     * @param UnexpectedCallException $exception
      *
-     * @return MethodProphecy|null
+     * @return null|MethodProphecy
      */
     private function findFirstUnexpectedArgumentsCallProphecy(
         array $methodProphecies,
@@ -99,22 +92,13 @@ class CallArgumentsPresenter
         return null;
     }
 
-    /**
-     * @param array $expectedTokens
-     * @param array $actualArguments
-     *
-     * @return bool
-     */
+    
     private function parametersCountMismatch(array $expectedTokens, array $actualArguments): bool
     {
         return \count($expectedTokens) !== \count($actualArguments);
     }
 
-    /**
-     * @param array $tokens
-     *
-     * @return array
-     */
+    
     private function convertArgumentTokensToDiffableValues(array $tokens): array
     {
         $values = array();
@@ -129,12 +113,7 @@ class CallArgumentsPresenter
         return $values;
     }
 
-    /**
-     * @param array $actualArguments
-     * @param array $expectedArguments
-     *
-     * @return string
-     */
+    
     private function generateArgumentsDifferenceText(array $actualArguments, array $expectedArguments): string
     {
         $text = '';

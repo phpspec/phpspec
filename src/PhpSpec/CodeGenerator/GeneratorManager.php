@@ -27,9 +27,7 @@ class GeneratorManager
      */
     private $generators = array();
 
-    /**
-     * @param Generator $generator
-     */
+    
     public function registerGenerator(Generator $generator): void
     {
         $this->generators[] = $generator;
@@ -40,6 +38,7 @@ class GeneratorManager
 
     /**
      * @return mixed
+     *
      * @throws \InvalidArgumentException
      */
     public function generate(Resource $resource, string $name, array $data = array()): void

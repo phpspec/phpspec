@@ -27,21 +27,13 @@ class ExceptionFactory
      */
     private $presenter;
 
-    /**
-     * @param Presenter $presenter
-     */
+    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }
 
-    /**
-     * @param string $classname
-     * @param string $method
-     * @param array  $arguments
-     *
-     * @return Fracture\NamedConstructorNotFoundException
-     */
+    
     public function namedConstructorNotFound(string $classname, string $method, array $arguments = array()): Fracture\NamedConstructorNotFoundException
     {
         $instantiator = new Instantiator();
@@ -57,13 +49,7 @@ class ExceptionFactory
         );
     }
 
-    /**
-     * @param string $classname
-     * @param string $method
-     * @param array  $arguments
-     *
-     * @return Fracture\MethodNotFoundException
-     */
+    
     public function methodNotFound(string $classname, string $method, array $arguments = array()): Fracture\MethodNotFoundException
     {
         $instantiator = new Instantiator();
@@ -78,13 +64,7 @@ class ExceptionFactory
         );
     }
 
-    /**
-     * @param string $classname
-     * @param string $method
-     * @param array  $arguments
-     *
-     * @return Fracture\MethodNotVisibleException
-     */
+    
     public function methodNotVisible(string $classname, string $method, array $arguments = array()): Fracture\MethodNotVisibleException
     {
         $instantiator = new Instantiator();
@@ -99,11 +79,7 @@ class ExceptionFactory
         );
     }
 
-    /**
-     * @param string $classname
-     *
-     * @return Fracture\ClassNotFoundException
-     */
+    
     public function classNotFound(string $classname): Fracture\ClassNotFoundException
     {
         $message = sprintf('Class %s does not exist.', $this->presenter->presentString($classname));
@@ -112,10 +88,7 @@ class ExceptionFactory
     }
 
     /**
-     * @param mixed  $subject
      * @param string $property
-     *
-     * @return Fracture\PropertyNotFoundException
      */
     public function propertyNotFound($subject, $property): Fracture\PropertyNotFoundException
     {
@@ -124,11 +97,7 @@ class ExceptionFactory
         return new Fracture\PropertyNotFoundException($message, $subject, $property);
     }
 
-    /**
-     * @param string $method
-     *
-     * @return SubjectException
-     */
+    
     public function callingMethodOnNonObject(string $method): SubjectException
     {
         return new SubjectException(sprintf(
@@ -137,11 +106,7 @@ class ExceptionFactory
         ));
     }
 
-    /**
-     * @param string $property
-     *
-     * @return SubjectException
-     */
+    
     public function settingPropertyOnNonObject(string $property): SubjectException
     {
         return new SubjectException(sprintf(
@@ -150,11 +115,7 @@ class ExceptionFactory
         ));
     }
 
-    /**
-     * @param string $property
-     *
-     * @return SubjectException
-     */
+    
     public function gettingPropertyOnNonObject(string $property): SubjectException
     {
         return new SubjectException(sprintf(

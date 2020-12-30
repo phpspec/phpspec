@@ -51,9 +51,7 @@ final class Application extends BaseApplication
         return $this->container;
     }
 
-    /**
-     * @return int
-     */
+    
     public function doRun(InputInterface $input, OutputInterface $output): int
     {
         $helperSet = $this->getHelperSet();
@@ -196,10 +194,6 @@ final class Application extends BaseApplication
     }
 
     /**
-     * @param InputInterface $input
-     *
-     * @return array
-     *
      * @throws \RuntimeException
      */
     protected function parseConfigurationFile(InputInterface $input): array
@@ -237,11 +231,7 @@ final class Application extends BaseApplication
         return array();
     }
 
-    /**
-     * @param string $path
-     *
-     * @return array
-     */
+    
     private function parseConfigFromExistingPath(string $path): array
     {
         if (!file_exists($path)) {

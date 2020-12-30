@@ -27,9 +27,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
     private $currentUse;
     private $uses = array();
 
-    /**
-     * @param string $code
-     */
+    
     public function analyse(string $code): void
     {
         $this->state = self::STATE_DEFAULT;

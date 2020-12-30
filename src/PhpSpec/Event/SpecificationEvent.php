@@ -32,15 +32,11 @@ class SpecificationEvent extends BaseEvent implements PhpSpecEvent
     private $time;
 
     /**
-     * @var integer
+     * @var int
      */
     private $result;
 
-    /**
-     * @param SpecificationNode $specification
-     * @param float             $time
-     * @param integer           $result
-     */
+    
     public function __construct(SpecificationNode $specification, float $time = 0.0, int $result = 0)
     {
         $this->specification = $specification;
@@ -48,41 +44,31 @@ class SpecificationEvent extends BaseEvent implements PhpSpecEvent
         $this->result        = $result;
     }
 
-    /**
-     * @return SpecificationNode
-     */
+    
     public function getSpecification(): SpecificationNode
     {
         return $this->specification;
     }
 
-    /**
-     * @return string
-     */
+    
     public function getTitle(): string
     {
         return $this->specification->getTitle();
     }
 
-    /**
-     * @return Suite
-     */
+    
     public function getSuite(): Suite
     {
         return $this->specification->getSuite();
     }
 
-    /**
-     * @return float
-     */
+    
     public function getTime(): float
     {
         return $this->time;
     }
 
-    /**
-     * @return integer
-     */
+    
     public function getResult(): int
     {
         return $this->result;

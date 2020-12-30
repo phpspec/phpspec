@@ -32,21 +32,14 @@ class SuiteRunner
      */
     private $specRunner;
 
-    /**
-     * @param EventDispatcher     $dispatcher
-     * @param SpecificationRunner $specRunner
-     */
+    
     public function __construct(EventDispatcher $dispatcher, SpecificationRunner $specRunner)
     {
         $this->dispatcher = $dispatcher;
         $this->specRunner = $specRunner;
     }
 
-    /**
-     * @param Suite $suite
-     *
-     * @return integer
-     */
+    
     public function run(Suite $suite): int
     {
         $this->dispatch($this->dispatcher, new SuiteEvent($suite), 'beforeSuite');

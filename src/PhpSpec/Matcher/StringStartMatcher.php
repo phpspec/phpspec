@@ -23,21 +23,13 @@ final class StringStartMatcher extends BasicMatcher
      */
     private $presenter;
 
-    /**
-     * @param Presenter $presenter
-     */
+    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return bool
-     */
+    
     public function supports(string $name, $subject, array $arguments): bool
     {
         return 'startWith' === $name
@@ -46,24 +38,13 @@ final class StringStartMatcher extends BasicMatcher
         ;
     }
 
-    /**
-     * @param mixed $subject
-     * @param array $arguments
-     *
-     * @return bool
-     */
+    
     protected function matches($subject, array $arguments): bool
     {
         return 0 === strpos($subject, $arguments[0]);
     }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return FailureException
-     */
+    
     protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
@@ -73,13 +54,7 @@ final class StringStartMatcher extends BasicMatcher
         ));
     }
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return FailureException
-     */
+    
     protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(

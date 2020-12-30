@@ -24,9 +24,7 @@ final class ScalarMatcher implements Matcher
      */
     private $presenter;
 
-    /**
-     * @param Presenter $presenter
-     */
+    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
@@ -34,12 +32,6 @@ final class ScalarMatcher implements Matcher
 
     /**
      * Checks if matcher supports provided subject and matcher name.
-     *
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return Boolean
      */
     public function supports(string $name, $subject, array $arguments): bool
     {
@@ -51,12 +43,8 @@ final class ScalarMatcher implements Matcher
     /**
      * Evaluates positive match.
      *
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
      *
      * @throws \PhpSpec\Exception\Example\FailureException
-     * @return boolean
      */
     public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
@@ -80,12 +68,8 @@ final class ScalarMatcher implements Matcher
     /**
      * Evaluates negative match.
      *
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
      *
      * @throws \PhpSpec\Exception\Example\FailureException
-     * @return boolean
      */
     public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
@@ -102,14 +86,12 @@ final class ScalarMatcher implements Matcher
                 $this->presenter->presentValue(true)
             ));
         }
-        
+
         return null;
     }
 
     /**
      * Returns matcher priority.
-     *
-     * @return integer
      */
     public function getPriority(): int
     {
@@ -117,9 +99,7 @@ final class ScalarMatcher implements Matcher
     }
 
     /**
-     * @param string $name
-     *
-     * @return string|boolean
+     * @return bool|string
      */
     private function getCheckerName(string $name)
     {

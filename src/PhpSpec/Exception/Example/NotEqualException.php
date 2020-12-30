@@ -18,21 +18,13 @@ namespace PhpSpec\Exception\Example;
  */
 class NotEqualException extends FailureException
 {
-    /**
-     * @var mixed
-     */
+    
     private $expected;
 
-    /**
-     * @var mixed
-     */
+    
     private $actual;
 
-    /**
-     * @param string $message
-     * @param mixed  $expected
-     * @param mixed  $actual
-     */
+    
     public function __construct(string $message, $expected, $actual)
     {
         parent::__construct($message);
@@ -41,25 +33,19 @@ class NotEqualException extends FailureException
         $this->actual   = $actual;
     }
 
-    /**
-     * @return mixed
-     */
+    
     public function getExpected()
     {
         return $this->expected;
     }
 
-    /**
-     * @return mixed
-     */
+    
     public function getActual()
     {
         return $this->actual;
     }
 
-    /**
-     * @return string
-     */
+    
     public function __toString(): string
     {
         return var_export(array($this->expected, $this->actual), true);

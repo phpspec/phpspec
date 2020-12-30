@@ -11,13 +11,9 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Exception\Fracture;
+namespace PhpSpec\Exception\Example;
 
-/**
- * Class PropertyNotFoundException holds information about property not found
- * exceptions
- */
-class PropertyNotFoundException extends FractureException
+class MethodFailureException extends NotEqualException
 {
     
     private $subject;
@@ -25,17 +21,17 @@ class PropertyNotFoundException extends FractureException
     /**
      * @var string
      */
-    private $property;
+    private $method;
 
     /**
-     * @param string $property
+     * @param string $method
      */
-    public function __construct(string $message, $subject, $property)
+    public function __construct(string $message, $expected, $actual, $subject, $method)
     {
-        parent::__construct($message);
+        parent::__construct($message, $expected, $actual);
 
         $this->subject = $subject;
-        $this->property  = $property;
+        $this->method = $method;
     }
 
     
@@ -44,9 +40,11 @@ class PropertyNotFoundException extends FractureException
         return $this->subject;
     }
 
-    
-    public function getProperty(): string
+    /**
+     * @return string
+     */
+    public function getMethod()
     {
-        return $this->property;
+        return $this->method;
     }
 }

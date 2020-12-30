@@ -65,7 +65,7 @@ final class ArrayEngine extends StringEngine
                     $line = sprintf(
                         '%s => %s,',
                         $key,
-                        $this->exporter->export($val, ($pad + 1) * $padCorrection)
+                        $this->exporter->export($val, (int)(($pad + 1) * $padCorrection))
                     );
                     break;
                 case 'string':

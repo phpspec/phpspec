@@ -19,10 +19,6 @@ use PhpSpec\Wrapper\DelayedCall;
 abstract class BasicMatcher implements Matcher
 {
     /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
      * @return void
      *
      * @throws FailureException
@@ -37,10 +33,6 @@ abstract class BasicMatcher implements Matcher
     }
 
     /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
      * @return void
      *
      * @throws FailureException
@@ -54,37 +46,18 @@ abstract class BasicMatcher implements Matcher
         return null;
     }
 
-    /**
-     * @return int
-     */
+    
     public function getPriority(): int
     {
         return 100;
     }
 
-    /**
-     * @param mixed $subject
-     * @param array $arguments
-     *
-     * @return boolean
-     */
+    
     abstract protected function matches($subject, array $arguments): bool;
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return FailureException
-     */
+    
     abstract protected function getFailureException(string $name, $subject, array $arguments): FailureException;
 
-    /**
-     * @param string $name
-     * @param mixed  $subject
-     * @param array  $arguments
-     *
-     * @return FailureException
-     */
+    
     abstract protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException;
 }

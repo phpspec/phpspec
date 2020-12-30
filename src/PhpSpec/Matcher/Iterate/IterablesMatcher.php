@@ -11,9 +11,7 @@ final class IterablesMatcher
      */
     private $presenter;
 
-    /**
-     * @param Presenter $presenter
-     */
+    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
@@ -22,7 +20,6 @@ final class IterablesMatcher
     /**
      * @param array|\Traversable $subject
      * @param array|\Traversable $expected
-     * @param bool               $strict
      *
      * @throws \InvalidArgumentException
      * @throws SubjectElementDoesNotMatchException
@@ -66,11 +63,7 @@ final class IterablesMatcher
         }
     }
 
-    /**
-     * @param mixed $variable
-     *
-     * @return bool
-     */
+    
     private function isIterable($variable): bool
     {
         return \is_array($variable) || $variable instanceof \Traversable;
@@ -78,8 +71,6 @@ final class IterablesMatcher
 
     /**
      * @param array|\Traversable $iterable
-     *
-     * @return \Iterator
      */
     private function createIteratorFromIterable($iterable): \Iterator
     {

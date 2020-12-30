@@ -48,10 +48,6 @@ class Wrapper
     private $accessInspector;
 
     /**
-     * @param MatcherManager $matchers
-     * @param Presenter $presenter
-     * @param EventDispatcherInterface $dispatcher
-     * @param ExampleNode $example
      * @param AccessInspector $accessInspector
      */
     public function __construct(
@@ -70,8 +66,6 @@ class Wrapper
 
     /**
      * @param object $value
-     *
-     * @return Subject
      */
     public function wrap($value = null): Subject
     {
@@ -90,11 +84,7 @@ class Wrapper
         );
     }
 
-    /**
-     * @param WrappedObject $wrappedObject
-     *
-     * @return Caller
-     */
+    
     private function createCaller(WrappedObject $wrappedObject): Caller
     {
         $exceptionFactory = new ExceptionFactory($this->presenter);

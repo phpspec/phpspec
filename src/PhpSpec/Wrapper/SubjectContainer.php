@@ -15,8 +15,6 @@ namespace PhpSpec\Wrapper;
 
 interface SubjectContainer
 {
-    /**
-     * @param Subject $subject
-     */
+    
     public function setSpecificationSubject(Subject $subject): void;
 }

@@ -22,38 +22,27 @@ use PhpSpec\Exception\Example as ExampleException;
 final class ErrorMaintainer implements Maintainer
 {
     /**
-     * @var integer
+     * @var int
      */
     private $errorLevel;
     /**
-     * @var callable|null
+     * @var null|callable
      */
     private $errorHandler;
 
-    /**
-     * @param integer $errorLevel
-     */
+    
     public function __construct(int $errorLevel)
     {
         $this->errorLevel = $errorLevel;
     }
 
-    /**
-     * @param ExampleNode $example
-     *
-     * @return bool
-     */
+    
     public function supports(ExampleNode $example): bool
     {
         return true;
     }
 
-    /**
-     * @param ExampleNode            $example
-     * @param Specification $context
-     * @param MatcherManager         $matchers
-     * @param CollaboratorManager    $collaborators
-     */
+    
     public function prepare(
         ExampleNode $example,
         Specification $context,
@@ -63,12 +52,7 @@ final class ErrorMaintainer implements Maintainer
         $this->errorHandler = set_error_handler(array($this, 'errorHandler'), $this->errorLevel);
     }
 
-    /**
-     * @param ExampleNode            $example
-     * @param Specification $context
-     * @param MatcherManager         $matchers
-     * @param CollaboratorManager    $collaborators
-     */
+    
     public function teardown(
         ExampleNode $example,
         Specification $context,
@@ -80,9 +64,7 @@ final class ErrorMaintainer implements Maintainer
         }
     }
 
-    /**
-     * @return int
-     */
+    
     public function getPriority(): int
     {
         return 999;
@@ -94,13 +76,6 @@ final class ErrorMaintainer implements Maintainer
      * This method used as custom error handler when step is running.
      *
      * @see set_error_handler()
-     *
-     * @param integer $level
-     * @param string  $message
-     * @param string  $file
-     * @param integer $line
-     *
-     * @return bool
      *
      * @throws ExampleException\ErrorException
      */

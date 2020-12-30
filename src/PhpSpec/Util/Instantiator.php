@@ -18,8 +18,6 @@ use PhpSpec\Exception\Fracture\ClassNotFoundException;
 class Instantiator
 {
     /**
-     * @param string $className
-     *
      * @return object
      */
     public function instantiate(string $className)

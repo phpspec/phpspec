@@ -45,19 +45,14 @@ class ExampleRunner
      */
     private $maintainers = array();
 
-    /**
-     * @param EventDispatcherInterface $dispatcher
-     * @param Presenter       $presenter
-     */
+    
     public function __construct(EventDispatcherInterface $dispatcher, Presenter $presenter)
     {
         $this->dispatcher = $dispatcher;
         $this->presenter  = $presenter;
     }
 
-    /**
-     * @param Maintainer $maintainer
-     */
+    
     public function registerMaintainer(Maintainer $maintainer): void
     {
         $this->maintainers[] = $maintainer;
@@ -67,11 +62,7 @@ class ExampleRunner
         });
     }
 
-    /**
-     * @param ExampleNode $example
-     *
-     * @return int
-     */
+    
     public function run(ExampleNode $example): int
     {
         $startTime = microtime(true);
@@ -124,9 +115,6 @@ class ExampleRunner
     }
 
     /**
-     * @param Specification $context
-     * @param ExampleNode            $example
-     *
      * @throws \PhpSpec\Exception\Example\PendingException
      * @throws \Exception
      */
@@ -173,10 +161,6 @@ class ExampleRunner
 
     /**
      * @param Maintainer[] $maintainers
-     * @param ExampleNode                      $example
-     * @param Specification           $context
-     * @param MatcherManager                   $matchers
-     * @param CollaboratorManager              $collaborators
      */
     private function runMaintainersTeardown(
         array $maintainers,

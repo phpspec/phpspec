@@ -48,9 +48,7 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
      */
     private $matcher;
 
-    /**
-     * @var mixed
-     */
+    
     private $subject;
 
     /**
@@ -64,7 +62,7 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
     private $arguments;
 
     /**
-     * @var integer
+     * @var int
      */
     private $result;
 
@@ -74,12 +72,9 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
     private $exception;
 
     /**
-     * @param ExampleNode      $example
-     * @param Matcher $matcher
-     * @param mixed            $subject
      * @param string           $method
      * @param array            $arguments
-     * @param integer          $result
+     * @param int          $result
      * @param \Exception       $exception
      */
     public function __construct(
@@ -100,73 +95,57 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
         $this->exception = $exception;
     }
 
-    /**
-     * @return Matcher
-     */
+    
     public function getMatcher(): Matcher
     {
         return $this->matcher;
     }
 
-    /**
-     * @return ExampleNode
-     */
+    
     public function getExample(): ExampleNode
     {
         return $this->example;
     }
 
-    /**
-     * @return SpecificationNode
-     */
+    
     public function getSpecification(): SpecificationNode
     {
         return $this->example->getSpecification();
     }
 
-    /**
-     * @return Suite
-     */
+    
     public function getSuite(): Suite
     {
         return $this->example->getSpecification()->getSuite();
     }
 
-    /**
-     * @return mixed
-     */
+    
     public function getSubject()
     {
         return $this->subject;
     }
 
-    /**
-     * @return string
-     */
+    
     public function getMethod(): string
     {
         return $this->method;
     }
 
-    /**
-     * @return array
-     */
+    
     public function getArguments(): array
     {
         return $this->arguments;
     }
 
     /**
-     * @return \Exception|null
+     * @return null|\Exception
      */
     public function getException()
     {
         return $this->exception;
     }
 
-    /**
-     * @return integer
-     */
+    
     public function getResult(): int
     {
         return $this->result;

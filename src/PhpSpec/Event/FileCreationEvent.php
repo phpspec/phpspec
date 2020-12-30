@@ -26,9 +26,7 @@ final class FileCreationEvent extends BaseEvent implements PhpSpecEvent
         $this->filepath = $filepath;
     }
 
-    /**
-     * @return string
-     */
+    
     public function getFilePath(): string
     {
         return $this->filepath;

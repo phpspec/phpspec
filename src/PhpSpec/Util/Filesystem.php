@@ -17,56 +17,37 @@ use Symfony\Component\Finder\Finder;
 
 class Filesystem
 {
-    /**
-     * @param string $path
-     *
-     * @return bool
-     */
+    
     public function pathExists(string $path): bool
     {
         return file_exists($path);
     }
 
-    /**
-     * @param string $path
-     *
-     * @return string
-     */
+    
     public function getFileContents(string $path): string
     {
         return file_get_contents($path);
     }
 
-    /**
-     * @param string $path
-     * @param string $content
-     */
+    
     public function putFileContents(string $path, string $content)
     {
         file_put_contents($path, $content);
     }
 
-    /**
-     * @param string $path
-     *
-     * @return bool
-     */
+    
     public function isDirectory(string $path): bool
     {
         return is_dir($path);
     }
 
-    /**
-     * @param string $path
-     */
+    
     public function makeDirectory(string $path): void
     {
         mkdir($path, 0777, true);
     }
 
     /**
-     * @param string $path
-     *
      * @return \SplFileInfo[]
      */
     public function findSpecFilesIn(string $path): array

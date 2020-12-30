@@ -25,17 +25,13 @@ final class StopOnFailureListener implements EventSubscriberInterface
      */
     private $io;
 
-    /**
-     * @param ConsoleIO $io
-     */
+    
     public function __construct(ConsoleIO $io)
     {
         $this->io = $io;
     }
 
-    /**
-     * @return array
-     */
+    
     public static function getSubscribedEvents(): array
     {
         return array(
@@ -44,8 +40,6 @@ final class StopOnFailureListener implements EventSubscriberInterface
     }
 
     /**
-     * @param ExampleEvent $event
-     *
      * @throws \PhpSpec\Exception\Example\StopOnFailureException
      */
     public function afterExample(ExampleEvent $event): void

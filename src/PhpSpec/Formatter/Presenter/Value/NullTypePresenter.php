@@ -15,27 +15,19 @@ namespace PhpSpec\Formatter\Presenter\Value;
 
 final class NullTypePresenter implements TypePresenter
 {
-    /**
-     * @param mixed $value
-     * @return bool
-     */
+    
     public function supports($value): bool
     {
         return null === $value;
     }
 
-    /**
-     * @param mixed $value
-     * @return string
-     */
+    
     public function present($value): string
     {
         return 'null';
     }
 
-    /**
-     * @return int
-     */
+    
     public function getPriority(): int
     {
         return 50;
