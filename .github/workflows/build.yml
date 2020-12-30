@@ -25,8 +25,6 @@ jobs:
                         composer-flags: --prefer-lowest
                     -   php: 7.4
                         stability: "dev"
-                    -   php: 7.4
-                        composer-extras: "symfony/event-dispatcher ^3.4 symfony/contracts ^2.0"
                     -   php: 8.0
 
         env:
