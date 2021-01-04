@@ -62,6 +62,9 @@ jobs:
             -   name: Install composer dependencies
                 run: composer update ${{ matrix.composer-flags }}
 
+            -   name: Run static analysis (psalm)
+                run: ./vendor/bin/psalm
+
             -   name: Run tests (phpspec)
                 run: bin/phpspec run --format=dot
 
