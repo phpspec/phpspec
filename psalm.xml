@@ -12,4 +12,19 @@
             <directory name="vendor" />
         </ignoreFiles>
     </projectFiles>
+    <issueHandlers>
+        <DuplicateClass>
+            <errorLevel type="suppress">
+                <!-- duplicate classes are inside a conditional so not an error -->
+                <file name="src/PhpSpec/Event/BaseEvent.php" />
+            </errorLevel>
+        </DuplicateClass>
+        <UndefinedConstant>
+            <errorLevel type="suppress">
+                <!-- new token constants in PHP 8 cause an error, despite being behind version detection -->
+                <file name="src/PhpSpec/CodeAnalysis/TokenizedTypeHintRewriter.php" />
+                <file name="src/PhpSpec/Locator/PSR0/PSR0Locator.php" />
+            </errorLevel>
+        </UndefinedConstant>
+    </issueHandlers>
 </psalm>
