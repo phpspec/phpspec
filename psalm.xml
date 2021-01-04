@@ -13,12 +13,6 @@
         </ignoreFiles>
     </projectFiles>
     <issueHandlers>
-        <DuplicateClass>
-            <errorLevel type="suppress">
-                <!-- duplicate classes are inside a conditional so not an error -->
-                <file name="src/PhpSpec/Event/BaseEvent.php" />
-            </errorLevel>
-        </DuplicateClass>
         <UndefinedConstant>
             <errorLevel type="suppress">
                 <!-- new token constants in PHP 8 cause an error, despite being behind version detection -->

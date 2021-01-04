@@ -63,7 +63,6 @@ jobs:
                 run: composer update ${{ matrix.composer-flags }}
 
             -   name: Run static analysis (psalm)
-                if: matrix.composer-flags != '--prefer-lowest'
                 run: ./vendor/bin/psalm
 
             -   name: Run tests (phpspec)
