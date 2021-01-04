@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Locator\PSR0;
 
+use PhpSpec\Locator\Resource;
 use PhpSpec\Locator\ResourceLocator;
 use PhpSpec\Locator\SrcPathLocator;
 use PhpSpec\Util\Filesystem;

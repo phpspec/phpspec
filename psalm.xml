@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<psalm
+    errorLevel="7"
+    resolveFromConfigFile="true"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://getpsalm.org/schema/config"
+    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+>
+    <projectFiles>
+        <directory name="src" />
+        <ignoreFiles>
+            <directory name="vendor" />
+        </ignoreFiles>
+    </projectFiles>
+    <issueHandlers>
+        <DuplicateClass>
+            <errorLevel type="suppress">
+                <!-- duplicate classes are inside a conditional so not an error -->
+                <file name="src/PhpSpec/Event/BaseEvent.php" />
+            </errorLevel>
+        </DuplicateClass>
+        <UndefinedConstant>
+            <errorLevel type="suppress">
+                <!-- new token constants in PHP 8 cause an error, despite being behind version detection -->
+                <file name="src/PhpSpec/CodeAnalysis/TokenizedTypeHintRewriter.php" />
+                <file name="src/PhpSpec/Locator/PSR0/PSR0Locator.php" />
+            </errorLevel>
+        </UndefinedConstant>
+    </issueHandlers>
+</psalm>

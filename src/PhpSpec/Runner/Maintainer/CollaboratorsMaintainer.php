@@ -105,8 +105,7 @@ final class CollaboratorsMaintainer implements Maintainer
                 if ($this->isUnsupportedTypeHinting($parameter)) {
                     throw new InvalidCollaboratorTypeException($parameter, $function);
                 }
-                if (($indexedClass = $this->getParameterTypeFromIndex($classRefl, $parameter))
-                    || ($indexedClass = $this->getParameterTypeFromReflection($parameter))) {
+                if ($indexedClass = $this->getParameterTypeFromIndex($classRefl, $parameter)) {
                     $collaborator->beADoubleOf($indexedClass);
                 }
             }
@@ -167,26 +166,5 @@ final class CollaboratorsMaintainer implements Maintainer
             $parameter->getDeclaringFunction()->getName(),
             '$' . $parameter->getName()
         );
-    }
-
-    /**
-     * @return null|string
-     */
-    private function getParameterTypeFromReflection(\ReflectionParameter $parameter): string
-    {
-        $type = $parameter->getType();
-
-        if (null === $type) {
-            return '';
-        }
-
-        // this is safe due to isUnsupportedTypeHinting
-        $name = $class->getName();
-
-        if ($type->isBuiltin() || class_exists($name)) {
-            return $name;
-        }
-
-        $this->throwCollaboratorNotFound($e, $parameter);
     }
 }
