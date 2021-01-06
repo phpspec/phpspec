@@ -30,9 +30,6 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
      */
     private $io;
 
-    /**
-     * @var MethodCallEvent[]
-     */
     private $nullMethods = array();
 
     /**
