@@ -18,6 +18,7 @@ use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\MethodCallEvent;
 use PhpSpec\Event\SuiteEvent;
+use PhpSpec\Exception\Example\MethodFailureException;
 use PhpSpec\Exception\Example\NotEqualException;
 use PhpSpec\Locator\ResourceManager;
 use PhpSpec\Util\MethodAnalyser;
@@ -99,6 +100,11 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
         }
 
         if (!$this->lastMethodCallEvent) {
+
+            if (!$exception instanceof MethodFailureException) {
+                return;
+            }
+
             $subject = $exception->getSubject();
             $method = $exception->getMethod();
             if (is_null($subject) || is_null($method)) {
