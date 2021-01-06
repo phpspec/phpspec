@@ -56,6 +56,7 @@ class SubjectWithArrayAccess
 
         $this->checkIfSubjectImplementsArrayAccess($subject);
 
+        /** @var \ArrayAccess|array $subject */
         return isset($subject[$key]);
     }
 
@@ -70,6 +71,7 @@ class SubjectWithArrayAccess
 
         $this->checkIfSubjectImplementsArrayAccess($subject);
 
+        /** @var \ArrayAccess|array $subject */
         return $subject[$key];
     }
 
@@ -85,6 +87,7 @@ class SubjectWithArrayAccess
 
         $this->checkIfSubjectImplementsArrayAccess($subject);
 
+        /** @var \ArrayAccess|array $subject */
         $subject[$key] = $value;
     }
 
@@ -99,6 +102,7 @@ class SubjectWithArrayAccess
 
         $this->checkIfSubjectImplementsArrayAccess($subject);
 
+        /** @var \ArrayAccess|array $subject */
         unset($subject[$key]);
     }
 
