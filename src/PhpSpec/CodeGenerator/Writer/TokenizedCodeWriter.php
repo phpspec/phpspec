@@ -13,6 +13,7 @@
 
 namespace PhpSpec\CodeGenerator\Writer;
 
+use PhpSpec\Exception\Generator\GenerationFailed;
 use PhpSpec\Util\ClassFileAnalyser;
 
 final class TokenizedCodeWriter implements CodeWriter
@@ -120,6 +121,8 @@ final class TokenizedCodeWriter implements CodeWriter
                 return substr_replace($class, "\n" . $method . "\n", $position, 0);
             }
         }
+
+        throw new GenerationFailed('Could not locate end of class');
     }
 
     /**
