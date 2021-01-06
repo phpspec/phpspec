@@ -114,6 +114,9 @@ class StatisticsCollector implements EventSubscriberInterface
         return $this->brokenEvents;
     }
 
+    /**
+     * @return int[]
+     */
     public function getCountsHash() : array
     {
         return array(
