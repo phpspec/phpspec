@@ -26,5 +26,11 @@
                 <file name="src/PhpSpec/Locator/PSR0/PSR0Locator.php" />
             </errorLevel>
         </UndefinedConstant>
+        <InvalidCatch>
+            <errorLevel type="suppress">
+                <!-- Prophecy's exception interface does not extend throwable -->
+                <referencedClass name="Prophecy\Exception\Prediction\PredictionException"/>
+            </errorLevel>
+        </InvalidCatch>
     </issueHandlers>
 </psalm>
