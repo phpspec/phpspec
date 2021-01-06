@@ -32,5 +32,11 @@
                 <referencedClass name="Prophecy\Exception\Prediction\PredictionException"/>
             </errorLevel>
         </InvalidCatch>
+        <InvalidArgument>
+            <errorLevel type="suppress">
+                <!-- Error from symfony BC code -->
+                <referencedFunction name="Symfony\Contracts\EventDispatcher\EventDispatcherInterface::dispatch"></referencedFunction>
+            </errorLevel>
+        </InvalidArgument>
     </issueHandlers>
 </psalm>
