@@ -36,6 +36,7 @@
             <errorLevel type="suppress">
                 <!-- Error from symfony BC code -->
                 <referencedFunction name="Symfony\Contracts\EventDispatcher\EventDispatcherInterface::dispatch"></referencedFunction>
+                <referencedFunction name="Symfony\Component\EventDispatcher\EventDispatcher::dispatch"></referencedFunction>
             </errorLevel>
         </InvalidArgument>
     </issueHandlers>
