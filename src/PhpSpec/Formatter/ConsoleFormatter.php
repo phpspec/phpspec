@@ -36,7 +36,9 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
         $this->io = $io;
     }
 
-    
+    /**
+     * @return ConsoleIO
+     */
     protected function getIO(): IO
     {
         return $this->io;
