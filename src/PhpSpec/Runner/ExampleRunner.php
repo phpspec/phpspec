@@ -142,8 +142,11 @@ class ExampleRunner
             if ($reflection instanceof \ReflectionMethod) {
                 $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
             }
-            else {
+            elseif ($reflection instanceof \ReflectionFunction)  {
                 $reflection->invokeArgs($collaborators->getArgumentsFor($reflection));
+            }
+            else {
+                throw new \RuntimeException('Not able to invoke example');
             }
         } catch (\Exception $e) {
             $this->runMaintainersTeardown(

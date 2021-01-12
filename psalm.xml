@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <psalm
-    errorLevel="7"
+    errorLevel="6"
     resolveFromConfigFile="true"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="https://getpsalm.org/schema/config"
@@ -26,5 +26,18 @@
                 <file name="src/PhpSpec/Locator/PSR0/PSR0Locator.php" />
             </errorLevel>
         </UndefinedConstant>
+        <InvalidCatch>
+            <errorLevel type="suppress">
+                <!-- Prophecy's exception interface does not extend throwable -->
+                <referencedClass name="Prophecy\Exception\Prediction\PredictionException"/>
+            </errorLevel>
+        </InvalidCatch>
+        <InvalidArgument>
+            <errorLevel type="suppress">
+                <!-- Error from symfony BC code -->
+                <referencedFunction name="Symfony\Contracts\EventDispatcher\EventDispatcherInterface::dispatch"></referencedFunction>
+                <referencedFunction name="Symfony\Component\EventDispatcher\EventDispatcher::dispatch"></referencedFunction>
+            </errorLevel>
+        </InvalidArgument>
     </issueHandlers>
 </psalm>

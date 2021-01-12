@@ -57,6 +57,8 @@ class ExpectationFactory
         if (0 === strpos($expectation, 'should')) {
             return $this->createPositive(lcfirst(substr($expectation, 6)), $subject, $arguments);
         }
+
+        throw new \RuntimeException('Could not create match');
     }
 
     

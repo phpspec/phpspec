@@ -19,8 +19,6 @@ use PhpSpec\Wrapper\DelayedCall;
 abstract class BasicMatcher implements Matcher
 {
     /**
-     * @return void
-     *
      * @throws FailureException
      */
     final public function positiveMatch(string $name, $subject, array $arguments): ?DelayedCall
@@ -33,8 +31,6 @@ abstract class BasicMatcher implements Matcher
     }
 
     /**
-     * @return void
-     *
      * @throws FailureException
      */
     final public function negativeMatch(string $name, $subject, array $arguments): ?DelayedCall

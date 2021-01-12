@@ -254,7 +254,7 @@ class ConsoleIO implements IO
     public function getBootstrapPath(): ?string
     {
         if ($path = $this->input->getOption('bootstrap')) {
-            return $path;
+            return (string) $path;
         }
 
         if ($path = $this->config->getBootstrapPath()) {
