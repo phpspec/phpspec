@@ -61,7 +61,9 @@ final class PrioritizedResourceManager implements ResourceManager
     {
         foreach ($this->locators as $locator) {
             if ($locator->supportsClass($classname)) {
-                return $locator->createResource($classname);
+                if ($resource = $locator->createResource($classname)) {
+                    return $resource;
+                }
             }
         }
 

@@ -2,10 +2,12 @@
 
 namespace spec\PhpSpec\Locator;
 
+use PhpSpec\Exception\Locator\ResourceCreationException;
 use PhpSpec\ObjectBehavior;
 
 use PhpSpec\Locator\ResourceLocator;
 use PhpSpec\Locator\Resource;
+use Prophecy\Argument;
 
 class PrioritizedResourceManagerSpec extends ObjectBehavior
 {
@@ -113,5 +115,36 @@ class PrioritizedResourceManagerSpec extends ObjectBehavior
         $locator2->getAllResources()->willReturn(array($resource2));
 
         $this->locateResources('')->shouldReturn(array($resource1));
+    }
+
+    function it_fails_to_create_resource_if_locator_did_not_succeed($locator1, Resource $resource1)
+    {
+        $locator1->getPriority()->willReturn(1);
+        $locator1->supportsClass('Some\Class')->willReturn(true);
+        $locator1->createResource(Argument::any())->willReturn(null);
+
+        $this->registerLocator($locator1);
+
+        $this->shouldThrow(ResourceCreationException::class)->duringCreateResource('Some\Class');
+    }
+
+    function it_uses_lower_priority_locator_to_create_resource_if_first_did_not_succeed(
+        $locator1, $locator2, Resource $resource1
+    )
+    {
+        $locator1->getPriority()->willReturn(1);
+        $locator2->getPriority()->willReturn(2);
+
+        $locator1->supportsClass('Some\Class')->willReturn(true);
+        $locator2->supportsClass('Some\Class')->willReturn(true);
+
+
+        $locator1->createResource(Argument::any())->willReturn(null);
+        $locator2->createResource(Argument::any())->willReturn($resource1);
+
+        $this->registerLocator($locator1);
+        $this->registerLocator($locator2);
+
+        $this->createResource('Some\Class')->shouldReturn($resource1);
     }
 }
