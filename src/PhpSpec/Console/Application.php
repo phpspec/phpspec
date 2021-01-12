@@ -46,7 +46,7 @@ final class Application extends BaseApplication
         parent::__construct('phpspec', $version);
     }
 
-    public function getContainer(): ServiceContainer
+    public function getContainer(): IndexedServiceContainer
     {
         return $this->container;
     }
