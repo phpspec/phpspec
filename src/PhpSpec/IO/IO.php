@@ -16,6 +16,6 @@ namespace PhpSpec\IO;
 interface IO
 {
     public function write(string $message): void;
-
     public function isVerbose(): bool;
+    public function writeln(string $message = '', int $indent = null): void;
 }
