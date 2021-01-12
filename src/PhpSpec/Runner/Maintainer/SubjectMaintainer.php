@@ -15,6 +15,7 @@ namespace PhpSpec\Runner\Maintainer;
 
 use PhpSpec\CodeAnalysis\AccessInspector;
 use PhpSpec\Loader\Node\ExampleNode;
+use PhpSpec\ObjectBehavior;
 use PhpSpec\Specification;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
@@ -76,7 +77,9 @@ final class SubjectMaintainer implements Maintainer
             $example->getSpecification()->getResource()->getSrcClassname()
         );
 
-        $context->setSpecificationSubject($subject);
+        if ($context instanceof ObjectBehavior) {
+            $context->setSpecificationSubject($subject);
+        }
     }
 
     
