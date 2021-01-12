@@ -143,7 +143,7 @@ class Caller
     }
 
     /**
-     * @return object
+     * @return ?object
      *
      * @throws \PhpSpec\Exception\Fracture\ClassNotFoundException
      */
