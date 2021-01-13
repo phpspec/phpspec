@@ -34,12 +34,12 @@ class ErrorException extends ExampleException
     /**
      * Initializes error handler exception.
      *
-     * @param string $level   error level
+     * @param int $level      error level
      * @param string $message error message
      * @param string $file    error file
-     * @param string $line    error line
+     * @param int $line       error line
      */
-    public function __construct(string $level, string $message, string $file, string $line)
+    public function __construct(int $level, string $message, string $file, int $line)
     {
         parent::__construct(sprintf(
             '%s: %s in %s line %d',

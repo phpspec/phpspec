@@ -59,7 +59,7 @@ final class ProcOpenReRunner extends PhpExecutableReRunner
             $status = proc_get_status($proc);
         } while ($status['running']);
 
-        exit($status['exitcode']);
+        exit((int)$status['exitcode']);
     }
 
     private function buildArgString() : string

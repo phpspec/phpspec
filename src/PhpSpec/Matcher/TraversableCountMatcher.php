@@ -56,7 +56,7 @@ final class TraversableCountMatcher implements Matcher
             throw new FailureException(sprintf(
                 'Expected %s to have %s items, but got %s than that.',
                 $this->presenter->presentValue($subject),
-                $this->presenter->presentString((int) $arguments[0]),
+                $this->presenter->presentString((string) $arguments[0]),
                 self::MORE_THAN === $countDifference ? 'more' : 'less'
             ));
         }
@@ -75,7 +75,7 @@ final class TraversableCountMatcher implements Matcher
             throw new FailureException(sprintf(
                 'Expected %s not to have %s items, but got it.',
                 $this->presenter->presentValue($subject),
-                $this->presenter->presentString((int) $arguments[0])
+                $this->presenter->presentString((string) $arguments[0])
             ));
         }
 
