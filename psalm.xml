@@ -39,5 +39,11 @@
                 <referencedFunction name="Symfony\Component\EventDispatcher\EventDispatcher::dispatch"></referencedFunction>
             </errorLevel>
         </InvalidArgument>
+        <TypeDoesNotContainType>
+            <errorLevel type="suppress">
+                <!-- Psalm error see https://github.com/vimeo/psalm/issues/5001 -->
+                <file name="src/PhpSpec/CodeAnalysis/TokenizedNamespaceResolver.php"/>
+            </errorLevel>
+        </TypeDoesNotContainType>
     </issueHandlers>
 </psalm>
