@@ -45,5 +45,11 @@
                 <file name="src/PhpSpec/CodeAnalysis/TokenizedNamespaceResolver.php"/>
             </errorLevel>
         </TypeDoesNotContainType>
+        <RedundantCondition>
+            <errorLevel type="suppress">
+                <!-- Psalm error see https://github.com/vimeo/psalm/issues/5004 -->
+                <file name="src/PhpSpec/Matcher/TriggerMatcher.php"/>
+            </errorLevel>
+        </RedundantCondition>
     </issueHandlers>
 </psalm>
