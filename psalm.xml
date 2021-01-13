@@ -43,6 +43,8 @@
             <errorLevel type="suppress">
                 <!-- Psalm error see https://github.com/vimeo/psalm/issues/5001 -->
                 <file name="src/PhpSpec/CodeAnalysis/TokenizedNamespaceResolver.php"/>
+                <!-- Psalm error see https://github.com/vimeo/psalm/issues/5004 -->
+                <file name="src/PhpSpec/Matcher/TriggerMatcher.php"/>
             </errorLevel>
         </TypeDoesNotContainType>
         <RedundantCondition>
