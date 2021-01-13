@@ -53,5 +53,11 @@
                 <file name="src/PhpSpec/Matcher/TriggerMatcher.php"/>
             </errorLevel>
         </RedundantCondition>
+        <TooManyArguments>
+            <errorLevel type="suppress">
+                <!-- Adding extra argument to interface would break backwards compatibility -->
+                <referencedFunction name="PhpSpec\Wrapper\Subject\Expectation\Expectation::match"/>
+            </errorLevel>
+        </TooManyArguments>
     </issueHandlers>
 </psalm>
