@@ -35,7 +35,7 @@ class ReportItemFactory
      */
     public function create(ExampleEvent $event, Presenter $presenter)
     {
-        switch ($event->getResult()) {
+        switch ($result = $event->getResult()) {
             case ExampleEvent::PASSED:
                 return new ReportPassedItem($this->template, $event);
             case ExampleEvent::PENDING:
@@ -46,17 +46,9 @@ class ReportItemFactory
             case ExampleEvent::BROKEN:
                 return new ReportFailedItem($this->template, $event, $presenter);
             default:
-                $this->invalidResultException($event->getResult());
+                throw new InvalidExampleResultException(
+                    "Unrecognised example result $result"
+                );
         }
-    }
-
-    /**
-     * @throws InvalidExampleResultException
-     */
-    private function invalidResultException(int $result): void
-    {
-        throw new InvalidExampleResultException(
-            "Unrecognised example result $result"
-        );
     }
 }

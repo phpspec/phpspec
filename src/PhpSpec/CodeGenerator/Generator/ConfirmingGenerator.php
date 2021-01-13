@@ -13,13 +13,13 @@
 
 namespace PhpSpec\CodeGenerator\Generator;
 
-use PhpSpec\IO\IO;
+use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Locator\Resource;
 
 final class ConfirmingGenerator implements Generator
 {
     /**
-     * @var IO
+     * @var ConsoleIO
      */
     private $io;
 
@@ -33,7 +33,7 @@ final class ConfirmingGenerator implements Generator
      */
     private $generator;
 
-    public function __construct(IO $io, string $message, Generator $generator)
+    public function __construct(ConsoleIO $io, string $message, Generator $generator)
     {
         $this->io = $io;
         $this->message = $message;
