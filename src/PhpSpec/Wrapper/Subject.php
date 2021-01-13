@@ -154,7 +154,7 @@ class Subject implements ArrayAccess, ObjectWrapper
     }
 
     /**
-     * @param ...$arguments
+     * @param mixed ...$arguments
      */
     public function beConstructedWith(): void
     {
