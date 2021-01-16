@@ -44,9 +44,6 @@ final class ThrowMatcher implements Matcher
      */
     private $factory;
 
-    /**
-     * @param null|ReflectionFactory $factory
-     */
     public function __construct(Unwrapper $unwrapper, Presenter $presenter, ReflectionFactory $factory)
     {
         $this->unwrapper = $unwrapper;

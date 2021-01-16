@@ -39,7 +39,7 @@ class SpecificationRunner
     }
 
     /**
-     * @return int|mixed
+     * @return int
      */
     public function run(SpecificationNode $specification): int
     {

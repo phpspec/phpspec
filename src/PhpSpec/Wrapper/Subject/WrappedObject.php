@@ -63,13 +63,6 @@ class WrappedObject
      */
     public function beAnInstanceOf(string $classname, array $arguments = array()): void
     {
-        if (!\is_string($classname)) {
-            throw new SubjectException(sprintf(
-                'Behavior subject classname should be a string, %s given.',
-                $this->presenter->presentValue($classname)
-            ));
-        }
-
         $this->classname      = $classname;
         $unwrapper            = new Unwrapper();
         $this->arguments      = $unwrapper->unwrapAll($arguments);

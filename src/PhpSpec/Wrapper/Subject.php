@@ -154,7 +154,7 @@ class Subject implements ArrayAccess, ObjectWrapper
     }
 
     /**
-     * @param ...$arguments
+     * @param mixed ...$arguments
      */
     public function beConstructedWith(): void
     {
@@ -202,9 +202,9 @@ class Subject implements ArrayAccess, ObjectWrapper
     /**
      * @param int|string $key
      */
-    public function offsetExists($key): Subject
+    public function offsetExists($key): bool
     {
-        return $this->wrap($this->arrayAccess->offsetExists($key));
+        return $this->arrayAccess->offsetExists($key);
     }
 
     /**

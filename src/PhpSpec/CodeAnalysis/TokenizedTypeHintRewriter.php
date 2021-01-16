@@ -197,7 +197,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     /**
      * @param array|string $token
      */
-    private function tokenHasType($token, string $type): bool
+    private function tokenHasType($token, int $type): bool
     {
         return \is_array($token) && $type == $token[0];
     }

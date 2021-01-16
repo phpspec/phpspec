@@ -21,10 +21,6 @@ class Unwrapper implements RevealerInterface
     
     public function unwrapAll(array $arguments): array
     {
-        if (null === $arguments) {
-            return array();
-        }
-
         return array_map(array($this, 'unwrapOne'), $arguments);
     }
 

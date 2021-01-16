@@ -99,7 +99,7 @@ final class ScalarMatcher implements Matcher
     }
 
     /**
-     * @return bool|string
+     * @return false|string
      */
     private function getCheckerName(string $name)
     {

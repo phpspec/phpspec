@@ -19,7 +19,7 @@ final class HtmlPhpSpecExceptionPresenter extends AbstractPhpSpecExceptionPresen
     protected function presentFileCode(string $file, int $lineno, int $context = 6): string
     {
         $lines  = explode(PHP_EOL, file_get_contents($file));
-        $offset = max(0, $lineno - ceil($context / 2));
+        $offset = (int)max(0, $lineno - ceil($context / 2));
         $lines  = \array_slice($lines, $offset, $context);
 
         $text = PHP_EOL;

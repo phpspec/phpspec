@@ -26,9 +26,9 @@ class InMemoryTypeHintIndexSpec extends ObjectBehavior
         $this->lookup('Foo', 'boz', '$bar')->shouldReturn('Baz');
     }
 
-    function it_returns_false_for_typehints_that_have_not_been_added()
+    function it_returns_null_for_typehints_that_have_not_been_added()
     {
-        $this->lookup('Foo', 'boz', '$bar')->shouldBe(false);
+        $this->lookup('Foo', 'boz', '$bar')->shouldbeNull();
     }
 
     function it_throws_invalid_argument_exceptions()

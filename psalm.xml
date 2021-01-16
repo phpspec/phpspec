@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <psalm
-    errorLevel="5"
+    errorLevel="4"
     resolveFromConfigFile="true"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="https://getpsalm.org/schema/config"
@@ -39,5 +39,25 @@
                 <referencedFunction name="Symfony\Component\EventDispatcher\EventDispatcher::dispatch"></referencedFunction>
             </errorLevel>
         </InvalidArgument>
+        <TypeDoesNotContainType>
+            <errorLevel type="suppress">
+                <!-- Psalm error see https://github.com/vimeo/psalm/issues/5001 -->
+                <file name="src/PhpSpec/CodeAnalysis/TokenizedNamespaceResolver.php"/>
+                <!-- Psalm error see https://github.com/vimeo/psalm/issues/5004 -->
+                <file name="src/PhpSpec/Matcher/TriggerMatcher.php"/>
+            </errorLevel>
+        </TypeDoesNotContainType>
+        <RedundantCondition>
+            <errorLevel type="suppress">
+                <!-- Psalm error see https://github.com/vimeo/psalm/issues/5004 -->
+                <file name="src/PhpSpec/Matcher/TriggerMatcher.php"/>
+            </errorLevel>
+        </RedundantCondition>
+        <TooManyArguments>
+            <errorLevel type="suppress">
+                <!-- Adding extra argument to interface would break backwards compatibility -->
+                <referencedFunction name="PhpSpec\Wrapper\Subject\Expectation\Expectation::match"/>
+            </errorLevel>
+        </TooManyArguments>
     </issueHandlers>
 </psalm>

@@ -50,7 +50,7 @@ final class InMemoryTypeHintIndex implements TypeHintIndex
     }
 
     /**
-     * @return false|string
+     * @return ?string
      */
     public function lookup(string $class, string $method, string $argument)
     {
@@ -59,7 +59,7 @@ final class InMemoryTypeHintIndex implements TypeHintIndex
         $argument = strtolower($argument);
 
         if (!isset($this->typehints[$class][$method][$argument])) {
-            return false;
+            return null;
         }
 
         if ($this->typehints[$class][$method][$argument] instanceof \Exception) {
