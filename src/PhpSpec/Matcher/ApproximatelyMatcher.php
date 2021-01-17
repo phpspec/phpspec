@@ -41,27 +41,54 @@ final class ApproximatelyMatcher extends BasicMatcher
         $this->presenter = $presenter;
     }
 
-    
+
     public function supports(string $name, $subject, array $arguments): bool
     {
-        return \in_array($name, self::$keywords) && 2 == \count($arguments);
+        if (!\in_array($name, self::$keywords) || 2 != \count($arguments)) {
+            return false;
+        }
+        if (is_object($subject) || is_object($arguments[0])) {
+            return false;
+        }
+
+        if (is_array($subject) xor is_array($arguments[0])) {
+            return false;
+        }
+
+        return true;
     }
 
     
     protected function matches($subject, array $arguments): bool
     {
-        $value = (float)$arguments[0];
-        return (abs($subject - $value) < $arguments[1]);
+        [$expected, $precision] = $arguments;
+
+        if (!is_array($expected)) {
+            $expected = [$expected];
+            $subject = [$subject];
+        }
+
+        if (count($expected) !== count($subject)) {
+            return false;
+        }
+
+        foreach ($expected as $k => $v) {
+            if (abs($subject[$k] - ((float)$v)) > $precision) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 
     protected function getFailureException(string $name, $subject, array $arguments): FailureException
     {
-        return new FailureException(sprintf(
+        return new NotEqualException(sprintf(
             'Expected an approximated value of %s, but got %s',
             $this->presenter->presentValue($arguments[0]),
             $this->presenter->presentValue($subject)
-        ));
+        ), $arguments[0], $subject);
     }
 
     protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
