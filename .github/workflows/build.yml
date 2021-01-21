@@ -15,6 +15,7 @@ jobs:
             fail-fast: false
             matrix:
                 php: [7.3, 7.4, 8.0]
+                operating-system: [ ubuntu-latest ]
                 composer-flags: [""]
                 composer-extras: [""]
                 stability: ["stable"]
@@ -26,6 +27,7 @@ jobs:
                     -   php: 7.3
                         composer-extras: "symfony/event-dispatcher ^3.4 symfony/contracts ^2.0"
                     -   php: 8.0
+                        operating-system: windows-latest
 
         env:
             COMPOSER_ROOT_VERSION: dev-master
