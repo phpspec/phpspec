@@ -18,7 +18,7 @@ class ErrorMaintainerSpec extends ObjectBehavior
         $this->shouldHaveType(ErrorMaintainer::class);
     }
 
-    function it_return_false_when_error_suppresed_or_no_error_reporting()
+    function it_return_false_when_error_suppressed_or_no_error_reporting()
     {
         $oldLevel = error_reporting(0);
         $this->errorHandler(0, 'error message', 'file', 1)->shouldBe(false);
