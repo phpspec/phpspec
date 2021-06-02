@@ -43,27 +43,27 @@ final class HtmlFormatter extends BasicFormatter
         parent::__construct($presenter, $io, $stats);
     }
 
-    
-    public function beforeSuite(SuiteEvent $suite)
+
+    public function beforeSuite(SuiteEvent $event)
     {
         include __DIR__."/Html/Template/ReportHeader.html";
     }
 
-    
-    public function beforeSpecification(SpecificationEvent $specification)
+
+    public function beforeSpecification(SpecificationEvent $event)
     {
         $index = $this->index++;
-        $name = $specification->getTitle();
+        $name = $event->getTitle();
         include __DIR__."/Html/Template/ReportSpecificationStarts.html";
     }
 
-    
-    public function afterSpecification(SpecificationEvent $specification)
+
+    public function afterSpecification(SpecificationEvent $event)
     {
         include __DIR__."/Html/Template/ReportSpecificationEnds.html";
     }
 
-    
+
     public function afterExample(ExampleEvent $event)
     {
         $reportLine = $this->reportItemFactory->create($event, $this->getPresenter());
@@ -71,8 +71,8 @@ final class HtmlFormatter extends BasicFormatter
         $this->getIO()->write(PHP_EOL);
     }
 
-    
-    public function afterSuite(SuiteEvent $suite)
+
+    public function afterSuite(SuiteEvent $event)
     {
         include __DIR__."/Html/Template/ReportSummary.html";
         include __DIR__."/Html/Template/ReportFooter.html";
