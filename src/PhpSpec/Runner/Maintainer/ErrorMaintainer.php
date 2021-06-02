@@ -92,7 +92,7 @@ final class ErrorMaintainer implements Maintainer
             }
         }
 
-        if (0 !== error_reporting()) {
+        if (0 !== (error_reporting() & $level)) {
             throw new ExampleException\ErrorException($level, $message, $file, $line);
         }
 
