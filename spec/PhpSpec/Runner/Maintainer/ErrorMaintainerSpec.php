@@ -30,4 +30,10 @@ class ErrorMaintainerSpec extends ObjectBehavior
         $msg = 'Argument 1 passed to ' . self::class . '::test() must be an instance of string, string given';
         $this->errorHandler(E_RECOVERABLE_ERROR, $msg, 'file', 1)->shouldBe(true);
     }
+
+    function it_throws_error_exception_when_message_not_match()
+    {
+        $this->shouldThrow(ExampleException\ErrorException::class)
+             ->during('errorHandler', [0, 'error message', 'file', 1]);
+    }
 }
