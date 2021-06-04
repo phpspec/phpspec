@@ -33,7 +33,8 @@ class ErrorMaintainerSpec extends ObjectBehavior
 
     function it_throws_error_exception_when_message_not_match()
     {
-        $this->shouldThrow(ExampleException\ErrorException::class)
-             ->during('errorHandler', [0, 'error message', 'file', 1]);
+        $this
+            ->shouldThrow(ExampleException\ErrorException::class)
+            ->during('errorHandler', [-1, 'error message', 'file', 1]);
     }
 }
