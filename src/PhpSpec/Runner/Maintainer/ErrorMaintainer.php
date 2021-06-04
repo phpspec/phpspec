@@ -30,19 +30,19 @@ final class ErrorMaintainer implements Maintainer
      */
     private $errorHandler;
 
-    
+
     public function __construct(int $errorLevel)
     {
         $this->errorLevel = $errorLevel;
     }
 
-    
+
     public function supports(ExampleNode $example): bool
     {
         return true;
     }
 
-    
+
     public function prepare(
         ExampleNode $example,
         Specification $context,
@@ -52,7 +52,7 @@ final class ErrorMaintainer implements Maintainer
         $this->errorHandler = set_error_handler(array($this, 'errorHandler'), $this->errorLevel);
     }
 
-    
+
     public function teardown(
         ExampleNode $example,
         Specification $context,
@@ -64,7 +64,7 @@ final class ErrorMaintainer implements Maintainer
         }
     }
 
-    
+
     public function getPriority(): int
     {
         return 999;
@@ -82,7 +82,7 @@ final class ErrorMaintainer implements Maintainer
     final public function errorHandler(int $level, string $message, string $file, int $line): bool
     {
         $regex = '/^Argument (\d)+ passed to (?:(?P<class>[\w\\\]+)::)?(\w+)\(\)' .
-                 ' must (?:be an instance of|implement interface) ([\w\\\]+),(?: instance of)? ([\w\\\]+) given/';
+            ' must (?:be an instance of|implement interface) ([\w\\\]+),(?: instance of)? ([\w\\\]+) given/';
 
         if (E_RECOVERABLE_ERROR === $level && preg_match($regex, $message, $matches)) {
             $class = $matches['class'];
@@ -92,11 +92,11 @@ final class ErrorMaintainer implements Maintainer
             }
         }
 
-        if (0 !== error_reporting()) {
-            throw new ExampleException\ErrorException($level, $message, $file, $line);
+        // error reporting turned off or more likely suppressed with error control operator "@"
+        if (0 === (error_reporting() & $level)) {
+            return false;
         }
 
-        // error reporting turned off or more likely suppressed with @
-        return false;
+        throw new ExampleException\ErrorException($level, $message, $file, $line);
     }
 }
