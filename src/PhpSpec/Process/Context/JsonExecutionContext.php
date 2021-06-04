@@ -21,7 +21,7 @@ final class JsonExecutionContext implements ExecutionContext
      */
     private $generatedTypes;
 
-    
+
     public static function fromEnv(array $env): JsonExecutionContext
     {
         $executionContext = new JsonExecutionContext();
@@ -37,19 +37,19 @@ final class JsonExecutionContext implements ExecutionContext
         return $executionContext;
     }
 
-    
-    public function addGeneratedType(string $generatedType)
+
+    public function addGeneratedType(string $type)
     {
-        $this->generatedTypes[] = $generatedType;
+        $this->generatedTypes[] = $type;
     }
 
-    
+
     public function getGeneratedTypes(): array
     {
         return $this->generatedTypes;
     }
 
-    
+
     public function asEnv(): array
     {
         return array(
