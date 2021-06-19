@@ -141,10 +141,6 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     {
         $path = $this->getQueryPath($query);
 
-        if (null === $path) {
-            return false;
-        }
-
         return 0 === strpos($path, $this->srcPath)
             || 0 === strpos($path, $this->specPath)
         ;
@@ -369,6 +365,6 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     
     private function isWindowsPath(string $query): bool
     {
-        return preg_match('/^\w:/', $query);
+        return (bool) preg_match('/^\w:/', $query);
     }
 }

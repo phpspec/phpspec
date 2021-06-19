@@ -50,8 +50,8 @@ final class ArrayCountMatcher extends BasicMatcher
         return new FailureException(sprintf(
             'Expected %s to have %s items, but got %s.',
             $this->presenter->presentValue($subject),
-            $this->presenter->presentString(\intval($arguments[0])),
-            $this->presenter->presentString(\count($subject))
+            $this->presenter->presentString((string)\intval($arguments[0])),
+            $this->presenter->presentString((string)\count($subject))
         ));
     }
 
@@ -61,7 +61,7 @@ final class ArrayCountMatcher extends BasicMatcher
         return new FailureException(sprintf(
             'Expected %s not to have %s items, but got it.',
             $this->presenter->presentValue($subject),
-            $this->presenter->presentString(\intval($arguments[0]))
+            $this->presenter->presentString((string)\intval($arguments[0]))
         ));
     }
 }

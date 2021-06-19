@@ -96,8 +96,6 @@ class Caller
     }
 
     /**
-     * @return mixed
-     *
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      * @throws \PhpSpec\Exception\Fracture\PropertyNotFoundException
      */
@@ -143,7 +141,7 @@ class Caller
     }
 
     /**
-     * @return object
+     * @return ?object
      *
      * @throws \PhpSpec\Exception\Fracture\ClassNotFoundException
      */

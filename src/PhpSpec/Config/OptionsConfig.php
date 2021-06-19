@@ -43,7 +43,7 @@ class OptionsConfig
     private $bootstrapPath;
 
     /**
-     * @var string
+     * @var bool
      */
     private $isVerbose;
 

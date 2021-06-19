@@ -58,7 +58,7 @@ Feature: Use the TAP formatter
                   case 'fail':
                       return 'fail';
                   case 'broken':
-                      throw new ErrorException('error','something terrible occurred','foo.php',99);
+                      throw new ErrorException(E_USER_ERROR,'something terrible occurred','foo.php',99);
               }
           }
       }

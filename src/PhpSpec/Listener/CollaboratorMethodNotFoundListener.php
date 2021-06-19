@@ -118,7 +118,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
     
     private function getDoubledInterface($class)
     {
-        if (class_parents($class) !== array('stdClass'=>'stdClass')) {
+        if (class_parents($class) !== array(\stdClass::class=>\stdClass::class)) {
             return;
         }
 

@@ -3,6 +3,7 @@
 namespace PhpSpec\Util;
 
 use PhpSpec\Wrapper\Collaborator;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -11,7 +12,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 trait DispatchTrait
 {
     /**
-     * @param EventDispatcherInterface $eventDispatcher
+     * @param EventDispatcher $eventDispatcher
      * @param object $event
      * @param string $eventName
      */

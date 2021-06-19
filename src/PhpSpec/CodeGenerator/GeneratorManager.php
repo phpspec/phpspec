@@ -37,8 +37,6 @@ class GeneratorManager
     }
 
     /**
-     * @return mixed
-     *
      * @throws \InvalidArgumentException
      */
     public function generate(Resource $resource, string $name, array $data = array()): void

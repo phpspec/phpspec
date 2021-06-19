@@ -26,7 +26,7 @@ class ComposerPsrNamespaceProvider
     }
 
     /**
-     * @return string[] a map associating a namespace to a location, e.g
+     * @return NamespaceLocation[] a map associating a namespace to a location, e.g
      *                  [
      *                      'My\PSR4Namespace' => 'my/PSR4Namespace',
      *                      'My\PSR0Namespace' => '',

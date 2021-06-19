@@ -69,6 +69,8 @@ final class ClassFileAnalyser
                 return $i;
             }
         }
+
+        throw new \RuntimeException('Could not find index of first method');
     }
 
     
@@ -101,6 +103,8 @@ final class ClassFileAnalyser
 
             return $index;
         }
+
+        throw new \RuntimeException('Could not find index of for docblock');
     }
 
     /**
@@ -178,6 +182,8 @@ final class ClassFileAnalyser
                 }
             }
         }
+
+        throw new \RuntimeException('Could not find last method or class end');
     }
 
     private function isSpecialBraceToken($token): bool

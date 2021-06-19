@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\CodeGenerator\Writer;
 
+use PhpSpec\Exception\Generator\GenerationFailed;
 use PhpSpec\Exception\Generator\NamedMethodNotFoundException;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Util\ClassFileAnalyser;
@@ -74,6 +75,17 @@ class TokenizedCodeWriterSpec extends ObjectBehavior
         $result = $this->getClassWithBraceTextAndNewMethod();
 
         $this->insertMethodLastInClass($class, $method)->shouldReturn($result);
+    }
+
+    function it_should_error_if_method_could_not_be_inserted()
+    {
+        $class = <<<CLASS
+<?php
+
+CLASS;
+        $method = $this->getMethod();
+
+        $this->shouldThrow(GenerationFailed::class)->duringInsertMethodFirstInClass($class, $method);
     }
 
     private function getSingleMethodClass()

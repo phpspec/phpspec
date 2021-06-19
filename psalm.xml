@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <psalm
-    errorLevel="7"
+    errorLevel="4"
     resolveFromConfigFile="true"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="https://getpsalm.org/schema/config"
@@ -20,5 +20,38 @@
                 <file name="src/PhpSpec/Locator/PSR0/PSR0Locator.php" />
             </errorLevel>
         </UndefinedConstant>
+        <InvalidCatch>
+            <errorLevel type="suppress">
+                <!-- Prophecy's exception interface does not extend throwable -->
+                <referencedClass name="Prophecy\Exception\Prediction\PredictionException"/>
+            </errorLevel>
+        </InvalidCatch>
+        <InvalidArgument>
+            <errorLevel type="suppress">
+                <!-- Error from symfony BC code -->
+                <referencedFunction name="Symfony\Contracts\EventDispatcher\EventDispatcherInterface::dispatch"></referencedFunction>
+                <referencedFunction name="Symfony\Component\EventDispatcher\EventDispatcher::dispatch"></referencedFunction>
+            </errorLevel>
+        </InvalidArgument>
+        <TypeDoesNotContainType>
+            <errorLevel type="suppress">
+                <!-- Psalm error see https://github.com/vimeo/psalm/issues/5001 -->
+                <file name="src/PhpSpec/CodeAnalysis/TokenizedNamespaceResolver.php"/>
+                <!-- Psalm error see https://github.com/vimeo/psalm/issues/5004 -->
+                <file name="src/PhpSpec/Matcher/TriggerMatcher.php"/>
+            </errorLevel>
+        </TypeDoesNotContainType>
+        <RedundantCondition>
+            <errorLevel type="suppress">
+                <!-- Psalm error see https://github.com/vimeo/psalm/issues/5004 -->
+                <file name="src/PhpSpec/Matcher/TriggerMatcher.php"/>
+            </errorLevel>
+        </RedundantCondition>
+        <TooManyArguments>
+            <errorLevel type="suppress">
+                <!-- Adding extra argument to interface would break backwards compatibility -->
+                <referencedFunction name="PhpSpec\Wrapper\Subject\Expectation\Expectation::match"/>
+            </errorLevel>
+        </TooManyArguments>
     </issueHandlers>
 </psalm>

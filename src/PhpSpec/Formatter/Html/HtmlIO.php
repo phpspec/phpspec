@@ -24,10 +24,14 @@ final class HtmlIO implements IO
     {
         echo $message;
     }
-
     
     public function isVerbose(): bool
     {
         return true;
+    }
+
+    public function writeln(string $message = '', int $indent = null): void
+    {
+        echo $message . "<br>";
     }
 }

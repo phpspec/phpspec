@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Console\Command;
 
+use PhpSpec\Console\Application;
 use PhpSpec\Formatter\FatalPresenter;
 use PhpSpec\Process\Shutdown\UpdateConsoleAction;
 use PhpSpec\ServiceContainer\IndexedServiceContainer;
@@ -30,6 +31,17 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class RunCommand extends Command
 {
+    public function getApplication() : Application
+    {
+        $application = parent::getApplication();
+
+        if (!$application instanceof Application) {
+            throw new \RuntimeException('PhpSpec commands require PhpSpec application');
+        }
+
+        return $application;
+    }
+
     protected function configure()
     {
         $this
