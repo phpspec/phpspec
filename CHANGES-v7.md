@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.1.0]
+### Fixed
+- Suppressed errors on PHP 8 no longer cause failing tests [@AlexandruGG](https://github.com/AlexandruGG)
+
+### Added
+- ApproximatelyMatcher can now compare arrays of floats [@ciaranmcnulty](https://github.com/ciaranmcnulty)
+
 ## [7.0.1]
 ### Fixed
 - Collaborator generation didn't happen in some cases [@ciaranmcnulty](https://github.com/ciaranmcnulty)
@@ -17,5 +24,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - More accurate error message for bad during* calls [@drupol](https://github.com/drupol)
  - Removed superfluous phpdoc and added bool return types where appropriate [@drupol](https://github.com/drupol)
  
+[7.1.0]: https://github.com/phpspec/phpspec/compare/7.0.1...7.1.0
 [7.0.1]: https://github.com/phpspec/phpspec/compare/7.0.0...7.0.1
 [7.0.0]: https://github.com/phpspec/phpspec/compare/6.2.2...7.0.0
