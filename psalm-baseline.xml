@@ -25,6 +25,11 @@
       <code>$triggered &gt; 0</code>
     </TypeDoesNotContainType>
   </file>
+  <file src="src/PhpSpec/ObjectBehavior.php">
+    <ImplementedReturnTypeMismatch occurrences="1">
+      <code>Subject</code>
+    </ImplementedReturnTypeMismatch>
+  </file>
   <file src="src/PhpSpec/Util/DispatchTrait.php">
     <InvalidArgument occurrences="2">
       <code>$event</code>
@@ -32,6 +37,9 @@
     </InvalidArgument>
   </file>
   <file src="src/PhpSpec/Wrapper/Subject.php">
+    <ImplementedReturnTypeMismatch occurrences="1">
+      <code>Subject</code>
+    </ImplementedReturnTypeMismatch>
     <TooManyArguments occurrences="2">
       <code>match</code>
       <code>match</code>
