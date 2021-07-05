@@ -59,6 +59,9 @@
     "autoload-dev": {
         "psr-0": {
             "spec\\PhpSpec": "."
+        },
+        "psr-4": {
+            "tests\\spec\\PhpSpec\\": "tests/"
         }
     },
 
