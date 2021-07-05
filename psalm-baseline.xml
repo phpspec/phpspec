@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<files psalm-version="4.7.3@38c452ae584467e939d55377aaf83b5a26f19dd1">
+  <file src="src/PhpSpec/CodeAnalysis/TokenizedTypeHintRewriter.php">
+    <UndefinedConstant occurrences="2">
+      <code>T_NAME_FULLY_QUALIFIED</code>
+      <code>T_NAME_QUALIFIED</code>
+    </UndefinedConstant>
+  </file>
+  <file src="src/PhpSpec/Event/BaseEvent.php">
+    <DuplicateClass occurrences="1">
+      <code>BaseEvent</code>
+    </DuplicateClass>
+  </file>
+  <file src="src/PhpSpec/Locator/PSR0/PSR0Locator.php">
+    <UndefinedConstant occurrences="2">
+      <code>T_NAME_FULLY_QUALIFIED</code>
+      <code>T_NAME_QUALIFIED</code>
+    </UndefinedConstant>
+  </file>
+  <file src="src/PhpSpec/Matcher/TriggerMatcher.php">
+    <RedundantCondition occurrences="1">
+      <code>$triggered === 0</code>
+    </RedundantCondition>
+    <TypeDoesNotContainType occurrences="1">
+      <code>$triggered &gt; 0</code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="src/PhpSpec/Util/DispatchTrait.php">
+    <InvalidArgument occurrences="2">
+      <code>$event</code>
+      <code>$eventName</code>
+    </InvalidArgument>
+  </file>
+  <file src="src/PhpSpec/Wrapper/Subject.php">
+    <TooManyArguments occurrences="2">
+      <code>match</code>
+      <code>match</code>
+    </TooManyArguments>
+  </file>
+</files>
