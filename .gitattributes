@@ -10,12 +10,8 @@
 /.gitignore        export-ignore
 /behat.yml.dist    export-ignore
 /box.json          export-ignore
-/CHANGES-v2.md     export-ignore
-/CHANGES-v3.md     export-ignore
-/CHANGES-v4.md     export-ignore
-/CHANGES-v5.md     export-ignore
-/CHANGES-v6.md     export-ignore
-/CHANGES-v7.md     export-ignore
+/CHANGES*.md       export-ignore
+/CHANGES.md        export-ignore
 /CONTRIBUTING.md   export-ignore
 /check-release.php export-ignore
 /Makefile          export-ignore
