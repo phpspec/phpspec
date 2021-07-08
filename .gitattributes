@@ -1,4 +1,18 @@
 *      text=auto
 *.bat  eol=crlf
 
-docs     export-ignore
+/.github           export-ignore
+/docs              export-ignore
+/features          export-ignore
+/integration       export-ignore
+/spec              export-ignore
+/.gitattributes    export-ignore
+/.gitignore        export-ignore
+/behat.yml.dist    export-ignore
+/box.json          export-ignore
+/CHANGES*.md       export-ignore
+/CONTRIBUTING.md   export-ignore
+/check-release.php export-ignore
+/Makefile          export-ignore
+/phpunit.xml       export-ignore
+/psalm.xml         export-ignore
