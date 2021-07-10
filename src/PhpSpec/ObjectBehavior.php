@@ -110,7 +110,7 @@ abstract class ObjectBehavior implements
      *
      * @param int|string $key
      */
-    public function offsetExists($key): Subject
+    public function offsetExists($key)
     {
         return $this->object->offsetExists($key);
     }
@@ -120,7 +120,7 @@ abstract class ObjectBehavior implements
      *
      * @param int|string $key
      */
-    public function offsetGet($key): Subject
+    public function offsetGet($key)
     {
         return $this->object->offsetGet($key);
     }
