@@ -59,5 +59,23 @@
                 <referencedFunction name="PhpSpec\Wrapper\Subject\Expectation\Expectation::match"/>
             </errorLevel>
         </TooManyArguments>
+        <InvalidReturnType>
+            <errorLevel type="suppress">
+                <!-- To avoid incompatibility with the parent interface (offsetExists) -->
+                <file name="src/PhpSpec/ObjectBehavior.php"/>
+            </errorLevel>
+        </InvalidReturnType>
+        <InvalidReturnStatement>
+            <errorLevel type="suppress">
+                <!-- To avoid incompatibility with the parent interface (offsetExists) -->
+                <file name="src/PhpSpec/ObjectBehavior.php"/>
+            </errorLevel>
+        </InvalidReturnStatement>
+        <ImplementedReturnTypeMismatch>
+            <errorLevel type="suppress">
+                <!-- To avoid incompatibility with the parent interface (offsetExists) -->
+                <file name="src/PhpSpec/Wrapper/Subject.php"/>
+            </errorLevel>
+        </ImplementedReturnTypeMismatch>
     </issueHandlers>
 </psalm>

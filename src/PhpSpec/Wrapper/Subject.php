@@ -202,9 +202,9 @@ class Subject implements ArrayAccess, ObjectWrapper
     /**
      * @param int|string $key
      */
-    public function offsetExists($key): bool
+    public function offsetExists($key): Subject
     {
-        return $this->arrayAccess->offsetExists($key);
+        return $this->wrap($this->arrayAccess->offsetExists($key));
     }
 
     /**
