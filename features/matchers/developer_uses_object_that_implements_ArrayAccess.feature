@@ -73,7 +73,7 @@ Feature: Developer uses object implementing ArrayAccess interface
 
     final class FooBar implements ArrayAccess
     {
-        private array $storage = [];
+        private $storage = [];
 
         public function offsetExists($offset) {
             return array_key_exists($offset, $this->storage);
