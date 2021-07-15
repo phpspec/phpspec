@@ -1,0 +1,17 @@
+<nav class="nav-main">
+  {{ $currentPage := . }}
+  <ul>
+    {{ range .Site.Menus.main }}
+    <li>
+      <a href="{{ .URL }}" class="{{if $currentPage.File }}{{if eq $currentPage.File.Dir .Page.File.Dir }}nav-active{{end}}{{end}}">{{ .Title }}</a>
+    </li>
+    {{ end }}
+  </ul>
+  <ul>
+    {{ range .Site.Menus.repo }}
+    <li>
+      <a href="{{ .URL }}" target="_blank">{{ .Name }}</a>
+    </li>
+    {{ end }}
+  </ul>
+</nav>
