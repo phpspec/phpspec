@@ -1,7 +1,0 @@
-# be aware TeamCity configuration stays in 'phpspec.tc.yaml'
-suites:
-    main:
-        namespace: \
-        psr4_prefix: \
-        spec_path: .
-        src_path: src
