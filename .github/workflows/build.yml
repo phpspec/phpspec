@@ -14,7 +14,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php: [7.3, 7.4, 8.0]
+                php: [7.3, 7.4, 8.0, 8.1]
                 operating-system: [ ubuntu-latest, macOS-latest, windows-latest ]
                 composer-flags: [""]
                 composer-extras: [""]
@@ -75,15 +75,15 @@ jobs:
                 run: ./vendor/bin/phpunit -v
 
             -   name: Run tests (behat)
-                if: matrix.php != '8.0'
+                if: matrix.php != '8.0' && matrix.php != '8.1'
                 run: ./vendor/bin/behat --format=progress --tags="~@php8"
 
             -   name: Run tests (behat)
-                if: matrix.php == '8.0'
+                if: matrix.php == '8.0' || matrix.php == '8.1'
                 run: ./vendor/bin/behat --format=progress
 
             -   name: Build the PHAR
-                if: matrix.php != '8.0'
+                if: matrix.php != '8.0' && matrix.php != '8.1'
                 run: |
                     composer config platform.php 7.3.0 &&
                     ln -s `which composer` composer.phar &&
