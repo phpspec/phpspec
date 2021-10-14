@@ -166,6 +166,17 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                 return;
             }
 
+            if (\strpos($typehint, '&') !== false) {
+                $this->typeHintIndex->addInvalid(
+                    $class,
+                    trim($this->currentFunction),
+                    $token[1],
+                    new DisallowedUnionTypehintException("Intersection type $typehint cannot be used to create a double")
+                );
+
+                return;
+            }
+
             try {
                 $typehintFcqn = $this->namespaceResolver->resolve($typehint);
                 $this->typeHintIndex->add(
@@ -187,7 +198,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
 
     private function haveNotReachedEndOfTypeHint($token) : bool
     {
-        if ($token == '|') {
+        if ($token == '|' || $token == '&') {
             return false;
         }
 
