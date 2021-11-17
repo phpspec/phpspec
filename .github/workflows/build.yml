@@ -54,10 +54,6 @@ jobs:
                 if: matrix.composer-extras != ''
                 run: composer require ${{ matrix.composer-extras }} --no-update
 
-            -   name: Update the minimum stability
-                if: matrix.stability == 'dev'
-                run: composer config minimum-stability ${{ matrix.stability }}
-
             -   name: Locate composer cache
                 id: composercache
                 run: echo "::set-output name=dir::$(composer config cache-files-dir)"
