@@ -110,8 +110,7 @@ abstract class ObjectBehavior implements
      *
      * @param int|string $key
      */
-    #[\ReturnTypeWillChange]
-    public function offsetExists($key)
+    public function offsetExists($key): bool
     {
         return $this->object->offsetExists($key);
     }
@@ -122,7 +121,7 @@ abstract class ObjectBehavior implements
      * @param int|string $key
      */
     #[\ReturnTypeWillChange]
-    public function offsetGet($key)
+    public function offsetGet($key): Subject
     {
         return $this->object->offsetGet($key);
     }
@@ -132,8 +131,7 @@ abstract class ObjectBehavior implements
      *
      * @param int|string $key
      */
-    #[\ReturnTypeWillChange]
-    public function offsetSet($key, $value)
+    public function offsetSet($key, $value): void
     {
         $this->object->offsetSet($key, $value);
     }
@@ -143,8 +141,7 @@ abstract class ObjectBehavior implements
      *
      * @param int|string $key
      */
-    #[\ReturnTypeWillChange]
-    public function offsetUnset($key)
+    public function offsetUnset($key): void
     {
         $this->object->offsetUnset($key);
     }
