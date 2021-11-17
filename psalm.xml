@@ -59,5 +59,11 @@
                 <referencedFunction name="PhpSpec\Wrapper\Subject\Expectation\Expectation::match"/>
             </errorLevel>
         </TooManyArguments>
+        <InvalidAttribute>
+            <errorLevel type="suppress">
+                <!-- Psalm does not yet understand \ReturnTypeWillChange -->
+                <file name="src/PhpSpec/ObjectBehavior.php"/>
+            </errorLevel>
+        </InvalidAttribute>
     </issueHandlers>
 </psalm>
