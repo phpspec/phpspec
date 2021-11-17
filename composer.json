@@ -26,18 +26,18 @@
         "phpspec/prophecy":         "^1.9",
         "phpspec/php-diff":         "^1.0.0",
         "sebastian/exporter":       "^3.0 || ^4.0",
-        "symfony/console":          "^3.4 || ^4.4 || ^5.0",
-        "symfony/event-dispatcher": "^3.4 || ^4.4 || ^5.0",
-        "symfony/process":          "^3.4 || ^4.4 || ^5.0",
-        "symfony/finder":           "^3.4 || ^4.4 || ^5.0",
-        "symfony/yaml":             "^3.4 || ^4.4 || ^5.0",
+        "symfony/console":          "^3.4 || ^4.4 || ^5.0 || ^6.0",
+        "symfony/event-dispatcher": "^3.4 || ^4.4 || ^5.0 || ^6.0",
+        "symfony/process":          "^3.4 || ^4.4 || ^5.0 || ^6.0",
+        "symfony/finder":           "^3.4 || ^4.4 || ^5.0 || ^6.0",
+        "symfony/yaml":             "^3.4 || ^4.4 || ^5.0 || ^6.0",
         "doctrine/instantiator":    "^1.0.5",
         "ext-tokenizer":            "*"
     },
 
     "require-dev": {
         "behat/behat":           "^3.3",
-        "symfony/filesystem":    "^3.4 || ^4.0 || ^5.0",
+        "symfony/filesystem":    "^3.4 || ^4.0 || ^5.0 || ^6.0",
         "phpunit/phpunit":       "^8.0 || ^9.0",
         "vimeo/psalm": "^4.3"
     },

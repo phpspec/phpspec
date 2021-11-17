@@ -28,6 +28,8 @@ jobs:
                         composer-extras: "symfony/event-dispatcher ^3.4 symfony/contracts ^2.0"
                     -   php: 8.0
                         operating-system: windows-latest
+                        stability: dev
+                        SYMFONY_REQUIRE: 6.0.*
 
         env:
             COMPOSER_ROOT_VERSION: dev-master
@@ -40,6 +42,13 @@ jobs:
                 with:
                     php-version: "${{ matrix.php }}"
                     ini-values: "phar.readonly=0"
+
+            -   name: Configure Composer minimum stability
+                if: matrix.stability
+                run: composer config minimum-stability ${{ matrix.stability }}
+
+            -   name: Install symfony/flex
+                run: composer global require symfony/flex
 
             -   name: Install composer extras
                 if: matrix.composer-extras != ''
@@ -62,6 +71,8 @@ jobs:
                     key: ${{ hashFiles('composer.json') }}
 
             -   name: Install composer dependencies
+                env:
+                    SYMFONY_REQUIRE: "${{ matrix.SYMFONY_REQUIRE }}"
                 run: composer update ${{ matrix.composer-flags }}
 
             -   name: Run static analysis (psalm)
