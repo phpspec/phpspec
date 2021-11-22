@@ -34,6 +34,24 @@ final class ProgressFormatter extends ConsoleFormatter
         }
     }
 
+    private function displayIgnoredResources(): void
+    {
+        $io = $this->getIO();
+        $stats = $this->getStatisticsCollector();
+        $ignoredResourceEvents = $stats->getIgnoredResourceEvents();
+        if (0 !== $ignoredResourcesCount = count($ignoredResourceEvents)) {
+            $io->writeln(sprintf('<ignored>%d ignored</ignored>', $ignoredResourcesCount));
+            foreach ($ignoredResourceEvents as $event) {
+                $resource = $event->getResource();
+                $io->writeln(sprintf(
+                    '  <ignored>! <label>%s</label> could not be loaded at path <label>%s</label>.</ignored>',
+                    $resource->getSpecClassname(),
+                    $resource->getSpecFilename()
+                ));
+            }
+        }
+    }
+
     public function afterSuite(SuiteEvent $event)
     {
         $this->drawStats();
@@ -43,6 +61,8 @@ final class ProgressFormatter extends ConsoleFormatter
 
         $io->freezeTemp();
         $io->writeln();
+
+        $this->displayIgnoredResources();
 
         $io->writeln(sprintf("%d specs", $stats->getTotalSpecs()));
 

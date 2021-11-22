@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\Listener;
 
 use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Event\ResourceEvent;
 use PhpSpec\Event\SpecificationEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Loader\Node\SpecificationNode;
@@ -29,6 +30,7 @@ class StatisticsCollectorSpec extends ObjectBehavior
         $subscribedEvents->shouldHaveKey('afterExample');
         $subscribedEvents->shouldHaveKey('afterSpecification');
         $subscribedEvents->shouldHaveKey('beforeSuite');
+        $subscribedEvents->shouldHaveKey('resourceIgnored');
     }
 
     function it_knows_no_specs_have_run_initially()
@@ -108,5 +110,12 @@ class StatisticsCollectorSpec extends ObjectBehavior
         $this->beforeSuite($suiteEvent);
 
         $this->getTotalSpecsCount()->shouldReturn(1);
+    }
+
+    function it_records_ignored_resources(ResourceEvent $resourceEvent)
+    {
+        $this->onResourceIgnored($resourceEvent);
+
+        $this->getIgnoredResourceEvents()->shouldReturn([$resourceEvent]);
     }
 }

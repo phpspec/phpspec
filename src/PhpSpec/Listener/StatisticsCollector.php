@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Listener;
 
+use PhpSpec\Event\ResourceEvent;
 use PhpSpec\Event\SuiteEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use PhpSpec\Event\ExampleEvent;
@@ -20,23 +21,24 @@ use PhpSpec\Event\SpecificationEvent;
 
 class StatisticsCollector implements EventSubscriberInterface
 {
-    private $globalResult    = 0;
-    private $totalSpecs      = 0;
+    private $globalResult = 0;
+    private $totalSpecs = 0;
     private $totalSpecsCount = 0;
 
-    private $passedEvents  = array();
+    private $passedEvents = array();
     private $pendingEvents = array();
     private $skippedEvents = array();
-    private $failedEvents  = array();
-    private $brokenEvents  = array();
+    private $failedEvents = array();
+    private $brokenEvents = array();
+    private $resourceIgnoredEvents = array();
 
     public static function getSubscribedEvents()
     {
         return array(
             'afterSpecification' => array('afterSpecification', 10),
-            'afterExample'       => array('afterExample', 10),
-            'beforeSuite'       => array('beforeSuite', 10),
-
+            'afterExample' => array('afterExample', 10),
+            'beforeSuite' => array('beforeSuite', 10),
+            'resourceIgnored' => array('onResourceIgnored', 1),
         );
     }
 
@@ -71,6 +73,11 @@ class StatisticsCollector implements EventSubscriberInterface
     public function beforeSuite(SuiteEvent $suiteEvent): void
     {
         $this->totalSpecsCount = \count($suiteEvent->getSuite()->getSpecifications());
+    }
+
+    public function onResourceIgnored(ResourceEvent $resourceEvent)
+    {
+        $this->resourceIgnoredEvents[] = $resourceEvent;
     }
 
     public function getGlobalResult() : int
@@ -112,6 +119,11 @@ class StatisticsCollector implements EventSubscriberInterface
     public function getBrokenEvents() : array
     {
         return $this->brokenEvents;
+    }
+
+    public function getIgnoredResourceEvents()
+    {
+        return $this->resourceIgnoredEvents;
     }
 
     /**
