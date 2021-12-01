@@ -121,6 +121,7 @@ final class ThrowMatcher implements Matcher
 
                 $property->setAccessible(true);
 
+                /** @psalm-suppress RedundantCondition */
                 if (method_exists($property, 'isInitialized')) {
                     $expected = $property->isInitialized($exception) ? $property->getValue($exception) : null;
                     $actual = $property->isInitialized($exceptionThrown) ? $property->getValue($exceptionThrown) : null;
@@ -180,6 +181,7 @@ final class ThrowMatcher implements Matcher
 
                     $property->setAccessible(true);
 
+                    /** @psalm-suppress RedundantCondition */
                     if (method_exists($property, 'isInitialized')) {
                         $expected = $property->isInitialized($exception) ?
                             $property->getValue($exception) : null;
