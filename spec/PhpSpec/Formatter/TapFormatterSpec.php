@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\Formatter;
 
 use PhpSpec\Console\ConsoleIO;
+use PhpSpec\Event\ResourceEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SpecificationEvent;
@@ -10,12 +11,14 @@ use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Listener\StatisticsCollector;
+use PhpSpec\Locator\Resource;
 use PhpSpec\ObjectBehavior;
 
 class TapFormatterSpec extends ObjectBehavior
 {
     function let(Presenter $presenter, ConsoleIO $io, StatisticsCollector $stats)
     {
+        $stats->getIgnoredResourceEvents()->willReturn([]);
         $this->beConstructedWith($presenter, $io, $stats);
     }
 
@@ -143,5 +146,15 @@ class TapFormatterSpec extends ObjectBehavior
 
         $expected = "not ok 1 - spec1: foobar\n  ---\n  message: 'The example result type was unknown to formatter'\n  severity: fail\n  ...";
         $io->writeln($expected)->shouldHaveBeenCalled();
+    }
+
+    function it_outputs_ignored_resouces_on_before_suite_event(SuiteEvent $event, StatisticsCollector $stats, Resource $resource, ConsoleIo $io)
+    {
+        $resource->getSpecClassname()->willReturn('Foo\\Bar\\BazSpec');
+        $resource->getSpecFilename()->willReturn('spec/Foo/Bar/BazSpec');
+        $stats->getIgnoredResourceEvents()->willReturn([ResourceEvent::ignored($resource->getWrappedObject())]);
+
+        $this->beforeSuite($event);
+        $io->writeln(' # IGNORE Foo\\Bar\\BazSpec could not be loaded at path spec/Foo/Bar/BazSpec')->shouldHaveBeenCalled();
     }
 }

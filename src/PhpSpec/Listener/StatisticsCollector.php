@@ -121,7 +121,7 @@ class StatisticsCollector implements EventSubscriberInterface
         return $this->brokenEvents;
     }
 
-    public function getIgnoredResourceEvents()
+    public function getIgnoredResourceEvents() : array
     {
         return $this->resourceIgnoredEvents;
     }

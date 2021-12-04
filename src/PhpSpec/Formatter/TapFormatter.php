@@ -20,7 +20,6 @@ use Symfony\Component\Yaml\Yaml;
 
 final class TapFormatter extends ConsoleFormatter
 {
-
     const VERSION = 'TAP version 13';
 
     const OK = 'ok %d';
@@ -32,6 +31,8 @@ final class TapFormatter extends ConsoleFormatter
     const SKIP = ' # SKIP %s';
 
     const TODO = ' # TODO %s';
+
+    const IGNORE = ' # IGNORE %s could not be loaded at path %s';
 
     const PLAN = '1..%d';
 
@@ -51,19 +52,24 @@ final class TapFormatter extends ConsoleFormatter
      */
     private $currentSpecificationTitle;
 
-    
     public function beforeSuite(SuiteEvent $event)
     {
         $this->getIO()->writeln(self::VERSION);
+        foreach ($this->getStatisticsCollector()->getIgnoredResourceEvents() as $event) {
+            $resource = $event->getResource();
+            $this->getIO()->writeln(sprintf(
+                self::IGNORE,
+                $resource->getSpecClassname(),
+                $resource->getSpecFilename()
+            ));
+        }
     }
 
-    
     public function beforeSpecification(SpecificationEvent $event)
     {
         $this->currentSpecificationTitle = $event->getSpecification()->getTitle();
     }
 
-    
     public function afterExample(ExampleEvent $event)
     {
         $this->examplesCount++;
@@ -98,7 +104,6 @@ final class TapFormatter extends ConsoleFormatter
         $this->getIO()->writeln($result);
     }
 
-    
     public function afterSuite(SuiteEvent $event)
     {
         $this->getIO()->writeln(sprintf(
@@ -145,13 +150,11 @@ final class TapFormatter extends ConsoleFormatter
         return $message;
     }
 
-    
     private function stripNewlines(string $string): string
     {
         return str_replace(array("\r\n", "\n", "\r"), ' / ', $string);
     }
 
-    
     private function indent(string $string): string
     {
         return preg_replace(

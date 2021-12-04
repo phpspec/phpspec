@@ -27,17 +27,24 @@ Feature: Display ignored resources using the progress formatter
     }
     """
 
-  Scenario: Non verbose output
+  Scenario: Non verbose progress output
     When I run phpspec
     Then I should see:
       """
       1 ignored
       """
 
-  Scenario: Verbose output
+  Scenario: Verbose progress output
     When I run phpspec with the "verbose" option
     Then I should see:
       """
       1 ignored
         ! spec\MilkyWay\OrionCygnusArm\MyClassSpec could not be loaded at path
       """
+
+  Scenario: TAP output
+    When I run phpspec using the "tap" format
+    Then I should see:
+    """
+     # IGNORE spec\MilkyWay\OrionCygnusArm\MyClassSpec could not be loaded at path
+    """
