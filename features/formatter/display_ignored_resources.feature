@@ -48,3 +48,16 @@ Feature: Display ignored resources using the progress formatter
     """
      # IGNORE spec\MilkyWay\OrionCygnusArm\MyClassSpec could not be loaded at path
     """
+
+   Scenario: Dot output
+    When I run phpspec using the "dot" format
+    Then I should see:
+    """
+
+
+    spec\MilkyWay\OrionCygnusArm\MyClassSpec                                        
+          - cannot be autoloaded
+          expected to find spec at path
+
+    0 spec (1 ignored)
+    """

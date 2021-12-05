@@ -15,6 +15,8 @@ namespace PhpSpec\Formatter;
 
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Event\PhpSpecEvent;
+use PhpSpec\Event\ResourceEvent;
 use PhpSpec\Exception\Example\PendingException;
 use PhpSpec\Exception\Example\SkippingException;
 use PhpSpec\Formatter\Presenter\Presenter;
@@ -44,7 +46,6 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
         return $this->io;
     }
 
-    
     protected function printException(ExampleEvent $event): void
     {
         if (null === $exception = $event->getException()) {
@@ -64,7 +65,19 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
         }
     }
 
-    
+    protected function printIgnoredResource(ResourceEvent $event): void
+    {
+        $resource = $event->getResource();
+
+        $this->io->writeln(sprintf(
+            '<ignored-bg>%s</ignored-bg>',
+            str_pad($resource->getSpecClassname(), $this->io->getBlockWidth()),
+        ));
+        $this->io->writeln('      <ignored>- cannot be autoloaded</ignored>');
+        $this->io->writeln(sprintf('      <ignored>expected to find spec at path %s</ignored>.', $resource->getSpecFilename()));
+        $this->io->writeln();
+    }
+
     protected function printSpecificException(ExampleEvent $event, string $type): void
     {
         $title = str_replace('\\', DIRECTORY_SEPARATOR, $event->getSpecification()->getTitle());
