@@ -109,4 +109,9 @@ class ArrayKeyValueMatcherSpec extends ObjectBehavior
 
         $this->shouldNotThrow()->duringNegativeMatch('haveKeyWithValue', $array, array('abc', 123));
     }
+
+    function its_priority_is_100()
+    {
+        $this->getPriority()->shouldReturn(100);
+    }
 }

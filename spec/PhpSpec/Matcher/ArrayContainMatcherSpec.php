@@ -43,4 +43,9 @@ class ArrayContainMatcherSpec extends ObjectBehavior
     {
         $this->shouldNotThrow()->duringNegativeMatch('contain', array(1,2,3), array('abc'));
     }
+
+    function its_priority_is_100()
+    {
+        $this->getPriority()->shouldReturn(100);
+    }
 }
