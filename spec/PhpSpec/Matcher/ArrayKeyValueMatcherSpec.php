@@ -74,6 +74,8 @@ class ArrayKeyValueMatcherSpec extends ObjectBehavior
 
     function it_does_not_match_ArrayObject_with_missing_key(ArrayObject $array)
     {
+        $array->offsetExists('abc')->willReturn(false);
+
         $this->shouldThrow(new FailureException('Expected object to have key abc, but it didn\'t.'))->duringPositiveMatch('haveKeyWithValue', $array, array('abc', 123));
     }
 

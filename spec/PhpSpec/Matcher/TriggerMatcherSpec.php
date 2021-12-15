@@ -23,25 +23,29 @@ class TriggerMatcherSpec extends ObjectBehavior
 
     function it_accepts_a_method_during_which_an_error_should_be_triggered(ArrayObject $arr)
     {
-        $arr->ksort()->will(function () { trigger_error('An error', E_USER_NOTICE); });
+        $arr->ksort()->will(function () { trigger_error('An error', E_USER_NOTICE); return false; });
 
         $this->positiveMatch('trigger', $arr, array(E_USER_NOTICE, 'An error'))->during('ksort', array());
     }
 
     function it_accepts_a_method_during_which_any_error_should_be_triggered(ArrayObject $arr)
     {
-        $arr->ksort()->will(function () { trigger_error('An error', E_USER_NOTICE); });
+        $arr->ksort()->will(function () { trigger_error('An error', E_USER_NOTICE); return false; });
 
         $this->positiveMatch('trigger', $arr, array(null, null))->during('ksort', array());
     }
 
     function it_accepts_a_method_during_which_an_error_should_not_be_triggered(ArrayObject $arr)
     {
+        $arr->ksort()->willReturn(true);
+
         $this->negativeMatch('trigger', $arr, array(E_USER_NOTICE, 'An error'))->during('ksort', array());
     }
 
     function it_accepts_a_method_during_which_any_error_should_not_be_triggered(ArrayObject $arr)
     {
+        $arr->ksort()->willReturn(true);
+
         $this->negativeMatch('trigger', $arr, array(null, null))->during('ksort', array());
     }
 }

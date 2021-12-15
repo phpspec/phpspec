@@ -198,7 +198,9 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
 
     private function haveNotReachedEndOfTypeHint($token) : bool
     {
-        if ($token == '|' || $token == '&') {
+        // PHP 8.1 returns the intersection token `&` as an array,
+        // while previous versions return it as a string.
+        if ($token == '|' || $token == '&' || (is_array($token) && $token[1] == '&')) {
             return false;
         }
 
