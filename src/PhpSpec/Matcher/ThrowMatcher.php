@@ -120,15 +120,8 @@ final class ThrowMatcher implements Matcher
                 }
 
                 $property->setAccessible(true);
-
-                /** @psalm-suppress RedundantCondition */
-                if (method_exists($property, 'isInitialized')) {
-                    $expected = $property->isInitialized($exception) ? $property->getValue($exception) : null;
-                    $actual = $property->isInitialized($exceptionThrown) ? $property->getValue($exceptionThrown) : null;
-                } else {
-                    $expected = $property->getValue($exception);
-                    $actual = $property->getValue($exceptionThrown);
-                }
+                $expected = $property->getValue($exception);
+                $actual = $property->getValue($exceptionThrown);
 
                 if (null !== $expected && $actual !== $expected) {
                     throw new NotEqualException(
@@ -180,17 +173,8 @@ final class ThrowMatcher implements Matcher
                     }
 
                     $property->setAccessible(true);
-
-                    /** @psalm-suppress RedundantCondition */
-                    if (method_exists($property, 'isInitialized')) {
-                        $expected = $property->isInitialized($exception) ?
-                            $property->getValue($exception) : null;
-                        $actual = $property->isInitialized($exceptionThrown) ?
-                            $property->getValue($exceptionThrown) : null;
-                    } else {
-                        $expected = $property->getValue($exception);
-                        $actual = $property->getValue($exceptionThrown);
-                    }
+                    $expected = $property->getValue($exception);
+                    $actual = $property->getValue($exceptionThrown);
 
                     if (null !== $expected && $actual === $expected) {
                         $invalidProperties[] = sprintf(
