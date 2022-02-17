@@ -86,7 +86,7 @@ final class ArrayKeyValueMatcher extends BasicMatcher
         ));
     }
 
-    private function offsetExists($key, $subject)
+    private function offsetExists($key, $subject): bool
     {
         if ($subject instanceof ArrayAccess && $subject->offsetExists($key)) {
             return true;

@@ -5,7 +5,7 @@ namespace spec\PhpSpec\Locator\PSR0;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Util\Filesystem;
 
-use SplFileInfo;
+use Symfony\Component\Finder\SplFileInfo;
 
 class PSR0LocatorSpec extends ObjectBehavior
 {
