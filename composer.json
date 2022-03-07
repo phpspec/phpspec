@@ -1,5 +1,5 @@
 {
-    "name":         "phpspec/phpspec",
+    "name":         "sylius/phpspec",
     "description":  "Specification-oriented BDD framework for PHP 7.1+",
     "keywords":     ["BDD", "SpecBDD", "TDD", "spec", "specification", "tests", "testing"],
     "homepage":     "http://phpspec.net/",
