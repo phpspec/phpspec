@@ -50,12 +50,14 @@ class ThrowMatcherSpec extends ObjectBehavior
     function it_accepts_a_method_during_which_an_exception_should_not_be_thrown(ArrayObject $arr)
     {
         $arr->ksort()->willReturn(true);
+
         $this->negativeMatch('throw', $arr, array('\Exception'))->during('ksort', array());
     }
 
     function it_accepts_a_method_during_which_an_error_should_not_be_thrown(ArrayObject $arr)
     {
         $arr->ksort()->willReturn(true);
+
         $this->negativeMatch('throw', $arr, array('\Error'))->during('ksort', array());
     }
 

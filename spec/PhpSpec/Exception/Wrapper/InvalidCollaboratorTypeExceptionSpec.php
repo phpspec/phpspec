@@ -10,6 +10,7 @@ class InvalidCollaboratorTypeExceptionSpec extends ObjectBehavior
     {
         $parameter->getPosition()->willReturn(0);
         $function->getName()->willReturn('bar');
+        $parameter->getPosition()->willReturn(0);
         $this->beConstructedWith($parameter, $function);
     }
 
