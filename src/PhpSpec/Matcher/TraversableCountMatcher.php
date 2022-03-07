@@ -28,7 +28,7 @@ final class TraversableCountMatcher implements Matcher
      */
     private $presenter;
 
-    
+
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
@@ -87,7 +87,7 @@ final class TraversableCountMatcher implements Matcher
      */
     public function getPriority(): int
     {
-        return 100;
+        return 101;
     }
 
     /**

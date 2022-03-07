@@ -67,4 +67,9 @@ class ArrayCountMatcherSpec extends ObjectBehavior
 
         $this->shouldNotThrow()->duringNegativeMatch('haveCount', $countable, array(4));
     }
+
+    function its_priority_is_100()
+    {
+        $this->getPriority()->shouldReturn(100);
+    }
 }
