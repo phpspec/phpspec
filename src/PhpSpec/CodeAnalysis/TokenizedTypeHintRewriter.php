@@ -52,6 +52,10 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
             $this->typehintTokens[] = T_NAME_FULLY_QUALIFIED;
             $this->typehintTokens[] = T_NAME_QUALIFIED;
         }
+
+        if (\PHP_VERSION_ID >= 80100) {
+            $this->typehintTokens[] = T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG;
+        }
     }
 
     public function rewrite(string $classDefinition): string
