@@ -264,7 +264,7 @@ class TeamCityFormatter extends BasicFormatter
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, array{0: string, 1: int}>
      */
     public static function getSubscribedEvents(): array
     {
