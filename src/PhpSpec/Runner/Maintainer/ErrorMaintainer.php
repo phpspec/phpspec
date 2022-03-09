@@ -92,6 +92,10 @@ final class ErrorMaintainer implements Maintainer
             }
         }
 
+        if (E_DEPRECATED === $level) {
+            return false;
+        }
+
         // error reporting turned off or more likely suppressed with error control operator "@"
         if (0 === (error_reporting() & $level)) {
             return false;
