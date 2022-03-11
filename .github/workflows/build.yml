@@ -14,17 +14,17 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php: ["7.4", "8.0", "8.1"]
+                php: ["8.0", "8.1"]
                 operating-system: [ ubuntu-latest, macOS-latest, windows-latest ]
                 composer-flags: [""]
                 composer-extras: [""]
                 stability: ["stable"]
                 include:
-                    -   php: "7.4"
+                    -   php: "8.0"
                         publish-phar: true
-                    -   php: "7.4"
+                    -   php: "8.0"
                         composer-flags: --prefer-lowest
-                    -   php: "7.4"
+                    -   php: "8.0"
                         stability: "dev"
                     -   php: "8.1"
                         operating-system: windows-latest
