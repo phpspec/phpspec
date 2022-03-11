@@ -126,8 +126,9 @@ final class ThrowMatcher implements Matcher
                     $expected = $property->isInitialized($exception) ? $property->getValue($exception) : null;
                     $actual = $property->isInitialized($exceptionThrown) ? $property->getValue($exceptionThrown) : null;
                 } else {
-                    $expected = $property->getValue($exception);
-                    $actual = $property->getValue($exceptionThrown);
+                    /** @todo remove error suppression when PHP 7.3 is no longer supported */
+                    $expected = @$property->getValue($exception);
+                    $actual = @$property->getValue($exceptionThrown);
                 }
 
                 if (null !== $expected && $actual !== $expected) {
