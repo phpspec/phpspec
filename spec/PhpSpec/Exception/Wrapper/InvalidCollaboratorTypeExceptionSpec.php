@@ -8,7 +8,9 @@ class InvalidCollaboratorTypeExceptionSpec extends ObjectBehavior
 {
     function let(\ReflectionParameter $parameter, \ReflectionFunctionAbstract $function)
     {
+        $parameter->getPosition()->willReturn(0);
         $function->getName()->willReturn('bar');
+        $parameter->getPosition()->willReturn(0);
         $this->beConstructedWith($parameter, $function);
     }
 

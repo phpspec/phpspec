@@ -52,6 +52,10 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
             $this->typehintTokens[] = T_NAME_FULLY_QUALIFIED;
             $this->typehintTokens[] = T_NAME_QUALIFIED;
         }
+
+        if (\PHP_VERSION_ID >= 80100) {
+            $this->typehintTokens[] = T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG;
+        }
     }
 
     public function rewrite(string $classDefinition): string
@@ -166,6 +170,17 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                 return;
             }
 
+            if (\strpos($typehint, '&') !== false) {
+                $this->typeHintIndex->addInvalid(
+                    $class,
+                    trim($this->currentFunction),
+                    $token[1],
+                    new DisallowedUnionTypehintException("Intersection type $typehint cannot be used to create a double")
+                );
+
+                return;
+            }
+
             try {
                 $typehintFcqn = $this->namespaceResolver->resolve($typehint);
                 $this->typeHintIndex->add(
@@ -187,7 +202,9 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
 
     private function haveNotReachedEndOfTypeHint($token) : bool
     {
-        if ($token == '|') {
+        // PHP 8.1 returns the intersection token `&` as an array,
+        // while previous versions return it as a string.
+        if ($token == '|' || $token == '&' || (is_array($token) && $token[1] == '&')) {
             return false;
         }
 

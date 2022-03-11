@@ -129,7 +129,9 @@ abstract class ObjectBehavior implements
      * Sets the value in a particular position in the ArrayAccess object
      *
      * @param int|string $key
+     * @psalm-suppress InvalidAttribute
      */
+    #[\ReturnTypeWillChange]
     public function offsetSet($key, $value)
     {
         $this->object->offsetSet($key, $value);
@@ -139,7 +141,9 @@ abstract class ObjectBehavior implements
      * Unsets a position in the ArrayAccess object
      *
      * @param int|string $key
+     * @psalm-suppress InvalidAttribute
      */
+    #[\ReturnTypeWillChange]
     public function offsetUnset($key)
     {
         $this->object->offsetUnset($key);

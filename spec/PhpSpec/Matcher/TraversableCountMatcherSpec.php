@@ -81,6 +81,11 @@ final class TraversableCountMatcherSpec extends ObjectBehavior
         ;
     }
 
+    function its_priority_is_101()
+    {
+        $this->getPriority()->shouldReturn(101);
+    }
+
     /**
      * @param int $count
      *

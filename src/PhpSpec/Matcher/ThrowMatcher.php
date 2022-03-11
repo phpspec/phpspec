@@ -51,19 +51,19 @@ final class ThrowMatcher implements Matcher
         $this->factory   = $factory;
     }
 
-    
+
     public function supports(string $name, $subject, array $arguments): bool
     {
         return 'throw' === $name;
     }
 
-    
+
     public function positiveMatch(string $name, $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyPositive'), $subject, $arguments);
     }
 
-    
+
     public function negativeMatch(string $name, $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyNegative'), $subject, $arguments);
@@ -120,8 +120,16 @@ final class ThrowMatcher implements Matcher
                 }
 
                 $property->setAccessible(true);
-                $expected = $property->getValue($exception);
-                $actual = $property->getValue($exceptionThrown);
+
+                /** @psalm-suppress RedundantCondition */
+                if (method_exists($property, 'isInitialized')) {
+                    $expected = $property->isInitialized($exception) ? $property->getValue($exception) : null;
+                    $actual = $property->isInitialized($exceptionThrown) ? $property->getValue($exceptionThrown) : null;
+                } else {
+                    /** @todo remove error suppression when PHP 7.3 is no longer supported */
+                    $expected = @$property->getValue($exception);
+                    $actual = @$property->getValue($exceptionThrown);
+                }
 
                 if (null !== $expected && $actual !== $expected) {
                     throw new NotEqualException(
@@ -173,8 +181,17 @@ final class ThrowMatcher implements Matcher
                     }
 
                     $property->setAccessible(true);
-                    $expected = $property->getValue($exception);
-                    $actual = $property->getValue($exceptionThrown);
+
+                    /** @psalm-suppress RedundantCondition */
+                    if (method_exists($property, 'isInitialized')) {
+                        $expected = $property->isInitialized($exception) ?
+                            $property->getValue($exception) : null;
+                        $actual = $property->isInitialized($exceptionThrown) ?
+                            $property->getValue($exceptionThrown) : null;
+                    } else {
+                        $expected = $property->getValue($exception);
+                        $actual = $property->getValue($exceptionThrown);
+                    }
 
                     if (null !== $expected && $actual === $expected) {
                         $invalidProperties[] = sprintf(
@@ -204,13 +221,13 @@ final class ThrowMatcher implements Matcher
         }
     }
 
-    
+
     public function getPriority(): int
     {
         return 1;
     }
 
-    
+
     private function getDelayedCall(callable $check, $subject, array $arguments): DelayedCall
     {
         $exception = $this->getException($arguments);

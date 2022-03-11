@@ -22,7 +22,7 @@
     ],
 
     "require": {
-        "php":                      "^7.3 || 8.0.*",
+        "php":                      "^7.3 || 8.0.* || 8.1.*",
         "phpspec/prophecy":         "^1.9",
         "phpspec/php-diff":         "^1.0.0",
         "sebastian/exporter":       "^3.0 || ^4.0",
