@@ -108,13 +108,13 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
     }
 
     
-    public function getSpecification(): SpecificationNode
+    public function getSpecification(): ?SpecificationNode
     {
         return $this->example->getSpecification();
     }
 
     
-    public function getSuite(): Suite
+    public function getSuite(): ?Suite
     {
         return $this->example->getSpecification()->getSuite();
     }

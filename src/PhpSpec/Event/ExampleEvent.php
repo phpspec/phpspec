@@ -67,11 +67,6 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
      */
     private $exception;
 
-    /**
-     * @param null|float   $time
-     * @param null|int $result
-     * @param \Exception   $exception
-     */
     public function __construct(
         ExampleNode $example,
         float $time = 0.0,
@@ -91,13 +86,13 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
     }
 
     
-    public function getSpecification(): SpecificationNode
+    public function getSpecification(): ?SpecificationNode
     {
         return $this->example->getSpecification();
     }
 
     
-    public function getSuite(): Suite
+    public function getSuite(): ?Suite
     {
         return $this->getSpecification()->getSuite();
     }

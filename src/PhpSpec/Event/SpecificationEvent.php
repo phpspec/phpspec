@@ -45,7 +45,7 @@ class SpecificationEvent extends BaseEvent implements PhpSpecEvent
     }
 
     
-    public function getSpecification(): SpecificationNode
+    public function getSpecification(): ?SpecificationNode
     {
         return $this->specification;
     }
@@ -57,7 +57,7 @@ class SpecificationEvent extends BaseEvent implements PhpSpecEvent
     }
 
     
-    public function getSuite(): Suite
+    public function getSuite(): ?Suite
     {
         return $this->specification->getSuite();
     }
