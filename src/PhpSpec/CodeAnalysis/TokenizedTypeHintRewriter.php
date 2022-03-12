@@ -30,7 +30,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     private $currentBodyLevel;
 
     private $typehintTokens = array(
-        T_WHITESPACE, T_STRING, T_NS_SEPARATOR
+        T_WHITESPACE, T_STRING, T_NS_SEPARATOR, T_NAME_FULLY_QUALIFIED, T_NAME_QUALIFIED
     );
 
     /**
@@ -47,11 +47,6 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     {
         $this->typeHintIndex = $typeHintIndex;
         $this->namespaceResolver = $namespaceResolver;
-
-        if (\PHP_VERSION_ID >= 80000) {
-            $this->typehintTokens[] = T_NAME_FULLY_QUALIFIED;
-            $this->typehintTokens[] = T_NAME_QUALIFIED;
-        }
 
         if (\PHP_VERSION_ID >= 80100) {
             $this->typehintTokens[] = T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG;

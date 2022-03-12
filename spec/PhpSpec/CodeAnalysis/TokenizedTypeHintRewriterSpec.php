@@ -284,10 +284,6 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
     function it_removes_union_types()
     {
-        if (PHP_VERSION_ID < 8000) {
-            return;
-        }
-
         $this->rewrite('
         <?php
 
@@ -313,10 +309,6 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
     function it_removes_union_types_with_whitespace()
     {
-        if (PHP_VERSION_ID < 8000) {
-            return;
-        }
-
         $this->rewrite('
         <?php
 
@@ -342,10 +334,6 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
 
     function it_indexes_union_types(TypeHintIndex $typeHintIndex)
     {
-        if (PHP_VERSION_ID < 8000) {
-            return;
-        }
-
         $this->rewrite('
         <?php
 
