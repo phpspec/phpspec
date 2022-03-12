@@ -13,15 +13,12 @@
 
 namespace PhpSpec\Runner;
 
-use PhpSpec\Util\DispatchTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Event;
 use PhpSpec\Loader\Node\SpecificationNode;
 
 class SpecificationRunner
 {
-    use DispatchTrait;
-
     /**
      * @var EventDispatcherInterface
      */
@@ -44,8 +41,7 @@ class SpecificationRunner
     public function run(SpecificationNode $specification): int
     {
         $startTime = microtime(true);
-        $this->dispatch(
-            $this->dispatcher,
+        $this->dispatcher->dispatch(
             new Event\SpecificationEvent($specification),
             'beforeSpecification'
         );
@@ -57,8 +53,7 @@ class SpecificationRunner
                 $result = max($result, $this->exampleRunner->run($example));
             }
         } finally {
-            $this->dispatch(
-                $this->dispatcher,
+            $this->dispatcher->dispatch(
                 new Event\SpecificationEvent($specification, microtime(true) - $startTime, $result),
                 'afterSpecification'
             );
