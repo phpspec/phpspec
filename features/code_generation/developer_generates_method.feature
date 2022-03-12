@@ -365,7 +365,7 @@ Feature: Developer generates a method
 
       """
 
-  @php:~7 @isolated
+  @isolated
   Scenario: Successful generation of a method named with a reserved keyword in previous PHP versions
     Given the spec file "spec/MyNamespace/KeywordMethodSpec.php" contains:
       """
