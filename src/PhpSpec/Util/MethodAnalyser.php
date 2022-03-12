@@ -119,17 +119,6 @@ class MethodAnalyser
     
     private function isNotImplementedInPhp(\ReflectionMethod $method): bool
     {
-        $filename = $method->getDeclaringClass()->getFileName();
-
-        if (false === $filename) {
-            return true;
-        }
-
-        // HHVM <=3.2.0 does not return FALSE correctly
-        if (preg_match('#^/([:/]systemlib.|/$)#', $filename)) {
-            return true;
-        }
-
-        return false;
+        return (false === $method->getDeclaringClass()->getFileName());
     }
 }

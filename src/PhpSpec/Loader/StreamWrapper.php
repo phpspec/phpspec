@@ -40,12 +40,7 @@ class StreamWrapper
 
     public static function wrapPath($path): string
     {
-        if (!\defined('HHVM_VERSION'))
-        {
-            return 'phpspec://' . $path;
-        }
-
-        return $path;
+        return 'phpspec://' . $path;
     }
 
     public function stream_open($path, $mode, $options, &$opened_path): bool
