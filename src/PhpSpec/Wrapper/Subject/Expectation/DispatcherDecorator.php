@@ -17,14 +17,11 @@ use PhpSpec\Event\ExpectationEvent;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Matcher\Matcher;
-use PhpSpec\Util\DispatchTrait;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Exception;
 
 final class DispatcherDecorator extends Decorator implements Expectation
 {
-    use DispatchTrait;
-
     /**
      * @var EventDispatcherInterface
      */
@@ -58,16 +55,14 @@ final class DispatcherDecorator extends Decorator implements Expectation
      */
     public function match(string $alias, $subject, array $arguments = array())
     {
-        $this->dispatch(
-            $this->dispatcher,
+        $this->dispatcher->dispatch(
             new ExpectationEvent($this->example, $this->matcher, $subject, $alias, $arguments),
             'beforeExpectation'
         );
 
         try {
             $result = $this->getExpectation()->match($alias, $subject, $arguments);
-            $this->dispatch(
-                $this->dispatcher,
+            $this->dispatcher->dispatch(
                 new ExpectationEvent(
                     $this->example,
                     $this->matcher,
@@ -79,8 +74,7 @@ final class DispatcherDecorator extends Decorator implements Expectation
                 'afterExpectation'
             );
         } catch (FailureException $e) {
-            $this->dispatch(
-                $this->dispatcher,
+            $this->dispatcher->dispatch(
                 new ExpectationEvent(
                     $this->example,
                     $this->matcher,
@@ -95,8 +89,7 @@ final class DispatcherDecorator extends Decorator implements Expectation
 
             throw $e;
         } catch (Exception $e) {
-            $this->dispatch(
-                $this->dispatcher,
+            $this->dispatcher->dispatch(
                 new ExpectationEvent(
                     $this->example,
                     $this->matcher,

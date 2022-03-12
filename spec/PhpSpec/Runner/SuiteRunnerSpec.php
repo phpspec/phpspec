@@ -3,7 +3,6 @@
 namespace spec\PhpSpec\Runner;
 
 use PhpSpec\ObjectBehavior;
-use PhpSpec\Util\DispatchTrait;
 use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
@@ -16,8 +15,6 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class SuiteRunnerSpec extends ObjectBehavior
 {
-    use DispatchTrait;
-
     function let(EventDispatcher $dispatcher, SpecificationRunner $specRunner, Suite $suite,
                  SpecificationNode $spec1, SpecificationNode $spec2)
     {
@@ -76,11 +73,11 @@ class SuiteRunnerSpec extends ObjectBehavior
 
         $this->run($suite);
 
-        $this->dispatch($dispatcher, Argument::type('PhpSpec\Event\SuiteEvent'),
+        $dispatcher->dispatch(Argument::type('PhpSpec\Event\SuiteEvent'),
             'beforeSuite'
         )->shouldHaveBeenCalled();
 
-        $this->dispatch($dispatcher, Argument::type('PhpSpec\Event\SuiteEvent'),
+        $dispatcher->dispatch(Argument::type('PhpSpec\Event\SuiteEvent'),
             'afterSuite'
         )->shouldHaveBeenCalled();
     }
@@ -96,8 +93,7 @@ class SuiteRunnerSpec extends ObjectBehavior
 
         $this->run($suite);
 
-        $this->dispatch(
-            $dispatcher,
+        $dispatcher->dispatch(
             Argument::that(
                 function ($event) {
                     return ($event->getTime() > 0)

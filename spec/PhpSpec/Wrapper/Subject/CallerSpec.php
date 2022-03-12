@@ -7,7 +7,6 @@ use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\ExceptionFactory;
 use PhpSpec\Exception\Fracture\FactoryDoesNotReturnObjectException;
 use PhpSpec\Exception\Fracture\PropertyNotFoundException;
-use PhpSpec\Util\DispatchTrait;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 use PhpSpec\Wrapper\Wrapper;
 use PhpSpec\Wrapper\Subject;
@@ -21,8 +20,6 @@ use Prophecy\Argument;
 
 class CallerSpec extends ObjectBehavior
 {
-    use DispatchTrait;
-
     function let(WrappedObject $wrappedObject, ExampleNode $example, Dispatcher $dispatcher,
                  ExceptionFactory $exceptions, Wrapper $wrapper, AccessInspector $accessInspector, Subject $subject)
     {
@@ -47,14 +44,12 @@ class CallerSpec extends ObjectBehavior
 
         $accessInspector->isMethodCallable(Argument::type('ArrayObject'), 'count')->willReturn(true);
 
-        $this->dispatch(
-            $dispatcher,
+        $dispatcher->dispatch(
             Argument::type('PhpSpec\Event\MethodCallEvent'),
             'beforeMethodCall'
         )->shouldBeCalled();
 
-        $this->dispatch(
-            $dispatcher,
+        $dispatcher->dispatch(
             Argument::type('PhpSpec\Event\MethodCallEvent'),
             'afterMethodCall'
         )->shouldBeCalled();
