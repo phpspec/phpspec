@@ -75,9 +75,4 @@ jobs:
                 run: ./vendor/bin/phpunit -v
 
             -   name: Run tests (behat)
-                if: matrix.php != '8.0' && matrix.php != '8.1'
-                run: ./vendor/bin/behat --format=progress --tags="~@php8"
-
-            -   name: Run tests (behat)
-                if: matrix.php == '8.0' || matrix.php == '8.1'
                 run: ./vendor/bin/behat --format=progress

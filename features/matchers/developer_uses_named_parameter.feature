@@ -1,4 +1,3 @@
-@php8
 Feature: Developer uses named parameter
   As a Developer
   I want to use named parameter
