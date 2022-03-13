@@ -31,7 +31,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class RunCommand extends Command
 {
-    public function getApplication() : Application
+    public function getApplication(): Application
     {
         $application = parent::getApplication();
 
@@ -142,8 +142,7 @@ EOF
         ;
     }
 
-    
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $container = $this->getApplication()->getContainer();
 
