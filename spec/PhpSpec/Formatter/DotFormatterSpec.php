@@ -2,12 +2,14 @@
 
 namespace spec\PhpSpec\Formatter;
 
+use PhpSpec\Event\ResourceEvent;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Listener\StatisticsCollector;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Loader\Suite;
+use PhpSpec\Locator\Resource;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Exception\Example\PendingException;
 use PhpSpec\Loader\Node\SpecificationNode;
@@ -38,6 +40,12 @@ class DotFormatterSpec extends ObjectBehavior
         });
         $io->getBlockWidth()->willReturn(80);
         $event->getTime()->willReturn(10.0);
+
+        $stats->getFailedEvents()->willReturn(array());
+        $stats->getBrokenEvents()->willReturn(array());
+        $stats->getPendingEvents()->willReturn(array());
+        $stats->getSkippedEvents()->willReturn(array());
+        $stats->getIgnoredResourceEvents()->willReturn(array());
     }
 
     function it_is_a_console_formatter()
@@ -179,10 +187,6 @@ class DotFormatterSpec extends ObjectBehavior
         StatisticsCollector $stats
     ) {
         $stats->getEventsCount()->willReturn(1);
-        $stats->getFailedEvents()->willReturn(array());
-        $stats->getBrokenEvents()->willReturn(array());
-        $stats->getPendingEvents()->willReturn(array());
-        $stats->getSkippedEvents()->willReturn(array());
         $stats->getTotalSpecs()->willReturn(15);
         $event->getTime()->willReturn(12.345);
 
@@ -201,5 +205,29 @@ class DotFormatterSpec extends ObjectBehavior
         $io->write('1 example ')->shouldHaveBeenCalled();
         $expected = '(<passed>1 passed</passed>, <failed>2 failed</failed>)';
         $io->write($expected)->shouldHaveBeenCalled();
+    }
+
+    function it_outputs_a_suite_summary_with_ignored_resources(
+        SuiteEvent $event,
+        ConsoleIO $io,
+        StatisticsCollector $stats,
+        Resource $resource
+    ) {
+        $stats->getEventsCount()->willReturn(1);
+        $stats->getCountsHash()->willReturn(array(
+            'passed'  => 1,
+            'pending' => 0,
+            'skipped' => 0,
+            'failed'  => 0,
+            'broken'  => 0,
+        ));
+        $stats->getTotalSpecs()->willReturn(15);
+        $stats->getIgnoredResourceEvents()->willReturn([ResourceEvent::ignored($resource->getWrappedObject())]);
+        $resource->getSpecClassname()->willReturn('Foo\\Bar\\BazSpec');
+        $resource->getSpecFilename()->willReturn('spec/Foo/Bar/BazSpec');
+
+        $this->afterSuite($event);
+
+        $io->writeln('15 specs (1 ignored)')->shouldHaveBeenCalled();
     }
 }

@@ -411,6 +411,7 @@ class ApplicationContext implements Context
         $string = str_replace("\r", '', $string);
         $string = preg_replace('#(Double\\\\.+?\\\\P)\d+#u', '$1', $string);
         $string = preg_replace('/\(\s+("[^"]*")\s+\)/', '($1)', $string);
+        $string = preg_replace('/at path(.*)/', 'at path', $string);
 
         return $string;
     }
