@@ -32,9 +32,6 @@ class Wrapper
     private ExampleNode $example;
     private AccessInspector $accessInspector;
 
-    /**
-     * @param AccessInspector $accessInspector
-     */
     public function __construct(
         MatcherManager $matchers,
         Presenter $presenter,
@@ -49,10 +46,7 @@ class Wrapper
         $this->accessInspector = $accessInspector;
     }
 
-    /**
-     * @param object $value
-     */
-    public function wrap($value = null): Subject
+    public function wrap(mixed $value = null): Subject
     {
         $wrappedObject = new WrappedObject($value, $this->presenter);
         $caller = $this->createCaller($wrappedObject);

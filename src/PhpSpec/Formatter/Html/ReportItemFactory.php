@@ -27,10 +27,7 @@ class ReportItemFactory
         $this->template = $template;
     }
 
-    /**
-     * @return ReportFailedItem|ReportPassedItem|ReportPendingItem|ReportSkippedItem
-     */
-    public function create(ExampleEvent $event, Presenter $presenter)
+    public function create(ExampleEvent $event, Presenter $presenter): ReportFailedItem|ReportPassedItem|ReportPendingItem|ReportSkippedItem
     {
         switch ($result = $event->getResult()) {
             case ExampleEvent::PASSED:

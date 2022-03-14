@@ -21,10 +21,7 @@ class SpecificationNode implements \Countable
 {
     private string $title;
     private \ReflectionClass $class;
-    /**
-     * @var Resource
-     */
-    private $resource;
+    private Resource $resource;
     private ?Suite $suite = null;
     /**
      * @var ExampleNode[]
@@ -72,21 +69,16 @@ class SpecificationNode implements \Countable
         return $this->examples;
     }
 
-    
     public function setSuite(Suite $suite): void
     {
         $this->suite = $suite;
     }
 
-    /**
-     * @return null|Suite
-     */
     public function getSuite(): ?Suite
     {
         return $this->suite;
     }
 
-    
     public function count(): int
     {
         return \count($this->examples);

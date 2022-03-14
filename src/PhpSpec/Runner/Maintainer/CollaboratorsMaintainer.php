@@ -30,7 +30,6 @@ use ReflectionNamedType;
 
 final class CollaboratorsMaintainer implements Maintainer
 {
-    private static string $docex = '#@param *([^ ]*) *\$([^ ]*)#';
     private Unwrapper $unwrapper;
     private ?Prophet $prophet = null;
 
@@ -132,8 +131,6 @@ final class CollaboratorsMaintainer implements Maintainer
     }
 
     /**
-     * @param string $className
-     *
      * @throws CollaboratorNotFoundException
      */
     private function throwCollaboratorNotFound(\Exception $e, \ReflectionParameter $parameter = null, string $className = null): void

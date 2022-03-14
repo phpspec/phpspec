@@ -103,12 +103,10 @@ class Caller
     }
 
     /**
-     * @return string|Subject
-     *
      * @throws PropertyNotFoundException
      * @throws SubjectException
      */
-    public function get(string $property)
+    public function get(string $property) : mixed
     {
         if ($this->lookingForConstants($property) && $this->constantDefined($property)) {
             return constant($this->wrappedObject->getClassName().'::'.$property);
@@ -215,14 +213,12 @@ class Caller
     }
 
     /**
-     * @return object
-     *
      * @throws MethodNotFoundException
      * @throws MethodNotVisibleException
      * @throws \Exception
      * @throws \ReflectionException
      */
-    private function newInstanceWithArguments(ReflectionClass $reflection)
+    private function newInstanceWithArguments(ReflectionClass $reflection): object
     {
         try {
             return $reflection->newInstanceArgs($this->wrappedObject->getArguments());
@@ -284,12 +280,7 @@ class Caller
         return $this->exceptionFactory->namedConstructorNotFound($className, $method, $arguments);
     }
 
-    /**
-     * @param $method
-     *
-     * @return MethodNotFoundException|MethodNotVisibleException
-     */
-    private function methodNotFound($method, array $arguments = array()): MethodNotFoundException|MethodNotVisibleException
+    private function methodNotFound(string $method, array $arguments = array()): MethodNotFoundException|MethodNotVisibleException
     {
         $className = $this->wrappedObject->getClassName();
 

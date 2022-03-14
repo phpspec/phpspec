@@ -101,13 +101,10 @@ class ConsoleIO implements IO
         $this->hasTempString = true;
     }
 
-    /**
-     * @return ?string
-     */
-    public function cutTemp()
+    public function cutTemp(): ?string
     {
         if (false === $this->hasTempString) {
-            return;
+            return null;
         }
 
         $message = $this->lastMessage;

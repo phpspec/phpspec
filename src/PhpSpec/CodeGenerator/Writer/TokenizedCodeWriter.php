@@ -122,10 +122,7 @@ final class TokenizedCodeWriter implements CodeWriter
         throw new GenerationFailed('Could not locate end of class');
     }
 
-    /**
-     * @param $token
-     */
-    private function isWritePoint($token): bool
+    private function isWritePoint(array|string $token): bool
     {
         return \is_array($token) && ($token[1] === "\n" || $token[0] === T_COMMENT);
     }

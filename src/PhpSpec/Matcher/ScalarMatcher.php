@@ -95,10 +95,7 @@ final class ScalarMatcher implements Matcher
         return 50;
     }
 
-    /**
-     * @return false|string
-     */
-    private function getCheckerName(string $name): bool|string
+    private function getCheckerName(string $name): string|false
     {
         if (0 !== strpos($name, 'be')) {
             return false;

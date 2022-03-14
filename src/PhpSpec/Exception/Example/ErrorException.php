@@ -30,11 +30,6 @@ class ErrorException extends ExampleException
 
     /**
      * Initializes error handler exception.
-     *
-     * @param int $level      error level
-     * @param string $message error message
-     * @param string $file    error file
-     * @param int $line       error line
      */
     public function __construct(int $level, string $message, string $file, int $line)
     {

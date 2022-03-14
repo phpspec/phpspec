@@ -87,9 +87,6 @@ final class TraversableCountMatcher implements Matcher
         return 101;
     }
 
-    /**
-     * @return int self::*
-     */
     private function countDifference(\Traversable $subject, int $expected): int
     {
         $count = 0;

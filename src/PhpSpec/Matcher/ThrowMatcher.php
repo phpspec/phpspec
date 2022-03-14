@@ -58,12 +58,10 @@ final class ThrowMatcher implements Matcher
     }
 
     /**
-     * @param null|object|string $exception
-     *
      * @throws FailureException
      * @throws NotEqualException
      */
-    public function verifyPositive(callable $callable, array $arguments, $exception = null): void
+    public function verifyPositive(callable $callable, array $arguments, \Throwable|string|null $exception = null): void
     {
         $exceptionThrown = null;
 
@@ -134,11 +132,9 @@ final class ThrowMatcher implements Matcher
     }
 
     /**
-     * @param null|object|string $exception
-     *
      * @throws FailureException
      */
-    public function verifyNegative(callable $callable, array $arguments, $exception = null): void
+    public function verifyNegative(callable $callable, array $arguments, \Exception|string|null $exception = null): void
     {
         $exceptionThrown = null;
 
@@ -245,11 +241,9 @@ final class ThrowMatcher implements Matcher
     }
 
     /**
-     * @return null|string|\Throwable
-     *
      * @throws MatcherException
      */
-    private function getException(array $arguments)
+    private function getException(array $arguments) : \Throwable|string|null
     {
         if (0 === \count($arguments)) {
             return null;

@@ -64,13 +64,11 @@ class CallArgumentsPresenter
 
     /**
      * @param MethodProphecy[] $methodProphecies
-     *
-     * @return null|MethodProphecy
      */
     private function findFirstUnexpectedArgumentsCallProphecy(
         array $methodProphecies,
         UnexpectedCallException $exception
-    ): ?MethodProphecy{
+    ): ?MethodProphecy {
         $objectProphecy = $exception->getObjectProphecy();
 
         foreach ($methodProphecies as $methodProphecy) {

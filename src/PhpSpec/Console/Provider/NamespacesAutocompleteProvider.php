@@ -36,8 +36,6 @@ final class NamespacesAutocompleteProvider
 
     /**
      * Get namespaces from paths.
-     *
-     * @return array of namespases
      */
     public function getNamespaces(): array
     {

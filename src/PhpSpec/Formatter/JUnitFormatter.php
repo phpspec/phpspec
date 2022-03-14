@@ -27,17 +27,11 @@ use PhpSpec\Event\SpecificationEvent;
  */
 final class JUnitFormatter extends BasicFormatter
 {
-    /** @var array */
-    protected $testCaseNodes = array();
+    protected array $testCaseNodes = array();
+    protected array $testSuiteNodes = array();
+    protected array $exampleStatusCounts = array();
 
-    /** @var array */
-    protected $testSuiteNodes = array();
-
-    /** @var array */
-    protected $exampleStatusCounts = array();
-
-    /** @var array */
-    protected $jUnitStatuses = array(
+    protected array $jUnitStatuses = array(
         ExampleEvent::PASSED  => 'passed',
         ExampleEvent::PENDING => 'pending',
         ExampleEvent::SKIPPED => 'skipped',
@@ -45,8 +39,7 @@ final class JUnitFormatter extends BasicFormatter
         ExampleEvent::BROKEN  => 'broken',
     );
 
-    /** @var array */
-    protected $resultTags = array(
+    protected array $resultTags = array(
         ExampleEvent::FAILED  => 'failure',
         ExampleEvent::BROKEN  => 'error',
         ExampleEvent::SKIPPED => 'skipped',

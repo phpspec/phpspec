@@ -216,12 +216,7 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
         return $resources;
     }
 
-    /**
-     * @param $path
-     *
-     * @return null|string
-     */
-    private function findSpecClassname($path): ?string
+    private function findSpecClassname(string $path): ?string
     {
         // Find namespace and class name
         $namespace = '';

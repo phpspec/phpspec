@@ -30,7 +30,7 @@ final class InMemoryTypeHintIndex implements TypeHintIndex
     }
 
     
-    private function store(string $class, string $method, string $argument, $typehint): void
+    private function store(string $class, string $method, string $argument, \Exception|string $typehint): void
     {
         $class = strtolower($class);
         $method = strtolower($method);
@@ -46,10 +46,7 @@ final class InMemoryTypeHintIndex implements TypeHintIndex
         $this->typehints[$class][$method][$argument] = $typehint;
     }
 
-    /**
-     * @return ?string
-     */
-    public function lookup(string $class, string $method, string $argument)
+    public function lookup(string $class, string $method, string $argument): ?string
     {
         $class = strtolower($class);
         $method = strtolower($method);

@@ -20,10 +20,7 @@ class MethodFailureException extends NotEqualException
 
     private string $method;
 
-    /**
-     * @param string $method
-     */
-    public function __construct(string $message, $expected, $actual, $subject, $method)
+    public function __construct(string $message, $expected, $actual, $subject, string $method)
     {
         parent::__construct($message, $expected, $actual);
 

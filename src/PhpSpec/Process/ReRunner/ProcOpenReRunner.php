@@ -20,9 +20,6 @@ final class ProcOpenReRunner extends PhpExecutableReRunner
 {
     private ?ExecutionContext $executionContext = null;
 
-    /**
-     * @return static
-     */
     public static function withExecutionContext(PhpExecutableFinder $phpExecutableFinder, ExecutionContext $executionContext): static
     {
         $reRunner = new static($phpExecutableFinder);

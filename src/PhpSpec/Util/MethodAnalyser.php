@@ -17,7 +17,7 @@ use PhpSpec\Loader\StreamWrapper;
 
 class MethodAnalyser
 {
-    
+
     public function methodIsEmpty(string $class, string $method): bool
     {
         return $this->reflectionMethodIsEmpty(new \ReflectionMethod($class, $method));
@@ -73,7 +73,7 @@ class MethodAnalyser
     }
 
     /**
-     * @param  \ReflectionClass[] $traits
+     * @param \ReflectionClass[] $traits
      */
     private function getDeclaringTrait(array $traits, string $file, int $start, int $end): ?\ReflectionClass
     {

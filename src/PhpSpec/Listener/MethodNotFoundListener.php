@@ -104,7 +104,7 @@ final class MethodNotFoundListener implements EventSubscriberInterface
         }
     }
 
-    private function checkIfMethodNameAllowed($methodName): void
+    private function checkIfMethodNameAllowed(string $methodName): void
     {
         if (!$this->nameChecker->isNameValid($methodName)) {
             $this->wrongMethodNames[] = $methodName;

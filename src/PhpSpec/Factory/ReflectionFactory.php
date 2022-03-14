@@ -19,10 +19,7 @@ namespace PhpSpec\Factory;
  */
 class ReflectionFactory
 {
-    /**
-     * @param $class
-     */
-    public function create($class): \ReflectionClass
+    public function create(object $class): \ReflectionClass
     {
         return new \ReflectionClass($class);
     }

@@ -50,20 +50,9 @@ final class IndexedServiceContainer implements ServiceContainer
 
     /**
      * Sets a object to be used as a service
-     *
-     * @param object $service
-     *
-     * @throws \InvalidArgumentException if service is not an object
      */
-    public function set(string $id, $service, array $tags = []): void
+    public function set(string $id, object $service, array $tags = []): void
     {
-        if (!\is_object($service)) {
-            throw new InvalidArgumentException(sprintf(
-                'Service should be an object, but %s given.',
-                \gettype($service)
-            ));
-        }
-
         $this->services[$id] = $service;
         unset($this->definitions[$id]);
 

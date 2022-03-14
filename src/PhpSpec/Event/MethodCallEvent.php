@@ -34,11 +34,7 @@ class MethodCallEvent extends BaseEvent implements PhpSpecEvent
     
     private $returnValue;
 
-    /**
-     * @param string      $method
-     * @param array       $arguments
-     */
-    public function __construct(ExampleNode $example, $subject, $method, $arguments, $returnValue = null)
+    public function __construct(ExampleNode $example, $subject, string $method, array $arguments, $returnValue = null)
     {
         $this->example = $example;
         $this->subject = $subject;

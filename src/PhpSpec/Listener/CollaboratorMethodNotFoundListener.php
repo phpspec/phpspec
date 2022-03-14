@@ -98,10 +98,10 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
     }
 
     
-    private function getDoubledInterface($class)
+    private function getDoubledInterface($class): string|false
     {
         if (class_parents($class) !== array(\stdClass::class=>\stdClass::class)) {
-            return;
+            return false;
         }
 
         $interfaces = array_filter(class_implements($class),
@@ -111,7 +111,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         );
 
         if (\count($interfaces) !== 1) {
-            return;
+            return false;
         }
 
         return current($interfaces);
@@ -162,16 +162,15 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         return array();
     }
 
-    /**
-     * @return MethodNotFoundException|void
-     */
-    private function getMethodNotFoundException(ExampleEvent $event)
+    private function getMethodNotFoundException(ExampleEvent $event) : ?MethodNotFoundException
     {
         if ($this->io->isCodeGenerationEnabled()
             && ($exception = $event->getException())
             && $exception instanceof MethodNotFoundException) {
             return $exception;
         }
+
+        return null;
     }
 
     private function checkIfMethodNameAllowed($methodName): void

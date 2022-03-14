@@ -31,9 +31,6 @@ class SpecificationRunner
         $this->exampleRunner = $exampleRunner;
     }
 
-    /**
-     * @return int
-     */
     public function run(SpecificationNode $specification): int
     {
         $startTime = microtime(true);

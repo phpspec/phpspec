@@ -68,17 +68,13 @@ abstract class ObjectBehavior implements
     ObjectWrapper,
     Specification
 {
-    /**
-     * @var Subject
-     */
-    protected $object;
+    protected ?Subject $object;
 
     /**
      * Override this method to provide your own inline matchers
      *
      * @link http://phpspec.net/cookbook/matchers.html Matchers cookbook
      *
-     * @return array a list of inline matchers
      */
     public function getMatchers(): array
     {
@@ -97,10 +93,8 @@ abstract class ObjectBehavior implements
 
     /**
      * Gets the unwrapped proxied object from PhpSpec subject
-     *
-     * @return object
      */
-    public function getWrappedObject()
+    public function getWrappedObject(): mixed
     {
         return $this->object->getWrappedObject();
     }

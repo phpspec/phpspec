@@ -63,9 +63,6 @@ final class IterablesMatcher
         return \is_array($variable) || $variable instanceof \Traversable;
     }
 
-    /**
-     * @param array|\Traversable $iterable
-     */
     private function createIteratorFromIterable(iterable $iterable): \Iterator
     {
         if (\is_array($iterable)) {

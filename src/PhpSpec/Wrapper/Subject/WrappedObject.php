@@ -72,10 +72,7 @@ class WrappedObject
         $this->beAnInstanceOf($this->classname, $args);
     }
 
-    /**
-     * @param null|callable|string $factoryMethod
-     */
-    public function beConstructedThrough($factoryMethod, array $arguments = array()): void
+    public function beConstructedThrough(null|callable|string $factoryMethod, array $arguments = array()): void
     {
         if (\is_string($factoryMethod) &&
             false === strpos($factoryMethod, '::') &&
@@ -110,9 +107,6 @@ class WrappedObject
         $this->isInstantiated = $instantiated;
     }
 
-    /**
-     * @return null|string
-     */
     public function getClassName(): ?string
     {
         return $this->classname;

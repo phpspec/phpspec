@@ -33,11 +33,9 @@ abstract class DuringCall
     }
 
     /**
-     * @param null|WrappedObject $wrappedObject
-     *
      * @return $this
      */
-    public function match(string $alias, $subject, array $arguments = array(), $wrappedObject = null): static
+    public function match(string $alias, $subject, array $arguments = array(), WrappedObject $wrappedObject = null): static
     {
         $this->subject = $subject;
         $this->arguments = $arguments;

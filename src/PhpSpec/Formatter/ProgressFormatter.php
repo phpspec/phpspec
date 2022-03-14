@@ -83,10 +83,6 @@ final class ProgressFormatter extends ConsoleFormatter
         $io->writeln();
     }
 
-    /**
-     * @param $total
-     * @param $counts
-     */
     private function getPercentages(int $total, array $counts): array
     {
         return array_map(
