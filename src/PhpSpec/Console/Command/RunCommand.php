@@ -42,7 +42,7 @@ final class RunCommand extends Command
         return $application;
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('run')

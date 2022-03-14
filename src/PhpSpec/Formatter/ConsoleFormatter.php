@@ -26,22 +26,15 @@ use PhpSpec\Message\CurrentExampleTracker;
 
 abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
 {
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
+    private ConsoleIO $io;
 
-    
     public function __construct(Presenter $presenter, ConsoleIO $io, StatisticsCollector $stats)
     {
         parent::__construct($presenter, $io, $stats);
         $this->io = $io;
     }
 
-    /**
-     * @return ConsoleIO
-     */
-    protected function getIO(): IO
+    protected function getIO(): ConsoleIO
     {
         return $this->io;
     }

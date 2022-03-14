@@ -18,10 +18,7 @@ namespace PhpSpec\Exception\Example;
  */
 class ErrorException extends ExampleException
 {
-    /**
-     * @var array
-     */
-    private $levels = array(
+    private array $levels = array(
         E_WARNING           => 'warning',
         E_NOTICE            => 'notice',
         E_USER_ERROR        => 'error',
@@ -33,11 +30,6 @@ class ErrorException extends ExampleException
 
     /**
      * Initializes error handler exception.
-     *
-     * @param int $level      error level
-     * @param string $message error message
-     * @param string $file    error file
-     * @param int $line       error line
      */
     public function __construct(int $level, string $message, string $file, int $line)
     {

@@ -15,9 +15,7 @@ namespace PhpSpec\Formatter\Presenter\Differ;
 
 interface DifferEngine
 {
-    
     public function supports($expected, $actual): bool;
 
-    
     public function compare($expected, $actual): string;
 }

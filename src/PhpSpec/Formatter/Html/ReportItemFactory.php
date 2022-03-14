@@ -19,10 +19,7 @@ use PhpSpec\Formatter\Template as TemplateInterface;
 
 class ReportItemFactory
 {
-    /**
-     * @var TemplateInterface
-     */
-    private $template;
+    private TemplateInterface $template;
 
     
     public function __construct(TemplateInterface $template)
@@ -30,10 +27,7 @@ class ReportItemFactory
         $this->template = $template;
     }
 
-    /**
-     * @return ReportFailedItem|ReportPassedItem|ReportPendingItem|ReportSkippedItem
-     */
-    public function create(ExampleEvent $event, Presenter $presenter)
+    public function create(ExampleEvent $event, Presenter $presenter): ReportFailedItem|ReportPassedItem|ReportPendingItem|ReportSkippedItem
     {
         switch ($result = $event->getResult()) {
             case ExampleEvent::PASSED:

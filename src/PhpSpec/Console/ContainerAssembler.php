@@ -13,6 +13,76 @@
 
 namespace PhpSpec\Console;
 
+use PhpSpec\Console\Command\RunCommand;
+use PhpSpec\Console\Command\DescribeCommand;
+use PhpSpec\Listener\StatisticsCollector;
+use PhpSpec\Listener\ClassNotFoundListener;
+use PhpSpec\Listener\CollaboratorNotFoundListener;
+use PhpSpec\Listener\CollaboratorMethodNotFoundListener;
+use PhpSpec\Listener\NamedConstructorNotFoundListener;
+use PhpSpec\Listener\MethodNotFoundListener;
+use PhpSpec\Listener\StopOnFailureListener;
+use PhpSpec\Listener\RerunListener;
+use PhpSpec\Listener\MethodReturnedNullListener;
+use PhpSpec\Listener\BootstrapListener;
+use PhpSpec\Listener\CurrentExampleListener;
+use PhpSpec\CodeGenerator\GeneratorManager;
+use PhpSpec\CodeGenerator\Generator\SpecificationGenerator;
+use PhpSpec\CodeGenerator\Generator\ValidateClassNameSpecificationGenerator;
+use PhpSpec\CodeGenerator\Generator\NewFileNotifyingGenerator;
+use PhpSpec\CodeGenerator\Generator\ClassGenerator;
+use PhpSpec\CodeGenerator\Generator\InterfaceGenerator;
+use PhpSpec\CodeGenerator\Writer\TokenizedCodeWriter;
+use PhpSpec\CodeGenerator\Generator\MethodGenerator;
+use PhpSpec\CodeGenerator\Generator\MethodSignatureGenerator;
+use PhpSpec\CodeGenerator\Generator\ReturnConstantGenerator;
+use PhpSpec\CodeGenerator\Generator\NamedConstructorGenerator;
+use PhpSpec\CodeGenerator\Generator\OneTimeGenerator;
+use PhpSpec\CodeGenerator\Generator\ConfirmingGenerator;
+use PhpSpec\CodeGenerator\Generator\PrivateConstructorGenerator;
+use PhpSpec\CodeGenerator\TemplateRenderer;
+use PhpSpec\Locator\PrioritizedResourceManager;
+use PhpSpec\Locator\PSR0\PSR0Locator;
+use PhpSpec\Loader\ResourceLoader;
+use PhpSpec\Loader\Transformer\TypeHintRewriter;
+use PhpSpec\Loader\Transformer\InMemoryTypeHintIndex;
+use PhpSpec\Runner\SuiteRunner;
+use PhpSpec\Runner\SpecificationRunner;
+use PhpSpec\Runner\ExampleRunner;
+use PhpSpec\Runner\Maintainer\ErrorMaintainer;
+use PhpSpec\Runner\Maintainer\CollaboratorsMaintainer;
+use PhpSpec\Runner\Maintainer\LetAndLetgoMaintainer;
+use PhpSpec\Runner\Maintainer\MatchersMaintainer;
+use PhpSpec\Runner\Maintainer\SubjectMaintainer;
+use PhpSpec\Wrapper\Unwrapper;
+use PhpSpec\Matcher\IdentityMatcher;
+use PhpSpec\Matcher\ComparisonMatcher;
+use PhpSpec\Matcher\ThrowMatcher;
+use PhpSpec\Matcher\TriggerMatcher;
+use PhpSpec\Matcher\TypeMatcher;
+use PhpSpec\Matcher\ObjectStateMatcher;
+use PhpSpec\Matcher\ScalarMatcher;
+use PhpSpec\Matcher\ArrayCountMatcher;
+use PhpSpec\Matcher\ArrayKeyMatcher;
+use PhpSpec\Matcher\ArrayKeyValueMatcher;
+use PhpSpec\Matcher\ArrayContainMatcher;
+use PhpSpec\Matcher\StringStartMatcher;
+use PhpSpec\Matcher\StringEndMatcher;
+use PhpSpec\Matcher\StringRegexMatcher;
+use PhpSpec\Matcher\StringContainMatcher;
+use PhpSpec\Matcher\TraversableCountMatcher;
+use PhpSpec\Matcher\TraversableKeyMatcher;
+use PhpSpec\Matcher\TraversableKeyValueMatcher;
+use PhpSpec\Matcher\TraversableContainMatcher;
+use PhpSpec\Matcher\IterateAsMatcher;
+use PhpSpec\Matcher\IterateLikeMatcher;
+use PhpSpec\Matcher\StartIteratingAsMatcher;
+use PhpSpec\Matcher\ApproximatelyMatcher;
+use PhpSpec\Process\ReRunner\OptionalReRunner;
+use PhpSpec\Process\ReRunner\CompositeReRunner;
+use PhpSpec\Process\ReRunner\PcntlReRunner;
+use PhpSpec\Process\ReRunner\ProcOpenReRunner;
+use PhpSpec\Process\ReRunner\WindowsPassthruReRunner;
 use PhpSpec\CodeAnalysis\MagicAwareAccessInspector;
 use PhpSpec\CodeAnalysis\StaticRejectingNamespaceResolver;
 use PhpSpec\CodeAnalysis\TokenizedNamespaceResolver;
@@ -129,11 +199,11 @@ final class ContainerAssembler
     private function setupCommands(IndexedServiceContainer $container): void
     {
         $container->define('console.commands.run', function () {
-            return new Command\RunCommand();
+            return new RunCommand();
         }, ['console.commands']);
 
         $container->define('console.commands.describe', function () {
-            return new Command\DescribeCommand();
+            return new DescribeCommand();
         }, ['console.commands']);
     }
 
@@ -160,24 +230,24 @@ final class ContainerAssembler
         });
 
         $container->define('event_dispatcher.listeners.stats', function () {
-            return new Listener\StatisticsCollector();
+            return new StatisticsCollector();
         }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.class_not_found', function (IndexedServiceContainer $c) {
-            return new Listener\ClassNotFoundListener(
+            return new ClassNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator')
             );
         }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.collaborator_not_found', function (IndexedServiceContainer $c) {
-            return new Listener\CollaboratorNotFoundListener(
+            return new CollaboratorNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator')
             );
         }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.collaborator_method_not_found', function (IndexedServiceContainer $c) {
-            return new Listener\CollaboratorMethodNotFoundListener(
+            return new CollaboratorMethodNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator'),
@@ -185,14 +255,14 @@ final class ContainerAssembler
             );
         }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.named_constructor_not_found', function (IndexedServiceContainer $c) {
-            return new Listener\NamedConstructorNotFoundListener(
+            return new NamedConstructorNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator')
             );
         }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.method_not_found', function (IndexedServiceContainer $c) {
-            return new Listener\MethodNotFoundListener(
+            return new MethodNotFoundListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator'),
@@ -200,12 +270,12 @@ final class ContainerAssembler
             );
         }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.stop_on_failure', function (IndexedServiceContainer $c) {
-            return new Listener\StopOnFailureListener(
+            return new StopOnFailureListener(
                 $c->get('console.io')
             );
         }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.rerun', function (IndexedServiceContainer $c) {
-            return new Listener\RerunListener(
+            return new RerunListener(
                 $c->get('process.rerunner'),
                 $c->get('process.prerequisites')
             );
@@ -216,7 +286,7 @@ final class ContainerAssembler
             );
         });
         $container->define('event_dispatcher.listeners.method_returned_null', function (IndexedServiceContainer $c) {
-            return new Listener\MethodReturnedNullListener(
+            return new MethodReturnedNullListener(
                 $c->get('console.io'),
                 $c->get('locator.resource_manager'),
                 $c->get('code_generator'),
@@ -233,12 +303,12 @@ final class ContainerAssembler
             return new ClassNameChecker();
         });
         $container->define('event_dispatcher.listeners.bootstrap', function (IndexedServiceContainer $c) {
-            return new Listener\BootstrapListener(
+            return new BootstrapListener(
                 $c->get('console.io')
             );
         }, ['event_dispatcher.listeners']);
         $container->define('event_dispatcher.listeners.current_example_listener', function (IndexedServiceContainer $c) {
-            return new Listener\CurrentExampleListener(
+            return new CurrentExampleListener(
                 $c->get('current_example')
             );
         }, ['event_dispatcher.listeners']);
@@ -248,7 +318,7 @@ final class ContainerAssembler
     private function setupGenerators(IndexedServiceContainer $container): void
     {
         $container->define('code_generator', function (IndexedServiceContainer $c) {
-            $generator = new CodeGenerator\GeneratorManager();
+            $generator = new GeneratorManager();
 
             array_map(
                 array($generator, 'registerGenerator'),
@@ -260,58 +330,58 @@ final class ContainerAssembler
 
         $container->define('code_generator.generators.specification', function (IndexedServiceContainer $c) {
             $io = $c->get('console.io');
-            $specificationGenerator = new CodeGenerator\Generator\SpecificationGenerator(
+            $specificationGenerator = new SpecificationGenerator(
                 $io,
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem'),
                 $c->get('process.executioncontext')
             );
 
-            $classNameCheckGenerator = new CodeGenerator\Generator\ValidateClassNameSpecificationGenerator(
+            $classNameCheckGenerator = new ValidateClassNameSpecificationGenerator(
                 $c->get('util.class_name_checker'),
                 $io,
                 $specificationGenerator
             );
 
-            return new CodeGenerator\Generator\NewFileNotifyingGenerator(
+            return new NewFileNotifyingGenerator(
                 $classNameCheckGenerator,
                 $c->get('event_dispatcher'),
                 $c->get('util.filesystem')
             );
         }, ['code_generator.generators']);
         $container->define('code_generator.generators.class', function (IndexedServiceContainer $c) {
-            $classGenerator = new CodeGenerator\Generator\ClassGenerator(
+            $classGenerator = new ClassGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem'),
                 $c->get('process.executioncontext')
             );
 
-            return new CodeGenerator\Generator\NewFileNotifyingGenerator(
+            return new NewFileNotifyingGenerator(
                 $classGenerator,
                 $c->get('event_dispatcher'),
                 $c->get('util.filesystem')
             );
         }, ['code_generator.generators']);
         $container->define('code_generator.generators.interface', function (IndexedServiceContainer $c) {
-            $interfaceGenerator = new CodeGenerator\Generator\InterfaceGenerator(
+            $interfaceGenerator = new InterfaceGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem'),
                 $c->get('process.executioncontext')
             );
 
-            return new CodeGenerator\Generator\NewFileNotifyingGenerator(
+            return new NewFileNotifyingGenerator(
                 $interfaceGenerator,
                 $c->get('event_dispatcher'),
                 $c->get('util.filesystem')
             );
         }, ['code_generator.generators']);
         $container->define('code_generator.writers.tokenized', function () {
-            return new CodeGenerator\Writer\TokenizedCodeWriter(new ClassFileAnalyser());
+            return new TokenizedCodeWriter(new ClassFileAnalyser());
         });
         $container->define('code_generator.generators.method', function (IndexedServiceContainer $c) {
-            return new CodeGenerator\Generator\MethodGenerator(
+            return new MethodGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem'),
@@ -319,14 +389,14 @@ final class ContainerAssembler
             );
         }, ['code_generator.generators']);
         $container->define('code_generator.generators.methodSignature', function (IndexedServiceContainer $c) {
-            return new CodeGenerator\Generator\MethodSignatureGenerator(
+            return new MethodSignatureGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem')
             );
         }, ['code_generator.generators']);
         $container->define('code_generator.generators.returnConstant', function (IndexedServiceContainer $c) {
-            return new CodeGenerator\Generator\ReturnConstantGenerator(
+            return new ReturnConstantGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem')
@@ -334,7 +404,7 @@ final class ContainerAssembler
         }, ['code_generator.generators']);
 
         $container->define('code_generator.generators.named_constructor', function (IndexedServiceContainer $c) {
-            return new CodeGenerator\Generator\NamedConstructorGenerator(
+            return new NamedConstructorGenerator(
                 $c->get('console.io'),
                 $c->get('code_generator.templates'),
                 $c->get('util.filesystem'),
@@ -343,11 +413,11 @@ final class ContainerAssembler
         }, ['code_generator.generators']);
 
         $container->define('code_generator.generators.private_constructor', function (IndexedServiceContainer $c) {
-            return new CodeGenerator\Generator\OneTimeGenerator(
-                new CodeGenerator\Generator\ConfirmingGenerator(
+            return new OneTimeGenerator(
+                new ConfirmingGenerator(
                     $c->get('console.io'),
                     $c->getParam('generator.private-constructor.message'),
-                    new CodeGenerator\Generator\PrivateConstructorGenerator(
+                    new PrivateConstructorGenerator(
                         $c->get('console.io'),
                         $c->get('code_generator.templates'),
                         $c->get('util.filesystem'),
@@ -358,7 +428,7 @@ final class ContainerAssembler
         }, ['code_generator.generators']);
 
         $container->define('code_generator.templates', function (IndexedServiceContainer $c) {
-            $renderer = new CodeGenerator\TemplateRenderer(
+            $renderer = new TemplateRenderer(
                 $c->get('util.filesystem')
             );
             $renderer->setLocations($c->getParam('code_generator.templates.paths', array()));
@@ -389,7 +459,7 @@ final class ContainerAssembler
     private function setupLocator(IndexedServiceContainer $container): void
     {
         $container->define('locator.resource_manager', function (IndexedServiceContainer $c) {
-            $manager = new Locator\PrioritizedResourceManager();
+            $manager = new PrioritizedResourceManager();
 
             array_map(
                 array($manager, 'registerLocator'),
@@ -460,7 +530,7 @@ final class ContainerAssembler
                 $c->define(
                     sprintf('locator.locators.%s_suite', $name),
                     function (IndexedServiceContainer $c) use ($config) {
-                        return new Locator\PSR0\PSR0Locator(
+                        return new PSR0Locator(
                             $c->get('util.filesystem'),
                             $config['namespace'],
                             $config['spec_prefix'],
@@ -479,7 +549,7 @@ final class ContainerAssembler
     private function setupLoader(IndexedServiceContainer $container): void
     {
         $container->define('loader.resource_loader', function (IndexedServiceContainer $c) {
-            return new Loader\ResourceLoader(
+            return new ResourceLoader(
                 $c->get('locator.resource_manager'),
                 $c->get('util.method_analyser'),
                 $c->get('event_dispatcher')
@@ -487,7 +557,7 @@ final class ContainerAssembler
         });
 
         $container->define('loader.resource_loader.spec_transformer.typehint_rewriter', function (IndexedServiceContainer $c) {
-            return new Loader\Transformer\TypeHintRewriter($c->get('analysis.typehintrewriter'));
+            return new TypeHintRewriter($c->get('analysis.typehintrewriter'));
         }, ['loader.resource_loader.spec_transformer']);
 
         $container->define('analysis.typehintrewriter', function ($c) {
@@ -497,7 +567,7 @@ final class ContainerAssembler
             );
         });
         $container->define('loader.transformer.typehintindex', function () {
-            return new Loader\Transformer\InMemoryTypeHintIndex();
+            return new InMemoryTypeHintIndex();
         });
         $container->define('analysis.namespaceresolver.tokenized', function () {
             return new TokenizedNamespaceResolver();
@@ -615,21 +685,21 @@ final class ContainerAssembler
     private function setupRunner(IndexedServiceContainer $container): void
     {
         $container->define('runner.suite', function (IndexedServiceContainer $c) {
-            return new Runner\SuiteRunner(
+            return new SuiteRunner(
                 $c->get('event_dispatcher'),
                 $c->get('runner.specification')
             );
         });
 
         $container->define('runner.specification', function (IndexedServiceContainer $c) {
-            return new Runner\SpecificationRunner(
+            return new SpecificationRunner(
                 $c->get('event_dispatcher'),
                 $c->get('runner.example')
             );
         });
 
         $container->define('runner.example', function (IndexedServiceContainer $c) {
-            $runner = new Runner\ExampleRunner(
+            $runner = new ExampleRunner(
                 $c->get('event_dispatcher'),
                 $c->get('formatter.presenter')
             );
@@ -643,30 +713,30 @@ final class ContainerAssembler
         });
 
         $container->define('runner.maintainers.errors', function (IndexedServiceContainer $c) {
-            return new Runner\Maintainer\ErrorMaintainer(
+            return new ErrorMaintainer(
                 $c->getParam('runner.maintainers.errors.level', E_ALL ^ E_STRICT)
             );
         }, ['runner.maintainers']);
         $container->define('runner.maintainers.collaborators', function (IndexedServiceContainer $c) {
-            return new Runner\Maintainer\CollaboratorsMaintainer(
+            return new CollaboratorsMaintainer(
                 $c->get('unwrapper'),
                 $c->get('loader.transformer.typehintindex')
             );
         }, ['runner.maintainers']);
         $container->define('runner.maintainers.let_letgo', function () {
-            return new Runner\Maintainer\LetAndLetgoMaintainer();
+            return new LetAndLetgoMaintainer();
         }, ['runner.maintainers']);
 
         $container->define('runner.maintainers.matchers', function (IndexedServiceContainer $c) {
             $matchers = $c->getByTag('matchers');
-            return new Runner\Maintainer\MatchersMaintainer(
+            return new MatchersMaintainer(
                 $c->get('formatter.presenter'),
                 $matchers
             );
         }, ['runner.maintainers']);
 
         $container->define('runner.maintainers.subject', function (IndexedServiceContainer $c) {
-            return new Runner\Maintainer\SubjectMaintainer(
+            return new SubjectMaintainer(
                 $c->get('formatter.presenter'),
                 $c->get('unwrapper'),
                 $c->get('event_dispatcher'),
@@ -675,7 +745,7 @@ final class ContainerAssembler
         }, ['runner.maintainers']);
 
         $container->define('unwrapper', function () {
-            return new Wrapper\Unwrapper();
+            return new Unwrapper();
         });
 
         $container->define('access_inspector', function ($c) {
@@ -695,73 +765,73 @@ final class ContainerAssembler
     private function setupMatchers(IndexedServiceContainer $container): void
     {
         $container->define('matchers.identity', function (IndexedServiceContainer $c) {
-            return new Matcher\IdentityMatcher($c->get('formatter.presenter'));
+            return new IdentityMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.comparison', function (IndexedServiceContainer $c) {
-            return new Matcher\ComparisonMatcher($c->get('formatter.presenter'));
+            return new ComparisonMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.throwm', function (IndexedServiceContainer $c) {
-            return new Matcher\ThrowMatcher($c->get('unwrapper'), $c->get('formatter.presenter'), new ReflectionFactory());
+            return new ThrowMatcher($c->get('unwrapper'), $c->get('formatter.presenter'), new ReflectionFactory());
         }, ['matchers']);
         $container->define('matchers.trigger', function (IndexedServiceContainer $c) {
-            return new Matcher\TriggerMatcher($c->get('unwrapper'));
+            return new TriggerMatcher($c->get('unwrapper'));
         }, ['matchers']);
         $container->define('matchers.type', function (IndexedServiceContainer $c) {
-            return new Matcher\TypeMatcher($c->get('formatter.presenter'));
+            return new TypeMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.object_state', function (IndexedServiceContainer $c) {
-            return new Matcher\ObjectStateMatcher($c->get('formatter.presenter'));
+            return new ObjectStateMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.scalar', function (IndexedServiceContainer $c) {
-            return new Matcher\ScalarMatcher($c->get('formatter.presenter'));
+            return new ScalarMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.array_count', function (IndexedServiceContainer $c) {
-            return new Matcher\ArrayCountMatcher($c->get('formatter.presenter'));
+            return new ArrayCountMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.array_key', function (IndexedServiceContainer $c) {
-            return new Matcher\ArrayKeyMatcher($c->get('formatter.presenter'));
+            return new ArrayKeyMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.array_key_with_value', function (IndexedServiceContainer $c) {
-            return new Matcher\ArrayKeyValueMatcher($c->get('formatter.presenter'));
+            return new ArrayKeyValueMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.array_contain', function (IndexedServiceContainer $c) {
-            return new Matcher\ArrayContainMatcher($c->get('formatter.presenter'));
+            return new ArrayContainMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.string_start', function (IndexedServiceContainer $c) {
-            return new Matcher\StringStartMatcher($c->get('formatter.presenter'));
+            return new StringStartMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.string_end', function (IndexedServiceContainer $c) {
-            return new Matcher\StringEndMatcher($c->get('formatter.presenter'));
+            return new StringEndMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.string_regex', function (IndexedServiceContainer $c) {
-            return new Matcher\StringRegexMatcher($c->get('formatter.presenter'));
+            return new StringRegexMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.string_contain', function (IndexedServiceContainer $c) {
-            return new Matcher\StringContainMatcher($c->get('formatter.presenter'));
+            return new StringContainMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.traversable_count', function (IndexedServiceContainer $c) {
-            return new Matcher\TraversableCountMatcher($c->get('formatter.presenter'));
+            return new TraversableCountMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.traversable_key', function (IndexedServiceContainer $c) {
-            return new Matcher\TraversableKeyMatcher($c->get('formatter.presenter'));
+            return new TraversableKeyMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.traversable_key_with_value', function (IndexedServiceContainer $c) {
-            return new Matcher\TraversableKeyValueMatcher($c->get('formatter.presenter'));
+            return new TraversableKeyValueMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.traversable_contain', function (IndexedServiceContainer $c) {
-            return new Matcher\TraversableContainMatcher($c->get('formatter.presenter'));
+            return new TraversableContainMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.iterate', function (IndexedServiceContainer $c) {
-            return new Matcher\IterateAsMatcher($c->get('formatter.presenter'));
+            return new IterateAsMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.iterate_like', function (IndexedServiceContainer $c) {
-            return new Matcher\IterateLikeMatcher($c->get('formatter.presenter'));
+            return new IterateLikeMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.start_iterating', function (IndexedServiceContainer $c) {
-            return new Matcher\StartIteratingAsMatcher($c->get('formatter.presenter'));
+            return new StartIteratingAsMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
         $container->define('matchers.approximately', function (IndexedServiceContainer $c) {
-            return new Matcher\ApproximatelyMatcher($c->get('formatter.presenter'));
+            return new ApproximatelyMatcher($c->get('formatter.presenter'));
         }, ['matchers']);
     }
 
@@ -769,7 +839,7 @@ final class ContainerAssembler
     private function setupRerunner(IndexedServiceContainer $container): void
     {
         $container->define('process.rerunner', function (IndexedServiceContainer $c) {
-            return new ReRunner\OptionalReRunner(
+            return new OptionalReRunner(
                 $c->get('process.rerunner.platformspecific'),
                 $c->get('console.io')
             );
@@ -780,24 +850,24 @@ final class ContainerAssembler
         }
 
         $container->define('process.rerunner.platformspecific', function (IndexedServiceContainer $c) {
-            return new ReRunner\CompositeReRunner(
+            return new CompositeReRunner(
                 $c->getByTag('process.rerunner.platformspecific')
             );
         });
         $container->define('process.rerunner.platformspecific.pcntl', function (IndexedServiceContainer $c) {
-            return ReRunner\PcntlReRunner::withExecutionContext(
+            return PcntlReRunner::withExecutionContext(
                 $c->get('process.phpexecutablefinder'),
                 $c->get('process.executioncontext')
             );
         }, ['process.rerunner.platformspecific']);
         $container->define('process.rerunner.platformspecific.passthru', function (IndexedServiceContainer $c) {
-            return ReRunner\ProcOpenReRunner::withExecutionContext(
+            return ProcOpenReRunner::withExecutionContext(
                 $c->get('process.phpexecutablefinder'),
                 $c->get('process.executioncontext')
             );
         }, ['process.rerunner.platformspecific']);
         $container->define('process.rerunner.platformspecific.windowspassthru', function (IndexedServiceContainer $c) {
-            return ReRunner\WindowsPassthruReRunner::withExecutionContext(
+            return WindowsPassthruReRunner::withExecutionContext(
                 $c->get('process.phpexecutablefinder'),
                 $c->get('process.executioncontext')
             );
@@ -810,7 +880,7 @@ final class ContainerAssembler
     
     private function setupSubscribers(IndexedServiceContainer $container): void
     {
-        $container->addConfigurator(function (IndexedServiceContainer $c) {
+        $container->addConfigurator(function (IndexedServiceContainer $c): void {
             array_map(
                 array($c->get('event_dispatcher'), 'addSubscriber'),
                 $c->getByTag('event_dispatcher.listeners')

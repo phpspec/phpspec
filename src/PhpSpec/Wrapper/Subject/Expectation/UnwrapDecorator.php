@@ -17,10 +17,7 @@ use PhpSpec\Wrapper\Unwrapper;
 
 final class UnwrapDecorator extends Decorator implements Expectation
 {
-    /**
-     * @var Unwrapper
-     */
-    private $unwrapper;
+    private Unwrapper $unwrapper;
 
     
     public function __construct(Expectation $expectation, Unwrapper $unwrapper)

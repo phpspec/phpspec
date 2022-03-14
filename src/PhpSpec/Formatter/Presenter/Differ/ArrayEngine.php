@@ -21,7 +21,7 @@ final class ArrayEngine extends StringEngine
 
     private const PAD_STRING = ' ';
 
-    private $exporter;
+    private Exporter $exporter;
 
     public function __construct(Exporter $exporter)
     {

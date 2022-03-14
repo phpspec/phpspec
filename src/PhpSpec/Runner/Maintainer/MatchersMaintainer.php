@@ -24,15 +24,12 @@ use PhpSpec\Formatter\Presenter\Presenter;
 
 final class MatchersMaintainer implements Maintainer
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
     /**
      * @var Matcher[]
      */
-    private $defaultMatchers = array();
+    private array $defaultMatchers = array();
 
     /**
      * @param Matcher[] $matchers

@@ -15,37 +15,24 @@ namespace PhpSpec\CodeAnalysis;
 
 final class MagicAwareAccessInspector implements AccessInspector
 {
-    /**
-     * @var AccessInspector
-     */
-    private $accessInspector;
+    private AccessInspector $accessInspector;
 
-    
     public function __construct(AccessInspector $accessInspector)
     {
         $this->accessInspector = $accessInspector;
     }
 
-    /**
-     * @param object $object
-     */
-    public function isPropertyReadable($object, string $property): bool
+    public function isPropertyReadable(object $object, string $property): bool
     {
         return method_exists($object, '__get') || $this->accessInspector->isPropertyReadable($object, $property);
     }
 
-    /**
-     * @param object $object
-     */
-    public function isPropertyWritable($object, string $property): bool
+    public function isPropertyWritable(object $object, string $property): bool
     {
         return method_exists($object, '__set') || $this->accessInspector->isPropertyWritable($object, $property);
     }
 
-    /**
-     * @param object $object
-     */
-    public function isMethodCallable($object, string $method): bool
+    public function isMethodCallable(object $object, string $method): bool
     {
         return method_exists($object, '__call') || $this->accessInspector->isMethodCallable($object, $method);
     }

@@ -38,53 +38,29 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
      */
     const BROKEN  = 2;
 
-    /**
-     * @var ExampleNode
-     */
-    private $example;
+    private ExampleNode $example;
 
-    /**
-     * @var Matcher
-     */
-    private $matcher;
+    private Matcher $matcher;
 
     
     private $subject;
 
-    /**
-     * @var string
-     */
-    private $method;
+    private string $method;
 
-    /**
-     * @var array
-     */
-    private $arguments;
+    private array $arguments;
 
-    /**
-     * @var int
-     */
-    private $result;
+    private int $result;
 
-    /**
-     * @var \Exception
-     */
-    private $exception;
+    private ?\Exception $exception;
 
-    /**
-     * @param string           $method
-     * @param array            $arguments
-     * @param int          $result
-     * @param \Exception       $exception
-     */
     public function __construct(
         ExampleNode $example,
         Matcher $matcher,
         $subject,
-        $method,
-        $arguments,
-        $result = self::PASSED,
-        $exception = null
+        string $method,
+        array $arguments,
+        int $result = self::PASSED,
+        ?\Exception $exception = null
     ) {
         $this->example = $example;
         $this->matcher = $matcher;
@@ -137,10 +113,8 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
         return $this->arguments;
     }
 
-    /**
-     * @return null|\Exception
-     */
-    public function getException()
+
+    public function getException(): ?\Exception
     {
         return $this->exception;
     }

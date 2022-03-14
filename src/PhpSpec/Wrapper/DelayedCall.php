@@ -20,13 +20,11 @@ class DelayedCall
      */
     private $callable;
 
-    
     public function __construct(callable $callable)
     {
         $this->callable = $callable;
     }
 
-    
     public function __call(string $method, array $arguments)
     {
         return \call_user_func($this->callable, $method, $arguments);

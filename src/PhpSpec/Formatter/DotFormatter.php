@@ -18,19 +18,16 @@ use PhpSpec\Event\ExampleEvent;
 
 final class DotFormatter extends ConsoleFormatter
 {
-    /**
-     * @var int
-     */
-    private $examplesCount = 0;
+    private int $examplesCount = 0;
 
     
-    public function beforeSuite(SuiteEvent $event)
+    public function beforeSuite(SuiteEvent $event): void
     {
         $this->examplesCount = \count($event->getSuite());
     }
 
     
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event): void
     {
         $io = $this->getIO();
 
@@ -78,7 +75,7 @@ final class DotFormatter extends ConsoleFormatter
     }
 
     
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event): void
     {
         $this->getIO()->writeln("\n");
 
@@ -114,7 +111,7 @@ final class DotFormatter extends ConsoleFormatter
         $this->getIO()->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
     }
 
-    private function plural($count)
+    private function plural(int $count): string
     {
         return $count > 1 ? 's' : '';
     }

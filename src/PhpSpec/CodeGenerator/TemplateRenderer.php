@@ -21,15 +21,9 @@ use PhpSpec\Util\Filesystem;
  */
 class TemplateRenderer
 {
-    /**
-     * @var array
-     */
-    private $locations = array();
+    private array $locations = array();
 
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
+    private Filesystem $filesystem;
 
     
     public function __construct(Filesystem $filesystem)

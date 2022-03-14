@@ -15,7 +15,7 @@ namespace PhpSpec\Process\Shutdown;
 
 final class Shutdown
 {
-    protected $actions;
+    protected array $actions;
 
     public function __construct()
     {
@@ -42,7 +42,7 @@ final class Shutdown
         }
     }
 
-    private function getFatalError()
+    private function getFatalError(): ?array
     {
         $error = error_get_last();
 

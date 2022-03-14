@@ -15,10 +15,7 @@ namespace PhpSpec\Loader\Transformer;
 
 final class InMemoryTypeHintIndex implements TypeHintIndex
 {
-    /**
-     * @var array
-     */
-    private $typehints = array();
+    private array $typehints = array();
 
     
     public function add(string $class, string $method, string $argument, string $typehint): void
@@ -33,7 +30,7 @@ final class InMemoryTypeHintIndex implements TypeHintIndex
     }
 
     
-    private function store(string $class, string $method, string $argument, $typehint): void
+    private function store(string $class, string $method, string $argument, \Exception|string $typehint): void
     {
         $class = strtolower($class);
         $method = strtolower($method);
@@ -49,10 +46,7 @@ final class InMemoryTypeHintIndex implements TypeHintIndex
         $this->typehints[$class][$method][$argument] = $typehint;
     }
 
-    /**
-     * @return ?string
-     */
-    public function lookup(string $class, string $method, string $argument)
+    public function lookup(string $class, string $method, string $argument): ?string
     {
         $class = strtolower($class);
         $method = strtolower($method);

@@ -18,10 +18,10 @@ final class ComposedValuePresenter implements ValuePresenter
     /**
      * @var TypePresenter[]
      */
-    private $typePresenters = array();
+    private array $typePresenters = array();
 
     
-    public function addTypePresenter(TypePresenter $typePresenter)
+    public function addTypePresenter(TypePresenter $typePresenter): void
     {
         $this->typePresenters[] = $typePresenter;
 

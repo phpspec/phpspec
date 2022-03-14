@@ -18,15 +18,9 @@ class MethodFailureException extends NotEqualException
     
     private $subject;
 
-    /**
-     * @var string
-     */
-    private $method;
+    private string $method;
 
-    /**
-     * @param string $method
-     */
-    public function __construct(string $message, $expected, $actual, $subject, $method)
+    public function __construct(string $message, $expected, $actual, $subject, string $method)
     {
         parent::__construct($message, $expected, $actual);
 
@@ -40,10 +34,7 @@ class MethodFailureException extends NotEqualException
         return $this->subject;
     }
 
-    /**
-     * @return string
-     */
-    public function getMethod()
+    public function getMethod(): string
     {
         return $this->method;
     }

@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Loader;
 
+use PhpSpec\Loader\Node\SpecificationNode;
+use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Event\ResourceEvent;
 use PhpSpec\Locator\Resource;
 use PhpSpec\Specification\ErrorSpecification;
@@ -24,20 +26,11 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ResourceLoader
 {
-    /**
-     * @var ResourceManager
-     */
-    private $manager;
+    private ResourceManager $manager;
 
-    /**
-     * @var MethodAnalyser
-     */
-    private $methodAnalyser;
+    private MethodAnalyser $methodAnalyser;
 
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $eventDispatcher;
+    private EventDispatcherInterface $eventDispatcher;
 
     public function __construct(
         ResourceManager $manager,
@@ -81,7 +74,7 @@ class ResourceLoader
                 continue;
             }
 
-            $spec = new Node\SpecificationNode($resource->getSrcClassname(), $reflection, $resource);
+            $spec = new SpecificationNode($resource->getSrcClassname(), $reflection, $resource);
             foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
                 if (!preg_match('/^(it|its)[^a-zA-Z]/', $method->getName())) {
                     continue;
@@ -90,7 +83,7 @@ class ResourceLoader
                     continue;
                 }
 
-                $example = new Node\ExampleNode(str_replace('_', ' ', $method->getName()), $method);
+                $example = new ExampleNode(str_replace('_', ' ', $method->getName()), $method);
 
                 if ($this->methodAnalyser->reflectionMethodIsEmpty($method)) {
                     $example->markAsPending();
@@ -113,17 +106,17 @@ class ResourceLoader
         return $line >= $method->getStartLine() && $line <= $method->getEndLine();
     }
 
-    private function addErrorThrowingExampleToSuite(Resource $resource, Suite $suite, \Error $error)
+    private function addErrorThrowingExampleToSuite(Resource $resource, Suite $suite, \Error $error): void
     {
         $reflection = new ReflectionClass(ErrorSpecification::class);
-        $spec = new Node\SpecificationNode($resource->getSrcClassname(), $reflection, $resource);
+        $spec = new SpecificationNode($resource->getSrcClassname(), $reflection, $resource);
 
         $errorFunction = new \ReflectionFunction(
             function () use ($error) {
                 throw $error;
             }
         );
-        $example = new Node\ExampleNode('Loading specification', $errorFunction);
+        $example = new ExampleNode('Loading specification', $errorFunction);
 
         $spec->addExample($example);
         $suite->addSpecification($spec);

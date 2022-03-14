@@ -23,20 +23,11 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 abstract class BasicFormatter implements EventSubscriberInterface
 {
-    /**
-     * @var IO
-     */
-    private $io;
+    private IO $io;
 
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
-    /**
-     * @var StatisticsCollector
-     */
-    private $stats;
+    private StatisticsCollector $stats;
 
     public function __construct(Presenter $presenter, IO $io, StatisticsCollector $stats)
     {
@@ -76,32 +67,32 @@ abstract class BasicFormatter implements EventSubscriberInterface
     }
 
     
-    public function beforeSuite(SuiteEvent $event)
+    public function beforeSuite(SuiteEvent $event): void
     {
     }
 
     
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event): void
     {
     }
 
     
-    public function beforeExample(ExampleEvent $event)
+    public function beforeExample(ExampleEvent $event): void
     {
     }
 
     
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event): void
     {
     }
 
     
-    public function beforeSpecification(SpecificationEvent $event)
+    public function beforeSpecification(SpecificationEvent $event): void
     {
     }
 
     
-    public function afterSpecification(SpecificationEvent $event)
+    public function afterSpecification(SpecificationEvent $event): void
     {
     }
 }

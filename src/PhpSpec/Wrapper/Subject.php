@@ -109,26 +109,11 @@ class Subject implements ArrayAccess, ObjectWrapper
 {
     
     private $subject;
-    /**
-     * @var Subject\WrappedObject
-     */
-    private $wrappedObject;
-    /**
-     * @var Subject\Caller
-     */
-    private $caller;
-    /**
-     * @var Subject\SubjectWithArrayAccess
-     */
-    private $arrayAccess;
-    /**
-     * @var Wrapper
-     */
-    private $wrapper;
-    /**
-     * @var Subject\ExpectationFactory
-     */
-    private $expectationFactory;
+    private WrappedObject $wrappedObject;
+    private Caller $caller;
+    private SubjectWithArrayAccess $arrayAccess;
+    private Wrapper $wrapper;
+    private ExpectationFactory $expectationFactory;
 
     
     public function __construct(
@@ -153,18 +138,12 @@ class Subject implements ArrayAccess, ObjectWrapper
         $this->wrappedObject->beAnInstanceOf($className, $arguments);
     }
 
-    /**
-     * @param mixed ...$arguments
-     */
-    public function beConstructedWith(): void
+    public function beConstructedWith(mixed ...$arguments): void
     {
-        $this->wrappedObject->beConstructedWith(\func_get_args());
+        $this->wrappedObject->beConstructedWith($arguments);
     }
 
-    /**
-     * @param array|string $factoryMethod
-     */
-    public function beConstructedThrough($factoryMethod, array $arguments = array()): void
+    public function beConstructedThrough(array|string $factoryMethod, array $arguments = array()): void
     {
         $this->wrappedObject->beConstructedThrough($factoryMethod, $arguments);
     }
@@ -185,16 +164,13 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $this->caller->call($method, $arguments);
     }
 
-    
-    public function setToWrappedObject(string $property, $value = null)
+
+    public function setToWrappedObject(string $property, $value = null): void
     {
-        return $this->caller->set($property, $value);
+        $this->caller->set($property, $value);
     }
 
-    /**
-     * @return string|Subject
-     */
-    public function getFromWrappedObject(string $property)
+    public function getFromWrappedObject(string $property): self|string
     {
         return $this->caller->get($property);
     }
@@ -231,10 +207,7 @@ class Subject implements ArrayAccess, ObjectWrapper
         $this->arrayAccess->offsetUnset($key);
     }
 
-    /**
-     * @return mixed|Subject
-     */
-    public function __call(string $method, array $arguments = array())
+    public function __call(string $method, array $arguments = array()): mixed
     {
         if (0 === strpos($method, 'should')) {
             return $this->callExpectation($method, $arguments);
@@ -263,10 +236,8 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $this->caller->set($property, $value);
     }
 
-    /**
-     * @return string|Subject
-     */
-    public function __get(string $property)
+
+    public function __get(string $property) : mixed
     {
         return $this->caller->get($property);
     }
@@ -291,10 +262,7 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $expectation->match(lcfirst(substr($method, 6)), $this, $arguments, $this->wrappedObject);
     }
 
-    /**
-     * @return object
-     */
-    private function makeSureWeHaveASubject()
+    private function makeSureWeHaveASubject(): mixed
     {
         if (null === $this->subject && $this->wrappedObject->getClassName()) {
             $instantiator = new Instantiator();

@@ -11,15 +11,9 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 class FilesystemContext implements Context
 {
-    /**
-     * @var string
-     */
-    private $workingDirectory;
+    private ?string $workingDirectory = null;
 
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
+    private Filesystem $filesystem;
 
     public function __construct()
     {

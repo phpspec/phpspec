@@ -19,12 +19,9 @@ use Symfony\Component\Finder\Finder;
 
 final class NamespacesAutocompleteProvider
 {
-    /**
-     * @var Finder
-     */
-    private $finder;
+    private Finder $finder;
 
-    private $paths = [];
+    private array $paths = [];
 
     public function __construct(Finder $finder, array $locators)
     {
@@ -39,10 +36,8 @@ final class NamespacesAutocompleteProvider
 
     /**
      * Get namespaces from paths.
-     *
-     * @return array of namespases
      */
-    public function getNamespaces()
+    public function getNamespaces(): array
     {
         $namespaces = [];
         foreach ($this->finder->files()->name('*.php')->in($this->paths) as $phpFile) {

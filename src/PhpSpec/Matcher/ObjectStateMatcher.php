@@ -20,14 +20,8 @@ use PhpSpec\Wrapper\DelayedCall;
 
 final class ObjectStateMatcher implements Matcher
 {
-    /**
-     * @var string
-     */
-    private static $regex = '/(be|have)(.+)/';
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private static string $regex = '/(be|have)(.+)/';
+    private Presenter $presenter;
 
     
     public function __construct(Presenter $presenter)
@@ -44,8 +38,8 @@ final class ObjectStateMatcher implements Matcher
     }
 
     /**
-     * @throws \PhpSpec\Exception\Example\MethodFailureException
-     * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
+     * @throws MethodFailureException
+     * @throws MethodNotFoundException
      */
     public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
@@ -68,8 +62,8 @@ final class ObjectStateMatcher implements Matcher
     }
 
     /**
-     * @throws \PhpSpec\Exception\Example\MethodFailureException
-     * @throws \PhpSpec\Exception\Fracture\MethodNotFoundException
+     * @throws MethodFailureException
+     * @throws MethodNotFoundException
      */
     public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
@@ -97,6 +91,9 @@ final class ObjectStateMatcher implements Matcher
         return 50;
     }
 
+    /**
+     * @param array{0: object, 1: string} callable
+     */
     private function getMethodFailureExceptionFor(array $callable, bool $expectedBool, $result): MethodFailureException
     {
         return new MethodFailureException(sprintf(

@@ -47,28 +47,17 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
      */
     const BROKEN  = 4;
 
-    /**
-     * @var ExampleNode
-     */
-    private $example;
+    private ExampleNode $example;
 
-    /**
-     * @var float
-     */
-    private $time;
+    private float $time;
 
-    /**
-     * @var int
-     */
-    private $result;
+    private int $result;
 
-    /**
-     * @var \Exception
-     */
-    private $exception;
+    private ?\Exception $exception;
 
     public function __construct(
         ExampleNode $example,
+        // options below are not provided beforeExample
         float $time = 0.0,
         int $result = self::PASSED,
         \Exception $exception = null
@@ -127,10 +116,7 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
         return $this->result;
     }
 
-    /**
-     * @return null|\Exception
-     */
-    public function getException()
+    public function getException(): ?\Exception
     {
         return $this->exception;
     }

@@ -26,18 +26,9 @@ use PhpSpec\Wrapper\Unwrapper;
 
 class ExpectationFactory
 {
-    /**
-     * @var ExampleNode
-     */
-    private $example;
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
-    /**
-     * @var MatcherManager
-     */
-    private $matchers;
+    private ExampleNode $example;
+    private EventDispatcherInterface $dispatcher;
+    private MatcherManager $matchers;
 
     
     public function __construct(ExampleNode $example, EventDispatcherInterface $dispatcher, MatcherManager $matchers)

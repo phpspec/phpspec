@@ -17,47 +17,25 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class OptionsConfig
 {
-    /**
-     * @var bool
-     */
-    private $stopOnFailureEnabled;
+    private bool $stopOnFailureEnabled;
 
-    /**
-     * @var bool
-     */
-    private $codeGenerationEnabled;
+    private bool $codeGenerationEnabled;
 
-    /**
-     * @var bool
-     */
-    private $reRunEnabled;
+    private bool $reRunEnabled;
 
-    /**
-     * @var bool
-     */
-    private $fakingEnabled;
+    private bool $fakingEnabled;
 
-    /**
-     * @var bool|string
-     */
-    private $bootstrapPath;
+    private string|false $bootstrapPath;
 
-    /**
-     * @var bool
-     */
-    private $isVerbose;
+    private bool $isVerbose;
 
-    /**
-     * @param bool|string $bootstrapPath
-     * @param bool $isVerbose
-     */
     public function __construct(
         bool $stopOnFailureEnabled,
         bool $codeGenerationEnabled,
         bool $reRunEnabled,
         bool $fakingEnabled,
-        $bootstrapPath,
-        $isVerbose
+        false|string $bootstrapPath,
+        bool $isVerbose
     ) {
         $this->stopOnFailureEnabled  = $stopOnFailureEnabled;
         $this->codeGenerationEnabled = $codeGenerationEnabled;
@@ -89,7 +67,7 @@ class OptionsConfig
         return $this->fakingEnabled;
     }
 
-    public function getBootstrapPath()
+    public function getBootstrapPath(): string|false
     {
         return $this->bootstrapPath;
     }

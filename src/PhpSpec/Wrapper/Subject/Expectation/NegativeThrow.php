@@ -15,11 +15,7 @@ namespace PhpSpec\Wrapper\Subject\Expectation;
 
 final class NegativeThrow extends DuringCall implements ThrowExpectation
 {
-    /**
-     * @param object $object
-     * @param string $method
-     */
-    protected function runDuring($object, $method, array $arguments = array())
+    protected function runDuring(object $object, string $method, array $arguments = array())
     {
         return $this->getMatcher()->negativeMatch('throw', $object, $this->getArguments())
             ->during($method, $arguments);

@@ -6,7 +6,7 @@ use PhpSpec\Process\ReRunner as BaseReRunner;
 
 class ReRunner implements BaseReRunner
 {
-    private $hasBeenReRun = false;
+    private bool $hasBeenReRun = false;
 
     public function isSupported(): bool
     {

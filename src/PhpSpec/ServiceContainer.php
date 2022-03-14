@@ -20,17 +20,14 @@ interface ServiceContainer
 
     /**
      * Sets a object to be used as a service
-     *
-     * @param object $service
-     *
-     * @throws \InvalidArgumentException if service is not an object
      */
-    public function set(string $id, $service, array $tags = []): void;
+    public function set(string $id, object $service, array $tags = []): void;
 
     /**
      * Sets a factory for the service creation. The same service will
      * be returned every time
      *
+     * @psalm-param callable(ServiceContainer $c): object $definition
      *
      * @throws \InvalidArgumentException if service is not a callable
      */
@@ -39,12 +36,9 @@ interface ServiceContainer
     /**
      * Retrieves a service from the container
      *
-     *
-     * @return object
-     *
      * @throws \InvalidArgumentException if service is not defined
      */
-    public function get(string $id);
+    public function get(string $id): object;
 
     /**
      * Determines whether a service is defined
@@ -53,7 +47,6 @@ interface ServiceContainer
 
     /**
      * Removes a service from the container
-     *
      *
      * @throws \InvalidArgumentException if service is not defined
      */

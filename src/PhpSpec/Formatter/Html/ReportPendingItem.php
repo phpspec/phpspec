@@ -18,18 +18,9 @@ use PhpSpec\Formatter\Template as TemplateInterface;
 
 class ReportPendingItem
 {
-    /**
-     * @var TemplateInterface
-     */
-    private $template;
-    /**
-     * @var ExampleEvent
-     */
-    private $event;
-    /**
-     * @var int
-     */
-    private static $pendingExamplesCount = 1;
+    private TemplateInterface $template;
+    private ExampleEvent $event;
+    private static int $pendingExamplesCount = 1;
 
     
     public function __construct(TemplateInterface $template, ExampleEvent $event)

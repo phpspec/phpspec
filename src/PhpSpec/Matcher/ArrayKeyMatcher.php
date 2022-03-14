@@ -19,10 +19,7 @@ use ArrayAccess;
 
 final class ArrayKeyMatcher extends BasicMatcher
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
     
     public function __construct(Presenter $presenter)

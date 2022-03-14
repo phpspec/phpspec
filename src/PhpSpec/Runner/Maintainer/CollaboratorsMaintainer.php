@@ -30,23 +30,10 @@ use ReflectionNamedType;
 
 final class CollaboratorsMaintainer implements Maintainer
 {
-    /**
-     * @var string
-     */
-    private static $docex = '#@param *([^ ]*) *\$([^ ]*)#';
-    /**
-     * @var Unwrapper
-     */
-    private $unwrapper;
-    /**
-     * @var Prophet
-     */
-    private $prophet;
+    private Unwrapper $unwrapper;
+    private ?Prophet $prophet = null;
 
-    /**
-     * @var TypeHintIndex
-     */
-    private $typeHintIndex;
+    private TypeHintIndex $typeHintIndex;
 
     
     public function __construct(Unwrapper $unwrapper, TypeHintIndex $typeHintIndex)
@@ -110,7 +97,7 @@ final class CollaboratorsMaintainer implements Maintainer
                 }
             }
             catch (ClassNotFoundException $e) {
-                $this->throwCollaboratorNotFound($e, null, $e->getClassname());
+                $this->throwCollaboratorNotFound($e, $e->getClassname());
             }
             catch (DisallowedUnionTypehintException $e) {
                 throw new InvalidCollaboratorTypeException($parameter, $function, $e->getMessage(), 'Use a specific type');
@@ -144,17 +131,14 @@ final class CollaboratorsMaintainer implements Maintainer
     }
 
     /**
-     * @param string $className
-     *
      * @throws CollaboratorNotFoundException
      */
-    private function throwCollaboratorNotFound(\Exception $e, \ReflectionParameter $parameter = null, string $className = null): void
+    private function throwCollaboratorNotFound(\Exception $e, string $className = null): void
     {
         throw new CollaboratorNotFoundException(
             sprintf('Collaborator does not exist '),
-            0, $e,
-            $parameter,
-            $className
+            $className, 0,
+            $e
         );
     }
 

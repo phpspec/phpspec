@@ -15,10 +15,7 @@ namespace PhpSpec\Wrapper\Subject\Expectation;
 
 abstract class Decorator implements Expectation
 {
-    /**
-     * @var Expectation
-     */
-    private $expectation;
+    private Expectation $expectation;
 
     
     public function __construct(Expectation $expectation)

@@ -9,10 +9,7 @@ use Symfony\Component\Process\Process;
  */
 class IsolatedProcessContext implements Context, SnippetAcceptingContext
 {
-    /**
-     * @var Process
-     */
-    private $process;
+    private ?Process $process = null;
 
     private $lastOutput;
 

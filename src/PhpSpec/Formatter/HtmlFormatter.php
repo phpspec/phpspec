@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Formatter;
 
+use PhpSpec\Formatter\Html\ReportItemFactory;
 use PhpSpec\Event\ExampleEvent;
 use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Event\SpecificationEvent;
@@ -22,18 +23,12 @@ use PhpSpec\Listener\StatisticsCollector;
 
 final class HtmlFormatter extends BasicFormatter
 {
-    /**
-     * @var Html\ReportItemFactory
-     */
-    private $reportItemFactory;
+    private ReportItemFactory $reportItemFactory;
 
-    /**
-     * @var int
-     */
-    private $index = 1;
+    private int $index = 1;
 
     public function __construct(
-        Html\ReportItemFactory $reportItemFactory,
+        ReportItemFactory $reportItemFactory,
         Presenter $presenter,
         IO $io,
         StatisticsCollector $stats
@@ -44,13 +39,13 @@ final class HtmlFormatter extends BasicFormatter
     }
 
 
-    public function beforeSuite(SuiteEvent $event)
+    public function beforeSuite(SuiteEvent $event): void
     {
         include __DIR__."/Html/Template/ReportHeader.html";
     }
 
 
-    public function beforeSpecification(SpecificationEvent $event)
+    public function beforeSpecification(SpecificationEvent $event): void
     {
         $index = $this->index++;
         $name = $event->getTitle();
@@ -58,13 +53,13 @@ final class HtmlFormatter extends BasicFormatter
     }
 
 
-    public function afterSpecification(SpecificationEvent $event)
+    public function afterSpecification(SpecificationEvent $event): void
     {
         include __DIR__."/Html/Template/ReportSpecificationEnds.html";
     }
 
 
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event): void
     {
         $reportLine = $this->reportItemFactory->create($event, $this->getPresenter());
         $reportLine->write($this->index - 1);
@@ -72,7 +67,7 @@ final class HtmlFormatter extends BasicFormatter
     }
 
 
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event): void
     {
         include __DIR__."/Html/Template/ReportSummary.html";
         include __DIR__."/Html/Template/ReportFooter.html";

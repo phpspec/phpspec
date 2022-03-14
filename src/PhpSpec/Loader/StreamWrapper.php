@@ -18,7 +18,7 @@ class StreamWrapper
     private $realPath;
     private $fileResource;
 
-    private static $specTransformers = array();
+    private static array $specTransformers = array();
 
     public static function register(): void
     {
@@ -38,7 +38,7 @@ class StreamWrapper
         static::$specTransformers[] = $specTransformer;
     }
 
-    public static function wrapPath($path): string
+    public static function wrapPath(string $path): string
     {
         return 'phpspec://' . $path;
     }
@@ -69,12 +69,12 @@ class StreamWrapper
         return true;
     }
 
-    public function stream_stat(): array
+    public function stream_stat(): array|bool
     {
         return stat($this->realPath);
     }
 
-    public function stream_read($count)
+    public function stream_read($count): bool|string
     {
         return fread($this->fileResource, $count);
     }

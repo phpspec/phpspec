@@ -6,10 +6,7 @@ use PhpSpec\Formatter\Presenter\Presenter;
 
 final class IterablesMatcher
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
     
     public function __construct(Presenter $presenter)
@@ -18,15 +15,12 @@ final class IterablesMatcher
     }
 
     /**
-     * @param array|\Traversable $subject
-     * @param array|\Traversable $expected
-     *
      * @throws \InvalidArgumentException
      * @throws SubjectElementDoesNotMatchException
      * @throws SubjectHasFewerElementsException
      * @throws SubjectHasMoreElementsException
      */
-    public function match($subject, $expected, bool $strict = true): void
+    public function match(mixed $subject, mixed $expected, bool $strict = true): void
     {
         if (!$this->isIterable($subject)) {
             throw new \InvalidArgumentException('Subject value should be an array or implement \Traversable.');
@@ -69,10 +63,7 @@ final class IterablesMatcher
         return \is_array($variable) || $variable instanceof \Traversable;
     }
 
-    /**
-     * @param array|\Traversable $iterable
-     */
-    private function createIteratorFromIterable($iterable): \Iterator
+    private function createIteratorFromIterable(iterable $iterable): \Iterator
     {
         if (\is_array($iterable)) {
             return new \ArrayIterator($iterable);

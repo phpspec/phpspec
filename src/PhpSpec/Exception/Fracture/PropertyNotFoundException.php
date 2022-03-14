@@ -22,15 +22,9 @@ class PropertyNotFoundException extends FractureException
     
     private $subject;
 
-    /**
-     * @var string
-     */
-    private $property;
+    private string $property;
 
-    /**
-     * @param string $property
-     */
-    public function __construct(string $message, $subject, $property)
+    public function __construct(string $message, $subject, string $property)
     {
         parent::__construct($message);
 

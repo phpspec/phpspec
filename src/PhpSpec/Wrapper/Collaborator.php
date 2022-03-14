@@ -15,12 +15,9 @@ namespace PhpSpec\Wrapper;
 
 use Prophecy\Prophecy\ObjectProphecy;
 
-final class Collaborator implements ObjectWrapper
+class Collaborator implements ObjectWrapper
 {
-    /**
-     * @var ObjectProphecy
-     */
-    private $prophecy;
+    private ObjectProphecy $prophecy;
 
     
     public function __construct(ObjectProphecy $prophecy)
@@ -38,9 +35,7 @@ final class Collaborator implements ObjectWrapper
         }
     }
 
-    /**
-     * @param array $arguments
-     */
+
     public function beConstructedWith(array $arguments = null): void
     {
         $this->prophecy->willBeConstructedWith($arguments);
@@ -70,10 +65,7 @@ final class Collaborator implements ObjectWrapper
         return $this->prophecy->$parameter;
     }
 
-    /**
-     * @return object
-     */
-    public function getWrappedObject()
+    public function getWrappedObject(): object
     {
         return $this->prophecy->reveal();
     }

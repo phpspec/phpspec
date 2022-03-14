@@ -26,11 +26,11 @@ class Filesystem
     
     public function getFileContents(string $path): string
     {
-        return file_get_contents($path);
+        return file_get_contents($path) ?: '';
     }
 
     
-    public function putFileContents(string $path, string $content)
+    public function putFileContents(string $path, string $content): void
     {
         file_put_contents($path, $content);
     }

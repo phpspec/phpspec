@@ -25,9 +25,9 @@ class DifferSpec extends ObjectBehavior
         $this->compare(2, 1)->shouldReturn('2 !== 1');
     }
 
-    function it_returns_null_if_engine_not_found()
+    function it_returns_empty_string_if_engine_not_found()
     {
-        $this->compare(1, 2)->shouldReturn(null);
+        $this->compare(1, 2)->shouldReturn('');
     }
 
     function its_constructor_allows_a_list_of_engines(DifferEngine $engine)

@@ -18,7 +18,7 @@ use PhpSpec\Exception\Generator\NoMethodFoundInClass;
 
 final class ClassFileAnalyser
 {
-    private $tokenLists = array();
+    private array $tokenLists = array();
 
     
     public function getStartLineOfFirstMethod(string $class): int
@@ -107,10 +107,7 @@ final class ClassFileAnalyser
         throw new \RuntimeException('Could not find index of for docblock');
     }
 
-    /**
-     * @param $class
-     */
-    private function getTokensForClass($class): array
+    private function getTokensForClass(string $class): array
     {
         $hash = md5($class);
 

@@ -24,25 +24,13 @@ use PhpSpec\Locator\Resource;
  */
 abstract class PromptingGenerator implements Generator
 {
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
+    private ConsoleIO $io;
 
-    /**
-     * @var TemplateRenderer
-     */
-    private $templates;
+    private TemplateRenderer $templates;
 
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
+    private Filesystem $filesystem;
 
-    /**
-     * @var ExecutionContext
-     */
-    private $executionContext;
+    private ExecutionContext $executionContext;
 
     
     public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, ExecutionContext $executionContext)
@@ -95,7 +83,7 @@ abstract class PromptingGenerator implements Generator
         return !$this->io->askConfirmation($message, false);
     }
 
-    private function createDirectoryIfItDoesExist(string $filepath)
+    private function createDirectoryIfItDoesExist(string $filepath): void
     {
         $path = dirname($filepath);
         if (!$this->filesystem->isDirectory($path)) {
@@ -103,7 +91,7 @@ abstract class PromptingGenerator implements Generator
         }
     }
 
-    private function generateFileAndRenderTemplate(Resource $resource, string $filepath)
+    private function generateFileAndRenderTemplate(Resource $resource, string $filepath): void
     {
         $content = $this->renderTemplate($resource, $filepath);
 

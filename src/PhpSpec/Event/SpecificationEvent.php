@@ -21,20 +21,11 @@ use PhpSpec\Loader\Node\SpecificationNode;
  */
 class SpecificationEvent extends BaseEvent implements PhpSpecEvent
 {
-    /**
-     * @var SpecificationNode
-     */
-    private $specification;
+    private SpecificationNode $specification;
 
-    /**
-     * @var float
-     */
-    private $time;
+    private float $time;
 
-    /**
-     * @var int
-     */
-    private $result;
+    private int $result;
 
     
     public function __construct(SpecificationNode $specification, float $time = 0.0, int $result = 0)
@@ -45,7 +36,7 @@ class SpecificationEvent extends BaseEvent implements PhpSpecEvent
     }
 
     
-    public function getSpecification(): ?SpecificationNode
+    public function getSpecification(): SpecificationNode
     {
         return $this->specification;
     }

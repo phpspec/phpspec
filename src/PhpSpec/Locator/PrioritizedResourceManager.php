@@ -20,10 +20,10 @@ final class PrioritizedResourceManager implements ResourceManager
     /**
      * @var ResourceLocator[]
      */
-    private $locators = array();
+    private array $locators = array();
 
     
-    public function registerLocator(ResourceLocator $locator)
+    public function registerLocator(ResourceLocator $locator): void
     {
         $this->locators[] = $locator;
 

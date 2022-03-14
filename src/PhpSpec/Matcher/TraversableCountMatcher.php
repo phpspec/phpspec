@@ -23,10 +23,7 @@ final class TraversableCountMatcher implements Matcher
     const EQUAL = 1;
     const MORE_THAN = 2;
 
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
 
     public function __construct(Presenter $presenter)
@@ -90,9 +87,6 @@ final class TraversableCountMatcher implements Matcher
         return 101;
     }
 
-    /**
-     * @return int self::*
-     */
     private function countDifference(\Traversable $subject, int $expected): int
     {
         $count = 0;

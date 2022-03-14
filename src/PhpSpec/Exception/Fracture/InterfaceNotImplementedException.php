@@ -22,15 +22,9 @@ class InterfaceNotImplementedException extends FractureException
     
     private $subject;
 
-    /**
-     * @var string
-     */
-    private $interface;
+    private string $interface;
 
-    /**
-     * @param string $interface
-     */
-    public function __construct(string $message, $subject, $interface)
+    public function __construct(string $message, $subject, string $interface)
     {
         parent::__construct($message);
 
@@ -38,13 +32,11 @@ class InterfaceNotImplementedException extends FractureException
         $this->interface = $interface;
     }
 
-    
     public function getSubject()
     {
         return $this->subject;
     }
 
-    
     public function getInterface(): string
     {
         return $this->interface;

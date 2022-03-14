@@ -15,10 +15,7 @@ namespace PhpSpec\Formatter\Presenter\Value;
 
 final class TruncatingStringTypePresenter implements StringTypePresenter
 {
-    /**
-     * @var StringTypePresenter
-     */
-    private $stringTypePresenter;
+    private StringTypePresenter $stringTypePresenter;
 
     public function __construct(StringTypePresenter $stringTypePresenter)
     {

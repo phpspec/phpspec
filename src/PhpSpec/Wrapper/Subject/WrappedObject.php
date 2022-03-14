@@ -15,40 +15,23 @@ namespace PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Factory\ObjectFactory;
 use PhpSpec\Formatter\Presenter\Presenter;
+use PhpSpec\Wrapper\Subject\Expectation\Expectation;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Exception\Wrapper\SubjectException;
 
 class WrappedObject
 {
+    private mixed $instance;
+    private Presenter $presenter;
+    private ?string $classname = null;
     /**
-     * @var object
+     * @var null|callable|string
      */
-    private $instance;
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-    /**
-     * @var string
-     */
-    private $classname;
-    /**
-     * @var null|callable
-     */
-    private $factoryMethod;
-    /**
-     * @var array
-     */
-    private $arguments = array();
-    /**
-     * @var bool
-     */
-    private $isInstantiated = false;
+    private mixed $factoryMethod;
+    private array $arguments = array();
+    private bool $isInstantiated = false;
 
-    /**
-     * @param null|object        $instance
-     */
-    public function __construct($instance, Presenter $presenter)
+    public function __construct(mixed $instance, Presenter $presenter)
     {
         $this->instance = $instance;
         $this->presenter = $presenter;
@@ -59,7 +42,7 @@ class WrappedObject
     }
 
     /**
-     * @throws \PhpSpec\Exception\Wrapper\SubjectException
+     * @throws SubjectException
      */
     public function beAnInstanceOf(string $classname, array $arguments = array()): void
     {
@@ -71,7 +54,7 @@ class WrappedObject
     }
 
     /**
-     * @throws \PhpSpec\Exception\Wrapper\SubjectException
+     * @throws SubjectException
      */
     public function beConstructedWith(array $args): void
     {
@@ -89,10 +72,7 @@ class WrappedObject
         $this->beAnInstanceOf($this->classname, $args);
     }
 
-    /**
-     * @param null|callable|string $factoryMethod
-     */
-    public function beConstructedThrough($factoryMethod, array $arguments = array()): void
+    public function beConstructedThrough(null|callable|string $factoryMethod, array $arguments = array()): void
     {
         if (\is_string($factoryMethod) &&
             false === strpos($factoryMethod, '::') &&
@@ -110,10 +90,7 @@ class WrappedObject
         $this->arguments     = $unwrapper->unwrapAll($arguments);
     }
 
-    /**
-     * @return null|callable
-     */
-    public function getFactoryMethod()
+    public function getFactoryMethod(): callable|null|string
     {
         return $this->factoryMethod;
     }
@@ -130,10 +107,7 @@ class WrappedObject
         $this->isInstantiated = $instantiated;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getClassName()
+    public function getClassName(): ?string
     {
         return $this->classname;
     }
@@ -150,26 +124,21 @@ class WrappedObject
         return $this->arguments;
     }
 
-    /**
-     * @return null|object
-     */
-    public function getInstance()
+    public function getInstance(): mixed
     {
         return $this->instance;
     }
 
-    /**
-     * @param object $instance
-     */
-    public function setInstance($instance): void
+    public function setInstance(object $instance): void
     {
         $this->instance = $instance;
     }
 
     /**
-     * @return object
+     * @psalm-assert true $this->isInstantiated
+     * @psalm-assert object $this->instance
      */
-    public function instantiate()
+    public function instantiate(): object
     {
         if ($this->isInstantiated()) {
             return $this->instance;

@@ -15,14 +15,9 @@ namespace PhpSpec\Loader\Transformer;
 
 interface TypeHintIndex
 {
-    
     public function add(string $class, string $method, string $argument, string $typehint): void;
 
-    
     public function addInvalid(string $class, string $method, string $argument, \Exception $exception): void;
 
-    /**
-     * @return null|string
-     */
-    public function lookup(string $class, string $method, string $argument);
+    public function lookup(string $class, string $method, string $argument): ?string;
 }

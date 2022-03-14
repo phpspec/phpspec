@@ -20,20 +20,14 @@ use PhpSpec\Formatter\Presenter\Presenter;
 final class ApproximatelyMatcher extends BasicMatcher
 {
 
-    /**
-     * @var array
-     */
-    private static $keywords = array(
+    private static array $keywords = array(
         'beApproximately',
         'beEqualToApproximately',
         'equalApproximately',
         'returnApproximately'
     );
 
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
     
     public function __construct(Presenter $presenter)

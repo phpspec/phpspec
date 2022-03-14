@@ -36,10 +36,7 @@ use RuntimeException;
  */
 final class Application extends BaseApplication
 {
-    /**
-     * @var IndexedServiceContainer
-     */
-    private $container;
+    private IndexedServiceContainer $container;
 
     public function __construct(string $version)
     {
@@ -124,7 +121,7 @@ final class Application extends BaseApplication
     /**
      * @throws \RuntimeException
      */
-    protected function loadConfigurationFile(InputInterface $input, IndexedServiceContainer $container)
+    protected function loadConfigurationFile(InputInterface $input, IndexedServiceContainer $container): void
     {
         $config = $this->parseConfigurationFile($input);
 
@@ -142,7 +139,7 @@ final class Application extends BaseApplication
         }
     }
 
-    private function populateContainerParameters(IndexedServiceContainer $container, array $config)
+    private function populateContainerParameters(IndexedServiceContainer $container, array $config): void
     {
         foreach ($config as $key => $val) {
             if ('extensions' !== $key && 'matchers' !== $key) {
@@ -151,7 +148,7 @@ final class Application extends BaseApplication
         }
     }
 
-    private function registerCustomMatchers(IndexedServiceContainer $container, array $matchersClassnames)
+    private function registerCustomMatchers(IndexedServiceContainer $container, array $matchersClassnames): void
     {
         foreach ($matchersClassnames as $class) {
             $this->ensureIsValidMatcherClass($class);
@@ -162,7 +159,7 @@ final class Application extends BaseApplication
         }
     }
 
-    private function ensureIsValidMatcherClass(string $class)
+    private function ensureIsValidMatcherClass(string $class): void
     {
         if (!class_exists($class)) {
             throw new InvalidConfigurationException(sprintf('Custom matcher %s does not exist.', $class));
@@ -177,7 +174,7 @@ final class Application extends BaseApplication
         }
     }
 
-    private function loadExtension(ServiceContainer $container, string $extensionClass, $config)
+    private function loadExtension(ServiceContainer $container, string $extensionClass, $config): void
     {
         if (!class_exists($extensionClass)) {
             throw new InvalidConfigurationException(sprintf('Extension class `%s` does not exist.', $extensionClass));

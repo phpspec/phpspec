@@ -18,10 +18,7 @@ use PhpSpec\Exception\Example\FailureException;
 
 final class ArrayCountMatcher extends BasicMatcher
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
     
     public function __construct(Presenter $presenter)

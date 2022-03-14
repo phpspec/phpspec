@@ -17,10 +17,7 @@ use PhpSpec\Locator\Resource;
 
 class ResourceEvent extends BaseEvent implements PhpSpecEvent
 {
-    /**
-     * @var Resource
-     */
-    private $resource;
+    private Resource $resource;
 
     private function __construct(Resource $resource)
     {

@@ -22,18 +22,9 @@ use Exception;
 
 final class DispatcherDecorator extends Decorator implements Expectation
 {
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
-    /**
-     * @var Matcher
-     */
-    private $matcher;
-    /**
-     * @var ExampleNode
-     */
-    private $example;
+    private EventDispatcherInterface $dispatcher;
+    private Matcher $matcher;
+    private ExampleNode $example;
 
     
     public function __construct(
@@ -50,7 +41,7 @@ final class DispatcherDecorator extends Decorator implements Expectation
 
     /**
      * @throws \Exception
-     * @throws \PhpSpec\Exception\Example\FailureException
+     * @throws FailureException
      * @throws \Exception
      */
     public function match(string $alias, $subject, array $arguments = array())

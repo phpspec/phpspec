@@ -13,6 +13,11 @@
 
 namespace PhpSpec\Exception;
 
+use PhpSpec\Exception\Fracture\NamedConstructorNotFoundException;
+use PhpSpec\Exception\Fracture\MethodNotFoundException;
+use PhpSpec\Exception\Fracture\MethodNotVisibleException;
+use PhpSpec\Exception\Fracture\ClassNotFoundException;
+use PhpSpec\Exception\Fracture\PropertyNotFoundException;
 use PhpSpec\Exception\Wrapper\SubjectException;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Util\Instantiator;
@@ -22,10 +27,7 @@ use PhpSpec\Util\Instantiator;
  */
 class ExceptionFactory
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
     
     public function __construct(Presenter $presenter)
@@ -34,14 +36,14 @@ class ExceptionFactory
     }
 
     
-    public function namedConstructorNotFound(string $classname, string $method, array $arguments = array()): Fracture\NamedConstructorNotFoundException
+    public function namedConstructorNotFound(string $classname, string $method, array $arguments = array()): NamedConstructorNotFoundException
     {
         $instantiator = new Instantiator();
         $subject = $instantiator->instantiate($classname);
 
         $message = sprintf('Named constructor %s not found.', $this->presenter->presentString($classname.'::'.$method));
 
-        return new Fracture\NamedConstructorNotFoundException(
+        return new NamedConstructorNotFoundException(
             $message,
             $subject,
             $method,
@@ -50,13 +52,13 @@ class ExceptionFactory
     }
 
     
-    public function methodNotFound(string $classname, string $method, array $arguments = array()): Fracture\MethodNotFoundException
+    public function methodNotFound(string $classname, string $method, array $arguments = array()): MethodNotFoundException
     {
         $instantiator = new Instantiator();
         $subject = $instantiator->instantiate($classname);
         $message = sprintf('Method %s not found.', $this->presenter->presentString($classname.'::'.$method));
 
-        return new Fracture\MethodNotFoundException(
+        return new MethodNotFoundException(
             $message,
             $subject,
             $method,
@@ -65,13 +67,13 @@ class ExceptionFactory
     }
 
     
-    public function methodNotVisible(string $classname, string $method, array $arguments = array()): Fracture\MethodNotVisibleException
+    public function methodNotVisible(string $classname, string $method, array $arguments = array()): MethodNotVisibleException
     {
         $instantiator = new Instantiator();
         $subject = $instantiator->instantiate($classname);
         $message = sprintf('Method %s not visible.', $this->presenter->presentString($classname.'::'.$method));
 
-        return new Fracture\MethodNotVisibleException(
+        return new MethodNotVisibleException(
             $message,
             $subject,
             $method,
@@ -80,21 +82,18 @@ class ExceptionFactory
     }
 
     
-    public function classNotFound(string $classname): Fracture\ClassNotFoundException
+    public function classNotFound(string $classname): ClassNotFoundException
     {
         $message = sprintf('Class %s does not exist.', $this->presenter->presentString($classname));
 
-        return new Fracture\ClassNotFoundException($message, $classname);
+        return new ClassNotFoundException($message, $classname);
     }
 
-    /**
-     * @param string $property
-     */
-    public function propertyNotFound($subject, $property): Fracture\PropertyNotFoundException
+    public function propertyNotFound($subject, string $property): PropertyNotFoundException
     {
         $message = sprintf('Property %s not found.', $this->presenter->presentString($property));
 
-        return new Fracture\PropertyNotFoundException($message, $subject, $property);
+        return new PropertyNotFoundException($message, $subject, $property);
     }
 
     

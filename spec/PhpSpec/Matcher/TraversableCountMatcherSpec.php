@@ -87,11 +87,9 @@ final class TraversableCountMatcherSpec extends ObjectBehavior
     }
 
     /**
-     * @param int $count
-     *
      * @return \Generator
      */
-    private function createGeneratorWithCount($count)
+    private function createGeneratorWithCount(int $count)
     {
         for ($i = 0; $i < $count; ++$i) {
             yield $i;

@@ -21,10 +21,7 @@ use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
 final class TriggerMatcher implements Matcher
 {
-    /**
-     * @var Unwrapper
-     */
-    private $unwrapper;
+    private Unwrapper $unwrapper;
 
     
     public function __construct(Unwrapper $unwrapper)
@@ -51,9 +48,9 @@ final class TriggerMatcher implements Matcher
     }
 
     /**
-     * @throws \PhpSpec\Exception\Example\FailureException
+     * @throws FailureException
      */
-    public function verifyPositive(callable $callable, array $arguments, int $level = null, string $message = null)
+    public function verifyPositive(callable $callable, array $arguments, int $level = null, string $message = null): void
     {
         $triggered = 0;
 
@@ -79,9 +76,9 @@ final class TriggerMatcher implements Matcher
     }
 
     /**
-     * @throws \PhpSpec\Exception\Example\FailureException
+     * @throws FailureException
      */
-    public function verifyNegative(callable $callable, array $arguments, int $level = null, string $message = null)
+    public function verifyNegative(callable $callable, array $arguments, int $level = null, string $message = null): void
     {
         $triggered = 0;
 

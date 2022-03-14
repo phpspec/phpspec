@@ -17,10 +17,7 @@ use PhpSpec\Formatter\Presenter\Presenter;
 
 final class CallableTypePresenter implements TypePresenter
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
     
     public function __construct(Presenter $presenter)

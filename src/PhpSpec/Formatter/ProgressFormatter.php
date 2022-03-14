@@ -23,7 +23,7 @@ final class ProgressFormatter extends ConsoleFormatter
 
     private $lastDraw;
 
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event): void
     {
         $this->printException($event);
 
@@ -52,7 +52,7 @@ final class ProgressFormatter extends ConsoleFormatter
         }
     }
 
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event): void
     {
         $this->drawStats();
 
@@ -83,11 +83,7 @@ final class ProgressFormatter extends ConsoleFormatter
         $io->writeln();
     }
 
-    /**
-     * @param $total
-     * @param $counts
-     */
-    private function getPercentages($total, $counts): array
+    private function getPercentages(int $total, array $counts): array
     {
         return array_map(
             function ($count) use ($total) {

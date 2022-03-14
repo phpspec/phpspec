@@ -18,10 +18,7 @@ use PhpSpec\Formatter\Presenter\Presenter;
 
 final class TraversableContainMatcher extends BasicMatcher
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
 
     public function __construct(Presenter $presenter)

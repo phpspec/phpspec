@@ -17,7 +17,7 @@ use PhpSpec\CodeGenerator\TemplateRenderer;
 
 class CreateObjectTemplate
 {
-    private $templates;
+    private TemplateRenderer $templates;
     private $methodName;
     private $arguments;
     private $className;

@@ -19,12 +19,12 @@ use PhpSpec\Event\ExampleEvent;
 
 final class PrettyFormatter extends ConsoleFormatter
 {
-    public function beforeSpecification(SpecificationEvent $event)
+    public function beforeSpecification(SpecificationEvent $event): void
     {
         $this->getIO()->writeln(sprintf("\n      %s\n", $event->getSpecification()->getTitle()), 0);
     }
 
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event): void
     {
         $io = $this->getIO();
         $line  = $event->getExample()->getFunctionReflection()->getStartLine();
@@ -56,7 +56,7 @@ final class PrettyFormatter extends ConsoleFormatter
         $this->printException($event);
     }
 
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event): void
     {
         $io = $this->getIO();
         $io->writeln();
@@ -98,7 +98,7 @@ final class PrettyFormatter extends ConsoleFormatter
         $io->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
     }
 
-    protected function printSlowTime(ExampleEvent $event)
+    protected function printSlowTime(ExampleEvent $event): void
     {
         $io = $this->getIO();
         $ms = $event->getTime() * 1000;

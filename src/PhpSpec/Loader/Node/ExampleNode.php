@@ -17,22 +17,10 @@ use ReflectionFunctionAbstract;
 
 class ExampleNode
 {
-    /**
-     * @var string
-     */
-    private $title;
-    /**
-     * @var \ReflectionFunctionAbstract
-     */
-    private $function;
-    /**
-     * @var null|SpecificationNode
-     */
-    private $specification;
-    /**
-     * @var bool
-     */
-    private $isPending = false;
+    private string $title;
+    private \ReflectionFunctionAbstract $function;
+    private ?SpecificationNode $specification = null;
+    private bool $isPending = false;
 
     
     public function __construct(string $title, ReflectionFunctionAbstract $function)
@@ -42,7 +30,7 @@ class ExampleNode
     }
 
     
-    public function setTitle(string $title)
+    public function setTitle(string $title): void
     {
       $this->title = $title;
     }
@@ -77,10 +65,7 @@ class ExampleNode
         $this->specification = $specification;
     }
 
-    /**
-     * @return null|SpecificationNode
-     */
-    public function getSpecification()
+    public function getSpecification(): ?SpecificationNode
     {
         return $this->specification;
     }
@@ -88,6 +73,6 @@ class ExampleNode
     
     public function getLineNumber(): int
     {
-        return $this->function->isClosure() ? 0 : $this->function->getStartLine();
+        return $this->function->isClosure() ? 0 : (int) $this->function->getStartLine();
     }
 }

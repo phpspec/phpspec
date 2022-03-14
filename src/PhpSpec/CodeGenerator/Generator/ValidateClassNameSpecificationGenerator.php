@@ -21,9 +21,9 @@ use PhpSpec\Locator\Resource;
 final class ValidateClassNameSpecificationGenerator implements Generator
 {
 
-    private $classNameChecker;
-    private $io;
-    private $originalGenerator;
+    private NameChecker $classNameChecker;
+    private ConsoleIO $io;
+    private Generator $originalGenerator;
 
     public function __construct(NameChecker $classNameChecker, ConsoleIO $io, Generator $originalGenerator)
     {
