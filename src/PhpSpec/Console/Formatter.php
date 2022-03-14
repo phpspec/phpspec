@@ -22,7 +22,6 @@ use Symfony\Component\Console\Formatter\OutputFormatterStyle;
  */
 class Formatter extends OutputFormatter
 {
-    
     public function __construct(bool $decorated = false, array $styles = array())
     {
         parent::__construct($decorated, $styles);
@@ -41,6 +40,9 @@ class Formatter extends OutputFormatter
 
         $this->setStyle('passed', new OutputFormatterStyle('green'));
         $this->setStyle('passed-bg', new OutputFormatterStyle('black', 'green', array('bold')));
+
+        $this->setStyle('ignored', new OutputFormatterStyle('yellow'));
+        $this->setStyle('ignored-bg', new OutputFormatterStyle('black', 'yellow', array('bold')));
 
         $this->setStyle('value', new OutputFormatterStyle('yellow'));
         $this->setStyle('lineno', new OutputFormatterStyle(null));

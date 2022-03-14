@@ -15,11 +15,12 @@ class NamespacesAutocompleteProviderSpec extends ObjectBehavior
         $locator->getFullSrcPath()->willReturn('/app/src');
     }
 
-    function it_returns_empty_array_if_nothing_found($finder)
+    function it_returns_empty_array_if_nothing_found(Finder $finder)
     {
         $finder->files()->willReturn($finder);
         $finder->name('*.php')->willReturn($finder);
-        $finder->in(['/app/src'])->willReturn([]);
+        $finder->in(['/app/src'])->willReturn($finder);
+        $finder->getIterator()->willReturn(new \ArrayIterator());
 
         $this->getNamespaces()->shouldHaveCount(0);
     }
@@ -32,7 +33,8 @@ class NamespacesAutocompleteProviderSpec extends ObjectBehavior
     ) {
         $finder->files()->shouldBeCalled()->willReturn($finder);
         $finder->name('*.php')->shouldBeCalled()->willReturn($finder);
-        $finder->in(['/app/src'])->shouldBeCalled()->willReturn([$file1, $file2, $file3]);
+        $finder->in(['/app/src'])->shouldBeCalled()->willReturn($finder);
+        $finder->getIterator()->willReturn(new \ArrayIterator([$file1->getWrappedObject(), $file2->getWrappedObject(), $file3->getWrappedObject()]));
 
         $file1->getContents()->willReturn('<?php namespace App\Foo; class Foo {}');
         $file2->getContents()->willReturn('<?php namespace App\Foo; class Bar {}');

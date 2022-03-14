@@ -4,8 +4,11 @@ namespace spec\PhpSpec\Formatter;
 
 use PhpSpec\Console\ConsoleIO;
 use PhpSpec\Event\ExampleEvent;
+use PhpSpec\Event\ResourceEvent;
+use PhpSpec\Event\SuiteEvent;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Listener\StatisticsCollector;
+use PhpSpec\Locator\Resource;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 

@@ -13,12 +13,14 @@
 
 namespace PhpSpec\Loader;
 
+use PhpSpec\Event\ResourceEvent;
 use PhpSpec\Locator\Resource;
 use PhpSpec\Specification\ErrorSpecification;
 use PhpSpec\Util\MethodAnalyser;
 use PhpSpec\Locator\ResourceManager;
 use ReflectionClass;
 use ReflectionMethod;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ResourceLoader
 {
@@ -26,19 +28,27 @@ class ResourceLoader
      * @var ResourceManager
      */
     private $manager;
+
     /**
      * @var MethodAnalyser
      */
     private $methodAnalyser;
 
-    
-    public function __construct(ResourceManager $manager, MethodAnalyser $methodAnalyser)
-    {
+    /**
+     * @var EventDispatcherInterface
+     */
+    private $eventDispatcher;
+
+    public function __construct(
+        ResourceManager $manager,
+        MethodAnalyser $methodAnalyser,
+        EventDispatcherInterface $eventDispatcher
+    ) {
         $this->manager = $manager;
         $this->methodAnalyser = $methodAnalyser;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
-    
     public function load(string $locator = '', int $line = null): Suite
     {
         $suite = new Suite();
@@ -51,7 +61,13 @@ class ResourceLoader
                     $this->addErrorThrowingExampleToSuite($resource, $suite, $e);
                     continue;
                 }
+            } else {
+                $this->eventDispatcher->dispatch(
+                    ResourceEvent::ignored($resource),
+                    'resourceIgnored'
+                );
             }
+
             if (!class_exists($resource->getSpecClassname(), false)) {
                 continue;
             }
@@ -89,7 +105,7 @@ class ResourceLoader
         return $suite;
     }
 
-    
+
     private function lineIsInsideMethod(int $line, ReflectionMethod $method): bool
     {
         $line = \intval($line);
