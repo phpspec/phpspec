@@ -6,19 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [7.2.0]
 
-## Added
+### Added
  - PHP 8.1 support [@ADmad](https://github.com/ADmad), [@iambrosi](https://github.com/iambrosi), [@jaylinski](https://github.com/jaylinski)
  - Symfony 6.0 support [@loic425](https://github.com/ADmad)
  - TeamCity formatter [@AyrtonRicardo](https://github.com/AyrtonRicardo)
  - Display any Specs that have been ignored (e.g. due to broken namespaces) [@gquemener](https://github.com/gquemener)
  - Temporarily disallow intersection types when requesting Mocks [@ciaranmcnulty](https://github.com/ciaranmcnulty)
 
-## Fixed
+### Fixed
  - Error when checking an Exception with unset properties is thrown [@jmleroux](https://github.com/jmleroux)
  - Sort order of default matchers made consistent between PHP 7/8 [@dannyvw](https://github.com/dannyvw)
  - Removed redundant cast [@driesvints](https://github.com/drupol)
 
-## Changed
+### Changed
  - Ship fewer files in the archive versions [@drupol](https://github.com/drupol)
 
 ## [7.1.0]
