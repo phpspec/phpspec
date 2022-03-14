@@ -27,12 +27,14 @@ class Differ
         $this->engines[] = $engine;
     }
 
-    public function compare($expected, $actual)
+    public function compare($expected, $actual) : string
     {
         foreach ($this->engines as $engine) {
             if ($engine->supports($expected, $actual)) {
                 return rtrim($engine->compare($expected, $actual));
             }
         }
+
+        return '';
     }
 }
