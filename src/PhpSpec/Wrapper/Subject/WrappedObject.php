@@ -23,6 +23,9 @@ class WrappedObject
 {
     private mixed $instance;
     private Presenter $presenter;
+    /**
+     * @var ?class-string
+     */
     private ?string $classname = null;
     /**
      * @var null|callable|string
@@ -42,6 +45,8 @@ class WrappedObject
     }
 
     /**
+     * @param class-string $classname
+     *
      * @throws SubjectException
      */
     public function beAnInstanceOf(string $classname, array $arguments = array()): void
@@ -74,11 +79,14 @@ class WrappedObject
 
     public function beConstructedThrough(null|callable|string $factoryMethod, array $arguments = array()): void
     {
-        if (\is_string($factoryMethod) &&
-            false === strpos($factoryMethod, '::') &&
-            method_exists($this->classname, $factoryMethod)
-        ) {
-            $factoryMethod = array($this->classname, $factoryMethod);
+
+        if (\is_string($factoryMethod) && false === strpos($factoryMethod, '::')) {
+            if (!$this->classname) {
+                throw new \LogicException('Cannot call factory method on non-obect');
+            }
+            if (method_exists($this->classname, $factoryMethod)) {
+                $factoryMethod = array($this->classname, $factoryMethod);
+            }
         }
 
         if ($this->isInstantiated()) {
@@ -107,12 +115,13 @@ class WrappedObject
         $this->isInstantiated = $instantiated;
     }
 
+    /** @return ?class-string */
     public function getClassName(): ?string
     {
         return $this->classname;
     }
 
-    
+    /** @param class-string $classname */
     public function setClassName(string $classname): void
     {
         $this->classname = $classname;
@@ -145,11 +154,17 @@ class WrappedObject
         }
 
         if ($this->factoryMethod) {
+            if (!is_callable($this->factoryMethod)) {
+                throw new \LogicException('Factory method must be callable');
+            }
             $this->instance = (new ObjectFactory())->instantiateFromCallable(
                 $this->factoryMethod,
                 $this->arguments
             );
         } else {
+            if (is_null($this->classname)) {
+                throw new \LogicException('Class name was not set');
+            }
             $reflection = new \ReflectionClass($this->classname);
 
             $this->instance = empty($this->arguments) ?

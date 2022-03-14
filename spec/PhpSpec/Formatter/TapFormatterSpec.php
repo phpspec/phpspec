@@ -34,13 +34,19 @@ class TapFormatterSpec extends ObjectBehavior
         $io->writeln($expected)->shouldHaveBeenCalled();
     }
 
-    function it_outputs_plan_on_aftersuite_event(SuiteEvent $suiteEvent, ExampleEvent $exampleEvent, ExampleNode $example, ConsoleIO $io, StatisticsCollector $stats)
+    function it_outputs_plan_on_aftersuite_event(
+        SuiteEvent $suiteEvent, SpecificationEvent $specEvent, SpecificationNode $specification, ExampleEvent $exampleEvent,
+        ExampleNode $example, ConsoleIO $io, StatisticsCollector $stats)
     {
+
         $stats->getEventsCount()->willReturn(3);
+        $specEvent->getSpecification()->willReturn($specification);
+        $specification->getTitle()->willReturn('title');
         $exampleEvent->getExample()->willReturn($example);
         $example->getTitle()->willReturn('foobar');
         $exampleEvent->getResult()->willReturn(0);
 
+        $this->beforeSpecification($specEvent);
         $this->afterExample($exampleEvent);
         $this->afterSuite($suiteEvent);
 

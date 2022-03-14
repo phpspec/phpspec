@@ -18,7 +18,7 @@ use Symfony\Component\Process\PhpExecutableFinder;
 
 final class ProcOpenReRunner extends PhpExecutableReRunner
 {
-    private ?ExecutionContext $executionContext = null;
+    private ExecutionContext $executionContext;
 
     public static function withExecutionContext(PhpExecutableFinder $phpExecutableFinder, ExecutionContext $executionContext): static
     {
@@ -38,8 +38,11 @@ final class ProcOpenReRunner extends PhpExecutableReRunner
 
     public function reRunSuite(): void
     {
+        /** @var string $executablePath because isSupported was called*/
+        $executablePath = $this->getExecutablePath();
+
         $args = $_SERVER['argv'];
-        $command = $this->buildArgString() . escapeshellcmd($this->getExecutablePath()).' '.join(' ', array_map('escapeshellarg', $args)) . ' 2>&1';
+        $command = $this->buildArgString() . escapeshellcmd($executablePath).' '.join(' ', array_map('escapeshellarg', $args)) . ' 2>&1';
 
         $desc = [
             0 => ['file', 'php://stdin', 'r'],

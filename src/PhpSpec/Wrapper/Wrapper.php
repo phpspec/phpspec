@@ -37,7 +37,7 @@ class Wrapper
         Presenter $presenter,
         EventDispatcherInterface $dispatcher,
         ExampleNode $example,
-        AccessInspector $accessInspector = null
+        AccessInspector $accessInspector
     ) {
         $this->matchers = $matchers;
         $this->presenter = $presenter;

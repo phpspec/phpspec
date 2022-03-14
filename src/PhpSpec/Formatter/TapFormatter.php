@@ -44,7 +44,7 @@ final class TapFormatter extends ConsoleFormatter
 
     private int $examplesCount = 0;
 
-    private ?string $currentSpecificationTitle = null;
+    private string $currentSpecificationTitle;
 
     public function beforeSuite(SuiteEvent $event): void
     {
@@ -113,11 +113,11 @@ final class TapFormatter extends ConsoleFormatter
     private function getResultData(ExampleEvent $event, int $result = null): string
     {
         if (null === $result) {
-            return $this->stripNewlines($event->getException()->getMessage());
+            return $this->stripNewlines($event->getException()?->getMessage());
         }
         switch ($result) {
             case ExampleEvent::PENDING:
-                $message = sprintf(self::TODO, $this->stripNewlines($event->getException()->getMessage()))
+                $message = sprintf(self::TODO, $this->stripNewlines($event->getException()?->getMessage()))
                     . $this->indent(sprintf(self::SEVERITY, Yaml::dump('todo')));
                 break;
             case self::UNDEFINED_RESULT:
@@ -134,7 +134,7 @@ final class TapFormatter extends ConsoleFormatter
                 $message = $this->indent(
                     sprintf(
                         self::MESSAGE . self::SEVERITY,
-                        Yaml::dump($event->getException()->getMessage()),
+                        Yaml::dump($event->getException()?->getMessage()),
                         Yaml::dump('fail')
                     )
                 );
@@ -142,9 +142,9 @@ final class TapFormatter extends ConsoleFormatter
         return $message;
     }
 
-    private function stripNewlines(string $string): string
+    private function stripNewlines(?string $string): string
     {
-        return str_replace(array("\r\n", "\n", "\r"), ' / ', $string);
+        return str_replace(array("\r\n", "\n", "\r"), ' / ', $string ?? '');
     }
 
     private function indent(string $string): string

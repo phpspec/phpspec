@@ -108,7 +108,7 @@ use ArrayAccess;
 class Subject implements ArrayAccess, ObjectWrapper
 {
     
-    private $subject;
+    private mixed $subject;
     private WrappedObject $wrappedObject;
     private Caller $caller;
     private SubjectWithArrayAccess $arrayAccess;
@@ -117,7 +117,7 @@ class Subject implements ArrayAccess, ObjectWrapper
 
     
     public function __construct(
-        $subject,
+        mixed $subject,
         Wrapper $wrapper,
         WrappedObject $wrappedObject,
         Caller $caller,
@@ -132,7 +132,9 @@ class Subject implements ArrayAccess, ObjectWrapper
         $this->expectationFactory = $expectationFactory;
     }
 
-    
+    /**
+     * @param class-string $className
+     */
     public function beAnInstanceOf(string $className, array $arguments = array()): void
     {
         $this->wrappedObject->beAnInstanceOf($className, $arguments);
@@ -264,10 +266,12 @@ class Subject implements ArrayAccess, ObjectWrapper
 
     private function makeSureWeHaveASubject(): mixed
     {
-        if (null === $this->subject && $this->wrappedObject->getClassName()) {
+        $className = $this->wrappedObject->getClassName();
+
+        if (null === $this->subject && $className) {
             $instantiator = new Instantiator();
 
-            return $instantiator->instantiate($this->wrappedObject->getClassName());
+            return $instantiator->instantiate($className);
         }
 
         return $this->subject;

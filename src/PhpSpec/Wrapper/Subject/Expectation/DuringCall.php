@@ -26,7 +26,6 @@ abstract class DuringCall
     private array $arguments = [];
     private ?WrappedObject $wrappedObject = null;
 
-
     public function __construct(Matcher $matcher)
     {
         $this->matcher = $matcher;
@@ -44,9 +43,12 @@ abstract class DuringCall
         return $this;
     }
 
-
     public function during(string $method, array $arguments = array())
     {
+        if (!$this->wrappedObject) {
+            throw new \LogicException('Cannot call during on undefined object');
+        }
+
         if ($method === '__construct') {
             $this->subject->beAnInstanceOf($this->wrappedObject->getClassName(), $arguments);
 
@@ -58,16 +60,24 @@ abstract class DuringCall
         return $this->runDuring($object, $method, $arguments);
     }
 
-
     public function duringInstantiation()
     {
+        if (!$this->wrappedObject) {
+            throw new \LogicException('Cannot call during on undefined object');
+        }
+
         if ($factoryMethod = $this->wrappedObject->getFactoryMethod()) {
+            /** @var array{1:string}|string $factoryMethod */
             $method = \is_array($factoryMethod) ? $factoryMethod[1] : $factoryMethod;
         } else {
             $method = '__construct';
         }
+
         $instantiator = new Instantiator();
-        $object = $instantiator->instantiate($this->wrappedObject->getClassName());
+
+        /** @var class-string $className */
+        $className = $this->wrappedObject->getClassName();
+        $object = $instantiator->instantiate($className);
 
         return $this->runDuring($object, $method, $this->wrappedObject->getArguments());
     }
@@ -89,12 +99,10 @@ abstract class DuringCall
             '->during(\''.$method.'\', array(arguments))');
     }
 
-
     protected function getArguments(): array
     {
         return $this->arguments;
     }
-
 
     protected function getMatcher(): Matcher
     {

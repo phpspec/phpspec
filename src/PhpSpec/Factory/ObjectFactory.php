@@ -39,6 +39,7 @@ class ObjectFactory
         return $instance;
     }
 
+
     private function callableToString(callable $callable): string
     {
         if (\is_array($callable)) {
@@ -51,6 +52,10 @@ class ObjectFactory
 
         if ($callable instanceof \Closure) {
             return 'closure';
+        }
+
+        if (is_object($callable)) {
+            return 'object';
         }
 
         return 'function ' . $callable;

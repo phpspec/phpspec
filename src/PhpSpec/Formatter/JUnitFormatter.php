@@ -109,7 +109,7 @@ final class JUnitFormatter extends BasicFormatter
             '<testcase name="%s" time="%F" classname="%s" status="%s"',
             $event->getTitle(),
             $event->getTime(),
-            $event->getSpecification()->getClassReflection()->getName(),
+            $event->getSpecification()?->getClassReflection()->getName() ?? '',
             $this->jUnitStatuses[$event->getResult()]
         );
 
@@ -117,6 +117,9 @@ final class JUnitFormatter extends BasicFormatter
 
         if (\in_array($event->getResult(), array(ExampleEvent::BROKEN, ExampleEvent::FAILED))) {
             $exception = $event->getException();
+            if (!$exception instanceof \Exception) {
+                throw new \LogicException('Broken example had no error attached');
+            }
             $testCaseNode .= sprintf(
                 '>'."\n".
                 '<%s type="%s" message="%s" />'."\n".
@@ -132,11 +135,15 @@ final class JUnitFormatter extends BasicFormatter
                 $exception->getTraceAsString()
             );
         } elseif (ExampleEvent::SKIPPED === $event->getResult()) {
+            $exception = $event->getException();
+            if (!$exception instanceof \Exception) {
+                throw new \LogicException('Skipped example had no skipping exception attached');
+            }
             $testCaseNode .= sprintf(
                 '>'."\n".
                 '\<skipped><![CDATA[ %s ]]>\</skipped>'."\n".
                 '</testcase>',
-                htmlspecialchars($event->getException()->getMessage())
+                htmlspecialchars($exception->getMessage())
             );
         } else {
             $testCaseNode .= ' />';

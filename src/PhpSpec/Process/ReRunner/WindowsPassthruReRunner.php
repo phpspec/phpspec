@@ -18,7 +18,7 @@ use Symfony\Component\Process\PhpExecutableFinder;
 
 final class WindowsPassthruReRunner extends PhpExecutableReRunner
 {
-    private ?ExecutionContext $executionContext = null;
+    private ExecutionContext $executionContext;
 
     public static function withExecutionContext(PhpExecutableFinder $phpExecutableFinder, ExecutionContext $executionContext): static
     {
@@ -38,8 +38,11 @@ final class WindowsPassthruReRunner extends PhpExecutableReRunner
 
     public function reRunSuite(): void
     {
+        /** @var string $executablePath because isSupported was called */
+        $executablePath = $this->getExecutablePath();
+
         $args = $_SERVER['argv'];
-        $command = $this->buildArgString() . escapeshellarg($this->getExecutablePath()) . ' ' . join(' ', array_map('escapeshellarg', $args));
+        $command = $this->buildArgString() . escapeshellarg($executablePath) . ' ' . join(' ', array_map('escapeshellarg', $args));
 
         passthru($command, $exitCode);
         exit($exitCode);

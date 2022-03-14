@@ -34,6 +34,6 @@ final class CompositeReRunner implements ReRunner
 
     public function reRunSuite(): void
     {
-        $this->reRunner->reRunSuite();
+        $this->reRunner?->reRunSuite();
     }
 }

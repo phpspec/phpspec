@@ -84,6 +84,8 @@ class ExpectationFactory
     private function createDecoratedExpectation(string $expectation, string $name, $subject, array $arguments): Expectation
     {
         $matcher = $this->findMatcher($name, $subject, $arguments);
+
+        /** @var class-string<Expectation> $expectation */
         $expectation = "\\PhpSpec\\Wrapper\\Subject\\Expectation\\".$expectation;
 
         $expectation = new $expectation($matcher);

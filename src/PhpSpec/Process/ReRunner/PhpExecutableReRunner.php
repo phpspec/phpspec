@@ -26,7 +26,7 @@ abstract class PhpExecutableReRunner implements PlatformSpecificReRunner
         $this->executableFinder = $executableFinder;
     }
 
-    protected function getExecutablePath(): string|false|null
+    protected function getExecutablePath(): string|false
     {
         if (null === $this->executablePath) {
             $this->executablePath = $this->executableFinder->find();

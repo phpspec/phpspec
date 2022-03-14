@@ -65,6 +65,7 @@ final class PSR0Resource implements Resource
     
     public function getSrcClassname(): string
     {
+        /** @var class-string */
         return $this->locator->getSrcNamespace().implode('\\', $this->parts);
     }
 
@@ -96,6 +97,7 @@ final class PSR0Resource implements Resource
     
     public function getSpecClassname(): string
     {
+        /** @var class-string */
         return $this->locator->getSpecNamespace().implode('\\', $this->parts).'Spec';
     }
 }

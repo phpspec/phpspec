@@ -18,6 +18,6 @@ final class PositiveThrow extends DuringCall implements ThrowExpectation
     protected function runDuring(object $object, string $method, array $arguments = array())
     {
         return $this->getMatcher()->positiveMatch('throw', $object, $this->getArguments())
-            ->during($method, $arguments);
+            ?->during($method, $arguments);
     }
 }

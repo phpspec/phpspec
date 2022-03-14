@@ -32,10 +32,15 @@ class ReportFailedItem
         $this->presenter = $presenter;
     }
 
-    
     public function write(int $index): void
     {
-        $code = $this->presenter->presentException($this->event->getException(), true);
+        $exception = $this->event->getException();
+
+        if (!$exception instanceof \Exception) {
+            throw new \LogicException('Exception not found');
+        }
+
+        $code = $this->presenter->presentException($exception, true);
         $this->template->render(
             Template::DIR.'/Template/ReportFailed.html',
             array(

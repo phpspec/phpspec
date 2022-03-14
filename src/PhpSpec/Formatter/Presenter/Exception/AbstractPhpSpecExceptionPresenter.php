@@ -35,7 +35,7 @@ abstract class AbstractPhpSpecExceptionPresenter
                 continue;
             }
 
-            if ($cause->getFileName() === $call['file']) {
+            if ($cause && $cause->getFileName() === $call['file']) {
                 return array($call['file'], $call['line']);
             }
         }

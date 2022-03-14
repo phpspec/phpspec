@@ -41,6 +41,9 @@ final class PcntlReRunner extends PhpExecutableReRunner
      */
     public function reRunSuite(): void
     {
+        /** @var string $executablePath because isSupported was called */
+        $executablePath = $this->getExecutablePath();
+
         $args = $_SERVER['argv'];
         $env = $this->executionContext ? $this->executionContext->asEnv() : array();
 
@@ -49,6 +52,6 @@ final class PcntlReRunner extends PhpExecutableReRunner
             function($x): bool { return !is_array($x); }
         );
 
-        pcntl_exec($this->getExecutablePath(), $args, $env);
+        pcntl_exec($executablePath, $args, $env);
     }
 }
