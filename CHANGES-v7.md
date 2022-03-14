@@ -5,8 +5,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [7.2.0]
-### Added
-- TeamCityFormatter added 
+
+## Added
+ - PHP 8.1 support [@ADmad](https://github.com/ADmad), [@iambrosi](https://github.com/iambrosi), [@jaylinski](https://github.com/jaylinski)
+ - Symfony 6.0 support [@loic425](https://github.com/ADmad)
+ - TeamCity formatter [@AyrtonRicardo](https://github.com/AyrtonRicardo)
+ - Display any Specs that have been ignored (e.g. due to broken namespaces) [@gquemener](https://github.com/gquemener)
+ - Temporarily disallow intersection types when requesting Mocks [@ciaranmcnulty](https://github.com/ciaranmcnulty)
+
+## Fixed
+ - Error when checking an Exception with unset properties is thrown [@jmleroux](https://github.com/jmleroux)
+ - Sort order of default matchers made consistent between PHP 7/8 [@dannyvw](https://github.com/dannyvw)
+ - Removed redundant cast [@driesvints](https://github.com/drupol)
+
+## Changed
+ - Ship fewer files in the archive versions [@drupol](https://github.com/drupol)
 
 ## [7.1.0]
 ### Fixed
@@ -27,7 +40,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Dropped support for Symfony 4.x < 4.4 [@ciaranmcnulty](https://github.com/ciaranmcnulty)
  - More accurate error message for bad during* calls [@drupol](https://github.com/drupol)
  - Removed superfluous phpdoc and added bool return types where appropriate [@drupol](https://github.com/drupol)
- 
+
+[7.2.0]: https://github.com/phpspec/phpspec/compare/7.1.0...7.2.0
 [7.1.0]: https://github.com/phpspec/phpspec/compare/7.0.1...7.1.0
 [7.0.1]: https://github.com/phpspec/phpspec/compare/7.0.0...7.0.1
 [7.0.0]: https://github.com/phpspec/phpspec/compare/6.2.2...7.0.0
