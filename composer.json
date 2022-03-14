@@ -23,7 +23,7 @@
 
     "require": {
         "php":                      "8.0.* || 8.1.*",
-        "phpspec/prophecy":         "^1.9",
+        "phpspec/prophecy":         "^1.14",
         "phpspec/php-diff":         "^1.1",
         "sebastian/exporter":       "^4.0",
         "symfony/console":          "^5.4 || ^6.0",
@@ -66,5 +66,4 @@
             "dev-next": "8.0.x-dev"
         }
     }
-
 }
