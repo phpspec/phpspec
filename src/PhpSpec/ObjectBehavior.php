@@ -132,7 +132,7 @@ abstract class ObjectBehavior implements
      * @psalm-suppress InvalidAttribute
      */
     #[\ReturnTypeWillChange]
-    public function offsetSet($key, $value)
+    public function offsetSet($key, $value): void
     {
         $this->object->offsetSet($key, $value);
     }
@@ -144,7 +144,7 @@ abstract class ObjectBehavior implements
      * @psalm-suppress InvalidAttribute
      */
     #[\ReturnTypeWillChange]
-    public function offsetUnset($key)
+    public function offsetUnset($key): void
     {
         $this->object->offsetUnset($key);
     }

@@ -24,15 +24,12 @@ use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
 final class MethodNotFoundListener implements EventSubscriberInterface
 {
-    private $io;
-    private $resources;
-    private $generator;
-    private $methods = array();
-    private $wrongMethodNames = array();
-    /**
-     * @var NameChecker
-     */
-    private $nameChecker;
+    private ConsoleIO $io;
+    private ResourceManager $resources;
+    private GeneratorManager $generator;
+    private array $methods = array();
+    private array $wrongMethodNames = array();
+    private NameChecker $nameChecker;
 
     
     public function __construct(
@@ -47,7 +44,7 @@ final class MethodNotFoundListener implements EventSubscriberInterface
         $this->nameChecker = $nameChecker;
     }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return array(
             'afterExample' => array('afterExample', 10),

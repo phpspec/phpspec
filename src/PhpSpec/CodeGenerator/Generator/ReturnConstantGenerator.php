@@ -20,18 +20,9 @@ use PhpSpec\Util\Filesystem;
 
 final class ReturnConstantGenerator implements Generator
 {
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
-    /**
-     * @var TemplateRenderer
-     */
-    private $templates;
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
+    private ConsoleIO $io;
+    private TemplateRenderer $templates;
+    private Filesystem $filesystem;
 
     
     public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem)

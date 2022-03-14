@@ -21,43 +21,16 @@ use InvalidArgumentException;
 
 class PSR0Locator implements ResourceLocator, SrcPathLocator
 {
-    /**
-     * @var string
-     */
-    private $srcPath;
-    /**
-     * @var string
-     */
-    private $specPath;
-    /**
-     * @var string
-     */
-    private $srcNamespace;
-    /**
-     * @var string
-     */
-    private $specNamespace;
-    /**
-     * @var string
-     */
-    private $fullSrcPath;
-    /**
-     * @var string
-     */
-    private $fullSpecPath;
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
+    private string $srcPath;
+    private string $specPath;
+    private string $srcNamespace;
+    private string $specNamespace;
+    private string $fullSrcPath;
+    private string $fullSpecPath;
+    private Filesystem $filesystem;
 
-    /**
-     * @var string
-     */
-    private $psr4Prefix;
+    private ?string $psr4Prefix;
 
-    /**
-     * @param string     $psr4Prefix
-     */
     public function __construct(
         Filesystem $filesystem,
         string $srcNamespace = '',
@@ -154,7 +127,7 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     /**
      * @return Resource[]
      */
-    public function findResources(string $query)
+    public function findResources(string $query): array
     {
         $path = $this->getQueryPath($query);
 
@@ -194,10 +167,7 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
         ;
     }
 
-    /**
-     * @return null|PSR0Resource
-     */
-    public function createResource(string $classname)
+    public function createResource(string $classname): ?PSR0Resource
     {
         $classname = ltrim($classname, '\\');
         $this->validatePsr0Classname($classname);
@@ -228,7 +198,7 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     /**
      * @return PSR0Resource[]
      */
-    protected function findSpecResources(string $path)
+    protected function findSpecResources(string $path): array
     {
         if (!$this->filesystem->pathExists($path)) {
             return array();
@@ -251,7 +221,7 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
      *
      * @return null|string
      */
-    private function findSpecClassname($path)
+    private function findSpecClassname($path): ?string
     {
         // Find namespace and class name
         $namespace = '';
@@ -316,7 +286,7 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     /**
      * @throws InvalidArgumentException
      */
-    private function validatePsr0Classname(string $classname)
+    private function validatePsr0Classname(string $classname): void
     {
         $pattern = '/\A([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*[\/\\\\]?)*[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\z/';
 

@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Matcher;
 
+use PhpSpec\Matcher\Iterate\SubjectHasFewerElementsException;
+use PhpSpec\Matcher\Iterate\SubjectHasMoreElementsException;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Matcher\Iterate\IterablesMatcher;
@@ -20,10 +22,7 @@ use PhpSpec\Wrapper\DelayedCall;
 
 final class IterateAsMatcher implements Matcher
 {
-    /**
-     * @var IterablesMatcher
-     */
-    private $iterablesMatcher;
+    private IterablesMatcher $iterablesMatcher;
 
     
     public function __construct(Presenter $presenter)
@@ -50,9 +49,9 @@ final class IterateAsMatcher implements Matcher
     {
         try {
             $this->iterablesMatcher->match($subject, $arguments[0]);
-        } catch (Iterate\SubjectHasFewerElementsException $exception) {
+        } catch (SubjectHasFewerElementsException $exception) {
             throw new FailureException('Expected subject to have the same number of elements than matched value, but it has fewer.', 0, $exception);
-        } catch (Iterate\SubjectHasMoreElementsException $exception) {
+        } catch (SubjectHasMoreElementsException $exception) {
             throw new FailureException('Expected subject to have the same number of elements than matched value, but it has more.', 0, $exception);
         }
 

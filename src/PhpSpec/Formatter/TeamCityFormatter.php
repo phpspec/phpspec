@@ -11,12 +11,9 @@ use PhpSpec\Event\SuiteEvent;
 
 class TeamCityFormatter extends BasicFormatter
 {
-    /** @var string|null */
-    private $startedTestName = null;
-    /** @var bool */
-    private $isSummaryTestCountPrinted = false;
-    /** @var false|int */
-    private $flowId;
+    private ?string $startedTestName = null;
+    private bool $isSummaryTestCountPrinted = false;
+    private int|false|null $flowId = null;
 
     private function startTest(ExampleEvent $event): void
     {

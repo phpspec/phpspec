@@ -23,7 +23,7 @@ final class ProgressFormatter extends ConsoleFormatter
 
     private $lastDraw;
 
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event): void
     {
         $this->printException($event);
 
@@ -52,7 +52,7 @@ final class ProgressFormatter extends ConsoleFormatter
         }
     }
 
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event): void
     {
         $this->drawStats();
 

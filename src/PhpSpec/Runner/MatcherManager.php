@@ -19,14 +19,11 @@ use PhpSpec\Formatter\Presenter\Presenter;
 
 class MatcherManager
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
     /**
      * @var Matcher[]
      */
-    private $matchers = array();
+    private array $matchers = array();
 
     
     public function __construct(Presenter $presenter)
@@ -54,7 +51,7 @@ class MatcherManager
     }
 
     /**
-     * @throws \PhpSpec\Exception\Wrapper\MatcherNotFoundException
+     * @throws MatcherNotFoundException
      */
     public function find(string $keyword, $subject, array $arguments): Matcher
     {

@@ -47,20 +47,11 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
      */
     const BROKEN  = 4;
 
-    /**
-     * @var ExampleNode
-     */
-    private $example;
+    private ExampleNode $example;
 
-    /**
-     * @var float
-     */
-    private $time;
+    private float $time;
 
-    /**
-     * @var int
-     */
-    private $result;
+    private int $result;
 
     /**
      * @var \Exception

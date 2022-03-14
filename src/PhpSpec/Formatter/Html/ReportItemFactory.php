@@ -19,10 +19,7 @@ use PhpSpec\Formatter\Template as TemplateInterface;
 
 class ReportItemFactory
 {
-    /**
-     * @var TemplateInterface
-     */
-    private $template;
+    private TemplateInterface $template;
 
     
     public function __construct(TemplateInterface $template)

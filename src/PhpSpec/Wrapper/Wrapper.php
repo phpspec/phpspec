@@ -26,26 +26,11 @@ use PhpSpec\Wrapper\Subject\ExpectationFactory;
 
 class Wrapper
 {
-    /**
-     * @var MatcherManager
-     */
-    private $matchers;
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
-    /**
-     * @var ExampleNode
-     */
-    private $example;
-    /**
-     * @var AccessInspector
-     */
-    private $accessInspector;
+    private MatcherManager $matchers;
+    private Presenter $presenter;
+    private EventDispatcherInterface $dispatcher;
+    private ExampleNode $example;
+    private AccessInspector $accessInspector;
 
     /**
      * @param AccessInspector $accessInspector

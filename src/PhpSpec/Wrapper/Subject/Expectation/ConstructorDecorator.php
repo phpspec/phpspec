@@ -13,6 +13,8 @@
 
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
+use PhpSpec\Exception\ErrorException;
+use PhpSpec\Exception\Fracture\FractureException;
 use PhpSpec\Util\Instantiator;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 
@@ -25,9 +27,9 @@ final class ConstructorDecorator extends Decorator implements Expectation
     }
 
     /**
-     * @throws \PhpSpec\Exception\ErrorException
+     * @throws ErrorException
      * @throws \PhpSpec\Exception\Example\ErrorException
-     * @throws \PhpSpec\Exception\Fracture\FractureException
+     * @throws FractureException
      */
     public function match(string $alias, $subject, array $arguments = [], WrappedObject $wrappedObject = null)
     {
@@ -35,7 +37,7 @@ final class ConstructorDecorator extends Decorator implements Expectation
             $wrapped = $subject->getWrappedObject();
         } catch (\PhpSpec\Exception\Example\ErrorException $e) {
             throw $e;
-        } catch (\PhpSpec\Exception\Fracture\FractureException $e) {
+        } catch (FractureException $e) {
             throw $e;
         } catch (\Exception $e) {
             if ($wrappedObject === null || $wrappedObject->getClassName() === null) {

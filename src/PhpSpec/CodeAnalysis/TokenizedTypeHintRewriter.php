@@ -23,24 +23,18 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     const STATE_READING_ARGUMENTS = 3;
     const STATE_READING_FUNCTION_BODY = 4;
 
-    private $state = self::STATE_DEFAULT;
+    private int $state = self::STATE_DEFAULT;
 
     private $currentClass;
     private $currentFunction;
     private $currentBodyLevel;
 
-    private $typehintTokens = array(
+    private array $typehintTokens = array(
         T_WHITESPACE, T_STRING, T_NS_SEPARATOR, T_NAME_FULLY_QUALIFIED, T_NAME_QUALIFIED
     );
 
-    /**
-     * @var TypeHintIndex
-     */
-    private $typeHintIndex;
-    /**
-     * @var NamespaceResolver
-     */
-    private $namespaceResolver;
+    private TypeHintIndex $typeHintIndex;
+    private NamespaceResolver $namespaceResolver;
 
     
     public function __construct(TypeHintIndex $typeHintIndex, NamespaceResolver $namespaceResolver)
@@ -206,10 +200,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         return !\in_array($token[0], $this->typehintTokens);
     }
 
-    /**
-     * @param array|string $token
-     */
-    private function tokenHasType($token, int $type): bool
+    private function tokenHasType(array|string $token, int $type): bool
     {
         return \is_array($token) && $type == $token[0];
     }
@@ -219,10 +210,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         return substr($className, -4) == 'Spec';
     }
 
-    /**
-     * @param array|string $token
-     */
-    private function isToken($token, string $string): bool
+    private function isToken(array|string $token, string $string): bool
     {
         return $token == $string || (\is_array($token) && $token[1] == $string);
     }

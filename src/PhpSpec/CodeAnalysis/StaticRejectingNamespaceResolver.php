@@ -15,10 +15,7 @@ namespace PhpSpec\CodeAnalysis;
 
 final class StaticRejectingNamespaceResolver implements NamespaceResolver
 {
-    /**
-     * @var NamespaceResolver
-     */
-    private $namespaceResolver;
+    private NamespaceResolver $namespaceResolver;
 
     public function __construct(NamespaceResolver $namespaceResolver)
     {
@@ -40,7 +37,7 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
     /**
      * @throws \Exception
      */
-    private function guardNonObjectTypeHints(string $typeAlias)
+    private function guardNonObjectTypeHints(string $typeAlias): void
     {
         $nonObjectTypes = [
             'int',

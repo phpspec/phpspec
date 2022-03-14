@@ -2,6 +2,10 @@
 
 namespace integration\PhpSpec\Console\Prompter;
 
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Helper\QuestionHelper;
+use PhpSpec\Console\Prompter;
 use PhpSpec\Console\Prompter\Question;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
@@ -11,25 +15,16 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  */
 class QuestionTest extends TestCase
 {
-    /**
-     * @var \Symfony\Component\Console\Input\InputInterface
-     */
-    private $input;
+    private InputInterface $input;
 
     /**
-     * @var \Symfony\Component\Console\Output\OutputInterface
+     * @var OutputInterface
      */
     private $output;
 
-    /**
-     * @var \Symfony\Component\Console\Helper\QuestionHelper
-     */
-    private $questionHelper;
+    private QuestionHelper $questionHelper;
 
-    /**
-     * @var \PhpSpec\Console\Prompter
-     */
-    private $prompter;
+    private Prompter $prompter;
 
     protected function setUp() : void
     {

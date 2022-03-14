@@ -21,20 +21,11 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 final class Question implements Prompter
 {
-    /**
-     * @var InputInterface
-     */
-    private $input;
+    private InputInterface $input;
 
-    /**
-     * @var OutputInterface
-     */
-    private $output;
+    private OutputInterface $output;
 
-    /**
-     * @var QuestionHelper
-     */
-    private $helper;
+    private QuestionHelper $helper;
 
     public function __construct(InputInterface $input, OutputInterface $output, QuestionHelper $helper)
     {

@@ -6,10 +6,7 @@ use PhpSpec\ObjectBehavior;
 
 class MethodFailureExceptionSpec extends ObjectBehavior
 {
-    /**
-     * @var mixed
-     */
-    private $subject;
+    private mixed $subject = null;
 
     function let()
     {

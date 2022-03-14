@@ -12,12 +12,12 @@ class ComposerPsrNamespaceProvider
     /**
      * @var string path to the root directory of the project, without a trailing slash
      */
-    private $rootDirectory;
+    private string $rootDirectory;
 
     /**
      * @var string prefix of the specifications namespace
      */
-    private $specPrefix;
+    private string $specPrefix;
 
     public function __construct(string $rootDirectory, string $specPrefix)
     {
@@ -85,7 +85,7 @@ class ComposerPsrNamespaceProvider
         return $namespaces;
     }
 
-    private function normaliseLocation($location)
+    private function normaliseLocation($location): string
     {
         return strpos(realpath($location), realpath($this->rootDirectory)) === 0 ?
             substr(

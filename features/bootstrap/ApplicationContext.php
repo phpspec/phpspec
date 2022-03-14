@@ -16,30 +16,15 @@ class ApplicationContext implements Context
 {
     const JUNIT_XSD_PATH = '/src/PhpSpec/Resources/schema/junit.xsd';
 
-    /**
-     * @var Application
-     */
-    private $application;
+    private ?Application $application = null;
 
-    /**
-     * @var integer
-     */
-    private $lastExitCode;
+    private ?int $lastExitCode = null;
 
-    /**
-     * @var ApplicationTester
-     */
-    private $tester;
+    private ?ApplicationTester $tester = null;
 
-    /**
-     * @var Prompter
-     */
-    private $prompter;
+    private ?Prompter $prompter = null;
 
-    /**
-     * @var ReRunner
-     */
-    private $reRunner;
+    private ?ReRunner $reRunner = null;
 
     /**
      * @beforeScenario
@@ -146,11 +131,9 @@ class ApplicationContext implements Context
     }
 
     /**
-     * @param string  $answer
-     * @param integer $times
      * @param string  $option
      */
-    private function runPhpSpecAndAnswerQuestions($answer, $times, $option = null)
+    private function runPhpSpecAndAnswerQuestions(string $answer, int $times, $option = null)
     {
         $arguments = array (
             'command' => 'run'
@@ -168,7 +151,6 @@ class ApplicationContext implements Context
 
     /**
      * @param string $option
-     * @param array $arguments
      */
     private function addOptionToArguments($option, array &$arguments)
     {

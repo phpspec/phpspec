@@ -22,30 +22,15 @@ use PhpSpec\ServiceContainer;
  */
 final class IndexedServiceContainer implements ServiceContainer
 {
-    /**
-     * @var array
-     */
-    private $parameters = [];
+    private array $parameters = [];
 
-    /**
-     * @var array
-     */
-    private $definitions = [];
+    private array $definitions = [];
 
-    /**
-     * @var array
-     */
-    private $services = [];
+    private array $services = [];
 
-    /**
-     * @var array
-     */
-    private $tags = [];
+    private array $tags = [];
 
-    /**
-     * @var array
-     */
-    private $configurators = [];
+    private array $configurators = [];
 
     /**
      * Sets a param in the container
@@ -99,7 +84,6 @@ final class IndexedServiceContainer implements ServiceContainer
 
     /**
      * Retrieves a service from the container
-     *
      *
      * @return object
      *

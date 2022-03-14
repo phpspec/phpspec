@@ -13,15 +13,13 @@
 
 namespace PhpSpec\Loader;
 
+use PhpSpec\Loader\Node\SpecificationNode;
 class Suite implements \Countable
 {
-    /**
-     * @var array
-     */
-    private $specs = array();
+    private array $specs = array();
 
     
-    public function addSpecification(Node\SpecificationNode $spec): void
+    public function addSpecification(SpecificationNode $spec): void
     {
         $this->specs[] = $spec;
         $spec->setSuite($this);

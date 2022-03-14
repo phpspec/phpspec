@@ -6,7 +6,7 @@ use PhpSpec\ObjectBehavior;
 
 class FileCreationEventSpec extends ObjectBehavior
 {
-    private $filepath = 'foo/bar.php';
+    private string $filepath = 'foo/bar.php';
 
     function let()
     {

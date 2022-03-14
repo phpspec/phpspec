@@ -25,7 +25,7 @@ class GeneratorManager
     /**
      * @var Generator[]
      */
-    private $generators = array();
+    private array $generators = array();
 
     
     public function registerGenerator(Generator $generator): void

@@ -22,10 +22,7 @@ class PropertyNotFoundException extends FractureException
     
     private $subject;
 
-    /**
-     * @var string
-     */
-    private $property;
+    private string $property;
 
     /**
      * @param string $property

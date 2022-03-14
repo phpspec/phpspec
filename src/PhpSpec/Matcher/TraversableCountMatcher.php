@@ -23,10 +23,7 @@ final class TraversableCountMatcher implements Matcher
     const EQUAL = 1;
     const MORE_THAN = 2;
 
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
 
     public function __construct(Presenter $presenter)

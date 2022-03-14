@@ -18,18 +18,12 @@ use PhpSpec\Exception\Example\FailureException;
 
 final class CallbackMatcher extends BasicMatcher
 {
-    /**
-     * @var string
-     */
-    private $name;
+    private string $name;
     /**
      * @var callable
      */
     private $callback;
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
     
     public function __construct(string $name, callable $callback, Presenter $presenter)

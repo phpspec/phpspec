@@ -42,17 +42,11 @@ final class TapFormatter extends ConsoleFormatter
 
     const UNDEFINED_RESULT = -1;
 
-    /**
-     * @var int
-     */
-    private $examplesCount = 0;
+    private int $examplesCount = 0;
 
-    /**
-     * @var string
-     */
-    private $currentSpecificationTitle;
+    private ?string $currentSpecificationTitle = null;
 
-    public function beforeSuite(SuiteEvent $event)
+    public function beforeSuite(SuiteEvent $event): void
     {
         $this->getIO()->writeln(self::VERSION);
         foreach ($this->getStatisticsCollector()->getIgnoredResourceEvents() as $event) {
@@ -65,12 +59,12 @@ final class TapFormatter extends ConsoleFormatter
         }
     }
 
-    public function beforeSpecification(SpecificationEvent $event)
+    public function beforeSpecification(SpecificationEvent $event): void
     {
         $this->currentSpecificationTitle = $event->getSpecification()->getTitle();
     }
 
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event): void
     {
         $this->examplesCount++;
         $desc = sprintf(
@@ -104,7 +98,7 @@ final class TapFormatter extends ConsoleFormatter
         $this->getIO()->writeln($result);
     }
 
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event): void
     {
         $this->getIO()->writeln(sprintf(
             self::PLAN,

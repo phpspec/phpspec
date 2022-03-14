@@ -15,10 +15,7 @@ namespace PhpSpec\Formatter\Presenter;
 
 final class TaggingPresenter implements Presenter
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
     
     public function __construct(Presenter $presenter)

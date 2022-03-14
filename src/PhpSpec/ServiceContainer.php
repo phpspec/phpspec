@@ -21,11 +21,10 @@ interface ServiceContainer
     /**
      * Sets a object to be used as a service
      *
-     * @param object $service
      *
      * @throws \InvalidArgumentException if service is not an object
      */
-    public function set(string $id, $service, array $tags = []): void;
+    public function set(string $id, object $service, array $tags = []): void;
 
     /**
      * Sets a factory for the service creation. The same service will

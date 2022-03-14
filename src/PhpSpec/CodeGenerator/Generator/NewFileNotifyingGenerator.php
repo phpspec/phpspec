@@ -9,20 +9,11 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 final class NewFileNotifyingGenerator implements Generator
 {
-    /**
-     * @var Generator
-     */
-    private $generator;
+    private Generator $generator;
 
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
+    private EventDispatcherInterface $dispatcher;
 
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
+    private Filesystem $filesystem;
 
     
     public function __construct(Generator $generator, EventDispatcherInterface $dispatcher, Filesystem $filesystem)

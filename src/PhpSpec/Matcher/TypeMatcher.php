@@ -18,19 +18,13 @@ use PhpSpec\Exception\Example\FailureException;
 
 final class TypeMatcher extends BasicMatcher
 {
-    /**
-     * @var array
-     */
-    private static $keywords = array(
+    private static array $keywords = array(
         'beAnInstanceOf',
         'returnAnInstanceOf',
         'haveType',
         'implement'
     );
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
     
     public function __construct(Presenter $presenter)

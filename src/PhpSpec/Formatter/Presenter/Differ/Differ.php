@@ -15,7 +15,7 @@ namespace PhpSpec\Formatter\Presenter\Differ;
 
 class Differ
 {
-    private $engines = array();
+    private array $engines = array();
 
     public function __construct(array $engines = array())
     {

@@ -27,40 +27,19 @@ class ConsoleIO implements IO
     const COL_DEFAULT_WIDTH = 60;
     const COL_MAX_WIDTH = 80;
 
-    /**
-     * @var InputInterface
-     */
-    private $input;
+    private InputInterface $input;
 
-    /**
-     * @var OutputInterface
-     */
-    private $output;
+    private OutputInterface $output;
 
-    /**
-     * @var string
-     */
-    private $lastMessage;
+    private ?string $lastMessage = null;
 
-    /**
-     * @var bool
-     */
-    private $hasTempString = false;
+    private bool $hasTempString = false;
 
-    /**
-      * @var OptionsConfig
-      */
-    private $config;
+    private OptionsConfig $config;
 
-    /**
-     * @var int
-     */
-    private $consoleWidth;
+    private ?int $consoleWidth = null;
 
-    /**
-     * @var Prompter
-     */
-    private $prompter;
+    private Prompter $prompter;
 
     public function __construct(
         InputInterface $input,
@@ -108,7 +87,7 @@ class ConsoleIO implements IO
 
     public function getLastWrittenMessage(): string
     {
-        return $this->lastMessage;
+        return $this->lastMessage ?? '';
     }
 
     public function writeln(string $message = '', int $indent = null): void

@@ -16,10 +16,10 @@ namespace PhpSpec\Locator;
 interface ResourceManager
 {
     /**
-     * @return \PhpSpec\Locator\Resource[]
+     * @return Resource[]
      */
     public function locateResources(string $query): array;
 
     
-    public function createResource(string $classname): \PhpSpec\Locator\Resource;
+    public function createResource(string $classname): Resource;
 }

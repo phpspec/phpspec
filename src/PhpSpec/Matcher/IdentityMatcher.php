@@ -19,19 +19,13 @@ use PhpSpec\Exception\Example\NotEqualException;
 
 final class IdentityMatcher extends BasicMatcher
 {
-    /**
-     * @var array
-     */
-    private static $keywords = array(
+    private static array $keywords = array(
         'return',
         'be',
         'equal',
         'beEqualTo'
     );
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
     
     public function __construct(Presenter $presenter)

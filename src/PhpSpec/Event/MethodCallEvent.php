@@ -22,23 +22,14 @@ use PhpSpec\Loader\Suite;
  */
 class MethodCallEvent extends BaseEvent implements PhpSpecEvent
 {
-    /**
-     * @var ExampleNode
-     */
-    private $example;
+    private ExampleNode $example;
 
     
     private $subject;
 
-    /**
-     * @var string
-     */
-    private $method;
+    private string $method;
 
-    /**
-     * @var array
-     */
-    private $arguments;
+    private array $arguments;
 
     
     private $returnValue;

@@ -19,26 +19,17 @@ use ReflectionClass;
 
 class SpecificationNode implements \Countable
 {
-    /**
-     * @var string
-     */
-    private $title;
-    /**
-     * @var \ReflectionClass
-     */
-    private $class;
+    private string $title;
+    private \ReflectionClass $class;
     /**
      * @var Resource
      */
     private $resource;
-    /**
-     * @var Suite
-     */
-    private $suite;
+    private ?Suite $suite = null;
     /**
      * @var ExampleNode[]
      */
-    private $examples = array();
+    private array $examples = array();
 
     
     public function __construct(string $title, ReflectionClass $class, Resource $resource)
@@ -82,7 +73,7 @@ class SpecificationNode implements \Countable
     }
 
     
-    public function setSuite(Suite $suite)
+    public function setSuite(Suite $suite): void
     {
         $this->suite = $suite;
     }
@@ -90,7 +81,7 @@ class SpecificationNode implements \Countable
     /**
      * @return null|Suite
      */
-    public function getSuite()
+    public function getSuite(): ?Suite
     {
         return $this->suite;
     }

@@ -26,22 +26,10 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 final class SubjectMaintainer implements Maintainer
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-    /**
-     * @var Unwrapper
-     */
-    private $unwrapper;
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
-    /**
-     * @var AccessInspector
-     */
-    private $accessInspector;
+    private Presenter $presenter;
+    private Unwrapper $unwrapper;
+    private EventDispatcherInterface $dispatcher;
+    private AccessInspector $accessInspector;
 
     
     public function __construct(

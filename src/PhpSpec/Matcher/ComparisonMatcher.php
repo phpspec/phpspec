@@ -19,10 +19,7 @@ use PhpSpec\Exception\Example\FailureException;
 
 final class ComparisonMatcher extends BasicMatcher
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
     
     public function __construct(Presenter $presenter)

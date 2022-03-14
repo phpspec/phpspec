@@ -34,10 +34,7 @@ final class VisibilityAccessInspector implements AccessInspector
         return $this->isExistingPublicProperty($object, $property);
     }
 
-    /**
-     * @param object $object
-     */
-    private function isExistingPublicProperty($object, string $property): bool
+    private function isExistingPublicProperty(object $object, string $property): bool
     {
         if (!property_exists($object, $property)) {
             return false;
@@ -56,10 +53,7 @@ final class VisibilityAccessInspector implements AccessInspector
         return $this->isExistingPublicMethod($object, $method);
     }
 
-    /**
-     * @param object $object
-     */
-    private function isExistingPublicMethod($object, string $method): bool
+    private function isExistingPublicMethod(object $object, string $method): bool
     {
         if (!method_exists($object, $method)) {
             return false;

@@ -21,10 +21,7 @@ use PhpSpec\Exception\Example as ExampleException;
 
 final class ErrorMaintainer implements Maintainer
 {
-    /**
-     * @var int
-     */
-    private $errorLevel;
+    private int $errorLevel;
     /**
      * @var null|callable
      */

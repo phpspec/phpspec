@@ -18,15 +18,9 @@ use PhpSpec\Formatter\Presenter\Value\ValuePresenter;
 
 final class SimplePresenter implements Presenter
 {
-    /**
-     * @var ValuePresenter
-     */
-    private $valuePresenter;
+    private ValuePresenter $valuePresenter;
 
-    /**
-     * @var ExceptionPresenter
-     */
-    private $exceptionPresenter;
+    private ExceptionPresenter $exceptionPresenter;
 
     
     public function __construct(ValuePresenter $valuePresenter, ExceptionPresenter $exceptionPresenter)

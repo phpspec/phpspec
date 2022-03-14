@@ -19,10 +19,7 @@ use PhpSpec\Wrapper\DelayedCall;
 
 final class ScalarMatcher implements Matcher
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
     
     public function __construct(Presenter $presenter)
@@ -44,7 +41,7 @@ final class ScalarMatcher implements Matcher
      * Evaluates positive match.
      *
      *
-     * @throws \PhpSpec\Exception\Example\FailureException
+     * @throws FailureException
      */
     public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
@@ -69,7 +66,7 @@ final class ScalarMatcher implements Matcher
      * Evaluates negative match.
      *
      *
-     * @throws \PhpSpec\Exception\Example\FailureException
+     * @throws FailureException
      */
     public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
@@ -101,7 +98,7 @@ final class ScalarMatcher implements Matcher
     /**
      * @return false|string
      */
-    private function getCheckerName(string $name)
+    private function getCheckerName(string $name): bool|string
     {
         if (0 !== strpos($name, 'be')) {
             return false;

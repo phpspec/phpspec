@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Runner;
 
+use PhpSpec\Exception\Example\PendingException;
 use Error;
 use PhpSpec\Exception\ErrorException;
 use PhpSpec\Runner\Maintainer\Maintainer;
@@ -29,18 +30,12 @@ use Exception;
 
 class ExampleRunner
 {
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private EventDispatcherInterface $dispatcher;
+    private Presenter $presenter;
     /**
      * @var Maintainer[]
      */
-    private $maintainers = array();
+    private array $maintainers = array();
 
     
     public function __construct(EventDispatcherInterface $dispatcher, Presenter $presenter)
@@ -110,7 +105,7 @@ class ExampleRunner
     }
 
     /**
-     * @throws \PhpSpec\Exception\Example\PendingException
+     * @throws PendingException
      * @throws \Exception
      */
     protected function executeExample(Specification $context, ExampleNode $example): void
@@ -177,7 +172,7 @@ class ExampleRunner
      *
      * @return Maintainer[]
      */
-    private function searchExceptionMaintainers(array $maintainers)
+    private function searchExceptionMaintainers(array $maintainers): array
     {
         return array_filter(
             $maintainers,

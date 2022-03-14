@@ -18,10 +18,7 @@ use PhpSpec\Util\ClassFileAnalyser;
 
 final class TokenizedCodeWriter implements CodeWriter
 {
-    /**
-     * @var ClassFileAnalyser
-     */
-    private $analyser;
+    private ClassFileAnalyser $analyser;
 
     
     public function __construct(ClassFileAnalyser $analyser)

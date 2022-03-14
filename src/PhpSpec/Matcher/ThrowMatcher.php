@@ -24,25 +24,13 @@ use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
 final class ThrowMatcher implements Matcher
 {
-    /**
-     * @var array
-     */
-    private static $ignoredProperties = array('file', 'line', 'string', 'trace', 'previous');
+    private static array $ignoredProperties = array('file', 'line', 'string', 'trace', 'previous');
 
-    /**
-     * @var Unwrapper
-     */
-    private $unwrapper;
+    private Unwrapper $unwrapper;
 
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
 
-    /**
-     * @var ReflectionFactory
-     */
-    private $factory;
+    private ReflectionFactory $factory;
 
     public function __construct(Unwrapper $unwrapper, Presenter $presenter, ReflectionFactory $factory)
     {
@@ -72,10 +60,10 @@ final class ThrowMatcher implements Matcher
     /**
      * @param null|object|string $exception
      *
-     * @throws \PhpSpec\Exception\Example\FailureException
-     * @throws \PhpSpec\Exception\Example\NotEqualException
+     * @throws FailureException
+     * @throws NotEqualException
      */
-    public function verifyPositive(callable $callable, array $arguments, $exception = null)
+    public function verifyPositive(callable $callable, array $arguments, $exception = null): void
     {
         $exceptionThrown = null;
 
@@ -148,9 +136,9 @@ final class ThrowMatcher implements Matcher
     /**
      * @param null|object|string $exception
      *
-     * @throws \PhpSpec\Exception\Example\FailureException
+     * @throws FailureException
      */
-    public function verifyNegative(callable $callable, array $arguments, $exception = null)
+    public function verifyNegative(callable $callable, array $arguments, $exception = null): void
     {
         $exceptionThrown = null;
 
@@ -259,7 +247,7 @@ final class ThrowMatcher implements Matcher
     /**
      * @return null|string|\Throwable
      *
-     * @throws \PhpSpec\Exception\Example\MatcherException
+     * @throws MatcherException
      */
     private function getException(array $arguments)
     {

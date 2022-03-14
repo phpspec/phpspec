@@ -20,20 +20,11 @@ use PhpSpec\Wrapper\Subject\WrappedObject;
 
 abstract class DuringCall
 {
-    /**
-     * @var Matcher
-     */
-    private $matcher;
+    private Matcher $matcher;
 
     private $subject;
-    /**
-     * @var array
-     */
-    private $arguments;
-    /**
-     * @var WrappedObject
-     */
-    private $wrappedObject;
+    private array $arguments = [];
+    private ?WrappedObject $wrappedObject = null;
 
 
     public function __construct(Matcher $matcher)
@@ -46,7 +37,7 @@ abstract class DuringCall
      *
      * @return $this
      */
-    public function match(string $alias, $subject, array $arguments = array(), $wrappedObject = null)
+    public function match(string $alias, $subject, array $arguments = array(), $wrappedObject = null): static
     {
         $this->subject = $subject;
         $this->arguments = $arguments;
@@ -112,9 +103,5 @@ abstract class DuringCall
         return $this->matcher;
     }
 
-    /**
-     * @param object $object
-     * @param string $method
-     */
-    abstract protected function runDuring($object, $method, array $arguments = array());
+    abstract protected function runDuring(object $object, string $method, array $arguments = array());
 }

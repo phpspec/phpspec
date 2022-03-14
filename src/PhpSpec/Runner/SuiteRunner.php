@@ -20,14 +20,8 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class SuiteRunner
 {
-    /**
-     * @var EventDispatcher
-     */
-    private $dispatcher;
-    /**
-     * @var SpecificationRunner
-     */
-    private $specRunner;
+    private EventDispatcher $dispatcher;
+    private SpecificationRunner $specRunner;
 
     
     public function __construct(EventDispatcher $dispatcher, SpecificationRunner $specRunner)

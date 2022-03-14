@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\Matcher;
 
+use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Factory\ReflectionFactory;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Wrapper\Unwrapper;
@@ -67,7 +68,7 @@ class ThrowMatcherSpec extends ObjectBehavior
 
         $callable = function () use ($actually_thrown_error) { throw $actually_thrown_error; };
 
-        $expected_error = new \PhpSpec\Exception\Example\FailureException(
+        $expected_error = new FailureException(
             'Expected exception of class Exception, but got Error with the message: "This is a test Error"'
         );
 

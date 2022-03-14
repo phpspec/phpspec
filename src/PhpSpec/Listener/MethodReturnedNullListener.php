@@ -26,29 +26,14 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class MethodReturnedNullListener implements EventSubscriberInterface
 {
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
+    private ConsoleIO $io;
 
-    private $nullMethods = array();
+    private array $nullMethods = array();
 
-    /**
-     * @var null|MethodCallEvent
-     */
-    private $lastMethodCallEvent = null;
-    /**
-     * @var ResourceManager
-     */
-    private $resources;
-    /**
-     * @var GeneratorManager
-     */
-    private $generator;
-    /**
-     * @var MethodAnalyser
-     */
-    private $methodAnalyser;
+    private ?MethodCallEvent $lastMethodCallEvent = null;
+    private ResourceManager $resources;
+    private GeneratorManager $generator;
+    private MethodAnalyser $methodAnalyser;
 
     
     public function __construct(
@@ -66,7 +51,7 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
     /**
      * @{inheritdoc}
      */
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return array(
             'afterExample' => array('afterExample', 10),

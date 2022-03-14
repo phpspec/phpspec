@@ -20,18 +20,15 @@ use Exception;
  */
 class StopOnFailureException extends ExampleException
 {
-    /**
-     * @var int
-     */
-    private $result;
+    private int $result;
 
-    public function __construct($message = "", $code = 0, Exception $previous = null, $result = 0)
+    public function __construct($message = "", $code = 0, Exception $previous = null, int $result = 0)
     {
         parent::__construct($message, $code, $previous);
         $this->result = $result;
     }
 
-    public function getResult()
+    public function getResult(): int
     {
         return $this->result;
     }

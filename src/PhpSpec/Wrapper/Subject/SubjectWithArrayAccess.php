@@ -21,18 +21,9 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class SubjectWithArrayAccess
 {
-    /**
-     * @var Caller
-     */
-    private $caller;
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
+    private Caller $caller;
+    private Presenter $presenter;
+    private EventDispatcherInterface $dispatcher;
 
     
     public function __construct(
@@ -45,10 +36,7 @@ class SubjectWithArrayAccess
         $this->dispatcher = $dispatcher;
     }
 
-    /**
-     * @param int|string $key
-     */
-    public function offsetExists($key): bool
+    public function offsetExists(int|string $key): bool
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -60,10 +48,7 @@ class SubjectWithArrayAccess
         return isset($subject[$key]);
     }
 
-    /**
-     * @param int|string $key
-     */
-    public function offsetGet($key)
+    public function offsetGet(int|string $key)
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -75,10 +60,7 @@ class SubjectWithArrayAccess
         return $subject[$key];
     }
 
-    /**
-     * @param int|string $key
-     */
-    public function offsetSet($key, $value): void
+    public function offsetSet(int|string $key, $value): void
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -91,10 +73,7 @@ class SubjectWithArrayAccess
         $subject[$key] = $value;
     }
 
-    /**
-     * @param int|string $key
-     */
-    public function offsetUnset($key): void
+    public function offsetUnset(int|string $key): void
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -107,8 +86,8 @@ class SubjectWithArrayAccess
     }
 
     /**
-     * @throws \PhpSpec\Exception\Wrapper\SubjectException
-     * @throws \PhpSpec\Exception\Fracture\InterfaceNotImplementedException
+     * @throws SubjectException
+     * @throws InterfaceNotImplementedException
      */
     private function checkIfSubjectImplementsArrayAccess($subject): void
     {

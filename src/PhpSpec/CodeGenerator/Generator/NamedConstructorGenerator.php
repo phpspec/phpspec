@@ -22,24 +22,12 @@ use PhpSpec\Util\Filesystem;
 
 final class NamedConstructorGenerator implements Generator
 {
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
+    private ConsoleIO $io;
 
-    /**
-     * @var TemplateRenderer
-     */
-    private $templates;
+    private TemplateRenderer $templates;
 
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
-    /**
-     * @var CodeWriter
-     */
-    private $codeWriter;
+    private Filesystem $filesystem;
+    private CodeWriter $codeWriter;
 
     
     public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, CodeWriter $codeWriter)

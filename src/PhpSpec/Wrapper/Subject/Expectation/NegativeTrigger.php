@@ -17,9 +17,8 @@ final class NegativeTrigger extends DuringCall implements ThrowExpectation
 {
     /**
      * @param object $object
-     * @param string $method
      */
-    protected function runDuring($object, $method, array $arguments = array())
+    protected function runDuring($object, string $method, array $arguments = array())
     {
         return $this->getMatcher()->negativeMatch('trigger', $object, $this->getArguments())
             ->during($method, $arguments);

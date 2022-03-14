@@ -18,14 +18,8 @@ use PhpSpec\Formatter\Template as TemplateInterface;
 
 class ReportSkippedItem
 {
-    /**
-     * @var TemplateInterface
-     */
-    private $template;
-    /**
-     * @var ExampleEvent
-     */
-    private $event;
+    private TemplateInterface $template;
+    private ExampleEvent $event;
 
     
     public function __construct(TemplateInterface $template, ExampleEvent $event)

@@ -17,14 +17,8 @@ use SebastianBergmann\Exporter\Exporter;
 
 final class ObjectEngine implements DifferEngine
 {
-    /**
-     * @var Exporter
-     */
-    private $exporter;
-    /**
-     * @var StringEngine
-     */
-    private $stringDiffer;
+    private Exporter $exporter;
+    private StringEngine $stringDiffer;
 
     
     public function __construct(Exporter $exporter, StringEngine $stringDiffer)

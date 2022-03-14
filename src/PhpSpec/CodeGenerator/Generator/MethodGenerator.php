@@ -24,25 +24,13 @@ use PhpSpec\Locator\Resource;
  */
 final class MethodGenerator implements Generator
 {
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
+    private ConsoleIO $io;
 
-    /**
-     * @var TemplateRenderer
-     */
-    private $templates;
+    private TemplateRenderer $templates;
 
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
+    private Filesystem $filesystem;
 
-    /**
-     * @var CodeWriter
-     */
-    private $codeWriter;
+    private CodeWriter $codeWriter;
 
     
     public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, CodeWriter $codeWriter)

@@ -20,10 +20,7 @@ use Prophecy\Prophecy\MethodProphecy;
 
 class CallArgumentsPresenter
 {
-    /**
-     * @var Differ
-     */
-    private $differ;
+    private Differ $differ;
 
     
     public function __construct(Differ $differ)
@@ -73,7 +70,7 @@ class CallArgumentsPresenter
     private function findFirstUnexpectedArgumentsCallProphecy(
         array $methodProphecies,
         UnexpectedCallException $exception
-    ){
+    ): ?MethodProphecy{
         $objectProphecy = $exception->getObjectProphecy();
 
         foreach ($methodProphecies as $methodProphecy) {

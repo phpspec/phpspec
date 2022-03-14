@@ -20,10 +20,7 @@ use PhpSpec\Console\ConsoleIO;
 
 final class StopOnFailureListener implements EventSubscriberInterface
 {
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
+    private ConsoleIO $io;
 
     
     public function __construct(ConsoleIO $io)
@@ -40,7 +37,7 @@ final class StopOnFailureListener implements EventSubscriberInterface
     }
 
     /**
-     * @throws \PhpSpec\Exception\Example\StopOnFailureException
+     * @throws StopOnFailureException
      */
     public function afterExample(ExampleEvent $event): void
     {

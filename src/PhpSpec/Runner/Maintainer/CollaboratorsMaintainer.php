@@ -30,23 +30,11 @@ use ReflectionNamedType;
 
 final class CollaboratorsMaintainer implements Maintainer
 {
-    /**
-     * @var string
-     */
-    private static $docex = '#@param *([^ ]*) *\$([^ ]*)#';
-    /**
-     * @var Unwrapper
-     */
-    private $unwrapper;
-    /**
-     * @var Prophet
-     */
-    private $prophet;
+    private static string $docex = '#@param *([^ ]*) *\$([^ ]*)#';
+    private Unwrapper $unwrapper;
+    private ?Prophet $prophet = null;
 
-    /**
-     * @var TypeHintIndex
-     */
-    private $typeHintIndex;
+    private TypeHintIndex $typeHintIndex;
 
     
     public function __construct(Unwrapper $unwrapper, TypeHintIndex $typeHintIndex)

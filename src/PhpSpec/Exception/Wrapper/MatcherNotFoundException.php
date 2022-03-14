@@ -21,18 +21,12 @@ use PhpSpec\Exception\Exception;
  */
 class MatcherNotFoundException extends Exception
 {
-    /**
-     * @var string
-     */
-    private $keyword;
+    private string $keyword;
 
     
     private $subject;
 
-    /**
-     * @var array
-     */
-    private $arguments;
+    private array $arguments;
 
     
     public function __construct(string $message, string $keyword, $subject, array $arguments)

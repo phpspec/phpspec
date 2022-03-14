@@ -6,10 +6,10 @@ use PhpSpec\Console\Prompter as PrompterInterface;
 
 class Prompter implements PrompterInterface
 {
-    private $answers = array();
-    private $hasBeenAsked = false;
+    private array $answers = array();
+    private bool $hasBeenAsked = false;
     private $question;
-    private $unansweredQuestions = false;
+    private bool $unansweredQuestions = false;
 
     public function setAnswer($answer)
     {

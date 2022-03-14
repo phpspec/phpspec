@@ -18,10 +18,7 @@ class MethodFailureException extends NotEqualException
     
     private $subject;
 
-    /**
-     * @var string
-     */
-    private $method;
+    private string $method;
 
     /**
      * @param string $method

@@ -20,14 +20,11 @@ use ReflectionFunctionAbstract;
 
 class CollaboratorManager
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private Presenter $presenter;
     /**
      * @var Collaborator[]
      */
-    private $collaborators = array();
+    private array $collaborators = array();
 
     
     public function __construct(Presenter $presenter)
@@ -52,7 +49,7 @@ class CollaboratorManager
     /**
      * @return object
      *
-     * @throws \PhpSpec\Exception\Wrapper\CollaboratorException
+     * @throws CollaboratorException
      */
     public function get(string $name)
     {

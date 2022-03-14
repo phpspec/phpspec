@@ -29,35 +29,17 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
 {
     const PROMPT = 'Would you like me to generate a method signature `%s::%s()` for you?';
 
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
+    private ConsoleIO $io;
 
-    /**
-     * @var array
-     */
-    private $interfaces = array();
+    private array $interfaces = array();
 
-    /**
-     * @var ResourceManager
-     */
-    private $resources;
+    private ResourceManager $resources;
 
-    /**
-     * @var GeneratorManager
-     */
-    private $generator;
+    private GeneratorManager $generator;
 
-    /**
-     * @var NameChecker
-     */
-    private $nameChecker;
+    private NameChecker $nameChecker;
 
-    /**
-     * @var array
-     */
-    private $wrongMethodNames = array();
+    private array $wrongMethodNames = array();
 
     
     public function __construct(

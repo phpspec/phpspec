@@ -22,15 +22,9 @@ abstract class MethodInvocationException extends FractureException
     
     private $subject;
 
-    /**
-     * @var string
-     */
-    private $method;
+    private string $method;
 
-    /**
-     * @var array
-     */
-    private $arguments;
+    private array $arguments;
 
     /**
      * @param string $method

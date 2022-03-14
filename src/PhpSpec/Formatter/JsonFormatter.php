@@ -18,7 +18,7 @@ use PhpSpec\Event\SuiteEvent;
 
 final class JsonFormatter extends BasicFormatter
 {
-    private $data = [
+    private array $data = [
         'status' => '',
         'time' => 0,
         'specifications' => [],
@@ -32,7 +32,7 @@ final class JsonFormatter extends BasicFormatter
         ExampleEvent::BROKEN  => 'broken',
     ];
 
-    public function beforeSpecification(SpecificationEvent $event)
+    public function beforeSpecification(SpecificationEvent $event): void
     {
         $this->data['specifications'][$event->getSpecification()->getTitle()] = [
             'status' => '',
@@ -41,7 +41,7 @@ final class JsonFormatter extends BasicFormatter
         ];
     }
 
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event): void
     {
         $specification = $event->getSpecification()->getTitle();
         $example = $event->getTitle();
@@ -63,7 +63,7 @@ final class JsonFormatter extends BasicFormatter
         ];
     }
 
-    public function afterSpecification(SpecificationEvent $event)
+    public function afterSpecification(SpecificationEvent $event): void
     {
         $specification = $event->getSpecification()->getTitle();
         
@@ -71,7 +71,7 @@ final class JsonFormatter extends BasicFormatter
         $this->data['specifications'][$specification]['time'] = $event->getTime();
     }
 
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event): void
     {
         $this->data['status'] = self::STATUS_NAME[$event->getResult()];
         $this->data['time'] = $event->getTime();

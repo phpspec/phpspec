@@ -18,7 +18,7 @@ use PhpSpec\Exception\Generator\NoMethodFoundInClass;
 
 final class ClassFileAnalyser
 {
-    private $tokenLists = array();
+    private array $tokenLists = array();
 
     
     public function getStartLineOfFirstMethod(string $class): int

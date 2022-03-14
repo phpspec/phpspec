@@ -15,9 +15,9 @@ namespace PhpSpec\Message;
 
 final class CurrentExampleTracker
 {
-    private $currentExample;
+    private ?string $currentExample = null;
 
-    public function setCurrentExample(string $currentExample = null)
+    public function setCurrentExample(string $currentExample = null): void
     {
         $this->currentExample = $currentExample;
     }

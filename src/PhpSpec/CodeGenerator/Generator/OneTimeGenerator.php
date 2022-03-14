@@ -17,15 +17,9 @@ use PhpSpec\Locator\Resource;
 
 final class OneTimeGenerator implements Generator
 {
-    /**
-     * @var Generator
-     */
-    private $generator;
+    private Generator $generator;
 
-    /**
-     * @var array
-     */
-    private $alreadyGenerated = array();
+    private array $alreadyGenerated = array();
 
     
     public function __construct(Generator $generator)

@@ -2,6 +2,11 @@
 
 namespace spec\PhpSpec\Wrapper\Subject;
 
+use PhpSpec\Exception\Fracture\ClassNotFoundException;
+use PhpSpec\Exception\Fracture\MethodNotFoundException;
+use PhpSpec\Exception\Fracture\NamedConstructorNotFoundException;
+use PhpSpec\Exception\Fracture\MethodNotVisibleException;
+use PhpSpec\Exception\Wrapper\SubjectException;
 use Phpspec\CodeAnalysis\AccessInspector;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Exception\ExceptionFactory;
@@ -103,7 +108,7 @@ class CallerSpec extends ObjectBehavior
         $wrappedObject->getClassName()->willReturn('Foo');
 
         $exceptions->classNotFound('Foo')
-            ->willReturn(new \PhpSpec\Exception\Fracture\ClassNotFoundException(
+            ->willReturn(new ClassNotFoundException(
                 'Class "Foo" does not exist.',
                 '"Foo"'
             ))
@@ -127,7 +132,7 @@ class CallerSpec extends ObjectBehavior
         $accessInspector->isMethodCallable($obj,'foo')->willReturn(false);
 
         $exceptions->methodNotFound('ArrayObject', 'foo', array())
-            ->willReturn(new \PhpSpec\Exception\Fracture\MethodNotFoundException(
+            ->willReturn(new MethodNotFoundException(
                 'Method "foo" not found.',
                 $obj,
                 '"ArrayObject::foo"',
@@ -150,7 +155,7 @@ class CallerSpec extends ObjectBehavior
         $wrappedObject->getFactoryMethod()->willReturn(null);
 
         $exceptions->methodNotFound('spec\PhpSpec\Wrapper\Subject\ExampleClass', '__construct', array($argument))
-            ->willReturn(new \PhpSpec\Exception\Fracture\MethodNotFoundException(
+            ->willReturn(new MethodNotFoundException(
                     'Method "__construct" not found.',
                     $obj,
                     '"ExampleClass::__construct"',
@@ -174,7 +179,7 @@ class CallerSpec extends ObjectBehavior
         $wrappedObject->getArguments()->willReturn($arguments);
 
         $exceptions->namedConstructorNotFound('ArrayObject', 'register', $arguments)
-            ->willReturn(new \PhpSpec\Exception\Fracture\NamedConstructorNotFoundException(
+            ->willReturn(new NamedConstructorNotFoundException(
                 'Named constructor "register" not found.',
                 $obj,
                 '"ArrayObject::register"',
@@ -200,7 +205,7 @@ class CallerSpec extends ObjectBehavior
         $accessInspector->isMethodCallable($obj,'privateMethod')->willReturn(false);
 
         $exceptions->methodNotVisible('spec\PhpSpec\Wrapper\Subject\ExampleClass', 'privateMethod', array())
-            ->willReturn(new \PhpSpec\Exception\Fracture\MethodNotVisibleException(
+            ->willReturn(new MethodNotVisibleException(
                 'Method "privateMethod" not visible.',
                 $obj,
                 '"ExampleClass::privateMethod"',
@@ -225,7 +230,7 @@ class CallerSpec extends ObjectBehavior
         $accessInspector->isPropertyWritable($obj,'nonExistentProperty')->willReturn(false);
 
         $exceptions->propertyNotFound($obj, 'nonExistentProperty')
-            ->willReturn(new \PhpSpec\Exception\Fracture\PropertyNotFoundException(
+            ->willReturn(new PropertyNotFoundException(
                 'Property "nonExistentProperty" not found.',
                 $obj,
                 'nonExistentProperty'
@@ -239,7 +244,7 @@ class CallerSpec extends ObjectBehavior
     function it_delegates_throwing_calling_method_on_non_object_exception(ExceptionFactory $exceptions)
     {
         $exceptions->callingMethodOnNonObject('foo')
-            ->willReturn(new \PhpSpec\Exception\Wrapper\SubjectException(
+            ->willReturn(new SubjectException(
                 'Call to a member function "foo()" on a non-object.'
             ))
             ->shouldBeCalled();
@@ -251,7 +256,7 @@ class CallerSpec extends ObjectBehavior
     function it_delegates_throwing_setting_property_on_non_object_exception(ExceptionFactory $exceptions)
     {
         $exceptions->settingPropertyOnNonObject('foo')
-            ->willReturn(new \PhpSpec\Exception\Wrapper\SubjectException(
+            ->willReturn(new SubjectException(
                 'Setting property "foo" on a non-object.'
             ))
             ->shouldBeCalled();
@@ -262,7 +267,7 @@ class CallerSpec extends ObjectBehavior
     function it_delegates_throwing_getting_property_on_non_object_exception(ExceptionFactory $exceptions)
     {
         $exceptions->gettingPropertyOnNonObject('foo')
-            ->willReturn(new \PhpSpec\Exception\Wrapper\SubjectException(
+            ->willReturn(new SubjectException(
                 'Getting property "foo" on a non-object.'
             ))
             ->shouldBeCalled();

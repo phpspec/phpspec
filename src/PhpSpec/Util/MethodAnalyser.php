@@ -48,7 +48,7 @@ class MethodAnalyser
     }
 
     
-    private function getCodeBody(\ReflectionMethod $reflectionMethod): string
+    private function getCodeBody(\ReflectionMethod $reflectionMethod): ?string
     {
         $endLine = $reflectionMethod->getEndLine();
         $startLine = $reflectionMethod->getStartLine();

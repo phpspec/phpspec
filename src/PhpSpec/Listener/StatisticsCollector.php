@@ -21,18 +21,18 @@ use PhpSpec\Event\SpecificationEvent;
 
 class StatisticsCollector implements EventSubscriberInterface
 {
-    private $globalResult = 0;
-    private $totalSpecs = 0;
-    private $totalSpecsCount = 0;
+    private int $globalResult = 0;
+    private int $totalSpecs = 0;
+    private int $totalSpecsCount = 0;
 
-    private $passedEvents = array();
-    private $pendingEvents = array();
-    private $skippedEvents = array();
-    private $failedEvents = array();
-    private $brokenEvents = array();
-    private $resourceIgnoredEvents = array();
+    private array $passedEvents = array();
+    private array $pendingEvents = array();
+    private array $skippedEvents = array();
+    private array $failedEvents = array();
+    private array $brokenEvents = array();
+    private array $resourceIgnoredEvents = array();
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return array(
             'afterSpecification' => array('afterSpecification', 10),
@@ -75,7 +75,7 @@ class StatisticsCollector implements EventSubscriberInterface
         $this->totalSpecsCount = \count($suiteEvent->getSuite()->getSpecifications());
     }
 
-    public function onResourceIgnored(ResourceEvent $resourceEvent)
+    public function onResourceIgnored(ResourceEvent $resourceEvent): void
     {
         $this->resourceIgnoredEvents[] = $resourceEvent;
     }

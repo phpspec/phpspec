@@ -17,35 +17,17 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class OptionsConfig
 {
-    /**
-     * @var bool
-     */
-    private $stopOnFailureEnabled;
+    private bool $stopOnFailureEnabled;
 
-    /**
-     * @var bool
-     */
-    private $codeGenerationEnabled;
+    private bool $codeGenerationEnabled;
 
-    /**
-     * @var bool
-     */
-    private $reRunEnabled;
+    private bool $reRunEnabled;
 
-    /**
-     * @var bool
-     */
-    private $fakingEnabled;
+    private bool $fakingEnabled;
 
-    /**
-     * @var bool|string
-     */
-    private $bootstrapPath;
+    private bool|string $bootstrapPath;
 
-    /**
-     * @var bool
-     */
-    private $isVerbose;
+    private bool $isVerbose;
 
     /**
      * @param bool|string $bootstrapPath

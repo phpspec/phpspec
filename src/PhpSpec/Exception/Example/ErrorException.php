@@ -18,10 +18,7 @@ namespace PhpSpec\Exception\Example;
  */
 class ErrorException extends ExampleException
 {
-    /**
-     * @var array
-     */
-    private $levels = array(
+    private array $levels = array(
         E_WARNING           => 'warning',
         E_NOTICE            => 'notice',
         E_USER_ERROR        => 'error',
