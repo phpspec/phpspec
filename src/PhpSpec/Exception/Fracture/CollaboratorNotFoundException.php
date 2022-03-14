@@ -20,37 +20,23 @@ class CollaboratorNotFoundException extends FractureException
 {
     const CLASSNAME_REGEX = '/\\[.* (?P<classname>[_a-z0-9\\\\]+) .*\\]/i';
 
-    /**
-     * @var string
-     */
-    private $collaboratorName;
+    private string $collaboratorName;
 
-    /**
-     * @param Exception $previous
-     */
     public function __construct(
         string $message,
+        string $className,
         int $code = 0,
-        Exception $previous = null,
-        ReflectionParameter $reflectionParameter = null,
-        string $className = null
+        Exception $previous = null
     ) {
-        if ($reflectionParameter) {
-            $this->collaboratorName = $this->extractCollaboratorName($reflectionParameter);
-        }
-        if ($className) {
-            $this->collaboratorName = $className;
-        }
+        $this->collaboratorName = $className;
 
         parent::__construct($message . ': ' . $this->collaboratorName, $code, $previous);
     }
 
-    
     public function getCollaboratorName(): string
     {
         return $this->collaboratorName;
     }
-
     
     private function extractCollaboratorName(ReflectionParameter $parameter): string
     {

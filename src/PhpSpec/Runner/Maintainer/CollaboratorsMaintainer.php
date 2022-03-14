@@ -97,7 +97,7 @@ final class CollaboratorsMaintainer implements Maintainer
                 }
             }
             catch (ClassNotFoundException $e) {
-                $this->throwCollaboratorNotFound($e, null, $e->getClassname());
+                $this->throwCollaboratorNotFound($e, $e->getClassname());
             }
             catch (DisallowedUnionTypehintException $e) {
                 throw new InvalidCollaboratorTypeException($parameter, $function, $e->getMessage(), 'Use a specific type');
@@ -133,13 +133,12 @@ final class CollaboratorsMaintainer implements Maintainer
     /**
      * @throws CollaboratorNotFoundException
      */
-    private function throwCollaboratorNotFound(\Exception $e, \ReflectionParameter $parameter = null, string $className = null): void
+    private function throwCollaboratorNotFound(\Exception $e, string $className = null): void
     {
         throw new CollaboratorNotFoundException(
             sprintf('Collaborator does not exist '),
-            0, $e,
-            $parameter,
-            $className
+            $className, 0,
+            $e
         );
     }
 
