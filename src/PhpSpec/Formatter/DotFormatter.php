@@ -111,7 +111,7 @@ final class DotFormatter extends ConsoleFormatter
         $this->getIO()->writeln(sprintf("\n%sms", round($event->getTime() * 1000)));
     }
 
-    private function plural($count): string
+    private function plural(int $count): string
     {
         return $count > 1 ? 's' : '';
     }
