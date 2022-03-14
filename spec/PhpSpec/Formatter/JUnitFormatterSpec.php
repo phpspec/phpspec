@@ -55,7 +55,7 @@ class JUnitFormatterSpec extends ObjectBehavior
         $event->getTitle()->willReturn('example title');
         $event->getTime()->willReturn(1337);
 
-        $event->getException()->willReturn(new ExceptionStub('Something went wrong', 'Exception trace'));
+        $event->getException()->willReturn($stub = new ExceptionStub('Something went wrong'));
 
         $event->getSpecification()->willReturn($specification);
         $specification->getClassReflection()->willReturn($refClass);
@@ -63,12 +63,14 @@ class JUnitFormatterSpec extends ObjectBehavior
 
         $this->afterExample($event);
 
+        $exceptionTrace = $stub->getTraceAsString();
+
         $this->getTestCaseNodes()->shouldReturn(array(
             '<testcase name="example title" time="1337.000000" classname="Acme\Foo\Bar" status="broken">'."\n".
                 '<error type="spec\PhpSpec\Formatter\ExceptionStub" message="Something went wrong" />'."\n".
                 '<system-err>'."\n".
                     '<![CDATA['."\n".
-                        'Exception trace'."\n".
+                        $exceptionTrace."\n".
                     ']]>'."\n".
                 '</system-err>'."\n".
             '</testcase>'
@@ -84,7 +86,7 @@ class JUnitFormatterSpec extends ObjectBehavior
         $event->getTitle()->willReturn('example title');
         $event->getTime()->willReturn(1337);
 
-        $event->getException()->willReturn(new ExceptionStub('Something went wrong', 'Exception trace'));
+        $event->getException()->willReturn($stub = new ExceptionStub('Something went wrong'));
 
         $event->getSpecification()->willReturn($specification);
         $specification->getClassReflection()->willReturn($refClass);
@@ -92,12 +94,14 @@ class JUnitFormatterSpec extends ObjectBehavior
 
         $this->afterExample($event);
 
+        $exceptionTrace = $stub->getTraceAsString();
+
         $this->getTestCaseNodes()->shouldReturn(array(
             '<testcase name="example title" time="1337.000000" classname="Acme\Foo\Bar" status="failed">'."\n".
                 '<failure type="spec\PhpSpec\Formatter\ExceptionStub" message="Something went wrong" />'."\n".
                 '<system-err>'."\n".
                     '<![CDATA['."\n".
-                        'Exception trace'."\n".
+                        $exceptionTrace."\n".
                     ']]>'."\n".
                 '</system-err>'."\n".
             '</testcase>'
@@ -202,24 +206,6 @@ class JUnitFormatterSpec extends ObjectBehavior
     }
 }
 
-class ExceptionStub
+class ExceptionStub extends \Exception
 {
-    protected $trace;
-    protected $message;
-
-    public function __construct($message, $trace)
-    {
-        $this->message = $message;
-        $this->trace   = $trace;
-    }
-
-    public function getMessage()
-    {
-        return $this->message;
-    }
-
-    public function getTraceAsString()
-    {
-        return $this->trace;
-    }
 }

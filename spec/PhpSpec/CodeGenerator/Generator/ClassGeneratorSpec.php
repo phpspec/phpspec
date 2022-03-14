@@ -99,7 +99,7 @@ class ClassGeneratorSpec extends ObjectBehavior
         $fs->pathExists('/project/src/Acme/App.php')->willReturn(false);
         $fs->isDirectory('/project/src/Acme')->willReturn(false);
         $fs->makeDirectory('/project/src/Acme')->shouldBeCalled();
-        $fs->putFileContents('/project/src/Acme/App.php', Argument::any())->willReturn(null);
+        $fs->putFileContents('/project/src/Acme/App.php', Argument::any());
 
         $this->generate($resource);
     }

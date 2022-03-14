@@ -73,6 +73,8 @@ final class IndexedServiceContainer implements ServiceContainer
     /**
      * Sets a factory for the service creation. The same service will
      * be returned every time
+     *
+     * @psalm-param callable(ServiceContainer $c): object $definition
      */
     public function define(string $id, callable $definition, array $tags = []): void
     {
@@ -85,11 +87,10 @@ final class IndexedServiceContainer implements ServiceContainer
     /**
      * Retrieves a service from the container
      *
-     * @return object
      *
      * @throws \InvalidArgumentException if service is not defined
      */
-    public function get(string $id)
+    public function get(string $id): object
     {
         if (!array_key_exists($id, $this->services)) {
             if (!array_key_exists($id, $this->definitions)) {

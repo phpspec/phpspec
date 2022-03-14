@@ -32,10 +32,7 @@ class CollaboratorManager
         $this->presenter = $presenter;
     }
 
-    /**
-     * @param object $collaborator
-     */
-    public function set(string $name, $collaborator): void
+    public function set(string $name, Collaborator $collaborator): void
     {
         $this->collaborators[$name] = $collaborator;
     }
@@ -47,11 +44,9 @@ class CollaboratorManager
     }
 
     /**
-     * @return object
-     *
      * @throws CollaboratorException
      */
-    public function get(string $name)
+    public function get(string $name): Collaborator
     {
         if (!$this->has($name)) {
             throw new CollaboratorException(

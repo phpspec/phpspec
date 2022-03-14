@@ -30,6 +30,7 @@ interface ServiceContainer
      * Sets a factory for the service creation. The same service will
      * be returned every time
      *
+     * @psalm-param callable(ServiceContainer $c): object $definition
      *
      * @throws \InvalidArgumentException if service is not a callable
      */

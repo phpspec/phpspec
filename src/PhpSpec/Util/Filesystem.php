@@ -30,7 +30,7 @@ class Filesystem
     }
 
     
-    public function putFileContents(string $path, string $content)
+    public function putFileContents(string $path, string $content): void
     {
         file_put_contents($path, $content);
     }

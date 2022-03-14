@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\ServiceContainer;
 
 use PhpSpec\ObjectBehavior;
+use stdClass;
 
 class IndexedServiceContainerSpec extends ObjectBehavior
 {
@@ -63,24 +64,26 @@ class IndexedServiceContainerSpec extends ObjectBehavior
         $this->shouldThrow('InvalidArgumentException')->duringGet('unexisting');
     }
 
-    function it_evaluates_factory_function_only_once_for_shared_services()
+    function it_returns_same_object_when_factory_is_invoked_multiple_times()
     {
-        $this->define('random_number', function () { return rand(); });
-        $number1 = $this->get('random_number');
-        $number2 = $this->get('random_number');
+        $this->define('random_object', function (){ return new stdClass(); });
+        $object1 = $this->get('random_object');
+        $object2 = $this->get('random_object');
 
-        $number2->shouldBe($number1);
+        $object2->shouldBe($object1);
     }
 
     function it_uses_new_definition_when_a_service_is_redefined()
     {
-        $this->define('some_service', function () { return 1; });
-        $this->get('some_service');
+        $this->define('some_service', function () { return new stdClass(); });
+        $object1 = $this->get('some_service');
 
 
-        $this->define('some_service', function () { return 2; });
+        $this->define('some_service', function () { return new stdClass(); });
 
-        $this->get('some_service')->shouldBe(2);
+        $object2 = $this->get('some_service');
+
+        $object1->shouldNotBe($object2);
     }
 
 
