@@ -227,9 +227,6 @@ class ConsoleIO implements IO
         return $this->input->getOption('fake') || $this->config->isFakingEnabled();
     }
 
-    /**
-     * @return ?string
-     */
     public function getBootstrapPath(): ?string
     {
         if ($path = $this->input->getOption('bootstrap')) {
@@ -239,6 +236,7 @@ class ConsoleIO implements IO
         if ($path = $this->config->getBootstrapPath()) {
             return $path;
         }
+
         return null;
     }
 

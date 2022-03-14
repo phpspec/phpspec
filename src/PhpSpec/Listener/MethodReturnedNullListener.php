@@ -92,7 +92,7 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
 
             $subject = $exception->getSubject();
             $method = $exception->getMethod();
-            if (is_null($subject) || is_null($method)) {
+            if (is_null($subject)) {
                 return;
             }
             $class = \get_class($subject);

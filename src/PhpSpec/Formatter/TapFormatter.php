@@ -155,6 +155,6 @@ final class TapFormatter extends ConsoleFormatter
             array("%(^[^\n\r])%", "%([\n\r]{1,2})%", "%\s+...[\n\r]{1,2}\s+---%"),
             array("  \\1", "\\1  ", ""),
             $string
-        );
+        ) ?: throw new \LogicException('Regex did not match');
     }
 }

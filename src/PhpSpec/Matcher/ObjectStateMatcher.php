@@ -91,6 +91,9 @@ final class ObjectStateMatcher implements Matcher
         return 50;
     }
 
+    /**
+     * @param array{0: object, 1: string} callable
+     */
     private function getMethodFailureExceptionFor(array $callable, bool $expectedBool, $result): MethodFailureException
     {
         return new MethodFailureException(sprintf(

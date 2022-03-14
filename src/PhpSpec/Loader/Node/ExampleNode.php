@@ -73,6 +73,6 @@ class ExampleNode
     
     public function getLineNumber(): int
     {
-        return $this->function->isClosure() ? 0 : $this->function->getStartLine();
+        return $this->function->isClosure() ? 0 : (int) $this->function->getStartLine();
     }
 }

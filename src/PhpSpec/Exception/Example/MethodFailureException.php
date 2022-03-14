@@ -37,10 +37,7 @@ class MethodFailureException extends NotEqualException
         return $this->subject;
     }
 
-    /**
-     * @return string
-     */
-    public function getMethod()
+    public function getMethod(): string
     {
         return $this->method;
     }

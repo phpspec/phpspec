@@ -33,7 +33,7 @@ class MethodReturnedNullListenerSpec extends ObjectBehavior
         $methodFailureException->getActual()->willReturn(null);
         $methodFailureException->getExpected()->willReturn(100);
         $methodFailureException->getSubject()->willReturn(null);
-        $methodFailureException->getMethod()->willReturn(null);
+        $methodFailureException->getMethod()->willReturn('');
 
         $methodCallEvent->getMethod()->willReturn('foo');
         $methodCallEvent->getSubject()->willReturn(new \stdClass);
