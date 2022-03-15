@@ -26,10 +26,12 @@ final class BaseExceptionTypePresenter implements ExceptionTypePresenter
     
     public function present($value): string
     {
+        /** @var \Exception $value because supports() must have been called*/
+
         $label = 'exc';
         $message = $value->getMessage();
 
-        if ($value instanceof ErrorException) {
+        if ($value instanceof ErrorException && $value->getPrevious() instanceof \Throwable) {
             $value = $value->getPrevious();
             $label = 'err';
         }

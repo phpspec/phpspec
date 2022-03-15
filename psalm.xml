@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <psalm
-    errorLevel="4"
+    errorLevel="3"
     resolveFromConfigFile="true"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="https://getpsalm.org/schema/config"
@@ -13,6 +13,15 @@
         </ignoreFiles>
     </projectFiles>
     <issueHandlers>
+        <ArgumentTypeCoercion>
+            <errorLevel type="suppress">
+                <!-- we are tolerant of short type-less lambdas in the container setup -->
+                <file name="src/PhpSpec/Console/Application.php"/>
+                <file name="src/PhpSpec/Console/Assembler/PresenterAssembler.php"/>
+                <file name="src/PhpSpec/Console/ContainerAssembler.php"/>
+                <file name="src/PhpSpec/Console/Command/RunCommand.php"/>
+            </errorLevel>
+        </ArgumentTypeCoercion>
         <UndefinedConstant>
             <errorLevel type="suppress">
                 <!-- new token constants in PHP 8 cause an error, despite being behind version detection -->

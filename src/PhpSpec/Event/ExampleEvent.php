@@ -83,7 +83,7 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
     
     public function getSuite(): ?Suite
     {
-        return $this->getSpecification()->getSuite();
+        return $this->getSpecification()?->getSuite();
     }
 
     
@@ -95,13 +95,13 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
     
     public function getMessage(): string
     {
-        return $this->exception->getMessage();
+        return $this->exception?->getMessage() ?? '';
     }
 
     
     public function getBacktrace(): array
     {
-        return $this->exception->getTrace();
+        return $this->exception?->getTrace() ?? [];
     }
 
     

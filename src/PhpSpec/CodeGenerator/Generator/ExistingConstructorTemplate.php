@@ -19,11 +19,15 @@ use ReflectionMethod;
 class ExistingConstructorTemplate
 {
     private TemplateRenderer $templates;
+    /** @var class-string */
     private string $class;
     private string $className;
     private array $arguments;
     private string $methodName;
 
+    /**
+     * @param class-string $class
+     */
     public function __construct(TemplateRenderer $templates, string $methodName, array $arguments, string $className, string $class)
     {
         $this->templates  = $templates;

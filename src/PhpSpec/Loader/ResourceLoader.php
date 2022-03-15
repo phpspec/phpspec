@@ -17,6 +17,7 @@ use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Event\ResourceEvent;
 use PhpSpec\Locator\Resource;
+use PhpSpec\Specification;
 use PhpSpec\Specification\ErrorSpecification;
 use PhpSpec\Util\MethodAnalyser;
 use PhpSpec\Locator\ResourceManager;
@@ -70,7 +71,7 @@ class ResourceLoader
             if ($reflection->isAbstract()) {
                 continue;
             }
-            if (!$reflection->implementsInterface('PhpSpec\Specification')) {
+            if (!$reflection->implementsInterface(Specification::class)) {
                 continue;
             }
 

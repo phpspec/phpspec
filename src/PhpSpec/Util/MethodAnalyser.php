@@ -18,6 +18,9 @@ use PhpSpec\Loader\StreamWrapper;
 class MethodAnalyser
 {
 
+    /**
+     * @param class-string $class
+     */
     public function methodIsEmpty(string $class, string $method): bool
     {
         return $this->reflectionMethodIsEmpty(new \ReflectionMethod($class, $method));
@@ -36,7 +39,9 @@ class MethodAnalyser
         return $this->codeIsOnlyBlocksAndWhitespace($codeWithoutComments);
     }
 
-    
+    /**
+     * @param class-string $class
+     */
     public function getMethodOwnerName(string $class, string $method): string
     {
         $reflectionMethod = new \ReflectionMethod($class, $method);
@@ -47,8 +52,7 @@ class MethodAnalyser
         return $reflectionClass->getName();
     }
 
-    
-    private function getCodeBody(\ReflectionMethod $reflectionMethod): ?string
+    private function getCodeBody(\ReflectionMethod $reflectionMethod): string
     {
         $endLine = $reflectionMethod->getEndLine();
         $startLine = $reflectionMethod->getStartLine();

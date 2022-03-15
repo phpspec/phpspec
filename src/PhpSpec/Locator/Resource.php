@@ -27,15 +27,16 @@ interface Resource
     
     public function getSrcNamespace(): string;
 
-    
+    /** @return class-string */
     public function getSrcClassname(): string;
 
-    
+
     public function getSpecFilename(): string;
 
     
     public function getSpecNamespace(): string;
 
-    
+
+    /** @return class-string */
     public function getSpecClassname(): string;
 }

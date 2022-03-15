@@ -45,6 +45,7 @@ final class ScalarMatcher implements Matcher
      */
     public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
+        /** @var string $checker */
         $checker = $this->getCheckerName($name);
 
         if (!\call_user_func($checker, $subject)) {
@@ -70,6 +71,7 @@ final class ScalarMatcher implements Matcher
      */
     public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall
     {
+        /** @var string $checker */
         $checker = $this->getCheckerName($name);
 
         if (\call_user_func($checker, $subject)) {

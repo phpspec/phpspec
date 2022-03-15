@@ -442,10 +442,13 @@ final class ContainerAssembler
             $home = getenv('HOME');
         }
 
-        $container->setParam('code_generator.templates.paths', array(
-            rtrim(getcwd(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
-            rtrim($home, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'.phpspec',
-        ));
+        $paths = [rtrim(getcwd(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.phpspec'];
+
+        if ($home) {
+            $paths[] = rtrim($home, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.phpspec';
+        }
+
+        $container->setParam('code_generator.templates.paths', $paths);
     }
 
     

@@ -58,7 +58,7 @@ class MethodCallEvent extends BaseEvent implements PhpSpecEvent
     
     public function getSuite(): ?Suite
     {
-        return $this->example->getSpecification()->getSuite();
+        return $this->example->getSpecification()?->getSuite();
     }
 
     

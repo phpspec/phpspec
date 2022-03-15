@@ -68,7 +68,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
                         $this->state = self::STATE_DEFAULT;
                     }
                     if ('{' == $token) {
-                        $this->currentUseGroup = trim($this->currentUse);
+                        $this->currentUseGroup = $this->currentUse ? trim($this->currentUse) : null;
                         $this->state = self::STATE_READING_USE_GROUP;
                     }
                     elseif (',' == $token) {

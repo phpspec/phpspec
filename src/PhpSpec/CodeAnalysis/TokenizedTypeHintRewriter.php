@@ -200,6 +200,12 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         return !\in_array($token[0], $this->typehintTokens);
     }
 
+    /**
+     * @template T of int
+     *
+     * @psalm-param T $type
+     * @psalm-assert-if-true array{0:T, 1:string, 2: int} $token
+     */
     private function tokenHasType(array|string $token, int $type): bool
     {
         return \is_array($token) && $type == $token[0];

@@ -40,14 +40,13 @@ final class ConstructorDecorator extends Decorator implements Expectation
         } catch (FractureException $e) {
             throw $e;
         } catch (\Exception $e) {
-            if ($wrappedObject === null || $wrappedObject->getClassName() === null) {
+            $className = $wrappedObject?->getClassName();
+            if ($wrappedObject === null || $className === null) {
                 throw $e;
             }
 
             $instantiator = new Instantiator();
-            $wrapped = $instantiator->instantiate(
-                $wrappedObject->getClassName()
-            );
+            $wrapped = $instantiator->instantiate($className);
         }
 
         return $this->getExpectation()->match($alias, $wrapped, $arguments);

@@ -68,7 +68,7 @@ abstract class ObjectBehavior implements
     ObjectWrapper,
     Specification
 {
-    protected ?Subject $object;
+    protected Subject $object;
 
     /**
      * Override this method to provide your own inline matchers

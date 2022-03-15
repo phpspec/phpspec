@@ -16,6 +16,7 @@ namespace PhpSpec\Runner;
 use PhpSpec\Exception\Example\PendingException;
 use Error;
 use PhpSpec\Exception\ErrorException;
+use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Runner\Maintainer\Maintainer;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PhpSpec\Runner\Maintainer\LetAndLetgoMaintainer;
@@ -64,8 +65,12 @@ class ExampleRunner
         );
 
         try {
+            $specification = $example->getSpecification()?->getClassReflection()->newInstance();
+            if (!$specification instanceof Specification) {
+                throw new \LogicException('No specification instance found');
+            }
             $this->executeExample(
-                $example->getSpecification()->getClassReflection()->newInstance(),
+                $specification,
                 $example
             );
 
@@ -78,6 +83,7 @@ class ExampleRunner
             $status    = ExampleEvent::SKIPPED;
             $exception = $e;
         } catch (ProphecyException\Prediction\PredictionException $e) {
+            /** @var \Exception $e all concrete classes are Exceptions */
             $status    = ExampleEvent::FAILED;
             $exception = $e;
         } catch (ExampleException\FailureException $e) {

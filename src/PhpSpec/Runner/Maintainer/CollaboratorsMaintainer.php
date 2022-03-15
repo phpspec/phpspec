@@ -57,7 +57,8 @@ final class CollaboratorsMaintainer implements Maintainer
     ): void {
         $this->prophet = new Prophet(null, $this->unwrapper, null);
 
-        $classRefl = $example->getSpecification()->getClassReflection();
+        /** @var \ReflectionClass $classRefl */
+        $classRefl = $example->getSpecification()?->getClassReflection();
 
         if ($classRefl->hasMethod('let')) {
             $this->generateCollaborators($collaborators, $classRefl->getMethod('let'), $classRefl);
@@ -73,7 +74,7 @@ final class CollaboratorsMaintainer implements Maintainer
         MatcherManager $matchers,
         CollaboratorManager $collaborators
     ): void {
-        $this->prophet->checkPredictions();
+        $this->prophet?->checkPredictions();
     }
 
     
@@ -97,7 +98,9 @@ final class CollaboratorsMaintainer implements Maintainer
                 }
             }
             catch (ClassNotFoundException $e) {
-                $this->throwCollaboratorNotFound($e, $e->getClassname());
+                /** @var class-string $className */
+                $className = $e->getClassname();
+                $this->throwCollaboratorNotFound($e, $className);
             }
             catch (DisallowedUnionTypehintException $e) {
                 throw new InvalidCollaboratorTypeException($parameter, $function, $e->getMessage(), 'Use a specific type');
@@ -123,6 +126,11 @@ final class CollaboratorsMaintainer implements Maintainer
     private function getOrCreateCollaborator(CollaboratorManager $collaborators, string $name): Collaborator
     {
         if (!$collaborators->has($name)) {
+
+            if (is_null($this->prophet)) {
+                throw new \LogicException('Prophet was not set');
+            }
+
             $collaborator = new Collaborator($this->prophet->prophesize());
             $collaborators->set($name, $collaborator);
         }
@@ -131,9 +139,11 @@ final class CollaboratorsMaintainer implements Maintainer
     }
 
     /**
+     * @param class-string $className
+     *
      * @throws CollaboratorNotFoundException
      */
-    private function throwCollaboratorNotFound(\Exception $e, string $className = null): void
+    private function throwCollaboratorNotFound(\Exception $e, string $className): void
     {
         throw new CollaboratorNotFoundException(
             sprintf('Collaborator does not exist '),

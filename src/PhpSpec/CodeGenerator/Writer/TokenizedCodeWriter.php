@@ -113,7 +113,7 @@ final class TokenizedCodeWriter implements CodeWriter
 
             if ($token === '{') {
                 $search = implode('', $searchPattern);
-                $position = strpos($class, $search) + \strlen($search) - 1;
+                $position = (int) strpos($class, $search) + \strlen($search) - 1;
 
                 return substr_replace($class, "\n" . $method . "\n", $position, 0);
             }

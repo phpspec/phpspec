@@ -23,8 +23,8 @@ class LetAndLetgoMaintainer implements Maintainer
     
     public function supports(ExampleNode $example): bool
     {
-        return $example->getSpecification()->getClassReflection()->hasMethod('let')
-            || $example->getSpecification()->getClassReflection()->hasMethod('letgo')
+        return $example->getSpecification()?->getClassReflection()->hasMethod('let')
+            || $example->getSpecification()?->getClassReflection()->hasMethod('letgo')
         ;
     }
 
@@ -35,11 +35,11 @@ class LetAndLetgoMaintainer implements Maintainer
         MatcherManager $matchers,
         CollaboratorManager $collaborators
     ): void {
-        if (!$example->getSpecification()->getClassReflection()->hasMethod('let')) {
+        if (!$example->getSpecification()?->getClassReflection()->hasMethod('let')) {
             return;
         }
 
-        $reflection = $example->getSpecification()->getClassReflection()->getMethod('let');
+        $reflection = $example->getSpecification()?->getClassReflection()->getMethod('let');
         $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
     }
 
@@ -50,11 +50,11 @@ class LetAndLetgoMaintainer implements Maintainer
         MatcherManager $matchers,
         CollaboratorManager $collaborators
     ): void {
-        if (!$example->getSpecification()->getClassReflection()->hasMethod('letgo')) {
+        if (!$example->getSpecification()?->getClassReflection()->hasMethod('letgo')) {
             return;
         }
 
-        $reflection = $example->getSpecification()->getClassReflection()->getMethod('letgo');
+        $reflection = $example->getSpecification()?->getClassReflection()->getMethod('letgo');
         $reflection->invokeArgs($context, $collaborators->getArgumentsFor($reflection));
     }
 

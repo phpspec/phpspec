@@ -132,11 +132,12 @@ class Caller
             return $this->wrappedObject->getInstance();
         }
 
-        if (null === $this->wrappedObject->getClassName() || !\is_string($this->wrappedObject->getClassName())) {
+        $className = $this->wrappedObject->getClassName();
+        if (!\is_string($className)) {
             return $this->wrappedObject->getInstance();
         }
 
-        if (!class_exists($this->wrappedObject->getClassName())) {
+        if (!$className || !class_exists($className)) {
             throw $this->classNotFound();
         }
 
@@ -180,7 +181,9 @@ class Caller
             return $this->newInstanceWithFactoryMethod();
         }
 
-        $reflection = new ReflectionClass($this->wrappedObject->getClassName());
+        /** @var class-string $className already validated before this method is called*/
+        $className = $this->wrappedObject->getClassName();
+        $reflection = new ReflectionClass($className);
 
         if (\count($this->wrappedObject->getArguments())) {
             return $this->newInstanceWithArguments($reflection);
@@ -239,17 +242,17 @@ class Caller
      */
     private function newInstanceWithFactoryMethod(): object
     {
+        /** @var callable $method Already checked in caller  */
         $method = $this->wrappedObject->getFactoryMethod();
+
+        /** @var class-string $className Already checked in caller */
         $className = $this->wrappedObject->getClassName();
 
-        if (!\is_array($method)) {
-
-            if (\is_string($method) && !method_exists($className, $method)) {
-                throw $this->namedConstructorNotFound(
-                    $method,
-                    $this->wrappedObject->getArguments()
-                );
-            }
+        if (\is_string($method) && !method_exists($className, $method)) {
+            throw $this->namedConstructorNotFound(
+                $method,
+                $this->wrappedObject->getArguments()
+            );
         }
 
         return (new ObjectFactory())->instantiateFromCallable(
@@ -267,21 +270,22 @@ class Caller
         ) !== 0;
     }
 
-    
+
     private function classNotFound(): ClassNotFoundException
     {
-        return $this->exceptionFactory->classNotFound($this->wrappedObject->getClassName());
+        return $this->exceptionFactory->classNotFound($this->wrappedObject->getClassName() ?? '');
     }
 
     private function namedConstructorNotFound(string $method, array $arguments = array()) : NamedConstructorNotFoundException
     {
         $className = $this->wrappedObject->getClassName();
 
-        return $this->exceptionFactory->namedConstructorNotFound($className, $method, $arguments);
+        return $this->exceptionFactory->namedConstructorNotFound($className ?? '', $method, $arguments);
     }
 
     private function methodNotFound(string $method, array $arguments = array()): MethodNotFoundException|MethodNotVisibleException
     {
+        /** @var class-string $className */
         $className = $this->wrappedObject->getClassName();
 
         if (!method_exists($className, $method)) {

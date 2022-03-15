@@ -43,7 +43,7 @@ final class JsonFormatter extends BasicFormatter
 
     public function afterExample(ExampleEvent $event): void
     {
-        $specification = $event->getSpecification()->getTitle();
+        $specification = $event->getSpecification()?->getTitle() ?? '';
         $example = $event->getTitle();
 
         $this->data['specifications'][$specification]['examples'][$example] = [

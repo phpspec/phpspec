@@ -115,7 +115,7 @@ class ConsoleIO implements IO
 
     public function freezeTemp(): void
     {
-        $this->write($this->lastMessage);
+        $this->write($this->lastMessage ?? '');
     }
 
     public function write(string $message, int $indent = null, bool $newline = false): void
@@ -150,9 +150,9 @@ class ConsoleIO implements IO
             return;
         }
 
-        $commonPrefix = $this->getCommonPrefix($message, $this->lastMessage);
+        $commonPrefix = $this->getCommonPrefix($message, $this->lastMessage ?? '');
         $newSuffix = substr($message, \strlen($commonPrefix));
-        $oldSuffix = substr($this->lastMessage, \strlen($commonPrefix));
+        $oldSuffix = substr($this->lastMessage ?? '', \strlen($commonPrefix));
 
         $overwriteLength = \strlen(strip_tags($oldSuffix));
 

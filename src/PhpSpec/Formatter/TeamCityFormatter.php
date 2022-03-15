@@ -21,8 +21,8 @@ class TeamCityFormatter extends BasicFormatter
         $this->startedTestName = $testName;
         $params = ['name' => $testName];
 
-        $className = $event->getSpecification()->getClassReflection()->getName();
-        $fileName = (string)$event->getSpecification()->getClassReflection()->getFileName();
+        $className = $event->getSpecification()?->getClassReflection()->getName() ?? '';
+        $fileName = (string) $event->getSpecification()?->getClassReflection()->getFileName();
         $referenceName = str_replace(' ', '_', $testName);
         $params['locationHint'] = "php_qn://{$fileName}::\\{$className}::{$referenceName}";
 
