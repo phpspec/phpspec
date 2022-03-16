@@ -174,18 +174,12 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $this->caller->get($property);
     }
 
-    /**
-     * @param int|string $key
-     */
-    public function offsetExists($key): bool
+    public function offsetExists(mixed $key): bool
     {
         return $this->arrayAccess->offsetExists($key);
     }
 
-    /**
-     * @param int|string $key
-     */
-    public function offsetGet($key): Subject
+    public function offsetGet(mixed $key): Subject
     {
         return $this->wrap($this->arrayAccess->offsetGet($key));
     }
