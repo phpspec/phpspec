@@ -35,9 +35,6 @@ final class ArrayKeyValueMatcher extends BasicMatcher
         ;
     }
 
-    /**
-     * @param array|ArrayAccess $subject
-     */
     protected function matches(mixed $subject, array $arguments): bool
     {
         $key = $arguments[0];
@@ -57,7 +54,7 @@ final class ArrayKeyValueMatcher extends BasicMatcher
         if (!$this->offsetExists($key, $subject)) {
             return new FailureException(sprintf('Expected %s to have key %s, but it didn\'t.',
                 $this->presenter->presentValue($subject),
-                $this->presenter->presentString($key)
+                $this->presenter->presentString((string)$key)
             ));
         }
 
@@ -65,7 +62,7 @@ final class ArrayKeyValueMatcher extends BasicMatcher
             'Expected %s to have value %s for %s key, but found %s.',
             $this->presenter->presentValue($subject),
             $this->presenter->presentValue($arguments[1]),
-            $this->presenter->presentString($key),
+            $this->presenter->presentString((string) $key),
             $this->presenter->presentValue($subject[$key])
         ));
     }

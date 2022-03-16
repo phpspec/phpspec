@@ -44,6 +44,8 @@ class ComposerPsrNamespaceProvider
                 }
             }
         }
+
+        /** @psalm-suppress UnresolvableInclude If the vendor folder isn't there we are in trouble */
         $classLoader = require $this->rootDirectory . '/vendor/autoload.php';
 
         $namespaces = array();

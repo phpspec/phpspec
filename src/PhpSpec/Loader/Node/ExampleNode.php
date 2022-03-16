@@ -22,20 +22,17 @@ class ExampleNode
     private ?SpecificationNode $specification = null;
     private bool $isPending = false;
 
-    
     public function __construct(string $title, ReflectionFunctionAbstract $function)
     {
-        $this->setTitle($title);
+        $this->title = $title;
         $this->function = $function;
     }
 
-    
     public function setTitle(string $title): void
     {
-      $this->title = $title;
+         $this->title = $title;
     }
 
-    
     public function getTitle(): string
     {
         return $this->title;

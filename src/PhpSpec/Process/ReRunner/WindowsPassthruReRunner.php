@@ -18,7 +18,7 @@ use Symfony\Component\Process\PhpExecutableFinder;
 
 final class WindowsPassthruReRunner extends PhpExecutableReRunner
 {
-    private ExecutionContext $executionContext;
+    private ?ExecutionContext $executionContext = null;
 
     public static function withExecutionContext(PhpExecutableFinder $phpExecutableFinder, ExecutionContext $executionContext): static
     {
@@ -52,7 +52,7 @@ final class WindowsPassthruReRunner extends PhpExecutableReRunner
     {
         $argstring = '';
 
-        foreach ($this->executionContext->asEnv() as $key => $value) {
+        foreach ($this->executionContext?->asEnv() ?? [] as $key => $value) {
             $argstring .= 'SET ' . $key . '=' . $value . ' && ';
         }
 

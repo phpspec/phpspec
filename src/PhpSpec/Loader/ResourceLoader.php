@@ -49,6 +49,7 @@ class ResourceLoader
         foreach ($this->manager->locateResources($locator) as $resource) {
             if (!class_exists($resource->getSpecClassname(), false) && is_file($resource->getSpecFilename())) {
                 try {
+                    /** @psalm-suppress UnresolvableInclude we are reasonably confident it is only loading a class definition */
                     require_once StreamWrapper::wrapPath($resource->getSpecFilename());
                 }
                 catch (\Error $e) {
@@ -98,7 +99,6 @@ class ResourceLoader
 
         return $suite;
     }
-
 
     private function lineIsInsideMethod(int $line, ReflectionMethod $method): bool
     {

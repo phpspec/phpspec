@@ -42,6 +42,8 @@ final class ObjectStateMatcher implements Matcher
      */
     public function positiveMatch(string $name, mixed $subject, array $arguments) : ?DelayedCall
     {
+        /** @var object $subject because supports has been called */
+
         preg_match(self::$regex, $name, $matches);
         $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);
         $callable = array($subject, $method);
@@ -66,6 +68,8 @@ final class ObjectStateMatcher implements Matcher
      */
     public function negativeMatch(string $name, mixed $subject, array $arguments) : ?DelayedCall
     {
+        /** @var object $subject because supports has been called */
+
         preg_match(self::$regex, $name, $matches);
         $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);
         $callable = array($subject, $method);

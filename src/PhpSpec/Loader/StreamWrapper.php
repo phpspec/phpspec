@@ -77,11 +77,13 @@ class StreamWrapper
 
     public function stream_read(int $count): bool|string
     {
+        /** @var resource $this->fileResource stream_open must have been run */
         return fread($this->fileResource, $count);
     }
 
     public function stream_eof(): bool
     {
+        /** @var resource $this->fileResource stream_open must have been run */
         return feof($this->fileResource);
     }
 

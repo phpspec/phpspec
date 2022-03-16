@@ -137,7 +137,8 @@ class Caller
             return $this->wrappedObject->getInstance();
         }
 
-        if (!$className || !class_exists($className)) {
+        /** @var string $className don't trust it's a class-string, we still want to check */
+        if (!class_exists($className)) {
             throw $this->classNotFound();
         }
 

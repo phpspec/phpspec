@@ -148,6 +148,7 @@ final class Application extends BaseApplication
         }
     }
 
+    /** @param array<class-string> $matchersClassnames */
     private function registerCustomMatchers(IndexedServiceContainer $container, array $matchersClassnames): void
     {
         foreach ($matchersClassnames as $class) {

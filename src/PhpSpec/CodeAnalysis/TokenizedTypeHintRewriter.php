@@ -145,6 +145,10 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
 
         if ($typehint = trim($typehint)) {
 
+            if (is_null($this->currentClass)) {
+                throw new \LogicException('Current class was null while parsing class');
+            }
+
             $class = $this->namespaceResolver->resolve($this->currentClass);
 
             if (\strpos($typehint, '|') !== false) {
@@ -189,7 +193,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     }
 
     /**
-     * @param string|array{0:T, 1:string, 2: int} $token
+     * @param string|array{0:int, 1:string, 2: int} $token
      */
     private function haveNotReachedEndOfTypeHint(string|array $token) : bool
     {

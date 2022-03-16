@@ -109,7 +109,7 @@ final class JUnitFormatter extends BasicFormatter
             '<testcase name="%s" time="%F" classname="%s" status="%s"',
             $event->getTitle(),
             $event->getTime(),
-            $event->getSpecification()?->getClassReflection()->getName() ?? '',
+            $event->getSpecification()?->getClassReflection()->getName(),
             $this->jUnitStatuses[$event->getResult()]
         );
 

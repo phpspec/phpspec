@@ -112,13 +112,13 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
 
     private function storeCurrentUse(): void
     {
-        if (preg_match('/\s*(.*)\s+as\s+(.*)\s*/', $this->currentUse, $matches)) {
+        if ($this->currentUse && preg_match('/\s*(.*)\s+as\s+(.*)\s*/', $this->currentUse, $matches)) {
             $this->uses[strtolower(trim($matches[2]))] = trim($matches[1]);
         }
-        elseif(preg_match('/\\\\([^\\\\]+)\s*$/', $this->currentUse, $matches)){
+        elseif($this->currentUse && preg_match('/\\\\([^\\\\]+)\s*$/', $this->currentUse, $matches)){
             $this->uses[strtolower($matches[1])] = trim($this->currentUse);
         }
-        else {
+        elseif($this->currentUse) {
             $this->uses[strtolower(trim($this->currentUse))] = trim($this->currentUse);
         }
 

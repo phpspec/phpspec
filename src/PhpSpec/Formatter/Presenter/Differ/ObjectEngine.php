@@ -33,10 +33,6 @@ final class ObjectEngine implements DifferEngine
         return \is_object($expected) && \is_object($actual);
     }
 
-    /**
-     * @param object $expected
-     * @param object $actual
-     */
     public function compare(mixed $expected, mixed $actual): string
     {
         return $this->stringDiffer->compare(
