@@ -24,17 +24,15 @@ class MethodCallEvent extends BaseEvent implements PhpSpecEvent
 {
     private ExampleNode $example;
 
-    
-    private $subject;
+    private mixed $subject;
 
     private string $method;
 
     private array $arguments;
 
-    
-    private $returnValue;
+    private mixed $returnValue;
 
-    public function __construct(ExampleNode $example, $subject, string $method, array $arguments, $returnValue = null)
+    public function __construct(ExampleNode $example, mixed $subject, string $method, array $arguments, mixed $returnValue = null)
     {
         $this->example = $example;
         $this->subject = $subject;
@@ -43,44 +41,37 @@ class MethodCallEvent extends BaseEvent implements PhpSpecEvent
         $this->returnValue = $returnValue;
     }
 
-    
     public function getExample(): ExampleNode
     {
         return $this->example;
     }
 
-    
     public function getSpecification(): ?SpecificationNode
     {
         return $this->example->getSpecification();
     }
 
-    
     public function getSuite(): ?Suite
     {
         return $this->example->getSpecification()?->getSuite();
     }
 
-    
-    public function getSubject()
+    public function getSubject(): mixed
     {
         return $this->subject;
     }
 
-    
     public function getMethod(): string
     {
         return $this->method;
     }
 
-    
     public function getArguments(): array
     {
         return $this->arguments;
     }
 
-    
-    public function getReturnValue()
+    public function getReturnValue(): mixed
     {
         return $this->returnValue;
     }

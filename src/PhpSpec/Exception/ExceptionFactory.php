@@ -29,13 +29,11 @@ class ExceptionFactory
 {
     private Presenter $presenter;
 
-    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }
 
-    
     public function namedConstructorNotFound(string $classname, string $method, array $arguments = array()): NamedConstructorNotFoundException
     {
         $instantiator = new Instantiator();
@@ -51,7 +49,6 @@ class ExceptionFactory
         );
     }
 
-    
     public function methodNotFound(string $classname, string $method, array $arguments = array()): MethodNotFoundException
     {
         $instantiator = new Instantiator();
@@ -66,7 +63,6 @@ class ExceptionFactory
         );
     }
 
-    
     public function methodNotVisible(string $classname, string $method, array $arguments = array()): MethodNotVisibleException
     {
         $instantiator = new Instantiator();
@@ -81,7 +77,6 @@ class ExceptionFactory
         );
     }
 
-    
     public function classNotFound(string $classname): ClassNotFoundException
     {
         $message = sprintf('Class %s does not exist.', $this->presenter->presentString($classname));
@@ -89,14 +84,13 @@ class ExceptionFactory
         return new ClassNotFoundException($message, $classname);
     }
 
-    public function propertyNotFound($subject, string $property): PropertyNotFoundException
+    public function propertyNotFound(mixed $subject, string $property): PropertyNotFoundException
     {
         $message = sprintf('Property %s not found.', $this->presenter->presentString($property));
 
         return new PropertyNotFoundException($message, $subject, $property);
     }
 
-    
     public function callingMethodOnNonObject(string $method): SubjectException
     {
         return new SubjectException(sprintf(
@@ -105,7 +99,6 @@ class ExceptionFactory
         ));
     }
 
-    
     public function settingPropertyOnNonObject(string $property): SubjectException
     {
         return new SubjectException(sprintf(
@@ -114,7 +107,6 @@ class ExceptionFactory
         ));
     }
 
-    
     public function gettingPropertyOnNonObject(string $property): SubjectException
     {
         return new SubjectException(sprintf(

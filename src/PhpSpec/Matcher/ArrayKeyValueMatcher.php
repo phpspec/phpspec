@@ -21,14 +21,12 @@ final class ArrayKeyValueMatcher extends BasicMatcher
 {
     private Presenter $presenter;
 
-    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }
 
-    
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return
             (\is_array($subject) || $subject instanceof \ArrayAccess) &&
@@ -40,7 +38,7 @@ final class ArrayKeyValueMatcher extends BasicMatcher
     /**
      * @param array|ArrayAccess $subject
      */
-    protected function matches($subject, array $arguments): bool
+    protected function matches(mixed $subject, array $arguments): bool
     {
         $key = $arguments[0];
         $value  = $arguments[1];
@@ -52,8 +50,7 @@ final class ArrayKeyValueMatcher extends BasicMatcher
         return (isset($subject[$key]) || array_key_exists($arguments[0], $subject)) && $subject[$key] === $value;
     }
 
-    
-    protected function getFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         $key = $arguments[0];
 
@@ -73,8 +70,7 @@ final class ArrayKeyValueMatcher extends BasicMatcher
         ));
     }
 
-    
-    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getNegativeFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s not to have %s key, but it does.',
@@ -83,7 +79,7 @@ final class ArrayKeyValueMatcher extends BasicMatcher
         ));
     }
 
-    private function offsetExists($key, $subject): bool
+    private function offsetExists(int|string $key, mixed $subject): bool
     {
         if ($subject instanceof ArrayAccess && $subject->offsetExists($key)) {
             return true;

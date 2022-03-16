@@ -17,25 +17,21 @@ abstract class Decorator implements Expectation
 {
     private Expectation $expectation;
 
-    
     public function __construct(Expectation $expectation)
     {
         $this->expectation = $expectation;
     }
 
-    
     public function getExpectation(): Expectation
     {
         return $this->expectation;
     }
 
-    
     protected function setExpectation(Expectation $expectation): void
     {
         $this->expectation = $expectation;
     }
 
-    
     public function getNestedExpectation(): Expectation
     {
         $expectation = $this->getExpectation();

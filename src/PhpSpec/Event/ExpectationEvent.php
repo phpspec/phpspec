@@ -42,8 +42,7 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
 
     private Matcher $matcher;
 
-    
-    private $subject;
+    private mixed $subject;
 
     private string $method;
 
@@ -56,7 +55,7 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
     public function __construct(
         ExampleNode $example,
         Matcher $matcher,
-        $subject,
+        mixed $subject,
         string $method,
         array $arguments,
         int $result = self::PASSED,
@@ -96,7 +95,7 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
     }
 
     
-    public function getSubject()
+    public function getSubject(): mixed
     {
         return $this->subject;
     }

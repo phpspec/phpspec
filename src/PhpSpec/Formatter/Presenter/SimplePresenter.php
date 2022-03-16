@@ -22,26 +22,22 @@ final class SimplePresenter implements Presenter
 
     private ExceptionPresenter $exceptionPresenter;
 
-    
     public function __construct(ValuePresenter $valuePresenter, ExceptionPresenter $exceptionPresenter)
     {
         $this->valuePresenter = $valuePresenter;
         $this->exceptionPresenter = $exceptionPresenter;
     }
 
-    
-    public function presentValue($value): string
+    public function presentValue(mixed $value): string
     {
         return $this->valuePresenter->presentValue($value);
     }
 
-    
     public function presentException(\Exception $exception, bool $verbose = false): string
     {
         return $this->exceptionPresenter->presentException($exception, $verbose);
     }
 
-    
     public function presentString(string $string): string
     {
         return $string;

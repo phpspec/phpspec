@@ -107,7 +107,6 @@ use ArrayAccess;
  */
 class Subject implements ArrayAccess, ObjectWrapper
 {
-    
     private mixed $subject;
     private WrappedObject $wrappedObject;
     private Caller $caller;
@@ -115,7 +114,6 @@ class Subject implements ArrayAccess, ObjectWrapper
     private Wrapper $wrapper;
     private ExpectationFactory $expectationFactory;
 
-    
     public function __construct(
         mixed $subject,
         Wrapper $wrapper,
@@ -150,8 +148,7 @@ class Subject implements ArrayAccess, ObjectWrapper
         $this->wrappedObject->beConstructedThrough($factoryMethod, $arguments);
     }
 
-    
-    public function getWrappedObject()
+    public function getWrappedObject(): mixed
     {
         if ($this->subject) {
             return $this->subject;
@@ -167,7 +164,7 @@ class Subject implements ArrayAccess, ObjectWrapper
     }
 
 
-    public function setToWrappedObject(string $property, $value = null): void
+    public function setToWrappedObject(string $property, mixed $value = null): void
     {
         $this->caller->set($property, $value);
     }
@@ -193,18 +190,12 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $this->wrap($this->arrayAccess->offsetGet($key));
     }
 
-    /**
-     * @param int|string $key
-     */
-    public function offsetSet($key, $value): void
+    public function offsetSet(mixed $key, mixed $value): void
     {
         $this->arrayAccess->offsetSet($key, $value);
     }
 
-    /**
-     * @param int|string $key
-     */
-    public function offsetUnset($key): void
+    public function offsetUnset(mixed $key): void
     {
         $this->arrayAccess->offsetUnset($key);
     }
@@ -233,7 +224,7 @@ class Subject implements ArrayAccess, ObjectWrapper
     }
 
     
-    public function __set(string $property, $value = null)
+    public function __set(string $property, mixed $value = null)
     {
         return $this->caller->set($property, $value);
     }
@@ -244,14 +235,12 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $this->caller->get($property);
     }
 
-    
-    private function wrap($value): Subject
+    private function wrap(mixed $value): Subject
     {
         return $this->wrapper->wrap($value);
     }
 
-    
-    private function callExpectation(string $method, array $arguments)
+    private function callExpectation(string $method, array $arguments): mixed
     {
         $subject = $this->makeSureWeHaveASubject();
 

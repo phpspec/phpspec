@@ -35,7 +35,7 @@ final class IndexedServiceContainer implements ServiceContainer
     /**
      * Sets a param in the container
      */
-    public function setParam(string $id, $value): void
+    public function setParam(string $id, mixed $value): void
     {
         $this->parameters[$id] = $value;
     }
@@ -43,7 +43,7 @@ final class IndexedServiceContainer implements ServiceContainer
     /**
      * Gets a param from the container or a default value.
      */
-    public function getParam(string $id, $default = null)
+    public function getParam(string $id, mixed $default = null): mixed
     {
         return $this->parameters[$id] ?? $default;
     }

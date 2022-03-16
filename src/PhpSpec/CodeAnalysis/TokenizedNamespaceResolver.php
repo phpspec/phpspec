@@ -22,12 +22,11 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
 
     private int $state = self::STATE_DEFAULT;
 
-    private $currentNamespace;
-    private $currentUseGroup;
-    private $currentUse;
+    private string $currentNamespace = '';
+    private ?string $currentUseGroup = null;
+    private ?string $currentUse = null;
     private array $uses = array();
 
-    
     public function analyse(string $code): void
     {
         $this->state = self::STATE_DEFAULT;

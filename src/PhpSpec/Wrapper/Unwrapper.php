@@ -24,8 +24,7 @@ class Unwrapper implements RevealerInterface
         return array_map(array($this, 'unwrapOne'), $arguments);
     }
 
-    
-    public function unwrapOne($argument)
+    public function unwrapOne(mixed $argument): mixed
     {
         if (\is_array($argument)) {
             return array_map(array($this, 'unwrapOne'), $argument);

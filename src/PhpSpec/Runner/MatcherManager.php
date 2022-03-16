@@ -25,13 +25,11 @@ class MatcherManager
      */
     private array $matchers = array();
 
-    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }
 
-    
     public function add(Matcher $matcher): void
     {
         $this->matchers[] = $matcher;
@@ -53,7 +51,7 @@ class MatcherManager
     /**
      * @throws MatcherNotFoundException
      */
-    public function find(string $keyword, $subject, array $arguments): Matcher
+    public function find(string $keyword, mixed $subject, array $arguments): Matcher
     {
         foreach ($this->matchers as $matcher) {
             if (true === $matcher->supports($keyword, $subject, $arguments)) {

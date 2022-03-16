@@ -124,6 +124,7 @@ abstract class ObjectBehavior implements
      *
      * @param int|string $key
      * @psalm-suppress InvalidAttribute
+     * @psalm-suppress MissingParamType
      */
     #[\ReturnTypeWillChange]
     public function offsetSet($key, $value): void
@@ -136,6 +137,7 @@ abstract class ObjectBehavior implements
      *
      * @param int|string $key
      * @psalm-suppress InvalidAttribute
+     * @psalm-suppress MissingParamType
      */
     #[\ReturnTypeWillChange]
     public function offsetUnset($key): void
@@ -154,7 +156,7 @@ abstract class ObjectBehavior implements
     /**
      * Proxies setting to the PhpSpec subject
      */
-    public function __set(string $property, $value)
+    public function __set(string $property, mixed $value)
     {
         $this->object->$property = $value;
     }

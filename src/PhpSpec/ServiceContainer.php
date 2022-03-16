@@ -11,12 +11,12 @@ interface ServiceContainer
     /**
      * Sets a param in the container
      */
-    public function setParam(string $id, $value): void;
+    public function setParam(string $id, mixed $value): void;
 
     /**
      * Gets a param from the container or a default value.
      */
-    public function getParam(string $id, $default = null);
+    public function getParam(string $id, mixed $default = null): mixed;
 
     /**
      * Sets a object to be used as a service

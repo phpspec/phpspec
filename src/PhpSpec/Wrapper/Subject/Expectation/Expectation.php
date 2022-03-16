@@ -13,8 +13,9 @@
 
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
+use PhpSpec\Wrapper\DelayedCall;
+
 interface Expectation
 {
-    
-    public function match(string $alias, $subject, array $arguments = array());
+    public function match(string $alias, mixed $subject, array $arguments = array()): mixed;
 }

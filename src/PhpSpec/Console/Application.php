@@ -174,7 +174,7 @@ final class Application extends BaseApplication
         }
     }
 
-    private function loadExtension(ServiceContainer $container, string $extensionClass, $config): void
+    private function loadExtension(ServiceContainer $container, string $extensionClass, mixed $config): void
     {
         if (!class_exists($extensionClass)) {
             throw new InvalidConfigurationException(sprintf('Extension class `%s` does not exist.', $extensionClass));

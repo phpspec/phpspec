@@ -84,7 +84,7 @@ class Caller
      * @throws SubjectException
      * @throws PropertyNotFoundException
      */
-    public function set(string $property, $value = null): void
+    public function set(string $property, mixed $value = null): void
     {
         if (null === $this->getWrappedObject()) {
             throw $this->settingPropertyOnNonObject($property);
@@ -210,7 +210,7 @@ class Caller
     }
 
     
-    private function wrap($value): Subject
+    private function wrap(mixed $value): Subject
     {
         return $this->wrapper->wrap($value);
     }

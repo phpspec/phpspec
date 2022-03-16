@@ -19,20 +19,17 @@ final class CallableTypePresenter implements TypePresenter
 {
     private Presenter $presenter;
 
-    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
     }
 
-    
-    public function supports($value): bool
+    public function supports(mixed $value): bool
     {
         return is_callable($value);
     }
 
-    
-    public function present($value): string
+    public function present(mixed $value): string
     {
         if (\is_array($value)) {
             $type = \is_object($value[0]) ? $this->presenter->presentValue($value[0]) : $value[0];
@@ -49,7 +46,6 @@ final class CallableTypePresenter implements TypePresenter
 
         return sprintf('[%s()]', $value);
     }
-
     
     public function getPriority(): int
     {

@@ -15,8 +15,9 @@ namespace PhpSpec\Loader;
 
 class StreamWrapper
 {
-    private $realPath;
-    private $fileResource;
+    private string $realPath = '';
+    /** @var ?resource */
+    private $fileResource = null;
 
     private static array $specTransformers = array();
 
@@ -43,7 +44,7 @@ class StreamWrapper
         return 'phpspec://' . $path;
     }
 
-    public function stream_open($path, $mode, $options, &$opened_path): bool
+    public function stream_open(string $path, string $mode, int $options, ?string &$opened_path): bool
     {
         if ($mode != 'rb') {
             throw new \RuntimeException('Cannot open phpspec url in mode "$mode"');
@@ -74,7 +75,7 @@ class StreamWrapper
         return stat($this->realPath);
     }
 
-    public function stream_read($count): bool|string
+    public function stream_read(int $count): bool|string
     {
         return fread($this->fileResource, $count);
     }

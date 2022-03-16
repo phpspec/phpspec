@@ -16,12 +16,9 @@ namespace PhpSpec\Formatter\Presenter\Value;
 
 interface TypePresenter
 {
-    
-    public function supports($value): bool;
+    public function supports(mixed $value): bool;
 
-    
-    public function present($value): string;
+    public function present(mixed $value): string;
 
-    
     public function getPriority(): int;
 }

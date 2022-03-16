@@ -23,13 +23,11 @@ class MatcherNotFoundException extends Exception
 {
     private string $keyword;
 
-    
-    private $subject;
+    private mixed $subject;
 
     private array $arguments;
 
-    
-    public function __construct(string $message, string $keyword, $subject, array $arguments)
+    public function __construct(string $message, string $keyword, mixed $subject, array $arguments)
     {
         parent::__construct($message);
 
@@ -38,19 +36,16 @@ class MatcherNotFoundException extends Exception
         $this->arguments = $arguments;
     }
 
-    
     public function getKeyword(): string
     {
         return $this->keyword;
     }
 
-    
-    public function getSubject()
+    public function getSubject(): mixed
     {
         return $this->subject;
     }
 
-    
     public function getArguments(): array
     {
         return $this->arguments;

@@ -20,11 +20,11 @@ namespace PhpSpec\Exception\Fracture;
 class InterfaceNotImplementedException extends FractureException
 {
     
-    private $subject;
+    private mixed $subject;
 
     private string $interface;
 
-    public function __construct(string $message, $subject, string $interface)
+    public function __construct(string $message, mixed $subject, string $interface)
     {
         parent::__construct($message);
 
@@ -32,7 +32,7 @@ class InterfaceNotImplementedException extends FractureException
         $this->interface = $interface;
     }
 
-    public function getSubject()
+    public function getSubject(): mixed
     {
         return $this->subject;
     }

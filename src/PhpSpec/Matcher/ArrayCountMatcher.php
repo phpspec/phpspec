@@ -26,8 +26,7 @@ final class ArrayCountMatcher extends BasicMatcher
         $this->presenter = $presenter;
     }
 
-    
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return 'haveCount' === $name
             && 1 == \count($arguments)
@@ -35,14 +34,12 @@ final class ArrayCountMatcher extends BasicMatcher
         ;
     }
 
-    
-    protected function matches($subject, array $arguments): bool
+    protected function matches(mixed $subject, array $arguments): bool
     {
         return $arguments[0] === \count($subject);
     }
 
-    
-    protected function getFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s to have %s items, but got %s.',
@@ -53,7 +50,7 @@ final class ArrayCountMatcher extends BasicMatcher
     }
 
     
-    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getNegativeFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s not to have %s items, but got it.',

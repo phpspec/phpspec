@@ -20,6 +20,9 @@ class DelayedCall
      */
     private $callable;
 
+    /**
+     * @param callable(string, array): mixed $callable
+     */
     public function __construct(callable $callable)
     {
         $this->callable = $callable;

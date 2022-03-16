@@ -85,7 +85,7 @@ class ComposerPsrNamespaceProvider
         return $namespaces;
     }
 
-    private function normaliseLocation($location): string
+    private function normaliseLocation(string $location): string
     {
         return strpos(realpath($location), realpath($this->rootDirectory)) === 0 ?
             substr(

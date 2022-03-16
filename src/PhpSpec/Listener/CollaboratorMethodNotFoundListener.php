@@ -97,15 +97,17 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         $this->checkIfMethodNameAllowed($methodName);
     }
 
-    
-    private function getDoubledInterface($class): string|false
+    /**
+     * @param class-string $class
+     */
+    private function getDoubledInterface(string $class): string|false
     {
         if (class_parents($class) !== array(\stdClass::class=>\stdClass::class)) {
             return false;
         }
 
         $interfaces = array_filter(class_implements($class),
-            function ($interface) {
+            function (string $interface): bool {
                 return !preg_match('/^Prophecy/', $interface);
             }
         );
@@ -153,7 +155,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
     }
 
     
-    private function getRealArguments($prophecyArguments): array
+    private function getRealArguments(mixed $prophecyArguments): array
     {
         if ($prophecyArguments instanceof ArgumentsWildcard) {
             return $prophecyArguments->getTokens();
@@ -173,7 +175,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         return null;
     }
 
-    private function checkIfMethodNameAllowed($methodName): void
+    private function checkIfMethodNameAllowed(string $methodName): void
     {
         if (!$this->nameChecker->isNameValid($methodName)) {
             $this->wrongMethodNames[] = $methodName;

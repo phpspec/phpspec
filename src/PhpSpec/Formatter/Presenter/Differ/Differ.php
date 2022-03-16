@@ -27,7 +27,7 @@ class Differ
         $this->engines[] = $engine;
     }
 
-    public function compare($expected, $actual) : string
+    public function compare(mixed $expected, mixed $actual) : string
     {
         foreach ($this->engines as $engine) {
             if ($engine->supports($expected, $actual)) {

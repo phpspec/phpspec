@@ -19,13 +19,11 @@ class Collaborator implements ObjectWrapper
 {
     private ObjectProphecy $prophecy;
 
-    
     public function __construct(ObjectProphecy $prophecy)
     {
         $this->prophecy  = $prophecy;
     }
 
-    
     public function beADoubleOf(string $classOrInterface): void
     {
         if (interface_exists($classOrInterface)) {
@@ -35,31 +33,26 @@ class Collaborator implements ObjectWrapper
         }
     }
 
-
     public function beConstructedWith(array $arguments = null): void
     {
         $this->prophecy->willBeConstructedWith($arguments);
     }
 
-    
     public function implement(string $interface): void
     {
         $this->prophecy->willImplement($interface);
     }
 
-    
     public function __call(string $method, array $arguments)
     {
         return \call_user_func_array(array($this->prophecy, '__call'), array($method, $arguments));
     }
 
-    
-    public function __set(string $parameter, $value)
+    public function __set(string $parameter, mixed $value)
     {
         $this->prophecy->$parameter = $value;
     }
 
-    
     public function __get(string $parameter)
     {
         return $this->prophecy->$parameter;

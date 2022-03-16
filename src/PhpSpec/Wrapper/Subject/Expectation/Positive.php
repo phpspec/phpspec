@@ -20,14 +20,12 @@ final class Positive implements Expectation
 {
     private Matcher $matcher;
 
-    
     public function __construct(Matcher $matcher)
     {
         $this->matcher = $matcher;
     }
 
-    
-    public function match(string $alias, $subject, array $arguments = array()): ?DelayedCall
+    public function match(string $alias, mixed $subject, array $arguments = array()): ?DelayedCall
     {
         return $this->matcher->positiveMatch($alias, $subject, $arguments);
     }

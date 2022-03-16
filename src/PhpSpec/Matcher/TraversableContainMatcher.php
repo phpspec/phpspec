@@ -29,7 +29,7 @@ final class TraversableContainMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return 'contain' === $name
             && 1 === \count($arguments)
@@ -48,7 +48,7 @@ final class TraversableContainMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    protected function matches($subject, array $arguments): bool
+    protected function matches(mixed $subject, array $arguments): bool
     {
         foreach ($subject as $value) {
             if ($value === $arguments[0]) {
@@ -62,7 +62,7 @@ final class TraversableContainMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    protected function getFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s to contain %s, but it does not.',
@@ -74,7 +74,7 @@ final class TraversableContainMatcher extends BasicMatcher
     /**
      * {@inheritdoc}
      */
-    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getNegativeFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s not to contain %s, but it does.',

@@ -2,32 +2,30 @@
 
 namespace PhpSpec\NamespaceProvider;
 
-use Composer\Autoload\ClassLoader;
-
 final class NamespaceLocation
 {
-    private $namespace;
-    private $location;
-    private $autoloadingStandard;
+    private string $namespace;
+    private string $location;
+    private string $autoloadingStandard;
 
-    public function __construct($namespace, $location, $autoloadingStandard)
+    public function __construct(string $namespace, string $location, string $autoloadingStandard)
     {
         $this->namespace = $namespace;
         $this->location = $location;
         $this->autoloadingStandard = $autoloadingStandard;
     }
 
-    public function getNamespace()
+    public function getNamespace(): string
     {
         return $this->namespace;
     }
 
-    public function getLocation()
+    public function getLocation(): string
     {
         return $this->location;
     }
 
-    public function getAutoloadingStandard()
+    public function getAutoloadingStandard(): string
     {
         return $this->autoloadingStandard;
     }
