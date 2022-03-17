@@ -101,44 +101,32 @@ abstract class ObjectBehavior implements
 
     /**
      * Checks if a key exists in case object implements ArrayAccess
-     *
-     * @param int|string $key
      */
-    public function offsetExists($key): bool
+    public function offsetExists(mixed $key): bool
     {
         return $this->object->offsetExists($key);
     }
 
     /**
      * Gets the value in a particular position in the ArrayAccess object
-     *
-     * @param int|string $key
      */
-    public function offsetGet($key): Subject
+    public function offsetGet(mixed $key): Subject
     {
         return $this->object->offsetGet($key);
     }
 
     /**
      * Sets the value in a particular position in the ArrayAccess object
-     *
-     * @param int|string $key
-     * @psalm-suppress InvalidAttribute
      */
-    #[\ReturnTypeWillChange]
-    public function offsetSet($key, $value): void
+    public function offsetSet(mixed $key, mixed $value): void
     {
         $this->object->offsetSet($key, $value);
     }
 
     /**
      * Unsets a position in the ArrayAccess object
-     *
-     * @param int|string $key
-     * @psalm-suppress InvalidAttribute
      */
-    #[\ReturnTypeWillChange]
-    public function offsetUnset($key): void
+    public function offsetUnset(mixed $key): void
     {
         $this->object->offsetUnset($key);
     }
@@ -154,7 +142,7 @@ abstract class ObjectBehavior implements
     /**
      * Proxies setting to the PhpSpec subject
      */
-    public function __set(string $property, $value)
+    public function __set(string $property, mixed $value)
     {
         $this->object->$property = $value;
     }

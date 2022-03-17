@@ -32,7 +32,6 @@ abstract class PromptingGenerator implements Generator
 
     private ExecutionContext $executionContext;
 
-    
     public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, ExecutionContext $executionContext)
     {
         $this->io         = $io;
@@ -41,7 +40,6 @@ abstract class PromptingGenerator implements Generator
         $this->executionContext = $executionContext;
     }
 
-    
     public function generate(Resource $resource, array $data = array()): void
     {
         $filepath = $this->getFilePath($resource);

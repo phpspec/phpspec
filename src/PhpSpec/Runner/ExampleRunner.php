@@ -38,24 +38,21 @@ class ExampleRunner
      */
     private array $maintainers = array();
 
-    
     public function __construct(EventDispatcherInterface $dispatcher, Presenter $presenter)
     {
         $this->dispatcher = $dispatcher;
         $this->presenter  = $presenter;
     }
 
-    
     public function registerMaintainer(Maintainer $maintainer): void
     {
         $this->maintainers[] = $maintainer;
 
-        @usort($this->maintainers, function ($maintainer1, $maintainer2) {
+        @usort($this->maintainers, function (Maintainer $maintainer1, Maintainer $maintainer2): int {
             return $maintainer2->getPriority() - $maintainer1->getPriority();
         });
     }
 
-    
     public function run(ExampleNode $example): int
     {
         $startTime = microtime(true);

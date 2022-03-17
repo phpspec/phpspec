@@ -29,8 +29,7 @@ final class ObjectStateMatcher implements Matcher
         $this->presenter = $presenter;
     }
 
-    
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return \is_object($subject) && !is_callable($subject)
             && (0 === strpos($name, 'be') || 0 === strpos($name, 'have'))
@@ -41,8 +40,10 @@ final class ObjectStateMatcher implements Matcher
      * @throws MethodFailureException
      * @throws MethodNotFoundException
      */
-    public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall
+    public function positiveMatch(string $name, mixed $subject, array $arguments) : ?DelayedCall
     {
+        /** @var object $subject because supports has been called */
+
         preg_match(self::$regex, $name, $matches);
         $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);
         $callable = array($subject, $method);
@@ -65,8 +66,10 @@ final class ObjectStateMatcher implements Matcher
      * @throws MethodFailureException
      * @throws MethodNotFoundException
      */
-    public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall
+    public function negativeMatch(string $name, mixed $subject, array $arguments) : ?DelayedCall
     {
+        /** @var object $subject because supports has been called */
+
         preg_match(self::$regex, $name, $matches);
         $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);
         $callable = array($subject, $method);
@@ -85,16 +88,15 @@ final class ObjectStateMatcher implements Matcher
         return null;
     }
 
-    
     public function getPriority(): int
     {
         return 50;
     }
 
     /**
-     * @param array{0: object, 1: string} callable
+     * @param array{0: object, 1: string} $callable
      */
-    private function getMethodFailureExceptionFor(array $callable, bool $expectedBool, $result): MethodFailureException
+    private function getMethodFailureExceptionFor(array $callable, bool $expectedBool, mixed $result): MethodFailureException
     {
         return new MethodFailureException(sprintf(
             "Expected %s to return %s, but got %s.",

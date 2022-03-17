@@ -15,6 +15,5 @@ namespace PhpSpec\Wrapper\Subject\Expectation;
 
 interface ThrowExpectation extends Expectation
 {
-    
-    public function during(string $method, array $arguments = array());
+    public function during(string $method, array $arguments = array()): void;
 }

@@ -84,7 +84,7 @@ class Caller
      * @throws SubjectException
      * @throws PropertyNotFoundException
      */
-    public function set(string $property, $value = null): void
+    public function set(string $property, mixed $value = null): void
     {
         if (null === $this->getWrappedObject()) {
             throw $this->settingPropertyOnNonObject($property);
@@ -137,7 +137,8 @@ class Caller
             return $this->wrappedObject->getInstance();
         }
 
-        if (!$className || !class_exists($className)) {
+        /** @var string $className don't trust it's a class-string, we still want to check */
+        if (!class_exists($className)) {
             throw $this->classNotFound();
         }
 
@@ -210,7 +211,7 @@ class Caller
     }
 
     
-    private function wrap($value): Subject
+    private function wrap(mixed $value): Subject
     {
         return $this->wrapper->wrap($value);
     }

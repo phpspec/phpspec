@@ -39,20 +39,17 @@ final class ThrowMatcher implements Matcher
         $this->factory   = $factory;
     }
 
-
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return 'throw' === $name;
     }
 
-
-    public function positiveMatch(string $name, $subject, array $arguments): DelayedCall
+    public function positiveMatch(string $name, mixed $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyPositive'), $subject, $arguments);
     }
 
-
-    public function negativeMatch(string $name, $subject, array $arguments): DelayedCall
+    public function negativeMatch(string $name, mixed $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyNegative'), $subject, $arguments);
     }
@@ -205,20 +202,19 @@ final class ThrowMatcher implements Matcher
         }
     }
 
-
     public function getPriority(): int
     {
         return 1;
     }
 
 
-    private function getDelayedCall(callable $check, $subject, array $arguments): DelayedCall
+    private function getDelayedCall(callable $check, mixed $subject, array $arguments): DelayedCall
     {
         $exception = $this->getException($arguments);
         $unwrapper = $this->unwrapper;
 
         return new DelayedCall(
-            function ($method, $arguments) use ($check, $subject, $exception, $unwrapper) {
+            function (string $method, array $arguments) use ($check, $subject, $exception, $unwrapper): mixed {
                 $arguments = $unwrapper->unwrapAll($arguments);
 
                 $methodName = $arguments[0];

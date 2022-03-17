@@ -148,6 +148,7 @@ final class Application extends BaseApplication
         }
     }
 
+    /** @param array<class-string> $matchersClassnames */
     private function registerCustomMatchers(IndexedServiceContainer $container, array $matchersClassnames): void
     {
         foreach ($matchersClassnames as $class) {
@@ -174,7 +175,7 @@ final class Application extends BaseApplication
         }
     }
 
-    private function loadExtension(ServiceContainer $container, string $extensionClass, $config): void
+    private function loadExtension(ServiceContainer $container, string $extensionClass, mixed $config): void
     {
         if (!class_exists($extensionClass)) {
             throw new InvalidConfigurationException(sprintf('Extension class `%s` does not exist.', $extensionClass));

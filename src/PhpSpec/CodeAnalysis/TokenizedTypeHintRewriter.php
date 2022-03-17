@@ -25,9 +25,9 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
 
     private int $state = self::STATE_DEFAULT;
 
-    private $currentClass;
-    private $currentFunction;
-    private $currentBodyLevel;
+    private ?string $currentClass = null;
+    private string $currentFunction = '';
+    private int $currentBodyLevel = 0;
 
     private array $typehintTokens = array(
         T_WHITESPACE, T_STRING, T_NS_SEPARATOR, T_NAME_FULLY_QUALIFIED, T_NAME_QUALIFIED
@@ -36,7 +36,6 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     private TypeHintIndex $typeHintIndex;
     private NamespaceResolver $namespaceResolver;
 
-    
     public function __construct(TypeHintIndex $typeHintIndex, NamespaceResolver $namespaceResolver)
     {
         $this->typeHintIndex = $typeHintIndex;
@@ -128,7 +127,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     
     private function tokensToString(array $tokens): string
     {
-        return join('', array_map(function ($token) {
+        return join('', array_map(function ($token) : string {
             return \is_array($token) ? $token[1] : $token;
         }, $tokens));
     }
@@ -145,6 +144,10 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         }
 
         if ($typehint = trim($typehint)) {
+
+            if (is_null($this->currentClass)) {
+                throw new \LogicException('Current class was null while parsing class');
+            }
 
             $class = $this->namespaceResolver->resolve($this->currentClass);
 
@@ -189,7 +192,10 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         }
     }
 
-    private function haveNotReachedEndOfTypeHint($token) : bool
+    /**
+     * @param string|array{0:int, 1:string, 2: int} $token
+     */
+    private function haveNotReachedEndOfTypeHint(string|array $token) : bool
     {
         // PHP 8.1 returns the intersection token `&` as an array,
         // while previous versions return it as a string.

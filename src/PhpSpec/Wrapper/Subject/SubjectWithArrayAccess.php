@@ -25,7 +25,6 @@ class SubjectWithArrayAccess
     private Presenter $presenter;
     private EventDispatcherInterface $dispatcher;
 
-    
     public function __construct(
         Caller $caller,
         Presenter $presenter,
@@ -36,7 +35,7 @@ class SubjectWithArrayAccess
         $this->dispatcher = $dispatcher;
     }
 
-    public function offsetExists(int|string $key): bool
+    public function offsetExists(mixed $key): bool
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -47,7 +46,7 @@ class SubjectWithArrayAccess
         return isset($subject[$key]);
     }
 
-    public function offsetGet(int|string $key)
+    public function offsetGet(mixed $key): mixed
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -58,7 +57,7 @@ class SubjectWithArrayAccess
         return $subject[$key];
     }
 
-    public function offsetSet(int|string $key, $value): void
+    public function offsetSet(mixed $key, mixed $value): void
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -70,7 +69,7 @@ class SubjectWithArrayAccess
         $subject[$key] = $value;
     }
 
-    public function offsetUnset(int|string $key): void
+    public function offsetUnset(mixed $key): void
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -87,7 +86,7 @@ class SubjectWithArrayAccess
      *
      * @psalm-assert \ArrayAccess|array $subject
      */
-    private function checkIfSubjectImplementsArrayAccess($subject): void
+    private function checkIfSubjectImplementsArrayAccess(mixed $subject): void
     {
         if (\is_object($subject) && !($subject instanceof \ArrayAccess)) {
             throw $this->interfaceNotImplemented();
@@ -96,7 +95,6 @@ class SubjectWithArrayAccess
         }
     }
 
-    
     private function interfaceNotImplemented(): InterfaceNotImplementedException
     {
         return new InterfaceNotImplementedException(
@@ -110,8 +108,7 @@ class SubjectWithArrayAccess
         );
     }
 
-    
-    private function cantUseAsArray($subject): SubjectException
+    private function cantUseAsArray(mixed $subject): SubjectException
     {
         return new SubjectException(sprintf(
             'Can not use %s as array.',

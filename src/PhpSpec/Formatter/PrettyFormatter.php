@@ -109,7 +109,7 @@ final class PrettyFormatter extends ConsoleFormatter
         }
     }
 
-    protected function printException(ExampleEvent $event, $depth = null): void
+    protected function printException(ExampleEvent $event, int $depth = 8): void
     {
         $io = $this->getIO();
 
@@ -117,7 +117,6 @@ final class PrettyFormatter extends ConsoleFormatter
             return;
         }
 
-        $depth = $depth ?: 8;
         $message = $this->getPresenter()->presentException($exception, $io->isVerbose());
 
         if (ExampleEvent::FAILED === $event->getResult()) {

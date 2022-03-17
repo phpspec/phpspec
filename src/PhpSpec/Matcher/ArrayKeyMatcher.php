@@ -27,8 +27,7 @@ final class ArrayKeyMatcher extends BasicMatcher
         $this->presenter = $presenter;
     }
 
-    
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return 'haveKey' === $name
             && 1 == \count($arguments)
@@ -36,8 +35,7 @@ final class ArrayKeyMatcher extends BasicMatcher
         ;
     }
 
-    
-    protected function matches($subject, array $arguments): bool
+    protected function matches(mixed $subject, array $arguments): bool
     {
         $key = $arguments[0];
 
@@ -48,8 +46,7 @@ final class ArrayKeyMatcher extends BasicMatcher
         return isset($subject[$key]) || array_key_exists($arguments[0], $subject);
     }
 
-    
-    protected function getFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s to have %s key, but it does not.',
@@ -58,8 +55,7 @@ final class ArrayKeyMatcher extends BasicMatcher
         ));
     }
 
-    
-    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getNegativeFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s not to have %s key, but it does.',

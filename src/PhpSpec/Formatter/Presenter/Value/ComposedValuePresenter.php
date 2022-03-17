@@ -20,18 +20,16 @@ final class ComposedValuePresenter implements ValuePresenter
      */
     private array $typePresenters = array();
 
-    
     public function addTypePresenter(TypePresenter $typePresenter): void
     {
         $this->typePresenters[] = $typePresenter;
 
-        @usort($this->typePresenters, function ($presenter1, $presenter2) {
+        @usort($this->typePresenters, function ($presenter1, $presenter2): int {
             return $presenter2->getPriority() - $presenter1->getPriority();
         });
     }
 
-    
-    public function presentValue($value): string
+    public function presentValue(mixed $value): string
     {
         foreach ($this->typePresenters as $typePresenter) {
             if ($typePresenter->supports($value)) {

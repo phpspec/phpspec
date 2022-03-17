@@ -21,7 +21,7 @@ class TeamCityFormatter extends BasicFormatter
         $this->startedTestName = $testName;
         $params = ['name' => $testName];
 
-        $className = $event->getSpecification()?->getClassReflection()->getName() ?? '';
+        $className = $event->getSpecification()?->getClassReflection()->getName();
         $fileName = (string) $event->getSpecification()?->getClassReflection()->getFileName();
         $referenceName = str_replace(' ', '_', $testName);
         $params['locationHint'] = "php_qn://{$fileName}::\\{$className}::{$referenceName}";
@@ -226,10 +226,6 @@ class TeamCityFormatter extends BasicFormatter
     {
         $suiteName = $event->getSpecification()->getResource()->getSpecClassname();
 
-        if (empty($suiteName)) {
-            return;
-        }
-
         $parameters = ['name' => $suiteName];
         $fileName = $event->getSpecification()->getResource()->getSpecFilename();
         $parameters['locationHint'] = "php_qn://{$fileName}::\\{$suiteName}";
@@ -240,10 +236,6 @@ class TeamCityFormatter extends BasicFormatter
     public function afterSpecification(SpecificationEvent $event): void
     {
         $suiteName = $event->getSpecification()->getResource()->getSpecClassname();
-
-        if (empty($suiteName)) {
-            return;
-        }
 
         $this->printEvent('testSuiteFinished', ['name' => $suiteName]);
     }

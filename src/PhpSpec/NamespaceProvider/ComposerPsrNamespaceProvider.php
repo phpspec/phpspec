@@ -44,6 +44,8 @@ class ComposerPsrNamespaceProvider
                 }
             }
         }
+
+        /** @psalm-suppress UnresolvableInclude If the vendor folder isn't there we are in trouble */
         $classLoader = require $this->rootDirectory . '/vendor/autoload.php';
 
         $namespaces = array();
@@ -85,7 +87,7 @@ class ComposerPsrNamespaceProvider
         return $namespaces;
     }
 
-    private function normaliseLocation($location): string
+    private function normaliseLocation(string $location): string
     {
         return strpos(realpath($location), realpath($this->rootDirectory)) === 0 ?
             substr(

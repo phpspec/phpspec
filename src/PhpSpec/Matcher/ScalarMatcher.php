@@ -30,7 +30,7 @@ final class ScalarMatcher implements Matcher
     /**
      * Checks if matcher supports provided subject and matcher name.
      */
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         $checkerName = $this->getCheckerName($name);
 
@@ -43,7 +43,7 @@ final class ScalarMatcher implements Matcher
      *
      * @throws FailureException
      */
-    public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall
+    public function positiveMatch(string $name, mixed $subject, array $arguments) : ?DelayedCall
     {
         /** @var string $checker */
         $checker = $this->getCheckerName($name);
@@ -69,7 +69,7 @@ final class ScalarMatcher implements Matcher
      *
      * @throws FailureException
      */
-    public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall
+    public function negativeMatch(string $name, mixed $subject, array $arguments) : ?DelayedCall
     {
         /** @var string $checker */
         $checker = $this->getCheckerName($name);

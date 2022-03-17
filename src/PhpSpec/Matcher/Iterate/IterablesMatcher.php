@@ -8,7 +8,6 @@ final class IterablesMatcher
 {
     private Presenter $presenter;
 
-    
     public function __construct(Presenter $presenter)
     {
         $this->presenter = $presenter;
@@ -57,8 +56,10 @@ final class IterablesMatcher
         }
     }
 
-    
-    private function isIterable($variable): bool
+    /**
+     * @psalm-assert-if-true array|Traversable $variable
+     */
+    private function isIterable(mixed $variable): bool
     {
         return \is_array($variable) || $variable instanceof \Traversable;
     }
@@ -75,7 +76,7 @@ final class IterablesMatcher
         return $iterator;
     }
 
-    private function valueIsEqual($expected, $value, bool $strict): bool
+    private function valueIsEqual(mixed $expected, mixed $value, bool $strict): bool
     {
         return $strict ? $expected === $value : $expected == $value;
     }

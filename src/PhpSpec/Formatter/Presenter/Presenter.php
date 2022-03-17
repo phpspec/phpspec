@@ -18,6 +18,5 @@ use PhpSpec\Formatter\Presenter\Value\ValuePresenter;
 
 interface Presenter extends ExceptionPresenter, ValuePresenter
 {
-    
     public function presentString(string $string): string;
 }

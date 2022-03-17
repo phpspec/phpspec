@@ -16,11 +16,11 @@ namespace PhpSpec\Wrapper\Subject\Expectation;
 use PhpSpec\Exception\ErrorException;
 use PhpSpec\Exception\Fracture\FractureException;
 use PhpSpec\Util\Instantiator;
+use PhpSpec\Wrapper\DelayedCall;
 use PhpSpec\Wrapper\Subject\WrappedObject;
 
 final class ConstructorDecorator extends Decorator implements Expectation
 {
-    
     public function __construct(Expectation $expectation)
     {
         $this->setExpectation($expectation);
@@ -31,7 +31,7 @@ final class ConstructorDecorator extends Decorator implements Expectation
      * @throws \PhpSpec\Exception\Example\ErrorException
      * @throws FractureException
      */
-    public function match(string $alias, $subject, array $arguments = [], WrappedObject $wrappedObject = null)
+    public function match(string $alias, mixed $subject, array $arguments = [], WrappedObject $wrappedObject = null): mixed
     {
         try {
             $wrapped = $subject->getWrappedObject();

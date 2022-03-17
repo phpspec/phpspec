@@ -36,7 +36,6 @@ interface Resource
     
     public function getSpecNamespace(): string;
 
-
     /** @return class-string */
     public function getSpecClassname(): string;
 }

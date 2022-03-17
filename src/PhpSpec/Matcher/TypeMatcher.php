@@ -33,7 +33,7 @@ final class TypeMatcher extends BasicMatcher
     }
 
     
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return \in_array($name, self::$keywords)
             && 1 == \count($arguments)
@@ -41,13 +41,13 @@ final class TypeMatcher extends BasicMatcher
     }
 
     
-    protected function matches($subject, array $arguments): bool
+    protected function matches(mixed $subject, array $arguments): bool
     {
         return (null !== $subject) && ($subject instanceof $arguments[0]);
     }
 
     
-    protected function getFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected an instance of %s, but got %s.',
@@ -57,7 +57,7 @@ final class TypeMatcher extends BasicMatcher
     }
 
     
-    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getNegativeFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Did not expect instance of %s, but got %s.',

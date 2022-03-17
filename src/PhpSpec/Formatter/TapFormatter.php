@@ -44,7 +44,7 @@ final class TapFormatter extends ConsoleFormatter
 
     private int $examplesCount = 0;
 
-    private string $currentSpecificationTitle;
+    private string $currentSpecificationTitle = '';
 
     public function beforeSuite(SuiteEvent $event): void
     {

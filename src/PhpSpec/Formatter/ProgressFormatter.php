@@ -21,7 +21,7 @@ final class ProgressFormatter extends ConsoleFormatter
 {
     const FPS = 10;
 
-    private $lastDraw;
+    private ?float $lastDraw = null;
 
     public function afterExample(ExampleEvent $event): void
     {

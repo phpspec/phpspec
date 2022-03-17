@@ -22,7 +22,7 @@ abstract class DuringCall
 {
     private Matcher $matcher;
 
-    private $subject;
+    private mixed $subject;
     private array $arguments = [];
     private ?WrappedObject $wrappedObject = null;
 
@@ -34,7 +34,7 @@ abstract class DuringCall
     /**
      * @return $this
      */
-    public function match(string $alias, $subject, array $arguments = array(), WrappedObject $wrappedObject = null): static
+    public function match(string $alias, mixed $subject, array $arguments = array(), WrappedObject $wrappedObject = null): static
     {
         $this->subject = $subject;
         $this->arguments = $arguments;
@@ -43,7 +43,7 @@ abstract class DuringCall
         return $this;
     }
 
-    public function during(string $method, array $arguments = array())
+    public function during(string $method, array $arguments = array()): void
     {
         if (!$this->wrappedObject) {
             throw new \LogicException('Cannot call during on undefined object');
@@ -52,15 +52,16 @@ abstract class DuringCall
         if ($method === '__construct') {
             $this->subject->beAnInstanceOf($this->wrappedObject->getClassName(), $arguments);
 
-            return $this->duringInstantiation();
+            $this->duringInstantiation();
+            return;
         }
 
         $object = $this->wrappedObject->instantiate();
 
-        return $this->runDuring($object, $method, $arguments);
+        $this->runDuring($object, $method, $arguments);
     }
 
-    public function duringInstantiation()
+    public function duringInstantiation(): void
     {
         if (!$this->wrappedObject) {
             throw new \LogicException('Cannot call during on undefined object');
@@ -79,7 +80,7 @@ abstract class DuringCall
         $className = $this->wrappedObject->getClassName();
         $object = $instantiator->instantiate($className);
 
-        return $this->runDuring($object, $method, $this->wrappedObject->getArguments());
+        $this->runDuring($object, $method, $this->wrappedObject->getArguments());
     }
 
     /**
@@ -109,5 +110,5 @@ abstract class DuringCall
         return $this->matcher;
     }
 
-    abstract protected function runDuring(object $object, string $method, array $arguments = array());
+    abstract protected function runDuring(object $object, string $method, array $arguments = array()): void;
 }

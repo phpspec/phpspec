@@ -93,7 +93,7 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
         $this->io->writeln();
     }
 
-    public function displayFatal(CurrentExampleTracker $currentExample, $error): void
+    public function displayFatal(CurrentExampleTracker $currentExample, ?array $error): void
     {
         if (
             (null !== $error && ($currentExample->getCurrentExample() || $error['type'] == E_ERROR))

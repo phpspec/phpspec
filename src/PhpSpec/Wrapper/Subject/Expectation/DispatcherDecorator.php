@@ -17,6 +17,7 @@ use PhpSpec\Event\ExpectationEvent;
 use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Matcher\Matcher;
+use PhpSpec\Wrapper\DelayedCall;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Exception;
 
@@ -26,7 +27,6 @@ final class DispatcherDecorator extends Decorator implements Expectation
     private Matcher $matcher;
     private ExampleNode $example;
 
-    
     public function __construct(
         Expectation $expectation,
         EventDispatcherInterface $dispatcher,
@@ -44,7 +44,7 @@ final class DispatcherDecorator extends Decorator implements Expectation
      * @throws FailureException
      * @throws \Exception
      */
-    public function match(string $alias, $subject, array $arguments = array())
+    public function match(string $alias, mixed $subject, array $arguments = array()): mixed
     {
         $this->dispatcher->dispatch(
             new ExpectationEvent($this->example, $this->matcher, $subject, $alias, $arguments),

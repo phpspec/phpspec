@@ -28,16 +28,12 @@ final class ObjectEngine implements DifferEngine
     }
 
     
-    public function supports($expected, $actual): bool
+    public function supports(mixed $expected, mixed $actual): bool
     {
         return \is_object($expected) && \is_object($actual);
     }
 
-    /**
-     * @param object $expected
-     * @param object $actual
-     */
-    public function compare($expected, $actual): string
+    public function compare(mixed $expected, mixed $actual): string
     {
         return $this->stringDiffer->compare(
             $this->exporter->export($expected),
