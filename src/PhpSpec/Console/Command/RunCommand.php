@@ -99,7 +99,7 @@ Will run all the specifications in the spec directory.
 
   <info>php %command.full_name% src/ClassName.php</info>
 
-Will run only the specifications in the ClassName.php file. The argument must be a file path from the root of project directory.
+Will run only the specifications related to the ClassName.php file. The argument must be a file path from the root of the project directory.
 
   <info>php %command.full_name% spec/ClassNameSpec.php</info>
 
