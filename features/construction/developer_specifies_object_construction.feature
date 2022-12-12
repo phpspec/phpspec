@@ -357,6 +357,8 @@ Feature: Developer specifies object construction
 
     class ClassConstructor
     {
+        private $type;
+
         public function __construct($type)
         {
             $this->type = $type;
@@ -402,6 +404,8 @@ Feature: Developer specifies object construction
 
     class ClassWithFactoryMethod
     {
+        private $type;
+
         private function __construct($type)
         {
             $this->type = $type;

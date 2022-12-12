@@ -20,6 +20,8 @@ class StreamWrapper
 
     private static $specTransformers = array();
 
+    public $context;
+
     public static function register(): void
     {
         if (\in_array('phpspec', stream_get_wrappers())) {
