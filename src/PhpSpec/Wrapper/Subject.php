@@ -104,10 +104,16 @@ use ArrayAccess;
  * @method void shouldStartYielding($iterable)
  * @method void shouldNotStartIteratingAs($iterable)
  * @method void shouldNotStartYielding($iterable)
+ *
+ * @template TKey
+ * @template TValue
+ * @template-implements ArrayAccess<TKey,TValue>
  */
 class Subject implements ArrayAccess, ObjectWrapper
 {
-    
+    /**
+     * @var mixed
+     */
     private $subject;
     /**
      * @var Subject\WrappedObject
@@ -130,7 +136,9 @@ class Subject implements ArrayAccess, ObjectWrapper
      */
     private $expectationFactory;
 
-    
+    /**
+     * @param mixed $subject
+     */
     public function __construct(
         $subject,
         Wrapper $wrapper,
@@ -147,7 +155,7 @@ class Subject implements ArrayAccess, ObjectWrapper
         $this->expectationFactory = $expectationFactory;
     }
 
-    
+
     public function beAnInstanceOf(string $className, array $arguments = array()): void
     {
         $this->wrappedObject->beAnInstanceOf($className, $arguments);
@@ -169,7 +177,9 @@ class Subject implements ArrayAccess, ObjectWrapper
         $this->wrappedObject->beConstructedThrough($factoryMethod, $arguments);
     }
 
-    
+    /**
+     * @return ?object
+     */
     public function getWrappedObject()
     {
         if ($this->subject) {
@@ -179,16 +189,19 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $this->subject = $this->caller->getWrappedObject();
     }
 
-    
+
     public function callOnWrappedObject(string $method, array $arguments = array()): Subject
     {
         return $this->caller->call($method, $arguments);
     }
 
-    
+    /**
+     * @param mixed $value
+     * @return void
+     */
     public function setToWrappedObject(string $property, $value = null)
     {
-        return $this->caller->set($property, $value);
+        $this->caller->set($property, $value);
     }
 
     /**
@@ -200,6 +213,7 @@ class Subject implements ArrayAccess, ObjectWrapper
     }
 
     /**
+     * @psalm-param TKey $key
      * @param int|string $key
      */
     public function offsetExists($key): bool
@@ -209,6 +223,8 @@ class Subject implements ArrayAccess, ObjectWrapper
 
     /**
      * @param int|string $key
+     * @psalm-param TKey $key
+     * @psalm-suppress ImplementedReturnTypeMismatch
      */
     public function offsetGet($key): Subject
     {
@@ -216,6 +232,8 @@ class Subject implements ArrayAccess, ObjectWrapper
     }
 
     /**
+     * @param mixed $value
+     * @psalm-param TKey $key
      * @param int|string $key
      */
     public function offsetSet($key, $value): void
@@ -224,6 +242,7 @@ class Subject implements ArrayAccess, ObjectWrapper
     }
 
     /**
+     * @psalm-param TKey $key
      * @param int|string $key
      */
     public function offsetUnset($key): void
@@ -251,13 +270,16 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $this->caller->call($method, $arguments);
     }
 
-    
+
     public function __invoke(): Subject
     {
         return $this->caller->call('__invoke', \func_get_args());
     }
 
-    
+
+    /**
+     * @param mixed $value
+     */
     public function __set(string $property, $value = null)
     {
         return $this->caller->set($property, $value);
@@ -271,13 +293,17 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $this->caller->get($property);
     }
 
-    
+    /**
+     * @param mixed $value
+     */
     private function wrap($value): Subject
     {
         return $this->wrapper->wrap($value);
     }
 
-    
+    /**
+     * @return mixed
+     */
     private function callExpectation(string $method, array $arguments)
     {
         $subject = $this->makeSureWeHaveASubject();
@@ -298,8 +324,9 @@ class Subject implements ArrayAccess, ObjectWrapper
     {
         if (null === $this->subject && $this->wrappedObject->getClassName()) {
             $instantiator = new Instantiator();
-
-            return $instantiator->instantiate($this->wrappedObject->getClassName());
+            $className = $this->wrappedObject->getClassName();
+            /** @var string $className */
+            return $instantiator->instantiate($className);
         }
 
         return $this->subject;
