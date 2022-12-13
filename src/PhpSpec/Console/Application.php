@@ -75,7 +75,7 @@ final class Application extends BaseApplication
 
         $dispatcher = $this->container->get('console_event_dispatcher');
 
-        /** @var \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $dispatcher */
+        /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher */
         $this->setDispatcher($dispatcher);
 
         $consoleWidth = (new Terminal)->getWidth();
