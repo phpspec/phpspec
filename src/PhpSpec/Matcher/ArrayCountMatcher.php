@@ -30,7 +30,7 @@ final class ArrayCountMatcher extends BasicMatcher
     {
         return 'haveCount' === $name
             && 1 == \count($arguments)
-            && (\is_array($subject) || $subject instanceof \Countable)
+            && (is_countable($subject))
         ;
     }
 
