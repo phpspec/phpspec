@@ -65,7 +65,7 @@ final class StartIteratingAsMatcher implements Matcher
     {
         try {
             $this->positiveMatch($name, $subject, $arguments);
-        } catch (FailureException $exception) {
+        } catch (FailureException) {
             return null;
         }
 

@@ -67,7 +67,7 @@ final class ClassNotFoundListener implements EventSubscriberInterface
 
             try {
                 $resource = $this->resources->createResource($classname);
-            } catch (\RuntimeException $e) {
+            } catch (\RuntimeException) {
                 continue;
             }
 

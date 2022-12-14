@@ -83,7 +83,7 @@ final class NamedConstructorGenerator implements Generator
     {
         try {
             return $this->codeWriter->insertAfterMethod($code, '__construct', $method);
-        } catch (NamedMethodNotFoundException $e) {
+        } catch (NamedMethodNotFoundException) {
             return $this->codeWriter->insertMethodFirstInClass($code, $method);
         }
     }

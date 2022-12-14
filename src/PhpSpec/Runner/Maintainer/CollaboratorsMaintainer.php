@@ -100,7 +100,7 @@ final class CollaboratorsMaintainer implements Maintainer
             catch (DisallowedUnionTypehintException $e) {
                 throw new InvalidCollaboratorTypeException($parameter, $function, $e->getMessage(), 'Use a specific type');
             }
-            catch (DisallowedNonObjectTypehintException $e) {
+            catch (DisallowedNonObjectTypehintException) {
                 throw new InvalidCollaboratorTypeException($parameter, $function);
             }
         }

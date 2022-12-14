@@ -677,7 +677,7 @@ final class ContainerAssembler
 
             try {
                 $formatter = $c->get('formatter.formatters.'.$formatterName);
-            } catch (\InvalidArgumentException $e) {
+            } catch (\InvalidArgumentException) {
                 throw new \RuntimeException(sprintf('Formatter not recognised: "%s"', $formatterName));
             }
             $c->set('event_dispatcher.listeners.formatter', $formatter, ['event_dispatcher.listeners']);

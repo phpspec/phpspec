@@ -133,7 +133,7 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
 
             try {
                 $resource = $this->resources->createResource($class);
-            } catch (\RuntimeException $exception) {
+            } catch (\RuntimeException) {
                 continue;
             }
 
