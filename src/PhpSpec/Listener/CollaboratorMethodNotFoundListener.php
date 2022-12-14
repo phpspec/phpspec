@@ -41,7 +41,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
 
     private array $wrongMethodNames = array();
 
-    
+
     public function __construct(
         ConsoleIO $io,
         ResourceManager $resources,
@@ -54,7 +54,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         $this->nameChecker = $nameChecker;
     }
 
-    
+
     public static function getSubscribedEvents(): array
     {
         return array(
@@ -63,7 +63,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         );
     }
 
-    
+
     public function afterExample(ExampleEvent $event): void
     {
         if (!$exception = $this->getMethodNotFoundException($event)) {
@@ -119,7 +119,6 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         return current($interfaces);
     }
 
-    
     public function afterSuite(SuiteEvent $event): void
     {
         foreach ($this->interfaces as $interface => $methods) {
@@ -154,7 +153,6 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         }
     }
 
-    
     private function getRealArguments(mixed $prophecyArguments): array
     {
         if ($prophecyArguments instanceof ArgumentsWildcard) {

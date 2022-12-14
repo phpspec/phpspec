@@ -31,6 +31,9 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class RunCommand extends Command
 {
+    /**
+     * @psalm-suppress MethodSignatureMismatch
+     */
     public function getApplication(): Application
     {
         $application = parent::getApplication();
@@ -157,8 +160,10 @@ EOF
         if ($currentFormatter instanceof FatalPresenter) {
 
             $container->define('process.shutdown.update_console_action', function (IndexedServiceContainer $c) use ($currentFormatter) {
+                $currentExample = $c->get('current_example');
+                /** @var \PhpSpec\Message\CurrentExampleTracker $currentExample */
                 return new UpdateConsoleAction(
-                    $c->get('current_example'),
+                    $currentExample,
                     $currentFormatter
                 );
             });
