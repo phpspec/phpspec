@@ -41,7 +41,7 @@ final class ProcOpenReRunner extends PhpExecutableReRunner
         /** @var string $executablePath because isSupported was called*/
         $executablePath = $this->getExecutablePath();
 
-        $args = $_SERVER['argv'];
+        $args = $_SERVER['argv'] ?? [];
         $command = $this->buildArgString() . escapeshellcmd($executablePath).' '.join(' ', array_map('escapeshellarg', $args)) . ' 2>&1';
 
         $desc = [
