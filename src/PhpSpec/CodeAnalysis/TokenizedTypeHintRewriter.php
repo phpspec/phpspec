@@ -17,11 +17,11 @@ use PhpSpec\Loader\Transformer\TypeHintIndex;
 
 final class TokenizedTypeHintRewriter implements TypeHintRewriter
 {
-    const STATE_DEFAULT = 0;
-    const STATE_READING_CLASS = 1;
-    const STATE_READING_FUNCTION = 2;
-    const STATE_READING_ARGUMENTS = 3;
-    const STATE_READING_FUNCTION_BODY = 4;
+    private const STATE_DEFAULT = 0;
+    private const STATE_READING_CLASS = 1;
+    private const STATE_READING_FUNCTION = 2;
+    private const STATE_READING_ARGUMENTS = 3;
+    private const STATE_READING_FUNCTION_BODY = 4;
 
     private int $state = self::STATE_DEFAULT;
 

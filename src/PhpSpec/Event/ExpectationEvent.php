@@ -26,17 +26,17 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
     /**
      * Expectation passed
      */
-    const PASSED  = 0;
+    public const PASSED  = 0;
 
     /**
      * Expectation failed
      */
-    const FAILED  = 1;
+    public const FAILED  = 1;
 
     /**
      * Expectation broken
      */
-    const BROKEN  = 2;
+    public const BROKEN  = 2;
 
     private ExampleNode $example;
 

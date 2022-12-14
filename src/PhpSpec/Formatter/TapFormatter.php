@@ -20,27 +20,27 @@ use Symfony\Component\Yaml\Yaml;
 
 final class TapFormatter extends ConsoleFormatter
 {
-    const VERSION = 'TAP version 13';
+    private const VERSION = 'TAP version 13';
 
-    const OK = 'ok %d';
+    private const OK = 'ok %d';
 
-    const NOT_OK = 'not ok %d';
+    private const NOT_OK = 'not ok %d';
 
-    const DESC = ' - %s: %s';
+    private const DESC = ' - %s: %s';
 
-    const SKIP = ' # SKIP %s';
+    private const SKIP = ' # SKIP %s';
 
-    const TODO = ' # TODO %s';
+    private const TODO = ' # TODO %s';
 
-    const IGNORE = ' # IGNORE %s could not be loaded at path %s';
+    private const IGNORE = ' # IGNORE %s could not be loaded at path %s';
 
-    const PLAN = '1..%d';
+    private const PLAN = '1..%d';
 
-    const MESSAGE = "---\nmessage: %s\n...";
+    private const MESSAGE = "---\nmessage: %s\n...";
 
-    const SEVERITY = "\n---\nseverity: %s\n...";
+    private const SEVERITY = "\n---\nseverity: %s\n...";
 
-    const UNDEFINED_RESULT = -1;
+    private const UNDEFINED_RESULT = -1;
 
     private int $examplesCount = 0;
 

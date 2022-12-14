@@ -18,7 +18,7 @@ use PhpSpec\IO\IO;
 
 final class Template implements TemplateInterface
 {
-    const DIR = __DIR__;
+    public const DIR = __DIR__;
 
     private IO $io;
 

@@ -18,7 +18,7 @@ use ReflectionParameter;
 
 class CollaboratorNotFoundException extends FractureException
 {
-    const CLASSNAME_REGEX = '/\\[.* (?P<classname>[_a-z0-9\\\\]+) .*\\]/i';
+    private const CLASSNAME_REGEX = '/\\[.* (?P<classname>[_a-z0-9\\\\]+) .*\\]/i';
 
     private string $collaboratorName;
 

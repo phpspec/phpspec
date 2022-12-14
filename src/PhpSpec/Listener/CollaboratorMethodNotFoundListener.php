@@ -27,7 +27,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
 {
-    const PROMPT = 'Would you like me to generate a method signature `%s::%s()` for you?';
+    private const PROMPT = 'Would you like me to generate a method signature `%s::%s()` for you?';
 
     private ConsoleIO $io;
 

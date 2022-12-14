@@ -23,9 +23,9 @@ use PhpSpec\Config\OptionsConfig;
  */
 class ConsoleIO implements IO
 {
-    const COL_MIN_WIDTH = 40;
-    const COL_DEFAULT_WIDTH = 60;
-    const COL_MAX_WIDTH = 80;
+    private const COL_MIN_WIDTH = 40;
+    private const COL_DEFAULT_WIDTH = 60;
+    private const COL_MAX_WIDTH = 80;
 
     private InputInterface $input;
 

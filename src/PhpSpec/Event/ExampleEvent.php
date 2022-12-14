@@ -25,27 +25,27 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
     /**
      * Spec passed
      */
-    const PASSED  = 0;
+    public const PASSED  = 0;
 
     /**
      * Spec is pending
      */
-    const PENDING = 1;
+    public const PENDING = 1;
 
     /**
      * Spec is skipped
      */
-    const SKIPPED = 2;
+    public const SKIPPED = 2;
 
     /**
      * Spec failed
      */
-    const FAILED  = 3;
+    public const FAILED  = 3;
 
     /**
      * Spec is broken
      */
-    const BROKEN  = 4;
+    public const BROKEN  = 4;
 
     private ExampleNode $example;
 

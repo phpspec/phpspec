@@ -19,7 +19,7 @@ use PhpSpec\Event\ExampleEvent;
 
 final class ProgressFormatter extends ConsoleFormatter
 {
-    const FPS = 10;
+    private const FPS = 10;
 
     private ?float $lastDraw = null;
 

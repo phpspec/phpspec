@@ -15,7 +15,7 @@ namespace PhpSpec\Process\Context;
 
 final class JsonExecutionContext implements ExecutionContext
 {
-    const ENV_NAME = 'PHPSPEC_EXECUTION_CONTEXT';
+    private const ENV_NAME = 'PHPSPEC_EXECUTION_CONTEXT';
     private array $generatedTypes = [];
 
     public static function fromEnv(array $env): JsonExecutionContext
