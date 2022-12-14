@@ -59,7 +59,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
      */
     private $wrongMethodNames = array();
 
-    
+
     public function __construct(
         ConsoleIO $io,
         ResourceManager $resources,
@@ -72,7 +72,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         $this->nameChecker = $nameChecker;
     }
 
-    
+
     public static function getSubscribedEvents(): array
     {
         return array(
@@ -81,7 +81,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         );
     }
 
-    
+
     public function afterExample(ExampleEvent $event): void
     {
         if (!$exception = $this->getMethodNotFoundException($event)) {
@@ -115,7 +115,10 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         $this->checkIfMethodNameAllowed($methodName);
     }
 
-    
+    /**
+     * @param mixed $class
+     * @return mixed
+     */
     private function getDoubledInterface($class)
     {
         if (class_parents($class) !== array(\stdClass::class=>\stdClass::class)) {
@@ -123,6 +126,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         }
 
         $interfaces = array_filter(class_implements($class),
+            /** @param string $interface */
             function ($interface) {
                 return !preg_match('/^Prophecy/', $interface);
             }
@@ -135,7 +139,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         return current($interfaces);
     }
 
-    
+
     public function afterSuite(SuiteEvent $event): void
     {
         foreach ($this->interfaces as $interface => $methods) {
@@ -170,7 +174,10 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         }
     }
 
-    
+
+    /**
+     * @param mixed $prophecyArguments
+     */
     private function getRealArguments($prophecyArguments): array
     {
         if ($prophecyArguments instanceof ArgumentsWildcard) {
@@ -181,6 +188,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
     }
 
     /**
+     * @psalm-suppress InvalidReturnType
      * @return MethodNotFoundException|void
      */
     private function getMethodNotFoundException(ExampleEvent $event)
@@ -192,6 +200,9 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         }
     }
 
+    /**
+     * @param string $methodName
+     */
     private function checkIfMethodNameAllowed($methodName): void
     {
         if (!$this->nameChecker->isNameValid($methodName)) {

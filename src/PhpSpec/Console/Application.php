@@ -73,7 +73,10 @@ final class Application extends BaseApplication
             $this->add($command);
         }
 
-        $this->setDispatcher($this->container->get('console_event_dispatcher'));
+        $dispatcher = $this->container->get('console_event_dispatcher');
+
+        /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher */
+        $this->setDispatcher($dispatcher);
 
         $consoleWidth = (new Terminal)->getWidth();
 
@@ -123,6 +126,7 @@ final class Application extends BaseApplication
 
     /**
      * @throws \RuntimeException
+     * @return void
      */
     protected function loadConfigurationFile(InputInterface $input, IndexedServiceContainer $container)
     {
@@ -142,6 +146,9 @@ final class Application extends BaseApplication
         }
     }
 
+    /**
+     * @return void
+     */
     private function populateContainerParameters(IndexedServiceContainer $container, array $config)
     {
         foreach ($config as $key => $val) {
@@ -151,17 +158,24 @@ final class Application extends BaseApplication
         }
     }
 
+    /**
+     * @return void
+     */
     private function registerCustomMatchers(IndexedServiceContainer $container, array $matchersClassnames)
     {
         foreach ($matchersClassnames as $class) {
             $this->ensureIsValidMatcherClass($class);
 
             $container->define(sprintf('matchers.%s', $class), function () use ($class) {
+                /** @psalm-suppress InvalidStringClass */
                 return new $class();
             }, ['matchers']);
         }
     }
 
+    /**
+     * @return void
+     */
     private function ensureIsValidMatcherClass(string $class)
     {
         if (!class_exists($class)) {
@@ -177,6 +191,10 @@ final class Application extends BaseApplication
         }
     }
 
+    /**
+     * @param mixed $config
+     * @return void
+     */
     private function loadExtension(ServiceContainer $container, string $extensionClass, $config)
     {
         if (!class_exists($extensionClass)) {
@@ -239,6 +257,7 @@ final class Application extends BaseApplication
             return array();
         }
 
+        /** @psalm-suppress ReservedWord, RedundantCondition */
         return Yaml::parse(file_get_contents($path)) ?: [];
     }
 
