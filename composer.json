@@ -66,7 +66,7 @@
 
     "extra": {
         "branch-alias": {
-            "dev-main": "7.2.x-dev"
+            "dev-main": "7.3.x-dev"
         }
     }
 
