@@ -101,10 +101,10 @@ class SubjectWithArrayAccess
             sprintf(
                 '%s does not implement %s interface, but should.',
                 $this->presenter->presentValue($this->caller->getWrappedObject()),
-                $this->presenter->presentString('ArrayAccess')
+                $this->presenter->presentString(\ArrayAccess::class)
             ),
             $this->caller->getWrappedObject(),
-            'ArrayAccess'
+            \ArrayAccess::class
         );
     }
 

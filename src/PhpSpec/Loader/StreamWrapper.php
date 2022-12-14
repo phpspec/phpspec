@@ -29,7 +29,7 @@ class StreamWrapper
         if (\in_array('phpspec', stream_get_wrappers())) {
             stream_wrapper_unregister('phpspec');
         }
-        stream_wrapper_register('phpspec', 'PhpSpec\Loader\StreamWrapper');
+        stream_wrapper_register('phpspec', \PhpSpec\Loader\StreamWrapper::class);
     }
 
     public static function reset(): void
