@@ -30,7 +30,7 @@ class WrappedObject
     /**
      * @var null|callable|string
      */
-    private mixed $factoryMethod;
+    private mixed $factoryMethod = null;
     private array $arguments = array();
     private bool $isInstantiated = false;
 
