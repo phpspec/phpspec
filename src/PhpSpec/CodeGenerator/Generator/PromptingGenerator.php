@@ -24,20 +24,8 @@ use PhpSpec\Locator\Resource;
  */
 abstract class PromptingGenerator implements Generator
 {
-    private ConsoleIO $io;
-
-    private TemplateRenderer $templates;
-
-    private Filesystem $filesystem;
-
-    private ExecutionContext $executionContext;
-
-    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, ExecutionContext $executionContext)
+    public function __construct(private ConsoleIO $io, private TemplateRenderer $templates, private Filesystem $filesystem, private ExecutionContext $executionContext)
     {
-        $this->io         = $io;
-        $this->templates  = $templates;
-        $this->filesystem = $filesystem;
-        $this->executionContext = $executionContext;
     }
 
     public function generate(Resource $resource, array $data = array()): void

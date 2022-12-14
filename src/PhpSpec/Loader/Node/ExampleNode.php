@@ -17,15 +17,11 @@ use ReflectionFunctionAbstract;
 
 class ExampleNode
 {
-    private string $title;
-    private \ReflectionFunctionAbstract $function;
     private ?SpecificationNode $specification = null;
     private bool $isPending = false;
 
-    public function __construct(string $title, ReflectionFunctionAbstract $function)
+    public function __construct(private string $title, private ReflectionFunctionAbstract $function)
     {
-        $this->title = $title;
-        $this->function = $function;
     }
 
     public function setTitle(string $title): void

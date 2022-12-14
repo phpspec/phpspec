@@ -21,14 +21,8 @@ use PhpSpec\Loader\Node\SpecificationNode;
 
 class SpecificationRunner
 {
-    private EventDispatcherInterface $dispatcher;
-    private ExampleRunner $exampleRunner;
-
-    
-    public function __construct(EventDispatcherInterface $dispatcher, ExampleRunner $exampleRunner)
+    public function __construct(private EventDispatcherInterface $dispatcher, private ExampleRunner $exampleRunner)
     {
-        $this->dispatcher    = $dispatcher;
-        $this->exampleRunner = $exampleRunner;
     }
 
     public function run(SpecificationNode $specification): int

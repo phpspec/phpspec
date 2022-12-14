@@ -27,11 +27,8 @@ use PhpSpec\Util\Instantiator;
  */
 class ExceptionFactory
 {
-    private Presenter $presenter;
-
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     public function namedConstructorNotFound(string $classname, string $method, array $arguments = array()): NamedConstructorNotFoundException

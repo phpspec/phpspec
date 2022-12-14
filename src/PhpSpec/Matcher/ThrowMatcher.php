@@ -26,17 +26,8 @@ final class ThrowMatcher implements Matcher
 {
     private static array $ignoredProperties = array('file', 'line', 'string', 'trace', 'previous');
 
-    private Unwrapper $unwrapper;
-
-    private Presenter $presenter;
-
-    private ReflectionFactory $factory;
-
-    public function __construct(Unwrapper $unwrapper, Presenter $presenter, ReflectionFactory $factory)
+    public function __construct(private Unwrapper $unwrapper, private Presenter $presenter, private ReflectionFactory $factory)
     {
-        $this->unwrapper = $unwrapper;
-        $this->presenter = $presenter;
-        $this->factory   = $factory;
     }
 
     public function supports(string $name, mixed $subject, array $arguments): bool

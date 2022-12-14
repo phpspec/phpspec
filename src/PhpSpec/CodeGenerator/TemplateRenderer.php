@@ -23,12 +23,9 @@ class TemplateRenderer
 {
     private array $locations = array();
 
-    private Filesystem $filesystem;
-
     
-    public function __construct(Filesystem $filesystem)
+    public function __construct(private Filesystem $filesystem)
     {
-        $this->filesystem = $filesystem;
     }
 
     

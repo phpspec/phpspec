@@ -15,11 +15,8 @@ namespace PhpSpec\CodeAnalysis;
 
 final class StaticRejectingNamespaceResolver implements NamespaceResolver
 {
-    private NamespaceResolver $namespaceResolver;
-
-    public function __construct(NamespaceResolver $namespaceResolver)
+    public function __construct(private NamespaceResolver $namespaceResolver)
     {
-        $this->namespaceResolver = $namespaceResolver;
     }
 
     public function analyse(string $code): void

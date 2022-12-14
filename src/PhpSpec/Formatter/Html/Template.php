@@ -20,12 +20,9 @@ final class Template implements TemplateInterface
 {
     public const DIR = __DIR__;
 
-    private IO $io;
-
     
-    public function __construct(IO $io)
+    public function __construct(private IO $io)
     {
-        $this->io = $io;
     }
 
     

@@ -19,12 +19,8 @@ use PhpSpec\Formatter\Template as TemplateInterface;
 
 class ReportItemFactory
 {
-    private TemplateInterface $template;
-
-    
-    public function __construct(TemplateInterface $template)
+    public function __construct(private TemplateInterface $template)
     {
-        $this->template = $template;
     }
 
     public function create(ExampleEvent $event, Presenter $presenter): ReportFailedItem|ReportPassedItem|ReportPendingItem|ReportSkippedItem

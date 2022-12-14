@@ -18,12 +18,8 @@ use PhpSpec\Util\ClassFileAnalyser;
 
 final class TokenizedCodeWriter implements CodeWriter
 {
-    private ClassFileAnalyser $analyser;
-
-    
-    public function __construct(ClassFileAnalyser $analyser)
+    public function __construct(private ClassFileAnalyser $analyser)
     {
-        $this->analyser = $analyser;
     }
 
     public function insertMethodFirstInClass(string $class, string $method): string

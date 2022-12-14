@@ -19,19 +19,15 @@ use Symfony\Component\Finder\Finder;
 
 final class NamespacesAutocompleteProvider
 {
-    private Finder $finder;
-
     private array $paths = [];
 
-    public function __construct(Finder $finder, array $locators)
+    public function __construct(private Finder $finder, array $locators)
     {
         foreach ($locators as $locator) {
             if ($locator instanceof SrcPathLocator) {
                 $this->paths[] = $locator->getFullSrcPath();
             }
         }
-
-        $this->finder = $finder;
     }
 
     /**

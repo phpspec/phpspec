@@ -26,15 +26,8 @@ use PhpSpec\Wrapper\Unwrapper;
 
 class ExpectationFactory
 {
-    private ExampleNode $example;
-    private EventDispatcherInterface $dispatcher;
-    private MatcherManager $matchers;
-
-    public function __construct(ExampleNode $example, EventDispatcherInterface $dispatcher, MatcherManager $matchers)
+    public function __construct(private ExampleNode $example, private EventDispatcherInterface $dispatcher, private MatcherManager $matchers)
     {
-        $this->example = $example;
-        $this->dispatcher = $dispatcher;
-        $this->matchers = $matchers;
     }
 
     public function create(string $expectation, mixed $subject, array $arguments = array()): Expectation

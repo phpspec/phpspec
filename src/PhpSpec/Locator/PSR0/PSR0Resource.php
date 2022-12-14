@@ -17,14 +17,8 @@ use PhpSpec\Locator\Resource;
 
 final class PSR0Resource implements Resource
 {
-    private array $parts;
-    private PSR0Locator $locator;
-
-    
-    public function __construct(array $parts, PSR0Locator $locator)
+    public function __construct(private array $parts, private PSR0Locator $locator)
     {
-        $this->parts   = $parts;
-        $this->locator = $locator;
     }
 
     

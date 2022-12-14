@@ -20,12 +20,8 @@ use PhpSpec\Console\ConsoleIO;
 
 final class StopOnFailureListener implements EventSubscriberInterface
 {
-    private ConsoleIO $io;
-
-    
-    public function __construct(ConsoleIO $io)
+    public function __construct(private ConsoleIO $io)
     {
-        $this->io = $io;
     }
 
     

@@ -21,11 +21,8 @@ final class ArrayEngine extends StringEngine
 
     private const PAD_STRING = ' ';
 
-    private Exporter $exporter;
-
-    public function __construct(Exporter $exporter)
+    public function __construct(private Exporter $exporter)
     {
-        $this->exporter = $exporter;
     }
 
     public function supports(mixed $expected, mixed $actual): bool

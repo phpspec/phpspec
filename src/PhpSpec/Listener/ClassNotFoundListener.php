@@ -24,17 +24,11 @@ use Prophecy\Exception\Doubler\ClassNotFoundException as ProphecyClassException;
 
 final class ClassNotFoundListener implements EventSubscriberInterface
 {
-    private ConsoleIO $io;
-    private ResourceManager $resources;
-    private GeneratorManager $generator;
     private array $classes = array();
 
     
-    public function __construct(ConsoleIO $io, ResourceManager $resources, GeneratorManager $generator)
+    public function __construct(private ConsoleIO $io, private ResourceManager $resources, private GeneratorManager $generator)
     {
-        $this->io        = $io;
-        $this->resources = $resources;
-        $this->generator = $generator;
     }
 
     

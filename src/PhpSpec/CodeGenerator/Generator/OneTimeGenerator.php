@@ -17,14 +17,11 @@ use PhpSpec\Locator\Resource;
 
 final class OneTimeGenerator implements Generator
 {
-    private Generator $generator;
-
     private array $alreadyGenerated = array();
 
     
-    public function __construct(Generator $generator)
+    public function __construct(private Generator $generator)
     {
-        $this->generator = $generator;
     }
 
     public function supports(Resource $resource, string $generation, array $data): bool

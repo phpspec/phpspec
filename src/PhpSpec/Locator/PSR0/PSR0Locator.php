@@ -27,19 +27,17 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     private string $specNamespace;
     private string $fullSrcPath;
     private string $fullSpecPath;
-    private Filesystem $filesystem;
 
     private ?string $psr4Prefix;
 
     public function __construct(
-        Filesystem $filesystem,
+        private Filesystem $filesystem,
         string $srcNamespace = '',
         string $specNamespacePrefix = 'spec',
         string $srcPath = 'src',
         string $specPath = '.',
         string $psr4Prefix = null
     ) {
-        $this->filesystem = $filesystem;
         $sepr = DIRECTORY_SEPARATOR;
 
         $this->srcPath       = rtrim(realpath($srcPath), '/\\').$sepr;

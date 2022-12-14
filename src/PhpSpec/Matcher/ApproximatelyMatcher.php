@@ -26,11 +26,8 @@ final class ApproximatelyMatcher extends BasicMatcher
         'returnApproximately'
     );
 
-    private Presenter $presenter;
-
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     public function supports(string $name, mixed $subject, array $arguments): bool

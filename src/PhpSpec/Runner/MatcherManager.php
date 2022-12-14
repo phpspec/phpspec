@@ -19,15 +19,13 @@ use PhpSpec\Formatter\Presenter\Presenter;
 
 class MatcherManager
 {
-    private Presenter $presenter;
     /**
      * @var Matcher[]
      */
     private array $matchers = array();
 
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     public function add(Matcher $matcher): void

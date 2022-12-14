@@ -7,11 +7,8 @@ use function is_iterable;
 
 final class IterablesMatcher
 {
-    private Presenter $presenter;
-
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     /**

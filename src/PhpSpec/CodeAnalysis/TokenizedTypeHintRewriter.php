@@ -33,14 +33,8 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         T_WHITESPACE, T_STRING, T_NS_SEPARATOR, T_NAME_FULLY_QUALIFIED, T_NAME_QUALIFIED
     );
 
-    private TypeHintIndex $typeHintIndex;
-    private NamespaceResolver $namespaceResolver;
-
-    public function __construct(TypeHintIndex $typeHintIndex, NamespaceResolver $namespaceResolver)
+    public function __construct(private TypeHintIndex $typeHintIndex, private NamespaceResolver $namespaceResolver)
     {
-        $this->typeHintIndex = $typeHintIndex;
-        $this->namespaceResolver = $namespaceResolver;
-
         if (\PHP_VERSION_ID >= 80100) {
             $this->typehintTokens[] = T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG;
         }

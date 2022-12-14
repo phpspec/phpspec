@@ -15,12 +15,8 @@ namespace PhpSpec\Event;
 
 final class FileCreationEvent extends BaseEvent implements PhpSpecEvent
 {
-    private string $filepath;
-
-    public function __construct(string $filepath)
+    public function __construct(private string $filepath)
     {
-
-        $this->filepath = $filepath;
     }
 
     

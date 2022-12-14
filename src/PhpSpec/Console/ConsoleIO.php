@@ -27,30 +27,14 @@ class ConsoleIO implements IO
     private const COL_DEFAULT_WIDTH = 60;
     private const COL_MAX_WIDTH = 80;
 
-    private InputInterface $input;
-
-    private OutputInterface $output;
-
     private ?string $lastMessage = null;
 
     private bool $hasTempString = false;
 
-    private OptionsConfig $config;
-
     private ?int $consoleWidth = null;
 
-    private Prompter $prompter;
-
-    public function __construct(
-        InputInterface $input,
-        OutputInterface $output,
-        OptionsConfig $config,
-        Prompter $prompter
-    ) {
-        $this->input   = $input;
-        $this->output  = $output;
-        $this->config  = $config;
-        $this->prompter = $prompter;
+    public function __construct(private InputInterface $input, private OutputInterface $output, private OptionsConfig $config, private Prompter $prompter)
+    {
     }
 
     public function isInteractive(): bool

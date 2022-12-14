@@ -17,13 +17,10 @@ use Symfony\Component\Process\PhpExecutableFinder;
 
 abstract class PhpExecutableReRunner implements PlatformSpecificReRunner
 {
-    private PhpExecutableFinder $executableFinder;
-
     private string|false|null $executablePath = null;
 
-    public function __construct(PhpExecutableFinder $executableFinder)
+    public function __construct(private PhpExecutableFinder $executableFinder)
     {
-        $this->executableFinder = $executableFinder;
     }
 
     /**

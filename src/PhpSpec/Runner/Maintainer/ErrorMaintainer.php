@@ -21,16 +21,14 @@ use PhpSpec\Exception\Example as ExampleException;
 
 final class ErrorMaintainer implements Maintainer
 {
-    private int $errorLevel;
     /**
      * @var null|callable
      */
     private $errorHandler;
 
 
-    public function __construct(int $errorLevel)
+    public function __construct(private int $errorLevel)
     {
-        $this->errorLevel = $errorLevel;
     }
 
 

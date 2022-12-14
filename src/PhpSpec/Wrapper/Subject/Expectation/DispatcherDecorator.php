@@ -23,20 +23,13 @@ use Exception;
 
 final class DispatcherDecorator extends Decorator implements Expectation
 {
-    private EventDispatcherInterface $dispatcher;
-    private Matcher $matcher;
-    private ExampleNode $example;
-
     public function __construct(
         Expectation $expectation,
-        EventDispatcherInterface $dispatcher,
-        Matcher $matcher,
-        ExampleNode $example
+        private EventDispatcherInterface $dispatcher,
+        private Matcher $matcher,
+        private ExampleNode $example
     ) {
         $this->setExpectation($expectation);
-        $this->dispatcher = $dispatcher;
-        $this->matcher = $matcher;
-        $this->example = $example;
     }
 
     /**

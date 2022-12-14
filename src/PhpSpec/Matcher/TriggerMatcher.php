@@ -21,12 +21,8 @@ use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
 final class TriggerMatcher implements Matcher
 {
-    private Unwrapper $unwrapper;
-
-
-    public function __construct(Unwrapper $unwrapper)
+    public function __construct(private Unwrapper $unwrapper)
     {
-        $this->unwrapper = $unwrapper;
     }
 
     public function supports(string $name, mixed $subject, array $arguments): bool

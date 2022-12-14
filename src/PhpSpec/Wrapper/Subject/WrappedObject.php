@@ -21,8 +21,6 @@ use PhpSpec\Exception\Wrapper\SubjectException;
 
 class WrappedObject
 {
-    private mixed $instance;
-    private Presenter $presenter;
     /**
      * @var ?class-string
      */
@@ -34,10 +32,8 @@ class WrappedObject
     private array $arguments = array();
     private bool $isInstantiated = false;
 
-    public function __construct(mixed $instance, Presenter $presenter)
+    public function __construct(private mixed $instance, private Presenter $presenter)
     {
-        $this->instance = $instance;
-        $this->presenter = $presenter;
         if (\is_object($this->instance)) {
             $this->classname = \get_class($this->instance);
             $this->isInstantiated = true;

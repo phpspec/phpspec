@@ -18,16 +18,9 @@ namespace PhpSpec\Exception\Example;
  */
 class NotEqualException extends FailureException
 {
-    private mixed $expected;
-
-    private mixed $actual;
-
-    public function __construct(string $message, mixed $expected, mixed $actual)
+    public function __construct(string $message, private mixed $expected, private mixed $actual)
     {
         parent::__construct($message);
-
-        $this->expected = $expected;
-        $this->actual   = $actual;
     }
 
     public function getExpected(): mixed

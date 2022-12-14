@@ -21,12 +21,10 @@ use PhpSpec\Wrapper\DelayedCall;
 final class ObjectStateMatcher implements Matcher
 {
     private static string $regex = '/(be|have)(.+)/';
-    private Presenter $presenter;
 
     
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     public function supports(string $name, mixed $subject, array $arguments): bool

@@ -23,17 +23,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 abstract class BasicFormatter implements EventSubscriberInterface
 {
-    private IO $io;
-
-    private Presenter $presenter;
-
-    private StatisticsCollector $stats;
-
-    public function __construct(Presenter $presenter, IO $io, StatisticsCollector $stats)
+    public function __construct(private Presenter $presenter, private IO $io, private StatisticsCollector $stats)
     {
-        $this->presenter = $presenter;
-        $this->io = $io;
-        $this->stats = $stats;
     }
 
     

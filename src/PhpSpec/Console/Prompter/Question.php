@@ -21,17 +21,8 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 final class Question implements Prompter
 {
-    private InputInterface $input;
-
-    private OutputInterface $output;
-
-    private QuestionHelper $helper;
-
-    public function __construct(InputInterface $input, OutputInterface $output, QuestionHelper $helper)
+    public function __construct(private InputInterface $input, private OutputInterface $output, private QuestionHelper $helper)
     {
-        $this->input = $input;
-        $this->output = $output;
-        $this->helper = $helper;
     }
 
     

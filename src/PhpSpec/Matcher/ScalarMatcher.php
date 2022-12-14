@@ -19,12 +19,8 @@ use PhpSpec\Wrapper\DelayedCall;
 
 final class ScalarMatcher implements Matcher
 {
-    private Presenter $presenter;
-
-    
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     /**

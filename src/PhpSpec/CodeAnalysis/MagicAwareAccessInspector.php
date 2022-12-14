@@ -15,11 +15,8 @@ namespace PhpSpec\CodeAnalysis;
 
 final class MagicAwareAccessInspector implements AccessInspector
 {
-    private AccessInspector $accessInspector;
-
-    public function __construct(AccessInspector $accessInspector)
+    public function __construct(private AccessInspector $accessInspector)
     {
-        $this->accessInspector = $accessInspector;
     }
 
     public function isPropertyReadable(object $object, string $property): bool

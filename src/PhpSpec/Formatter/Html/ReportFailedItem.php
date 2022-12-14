@@ -19,17 +19,11 @@ use PhpSpec\Formatter\Template as TemplateInterface;
 
 class ReportFailedItem
 {
-    private TemplateInterface $template;
-    private ExampleEvent $event;
     private static int $failingExamplesCount = 1;
-    private Presenter $presenter;
 
     
-    public function __construct(TemplateInterface $template, ExampleEvent $event, Presenter $presenter)
+    public function __construct(private TemplateInterface $template, private ExampleEvent $event, private Presenter $presenter)
     {
-        $this->template = $template;
-        $this->event = $event;
-        $this->presenter = $presenter;
     }
 
     public function write(int $index): void

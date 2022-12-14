@@ -23,16 +23,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class NamedConstructorNotFoundListener implements EventSubscriberInterface
 {
-    private ConsoleIO $io;
-    private ResourceManager $resources;
-    private GeneratorManager $generator;
     private array $methods = array();
 
-    public function __construct(ConsoleIO $io, ResourceManager $resources, GeneratorManager $generator)
+    public function __construct(private ConsoleIO $io, private ResourceManager $resources, private GeneratorManager $generator)
     {
-        $this->io        = $io;
-        $this->resources = $resources;
-        $this->generator = $generator;
     }
 
     public static function getSubscribedEvents(): array

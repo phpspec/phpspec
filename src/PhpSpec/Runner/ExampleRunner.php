@@ -31,17 +31,13 @@ use Exception;
 
 class ExampleRunner
 {
-    private EventDispatcherInterface $dispatcher;
-    private Presenter $presenter;
     /**
      * @var Maintainer[]
      */
     private array $maintainers = array();
 
-    public function __construct(EventDispatcherInterface $dispatcher, Presenter $presenter)
+    public function __construct(private EventDispatcherInterface $dispatcher, private Presenter $presenter)
     {
-        $this->dispatcher = $dispatcher;
-        $this->presenter  = $presenter;
     }
 
     public function registerMaintainer(Maintainer $maintainer): void

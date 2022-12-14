@@ -24,12 +24,10 @@ final class TypeMatcher extends BasicMatcher
         'haveType',
         'implement'
     );
-    private Presenter $presenter;
 
     
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     

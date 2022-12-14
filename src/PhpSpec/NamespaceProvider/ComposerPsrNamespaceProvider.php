@@ -9,20 +9,17 @@ use Composer\Autoload\ClassLoader;
  */
 class ComposerPsrNamespaceProvider
 {
-    /**
-     *  path to the root directory of the project, without a trailing slash
-     */
-    private string $rootDirectory;
-
-    /**
-     *  prefix of the specifications namespace
-     */
-    private string $specPrefix;
-
-    public function __construct(string $rootDirectory, string $specPrefix)
+    public function __construct(
+        /**
+         *  path to the root directory of the project, without a trailing slash
+         */
+        private string $rootDirectory,
+        /**
+         *  prefix of the specifications namespace
+         */
+        private string $specPrefix
+    )
     {
-        $this->rootDirectory = $rootDirectory;
-        $this->specPrefix = $specPrefix;
     }
 
     /**

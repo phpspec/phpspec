@@ -18,14 +18,8 @@ use PhpSpec\Process\ReRunner;
 
 final class OptionalReRunner implements ReRunner
 {
-    private ConsoleIO $io;
-    private ReRunner $decoratedRerunner;
-
-    
-    public function __construct(ReRunner $decoratedRerunner, ConsoleIO $io)
+    public function __construct(private ReRunner $decoratedRerunner, private ConsoleIO $io)
     {
-        $this->io = $io;
-        $this->decoratedRerunner = $decoratedRerunner;
     }
 
     public function reRunSuite(): void

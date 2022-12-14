@@ -21,18 +21,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class SubjectWithArrayAccess
 {
-    private Caller $caller;
-    private Presenter $presenter;
-    private EventDispatcherInterface $dispatcher;
-
-    public function __construct(
-        Caller $caller,
-        Presenter $presenter,
-        EventDispatcherInterface $dispatcher
-    ) {
-        $this->caller     = $caller;
-        $this->presenter  = $presenter;
-        $this->dispatcher = $dispatcher;
+    public function __construct(private Caller $caller, private Presenter $presenter, private EventDispatcherInterface $dispatcher)
+    {
     }
 
     public function offsetExists(mixed $key): bool

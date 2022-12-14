@@ -24,30 +24,17 @@ use Prophecy\Exception\Exception as ProphecyException;
 
 final class SimpleExceptionPresenter implements ExceptionPresenter
 {
-    private Differ $differ;
-
     private string $phpspecPath;
 
     private string $runnerPath;
 
-    private ExceptionElementPresenter $exceptionElementPresenter;
-
-    private CallArgumentsPresenter $callArgumentsPresenter;
-
-    private PhpSpecExceptionPresenter $phpspecExceptionPresenter;
-
     
     public function __construct(
-        Differ $differ,
-        ExceptionElementPresenter $exceptionElementPresenter,
-        CallArgumentsPresenter $callArgumentsPresenter,
-        PhpSpecExceptionPresenter $phpspecExceptionPresenter
+        private Differ $differ,
+        private ExceptionElementPresenter $exceptionElementPresenter,
+        private CallArgumentsPresenter $callArgumentsPresenter,
+        private PhpSpecExceptionPresenter $phpspecExceptionPresenter
     ) {
-        $this->differ = $differ;
-        $this->exceptionElementPresenter = $exceptionElementPresenter;
-        $this->callArgumentsPresenter = $callArgumentsPresenter;
-        $this->phpspecExceptionPresenter = $phpspecExceptionPresenter;
-
         $this->phpspecPath = dirname(dirname(__DIR__));
         $this->runnerPath  = $this->phpspecPath.DIRECTORY_SEPARATOR.'Runner';
     }

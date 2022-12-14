@@ -15,11 +15,8 @@ namespace PhpSpec\Formatter\Presenter;
 
 final class TaggingPresenter implements Presenter
 {
-    private Presenter $presenter;
-
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     public function presentException(\Exception $exception, bool $verbose = false): string

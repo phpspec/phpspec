@@ -18,15 +18,8 @@ use PhpSpec\Formatter\Presenter\Value\ValuePresenter;
 
 final class TaggingExceptionElementPresenter implements ExceptionElementPresenter
 {
-    private ExceptionTypePresenter $exceptionTypePresenter;
-
-    private ValuePresenter $valuePresenter;
-
-    
-    public function __construct(ExceptionTypePresenter $exceptionTypePresenter, ValuePresenter $valuePresenter)
+    public function __construct(private ExceptionTypePresenter $exceptionTypePresenter, private ValuePresenter $valuePresenter)
     {
-        $this->exceptionTypePresenter = $exceptionTypePresenter;
-        $this->valuePresenter = $valuePresenter;
     }
 
     

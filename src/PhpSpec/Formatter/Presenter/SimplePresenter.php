@@ -18,14 +18,8 @@ use PhpSpec\Formatter\Presenter\Value\ValuePresenter;
 
 final class SimplePresenter implements Presenter
 {
-    private ValuePresenter $valuePresenter;
-
-    private ExceptionPresenter $exceptionPresenter;
-
-    public function __construct(ValuePresenter $valuePresenter, ExceptionPresenter $exceptionPresenter)
+    public function __construct(private ValuePresenter $valuePresenter, private ExceptionPresenter $exceptionPresenter)
     {
-        $this->valuePresenter = $valuePresenter;
-        $this->exceptionPresenter = $exceptionPresenter;
     }
 
     public function presentValue(mixed $value): string

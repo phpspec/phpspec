@@ -24,23 +24,14 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class CollaboratorNotFoundListener implements EventSubscriberInterface
 {
-    private ConsoleIO $io;
-
     /**
      * @var CollaboratorNotFoundException[]
      */
     private array $exceptions = array();
 
-    private ResourceManager $resources;
-
-    private GeneratorManager $generator;
-
     
-    public function __construct(ConsoleIO $io, ResourceManager $resources, GeneratorManager $generator)
+    public function __construct(private ConsoleIO $io, private ResourceManager $resources, private GeneratorManager $generator)
     {
-        $this->io = $io;
-        $this->resources = $resources;
-        $this->generator = $generator;
     }
 
     

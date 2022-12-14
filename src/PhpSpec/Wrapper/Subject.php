@@ -111,27 +111,8 @@ use ArrayAccess;
  */
 class Subject implements ArrayAccess, ObjectWrapper
 {
-    private mixed $subject;
-    private WrappedObject $wrappedObject;
-    private Caller $caller;
-    private SubjectWithArrayAccess $arrayAccess;
-    private Wrapper $wrapper;
-    private ExpectationFactory $expectationFactory;
-
-    public function __construct(
-        mixed $subject,
-        Wrapper $wrapper,
-        WrappedObject $wrappedObject,
-        Caller $caller,
-        SubjectWithArrayAccess $arrayAccess,
-        ExpectationFactory $expectationFactory
-    ) {
-        $this->subject            = $subject;
-        $this->wrapper            = $wrapper;
-        $this->wrappedObject      = $wrappedObject;
-        $this->caller             = $caller;
-        $this->arrayAccess        = $arrayAccess;
-        $this->expectationFactory = $expectationFactory;
+    public function __construct(private mixed $subject, private Wrapper $wrapper, private WrappedObject $wrappedObject, private Caller $caller, private SubjectWithArrayAccess $arrayAccess, private ExpectationFactory $expectationFactory)
+    {
     }
 
     /**
