@@ -87,6 +87,6 @@ final class CollaboratorNotFoundListener implements EventSubscriberInterface
     
     private function resourceIsInSpecNamespace(CollaboratorNotFoundException $exception, Resource $resource): bool
     {
-        return strpos($exception->getCollaboratorName(), $resource->getSpecNamespace()) === 0;
+        return str_starts_with($exception->getCollaboratorName(), $resource->getSpecNamespace());
     }
 }

@@ -42,7 +42,7 @@ final class StringContainMatcher extends BasicMatcher
      */
     protected function matches(mixed $subject, array $arguments): bool
     {
-        return false !== strpos($subject, $arguments[0]);
+        return str_contains($subject, $arguments[0]);
     }
 
     /**

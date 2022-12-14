@@ -99,7 +99,7 @@ final class ScalarMatcher implements Matcher
 
     private function getCheckerName(string $name): string|false
     {
-        if (0 !== strpos($name, 'be')) {
+        if (!str_starts_with($name, 'be')) {
             return false;
         }
 

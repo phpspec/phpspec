@@ -151,7 +151,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
 
             $class = $this->namespaceResolver->resolve($this->currentClass);
 
-            if (\strpos($typehint, '|') !== false) {
+            if (str_contains($typehint, '|')) {
                 $this->typeHintIndex->addInvalid(
                     $class,
                     trim($this->currentFunction),
@@ -162,7 +162,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                 return;
             }
 
-            if (\strpos($typehint, '&') !== false) {
+            if (str_contains($typehint, '&')) {
                 $this->typeHintIndex->addInvalid(
                     $class,
                     trim($this->currentFunction),

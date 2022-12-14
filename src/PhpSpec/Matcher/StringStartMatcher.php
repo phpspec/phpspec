@@ -35,7 +35,7 @@ final class StringStartMatcher extends BasicMatcher
 
     protected function matches(mixed $subject, array $arguments): bool
     {
-        return 0 === strpos($subject, $arguments[0]);
+        return str_starts_with($subject, $arguments[0]);
     }
 
     protected function getFailureException(string $name, mixed $subject, array $arguments): FailureException

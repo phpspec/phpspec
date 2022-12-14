@@ -94,7 +94,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
 
     public function resolve(string $typeAlias): string
     {
-        if (strpos($typeAlias, '\\') === 0) {
+        if (str_starts_with($typeAlias, '\\')) {
             return substr($typeAlias, 1);
         }
         if (($divider = strpos($typeAlias, '\\')) && array_key_exists(strtolower(substr($typeAlias, 0, $divider)), $this->uses)) {

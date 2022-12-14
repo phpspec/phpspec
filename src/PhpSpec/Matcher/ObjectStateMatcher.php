@@ -32,7 +32,7 @@ final class ObjectStateMatcher implements Matcher
     public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return \is_object($subject) && !is_callable($subject)
-            && (0 === strpos($name, 'be') || 0 === strpos($name, 'have'))
+            && (str_starts_with($name, 'be') || str_starts_with($name, 'have'))
         ;
     }
 

@@ -80,7 +80,7 @@ class WrappedObject
     public function beConstructedThrough(null|callable|string $factoryMethod, array $arguments = array()): void
     {
 
-        if (\is_string($factoryMethod) && false === strpos($factoryMethod, '::')) {
+        if (\is_string($factoryMethod) && !str_contains($factoryMethod, '::')) {
             if (!$this->classname) {
                 throw new \LogicException('Cannot call factory method on non-obect');
             }

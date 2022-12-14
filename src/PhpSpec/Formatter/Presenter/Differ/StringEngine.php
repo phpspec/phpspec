@@ -32,9 +32,9 @@ class StringEngine implements DifferEngine
 
         $lines = array();
         foreach (explode("\n", $text) as $line) {
-            if (0 === strpos($line, '-')) {
+            if (str_starts_with($line, '-')) {
                 $lines[] = sprintf('<diff-del>%s</diff-del>', $line);
-            } elseif (0 === strpos($line, '+')) {
+            } elseif (str_starts_with($line, '+')) {
                 $lines[] = sprintf('<diff-add>%s</diff-add>', $line);
             } else {
                 $lines[] = $line;

@@ -160,17 +160,17 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
     
     private function shouldStopTracePresentation(array $call): bool
     {
-        return isset($call['file']) && false !== strpos($call['file'], $this->runnerPath);
+        return isset($call['file']) && str_contains($call['file'], $this->runnerPath);
     }
 
     
     private function shouldSkipTracePresentation(array $call): bool
     {
-        if (isset($call['file']) && 0 === strpos($call['file'], $this->phpspecPath)) {
+        if (isset($call['file']) && str_starts_with($call['file'], $this->phpspecPath)) {
             return true;
         }
 
-        return isset($call['class']) && 0 === strpos($call['class'], "PhpSpec\\");
+        return isset($call['class']) && str_starts_with($call['class'], "PhpSpec\\");
     }
 
     

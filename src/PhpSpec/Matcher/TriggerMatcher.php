@@ -56,7 +56,7 @@ final class TriggerMatcher implements Matcher
                 return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
-            if (null !== $message && false === strpos($str, $message)) {
+            if (null !== $message && !str_contains($str, $message)) {
                 return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
@@ -84,7 +84,7 @@ final class TriggerMatcher implements Matcher
                 return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
-            if (null !== $message && false === strpos($str, $message)) {
+            if (null !== $message && !str_contains($str, $message)) {
                 return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 

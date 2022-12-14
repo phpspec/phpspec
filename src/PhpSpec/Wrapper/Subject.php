@@ -215,7 +215,7 @@ class Subject implements ArrayAccess, ObjectWrapper
 
     public function __call(string $method, array $arguments = array()): mixed
     {
-        if (0 === strpos($method, 'should')) {
+        if (str_starts_with($method, 'should')) {
             return $this->callExpectation($method, $arguments);
         }
 
@@ -257,7 +257,7 @@ class Subject implements ArrayAccess, ObjectWrapper
 
         $expectation = $this->expectationFactory->create($method, $subject, $arguments);
 
-        if (0 === strpos($method, 'shouldNot')) {
+        if (str_starts_with($method, 'shouldNot')) {
             return $expectation->match(lcfirst(substr($method, 9)), $this, $arguments, $this->wrappedObject);
         }
 

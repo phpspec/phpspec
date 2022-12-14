@@ -271,10 +271,7 @@ class Caller
 
     private function detectMissingConstructorMessage(ReflectionException $exception): bool
     {
-        return strpos(
-            $exception->getMessage(),
-            'does not have a constructor'
-        ) !== 0;
+        return !str_starts_with($exception->getMessage(), 'does not have a constructor');
     }
 
     private function classNotFound(): ClassNotFoundException
