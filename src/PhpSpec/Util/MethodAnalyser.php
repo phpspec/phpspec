@@ -73,7 +73,7 @@ class MethodAnalyser
         $fileName = $reflectionMethod->getFileName();
         $trait = $this->getDeclaringTrait($reflectionClass->getTraits(), $fileName, $methodStartLine, $methodEndLine);
 
-        return $trait === null ? $reflectionClass : $trait;
+        return $trait ?? $reflectionClass;
     }
 
     /**

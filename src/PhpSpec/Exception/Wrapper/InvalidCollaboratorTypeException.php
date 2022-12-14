@@ -24,8 +24,8 @@ class InvalidCollaboratorTypeException extends CollaboratorException
         ?string $prompt = null
     )
     {
-        $reason = $reason ?? 'Collaborator must be an object';
-        $prompt = $prompt ?? 'You can create non-object values manually.';
+        $reason ??= 'Collaborator must be an object';
+        $prompt ??= 'You can create non-object values manually.';
 
         $message = sprintf(
             $reason . ': argument %s defined in %s. ' .
