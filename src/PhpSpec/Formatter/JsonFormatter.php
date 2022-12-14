@@ -76,6 +76,6 @@ final class JsonFormatter extends BasicFormatter
         $this->data['status'] = self::STATUS_NAME[$event->getResult()];
         $this->data['time'] = $event->getTime();
 
-        $this->getIO()->write(json_encode($this->data));
+        $this->getIO()->write(json_encode($this->data, JSON_THROW_ON_ERROR));
     }
 }

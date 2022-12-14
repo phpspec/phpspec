@@ -23,7 +23,7 @@ final class JsonExecutionContext implements ExecutionContext
         $executionContext = new self();
 
         if (array_key_exists(self::ENV_NAME, $env)) {
-            $serialized = json_decode($env[self::ENV_NAME], true);
+            $serialized = json_decode($env[self::ENV_NAME], true, 512, JSON_THROW_ON_ERROR);
             $executionContext->generatedTypes = $serialized['generated-types'];
         }
         else {
@@ -52,7 +52,7 @@ final class JsonExecutionContext implements ExecutionContext
             self::ENV_NAME => json_encode(
                 array(
                     'generated-types' => $this->generatedTypes
-                )
+                ), JSON_THROW_ON_ERROR
             )
         );
     }
