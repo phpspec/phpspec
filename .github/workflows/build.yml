@@ -14,7 +14,10 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php: ["8.0", "8.1"]
+                php:
+                 - "8.0"
+                 - "8.1"
+                 - "8.2"
                 operating-system: [ ubuntu-latest, macOS-latest, windows-latest ]
                 composer-flags: [""]
                 composer-extras: [""]
@@ -24,9 +27,7 @@ jobs:
                         publish-phar: true
                     -   php: "8.0"
                         composer-flags: --prefer-lowest
-                    -   php: "8.0"
-                        stability: "dev"
-                    -   php: "8.1"
+                    -   php: "8.2"
                         operating-system: windows-latest
 
         env:
@@ -76,3 +77,36 @@ jobs:
 
             -   name: Run tests (behat)
                 run: ./vendor/bin/behat --format=progress
+
+            -   name: Build the PHAR
+                run: |
+                    composer config platform.php 7.3.0 &&
+                    ln -s `which composer` composer.phar &&
+                    make phpspec.phar
+
+            -   uses: actions/upload-artifact@v1
+                name: Publish the PHAR
+                if: matrix.publish-phar
+                with:
+                    name: phpspec.phar
+                    path: phpspec.phar
+
+    publish-phar:
+        runs-on: ubuntu-latest
+        name: Publish the PHAR
+        needs: tests
+        if: github.event_name == 'release'
+        steps:
+            -   uses: actions/download-artifact@v1
+                with:
+                    name: phpspec.phar
+                    path: .
+            -   name: Upload phpspec.phar
+                uses: actions/upload-release-asset@v1
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                with:
+                    upload_url: ${{ github.event.release.upload_url }}
+                    asset_path: phpspec.phar
+                    asset_name: phpspec.phar
+                    asset_content_type: application/zip
