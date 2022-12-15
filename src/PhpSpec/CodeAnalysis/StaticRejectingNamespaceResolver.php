@@ -36,7 +36,6 @@ final class StaticRejectingNamespaceResolver implements NamespaceResolver
 
     /**
      * @throws \Exception
-     * @return void
      */
     private function guardNonObjectTypeHints(string $typeAlias): void
     {
