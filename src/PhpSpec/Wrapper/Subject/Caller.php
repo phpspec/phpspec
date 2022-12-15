@@ -41,7 +41,6 @@ class Caller
     private ExceptionFactory $exceptionFactory;
     private AccessInspector $accessInspector;
 
-    
     public function __construct(
         WrappedObject $wrappedObject,
         ExampleNode $example,
@@ -74,6 +73,7 @@ class Caller
         $arguments = $unwrapper->unwrapAll($arguments);
 
         if ($this->isObjectMethodCallable($method)) {
+            /** @var object $subject */
             return $this->invokeAndWrapMethodResult($subject, $method, $arguments);
         }
 
@@ -109,7 +109,9 @@ class Caller
     public function get(string $property) : mixed
     {
         if ($this->lookingForConstants($property) && $this->constantDefined($property)) {
-            return constant($this->wrappedObject->getClassName().'::'.$property);
+            $className = $this->wrappedObject->getClassName();
+            /** @var string $className */
+            return constant($className.'::'.$property);
         }
 
         if (null === $this->getWrappedObject()) {
@@ -133,6 +135,7 @@ class Caller
         }
 
         $className = $this->wrappedObject->getClassName();
+
         if (!\is_string($className)) {
             return $this->wrappedObject->getInstance();
         }
@@ -154,7 +157,6 @@ class Caller
         return $instance;
     }
 
-    
     private function isObjectPropertyReadable(string $property): bool
     {
         $subject = $this->getWrappedObject();
@@ -162,7 +164,6 @@ class Caller
         return \is_object($subject) && $this->accessInspector->isPropertyReadable($subject, $property);
     }
 
-    
     private function isObjectPropertyWritable(string $property): bool
     {
         $subject = $this->getWrappedObject();
@@ -170,10 +171,15 @@ class Caller
         return \is_object($subject) && $this->accessInspector->isPropertyWritable($subject, $property);
     }
 
-    
     private function isObjectMethodCallable(string $method): bool
     {
-        return $this->accessInspector->isMethodCallable($this->getWrappedObject(), $method);
+        $subject = $this->getWrappedObject();
+
+        if (!is_object($subject)) {
+            return false;
+        }
+
+        return $this->accessInspector->isMethodCallable($subject, $method);
     }
 
     private function instantiateWrappedObject(): object
@@ -189,7 +195,7 @@ class Caller
         if (\count($this->wrappedObject->getArguments())) {
             return $this->newInstanceWithArguments($reflection);
         }
-
+        /** @psalm-suppress InvalidMethodCall */
         return $reflection->newInstance();
     }
 
@@ -210,7 +216,6 @@ class Caller
         return $this->wrap($returnValue);
     }
 
-    
     private function wrap(mixed $value): Subject
     {
         return $this->wrapper->wrap($value);
@@ -256,13 +261,14 @@ class Caller
             );
         }
 
+        /** @var callable $method */
         return (new ObjectFactory())->instantiateFromCallable(
             $method,
             $this->wrappedObject->getArguments()
         );
     }
 
-    
+
     private function detectMissingConstructorMessage(ReflectionException $exception): bool
     {
         return strpos(
@@ -270,7 +276,6 @@ class Caller
             'does not have a constructor'
         ) !== 0;
     }
-
 
     private function classNotFound(): ClassNotFoundException
     {
@@ -288,7 +293,6 @@ class Caller
     {
         /** @var class-string $className */
         $className = $this->wrappedObject->getClassName();
-
         if (!method_exists($className, $method)) {
             return $this->exceptionFactory->methodNotFound($className, $method, $arguments);
         }
@@ -296,40 +300,36 @@ class Caller
         return $this->exceptionFactory->methodNotVisible($className, $method, $arguments);
     }
 
-    
     private function propertyNotFound(string $property): PropertyNotFoundException
     {
         return $this->exceptionFactory->propertyNotFound($this->getWrappedObject(), $property);
     }
 
-    
     private function callingMethodOnNonObject(string $method): SubjectException
     {
         return $this->exceptionFactory->callingMethodOnNonObject($method);
     }
 
-    
     private function settingPropertyOnNonObject(string $property): SubjectException
     {
         return $this->exceptionFactory->settingPropertyOnNonObject($property);
     }
 
-    
     private function accessingPropertyOnNonObject(string $property): SubjectException
     {
         return $this->exceptionFactory->gettingPropertyOnNonObject($property);
     }
 
-    
     private function lookingForConstants(string $property): bool
     {
         return null !== $this->wrappedObject->getClassName() &&
             $property === strtoupper($property);
     }
 
-    
     public function constantDefined(string $property): bool
     {
-        return \defined($this->wrappedObject->getClassName().'::'.$property);
+        $className = $this->wrappedObject->getClassName();
+        /** @var string $className */
+        return \defined($className.'::'.$property);
     }
 }

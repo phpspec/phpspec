@@ -41,7 +41,7 @@ final class WindowsPassthruReRunner extends PhpExecutableReRunner
         /** @var string $executablePath because isSupported was called */
         $executablePath = $this->getExecutablePath();
 
-        $args = $_SERVER['argv'];
+        $args = $_SERVER['argv'] ?? [];
         $command = $this->buildArgString() . escapeshellarg($executablePath) . ' ' . join(' ', array_map('escapeshellarg', $args));
 
         passthru($command, $exitCode);

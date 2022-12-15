@@ -29,6 +29,9 @@ use Symfony\Component\Console\Question\Question;
  */
 final class DescribeCommand extends Command
 {
+    /**
+     * @psalm-suppress MethodSignatureMismatch
+     */
     public function getApplication() : Application
     {
         $application = parent::getApplication();

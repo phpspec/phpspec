@@ -70,7 +70,10 @@ final class Application extends BaseApplication
             $this->add($command);
         }
 
-        $this->setDispatcher($this->container->get('console_event_dispatcher'));
+        $dispatcher = $this->container->get('console_event_dispatcher');
+
+        /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher */
+        $this->setDispatcher($dispatcher);
 
         $consoleWidth = (new Terminal)->getWidth();
 
@@ -120,6 +123,7 @@ final class Application extends BaseApplication
 
     /**
      * @throws \RuntimeException
+     * @return void
      */
     protected function loadConfigurationFile(InputInterface $input, IndexedServiceContainer $container): void
     {
@@ -155,6 +159,7 @@ final class Application extends BaseApplication
             $this->ensureIsValidMatcherClass($class);
 
             $container->define(sprintf('matchers.%s', $class), function () use ($class) {
+                /** @psalm-suppress InvalidStringClass */
                 return new $class();
             }, ['matchers']);
         }
@@ -237,6 +242,7 @@ final class Application extends BaseApplication
             return array();
         }
 
+        /** @psalm-suppress ReservedWord, RedundantCondition */
         return Yaml::parse(file_get_contents($path)) ?: [];
     }
 

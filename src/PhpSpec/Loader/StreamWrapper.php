@@ -21,6 +21,7 @@ class StreamWrapper
 
     private static array $specTransformers = array();
 
+    /** @var ?resource */
     public $context;
 
     public static function register(): void

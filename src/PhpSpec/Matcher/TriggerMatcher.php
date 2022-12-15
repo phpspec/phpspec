@@ -23,25 +23,22 @@ final class TriggerMatcher implements Matcher
 {
     private Unwrapper $unwrapper;
 
-    
+
     public function __construct(Unwrapper $unwrapper)
     {
         $this->unwrapper = $unwrapper;
     }
 
-    
     public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return 'trigger' === $name;
     }
 
-    
     public function positiveMatch(string $name, mixed $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyPositive'), $subject, $arguments);
     }
 
-    
     public function negativeMatch(string $name, mixed $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyNegative'), $subject, $arguments);
@@ -99,6 +96,7 @@ final class TriggerMatcher implements Matcher
         restore_error_handler();
 
         if ($triggered > 0) {
+            /** @psalm-suppress NoValue */
             throw new FailureException(
                 sprintf(
                     'Expected to not trigger errors, but got %d.',
@@ -108,13 +106,12 @@ final class TriggerMatcher implements Matcher
         }
     }
 
-    
+
     public function getPriority(): int
     {
         return 1;
     }
 
-    
     private function getDelayedCall(callable $check, mixed $subject, array $arguments): DelayedCall
     {
         $unwrapper = $this->unwrapper;

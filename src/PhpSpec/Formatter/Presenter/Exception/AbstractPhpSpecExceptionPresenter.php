@@ -31,7 +31,7 @@ abstract class AbstractPhpSpecExceptionPresenter
         $cause = $exception->getCause();
 
         foreach ($exception->getTrace() as $call) {
-            if (!isset($call['file'])) {
+            if (!isset($call['file']) || !isset($call['line'])) {
                 continue;
             }
 

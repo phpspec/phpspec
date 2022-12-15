@@ -44,7 +44,7 @@ final class PcntlReRunner extends PhpExecutableReRunner
         /** @var string $executablePath because isSupported was called */
         $executablePath = $this->getExecutablePath();
 
-        $args = $_SERVER['argv'];
+        $args = $_SERVER['argv'] ?? [];
         $env = $this->executionContext ? $this->executionContext->asEnv() : array();
 
         $env = array_filter(

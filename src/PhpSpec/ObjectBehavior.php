@@ -60,6 +60,10 @@ use ArrayAccess;
  * @method void shouldNotHaveKeyWithValue($key, $value)
  * @method void shouldHaveKey($key)
  * @method void shouldNotHaveKey($key)
+ *
+ * @template TKey
+ * @template TValue
+ * @template-implements ArrayAccess<TKey,TValue>
  */
 abstract class ObjectBehavior implements
     ArrayAccess,
@@ -101,6 +105,9 @@ abstract class ObjectBehavior implements
 
     /**
      * Checks if a key exists in case object implements ArrayAccess
+     *
+     * @psalm-param TKey $key
+     * @param int|string $key
      */
     public function offsetExists(mixed $key): bool
     {
@@ -109,6 +116,10 @@ abstract class ObjectBehavior implements
 
     /**
      * Gets the value in a particular position in the ArrayAccess object
+     *
+     * @psalm-param TKey $key
+     * @param int|string $key
+     * @psalm-suppress ImplementedReturnTypeMismatch
      */
     public function offsetGet(mixed $key): Subject
     {
@@ -117,6 +128,10 @@ abstract class ObjectBehavior implements
 
     /**
      * Sets the value in a particular position in the ArrayAccess object
+     *
+     * @psalm-param TKey $key
+     * @param int|string $key
+     * @psalm-suppress InvalidAttribute
      */
     public function offsetSet(mixed $key, mixed $value): void
     {
@@ -125,6 +140,10 @@ abstract class ObjectBehavior implements
 
     /**
      * Unsets a position in the ArrayAccess object
+     *
+     * @psalm-param TKey $key
+     * @param int|string $key
+     * @psalm-suppress InvalidAttribute
      */
     public function offsetUnset(mixed $key): void
     {
@@ -141,6 +160,8 @@ abstract class ObjectBehavior implements
 
     /**
      * Proxies setting to the PhpSpec subject
+     *
+     * @param mixed $value
      */
     public function __set(string $property, mixed $value)
     {

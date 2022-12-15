@@ -104,6 +104,10 @@ use ArrayAccess;
  * @method void shouldStartYielding($iterable)
  * @method void shouldNotStartIteratingAs($iterable)
  * @method void shouldNotStartYielding($iterable)
+ *
+ * @template TKey
+ * @template TValue
+ * @template-implements ArrayAccess<TKey,TValue>
  */
 class Subject implements ArrayAccess, ObjectWrapper
 {
@@ -157,12 +161,10 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $this->subject = $this->caller->getWrappedObject();
     }
 
-    
     public function callOnWrappedObject(string $method, array $arguments = array()): Subject
     {
         return $this->caller->call($method, $arguments);
     }
-
 
     public function setToWrappedObject(string $property, mixed $value = null): void
     {
@@ -174,21 +176,38 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $this->caller->get($property);
     }
 
+    /**
+     * @psalm-param TKey $key
+     * @param int|string $key
+     */
     public function offsetExists(mixed $key): bool
     {
         return $this->arrayAccess->offsetExists($key);
     }
 
+    /**
+     * @param int|string $key
+     * @psalm-param TKey $key
+     * @psalm-suppress ImplementedReturnTypeMismatch
+     */
     public function offsetGet(mixed $key): Subject
     {
         return $this->wrap($this->arrayAccess->offsetGet($key));
     }
 
+    /**
+     * @psalm-param TKey $key
+     * @param int|string $key
+     */
     public function offsetSet(mixed $key, mixed $value): void
     {
         $this->arrayAccess->offsetSet($key, $value);
     }
 
+    /**
+     * @psalm-param TKey $key
+     * @param int|string $key
+     */
     public function offsetUnset(mixed $key): void
     {
         $this->arrayAccess->offsetUnset($key);
@@ -211,18 +230,16 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $this->caller->call($method, $arguments);
     }
 
-    
+
     public function __invoke(): Subject
     {
         return $this->caller->call('__invoke', \func_get_args());
     }
 
-    
     public function __set(string $property, mixed $value = null)
     {
         return $this->caller->set($property, $value);
     }
-
 
     public function __get(string $property) : mixed
     {
@@ -253,7 +270,8 @@ class Subject implements ArrayAccess, ObjectWrapper
 
         if (null === $this->subject && $className) {
             $instantiator = new Instantiator();
-
+            $className = $this->wrappedObject->getClassName();
+            /** @var string $className */
             return $instantiator->instantiate($className);
         }
 
