@@ -35,7 +35,7 @@ class ComposerPsrNamespaceProvider
         foreach (get_declared_classes() as $class) {
             if ('C' === $class[0] && str_starts_with($class, 'ComposerAutoloaderInit')) {
                 $r = new \ReflectionClass($class);
-                $v = dirname(dirname($r->getFileName()));
+                $v = dirname($r->getFileName(), 2);
                 if (file_exists($v.'/composer/installed.json')) {
                     $vendors[] = $v;
                 }

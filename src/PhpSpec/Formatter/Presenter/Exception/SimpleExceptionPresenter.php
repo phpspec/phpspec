@@ -35,7 +35,7 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
         private CallArgumentsPresenter $callArgumentsPresenter,
         private PhpSpecExceptionPresenter $phpspecExceptionPresenter
     ) {
-        $this->phpspecPath = dirname(dirname(__DIR__));
+        $this->phpspecPath = dirname(__DIR__, 2);
         $this->runnerPath  = $this->phpspecPath.DIRECTORY_SEPARATOR.'Runner';
     }
 
