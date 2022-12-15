@@ -191,7 +191,7 @@ final class ClassFileAnalyser
     /**
      * @param string|array{0:int,1:string,2:int} $token
      */
-    private function tokenIsFunction($token): bool
+    private function tokenIsFunction(string|array $token): bool
     {
         return \is_array($token) && $token[0] === T_FUNCTION;
     }
