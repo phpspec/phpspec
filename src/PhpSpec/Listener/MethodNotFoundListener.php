@@ -63,7 +63,7 @@ final class MethodNotFoundListener implements EventSubscriberInterface
         }
 
         foreach ($this->methods as $call => $arguments) {
-            list($classname, $method) = explode('::', $call);
+            [$classname, $method] = explode('::', $call);
 
             if (\in_array($method, $this->wrongMethodNames)) {
                 continue;

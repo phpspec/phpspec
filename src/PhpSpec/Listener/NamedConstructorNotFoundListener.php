@@ -59,7 +59,7 @@ final class NamedConstructorNotFoundListener implements EventSubscriberInterface
 
         foreach ($this->methods as $call => $arguments) {
             /** @var class-string $classname */
-            list($classname, $method) = explode('::', $call);
+            [$classname, $method] = explode('::', $call);
             $message = sprintf('Do you want me to create `%s()` for you?', $call);
 
             try {

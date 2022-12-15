@@ -111,7 +111,7 @@ final class TriggerMatcher implements Matcher
     private function getDelayedCall(callable $check, mixed $subject, array $arguments): DelayedCall
     {
         $unwrapper = $this->unwrapper;
-        list($level, $message) = $this->unpackArguments($arguments);
+        [$level, $message] = $this->unpackArguments($arguments);
 
         return new DelayedCall(
             function (string $method, array $arguments) use ($check, $subject, $level, $message, $unwrapper): mixed {
@@ -121,7 +121,7 @@ final class TriggerMatcher implements Matcher
                 $arguments = $arguments[1] ?? array();
                 $callable = array($subject, $methodName);
 
-                list($class, $methodName) = array($subject, $methodName);
+                [$class, $methodName] = array($subject, $methodName);
                 if (!method_exists($class, $methodName) && !method_exists($class, '__call')) {
                     throw new MethodNotFoundException(
                         sprintf('Method %s::%s not found.', \get_class($class), $methodName),

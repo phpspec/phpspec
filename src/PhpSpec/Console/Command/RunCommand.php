@@ -179,7 +179,7 @@ EOF
         $locator = $input->getArgument('spec') ?? '';
         $linenum = null;
         if (preg_match('/^(.*)\:(\d+)$/', $locator, $matches)) {
-            list($_, $locator, $linenum) = $matches;
+            [$_, $locator, $linenum] = $matches;
         }
 
         $suite       = $container->get('loader.resource_loader')->load((string)$locator, $linenum);
