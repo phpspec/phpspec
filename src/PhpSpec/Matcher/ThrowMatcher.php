@@ -55,8 +55,6 @@ final class ThrowMatcher implements Matcher
 
         try {
             \call_user_func_array($callable, $arguments);
-        } catch (\Exception $e) {
-            $exceptionThrown = $e;
         } catch (\Throwable $e) {
             $exceptionThrown = $e;
         }
@@ -128,8 +126,6 @@ final class ThrowMatcher implements Matcher
 
         try {
             \call_user_func_array($callable, $arguments);
-        } catch (\Exception $e) {
-            $exceptionThrown = $e;
         } catch (\Throwable $e) {
             $exceptionThrown = $e;
         }
