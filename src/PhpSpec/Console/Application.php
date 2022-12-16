@@ -121,7 +121,6 @@ final class Application extends BaseApplication
 
     /**
      * @throws \RuntimeException
-     * @return void
      */
     protected function loadConfigurationFile(InputInterface $input, IndexedServiceContainer $container): void
     {
