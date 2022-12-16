@@ -71,9 +71,7 @@ final class TaggingExceptionElementPresenter implements ExceptionElementPresente
     {
         $valuePresenter = $this->valuePresenter;
 
-        $taggedArgs = array_map(function ($arg) use ($valuePresenter) {
-            return sprintf('<value>%s</value>', $valuePresenter->presentValue($arg));
-        }, $args);
+        $taggedArgs = array_map(fn($arg) => sprintf('<value>%s</value>', $valuePresenter->presentValue($arg)), $args);
 
         return implode(', ', $taggedArgs);
     }

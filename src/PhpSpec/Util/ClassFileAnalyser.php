@@ -198,9 +198,7 @@ final class ClassFileAnalyser
     
     private function findIndexOfClassEnd(array $tokens): int
     {
-        $classTokens = array_filter($tokens, function ($token) {
-            return \is_array($token) && $token[0] === T_CLASS;
-        });
+        $classTokens = array_filter($tokens, fn($token) => \is_array($token) && $token[0] === T_CLASS);
         $classTokenIndex = key($classTokens);
         return $this->findIndexOfMethodOrClassEnd($tokens, $classTokenIndex) - 1;
     }

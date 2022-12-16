@@ -39,8 +39,6 @@ final class Template implements TemplateInterface
     
     private function extractKeys(array $templateVars): array
     {
-        return array_map(function ($e) {
-            return '{'.$e.'}';
-        }, array_keys($templateVars));
+        return array_map(fn($e) => '{'.$e.'}', array_keys($templateVars));
     }
 }

@@ -121,9 +121,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     
     private function tokensToString(array $tokens): string
     {
-        return join('', array_map(function ($token) : string {
-            return \is_array($token) ? $token[1] : $token;
-        }, $tokens));
+        return join('', array_map(fn($token): string => \is_array($token) ? $token[1] : $token, $tokens));
     }
 
     private function extractTypehints(array &$tokens, int $index, array $token): void

@@ -29,9 +29,7 @@ final class MatchersMaintainer implements Maintainer
      */
     public function __construct(private Presenter $presenter, private array $defaultMatchers)
     {
-        @usort($this->defaultMatchers, function (Matcher $matcher1, Matcher $matcher2) {
-            return $matcher2->getPriority() - $matcher1->getPriority();
-        });
+        @usort($this->defaultMatchers, fn(Matcher $matcher1, Matcher $matcher2) => $matcher2->getPriority() - $matcher1->getPriority());
     }
 
     

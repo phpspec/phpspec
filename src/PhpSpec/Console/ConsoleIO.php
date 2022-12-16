@@ -191,9 +191,7 @@ class ConsoleIO implements IO
     private function indentText(string $text, int $indent): string
     {
         return implode("\n", array_map(
-            function ($line) use ($indent) {
-                return str_repeat(' ', $indent).$line;
-            },
+            fn($line) => str_repeat(' ', $indent).$line,
             explode("\n", $text)
         ));
     }

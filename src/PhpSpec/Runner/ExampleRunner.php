@@ -44,9 +44,7 @@ class ExampleRunner
     {
         $this->maintainers[] = $maintainer;
 
-        @usort($this->maintainers, function (Maintainer $maintainer1, Maintainer $maintainer2): int {
-            return $maintainer2->getPriority() - $maintainer1->getPriority();
-        });
+        @usort($this->maintainers, fn(Maintainer $maintainer1, Maintainer $maintainer2): int => $maintainer2->getPriority() - $maintainer1->getPriority());
     }
 
     public function run(ExampleNode $example): int
@@ -115,9 +113,7 @@ class ExampleRunner
 
         $matchers      = new MatcherManager($this->presenter);
         $collaborators = new CollaboratorManager($this->presenter);
-        $maintainers   = array_filter($this->maintainers, function (Maintainer $maintainer) use ($example) {
-            return $maintainer->supports($example);
-        });
+        $maintainers   = array_filter($this->maintainers, fn(Maintainer $maintainer) => $maintainer->supports($example));
 
         // run maintainers prepare
         foreach ($maintainers as $maintainer) {
@@ -175,9 +171,7 @@ class ExampleRunner
     {
         return array_filter(
             $maintainers,
-            function ($maintainer) {
-                return $maintainer instanceof LetAndLetgoMaintainer;
-            }
+            fn($maintainer) => $maintainer instanceof LetAndLetgoMaintainer
         );
     }
 }
