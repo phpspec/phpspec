@@ -8,6 +8,7 @@
 /spec              export-ignore
 /.gitattributes    export-ignore
 /.gitignore        export-ignore
+/.editorconfig     export-ignore
 /behat.yml.dist    export-ignore
 /box.json          export-ignore
 /CHANGES*.md       export-ignore
