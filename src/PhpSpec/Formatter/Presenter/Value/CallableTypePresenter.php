@@ -38,7 +38,7 @@ final class CallableTypePresenter implements TypePresenter
         }
 
         if (\is_object($value)) {
-            return sprintf('[obj:%s]', \get_class($value));
+            return sprintf('[obj:%s]', $value::class);
         }
 
         return sprintf('[%s()]', $value);

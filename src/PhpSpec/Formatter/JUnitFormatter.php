@@ -130,7 +130,7 @@ final class JUnitFormatter extends BasicFormatter
                 '</system-err>'."\n".
                 '</testcase>',
                 $this->resultTags[$event->getResult()],
-                \get_class($exception),
+                $exception::class,
                 htmlspecialchars($exception->getMessage()),
                 $exception->getTraceAsString()
             );

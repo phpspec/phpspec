@@ -47,7 +47,7 @@ final class NamedConstructorNotFoundListener implements EventSubscriberInterface
             return;
         }
 
-        $className = \get_class($exception->getSubject());
+        $className = $exception->getSubject()::class;
         $this->methods[$className .'::'.$exception->getMethodName()] = $exception->getArguments();
     }
 

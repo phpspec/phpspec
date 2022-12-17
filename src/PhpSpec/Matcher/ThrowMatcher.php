@@ -211,7 +211,7 @@ final class ThrowMatcher implements Matcher
                 [$class, $methodName] = array($subject, $methodName);
                 if (!method_exists($class, $methodName) && !method_exists($class, '__call')) {
                     throw new MethodNotFoundException(
-                        sprintf('Method %s::%s not found.', \get_class($class), $methodName),
+                        sprintf('Method %s::%s not found.', $class::class, $methodName),
                         $class,
                         $methodName,
                         $arguments

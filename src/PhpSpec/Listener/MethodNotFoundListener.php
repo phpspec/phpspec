@@ -50,7 +50,7 @@ final class MethodNotFoundListener implements EventSubscriberInterface
             return;
         }
 
-        $classname = \get_class($exception->getSubject());
+        $classname = $exception->getSubject()::class;
         $methodName = $exception->getMethodName();
         $this->methods[$classname .'::'.$methodName] = $exception->getArguments();
         $this->checkIfMethodNameAllowed($methodName);

@@ -35,7 +35,7 @@ class WrappedObject
     public function __construct(private mixed $instance, private Presenter $presenter)
     {
         if (\is_object($this->instance)) {
-            $this->classname = \get_class($this->instance);
+            $this->classname = $this->instance::class;
             $this->isInstantiated = true;
         }
     }

@@ -44,7 +44,7 @@ class ObjectFactory
     {
         if (\is_array($callable)) {
             $className = \is_object($callable[0])
-                ? get_class($callable[0])
+                ? $callable[0]::class
                 : $callable[0];
 
             return 'method ' . $className . '::' . $callable[1];

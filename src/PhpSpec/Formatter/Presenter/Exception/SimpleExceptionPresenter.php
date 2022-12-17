@@ -96,7 +96,7 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
 
         $text .= $this->presentExceptionTraceLocation($offset++, $exception->getFile(), $exception->getLine());
         $text .= $this->presentExceptionTraceFunction(
-            'throw new '.\get_class($exception),
+            'throw new '.$exception::class,
             array($exception->getMessage())
         );
 
