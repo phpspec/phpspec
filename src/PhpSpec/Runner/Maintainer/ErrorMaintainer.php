@@ -21,16 +21,14 @@ use PhpSpec\Exception\Example as ExampleException;
 
 final class ErrorMaintainer implements Maintainer
 {
-    private int $errorLevel;
     /**
      * @var null|callable
      */
     private $errorHandler;
 
 
-    public function __construct(int $errorLevel)
+    public function __construct(private int $errorLevel)
     {
-        $this->errorLevel = $errorLevel;
     }
 
 
@@ -84,7 +82,7 @@ final class ErrorMaintainer implements Maintainer
         if (E_RECOVERABLE_ERROR === $level && preg_match($regex, $message, $matches)) {
             $class = $matches['class'];
 
-            if (\in_array('PhpSpec\Specification', class_implements($class))) {
+            if (\in_array(\PhpSpec\Specification::class, class_implements($class))) {
                 return true;
             }
         }

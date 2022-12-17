@@ -18,14 +18,11 @@ use PhpSpec\IO\IO;
 
 final class Template implements TemplateInterface
 {
-    const DIR = __DIR__;
-
-    private IO $io;
+    public const DIR = __DIR__;
 
     
-    public function __construct(IO $io)
+    public function __construct(private IO $io)
     {
-        $this->io = $io;
     }
 
     
@@ -42,8 +39,6 @@ final class Template implements TemplateInterface
     
     private function extractKeys(array $templateVars): array
     {
-        return array_map(function ($e) {
-            return '{'.$e.'}';
-        }, array_keys($templateVars));
+        return array_map(fn($e) => '{'.$e.'}', array_keys($templateVars));
     }
 }

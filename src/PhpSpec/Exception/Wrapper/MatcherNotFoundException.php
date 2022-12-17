@@ -21,19 +21,9 @@ use PhpSpec\Exception\Exception;
  */
 class MatcherNotFoundException extends Exception
 {
-    private string $keyword;
-
-    private mixed $subject;
-
-    private array $arguments;
-
-    public function __construct(string $message, string $keyword, mixed $subject, array $arguments)
+    public function __construct(string $message, private string $keyword, private mixed $subject, private array $arguments)
     {
         parent::__construct($message);
-
-        $this->keyword   = $keyword;
-        $this->subject   = $subject;
-        $this->arguments = $arguments;
     }
 
     public function getKeyword(): string

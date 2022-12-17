@@ -15,12 +15,8 @@ namespace PhpSpec\Formatter\Presenter\Exception;
 
 final class GenericPhpSpecExceptionPresenter extends AbstractPhpSpecExceptionPresenter implements PhpSpecExceptionPresenter
 {
-    private ExceptionElementPresenter $exceptionElementPresenter;
-
-    
-    public function __construct(ExceptionElementPresenter $exceptionElementPresenter)
+    public function __construct(private ExceptionElementPresenter $exceptionElementPresenter)
     {
-        $this->exceptionElementPresenter = $exceptionElementPresenter;
     }
 
     

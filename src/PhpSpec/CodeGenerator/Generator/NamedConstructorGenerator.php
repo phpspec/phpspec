@@ -22,20 +22,8 @@ use PhpSpec\Util\Filesystem;
 
 final class NamedConstructorGenerator implements Generator
 {
-    private ConsoleIO $io;
-
-    private TemplateRenderer $templates;
-
-    private Filesystem $filesystem;
-    private CodeWriter $codeWriter;
-
-    
-    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, CodeWriter $codeWriter)
+    public function __construct(private ConsoleIO $io, private TemplateRenderer $templates, private Filesystem $filesystem, private CodeWriter $codeWriter)
     {
-        $this->io         = $io;
-        $this->templates  = $templates;
-        $this->filesystem = $filesystem;
-        $this->codeWriter = $codeWriter;
     }
 
     public function supports(Resource $resource, string $generation, array $data): bool
@@ -95,7 +83,7 @@ final class NamedConstructorGenerator implements Generator
     {
         try {
             return $this->codeWriter->insertAfterMethod($code, '__construct', $method);
-        } catch (NamedMethodNotFoundException $e) {
+        } catch (NamedMethodNotFoundException) {
             return $this->codeWriter->insertMethodFirstInClass($code, $method);
         }
     }

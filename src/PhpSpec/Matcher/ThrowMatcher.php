@@ -26,17 +26,8 @@ final class ThrowMatcher implements Matcher
 {
     private static array $ignoredProperties = array('file', 'line', 'string', 'trace', 'previous');
 
-    private Unwrapper $unwrapper;
-
-    private Presenter $presenter;
-
-    private ReflectionFactory $factory;
-
-    public function __construct(Unwrapper $unwrapper, Presenter $presenter, ReflectionFactory $factory)
+    public function __construct(private Unwrapper $unwrapper, private Presenter $presenter, private ReflectionFactory $factory)
     {
-        $this->unwrapper = $unwrapper;
-        $this->presenter = $presenter;
-        $this->factory   = $factory;
     }
 
     public function supports(string $name, mixed $subject, array $arguments): bool
@@ -64,8 +55,6 @@ final class ThrowMatcher implements Matcher
 
         try {
             \call_user_func_array($callable, $arguments);
-        } catch (\Exception $e) {
-            $exceptionThrown = $e;
         } catch (\Throwable $e) {
             $exceptionThrown = $e;
         }
@@ -137,8 +126,6 @@ final class ThrowMatcher implements Matcher
 
         try {
             \call_user_func_array($callable, $arguments);
-        } catch (\Exception $e) {
-            $exceptionThrown = $e;
         } catch (\Throwable $e) {
             $exceptionThrown = $e;
         }
@@ -221,10 +208,10 @@ final class ThrowMatcher implements Matcher
                 $arguments = $arguments[1] ?? array();
                 $callable = array($subject, $methodName);
 
-                list($class, $methodName) = array($subject, $methodName);
+                [$class, $methodName] = array($subject, $methodName);
                 if (!method_exists($class, $methodName) && !method_exists($class, '__call')) {
                     throw new MethodNotFoundException(
-                        sprintf('Method %s::%s not found.', \get_class($class), $methodName),
+                        sprintf('Method %s::%s not found.', $class::class, $methodName),
                         $class,
                         $methodName,
                         $arguments

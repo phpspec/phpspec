@@ -18,12 +18,8 @@ use PhpSpec\Formatter\Presenter\Presenter;
 
 final class StringContainMatcher extends BasicMatcher
 {
-    private Presenter $presenter;
-
-    
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     /**
@@ -42,7 +38,7 @@ final class StringContainMatcher extends BasicMatcher
      */
     protected function matches(mixed $subject, array $arguments): bool
     {
-        return false !== strpos($subject, $arguments[0]);
+        return str_contains($subject, $arguments[0]);
     }
 
     /**

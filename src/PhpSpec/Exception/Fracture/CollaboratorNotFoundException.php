@@ -18,18 +18,14 @@ use ReflectionParameter;
 
 class CollaboratorNotFoundException extends FractureException
 {
-    const CLASSNAME_REGEX = '/\\[.* (?P<classname>[_a-z0-9\\\\]+) .*\\]/i';
-
-    private string $collaboratorName;
+    private const CLASSNAME_REGEX = '/\\[.* (?P<classname>[_a-z0-9\\\\]+) .*\\]/i';
 
     public function __construct(
         string $message,
-        string $className,
+        private string $collaboratorName,
         int $code = 0,
         Exception $previous = null
     ) {
-        $this->collaboratorName = $className;
-
         parent::__construct($message . ': ' . $this->collaboratorName, $code, $previous);
     }
 

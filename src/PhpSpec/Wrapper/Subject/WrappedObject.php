@@ -21,8 +21,6 @@ use PhpSpec\Exception\Wrapper\SubjectException;
 
 class WrappedObject
 {
-    private mixed $instance;
-    private Presenter $presenter;
     /**
      * @var ?class-string
      */
@@ -30,16 +28,14 @@ class WrappedObject
     /**
      * @var null|callable|string
      */
-    private mixed $factoryMethod;
+    private mixed $factoryMethod = null;
     private array $arguments = array();
     private bool $isInstantiated = false;
 
-    public function __construct(mixed $instance, Presenter $presenter)
+    public function __construct(private mixed $instance, private Presenter $presenter)
     {
-        $this->instance = $instance;
-        $this->presenter = $presenter;
         if (\is_object($this->instance)) {
-            $this->classname = \get_class($this->instance);
+            $this->classname = $this->instance::class;
             $this->isInstantiated = true;
         }
     }
@@ -80,7 +76,7 @@ class WrappedObject
     public function beConstructedThrough(null|callable|string $factoryMethod, array $arguments = array()): void
     {
 
-        if (\is_string($factoryMethod) && false === strpos($factoryMethod, '::')) {
+        if (\is_string($factoryMethod) && !str_contains($factoryMethod, '::')) {
             if (!$this->classname) {
                 throw new \LogicException('Cannot call factory method on non-obect');
             }

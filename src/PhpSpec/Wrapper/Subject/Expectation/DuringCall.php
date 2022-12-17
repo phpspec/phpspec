@@ -20,15 +20,12 @@ use PhpSpec\Wrapper\Subject\WrappedObject;
 
 abstract class DuringCall
 {
-    private Matcher $matcher;
-
     private mixed $subject;
     private array $arguments = [];
     private ?WrappedObject $wrappedObject = null;
 
-    public function __construct(Matcher $matcher)
+    public function __construct(private Matcher $matcher)
     {
-        $this->matcher = $matcher;
     }
 
     /**

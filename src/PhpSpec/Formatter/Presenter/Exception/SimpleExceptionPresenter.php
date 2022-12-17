@@ -24,31 +24,18 @@ use Prophecy\Exception\Exception as ProphecyException;
 
 final class SimpleExceptionPresenter implements ExceptionPresenter
 {
-    private Differ $differ;
-
     private string $phpspecPath;
 
     private string $runnerPath;
 
-    private ExceptionElementPresenter $exceptionElementPresenter;
-
-    private CallArgumentsPresenter $callArgumentsPresenter;
-
-    private PhpSpecExceptionPresenter $phpspecExceptionPresenter;
-
     
     public function __construct(
-        Differ $differ,
-        ExceptionElementPresenter $exceptionElementPresenter,
-        CallArgumentsPresenter $callArgumentsPresenter,
-        PhpSpecExceptionPresenter $phpspecExceptionPresenter
+        private Differ $differ,
+        private ExceptionElementPresenter $exceptionElementPresenter,
+        private CallArgumentsPresenter $callArgumentsPresenter,
+        private PhpSpecExceptionPresenter $phpspecExceptionPresenter
     ) {
-        $this->differ = $differ;
-        $this->exceptionElementPresenter = $exceptionElementPresenter;
-        $this->callArgumentsPresenter = $callArgumentsPresenter;
-        $this->phpspecExceptionPresenter = $phpspecExceptionPresenter;
-
-        $this->phpspecPath = dirname(dirname(__DIR__));
+        $this->phpspecPath = dirname(__DIR__, 2);
         $this->runnerPath  = $this->phpspecPath.DIRECTORY_SEPARATOR.'Runner';
     }
 
@@ -109,7 +96,7 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
 
         $text .= $this->presentExceptionTraceLocation($offset++, $exception->getFile(), $exception->getLine());
         $text .= $this->presentExceptionTraceFunction(
-            'throw new '.\get_class($exception),
+            'throw new '.$exception::class,
             array($exception->getMessage())
         );
 
@@ -160,17 +147,17 @@ final class SimpleExceptionPresenter implements ExceptionPresenter
     
     private function shouldStopTracePresentation(array $call): bool
     {
-        return isset($call['file']) && false !== strpos($call['file'], $this->runnerPath);
+        return isset($call['file']) && str_contains($call['file'], $this->runnerPath);
     }
 
     
     private function shouldSkipTracePresentation(array $call): bool
     {
-        if (isset($call['file']) && 0 === strpos($call['file'], $this->phpspecPath)) {
+        if (isset($call['file']) && str_starts_with($call['file'], $this->phpspecPath)) {
             return true;
         }
 
-        return isset($call['class']) && 0 === strpos($call['class'], "PhpSpec\\");
+        return isset($call['class']) && str_starts_with($call['class'], "PhpSpec\\");
     }
 
     

@@ -191,16 +191,14 @@ final class ClassFileAnalyser
     /**
      * @param string|array{0:int,1:string,2:int} $token
      */
-    private function tokenIsFunction($token): bool
+    private function tokenIsFunction(string|array $token): bool
     {
         return \is_array($token) && $token[0] === T_FUNCTION;
     }
     
     private function findIndexOfClassEnd(array $tokens): int
     {
-        $classTokens = array_filter($tokens, function ($token) {
-            return \is_array($token) && $token[0] === T_CLASS;
-        });
+        $classTokens = array_filter($tokens, fn($token) => \is_array($token) && $token[0] === T_CLASS);
         $classTokenIndex = key($classTokens);
         return $this->findIndexOfMethodOrClassEnd($tokens, $classTokenIndex) - 1;
     }

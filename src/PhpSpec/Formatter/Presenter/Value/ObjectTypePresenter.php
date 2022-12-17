@@ -22,7 +22,7 @@ final class ObjectTypePresenter implements TypePresenter
 
     public function present(mixed $value): string
     {
-        return sprintf('[obj:%s]', \get_class($value));
+        return sprintf('[obj:%s]', $value::class);
     }
 
     public function getPriority(): int

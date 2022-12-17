@@ -27,20 +27,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ResourceLoader
 {
-    private ResourceManager $manager;
-
-    private MethodAnalyser $methodAnalyser;
-
-    private EventDispatcherInterface $eventDispatcher;
-
-    public function __construct(
-        ResourceManager $manager,
-        MethodAnalyser $methodAnalyser,
-        EventDispatcherInterface $eventDispatcher
-    ) {
-        $this->manager = $manager;
-        $this->methodAnalyser = $methodAnalyser;
-        $this->eventDispatcher = $eventDispatcher;
+    public function __construct(private ResourceManager $manager, private MethodAnalyser $methodAnalyser, private EventDispatcherInterface $eventDispatcher)
+    {
     }
 
     public function load(string $locator = '', int $line = null): Suite

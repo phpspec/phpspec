@@ -25,12 +25,9 @@ class ResultConverter
      */
     public function convert(int $result): int
     {
-        switch ($result) {
-            case ExampleEvent::PASSED:
-            case ExampleEvent::SKIPPED:
-                return 0;
-        }
-
-        return 1;
+        return match ($result) {
+            ExampleEvent::PASSED, ExampleEvent::SKIPPED => 0,
+            default => 1,
+        };
     }
 }

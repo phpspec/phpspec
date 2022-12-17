@@ -22,23 +22,8 @@ use PhpSpec\Loader\Suite;
  */
 class MethodCallEvent extends BaseEvent implements PhpSpecEvent
 {
-    private ExampleNode $example;
-
-    private mixed $subject;
-
-    private string $method;
-
-    private array $arguments;
-
-    private mixed $returnValue;
-
-    public function __construct(ExampleNode $example, mixed $subject, string $method, array $arguments, mixed $returnValue = null)
+    public function __construct(private ExampleNode $example, private mixed $subject, private string $method, private array $arguments, private mixed $returnValue = null)
     {
-        $this->example = $example;
-        $this->subject = $subject;
-        $this->method = $method;
-        $this->arguments = $arguments;
-        $this->returnValue = $returnValue;
     }
 
     public function getExample(): ExampleNode

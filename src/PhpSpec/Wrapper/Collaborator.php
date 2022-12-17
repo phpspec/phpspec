@@ -17,11 +17,8 @@ use Prophecy\Prophecy\ObjectProphecy;
 
 class Collaborator implements ObjectWrapper
 {
-    private ObjectProphecy $prophecy;
-
-    public function __construct(ObjectProphecy $prophecy)
+    public function __construct(private ObjectProphecy $prophecy)
     {
-        $this->prophecy  = $prophecy;
     }
 
     public function beADoubleOf(string $classOrInterface): void

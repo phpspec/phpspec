@@ -34,27 +34,8 @@ use ReflectionException;
 
 class Caller
 {
-    private WrappedObject $wrappedObject;
-    private ExampleNode $example;
-    private Dispatcher $dispatcher;
-    private Wrapper $wrapper;
-    private ExceptionFactory $exceptionFactory;
-    private AccessInspector $accessInspector;
-
-    public function __construct(
-        WrappedObject $wrappedObject,
-        ExampleNode $example,
-        Dispatcher $dispatcher,
-        ExceptionFactory $exceptions,
-        Wrapper $wrapper,
-        AccessInspector $accessInspector
-    ) {
-        $this->wrappedObject    = $wrappedObject;
-        $this->example          = $example;
-        $this->dispatcher       = $dispatcher;
-        $this->wrapper          = $wrapper;
-        $this->exceptionFactory = $exceptions;
-        $this->accessInspector  = $accessInspector;
+    public function __construct(private WrappedObject $wrappedObject, private ExampleNode $example, private Dispatcher $dispatcher, private ExceptionFactory $exceptionFactory, private Wrapper $wrapper, private AccessInspector $accessInspector)
+    {
     }
 
     /**
@@ -271,10 +252,7 @@ class Caller
 
     private function detectMissingConstructorMessage(ReflectionException $exception): bool
     {
-        return strpos(
-            $exception->getMessage(),
-            'does not have a constructor'
-        ) !== 0;
+        return !str_starts_with($exception->getMessage(), 'does not have a constructor');
     }
 
     private function classNotFound(): ClassNotFoundException

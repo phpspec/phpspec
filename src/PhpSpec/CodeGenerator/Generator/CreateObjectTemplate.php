@@ -17,17 +17,8 @@ use PhpSpec\CodeGenerator\TemplateRenderer;
 
 class CreateObjectTemplate
 {
-    private TemplateRenderer $templates;
-    private string $methodName;
-    private array $arguments;
-    private string $className;
-
-    public function __construct(TemplateRenderer $templates, string $methodName, array $arguments, string $className)
+    public function __construct(private TemplateRenderer $templates, private string $methodName, private array $arguments, private string $className)
     {
-        $this->templates  = $templates;
-        $this->methodName = $methodName;
-        $this->arguments  = $arguments;
-        $this->className  = $className;
     }
 
     public function getContent(): string

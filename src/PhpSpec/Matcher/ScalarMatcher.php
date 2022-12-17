@@ -19,12 +19,8 @@ use PhpSpec\Wrapper\DelayedCall;
 
 final class ScalarMatcher implements Matcher
 {
-    private Presenter $presenter;
-
-    
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     /**
@@ -99,7 +95,7 @@ final class ScalarMatcher implements Matcher
 
     private function getCheckerName(string $name): string|false
     {
-        if (0 !== strpos($name, 'be')) {
+        if (!str_starts_with($name, 'be')) {
             return false;
         }
 

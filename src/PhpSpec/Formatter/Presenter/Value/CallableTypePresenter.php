@@ -17,11 +17,8 @@ use PhpSpec\Formatter\Presenter\Presenter;
 
 final class CallableTypePresenter implements TypePresenter
 {
-    private Presenter $presenter;
-
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     public function supports(mixed $value): bool
@@ -41,7 +38,7 @@ final class CallableTypePresenter implements TypePresenter
         }
 
         if (\is_object($value)) {
-            return sprintf('[obj:%s]', \get_class($value));
+            return sprintf('[obj:%s]', $value::class);
         }
 
         return sprintf('[%s()]', $value);

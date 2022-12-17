@@ -23,34 +23,18 @@ use PhpSpec\Config\OptionsConfig;
  */
 class ConsoleIO implements IO
 {
-    const COL_MIN_WIDTH = 40;
-    const COL_DEFAULT_WIDTH = 60;
-    const COL_MAX_WIDTH = 80;
-
-    private InputInterface $input;
-
-    private OutputInterface $output;
+    private const COL_MIN_WIDTH = 40;
+    private const COL_DEFAULT_WIDTH = 60;
+    private const COL_MAX_WIDTH = 80;
 
     private ?string $lastMessage = null;
 
     private bool $hasTempString = false;
 
-    private OptionsConfig $config;
-
     private ?int $consoleWidth = null;
 
-    private Prompter $prompter;
-
-    public function __construct(
-        InputInterface $input,
-        OutputInterface $output,
-        OptionsConfig $config,
-        Prompter $prompter
-    ) {
-        $this->input   = $input;
-        $this->output  = $output;
-        $this->config  = $config;
-        $this->prompter = $prompter;
+    public function __construct(private InputInterface $input, private OutputInterface $output, private OptionsConfig $config, private Prompter $prompter)
+    {
     }
 
     public function isInteractive(): bool
@@ -207,9 +191,7 @@ class ConsoleIO implements IO
     private function indentText(string $text, int $indent): string
     {
         return implode("\n", array_map(
-            function ($line) use ($indent) {
-                return str_repeat(' ', $indent).$line;
-            },
+            fn($line) => str_repeat(' ', $indent).$line,
             explode("\n", $text)
         ));
     }

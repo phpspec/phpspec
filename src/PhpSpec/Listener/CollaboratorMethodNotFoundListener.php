@@ -27,33 +27,15 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class CollaboratorMethodNotFoundListener implements EventSubscriberInterface
 {
-    const PROMPT = 'Would you like me to generate a method signature `%s::%s()` for you?';
-
-    private ConsoleIO $io;
+    private const PROMPT = 'Would you like me to generate a method signature `%s::%s()` for you?';
 
     private array $interfaces = array();
 
-    private ResourceManager $resources;
-
-    private GeneratorManager $generator;
-
-    private NameChecker $nameChecker;
-
     private array $wrongMethodNames = array();
 
-
-    public function __construct(
-        ConsoleIO $io,
-        ResourceManager $resources,
-        GeneratorManager $generator,
-        NameChecker $nameChecker
-    ) {
-        $this->io = $io;
-        $this->resources = $resources;
-        $this->generator = $generator;
-        $this->nameChecker = $nameChecker;
+    public function __construct(private ConsoleIO $io, private ResourceManager $resources, private GeneratorManager $generator, private NameChecker $nameChecker)
+    {
     }
-
 
     public static function getSubscribedEvents(): array
     {
@@ -107,9 +89,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         }
 
         $interfaces = array_filter(class_implements($class),
-            function (string $interface): bool {
-                return !preg_match('/^Prophecy/', $interface);
-            }
+            fn(string $interface): bool => !preg_match('/^Prophecy/', $interface)
         );
 
         if (\count($interfaces) !== 1) {
@@ -124,7 +104,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         foreach ($this->interfaces as $interface => $methods) {
             try {
                 $resource = $this->resources->createResource($interface);
-            } catch (ResourceCreationException $e) {
+            } catch (ResourceCreationException) {
                 continue;
             }
 

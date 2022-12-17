@@ -26,24 +26,17 @@ use PhpSpec\Wrapper\Unwrapper;
 
 class ExpectationFactory
 {
-    private ExampleNode $example;
-    private EventDispatcherInterface $dispatcher;
-    private MatcherManager $matchers;
-
-    public function __construct(ExampleNode $example, EventDispatcherInterface $dispatcher, MatcherManager $matchers)
+    public function __construct(private ExampleNode $example, private EventDispatcherInterface $dispatcher, private MatcherManager $matchers)
     {
-        $this->example = $example;
-        $this->dispatcher = $dispatcher;
-        $this->matchers = $matchers;
     }
 
     public function create(string $expectation, mixed $subject, array $arguments = array()): Expectation
     {
-        if (0 === strpos($expectation, 'shouldNot')) {
+        if (str_starts_with($expectation, 'shouldNot')) {
             return $this->createNegative(lcfirst(substr($expectation, 9)), $subject, $arguments);
         }
 
-        if (0 === strpos($expectation, 'should')) {
+        if (str_starts_with($expectation, 'should')) {
             return $this->createPositive(lcfirst(substr($expectation, 6)), $subject, $arguments);
         }
 

@@ -23,16 +23,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class NamedConstructorNotFoundListener implements EventSubscriberInterface
 {
-    private ConsoleIO $io;
-    private ResourceManager $resources;
-    private GeneratorManager $generator;
     private array $methods = array();
 
-    public function __construct(ConsoleIO $io, ResourceManager $resources, GeneratorManager $generator)
+    public function __construct(private ConsoleIO $io, private ResourceManager $resources, private GeneratorManager $generator)
     {
-        $this->io        = $io;
-        $this->resources = $resources;
-        $this->generator = $generator;
     }
 
     public static function getSubscribedEvents(): array
@@ -53,7 +47,7 @@ final class NamedConstructorNotFoundListener implements EventSubscriberInterface
             return;
         }
 
-        $className = \get_class($exception->getSubject());
+        $className = $exception->getSubject()::class;
         $this->methods[$className .'::'.$exception->getMethodName()] = $exception->getArguments();
     }
 
@@ -65,12 +59,12 @@ final class NamedConstructorNotFoundListener implements EventSubscriberInterface
 
         foreach ($this->methods as $call => $arguments) {
             /** @var class-string $classname */
-            list($classname, $method) = explode('::', $call);
+            [$classname, $method] = explode('::', $call);
             $message = sprintf('Do you want me to create `%s()` for you?', $call);
 
             try {
                 $resource = $this->resources->createResource($classname);
-            } catch (\RuntimeException $e) {
+            } catch (\RuntimeException) {
                 continue;
             }
 

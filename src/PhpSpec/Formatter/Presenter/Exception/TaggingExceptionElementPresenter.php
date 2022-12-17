@@ -18,15 +18,8 @@ use PhpSpec\Formatter\Presenter\Value\ValuePresenter;
 
 final class TaggingExceptionElementPresenter implements ExceptionElementPresenter
 {
-    private ExceptionTypePresenter $exceptionTypePresenter;
-
-    private ValuePresenter $valuePresenter;
-
-    
-    public function __construct(ExceptionTypePresenter $exceptionTypePresenter, ValuePresenter $valuePresenter)
+    public function __construct(private ExceptionTypePresenter $exceptionTypePresenter, private ValuePresenter $valuePresenter)
     {
-        $this->exceptionTypePresenter = $exceptionTypePresenter;
-        $this->valuePresenter = $valuePresenter;
     }
 
     
@@ -78,9 +71,7 @@ final class TaggingExceptionElementPresenter implements ExceptionElementPresente
     {
         $valuePresenter = $this->valuePresenter;
 
-        $taggedArgs = array_map(function ($arg) use ($valuePresenter) {
-            return sprintf('<value>%s</value>', $valuePresenter->presentValue($arg));
-        }, $args);
+        $taggedArgs = array_map(fn($arg) => sprintf('<value>%s</value>', $valuePresenter->presentValue($arg)), $args);
 
         return implode(', ', $taggedArgs);
     }

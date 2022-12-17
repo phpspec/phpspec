@@ -7,11 +7,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class BootstrapListener implements EventSubscriberInterface
 {
-    private ConsoleIO $io;
-
-    public function __construct(ConsoleIO $io)
+    public function __construct(private ConsoleIO $io)
     {
-        $this->io = $io;
     }
 
     public static function getSubscribedEvents(): array

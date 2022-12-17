@@ -9,20 +9,17 @@ use Composer\Autoload\ClassLoader;
  */
 class ComposerPsrNamespaceProvider
 {
-    /**
-     *  path to the root directory of the project, without a trailing slash
-     */
-    private string $rootDirectory;
-
-    /**
-     *  prefix of the specifications namespace
-     */
-    private string $specPrefix;
-
-    public function __construct(string $rootDirectory, string $specPrefix)
+    public function __construct(
+        /**
+         *  path to the root directory of the project, without a trailing slash
+         */
+        private string $rootDirectory,
+        /**
+         *  prefix of the specifications namespace
+         */
+        private string $specPrefix
+    )
     {
-        $this->rootDirectory = $rootDirectory;
-        $this->specPrefix = $specPrefix;
     }
 
     /**
@@ -36,9 +33,9 @@ class ComposerPsrNamespaceProvider
     {
         $vendors = array();
         foreach (get_declared_classes() as $class) {
-            if ('C' === $class[0] && 0 === strpos($class, 'ComposerAutoloaderInit')) {
+            if ('C' === $class[0] && str_starts_with($class, 'ComposerAutoloaderInit')) {
                 $r = new \ReflectionClass($class);
-                $v = dirname(dirname($r->getFileName()));
+                $v = dirname($r->getFileName(), 2);
                 if (file_exists($v.'/composer/installed.json')) {
                     $vendors[] = $v;
                 }
@@ -70,11 +67,11 @@ class ComposerPsrNamespaceProvider
             foreach ($psrPrefix as $location) {
                 foreach ($vendors as $vendor) {
                     $realPath = realpath($location);
-                    if ($realPath === false || strpos($realPath, $vendor) === 0) {
+                    if ($realPath === false || str_starts_with($realPath, $vendor)) {
                         break 2;
                     }
                 }
-                if (strpos($namespace, $this->specPrefix) !== 0) {
+                if (!str_starts_with($namespace, $this->specPrefix)) {
                     $namespaces[$namespace] = new NamespaceLocation(
                         $namespace,
                         $this->normaliseLocation($location),
@@ -89,7 +86,7 @@ class ComposerPsrNamespaceProvider
 
     private function normaliseLocation(string $location): string
     {
-        return strpos(realpath($location), realpath($this->rootDirectory)) === 0 ?
+        return str_starts_with(realpath($location), realpath($this->rootDirectory)) ?
             substr(
                 realpath($location),
                 \strlen(realpath($this->rootDirectory)) + 1 // trailing slash

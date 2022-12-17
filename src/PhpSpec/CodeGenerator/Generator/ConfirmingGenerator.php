@@ -18,17 +18,8 @@ use PhpSpec\Locator\Resource;
 
 final class ConfirmingGenerator implements Generator
 {
-    private ConsoleIO $io;
-
-    private string $message;
-
-    private Generator $generator;
-
-    public function __construct(ConsoleIO $io, string $message, Generator $generator)
+    public function __construct(private ConsoleIO $io, private string $message, private Generator $generator)
     {
-        $this->io = $io;
-        $this->message = $message;
-        $this->generator = $generator;
     }
 
     public function supports(Resource $resource, string $generation, array $data): bool

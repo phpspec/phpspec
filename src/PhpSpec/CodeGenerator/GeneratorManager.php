@@ -31,9 +31,7 @@ class GeneratorManager
     public function registerGenerator(Generator $generator): void
     {
         $this->generators[] = $generator;
-        @usort($this->generators, function (Generator $generator1, Generator $generator2) {
-            return $generator2->getPriority() - $generator1->getPriority();
-        });
+        @usort($this->generators, fn(Generator $generator1, Generator $generator2) => $generator2->getPriority() - $generator1->getPriority());
     }
 
     /**

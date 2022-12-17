@@ -20,7 +20,7 @@ abstract class AbstractPhpSpecExceptionPresenter
     
     public function presentException(Exception $exception): string
     {
-        list($file, $line) = $this->getExceptionExamplePosition($exception);
+        [$file, $line] = $this->getExceptionExamplePosition($exception);
 
         return $this->presentFileCode($file, $line);
     }

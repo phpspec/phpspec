@@ -27,9 +27,7 @@ final class PrioritizedResourceManager implements ResourceManager
     {
         $this->locators[] = $locator;
 
-        @usort($this->locators, function (ResourceLocator $locator1, ResourceLocator $locator2) {
-            return $locator2->getPriority() - $locator1->getPriority();
-        });
+        @usort($this->locators, fn(ResourceLocator $locator1, ResourceLocator $locator2) => $locator2->getPriority() - $locator1->getPriority());
     }
 
     /**

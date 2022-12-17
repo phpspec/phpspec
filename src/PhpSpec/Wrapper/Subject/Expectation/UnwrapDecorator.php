@@ -18,12 +18,9 @@ use PhpSpec\Wrapper\Unwrapper;
 
 final class UnwrapDecorator extends Decorator implements Expectation
 {
-    private Unwrapper $unwrapper;
-
-    public function __construct(Expectation $expectation, Unwrapper $unwrapper)
+    public function __construct(Expectation $expectation, private Unwrapper $unwrapper)
     {
         parent::__construct($expectation);
-        $this->unwrapper = $unwrapper;
     }
 
     public function match(string $alias, mixed $subject, array $arguments = array()): ?DelayedCall

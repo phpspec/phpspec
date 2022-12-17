@@ -20,12 +20,8 @@ use Prophecy\Prophecy\MethodProphecy;
 
 class CallArgumentsPresenter
 {
-    private Differ $differ;
-
-    
-    public function __construct(Differ $differ)
+    public function __construct(private Differ $differ)
     {
-        $this->differ = $differ;
     }
 
     

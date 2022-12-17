@@ -24,23 +24,12 @@ use PhpSpec\Formatter\Presenter\Presenter;
 
 final class MatchersMaintainer implements Maintainer
 {
-    private Presenter $presenter;
-
     /**
-     * @var Matcher[]
+     * @param Matcher[] $defaultMatchers
      */
-    private array $defaultMatchers = array();
-
-    /**
-     * @param Matcher[] $matchers
-     */
-    public function __construct(Presenter $presenter, array $matchers)
+    public function __construct(private Presenter $presenter, private array $defaultMatchers)
     {
-        $this->presenter = $presenter;
-        $this->defaultMatchers = $matchers;
-        @usort($this->defaultMatchers, function (Matcher $matcher1, Matcher $matcher2) {
-            return $matcher2->getPriority() - $matcher1->getPriority();
-        });
+        @usort($this->defaultMatchers, fn(Matcher $matcher1, Matcher $matcher2) => $matcher2->getPriority() - $matcher1->getPriority());
     }
 
     

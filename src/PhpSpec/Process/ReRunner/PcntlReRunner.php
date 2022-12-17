@@ -49,7 +49,7 @@ final class PcntlReRunner extends PhpExecutableReRunner
 
         $env = array_filter(
             array_merge($env, $_SERVER),
-            function($x): bool { return !is_array($x); }
+            fn($x): bool => !is_array($x)
         );
 
         pcntl_exec($executablePath, $args, $env);

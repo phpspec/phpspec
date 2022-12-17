@@ -27,26 +27,24 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     private string $specNamespace;
     private string $fullSrcPath;
     private string $fullSpecPath;
-    private Filesystem $filesystem;
 
     private ?string $psr4Prefix;
 
     public function __construct(
-        Filesystem $filesystem,
+        private Filesystem $filesystem,
         string $srcNamespace = '',
         string $specNamespacePrefix = 'spec',
         string $srcPath = 'src',
         string $specPath = '.',
         string $psr4Prefix = null
     ) {
-        $this->filesystem = $filesystem;
         $sepr = DIRECTORY_SEPARATOR;
 
         $this->srcPath       = rtrim(realpath($srcPath), '/\\').$sepr;
         $this->specPath      = rtrim(realpath($specPath), '/\\').$sepr;
         $this->srcNamespace  = ltrim(trim($srcNamespace, ' \\').'\\', '\\');
         $this->psr4Prefix    = (null === $psr4Prefix) ? null : ltrim(trim($psr4Prefix, ' \\').'\\', '\\');
-        if (null !== $this->psr4Prefix  && substr($this->srcNamespace, 0, \strlen($this->psr4Prefix)) !== $this->psr4Prefix) {
+        if (null !== $this->psr4Prefix  && !str_starts_with($this->srcNamespace, $this->psr4Prefix)) {
             throw new InvalidArgumentException('PSR4 prefix doesn\'t match given class namespace.'.PHP_EOL);
         }
         $srcNamespacePath = null === $this->psr4Prefix ?
@@ -114,8 +112,8 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     {
         $path = $this->getQueryPath($query);
 
-        return 0 === strpos($path, $this->srcPath)
-            || 0 === strpos($path, $this->specPath)
+        return str_starts_with($path, $this->srcPath)
+            || str_starts_with($path, $this->specPath)
         ;
     }
 
@@ -131,22 +129,22 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     {
         $path = $this->getQueryPath($query);
 
-        if ('.php' !== substr($path, -4)) {
+        if (!str_ends_with($path, '.php')) {
             $path .= DIRECTORY_SEPARATOR;
         }
 
-        if ($path && 0 === strpos($path, $this->fullSpecPath)) {
+        if ($path && str_starts_with($path, $this->fullSpecPath)) {
             return $this->findSpecResources($path);
         }
 
-        if ($path && 0 === strpos($path, $this->fullSrcPath)) {
+        if ($path && str_starts_with($path, $this->fullSrcPath)) {
             $path = $this->fullSpecPath.substr($path, \strlen($this->fullSrcPath));
             $path = preg_replace('/\.php/', 'Spec.php', $path);
 
             return $this->findSpecResources($path);
         }
 
-        if ($path && 0 === strpos($path, $this->srcPath)) {
+        if ($path && str_starts_with($path, $this->srcPath)) {
             $path = $this->fullSpecPath.substr($path, \strlen($this->srcPath));
             $path = preg_replace('/\.php/', 'Spec.php', $path);
 
@@ -162,8 +160,8 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
         $classname = str_replace('/', '\\', $classname);
 
         return '' === $this->srcNamespace
-            || 0  === strpos($classname, $this->srcNamespace)
-            || 0  === strpos($classname, $this->specNamespace)
+            || str_starts_with($classname, $this->srcNamespace)
+            || str_starts_with($classname, $this->specNamespace)
         ;
     }
 
@@ -174,13 +172,13 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
 
         $classname = str_replace('/', '\\', $classname);
 
-        if (0 === strpos($classname, $this->specNamespace)) {
+        if (str_starts_with($classname, $this->specNamespace)) {
             $relative = substr($classname, \strlen($this->specNamespace));
 
             return new PSR0Resource(explode('\\', $relative), $this);
         }
 
-        if ('' === $this->srcNamespace || 0 === strpos($classname, $this->srcNamespace)) {
+        if ('' === $this->srcNamespace || str_starts_with($classname, $this->srcNamespace)) {
             $relative = substr($classname, \strlen($this->srcNamespace));
 
             return new PSR0Resource(explode('\\', $relative), $this);
@@ -204,7 +202,7 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
             return array();
         }
 
-        if ('.php' === substr($path, -4)) {
+        if (str_ends_with($path, '.php')) {
             return array($this->createResourceFromSpecFile(realpath($path)));
         }
 
@@ -261,7 +259,7 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
         // Remove spec namespace from the begining of the classname.
         $specNamespace = trim($this->getSpecNamespace(), '\\').'\\';
 
-        if (0 !== strpos($classname, $specNamespace)) {
+        if (!str_starts_with($classname, $specNamespace)) {
             throw new \RuntimeException(sprintf(
                 'Spec class `%s` must be in the base spec namespace `%s`.',
                 $classname,
@@ -324,7 +322,7 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     
     private function queryContainsBlackslashes(string $query): bool
     {
-        return false !== strpos($query, '\\');
+        return str_contains($query, '\\');
     }
 
     

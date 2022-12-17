@@ -19,23 +19,19 @@ use PhpSpec\Formatter\Presenter\Presenter;
 
 class MatcherManager
 {
-    private Presenter $presenter;
     /**
      * @var Matcher[]
      */
     private array $matchers = array();
 
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     public function add(Matcher $matcher): void
     {
         $this->matchers[] = $matcher;
-        @usort($this->matchers, function (Matcher $matcher1, Matcher $matcher2) {
-            return $matcher2->getPriority() - $matcher1->getPriority();
-        });
+        @usort($this->matchers, fn(Matcher $matcher1, Matcher $matcher2) => $matcher2->getPriority() - $matcher1->getPriority());
     }
 
     /**

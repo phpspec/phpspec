@@ -30,16 +30,11 @@ use ReflectionNamedType;
 
 final class CollaboratorsMaintainer implements Maintainer
 {
-    private Unwrapper $unwrapper;
     private ?Prophet $prophet = null;
 
-    private TypeHintIndex $typeHintIndex;
-
     
-    public function __construct(Unwrapper $unwrapper, TypeHintIndex $typeHintIndex)
+    public function __construct(private Unwrapper $unwrapper, private TypeHintIndex $typeHintIndex)
     {
-        $this->unwrapper = $unwrapper;
-        $this->typeHintIndex = $typeHintIndex;
     }
 
     
@@ -105,7 +100,7 @@ final class CollaboratorsMaintainer implements Maintainer
             catch (DisallowedUnionTypehintException $e) {
                 throw new InvalidCollaboratorTypeException($parameter, $function, $e->getMessage(), 'Use a specific type');
             }
-            catch (DisallowedNonObjectTypehintException $e) {
+            catch (DisallowedNonObjectTypehintException) {
                 throw new InvalidCollaboratorTypeException($parameter, $function);
             }
         }

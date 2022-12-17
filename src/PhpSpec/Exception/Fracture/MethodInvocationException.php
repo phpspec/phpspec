@@ -19,19 +19,9 @@ namespace PhpSpec\Exception\Fracture;
  */
 abstract class MethodInvocationException extends FractureException
 {
-    private mixed $subject;
-
-    private string $method;
-
-    private array $arguments;
-
-    public function __construct(string $message, mixed $subject, string $method, array $arguments = array())
+    public function __construct(string $message, private mixed $subject, private string $method, private array $arguments = array())
     {
         parent::__construct($message);
-
-        $this->subject   = $subject;
-        $this->method    = $method;
-        $this->arguments = $arguments;
     }
 
     public function getSubject(): mixed

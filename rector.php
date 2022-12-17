@@ -2,24 +2,19 @@
 
 declare(strict_types=1);
 
-use Rector\Core\Configuration\Option;
-use Rector\Php74\Rector\Property\TypedPropertyRector;
-use Rector\TypeDeclaration\Rector\ClassMethod\AddMethodCallBasedStrictParamTypeRector;
-use Rector\TypeDeclaration\Rector\ClassMethod\AddVoidReturnTypeWhereNoReturnRector;
-use Rector\TypeDeclaration\Rector\ClassMethod\ParamTypeByMethodCallTypeRector;
-use Rector\TypeDeclaration\Rector\FunctionLike\ParamTypeDeclarationRector;
-use Rector\TypeDeclaration\Rector\FunctionLike\ReturnTypeDeclarationRector;
-use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Rector\Config\RectorConfig;
+use Rector\Php71\Rector\FuncCall\CountOnNullRector;
+use Rector\Php80\Rector\FuncCall\TokenGetAllToObjectRector;
+use Rector\Set\ValueObject\LevelSetList;
 
-return static function (ContainerConfigurator $containerConfigurator): void {
+return static function (RectorConfig $rectorConfig): void {
+    $rectorConfig->sets([LevelSetList::UP_TO_PHP_80]);
+    $rectorConfig->skip([
+        TokenGetAllToObjectRector::class, # causing rector to crash
+        CountOnNullRector::class, #needs manual review
+    ]);
 
-    $services = $containerConfigurator->services();
-//    $services->set(TypedPropertyRector::class);
-//    $services->set(ParamTypeDeclarationRector::class);
-//    $services->set(ReturnTypeDeclarationRector::class);
-//    $services->set(AddVoidReturnTypeWhereNoReturnRector::class);
+    $rectorConfig->rule();
 
-    $parameters = $containerConfigurator->parameters();
-    $parameters->set(Option::AUTO_IMPORT_NAMES, true);
-    $parameters->set(Option::IMPORT_SHORT_CLASSES, false);
+    $rectorConfig->paths([__DIR__ . '/src']);
 };

@@ -26,26 +26,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class MethodReturnedNullListener implements EventSubscriberInterface
 {
-    private ConsoleIO $io;
-
     private array $nullMethods = array();
 
     private ?MethodCallEvent $lastMethodCallEvent = null;
-    private ResourceManager $resources;
-    private GeneratorManager $generator;
-    private MethodAnalyser $methodAnalyser;
 
     
-    public function __construct(
-        ConsoleIO $io,
-        ResourceManager $resources,
-        GeneratorManager $generator,
-        MethodAnalyser $methodAnalyser
-    ) {
-        $this->io = $io;
-        $this->resources = $resources;
-        $this->generator = $generator;
-        $this->methodAnalyser = $methodAnalyser;
+    public function __construct(private ConsoleIO $io, private ResourceManager $resources, private GeneratorManager $generator, private MethodAnalyser $methodAnalyser)
+    {
     }
 
     /**
@@ -95,9 +82,9 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
             if (is_null($subject)) {
                 return;
             }
-            $class = \get_class($subject);
+            $class = $subject::class;
         } else {
-            $class = \get_class($this->lastMethodCallEvent->getSubject());
+            $class = $this->lastMethodCallEvent->getSubject()::class;
             $method = $this->lastMethodCallEvent->getMethod();
         }
 
@@ -146,7 +133,7 @@ final class MethodReturnedNullListener implements EventSubscriberInterface
 
             try {
                 $resource = $this->resources->createResource($class);
-            } catch (\RuntimeException $exception) {
+            } catch (\RuntimeException) {
                 continue;
             }
 

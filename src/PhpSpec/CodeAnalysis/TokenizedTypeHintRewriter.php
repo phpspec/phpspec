@@ -17,11 +17,11 @@ use PhpSpec\Loader\Transformer\TypeHintIndex;
 
 final class TokenizedTypeHintRewriter implements TypeHintRewriter
 {
-    const STATE_DEFAULT = 0;
-    const STATE_READING_CLASS = 1;
-    const STATE_READING_FUNCTION = 2;
-    const STATE_READING_ARGUMENTS = 3;
-    const STATE_READING_FUNCTION_BODY = 4;
+    private const STATE_DEFAULT = 0;
+    private const STATE_READING_CLASS = 1;
+    private const STATE_READING_FUNCTION = 2;
+    private const STATE_READING_ARGUMENTS = 3;
+    private const STATE_READING_FUNCTION_BODY = 4;
 
     private int $state = self::STATE_DEFAULT;
 
@@ -33,14 +33,8 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         T_WHITESPACE, T_STRING, T_NS_SEPARATOR, T_NAME_FULLY_QUALIFIED, T_NAME_QUALIFIED
     );
 
-    private TypeHintIndex $typeHintIndex;
-    private NamespaceResolver $namespaceResolver;
-
-    public function __construct(TypeHintIndex $typeHintIndex, NamespaceResolver $namespaceResolver)
+    public function __construct(private TypeHintIndex $typeHintIndex, private NamespaceResolver $namespaceResolver)
     {
-        $this->typeHintIndex = $typeHintIndex;
-        $this->namespaceResolver = $namespaceResolver;
-
         if (\PHP_VERSION_ID >= 80100) {
             $this->typehintTokens[] = T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG;
         }
@@ -127,9 +121,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     
     private function tokensToString(array $tokens): string
     {
-        return join('', array_map(function ($token) : string {
-            return \is_array($token) ? $token[1] : $token;
-        }, $tokens));
+        return join('', array_map(fn($token): string => \is_array($token) ? $token[1] : $token, $tokens));
     }
 
     private function extractTypehints(array &$tokens, int $index, array $token): void
@@ -151,7 +143,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
 
             $class = $this->namespaceResolver->resolve($this->currentClass);
 
-            if (\strpos($typehint, '|') !== false) {
+            if (str_contains($typehint, '|')) {
                 $this->typeHintIndex->addInvalid(
                     $class,
                     trim($this->currentFunction),
@@ -162,7 +154,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                 return;
             }
 
-            if (\strpos($typehint, '&') !== false) {
+            if (str_contains($typehint, '&')) {
                 $this->typeHintIndex->addInvalid(
                     $class,
                     trim($this->currentFunction),

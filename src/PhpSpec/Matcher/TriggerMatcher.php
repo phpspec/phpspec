@@ -21,12 +21,8 @@ use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
 final class TriggerMatcher implements Matcher
 {
-    private Unwrapper $unwrapper;
-
-
-    public function __construct(Unwrapper $unwrapper)
+    public function __construct(private Unwrapper $unwrapper)
     {
-        $this->unwrapper = $unwrapper;
     }
 
     public function supports(string $name, mixed $subject, array $arguments): bool
@@ -56,7 +52,7 @@ final class TriggerMatcher implements Matcher
                 return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
-            if (null !== $message && false === strpos($str, $message)) {
+            if (null !== $message && !str_contains($str, $message)) {
                 return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
@@ -84,7 +80,7 @@ final class TriggerMatcher implements Matcher
                 return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
-            if (null !== $message && false === strpos($str, $message)) {
+            if (null !== $message && !str_contains($str, $message)) {
                 return null !== $prevHandler && \call_user_func($prevHandler, $type, $str, $file, $line, $context);
             }
 
@@ -115,7 +111,7 @@ final class TriggerMatcher implements Matcher
     private function getDelayedCall(callable $check, mixed $subject, array $arguments): DelayedCall
     {
         $unwrapper = $this->unwrapper;
-        list($level, $message) = $this->unpackArguments($arguments);
+        [$level, $message] = $this->unpackArguments($arguments);
 
         return new DelayedCall(
             function (string $method, array $arguments) use ($check, $subject, $level, $message, $unwrapper): mixed {
@@ -125,10 +121,10 @@ final class TriggerMatcher implements Matcher
                 $arguments = $arguments[1] ?? array();
                 $callable = array($subject, $methodName);
 
-                list($class, $methodName) = array($subject, $methodName);
+                [$class, $methodName] = array($subject, $methodName);
                 if (!method_exists($class, $methodName) && !method_exists($class, '__call')) {
                     throw new MethodNotFoundException(
-                        sprintf('Method %s::%s not found.', \get_class($class), $methodName),
+                        sprintf('Method %s::%s not found.', $class::class, $methodName),
                         $class,
                         $methodName,
                         $arguments

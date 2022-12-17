@@ -73,7 +73,7 @@ class MethodAnalyser
         $fileName = $reflectionMethod->getFileName();
         $trait = $this->getDeclaringTrait($reflectionClass->getTraits(), $fileName, $methodStartLine, $methodEndLine);
 
-        return $trait === null ? $reflectionClass : $trait;
+        return $trait ?? $reflectionClass;
     }
 
     /**
@@ -99,14 +99,10 @@ class MethodAnalyser
         $tokens = token_get_all('<?php ' . $code);
 
         $comments = array_map(
-            function ($token) {
-                return $token[1];
-            },
+            fn($token) => $token[1],
             array_filter(
                 $tokens,
-                function ($token) {
-                    return \is_array($token) && \in_array($token[0], array(T_COMMENT, T_DOC_COMMENT));
-                })
+                fn($token) => \is_array($token) && \in_array($token[0], array(T_COMMENT, T_DOC_COMMENT)))
         );
 
         $commentless = str_replace($comments, '', $code);

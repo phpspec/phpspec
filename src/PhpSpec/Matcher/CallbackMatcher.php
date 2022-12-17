@@ -18,18 +18,14 @@ use PhpSpec\Exception\Example\FailureException;
 
 final class CallbackMatcher extends BasicMatcher
 {
-    private string $name;
     /**
      * @var callable
      */
     private $callback;
-    private Presenter $presenter;
 
-    public function __construct(string $name, callable $callback, Presenter $presenter)
+    public function __construct(private string $name, callable $callback, private Presenter $presenter)
     {
-        $this->name      = $name;
         $this->callback  = $callback;
-        $this->presenter = $presenter;
     }
 
     public function supports(string $name, mixed $subject, array $arguments): bool

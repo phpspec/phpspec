@@ -19,9 +19,6 @@ use ReflectionClass;
 
 class SpecificationNode implements \Countable
 {
-    private string $title;
-    private \ReflectionClass $class;
-    private Resource $resource;
     private ?Suite $suite = null;
     /**
      * @var ExampleNode[]
@@ -29,11 +26,8 @@ class SpecificationNode implements \Countable
     private array $examples = array();
 
     
-    public function __construct(string $title, ReflectionClass $class, Resource $resource)
+    public function __construct(private string $title, private ReflectionClass $class, private Resource $resource)
     {
-        $this->title    = $title;
-        $this->class    = $class;
-        $this->resource = $resource;
     }
 
     

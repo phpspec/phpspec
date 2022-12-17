@@ -17,12 +17,8 @@ use PhpSpec\Process\Context\ExecutionContext;
 
 final class SuitePrerequisites implements PrerequisiteTester
 {
-    private ExecutionContext $executionContext;
-
-    
-    public function __construct(ExecutionContext $executionContext)
+    public function __construct(private ExecutionContext $executionContext)
     {
-        $this->executionContext = $executionContext;
     }
 
     /**

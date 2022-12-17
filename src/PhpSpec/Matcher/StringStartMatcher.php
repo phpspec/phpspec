@@ -18,11 +18,8 @@ use PhpSpec\Exception\Example\FailureException;
 
 final class StringStartMatcher extends BasicMatcher
 {
-    private Presenter $presenter;
-
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     public function supports(string $name, mixed $subject, array $arguments): bool
@@ -35,7 +32,7 @@ final class StringStartMatcher extends BasicMatcher
 
     protected function matches(mixed $subject, array $arguments): bool
     {
-        return 0 === strpos($subject, $arguments[0]);
+        return str_starts_with($subject, $arguments[0]);
     }
 
     protected function getFailureException(string $name, mixed $subject, array $arguments): FailureException

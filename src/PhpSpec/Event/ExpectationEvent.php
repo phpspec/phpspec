@@ -26,48 +26,20 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
     /**
      * Expectation passed
      */
-    const PASSED  = 0;
+    public const PASSED  = 0;
 
     /**
      * Expectation failed
      */
-    const FAILED  = 1;
+    public const FAILED  = 1;
 
     /**
      * Expectation broken
      */
-    const BROKEN  = 2;
+    public const BROKEN  = 2;
 
-    private ExampleNode $example;
-
-    private Matcher $matcher;
-
-    private mixed $subject;
-
-    private string $method;
-
-    private array $arguments;
-
-    private int $result;
-
-    private ?\Exception $exception;
-
-    public function __construct(
-        ExampleNode $example,
-        Matcher $matcher,
-        mixed $subject,
-        string $method,
-        array $arguments,
-        int $result = self::PASSED,
-        ?\Exception $exception = null
-    ) {
-        $this->example = $example;
-        $this->matcher = $matcher;
-        $this->subject = $subject;
-        $this->method = $method;
-        $this->arguments = $arguments;
-        $this->result = $result;
-        $this->exception = $exception;
+    public function __construct(private ExampleNode $example, private Matcher $matcher, private mixed $subject, private string $method, private array $arguments, private int $result = self::PASSED, private ?\Exception $exception = null)
+    {
     }
 
     

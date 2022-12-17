@@ -18,11 +18,8 @@ use PhpSpec\Matcher\Matcher;
 
 final class Negative implements Expectation
 {
-    private Matcher $matcher;
-
-    public function __construct(Matcher $matcher)
+    public function __construct(private Matcher $matcher)
     {
-        $this->matcher = $matcher;
     }
 
     public function match(string $alias, mixed $subject, array $arguments = array()): ?DelayedCall

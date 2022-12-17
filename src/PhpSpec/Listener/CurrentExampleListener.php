@@ -20,8 +20,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class CurrentExampleListener implements EventSubscriberInterface {
 
-    private CurrentExampleTracker $currentExample;
-
     public static function getSubscribedEvents(): array
     {
         return array(
@@ -31,9 +29,8 @@ final class CurrentExampleListener implements EventSubscriberInterface {
         );
     }
 
-    public function __construct(CurrentExampleTracker $currentExample)
+    public function __construct(private CurrentExampleTracker $currentExample)
     {
-        $this->currentExample = $currentExample;
     }
 
     public function beforeCurrentExample(ExampleEvent $event): void

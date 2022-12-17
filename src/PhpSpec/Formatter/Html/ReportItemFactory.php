@@ -19,30 +19,20 @@ use PhpSpec\Formatter\Template as TemplateInterface;
 
 class ReportItemFactory
 {
-    private TemplateInterface $template;
-
-    
-    public function __construct(TemplateInterface $template)
+    public function __construct(private TemplateInterface $template)
     {
-        $this->template = $template;
     }
 
     public function create(ExampleEvent $event, Presenter $presenter): ReportFailedItem|ReportPassedItem|ReportPendingItem|ReportSkippedItem
     {
-        switch ($result = $event->getResult()) {
-            case ExampleEvent::PASSED:
-                return new ReportPassedItem($this->template, $event);
-            case ExampleEvent::PENDING:
-                return new ReportPendingItem($this->template, $event);
-            case ExampleEvent::SKIPPED:
-                return new ReportSkippedItem($this->template, $event);
-            case ExampleEvent::FAILED:
-            case ExampleEvent::BROKEN:
-                return new ReportFailedItem($this->template, $event, $presenter);
-            default:
-                throw new InvalidExampleResultException(
-                    "Unrecognised example result $result"
-                );
-        }
+        return match ($result = $event->getResult()) {
+            ExampleEvent::PASSED => new ReportPassedItem($this->template, $event),
+            ExampleEvent::PENDING => new ReportPendingItem($this->template, $event),
+            ExampleEvent::SKIPPED => new ReportSkippedItem($this->template, $event),
+            ExampleEvent::FAILED, ExampleEvent::BROKEN => new ReportFailedItem($this->template, $event, $presenter),
+            default => throw new InvalidExampleResultException(
+                "Unrecognised example result $result"
+            ),
+        };
     }
 }

@@ -23,18 +23,14 @@ use PhpSpec\Listener\StatisticsCollector;
 
 final class HtmlFormatter extends BasicFormatter
 {
-    private ReportItemFactory $reportItemFactory;
-
     private int $index = 1;
 
     public function __construct(
-        ReportItemFactory $reportItemFactory,
+        private ReportItemFactory $reportItemFactory,
         Presenter $presenter,
         IO $io,
         StatisticsCollector $stats
     ) {
-        $this->reportItemFactory = $reportItemFactory;
-
         parent::__construct($presenter, $io, $stats);
     }
 

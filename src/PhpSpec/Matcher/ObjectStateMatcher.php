@@ -21,18 +21,16 @@ use PhpSpec\Wrapper\DelayedCall;
 final class ObjectStateMatcher implements Matcher
 {
     private static string $regex = '/(be|have)(.+)/';
-    private Presenter $presenter;
 
     
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return \is_object($subject) && !is_callable($subject)
-            && (0 === strpos($name, 'be') || 0 === strpos($name, 'have'))
+            && (str_starts_with($name, 'be') || str_starts_with($name, 'have'))
         ;
     }
 

@@ -67,51 +67,31 @@ final class PresenterAssembler
 
     private function assembleDifferEngines(IndexedServiceContainer $container): void
     {
-        $container->define('formatter.presenter.differ.engines.string', function () {
-            return new StringEngine();
-        }, ['formatter.presenter.differ.engines']);
+        $container->define('formatter.presenter.differ.engines.string', fn() => new StringEngine(), ['formatter.presenter.differ.engines']);
 
-        $container->define('formatter.presenter.differ.engines.array', function () {
-            return new ArrayEngine(new Exporter());
-        }, ['formatter.presenter.differ.engines']);
+        $container->define('formatter.presenter.differ.engines.array', fn() => new ArrayEngine(new Exporter()), ['formatter.presenter.differ.engines']);
 
-        $container->define('formatter.presenter.differ.engines.object', function (IndexedServiceContainer $c) {
-            return new ObjectEngine(
-                new Exporter(),
-                $c->get('formatter.presenter.differ.engines.string')
-            );
-        }, ['formatter.presenter.differ.engines']);
+        $container->define('formatter.presenter.differ.engines.object', fn(IndexedServiceContainer $c) => new ObjectEngine(
+            new Exporter(),
+            $c->get('formatter.presenter.differ.engines.string')
+        ), ['formatter.presenter.differ.engines']);
     }
 
     private function assembleTypePresenters(IndexedServiceContainer $container): void
     {
-        $container->define('formatter.presenter.value.array_type_presenter', function () {
-            return new ArrayTypePresenter();
-        }, ['formatter.presenter.value']);
+        $container->define('formatter.presenter.value.array_type_presenter', fn() => new ArrayTypePresenter(), ['formatter.presenter.value']);
 
-        $container->define('formatter.presenter.value.boolean_type_presenter', function () {
-            return new BooleanTypePresenter();
-        }, ['formatter.presenter.value']);
+        $container->define('formatter.presenter.value.boolean_type_presenter', fn() => new BooleanTypePresenter(), ['formatter.presenter.value']);
 
-        $container->define('formatter.presenter.value.callable_type_presenter', function (IndexedServiceContainer $c) {
-            return new CallableTypePresenter($c->get('formatter.presenter'));
-        }, ['formatter.presenter.value']);
+        $container->define('formatter.presenter.value.callable_type_presenter', fn(IndexedServiceContainer $c) => new CallableTypePresenter($c->get('formatter.presenter')), ['formatter.presenter.value']);
 
-        $container->define('formatter.presenter.value.exception_type_presenter', function () {
-            return new BaseExceptionTypePresenter();
-        }, ['formatter.presenter.value']);
+        $container->define('formatter.presenter.value.exception_type_presenter', fn() => new BaseExceptionTypePresenter(), ['formatter.presenter.value']);
 
-        $container->define('formatter.presenter.value.null_type_presenter', function () {
-            return new NullTypePresenter();
-        }, ['formatter.presenter.value']);
+        $container->define('formatter.presenter.value.null_type_presenter', fn() => new NullTypePresenter(), ['formatter.presenter.value']);
 
-        $container->define('formatter.presenter.value.object_type_presenter', function () {
-            return new ObjectTypePresenter();
-        }, ['formatter.presenter.value']);
+        $container->define('formatter.presenter.value.object_type_presenter', fn() => new ObjectTypePresenter(), ['formatter.presenter.value']);
 
-        $container->define('formatter.presenter.value.string_type_presenter', function () {
-            return new TruncatingStringTypePresenter(new QuotingStringTypePresenter());
-        }, ['formatter.presenter.value']);
+        $container->define('formatter.presenter.value.string_type_presenter', fn() => new TruncatingStringTypePresenter(new QuotingStringTypePresenter()), ['formatter.presenter.value']);
 
         $container->addConfigurator(function (IndexedServiceContainer $c): void {
             array_map(
@@ -123,61 +103,47 @@ final class PresenterAssembler
 
     private function assemblePresenter(IndexedServiceContainer $container): void
     {
-        $container->define('formatter.presenter', function (IndexedServiceContainer $c) {
-            return new TaggingPresenter(
-                new SimplePresenter(
-                    $c->get('formatter.presenter.value_presenter'),
-                    new SimpleExceptionPresenter(
-                        $c->get('formatter.presenter.differ'),
-                        $c->get('formatter.presenter.exception_element_presenter'),
-                        new CallArgumentsPresenter($c->get('formatter.presenter.differ')),
-                        $c->get('formatter.presenter.exception.phpspec')
-                    )
+        $container->define('formatter.presenter', fn(IndexedServiceContainer $c) => new TaggingPresenter(
+            new SimplePresenter(
+                $c->get('formatter.presenter.value_presenter'),
+                new SimpleExceptionPresenter(
+                    $c->get('formatter.presenter.differ'),
+                    $c->get('formatter.presenter.exception_element_presenter'),
+                    new CallArgumentsPresenter($c->get('formatter.presenter.differ')),
+                    $c->get('formatter.presenter.exception.phpspec')
                 )
-            );
-        });
+            )
+        ));
 
-        $container->define('formatter.presenter.value_presenter', function () {
-            return new ComposedValuePresenter();
-        });
+        $container->define('formatter.presenter.value_presenter', fn() => new ComposedValuePresenter());
 
-        $container->define('formatter.presenter.exception_element_presenter', function (IndexedServiceContainer $c) {
-            return new TaggingExceptionElementPresenter(
-                $c->get('formatter.presenter.value.exception_type_presenter'),
-                $c->get('formatter.presenter.value_presenter')
-            );
-        });
+        $container->define('formatter.presenter.exception_element_presenter', fn(IndexedServiceContainer $c) => new TaggingExceptionElementPresenter(
+            $c->get('formatter.presenter.value.exception_type_presenter'),
+            $c->get('formatter.presenter.value_presenter')
+        ));
 
-        $container->define('formatter.presenter.exception.phpspec', function (IndexedServiceContainer $c) {
-            return new GenericPhpSpecExceptionPresenter(
-                $c->get('formatter.presenter.exception_element_presenter')
-            );
-        });
+        $container->define('formatter.presenter.exception.phpspec', fn(IndexedServiceContainer $c) => new GenericPhpSpecExceptionPresenter(
+            $c->get('formatter.presenter.exception_element_presenter')
+        ));
     }
 
     private function assembleHtmlPresenter(IndexedServiceContainer $container): void
     {
-        $container->define('formatter.presenter.html', function (IndexedServiceContainer $c) {
-            return new SimplePresenter(
-                $c->get('formatter.presenter.value_presenter'),
-                new SimpleExceptionPresenter(
-                    $c->get('formatter.presenter.differ'),
-                    $c->get('formatter.presenter.html.exception_element_presenter'),
-                    new CallArgumentsPresenter($c->get('formatter.presenter.differ')),
-                    $c->get('formatter.presenter.html.exception.phpspec')
-                )
-            );
-        });
+        $container->define('formatter.presenter.html', fn(IndexedServiceContainer $c) => new SimplePresenter(
+            $c->get('formatter.presenter.value_presenter'),
+            new SimpleExceptionPresenter(
+                $c->get('formatter.presenter.differ'),
+                $c->get('formatter.presenter.html.exception_element_presenter'),
+                new CallArgumentsPresenter($c->get('formatter.presenter.differ')),
+                $c->get('formatter.presenter.html.exception.phpspec')
+            )
+        ));
 
-        $container->define('formatter.presenter.html.exception_element_presenter', function (IndexedServiceContainer $c) {
-            return new SimpleExceptionElementPresenter(
-                $c->get('formatter.presenter.value.exception_type_presenter'),
-                $c->get('formatter.presenter.value_presenter')
-            );
-        });
+        $container->define('formatter.presenter.html.exception_element_presenter', fn(IndexedServiceContainer $c) => new SimpleExceptionElementPresenter(
+            $c->get('formatter.presenter.value.exception_type_presenter'),
+            $c->get('formatter.presenter.value_presenter')
+        ));
 
-        $container->define('formatter.presenter.html.exception.phpspec', function () {
-            return new HtmlPhpSpecExceptionPresenter();
-        });
+        $container->define('formatter.presenter.html.exception.phpspec', fn() => new HtmlPhpSpecExceptionPresenter());
     }
 }

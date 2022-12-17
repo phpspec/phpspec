@@ -3,14 +3,12 @@
 namespace PhpSpec\Matcher\Iterate;
 
 use PhpSpec\Formatter\Presenter\Presenter;
+use function is_iterable;
 
 final class IterablesMatcher
 {
-    private Presenter $presenter;
-
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     /**
@@ -21,11 +19,11 @@ final class IterablesMatcher
      */
     public function match(mixed $subject, mixed $expected, bool $strict = true): void
     {
-        if (!$this->isIterable($subject)) {
+        if (!is_iterable($subject)) {
             throw new \InvalidArgumentException('Subject value should be an array or implement \Traversable.');
         }
 
-        if (!$this->isIterable($expected)) {
+        if (!is_iterable($expected)) {
             throw new \InvalidArgumentException('Expected value should be an array or implement \Traversable.');
         }
 
@@ -54,14 +52,6 @@ final class IterablesMatcher
         if ($expectedIterator->valid()) {
             throw new SubjectHasFewerElementsException();
         }
-    }
-
-    /**
-     * @psalm-assert-if-true array|Traversable $variable
-     */
-    private function isIterable(mixed $variable): bool
-    {
-        return \is_array($variable) || $variable instanceof \Traversable;
     }
 
     private function createIteratorFromIterable(iterable $iterable): \Iterator

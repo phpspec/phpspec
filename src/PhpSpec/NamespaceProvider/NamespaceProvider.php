@@ -7,8 +7,8 @@ namespace PhpSpec\NamespaceProvider;
  */
 interface NamespaceProvider
 {
-    const AUTOLOADING_STANDARD_PSR0 = 'PSR0';
-    const AUTOLOADING_STANDARD_PSR4 = 'PSR4';
+    public const AUTOLOADING_STANDARD_PSR0 = 'PSR0';
+    public const AUTOLOADING_STANDARD_PSR4 = 'PSR4';
 
     /**
      * @return string[] a map associating a namespace to a location, e.g

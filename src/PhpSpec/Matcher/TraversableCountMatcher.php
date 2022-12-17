@@ -19,16 +19,12 @@ use PhpSpec\Wrapper\DelayedCall;
 
 final class TraversableCountMatcher implements Matcher
 {
-    const LESS_THAN = 0;
-    const EQUAL = 1;
-    const MORE_THAN = 2;
+    private const LESS_THAN = 0;
+    private const EQUAL = 1;
+    private const MORE_THAN = 2;
 
-    private Presenter $presenter;
-
-
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     /**

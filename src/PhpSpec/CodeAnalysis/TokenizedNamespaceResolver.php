@@ -15,10 +15,10 @@ namespace PhpSpec\CodeAnalysis;
 
 final class TokenizedNamespaceResolver implements NamespaceResolver
 {
-    const STATE_DEFAULT = 0;
-    const STATE_READING_NAMESPACE = 1;
-    const STATE_READING_USE = 2;
-    const STATE_READING_USE_GROUP = 3;
+    private const STATE_DEFAULT = 0;
+    private const STATE_READING_NAMESPACE = 1;
+    private const STATE_READING_USE = 2;
+    private const STATE_READING_USE_GROUP = 3;
 
     private int $state = self::STATE_DEFAULT;
 
@@ -94,7 +94,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
 
     public function resolve(string $typeAlias): string
     {
-        if (strpos($typeAlias, '\\') === 0) {
+        if (str_starts_with($typeAlias, '\\')) {
             return substr($typeAlias, 1);
         }
         if (($divider = strpos($typeAlias, '\\')) && array_key_exists(strtolower(substr($typeAlias, 0, $divider)), $this->uses)) {

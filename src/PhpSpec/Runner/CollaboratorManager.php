@@ -20,16 +20,14 @@ use ReflectionFunctionAbstract;
 
 class CollaboratorManager
 {
-    private Presenter $presenter;
     /**
      * @var Collaborator[]
      */
     private array $collaborators = array();
 
     
-    public function __construct(Presenter $presenter)
+    public function __construct(private Presenter $presenter)
     {
-        $this->presenter = $presenter;
     }
 
     public function set(string $name, Collaborator $collaborator): void

@@ -57,9 +57,7 @@ final class Application extends BaseApplication
         $this->container->set('console.output', $output);
         $this->container->set('console.helper_set', $helperSet);
 
-        $this->container->define('process.executioncontext', function () {
-            return JsonExecutionContext::fromEnv($_SERVER);
-        });
+        $this->container->define('process.executioncontext', fn() => JsonExecutionContext::fromEnv($_SERVER));
 
         $assembler = new ContainerAssembler();
         $assembler->build($this->container);
@@ -123,7 +121,6 @@ final class Application extends BaseApplication
 
     /**
      * @throws \RuntimeException
-     * @return void
      */
     protected function loadConfigurationFile(InputInterface $input, IndexedServiceContainer $container): void
     {
@@ -158,10 +155,7 @@ final class Application extends BaseApplication
         foreach ($matchersClassnames as $class) {
             $this->ensureIsValidMatcherClass($class);
 
-            $container->define(sprintf('matchers.%s', $class), function () use ($class) {
-                /** @psalm-suppress InvalidStringClass */
-                return new $class();
-            }, ['matchers']);
+            $container->define(sprintf('matchers.%s', $class), fn() => new $class(), ['matchers']);
         }
     }
 

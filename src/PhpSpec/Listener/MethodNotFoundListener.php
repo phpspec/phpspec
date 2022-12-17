@@ -24,24 +24,12 @@ use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
 final class MethodNotFoundListener implements EventSubscriberInterface
 {
-    private ConsoleIO $io;
-    private ResourceManager $resources;
-    private GeneratorManager $generator;
     private array $methods = array();
     private array $wrongMethodNames = array();
-    private NameChecker $nameChecker;
 
     
-    public function __construct(
-        ConsoleIO $io,
-        ResourceManager $resources,
-        GeneratorManager $generator,
-        NameChecker $nameChecker
-    ) {
-        $this->io        = $io;
-        $this->resources = $resources;
-        $this->generator = $generator;
-        $this->nameChecker = $nameChecker;
+    public function __construct(private ConsoleIO $io, private ResourceManager $resources, private GeneratorManager $generator, private NameChecker $nameChecker)
+    {
     }
 
     public static function getSubscribedEvents(): array
@@ -62,7 +50,7 @@ final class MethodNotFoundListener implements EventSubscriberInterface
             return;
         }
 
-        $classname = \get_class($exception->getSubject());
+        $classname = $exception->getSubject()::class;
         $methodName = $exception->getMethodName();
         $this->methods[$classname .'::'.$methodName] = $exception->getArguments();
         $this->checkIfMethodNameAllowed($methodName);
@@ -75,7 +63,7 @@ final class MethodNotFoundListener implements EventSubscriberInterface
         }
 
         foreach ($this->methods as $call => $arguments) {
-            list($classname, $method) = explode('::', $call);
+            [$classname, $method] = explode('::', $call);
 
             if (\in_array($method, $this->wrongMethodNames)) {
                 continue;
@@ -85,7 +73,7 @@ final class MethodNotFoundListener implements EventSubscriberInterface
 
             try {
                 $resource = $this->resources->createResource($classname);
-            } catch (\RuntimeException $e) {
+            } catch (\RuntimeException) {
                 continue;
             }
 

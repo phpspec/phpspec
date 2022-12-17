@@ -149,9 +149,7 @@ class TeamCityFormatter extends BasicFormatter
                 [
                     'count' => array_sum(
                         array_map(
-                            static function ($spec) {
-                                return count($spec->getExamples());
-                            },
+                            static fn($spec) => count($spec->getExamples()),
                             $event->getSuite()->getSpecifications()
                         )
                     )
