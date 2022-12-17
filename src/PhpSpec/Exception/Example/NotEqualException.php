@@ -16,7 +16,7 @@ namespace PhpSpec\Exception\Example;
 /**
  * Class NotEqualException holds information about the non-equal failure exception
  */
-class NotEqualException extends FailureException
+class NotEqualException extends FailureException implements \Stringable
 {
     public function __construct(string $message, private mixed $expected, private mixed $actual)
     {
