@@ -165,6 +165,14 @@ class FilesystemContext implements Context
      */
     public function thereShouldBeNoFile($path)
     {
-        Assert::assertFileNotExists($path);
+        if (method_exists(Assert::class, 'assertFileDoesNotExist')) {
+            Assert::assertFileDoesNotExist($path);
+        }
+        elseif (method_exists(Assert::class, 'assertFileNotExists')) {
+            Assert::assertFileNotExists($path);
+        }
+        else {
+            Assert::assertFalse(file_exists($path));
+        }
     }
 }
