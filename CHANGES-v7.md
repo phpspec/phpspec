@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.4.0]
+
+### Added
+ - Allow PHPUnit 10 [@ciaranmcnulty](https://github.com/ciaranmcnulty) [@Jean85](https://github.com/Jean85)
+ - Allow Doctrine/instantiator 2 [@stof](https://github.com/stof)
+ - Allow sebastian/export 5 [@arendjantetteroo](https://github.com/arendjantetteroo)
+
+### Changed
+ - Use Psalm 5 [@rogervila](https://github.com/rogervila)
+ - Added .editorconfig [@chapeupreto](https://github.com/chapeupreto)
+
 ## [7.3.0]
 
 ### Added
@@ -50,6 +61,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - More accurate error message for bad during* calls [@drupol](https://github.com/drupol)
  - Removed superfluous phpdoc and added bool return types where appropriate [@drupol](https://github.com/drupol)
 
+[7.4.0]: https://github.com/phpspec/phpspec/compare/7.3.0...7.4.0
 [7.3.0]: https://github.com/phpspec/phpspec/compare/7.2.0...7.3.0
 [7.2.0]: https://github.com/phpspec/phpspec/compare/7.1.0...7.2.0
 [7.1.0]: https://github.com/phpspec/phpspec/compare/7.0.1...7.1.0
