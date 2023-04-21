@@ -28,6 +28,8 @@ jobs:
                         composer-extras: "symfony/event-dispatcher ^3.4 symfony/contracts ^2.0"
                     -   php: "8.0"
                         operating-system: windows-latest
+                    -   php: "8.2"
+                        stability: "dev"
 
         env:
             COMPOSER_ROOT_VERSION: dev-master
