@@ -9,9 +9,14 @@ use SebastianBergmann\Exporter\Exporter;
 
 class ObjectEngineTest extends TestCase
 {
-    private ObjectEngine $engine;
-    private Exporter $exporter;
-    private StringEngine $stringDiffer;
+    /** @var ObjectEngine */
+    private $engine;
+
+    /** @var Exporter */
+    private $exporter;
+
+    /** @var StringEngine */
+    private $stringDiffer;
 
     public function setUp() : void
     {
