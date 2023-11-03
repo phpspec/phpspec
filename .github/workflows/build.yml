@@ -35,7 +35,7 @@ jobs:
             COMPOSER_ROOT_VERSION: dev-master
 
         steps:
-            -   uses: actions/checkout@v2
+            -   uses: actions/checkout@v4
 
             -   name: Setup PHP
                 uses: shivammathur/setup-php@v2
@@ -53,10 +53,10 @@ jobs:
 
             -   name: Locate composer cache
                 id: composercache
-                run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+                run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
             -   name: Cache composer dependencies
-                uses: actions/cache@v2
+                uses: actions/cache@v3
                 env:
                     cache-name: cache-composer
                 with:
