@@ -135,15 +135,15 @@ abstract class ObjectBehavior implements
     /**
      * Sets the value in a particular position in the ArrayAccess object
      *
-     * @psalm-param TKey $key
-     * @param int|string $key
+     * @psalm-param TKey $offset
+     * @param int|string $offset
      * @param mixed $value
      * @psalm-suppress InvalidAttribute
      */
     #[\ReturnTypeWillChange]
-    public function offsetSet($key, $value)
+    public function offsetSet($offset, $value)
     {
-        $this->object->offsetSet($key, $value);
+        $this->object->offsetSet($offset, $value);
     }
 
     /**
