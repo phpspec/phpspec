@@ -74,7 +74,7 @@ jobs:
                 run: bin/phpspec run --format=dot
 
             -   name: Run tests (phpunit)
-                run: ./vendor/bin/phpunit -v
+                run: ./vendor/bin/phpunit
 
             -   name: Run tests (behat)
                 if: matrix.php != '8.0' && matrix.php != '8.1' && matrix.php != '8.2'
