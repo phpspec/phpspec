@@ -59,5 +59,11 @@
                 <referencedFunction name="PhpSpec\Wrapper\Subject\Expectation\Expectation::match"/>
             </errorLevel>
         </TooManyArguments>
+        <UndefinedVariable>
+            <errorLevel type="suppress">
+                <!-- Psalm can't handle $foo = fn() use (&$foo) pattern -->
+                <file name="src/PhpSpec/Matcher/TriggerMatcher.php"/>
+            </errorLevel>
+        </UndefinedVariable>
     </issueHandlers>
 </psalm>
