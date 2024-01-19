@@ -36,7 +36,7 @@
     },
 
     "require-dev": {
-        "behat/behat":           "^3.3",
+        "behat/behat":           "^3.14",
         "symfony/filesystem":    "^5.4  || ^6.0 || ^7.0",
         "phpunit/phpunit":       "^9.0 || ^10.0",
         "vimeo/psalm":           "^4.3 || ^5.2",
