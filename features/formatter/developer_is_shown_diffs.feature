@@ -193,11 +193,17 @@ Feature: Developer is shown diffs
     Then I should see:
       """
             -    'i' => 1
+      """
+    And I should see:
+      """
             -    's' => 'foo'
       """
     And I should see:
       """
             +    'i' => 2
+      """
+    And I should see:
+      """
             +    's' => 'bar'
       """
 

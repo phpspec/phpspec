@@ -64,6 +64,7 @@ final class TriggerMatcher implements Matcher
     public function verifyPositive(callable $callable, array $arguments, int $level = null, string $message = null)
     {
         $triggered = 0;
+        $prevHandler = function($type, $str, $file, $line, $context=[]){};
 
         $prevHandler = set_error_handler(function ($type, $str, $file, $line, $context=[]) use (&$prevHandler, $level, $message, &$triggered) {
             if (null !== $level && $level !== $type) {
@@ -93,6 +94,7 @@ final class TriggerMatcher implements Matcher
     public function verifyNegative(callable $callable, array $arguments, int $level = null, string $message = null)
     {
         $triggered = 0;
+        $prevHandler = function($type, $str, $file, $line, $context=[]){};
 
         $prevHandler = set_error_handler(function ($type, $str, $file, $line, $context) use (&$prevHandler, $level, $message, &$triggered) {
             if (null !== $level && $level !== $type) {
