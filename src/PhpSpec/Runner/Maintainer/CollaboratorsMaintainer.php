@@ -48,20 +48,20 @@ final class CollaboratorsMaintainer implements Maintainer
      */
     private $typeHintIndex;
 
-    
+
     public function __construct(Unwrapper $unwrapper, TypeHintIndex $typeHintIndex)
     {
         $this->unwrapper = $unwrapper;
         $this->typeHintIndex = $typeHintIndex;
     }
 
-    
+
     public function supports(ExampleNode $example): bool
     {
         return true;
     }
 
-    
+
     public function prepare(
         ExampleNode $example,
         Specification $context,
@@ -79,7 +79,7 @@ final class CollaboratorsMaintainer implements Maintainer
         $this->generateCollaborators($collaborators, $example->getFunctionReflection(), $classRefl);
     }
 
-    
+
     public function teardown(
         ExampleNode $example,
         Specification $context,
@@ -89,13 +89,13 @@ final class CollaboratorsMaintainer implements Maintainer
         $this->prophet->checkPredictions();
     }
 
-    
+
     public function getPriority(): int
     {
         return 50;
     }
 
-    
+
     private function generateCollaborators(CollaboratorManager $collaborators, \ReflectionFunctionAbstract $function, \ReflectionClass $classRefl): void
     {
         foreach ($function->getParameters() as $parameter) {
@@ -132,7 +132,7 @@ final class CollaboratorsMaintainer implements Maintainer
         return !$type instanceof ReflectionNamedType || in_array($type->getName(), ['array', 'callable'], true);
     }
 
-    
+
     private function getOrCreateCollaborator(CollaboratorManager $collaborators, string $name): Collaborator
     {
         if (!$collaborators->has($name)) {
@@ -151,14 +151,14 @@ final class CollaboratorsMaintainer implements Maintainer
     private function throwCollaboratorNotFound(\Exception $e, \ReflectionParameter $parameter = null, string $className = null): void
     {
         throw new CollaboratorNotFoundException(
-            sprintf('Collaborator does not exist '),
+            'Collaborator does not exist',
             0, $e,
             $parameter,
             $className
         );
     }
 
-    
+
     private function getParameterTypeFromIndex(\ReflectionClass $classRefl, \ReflectionParameter $parameter): ?string
     {
         return $this->typeHintIndex->lookup(
