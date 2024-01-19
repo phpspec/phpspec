@@ -2,5 +2,6 @@
 *.phar
 behat.yml
 vendor
+vendor-bin
 composer.lock
 .phpunit.result.cache
