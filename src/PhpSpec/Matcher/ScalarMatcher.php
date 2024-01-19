@@ -95,7 +95,7 @@ final class ScalarMatcher implements Matcher
      */
     public function getPriority(): int
     {
-        return 50;
+        return 51;
     }
 
     /**
