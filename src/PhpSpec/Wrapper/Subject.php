@@ -233,12 +233,12 @@ class Subject implements ArrayAccess, ObjectWrapper
 
     /**
      * @param mixed $value
-     * @psalm-param TKey $key
-     * @param int|string $key
+     * @psalm-param TKey $offset
+     * @param int|string $offset
      */
-    public function offsetSet($key, $value): void
+    public function offsetSet($offset, $value): void
     {
-        $this->arrayAccess->offsetSet($key, $value);
+        $this->arrayAccess->offsetSet($offset, $value);
     }
 
     /**
