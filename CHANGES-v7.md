@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [7.5.0]
+
+### Added
+- PHP 8.3 compatibility [@rajeshreeputra](https://github.com/rajeshreeputra), [@ciaranmcnulty](https://github.com/ciaranmcnulty)
+- Symfony 7.0 compatibility [@thecrimpmaster](https://github.com/thecrimpmaster), [@Chris8934](https://github.com/Chris8934)
+
+### Changed
+- Bump GHA workflow versions [@Chris8934](https://github.com/Chris8934)
+
+### Fixed
+- Restore ScalarMatcher priority for PHP > 8.0 [@bsod85](https://github.com/bsod85)
+
 ## [7.4.0]
 
 ### Added
@@ -61,6 +73,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - More accurate error message for bad during* calls [@drupol](https://github.com/drupol)
  - Removed superfluous phpdoc and added bool return types where appropriate [@drupol](https://github.com/drupol)
 
+[7.5.0]: https://github.com/phpspec/phpspec/compare/7.4.0...7.5.0
 [7.4.0]: https://github.com/phpspec/phpspec/compare/7.3.0...7.4.0
 [7.3.0]: https://github.com/phpspec/phpspec/compare/7.2.0...7.3.0
 [7.2.0]: https://github.com/phpspec/phpspec/compare/7.1.0...7.2.0
