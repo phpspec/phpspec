@@ -17,63 +17,21 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class OptionsConfig
 {
-    /**
-     * @var bool
-     */
-    private $stopOnFailureEnabled;
-
-    /**
-     * @var bool
-     */
-    private $codeGenerationEnabled;
-
-    /**
-     * @var bool
-     */
-    private $reRunEnabled;
-
-    /**
-     * @var bool
-     */
-    private $fakingEnabled;
-
-    /**
-     * @var bool|string
-     */
-    private $bootstrapPath;
-
-    /**
-     * @var bool
-     */
-    private $isVerbose;
-
-    /**
-     * @param bool|string $bootstrapPath
-     * @param bool $isVerbose
-     */
     public function __construct(
-        bool $stopOnFailureEnabled,
-        bool $codeGenerationEnabled,
-        bool $reRunEnabled,
-        bool $fakingEnabled,
-        $bootstrapPath,
-        $isVerbose
+        private bool $stopOnFailureEnabled,
+        private bool $codeGenerationEnabled,
+        private bool $reRunEnabled,
+        private bool $fakingEnabled,
+        private ?string $bootstrapPath,
+        private bool $isVerbose
     ) {
-        $this->stopOnFailureEnabled  = $stopOnFailureEnabled;
-        $this->codeGenerationEnabled = $codeGenerationEnabled;
-        $this->reRunEnabled = $reRunEnabled;
-        $this->fakingEnabled = $fakingEnabled;
-        $this->bootstrapPath = $bootstrapPath;
-        $this->isVerbose = $isVerbose;
     }
 
-    
     public function isStopOnFailureEnabled(): bool
     {
         return $this->stopOnFailureEnabled;
     }
 
-    
     public function isCodeGenerationEnabled(): bool
     {
         return $this->codeGenerationEnabled;
@@ -89,9 +47,9 @@ class OptionsConfig
         return $this->fakingEnabled;
     }
 
-    public function getBootstrapPath()
+    public function getBootstrapPath() : ?string
     {
-        return $this->bootstrapPath;
+        return $this->bootstrapPath ? $this->bootstrapPath : null;
     }
 
     public function isVerbose(): bool

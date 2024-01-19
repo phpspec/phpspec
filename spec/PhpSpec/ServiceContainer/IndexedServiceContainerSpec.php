@@ -3,6 +3,7 @@
 namespace spec\PhpSpec\ServiceContainer;
 
 use PhpSpec\ObjectBehavior;
+use stdClass;
 
 class IndexedServiceContainerSpec extends ObjectBehavior
 {
@@ -46,14 +47,14 @@ class IndexedServiceContainerSpec extends ObjectBehavior
 
     function it_returns_services_which_are_set_using_tags($service)
     {
-        $obj = new \StdClass();
+        $obj = new StdClass();
         $this->set('some_service', $obj, ['some_tag']);
         $this->getByTag('some_tag')->shouldReturn([$obj]);
     }
 
     function it_returns_services_which_are_defined_using_tags()
     {
-        $obj = new \StdClass();
+        $obj = new StdClass();
         $this->define('some_service', function () use ($obj) { return $obj; }, ['some_tag']);
         $this->getByTag('some_tag')->shouldReturn([$obj]);
     }
@@ -65,22 +66,30 @@ class IndexedServiceContainerSpec extends ObjectBehavior
 
     function it_evaluates_factory_function_only_once_for_shared_services()
     {
-        $this->define('random_number', function () { return rand(); });
-        $number1 = $this->get('random_number');
-        $number2 = $this->get('random_number');
+        $this->define('random_number', function () {
+            $obj = new stdClass();
+            $obj->num = rand();
+
+            return $obj;
+        });
+        $number1 = $this->get('random_number')->num;
+        $number2 = $this->get('random_number')->num;
 
         $number2->shouldBe($number1);
     }
 
     function it_uses_new_definition_when_a_service_is_redefined()
     {
-        $this->define('some_service', function () { return 1; });
+        $class1 = new stdClass();
+        $class2 = new stdClass();
+
+        $this->define('some_service', fn () => $class1);
         $this->get('some_service');
 
 
-        $this->define('some_service', function () { return 2; });
+        $this->define('some_service', fn () => $class2);
 
-        $this->get('some_service')->shouldBe(2);
+        $this->get('some_service')->shouldBe($class2);
     }
 
 

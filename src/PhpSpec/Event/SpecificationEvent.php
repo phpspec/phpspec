@@ -21,54 +21,34 @@ use PhpSpec\Loader\Node\SpecificationNode;
  */
 class SpecificationEvent extends BaseEvent implements PhpSpecEvent
 {
-    /**
-     * @var SpecificationNode
-     */
-    private $specification;
-
-    /**
-     * @var float
-     */
-    private $time;
-
-    /**
-     * @var int
-     */
-    private $result;
-
-    
-    public function __construct(SpecificationNode $specification, float $time = 0.0, int $result = 0)
+    public function __construct(
+        private SpecificationNode $specification,
+        private float $time = 0.0,
+        private int $result = 0
+    )
     {
-        $this->specification = $specification;
-        $this->time          = $time;
-        $this->result        = $result;
     }
 
-    
     public function getSpecification(): SpecificationNode
     {
         return $this->specification;
     }
 
-    
     public function getTitle(): string
     {
         return $this->specification->getTitle();
     }
 
-    
     public function getSuite(): Suite
     {
         return $this->specification->getSuite();
     }
 
-    
     public function getTime(): float
     {
         return $this->time;
     }
 
-    
     public function getResult(): int
     {
         return $this->result;

@@ -15,7 +15,6 @@ namespace PhpSpec\Exception\Example;
 
 class SkippingException extends ExampleException
 {
-    
     public function __construct(string $text)
     {
         parent::__construct(sprintf('skipped: %s', $text));

@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Formatter\Presenter\Exception;
 
+use PhpParser\Builder\Method;
 use PhpSpec\Formatter\Presenter\Differ\Differ;
 use Prophecy\Argument\Token\ExactValueToken;
 use Prophecy\Exception\Call\UnexpectedCallException;
@@ -20,18 +21,12 @@ use Prophecy\Prophecy\MethodProphecy;
 
 class CallArgumentsPresenter
 {
-    /**
-     * @var Differ
-     */
-    private $differ;
-
-    
-    public function __construct(Differ $differ)
+    public function __construct(
+        private Differ $differ
+    )
     {
-        $this->differ = $differ;
     }
 
-    
     public function presentDifference(UnexpectedCallException $exception): string
     {
         $actualArguments = $exception->getArguments();
@@ -67,13 +62,12 @@ class CallArgumentsPresenter
 
     /**
      * @param MethodProphecy[] $methodProphecies
-     *
-     * @return null|MethodProphecy
      */
     private function findFirstUnexpectedArgumentsCallProphecy(
         array $methodProphecies,
         UnexpectedCallException $exception
-    ){
+    ) : ?MethodProphecy
+    {
         $objectProphecy = $exception->getObjectProphecy();
 
         foreach ($methodProphecies as $methodProphecy) {
@@ -92,13 +86,13 @@ class CallArgumentsPresenter
         return null;
     }
 
-    
+
     private function parametersCountMismatch(array $expectedTokens, array $actualArguments): bool
     {
         return \count($expectedTokens) !== \count($actualArguments);
     }
 
-    
+
     private function convertArgumentTokensToDiffableValues(array $tokens): array
     {
         $values = array();
@@ -113,7 +107,7 @@ class CallArgumentsPresenter
         return $values;
     }
 
-    
+
     private function generateArgumentsDifferenceText(array $actualArguments, array $expectedArguments): string
     {
         $text = '';

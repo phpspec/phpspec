@@ -14,22 +14,17 @@
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Matcher\Matcher;
+use PhpSpec\Wrapper\DelayedCall;
 
 final class Negative implements Expectation
 {
-    /**
-     * @var Matcher
-     */
-    private $matcher;
-
-    
-    public function __construct(Matcher $matcher)
+    public function __construct(
+        private Matcher $matcher
+    )
     {
-        $this->matcher = $matcher;
     }
 
-    
-    public function match(string $alias, $subject, array $arguments = array())
+    public function match(string $alias, mixed $subject, array $arguments = array()) : ?DelayedCall
     {
         return $this->matcher->negativeMatch($alias, $subject, $arguments);
     }

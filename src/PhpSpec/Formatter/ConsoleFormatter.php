@@ -26,22 +26,15 @@ use PhpSpec\Message\CurrentExampleTracker;
 
 abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
 {
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
-
-    
-    public function __construct(Presenter $presenter, ConsoleIO $io, StatisticsCollector $stats)
+    public function __construct(
+        Presenter $presenter,
+        private ConsoleIO $io,
+        StatisticsCollector $stats)
     {
         parent::__construct($presenter, $io, $stats);
-        $this->io = $io;
     }
 
-    /**
-     * @return ConsoleIO
-     */
-    protected function getIO(): IO
+    protected function getIO(): ConsoleIO
     {
         return $this->io;
     }
@@ -98,7 +91,7 @@ abstract class ConsoleFormatter extends BasicFormatter implements FatalPresenter
         $this->io->writeln();
     }
 
-    public function displayFatal(CurrentExampleTracker $currentExample, $error): void
+    public function displayFatal(CurrentExampleTracker $currentExample, ?array $error): void
     {
         if (
             (null !== $error && ($currentExample->getCurrentExample() || $error['type'] == E_ERROR)) ||

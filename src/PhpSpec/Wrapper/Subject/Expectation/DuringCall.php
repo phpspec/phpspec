@@ -20,33 +20,22 @@ use PhpSpec\Wrapper\Subject\WrappedObject;
 
 abstract class DuringCall
 {
-    /**
-     * @var Matcher
-     */
-    private $matcher;
+    private mixed $subject;
 
-    private $subject;
-    /**
-     * @var array
-     */
-    private $arguments;
-    /**
-     * @var WrappedObject
-     */
-    private $wrappedObject;
+    private array $arguments;
 
+    private WrappedObject $wrappedObject;
 
-    public function __construct(Matcher $matcher)
+    public function __construct(
+        private Matcher $matcher
+    )
     {
-        $this->matcher = $matcher;
     }
 
     /**
-     * @param null|WrappedObject $wrappedObject
-     *
      * @return $this
      */
-    public function match(string $alias, $subject, array $arguments = array(), $wrappedObject = null)
+    public function match(string $alias, mixed $subject, array $arguments = array(), ?WrappedObject $wrappedObject = null) : static
     {
         $this->subject = $subject;
         $this->arguments = $arguments;
@@ -55,22 +44,23 @@ abstract class DuringCall
         return $this;
     }
 
-
-    public function during(string $method, array $arguments = array())
+    public function during(string $method, array $arguments = array()) : void
     {
         if ($method === '__construct') {
             $this->subject->beAnInstanceOf($this->wrappedObject->getClassName(), $arguments);
 
-            return $this->duringInstantiation();
+            $this->duringInstantiation();
+
+            return;
         }
 
         $object = $this->wrappedObject->instantiate();
 
-        return $this->runDuring($object, $method, $arguments);
+        $this->runDuring($object, $method, $arguments);
     }
 
 
-    public function duringInstantiation()
+    public function duringInstantiation() : void
     {
         if ($factoryMethod = $this->wrappedObject->getFactoryMethod()) {
             $method = \is_array($factoryMethod) ? $factoryMethod[1] : $factoryMethod;
@@ -80,7 +70,7 @@ abstract class DuringCall
         $instantiator = new Instantiator();
         $object = $instantiator->instantiate($this->wrappedObject->getClassName());
 
-        return $this->runDuring($object, $method, $this->wrappedObject->getArguments());
+        $this->runDuring($object, $method, $this->wrappedObject->getArguments());
     }
 
     /**
@@ -112,9 +102,5 @@ abstract class DuringCall
         return $this->matcher;
     }
 
-    /**
-     * @param object $object
-     * @param string $method
-     */
-    abstract protected function runDuring($object, $method, array $arguments = array());
+    abstract protected function runDuring(object $object, string $method, array $arguments = array()) : void;
 }

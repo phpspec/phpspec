@@ -19,7 +19,7 @@ Feature: Developer uses extension
 
     class Extension implements PhpSpecExtension
     {
-        public function load(ServiceContainer $container, array $params)
+        public function load(ServiceContainer $container, array $params) : void
         {
             $container->define('matchers.seven', function (ServiceContainer $c) {
                 return new BeSevenMatcher($c->get('formatter.presenter'));
@@ -173,7 +173,7 @@ Feature: Developer uses extension
 
     class EventSubscriberExtension implements PhpSpecExtension
     {
-        public function load(ServiceContainer $compositeContainer, array $params)
+        public function load(ServiceContainer $compositeContainer, array $params) : void
         {
             $io = $compositeContainer->get('console.io');
             $eventDispatcher = $compositeContainer->get('event_dispatcher');

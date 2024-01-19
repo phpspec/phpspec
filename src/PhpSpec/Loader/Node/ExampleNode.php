@@ -17,75 +17,52 @@ use ReflectionFunctionAbstract;
 
 class ExampleNode
 {
-    /**
-     * @var string
-     */
-    private $title;
-    /**
-     * @var \ReflectionFunctionAbstract
-     */
-    private $function;
-    /**
-     * @var null|SpecificationNode
-     */
-    private $specification;
-    /**
-     * @var bool
-     */
-    private $isPending = false;
+    private ?SpecificationNode $specification;
 
-    
-    public function __construct(string $title, ReflectionFunctionAbstract $function)
+    private bool $isPending = false;
+
+    public function __construct(
+        private string $title,
+        private ReflectionFunctionAbstract $function
+    )
     {
-        $this->setTitle($title);
-        $this->function = $function;
     }
 
-    
-    public function setTitle(string $title)
+    public function setTitle(string $title) : void
     {
       $this->title = $title;
     }
 
-    
     public function getTitle(): string
     {
         return $this->title;
     }
 
-    
     public function markAsPending(bool $isPending = true): void
     {
         $this->isPending = $isPending;
     }
 
-    
     public function isPending(): bool
     {
         return $this->isPending;
     }
 
-    
     public function getFunctionReflection(): ReflectionFunctionAbstract
     {
         return $this->function;
     }
 
-    
     public function setSpecification(SpecificationNode $specification): void
     {
         $this->specification = $specification;
     }
 
-    /**
-     * @return null|SpecificationNode
-     */
-    public function getSpecification()
+    public function getSpecification() : ?SpecificationNode
     {
         return $this->specification;
     }
 
-    
     public function getLineNumber(): int
     {
         return $this->function->isClosure() ? 0 : $this->function->getStartLine();

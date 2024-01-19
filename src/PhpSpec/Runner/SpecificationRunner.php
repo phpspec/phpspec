@@ -22,25 +22,13 @@ class SpecificationRunner
 {
     use DispatchTrait;
 
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
-    /**
-     * @var ExampleRunner
-     */
-    private $exampleRunner;
-
-    
-    public function __construct(EventDispatcherInterface $dispatcher, ExampleRunner $exampleRunner)
+    public function __construct(
+        private EventDispatcherInterface $dispatcher,
+        private ExampleRunner $exampleRunner
+    )
     {
-        $this->dispatcher    = $dispatcher;
-        $this->exampleRunner = $exampleRunner;
     }
 
-    /**
-     * @return int
-     */
     public function run(SpecificationNode $specification): int
     {
         $startTime = microtime(true);

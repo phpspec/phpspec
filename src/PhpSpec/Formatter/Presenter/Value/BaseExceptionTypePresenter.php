@@ -17,14 +17,12 @@ use PhpSpec\Exception\ErrorException;
 
 final class BaseExceptionTypePresenter implements ExceptionTypePresenter
 {
-    
-    public function supports($value): bool
+    public function supports(mixed $value): bool
     {
         return $value instanceof \Exception;
     }
 
-    
-    public function present($value): string
+    public function present(mixed $value): string
     {
         $label = 'exc';
         $message = $value->getMessage();
@@ -51,7 +49,7 @@ final class BaseExceptionTypePresenter implements ExceptionTypePresenter
         );
     }
 
-    
+
     public function getPriority(): int
     {
         return 60;

@@ -20,53 +20,31 @@ use PhpSpec\Loader\Suite;
  */
 class SuiteEvent extends BaseEvent implements PhpSpecEvent
 {
-    /**
-     * @var Suite
-     */
-    private $suite;
+    private bool $worthRerunning = false;
 
-    /**
-     * @var float
-     */
-    private $time;
-
-    /**
-     * @var int
-     */
-    private $result;
-
-    /**
-     * @var bool
-     */
-    private $worthRerunning = false;
-
-    
-    public function __construct(Suite $suite, float $time = 0.0, int $result = 0)
+    public function __construct(
+        private Suite $suite,
+        private float $time = 0.0,
+        private int $result = 0
+    )
     {
-        $this->suite  = $suite;
-        $this->time   = $time;
-        $this->result = $result;
     }
 
-    
     public function getSuite(): Suite
     {
         return $this->suite;
     }
 
-    
     public function getTime(): float
     {
         return $this->time;
     }
 
-    
     public function getResult(): int
     {
         return $this->result;
     }
 
-    
     public function isWorthRerunning(): bool
     {
         return $this->worthRerunning;

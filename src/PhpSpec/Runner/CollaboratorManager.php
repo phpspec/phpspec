@@ -21,40 +21,30 @@ use ReflectionFunctionAbstract;
 class CollaboratorManager
 {
     /**
-     * @var Presenter
-     */
-    private $presenter;
-    /**
      * @var Collaborator[]
      */
-    private $collaborators = array();
+    private array $collaborators = [];
 
-    
-    public function __construct(Presenter $presenter)
+    public function __construct(
+        private Presenter $presenter
+    )
     {
-        $this->presenter = $presenter;
     }
 
-    /**
-     * @param object $collaborator
-     */
-    public function set(string $name, $collaborator): void
+    public function set(string $name, object $collaborator): void
     {
         $this->collaborators[$name] = $collaborator;
     }
 
-    
     public function has(string $name): bool
     {
         return isset($this->collaborators[$name]);
     }
 
     /**
-     * @return object
-     *
      * @throws \PhpSpec\Exception\Wrapper\CollaboratorException
      */
-    public function get(string $name)
+    public function get(string $name) : object
     {
         if (!$this->has($name)) {
             throw new CollaboratorException(
@@ -65,7 +55,6 @@ class CollaboratorManager
         return $this->collaborators[$name];
     }
 
-    
     public function getArgumentsFor(ReflectionFunctionAbstract $function): array
     {
         $parameters = array();

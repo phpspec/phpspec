@@ -23,26 +23,19 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     const STATE_READING_ARGUMENTS = 3;
     const STATE_READING_FUNCTION_BODY = 4;
 
-    private $state = self::STATE_DEFAULT;
+    private int $state = self::STATE_DEFAULT;
 
-    private $currentClass;
-    private $currentFunction;
-    private $currentBodyLevel;
+    private string $currentClass = '';
+    private string $currentFunction = '';
+    private int $currentBodyLevel = 0;
 
-    private $typehintTokens = array(
+    private array $typehintTokens = array(
         T_WHITESPACE, T_STRING, T_NS_SEPARATOR
     );
 
-    /**
-     * @var TypeHintIndex
-     */
-    private $typeHintIndex;
-    /**
-     * @var NamespaceResolver
-     */
-    private $namespaceResolver;
+    private TypeHintIndex $typeHintIndex;
+    private NamespaceResolver $namespaceResolver;
 
-    
     public function __construct(TypeHintIndex $typeHintIndex, NamespaceResolver $namespaceResolver)
     {
         $this->typeHintIndex = $typeHintIndex;
@@ -110,7 +103,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
                     }
                     elseif ('}' == $token && $this->currentClass) {
                         $this->state = self::STATE_DEFAULT;
-                        $this->currentClass = null;
+                        $this->currentClass = '';
                     }
                     elseif ($this->tokenHasType($token, T_STRING) && !$this->currentClass && $this->shouldExtractTokensOfClass($token[1])) {
                         $this->currentClass = $token[1];
@@ -136,7 +129,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         return $tokens;
     }
 
-    
+
     private function tokensToString(array $tokens): string
     {
         return join('', array_map(function ($token) {
@@ -200,7 +193,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         }
     }
 
-    private function haveNotReachedEndOfTypeHint($token) : bool
+    private function haveNotReachedEndOfTypeHint(string|array $token) : bool
     {
         // PHP 8.1 returns the intersection token `&` as an array,
         // while previous versions return it as a string.
@@ -211,10 +204,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         return !\in_array($token[0], $this->typehintTokens);
     }
 
-    /**
-     * @param array|string $token
-     */
-    private function tokenHasType($token, int $type): bool
+    private function tokenHasType(array|string $token, int $type): bool
     {
         return \is_array($token) && $type == $token[0];
     }
@@ -224,10 +214,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         return substr($className, -4) == 'Spec';
     }
 
-    /**
-     * @param array|string $token
-     */
-    private function isToken($token, string $string): bool
+    private function isToken(array|string $token, string $string): bool
     {
         return $token == $string || (\is_array($token) && $token[1] == $string);
     }

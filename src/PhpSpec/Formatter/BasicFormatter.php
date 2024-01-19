@@ -23,29 +23,14 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 abstract class BasicFormatter implements EventSubscriberInterface
 {
-    /**
-     * @var IO
-     */
-    private $io;
-
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-
-    /**
-     * @var StatisticsCollector
-     */
-    private $stats;
-
-    public function __construct(Presenter $presenter, IO $io, StatisticsCollector $stats)
+    public function __construct(
+        private Presenter $presenter,
+        private IO $io,
+        private StatisticsCollector $stats
+    )
     {
-        $this->presenter = $presenter;
-        $this->io = $io;
-        $this->stats = $stats;
     }
 
-    
     public static function getSubscribedEvents(): array
     {
         $events = array(
@@ -57,51 +42,42 @@ abstract class BasicFormatter implements EventSubscriberInterface
         return array_combine($events, $events);
     }
 
-    
     protected function getIO(): IO
     {
         return $this->io;
     }
 
-    
     protected function getPresenter(): Presenter
     {
         return $this->presenter;
     }
 
-    
     protected function getStatisticsCollector(): StatisticsCollector
     {
         return $this->stats;
     }
 
-    
-    public function beforeSuite(SuiteEvent $event)
+    public function beforeSuite(SuiteEvent $event) : void
     {
     }
 
-    
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event) : void
     {
     }
 
-    
-    public function beforeExample(ExampleEvent $event)
+    public function beforeExample(ExampleEvent $event) : void
     {
     }
 
-    
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event) : void
     {
     }
 
-    
-    public function beforeSpecification(SpecificationEvent $event)
+    public function beforeSpecification(SpecificationEvent $event) : void
     {
     }
 
-    
-    public function afterSpecification(SpecificationEvent $event)
+    public function afterSpecification(SpecificationEvent $event) : void
     {
     }
 }

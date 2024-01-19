@@ -19,32 +19,20 @@ namespace PhpSpec\Exception\Fracture;
  */
 class PropertyNotFoundException extends FractureException
 {
-    
-    private $subject;
-
-    /**
-     * @var string
-     */
-    private $property;
-
-    /**
-     * @param string $property
-     */
-    public function __construct(string $message, $subject, $property)
+    public function __construct(
+        string $message,
+        private object $subject,
+        private string $property
+    )
     {
         parent::__construct($message);
-
-        $this->subject = $subject;
-        $this->property  = $property;
     }
 
-    
-    public function getSubject()
+    public function getSubject() : object
     {
         return $this->subject;
     }
 
-    
     public function getProperty(): string
     {
         return $this->property;

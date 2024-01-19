@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\Event;
 
+use PhpSpec\Event\ExampleEvent;
 use PhpSpec\ObjectBehavior;
 
 use PhpSpec\Loader\Node\ExampleNode;
@@ -48,7 +49,7 @@ class ExampleEventSpec extends ObjectBehavior
 
     function it_provides_a_link_to_result()
     {
-        $this->getResult()->shouldReturn($this->FAILED);
+        $this->getResult()->shouldReturn(ExampleEvent::FAILED);
     }
 
     function it_provides_a_link_to_exception($exception)
@@ -60,7 +61,7 @@ class ExampleEventSpec extends ObjectBehavior
     {
         $this->beConstructedWith($example);
 
-        $this->getResult()->shouldReturn($this->PASSED);
+        $this->getResult()->shouldReturn(ExampleEvent::PASSED);
     }
 
     function it_initializes_a_default_time(ExampleNode $example)

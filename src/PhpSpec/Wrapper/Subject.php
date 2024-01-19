@@ -111,76 +111,32 @@ use ArrayAccess;
  */
 class Subject implements ArrayAccess, ObjectWrapper
 {
-    /**
-     * @var mixed
-     */
-    private $subject;
-    /**
-     * @var Subject\WrappedObject
-     */
-    private $wrappedObject;
-    /**
-     * @var Subject\Caller
-     */
-    private $caller;
-    /**
-     * @var Subject\SubjectWithArrayAccess
-     */
-    private $arrayAccess;
-    /**
-     * @var Wrapper
-     */
-    private $wrapper;
-    /**
-     * @var Subject\ExpectationFactory
-     */
-    private $expectationFactory;
-
-    /**
-     * @param mixed $subject
-     */
     public function __construct(
-        $subject,
-        Wrapper $wrapper,
-        WrappedObject $wrappedObject,
-        Caller $caller,
-        SubjectWithArrayAccess $arrayAccess,
-        ExpectationFactory $expectationFactory
+        private mixed $subject,
+        private Wrapper $wrapper,
+        private WrappedObject $wrappedObject,
+        private Caller $caller,
+        private SubjectWithArrayAccess $arrayAccess,
+        private ExpectationFactory $expectationFactory
     ) {
-        $this->subject            = $subject;
-        $this->wrapper            = $wrapper;
-        $this->wrappedObject      = $wrappedObject;
-        $this->caller             = $caller;
-        $this->arrayAccess        = $arrayAccess;
-        $this->expectationFactory = $expectationFactory;
     }
-
 
     public function beAnInstanceOf(string $className, array $arguments = array()): void
     {
         $this->wrappedObject->beAnInstanceOf($className, $arguments);
     }
 
-    /**
-     * @param mixed ...$arguments
-     */
     public function beConstructedWith(): void
     {
         $this->wrappedObject->beConstructedWith(\func_get_args());
     }
 
-    /**
-     * @param array|string $factoryMethod
-     */
-    public function beConstructedThrough($factoryMethod, array $arguments = array()): void
+    public function beConstructedThrough(string|array $factoryMethod, array $arguments = array()): void
     {
         $this->wrappedObject->beConstructedThrough($factoryMethod, $arguments);
     }
 
-    /**
-     * @return ?object
-     */
-    public function getWrappedObject()
+    public function getWrappedObject() : mixed
     {
         if ($this->subject) {
             return $this->subject;
@@ -195,65 +151,50 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $this->caller->call($method, $arguments);
     }
 
-    /**
-     * @param mixed $value
-     * @return void
-     */
-    public function setToWrappedObject(string $property, $value = null)
+    public function setToWrappedObject(string $property, mixed $value = null) : void
     {
         $this->caller->set($property, $value);
     }
 
-    /**
-     * @return string|Subject
-     */
-    public function getFromWrappedObject(string $property)
+    public function getFromWrappedObject(string $property) : string|Subject
     {
         return $this->caller->get($property);
     }
 
     /**
      * @psalm-param TKey $key
-     * @param int|string $key
      */
-    public function offsetExists($key): bool
+    public function offsetExists(mixed $key): bool
     {
         return $this->arrayAccess->offsetExists($key);
     }
 
     /**
-     * @param int|string $key
      * @psalm-param TKey $key
      * @psalm-suppress ImplementedReturnTypeMismatch
      */
-    public function offsetGet($key): Subject
+    public function offsetGet(mixed $key): Subject
     {
         return $this->wrap($this->arrayAccess->offsetGet($key));
     }
 
     /**
-     * @param mixed $value
      * @psalm-param TKey $offset
-     * @param int|string $offset
      */
-    public function offsetSet($offset, $value): void
+    public function offsetSet(mixed $offset, mixed $value): void
     {
         $this->arrayAccess->offsetSet($offset, $value);
     }
 
     /**
      * @psalm-param TKey $key
-     * @param int|string $key
      */
-    public function offsetUnset($key): void
+    public function offsetUnset(mixed $key): void
     {
         $this->arrayAccess->offsetUnset($key);
     }
 
-    /**
-     * @return mixed|Subject
-     */
-    public function __call(string $method, array $arguments = array())
+    public function __call(string $method, array $arguments = array()) : mixed
     {
         if (0 === strpos($method, 'should')) {
             return $this->callExpectation($method, $arguments);
@@ -276,35 +217,22 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $this->caller->call('__invoke', \func_get_args());
     }
 
-
-    /**
-     * @param mixed $value
-     */
-    public function __set(string $property, $value = null)
+    public function __set(string $property, mixed $value = null)
     {
         return $this->caller->set($property, $value);
     }
 
-    /**
-     * @return string|Subject
-     */
-    public function __get(string $property)
+    public function __get(string $property) : string|Subject
     {
         return $this->caller->get($property);
     }
 
-    /**
-     * @param mixed $value
-     */
-    private function wrap($value): Subject
+    private function wrap(mixed $value): Subject
     {
         return $this->wrapper->wrap($value);
     }
 
-    /**
-     * @return mixed
-     */
-    private function callExpectation(string $method, array $arguments)
+    private function callExpectation(string $method, array $arguments) : mixed
     {
         $subject = $this->makeSureWeHaveASubject();
 
@@ -317,10 +245,7 @@ class Subject implements ArrayAccess, ObjectWrapper
         return $expectation->match(lcfirst(substr($method, 6)), $this, $arguments, $this->wrappedObject);
     }
 
-    /**
-     * @return object
-     */
-    private function makeSureWeHaveASubject()
+    private function makeSureWeHaveASubject() : mixed
     {
         if (null === $this->subject && $this->wrappedObject->getClassName()) {
             $instantiator = new Instantiator();

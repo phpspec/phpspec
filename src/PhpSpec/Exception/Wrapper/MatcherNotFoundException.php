@@ -21,42 +21,26 @@ use PhpSpec\Exception\Exception;
  */
 class MatcherNotFoundException extends Exception
 {
-    /**
-     * @var string
-     */
-    private $keyword;
-
-    
-    private $subject;
-
-    /**
-     * @var array
-     */
-    private $arguments;
-
-    
-    public function __construct(string $message, string $keyword, $subject, array $arguments)
+    public function __construct(
+        string $message,
+        private string $keyword,
+        private string $subject,
+        private array $arguments
+    )
     {
         parent::__construct($message);
-
-        $this->keyword   = $keyword;
-        $this->subject   = $subject;
-        $this->arguments = $arguments;
     }
 
-    
     public function getKeyword(): string
     {
         return $this->keyword;
     }
 
-    
-    public function getSubject()
+    public function getSubject() : string
     {
         return $this->subject;
     }
 
-    
     public function getArguments(): array
     {
         return $this->arguments;

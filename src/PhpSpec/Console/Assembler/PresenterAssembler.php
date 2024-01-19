@@ -42,7 +42,7 @@ use SebastianBergmann\Exporter\Exporter;
  */
 final class PresenterAssembler
 {
-    public function assemble(IndexedServiceContainer $container)
+    public function assemble(IndexedServiceContainer $container) : void
     {
         $this->assembleDiffer($container);
         $this->assembleDifferEngines($container);
@@ -51,7 +51,7 @@ final class PresenterAssembler
         $this->assembleHtmlPresenter($container);
     }
 
-    private function assembleDiffer(IndexedServiceContainer $container)
+    private function assembleDiffer(IndexedServiceContainer $container) : void
     {
         $container->define('formatter.presenter.differ', function (IndexedServiceContainer $c) {
             $differ = new Differ();
@@ -65,7 +65,7 @@ final class PresenterAssembler
         });
     }
 
-    private function assembleDifferEngines(IndexedServiceContainer $container)
+    private function assembleDifferEngines(IndexedServiceContainer $container) : void
     {
         $container->define('formatter.presenter.differ.engines.string', function () {
             return new StringEngine();
@@ -83,7 +83,7 @@ final class PresenterAssembler
         }, ['formatter.presenter.differ.engines']);
     }
 
-    private function assembleTypePresenters(IndexedServiceContainer $container)
+    private function assembleTypePresenters(IndexedServiceContainer $container) : void
     {
         $container->define('formatter.presenter.value.array_type_presenter', function () {
             return new ArrayTypePresenter();
@@ -121,7 +121,7 @@ final class PresenterAssembler
         });
     }
 
-    private function assemblePresenter(IndexedServiceContainer $container)
+    private function assemblePresenter(IndexedServiceContainer $container) : void
     {
         $container->define('formatter.presenter', function (IndexedServiceContainer $c) {
             return new TaggingPresenter(
@@ -155,7 +155,7 @@ final class PresenterAssembler
         });
     }
 
-    private function assembleHtmlPresenter(IndexedServiceContainer $container)
+    private function assembleHtmlPresenter(IndexedServiceContainer $container) : void
     {
         $container->define('formatter.presenter.html', function (IndexedServiceContainer $c) {
             return new SimplePresenter(

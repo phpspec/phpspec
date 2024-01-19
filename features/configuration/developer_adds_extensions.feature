@@ -12,7 +12,7 @@ Feature: Developer enables extensions
 
       class Extension2 implements \PhpSpec\Extension
       {
-          public function load(\PhpSpec\ServiceContainer $container, array $params)
+          public function load(\PhpSpec\ServiceContainer $container, array $params) : void
           {
               throw new \Exception(get_class($this).' enabled'. print_r($params, true));
           }
@@ -38,7 +38,7 @@ Feature: Developer enables extensions
 
       class Extension3 implements \PhpSpec\Extension
       {
-          public function load(\PhpSpec\ServiceContainer $container, array $params)
+          public function load(\PhpSpec\ServiceContainer $container, array $params) : void
           {
               throw new \Exception(get_class($this).' enabled'. print_r($params, true));
           }
@@ -62,7 +62,7 @@ Feature: Developer enables extensions
 
       class NOPE implements \PhpSpec\Extension
       {
-          public function load(\PhpSpec\ServiceContainer $container, array $params)
+          public function load(\PhpSpec\ServiceContainer $container, array $params) : void
           {
               throw new \Exception(get_class($this).' enabled'. print_r($params, true));
           }
@@ -86,7 +86,7 @@ Feature: Developer enables extensions
 
       class Extension4 implements \PhpSpec\Extension
       {
-          public function load(\PhpSpec\ServiceContainer $container, array $params)
+          public function load(\PhpSpec\ServiceContainer $container, array $params) : void
           {
               throw new \Exception(get_class($this).' enabled'. print_r($params, true));
           }

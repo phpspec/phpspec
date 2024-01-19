@@ -13,10 +13,8 @@
 
 namespace PhpSpec\Exception\Configuration;
 
-
 use PhpSpec\Exception\Exception;
 
 class InvalidConfigurationException extends Exception
 {
-
 }

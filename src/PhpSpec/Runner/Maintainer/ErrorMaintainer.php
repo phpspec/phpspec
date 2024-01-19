@@ -22,26 +22,20 @@ use PhpSpec\Exception\Example as ExampleException;
 final class ErrorMaintainer implements Maintainer
 {
     /**
-     * @var int
-     */
-    private $errorLevel;
-    /**
      * @var null|callable
      */
-    private $errorHandler;
+    private mixed $errorHandler;
 
-
-    public function __construct(int $errorLevel)
+    public function __construct(
+        private int $errorLevel
+    )
     {
-        $this->errorLevel = $errorLevel;
     }
-
 
     public function supports(ExampleNode $example): bool
     {
         return true;
     }
-
 
     public function prepare(
         ExampleNode $example,
@@ -51,7 +45,6 @@ final class ErrorMaintainer implements Maintainer
     ): void {
         $this->errorHandler = set_error_handler(array($this, 'errorHandler'), $this->errorLevel);
     }
-
 
     public function teardown(
         ExampleNode $example,
@@ -63,7 +56,6 @@ final class ErrorMaintainer implements Maintainer
             set_error_handler($this->errorHandler);
         }
     }
-
 
     public function getPriority(): int
     {

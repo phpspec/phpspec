@@ -17,14 +17,11 @@ use PhpSpec\IO\IO;
 
 final class HtmlIO implements IO
 {
-    /**
-     * @param $message
-     */
     public function write(string $message): void
     {
         echo $message;
     }
-    
+
     public function isVerbose(): bool
     {
         return true;

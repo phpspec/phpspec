@@ -3,30 +3,23 @@
 namespace PhpSpec\Matcher\Iterate;
 
 use PhpSpec\Formatter\Presenter\Presenter;
+use Traversable;
 
 final class IterablesMatcher
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-
-    
-    public function __construct(Presenter $presenter)
+    public function __construct(
+        private Presenter $presenter
+    )
     {
-        $this->presenter = $presenter;
     }
 
     /**
-     * @param array|\Traversable $subject
-     * @param array|\Traversable $expected
-     *
      * @throws \InvalidArgumentException
      * @throws SubjectElementDoesNotMatchException
      * @throws SubjectHasFewerElementsException
      * @throws SubjectHasMoreElementsException
      */
-    public function match($subject, $expected, bool $strict = true): void
+    public function match(mixed $subject, mixed $expected, bool $strict = true): void
     {
         if (!$this->isIterable($subject)) {
             throw new \InvalidArgumentException('Subject value should be an array or implement \Traversable.');
@@ -63,16 +56,12 @@ final class IterablesMatcher
         }
     }
 
-    
-    private function isIterable($variable): bool
+    private function isIterable(mixed $variable): bool
     {
         return \is_array($variable) || $variable instanceof \Traversable;
     }
 
-    /**
-     * @param array|\Traversable $iterable
-     */
-    private function createIteratorFromIterable($iterable): \Iterator
+    private function createIteratorFromIterable(iterable $iterable): \Iterator
     {
         if (\is_array($iterable)) {
             return new \ArrayIterator($iterable);
@@ -84,7 +73,7 @@ final class IterablesMatcher
         return $iterator;
     }
 
-    private function valueIsEqual($expected, $value, bool $strict): bool
+    private function valueIsEqual(mixed $expected, mixed $value, bool $strict): bool
     {
         return $strict ? $expected === $value : $expected == $value;
     }

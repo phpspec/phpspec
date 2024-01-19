@@ -18,6 +18,7 @@ use PhpSpec\Exception\Example\FailureException;
 use PhpSpec\Loader\Node\ExampleNode;
 use PhpSpec\Matcher\Matcher;
 use PhpSpec\Util\DispatchTrait;
+use PhpSpec\Wrapper\DelayedCall;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Exception;
 
@@ -25,30 +26,13 @@ final class DispatcherDecorator extends Decorator implements Expectation
 {
     use DispatchTrait;
 
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
-    /**
-     * @var Matcher
-     */
-    private $matcher;
-    /**
-     * @var ExampleNode
-     */
-    private $example;
-
-    
     public function __construct(
         Expectation $expectation,
-        EventDispatcherInterface $dispatcher,
-        Matcher $matcher,
-        ExampleNode $example
+        private EventDispatcherInterface $dispatcher,
+        private Matcher $matcher,
+        private ExampleNode $example
     ) {
         $this->setExpectation($expectation);
-        $this->dispatcher = $dispatcher;
-        $this->matcher = $matcher;
-        $this->example = $example;
     }
 
     /**
@@ -56,7 +40,7 @@ final class DispatcherDecorator extends Decorator implements Expectation
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \Exception
      */
-    public function match(string $alias, $subject, array $arguments = array())
+    public function match(string $alias, mixed $subject, array $arguments = array()) : DelayedCall|DuringCall|bool|null
     {
         $this->dispatch(
             $this->dispatcher,

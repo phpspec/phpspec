@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\Event;
 
+use PhpSpec\Event\ExpectationEvent;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Loader\Suite;
 use PhpSpec\Loader\Node\SpecificationNode;
@@ -66,7 +67,7 @@ class ExpectationEventSpec extends ObjectBehavior
 
     function it_provides_a_link_to_result()
     {
-        $this->getResult()->shouldReturn($this->FAILED);
+        $this->getResult()->shouldReturn(ExpectationEvent::FAILED);
     }
 
     function it_provides_a_link_to_exception($exception)
@@ -81,6 +82,6 @@ class ExpectationEventSpec extends ObjectBehavior
 
         $this->beConstructedWith($example, $matcher, $subject, $method, $arguments);
 
-        $this->getResult()->shouldReturn($this->PASSED);
+        $this->getResult()->shouldReturn(ExpectationEvent::PASSED);
     }
 }

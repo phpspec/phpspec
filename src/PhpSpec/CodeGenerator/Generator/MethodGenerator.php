@@ -24,33 +24,13 @@ use PhpSpec\Locator\Resource;
  */
 final class MethodGenerator implements Generator
 {
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
-
-    /**
-     * @var TemplateRenderer
-     */
-    private $templates;
-
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
-
-    /**
-     * @var CodeWriter
-     */
-    private $codeWriter;
-
-    
-    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, CodeWriter $codeWriter)
+    public function __construct(
+        private ConsoleIO $io,
+        private TemplateRenderer $templates,
+        private Filesystem $filesystem,
+        private CodeWriter $codeWriter
+    )
     {
-        $this->io         = $io;
-        $this->templates  = $templates;
-        $this->filesystem = $filesystem;
-        $this->codeWriter = $codeWriter;
     }
 
     public function supports(Resource $resource, string $generation, array $data): bool
@@ -58,7 +38,7 @@ final class MethodGenerator implements Generator
         return 'method' === $generation;
     }
 
-    
+
     public function generate(Resource $resource, array $data = array()): void
     {
         $filepath  = $resource->getSrcFilename();

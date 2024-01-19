@@ -39,7 +39,7 @@ class OptionsConfigSpec extends ObjectBehavior
     {
         $this->beConstructedWith(false, false, false, false, false, false);
 
-        $this->getBootstrapPath()->shouldReturn(false);
+        $this->getBootstrapPath()->shouldReturn(null);
     }
 
     function it_returns_bootstrap_path_when_one_is_specified()

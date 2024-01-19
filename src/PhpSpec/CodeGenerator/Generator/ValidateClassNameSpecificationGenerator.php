@@ -20,16 +20,12 @@ use PhpSpec\Locator\Resource;
 
 final class ValidateClassNameSpecificationGenerator implements Generator
 {
-
-    private $classNameChecker;
-    private $io;
-    private $originalGenerator;
-
-    public function __construct(NameChecker $classNameChecker, ConsoleIO $io, Generator $originalGenerator)
+    public function __construct(
+        private NameChecker $classNameChecker,
+        private ConsoleIO $io,
+        private Generator $originalGenerator
+    )
     {
-        $this->classNameChecker = $classNameChecker;
-        $this->io = $io;
-        $this->originalGenerator = $originalGenerator;
     }
 
     public function supports(Resource $resource, string $generation, array $data): bool

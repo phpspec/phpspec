@@ -21,34 +21,15 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class SubjectWithArrayAccess
 {
-    /**
-     * @var Caller
-     */
-    private $caller;
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
-
-    
     public function __construct(
-        Caller $caller,
-        Presenter $presenter,
-        EventDispatcherInterface $dispatcher
-    ) {
-        $this->caller     = $caller;
-        $this->presenter  = $presenter;
-        $this->dispatcher = $dispatcher;
+        private Caller $caller,
+        private Presenter $presenter,
+        private EventDispatcherInterface $dispatcher
+    )
+    {
     }
 
-    /**
-     * @param int|string $key
-     */
-    public function offsetExists($key): bool
+    public function offsetExists(int|string $key): bool
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -60,10 +41,7 @@ class SubjectWithArrayAccess
         return isset($subject[$key]);
     }
 
-    /**
-     * @param int|string $key
-     */
-    public function offsetGet($key)
+    public function offsetGet(int|string $key) : mixed
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -75,10 +53,7 @@ class SubjectWithArrayAccess
         return $subject[$key];
     }
 
-    /**
-     * @param int|string $key
-     */
-    public function offsetSet($key, $value): void
+    public function offsetSet(int|string $key, mixed $value): void
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -91,10 +66,7 @@ class SubjectWithArrayAccess
         $subject[$key] = $value;
     }
 
-    /**
-     * @param int|string $key
-     */
-    public function offsetUnset($key): void
+    public function offsetUnset(int|string $key): void
     {
         $unwrapper = new Unwrapper();
         $subject = $this->caller->getWrappedObject();
@@ -110,7 +82,7 @@ class SubjectWithArrayAccess
      * @throws \PhpSpec\Exception\Wrapper\SubjectException
      * @throws \PhpSpec\Exception\Fracture\InterfaceNotImplementedException
      */
-    private function checkIfSubjectImplementsArrayAccess($subject): void
+    private function checkIfSubjectImplementsArrayAccess(mixed $subject): void
     {
         if (\is_object($subject) && !($subject instanceof \ArrayAccess)) {
             throw $this->interfaceNotImplemented();
@@ -119,7 +91,6 @@ class SubjectWithArrayAccess
         }
     }
 
-    
     private function interfaceNotImplemented(): InterfaceNotImplementedException
     {
         return new InterfaceNotImplementedException(
@@ -133,8 +104,7 @@ class SubjectWithArrayAccess
         );
     }
 
-    
-    private function cantUseAsArray($subject): SubjectException
+    private function cantUseAsArray(mixed $subject): SubjectException
     {
         return new SubjectException(sprintf(
             'Can not use %s as array.',

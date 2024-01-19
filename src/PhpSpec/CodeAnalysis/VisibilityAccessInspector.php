@@ -18,26 +18,17 @@ use ReflectionProperty;
 
 final class VisibilityAccessInspector implements AccessInspector
 {
-    /**
-     * @param object $object
-     */
-    public function isPropertyReadable($object, string $property): bool
+    public function isPropertyReadable(object $object, string $property): bool
     {
         return $this->isExistingPublicProperty($object, $property);
     }
 
-    /**
-     * @param object $object
-     */
-    public function isPropertyWritable($object, string $property): bool
+    public function isPropertyWritable(object $object, string $property): bool
     {
         return $this->isExistingPublicProperty($object, $property);
     }
 
-    /**
-     * @param object $object
-     */
-    private function isExistingPublicProperty($object, string $property): bool
+    private function isExistingPublicProperty(object $object, string $property): bool
     {
         if (!property_exists($object, $property)) {
             return false;
@@ -48,18 +39,12 @@ final class VisibilityAccessInspector implements AccessInspector
         return $propertyReflection->isPublic();
     }
 
-    /**
-     * @param object $object
-     */
-    public function isMethodCallable($object, string $method): bool
+    public function isMethodCallable(object $object, string $method): bool
     {
         return $this->isExistingPublicMethod($object, $method);
     }
 
-    /**
-     * @param object $object
-     */
-    private function isExistingPublicMethod($object, string $method): bool
+    private function isExistingPublicMethod(object $object, string $method): bool
     {
         if (!method_exists($object, $method)) {
             return false;

@@ -70,9 +70,6 @@ EOF
         ;
     }
 
-    /**
-     * @return int
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $container = $this->getApplication()->getContainer();
@@ -98,10 +95,8 @@ EOF
 
     /**
      * Get suites namespaces.
-     *
-     * @return array
      */
-    private function getNamespaces()
+    private function getNamespaces() : array
     {
         return $this->getApplication()->getContainer()->get('console.autocomplete_provider')->getNamespaces();
     }

@@ -18,19 +18,13 @@ use ReflectionMethod;
 
 class ExistingConstructorTemplate
 {
-    private $templates;
-    private $class;
-    private $className;
-    private $arguments;
-    private $methodName;
-
-    public function __construct(TemplateRenderer $templates, string $methodName, array $arguments, string $className, string $class)
+    public function __construct(
+        private TemplateRenderer $templates,
+        private string $methodName,
+        private array $arguments,
+        private string $className,
+        private string $class)
     {
-        $this->templates  = $templates;
-        $this->class      = $class;
-        $this->className  = $className;
-        $this->arguments  = $arguments;
-        $this->methodName = $methodName;
     }
 
     public function getContent(): string
@@ -105,13 +99,13 @@ class ExistingConstructorTemplate
         );
     }
 
-    
+
     private function getCreateObjectTemplate(): string
     {
         return file_get_contents(__DIR__.'/templates/named_constructor_create_object.template');
     }
 
-    
+
     private function getExceptionTemplate(): string
     {
         return file_get_contents(__DIR__.'/templates/named_constructor_exception.template');

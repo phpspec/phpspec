@@ -23,23 +23,13 @@ class SuiteRunner
 {
     use DispatchTrait;
 
-    /**
-     * @var EventDispatcher
-     */
-    private $dispatcher;
-    /**
-     * @var SpecificationRunner
-     */
-    private $specRunner;
-
-    
-    public function __construct(EventDispatcher $dispatcher, SpecificationRunner $specRunner)
+    public function __construct(
+        private EventDispatcher $dispatcher,
+        private SpecificationRunner $specRunner
+    )
     {
-        $this->dispatcher = $dispatcher;
-        $this->specRunner = $specRunner;
     }
 
-    
     public function run(Suite $suite): int
     {
         $this->dispatch($this->dispatcher, new SuiteEvent($suite), 'beforeSuite');

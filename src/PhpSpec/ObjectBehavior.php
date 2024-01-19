@@ -72,17 +72,12 @@ abstract class ObjectBehavior implements
     ObjectWrapper,
     Specification
 {
-    /**
-     * @var Subject
-     */
-    protected $object;
+    protected Subject $object;
 
     /**
      * Override this method to provide your own inline matchers
      *
      * @link http://phpspec.net/cookbook/matchers.html Matchers cookbook
-     *
-     * @return array a list of inline matchers
      */
     public function getMatchers(): array
     {
@@ -101,10 +96,8 @@ abstract class ObjectBehavior implements
 
     /**
      * Gets the unwrapped proxied object from PhpSpec subject
-     *
-     * @return ?object
      */
-    public function getWrappedObject()
+    public function getWrappedObject() : ?object
     {
         return $this->object->getWrappedObject();
     }
@@ -113,9 +106,8 @@ abstract class ObjectBehavior implements
      * Checks if a key exists in case object implements ArrayAccess
      *
      * @psalm-param TKey $key
-     * @param int|string $key
      */
-    public function offsetExists($key): bool
+    public function offsetExists(mixed $key): bool
     {
         return $this->object->offsetExists($key);
     }
@@ -124,10 +116,9 @@ abstract class ObjectBehavior implements
      * Gets the value in a particular position in the ArrayAccess object
      *
      * @psalm-param TKey $key
-     * @param int|string $key
      * @psalm-suppress ImplementedReturnTypeMismatch
      */
-    public function offsetGet($key): Subject
+    public function offsetGet(mixed $key): Subject
     {
         return $this->object->offsetGet($key);
     }
@@ -136,12 +127,10 @@ abstract class ObjectBehavior implements
      * Sets the value in a particular position in the ArrayAccess object
      *
      * @psalm-param TKey $offset
-     * @param int|string $offset
-     * @param mixed $value
      * @psalm-suppress InvalidAttribute
      */
     #[\ReturnTypeWillChange]
-    public function offsetSet($offset, $value)
+    public function offsetSet(mixed $offset, mixed $value)
     {
         $this->object->offsetSet($offset, $value);
     }
@@ -150,11 +139,10 @@ abstract class ObjectBehavior implements
      * Unsets a position in the ArrayAccess object
      *
      * @psalm-param TKey $key
-     * @param int|string $key
      * @psalm-suppress InvalidAttribute
      */
     #[\ReturnTypeWillChange]
-    public function offsetUnset($key)
+    public function offsetUnset(mixed $key)
     {
         $this->object->offsetUnset($key);
     }
@@ -169,10 +157,8 @@ abstract class ObjectBehavior implements
 
     /**
      * Proxies setting to the PhpSpec subject
-     *
-     * @param mixed $value
      */
-    public function __set(string $property, $value)
+    public function __set(string $property, mixed $value)
     {
         $this->object->$property = $value;
     }

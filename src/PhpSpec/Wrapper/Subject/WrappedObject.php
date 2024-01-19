@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Wrapper\Subject;
 
+use Closure;
 use PhpSpec\Factory\ObjectFactory;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Wrapper\Unwrapper;
@@ -20,38 +21,22 @@ use PhpSpec\Exception\Wrapper\SubjectException;
 
 class WrappedObject
 {
-    /**
-     * @var object
-     */
-    private $instance;
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-    /**
-     * @var string
-     */
-    private $classname;
+    private ?string $classname = null;
+
     /**
      * @var null|callable
      */
-    private $factoryMethod;
-    /**
-     * @var array
-     */
-    private $arguments = array();
-    /**
-     * @var bool
-     */
-    private $isInstantiated = false;
+    private mixed $factoryMethod;
 
-    /**
-     * @param null|object        $instance
-     */
-    public function __construct($instance, Presenter $presenter)
+    private array $arguments =[];
+
+    private bool $isInstantiated = false;
+
+    public function __construct(
+        private mixed $instance,
+        private Presenter $presenter
+    )
     {
-        $this->instance = $instance;
-        $this->presenter = $presenter;
         if (\is_object($this->instance)) {
             $this->classname = \get_class($this->instance);
             $this->isInstantiated = true;
@@ -89,10 +74,7 @@ class WrappedObject
         $this->beAnInstanceOf($this->classname, $args);
     }
 
-    /**
-     * @param null|callable|string $factoryMethod
-     */
-    public function beConstructedThrough($factoryMethod, array $arguments = array()): void
+    public function beConstructedThrough(callable|array|string|null $factoryMethod, array $arguments = array()): void
     {
         if (\is_string($factoryMethod) &&
             false === strpos($factoryMethod, '::') &&
@@ -110,66 +92,47 @@ class WrappedObject
         $this->arguments     = $unwrapper->unwrapAll($arguments);
     }
 
-    /**
-     * @return null|callable
-     */
-    public function getFactoryMethod()
+    public function getFactoryMethod() : callable|array|string|null
     {
         return $this->factoryMethod;
     }
 
-    
     public function isInstantiated(): bool
     {
         return $this->isInstantiated;
     }
 
-    
     public function setInstantiated(bool $instantiated): void
     {
         $this->isInstantiated = $instantiated;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getClassName()
+    public function getClassName() : ?string
     {
         return $this->classname;
     }
 
-    
     public function setClassName(string $classname): void
     {
         $this->classname = $classname;
     }
 
-    
     public function getArguments(): array
     {
         return $this->arguments;
     }
 
-    /**
-     * @return null|object
-     */
-    public function getInstance()
+    public function getInstance() : mixed
     {
         return $this->instance;
     }
 
-    /**
-     * @param object $instance
-     */
-    public function setInstance($instance): void
+    public function setInstance(object $instance): void
     {
         $this->instance = $instance;
     }
 
-    /**
-     * @return object
-     */
-    public function instantiate()
+    public function instantiate() : object
     {
         if ($this->isInstantiated()) {
             return $this->instance;

@@ -14,6 +14,7 @@ use PhpSpec\Wrapper\Subject;
 
 use PhpSpec\Loader\Node\ExampleNode;
 
+use stdClass;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface as Dispatcher;
 
 use PhpSpec\ObjectBehavior;
@@ -33,7 +34,7 @@ class CallerSpec extends ObjectBehavior
         $wrappedObject->isInstantiated()->willReturn(false);
         $wrappedObject->getClassName()->willReturn(null);
         $wrappedObject->getInstance()->willReturn(null);
-        $exceptions->propertyNotFound(Argument::cetera())->willReturn(new PropertyNotFoundException('Message', 'subject', 'prop'));
+        $exceptions->propertyNotFound(Argument::cetera())->willReturn(new PropertyNotFoundException('Message', new stdClass, 'prop'));
 
         $accessInspector->isMethodCallable(Argument::cetera())->willReturn(false);
         $dispatcher->dispatch(Argument::any(), Argument::any())->willReturnArgument(0);

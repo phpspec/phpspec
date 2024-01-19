@@ -26,48 +26,17 @@ use PhpSpec\Wrapper\Subject\ExpectationFactory;
 
 class Wrapper
 {
-    /**
-     * @var MatcherManager
-     */
-    private $matchers;
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
-    /**
-     * @var ExampleNode
-     */
-    private $example;
-    /**
-     * @var AccessInspector
-     */
-    private $accessInspector;
-
-    /**
-     * @param AccessInspector $accessInspector
-     */
     public function __construct(
-        MatcherManager $matchers,
-        Presenter $presenter,
-        EventDispatcherInterface $dispatcher,
-        ExampleNode $example,
-        AccessInspector $accessInspector = null
-    ) {
-        $this->matchers = $matchers;
-        $this->presenter = $presenter;
-        $this->dispatcher = $dispatcher;
-        $this->example = $example;
-        $this->accessInspector = $accessInspector;
+        private MatcherManager $matchers,
+        private Presenter $presenter,
+        private EventDispatcherInterface $dispatcher,
+        private ExampleNode $example,
+        private ?AccessInspector $accessInspector = null
+    )
+    {
     }
 
-    /**
-     * @param object $value
-     */
-    public function wrap($value = null): Subject
+    public function wrap(mixed $value = null): Subject
     {
         $wrappedObject = new WrappedObject($value, $this->presenter);
         $caller = $this->createCaller($wrappedObject);
@@ -84,7 +53,6 @@ class Wrapper
         );
     }
 
-    
     private function createCaller(WrappedObject $wrappedObject): Caller
     {
         $exceptionFactory = new ExceptionFactory($this->presenter);

@@ -15,11 +15,10 @@ namespace PhpSpec\Formatter\Presenter\Differ;
 
 class Differ
 {
-    private $engines = array();
-
-    public function __construct(array $engines = array())
+    public function __construct(
+        private array $engines = []
+    )
     {
-        $this->engines = $engines;
     }
 
     public function addEngine(DifferEngine $engine): void
@@ -27,12 +26,14 @@ class Differ
         $this->engines[] = $engine;
     }
 
-    public function compare($expected, $actual)
+    public function compare(mixed $expected, mixed $actual) : ?string
     {
         foreach ($this->engines as $engine) {
             if ($engine->supports($expected, $actual)) {
                 return rtrim($engine->compare($expected, $actual));
             }
         }
+
+        return null;
     }
 }

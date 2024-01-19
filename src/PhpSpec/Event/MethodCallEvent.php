@@ -22,78 +22,46 @@ use PhpSpec\Loader\Suite;
  */
 class MethodCallEvent extends BaseEvent implements PhpSpecEvent
 {
-    /**
-     * @var ExampleNode
-     */
-    private $example;
-
-    
-    private $subject;
-
-    /**
-     * @var string
-     */
-    private $method;
-
-    /**
-     * @var array
-     */
-    private $arguments;
-
-    
-    private $returnValue;
-
-    /**
-     * @param string      $method
-     * @param array       $arguments
-     */
-    public function __construct(ExampleNode $example, $subject, $method, $arguments, $returnValue = null)
+    public function __construct(
+        private ExampleNode $example,
+        private object $subject,
+        private string $method,
+        private array $arguments,
+        private mixed $returnValue = null)
     {
-        $this->example = $example;
-        $this->subject = $subject;
-        $this->method = $method;
-        $this->arguments = $arguments;
-        $this->returnValue = $returnValue;
     }
 
-    
     public function getExample(): ExampleNode
     {
         return $this->example;
     }
 
-    
     public function getSpecification(): SpecificationNode
     {
         return $this->example->getSpecification();
     }
 
-    
     public function getSuite(): Suite
     {
         return $this->example->getSpecification()->getSuite();
     }
 
-    
-    public function getSubject()
+    public function getSubject() : object
     {
         return $this->subject;
     }
 
-    
     public function getMethod(): string
     {
         return $this->method;
     }
 
-    
     public function getArguments(): array
     {
         return $this->arguments;
     }
 
-    
-    public function getReturnValue()
+    public function getReturnValue() : mixed
     {
         return $this->returnValue;
     }

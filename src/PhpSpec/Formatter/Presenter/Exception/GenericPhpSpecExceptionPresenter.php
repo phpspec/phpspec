@@ -15,18 +15,12 @@ namespace PhpSpec\Formatter\Presenter\Exception;
 
 final class GenericPhpSpecExceptionPresenter extends AbstractPhpSpecExceptionPresenter implements PhpSpecExceptionPresenter
 {
-    /**
-     * @var ExceptionElementPresenter
-     */
-    private $exceptionElementPresenter;
-
-    
-    public function __construct(ExceptionElementPresenter $exceptionElementPresenter)
+    public function __construct(
+        private ExceptionElementPresenter $exceptionElementPresenter
+    )
     {
-        $this->exceptionElementPresenter = $exceptionElementPresenter;
     }
 
-    
     protected function presentFileCode(string $file, int $lineno, int $context = 6): string
     {
         $lines  = explode(PHP_EOL, file_get_contents($file));

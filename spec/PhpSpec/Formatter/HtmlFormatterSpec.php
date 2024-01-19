@@ -2,12 +2,12 @@
 
 namespace spec\PhpSpec\Formatter;
 
+use PhpSpec\Formatter\Html\ReportPassedItem;
 use PhpSpec\IO\IO;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 use PhpSpec\Event\ExampleEvent;
-use PhpSpec\Formatter\Html\ReportItem;
 use PhpSpec\Formatter\Html\ReportItemFactory;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\Listener\StatisticsCollector;
@@ -27,7 +27,7 @@ class HtmlFormatterSpec extends ObjectBehavior
     }
 
     function it_delegates_the_reporting_to_the_event_type_line_reporter(
-        ExampleEvent $event, ReportItem $item, ReportItemFactory $factory,
+        ExampleEvent $event, ReportPassedItem $item, ReportItemFactory $factory,
         Presenter $presenter)
     {
         $factory->create($event, $presenter)->willReturn($item);

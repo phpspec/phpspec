@@ -27,29 +27,11 @@ class ResourceLoader
 {
     use DispatchTrait;
 
-    /**
-     * @var ResourceManager
-     */
-    private $manager;
-
-    /**
-     * @var MethodAnalyser
-     */
-    private $methodAnalyser;
-
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $eventDispatcher;
-
     public function __construct(
-        ResourceManager $manager,
-        MethodAnalyser $methodAnalyser,
-        EventDispatcherInterface $eventDispatcher
+        private ResourceManager $manager,
+        private MethodAnalyser $methodAnalyser,
+        private EventDispatcherInterface $eventDispatcher
     ) {
-        $this->manager = $manager;
-        $this->methodAnalyser = $methodAnalyser;
-        $this->eventDispatcher = $eventDispatcher;
     }
 
     public function load(string $locator = '', int $line = null): Suite
@@ -117,7 +99,7 @@ class ResourceLoader
         return $line >= $method->getStartLine() && $line <= $method->getEndLine();
     }
 
-    private function addErrorThrowingExampleToSuite(Resource $resource, Suite $suite, \Error $error)
+    private function addErrorThrowingExampleToSuite(Resource $resource, Suite $suite, \Error $error) : void
     {
         $reflection = new ReflectionClass(ErrorSpecification::class);
         $spec = new Node\SpecificationNode($resource->getSrcClassname(), $reflection, $resource);

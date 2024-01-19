@@ -19,35 +19,25 @@ use PhpSpec\Exception\Example\FailureException;
 
 final class ComparisonMatcher extends BasicMatcher
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-
-    
-    public function __construct(Presenter $presenter)
+    public function __construct(
+        private Presenter $presenter
+    )
     {
-        $this->presenter = $presenter;
     }
 
-    
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return 'beLike' === $name
             && 1 == \count($arguments)
         ;
     }
 
-    
-    protected function matches($subject, array $arguments): bool
+    protected function matches(mixed $subject, array $arguments): bool
     {
         return $subject == $arguments[0];
     }
 
-    /**
-     * @return NotEqualException
-     */
-    protected function getFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getFailureException(string $name, mixed $subject, array $arguments): NotEqualException
     {
         return new NotEqualException(sprintf(
             'Expected %s, but got %s.',
@@ -56,8 +46,7 @@ final class ComparisonMatcher extends BasicMatcher
         ), $arguments[0], $subject);
     }
 
-    
-    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getNegativeFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Did not expect %s, but got one.',

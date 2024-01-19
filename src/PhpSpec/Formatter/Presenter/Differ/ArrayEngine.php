@@ -21,19 +21,18 @@ final class ArrayEngine extends StringEngine
 
     private const PAD_STRING = ' ';
 
-    private $exporter;
-
-    public function __construct(Exporter $exporter)
+    public function __construct(
+        private Exporter $exporter
+    )
     {
-        $this->exporter = $exporter;
     }
 
-    public function supports($expected, $actual): bool
+    public function supports(mixed $expected, mixed $actual): bool
     {
         return \is_array($expected) && \is_array($actual);
     }
 
-    public function compare($expected, $actual): string
+    public function compare(mixed $expected, mixed $actual): string
     {
         $expectedString = $this->convertArrayToString($expected);
         $actualString = $this->convertArrayToString($actual);
@@ -41,7 +40,7 @@ final class ArrayEngine extends StringEngine
         return parent::compare($expectedString, $actualString);
     }
 
-    private function convertArrayToString(array $a, $pad = 1): string
+    private function convertArrayToString(array $a, int $pad = 1): string
     {
         $str = str_pad('', $pad * self::PAD_SIZE, self::PAD_STRING) . '[';
         foreach ($a as $key => $val) {

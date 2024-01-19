@@ -13,8 +13,10 @@
 
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
+use PhpSpec\Wrapper\DelayedCall;
+use PhpSpec\Wrapper\Subject\Expectation\DuringCall;
+
 interface Expectation
 {
-    
-    public function match(string $alias, $subject, array $arguments = array());
+    public function match(string $alias, mixed $subject, array $arguments = array()) : DuringCall|DelayedCall|bool|null;
 }

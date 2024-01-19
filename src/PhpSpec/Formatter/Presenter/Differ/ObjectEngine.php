@@ -17,33 +17,19 @@ use SebastianBergmann\Exporter\Exporter;
 
 final class ObjectEngine implements DifferEngine
 {
-    /**
-     * @var Exporter
-     */
-    private $exporter;
-    /**
-     * @var StringEngine
-     */
-    private $stringDiffer;
-
-    
-    public function __construct(Exporter $exporter, StringEngine $stringDiffer)
+    public function __construct(
+        private Exporter $exporter,
+        private StringEngine $stringDiffer
+    )
     {
-        $this->exporter = $exporter;
-        $this->stringDiffer = $stringDiffer;
     }
 
-    
-    public function supports($expected, $actual): bool
+    public function supports(mixed $expected, mixed $actual): bool
     {
         return \is_object($expected) && \is_object($actual);
     }
 
-    /**
-     * @param object $expected
-     * @param object $actual
-     */
-    public function compare($expected, $actual): string
+    public function compare(mixed $expected, mixed$actual): string
     {
         return $this->stringDiffer->compare(
             $this->exporter->export($expected),

@@ -18,18 +18,12 @@ use PhpSpec\CodeAnalysis\TypeHintRewriter as TypeHintRewriterInterface;
 
 final class TypeHintRewriter implements SpecTransformer
 {
-    /**
-     * @var TypeHintRewriterInterface
-     */
-    private $rewriter;
-
-    
-    public function __construct(TypeHintRewriterInterface $rewriter)
+    public function __construct(
+        private TypeHintRewriterInterface $rewriter
+    )
     {
-        $this->rewriter = $rewriter;
     }
 
-    
     public function transform(string $spec): string
     {
         return $this->rewriter->rewrite($spec);

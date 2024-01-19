@@ -7,17 +7,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class BootstrapListener implements EventSubscriberInterface
 {
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
-
-    public function __construct(ConsoleIO $io)
+    public function __construct(
+        private ConsoleIO $io
+    )
     {
-        $this->io = $io;
     }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents() : array
     {
         return array('beforeSuite' => array('beforeSuite', 1100));
     }

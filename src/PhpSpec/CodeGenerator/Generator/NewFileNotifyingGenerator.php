@@ -12,27 +12,11 @@ final class NewFileNotifyingGenerator implements Generator
 {
     use DispatchTrait;
 
-    /**
-     * @var Generator
-     */
-    private $generator;
-
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
-
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
-
-    
-    public function __construct(Generator $generator, EventDispatcherInterface $dispatcher, Filesystem $filesystem)
+    public function __construct(
+        private Generator $generator,
+        private EventDispatcherInterface $dispatcher,
+        private Filesystem $filesystem)
     {
-        $this->generator = $generator;
-        $this->dispatcher = $dispatcher;
-        $this->filesystem = $filesystem;
     }
 
     public function supports(Resource $resource, string $generation, array $data): bool

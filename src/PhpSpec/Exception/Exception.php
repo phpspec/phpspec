@@ -20,18 +20,14 @@ use ReflectionFunctionAbstract;
  */
 class Exception extends \Exception
 {
-    /**
-     * @var ReflectionFunctionAbstract
-     */
-    private $cause;
+    private ?ReflectionFunctionAbstract $cause;
 
-    
-    public function getCause(): ReflectionFunctionAbstract
+    public function getCause(): ?ReflectionFunctionAbstract
     {
         return $this->cause;
     }
 
-    
+
     public function setCause(ReflectionFunctionAbstract $cause): void
     {
         $this->cause = $cause;

@@ -32,27 +32,15 @@ class ExampleRunner
 {
     use DispatchTrait;
 
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-    /**
-     * @var Maintainer[]
-     */
-    private $maintainers = array();
+    private array $maintainers = [];
 
-    
-    public function __construct(EventDispatcherInterface $dispatcher, Presenter $presenter)
+    public function __construct(
+        private EventDispatcherInterface $dispatcher,
+        private Presenter $presenter
+    )
     {
-        $this->dispatcher = $dispatcher;
-        $this->presenter  = $presenter;
     }
 
-    
     public function registerMaintainer(Maintainer $maintainer): void
     {
         $this->maintainers[] = $maintainer;
@@ -62,7 +50,6 @@ class ExampleRunner
         });
     }
 
-    
     public function run(ExampleNode $example): int
     {
         $startTime = microtime(true);
@@ -182,7 +169,7 @@ class ExampleRunner
      *
      * @return Maintainer[]
      */
-    private function searchExceptionMaintainers(array $maintainers)
+    private function searchExceptionMaintainers(array $maintainers) : array
     {
         return array_filter(
             $maintainers,

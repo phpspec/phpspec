@@ -24,36 +24,15 @@ use PhpSpec\Locator\Resource;
  */
 abstract class PromptingGenerator implements Generator
 {
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
-
-    /**
-     * @var TemplateRenderer
-     */
-    private $templates;
-
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
-
-    /**
-     * @var ExecutionContext
-     */
-    private $executionContext;
-
-    
-    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, ExecutionContext $executionContext)
+    public function __construct(
+        private ConsoleIO $io,
+        private TemplateRenderer $templates,
+        private Filesystem $filesystem,
+        private ExecutionContext $executionContext
+    )
     {
-        $this->io         = $io;
-        $this->templates  = $templates;
-        $this->filesystem = $filesystem;
-        $this->executionContext = $executionContext;
     }
 
-    
     public function generate(Resource $resource, array $data = array()): void
     {
         $filepath = $this->getFilePath($resource);
@@ -80,7 +59,7 @@ abstract class PromptingGenerator implements Generator
 
     abstract protected function renderTemplate(Resource $resource, string $filepath): string;
 
-    
+
     abstract protected function getGeneratedMessage(Resource $resource, string $filepath): string;
 
     private function fileAlreadyExists(string $filepath): bool
@@ -95,7 +74,7 @@ abstract class PromptingGenerator implements Generator
         return !$this->io->askConfirmation($message, false);
     }
 
-    private function createDirectoryIfItDoesExist(string $filepath)
+    private function createDirectoryIfItDoesExist(string $filepath) : void
     {
         $path = dirname($filepath);
         if (!$this->filesystem->isDirectory($path)) {
@@ -103,7 +82,7 @@ abstract class PromptingGenerator implements Generator
         }
     }
 
-    private function generateFileAndRenderTemplate(Resource $resource, string $filepath)
+    private function generateFileAndRenderTemplate(Resource $resource, string $filepath) : void
     {
         $content = $this->renderTemplate($resource, $filepath);
 

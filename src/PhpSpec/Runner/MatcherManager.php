@@ -20,21 +20,16 @@ use PhpSpec\Formatter\Presenter\Presenter;
 class MatcherManager
 {
     /**
-     * @var Presenter
-     */
-    private $presenter;
-    /**
      * @var Matcher[]
      */
-    private $matchers = array();
+    private array $matchers = [];
 
-    
-    public function __construct(Presenter $presenter)
+    public function __construct(
+        private Presenter $presenter
+    )
     {
-        $this->presenter = $presenter;
     }
 
-    
     public function add(Matcher $matcher): void
     {
         $this->matchers[] = $matcher;
@@ -56,7 +51,7 @@ class MatcherManager
     /**
      * @throws \PhpSpec\Exception\Wrapper\MatcherNotFoundException
      */
-    public function find(string $keyword, $subject, array $arguments): Matcher
+    public function find(string $keyword, mixed $subject, array $arguments): Matcher
     {
         foreach ($this->matchers as $matcher) {
             if (true === $matcher->supports($keyword, $subject, $arguments)) {

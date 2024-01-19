@@ -17,10 +17,7 @@ use PhpSpec\Exception\Fracture\ClassNotFoundException;
 
 class Instantiator
 {
-    /**
-     * @return object
-     */
-    public function instantiate(string $className)
+    public function instantiate(string $className) : object
     {
         if (!class_exists($className)) {
             throw new ClassNotFoundException("Class $className does not exist.", $className);

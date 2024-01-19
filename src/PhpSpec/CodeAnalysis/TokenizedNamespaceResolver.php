@@ -20,20 +20,19 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
     const STATE_READING_USE = 2;
     const STATE_READING_USE_GROUP = 3;
 
-    private $state = self::STATE_DEFAULT;
+    private int $state = self::STATE_DEFAULT;
 
-    private $currentNamespace;
-    private $currentUseGroup;
-    private $currentUse;
-    private $uses = array();
+    private string $currentNamespace = '';
+    private string $currentUseGroup = '';
+    private string $currentUse = '';
+    private array $uses = [];
 
-    
     public function analyse(string $code): void
     {
         $this->state = self::STATE_DEFAULT;
-        $this->currentUse = null;
-        $this->currentUseGroup = null;
-        $this->uses = array();
+        $this->currentUse = '';
+        $this->currentUseGroup = '';
+        $this->uses = [];
 
         $tokens = token_get_all($code);
 
@@ -52,7 +51,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
                 case self::STATE_READING_USE_GROUP:
                     if ('}' == $token) {
                         $this->state = self::STATE_READING_USE;
-                        $this->currentUseGroup = null;
+                        $this->currentUseGroup = '';
                     }
                     elseif (',' == $token) {
                         $this->storeCurrentUse();
@@ -111,7 +110,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
         return $typeAlias;
     }
 
-    private function storeCurrentUse()
+    private function storeCurrentUse() : void
     {
         if (preg_match('/\s*(.*)\s+as\s+(.*)\s*/', $this->currentUse, $matches)) {
             $this->uses[strtolower(trim($matches[2]))] = trim($matches[1]);

@@ -21,9 +21,9 @@ final class ProgressFormatter extends ConsoleFormatter
 {
     const FPS = 10;
 
-    private $lastDraw;
+    private ?float $lastDraw = null;
 
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event) : void
     {
         $this->printException($event);
 
@@ -52,7 +52,7 @@ final class ProgressFormatter extends ConsoleFormatter
         }
     }
 
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event) : void
     {
         $this->drawStats();
 
@@ -83,11 +83,7 @@ final class ProgressFormatter extends ConsoleFormatter
         $io->writeln();
     }
 
-    /**
-     * @param $total
-     * @param $counts
-     */
-    private function getPercentages($total, $counts): array
+    private function getPercentages(int $total, array $counts): array
     {
         return array_map(
             function ($count) use ($total) {
@@ -103,7 +99,6 @@ final class ProgressFormatter extends ConsoleFormatter
         );
     }
 
-    
     private function getBarLengths(array $counts): array
     {
         $stats = $this->getStatisticsCollector();
@@ -119,7 +114,6 @@ final class ProgressFormatter extends ConsoleFormatter
         return $barLengths;
     }
 
-    
     private function formatProgressOutput(array $barLengths, array $percents, bool $isDecorated): array
     {
         $size = $this->getIO()->getBlockWidth();
@@ -152,7 +146,6 @@ final class ProgressFormatter extends ConsoleFormatter
         return $progress;
     }
 
-    
     private function updateProgressBar(ConsoleIO $io, array $progress, int $total): void
     {
         if ($io->isDecorated()) {

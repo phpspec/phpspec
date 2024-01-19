@@ -15,18 +15,13 @@ namespace PhpSpec\Wrapper;
 
 class DelayedCall
 {
-    /**
-     * @var callable
-     */
-    private $callable;
+    private mixed $callable;
 
-    
     public function __construct(callable $callable)
     {
         $this->callable = $callable;
     }
 
-    
     public function __call(string $method, array $arguments)
     {
         return \call_user_func($this->callable, $method, $arguments);

@@ -16,11 +16,8 @@ namespace PhpSpec\Process\Context;
 final class JsonExecutionContext implements ExecutionContext
 {
     const ENV_NAME = 'PHPSPEC_EXECUTION_CONTEXT';
-    /**
-     * @var array
-     */
-    private $generatedTypes;
 
+    private array $generatedTypes;
 
     public static function fromEnv(array $env): JsonExecutionContext
     {
@@ -37,18 +34,15 @@ final class JsonExecutionContext implements ExecutionContext
         return $executionContext;
     }
 
-
-    public function addGeneratedType(string $type)
+    public function addGeneratedType(string $type) : void
     {
         $this->generatedTypes[] = $type;
     }
-
 
     public function getGeneratedTypes(): array
     {
         return $this->generatedTypes;
     }
-
 
     public function asEnv(): array
     {

@@ -15,12 +15,8 @@ namespace PhpSpec\Loader;
 
 class Suite implements \Countable
 {
-    /**
-     * @var array
-     */
-    private $specs = array();
+    private array $specs = [];
 
-    
     public function addSpecification(Node\SpecificationNode $spec): void
     {
         $this->specs[] = $spec;
@@ -35,7 +31,6 @@ class Suite implements \Countable
         return $this->specs;
     }
 
-    
     public function count(): int
     {
         return array_sum(array_map('count', $this->specs));

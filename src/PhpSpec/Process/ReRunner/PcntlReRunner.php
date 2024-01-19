@@ -18,15 +18,9 @@ use Symfony\Component\Process\PhpExecutableFinder;
 
 final class PcntlReRunner extends PhpExecutableReRunner
 {
-    /**
-     * @var ExecutionContext
-     */
-    private $executionContext;
+    private ExecutionContext $executionContext;
 
-    /**
-     * @return static
-     */
-    public static function withExecutionContext(PhpExecutableFinder $phpExecutableFinder, ExecutionContext $executionContext)
+    public static function withExecutionContext(PhpExecutableFinder $phpExecutableFinder, ExecutionContext $executionContext) : static
     {
         $reRunner = new static($phpExecutableFinder);
         $reRunner->executionContext = $executionContext;
@@ -34,7 +28,6 @@ final class PcntlReRunner extends PhpExecutableReRunner
         return $reRunner;
     }
 
-    
     public function isSupported(): bool
     {
         return (php_sapi_name() == 'cli')
@@ -49,7 +42,7 @@ final class PcntlReRunner extends PhpExecutableReRunner
     public function reRunSuite(): void
     {
         $args = $_SERVER['argv'];
-        $env = $this->executionContext ? $this->executionContext->asEnv() : array();
+        $env = $this->executionContext->asEnv();
 
         $env = array_filter(
             array_merge($env, $_SERVER),

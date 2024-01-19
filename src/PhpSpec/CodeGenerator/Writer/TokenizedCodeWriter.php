@@ -18,15 +18,10 @@ use PhpSpec\Util\ClassFileAnalyser;
 
 final class TokenizedCodeWriter implements CodeWriter
 {
-    /**
-     * @var ClassFileAnalyser
-     */
-    private $analyser;
-
-    
-    public function __construct(ClassFileAnalyser $analyser)
+    public function __construct(
+        private ClassFileAnalyser $analyser
+    )
     {
-        $this->analyser = $analyser;
     }
 
     public function insertMethodFirstInClass(string $class, string $method): string
@@ -125,10 +120,7 @@ final class TokenizedCodeWriter implements CodeWriter
         throw new GenerationFailed('Could not locate end of class');
     }
 
-    /**
-     * @param $token
-     */
-    private function isWritePoint($token): bool
+    private function isWritePoint(string|array $token): bool
     {
         return \is_array($token) && ($token[1] === "\n" || $token[0] === T_COMMENT);
     }
