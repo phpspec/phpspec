@@ -14,19 +14,19 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php: ["7.3", "7.4", "8.0", "8.1", "8.2", "8.3"]
+                php: ["8.2", "8.3"]
                 operating-system: [ ubuntu-latest, macOS-latest, windows-latest ]
                 composer-flags: [""]
                 composer-extras: [""]
                 stability: ["stable"]
                 include:
-                    -   php: "7.3"
+                    -   php: "8.2"
                         publish-phar: true
-                    -   php: "7.3"
+                    -   php: "8.2"
                         composer-flags: --prefer-lowest
-                    -   php: "7.3"
+                    -   php: "8.2"
                         composer-extras: "symfony/event-dispatcher ^3.4 symfony/contracts ^2.0"
-                    -   php: "8.0"
+                    -   php: "8.3"
                         operating-system: windows-latest
                     -   php: "8.2"
                     -   php: "8.3"
@@ -77,17 +77,11 @@ jobs:
                 run: ./vendor/bin/phpunit
 
             -   name: Run tests (behat)
-                if: matrix.php != '8.0' && matrix.php != '8.1' && matrix.php != '8.2'
-                run: ./vendor/bin/behat --format=progress --tags="~@php8"
-
-            -   name: Run tests (behat)
-                if: matrix.php == '8.0' || matrix.php == '8.1' || matrix.php == '8.2'
                 run: ./vendor/bin/behat --format=progress
 
             -   name: Build the PHAR
-                if: matrix.php != '8.0' && matrix.php != '8.1' && matrix.php != '8.2' && matrix.php != '8.3'
                 run: |
-                    composer config platform.php 7.3.0 &&
+                    composer config platform.php 8.2.0 &&
                     ln -s `which composer` composer.phar &&
                     make phpspec.phar
 
