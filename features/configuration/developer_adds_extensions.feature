@@ -14,7 +14,7 @@ Feature: Developer enables extensions
       {
           public function load(\PhpSpec\ServiceContainer $container, array $params)
           {
-              throw new \Exception(get_class().' enabled'. print_r($params, true));
+              throw new \Exception(get_class($this).' enabled'. print_r($params, true));
           }
       }
 
@@ -40,7 +40,7 @@ Feature: Developer enables extensions
       {
           public function load(\PhpSpec\ServiceContainer $container, array $params)
           {
-              throw new \Exception(get_class().' enabled'. print_r($params, true));
+              throw new \Exception(get_class($this).' enabled'. print_r($params, true));
           }
       }
 
@@ -64,7 +64,7 @@ Feature: Developer enables extensions
       {
           public function load(\PhpSpec\ServiceContainer $container, array $params)
           {
-              throw new \Exception(get_class().' enabled'. print_r($params, true));
+              throw new \Exception(get_class($this).' enabled'. print_r($params, true));
           }
       }
 
@@ -88,7 +88,7 @@ Feature: Developer enables extensions
       {
           public function load(\PhpSpec\ServiceContainer $container, array $params)
           {
-              throw new \Exception(get_class().' enabled'. print_r($params, true));
+              throw new \Exception(get_class($this).' enabled'. print_r($params, true));
           }
       }
 
