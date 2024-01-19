@@ -79,9 +79,9 @@ jobs:
 
             -   name: Build the PHAR
                 run: |
-                    composer config platform.php 8.2.0 &&
-                    ln -s `which composer` composer.phar &&
-                    make phpspec.phar
+                    composer bin box require --dev humbug/box
+                    ./vendor/bin/box compile
+                    ./vendor/bin/behat --profile=phar
 
             -   uses: actions/upload-artifact@v1
                 name: Publish the PHAR
