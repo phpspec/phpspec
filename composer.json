@@ -38,7 +38,7 @@
     "require-dev": {
         "behat/behat":           "^3.3",
         "symfony/filesystem":    "^5.4  || ^6.0 || ^7.0",
-        "phpunit/phpunit":       "^8.5 || ^9.0 || ^10.0",
+        "phpunit/phpunit":       "^9.0 || ^10.0",
         "vimeo/psalm":           "^4.3 || ^5.2",
         "bamarni/composer-bin-plugin": "^1.8"
     },
