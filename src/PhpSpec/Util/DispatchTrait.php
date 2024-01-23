@@ -11,12 +11,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  */
 trait DispatchTrait
 {
-    /**
-     * @param EventDispatcher $eventDispatcher
-     * @param object $event
-     * @param string $eventName
-     */
-    private function dispatch($eventDispatcher, $event, $eventName)
+    private function dispatch(object $eventDispatcher, object $event, string $eventName) : object
     {
         if ($this->isNewSymfonyContract($eventDispatcher)) {
             return $eventDispatcher->dispatch($event, $eventName);
@@ -25,7 +20,7 @@ trait DispatchTrait
         return $eventDispatcher->dispatch($eventName, $event);
     }
 
-    private function isNewSymfonyContract($eventDispatcher): bool
+    private function isNewSymfonyContract(object $eventDispatcher): bool
     {
         // This trait may be used with a double, in the tests
         if ($eventDispatcher instanceof Collaborator) {

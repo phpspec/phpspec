@@ -20,23 +20,19 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class CurrentExampleListener implements EventSubscriberInterface {
 
-    /**
-     * @var CurrentExampleTracker
-     */
-    private $currentExample;
+    public function __construct(
+        private CurrentExampleTracker $currentExample
+    )
+    {
+    }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents() : array
     {
         return array(
             'beforeExample' => array('beforeCurrentExample', -20),
             'afterExample' => array('afterCurrentExample', -20),
             'afterSuite' => array('afterSuiteEvent', -20),
         );
-    }
-
-    public function __construct(CurrentExampleTracker $currentExample)
-    {
-        $this->currentExample = $currentExample;
     }
 
     public function beforeCurrentExample(ExampleEvent $event): void

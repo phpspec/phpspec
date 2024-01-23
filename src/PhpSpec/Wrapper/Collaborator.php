@@ -17,18 +17,11 @@ use Prophecy\Prophecy\ObjectProphecy;
 
 final class Collaborator implements ObjectWrapper
 {
-    /**
-     * @var ObjectProphecy
-     */
-    private $prophecy;
-
-    
-    public function __construct(ObjectProphecy $prophecy)
+    public function __construct(
+        private ObjectProphecy $prophecy)
     {
-        $this->prophecy  = $prophecy;
     }
 
-    
     public function beADoubleOf(string $classOrInterface): void
     {
         if (interface_exists($classOrInterface)) {
@@ -38,42 +31,32 @@ final class Collaborator implements ObjectWrapper
         }
     }
 
-    /**
-     * @param array $arguments
-     */
     public function beConstructedWith(array $arguments = null): void
     {
         $this->prophecy->willBeConstructedWith($arguments);
     }
 
-    
     public function implement(string $interface): void
     {
         $this->prophecy->willImplement($interface);
     }
 
-    
     public function __call(string $method, array $arguments)
     {
         return \call_user_func_array(array($this->prophecy, '__call'), array($method, $arguments));
     }
 
-    
-    public function __set(string $parameter, $value)
+    public function __set(string $parameter, mixed $value)
     {
         $this->prophecy->$parameter = $value;
     }
 
-    
     public function __get(string $parameter)
     {
         return $this->prophecy->$parameter;
     }
 
-    /**
-     * @return object
-     */
-    public function getWrappedObject()
+    public function getWrappedObject() : object
     {
         return $this->prophecy->reveal();
     }

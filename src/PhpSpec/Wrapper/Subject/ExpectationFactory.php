@@ -26,29 +26,15 @@ use PhpSpec\Wrapper\Unwrapper;
 
 class ExpectationFactory
 {
-    /**
-     * @var ExampleNode
-     */
-    private $example;
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $dispatcher;
-    /**
-     * @var MatcherManager
-     */
-    private $matchers;
-
-    
-    public function __construct(ExampleNode $example, EventDispatcherInterface $dispatcher, MatcherManager $matchers)
+    public function __construct(
+        private ExampleNode $example,
+        private EventDispatcherInterface $dispatcher,
+        private MatcherManager $matchers
+    )
     {
-        $this->example = $example;
-        $this->dispatcher = $dispatcher;
-        $this->matchers = $matchers;
     }
 
-    
-    public function create(string $expectation, $subject, array $arguments = array()): Expectation
+    public function create(string $expectation, mixed $subject, array $arguments = array()): Expectation
     {
         if (0 === strpos($expectation, 'shouldNot')) {
             return $this->createNegative(lcfirst(substr($expectation, 9)), $subject, $arguments);
@@ -61,8 +47,7 @@ class ExpectationFactory
         throw new \RuntimeException('Could not create match');
     }
 
-    
-    private function createPositive(string $name, $subject, array $arguments = array()): Expectation
+    private function createPositive(string $name, mixed $subject, array $arguments = array()): Expectation
     {
         if (strtolower($name) === 'throw') {
             return $this->createDecoratedExpectation("PositiveThrow", $name, $subject, $arguments);
@@ -75,8 +60,7 @@ class ExpectationFactory
         return $this->createDecoratedExpectation("Positive", $name, $subject, $arguments);
     }
 
-    
-    private function createNegative(string $name, $subject, array $arguments = array()): Expectation
+    private function createNegative(string $name, mixed $subject, array $arguments = array()): Expectation
     {
         if (strtolower($name) === 'throw') {
             return $this->createDecoratedExpectation("NegativeThrow", $name, $subject, $arguments);
@@ -89,8 +73,7 @@ class ExpectationFactory
         return $this->createDecoratedExpectation("Negative", $name, $subject, $arguments);
     }
 
-    
-    private function createDecoratedExpectation(string $expectation, string $name, $subject, array $arguments): Expectation
+    private function createDecoratedExpectation(string $expectation, string $name, mixed $subject, array $arguments): Expectation
     {
         $matcher = $this->findMatcher($name, $subject, $arguments);
         $expectation = "\\PhpSpec\\Wrapper\\Subject\\Expectation\\".$expectation;
@@ -104,8 +87,7 @@ class ExpectationFactory
         return $this->decoratedExpectation($expectation, $matcher);
     }
 
-    
-    private function findMatcher(string $name, $subject, array $arguments = array()): Matcher
+    private function findMatcher(string $name, mixed $subject, array $arguments = array()): Matcher
     {
         $unwrapper = new Unwrapper();
         $arguments = $unwrapper->unwrapAll($arguments);
@@ -113,7 +95,6 @@ class ExpectationFactory
         return $this->matchers->find($name, $subject, $arguments);
     }
 
-    
     private function decoratedExpectation(Expectation $expectation, Matcher $matcher): ConstructorDecorator
     {
         $dispatcherDecorator = new DispatcherDecorator($expectation, $this->dispatcher, $matcher, $this->example);

@@ -21,7 +21,7 @@ abstract class BasicMatcher implements Matcher
     /**
      * @throws FailureException
      */
-    final public function positiveMatch(string $name, $subject, array $arguments): ?DelayedCall
+    final public function positiveMatch(string $name, mixed $subject, array $arguments): ?DelayedCall
     {
         if (false === $this->matches($subject, $arguments)) {
             throw $this->getFailureException($name, $subject, $arguments);
@@ -33,7 +33,7 @@ abstract class BasicMatcher implements Matcher
     /**
      * @throws FailureException
      */
-    final public function negativeMatch(string $name, $subject, array $arguments): ?DelayedCall
+    final public function negativeMatch(string $name, mixed $subject, array $arguments): ?DelayedCall
     {
         if (true === $this->matches($subject, $arguments)) {
             throw $this->getNegativeFailureException($name, $subject, $arguments);
@@ -42,18 +42,14 @@ abstract class BasicMatcher implements Matcher
         return null;
     }
 
-    
     public function getPriority(): int
     {
         return 100;
     }
 
-    
-    abstract protected function matches($subject, array $arguments): bool;
+    abstract protected function matches(mixed $subject, array $arguments): bool;
 
-    
-    abstract protected function getFailureException(string $name, $subject, array $arguments): FailureException;
+    abstract protected function getFailureException(string $name, mixed $subject, array $arguments): FailureException;
 
-    
-    abstract protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException;
+    abstract protected function getNegativeFailureException(string $name, mixed $subject, array $arguments): FailureException;
 }

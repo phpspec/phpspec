@@ -19,54 +19,36 @@ use ReflectionClass;
 
 class SpecificationNode implements \Countable
 {
-    /**
-     * @var string
-     */
-    private $title;
-    /**
-     * @var \ReflectionClass
-     */
-    private $class;
-    /**
-     * @var Resource
-     */
-    private $resource;
-    /**
-     * @var Suite
-     */
-    private $suite;
+    private ?Suite $suite;
+
     /**
      * @var ExampleNode[]
      */
-    private $examples = array();
+    private array $examples = [];
 
-    
-    public function __construct(string $title, ReflectionClass $class, Resource $resource)
+    public function __construct(
+        private string $title,
+        private ReflectionClass $class,
+        private Resource $resource
+    )
     {
-        $this->title    = $title;
-        $this->class    = $class;
-        $this->resource = $resource;
     }
 
-    
     public function getTitle(): string
     {
         return $this->title;
     }
 
-    
     public function getClassReflection(): ReflectionClass
     {
         return $this->class;
     }
 
-    
     public function getResource(): Resource
     {
         return $this->resource;
     }
 
-    
     public function addExample(ExampleNode $example): void
     {
         $this->examples[] = $example;
@@ -81,21 +63,16 @@ class SpecificationNode implements \Countable
         return $this->examples;
     }
 
-    
-    public function setSuite(Suite $suite)
+    public function setSuite(Suite $suite) : void
     {
         $this->suite = $suite;
     }
 
-    /**
-     * @return null|Suite
-     */
-    public function getSuite()
+    public function getSuite() : ?Suite
     {
         return $this->suite;
     }
 
-    
     public function count(): int
     {
         return \count($this->examples);

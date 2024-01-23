@@ -19,6 +19,5 @@ namespace PhpSpec;
  */
 interface Extension
 {
-    
-    public function load(ServiceContainer $container, array $params);
+    public function load(ServiceContainer $container, array $params) : void;
 }

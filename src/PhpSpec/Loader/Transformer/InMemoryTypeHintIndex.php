@@ -13,27 +13,23 @@
 
 namespace PhpSpec\Loader\Transformer;
 
+use Exception;
+
 final class InMemoryTypeHintIndex implements TypeHintIndex
 {
-    /**
-     * @var array
-     */
-    private $typehints = array();
+    private array $typehints = [];
 
-    
     public function add(string $class, string $method, string $argument, string $typehint): void
     {
         $this->store($class, $method, $argument, $typehint);
     }
 
-    
-    public function addInvalid(string $class, string $method, string $argument, \Exception $exception): void
+    public function addInvalid(string $class, string $method, string $argument, Exception $exception): void
     {
         $this->store($class, $method, $argument, $exception);
     }
 
-    
-    private function store(string $class, string $method, string $argument, $typehint): void
+    private function store(string $class, string $method, string $argument, string|Exception $typehint): void
     {
         $class = strtolower($class);
         $method = strtolower($method);
@@ -49,10 +45,7 @@ final class InMemoryTypeHintIndex implements TypeHintIndex
         $this->typehints[$class][$method][$argument] = $typehint;
     }
 
-    /**
-     * @return ?string
-     */
-    public function lookup(string $class, string $method, string $argument)
+    public function lookup(string $class, string $method, string $argument) : ?string
     {
         $class = strtolower($class);
         $method = strtolower($method);
@@ -62,7 +55,7 @@ final class InMemoryTypeHintIndex implements TypeHintIndex
             return null;
         }
 
-        if ($this->typehints[$class][$method][$argument] instanceof \Exception) {
+        if ($this->typehints[$class][$method][$argument] instanceof Exception) {
             throw $this->typehints[$class][$method][$argument];
         };
 

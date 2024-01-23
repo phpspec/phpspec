@@ -15,19 +15,16 @@ namespace PhpSpec\Formatter\Presenter\Value;
 
 final class QuotingStringTypePresenter implements StringTypePresenter
 {
-    
-    public function supports($value): bool
+    public function supports(mixed $value): bool
     {
         return 'string' === strtolower(\gettype($value));
     }
 
-    
-    public function present($value): string
+    public function present(mixed $value): string
     {
         return sprintf('"%s"', $value);
     }
 
-    
     public function getPriority(): int
     {
         return 10;

@@ -21,23 +21,14 @@ use PhpSpec\Util\Filesystem;
  */
 class TemplateRenderer
 {
-    /**
-     * @var array
-     */
-    private $locations = array();
+    private array $locations = [];
 
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
-
-    
-    public function __construct(Filesystem $filesystem)
+    public function __construct(
+        private Filesystem $filesystem
+    )
     {
-        $this->filesystem = $filesystem;
     }
 
-    
     public function setLocations(array $locations): void
     {
         $this->locations = array_map(array($this, 'normalizeLocation'), $locations);

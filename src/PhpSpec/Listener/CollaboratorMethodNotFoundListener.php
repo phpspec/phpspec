@@ -29,49 +29,18 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
 {
     const PROMPT = 'Would you like me to generate a method signature `%s::%s()` for you?';
 
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
+    private array $interfaces = [];
 
-    /**
-     * @var array
-     */
-    private $interfaces = array();
-
-    /**
-     * @var ResourceManager
-     */
-    private $resources;
-
-    /**
-     * @var GeneratorManager
-     */
-    private $generator;
-
-    /**
-     * @var NameChecker
-     */
-    private $nameChecker;
-
-    /**
-     * @var array
-     */
-    private $wrongMethodNames = array();
-
+    private array $wrongMethodNames = [];
 
     public function __construct(
-        ConsoleIO $io,
-        ResourceManager $resources,
-        GeneratorManager $generator,
-        NameChecker $nameChecker
-    ) {
-        $this->io = $io;
-        $this->resources = $resources;
-        $this->generator = $generator;
-        $this->nameChecker = $nameChecker;
+        private ConsoleIO $io,
+        private ResourceManager $resources,
+        private GeneratorManager $generator,
+        private NameChecker $nameChecker
+    )
+    {
     }
-
 
     public static function getSubscribedEvents(): array
     {
@@ -80,7 +49,6 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
             'afterSuite' => array('afterSuite', -10)
         );
     }
-
 
     public function afterExample(ExampleEvent $event): void
     {
@@ -115,30 +83,24 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         $this->checkIfMethodNameAllowed($methodName);
     }
 
-    /**
-     * @param mixed $class
-     * @return mixed
-     */
-    private function getDoubledInterface($class)
+    private function getDoubledInterface(mixed $class) : mixed
     {
         if (class_parents($class) !== array(\stdClass::class=>\stdClass::class)) {
-            return;
+            return null;
         }
 
         $interfaces = array_filter(class_implements($class),
-            /** @param string $interface */
-            function ($interface) {
+            function (string $interface) {
                 return !preg_match('/^Prophecy/', $interface);
             }
         );
 
         if (\count($interfaces) !== 1) {
-            return;
+            return null;
         }
 
         return current($interfaces);
     }
-
 
     public function afterSuite(SuiteEvent $event): void
     {
@@ -174,11 +136,7 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         }
     }
 
-
-    /**
-     * @param mixed $prophecyArguments
-     */
-    private function getRealArguments($prophecyArguments): array
+    private function getRealArguments(mixed $prophecyArguments): array
     {
         if ($prophecyArguments instanceof ArgumentsWildcard) {
             return $prophecyArguments->getTokens();
@@ -187,23 +145,18 @@ final class CollaboratorMethodNotFoundListener implements EventSubscriberInterfa
         return array();
     }
 
-    /**
-     * @psalm-suppress InvalidReturnType
-     * @return MethodNotFoundException|void
-     */
-    private function getMethodNotFoundException(ExampleEvent $event)
+    private function getMethodNotFoundException(ExampleEvent $event) : ?MethodNotFoundException
     {
         if ($this->io->isCodeGenerationEnabled()
             && ($exception = $event->getException())
             && $exception instanceof MethodNotFoundException) {
             return $exception;
         }
+
+        return null;
     }
 
-    /**
-     * @param string $methodName
-     */
-    private function checkIfMethodNameAllowed($methodName): void
+    private function checkIfMethodNameAllowed(string $methodName): void
     {
         if (!$this->nameChecker->isNameValid($methodName)) {
             $this->wrongMethodNames[] = $methodName;

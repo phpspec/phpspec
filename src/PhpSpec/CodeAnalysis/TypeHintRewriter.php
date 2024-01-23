@@ -15,6 +15,5 @@ namespace PhpSpec\CodeAnalysis;
 
 interface TypeHintRewriter
 {
-    
     public function rewrite(string $classDefinition): string;
 }

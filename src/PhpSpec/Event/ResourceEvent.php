@@ -17,14 +17,10 @@ use PhpSpec\Locator\Resource;
 
 class ResourceEvent extends BaseEvent implements PhpSpecEvent
 {
-    /**
-     * @var Resource
-     */
-    private $resource;
-
-    private function __construct(Resource $resource)
+    private function __construct(
+        private Resource $resource
+    )
     {
-        $this->resource = $resource;
     }
 
     public static function ignored(Resource $resource): self

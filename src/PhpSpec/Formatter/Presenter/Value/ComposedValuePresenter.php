@@ -18,10 +18,9 @@ final class ComposedValuePresenter implements ValuePresenter
     /**
      * @var TypePresenter[]
      */
-    private $typePresenters = array();
+    private array $typePresenters = [];
 
-    
-    public function addTypePresenter(TypePresenter $typePresenter)
+    public function addTypePresenter(TypePresenter $typePresenter) : void
     {
         $this->typePresenters[] = $typePresenter;
 
@@ -30,8 +29,7 @@ final class ComposedValuePresenter implements ValuePresenter
         });
     }
 
-    
-    public function presentValue($value): string
+    public function presentValue(mixed $value): string
     {
         foreach ($this->typePresenters as $typePresenter) {
             if ($typePresenter->supports($value)) {

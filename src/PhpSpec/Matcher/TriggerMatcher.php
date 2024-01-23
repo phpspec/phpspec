@@ -21,47 +21,30 @@ use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
 final class TriggerMatcher implements Matcher
 {
-    /**
-     * @var Unwrapper
-     */
-    private $unwrapper;
-
-
-    public function __construct(Unwrapper $unwrapper)
+    public function __construct(
+        private Unwrapper $unwrapper
+    )
     {
-        $this->unwrapper = $unwrapper;
     }
 
-
-    /**
-     * @param mixed $subject
-     */
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return 'trigger' === $name;
     }
-
-    /**
-     * @param mixed $subject
-     */
-    public function positiveMatch(string $name, $subject, array $arguments): DelayedCall
+    public function positiveMatch(string $name, mixed $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyPositive'), $subject, $arguments);
     }
 
-    /**
-     * @param mixed $subject
-     */
-    public function negativeMatch(string $name, $subject, array $arguments): DelayedCall
+    public function negativeMatch(string $name, mixed $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyNegative'), $subject, $arguments);
     }
 
     /**
      * @throws \PhpSpec\Exception\Example\FailureException
-     * @return void
      */
-    public function verifyPositive(callable $callable, array $arguments, int $level = null, string $message = null)
+    public function verifyPositive(callable $callable, array $arguments, int $level = null, string $message = null) : void
     {
         $triggered = 0;
         $prevHandler = function($type, $str, $file, $line, $context=[]){};
@@ -89,9 +72,8 @@ final class TriggerMatcher implements Matcher
 
     /**
      * @throws \PhpSpec\Exception\Example\FailureException
-     * @return void
      */
-    public function verifyNegative(callable $callable, array $arguments, int $level = null, string $message = null)
+    public function verifyNegative(callable $callable, array $arguments, int $level = null, string $message = null) : void
     {
         $triggered = 0;
         $prevHandler = function($type, $str, $file, $line, $context=[]){};
@@ -129,21 +111,13 @@ final class TriggerMatcher implements Matcher
         return 1;
     }
 
-    /**
-     * @param mixed $subject
-     */
-    private function getDelayedCall(callable $check, $subject, array $arguments): DelayedCall
+    private function getDelayedCall(callable $check, mixed $subject, array $arguments): DelayedCall
     {
         $unwrapper = $this->unwrapper;
         list($level, $message) = $this->unpackArguments($arguments);
 
         return new DelayedCall(
-            /**
-             * @param mixed $method
-             * @param mixed $arguments
-             * @return mixed
-             */
-            function ($method, $arguments) use ($check, $subject, $level, $message, $unwrapper) {
+            function (mixed $method, mixed $arguments) use ($check, $subject, $level, $message, $unwrapper) : mixed {
                 $arguments = $unwrapper->unwrapAll($arguments);
 
                 $methodName = $arguments[0];
@@ -164,7 +138,6 @@ final class TriggerMatcher implements Matcher
             }
         );
     }
-
 
     private function unpackArguments(array $arguments): array
     {

@@ -24,20 +24,15 @@ use Prophecy\Exception\Doubler\ClassNotFoundException as ProphecyClassException;
 
 final class ClassNotFoundListener implements EventSubscriberInterface
 {
-    private $io;
-    private $resources;
-    private $generator;
-    private $classes = array();
+    private array $classes = [];
 
-    
-    public function __construct(ConsoleIO $io, ResourceManager $resources, GeneratorManager $generator)
+    public function __construct(
+        private ConsoleIO $io,
+        private ResourceManager $resources,
+        private GeneratorManager $generator)
     {
-        $this->io        = $io;
-        $this->resources = $resources;
-        $this->generator = $generator;
     }
 
-    
     public static function getSubscribedEvents(): array
     {
         return array(
@@ -46,8 +41,7 @@ final class ClassNotFoundListener implements EventSubscriberInterface
         );
     }
 
-    
-    public function afterExample(ExampleEvent $event)
+    public function afterExample(ExampleEvent $event) : void
     {
         if (null === $exception = $event->getException()) {
             return;
@@ -61,8 +55,7 @@ final class ClassNotFoundListener implements EventSubscriberInterface
         $this->classes[$exception->getClassname()] = true;
     }
 
-    
-    public function afterSuite(SuiteEvent $event)
+    public function afterSuite(SuiteEvent $event) : void
     {
         if (!$this->io->isCodeGenerationEnabled()) {
             return;

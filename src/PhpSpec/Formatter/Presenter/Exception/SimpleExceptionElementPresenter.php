@@ -18,24 +18,13 @@ use PhpSpec\Formatter\Presenter\Value\ValuePresenter;
 
 final class SimpleExceptionElementPresenter implements ExceptionElementPresenter
 {
-    /**
-     * @var ExceptionTypePresenter
-     */
-    private $exceptionTypePresenter;
-
-    /**
-     * @var ValuePresenter
-     */
-    private $valuePresenter;
-
-    
-    public function __construct(ExceptionTypePresenter $exceptionTypePresenter, ValuePresenter $valuePresenter)
+    public function __construct(
+        private ExceptionTypePresenter $exceptionTypePresenter,
+        private ValuePresenter $valuePresenter
+    )
     {
-        $this->exceptionTypePresenter = $exceptionTypePresenter;
-        $this->valuePresenter = $valuePresenter;
     }
 
-    
     public function presentExceptionThrownMessage(\Exception $exception): string
     {
         return sprintf(
@@ -44,37 +33,31 @@ final class SimpleExceptionElementPresenter implements ExceptionElementPresenter
         );
     }
 
-    
     public function presentCodeLine(string $number, string $line): string
     {
         return sprintf('%s %s', $number, $line);
     }
 
-    
     public function presentHighlight(string $line): string
     {
         return $line;
     }
 
-    
     public function presentExceptionTraceHeader(string $header): string
     {
         return $header;
     }
 
-    
     public function presentExceptionTraceMethod(string $class, string $type, string $method, array $args): string
     {
         return sprintf('   %s%s%s(%s)', $class, $type, $method, $this->presentExceptionTraceArguments($args));
     }
 
-    
     public function presentExceptionTraceFunction(string $function, array $args): string
     {
         return sprintf('   %s(%s)', $function, $this->presentExceptionTraceArguments($args));
     }
 
-    
     private function presentExceptionTraceArguments(array $args): string
     {
         return implode(', ', array_map(array($this->valuePresenter, 'presentValue'), $args));

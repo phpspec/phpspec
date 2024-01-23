@@ -11,12 +11,11 @@ use PhpSpec\Event\SuiteEvent;
 
 class TeamCityFormatter extends BasicFormatter
 {
-    /** @var string|null */
-    private $startedTestName = null;
-    /** @var bool */
-    private $isSummaryTestCountPrinted = false;
-    /** @var false|int */
-    private $flowId;
+    private ?string $startedTestName = null;
+
+    private bool $isSummaryTestCountPrinted = false;
+
+    private int|false $flowId = false;
 
     private function startTest(ExampleEvent $event): void
     {
@@ -94,9 +93,6 @@ class TeamCityFormatter extends BasicFormatter
         );
     }
 
-    /**
-     * @param float $time microseconds
-     */
     private function toMilliseconds(float $time): int
     {
         return (int)round($time * 1000);
@@ -168,9 +164,6 @@ class TeamCityFormatter extends BasicFormatter
         );
     }
 
-    /**
-     * @param SuiteEvent $event
-     */
     public function afterSuite(SuiteEvent $event): void
     {
         $this->printEvent(
@@ -189,9 +182,6 @@ class TeamCityFormatter extends BasicFormatter
         $this->startTest($event);
     }
 
-    /**
-     * @param ExampleEvent $event
-     */
     public function afterExample(ExampleEvent $event): void
     {
         switch ($event->getResult()) {
@@ -231,9 +221,6 @@ class TeamCityFormatter extends BasicFormatter
         $this->endTest($event);
     }
 
-    /**
-     * @param SpecificationEvent $event
-     */
     public function beforeSpecification(SpecificationEvent $event): void
     {
         $suiteName = $event->getSpecification()->getResource()->getSpecClassname();
@@ -249,9 +236,6 @@ class TeamCityFormatter extends BasicFormatter
         $this->printEvent('testSuiteStarted', $parameters);
     }
 
-    /**
-     * @param SpecificationEvent $event
-     */
     public function afterSpecification(SpecificationEvent $event): void
     {
         $suiteName = $event->getSpecification()->getResource()->getSpecClassname();

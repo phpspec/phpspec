@@ -22,35 +22,20 @@ use PhpSpec\ServiceContainer;
  */
 final class IndexedServiceContainer implements ServiceContainer
 {
-    /**
-     * @var array
-     */
-    private $parameters = [];
+    private array $parameters = [];
 
-    /**
-     * @var array
-     */
-    private $definitions = [];
+    private array $definitions = [];
 
-    /**
-     * @var array
-     */
-    private $services = [];
+    private array $services = [];
 
-    /**
-     * @var array
-     */
-    private $tags = [];
+    private array $tags = [];
 
-    /**
-     * @var array
-     */
-    private $configurators = [];
+    private array $configurators = [];
 
     /**
      * Sets a param in the container
      */
-    public function setParam(string $id, $value): void
+    public function setParam(string $id, mixed $value): void
     {
         $this->parameters[$id] = $value;
     }
@@ -58,7 +43,7 @@ final class IndexedServiceContainer implements ServiceContainer
     /**
      * Gets a param from the container or a default value.
      */
-    public function getParam(string $id, $default = null)
+    public function getParam(string $id, mixed $default = null) : mixed
     {
         return $this->parameters[$id] ?? $default;
     }
@@ -66,19 +51,10 @@ final class IndexedServiceContainer implements ServiceContainer
     /**
      * Sets a object to be used as a service
      *
-     * @param object $service
-     *
      * @throws \InvalidArgumentException if service is not an object
      */
-    public function set(string $id, $service, array $tags = []): void
+    public function set(string $id, object $service, array $tags = []): void
     {
-        if (!\is_object($service)) {
-            throw new InvalidArgumentException(sprintf(
-                'Service should be an object, but %s given.',
-                \gettype($service)
-            ));
-        }
-
         $this->services[$id] = $service;
         unset($this->definitions[$id]);
 
@@ -100,12 +76,9 @@ final class IndexedServiceContainer implements ServiceContainer
     /**
      * Retrieves a service from the container
      *
-     *
-     * @return object
-     *
      * @throws \InvalidArgumentException if service is not defined
      */
-    public function get(string $id)
+    public function get(string $id) : object
     {
         if (!array_key_exists($id, $this->services)) {
             if (!array_key_exists($id, $this->definitions)) {

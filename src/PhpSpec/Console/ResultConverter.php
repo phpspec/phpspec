@@ -23,7 +23,7 @@ class ResultConverter
     /**
      * Convert Example result into exit code
      */
-    public function convert($result): int
+    public function convert(int $result): int
     {
         switch ($result) {
             case ExampleEvent::PASSED:

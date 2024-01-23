@@ -20,21 +20,14 @@ use PhpSpec\Wrapper\DelayedCall;
 
 final class StartIteratingAsMatcher implements Matcher
 {
-    /**
-     * @var IterablesMatcher
-     */
-    private $iterablesMatcher;
+    private IterablesMatcher $iterablesMatcher;
 
-    
     public function __construct(Presenter $presenter)
     {
         $this->iterablesMatcher = new IterablesMatcher($presenter);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return \in_array($name, ['startIteratingAs', 'startYielding'])
             && 1 === \count($arguments)
@@ -43,10 +36,7 @@ final class StartIteratingAsMatcher implements Matcher
         ;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall
+    public function positiveMatch(string $name, mixed $subject, array $arguments) : ?DelayedCall
     {
         try {
             $this->iterablesMatcher->match($subject, $arguments[0]);
@@ -59,10 +49,7 @@ final class StartIteratingAsMatcher implements Matcher
         return null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall
+    public function negativeMatch(string $name, mixed $subject, array $arguments) : ?DelayedCall
     {
         try {
             $this->positiveMatch($name, $subject, $arguments);
@@ -73,9 +60,6 @@ final class StartIteratingAsMatcher implements Matcher
         throw new FailureException('Expected subject not to start iterating the same as matched value, but it does.');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getPriority(): int
     {
         return 100;

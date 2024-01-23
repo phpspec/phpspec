@@ -13,6 +13,7 @@
 
 namespace PhpSpec\Event;
 
+use Exception;
 use PhpSpec\Loader\Node\SpecificationNode;
 use PhpSpec\Loader\Suite;
 use PhpSpec\Loader\Node\ExampleNode;
@@ -47,95 +48,56 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
      */
     const BROKEN  = 4;
 
-    /**
-     * @var ExampleNode
-     */
-    private $example;
-
-    /**
-     * @var float
-     */
-    private $time;
-
-    /**
-     * @var int
-     */
-    private $result;
-
-    /**
-     * @var \Exception
-     */
-    private $exception;
-
-    /**
-     * @param null|float   $time
-     * @param null|int $result
-     * @param \Exception   $exception
-     */
     public function __construct(
-        ExampleNode $example,
-        float $time = 0.0,
-        int $result = self::PASSED,
-        \Exception $exception = null
-    ) {
-        $this->example   = $example;
-        $this->time      = $time;
-        $this->result    = $result;
-        $this->exception = $exception;
+        private ExampleNode $example,
+        private float $time = 0.0,
+        private int $result = self::PASSED,
+        private ?Exception $exception = null
+    )
+    {
     }
 
-    
     public function getExample(): ExampleNode
     {
         return $this->example;
     }
 
-    
     public function getSpecification(): SpecificationNode
     {
         return $this->example->getSpecification();
     }
 
-    
     public function getSuite(): Suite
     {
         return $this->getSpecification()->getSuite();
     }
 
-    
     public function getTitle(): string
     {
         return $this->example->getTitle();
     }
 
-    
     public function getMessage(): string
     {
         return $this->exception->getMessage();
     }
 
-    
     public function getBacktrace(): array
     {
         return $this->exception->getTrace();
     }
 
-    
     public function getTime(): float
     {
         return $this->time;
     }
 
-    
     public function getResult(): int
     {
         return $this->result;
     }
 
-    /**
-     * @return null|\Exception
-     */
-    public function getException()
+    public function getException() : ?Exception
     {
         return $this->exception;
     }

@@ -19,44 +19,27 @@ namespace PhpSpec\Exception\Fracture;
  */
 abstract class MethodInvocationException extends FractureException
 {
-    
-    private $subject;
-
-    /**
-     * @var string
-     */
-    private $method;
-
-    /**
-     * @var array
-     */
-    private $arguments;
-
-    /**
-     * @param string $method
-     */
-    public function __construct(string $message, $subject, $method, array $arguments = array())
+    public function __construct(
+        string $message,
+        private object $subject,
+        private string $method,
+        private array $arguments = array()
+    )
     {
         parent::__construct($message);
-
-        $this->subject   = $subject;
-        $this->method    = $method;
-        $this->arguments = $arguments;
     }
 
-    
-    public function getSubject()
+    public function getSubject() : object
     {
         return $this->subject;
     }
 
-    
     public function getMethodName(): string
     {
         return $this->method;
     }
 
-    
+
     public function getArguments(): array
     {
         return $this->arguments;

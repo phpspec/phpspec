@@ -21,7 +21,7 @@ Feature: Developer uses bootstrap config key in any place
 
     class Extension implements PhpSpecExtension
     {
-        public function load(ServiceContainer $container, array $params)
+        public function load(ServiceContainer $container, array $params) : void
         {
             $container->get('console.io');
         }

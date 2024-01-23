@@ -20,27 +20,14 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class RerunListener implements EventSubscriberInterface
 {
-    /**
-     * @var ReRunner
-     */
-    private $reRunner;
-
-    /**
-     * @var PrerequisiteTester
-     */
-    private $suitePrerequisites;
-
-    
-    public function __construct(ReRunner $reRunner, PrerequisiteTester $suitePrerequisites)
+    public function __construct(
+        private ReRunner $reRunner,
+        private PrerequisiteTester $suitePrerequisites
+    )
     {
-        $this->reRunner = $reRunner;
-        $this->suitePrerequisites = $suitePrerequisites;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents() : array
     {
         return array(
             'beforeSuite' => array('beforeSuite', 1000),
@@ -48,13 +35,13 @@ final class RerunListener implements EventSubscriberInterface
         );
     }
 
-    
+
     public function beforeSuite(SuiteEvent $suiteEvent): void
     {
         $this->suitePrerequisites->guardPrerequisites();
     }
 
-    
+
     public function afterSuite(SuiteEvent $suiteEvent): void
     {
         if ($suiteEvent->isWorthRerunning()) {

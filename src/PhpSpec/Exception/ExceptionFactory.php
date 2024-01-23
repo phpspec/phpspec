@@ -22,18 +22,12 @@ use PhpSpec\Util\Instantiator;
  */
 class ExceptionFactory
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-
-    
-    public function __construct(Presenter $presenter)
+    public function __construct(
+        private Presenter $presenter
+    )
     {
-        $this->presenter = $presenter;
     }
 
-    
     public function namedConstructorNotFound(string $classname, string $method, array $arguments = array()): Fracture\NamedConstructorNotFoundException
     {
         $instantiator = new Instantiator();
@@ -49,7 +43,6 @@ class ExceptionFactory
         );
     }
 
-    
     public function methodNotFound(string $classname, string $method, array $arguments = array()): Fracture\MethodNotFoundException
     {
         $instantiator = new Instantiator();
@@ -64,7 +57,6 @@ class ExceptionFactory
         );
     }
 
-    
     public function methodNotVisible(string $classname, string $method, array $arguments = array()): Fracture\MethodNotVisibleException
     {
         $instantiator = new Instantiator();
@@ -79,7 +71,6 @@ class ExceptionFactory
         );
     }
 
-    
     public function classNotFound(string $classname): Fracture\ClassNotFoundException
     {
         $message = sprintf('Class %s does not exist.', $this->presenter->presentString($classname));
@@ -87,17 +78,13 @@ class ExceptionFactory
         return new Fracture\ClassNotFoundException($message, $classname);
     }
 
-    /**
-     * @param string $property
-     */
-    public function propertyNotFound($subject, $property): Fracture\PropertyNotFoundException
+    public function propertyNotFound(object $subject, string $property): Fracture\PropertyNotFoundException
     {
         $message = sprintf('Property %s not found.', $this->presenter->presentString($property));
 
         return new Fracture\PropertyNotFoundException($message, $subject, $property);
     }
 
-    
     public function callingMethodOnNonObject(string $method): SubjectException
     {
         return new SubjectException(sprintf(
@@ -106,7 +93,6 @@ class ExceptionFactory
         ));
     }
 
-    
     public function settingPropertyOnNonObject(string $property): SubjectException
     {
         return new SubjectException(sprintf(
@@ -115,7 +101,6 @@ class ExceptionFactory
         ));
     }
 
-    
     public function gettingPropertyOnNonObject(string $property): SubjectException
     {
         return new SubjectException(sprintf(

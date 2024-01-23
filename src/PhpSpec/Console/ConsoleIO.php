@@ -27,51 +27,19 @@ class ConsoleIO implements IO
     const COL_DEFAULT_WIDTH = 60;
     const COL_MAX_WIDTH = 80;
 
-    /**
-     * @var InputInterface
-     */
-    private $input;
+    private string $lastMessage = '';
 
-    /**
-     * @var OutputInterface
-     */
-    private $output;
+    private bool $hasTempString = false;
 
-    /**
-     * @var string
-     */
-    private $lastMessage;
-
-    /**
-     * @var bool
-     */
-    private $hasTempString = false;
-
-    /**
-      * @var OptionsConfig
-      */
-    private $config;
-
-    /**
-     * @var int
-     */
-    private $consoleWidth;
-
-    /**
-     * @var Prompter
-     */
-    private $prompter;
+    private int $consoleWidth = 0;
 
     public function __construct(
-        InputInterface $input,
-        OutputInterface $output,
-        OptionsConfig $config,
-        Prompter $prompter
-    ) {
-        $this->input   = $input;
-        $this->output  = $output;
-        $this->config  = $config;
-        $this->prompter = $prompter;
+        private InputInterface $input,
+        private OutputInterface $output,
+        private OptionsConfig $config,
+        private Prompter $prompter
+    )
+    {
     }
 
     public function isInteractive(): bool
@@ -122,13 +90,10 @@ class ConsoleIO implements IO
         $this->hasTempString = true;
     }
 
-    /**
-     * @return ?string
-     */
-    public function cutTemp()
+    public function cutTemp() : ?string
     {
         if (false === $this->hasTempString) {
-            return;
+            return null;
         }
 
         $message = $this->lastMessage;
@@ -248,9 +213,6 @@ class ConsoleIO implements IO
         return $this->input->getOption('fake') || $this->config->isFakingEnabled();
     }
 
-    /**
-     * @return ?string
-     */
     public function getBootstrapPath(): ?string
     {
         if ($path = $this->input->getOption('bootstrap')) {
@@ -280,7 +242,7 @@ class ConsoleIO implements IO
         return $width;
     }
 
-    
+
     public function writeBrokenCodeBlock(string $message, int $indent = 0): void
     {
         $message = wordwrap($message, $this->getBlockWidth() - ($indent * 2), "\n", true);

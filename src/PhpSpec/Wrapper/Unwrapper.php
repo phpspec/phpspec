@@ -18,14 +18,12 @@ use Prophecy\Prophecy\ProphecyInterface;
 
 class Unwrapper implements RevealerInterface
 {
-    
     public function unwrapAll(array $arguments): array
     {
         return array_map(array($this, 'unwrapOne'), $arguments);
     }
 
-    
-    public function unwrapOne($argument)
+    public function unwrapOne(mixed $argument) : mixed
     {
         if (\is_array($argument)) {
             return array_map(array($this, 'unwrapOne'), $argument);
@@ -46,8 +44,7 @@ class Unwrapper implements RevealerInterface
         return $argument;
     }
 
-    
-    public function reveal($value)
+    public function reveal(mixed $value) : mixed
     {
         return $this->unwrapOne($value);
     }

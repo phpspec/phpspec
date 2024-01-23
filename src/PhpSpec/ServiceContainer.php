@@ -11,21 +11,19 @@ interface ServiceContainer
     /**
      * Sets a param in the container
      */
-    public function setParam(string $id, $value): void;
+    public function setParam(string $id, mixed $value): void;
 
     /**
      * Gets a param from the container or a default value.
      */
-    public function getParam(string $id, $default = null);
+    public function getParam(string $id, mixed $default = null) : mixed;
 
     /**
      * Sets a object to be used as a service
      *
-     * @param object $service
-     *
      * @throws \InvalidArgumentException if service is not an object
      */
-    public function set(string $id, $service, array $tags = []): void;
+    public function set(string $id, object $service, array $tags = []): void;
 
     /**
      * Sets a factory for the service creation. The same service will
@@ -39,12 +37,9 @@ interface ServiceContainer
     /**
      * Retrieves a service from the container
      *
-     *
-     * @return object
-     *
      * @throws \InvalidArgumentException if service is not defined
      */
-    public function get(string $id);
+    public function get(string $id) : object;
 
     /**
      * Determines whether a service is defined

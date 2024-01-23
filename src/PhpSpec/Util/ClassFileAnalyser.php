@@ -18,9 +18,8 @@ use PhpSpec\Exception\Generator\NoMethodFoundInClass;
 
 final class ClassFileAnalyser
 {
-    private $tokenLists = array();
+    private array $tokenLists = [];
 
-    
     public function getStartLineOfFirstMethod(string $class): int
     {
         $tokens = $this->getTokensForClass($class);
@@ -28,7 +27,6 @@ final class ClassFileAnalyser
         return $tokens[$index][2];
     }
 
-    
     public function getEndLineOfLastMethod(string $class): int
     {
         $tokens = $this->getTokensForClass($class);
@@ -36,7 +34,6 @@ final class ClassFileAnalyser
         return $tokens[$index][2];
     }
 
-    
     public function classHasMethods(string $class): bool
     {
         foreach ($this->getTokensForClass($class) as $token) {
@@ -52,7 +49,6 @@ final class ClassFileAnalyser
         return false;
     }
 
-    
     public function getEndLineOfNamedMethod(string $class, string $methodName): int
     {
         $tokens = $this->getTokensForClass($class);
@@ -61,7 +57,6 @@ final class ClassFileAnalyser
         return $tokens[$index][2];
     }
 
-    
     private function findIndexOfFirstMethod(array $tokens): int
     {
         for ($i = 0, $max = \count($tokens); $i < $max; $i++) {
@@ -73,7 +68,6 @@ final class ClassFileAnalyser
         throw new \RuntimeException('Could not find index of first method');
     }
 
-    
     private function offsetForDocblock(array $tokens, int $index): int
     {
         $allowedTokens = array(
@@ -107,10 +101,7 @@ final class ClassFileAnalyser
         throw new \RuntimeException('Could not find index of for docblock');
     }
 
-    /**
-     * @param $class
-     */
-    private function getTokensForClass($class): array
+    private function getTokensForClass(string $class): array
     {
         $hash = md5($class);
 
@@ -121,7 +112,7 @@ final class ClassFileAnalyser
         return $this->tokenLists[$hash];
     }
 
-    
+
     private function findIndexOfNamedMethodEnd(array $tokens, string $methodName): int
     {
         $index = $this->findIndexOfNamedMethod($tokens, $methodName);
@@ -162,7 +153,7 @@ final class ClassFileAnalyser
         throw new NamedMethodNotFoundException('Target method not found');
     }
 
-    
+
     private function findIndexOfMethodOrClassEnd(array $tokens, int $index): int
     {
         $braceCount = 0;
@@ -186,7 +177,7 @@ final class ClassFileAnalyser
         throw new \RuntimeException('Could not find last method or class end');
     }
 
-    private function isSpecialBraceToken($token): bool
+    private function isSpecialBraceToken(string|array $token): bool
     {
         if (!\is_array($token)) {
             return false;
@@ -195,13 +186,13 @@ final class ClassFileAnalyser
         return $token[1] === "{";
     }
 
-    
-    private function tokenIsFunction($token): bool
+
+    private function tokenIsFunction(string|array $token): bool
     {
         return \is_array($token) && $token[0] === T_FUNCTION;
     }
 
-    
+
     private function findIndexOfClassEnd(array $tokens): int
     {
         $classTokens = array_filter($tokens, function ($token) {
@@ -211,7 +202,7 @@ final class ClassFileAnalyser
         return $this->findIndexOfMethodOrClassEnd($tokens, $classTokenIndex) - 1;
     }
 
-    
+
     public function findEndOfLastMethod(array $tokens, int $index): int
     {
         for ($i = $index - 1; $i > 0; $i--) {

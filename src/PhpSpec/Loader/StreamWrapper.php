@@ -15,12 +15,15 @@ namespace PhpSpec\Loader;
 
 class StreamWrapper
 {
-    private $realPath;
-    private $fileResource;
+    private string $realPath;
 
-    private static $specTransformers = array();
+    /** @var resource */
+    private mixed $fileResource;
 
-    public $context;
+    private static array $specTransformers = [];
+
+    /** set by PHP */
+    public mixed $context;
 
     public static function register(): void
     {
@@ -40,7 +43,7 @@ class StreamWrapper
         static::$specTransformers[] = $specTransformer;
     }
 
-    public static function wrapPath($path): string
+    public static function wrapPath(string $path): string
     {
         if (!\defined('HHVM_VERSION'))
         {
@@ -50,7 +53,7 @@ class StreamWrapper
         return $path;
     }
 
-    public function stream_open($path, $mode, $options, &$opened_path): bool
+    public function stream_open(string $path, string $mode, int $options, ?string &$opened_path): bool
     {
         if ($mode != 'rb') {
             throw new \RuntimeException('Cannot open phpspec url in mode "$mode"');
@@ -81,7 +84,7 @@ class StreamWrapper
         return stat($this->realPath);
     }
 
-    public function stream_read($count)
+    public function stream_read(int $count) : string|false
     {
         return fread($this->fileResource, $count);
     }

@@ -17,10 +17,7 @@ use PhpSpec\Process\ReRunner;
 
 final class CompositeReRunner implements ReRunner
 {
-    /**
-     * @var ReRunner
-     */
-    private $reRunner;
+    private ReRunner $reRunner;
 
     /**
      * @param PlatformSpecificReRunner[] $reRunners

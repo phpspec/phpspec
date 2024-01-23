@@ -16,7 +16,7 @@ namespace PhpSpec\Util;
 
 final class ClassNameChecker implements NameChecker
 {
-    private $reservedKeywordsForClassNamespaceParts = [
+    private array $reservedKeywordsForClassNamespaceParts = [
         '__halt_compiler',
         'abstract',
         'and',

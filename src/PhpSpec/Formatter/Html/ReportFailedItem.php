@@ -19,32 +19,15 @@ use PhpSpec\Formatter\Template as TemplateInterface;
 
 class ReportFailedItem
 {
-    /**
-     * @var TemplateInterface
-     */
-    private $template;
-    /**
-     * @var ExampleEvent
-     */
-    private $event;
-    /**
-     * @var int
-     */
-    private static $failingExamplesCount = 1;
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    private static int $failingExamplesCount = 1;
 
-    
-    public function __construct(TemplateInterface $template, ExampleEvent $event, Presenter $presenter)
+    public function __construct(
+        private TemplateInterface $template,
+        private ExampleEvent $event,
+        private Presenter $presenter)
     {
-        $this->template = $template;
-        $this->event = $event;
-        $this->presenter = $presenter;
     }
 
-    
     public function write(int $index): void
     {
         $code = $this->presenter->presentException($this->event->getException(), true);
@@ -61,7 +44,6 @@ class ReportFailedItem
         );
     }
 
-    
     private function formatBacktrace() : string
     {
         $backtrace = '';

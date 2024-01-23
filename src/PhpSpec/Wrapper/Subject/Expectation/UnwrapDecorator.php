@@ -14,23 +14,19 @@
 namespace PhpSpec\Wrapper\Subject\Expectation;
 
 use PhpSpec\Wrapper\Unwrapper;
+use PhpSpec\Wrapper\DelayedCall;
 
 final class UnwrapDecorator extends Decorator implements Expectation
 {
-    /**
-     * @var Unwrapper
-     */
-    private $unwrapper;
-
-    
-    public function __construct(Expectation $expectation, Unwrapper $unwrapper)
+    public function __construct(
+        Expectation $expectation,
+        private Unwrapper $unwrapper
+    )
     {
         parent::__construct($expectation);
-        $this->unwrapper = $unwrapper;
     }
 
-    
-    public function match(string $alias, $subject, array $arguments = array())
+    public function match(string $alias, mixed $subject, array $arguments = array()) : DuringCall|DelayedCall|bool|null
     {
         $arguments = $this->unwrapper->unwrapAll($arguments);
 

@@ -17,20 +17,12 @@ use PhpSpec\Locator\Resource;
 
 final class OneTimeGenerator implements Generator
 {
-    /**
-     * @var Generator
-     */
-    private $generator;
+    private array $alreadyGenerated = [];
 
-    /**
-     * @var array
-     */
-    private $alreadyGenerated = array();
-
-    
-    public function __construct(Generator $generator)
+    public function __construct(
+        private Generator $generator
+    )
     {
-        $this->generator = $generator;
     }
 
     public function supports(Resource $resource, string $generation, array $data): bool
@@ -38,9 +30,6 @@ final class OneTimeGenerator implements Generator
         return $this->generator->supports($resource, $generation, $data);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function generate(Resource $resource, array $data): void
     {
         $classname = $resource->getSrcClassname();

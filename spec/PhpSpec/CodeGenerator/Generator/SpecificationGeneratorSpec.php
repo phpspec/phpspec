@@ -106,7 +106,7 @@ class SpecificationGeneratorSpec extends ObjectBehavior
         $fs->pathExists('/project/spec/Acme/AppSpec.php')->willReturn(false);
         $fs->isDirectory('/project/spec/Acme')->willReturn(false);
         $fs->makeDirectory('/project/spec/Acme')->shouldBeCalled();
-        $fs->putFileContents('/project/spec/Acme/AppSpec.php', Argument::any())->willReturn(null);
+        $fs->putFileContents('/project/spec/Acme/AppSpec.php', Argument::any())->shouldBeCalled();
 
         $this->generate($resource);
     }

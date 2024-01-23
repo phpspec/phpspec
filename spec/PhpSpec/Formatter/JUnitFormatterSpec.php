@@ -2,6 +2,7 @@
 
 namespace spec\PhpSpec\Formatter;
 
+use Exception;
 use PhpSpec\ObjectBehavior;
 use PhpSpec\Formatter\Presenter\Presenter;
 use PhpSpec\IO\IO;
@@ -55,7 +56,7 @@ class JUnitFormatterSpec extends ObjectBehavior
         $event->getTitle()->willReturn('example title');
         $event->getTime()->willReturn(1337);
 
-        $event->getException()->willReturn(new ExceptionStub('Something went wrong', 'Exception trace'));
+        $event->getException()->willReturn(new Exception('Something went wrong'));
 
         $event->getSpecification()->willReturn($specification);
         $specification->getClassReflection()->willReturn($refClass);
@@ -63,16 +64,18 @@ class JUnitFormatterSpec extends ObjectBehavior
 
         $this->afterExample($event);
 
-        $this->getTestCaseNodes()->shouldReturn(array(
+        $testCaseNode = $this->getTestCaseNodes()[0];
+
+        $testCaseNode->shouldStartWith(
             '<testcase name="example title" time="1337.000000" classname="Acme\Foo\Bar" status="broken">'."\n".
-                '<error type="spec\PhpSpec\Formatter\ExceptionStub" message="Something went wrong" />'."\n".
-                '<system-err>'."\n".
-                    '<![CDATA['."\n".
-                        'Exception trace'."\n".
-                    ']]>'."\n".
-                '</system-err>'."\n".
+                '<error type="Exception" message="Something went wrong" />'."\n".
+                '<system-err>'
+        );
+
+        $testCaseNode->shouldEndWith(
+            '</system-err>'."\n".
             '</testcase>'
-        ));
+        );
     }
 
     function it_stores_a_testcase_node_after_failed_example_run(
@@ -84,7 +87,7 @@ class JUnitFormatterSpec extends ObjectBehavior
         $event->getTitle()->willReturn('example title');
         $event->getTime()->willReturn(1337);
 
-        $event->getException()->willReturn(new ExceptionStub('Something went wrong', 'Exception trace'));
+        $event->getException()->willReturn(new Exception('Something went wrong'));
 
         $event->getSpecification()->willReturn($specification);
         $specification->getClassReflection()->willReturn($refClass);
@@ -92,16 +95,18 @@ class JUnitFormatterSpec extends ObjectBehavior
 
         $this->afterExample($event);
 
-        $this->getTestCaseNodes()->shouldReturn(array(
+        $testCaseNode = $this->getTestCaseNodes()[0];
+
+        $testCaseNode->shouldStartWith(
             '<testcase name="example title" time="1337.000000" classname="Acme\Foo\Bar" status="failed">'."\n".
-                '<failure type="spec\PhpSpec\Formatter\ExceptionStub" message="Something went wrong" />'."\n".
-                '<system-err>'."\n".
-                    '<![CDATA['."\n".
-                        'Exception trace'."\n".
-                    ']]>'."\n".
+                '<failure type="Exception" message="Something went wrong" />'."\n".
+                '<system-err>'
+        );
+
+        $testCaseNode->shouldEndWith(
                 '</system-err>'."\n".
             '</testcase>'
-        ));
+        );
     }
 
     function it_stores_a_testcase_node_after_skipped_example_run(
@@ -199,27 +204,5 @@ class JUnitFormatterSpec extends ObjectBehavior
                 '</testsuite>'."\n".
             '</testsuites>'
         )->shouldBeCalled();
-    }
-}
-
-class ExceptionStub
-{
-    protected $trace;
-    protected $message;
-
-    public function __construct($message, $trace)
-    {
-        $this->message = $message;
-        $this->trace   = $trace;
-    }
-
-    public function getMessage()
-    {
-        return $this->message;
-    }
-
-    public function getTraceAsString()
-    {
-        return $this->trace;
     }
 }

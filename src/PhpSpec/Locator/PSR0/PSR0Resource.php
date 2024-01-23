@@ -17,35 +17,23 @@ use PhpSpec\Locator\Resource;
 
 final class PSR0Resource implements Resource
 {
-    /**
-     * @var array
-     */
-    private $parts;
-    /**
-     * @var PSR0Locator
-     */
-    private $locator;
-
-    
-    public function __construct(array $parts, PSR0Locator $locator)
+    public function __construct(
+        private array $parts,
+        private PSR0Locator $locator
+    )
     {
-        $this->parts   = $parts;
-        $this->locator = $locator;
     }
 
-    
     public function getName(): string
     {
         return end($this->parts);
     }
 
-    
     public function getSpecName(): string
     {
         return $this->getName().'Spec';
     }
 
-    
     public function getSrcFilename(): string
     {
         if ($this->locator->isPSR4()) {
@@ -59,7 +47,6 @@ final class PSR0Resource implements Resource
         return $this->locator->getFullSrcPath().implode(DIRECTORY_SEPARATOR, $parts).'.php';
     }
 
-    
     public function getSrcNamespace(): string
     {
         $nsParts = $this->parts;
@@ -68,13 +55,11 @@ final class PSR0Resource implements Resource
         return rtrim($this->locator->getSrcNamespace().implode('\\', $nsParts), '\\');
     }
 
-    
     public function getSrcClassname(): string
     {
         return $this->locator->getSrcNamespace().implode('\\', $this->parts);
     }
 
-    
     public function getSpecFilename(): string
     {
         if ($this->locator->isPSR4()) {
@@ -90,7 +75,6 @@ final class PSR0Resource implements Resource
             implode(DIRECTORY_SEPARATOR, $parts).'Spec.php';
     }
 
-    
     public function getSpecNamespace(): string
     {
         $nsParts = $this->parts;
@@ -99,7 +83,6 @@ final class PSR0Resource implements Resource
         return rtrim($this->locator->getSpecNamespace().implode('\\', $nsParts), '\\');
     }
 
-    
     public function getSpecClassname(): string
     {
         return $this->locator->getSpecNamespace().implode('\\', $this->parts).'Spec';

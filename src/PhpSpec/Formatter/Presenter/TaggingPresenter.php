@@ -15,31 +15,23 @@ namespace PhpSpec\Formatter\Presenter;
 
 final class TaggingPresenter implements Presenter
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-
-    
-    public function __construct(Presenter $presenter)
+    public function __construct(
+        private Presenter $presenter
+    )
     {
-        $this->presenter = $presenter;
     }
 
-    
     public function presentException(\Exception $exception, bool $verbose = false): string
     {
         return $this->presenter->presentException($exception, $verbose);
     }
 
-    
     public function presentString(string $string): string
     {
         return sprintf('<value>%s</value>', $string);
     }
 
-    
-    public function presentValue($value): string
+    public function presentValue(mixed $value): string
     {
         return $this->presentString($this->presenter->presentValue($value));
     }

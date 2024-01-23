@@ -15,24 +15,18 @@ namespace PhpSpec\Formatter\Presenter\Value;
 
 final class TruncatingStringTypePresenter implements StringTypePresenter
 {
-    /**
-     * @var StringTypePresenter
-     */
-    private $stringTypePresenter;
-
-    public function __construct(StringTypePresenter $stringTypePresenter)
+    public function __construct(
+        private StringTypePresenter $stringTypePresenter
+    )
     {
-        $this->stringTypePresenter = $stringTypePresenter;
     }
 
-    
-    public function supports($value): bool
+    public function supports(mixed $value): bool
     {
         return $this->stringTypePresenter->supports($value);
     }
 
-    
-    public function present($value): string
+    public function present(mixed $value): string
     {
         if (25 > \strlen($value) && false === strpos($value, "\n")) {
             return $this->stringTypePresenter->present($value);
@@ -42,7 +36,6 @@ final class TruncatingStringTypePresenter implements StringTypePresenter
         return $this->stringTypePresenter->present(sprintf('%s...', substr($lines[0], 0, 25)));
     }
 
-    
     public function getPriority(): int
     {
         return $this->stringTypePresenter->getPriority();

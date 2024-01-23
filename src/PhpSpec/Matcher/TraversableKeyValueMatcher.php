@@ -19,21 +19,13 @@ use ArrayAccess;
 
 final class TraversableKeyValueMatcher extends BasicMatcher
 {
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-
-
-    public function __construct(Presenter $presenter)
+    public function __construct(
+        private Presenter $presenter
+    )
     {
-        $this->presenter = $presenter;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return 'haveKeyWithValue' === $name
             && 2 === \count($arguments)
@@ -41,18 +33,12 @@ final class TraversableKeyValueMatcher extends BasicMatcher
         ;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getPriority(): int
     {
         return 101;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function matches($subject, array $arguments): bool
+    protected function matches(mixed $subject, array $arguments): bool
     {
         foreach ($subject as $key => $value) {
             if ($key === $arguments[0] && $value === $arguments[1]) {
@@ -63,10 +49,7 @@ final class TraversableKeyValueMatcher extends BasicMatcher
         return false;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function getFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s to have an element with %s key and %s value, but it does not.',
@@ -76,10 +59,7 @@ final class TraversableKeyValueMatcher extends BasicMatcher
         ));
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getNegativeFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Expected %s not to have an element with %s key and %s value, but it does.',

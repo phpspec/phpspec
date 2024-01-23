@@ -22,32 +22,13 @@ use PhpSpec\Util\Filesystem;
 
 final class NamedConstructorGenerator implements Generator
 {
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
-
-    /**
-     * @var TemplateRenderer
-     */
-    private $templates;
-
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
-    /**
-     * @var CodeWriter
-     */
-    private $codeWriter;
-
-    
-    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem, CodeWriter $codeWriter)
+    public function __construct(
+        private ConsoleIO $io,
+        private TemplateRenderer $templates,
+        private Filesystem $filesystem,
+        private CodeWriter $codeWriter
+    )
     {
-        $this->io         = $io;
-        $this->templates  = $templates;
-        $this->filesystem = $filesystem;
-        $this->codeWriter = $codeWriter;
     }
 
     public function supports(Resource $resource, string $generation, array $data): bool
@@ -55,7 +36,6 @@ final class NamedConstructorGenerator implements Generator
         return 'named_constructor' === $generation;
     }
 
-    
     public function generate(Resource $resource, array $data = array()): void
     {
         $filepath   = $resource->getSrcFilename();

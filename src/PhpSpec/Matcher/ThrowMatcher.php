@@ -24,58 +24,38 @@ use PhpSpec\Exception\Fracture\MethodNotFoundException;
 
 final class ThrowMatcher implements Matcher
 {
-    /**
-     * @var array
-     */
-    private static $ignoredProperties = array('file', 'line', 'string', 'trace', 'previous');
+    private static array $ignoredProperties = [
+        'file', 'line', 'string', 'trace', 'previous'
+    ];
 
-    /**
-     * @var Unwrapper
-     */
-    private $unwrapper;
-
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-
-    /**
-     * @var ReflectionFactory
-     */
-    private $factory;
-
-    public function __construct(Unwrapper $unwrapper, Presenter $presenter, ReflectionFactory $factory)
+    public function __construct(
+        private Unwrapper $unwrapper,
+        private Presenter $presenter,
+        private ReflectionFactory $factory
+    )
     {
-        $this->unwrapper = $unwrapper;
-        $this->presenter = $presenter;
-        $this->factory   = $factory;
     }
 
-
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return 'throw' === $name;
     }
 
-
-    public function positiveMatch(string $name, $subject, array $arguments): DelayedCall
+    public function positiveMatch(string $name, mixed $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyPositive'), $subject, $arguments);
     }
 
-
-    public function negativeMatch(string $name, $subject, array $arguments): DelayedCall
+    public function negativeMatch(string $name, mixed $subject, array $arguments): DelayedCall
     {
         return $this->getDelayedCall(array($this, 'verifyNegative'), $subject, $arguments);
     }
 
     /**
-     * @param null|object|string $exception
-     *
      * @throws \PhpSpec\Exception\Example\FailureException
      * @throws \PhpSpec\Exception\Example\NotEqualException
      */
-    public function verifyPositive(callable $callable, array $arguments, $exception = null)
+    public function verifyPositive(callable $callable, array $arguments, object|string|null $exception = null) : void
     {
         $exceptionThrown = null;
 
@@ -146,11 +126,9 @@ final class ThrowMatcher implements Matcher
     }
 
     /**
-     * @param null|object|string $exception
-     *
      * @throws \PhpSpec\Exception\Example\FailureException
      */
-    public function verifyNegative(callable $callable, array $arguments, $exception = null)
+    public function verifyNegative(callable $callable, array $arguments, object|null|string $exception = null) : void
     {
         $exceptionThrown = null;
 
@@ -221,14 +199,12 @@ final class ThrowMatcher implements Matcher
         }
     }
 
-
     public function getPriority(): int
     {
         return 1;
     }
 
-
-    private function getDelayedCall(callable $check, $subject, array $arguments): DelayedCall
+    private function getDelayedCall(callable $check, mixed $subject, array $arguments): DelayedCall
     {
         $exception = $this->getException($arguments);
         $unwrapper = $this->unwrapper;
@@ -257,11 +233,9 @@ final class ThrowMatcher implements Matcher
     }
 
     /**
-     * @return null|string|\Throwable
-     *
      * @throws \PhpSpec\Exception\Example\MatcherException
      */
-    private function getException(array $arguments)
+    private function getException(array $arguments) : null|string|\Throwable
     {
         if (0 === \count($arguments)) {
             return null;

@@ -23,21 +23,13 @@ final class TraversableCountMatcher implements Matcher
     const EQUAL = 1;
     const MORE_THAN = 2;
 
-    /**
-     * @var Presenter
-     */
-    private $presenter;
-
-
-    public function __construct(Presenter $presenter)
+    public function __construct(
+        private Presenter $presenter
+    )
     {
-        $this->presenter = $presenter;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return 'haveCount' === $name
             && 1 === \count($arguments)
@@ -45,10 +37,7 @@ final class TraversableCountMatcher implements Matcher
         ;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function positiveMatch(string $name, $subject, array $arguments) : ?DelayedCall
+    public function positiveMatch(string $name, mixed $subject, array $arguments) : ?DelayedCall
     {
         $countDifference = $this->countDifference($subject, (int) $arguments[0]);
 
@@ -64,10 +53,7 @@ final class TraversableCountMatcher implements Matcher
         return null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function negativeMatch(string $name, $subject, array $arguments) : ?DelayedCall
+    public function negativeMatch(string $name, mixed $subject, array $arguments) : ?DelayedCall
     {
         $count = $this->countDifference($subject, (int) $arguments[0]);
 
@@ -82,9 +68,6 @@ final class TraversableCountMatcher implements Matcher
         return null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getPriority(): int
     {
         return 101;

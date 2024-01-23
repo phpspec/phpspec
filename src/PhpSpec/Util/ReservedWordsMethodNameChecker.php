@@ -15,13 +15,10 @@ namespace PhpSpec\Util;
 
 final class ReservedWordsMethodNameChecker implements NameChecker
 {
-    private $reservedWords = [
+    private array $reservedWords = [
         '__halt_compiler',
     ];
 
-    /**
-     * {@inheritdoc}
-     */
     public function isNameValid(string $name): bool
     {
         return !\in_array(strtolower($name), $this->reservedWords);

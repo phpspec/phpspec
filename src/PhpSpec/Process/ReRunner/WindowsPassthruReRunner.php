@@ -18,15 +18,9 @@ use Symfony\Component\Process\PhpExecutableFinder;
 
 final class WindowsPassthruReRunner extends PhpExecutableReRunner
 {
-    /**
-     * @var ExecutionContext
-     */
-    private $executionContext;
+    private ExecutionContext $executionContext;
 
-    /**
-     * @return static
-     */
-    public static function withExecutionContext(PhpExecutableFinder $phpExecutableFinder, ExecutionContext $executionContext)
+    public static function withExecutionContext(PhpExecutableFinder $phpExecutableFinder, ExecutionContext $executionContext) : static
     {
         $reRunner = new static($phpExecutableFinder);
         $reRunner->executionContext = $executionContext;

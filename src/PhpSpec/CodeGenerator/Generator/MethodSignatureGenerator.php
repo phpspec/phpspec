@@ -23,27 +23,12 @@ use PhpSpec\Locator\Resource;
  */
 final class MethodSignatureGenerator implements Generator
 {
-    /**
-     * @var ConsoleIO
-     */
-    private $io;
-
-    /**
-     * @var TemplateRenderer
-     */
-    private $templates;
-
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
-
-    
-    public function __construct(ConsoleIO $io, TemplateRenderer $templates, Filesystem $filesystem)
+    public function __construct(
+        private ConsoleIO $io,
+        private TemplateRenderer $templates,
+        private Filesystem $filesystem
+    )
     {
-        $this->io         = $io;
-        $this->templates  = $templates;
-        $this->filesystem = $filesystem;
     }
 
     public function supports(Resource $resource, string $generation, array $data): bool
@@ -84,7 +69,7 @@ final class MethodSignatureGenerator implements Generator
         return file_get_contents(__DIR__.'/templates/interface_method_signature.template');
     }
 
-    private function insertMethodSignature(string $filepath, string $content)
+    private function insertMethodSignature(string $filepath, string $content) : void
     {
         $code = $this->filesystem->getFileContents($filepath);
         $code = preg_replace('/}[ \n]*$/', rtrim($content) . "\n}\n", trim($code));

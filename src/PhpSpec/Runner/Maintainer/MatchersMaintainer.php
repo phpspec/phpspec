@@ -25,34 +25,23 @@ use PhpSpec\Formatter\Presenter\Presenter;
 final class MatchersMaintainer implements Maintainer
 {
     /**
-     * @var Presenter
-     */
-    private $presenter;
-
-    /**
-     * @var Matcher[]
-     */
-    private $defaultMatchers = array();
-
-    /**
      * @param Matcher[] $matchers
      */
-    public function __construct(Presenter $presenter, array $matchers)
+    public function __construct(
+        private Presenter $presenter,
+        private array $matchers
+    )
     {
-        $this->presenter = $presenter;
-        $this->defaultMatchers = $matchers;
-        @usort($this->defaultMatchers, function (Matcher $matcher1, Matcher $matcher2) {
+        @usort($this->matchers, function (Matcher $matcher1, Matcher $matcher2) {
             return $matcher2->getPriority() - $matcher1->getPriority();
         });
     }
 
-    
     public function supports(ExampleNode $example): bool
     {
         return true;
     }
 
-    
     public function prepare(
         ExampleNode $example,
         Specification $context,
@@ -60,7 +49,7 @@ final class MatchersMaintainer implements Maintainer
         CollaboratorManager $collaborators
     ): void {
 
-        $matchers->replace($this->defaultMatchers);
+        $matchers->replace($this->matchers);
 
         if (!$context instanceof MatchersProvider) {
             return;
@@ -79,7 +68,6 @@ final class MatchersMaintainer implements Maintainer
         }
     }
 
-    
     public function teardown(
         ExampleNode $example,
         Specification $context,
@@ -88,7 +76,6 @@ final class MatchersMaintainer implements Maintainer
     ): void {
     }
 
-    
     public function getPriority(): int
     {
         return 50;

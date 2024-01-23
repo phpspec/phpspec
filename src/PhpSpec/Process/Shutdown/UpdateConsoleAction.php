@@ -18,23 +18,13 @@ use PhpSpec\Message\CurrentExampleTracker;
 
 final class UpdateConsoleAction implements ShutdownAction
 {
-    /**
-     * @var CurrentExampleTracker
-     */
-    private $currentExample;
-
-    /**
-     * @var FatalPresenter
-     */
-    private $currentExampleWriter;
-
-    public function __construct(CurrentExampleTracker $currentExample, FatalPresenter $currentExampleWriter)
+    public function __construct(
+        private CurrentExampleTracker $currentExample,
+        private FatalPresenter $currentExampleWriter)
     {
-        $this->currentExample = $currentExample;
-        $this->currentExampleWriter = $currentExampleWriter;
     }
 
-    public function runAction($error): void
+    public function runAction(?array $error): void
     {
         $this->currentExampleWriter->displayFatal($this->currentExample, $error);
     }

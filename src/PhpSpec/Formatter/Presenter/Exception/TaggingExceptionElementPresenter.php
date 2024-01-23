@@ -18,24 +18,13 @@ use PhpSpec\Formatter\Presenter\Value\ValuePresenter;
 
 final class TaggingExceptionElementPresenter implements ExceptionElementPresenter
 {
-    /**
-     * @var ExceptionTypePresenter
-     */
-    private $exceptionTypePresenter;
-
-    /**
-     * @var ValuePresenter
-     */
-    private $valuePresenter;
-
-    
-    public function __construct(ExceptionTypePresenter $exceptionTypePresenter, ValuePresenter $valuePresenter)
+    public function __construct(
+        private ExceptionTypePresenter $exceptionTypePresenter,
+        private ValuePresenter $valuePresenter
+    )
     {
-        $this->exceptionTypePresenter = $exceptionTypePresenter;
-        $this->valuePresenter = $valuePresenter;
     }
 
-    
     public function presentExceptionThrownMessage(\Exception $exception): string
     {
         return sprintf(
@@ -44,25 +33,21 @@ final class TaggingExceptionElementPresenter implements ExceptionElementPresente
         );
     }
 
-    
     public function presentCodeLine(string $number, string $line): string
     {
         return sprintf('<lineno>%s</lineno> <code>%s</code>', $number, $line);
     }
 
-    
     public function presentHighlight(string $line): string
     {
         return sprintf('<hl>%s</hl>', $line);
     }
 
-    
     public function presentExceptionTraceHeader(string $header): string
     {
         return sprintf('<trace>%s</trace>', $header);
     }
 
-    
     public function presentExceptionTraceMethod(string $class, string $type, string $method, array $args): string
     {
         $template = '   <trace><trace-class>%s</trace-class><trace-type>%s</trace-type>'.
@@ -71,7 +56,6 @@ final class TaggingExceptionElementPresenter implements ExceptionElementPresente
         return sprintf($template, $class, $type, $method, $this->presentExceptionTraceArguments($args));
     }
 
-    
     public function presentExceptionTraceFunction(string $function, array $args): string
     {
         $template = '   <trace><trace-func>%s</trace-func>(<trace-args>%s</trace-args>)</trace>';
@@ -79,7 +63,6 @@ final class TaggingExceptionElementPresenter implements ExceptionElementPresente
         return sprintf($template, $function, $this->presentExceptionTraceArguments($args));
     }
 
-    
     private function presentExceptionTraceArguments(array $args): string
     {
         $valuePresenter = $this->valuePresenter;

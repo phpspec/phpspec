@@ -17,31 +17,31 @@ use Symfony\Component\Finder\Finder;
 
 class Filesystem
 {
-    
+
     public function pathExists(string $path): bool
     {
         return file_exists($path);
     }
 
-    
+
     public function getFileContents(string $path): string
     {
         return file_get_contents($path);
     }
 
-    
-    public function putFileContents(string $path, string $content)
+
+    public function putFileContents(string $path, string $content) : void
     {
         file_put_contents($path, $content);
     }
 
-    
+
     public function isDirectory(string $path): bool
     {
         return is_dir($path);
     }
 
-    
+
     public function makeDirectory(string $path): void
     {
         mkdir($path, 0777, true);

@@ -19,42 +19,32 @@ use PhpSpec\Exception\Example\NotEqualException;
 
 final class IdentityMatcher extends BasicMatcher
 {
-    /**
-     * @var array
-     */
-    private static $keywords = array(
+    private static array $keywords = [
         'return',
         'be',
         'equal',
         'beEqualTo'
-    );
-    /**
-     * @var Presenter
-     */
-    private $presenter;
+    ];
 
-    
-    public function __construct(Presenter $presenter)
+    public function __construct(
+        private Presenter $presenter
+    )
     {
-        $this->presenter = $presenter;
     }
 
-    
-    public function supports(string $name, $subject, array $arguments): bool
+    public function supports(string $name, mixed $subject, array $arguments): bool
     {
         return \in_array($name, self::$keywords)
             && 1 == \count($arguments)
         ;
     }
 
-    
-    protected function matches($subject, array $arguments): bool
+    protected function matches(mixed $subject, array $arguments): bool
     {
         return $subject === $arguments[0];
     }
 
-    
-    protected function getFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         return new NotEqualException(sprintf(
             'Expected %s, but got %s.',
@@ -63,8 +53,7 @@ final class IdentityMatcher extends BasicMatcher
         ), $arguments[0], $subject);
     }
 
-    
-    protected function getNegativeFailureException(string $name, $subject, array $arguments): FailureException
+    protected function getNegativeFailureException(string $name, mixed $subject, array $arguments): FailureException
     {
         return new FailureException(sprintf(
             'Did not expect %s, but got one.',

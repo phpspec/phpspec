@@ -13,6 +13,9 @@
         </ignoreFiles>
     </projectFiles>
     <issueHandlers>
+        <MissingParamType><errorLevel type="error"/></MissingParamType>
+        <MissingReturnType><errorLevel type="error"/></MissingReturnType>
+        <MissingPropertyType><errorLevel type="error"/></MissingPropertyType>
         <DuplicateClass>
             <errorLevel type="suppress">
                 <!-- duplicate classes are inside a conditional so not an error -->
