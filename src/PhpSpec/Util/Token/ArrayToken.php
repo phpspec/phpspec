@@ -38,4 +38,9 @@ final class ArrayToken extends Token
     {
         return in_array($this->phpToken[0], $tokenTypes, true);
     }
+
+    function getLine(): int
+    {
+        return $this->phpToken[2];
+    }
 }

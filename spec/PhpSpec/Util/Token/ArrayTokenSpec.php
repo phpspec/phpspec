@@ -50,4 +50,9 @@ class ArrayTokenSpec extends ObjectBehavior
     {
         $this->isInTypes([T_FINALLY])->shouldBe(false);
     }
+
+    function it_has_a_line()
+    {
+        $this->getLine()->shouldBe(100);
+    }
 }

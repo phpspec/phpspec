@@ -40,4 +40,9 @@ class StringTokenSpec extends ObjectBehavior
     {
         $this->isInTypes([T_CATCH])->shouldBe(false);
     }
+
+    function it_does_not_have_a_line()
+    {
+        $this->getLine()->shouldBeNull();
+    }
 }

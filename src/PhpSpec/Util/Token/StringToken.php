@@ -38,4 +38,9 @@ final class StringToken extends Token
     {
         return false;
     }
+
+    function getLine(): ?int
+    {
+        return null;
+    }
 }

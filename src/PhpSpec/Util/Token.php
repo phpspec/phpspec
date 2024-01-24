@@ -42,4 +42,6 @@ abstract class Token
 
     /** @param list<int> $types */
     abstract function isInTypes(array $tokenTypes) : bool;
+
+    abstract function getLine() : ?int;
 }
