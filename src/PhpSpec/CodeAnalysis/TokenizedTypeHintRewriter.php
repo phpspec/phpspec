@@ -29,26 +29,20 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     private string $currentFunction = '';
     private int $currentBodyLevel = 0;
 
-    private array $typehintTokens = array(
-        T_WHITESPACE, T_STRING, T_NS_SEPARATOR
-    );
+    private array $typehintTokens = [
+        T_WHITESPACE,
+        T_STRING,
+        T_NS_SEPARATOR,
+        T_NAME_FULLY_QUALIFIED,
+        T_NAME_QUALIFIED,
+        T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG
+    ];
 
-    private TypeHintIndex $typeHintIndex;
-    private NamespaceResolver $namespaceResolver;
-
-    public function __construct(TypeHintIndex $typeHintIndex, NamespaceResolver $namespaceResolver)
+    public function __construct(
+        private TypeHintIndex $typeHintIndex,
+        private NamespaceResolver $namespaceResolver
+    )
     {
-        $this->typeHintIndex = $typeHintIndex;
-        $this->namespaceResolver = $namespaceResolver;
-
-        if (\PHP_VERSION_ID >= 80000) {
-            $this->typehintTokens[] = T_NAME_FULLY_QUALIFIED;
-            $this->typehintTokens[] = T_NAME_QUALIFIED;
-        }
-
-        if (\PHP_VERSION_ID >= 80100) {
-            $this->typehintTokens[] = T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG;
-        }
     }
 
     public function rewrite(string $classDefinition): string
@@ -195,9 +189,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
 
     private function haveNotReachedEndOfTypeHint(string|array $token) : bool
     {
-        // PHP 8.1 returns the intersection token `&` as an array,
-        // while previous versions return it as a string.
-        if ($token == '|' || $token == '&' || (is_array($token) && $token[1] == '&')) {
+        if ($token == '|' || is_array($token) && $token[1] == '&') {
             return false;
         }
 
