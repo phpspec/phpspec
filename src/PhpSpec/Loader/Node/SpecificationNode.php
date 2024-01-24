@@ -19,7 +19,7 @@ use ReflectionClass;
 
 class SpecificationNode implements \Countable
 {
-    private ?Suite $suite;
+    private Suite $suite;
 
     /**
      * @var ExampleNode[]
@@ -68,7 +68,7 @@ class SpecificationNode implements \Countable
         $this->suite = $suite;
     }
 
-    public function getSuite() : ?Suite
+    public function getSuite() : Suite
     {
         return $this->suite;
     }
