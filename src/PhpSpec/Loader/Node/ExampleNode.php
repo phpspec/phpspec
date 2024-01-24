@@ -17,7 +17,7 @@ use ReflectionFunctionAbstract;
 
 class ExampleNode
 {
-    private ?SpecificationNode $specification;
+    private SpecificationNode $specification;
 
     private bool $isPending = false;
 
@@ -58,7 +58,7 @@ class ExampleNode
         $this->specification = $specification;
     }
 
-    public function getSpecification() : ?SpecificationNode
+    public function getSpecification() : SpecificationNode
     {
         return $this->specification;
     }

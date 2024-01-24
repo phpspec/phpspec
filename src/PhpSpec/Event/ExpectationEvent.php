@@ -70,7 +70,7 @@ final class ExpectationEvent extends BaseEvent implements PhpSpecEvent
         return $this->example->getSpecification()->getSuite();
     }
 
-    public function getSubject()
+    public function getSubject() : mixed
     {
         return $this->subject;
     }
