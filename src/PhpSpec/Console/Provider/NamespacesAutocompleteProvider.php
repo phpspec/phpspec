@@ -15,6 +15,7 @@ namespace PhpSpec\Console\Provider;
 
 use PhpSpec\Locator\ResourceLocator;
 use PhpSpec\Locator\SrcPathLocator;
+use PhpSpec\Util\Token;
 use Symfony\Component\Finder\Finder;
 
 final class NamespacesAutocompleteProvider
@@ -42,17 +43,17 @@ final class NamespacesAutocompleteProvider
     {
         $namespaces = [];
         foreach ($this->finder->files()->name('*.php')->in($this->paths) as $phpFile) {
-            $tokens = token_get_all($phpFile->getContents());
+            $tokens = Token::getAll($phpFile->getContents());
             foreach ($tokens as $index => $token) {
-                if (!is_array($token) || T_NAMESPACE !== $token[0]) {
+                if (!$token->hasType(T_NAMESPACE)) {
                     continue;
                 }
 
                 $shift = 2;
                 $namespace = '';
 
-                while ($tokens[$index + $shift] !== ';') {
-                    $namespace .= $tokens[$index + $shift][1];
+                while (!$tokens[$index + $shift]->equals(';')) {
+                    $namespace .= $tokens[$index + $shift]->asString();
                     $shift++;
                 }
 

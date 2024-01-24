@@ -31,6 +31,7 @@ abstract class Token
         return $this->asString() === $string;
     }
 
+    /** @return list<Token> */
     public static function getAll(string $code) : array
     {
         return array_map(static::fromPhpToken(...), token_get_all($code));
