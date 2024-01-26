@@ -18,6 +18,7 @@ use PhpSpec\Locator\ResourceLocator;
 use PhpSpec\Locator\SrcPathLocator;
 use PhpSpec\Util\Filesystem;
 use InvalidArgumentException;
+use PhpSpec\Util\Token;
 
 class PSR0Locator implements ResourceLocator, SrcPathLocator
 {
@@ -224,27 +225,24 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
         // Find namespace and class name
         $namespace = '';
         $content   = $this->filesystem->getFileContents($path);
-        $tokens    = token_get_all($content);
+        $tokens    = Token::getAll($content);
         $count     = \count($tokens);
 
-        for ($i = 0; $i < $count; $i++) {
-            if ($tokens[$i][0] === T_NAMESPACE) {
+        foreach ($tokens as $i => $token) {
+            if ($token->hasType(T_NAMESPACE)) {
                 for ($j = $i + 1; $j < $count; $j++) {
-                    if ($tokens[$j][0] === T_STRING
-                        || $tokens[$j][0] === T_NAME_FULLY_QUALIFIED
-                        || $tokens[$j][0] === T_NAME_QUALIFIED
-                    ) {
-                        $namespace .= $tokens[$j][1].'\\';
-                    } elseif ($tokens[$j] === '{' || $tokens[$j] === ';') {
+                    if ($tokens[$j]->isInTypes([T_STRING, T_NAME_FULLY_QUALIFIED, T_NAME_QUALIFIED])) {
+                        $namespace .= $tokens[$j]->asString() . '\\';
+                    } elseif ($tokens[$j]->equals('{') || $tokens[$j]->equals(';')) {
                         break;
                     }
                 }
             }
 
-            if ($tokens[$i][0] === T_CLASS) {
+            if ($token->hasType(T_CLASS)) {
                 for ($j = $i+1; $j < $count; $j++) {
-                    if ($tokens[$j] === '{') {
-                        return $namespace.$tokens[$i+2][1];
+                    if ($tokens[$j]->equals('{')) {
+                        return $namespace . $tokens[$i+2]->asString();
                     }
                 }
             }
@@ -253,7 +251,6 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
         // No class found
         return null;
     }
-
 
     private function createResourceFromSpecFile(string $path): PSR0Resource
     {
@@ -299,7 +296,6 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
         }
     }
 
-
     private function getQueryPath(string $query): string
     {
         $sepr = DIRECTORY_SEPARATOR;
@@ -320,18 +316,15 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
         return rtrim(realpath($replacedQuery), $sepr);
     }
 
-
     private function queryContainsQualifiedClassName(string $query): bool
     {
         return $this->queryContainsBlackslashes($query) && !$this->isWindowsPath($query);
     }
 
-
     private function queryContainsBlackslashes(string $query): bool
     {
         return false !== strpos($query, '\\');
     }
-
 
     private function isWindowsPath(string $query): bool
     {
