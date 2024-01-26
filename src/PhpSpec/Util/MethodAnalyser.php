@@ -92,17 +92,14 @@ class MethodAnalyser
 
     private function stripComments(string $code): string
     {
-        $tokens = token_get_all('<?php ' . $code);
+        $tokens = Token::getAll('<?php ' . $code);
 
         $comments = array_map(
-            function ($token) {
-                return $token[1];
-            },
+            fn (Token $token) => $token->asString(),
             array_filter(
                 $tokens,
-                function ($token) {
-                    return \is_array($token) && \in_array($token[0], array(T_COMMENT, T_DOC_COMMENT));
-                })
+                fn (Token $token) => $token->isInTypes([T_COMMENT, T_DOC_COMMENT])
+            )
         );
 
         $commentless = str_replace($comments, '', $code);
