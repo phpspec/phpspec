@@ -62,5 +62,12 @@
                 <file name="src/PhpSpec/Matcher/TriggerMatcher.php"/>
             </errorLevel>
         </UndefinedVariable>
+        <ArgumentTypeCoercion>
+            <errorLevel type="suppress">
+                <!-- The container is totally non-type-safe currently -->
+                <file name="src/PhpSpec/Console/ContainerAssembler.php"/>
+                <file name="src/PhpSpec/Console/Assembler/PresenterAssembler.php"/>
+            </errorLevel>
+        </ArgumentTypeCoercion>
     </issueHandlers>
 </psalm>
