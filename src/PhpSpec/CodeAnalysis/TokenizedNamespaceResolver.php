@@ -13,6 +13,8 @@
 
 namespace PhpSpec\CodeAnalysis;
 
+use PhpSpec\Util\Token;
+
 final class TokenizedNamespaceResolver implements NamespaceResolver
 {
     const STATE_DEFAULT = 0;
@@ -34,56 +36,59 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
         $this->currentUseGroup = '';
         $this->uses = [];
 
-        $tokens = token_get_all($code);
+        $tokens = Token::getAll($code);
 
-        foreach ($tokens as $index => $token) {
+        foreach ($tokens as $token) {
 
             switch ($this->state) {
+
                 case self::STATE_READING_NAMESPACE:
-                    if (';' == $token) {
+                    if ($token->equals(';')) {
                         $this->currentNamespace = trim($this->currentNamespace);
                         $this->state = self::STATE_DEFAULT;
                     }
-                    elseif (\is_array($token)) {
-                        $this->currentNamespace .= $token[1];
+                    else {
+                        $this->currentNamespace .= $token->asString();
                     }
                     break;
+
                 case self::STATE_READING_USE_GROUP:
-                    if ('}' == $token) {
+                    if ($token->equals('}')) {
                         $this->state = self::STATE_READING_USE;
                         $this->currentUseGroup = '';
                     }
-                    elseif (',' == $token) {
+                    elseif ($token->equals(',')) {
                         $this->storeCurrentUse();
                     }
-                    elseif (\is_array($token)) {
-                        $this->currentUse = $this->currentUseGroup . trim($token[1]);
+                    else {
+                        $this->currentUse = $this->currentUseGroup . trim($token->asString());
                     }
                     break;
 
                 case self::STATE_READING_USE:
-                    if (';' == $token) {
+                    if ($token->equals(';')) {
                         $this->storeCurrentUse();
                         $this->state = self::STATE_DEFAULT;
                     }
-                    if ('{' == $token) {
+                    if ($token->equals('{')) {
                         $this->currentUseGroup = trim($this->currentUse);
                         $this->state = self::STATE_READING_USE_GROUP;
                     }
-                    elseif (',' == $token) {
+                    elseif ($token->equals(',')) {
                         $this->storeCurrentUse();
                     }
-                    elseif (\is_array($token)) {
-                        $this->currentUse .= $token[1];
+                    else {
+                        $this->currentUse .= $token->asString();
                     }
                     break;
+
                 default:
-                    if (\is_array($token) && T_NAMESPACE == $token[0]) {
+                    if ($token->hasType(T_NAMESPACE)) {
                         $this->state = self::STATE_READING_NAMESPACE;
                         $this->currentNamespace = '';
                         $this->uses = array();
                     }
-                    elseif (\is_array($token) && T_USE == $token[0]) {
+                    if ($token->hasType(T_USE)) {
                         $this->state = self::STATE_READING_USE;
                         $this->currentUse = '';
                     }

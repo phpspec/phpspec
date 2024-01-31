@@ -15,6 +15,7 @@ namespace PhpSpec\CodeGenerator\Writer;
 
 use PhpSpec\Exception\Generator\GenerationFailed;
 use PhpSpec\Util\ClassFileAnalyser;
+use PhpSpec\Util\Token;
 
 final class TokenizedCodeWriter implements CodeWriter
 {
@@ -79,15 +80,15 @@ final class TokenizedCodeWriter implements CodeWriter
 
     private function writeAtEndOfClass(string $class, string $method): string
     {
-        $tokens = token_get_all($class);
+        $tokens = Token::getAll($class);
         $searching = false;
         $inString = false;
         $searchPattern = array();
 
         for ($i = \count($tokens) - 1; $i >= 0; $i--) {
-            $token = $tokens[$i];
+            $parsedToken = $tokens[$i];
 
-            if ($token === '}' && !$inString) {
+            if ($parsedToken->equals('}') && !$inString) {
                 $searching = true;
                 continue;
             }
@@ -96,20 +97,20 @@ final class TokenizedCodeWriter implements CodeWriter
                 continue;
             }
 
-            if ($token === '"') {
+            if ($parsedToken->equals('"')) {
                 $inString = !$inString;
                 continue;
             }
 
-            if ($this->isWritePoint($token)) {
-                $line = (int) $token[2];
-                $prependNewLine = $token[0] === T_COMMENT || ($i != 0 && $tokens[$i-1][0] === T_COMMENT);
+            if ($this->isWritePoint($parsedToken)) {
+                $line = (int) $parsedToken->getLine();
+                $prependNewLine = $parsedToken->hasType(T_COMMENT) || ($i != 0 && $tokens[$i-1]->hasType(T_COMMENT));
                 return $this->insertStringAfterLine($class, $method, $line, $prependNewLine);
             }
 
-            array_unshift($searchPattern, \is_array($token) ? $token[1] : $token);
+            array_unshift($searchPattern, $parsedToken->asString());
 
-            if ($token === '{') {
+            if ($parsedToken->equals('{')) {
                 $search = implode('', $searchPattern);
                 $position = strpos($class, $search) + \strlen($search) - 1;
 
@@ -120,8 +121,8 @@ final class TokenizedCodeWriter implements CodeWriter
         throw new GenerationFailed('Could not locate end of class');
     }
 
-    private function isWritePoint(string|array $token): bool
+    private function isWritePoint(Token $token): bool
     {
-        return \is_array($token) && ($token[1] === "\n" || $token[0] === T_COMMENT);
+        return $token->equals("\n") || $token->hasType(T_COMMENT);
     }
 }
