@@ -38,7 +38,7 @@ final class TokenizedNamespaceResolver implements NamespaceResolver
 
         $tokens = Token::getAll($code);
 
-        foreach ($tokens as $_ => $token) {
+        foreach ($tokens as $token) {
 
             switch ($this->state) {
 
