@@ -136,6 +136,7 @@ final class CollaboratorsMaintainer implements Maintainer
         );
     }
 
+    /** @return ?class-string */
     private function getParameterTypeFromIndex(\ReflectionClass $classRefl, \ReflectionParameter $parameter): ?string
     {
         return $this->typeHintIndex->lookup(

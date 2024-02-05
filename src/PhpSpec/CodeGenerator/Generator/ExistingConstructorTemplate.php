@@ -18,6 +18,7 @@ use ReflectionMethod;
 
 class ExistingConstructorTemplate
 {
+    /** @param class-string $class */
     public function __construct(
         private TemplateRenderer $templates,
         private string $methodName,

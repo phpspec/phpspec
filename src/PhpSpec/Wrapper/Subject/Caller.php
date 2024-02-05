@@ -286,7 +286,6 @@ class Caller
     private function methodNotFound(mixed $method, array $arguments = array()) : MethodNotFoundException|MethodNotVisibleException
     {
         $className = $this->wrappedObject->getClassName();
-        /** @var string $className */
         if (!method_exists($className, $method)) {
             return $this->exceptions->methodNotFound($className, $method, $arguments);
         }

@@ -15,27 +15,27 @@ namespace PhpSpec\Locator;
 
 interface Resource
 {
-    
+
     public function getName(): string;
 
-    
+
     public function getSpecName(): string;
 
-    
+
     public function getSrcFilename(): string;
 
-    
+
     public function getSrcNamespace(): string;
 
-    
+    /** @return class-string */
     public function getSrcClassname(): string;
 
-    
+
     public function getSpecFilename(): string;
 
-    
+
     public function getSpecNamespace(): string;
 
-    
+
     public function getSpecClassname(): string;
 }

@@ -15,6 +15,7 @@ namespace PhpSpec\Loader\Node;
 
 use PhpSpec\Loader\Suite;
 use PhpSpec\Locator\Resource;
+use PhpSpec\Specification;
 use ReflectionClass;
 
 class SpecificationNode implements \Countable
@@ -39,6 +40,7 @@ class SpecificationNode implements \Countable
         return $this->title;
     }
 
+    /** @return ReflectionClass<Specification> */
     public function getClassReflection(): ReflectionClass
     {
         return $this->class;

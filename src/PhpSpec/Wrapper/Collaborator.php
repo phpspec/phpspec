@@ -22,11 +22,14 @@ final class Collaborator implements ObjectWrapper
     {
     }
 
+    /** @param class-string $classOrInterface */
     public function beADoubleOf(string $classOrInterface): void
     {
         if (interface_exists($classOrInterface)) {
+            /** @var interface-string $classOrInterface */
             $this->prophecy->willImplement($classOrInterface);
         } else {
+            /** @var class-string $classOrInterface */
             $this->prophecy->willExtend($classOrInterface);
         }
     }
@@ -36,6 +39,7 @@ final class Collaborator implements ObjectWrapper
         $this->prophecy->willBeConstructedWith($arguments);
     }
 
+    /** @param interface-string $interface */
     public function implement(string $interface): void
     {
         $this->prophecy->willImplement($interface);

@@ -21,6 +21,7 @@ use PhpSpec\Exception\Wrapper\SubjectException;
 
 class WrappedObject
 {
+    /** @var ?class-string */
     private ?string $classname = null;
 
     /**
@@ -107,6 +108,7 @@ class WrappedObject
         $this->isInstantiated = $instantiated;
     }
 
+    /** @return ?class-string */
     public function getClassName() : ?string
     {
         return $this->classname;
