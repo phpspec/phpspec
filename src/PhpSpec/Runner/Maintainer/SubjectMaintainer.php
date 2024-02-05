@@ -20,6 +20,7 @@ use PhpSpec\Specification;
 use PhpSpec\Runner\MatcherManager;
 use PhpSpec\Runner\CollaboratorManager;
 use PhpSpec\Formatter\Presenter\Presenter;
+use PhpSpec\Wrapper\SubjectContainer;
 use PhpSpec\Wrapper\Unwrapper;
 use PhpSpec\Wrapper\Wrapper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -37,7 +38,7 @@ final class SubjectMaintainer implements Maintainer
     public function supports(ExampleNode $example): bool
     {
         return $example->getSpecification()->getClassReflection()->implementsInterface(
-            'PhpSpec\Wrapper\SubjectContainer'
+            SubjectContainer::class
         );
     }
 

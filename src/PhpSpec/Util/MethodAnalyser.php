@@ -17,12 +17,11 @@ use PhpSpec\Loader\StreamWrapper;
 
 class MethodAnalyser
 {
-
+    /** @param class-string $class */
     public function methodIsEmpty(string $class, string $method): bool
     {
         return $this->reflectionMethodIsEmpty(new \ReflectionMethod($class, $method));
     }
-
 
     public function reflectionMethodIsEmpty(\ReflectionMethod $method): bool
     {
@@ -36,7 +35,7 @@ class MethodAnalyser
         return $this->codeIsOnlyBlocksAndWhitespace($codeWithoutComments);
     }
 
-
+    /** @param class-string $class */
     public function getMethodOwnerName(string $class, string $method): string
     {
         $reflectionMethod = new \ReflectionMethod($class, $method);
@@ -46,7 +45,6 @@ class MethodAnalyser
 
         return $reflectionClass->getName();
     }
-
 
     private function getCodeBody(\ReflectionMethod $reflectionMethod): string
     {
@@ -60,7 +58,6 @@ class MethodAnalyser
 
         return preg_replace('/.*function[^{]+{/s', '', $code);
     }
-
 
     private function getMethodOwner(\ReflectionMethod $reflectionMethod, int $methodStartLine, int $methodEndLine): \ReflectionClass
     {
@@ -89,7 +86,6 @@ class MethodAnalyser
         return null;
     }
 
-
     private function stripComments(string $code): string
     {
         $tokens = Token::getAll('<?php ' . $code);
@@ -107,12 +103,10 @@ class MethodAnalyser
         return $commentless;
     }
 
-
     private function codeIsOnlyBlocksAndWhitespace(string $codeWithoutComments): bool
     {
         return (bool) preg_match('/^[\s{}]*$/s', $codeWithoutComments);
     }
-
 
     private function isNotImplementedInPhp(\ReflectionMethod $method): bool
     {

@@ -15,6 +15,7 @@ namespace PhpSpec\Loader;
 
 use PhpSpec\Event\ResourceEvent;
 use PhpSpec\Locator\Resource;
+use PhpSpec\Specification;
 use PhpSpec\Specification\ErrorSpecification;
 use PhpSpec\Util\DispatchTrait;
 use PhpSpec\Util\MethodAnalyser;
@@ -38,7 +39,9 @@ class ResourceLoader
     {
         $suite = new Suite();
         foreach ($this->manager->locateResources($locator) as $resource) {
-            if (!class_exists($resource->getSpecClassname(), false) && is_file($resource->getSpecFilename())) {
+            $classname = $resource->getSpecClassname();
+
+            if (!class_exists($classname, false) && is_file($resource->getSpecFilename())) {
                 try {
                     require_once StreamWrapper::wrapPath($resource->getSpecFilename());
                 }
@@ -54,16 +57,16 @@ class ResourceLoader
                 );
             }
 
-            if (!class_exists($resource->getSpecClassname(), false)) {
+            if (!class_exists($classname, false)) {
                 continue;
             }
 
-            $reflection = new ReflectionClass($resource->getSpecClassname());
+            $reflection = new ReflectionClass($classname);
 
             if ($reflection->isAbstract()) {
                 continue;
             }
-            if (!$reflection->implementsInterface('PhpSpec\Specification')) {
+            if (!$reflection->implementsInterface(Specification::class)) {
                 continue;
             }
 

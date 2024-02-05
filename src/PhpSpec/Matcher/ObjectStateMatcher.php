@@ -20,7 +20,7 @@ use PhpSpec\Wrapper\DelayedCall;
 
 final class ObjectStateMatcher implements Matcher
 {
-    private static string $regex = '/(be|have)(.+)/';
+    private const REGEX = '/(be|have)(.+)/';
 
     public function __construct(
         private Presenter $presenter
@@ -41,7 +41,7 @@ final class ObjectStateMatcher implements Matcher
      */
     public function positiveMatch(string $name, mixed $subject, array $arguments) : ?DelayedCall
     {
-        preg_match(self::$regex, $name, $matches);
+        preg_match(self::REGEX, $name, $matches);
         $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);
         $callable = array($subject, $method);
 
@@ -65,7 +65,7 @@ final class ObjectStateMatcher implements Matcher
      */
     public function negativeMatch(string $name, mixed $subject, array $arguments) : ?DelayedCall
     {
-        preg_match(self::$regex, $name, $matches);
+        preg_match(self::REGEX, $name, $matches);
         $method   = ('be' === $matches[1] ? 'is' : 'has').ucfirst($matches[2]);
         $callable = array($subject, $method);
 
