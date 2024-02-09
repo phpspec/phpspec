@@ -1,0 +1,51 @@
+{{ $currentPage    := . }}
+{{ $currentVersion := index (split .Path "/") 0 }}
+{{ $url            := .RelPermalink }}
+{{ $latest         := .Site.Params.latest }}
+<div class="nav-sidebar-headline">
+  <h3 class="h-chapter">Chapters</h3>
+  <button>Menu</button>
+</div>
+<nav class="nav-sidebar">
+  <section class="nav-sidebar-main">
+    <ul>
+      {{ range where .Site.RegularPages "File.Dir" (printf "%s/manual/" $currentVersion) }}
+      {{ $docVersion := index (split .File.Path "/") 0 }}
+      {{ if eq $docVersion $currentVersion }}
+      {{ $isCurrentPage := eq $url .RelPermalink }}
+      <li class="{{if $isCurrentPage }}nav-active{{end}}">
+        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+        {{ .Page.TableOfContents }}
+      </li>
+      {{ end }}
+      {{ end }}
+    </ul>
+    <hr>
+    <ul>
+      {{ range where .Site.RegularPages "File.Dir" (printf "%s/cookbook/" $currentVersion) }}
+      {{ $docVersion := index (split .File.Path "/") 0 }}
+      {{ if eq $docVersion $currentVersion }}
+      {{ $isCurrentPage := eq $url .RelPermalink }}
+      <li class="{{if $isCurrentPage }}nav-active{{end}}">
+        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+        {{ .Page.TableOfContents }}
+      </li>
+      {{ end }}
+      {{ end }}
+    </ul>
+  </section>
+  <section class="nav-sidebar-version">
+    <h3>Version</h3>
+    <ul>
+      {{ $latest  := .Site.Params.latest }}
+      {{ range .Site.Params.versions }}
+      {{ $version := . }}
+      {{ $isLatest := eq $version $latest }}
+      {{ $url := relref $currentPage (printf "%s/%s" $version "manual/introduction") }}
+      <li class="{{ if and (eq $version $currentVersion) }}nav-version-active{{ end }}">
+        <a href="{{ $url }}">{{ $version }}{{ if $isLatest }}&nbsp;(<strong>latest</strong>){{ end }}</a>
+      </li>
+      {{ end }}
+    </ul>
+  </section>
+</nav>
