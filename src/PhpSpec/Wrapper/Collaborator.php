@@ -39,9 +39,9 @@ final class Collaborator implements ObjectWrapper
     }
 
     /**
-     * @param array $arguments
+     * @param null|array $arguments
      */
-    public function beConstructedWith(array $arguments = null): void
+    public function beConstructedWith(?array $arguments = null): void
     {
         $this->prophecy->willBeConstructedWith($arguments);
     }

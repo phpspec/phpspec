@@ -144,11 +144,11 @@ final class CollaboratorsMaintainer implements Maintainer
     }
 
     /**
-     * @param string $className
+     * @param null|string $className
      *
      * @throws CollaboratorNotFoundException
      */
-    private function throwCollaboratorNotFound(\Exception $e, \ReflectionParameter $parameter = null, string $className = null): void
+    private function throwCollaboratorNotFound(\Exception $e, ?\ReflectionParameter $parameter = null, ?string $className = null): void
     {
         throw new CollaboratorNotFoundException(
             'Collaborator does not exist',

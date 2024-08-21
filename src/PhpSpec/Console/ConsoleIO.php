@@ -111,12 +111,12 @@ class ConsoleIO implements IO
         return $this->lastMessage;
     }
 
-    public function writeln(string $message = '', int $indent = null): void
+    public function writeln(string $message = '', ?int $indent = null): void
     {
         $this->write($message, $indent, true);
     }
 
-    public function writeTemp(string $message, int $indent = null): void
+    public function writeTemp(string $message, ?int $indent = null): void
     {
         $this->write($message, $indent);
         $this->hasTempString = true;
@@ -142,7 +142,7 @@ class ConsoleIO implements IO
         $this->write($this->lastMessage);
     }
 
-    public function write(string $message, int $indent = null, bool $newline = false): void
+    public function write(string $message, ?int $indent = null, bool $newline = false): void
     {
         if ($this->hasTempString) {
             $this->hasTempString = false;
@@ -159,12 +159,12 @@ class ConsoleIO implements IO
         $this->lastMessage = $message.($newline ? "\n" : '');
     }
 
-    public function overwriteln(string $message = '', int $indent = null): void
+    public function overwriteln(string $message = '', ?int $indent = null): void
     {
         $this->overwrite($message, $indent, true);
     }
 
-    public function overwrite(string $message, int $indent = null, bool $newline = false): void
+    public function overwrite(string $message, ?int $indent = null, bool $newline = false): void
     {
         if (null !== $indent) {
             $message = $this->indentText($message, $indent);

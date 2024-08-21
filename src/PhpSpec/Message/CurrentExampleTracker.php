@@ -17,7 +17,7 @@ final class CurrentExampleTracker
 {
     private $currentExample;
 
-    public function setCurrentExample(string $currentExample = null)
+    public function setCurrentExample(?string $currentExample = null)
     {
         $this->currentExample = $currentExample;
     }

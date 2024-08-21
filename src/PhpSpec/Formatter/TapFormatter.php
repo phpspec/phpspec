@@ -116,9 +116,9 @@ final class TapFormatter extends ConsoleFormatter
      * Format message as two-space indented YAML when needed outside of a
      * SKIP or TODO directive.
      *
-     * @param int $result
+     * @param null|int $result
      */
-    private function getResultData(ExampleEvent $event, int $result = null): string
+    private function getResultData(ExampleEvent $event, ?int $result = null): string
     {
         if (null === $result) {
             return $this->stripNewlines($event->getException()->getMessage());
