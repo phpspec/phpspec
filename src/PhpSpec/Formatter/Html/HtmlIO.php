@@ -27,7 +27,7 @@ final class HtmlIO implements IO
         return true;
     }
 
-    public function writeln(string $message = '', int $indent = null): void
+    public function writeln(string $message = '', ?int $indent = null): void
     {
         echo $message . "<br>";
     }

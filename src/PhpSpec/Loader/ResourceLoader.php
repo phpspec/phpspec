@@ -35,7 +35,7 @@ class ResourceLoader
     ) {
     }
 
-    public function load(string $locator = '', int $line = null): Suite
+    public function load(string $locator = '', ?int $line = null): Suite
     {
         $suite = new Suite();
         foreach ($this->manager->locateResources($locator) as $resource) {

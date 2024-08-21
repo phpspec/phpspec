@@ -25,9 +25,9 @@ class CollaboratorNotFoundException extends FractureException
     public function __construct(
         string $message,
         int $code = 0,
-        Exception $previous = null,
-        ReflectionParameter $reflectionParameter = null,
-        string $className = null
+        ?Exception $previous = null,
+        ?ReflectionParameter $reflectionParameter = null,
+        ?string $className = null
     ) {
         if ($reflectionParameter) {
             $this->collaboratorName = $this->extractCollaboratorName($reflectionParameter);
