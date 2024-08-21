@@ -51,12 +51,12 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
     private $filesystem;
 
     /**
-     * @var string
+     * @var null|string
      */
     private $psr4Prefix;
 
     /**
-     * @param string     $psr4Prefix
+     * @param null|string $psr4Prefix
      */
     public function __construct(
         Filesystem $filesystem,
@@ -64,7 +64,7 @@ class PSR0Locator implements ResourceLocator, SrcPathLocator
         string $specNamespacePrefix = 'spec',
         string $srcPath = 'src',
         string $specPath = '.',
-        string $psr4Prefix = null
+        ?string $psr4Prefix = null
     ) {
         $this->filesystem = $filesystem;
         $sepr = DIRECTORY_SEPARATOR;

@@ -61,7 +61,7 @@ final class TriggerMatcher implements Matcher
      * @throws \PhpSpec\Exception\Example\FailureException
      * @return void
      */
-    public function verifyPositive(callable $callable, array $arguments, int $level = null, string $message = null)
+    public function verifyPositive(callable $callable, array $arguments, ?int $level = null, ?string $message = null)
     {
         $triggered = 0;
         $prevHandler = function($type, $str, $file, $line, $context=[]){};
@@ -91,7 +91,7 @@ final class TriggerMatcher implements Matcher
      * @throws \PhpSpec\Exception\Example\FailureException
      * @return void
      */
-    public function verifyNegative(callable $callable, array $arguments, int $level = null, string $message = null)
+    public function verifyNegative(callable $callable, array $arguments, ?int $level = null, ?string $message = null)
     {
         $triggered = 0;
         $prevHandler = function($type, $str, $file, $line, $context=[]){};

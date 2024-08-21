@@ -48,14 +48,14 @@ class Wrapper
     private $accessInspector;
 
     /**
-     * @param AccessInspector $accessInspector
+     * @param null|AccessInspector $accessInspector
      */
     public function __construct(
         MatcherManager $matchers,
         Presenter $presenter,
         EventDispatcherInterface $dispatcher,
         ExampleNode $example,
-        AccessInspector $accessInspector = null
+        ?AccessInspector $accessInspector = null
     ) {
         $this->matchers = $matchers;
         $this->presenter = $presenter;
@@ -65,7 +65,7 @@ class Wrapper
     }
 
     /**
-     * @param object $value
+     * @param null|object $value
      */
     public function wrap($value = null): Subject
     {

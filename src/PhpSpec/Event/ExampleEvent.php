@@ -63,20 +63,20 @@ class ExampleEvent extends BaseEvent implements PhpSpecEvent
     private $result;
 
     /**
-     * @var \Exception
+     * @var null|\Exception
      */
     private $exception;
 
     /**
-     * @param null|float   $time
-     * @param null|int $result
-     * @param \Exception   $exception
+     * @param float   $time
+     * @param int $result
+     * @param null|\Exception   $exception
      */
     public function __construct(
         ExampleNode $example,
         float $time = 0.0,
         int $result = self::PASSED,
-        \Exception $exception = null
+        ?\Exception $exception = null
     ) {
         $this->example   = $example;
         $this->time      = $time;

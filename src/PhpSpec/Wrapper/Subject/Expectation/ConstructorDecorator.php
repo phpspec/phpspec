@@ -29,7 +29,7 @@ final class ConstructorDecorator extends Decorator implements Expectation
      * @throws \PhpSpec\Exception\Example\ErrorException
      * @throws \PhpSpec\Exception\Fracture\FractureException
      */
-    public function match(string $alias, $subject, array $arguments = [], WrappedObject $wrappedObject = null)
+    public function match(string $alias, $subject, array $arguments = [], ?WrappedObject $wrappedObject = null)
     {
         try {
             $wrapped = $subject->getWrappedObject();
