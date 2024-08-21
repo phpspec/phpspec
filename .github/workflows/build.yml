@@ -2,7 +2,7 @@ name: Build
 
 on:
     push:
-        branches: [main, next, master, 2.5, 3.4, 4.3, 5.1, 6.3]
+        branches: [main, next, master, 2.5, 3.4, 4.3, 5.1, 6.3, 7.5]
     pull_request:
     release:
         types: [created]
