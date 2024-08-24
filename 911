@@ -1,0 +1,236 @@
+<?php
+
+include("../../../bd.php");
+
+if ($_POST) {
+
+    //Recibimos valores del formulario
+    $clasificacion = (isset($_POST["clasificacion"])) ? $_POST["clasificacion"] : "";
+    $id_clasificacion = (isset($_POST["id_clasificacion"])) ? $_POST["id_clasificacion"] : "";
+
+    $sentencia = $conexion->prepare("INSERT INTO `tbl_clasificacion_especifica` 
+    (`id`, `clasificacion`, `id_clasificacion`) 
+    VALUES (NULL, :clasificacion, :id_clasificacion);");
+
+    $sentencia->bindParam(":clasificacion", $clasificacion);
+    $sentencia->bindParam(":id_clasificacion", $id_clasificacion);
+
+    $sentencia->execute();
+
+    $mensaje = "Registro agregado con éxito.";
+    header("Location:index.php?mensaje=" . $mensaje);
+}
+
+?>
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Sistema LAZO - CCCT 911</title>
+
+    <!-- Fuentes personalizadas para esta plantilla-->
+    <link href="../../../vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+    <!-- Estilos personalizados para esta plantilla-->
+    <link href="../../../css/sb-admin-2.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this page -->
+    <link href="../../../vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+
+</head>
+
+<body id="page-top">
+
+    <!-- Envoltorio de página -->
+    <div id="wrapper">
+
+        <!-- Barra lateral -->
+        <?php
+
+        include("../../../navbar.php");
+
+        ?>
+        <!-- Fin de la barra lateral -->
+
+        <!-- Envoltorio de contenido -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Contenido principal -->
+            <div id="content">
+
+                <!-- Barra superior -->
+                <?php
+
+                include("../../../supbar.php");
+
+                ?>
+                <!-- Fin de la barra superior -->
+
+                <!-- Contenido de la página de inicio -->
+                <div class="container-fluid">
+
+                    <!-- Encabezado de página -->
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                        <h1 class="h3 mb-0 text-gray-800">Agregar clasificación</h1>
+                    </div>
+
+                    <!-- Datos de ingreso -->
+
+                    <div class="container">
+
+                        <!-- Fila exterior -->
+
+                        <div class="row justify-content-center">
+
+                            <div class="col-xl-10 col-lg-12 col-md-9">
+
+                                <div class="card o-hidden border-0 shadow-lg my-5">
+                                    <div class="card-body p-0">
+
+                                        <!-- Fila anidada dentro del cuerpo de la tarjeta -->
+
+                                        <div class="row">
+
+                                            <div class="col-lg-6 d-none d-lg-block bg-login-image"></div>
+                                            <div class="col-lg-6">
+                                                <div class="p-5">
+
+                                                    <form action="" method="post">
+
+                                                        <div class="col-md-12">
+                                                            <label for="clasificacion" class="form-label">Clasificación:</label>
+                                                            <input required type="text" class="form-control form-control-user" name="clasificacion" id="clasificacion" aria-describedby="helpId" placeholder="Ingresar Clasificación" oninput="this.value = this.value.toUpperCase();" />
+                                                        </div>
+
+                                                        <br>
+
+                                                        <div class="col-md-12">
+
+                                                            <label for="id_clasificacion" class="form-label">Clasif. General:</label>
+
+                                                            <select name="id_clasificacion" id="id_clasificacion">
+
+                                                                <option value="<?php echo $valor["id"]; ?>">Selecciona</option>
+
+                                                                <?php
+
+                                                                $sentencia = $conexion->prepare("SELECT * FROM tbl_clasificacion_general");
+
+                                                                $sentencia->execute();
+
+                                                                $dato = $sentencia->fetchAll();
+
+                                                                foreach ($dato as $valor) :
+
+                                                                    echo '<option value="' . $valor["id"] . '">' . $valor["clasificacion"] . '</option>';
+
+                                                                endforeach;
+
+                                                                ?>
+
+                                                            </select>
+
+                                                        </div>
+
+                                                        <br>
+
+                                                        <div style="display: flex; justify-content: center;">
+
+                                                            <a href="submit" class="btn btn-success btn-icon-split">
+                                                                <span class="icon text-white-50">
+                                                                    <i class="fas fa-folder-plus"></i>
+                                                                </span>
+
+                                                                <button type="submit" class="btn btn-success">
+                                                                    Agregar
+                                                                </button>
+
+                                                            </a>
+
+                                                            <!-- Divisor -->
+                                                            <hr class="sidebar-divider">
+
+                                                            <a href="index.php" class="btn btn-danger btn-icon-split">
+                                                                <span class="icon text-white-50">
+                                                                    <i class="fas fa-times"></i>
+                                                                </span>
+                                                                <span class="text">Cancelar</span>
+                                                            </a>
+
+                                                        </div>
+
+                                                    </form>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Fin del contenido principal -->
+
+                    <!-- Pie de página -->
+                    <footer class="sticky-footer bg-white">
+                        <div class="container my-auto">
+                            <div class="copyright text-center my-auto">
+                                <span>Derechos de autor &copy; YL 2024</span>
+                            </div>
+                        </div>
+                    </footer>
+                    <!-- Fin del pie de página -->
+
+                </div>
+                <!-- Fin del contenedor de contenido -->
+
+            </div>
+            <!-- Envoltorio de fin de página -->
+
+            <!-- Desplazarse hasta el botón superior-->
+            <a class="scroll-to-top rounded" href="#page-top">
+                <i class="fas fa-angle-up"></i>
+            </a>
+
+
+
+            <!-- JavaScript básico de arranque-->
+            <script src="../../../vendor/jquery/jquery.min.js"></script>
+            <script src="../../../vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+            <!-- Complemento principal JavaScript-->
+            <script src="../../../vendor/jquery-easing/jquery.easing.min.js"></script>
+
+            <!-- Scripts personalizados para todas las páginas.-->
+            <script src="../../../js/sb-admin-2.min.js"></script>
+
+            <!-- Complementos a nivel de página -->
+            <script src="../../../vendor/chart.js/Chart.min.js"></script>
+
+            <!-- Scripts personalizados a nivel de página -->
+            <script src="../../../js/demo/chart-area-demo.js"></script>
+            <script src="../../../js/demo/chart-pie-demo.js"></script>
+
+            <!-- Page level plugins -->
+            <script src="../../../vendor/datatables/jquery.dataTables.min.js"></script>
+            <script src="../../../vendor/datatables/dataTables.bootstrap4.min.js"></script>
+
+            <!-- Page level custom scripts -->
+            <script src="../../../js/demo/datatables-demo.js"></script>
+
+</body>
+
+</html>
