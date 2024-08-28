@@ -1,7 +1,7 @@
 phpspec
 =======
 
-The main website with documentation is at `http://www.phpspec.net <http://www.phpspec.net>`_.
+The main website with documentation is at `https://phpspec.net <https://phpspec.net>`_.
 
 .. image:: https://github.com/phpspec/phpspec/workflows/Build/badge.svg
    :target: https://github.com/phpspec/phpspec/actions?query=workflow%3ABuild
