@@ -30,6 +30,8 @@ jobs:
                         operating-system: windows-latest
                     -   php: "8.2"
                     -   php: "8.3"
+                    -   php: "8.4" # TODO move that to a normal job once prophecy supports PHP 8.4
+                        composer-flags: "--ignore-platform-req=php+"
 
         env:
             COMPOSER_ROOT_VERSION: dev-master
@@ -85,7 +87,7 @@ jobs:
                 run: ./vendor/bin/behat --format=progress
 
             -   name: Build the PHAR
-                if: matrix.php != '8.0' && matrix.php != '8.1' && matrix.php != '8.2' && matrix.php != '8.3'
+                if: matrix.php != '8.0' && matrix.php != '8.1' && matrix.php != '8.2' && matrix.php != '8.3' && matrix.php != '8.4'
                 run: |
                     composer config platform.php 7.3.0 &&
                     ln -s `which composer` composer.phar &&
