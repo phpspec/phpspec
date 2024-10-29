@@ -643,7 +643,7 @@ final class ContainerAssembler
 
         $container->define('runner.maintainers.errors', function (IndexedServiceContainer $c) {
             return new Runner\Maintainer\ErrorMaintainer(
-                $c->getParam('runner.maintainers.errors.level', E_ALL ^ E_STRICT)
+                $c->getParam('runner.maintainers.errors.level', E_ALL)
             );
         }, ['runner.maintainers']);
         $container->define('runner.maintainers.collaborators', function (IndexedServiceContainer $c) {
