@@ -21,6 +21,7 @@ jobs:
                 stability: ["stable"]
                 include:
                     -   php: "8.2"
+                        operating-system: ubuntu-latest
                         publish-phar: true
                     -   php: "8.2"
                         composer-flags: --prefer-lowest
