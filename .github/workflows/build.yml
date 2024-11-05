@@ -21,6 +21,7 @@ jobs:
                 stability: ["stable"]
                 include:
                     -   php: "7.3"
+                        operating-system: ubuntu-latest
                         publish-phar: true
                     -   php: "7.3"
                         composer-flags: --prefer-lowest
