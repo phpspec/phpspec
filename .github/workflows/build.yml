@@ -21,6 +21,7 @@ jobs:
                 stability: ["stable"]
                 include:
                     -   php: "8.2"
+                        operating-system: ubuntu-latest
                         publish-phar: true
                     -   php: "8.2"
                         composer-flags: --prefer-lowest
@@ -54,7 +55,7 @@ jobs:
                 run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
             -   name: Cache composer dependencies
-                uses: actions/cache@v3
+                uses: actions/cache@v4
                 env:
                     cache-name: cache-composer
                 with:
@@ -83,7 +84,7 @@ jobs:
                     ./vendor/bin/box compile
                     ./vendor/bin/behat --profile=phar
 
-            -   uses: actions/upload-artifact@v1
+            -   uses: actions/upload-artifact@v4
                 name: Publish the PHAR
                 if: matrix.publish-phar
                 with:
@@ -96,7 +97,7 @@ jobs:
         needs: tests
         if: github.event_name == 'release'
         steps:
-            -   uses: actions/download-artifact@v1
+            -   uses: actions/download-artifact@v4
                 with:
                     name: phpspec.phar
                     path: .
