@@ -2,7 +2,7 @@ name: Build
 
 on:
     push:
-        branches: [main, next, master, 2.5, 3.4, 4.3, 5.1, 6.3]
+        branches: [main, next, master, 2.5, 3.4, 4.3, 5.1, 6.3, 7.5]
     pull_request:
     release:
         types: [created]
@@ -21,6 +21,7 @@ jobs:
                 stability: ["stable"]
                 include:
                     -   php: "7.3"
+                        operating-system: ubuntu-latest
                         publish-phar: true
                     -   php: "7.3"
                         composer-flags: --prefer-lowest
@@ -56,7 +57,7 @@ jobs:
                 run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
             -   name: Cache composer dependencies
-                uses: actions/cache@v3
+                uses: actions/cache@v4
                 env:
                     cache-name: cache-composer
                 with:
@@ -91,7 +92,7 @@ jobs:
                     ln -s `which composer` composer.phar &&
                     make phpspec.phar
 
-            -   uses: actions/upload-artifact@v1
+            -   uses: actions/upload-artifact@v4
                 name: Publish the PHAR
                 if: matrix.publish-phar
                 with:
@@ -104,7 +105,7 @@ jobs:
         needs: tests
         if: github.event_name == 'release'
         steps:
-            -   uses: actions/download-artifact@v1
+            -   uses: actions/download-artifact@v4
                 with:
                     name: phpspec.phar
                     path: .
