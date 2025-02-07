@@ -26,7 +26,6 @@ final class Collaborator implements ObjectWrapper
     public function beADoubleOf(string $classOrInterface): void
     {
         if (interface_exists($classOrInterface)) {
-            /** @var interface-string $classOrInterface */
             $this->prophecy->willImplement($classOrInterface);
         } else {
             /** @var class-string $classOrInterface */

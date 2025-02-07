@@ -1,0 +1,544 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<files psalm-version="6.4.1@09a200c15910905ddc49e5edd37b73f9c78f7580">
+  <file src="src/PhpSpec/CodeGenerator/Generator/ClassGenerator.php">
+    <FalsableReturnStatement>
+      <code><![CDATA[file_get_contents(__DIR__.'/templates/class.template')]]></code>
+    </FalsableReturnStatement>
+  </file>
+  <file src="src/PhpSpec/CodeGenerator/Generator/CreateObjectTemplate.php">
+    <FalsableReturnStatement>
+      <code><![CDATA[file_get_contents(__DIR__.'/templates/named_constructor_create_object.template')]]></code>
+    </FalsableReturnStatement>
+  </file>
+  <file src="src/PhpSpec/CodeGenerator/Generator/ExistingConstructorTemplate.php">
+    <FalsableReturnStatement>
+      <code><![CDATA[file_get_contents(__DIR__.'/templates/named_constructor_create_object.template')]]></code>
+      <code><![CDATA[file_get_contents(__DIR__.'/templates/named_constructor_exception.template')]]></code>
+    </FalsableReturnStatement>
+  </file>
+  <file src="src/PhpSpec/CodeGenerator/Generator/InterfaceGenerator.php">
+    <FalsableReturnStatement>
+      <code><![CDATA[file_get_contents(__DIR__.'/templates/interface.template')]]></code>
+    </FalsableReturnStatement>
+  </file>
+  <file src="src/PhpSpec/CodeGenerator/Generator/MethodGenerator.php">
+    <FalsableReturnStatement>
+      <code><![CDATA[file_get_contents(__DIR__.'/templates/method.template')]]></code>
+    </FalsableReturnStatement>
+  </file>
+  <file src="src/PhpSpec/CodeGenerator/Generator/MethodSignatureGenerator.php">
+    <FalsableReturnStatement>
+      <code><![CDATA[file_get_contents(__DIR__.'/templates/interface_method_signature.template')]]></code>
+    </FalsableReturnStatement>
+  </file>
+  <file src="src/PhpSpec/CodeGenerator/Generator/PrivateConstructorGenerator.php">
+    <FalsableReturnStatement>
+      <code><![CDATA[file_get_contents(__DIR__.'/templates/private-constructor.template')]]></code>
+    </FalsableReturnStatement>
+  </file>
+  <file src="src/PhpSpec/CodeGenerator/Generator/ReturnConstantGenerator.php">
+    <FalsableReturnStatement>
+      <code><![CDATA[file_get_contents(__DIR__.'/templates/returnconstant.template')]]></code>
+    </FalsableReturnStatement>
+  </file>
+  <file src="src/PhpSpec/CodeGenerator/Generator/SpecificationGenerator.php">
+    <FalsableReturnStatement>
+      <code><![CDATA[file_get_contents(__DIR__.'/templates/specification.template')]]></code>
+    </FalsableReturnStatement>
+  </file>
+  <file src="src/PhpSpec/CodeGenerator/TemplateRenderer.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[appendLocation]]></code>
+      <code><![CDATA[getLocations]]></code>
+      <code><![CDATA[prependLocation]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Console/Application.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Console/Assembler/PresenterAssembler.php">
+    <UnusedFunctionCall>
+      <code><![CDATA[array_map]]></code>
+    </UnusedFunctionCall>
+  </file>
+  <file src="src/PhpSpec/Console/ConsoleIO.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[cutTemp]]></code>
+      <code><![CDATA[getLastWrittenMessage]]></code>
+      <code><![CDATA[overwriteln]]></code>
+      <code><![CDATA[setConsoleWidth]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Console/ContainerAssembler.php">
+    <UnusedFunctionCall>
+      <code><![CDATA[array_map]]></code>
+    </UnusedFunctionCall>
+  </file>
+  <file src="src/PhpSpec/Console/Provider/NamespacesAutocompleteProvider.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getNamespaces]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Console/ResultConverter.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[convert]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Event/ExampleEvent.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getSuite]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Event/ExpectationEvent.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getArguments]]></code>
+      <code><![CDATA[getExample]]></code>
+      <code><![CDATA[getException]]></code>
+      <code><![CDATA[getMatcher]]></code>
+      <code><![CDATA[getMethod]]></code>
+      <code><![CDATA[getResult]]></code>
+      <code><![CDATA[getSpecification]]></code>
+      <code><![CDATA[getSubject]]></code>
+      <code><![CDATA[getSuite]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Event/FileCreationEvent.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getFilePath]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Event/MethodCallEvent.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getArguments]]></code>
+      <code><![CDATA[getExample]]></code>
+      <code><![CDATA[getReturnValue]]></code>
+      <code><![CDATA[getSpecification]]></code>
+      <code><![CDATA[getSuite]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Event/SpecificationEvent.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getSuite]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Exception/Example/ErrorException.php">
+    <UnusedProperty>
+      <code><![CDATA[$levels]]></code>
+    </UnusedProperty>
+  </file>
+  <file src="src/PhpSpec/Exception/Example/SkippingException.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Exception/Fracture/InterfaceNotImplementedException.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getInterface]]></code>
+      <code><![CDATA[getSubject]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$message]]></code>
+    </PossiblyUnusedParam>
+  </file>
+  <file src="src/PhpSpec/Exception/Fracture/PropertyNotFoundException.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getProperty]]></code>
+      <code><![CDATA[getSubject]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Exception/Wrapper/MatcherNotFoundException.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getArguments]]></code>
+      <code><![CDATA[getKeyword]]></code>
+      <code><![CDATA[getSubject]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Formatter/BasicFormatter.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[afterSpecification]]></code>
+      <code><![CDATA[afterSuite]]></code>
+      <code><![CDATA[beforeExample]]></code>
+      <code><![CDATA[beforeSpecification]]></code>
+      <code><![CDATA[beforeSuite]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Formatter/DotFormatter.php">
+    <UnusedFunctionCall>
+      <code><![CDATA[array_map]]></code>
+    </UnusedFunctionCall>
+  </file>
+  <file src="src/PhpSpec/Formatter/Html/ReportItem.php">
+    <UnusedClass>
+      <code><![CDATA[ReportItem]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/PhpSpec/Formatter/HtmlFormatter.php">
+    <UnusedVariable>
+      <code><![CDATA[$index]]></code>
+      <code><![CDATA[$name]]></code>
+    </UnusedVariable>
+  </file>
+  <file src="src/PhpSpec/Formatter/JUnitFormatter.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getExampleStatusCounts]]></code>
+      <code><![CDATA[getTestCaseNodes]]></code>
+      <code><![CDATA[getTestSuiteNodes]]></code>
+      <code><![CDATA[setExampleStatusCounts]]></code>
+      <code><![CDATA[setTestCaseNodes]]></code>
+      <code><![CDATA[setTestSuiteNodes]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Formatter/Presenter/Differ/DifferEngine.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[supports]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Formatter/Presenter/Exception/AbstractPhpSpecExceptionPresenter.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[presentException]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Formatter/Presenter/Value/ComposedValuePresenter.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[addTypePresenter]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Formatter/TapFormatter.php">
+    <InvalidNullableReturnType>
+      <code><![CDATA[string]]></code>
+    </InvalidNullableReturnType>
+    <NullableReturnStatement>
+      <code><![CDATA[preg_replace(
+            array("%(^[^\n\r])%", "%([\n\r]{1,2})%", "%\s+...[\n\r]{1,2}\s+---%"),
+            array("  \\1", "\\1  ", ""),
+            $string
+        )]]></code>
+    </NullableReturnStatement>
+  </file>
+  <file src="src/PhpSpec/Formatter/TeamCityFormatter.php">
+    <UnusedClass>
+      <code><![CDATA[TeamCityFormatter]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/PhpSpec/Listener/BootstrapListener.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[beforeSuite]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Listener/ClassNotFoundListener.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[afterExample]]></code>
+      <code><![CDATA[afterSuite]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Listener/CollaboratorMethodNotFoundListener.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[afterExample]]></code>
+      <code><![CDATA[afterSuite]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Listener/CollaboratorNotFoundListener.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[afterExample]]></code>
+      <code><![CDATA[afterSuite]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Listener/CurrentExampleListener.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[afterCurrentExample]]></code>
+      <code><![CDATA[afterSuiteEvent]]></code>
+      <code><![CDATA[beforeCurrentExample]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Listener/MethodNotFoundListener.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[afterExample]]></code>
+      <code><![CDATA[afterSuite]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Listener/MethodReturnedNullListener.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[afterExample]]></code>
+      <code><![CDATA[afterMethodCall]]></code>
+      <code><![CDATA[afterSuite]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Listener/NamedConstructorNotFoundListener.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[afterExample]]></code>
+      <code><![CDATA[afterSuite]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Listener/RerunListener.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[afterSuite]]></code>
+      <code><![CDATA[beforeSuite]]></code>
+    </PossiblyUnusedMethod>
+    <UnusedParam>
+      <code><![CDATA[$suiteEvent]]></code>
+    </UnusedParam>
+  </file>
+  <file src="src/PhpSpec/Listener/StatisticsCollector.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[afterExample]]></code>
+      <code><![CDATA[afterSpecification]]></code>
+      <code><![CDATA[beforeSuite]]></code>
+      <code><![CDATA[getAllEvents]]></code>
+      <code><![CDATA[getGlobalResult]]></code>
+      <code><![CDATA[onResourceIgnored]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$event]]></code>
+    </PossiblyUnusedParam>
+  </file>
+  <file src="src/PhpSpec/Listener/StopOnFailureListener.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[afterExample]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Loader/Node/ExampleNode.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[setTitle]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Loader/Node/SpecificationNode.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[count]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Loader/ResourceLoader.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[load]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Loader/SpecTransformer.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[transform]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Loader/StreamWrapper.php">
+    <FalsableReturnStatement>
+      <code><![CDATA[stat($this->realPath)]]></code>
+    </FalsableReturnStatement>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[stream_eof]]></code>
+      <code><![CDATA[stream_open]]></code>
+      <code><![CDATA[stream_read]]></code>
+      <code><![CDATA[stream_set_option]]></code>
+      <code><![CDATA[stream_stat]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$arg1]]></code>
+      <code><![CDATA[$arg2]]></code>
+      <code><![CDATA[$option]]></code>
+      <code><![CDATA[$options]]></code>
+    </PossiblyUnusedParam>
+    <PossiblyUnusedProperty>
+      <code><![CDATA[$context]]></code>
+    </PossiblyUnusedProperty>
+    <UnusedFunctionCall>
+      <code><![CDATA[stream_wrapper_unregister]]></code>
+    </UnusedFunctionCall>
+  </file>
+  <file src="src/PhpSpec/Loader/Suite.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[count]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Locator/PSR0/PSR0Resource.php">
+    <FalsableReturnStatement>
+      <code><![CDATA[end($this->parts)]]></code>
+    </FalsableReturnStatement>
+  </file>
+  <file src="src/PhpSpec/Matcher/IterateAsMatcher.php">
+    <PossiblyUnusedReturnValue>
+      <code><![CDATA[?DelayedCall]]></code>
+    </PossiblyUnusedReturnValue>
+  </file>
+  <file src="src/PhpSpec/Matcher/IterateLikeMatcher.php">
+    <PossiblyUnusedReturnValue>
+      <code><![CDATA[?DelayedCall]]></code>
+    </PossiblyUnusedReturnValue>
+  </file>
+  <file src="src/PhpSpec/Matcher/StartIteratingAsMatcher.php">
+    <PossiblyUnusedReturnValue>
+      <code><![CDATA[?DelayedCall]]></code>
+    </PossiblyUnusedReturnValue>
+  </file>
+  <file src="src/PhpSpec/Matcher/ThrowMatcher.php">
+    <UnusedMethodCall>
+      <code><![CDATA[setAccessible]]></code>
+      <code><![CDATA[setAccessible]]></code>
+    </UnusedMethodCall>
+  </file>
+  <file src="src/PhpSpec/Matcher/TraversableCountMatcher.php">
+    <UnusedForeachValue>
+      <code><![CDATA[$value]]></code>
+    </UnusedForeachValue>
+  </file>
+  <file src="src/PhpSpec/Matcher/TraversableKeyMatcher.php">
+    <UnusedForeachValue>
+      <code><![CDATA[$value]]></code>
+    </UnusedForeachValue>
+  </file>
+  <file src="src/PhpSpec/Matcher/TriggerMatcher.php">
+    <UnusedClosureParam>
+      <code><![CDATA[$context]]></code>
+      <code><![CDATA[$context]]></code>
+      <code><![CDATA[$file]]></code>
+      <code><![CDATA[$file]]></code>
+      <code><![CDATA[$line]]></code>
+      <code><![CDATA[$line]]></code>
+      <code><![CDATA[$str]]></code>
+      <code><![CDATA[$str]]></code>
+      <code><![CDATA[$type]]></code>
+      <code><![CDATA[$type]]></code>
+    </UnusedClosureParam>
+    <UnusedVariable>
+      <code><![CDATA[$prevHandler]]></code>
+      <code><![CDATA[$prevHandler]]></code>
+    </UnusedVariable>
+  </file>
+  <file src="src/PhpSpec/NamespaceProvider/NamespaceLocation.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getNamespace]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/NamespaceProvider/NamespaceProvider.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getNamespaces]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/ObjectBehavior.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__call]]></code>
+      <code><![CDATA[__get]]></code>
+      <code><![CDATA[__set]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Process/Shutdown/Shutdown.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[registerAction]]></code>
+      <code><![CDATA[registerShutdown]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Process/Shutdown/ShutdownAction.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[runAction]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Runner/Maintainer/CollaboratorsMaintainer.php">
+    <UnusedProperty>
+      <code><![CDATA[$docex]]></code>
+    </UnusedProperty>
+  </file>
+  <file src="src/PhpSpec/Runner/Maintainer/Maintainer.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getPriority]]></code>
+      <code><![CDATA[prepare]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Runner/Maintainer/SubjectMaintainer.php">
+    <UnusedProperty>
+      <code><![CDATA[$unwrapper]]></code>
+    </UnusedProperty>
+  </file>
+  <file src="src/PhpSpec/Runner/SuiteRunner.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[run]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/ServiceContainer.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[remove]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Util/ClassFileAnalyser.php">
+    <UnusedForeachValue>
+      <code><![CDATA[$token]]></code>
+    </UnusedForeachValue>
+  </file>
+  <file src="src/PhpSpec/Util/DispatchTrait.php">
+    <UnusedReturnValue>
+      <code><![CDATA[object]]></code>
+    </UnusedReturnValue>
+  </file>
+  <file src="src/PhpSpec/Util/Filesystem.php">
+    <FalsableReturnStatement>
+      <code><![CDATA[file_get_contents($path)]]></code>
+    </FalsableReturnStatement>
+  </file>
+  <file src="src/PhpSpec/Util/MethodAnalyser.php">
+    <InvalidNullableReturnType>
+      <code><![CDATA[string]]></code>
+    </InvalidNullableReturnType>
+    <NullableReturnStatement>
+      <code><![CDATA[preg_replace('/.*function[^{]+{/s', '', $code)]]></code>
+    </NullableReturnStatement>
+  </file>
+  <file src="src/PhpSpec/Wrapper/Collaborator.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__call]]></code>
+      <code><![CDATA[__get]]></code>
+      <code><![CDATA[__set]]></code>
+      <code><![CDATA[beConstructedWith]]></code>
+      <code><![CDATA[implement]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Wrapper/Subject.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__call]]></code>
+      <code><![CDATA[__get]]></code>
+      <code><![CDATA[__set]]></code>
+      <code><![CDATA[beConstructedWith]]></code>
+      <code><![CDATA[callOnWrappedObject]]></code>
+      <code><![CDATA[getFromWrappedObject]]></code>
+      <code><![CDATA[setToWrappedObject]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedReturnValue>
+      <code><![CDATA[Subject]]></code>
+    </PossiblyUnusedReturnValue>
+  </file>
+  <file src="src/PhpSpec/Wrapper/Subject/Expectation/Decorator.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getNestedExpectation]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Wrapper/Subject/Expectation/DuringCall.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__call]]></code>
+      <code><![CDATA[__construct]]></code>
+      <code><![CDATA[match]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$alias]]></code>
+    </PossiblyUnusedParam>
+  </file>
+  <file src="src/PhpSpec/Wrapper/Subject/Expectation/Negative.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Wrapper/Subject/Expectation/Positive.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Wrapper/Subject/Expectation/ThrowExpectation.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[during]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/PhpSpec/Wrapper/Subject/SubjectWithArrayAccess.php">
+    <UnusedProperty>
+      <code><![CDATA[$dispatcher]]></code>
+    </UnusedProperty>
+  </file>
+  <file src="src/PhpSpec/Wrapper/Subject/WrappedObject.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[setClassName]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+</files>
