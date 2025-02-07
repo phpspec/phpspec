@@ -39,7 +39,7 @@
         "behat/behat":           "^3.3",
         "symfony/filesystem":    "^3.4 || ^4.0 || ^5.0 || ^6.0 || ^7.0",
         "phpunit/phpunit":       "^8.0 || ^9.0 || ^10.0",
-        "vimeo/psalm": "^4.3 || ^5.2"
+        "vimeo/psalm": "^4.3 || ^5.2 || ^6.0"
     },
 
     "suggest": {
