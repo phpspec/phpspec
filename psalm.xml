@@ -5,6 +5,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="https://getpsalm.org/schema/config"
     xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+    errorBaseline="psalm-baseline.xml"
 >
     <projectFiles>
         <directory name="src" />
@@ -13,32 +14,6 @@
         </ignoreFiles>
     </projectFiles>
     <issueHandlers>
-        <DuplicateClass>
-            <errorLevel type="suppress">
-                <!-- duplicate classes are inside a conditional so not an error -->
-                <file name="src/PhpSpec/Event/BaseEvent.php" />
-            </errorLevel>
-        </DuplicateClass>
-        <UndefinedConstant>
-            <errorLevel type="suppress">
-                <!-- new token constants in PHP 8 cause an error, despite being behind version detection -->
-                <file name="src/PhpSpec/CodeAnalysis/TokenizedTypeHintRewriter.php" />
-                <file name="src/PhpSpec/Locator/PSR0/PSR0Locator.php" />
-            </errorLevel>
-        </UndefinedConstant>
-        <InvalidCatch>
-            <errorLevel type="suppress">
-                <!-- Prophecy's exception interface does not extend throwable -->
-                <referencedClass name="Prophecy\Exception\Prediction\PredictionException"/>
-            </errorLevel>
-        </InvalidCatch>
-        <InvalidArgument>
-            <errorLevel type="suppress">
-                <!-- Error from symfony BC code -->
-                <referencedFunction name="Symfony\Contracts\EventDispatcher\EventDispatcherInterface::dispatch"></referencedFunction>
-                <referencedFunction name="Symfony\Component\EventDispatcher\EventDispatcher::dispatch"></referencedFunction>
-            </errorLevel>
-        </InvalidArgument>
         <TypeDoesNotContainType>
             <errorLevel type="suppress">
                 <!-- Psalm error see https://github.com/vimeo/psalm/issues/5001 -->
@@ -59,11 +34,12 @@
                 <referencedFunction name="PhpSpec\Wrapper\Subject\Expectation\Expectation::match"/>
             </errorLevel>
         </TooManyArguments>
-        <UndefinedVariable>
+        <ArgumentTypeCoercion>
             <errorLevel type="suppress">
-                <!-- Psalm can't handle $foo = fn() use (&$foo) pattern -->
-                <file name="src/PhpSpec/Matcher/TriggerMatcher.php"/>
+                <!-- The container is totally non-type-safe currently -->
+                <file name="src/PhpSpec/Console/ContainerAssembler.php"/>
+                <file name="src/PhpSpec/Console/Assembler/PresenterAssembler.php"/>
             </errorLevel>
-        </UndefinedVariable>
+        </ArgumentTypeCoercion>
     </issueHandlers>
 </psalm>
