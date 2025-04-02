@@ -6,6 +6,8 @@
     xmlns="https://getpsalm.org/schema/config"
     xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
     errorBaseline="psalm-baseline.xml"
+    ensureOverrideAttribute="false"
+    strictBinaryOperands="false"
 >
     <projectFiles>
         <directory name="src" />
@@ -14,14 +16,6 @@
         </ignoreFiles>
     </projectFiles>
     <issueHandlers>
-        <TypeDoesNotContainType>
-            <errorLevel type="suppress">
-                <!-- Psalm error see https://github.com/vimeo/psalm/issues/5001 -->
-                <file name="src/PhpSpec/CodeAnalysis/TokenizedNamespaceResolver.php"/>
-                <!-- Psalm error see https://github.com/vimeo/psalm/issues/5004 -->
-                <file name="src/PhpSpec/Matcher/TriggerMatcher.php"/>
-            </errorLevel>
-        </TypeDoesNotContainType>
         <RedundantCondition>
             <errorLevel type="suppress">
                 <!-- Psalm error see https://github.com/vimeo/psalm/issues/5004 -->
