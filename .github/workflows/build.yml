@@ -67,6 +67,10 @@ jobs:
                 if: matrix.composer-flags != '--prefer-lowest'
                 run: ./vendor/bin/psalm --php-version=${{ matrix.php }}
 
+            -   name: Remove psalm (to allow PHPUnit 11+)
+                if: matrix.composer-flags != '--prefer-lowest'
+                run: composer remove --dev --no-update vimeo/psalm && composer update
+
             -   name: Run tests (phpspec)
                 run: bin/phpspec run --format=dot
 
