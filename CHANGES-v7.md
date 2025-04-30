@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [7.6.0]
 
 ### Added
-- PHPUnit 11 compatibility [@Jean85](https://github.com/Jean85)
+- PHPUnit 11 & 12 compatibility [@Jean85](https://github.com/Jean85)
 
 ## [7.5.0]
 
