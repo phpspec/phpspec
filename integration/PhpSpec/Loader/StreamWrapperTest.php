@@ -7,6 +7,7 @@ use PhpSpec\CodeAnalysis\TokenizedTypeHintRewriter;
 use PhpSpec\Loader\StreamWrapper;
 use PhpSpec\Loader\Transformer\InMemoryTypeHintIndex;
 use PhpSpec\Loader\Transformer\TypeHintRewriter;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 class StreamWrapperTest extends TestCase
@@ -23,6 +24,7 @@ class StreamWrapperTest extends TestCase
      * @test
      * @requires PHP 7.0
      */
+    #[Test]
     function it_loads_a_spec_with_no_typehints()
     {
         require StreamWrapper::wrapPath(__DIR__.'/examples/ExampleSpec.php');
