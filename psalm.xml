@@ -41,5 +41,6 @@
                 <file name="src/PhpSpec/Console/Assembler/PresenterAssembler.php"/>
             </errorLevel>
         </ArgumentTypeCoercion>
+        <MissingOverrideAttribute errorLevel="suppress" />
     </issueHandlers>
 </psalm>
