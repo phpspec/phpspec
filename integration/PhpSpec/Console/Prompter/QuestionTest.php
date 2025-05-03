@@ -3,12 +3,16 @@
 namespace integration\PhpSpec\Console\Prompter;
 
 use PhpSpec\Console\Prompter\Question;
+use PHPUnit\Framework\Attributes\RequiresMethod;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
  * @requires function \Symfony\Component\Console\Helper\QuestionHelper::ask
  */
+#[RequiresMethod(QuestionHelper::class, 'ask')]
 class QuestionTest extends TestCase
 {
     /**
@@ -43,6 +47,7 @@ class QuestionTest extends TestCase
     /**
      * @test
      */
+    #[Test]
     function it_is_a_prompter()
     {
         $this->assertInstanceOf('PhpSpec\Console\Prompter', $this->prompter);
@@ -51,6 +56,7 @@ class QuestionTest extends TestCase
     /**
      * @test
      */
+    #[Test]
     function it_can_ask_a_question_and_return_the_result()
     {
         $this->questionHelper->expects($this->once())
