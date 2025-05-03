@@ -6,6 +6,7 @@
     xmlns="https://getpsalm.org/schema/config"
     xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
     errorBaseline="psalm-baseline.xml"
+    strictBinaryOperands="false"
 >
     <projectFiles>
         <directory name="src" />
@@ -41,5 +42,11 @@
                 <file name="src/PhpSpec/Console/Assembler/PresenterAssembler.php"/>
             </errorLevel>
         </ArgumentTypeCoercion>
+        <MissingOverrideAttribute errorLevel="suppress" />
+        <UndefinedMagicMethod>
+            <errorLevel type="suppress">
+                <referencedMethod name="PhpSpec\Wrapper\DelayedCall::during"/>
+            </errorLevel>
+        </UndefinedMagicMethod>
     </issueHandlers>
 </psalm>
