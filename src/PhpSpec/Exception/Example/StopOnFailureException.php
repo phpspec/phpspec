@@ -23,7 +23,7 @@ class StopOnFailureException extends ExampleException
     public function __construct(
         string $message = "",
         int $code = 0,
-        Exception $previous = null,
+        ?Exception $previous = null,
         private int $result = 0)
     {
         parent::__construct($message, $code, $previous);
