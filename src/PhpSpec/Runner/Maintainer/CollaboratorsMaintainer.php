@@ -77,6 +77,14 @@ final class CollaboratorsMaintainer implements Maintainer
         return 50;
     }
 
+    /**
+     * @param CollaboratorManager $collaborators
+     * @param \ReflectionFunctionAbstract $function
+     * @param \ReflectionClass<Specification> $classRefl
+     * @return void
+     * @throws CollaboratorNotFoundException
+     * @throws InvalidCollaboratorTypeException
+     */
     private function generateCollaborators(CollaboratorManager $collaborators, \ReflectionFunctionAbstract $function, \ReflectionClass $classRefl): void
     {
         foreach ($function->getParameters() as $parameter) {
@@ -136,7 +144,11 @@ final class CollaboratorsMaintainer implements Maintainer
         );
     }
 
-    /** @return ?class-string */
+    /**
+     * @param \ReflectionClass<Specification> $classRefl
+     * @param \ReflectionParameter $parameter
+     * @return ?class-string
+     */
     private function getParameterTypeFromIndex(\ReflectionClass $classRefl, \ReflectionParameter $parameter): ?string
     {
         return $this->typeHintIndex->lookup(

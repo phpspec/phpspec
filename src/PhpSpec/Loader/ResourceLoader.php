@@ -105,6 +105,7 @@ class ResourceLoader
     private function addErrorThrowingExampleToSuite(Resource $resource, Suite $suite, \Error $error) : void
     {
         $reflection = new ReflectionClass(ErrorSpecification::class);
+        /** @var ReflectionClass<Specification> $reflection */
         $spec = new Node\SpecificationNode($resource->getSrcClassname(), $reflection, $resource);
 
         $errorFunction = new \ReflectionFunction(

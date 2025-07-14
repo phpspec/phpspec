@@ -27,6 +27,11 @@ class SpecificationNode implements \Countable
      */
     private array $examples = [];
 
+    /**
+     * @param string $title
+     * @param ReflectionClass<Specification> $class
+     * @param Resource $resource
+     */
     public function __construct(
         private string $title,
         private ReflectionClass $class,
