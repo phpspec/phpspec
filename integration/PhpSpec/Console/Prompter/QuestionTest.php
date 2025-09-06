@@ -64,7 +64,11 @@ class QuestionTest extends TestCase
                            ->with(
                                $this->identicalTo($this->input),
                                $this->identicalTo($this->output),
-                               $this->equalTo(new ConfirmationQuestion('Are you sure?', true))
+                               $this->callback(function ($question) {
+                                   return $question instanceof ConfirmationQuestion
+                                       && $question->getQuestion() === 'Are you sure?'
+                                       && $question->getDefault() === true;
+                               }),
                            )
                            ->willReturn(true);
 
