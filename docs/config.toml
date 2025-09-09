@@ -1,0 +1,34 @@
+baseURL = "https://jaylinski.github.io/phpspec/" # TODO Change to phpspec.net
+title = "phpspec"
+disableKinds = ["taxonomy", "term"]
+disableHugoGeneratorInject = true
+
+[outputs]
+  home = ["HTML", "RSS"]
+  page = ["HTML"]
+
+[markup]
+  [markup.tableOfContents]
+    ordered = true
+    endLevel = 2
+
+[params]
+  github = "https://www.github.com/phpspec/phpspec"
+  githubProphecy = "https://www.github.com/phpspec/prophecy"
+
+  latest = "v7"
+  versions = ["v7", "v6"]
+
+[menu]
+  [[menu.repo]]
+    name = "phpspec repo"
+    url = "https://www.github.com/phpspec/phpspec"
+  [[menu.repo]]
+    name = "prophecy repo"
+    url = "https://www.github.com/phpspec/prophecy"
+
+[languages]
+  [languages.en]
+    contentDir = "content/en"
+    languageCode = "en"
+    languageName = "English"
