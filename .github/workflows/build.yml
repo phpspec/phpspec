@@ -18,6 +18,7 @@ jobs:
                 operating-system: [ ubuntu-latest, macOS-latest, windows-latest ]
                 composer-flags: [""]
                 composer-extras: [""]
+                symfony: [""]
                 stability: ["stable"]
                 include:
                     -   php: "8.2"
@@ -25,9 +26,13 @@ jobs:
                         publish-phar: true
                     -   php: "8.2"
                         composer-flags: --prefer-lowest
+                    -   php: "8.4"
+                        operating-system: ubuntu-latest
+                        symfony: "8.0.*"
 
         env:
             COMPOSER_ROOT_VERSION: dev-master
+            SYMFONY_REQUIRE: ${{ matrix.symfony }}
 
         steps:
             -   uses: actions/checkout@v4
@@ -58,16 +63,20 @@ jobs:
                     path: ${{ steps.composercache.outputs.dir }}
                     key: ${{ hashFiles('composer.json') }}
 
+            -   name: Remove psalm (to allow PHPUnit 11+ and Symfony 8)
+                if: matrix.composer-flags != '--prefer-lowest'
+                run: composer remove --dev --no-update vimeo/psalm
+
+            -   name: Remove behat (to allow Symfony 8)
+                if: matrix.symfony == '8.0.*'
+                run: composer remove --dev --no-update behat/behat
+
             -   name: Install composer dependencies
                 run: composer update ${{ matrix.composer-flags }}
 
             -   name: Run static analysis (psalm)
                 if: matrix.composer-flags != '--prefer-lowest'
                 run: ./vendor/bin/psalm --php-version=${{ matrix.php }}
-
-            -   name: Remove psalm (to allow PHPUnit 11+)
-                if: matrix.composer-flags != '--prefer-lowest'
-                run: composer remove --dev --no-update vimeo/psalm && composer update
 
             -   name: Run tests (phpspec)
                 run: bin/phpspec run --format=dot
@@ -76,9 +85,11 @@ jobs:
                 run: ./vendor/bin/phpunit
 
             -   name: Run tests (behat)
+                if: matrix.symfony != '8.0.*'
                 run: ./vendor/bin/behat --format=progress
 
             -   name: Build the PHAR
+                if: matrix.symfony != '8.0.*'
                 run: |
                     composer bin box require --dev humbug/box
                     ./vendor/bin/box compile
