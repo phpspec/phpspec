@@ -7,4 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [8.0.0](https://github.com/phpspec/phpspec/compare/7.6.0...8.0.0)
 
 ### Added
-- PHP 8.4 compatibility [@jrfnl](https://github.com/jrfnl) [@andypost](https://github.com/andypost) 
+- PHP 8.4 compatibility [@jrfnl](https://github.com/jrfnl) [@andypost](https://github.com/andypost)
+
+## [8.1.0](https://github.com/phpspec/phpspec/compare/8.0.0...8.1.0)
+
+### Added
+- PHP 8.5 compatibility
