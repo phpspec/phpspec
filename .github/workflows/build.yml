@@ -63,11 +63,7 @@ jobs:
                     path: ${{ steps.composercache.outputs.dir }}
                     key: ${{ hashFiles('composer.json') }}
 
-            -   name: Remove psalm (to allow PHPUnit 11+ and Symfony 8)
-                if: matrix.composer-flags != '--prefer-lowest'
-                run: composer remove --dev --no-update vimeo/psalm
-
-            -   name: Remove behat (to allow Symfony 8)
+            -   name: Remove psalm & behat (to allow Symfony 8)
                 if: matrix.symfony == '8.0.*'
                 run: composer remove --dev --no-update behat/behat
 
@@ -75,7 +71,7 @@ jobs:
                 run: composer update ${{ matrix.composer-flags }}
 
             -   name: Run static analysis (psalm)
-                if: matrix.composer-flags != '--prefer-lowest'
+                if: matrix.symfony != '8.0.*'
                 run: ./vendor/bin/psalm --php-version=${{ matrix.php }}
 
             -   name: Run tests (phpspec)
