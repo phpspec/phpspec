@@ -71,7 +71,7 @@ jobs:
                 run: composer update ${{ matrix.composer-flags }}
 
             -   name: Run static analysis (psalm)
-                if: matrix.symfony != '8.0.*'
+                if: matrix.symfony != '8.0.*' && matrix.composer-flags != '--prefer-lowest'
                 run: ./vendor/bin/psalm --php-version=${{ matrix.php }}
 
             -   name: Run tests (phpspec)
