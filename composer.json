@@ -39,7 +39,7 @@
         "behat/behat":           "^3.14",
         "symfony/filesystem":    "^5.4  || ^6.0 || ^7.0 || ^8.0",
         "phpunit/phpunit":       "^9.0 || ^10.0 || ^11.0 || ^12.0",
-        "vimeo/psalm":           "^4.3 || ^5.2 || ^6.0",
+        "vimeo/psalm":           "^6.0",
         "bamarni/composer-bin-plugin": "^1.8"
     },
 
