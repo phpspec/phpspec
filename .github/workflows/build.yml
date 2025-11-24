@@ -63,7 +63,7 @@ jobs:
 
             -   name: Run static analysis (psalm)
                 if: matrix.composer-flags != '--prefer-lowest'
-                run: ./vendor/bin/psalm --php-version=${{ matrix.php }}
+                run: ./vendor/bin/psalm --version && ./vendor/bin/psalm --php-version=${{ matrix.php }}
 
             -   name: Remove psalm (to allow PHPUnit 11+)
                 if: matrix.composer-flags != '--prefer-lowest'
