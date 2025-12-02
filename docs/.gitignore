@@ -1,5 +1,2 @@
-.Python
-bin
-include
-lib
-_build
+public/
+resources/
