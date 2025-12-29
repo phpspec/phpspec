@@ -67,7 +67,11 @@ final class Application extends BaseApplication
         $this->loadConfigurationFile($input, $this->container);
 
         foreach ($this->container->getByTag('console.commands') as $command) {
-            $this->addCommand($command);
+            if (method_exists($this, 'addCommand')) {
+                $this->addCommand($command);
+            } else {
+                $this->add($command);
+            }
         }
 
         $dispatcher = $this->container->get('console_event_dispatcher');
