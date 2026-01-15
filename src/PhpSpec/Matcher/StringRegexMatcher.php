@@ -34,7 +34,7 @@ final class StringRegexMatcher extends BasicMatcher
 
     protected function matches(mixed $subject, array $arguments): bool
     {
-        return (Boolean) preg_match($arguments[0], $subject);
+        return (bool) preg_match($arguments[0], $subject);
     }
 
     protected function getFailureException(string $name, mixed $subject, array $arguments): FailureException
