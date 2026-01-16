@@ -99,10 +99,6 @@ final class ThrowMatcher implements Matcher
                     continue;
                 }
 
-                if (PHP_VERSION_ID < 80500) {
-                    $property->setAccessible(true);
-                }
-
                 /** @psalm-suppress RedundantCondition */
                 if (method_exists($property, 'isInitialized')) {
                     $expected = $property->isInitialized($exception) ? $property->getValue($exception) : null;
@@ -158,10 +154,6 @@ final class ThrowMatcher implements Matcher
                 foreach ($exceptionRefl->getProperties() as $property) {
                     if (\in_array($property->getName(), self::$ignoredProperties, true)) {
                         continue;
-                    }
-
-                    if (PHP_VERSION_ID < 80500) {
-                        $property->setAccessible(true);
                     }
 
                     /** @psalm-suppress RedundantCondition */

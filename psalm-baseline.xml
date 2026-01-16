@@ -367,12 +367,6 @@
       <code><![CDATA[?DelayedCall]]></code>
     </PossiblyUnusedReturnValue>
   </file>
-  <file src="src/PhpSpec/Matcher/ThrowMatcher.php">
-    <UnusedMethodCall>
-      <code><![CDATA[setAccessible]]></code>
-      <code><![CDATA[setAccessible]]></code>
-    </UnusedMethodCall>
-  </file>
   <file src="src/PhpSpec/Matcher/TraversableCountMatcher.php">
     <UnusedForeachValue>
       <code><![CDATA[$value]]></code>
