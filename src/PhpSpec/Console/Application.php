@@ -72,7 +72,7 @@ final class Application extends BaseApplication
             foreach ($commands as $command) {
                 $this->addCommand($command);
             }
-        } elseif (method_exists($this, 'add')) {
+        } else {
             // For symfony/console < 8.0
             foreach ($commands as $command) {
                 $this->add($command);
