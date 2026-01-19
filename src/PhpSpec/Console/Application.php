@@ -66,8 +66,17 @@ final class Application extends BaseApplication
 
         $this->loadConfigurationFile($input, $this->container);
 
-        foreach ($this->container->getByTag('console.commands') as $command) {
-            $this->add($command);
+        $commands = $this->container->getByTag('console.commands');
+
+        if (method_exists($this, 'addCommand')) {
+            foreach ($commands as $command) {
+                $this->addCommand($command);
+            }
+        } elseif (method_exists($this, 'add')) {
+            // For symfony/console < 8.0
+            foreach ($commands as $command) {
+                $this->add($command);
+            }
         }
 
         $dispatcher = $this->container->get('console_event_dispatcher');
