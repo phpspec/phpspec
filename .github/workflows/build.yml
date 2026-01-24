@@ -14,7 +14,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php: ["8.2", "8.3", "8.4"]
+                php: ["8.2", "8.3", "8.4", "8.5"]
                 operating-system: [ ubuntu-latest, macOS-latest, windows-latest ]
                 composer-flags: [""]
                 composer-extras: [""]
@@ -70,10 +70,6 @@ jobs:
             -   name: Install composer dependencies
                 run: composer update ${{ matrix.composer-flags }}
 
-            -   name: Run static analysis (psalm)
-                if: matrix.symfony != '8.0.*' && matrix.composer-flags != '--prefer-lowest'
-                run: ./vendor/bin/psalm --php-version=${{ matrix.php }}
-
             -   name: Run tests (phpspec)
                 run: bin/phpspec run --format=dot
 
@@ -97,6 +93,35 @@ jobs:
                 with:
                     name: phpspec.phar
                     path: phpspec.phar
+
+    static-analysis:
+        runs-on: ubuntu-latest
+        name: Static analysis (PHP 8.5)
+        steps:
+            -   uses: actions/checkout@v4
+
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: "8.5"
+
+            -   name: Locate composer cache
+                id: composercache
+                run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+            -   name: Cache composer dependencies
+                uses: actions/cache@v4
+                env:
+                    cache-name: cache-composer
+                with:
+                    path: ${{ steps.composercache.outputs.dir }}
+                    key: ${{ hashFiles('composer.json') }}
+
+            -   name: Install composer dependencies
+                run: composer update
+
+            -   name: Run static analysis (psalm)
+                run: ./vendor/bin/psalm --version && ./vendor/bin/psalm --php-version=8.5
 
     publish-phar:
         runs-on: ubuntu-latest

@@ -99,8 +99,6 @@ final class ThrowMatcher implements Matcher
                     continue;
                 }
 
-                $property->setAccessible(true);
-
                 /** @psalm-suppress RedundantCondition */
                 if (method_exists($property, 'isInitialized')) {
                     $expected = $property->isInitialized($exception) ? $property->getValue($exception) : null;
@@ -157,8 +155,6 @@ final class ThrowMatcher implements Matcher
                     if (\in_array($property->getName(), self::$ignoredProperties, true)) {
                         continue;
                     }
-
-                    $property->setAccessible(true);
 
                     /** @psalm-suppress RedundantCondition */
                     if (method_exists($property, 'isInitialized')) {
@@ -217,7 +213,7 @@ final class ThrowMatcher implements Matcher
                 $arguments = $arguments[1] ?? array();
                 $callable = array($subject, $methodName);
 
-                list($class, $methodName) = array($subject, $methodName);
+                [$class, $methodName] = array($subject, $methodName);
                 if (!method_exists($class, $methodName) && !method_exists($class, '__call')) {
                     throw new MethodNotFoundException(
                         sprintf('Method %s::%s not found.', \get_class($class), $methodName),

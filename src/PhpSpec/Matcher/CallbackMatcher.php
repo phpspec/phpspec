@@ -39,7 +39,7 @@ final class CallbackMatcher extends BasicMatcher
     {
         array_unshift($arguments, $subject);
 
-        return (Boolean) \call_user_func_array($this->callback, $arguments);
+        return (bool) \call_user_func_array($this->callback, $arguments);
     }
 
     protected function getFailureException(string $name, mixed $subject, array $arguments): FailureException
