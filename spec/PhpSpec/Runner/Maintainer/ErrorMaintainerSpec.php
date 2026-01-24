@@ -18,7 +18,7 @@ class ErrorMaintainerSpec extends ObjectBehavior
         $this->shouldHaveType(ErrorMaintainer::class);
     }
 
-    function it_returns_false_when_error_suppresed_or_no_error_reporting()
+    function it_returns_false_when_error_suppressed_or_no_error_reporting()
     {
         $oldLevel = error_reporting(0);
 
@@ -42,6 +42,19 @@ class ErrorMaintainerSpec extends ObjectBehavior
         $oldLevel = error_reporting(E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR);
 
         $this->errorHandler(E_WARNING, 'error message', 'file', 1)->shouldBe(false);
+
+        error_reporting($oldLevel);
+    }
+
+    function it_returns_false_when_error_is_a_deprecation()
+    {
+        /**
+         * Based on manual testing and:
+         * @link https://www.php.net/manual/en/language.operators.errorcontrol.php#125938
+         */
+        $oldLevel = error_reporting(E_DEPRECATED);
+
+        $this->errorHandler(E_DEPRECATED, 'error message', 'file', 1)->shouldBe(false);
 
         error_reporting($oldLevel);
     }
