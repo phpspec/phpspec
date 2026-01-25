@@ -131,7 +131,7 @@ class Subject implements ArrayAccess, ObjectWrapper
         $this->wrappedObject->beConstructedWith(\func_get_args());
     }
 
-    public function beConstructedThrough(string|array $factoryMethod, array $arguments = array()): void
+    public function beConstructedThrough(string|array|callable $factoryMethod, array $arguments = array()): void
     {
         $this->wrappedObject->beConstructedThrough($factoryMethod, $arguments);
     }
