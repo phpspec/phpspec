@@ -1,0 +1,21 @@
+{{ define "main" }}
+<div class="home">
+	<img src="{{ .Site.BaseURL }}images/logo.png" alt="phpspec logo">
+	<h1>
+		A <em>php</em> toolset to drive emergent<br>
+		design by <em>specification</em>.
+	</h1>
+	<div class="preview">
+		<div>
+			<a class="icon-search" href="{{ .Site.Params.github }}">phpspec<br>repository</a>
+		</div>
+		<div>
+			<a class="icon-docs" href="{{ relref . (printf "%s/%s" .Site.Params.latest "manual/introduction.md") }}">phpspec<br>manual</a>
+		</div>
+	</div>
+</div>
+<div class="quickstart">
+	<h1>{{ .Name }}</h1>
+	{{ .Content }}
+</div>
+{{ end }}

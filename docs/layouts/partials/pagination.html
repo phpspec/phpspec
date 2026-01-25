@@ -1,0 +1,16 @@
+<nav class="nav-pagination">
+	<ul>
+		<li>
+			{{if .NextInSection}}
+			<strong>Previous</strong>
+			<a href="{{ .NextInSection.Permalink }}">{{ .NextInSection.Title }}</a>
+			{{ end }}
+		</li>
+		<li>
+			{{if .PrevInSection}}
+			<strong>Next</strong>
+			<a href="{{ .PrevInSection.Permalink }}">{{ .PrevInSection.Title }}</a>
+			{{ end }}
+		</li>
+	</ul>
+</nav>
