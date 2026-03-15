@@ -1,78 +1,69 @@
 {
-    "name":         "phpspec/phpspec",
-    "description":  "Specification-oriented BDD framework for PHP 7.1+",
-    "keywords":     ["BDD", "SpecBDD", "TDD", "spec", "specification", "tests", "testing"],
-    "homepage":     "http://phpspec.net/",
-    "type":         "library",
-    "license":      "MIT",
-    "authors":      [
+    "name": "phpspec/phpspec",
+    "description": "Specification-oriented BDD framework for PHP 8.2+",
+    "keywords": ["BDD", "SpecBDD", "TDD", "spec", "specification", "tests", "testing"],
+    "homepage": "http://phpspec.net/",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
         {
-            "name":      "Konstantin Kudryashov",
-            "email":     "ever.zet@gmail.com",
-            "homepage":  "http://everzet.com"
+            "name": "Konstantin Kudryashov",
+            "email": "ever.zet@gmail.com",
+            "homepage": "http://everzet.com"
         },
         {
-            "name":      "Marcello Duarte",
-            "homepage":  "http://marcelloduarte.net/"
+            "name": "Marcello Duarte",
+            "homepage": "http://marcelloduarte.net/"
         },
         {
-            "name":      "Ciaran McNulty",
-            "homepage":  "https://ciaranmcnulty.com/"
+            "name": "Ciaran McNulty",
+            "homepage": "https://ciaranmcnulty.com/"
         }
     ],
 
     "require": {
-        "php":                      "8.2.* || 8.3.* || 8.4.* || 8.5.*",
-        "phpspec/prophecy":         "^1.16",
-        "phpspec/php-diff":         "^1.0",
-        "sebastian/exporter":       "^3.1 || ^4.0 || ^5.0 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/console":          "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/event-dispatcher": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/process":          "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/finder":           "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/yaml":             "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "doctrine/instantiator":    "^1.3 || ^2",
-        "ext-tokenizer":            "*"
-    },
-
-    "require-dev": {
-        "behat/behat":           "^3.14",
-        "symfony/filesystem":    "^5.4  || ^6.0 || ^7.0 || ^8.0",
-        "phpunit/phpunit":       "^9.0 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
-        "vimeo/psalm":           "^6.0",
-        "bamarni/composer-bin-plugin": "^1.8"
-    },
-
-    "suggest": {
-        "phpspec/nyan-formatters": "Adds Nyan formatters"
-    },
-
-    "conflict": {
-        "sebastian/comparator" : "<1.2.4"
+        "php": "^8.2 || ^8.3 || ^8.4 || ^8.5",
+        "symfony/console": "^7.0 || ^8.0",
+        "symfony/yaml": "^7.0 || ^8.0",
+        "ext-dom": "*",
+        "ext-curl": "*",
+        "ext-tokenizer": "*"
     },
 
     "autoload": {
         "psr-0": {
             "PhpSpec": "src/"
-        }
+        },
+        "files": [
+            "src/PhpSpec/functions.php",
+            "src/PhpSpec/Mock/functions.php",
+            "src/PhpSpec/StoryBDD/functions.php",
+            "src/PhpSpec/Browser/functions.php"
+        ]
     },
 
-    "autoload-dev": {
-        "psr-0": {
-            "spec\\PhpSpec": "."
-        }
+    "suggest": {
+        "papi-ai/papi-core": "Required for AI features (pair, next, refactor)",
+        "papi-ai/google": "Google Gemini AI provider",
+        "papi-ai/anthropic": "Anthropic Claude AI provider",
+        "papi-ai/openai": "OpenAI GPT AI provider",
+        "ext-xdebug": "For code coverage reporting",
+        "ext-posix": "For terminal width detection",
+        "ext-readline": "For interactive pair mode"
+    },
+
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.75",
+        "phpstan/phpstan": "^2.1",
+        "papi-ai/papi-core": "^0.9",
+        "papi-ai/google": "^0.9"
     },
 
     "bin": ["bin/phpspec"],
 
     "extra": {
         "branch-alias": {
-            "dev-main": "8.0.x-dev"
-        }
-    },
-    "config": {
-        "allow-plugins": {
-            "bamarni/composer-bin-plugin": true
+            "dev-main": "9.0.x-dev"
         }
     }
 }

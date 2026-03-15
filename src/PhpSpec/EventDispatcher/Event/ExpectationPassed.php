@@ -1,0 +1,31 @@
+<?php
+
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ * (c) Ciaran McNulty <ciaran@ciaranmcnulty.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PhpSpec\EventDispatcher\Event;
+
+use PhpSpec\EventDispatcher\Event;
+
+/**
+ * Dispatched when an expectation matcher evaluates successfully.
+ */
+final readonly class ExpectationPassed implements Event
+{
+    public const NAME = 'expectation.passed';
+
+    /** {@inheritdoc} */
+    public function getName(): string
+    {
+        return self::NAME;
+    }
+}
