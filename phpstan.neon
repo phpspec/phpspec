@@ -1,6 +1,0 @@
-parameters:
-    level: 1
-    paths:
-        - src
-    excludePaths:
-        - src/PhpSpec/Report/Formatter/Pretty/views
