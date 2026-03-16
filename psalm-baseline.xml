@@ -623,11 +623,6 @@
       <code><![CDATA[$tags]]></code>
     </PossiblyUnusedProperty>
   </file>
-  <file src="src/PhpSpec/StoryBDD/GherkinParser.php">
-    <UnusedVariable>
-      <code><![CDATA[$description]]></code>
-    </UnusedVariable>
-  </file>
   <file src="src/PhpSpec/StoryBDD/StepError.php">
     <PossiblyUnusedMethod>
       <code><![CDATA[getFilteredTrace]]></code>
