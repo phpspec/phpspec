@@ -16,6 +16,7 @@ namespace PhpSpec\Specification;
 
 use Closure;
 use PhpSpec\EventDispatcher\Dispatcher;
+use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\ContextRan;
 use PhpSpec\EventDispatcher\Event\ContextStarted;
 use PhpSpec\Result\ContextResult;
@@ -63,11 +64,20 @@ class Context implements ExampleRegistry, SpecBlock
     /** @var ExampleError error captured during context execution */
     private ExampleError $error;
 
+    private readonly Dispatcher $dispatcher;
+
     /**
      * @param mixed $context description string or class name
      * @param Closure $specBlock closure containing nested DSL calls
+     * @param Dispatcher|null $dispatcher event dispatcher instance
      */
-    public function __construct(private readonly mixed $context, private readonly Closure $specBlock) {}
+    public function __construct(
+        private readonly mixed $context,
+        private readonly Closure $specBlock,
+        ?Dispatcher $dispatcher = null,
+    ) {
+        $this->dispatcher = $dispatcher ?? DispatcherRegistry::get();
+    }
 
     /**
      * Marks this context and all its children as pending (skipped).
@@ -111,10 +121,10 @@ class Context implements ExampleRegistry, SpecBlock
     {
         $results = [];
         try {
-            Dispatcher::dispatch(new ContextStarted($this->context), ContextStarted::NAME);
-            Dispatcher::pushScope($this);
+            $this->dispatcher->dispatch(new ContextStarted($this->context), ContextStarted::NAME);
+            $this->dispatcher->pushScope($this);
             ($this->specBlock)();
-            Dispatcher::popScope();
+            $this->dispatcher->popScope();
 
             $this->resolveFocus();
 
@@ -154,7 +164,7 @@ class Context implements ExampleRegistry, SpecBlock
                 }
             }
         } catch (Throwable $e) {
-            Dispatcher::dispatch(new ContextRan($this->context, $this), ContextRan::NAME);
+            $this->dispatcher->dispatch(new ContextRan($this->context, $this), ContextRan::NAME);
             $result = new ExampleResult($this->context, [], true);
             $error = new ExampleError($e->getMessage(), $e);
             $result->setError($error);
@@ -162,7 +172,7 @@ class Context implements ExampleRegistry, SpecBlock
             $contextResult->setError($error);
             return $contextResult;
         }
-        Dispatcher::dispatch(new ContextRan($this->context, $this), ContextRan::NAME);
+        $this->dispatcher->dispatch(new ContextRan($this->context, $this), ContextRan::NAME);
         return new ContextResult($this->context, $results);
     }
 

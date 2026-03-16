@@ -1,6 +1,7 @@
 <?php
 
 use PhpSpec\EventDispatcher\Dispatcher;
+use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event;
 use PhpSpec\EventDispatcher\Subscriber;
 use PhpSpec\EventDispatcher\Listener;
@@ -9,6 +10,7 @@ describe(Dispatcher::class, function() {
 
     it("dispatches events to subscribers", function() {
         $called = false;
+        $d = new Dispatcher();
 
         $event = new class implements Event {
             public function getName(): string { return 'test.event'; }
@@ -24,13 +26,14 @@ describe(Dispatcher::class, function() {
             }
         };
 
-        Dispatcher::addSubscriber($subscriber);
-        Dispatcher::dispatch($event, 'test.event');
+        $d->addSubscriber($subscriber);
+        $d->dispatch($event, 'test.event');
         expect($called)->toBe(true);
     });
 
     it("dispatches events to listeners", function() {
         $called = false;
+        $d = new Dispatcher();
 
         $event = new class implements Event {
             public function getName(): string { return 'test.listener'; }
@@ -43,13 +46,14 @@ describe(Dispatcher::class, function() {
             }
         };
 
-        Dispatcher::addListener($listener);
-        Dispatcher::dispatch($event, 'test.listener');
+        $d->addListener($listener);
+        $d->dispatch($event, 'test.listener');
         expect($called)->toBe(true);
     });
 
     it("dispatches events to subscriber with array of methods", function() {
         $log = [];
+        $d = new Dispatcher();
 
         $event = new class implements Event {
             public function getName(): string { return 'test.array'; }
@@ -68,13 +72,14 @@ describe(Dispatcher::class, function() {
             }
         };
 
-        Dispatcher::addSubscriber($subscriber);
-        Dispatcher::dispatch($event, 'test.array');
+        $d->addSubscriber($subscriber);
+        $d->dispatch($event, 'test.array');
         expect($log)->toBe(['first', 'second']);
     });
 
     it("removes a subscriber so it no longer receives events", function() {
         $called = 0;
+        $d = new Dispatcher();
 
         $event = new class implements Event {
             public function getName(): string { return 'test.remove'; }
@@ -90,16 +95,18 @@ describe(Dispatcher::class, function() {
             }
         };
 
-        Dispatcher::addSubscriber($subscriber);
-        Dispatcher::dispatch($event, 'test.remove');
+        $d->addSubscriber($subscriber);
+        $d->dispatch($event, 'test.remove');
         expect($called)->toBe(1);
 
-        Dispatcher::removeSubscriber($subscriber);
-        Dispatcher::dispatch($event, 'test.remove');
+        $d->removeSubscriber($subscriber);
+        $d->dispatch($event, 'test.remove');
         expect($called)->toBe(1);
     });
 
     it("handles removing a subscriber that was never added", function () {
+        $d = new Dispatcher();
+
         $subscriber = new class implements \PhpSpec\EventDispatcher\Subscriber {
             public function getSubscribedEvents(): array {
                 return ['never.registered' => 'onNever'];
@@ -107,29 +114,37 @@ describe(Dispatcher::class, function() {
             public function onNever($event) {}
         };
 
-        Dispatcher::removeSubscriber($subscriber);
+        $d->removeSubscriber($subscriber);
         expect(true)->toBeTrue();
     });
 
     it("manages scope stack", function(\PhpSpec\Specification\ExampleRegistry $mockScope) {
-        $before = Dispatcher::currentScope();
-        Dispatcher::pushScope($mockScope);
-        expect(Dispatcher::currentScope())->toBe($mockScope);
-        Dispatcher::popScope();
-        expect(Dispatcher::currentScope())->toBe($before);
+        $d = new Dispatcher();
+        expect($d->currentScope())->toBeNull();
+        $d->pushScope($mockScope);
+        expect($d->currentScope())->toBe($mockScope);
+        $d->popScope();
+        expect($d->currentScope())->toBeNull();
     });
 
     it("saves and restores state", function(\PhpSpec\Specification\ExampleRegistry $mockScope) {
-        $saved = Dispatcher::saveState();
+        $d = new Dispatcher();
+        $saved = $d->saveState();
 
-        Dispatcher::pushScope($mockScope);
-        expect(Dispatcher::currentScope())->toBe($mockScope);
+        $d->pushScope($mockScope);
+        expect($d->currentScope())->toBe($mockScope);
 
-        Dispatcher::reset();
-        expect(Dispatcher::currentScope())->toBeNull();
+        $d->reset();
+        expect($d->currentScope())->toBeNull();
 
-        Dispatcher::restoreState($saved);
-        expect(Dispatcher::currentScope())->not()->toBe($mockScope);
+        $d->restoreState($saved);
+        expect($d->currentScope())->toBeNull();
+    });
+
+    it("is accessible via DispatcherRegistry", function() {
+        $d = new Dispatcher();
+        DispatcherRegistry::set($d);
+        expect(DispatcherRegistry::get())->toBe($d);
     });
 
 });

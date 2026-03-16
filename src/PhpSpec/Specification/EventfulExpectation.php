@@ -14,7 +14,7 @@
 
 namespace PhpSpec\Specification;
 
-use PhpSpec\EventDispatcher\Dispatcher;
+use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\ExpectationStarted;
 use PhpSpec\EventDispatcher\Event\MatchCreated;
 use PhpSpec\Result\MatchResult;
@@ -47,8 +47,9 @@ final readonly class EventfulExpectation
      */
     public function createMatchEvent(\Closure $match, string $message, ?string $fakeExpression = null, ...$values): void
     {
-        Dispatcher::dispatch(new ExpectationStarted(), ExpectationStarted::NAME);
-        Dispatcher::dispatch(new MatchCreated(fn() => match (true) {
+        $d = DispatcherRegistry::get();
+        $d->dispatch(new ExpectationStarted(), ExpectationStarted::NAME);
+        $d->dispatch(new MatchCreated(fn() => match (true) {
             $match($this->subject) => MatchResult::passed(),
             default => MatchResult::failed(
                 $this->subject,

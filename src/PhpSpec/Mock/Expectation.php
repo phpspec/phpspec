@@ -15,7 +15,7 @@
 namespace PhpSpec\Mock;
 
 use Closure;
-use PhpSpec\EventDispatcher\Dispatcher;
+use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\ExpectationStarted;
 use PhpSpec\EventDispatcher\Event\MatchCreated;
 use PhpSpec\EventDispatcher\Event\Mock\MethodMocked;
@@ -95,7 +95,7 @@ final class Expectation extends BaseExpectation
         $method = $calls->peek();
         $methodName = $method->method;
         $method->unCall();
-        Dispatcher::dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
+        DispatcherRegistry::get()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
 
         $trace = debug_backtrace()[0];
 
@@ -134,7 +134,7 @@ final class Expectation extends BaseExpectation
         $method = $calls->peek();
         $methodName = $method->method;
         $method->unCall();
-        Dispatcher::dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
+        DispatcherRegistry::get()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
 
         return $this->should(
             get_class($double),
@@ -158,7 +158,7 @@ final class Expectation extends BaseExpectation
         $method = $calls->peek();
         $methodName = $method->method;
         $method->unCall();
-        Dispatcher::dispatch(new MethodMocked($double, $method, $times), MethodMocked::NAME);
+        DispatcherRegistry::get()->dispatch(new MethodMocked($double, $method, $times), MethodMocked::NAME);
 
         $trace = debug_backtrace()[0];
         $file = $trace['file'];
@@ -241,8 +241,9 @@ final class Expectation extends BaseExpectation
      */
     private function expectation($match): static
     {
-        Dispatcher::dispatch(new ExpectationStarted(), ExpectationStarted::NAME);
-        Dispatcher::dispatch(new MatchCreated($match), MatchCreated::NAME);
+        $d = DispatcherRegistry::get();
+        $d->dispatch(new ExpectationStarted(), ExpectationStarted::NAME);
+        $d->dispatch(new MatchCreated($match), MatchCreated::NAME);
         return $this;
     }
 

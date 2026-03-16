@@ -21,6 +21,7 @@ use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\EventDispatcher\Dispatcher;
+use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Filesystem;
 use PhpSpec\Loader;
@@ -284,8 +285,8 @@ final class CommandDispatcher
     {
         $path = $argument !== '' ? $argument : $this->config->getAllLoadPaths();
 
-        $state = Dispatcher::saveState();
-        Dispatcher::reset();
+        $savedDispatcher = DispatcherRegistry::get();
+        DispatcherRegistry::set(new Dispatcher());
 
         try {
             $suite = $this->loader->load($path);
@@ -309,7 +310,7 @@ final class CommandDispatcher
             $codeGenerator = new CodeGenerator($srcPath, $specPath);
             $codeGenerator->generate($this->output->getOutput(), $results, false);
         } finally {
-            Dispatcher::restoreState($state);
+            DispatcherRegistry::set($savedDispatcher);
         }
 
         return self::CONTINUE;

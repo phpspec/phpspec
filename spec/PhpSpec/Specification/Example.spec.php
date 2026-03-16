@@ -1,5 +1,7 @@
 <?php
 
+use PhpSpec\EventDispatcher\Dispatcher;
+use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Specification\Example;
 
 describe(Example::class, function() {
@@ -11,11 +13,12 @@ describe(Example::class, function() {
 
     it("runs the example closure", function() {
         $ran = false;
+        $d = DispatcherRegistry::get();
         $example = new Example("does something", function() use (&$ran) {
             $ran = true;
-        });
+        }, $d);
 
-        \PhpSpec\EventDispatcher\Dispatcher::addSubscriber(
+        $d->addSubscriber(
             new \PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber($example)
         );
         $result = $example->run();
@@ -24,9 +27,10 @@ describe(Example::class, function() {
     });
 
     it("tracks error state", function() {
-        $example = new Example("breaks", function() {});
+        $d = DispatcherRegistry::get();
+        $example = new Example("breaks", function() {}, $d);
 
-        \PhpSpec\EventDispatcher\Dispatcher::addSubscriber(
+        $d->addSubscriber(
             new \PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber($example)
         );
 
@@ -35,12 +39,13 @@ describe(Example::class, function() {
 
     it("does not run closure when pending", function() {
         $ran = false;
+        $d = DispatcherRegistry::get();
         $example = new Example("pending test", function() use (&$ran) {
             $ran = true;
-        });
+        }, $d);
         $example->setPending(true);
 
-        \PhpSpec\EventDispatcher\Dispatcher::addSubscriber(
+        $d->addSubscriber(
             new \PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber($example)
         );
         $result = $example->run();
@@ -50,11 +55,12 @@ describe(Example::class, function() {
     });
 
     it("returns pending result when closure throws PendingException", function() {
+        $d = DispatcherRegistry::get();
         $example = new Example("pending via exception", function() {
             pending("not done yet");
-        });
+        }, $d);
 
-        \PhpSpec\EventDispatcher\Dispatcher::addSubscriber(
+        $d->addSubscriber(
             new \PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber($example)
         );
         $result = $example->run();
@@ -70,10 +76,11 @@ describe(Example::class, function() {
     });
 
     it("tracks duration after run", function() {
+        $d = DispatcherRegistry::get();
         $example = new Example("duration test", function() {
             // quick operation
-        });
-        \PhpSpec\EventDispatcher\Dispatcher::addSubscriber(
+        }, $d);
+        $d->addSubscriber(
             new \PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber($example)
         );
         $result = $example->run();
@@ -97,11 +104,12 @@ describe(Example::class, function() {
     });
 
     it("returns skipped result when closure throws SkippedException", function() {
+        $d = DispatcherRegistry::get();
         $example = new Example("skipped via skip()", function() {
             skip("not applicable");
-        });
+        }, $d);
 
-        \PhpSpec\EventDispatcher\Dispatcher::addSubscriber(
+        $d->addSubscriber(
             new \PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber($example)
         );
         $result = $example->run();

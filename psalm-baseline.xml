@@ -82,6 +82,9 @@
   <file src="src/PhpSpec/EventDispatcher/Dispatcher.php">
     <PossiblyUnusedMethod>
       <code><![CDATA[addListener]]></code>
+      <code><![CDATA[reset]]></code>
+      <code><![CDATA[restoreState]]></code>
+      <code><![CDATA[saveState]]></code>
     </PossiblyUnusedMethod>
     <UnusedForeachValue>
       <code><![CDATA[$methods]]></code>

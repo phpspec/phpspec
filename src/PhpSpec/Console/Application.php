@@ -23,6 +23,8 @@ use PhpSpec\Console\Command\Next;
 use PhpSpec\Console\Command\Pair;
 use PhpSpec\Console\Command\Refactor;
 use PhpSpec\Console\Command\Run;
+use PhpSpec\EventDispatcher\Dispatcher;
+use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Loader;
 use PhpSpec\Runner;
@@ -44,8 +46,11 @@ final class Application extends BaseApplication
     {
         $config = new Configuration('.');
 
+        $dispatcher = new Dispatcher();
+        DispatcherRegistry::set($dispatcher);
+
         $config->registerAutoloaders();
-        $extensionLoader = new ExtensionLoader($config);
+        $extensionLoader = new ExtensionLoader($config, $dispatcher);
         $extensionLoader->load();
 
         $defaultCommands = array_values(array_filter(
@@ -54,7 +59,7 @@ final class Application extends BaseApplication
         ));
         $specSuffix = $config->getSpecSuffix();
         $defaultCommands[] = new Run(
-            new Loader(specSuffix: $specSuffix),
+            new Loader($dispatcher, specSuffix: $specSuffix),
             new Runner(),
             $config,
             $extensionLoader,
@@ -66,7 +71,7 @@ final class Application extends BaseApplication
             new SpecGenerator(ltrim($config->getSpecPath(), './'), specSuffix: $specSuffix),
         );
         $defaultCommands[] = new Pair(
-            new Loader(specSuffix: $specSuffix),
+            new Loader($dispatcher, specSuffix: $specSuffix),
             new Runner(),
             new SpecGenerator(ltrim($config->getSpecPath(), './'), specSuffix: $specSuffix),
             new ClassGenerator(ltrim($config->getSrcPath(), './')),
