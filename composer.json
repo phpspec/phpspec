@@ -26,7 +26,6 @@
         "symfony/console": "^7.0 || ^8.0",
         "symfony/yaml": "^7.0 || ^8.0",
         "ext-dom": "*",
-        "ext-curl": "*",
         "ext-tokenizer": "*"
     },
 
@@ -47,6 +46,7 @@
         "papi-ai/google": "Google Gemini AI provider",
         "papi-ai/anthropic": "Anthropic Claude AI provider",
         "papi-ai/openai": "OpenAI GPT AI provider",
+        "ext-curl": "Required for AI features (pair, next, refactor)",
         "ext-xdebug": "For code coverage reporting",
         "ext-posix": "For terminal width detection",
         "ext-readline": "For interactive pair mode"
