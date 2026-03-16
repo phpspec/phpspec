@@ -327,4 +327,14 @@ describe(GherkinParser::class, function () {
         expect($steps[1]->table)->toBeNull();
     });
 
+    it("throws on invalid Gherkin", function () {
+        expect(fn() => $this->parser->parse("Not valid Gherkin at all\nScenario Outline:\n| broken"))->toThrow(\RuntimeException::class);
+    });
+
+    it("returns empty feature for content with no Feature keyword", function () {
+        $feature = $this->parser->parse("");
+        expect($feature->title)->toBe("");
+        expect($feature->scenarios)->toHaveCount(0);
+    });
+
 });
