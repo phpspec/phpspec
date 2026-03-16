@@ -58,7 +58,7 @@ jobs:
               uses: shivammathur/setup-php@v2
               with:
                   php-version: ${{ matrix.php }}
-                  extensions: sockets
+                  extensions: mbstring, sockets
                   coverage: xdebug
                   ini-values: "phar.readonly=0"
 

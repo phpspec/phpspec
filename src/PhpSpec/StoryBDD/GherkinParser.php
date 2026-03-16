@@ -14,10 +14,21 @@
 
 namespace PhpSpec\StoryBDD;
 
+use Cucumber\Gherkin\GherkinParser as CucumberParser;
+use Cucumber\Messages\Background;
+use Cucumber\Messages\DataTable as CucumberDataTable;
+use Cucumber\Messages\Examples;
+use Cucumber\Messages\Feature;
+use Cucumber\Messages\FeatureChild;
+use Cucumber\Messages\Scenario;
+use Cucumber\Messages\Step;
+use Cucumber\Messages\TableRow;
+use Cucumber\Messages\Tag;
+
 /**
  * Parses .feature file content into a FeatureNode data structure.
- * Supports Background, Scenario, Scenario Outline with Examples tables, DataTables,
- * Doc strings, tags, and And/But step keywords.
+ * Delegates to the official cucumber/gherkin parser and maps the AST
+ * to PhpSpec's node types.
  */
 final class GherkinParser
 {
@@ -29,305 +40,135 @@ final class GherkinParser
      */
     public function parse(string $content): FeatureNode
     {
-        $lines = explode("\n", $content);
-        $title = '';
-        $description = '';
+        $parser = new CucumberParser(
+            includeSource: false,
+            includeGherkinDocument: true,
+            includePickles: false,
+        );
+
+        $document = null;
+        $errors = [];
+
+        foreach ($parser->parseString('inline.feature', $content) as $envelope) {
+            if ($envelope->gherkinDocument !== null) {
+                $document = $envelope->gherkinDocument;
+            }
+            if ($envelope->parseError !== null) {
+                $errors[] = $envelope->parseError->message;
+            }
+        }
+
+        if (!empty($errors)) {
+            throw new \RuntimeException('Gherkin parse error: ' . implode('; ', $errors));
+        }
+
+        if ($document === null || $document->feature === null) {
+            return new FeatureNode('', '', null, []);
+        }
+
+        return $this->mapFeature($document->feature);
+    }
+
+    private function mapFeature(Feature $feature): FeatureNode
+    {
         $background = null;
         $scenarios = [];
-        $currentSection = null; // 'description', 'background', 'scenario', 'outline', 'examples'
-        $currentSteps = [];
-        $currentScenarioTitle = '';
-        $descriptionLines = [];
-        $pendingTags = [];
-        $featureTags = [];
-        $currentScenarioTags = [];
-        $isOutline = false;
-        $examplesRows = [];
-        $tableRows = [];
-        $lastStep = null;
-        $inDocString = false;
-        $docStringLines = [];
 
-        foreach ($lines as $line) {
-            $trimmed = trim($line);
-
-            // Doc string handling
-            if ($trimmed === '"""') {
-                if ($inDocString) {
-                    // Close doc string — attach to last step
-                    $this->attachDocString($lastStep, $docStringLines, $currentSteps);
-                    $docStringLines = [];
-                    $inDocString = false;
-                } else {
-                    $inDocString = true;
-                    $docStringLines = [];
-                }
-                continue;
+        foreach ($feature->children as $child) {
+            if ($child->background !== null) {
+                $background = $this->mapBackground($child->background);
             }
-
-            if ($inDocString) {
-                $docStringLines[] = $line;
-                continue;
-            }
-
-            if ($trimmed === '' || str_starts_with($trimmed, '#')) {
-                if ($currentSection === 'description') {
-                    $descriptionLines[] = '';
-                }
-                continue;
-            }
-
-            // Tags line: @tag1 @tag2
-            if (str_starts_with($trimmed, '@')) {
-                $pendingTags = array_merge($pendingTags, $this->parseTags($trimmed));
-                continue;
-            }
-
-            if (str_starts_with($trimmed, 'Feature:')) {
-                $title = trim(substr($trimmed, 8));
-                $featureTags = $pendingTags;
-                $pendingTags = [];
-                $currentSection = 'description';
-                continue;
-            }
-
-            if (str_starts_with($trimmed, 'Background:')) {
-                $this->attachTable($lastStep, $tableRows, $currentSteps);
-                $tableRows = [];
-                $lastStep = null;
-                $this->flushScenario($scenarios, $currentSection, $currentScenarioTitle, $currentSteps, $currentScenarioTags, $isOutline, $examplesRows);
-                $currentSection = 'background';
-                $currentSteps = [];
-                $isOutline = false;
-                $examplesRows = [];
-                $pendingTags = [];
-                continue;
-            }
-
-            if (str_starts_with($trimmed, 'Scenario Outline:') || str_starts_with($trimmed, 'Scenario Template:')) {
-                $this->attachTable($lastStep, $tableRows, $currentSteps);
-                $tableRows = [];
-                $lastStep = null;
-                if ($currentSection === 'background') {
-                    $background = new BackgroundNode($currentSteps);
-                    $currentSteps = [];
-                }
-                $this->flushScenario($scenarios, $currentSection, $currentScenarioTitle, $currentSteps, $currentScenarioTags, $isOutline, $examplesRows);
-                $currentSection = 'outline';
-                $prefix = str_starts_with($trimmed, 'Scenario Outline:') ? 'Scenario Outline:' : 'Scenario Template:';
-                $currentScenarioTitle = trim(substr($trimmed, strlen($prefix)));
-                $currentSteps = [];
-                $currentScenarioTags = $pendingTags;
-                $pendingTags = [];
-                $isOutline = true;
-                $examplesRows = [];
-                continue;
-            }
-
-            if (str_starts_with($trimmed, 'Scenario:')) {
-                $this->attachTable($lastStep, $tableRows, $currentSteps);
-                $tableRows = [];
-                $lastStep = null;
-                if ($currentSection === 'background') {
-                    $background = new BackgroundNode($currentSteps);
-                    $currentSteps = [];
-                }
-                $this->flushScenario($scenarios, $currentSection, $currentScenarioTitle, $currentSteps, $currentScenarioTags, $isOutline, $examplesRows);
-                $currentSection = 'scenario';
-                $currentScenarioTitle = trim(substr($trimmed, 9));
-                $currentSteps = [];
-                $currentScenarioTags = $pendingTags;
-                $pendingTags = [];
-                $isOutline = false;
-                $examplesRows = [];
-                continue;
-            }
-
-            if (str_starts_with($trimmed, 'Examples:') || str_starts_with($trimmed, 'Scenarios:')) {
-                $this->attachTable($lastStep, $tableRows, $currentSteps);
-                $tableRows = [];
-                $lastStep = null;
-                $currentSection = 'examples';
-                $examplesRows = [];
-                continue;
-            }
-
-            // Table row: | col1 | col2 |
-            if (str_starts_with($trimmed, '|')) {
-                $cells = $this->parseTableRow($trimmed);
-                if ($currentSection === 'examples') {
-                    $examplesRows[] = $cells;
-                } else {
-                    $tableRows[] = $cells;
-                }
-                continue;
-            }
-
-            if ($currentSection === 'description') {
-                $descriptionLines[] = $trimmed;
-                continue;
-            }
-
-            if ($currentSection === 'background' || $currentSection === 'scenario' || $currentSection === 'outline') {
-                // Flush any pending table rows to the last step
-                $this->attachTable($lastStep, $tableRows, $currentSteps);
-                $tableRows = [];
-
-                $step = $this->parseStep($trimmed);
-                if ($step !== null) {
-                    $currentSteps[] = $step;
-                    $lastStep = $step;
-                }
+            if ($child->scenario !== null) {
+                $scenarios[] = $this->mapScenario($child->scenario);
             }
         }
 
-        // Flush any trailing table rows
-        $this->attachTable($lastStep, $tableRows, $currentSteps);
-
-        if ($currentSection === 'background') {
-            $background = new BackgroundNode($currentSteps);
-        } else {
-            $this->flushScenario($scenarios, $currentSection, $currentScenarioTitle, $currentSteps, $currentScenarioTags, $isOutline, $examplesRows);
-        }
-
-        $description = trim(implode("\n", $descriptionLines));
-
-        return new FeatureNode($title, $description, $background, $scenarios, $featureTags);
+        return new FeatureNode(
+            $feature->name,
+            trim($feature->description),
+            $background,
+            $scenarios,
+            $this->mapTags($feature->tags),
+        );
     }
 
-    /**
-     * Extracts tag names from a line like "@tag1 @tag2".
-     *
-     * @param string $line the raw line containing @-prefixed tags
-     * @return string[] tag names without the @ prefix
-     */
-    private function parseTags(string $line): array
+    private function mapBackground(Background $background): BackgroundNode
     {
-        preg_match_all('/@(\S+)/', $line, $matches);
-        return $matches[1] ?? [];
+        return new BackgroundNode(
+            $this->mapSteps($background->steps),
+        );
     }
 
     /**
-     * Splits a pipe-delimited table row into an array of trimmed cell values.
-     *
-     * @param string $line a row like "| col1 | col2 |"
-     * @return string[] the cell values
+     * @return ScenarioNode|ScenarioOutlineNode
      */
-    private function parseTableRow(string $line): array
+    private function mapScenario(Scenario $scenario): ScenarioNode
     {
-        $line = trim($line, '|');
-        return array_map('trim', explode('|', $line));
+        $steps = $this->mapSteps($scenario->steps);
+        $tags = $this->mapTags($scenario->tags);
+
+        if (!empty($scenario->examples)) {
+            $examples = $this->mergeExamples($scenario->examples);
+            return new ScenarioOutlineNode($scenario->name, $steps, $tags, $examples);
+        }
+
+        return new ScenarioNode($scenario->name, $steps, $tags);
     }
 
     /**
-     * Parses a line into a StepNode if it begins with a recognized keyword (Given/When/Then/And/But).
-     *
-     * @param string $line the trimmed line to parse
-     * @return StepNode|null null if the line does not match any step keyword
+     * @param Step[] $steps
+     * @return StepNode[]
      */
-    private function parseStep(string $line): ?StepNode
+    private function mapSteps(array $steps): array
     {
-        $keywords = ['Given', 'When', 'Then', 'And', 'But'];
+        return array_map(fn (Step $step) => new StepNode(
+            trim($step->keyword),
+            $step->text,
+            $step->dataTable !== null ? $this->mapDataTable($step->dataTable) : null,
+            $step->docString?->content,
+        ), $steps);
+    }
 
-        foreach ($keywords as $keyword) {
-            if (str_starts_with($line, $keyword . ' ')) {
-                $text = trim(substr($line, strlen($keyword) + 1));
-                return new StepNode($keyword, $text);
+    private function mapDataTable(CucumberDataTable $table): DataTable
+    {
+        return new DataTable(array_map(
+            fn (TableRow $row) => array_map(
+                fn ($cell) => $cell->value,
+                $row->cells,
+            ),
+            $table->rows,
+        ));
+    }
+
+    /**
+     * Merges all Examples blocks into a single DataTable.
+     *
+     * @param Examples[] $examplesList
+     */
+    private function mergeExamples(array $examplesList): ?DataTable
+    {
+        $rawRows = [];
+        $header = null;
+
+        foreach ($examplesList as $examples) {
+            if ($examples->tableHeader !== null && $header === null) {
+                $header = array_map(fn ($cell) => $cell->value, $examples->tableHeader->cells);
+                $rawRows[] = $header;
+            }
+            foreach ($examples->tableBody as $row) {
+                $rawRows[] = array_map(fn ($cell) => $cell->value, $row->cells);
             }
         }
 
-        return null;
+        return !empty($rawRows) ? new DataTable($rawRows) : null;
     }
 
     /**
-     * Attaches accumulated table rows as a DataTable to the most recent step.
-     * Replaces the last step in the steps array with a new StepNode that includes the table.
-     *
-     * @param ?StepNode $lastStep the step to attach the table to
-     * @param mixed $tableRows accumulated raw table rows; cleared after attachment
-     * @param mixed $currentSteps the current steps array, modified in place
+     * @param Tag[] $tags
+     * @return string[]
      */
-    private function attachTable(?StepNode $lastStep, array &$tableRows, array &$currentSteps): void
+    private function mapTags(array $tags): array
     {
-        if (empty($tableRows) || $lastStep === null) {
-            $tableRows = [];
-            return;
-        }
-
-        $table = new DataTable($tableRows);
-        $index = array_key_last($currentSteps);
-        if ($index !== null) {
-            $currentSteps[$index] = new StepNode($lastStep->keyword, $lastStep->text, $table, $lastStep->docString);
-        }
-        $tableRows = [];
-    }
-
-    /**
-     * Attaches a doc string (triple-quoted block) to the most recent step.
-     * Dedents the content by the minimum indentation of non-empty lines.
-     *
-     * @param ?StepNode $lastStep the step to attach the doc string to
-     * @param array $docStringLines raw lines between the triple-quote delimiters
-     * @param mixed $currentSteps the current steps array, modified in place
-     */
-    private function attachDocString(?StepNode $lastStep, array $docStringLines, array &$currentSteps): void
-    {
-        if ($lastStep === null) {
-            return;
-        }
-
-        // Dedent: find minimum indentation of non-empty lines
-        $minIndent = PHP_INT_MAX;
-        foreach ($docStringLines as $line) {
-            if (trim($line) !== '') {
-                $indent = strlen($line) - strlen(ltrim($line));
-                $minIndent = min($minIndent, $indent);
-            }
-        }
-        if ($minIndent === PHP_INT_MAX) {
-            $minIndent = 0;
-        }
-
-        $dedented = array_map(function (string $line) use ($minIndent) {
-            return strlen($line) >= $minIndent ? substr($line, $minIndent) : $line;
-        }, $docStringLines);
-
-        $docString = implode("\n", $dedented);
-
-        $index = array_key_last($currentSteps);
-        if ($index !== null) {
-            $currentSteps[$index] = new StepNode($lastStep->keyword, $lastStep->text, $lastStep->table, $docString);
-        }
-    }
-
-    /**
-     * Finalizes the current scenario (or outline) and appends it to the scenarios list.
-     * Creates a ScenarioOutlineNode for outlines with Examples, or a plain ScenarioNode otherwise.
-     *
-     * @param mixed $scenarios accumulator for completed scenario nodes; modified in place
-     * @param ?string $section the current parser section (scenario/outline/examples)
-     * @param string $title the scenario title
-     * @param array $steps the steps collected for this scenario
-     * @param array $tags tags applied to the scenario
-     * @param bool $isOutline whether this is a Scenario Outline
-     * @param array $examplesRows raw rows from the Examples table
-     */
-    private function flushScenario(
-        array &$scenarios,
-        ?string $section,
-        string $title,
-        array $steps,
-        array $tags,
-        bool $isOutline,
-        array $examplesRows,
-    ): void {
-        if (($section === 'scenario' || $section === 'outline' || $section === 'examples') && !empty($steps)) {
-            if ($isOutline) {
-                $examples = !empty($examplesRows) ? new DataTable($examplesRows) : null;
-                $scenarios[] = new ScenarioOutlineNode($title, $steps, $tags, $examples);
-            } else {
-                $scenarios[] = new ScenarioNode($title, $steps, $tags);
-            }
-        }
+        return array_map(fn (Tag $tag) => ltrim($tag->name, '@'), $tags);
     }
 }

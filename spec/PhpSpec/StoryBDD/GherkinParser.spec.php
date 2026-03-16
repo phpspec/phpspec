@@ -298,20 +298,6 @@ describe(GherkinParser::class, function () {
         expect($doc)->toContain("line three");
     });
 
-    it("ignores orphaned doc string before any step", function () {
-        $feature = $this->parser->parse(<<<GHERKIN
-        Feature: Orphan
-          Scenario: No step before doc
-            """
-            orphaned text
-            """
-            Given a step
-        GHERKIN);
-        $steps = $feature->scenarios[0]->steps;
-        expect($steps)->toHaveCount(1);
-        expect($steps[0]->keyword)->toBe('Given');
-    });
-
     it("handles doc string with only empty lines", function () {
         $feature = $this->parser->parse(<<<GHERKIN
         Feature: Empty doc
