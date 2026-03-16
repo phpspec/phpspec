@@ -19,7 +19,6 @@ use Cucumber\Messages\Background;
 use Cucumber\Messages\DataTable as CucumberDataTable;
 use Cucumber\Messages\Examples;
 use Cucumber\Messages\Feature;
-use Cucumber\Messages\FeatureChild;
 use Cucumber\Messages\Scenario;
 use Cucumber\Messages\Step;
 use Cucumber\Messages\TableRow;
@@ -121,7 +120,7 @@ final class GherkinParser
      */
     private function mapSteps(array $steps): array
     {
-        return array_map(fn (Step $step) => new StepNode(
+        return array_map(fn(Step $step) => new StepNode(
             trim($step->keyword),
             $step->text,
             $step->dataTable !== null ? $this->mapDataTable($step->dataTable) : null,
@@ -132,8 +131,8 @@ final class GherkinParser
     private function mapDataTable(CucumberDataTable $table): DataTable
     {
         return new DataTable(array_map(
-            fn (TableRow $row) => array_map(
-                fn ($cell) => $cell->value,
+            fn(TableRow $row) => array_map(
+                fn($cell) => $cell->value,
                 $row->cells,
             ),
             $table->rows,
@@ -152,11 +151,11 @@ final class GherkinParser
 
         foreach ($examplesList as $examples) {
             if ($examples->tableHeader !== null && $header === null) {
-                $header = array_map(fn ($cell) => $cell->value, $examples->tableHeader->cells);
+                $header = array_map(fn($cell) => $cell->value, $examples->tableHeader->cells);
                 $rawRows[] = $header;
             }
             foreach ($examples->tableBody as $row) {
-                $rawRows[] = array_map(fn ($cell) => $cell->value, $row->cells);
+                $rawRows[] = array_map(fn($cell) => $cell->value, $row->cells);
             }
         }
 
@@ -169,6 +168,6 @@ final class GherkinParser
      */
     private function mapTags(array $tags): array
     {
-        return array_map(fn (Tag $tag) => ltrim($tag->name, '@'), $tags);
+        return array_map(fn(Tag $tag) => ltrim($tag->name, '@'), $tags);
     }
 }
