@@ -54,9 +54,6 @@
     <PossiblyUnusedMethod>
       <code><![CDATA[isSilent]]></code>
     </PossiblyUnusedMethod>
-    <UndefinedInterfaceMethod>
-      <code><![CDATA[isSilent]]></code>
-    </UndefinedInterfaceMethod>
   </file>
   <file src="src/PhpSpec/Console/Command/Refactor/Diff.php">
     <InvalidArrayOffset>
