@@ -36,9 +36,10 @@ final class GherkinParser
      * Parses raw Gherkin text into a FeatureNode containing scenarios, background, and metadata.
      *
      * @param string $content the full text content of a .feature file
+     * @param string $uri the file path used in error messages
      * @return FeatureNode the parsed feature structure
      */
-    public function parse(string $content): FeatureNode
+    public function parse(string $content, string $uri = 'inline.feature'): FeatureNode
     {
         $parser = new CucumberParser(
             includeSource: false,
@@ -49,7 +50,7 @@ final class GherkinParser
         $document = null;
         $errors = [];
 
-        foreach ($parser->parseString('inline.feature', $content) as $envelope) {
+        foreach ($parser->parseString($uri, $content) as $envelope) {
             if ($envelope->gherkinDocument !== null) {
                 $document = $envelope->gherkinDocument;
             }

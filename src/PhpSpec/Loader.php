@@ -190,7 +190,7 @@ final class Loader
         $features = [];
         foreach ($featureFiles as $featureFile) {
             $content = $this->fs->read($featureFile);
-            $featureNode = $parser->parse($content);
+            $featureNode = $parser->parse($content, $featureFile);
             $features[] = new Feature(
                 $featureFile,
                 $featureNode,
