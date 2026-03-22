@@ -19,7 +19,7 @@ use PhpSpec\EventDispatcher\Subscriber\SpecificationSubscriber;
 use PhpSpec\Specification\SpecBlock;
 use PhpSpec\StoryBDD\Feature;
 use PhpSpec\StoryBDD\GherkinParser;
-use StoryBDDRegistry;
+use PhpSpec\StoryBDD\StoryBDDRegistry;
 
 /**
  * @internal

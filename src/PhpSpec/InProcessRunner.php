@@ -19,6 +19,7 @@ use PhpSpec\Console\Application;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Mock\Double;
 use PhpSpec\Mock\Expectation as MockExpectation;
+use PhpSpec\StoryBDD\StoryBDDRegistry;
 use ReflectionClass;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -50,7 +51,7 @@ final class InProcessRunner
         $savedLastCallForAllow = MockExpectation::$lastCallForAllow;
         $savedRegistry = MockExpectation::$registry;
         $savedAutoloaders = spl_autoload_functions();
-        $savedStoryBDD = \StoryBDDRegistry::saveState();
+        $savedStoryBDD = StoryBDDRegistry::saveState();
         $savedBrowser = BrowserRegistry::saveState();
 
         // Reset for inner run — fresh Dispatcher for the nested Application
@@ -60,7 +61,7 @@ final class InProcessRunner
         MockExpectation::$lastMockReturn = null;
         MockExpectation::$lastCallForAllow = null;
         MockExpectation::$registry = [];
-        \StoryBDDRegistry::init();
+        StoryBDDRegistry::init();
         BrowserRegistry::reset();
 
         $savedCwdStr = is_string($savedCwd) ? $savedCwd : $projectDir;
@@ -85,7 +86,7 @@ final class InProcessRunner
             MockExpectation::$lastMockReturn = $savedLastMockReturn;
             MockExpectation::$lastCallForAllow = $savedLastCallForAllow;
             MockExpectation::$registry = $savedRegistry;
-            \StoryBDDRegistry::restoreState($savedStoryBDD);
+            StoryBDDRegistry::restoreState($savedStoryBDD);
             BrowserRegistry::restoreState($savedBrowser);
 
             // Unregister any autoloaders added by the inner run
