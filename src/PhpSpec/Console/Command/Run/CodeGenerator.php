@@ -39,12 +39,15 @@ final readonly class CodeGenerator
      * @param string $srcPath relative path to the source directory
      * @param string $specPath relative path to the spec directory
      * @param bool $interactive whether to prompt for user input (false = auto-accept all)
+     * @param string $specSuffix file suffix for spec files
+     * @param string $psr4Prefix PSR-4 namespace prefix mapped to $srcPath
      */
     public function __construct(
         private string $srcPath,
         private string $specPath,
         private bool $interactive = true,
         private string $specSuffix = '.spec.php',
+        private string $psr4Prefix = '',
     ) {
         $this->analyser = new SourceAnalyser();
         $this->scanner = new ResultScanner($this->analyser);
@@ -125,7 +128,7 @@ final readonly class CodeGenerator
         $classGenerator = new ClassGenerator($this->srcPath);
 
         foreach ($missingClasses as $fqcn) {
-            $filePath = ClassGenerator::resolveFqcn($fqcn, $this->srcPath)['filePath'];
+            $filePath = ClassGenerator::resolveFqcn($fqcn, $this->srcPath, $this->psr4Prefix)['filePath'];
 
             if (file_exists($filePath)) {
                 continue;
@@ -175,7 +178,7 @@ final readonly class CodeGenerator
                 $specGenerator->generate($specName);
                 $output->writeln(sprintf('  <fg=green>Spec for %s created.</>', $fqcn));
 
-                $filePath = ClassGenerator::resolveFqcn($fqcn, $this->srcPath)['filePath'];
+                $filePath = ClassGenerator::resolveFqcn($fqcn, $this->srcPath, $this->psr4Prefix)['filePath'];
 
                 $this->confirmAndGenerate($output, sprintf(
                     '  <fg=yellow>Do you want me to create class <fg=white>%s</> for you?</> [Y/n] ',
@@ -207,7 +210,7 @@ final readonly class CodeGenerator
         $interfaceGenerator = new InterfaceGenerator($this->srcPath);
 
         foreach (array_keys($uniqueMissing) as $fqcn) {
-            $filePath = ClassGenerator::resolveFqcn($fqcn, $this->srcPath)['filePath'];
+            $filePath = ClassGenerator::resolveFqcn($fqcn, $this->srcPath, $this->psr4Prefix)['filePath'];
 
             $this->confirmAndGenerate($output, sprintf(
                 '  <fg=yellow>Do you want me to create interface <fg=white>%s</> for you?</> [Y/n] ',
@@ -236,7 +239,7 @@ final readonly class CodeGenerator
 
         foreach ($uniqueMockMethods as $error) {
             $argCount = $this->analyser->extractArgumentCount($error['file'], $error['line'], $error['methodName']);
-            $filePath = ClassGenerator::resolveFqcn($error['className'], $this->srcPath)['filePath'];
+            $filePath = ClassGenerator::resolveFqcn($error['className'], $this->srcPath, $this->psr4Prefix)['filePath'];
 
             $this->confirmAndGenerate($output, sprintf(
                 '  <fg=yellow>Do you want me to add method <fg=white>%s()</> to interface <fg=white>%s</>?</> [Y/n] ',
@@ -268,7 +271,7 @@ final readonly class CodeGenerator
 
         foreach ($unique as $error) {
             $argCount = $this->analyser->extractArgumentCount($error['file'], $error['line'], $error['methodName']);
-            $filePath = ClassGenerator::resolveFqcn($error['className'], $this->srcPath)['filePath'];
+            $filePath = ClassGenerator::resolveFqcn($error['className'], $this->srcPath, $this->psr4Prefix)['filePath'];
 
             $returnExpr = null;
             if ($fake) {
@@ -315,7 +318,7 @@ final readonly class CodeGenerator
                 continue;
             }
 
-            $filePath = ClassGenerator::resolveFqcn($candidate['className'], $this->srcPath)['filePath'];
+            $filePath = ClassGenerator::resolveFqcn($candidate['className'], $this->srcPath, $this->psr4Prefix)['filePath'];
 
             $this->confirmAndGenerate($output, sprintf(
                 '  <fg=yellow>Are you sure you want <fg=white>%s()</> to always return <fg=white>%s</>?</> [Y/n] ',

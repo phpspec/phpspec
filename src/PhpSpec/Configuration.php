@@ -98,6 +98,29 @@ final class Configuration
     }
 
     /**
+     * Returns the PSR-4 namespace prefix mapped to the source directory.
+     * When set, namespace segments matching the prefix are not reflected
+     * in the directory structure during code generation.
+     *
+     * Reads from top-level `psr4_prefix` or per-suite `namespace` key.
+     * Defaults to '' (PSR-0 behaviour: all segments become directories).
+     */
+    public function getPsr4Prefix(): string
+    {
+        if (isset($this->config['psr4_prefix']) && is_string($this->config['psr4_prefix'])) {
+            return rtrim($this->config['psr4_prefix'], '\\');
+        }
+        if (isset($this->config['suites']) && is_array($this->config['suites'])) {
+            foreach ($this->config['suites'] as $suite) {
+                if (isset($suite['namespace']) && is_string($suite['namespace'])) {
+                    return rtrim($suite['namespace'], '\\');
+                }
+            }
+        }
+        return '';
+    }
+
+    /**
      * Returns the spec file suffix. Defaults to '.spec.php'.
      */
     public function getSpecSuffix(): string

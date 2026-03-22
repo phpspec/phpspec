@@ -194,7 +194,7 @@ final class CommandDispatcher
                     $message = $this->classGenerator->generate($fqcn);
                     $this->output->success($message);
 
-                    $resolved = ClassGenerator::resolveFqcn($fqcn, ltrim($this->config->getSrcPath(), './'));
+                    $resolved = ClassGenerator::resolveFqcn($fqcn, ltrim($this->config->getSrcPath(), './'), $this->config->getPsr4Prefix());
                     if ($this->filesystem->exists($resolved['filePath'])) {
                         $this->output->fileDisplay($resolved['filePath'], $this->filesystem->read($resolved['filePath']), true);
                     }
@@ -306,7 +306,7 @@ final class CommandDispatcher
 
             $srcPath = ltrim($this->config->getSrcPath(), './');
             $specPath = ltrim($this->config->getSpecPath(), './');
-            $codeGenerator = new CodeGenerator($srcPath, $specPath);
+            $codeGenerator = new CodeGenerator($srcPath, $specPath, psr4Prefix: $this->config->getPsr4Prefix());
             $codeGenerator->generate($this->output->getOutput(), $results, false);
         } finally {
             DispatcherRegistry::set($state);

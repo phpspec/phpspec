@@ -396,7 +396,7 @@ final class Run extends Command
     {
         $srcPath = ltrim($this->config->getSrcPath(), './');
         $specPath = ltrim($this->config->getSpecPath(), './');
-        $codeGenerator = new CodeGenerator($srcPath, $specPath, $interactive, $this->config->getSpecSuffix());
+        $codeGenerator = new CodeGenerator($srcPath, $specPath, $interactive, $this->config->getSpecSuffix(), $this->config->getPsr4Prefix());
         $codeGenerator->generate($output, $results, $fake);
     }
 }
