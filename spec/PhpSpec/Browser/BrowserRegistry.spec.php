@@ -1,5 +1,7 @@
 <?php
 
+use PhpSpec\Browser\BrowserRegistry;
+
 describe(BrowserRegistry::class, function () {
 
     it("saveState captures current state", function () {

@@ -14,6 +14,7 @@
 
 namespace PhpSpec;
 
+use PhpSpec\Browser\BrowserRegistry;
 use PhpSpec\Console\Application;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Mock\Double;
@@ -49,7 +50,7 @@ final class InProcessRunner
         $savedRegistry = MockExpectation::$registry;
         $savedAutoloaders = spl_autoload_functions();
         $savedStoryBDD = \StoryBDDRegistry::saveState();
-        $savedBrowser = \BrowserRegistry::saveState();
+        $savedBrowser = BrowserRegistry::saveState();
 
         // Reset for inner run — fresh Dispatcher for the nested Application
         DispatcherRegistry::reset();
@@ -59,7 +60,7 @@ final class InProcessRunner
         MockExpectation::$lastCallForAllow = null;
         MockExpectation::$registry = [];
         \StoryBDDRegistry::init();
-        \BrowserRegistry::reset();
+        BrowserRegistry::reset();
 
         $savedCwdStr = is_string($savedCwd) ? $savedCwd : $projectDir;
         chdir($projectDir);
@@ -84,7 +85,7 @@ final class InProcessRunner
             MockExpectation::$lastCallForAllow = $savedLastCallForAllow;
             MockExpectation::$registry = $savedRegistry;
             \StoryBDDRegistry::restoreState($savedStoryBDD);
-            \BrowserRegistry::restoreState($savedBrowser);
+            BrowserRegistry::restoreState($savedBrowser);
 
             // Unregister any autoloaders added by the inner run
             $currentAutoloaders = spl_autoload_functions();

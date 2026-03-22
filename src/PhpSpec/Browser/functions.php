@@ -12,9 +12,8 @@
  * file that was distributed with this source code.
  */
 
-use PhpSpec\Browser\Client;
+use PhpSpec\Browser\BrowserRegistry;
 use PhpSpec\Browser\Response;
-use PhpSpec\Configuration;
 
 /**
  * Sends a GET request to the given path. Alias for get().
@@ -90,90 +89,4 @@ function patch(string $path, array $options = []): Response
 function delete(string $path, array $options = []): Response
 {
     return BrowserRegistry::client()->request('DELETE', $path, $options);
-}
-
-/**
- * Static registry holding the Browser Client instance.
- * Lazily creates the client from Configuration on first access.
- */
-class BrowserRegistry
-{
-    private static ?Client $client = null;
-
-    /**
-     * Returns the HTTP client, creating it from configuration if needed.
-     *
-     * @throws RuntimeException if base_url is not configured
-     *
-     * @return Client
-     */
-    public static function client(): Client
-    {
-        if (self::$client === null) {
-            self::init();
-        }
-
-        if (self::$client === null) {
-            throw new RuntimeException('Browser client failed to initialize');
-        }
-
-        return self::$client;
-    }
-
-    /**
-     * Loads configuration and creates the Client from base_url.
-     *
-     * @throws RuntimeException if base_url is not configured
-     *
-     * @return void
-     */
-    public static function init(): void
-    {
-        $cwd = getcwd();
-        if ($cwd === false) {
-            throw new RuntimeException('Unable to determine current working directory');
-        }
-        $config = new Configuration($cwd);
-        $baseUrl = $config->getBaseUrl();
-
-        if ($baseUrl === null) {
-            throw new RuntimeException(
-                'Browser testing requires "base_url" in phpspec.json. Example: {"base_url": "http://localhost:8080"}',
-            );
-        }
-
-        self::$client = new Client($baseUrl);
-    }
-
-    /**
-     * Resets the client for test isolation.
-     *
-     * @return void
-     */
-    public static function reset(): void
-    {
-        self::$client = null;
-    }
-
-    /**
-     * Captures the current client for later restoration.
-     *
-     * @return array{client: Client|null}
-     */
-    public static function saveState(): array
-    {
-        return ['client' => self::$client];
-    }
-
-    /**
-     * Restores a previously saved client state.
-     *
-     * @param array{client: Client|null} $state
-     *
-     * @return void
-     */
-    public static function restoreState(array $state): void
-    {
-        self::$client = $state['client'];
-    }
 }
