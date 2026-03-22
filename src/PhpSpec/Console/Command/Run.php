@@ -145,7 +145,7 @@ final class Run extends Command
             return 1;
         }
 
-        $results = $this->runSuiteStreaming($input, $output, $coverageReporter ?: null);
+        $results = $this->runSuiteStreaming($input, $output);
 
         $this->printProfile($input, $output, $results);
 
@@ -229,7 +229,7 @@ final class Run extends Command
      *
      * @throws RandomException
      */
-    private function runSuiteStreaming(Input $input, Output $output, ?CoverageReporter $coverageReporter = null): SuiteResult
+    private function runSuiteStreaming(Input $input, Output $output): SuiteResult
     {
         $paths = $input->getArgument('files');
 
@@ -294,7 +294,6 @@ final class Run extends Command
         foreach ($stream as $result) {
             $formatter->printResult($result);
             $accumulated[] = $result;
-            $coverageReporter?->flush();
         }
 
         $results = new SuiteResult($accumulated);

@@ -24,9 +24,6 @@ final class CoverageCollector
     /** @var array<string, array<int, int>> raw coverage data keyed by file path */
     private array $data = [];
 
-    /** @var int flush call counter for periodic draining */
-    private int $flushCount = 0;
-
     /**
      * Checks whether Xdebug is loaded with coverage mode enabled.
      *
@@ -39,29 +36,11 @@ final class CoverageCollector
     }
 
     /**
-     * Starts Xdebug code coverage collection.
-     * Uses XDEBUG_CC_UNUSED only — XDEBUG_CC_DEAD_CODE causes segfaults
-     * on large suites due to unbounded internal state accumulation.
+     * Starts Xdebug code coverage collection with unused and dead code analysis.
      */
     public function start(): void
     {
-        xdebug_start_code_coverage(XDEBUG_CC_UNUSED);
-    }
-
-    /**
-     * Periodically drains Xdebug's internal buffers to prevent memory
-     * corruption on large suites. Call after each example.
-     * Every 50 calls, stops coverage, merges data, and restarts.
-     */
-    public function flush(): void
-    {
-        $this->flushCount++;
-        if ($this->flushCount % 50 !== 0) {
-            return;
-        }
-
-        $this->mergeXdebugData();
-        xdebug_start_code_coverage(XDEBUG_CC_UNUSED);
+        xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
     }
 
     /**
@@ -69,27 +48,8 @@ final class CoverageCollector
      */
     public function stop(): void
     {
-        $this->mergeXdebugData();
-    }
-
-    /**
-     * Reads and merges Xdebug's accumulated data into $this->data, then stops coverage.
-     */
-    private function mergeXdebugData(): void
-    {
-        $newData = xdebug_get_code_coverage();
+        $this->data = xdebug_get_code_coverage();
         xdebug_stop_code_coverage();
-
-        foreach ($newData as $file => $lines) {
-            if (!isset($this->data[$file])) {
-                $this->data[$file] = $lines;
-            } else {
-                foreach ($lines as $line => $hit) {
-                    $existing = $this->data[$file][$line] ?? 0;
-                    $this->data[$file][$line] = max($existing, $hit);
-                }
-            }
-        }
     }
 
     /**
