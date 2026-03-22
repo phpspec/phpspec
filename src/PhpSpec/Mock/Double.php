@@ -544,37 +544,11 @@ PHP;
                     $className = 'MockedMethodFor' . $wrapperSuffix;
                     $template = <<<PHP
 class $className implements \PhpSpec\Mock\MatchableDouble, $returnTypeFqcn {
-    public function __construct(private \$mockedObject)
-    {
+    use \PhpSpec\Mock\MatchableDoubleBehaviour;
 
-    }
-
-    public function ______PhpSpecGetDouble(): mixed
-    {
-        return \$this->mockedObject;
-    }
-
-    public function ______PhpSpecGetMethod(): string
-    {
-        return "$methodName";
-    }
-
-    public function toReturn(mixed \$value): void
-    {
-        \$this->mockedObject->______PhpSpecStubReturn('$methodName', \$value);
-        \$this->mockedObject->______PhpSpecGetStubbedCalls()->pop();
-    }
-
-    public function toReturnUsing(callable \$callback): void
-    {
-        \$this->mockedObject->______PhpSpecStubReturnUsing('$methodName', \$callback);
-        \$this->mockedObject->______PhpSpecGetStubbedCalls()->pop();
-    }
-
-    public function toThrow(string \$exceptionClass, string \$message = ''): void
-    {
-        \$this->mockedObject->______PhpSpecStubThrow('$methodName', \$exceptionClass, \$message);
-        \$this->mockedObject->______PhpSpecGetStubbedCalls()->pop();
+    public function __construct(object \$mockedObject) {
+        \$this->______phpspec_mockedObject = \$mockedObject;
+        \$this->______phpspec_methodName = '$methodName';
     }
 
     $templateMethods
@@ -584,33 +558,13 @@ PHP;
                     $className = 'MockedMethodFor' . $wrapperSuffix;
                     $template = <<<PHP
 class $className extends $returnTypeFqcn implements \PhpSpec\Mock\MatchableDouble {
-    private \$______mockedObject;
+    use \PhpSpec\Mock\MatchableDoubleBehaviour;
 
-    public function __construct(\$mockedObject = null) {
-        \$this->______mockedObject = \$mockedObject;
-    }
-
-    public function ______PhpSpecGetDouble(): mixed {
-        return \$this->______mockedObject;
-    }
-
-    public function ______PhpSpecGetMethod(): string {
-        return "$methodName";
-    }
-
-    public function toReturn(mixed \$value): void {
-        \$this->______mockedObject->______PhpSpecStubReturn('$methodName', \$value);
-        \$this->______mockedObject->______PhpSpecGetStubbedCalls()->pop();
-    }
-
-    public function toReturnUsing(callable \$callback): void {
-        \$this->______mockedObject->______PhpSpecStubReturnUsing('$methodName', \$callback);
-        \$this->______mockedObject->______PhpSpecGetStubbedCalls()->pop();
-    }
-
-    public function toThrow(string \$exceptionClass, string \$message = ''): void {
-        \$this->______mockedObject->______PhpSpecStubThrow('$methodName', \$exceptionClass, \$message);
-        \$this->______mockedObject->______PhpSpecGetStubbedCalls()->pop();
+    public function __construct(object \$mockedObject = null) {
+        if (\$mockedObject !== null) {
+            \$this->______phpspec_mockedObject = \$mockedObject;
+            \$this->______phpspec_methodName = '$methodName';
+        }
     }
 
     $templateMethods
@@ -663,29 +617,11 @@ PHP;
                     }
                     $template = <<<PHP
 class $className implements \PhpSpec\Mock\MatchableDouble, $interfacesStr {
-    public function __construct(private \$mockedObject) {}
+    use \PhpSpec\Mock\MatchableDoubleBehaviour;
 
-    public function ______PhpSpecGetDouble(): mixed {
-        return \$this->mockedObject;
-    }
-
-    public function ______PhpSpecGetMethod(): string {
-        return "$methodName";
-    }
-
-    public function toReturn(mixed \$value): void {
-        \$this->mockedObject->______PhpSpecStubReturn('$methodName', \$value);
-        \$this->mockedObject->______PhpSpecGetStubbedCalls()->pop();
-    }
-
-    public function toReturnUsing(callable \$callback): void {
-        \$this->mockedObject->______PhpSpecStubReturnUsing('$methodName', \$callback);
-        \$this->mockedObject->______PhpSpecGetStubbedCalls()->pop();
-    }
-
-    public function toThrow(string \$exceptionClass, string \$message = ''): void {
-        \$this->mockedObject->______PhpSpecStubThrow('$methodName', \$exceptionClass, \$message);
-        \$this->mockedObject->______PhpSpecGetStubbedCalls()->pop();
+    public function __construct(object \$mockedObject) {
+        \$this->______phpspec_mockedObject = \$mockedObject;
+        \$this->______phpspec_methodName = '$methodName';
     }
 
     $combinedTemplateMethods
@@ -704,29 +640,11 @@ PHP;
                 $className = 'MockedMethodFor' . $wrapperSuffix;
                 $template = <<<PHP
 class $className implements \PhpSpec\Mock\MatchableDouble {
-    public function __construct(private \$mockedObject) {}
+    use \PhpSpec\Mock\MatchableDoubleBehaviour;
 
-    public function ______PhpSpecGetDouble(): mixed {
-        return \$this->mockedObject;
-    }
-
-    public function ______PhpSpecGetMethod(): string {
-        return "$methodName";
-    }
-
-    public function toReturn(mixed \$value): void {
-        \$this->mockedObject->______PhpSpecStubReturn('$methodName', \$value);
-        \$this->mockedObject->______PhpSpecGetStubbedCalls()->pop();
-    }
-
-    public function toReturnUsing(callable \$callback): void {
-        \$this->mockedObject->______PhpSpecStubReturnUsing('$methodName', \$callback);
-        \$this->mockedObject->______PhpSpecGetStubbedCalls()->pop();
-    }
-
-    public function toThrow(string \$exceptionClass, string \$message = ''): void {
-        \$this->mockedObject->______PhpSpecStubThrow('$methodName', \$exceptionClass, \$message);
-        \$this->mockedObject->______PhpSpecGetStubbedCalls()->pop();
+    public function __construct(object \$mockedObject) {
+        \$this->______phpspec_mockedObject = \$mockedObject;
+        \$this->______phpspec_methodName = '$methodName';
     }
 }
 PHP;
