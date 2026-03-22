@@ -30,4 +30,14 @@ interface MatchableDouble
      * Returns the method name that was called.
      */
     public function ______PhpSpecGetMethod(): string;
+
+    /**
+     * Configures the mock method to return a specific value.
+     */
+    public function toReturn(mixed $value): void;
+
+    /**
+     * Configures the mock method to throw an exception.
+     */
+    public function toThrow(string $exceptionClass, string $message = ''): void;
 }

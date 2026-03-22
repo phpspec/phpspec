@@ -32,6 +32,8 @@ interface ExampleResultRegistry
 
     /**
      * Returns all registered deferred match closures for the current example.
+     *
+     * @return array<\Closure>
      */
     public function getMatches(): array;
 
@@ -52,7 +54,7 @@ interface ExampleResultRegistry
      *
      * @param ExampleError $error the error details
      */
-    public function setError(ExampleError $error);
+    public function setError(ExampleError $error): void;
 
     /**
      * Checks whether an error has been recorded for the current example.
@@ -64,5 +66,5 @@ interface ExampleResultRegistry
      *
      * @param mixed $double the mock double instance
      */
-    public function addDouble(mixed $double);
+    public function addDouble(mixed $double): void;
 }

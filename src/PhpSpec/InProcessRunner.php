@@ -61,6 +61,7 @@ final class InProcessRunner
         \StoryBDDRegistry::init();
         \BrowserRegistry::reset();
 
+        $savedCwdStr = is_string($savedCwd) ? $savedCwd : $projectDir;
         chdir($projectDir);
 
         try {
@@ -76,7 +77,7 @@ final class InProcessRunner
             return new InProcessResult($exitCode, $output->fetch());
         } finally {
             // Always restore, even on error
-            chdir($savedCwd);
+            chdir($savedCwdStr);
             DispatcherRegistry::set($savedDispatcher);
             MockExpectation::$lastDouble = $savedLastDouble;
             MockExpectation::$lastMockReturn = $savedLastMockReturn;
@@ -141,6 +142,9 @@ final class InProcessRunner
     private static function parseArgs(string $args): array
     {
         $parts = preg_split('/\s+/', trim($args));
+        if ($parts === false) {
+            return [];
+        }
         $result = [];
         $command = null;
         $skipNext = false;
@@ -183,7 +187,9 @@ final class InProcessRunner
             } else {
                 // Positional argument — map to correct argument name
                 if ($command === 'run') {
-                    $result['files'] = $result['files'] ?? [];
+                    if (!isset($result['files']) || !is_array($result['files'])) {
+                        $result['files'] = [];
+                    }
                     $result['files'][] = $part;
                 } elseif ($command === 'describe') {
                     $result['class'] = $part;

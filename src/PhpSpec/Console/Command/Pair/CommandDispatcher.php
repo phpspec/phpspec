@@ -76,7 +76,7 @@ final class CommandDispatcher
         if ($aiConfig !== null) {
             try {
                 $provider = ProviderFactory::create($aiConfig);
-                $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider'] ?? 'google');
+                $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider']);
                 $this->ai = new AiAssistant($provider, $this->config, $this->output, $model, $this->filesystem, $this->interactive, $this->extensionLoader);
             } catch (RuntimeException $e) {
                 $this->output->error($e->getMessage());
@@ -135,7 +135,8 @@ final class CommandDispatcher
             default => 0,
         };
 
-        $tokenCount = count(preg_split('/\s+/', $argument));
+        $tokens = preg_split('/\s+/', $argument);
+        $tokenCount = $tokens !== false ? count($tokens) : 0;
 
         return $maxArgs > 0 && $tokenCount > $maxArgs;
     }
@@ -177,9 +178,7 @@ final class CommandDispatcher
                 $specFile,
             ));
 
-            if ($this->filesystem->exists($specFile)) {
-                $this->output->fileDisplay($specFile, $this->filesystem->read($specFile), true);
-            }
+            $this->output->fileDisplay($specFile, $this->filesystem->read($specFile), true);
         }
 
         // Offer class generation
@@ -220,7 +219,7 @@ final class CommandDispatcher
     private function handleExemplify(string $argument): int
     {
         $parts = explode(' ', $argument, 2);
-        $fqcn = $parts[0] ?? '';
+        $fqcn = $parts[0];
         $method = $parts[1] ?? '';
 
         if ($fqcn === '' || $method === '') {
@@ -351,7 +350,8 @@ final class CommandDispatcher
             }
             $maxArgs++;
         }
-        $tokenCount = count(preg_split('/\s+/', $argument));
+        $tokens = preg_split('/\s+/', $argument);
+        $tokenCount = $tokens !== false ? count($tokens) : 0;
         return $maxArgs === 0 || $tokenCount > $maxArgs;
     }
 

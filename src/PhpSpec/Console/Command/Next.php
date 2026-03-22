@@ -21,6 +21,7 @@ use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Output\OutputInterface as Output;
@@ -39,13 +40,13 @@ final class Next extends Command
 
     private Filesystem $filesystem;
 
-    /** @var (callable(array): array{type: string, target: string, reason: string})|null */
+    /** @var (callable(array{provider: string, model?: string, api_key: string}): array{type: string, target: string, reason: string})|null */
     private $suggestFn;
 
     /**
      * @param Configuration $config
      * @param Filesystem|null $filesystem
-     * @param (callable(array): array{type: string, target: string, reason: string})|null $suggestFn
+     * @param (callable(array{provider: string, model?: string, api_key: string}): array{type: string, target: string, reason: string})|null $suggestFn
      */
     public function __construct(
         private readonly Configuration $config,
@@ -113,6 +114,7 @@ final class Next extends Command
     }
 
     /**
+     * @param array{provider: string, model?: string, api_key: string} $aiConfig
      * @return array{type: string, target: string, reason: string}
      */
     private function getSuggestion(array $aiConfig): array
@@ -127,7 +129,7 @@ final class Next extends Command
             return ['type' => 'info', 'target' => '', 'reason' => $e->getMessage()];
         }
 
-        $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider'] ?? 'google');
+        $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider']);
 
         $projectContext = $this->getCachedProjectContext();
         $systemPrompt = $this->buildSystemPrompt();
@@ -155,7 +157,8 @@ final class Next extends Command
         $cacheFile = getcwd() . '/.phpspec/next-context.cache';
 
         if (file_exists($cacheFile)) {
-            $data = json_decode(file_get_contents($cacheFile), true);
+            $contents = file_get_contents($cacheFile);
+            $data = $contents !== false ? json_decode($contents, true) : null;
             if (is_array($data) && isset($data['time'], $data['context'])) {
                 if (time() - $data['time'] < self::CACHE_TTL) {
                     return $data['context'];
@@ -218,6 +221,9 @@ final class Next extends Command
         return null;
     }
 
+    /**
+     * @param array{type: string, target: string, reason: string} $suggestion
+     */
     private function displaySuggestion(Output $output, array $suggestion): void
     {
         $typeLabel = match ($suggestion['type']) {
@@ -250,6 +256,7 @@ final class Next extends Command
             return 0;
         }
 
+        /** @var QuestionHelper $helper */
         $helper = $this->getHelper('question');
         $question = new ConfirmationQuestion(
             '  <fg=yellow>Would you like me to create that for you?</> [Y/n] ',
@@ -260,7 +267,12 @@ final class Next extends Command
             return 0;
         }
 
-        return $this->getApplication()->find('describe')->run(
+        $application = $this->getApplication();
+        if ($application === null) {
+            return 1;
+        }
+
+        return $application->find('describe')->run(
             new ArrayInput(['class' => $classArg]),
             $output,
         );
@@ -273,24 +285,6 @@ final class Next extends Command
         $output->writeln("  <fg=gray>Run:</> bin/phpspec exemplify $classArg <method>");
 
         return 0;
-    }
-
-    /**
-     * Strips common markdown formatting for CLI output.
-     */
-    private function stripMarkdown(string $text): string
-    {
-        // Bold: **text** or __text__
-        $text = preg_replace('/\*\*(.+?)\*\*/', '$1', $text);
-        $text = preg_replace('/__(.+?)__/', '$1', $text);
-        // Italic: *text* or _text_
-        $text = preg_replace('/\*(.+?)\*/', '$1', $text);
-        // Inline code: `text`
-        $text = preg_replace('/`(.+?)`/', '$1', $text);
-        // Headers: # text
-        $text = preg_replace('/^#{1,6}\s+/m', '', $text);
-
-        return trim($text);
     }
 
     private function buildSystemPrompt(): string

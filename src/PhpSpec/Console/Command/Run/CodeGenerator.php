@@ -331,8 +331,8 @@ final readonly class CodeGenerator
     /**
      * Deduplicates an array of error/candidate records by className::methodName.
      *
-     * @param array<array{className: string, methodName: string, ...}> $items the items to deduplicate
-     * @return array<array{className: string, methodName: string, ...}> deduplicated items
+     * @param array<array<string, mixed>> $items the items to deduplicate
+     * @return array<array<string, mixed>> deduplicated items
      */
     private function uniqueByClassMethod(array $items): array
     {
@@ -343,7 +343,7 @@ final readonly class CodeGenerator
                 $unique[$key] = $item;
             }
         }
-        return $unique;
+        return array_values($unique);
     }
 
     /**
@@ -369,9 +369,10 @@ final readonly class CodeGenerator
         }
         if ($answer === '' || strtolower($answer) === 'y') {
             try {
-                $oldLines = ($filePath !== null && file_exists($filePath))
-                    ? explode("\n", file_get_contents($filePath))
-                    : null;
+                $oldContent = ($filePath !== null && file_exists($filePath))
+                    ? file_get_contents($filePath)
+                    : false;
+                $oldLines = $oldContent !== false ? explode("\n", $oldContent) : null;
 
                 $message = $action();
                 $output->writeln("  <fg=green>$message</>");
@@ -395,7 +396,8 @@ final readonly class CodeGenerator
      */
     private function showFileDiff(Output $output, string $filePath, ?array $oldLines): void
     {
-        $newLines = explode("\n", file_get_contents($filePath));
+        $newContent = file_get_contents($filePath);
+        $newLines = $newContent !== false ? explode("\n", $newContent) : [];
         $label = $oldLines === null ? '[NEW FILE]' : '[MODIFIED]';
 
         $output->writeln('');

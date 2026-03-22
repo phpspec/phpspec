@@ -103,7 +103,7 @@ final class Dispatcher
     {
         $key = array_search($subscriber, $this->subscribers, true);
         if ($key !== false) {
-            array_splice($this->subscribers, $key, 1);
+            array_splice($this->subscribers, (int) $key, 1);
         }
 
         foreach ($subscriber->getSubscribedEvents() as $eventName => $methods) {

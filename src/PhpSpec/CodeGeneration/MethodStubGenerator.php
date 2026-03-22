@@ -25,13 +25,15 @@ use RuntimeException;
  */
 final class MethodStubGenerator
 {
+    private readonly Filesystem $filesystem;
+
     /**
      * @param string $srcPath relative path to the source directory
-     * @param Filesystem|null $filesystem filesystem abstraction for testability
+     * @param Filesystem $filesystem filesystem abstraction for testability
      */
-    public function __construct(private readonly string $srcPath = 'src', private ?Filesystem $filesystem = null)
+    public function __construct(private readonly string $srcPath = 'src', ?Filesystem $filesystem = null)
     {
-        $this->filesystem ??= new RealFilesystem();
+        $this->filesystem = $filesystem ?? new RealFilesystem();
     }
 
     /**
@@ -118,7 +120,7 @@ final class MethodStubGenerator
             '$1' . "\n        return $returnExpression;\n    " . '$2',
             $content,
             1,
-        );
+        ) ?? $content;
 
         $this->filesystem->write($filePath, $newContent);
 

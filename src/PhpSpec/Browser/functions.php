@@ -44,7 +44,7 @@ function get(string $path): Response
  * Sends a POST request to the given path.
  *
  * @param string $path URL path
- * @param array{json?: array, body?: string, headers?: array<string, string>} $options request options
+ * @param array{json?: array<string, mixed>, body?: string, headers?: array<string, string>} $options request options
  *
  * @return Response
  */
@@ -57,7 +57,7 @@ function post(string $path, array $options = []): Response
  * Sends a PUT request to the given path.
  *
  * @param string $path URL path
- * @param array{json?: array, body?: string, headers?: array<string, string>} $options request options
+ * @param array{json?: array<string, mixed>, body?: string, headers?: array<string, string>} $options request options
  *
  * @return Response
  */
@@ -70,7 +70,7 @@ function put(string $path, array $options = []): Response
  * Sends a PATCH request to the given path.
  *
  * @param string $path URL path
- * @param array{json?: array, body?: string, headers?: array<string, string>} $options request options
+ * @param array{json?: array<string, mixed>, body?: string, headers?: array<string, string>} $options request options
  *
  * @return Response
  */
@@ -83,7 +83,7 @@ function patch(string $path, array $options = []): Response
  * Sends a DELETE request to the given path.
  *
  * @param string $path URL path
- * @param array{json?: array, body?: string, headers?: array<string, string>} $options request options
+ * @param array{json?: array<string, mixed>, body?: string, headers?: array<string, string>} $options request options
  *
  * @return Response
  */
@@ -113,6 +113,10 @@ class BrowserRegistry
             self::init();
         }
 
+        if (self::$client === null) {
+            throw new RuntimeException('Browser client failed to initialize');
+        }
+
         return self::$client;
     }
 
@@ -125,7 +129,11 @@ class BrowserRegistry
      */
     public static function init(): void
     {
-        $config = new Configuration(getcwd());
+        $cwd = getcwd();
+        if ($cwd === false) {
+            throw new RuntimeException('Unable to determine current working directory');
+        }
+        $config = new Configuration($cwd);
         $baseUrl = $config->getBaseUrl();
 
         if ($baseUrl === null) {

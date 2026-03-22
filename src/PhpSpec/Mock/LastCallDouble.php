@@ -27,7 +27,7 @@ final class LastCallDouble implements MatchableDouble
     /**
      * @param object $double the test double instance that was called
      * @param string $method the method name that was invoked
-     * @param array|null $args the arguments from the setup call (null = catch-all)
+     * @param array<int, mixed>|null $args the arguments from the setup call (null = catch-all)
      */
     public function __construct(
         private readonly object $double,
@@ -53,6 +53,8 @@ final class LastCallDouble implements MatchableDouble
 
     /**
      * Returns the captured arguments from the setup call.
+     *
+     * @return array<int, mixed>|null
      */
     public function ______PhpSpecGetArgs(): ?array
     {
@@ -67,8 +69,10 @@ final class LastCallDouble implements MatchableDouble
      */
     public function toReturn(mixed $value): void
     {
-        $this->double->______PhpSpecStubReturn($this->method, $value, $this->args);
-        $this->double->______PhpSpecGetStubbedCalls()->pop();
+        if ($this->double instanceof GeneratedDouble) {
+            $this->double->______PhpSpecStubReturn($this->method, $value, $this->args);
+            $this->double->______PhpSpecGetStubbedCalls()->pop();
+        }
     }
 
     /**
@@ -80,8 +84,10 @@ final class LastCallDouble implements MatchableDouble
      */
     public function toReturnUsing(callable $callback): void
     {
-        $this->double->______PhpSpecStubReturnUsing($this->method, $callback, $this->args);
-        $this->double->______PhpSpecGetStubbedCalls()->pop();
+        if ($this->double instanceof GeneratedDouble) {
+            $this->double->______PhpSpecStubReturnUsing($this->method, $callback, $this->args);
+            $this->double->______PhpSpecGetStubbedCalls()->pop();
+        }
     }
 
     /**
@@ -93,7 +99,9 @@ final class LastCallDouble implements MatchableDouble
      */
     public function toThrow(string $exceptionClass, string $message = ''): void
     {
-        $this->double->______PhpSpecStubThrow($this->method, $exceptionClass, $message, $this->args);
-        $this->double->______PhpSpecGetStubbedCalls()->pop();
+        if ($this->double instanceof GeneratedDouble) {
+            $this->double->______PhpSpecStubThrow($this->method, $exceptionClass, $message, $this->args);
+            $this->double->______PhpSpecGetStubbedCalls()->pop();
+        }
     }
 }

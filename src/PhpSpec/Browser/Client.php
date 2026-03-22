@@ -42,7 +42,7 @@ final class Client
      *
      * @param string $method HTTP method (GET, POST, PUT, PATCH, DELETE)
      * @param string $path URL path appended to base URL
-     * @param array{json?: array, body?: string, headers?: array<string, string>} $options request options
+     * @param array{json?: array<string, mixed>, body?: string, headers?: array<string, string>} $options request options
      *
      * @return Response
      */

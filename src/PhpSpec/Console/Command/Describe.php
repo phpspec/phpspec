@@ -86,7 +86,11 @@ final class Describe extends Command
         }
 
         if ($input->getOption('run')) {
-            return $this->getApplication()->find('run')->run(new ArrayInput([]), $output);
+            $application = $this->getApplication();
+            if ($application === null) {
+                return 1;
+            }
+            return $application->find('run')->run(new ArrayInput([]), $output);
         }
 
         return 0;

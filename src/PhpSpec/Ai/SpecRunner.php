@@ -35,7 +35,8 @@ final class SpecRunner
             2 => ['pipe', 'w'],
         ];
 
-        $process = proc_open($cmd, $descriptors, $pipes, getcwd());
+        $cwd = getcwd();
+        $process = proc_open($cmd, $descriptors, $pipes, $cwd !== false ? $cwd : null);
 
         if (!is_resource($process)) {
             return [1, 'Failed to start phpspec process'];
@@ -101,7 +102,7 @@ final class SpecRunner
     }
 
     /**
-     * @return string[]
+     * @return list<string>
      */
     private static function buildCommand(string $specPath): array
     {

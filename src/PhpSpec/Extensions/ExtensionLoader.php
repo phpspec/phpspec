@@ -215,7 +215,7 @@ final class ExtensionLoader
     /**
      * Reads vendor/composer/installed.json for auto-discovery.
      *
-     * @param array $disabled package names to skip
+     * @param array<string> $disabled package names to skip
      * @return array<string, string[]> type => FQCNs
      */
     private function autoDiscover(array $disabled): array
@@ -263,6 +263,10 @@ final class ExtensionLoader
 
     /**
      * Merges config extensions with auto-discovered ones, deduplicating.
+     *
+     * @param array<string, mixed> $config
+     * @param array<string, string[]> $discovered
+     * @return array<string, string[]>
      */
     private function mergeExtensions(array $config, array $discovered): array
     {

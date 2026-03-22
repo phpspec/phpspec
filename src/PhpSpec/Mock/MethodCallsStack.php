@@ -37,7 +37,7 @@ final class MethodCallsStack
     /**
      * Removes and returns the most recent method call from the stack.
      */
-    public function pop(): MockedMethod
+    public function pop(): ?MockedMethod
     {
         return array_pop($this->stack);
     }
@@ -54,7 +54,7 @@ final class MethodCallsStack
      * Checks whether a call with the given method name and arguments exists in the stack.
      *
      * @param string $method the method name to search for
-     * @param array $args the expected arguments for exact matching
+     * @param array<int, mixed> $args the expected arguments for exact matching
      */
     public function exist(string $method, array $args = []): bool
     {
@@ -118,7 +118,7 @@ final class MethodCallsStack
      * If argPattern is null, counts all calls (same as countCallsTo).
      *
      * @param string $method the method name to count calls for
-     * @param array|null $argPattern the argument pattern to filter by
+     * @param array<int, mixed>|null $argPattern the argument pattern to filter by
      */
     public function countCallsToWithArgs(string $method, ?array $argPattern): int
     {

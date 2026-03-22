@@ -23,14 +23,16 @@ use PhpSpec\RealFilesystem;
  */
 final class SpecGenerator
 {
+    private readonly Filesystem $filesystem;
+
     /**
      * @param string $specPath relative path to the spec directory
-     * @param Filesystem|null $filesystem filesystem abstraction for testability
+     * @param Filesystem $filesystem filesystem abstraction for testability
      * @param string $specSuffix file suffix for spec files (e.g. '.spec.php')
      */
-    public function __construct(private readonly string $specPath = 'spec', private ?Filesystem $filesystem = null, private string $specSuffix = '.spec.php')
+    public function __construct(private readonly string $specPath = 'spec', ?Filesystem $filesystem = null, private string $specSuffix = '.spec.php')
     {
-        $this->filesystem ??= new RealFilesystem();
+        $this->filesystem = $filesystem ?? new RealFilesystem();
     }
 
     /**

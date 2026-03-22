@@ -134,10 +134,13 @@ final class ParallelRunner
         // bin/phpspec is 3 directories up
         $bin = dirname(__DIR__, 3) . '/bin/phpspec';
         if (file_exists($bin)) {
-            return realpath($bin);
+            $resolved = realpath($bin);
+            return $resolved !== false ? $resolved : $bin;
         }
 
-        return realpath($_SERVER['argv'][0]) ?: $_SERVER['argv'][0];
+        $argv0 = $_SERVER['argv'][0] ?? 'phpspec';
+        $resolved = realpath($argv0);
+        return $resolved !== false ? $resolved : $argv0;
     }
 
     /**

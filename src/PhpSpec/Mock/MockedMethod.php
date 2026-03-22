@@ -26,7 +26,7 @@ namespace PhpSpec\Mock;
     /**
      * @param mixed $subject the test double instance the method was called on
      * @param string $method the invoked method name
-     * @param array $arguments the arguments passed to the method
+     * @param array<int, mixed> $arguments the arguments passed to the method
      */
     public function __construct(
         public readonly mixed $subject,
@@ -50,7 +50,7 @@ namespace PhpSpec\Mock;
      *
      * @param object $subject the test double instance
      * @param string $method the method name
-     * @param array $args the expected arguments
+     * @param array<int, mixed> $args the expected arguments
      */
     public static function withoutCall(object $subject, string $method, array $args = []): self
     {

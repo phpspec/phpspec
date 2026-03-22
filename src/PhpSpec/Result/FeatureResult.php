@@ -23,7 +23,7 @@ final readonly class FeatureResult implements Results
 {
     /**
      * @param string $title the feature description
-     * @param array $scenarioResults child ScenarioResult instances
+     * @param array<ScenarioResult> $scenarioResults child ScenarioResult instances
      * @param string $path the feature file path
      */
     public function __construct(

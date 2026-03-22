@@ -25,14 +25,18 @@ final class StepError extends \Exception
     /** @var string the class name of the original throwable */
     private string $type;
 
+    private \Throwable $original;
+
     /**
      * Wraps an original throwable, preserving its file and line for error reporting.
      *
-     * @param mixed $message the error message
+     * @param string $message the error message
      * @param \Throwable $original the original throwable that caused the step failure
      */
-    public function __construct(protected $message, protected \Throwable $original)
+    public function __construct(string $message, \Throwable $original)
     {
+        parent::__construct($message);
+        $this->original = $original;
         $this->line = $original->getLine();
         $this->file = $original->getFile();
         $this->type = get_class($original);
@@ -43,7 +47,7 @@ final class StepError extends \Exception
      *
      * @param int $before number of lines to include before the error line
      * @param int $after number of lines to include after the error line
-     * @return array the surrounding code lines
+     * @return array<int, string> the surrounding code lines
      */
     public function getSurroundingCode(int $before = 3, int $after = 3): array
     {
@@ -65,7 +69,7 @@ final class StepError extends \Exception
      * Returns the original exception's stack trace filtered to exclude internal PhpSpec
      * and vendor frames, keeping only user code.
      *
-     * @return array stack frames from user code only
+     * @return array<int, array<string, mixed>> stack frames from user code only
      */
     public function getFilteredTrace(): array
     {

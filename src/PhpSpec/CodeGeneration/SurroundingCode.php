@@ -54,20 +54,27 @@ final class SurroundingCode
             return [];
         }
 
-        $code = [null, ...$this->filesystem->readLines($this->file)];
+        $lines = $this->filesystem->readLines($this->file);
 
-        // lines start at 1, get rid of index 0
-        unset($code[0]);
-
-        $line = $this->line;
-        $start = $line - $this->before - 1;
-        $numberOfLines = $this->before + $this->after + 1;
-
-        // a negative start would send us to the end of the file
-        if ($line < ($this->before + 1)) {
-            $start = 0;
+        // Build 1-based indexed array
+        /** @var array<int, string> $code */
+        $code = [];
+        foreach ($lines as $i => $lineContent) {
+            $code[$i + 1] = $lineContent;
         }
 
-        return array_slice($code, $start, $numberOfLines, true);
+        $line = $this->line;
+        $start = max(1, $line - $this->before);
+        $end = $line + $this->after;
+
+        /** @var array<int, string> $result */
+        $result = [];
+        foreach ($code as $num => $content) {
+            if ($num >= $start && $num <= $end) {
+                $result[$num] = $content;
+            }
+        }
+
+        return $result;
     }
 }

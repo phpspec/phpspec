@@ -51,8 +51,8 @@ class Context implements ExampleRegistry, SpecBlock
     /** @var array<string, object> mocks created by let() parameter injection, keyed by param name */
     private array $letMocks = [];
 
-    /** @var World shared state object accessible via $this in closures */
-    private World $world;
+    /** @var Subject shared state object accessible via $this in closures */
+    private Subject $world;
 
     /** @var bool whether all examples in this context are skipped */
     private bool $pending = false;
@@ -125,7 +125,7 @@ class Context implements ExampleRegistry, SpecBlock
             }
 
             foreach ($this->specBlocks as $block) {
-                if ($this->pending) {
+                if ($this->pending && ($block instanceof Context || $block instanceof Example)) {
                     $block->setPending(true);
                 }
                 if ($block instanceof Context) {
@@ -180,10 +180,10 @@ class Context implements ExampleRegistry, SpecBlock
     /**
      * Sets the shared world (Subject) for let() bindings and closure $this.
      *
-     * @param World $world shared state container
+     * @param Subject $world shared state container
      * @return void
      */
-    public function setWorld(World $world): void
+    public function setWorld(Subject $world): void
     {
         $this->world = $world;
     }
@@ -259,7 +259,7 @@ class Context implements ExampleRegistry, SpecBlock
      *
      * @param array<Closure> $before parent's beforeEach hooks
      * @param array<Closure> $after parent's afterEach hooks
-     * @param array $letBindings parent's let() bindings
+     * @param array<array{0: string, 1: ?string, 2: Closure}> $letBindings parent's let() bindings
      * @return void
      */
     public function inheritHooks(array $before, array $after, array $letBindings = []): void
@@ -356,7 +356,7 @@ class Context implements ExampleRegistry, SpecBlock
         }
         $this->letMocks = [];
         foreach ($this->letBindings as $binding) {
-            if ($binding[0] === 'named') {
+            if ($binding[0] === 'named' && $binding[1] !== null) {
                 $this->evaluateNamedLet($binding[1], $binding[2]);
             } else {
                 $this->evaluateInjectionLet($binding[2]);
@@ -371,7 +371,7 @@ class Context implements ExampleRegistry, SpecBlock
      * or new mock doubles. New mocks are stored in $letMocks only (not on World).
      *
      * @param Closure $closure closure whose parameters to resolve
-     * @return array resolved arguments
+     * @return array<mixed> resolved arguments
      * @throws ReflectionException
      */
     private function resolveClosureArgs(Closure $closure): array

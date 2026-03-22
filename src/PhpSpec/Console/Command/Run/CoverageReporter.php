@@ -66,6 +66,10 @@ final class CoverageReporter
         ?string $htmlPath,
         ?string $coverageMin,
     ): ?int {
+        if ($this->collector === null) {
+            return null;
+        }
+
         $this->collector->stop();
         $covData = $this->collector->filter($srcPath);
 

@@ -89,10 +89,13 @@ final class Expectation extends BaseExpectation
      */
     public function toBeCalled(): CallCountExpectation
     {
-        $double = $this->mockSubject->______PhpSpecGetDouble();
+        $double = $this->getGeneratedDouble();
         $class = $double->______PhpSpecNameOfClassDoubled();
         $calls = $double->______PhpSpecGetStubbedCalls();
         $method = $calls->peek();
+        if ($method === null) {
+            throw new \LogicException('No method call recorded on the mock. Call a method before using toBeCalled().');
+        }
         $methodName = $method->method;
         $method->unCall();
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
@@ -103,8 +106,8 @@ final class Expectation extends BaseExpectation
             $methodName,
             $calls,
             $class,
-            $trace['file'],
-            $trace['line'],
+            $trace['file'] ?? 'unknown',
+            $trace['line'] ?? 0,
             $this->negated,
             null, // toBeCalled() counts all calls regardless of args
             $this->mockSubject,
@@ -128,10 +131,13 @@ final class Expectation extends BaseExpectation
      */
     public function toBeCalledWith(...$expectedArgs): static
     {
-        $double = $this->mockSubject->______PhpSpecGetDouble();
+        $double = $this->getGeneratedDouble();
         $class = $double->______PhpSpecNameOfClassDoubled();
         $calls = $double->______PhpSpecGetStubbedCalls();
         $method = $calls->peek();
+        if ($method === null) {
+            throw new \LogicException('No method call recorded on the mock. Call a method before using toBeCalledWith().');
+        }
         $methodName = $method->method;
         $method->unCall();
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, 1), MethodMocked::NAME);
@@ -152,17 +158,20 @@ final class Expectation extends BaseExpectation
      */
     public function toBeCalledTimes(int $times): static
     {
-        $double = $this->mockSubject->______PhpSpecGetDouble();
+        $double = $this->getGeneratedDouble();
         $class = $double->______PhpSpecNameOfClassDoubled();
         $calls = $double->______PhpSpecGetStubbedCalls();
         $method = $calls->peek();
+        if ($method === null) {
+            throw new \LogicException('No method call recorded on the mock. Call a method before using toBeCalledTimes().');
+        }
         $methodName = $method->method;
         $method->unCall();
         DispatcherRegistry::dispatcher()->dispatch(new MethodMocked($double, $method, $times), MethodMocked::NAME);
 
         $trace = debug_backtrace()[0];
-        $file = $trace['file'];
-        $line = $trace['line'];
+        $file = $trace['file'] ?? 'unknown';
+        $line = $trace['line'] ?? 0;
 
         return $this->expectation(function () use ($double, $methodName, $times, $class, $file, $line) {
             $stack = $double->______PhpSpecGetStubbedCalls();
@@ -185,8 +194,8 @@ final class Expectation extends BaseExpectation
      * Compares actual call arguments against expected values.
      * Uses ArgumentMatcher::matches() for matcher instances, strict equality otherwise.
      *
-     * @param array $actual the arguments that were actually passed
-     * @param array $expected the expected arguments to compare against
+     * @param array<int, mixed> $actual the arguments that were actually passed
+     * @param array<int|string, mixed> $expected the expected arguments to compare against
      */
     private function matchArguments(array $actual, array $expected): bool
     {
@@ -206,8 +215,8 @@ final class Expectation extends BaseExpectation
     private function should($doubleName, Closure $match, $message, ...$values): static
     {
         $trace = debug_backtrace()[1];
-        $file = $trace['file'];
-        $line = $trace['line'];
+        $file = $trace['file'] ?? 'unknown';
+        $line = $trace['line'] ?? 0;
 
         if ($this->negated) {
             $originalMatch = $match;
@@ -244,6 +253,18 @@ final class Expectation extends BaseExpectation
         DispatcherRegistry::dispatcher()->dispatch(new ExpectationStarted(), ExpectationStarted::NAME);
         DispatcherRegistry::dispatcher()->dispatch(new MatchCreated($match), MatchCreated::NAME);
         return $this;
+    }
+
+    /**
+     * Retrieves the GeneratedDouble from the mock subject.
+     */
+    private function getGeneratedDouble(): GeneratedDouble
+    {
+        $double = $this->mockSubject->______PhpSpecGetDouble();
+        if (!$double instanceof GeneratedDouble) {
+            throw new \LogicException('Expected a GeneratedDouble instance from ______PhpSpecGetDouble()');
+        }
+        return $double;
     }
 
 }

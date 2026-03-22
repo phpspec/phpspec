@@ -47,7 +47,7 @@ final readonly class ResultScanner
         foreach ($results->getResults() as $result) {
             if ($result instanceof ExampleResult && $result->isError()) {
                 $error = $result->getError();
-                if (preg_match("/Cannot create mock: class or interface '([^']+)' does not exist/", $error->getMessage(), $matches)) {
+                if ($error !== null && preg_match("/Cannot create mock: class or interface '([^']+)' does not exist/", $error->getMessage(), $matches)) {
                     $missing[] = $matches[1];
                 }
             } elseif ($result instanceof Results) {
@@ -70,7 +70,7 @@ final readonly class ResultScanner
         foreach ($results->getResults() as $result) {
             if ($result instanceof ExampleResult && $result->isError()) {
                 $error = $result->getError();
-                if (preg_match('/^Call to undefined method ([A-Za-z0-9_\\\\]+)::([A-Za-z0-9_]+)\(\)$/', $error->getMessage(), $matches)) {
+                if ($error !== null && preg_match('/^Call to undefined method ([A-Za-z0-9_\\\\]+)::([A-Za-z0-9_]+)\(\)$/', $error->getMessage(), $matches)) {
                     $mockClassName = $matches[1];
                     $methodName = $matches[2];
 
@@ -110,7 +110,7 @@ final readonly class ResultScanner
         foreach ($results->getResults() as $result) {
             if ($result instanceof ExampleResult && $result->isError()) {
                 $error = $result->getError();
-                if (preg_match('/^Call to undefined method ([A-Za-z0-9_\\\\]+)::([A-Za-z0-9_]+)\(\)$/', $error->getMessage(), $matches)) {
+                if ($error !== null && preg_match('/^Call to undefined method ([A-Za-z0-9_\\\\]+)::([A-Za-z0-9_]+)\(\)$/', $error->getMessage(), $matches)) {
                     $className = $matches[1];
                     // Skip mock doubles — handled in collectUndefinedMockInterfaceMethods
                     if (str_contains($className, '_Double_')) {
@@ -156,20 +156,17 @@ final readonly class ResultScanner
                         continue;
                     }
                     $lines = file($file);
+                    if ($lines === false) {
+                        continue;
+                    }
                     $sourceLine = $lines[$line - 1] ?? '';
 
                     // Match: expect($this->prop->method(...))->... or expect($obj->method(...))->...
-                    $varName = null;
-                    $methodName = null;
-                    if (preg_match('/expect\(\$this->(\w+)->(\w+)\(/', $sourceLine, $parts)) {
+                    if (preg_match('/expect\(\$this->(\w+)->(\w+)\(/', $sourceLine, $parts)
+                        || preg_match('/expect\(\$(\w+)->(\w+)\(/', $sourceLine, $parts)
+                    ) {
                         $varName = $parts[1];
                         $methodName = $parts[2];
-                    } elseif (preg_match('/expect\(\$(\w+)->(\w+)\(/', $sourceLine, $parts)) {
-                        $varName = $parts[1];
-                        $methodName = $parts[2];
-                    }
-
-                    if ($varName !== null && $methodName !== null) {
                         // Resolve $varName to a class name
                         $className = $this->analyser->resolveVariableClass($lines, $line - 1, $varName);
                         if ($className !== null) {
@@ -237,7 +234,7 @@ final readonly class ResultScanner
         foreach ($results->getResults() as $result) {
             if ($result instanceof ExampleResult && $result->isError()) {
                 $error = $result->getError();
-                if (preg_match('/^Class "([^"]+)" not found$/', $error->getMessage(), $m)) {
+                if ($error !== null && preg_match('/^Class "([^"]+)" not found$/', $error->getMessage(), $m)) {
                     $missing[$m[1]] = true;
                 }
             } elseif ($result instanceof Results) {

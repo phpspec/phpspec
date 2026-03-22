@@ -32,7 +32,14 @@ final class Diff
         $newLen = count($new);
 
         // Build LCS table
-        $lcs = array_fill(0, $oldLen + 1, array_fill(0, $newLen + 1, 0));
+        /** @var array<int, array<int, int>> $lcs */
+        $lcs = [];
+        for ($i = 0; $i <= $oldLen; $i++) {
+            $lcs[$i] = [];
+            for ($j = 0; $j <= $newLen; $j++) {
+                $lcs[$i][$j] = 0;
+            }
+        }
         for ($i = 1; $i <= $oldLen; $i++) {
             for ($j = 1; $j <= $newLen; $j++) {
                 if ($old[$i - 1] === $new[$j - 1]) {

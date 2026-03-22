@@ -28,7 +28,7 @@ class ContextResult implements Results
 
     /**
      * @param string $title the context description
-     * @param array $exampleResults child ExampleResult or ContextResult instances
+     * @param array<Results> $exampleResults child ExampleResult, ContextResult, or other Results instances
      */
     public function __construct(private string $title, private array $exampleResults) {}
 

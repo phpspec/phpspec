@@ -47,7 +47,7 @@ class Expectation
      * Dispatches custom matchers or throws BadMethodCallException with typo suggestions.
      *
      * @param string $name matcher name
-     * @param array $arguments matcher arguments
+     * @param array<mixed> $arguments matcher arguments
      * @return static
      * @throws BadMethodCallException if no matcher matches the name
      */
@@ -79,7 +79,7 @@ class Expectation
                 $prefix = 'have';
             }
             if ($method !== null && method_exists($this->subject, $method)) {
-                $humanized = strtolower(ltrim(preg_replace('/[A-Z]/', ' $0', substr($name, $prefix === 'be' ? 4 : 6))));
+                $humanized = strtolower(ltrim((string) preg_replace('/[A-Z]/', ' $0', substr($name, $prefix === 'be' ? 4 : 6))));
                 return $this->match(
                     fn($expected) => (bool) $expected->$method(...$arguments),
                     "Expected %s to {$prefix} {$humanized}",
@@ -111,8 +111,8 @@ class Expectation
      */
     public function __construct(
         private readonly mixed $subject,
-        private string $file,
-        private int $line,
+        string $file,
+        int $line,
         private ?EventfulExpectation $eventCreator = null,
     ) {
         $this->eventCreator = $eventCreator ?? new EventfulExpectation($subject, $file, $line);
@@ -789,7 +789,7 @@ class Expectation
             }
             $fakeExpression = null; // negated matchers don't produce fakes
         }
-        $this->eventCreator->createMatchEvent($match, $message[0], $fakeExpression, ...array_slice($message, 1));
+        $this->eventCreator?->createMatchEvent($match, $message[0], $fakeExpression, ...array_slice($message, 1));
         return $this;
     }
 
@@ -809,7 +809,7 @@ class Expectation
                 'boolean' => self::replaceOne('%s', $value ? 'true' : 'false', $message),
                 'array' => self::replaceOne('%s', '[' . implode(', ', $value) . ']', $message),
                 'NULL' => self::replaceOne('%s', 'null', $message),
-                default => self::replaceOne('%s', $value, $message)
+                default => self::replaceOne('%s', (string) $value, $message)
             };
         }
         return $message;
@@ -836,7 +836,7 @@ class Expectation
      * Extracts status, body, headers, and json from a response object.
      * Supports Browser\Response and PSR-7 ResponseInterface (when available).
      *
-     * @return array{status: int, body: string, headers: array, json: array}|null
+     * @return array{status: int, body: string, headers: array<string, string>, json: array<string, mixed>}|null
      */
     private static function extractResponseData(mixed $subject): ?array
     {

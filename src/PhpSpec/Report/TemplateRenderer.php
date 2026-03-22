@@ -35,7 +35,7 @@ final readonly class TemplateRenderer
      * Renders a named template by requiring its .view.php file with extracted variables.
      *
      * @param string $template the template name (without .view.php extension)
-     * @param array $vars associative array of variables to make available in the template scope
+     * @param array<string, mixed> $vars associative array of variables to make available in the template scope
      */
     public function render(string $template, array $vars): void
     {

@@ -33,7 +33,7 @@ final readonly class InputParser
             return ['command' => '', 'argument' => ''];
         }
 
-        $parts = preg_split('/\s+/', $input);
+        $parts = preg_split('/\s+/', $input) ?: [$input];
         $command = strtolower($parts[0]);
 
         // Collect all non-option tokens after the command

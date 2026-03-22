@@ -24,6 +24,10 @@ use OutOfRangeException;
  * Represents an immutable Gherkin data table as rows of associative arrays keyed by header names.
  * The first raw row is treated as headers; subsequent rows become data keyed by those headers.
  */
+/**
+ * @implements ArrayAccess<int, array<string, string>>
+ * @implements Iterator<int, array<string, string>>
+ */
 final class DataTable implements ArrayAccess, Iterator, Countable
 {
     /** @var string[] column header names from the first row */
@@ -36,7 +40,7 @@ final class DataTable implements ArrayAccess, Iterator, Countable
     /**
      * Builds the table from raw rows where the first row defines headers.
      *
-     * @param array $rawRows array of arrays; first element is headers, rest are data rows
+     * @param array<int, array<int, string>> $rawRows array of arrays; first element is headers, rest are data rows
      */
     public function __construct(array $rawRows)
     {

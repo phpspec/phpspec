@@ -29,9 +29,11 @@ final class Configuration
      * @param string $rootDir project root directory containing config files
      * @param Filesystem|null $filesystem injectable filesystem for testability
      */
-    public function __construct(private string $rootDir, private ?Filesystem $filesystem = null)
+    private Filesystem $fs;
+
+    public function __construct(private string $rootDir, ?Filesystem $filesystem = null)
     {
-        $this->filesystem ??= new RealFilesystem();
+        $this->fs = $filesystem ?? new RealFilesystem();
         $this->load();
     }
 
@@ -45,15 +47,15 @@ final class Configuration
         $jsonPath = $this->rootDir . '/phpspec.json';
         $phpPath = $this->rootDir . '/phpspec.php';
 
-        if ($this->filesystem->exists($yamlPath)) {
-            $this->config = Yaml::parse($this->filesystem->read($yamlPath)) ?? [];
-        } elseif ($this->filesystem->exists($ymlPath)) {
-            $this->config = Yaml::parse($this->filesystem->read($ymlPath)) ?? [];
-        } elseif ($this->filesystem->exists($jsonPath)) {
-            $content = $this->filesystem->read($jsonPath);
+        if ($this->fs->exists($yamlPath)) {
+            $this->config = Yaml::parse($this->fs->read($yamlPath)) ?? [];
+        } elseif ($this->fs->exists($ymlPath)) {
+            $this->config = Yaml::parse($this->fs->read($ymlPath)) ?? [];
+        } elseif ($this->fs->exists($jsonPath)) {
+            $content = $this->fs->read($jsonPath);
             $this->config = json_decode($content, true) ?? [];
-        } elseif ($this->filesystem->exists($phpPath)) {
-            $this->config = $this->filesystem->requirePhp($phpPath);
+        } elseif ($this->fs->exists($phpPath)) {
+            $this->config = $this->fs->requirePhp($phpPath);
         }
     }
 
@@ -194,7 +196,7 @@ final class Configuration
      * Returns named suites. If no suites key exists, synthesises a default suite
      * from the flat spec_path/src_path.
      *
-     * @return array<string, array{paths: string[], src?: string, steps?: string[]}>
+     * @return array<string, array{paths?: string[], src?: string, steps?: string[]}>
      */
     public function getSuites(): array
     {
@@ -211,9 +213,7 @@ final class Configuration
     {
         $paths = [];
         foreach ($this->getSuites() as $suite) {
-            if (isset($suite['paths']) && is_array($suite['paths'])) {
-                $paths = array_merge($paths, $suite['paths']);
-            }
+            $paths = array_merge($paths, $suite['paths'] ?? []);
         }
         return implode(',', $paths);
     }
@@ -244,7 +244,17 @@ final class Configuration
     public function getAiConfig(): ?array
     {
         $ai = $this->get('ai');
-        return is_array($ai) && isset($ai['api_key']) ? $ai : null;
+        if (!is_array($ai) || !isset($ai['api_key']) || !is_string($ai['api_key'])) {
+            return null;
+        }
+        $result = [
+            'provider' => isset($ai['provider']) && is_string($ai['provider']) ? $ai['provider'] : 'openai',
+        ];
+        if (isset($ai['model']) && is_string($ai['model'])) {
+            $result['model'] = $ai['model'];
+        }
+        $result['api_key'] = $ai['api_key'];
+        return $result;
     }
 
     /**

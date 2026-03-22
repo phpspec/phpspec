@@ -162,7 +162,7 @@ final class AiAssistant
 
         try {
             $result = $tool->execute($toolCall->arguments);
-            PairLogger::log('RESULT', is_string($result) ? $result : json_encode($result));
+            PairLogger::log('RESULT', is_string($result) ? $result : (json_encode($result) ?: ''));
             return $result;
         } catch (Throwable $e) {
             PairLogger::log('RESULT', "ERROR: {$e->getMessage()}");
@@ -220,7 +220,7 @@ final class AiAssistant
     }
 
     /**
-     * @return Tool[]
+     * @return ToolInterface[]
      */
     private function buildTools(): array
     {

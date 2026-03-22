@@ -73,7 +73,10 @@ final class Junit extends AbstractFormatter
             $this->buildTestSuite($xml, $testSuites, $specResult);
         }
 
-        $this->output->writeln($xml->saveXML());
+        $xmlOutput = $xml->saveXML();
+        if ($xmlOutput !== false) {
+            $this->output->writeln($xmlOutput);
+        }
     }
 
     /**
@@ -179,6 +182,7 @@ final class Junit extends AbstractFormatter
     /**
      * Recursively collects all examples into a flat list for testsuite construction.
      *
+     * @param array<int, array{title: string, pending: bool, error: bool, failure: bool, message: string}> $examples
      * @return array<int, array{title: string, pending: bool, error: bool, failure: bool, message: string}>
      */
     private function collectExamples(Results $results, string $prefix = '', array &$examples = []): array

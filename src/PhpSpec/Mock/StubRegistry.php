@@ -25,11 +25,11 @@ final class StubRegistry
      * Finds the first matching stub entry for a method call.
      *
      * @param string $method the method name
-     * @param array $actualArgs the actual arguments passed to the method
-     * @param array $stubbedReturns keyed by method name, each value is array of [$argPattern, $value]
-     * @param array $stubbedReturnCallbacks keyed by method name, each value is array of [$argPattern, callable]
-     * @param array $stubbedThrows keyed by method name, each value is array of [$argPattern, ['class'=>..., 'message'=>...]]
-     * @return array|null ['type' => 'value'|'callback'|'throw', 'data' => mixed] or null if no match
+     * @param array<int, mixed> $actualArgs the actual arguments passed to the method
+     * @param array<string, list<array{0: array<int, mixed>|null, 1: mixed}>> $stubbedReturns keyed by method name, each value is array of [$argPattern, $value]
+     * @param array<string, list<array{0: array<int, mixed>|null, 1: callable}>> $stubbedReturnCallbacks keyed by method name, each value is array of [$argPattern, callable]
+     * @param array<string, list<array{0: array<int, mixed>|null, 1: array{class: string, message: string}}>> $stubbedThrows keyed by method name, each value is array of [$argPattern, ['class'=>..., 'message'=>...]]
+     * @return array{type: string, data: mixed}|null ['type' => 'value'|'callback'|'throw', 'data' => mixed] or null if no match
      */
     public static function findMatch(
         string $method,
@@ -70,6 +70,9 @@ final class StubRegistry
 
     /**
      * Returns true if actual arguments match the pattern, or if the pattern is null (catch-all).
+     *
+     * @param array<int, mixed> $actualArgs
+     * @param array<int, mixed>|null $argPattern
      */
     private static function argsMatch(array $actualArgs, ?array $argPattern): bool
     {

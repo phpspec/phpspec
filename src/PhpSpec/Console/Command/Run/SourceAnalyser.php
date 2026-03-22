@@ -34,6 +34,9 @@ final class SourceAnalyser
             return 0;
         }
         $lines = file($file);
+        if ($lines === false) {
+            return 0;
+        }
         $sourceLine = $lines[$line - 1] ?? '';
 
         if (preg_match('/->' . preg_quote($methodName, '/') . '\(([^)]*)\)/', $sourceLine, $m)) {
@@ -57,6 +60,9 @@ final class SourceAnalyser
             return null;
         }
         $lines = file($file);
+        if ($lines === false) {
+            return null;
+        }
 
         // Search the error line and a few lines after for ->toBe(VALUE)
         for ($i = max(0, $line - 1); $i < min(count($lines), $line + 5); $i++) {

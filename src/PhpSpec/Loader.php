@@ -30,9 +30,11 @@ final class Loader
      * @param Filesystem|null $filesystem injectable filesystem for testability
      * @param string $specSuffix file suffix used to identify spec files
      */
-    public function __construct(private ?Filesystem $filesystem = null, private string $specSuffix = '.spec.php')
+    private Filesystem $fs;
+
+    public function __construct(?Filesystem $filesystem = null, private string $specSuffix = '.spec.php')
     {
-        $this->filesystem ??= new RealFilesystem();
+        $this->fs = $filesystem ?? new RealFilesystem();
     }
 
     /**
@@ -62,15 +64,7 @@ final class Loader
         }
 
         if ($filter) {
-            $blocks = array_values(array_filter($blocks, function (SpecBlock $block) use ($filter) {
-                if ($block instanceof Specification) {
-                    return stripos($block->getPath(), $filter) !== false;
-                }
-                if ($block instanceof Feature) {
-                    return stripos($block->getPath(), $filter) !== false;
-                }
-                return true;
-            }));
+            $blocks = $this->filterBlocks($blocks, $filter);
         }
 
         return new Suite($blocks);
@@ -81,6 +75,39 @@ final class Loader
      *
      * @param string $path filesystem path to inspect
      */
+    /**
+     * Filters spec blocks by path substring match.
+     *
+     * @param array<SpecBlock> $blocks blocks to filter
+     * @param string $filter substring to match
+     * @return array<SpecBlock>
+     */
+    private function filterBlocks(array $blocks, string $filter): array
+    {
+        $filtered = [];
+        foreach ($blocks as $block) {
+            $path = $this->getBlockPath($block);
+            if ($path === null || stripos($path, $filter) !== false) {
+                $filtered[] = $block;
+            }
+        }
+        return $filtered;
+    }
+
+    /**
+     * Extracts the file path from a spec block, if available.
+     */
+    private function getBlockPath(SpecBlock $block): ?string
+    {
+        if ($block instanceof \PhpSpec\Specification) {
+            return $block->getPath();
+        }
+        if ($block instanceof Feature) {
+            return $block->getPath();
+        }
+        return null;
+    }
+
     private function isFeaturePath(string $path): bool
     {
         return str_ends_with($path, '.feature')
@@ -97,15 +124,15 @@ final class Loader
     {
         $specifications = [];
 
-        if (!$this->filesystem->isFile($directory) && !$this->filesystem->isDir($directory)) {
+        if (!$this->fs->isFile($directory) && !$this->fs->isDir($directory)) {
             return [];
         }
 
-        if ($this->filesystem->isFile($directory) && str_ends_with($directory, $this->specSuffix)) {
+        if ($this->fs->isFile($directory) && str_ends_with($directory, $this->specSuffix)) {
             return [$this->loadFile($directory)];
         }
 
-        $files = $this->filesystem->scandir($directory);
+        $files = $this->fs->scandir($directory);
 
         foreach ($files as $file) {
             if ($file === '.' || $file === '..') {
@@ -114,10 +141,10 @@ final class Loader
 
             $filePath = $directory . '/' . $file;
 
-            if ($this->filesystem->isDir($filePath)) {
+            if ($this->fs->isDir($filePath)) {
                 $subdirectoryFilePaths = $this->loadSuite($filePath);
                 $specifications = array_merge($specifications, $subdirectoryFilePaths);
-            } elseif ($this->filesystem->isFile($filePath) && str_ends_with($file, $this->specSuffix)) {
+            } elseif ($this->fs->isFile($filePath) && str_ends_with($file, $this->specSuffix)) {
                 $specifications[] = $this->loadFile($filePath);
             }
         }
@@ -161,7 +188,7 @@ final class Loader
 
         $features = [];
         foreach ($featureFiles as $featureFile) {
-            $content = $this->filesystem->read($featureFile);
+            $content = $this->fs->read($featureFile);
             $featureNode = $parser->parse($content);
             $features[] = new Feature(
                 $featureFile,
@@ -178,18 +205,18 @@ final class Loader
      * Recursively discovers .feature files and step definition files.
      *
      * @param string $path directory or file to scan
-     * @param array $featureFiles collected feature file paths (by reference)
-     * @param array $stepFiles collected step definition paths (by reference)
+     * @param array<string> $featureFiles collected feature file paths (by reference)
+     * @param array<string> $stepFiles collected step definition paths (by reference)
      */
     private function scanFeatures(string $path, array &$featureFiles, array &$stepFiles): void
     {
-        if ($this->filesystem->isFile($path) && str_ends_with($path, '.feature')) {
+        if ($this->fs->isFile($path) && str_ends_with($path, '.feature')) {
             $featureFiles[] = $path;
             // Walk up from the feature file's directory to find steps/ dirs
             $dir = dirname($path);
             while ($dir !== dirname($dir)) {
                 $stepsDir = $dir . '/steps';
-                if ($this->filesystem->isDir($stepsDir)) {
+                if ($this->fs->isDir($stepsDir)) {
                     $this->collectStepFiles($stepsDir, $stepFiles);
                 }
                 $dir = dirname($dir);
@@ -197,11 +224,11 @@ final class Loader
             return;
         }
 
-        if (!$this->filesystem->isDir($path)) {
+        if (!$this->fs->isDir($path)) {
             return;
         }
 
-        $files = $this->filesystem->scandir($path);
+        $files = $this->fs->scandir($path);
 
         foreach ($files as $file) {
             if ($file === '.' || $file === '..') {
@@ -210,7 +237,7 @@ final class Loader
 
             $filePath = $path . '/' . $file;
 
-            if ($this->filesystem->isDir($filePath)) {
+            if ($this->fs->isDir($filePath)) {
                 if ($file === 'steps') {
                     $this->collectStepFiles($filePath, $stepFiles);
                 } else {
@@ -226,19 +253,19 @@ final class Loader
      * Recursively collects *.steps.php files from a steps directory.
      *
      * @param string $dir steps directory to scan
-     * @param array $stepFiles collected step file paths (by reference)
+     * @param array<string> $stepFiles collected step file paths (by reference)
      */
     private function collectStepFiles(string $dir, array &$stepFiles): void
     {
-        $files = $this->filesystem->scandir($dir);
+        $files = $this->fs->scandir($dir);
         foreach ($files as $file) {
             if ($file === '.' || $file === '..') {
                 continue;
             }
             $filePath = $dir . '/' . $file;
-            if ($this->filesystem->isDir($filePath)) {
+            if ($this->fs->isDir($filePath)) {
                 $this->collectStepFiles($filePath, $stepFiles);
-            } elseif ($this->filesystem->isFile($filePath) && str_ends_with($file, '.steps.php')) {
+            } elseif ($this->fs->isFile($filePath) && str_ends_with($file, '.steps.php')) {
                 $stepFiles[] = $filePath;
             }
         }

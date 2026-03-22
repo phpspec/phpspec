@@ -37,7 +37,7 @@ class Example implements ExampleResultRegistry, SpecBlock
     /** @var array<Closure> collected match closures from expectations */
     private array $matches = [];
 
-    /** @var array mock doubles created during this example */
+    /** @var array<mixed> mock doubles created during this example */
     private array $doubles = [];
 
     /** @var ExampleResult accumulated result for this example */
@@ -256,7 +256,7 @@ class Example implements ExampleResultRegistry, SpecBlock
      * or new mock doubles.
      *
      * @param Closure $closure example closure whose parameters to resolve
-     * @return array resolved arguments
+     * @return array<mixed> resolved arguments
      * @throws ReflectionException
      */
     private function resolveClosureArgs(Closure $closure): array

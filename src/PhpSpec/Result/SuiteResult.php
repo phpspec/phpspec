@@ -24,14 +24,14 @@ use PhpSpec\Results;
  */
 final class SuiteResult implements Results
 {
-    /** @var array SpecificationResult and FeatureResult instances */
+    /** @var array<Results> SpecificationResult, FeatureResult, and other Results instances */
     private array $specificationResults;
 
     /** @var float Total suite execution duration in seconds */
     private float $duration = 0.0;
 
     /**
-     * @param array $results array of SpecificationResult and FeatureResult instances
+     * @param array<Results> $results array of SpecificationResult, FeatureResult, and other Results instances
      */
     public function __construct(array $results)
     {

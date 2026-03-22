@@ -15,6 +15,7 @@
 use PhpSpec\Mock\ArgumentMatcher;
 use PhpSpec\Mock\Double;
 use PhpSpec\Mock\Expectation;
+use PhpSpec\Mock\GeneratedDouble;
 use PhpSpec\Mock\LastCallDouble;
 use PhpSpec\Mock\MatchableDouble;
 
@@ -94,7 +95,7 @@ function anInstanceOf(string $class): ArgumentMatcher
 /**
  * Creates an argument matcher that checks an array contains all given key/value pairs.
  *
- * @param array $subset the expected key/value pairs
+ * @param array<mixed, mixed> $subset the expected key/value pairs
  */
 function arrayIncluding(array $subset): ArgumentMatcher
 {
@@ -142,6 +143,9 @@ function allow(mixed $returnValue = null): LastCallDouble
     if ($returnValue instanceof MatchableDouble) {
         Expectation::$lastCallForAllow = null;
         $double = $returnValue->______PhpSpecGetDouble();
+        if (!$double instanceof GeneratedDouble) {
+            throw new LogicException('Expected a GeneratedDouble instance from ______PhpSpecGetDouble()');
+        }
         $method = $returnValue->______PhpSpecGetMethod();
         $stack = $double->______PhpSpecGetStubbedCalls();
         $top = $stack->peek();
@@ -161,6 +165,9 @@ function allow(mixed $returnValue = null): LastCallDouble
 
     // Extract args from the stack for arg-based stub dispatch
     $double = $lastDouble->______PhpSpecGetDouble();
+    if (!$double instanceof GeneratedDouble) {
+        throw new LogicException('Expected a GeneratedDouble instance from ______PhpSpecGetDouble()');
+    }
     $method = $lastDouble->______PhpSpecGetMethod();
     $stack = $double->______PhpSpecGetStubbedCalls();
     $top = $stack->peek();

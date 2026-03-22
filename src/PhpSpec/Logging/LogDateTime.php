@@ -30,6 +30,9 @@ trait LogDateTime
     public function getLogNow(string $log): string
     {
         $now = DateTime::createFromFormat('U.u', sprintf('%.6f', microtime(true)));
+        if ($now === false) {
+            $now = new DateTime();
+        }
         return '[' . $now->format('d/m/Y H:i:s.u') . '] - ' . $log;
     }
 }

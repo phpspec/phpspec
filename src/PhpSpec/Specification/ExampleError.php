@@ -42,7 +42,7 @@ final class ExampleError extends \Exception
      *
      * @param int $before number of lines before the error line
      * @param int $after number of lines after the error line
-     * @return array lines of source code with line numbers as keys
+     * @return array<int, string> lines of source code with line numbers as keys
      */
     public function getSurroundingCode(int $before = 3, int $after = 3): array
     {
@@ -63,7 +63,7 @@ final class ExampleError extends \Exception
     /**
      * Returns the stack trace filtered to exclude PhpSpec internals and vendor frames.
      *
-     * @return array stack frames from user spec code only
+     * @return array<int, array<string, mixed>> stack frames from user spec code only
      */
     public function getFilteredTrace(): array
     {

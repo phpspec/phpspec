@@ -40,7 +40,11 @@ final class RealFilesystem implements Filesystem
     /** {@inheritdoc} */
     public function read(string $path): string
     {
-        return file_get_contents($path);
+        $content = file_get_contents($path);
+        if ($content === false) {
+            throw new \RuntimeException("Failed to read file: {$path}");
+        }
+        return $content;
     }
 
     /** {@inheritdoc} */

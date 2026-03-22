@@ -99,6 +99,7 @@ final class Tap extends AbstractFormatter
     /**
      * Recursively collects all examples into a flat list with context-prefixed titles.
      *
+     * @param array<int, array{title: string, pending: bool, error: bool, failure: bool, message: string}> $examples
      * @return array<int, array{title: string, pending: bool, error: bool, failure: bool, message: string}>
      */
     private function collectExamples(Results $results, string $prefix = '', array &$examples = []): array

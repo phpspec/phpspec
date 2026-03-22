@@ -137,6 +137,8 @@ final class Dot extends AbstractFormatter
 
     /**
      * Formats the step outcome breakdown (passed, failed, pending, undefined, skipped).
+     *
+     * @param array<string, int> $c
      */
     private function formatStepParts(array $c): string
     {
@@ -303,6 +305,7 @@ final class Dot extends AbstractFormatter
     /**
      * Recursively collects warning details from all example results.
      *
+     * @param array<int, array{title: string, message: string, file: string, line: int}> $warnings
      * @return array<int, array{title: string, message: string, file: string, line: int}>
      */
     private function collectWarnings(Results $results, array &$warnings = []): array
@@ -393,6 +396,7 @@ final class Dot extends AbstractFormatter
     /**
      * Recursively collects deprecation details from all example results.
      *
+     * @param array<int, array{title: string, message: string, file: string, line: int}> $deprecations
      * @return array<int, array{title: string, message: string, file: string, line: int}>
      */
     private function collectDeprecations(Results $results, array &$deprecations = []): array
@@ -419,6 +423,7 @@ final class Dot extends AbstractFormatter
     /**
      * Recursively collects notice details from all example results.
      *
+     * @param array<int, array{title: string, message: string, file: string, line: int}> $notices
      * @return array<int, array{title: string, message: string, file: string, line: int}>
      */
     private function collectNotices(Results $results, array &$notices = []): array
@@ -445,6 +450,7 @@ final class Dot extends AbstractFormatter
     /**
      * Recursively collects error and failure details from all example results.
      *
+     * @param array<int, array{title: string, message: string}> $errors
      * @return array<int, array{title: string, message: string}>
      */
     private function collectErrors(Results $results, array &$errors = []): array

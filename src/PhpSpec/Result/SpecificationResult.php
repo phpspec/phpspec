@@ -23,7 +23,7 @@ final readonly class SpecificationResult implements Results
 {
     /**
      * @param string $title the specification file title
-     * @param array $exampleResults child ContextResult and ExampleResult instances
+     * @param array<Results> $exampleResults child ContextResult, ExampleResult, and other Results instances
      */
     public function __construct(private string $title, private array $exampleResults) {}
 

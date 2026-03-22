@@ -15,6 +15,7 @@
 namespace PhpSpec\Result;
 
 use PhpSpec\CodeGeneration\SurroundingCode;
+use PhpSpec\Results;
 
 /**
  * Wraps the pass/fail outcome of a single expectation along with its detail.
@@ -22,13 +23,23 @@ use PhpSpec\CodeGeneration\SurroundingCode;
  * Provides factory methods for creating passed and failed results, and delegates
  * to the Detail for failure message, source location, and expected/actual values.
  */
-final readonly class MatchResult
+final readonly class MatchResult implements Results
 {
     /**
      * @param Result $result the pass/fail enum value
      * @param Detail $detail the detailed outcome (Successful or Failed)
      */
     public function __construct(private Result $result, private Detail $detail) {}
+
+    /**
+     * Returns an empty array since match results have no children.
+     *
+     * @return array<Results>
+     */
+    public function getResults(): array
+    {
+        return [];
+    }
 
     /**
      * Creates a passing MatchResult with a Successful detail.
@@ -96,6 +107,8 @@ final readonly class MatchResult
 
     /**
      * Returns the surrounding source code lines at the failure site.
+     *
+     * @return array<int, string>
      */
     public function getCode(): array
     {

@@ -16,6 +16,7 @@ namespace PhpSpec\StoryBDD;
 
 use PhpSpec\EventDispatcher\Event\MatchCreated;
 use PhpSpec\EventDispatcher\Subscriber;
+use PhpSpec\Result\MatchResult;
 
 /**
  * Subscribes to MatchCreated events to collect expectations made during step execution.
@@ -52,7 +53,7 @@ final class StepMatchCollector implements Subscriber
     /**
      * Evaluates all collected matches and clears the internal collection.
      *
-     * @return MatchResult[] the results of evaluating each collected match
+     * @return array<MatchResult> the results of evaluating each collected match
      */
     public function evaluateMatches(): array
     {

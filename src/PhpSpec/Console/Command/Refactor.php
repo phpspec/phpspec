@@ -85,14 +85,13 @@ final class Refactor extends Command
         }
 
         // 3. Resolve target
-        $target = $this->resolveTarget($input->getArgument('target'));
-
-        if ($target === null) {
+        $targetArg = $input->getArgument('target');
+        if (!is_string($targetArg) || $targetArg === '') {
             $output->writeln('<fg=red>Could not resolve target. Provide a class FQCN, FQCN::method, or spec file path.</>');
             return 1;
         }
 
-        [$srcPath, $specPath, $method] = $target;
+        [$srcPath, $specPath, $method] = $this->resolveTarget($targetArg);
 
         // 4. Verify files exist
         if (!$this->filesystem->exists($srcPath)) {
@@ -166,9 +165,9 @@ final class Refactor extends Command
      * - `App\Calculator::sum` → same + method focus
      * - `spec/App/Calculator.spec.php` → infer src from spec
      *
-     * @return array{0: string, 1: string, 2: string|null}|null
+     * @return array{0: string, 1: string, 2: string|null}
      */
-    public function resolveTarget(string $target): ?array
+    public function resolveTarget(string $target): array
     {
         $specSuffix = $this->config->getSpecSuffix();
         $specPath = ltrim($this->config->getSpecPath(), './');
@@ -207,6 +206,8 @@ final class Refactor extends Command
 
     /**
      * Performs the refactoring via injected callable or RefactorAgent.
+     *
+     * @param array{provider: string, model?: string, api_key: string} $aiConfig
      */
     private function performRefactoring(array $aiConfig, string $srcPath, string $specPath, ?string $method): RefactorResult
     {
@@ -226,7 +227,7 @@ final class Refactor extends Command
             );
         }
 
-        $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider'] ?? 'google');
+        $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider']);
 
         return (new RefactorAgent($provider, $model, $this->filesystem))->refactor($srcPath, $specPath, $method);
     }

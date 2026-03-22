@@ -39,7 +39,7 @@ final class CallCountExpectation
      * @param string $file the spec file where the expectation was created
      * @param int $line the line number in the spec file
      * @param bool $negated whether the expectation is negated (not()->toBeCalled())
-     * @param array|null $argPattern argument pattern to filter counted calls, or null for all calls
+     * @param array<int, mixed>|null $argPattern argument pattern to filter counted calls, or null for all calls
      * @param MatchableDouble $mockSubject the mock subject being verified
      */
     public function __construct(
@@ -147,6 +147,7 @@ final class CallCountExpectation
             'exactly' => "exactly $this->count",
             'atLeast' => "at least $this->count",
             'atMost' => "at most $this->count",
+            default => $this->constraint . ' ' . $this->count,
         };
 
         $not = $this->negated ? ' not' : '';

@@ -53,7 +53,7 @@ final class WorkerProcess
      */
     public function start(): void
     {
-        $command = [
+        $command = array_values([
             PHP_BINARY,
             '-d', 'xdebug.mode=off',
             $this->phpspecBin,
@@ -62,7 +62,7 @@ final class WorkerProcess
             '-f', 'junit',
             '--no-ansi',
             '--no-interaction',
-        ];
+        ]);
 
         $descriptors = [
             0 => ['pipe', 'r'],
@@ -70,11 +70,14 @@ final class WorkerProcess
             2 => ['pipe', 'w'],
         ];
 
-        $this->process = proc_open($command, $descriptors, $this->pipes, getcwd());
+        $cwd = getcwd();
+        $process = proc_open($command, $descriptors, $this->pipes, $cwd !== false ? $cwd : null);
 
-        if (!is_resource($this->process)) {
+        if (!is_resource($process)) {
             throw new \RuntimeException('Failed to start worker process');
         }
+
+        $this->process = $process;
 
         fclose($this->pipes[0]);
         unset($this->pipes[0]);
@@ -138,10 +141,11 @@ final class WorkerProcess
      */
     public function terminate(): void
     {
-        if (is_resource($this->process)) {
-            proc_terminate($this->process);
+        $process = $this->process;
+        if ($process !== null && is_resource($process)) {
+            proc_terminate($process);
             $this->closePipes();
-            proc_close($this->process);
+            proc_close($process);
             $this->process = null;
         }
     }
@@ -165,7 +169,7 @@ final class WorkerProcess
     /**
      * Parses JUnit XML output from the child process into result objects.
      *
-     * @return array<SpecificationResult>
+     * @return array<SpecificationResult|FeatureResult>
      */
     public function getResults(): array
     {

@@ -59,7 +59,7 @@ final class PapiProvider implements ProviderInterface
                     : null,
             ),
             Role::Tool => PapiMessage::toolResult(
-                $message->toolCallId,
+                $message->toolCallId ?? '',
                 $message->content,
             ),
         };

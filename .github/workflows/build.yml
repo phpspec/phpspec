@@ -31,8 +31,8 @@ jobs:
             - name: PHP CS Fixer
               run: vendor/bin/php-cs-fixer fix --dry-run --diff --format=checkstyle | cs2pr
 
-            - name: Psalm
-              run: vendor/bin/psalm --version && vendor/bin/psalm
+            - name: PHPStan
+              run: vendor/bin/phpstan analyse --memory-limit=512M
 
     tests:
         name: Test (PHP ${{ matrix.php }}, ${{ matrix.operating-system }})

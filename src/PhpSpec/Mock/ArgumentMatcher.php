@@ -87,7 +87,7 @@ final readonly class ArgumentMatcher
     /**
      * Creates a matcher that checks an array contains all given key/value pairs.
      *
-     * @param array $subset the expected key/value pairs
+     * @param array<mixed, mixed> $subset the expected key/value pairs
      */
     public static function arrayIncluding(array $subset): self
     {
@@ -153,8 +153,8 @@ final readonly class ArgumentMatcher
      * Handles noArgs (single-element check for empty actual) and
      * cetera (return true when reached, matching all remaining args).
      *
-     * @param array $actual the arguments that were actually passed
-     * @param array $expected the expected argument pattern (may include matchers)
+     * @param array<int|string, mixed> $actual the arguments that were actually passed
+     * @param array<int|string, mixed> $expected the expected argument pattern (may include matchers)
      */
     public static function matchArgs(array $actual, array $expected): bool
     {
@@ -189,6 +189,8 @@ final readonly class ArgumentMatcher
 
     /**
      * Checks whether all key-value pairs in this matcher's value exist in the actual array.
+     *
+     * @param array<mixed, mixed> $actual
      */
     private function arrayContainsSubset(array $actual): bool
     {

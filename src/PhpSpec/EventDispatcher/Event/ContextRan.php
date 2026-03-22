@@ -50,6 +50,14 @@ final readonly class ContextRan implements Event, Loggable
         return $this->title;
     }
 
+    /**
+     * Returns the context that finished running.
+     */
+    public function getContext(): Context
+    {
+        return $this->context;
+    }
+
     /** {@inheritdoc} */
     public function getLog(): string
     {

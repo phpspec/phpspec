@@ -90,6 +90,8 @@ final class Failed extends Detail
 
     /**
      * Returns the source code lines surrounding the failure site.
+     *
+     * @return array<int, string>
      */
     public function getSurroundingCode(): array
     {

@@ -23,7 +23,7 @@ final readonly class ScenarioResult implements Results
 {
     /**
      * @param string $title the scenario description
-     * @param array $stepResults child StepResult instances
+     * @param array<StepResult> $stepResults child StepResult instances
      */
     public function __construct(
         private string $title,

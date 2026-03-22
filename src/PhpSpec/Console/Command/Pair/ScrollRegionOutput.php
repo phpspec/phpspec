@@ -42,14 +42,20 @@ final class ScrollRegionOutput implements OutputInterface
         private readonly int $width,
     ) {}
 
-    /** {@inheritdoc} */
+    /**
+     * {@inheritdoc}
+     * @param string|iterable<string> $messages
+     */
     public function write(string|iterable $messages, bool $newline = false, int $options = 0): void
     {
         $this->ensureInContent();
         $this->inner->write($messages, $newline, $options);
     }
 
-    /** {@inheritdoc} */
+    /**
+     * {@inheritdoc}
+     * @param string|iterable<string> $messages
+     */
     public function writeln(string|iterable $messages, int $options = 0): void
     {
         $this->ensureInContent();

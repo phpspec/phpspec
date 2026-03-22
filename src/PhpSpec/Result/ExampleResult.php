@@ -24,23 +24,23 @@ use PhpSpec\Specification\ExampleError;
 final class ExampleResult implements Results
 {
     /** @var ExampleError|null Error that occurred during execution */
-    private ?ExampleError $error;
+    private ?ExampleError $error = null;
 
     /** @var float Execution duration in seconds */
     private float $duration = 0.0;
 
-    /** @var array Warning items (E_WARNING, E_USER_WARNING) collected during execution */
+    /** @var array<array{severity: int, message: string, file: string, line: int}> Warning items (E_WARNING, E_USER_WARNING) collected during execution */
     private array $warnings = [];
 
-    /** @var array Deprecation items (E_DEPRECATED, E_USER_DEPRECATED) collected during execution */
+    /** @var array<array{severity: int, message: string, file: string, line: int}> Deprecation items (E_DEPRECATED, E_USER_DEPRECATED) collected during execution */
     private array $deprecations = [];
 
-    /** @var array Notice items (E_NOTICE, E_USER_NOTICE) collected during execution */
+    /** @var array<array{severity: int, message: string, file: string, line: int}> Notice items (E_NOTICE, E_USER_NOTICE) collected during execution */
     private array $notices = [];
 
     /**
      * @param string $title the example description
-     * @param array $matchResults array of MatchResult instances from this example
+     * @param array<MatchResult> $matchResults array of MatchResult instances from this example
      * @param bool $isError whether the example errored
      * @param bool $isPending whether the example is pending
      * @param bool $isSkipped whether the example is skipped
@@ -120,7 +120,7 @@ final class ExampleResult implements Results
      */
     public function getMessage(): string
     {
-        if ($this->isError) {
+        if ($this->isError && $this->error !== null) {
             return $this->error->getMessage();
         }
         return $this->getFailureMessage();
@@ -147,7 +147,7 @@ final class ExampleResult implements Results
     /**
      * Returns the error that caused this example to fail.
      */
-    public function getError(): ExampleError
+    public function getError(): ?ExampleError
     {
         return $this->error;
     }
@@ -171,7 +171,7 @@ final class ExampleResult implements Results
     /**
      * Stores warning items collected during example execution.
      *
-     * @param array $warnings array of warning items
+     * @param array<array{severity: int, message: string, file: string, line: int}> $warnings array of warning items
      */
     public function setWarnings(array $warnings): void
     {
@@ -180,6 +180,8 @@ final class ExampleResult implements Results
 
     /**
      * Returns the warning items from this example.
+     *
+     * @return array<array{severity: int, message: string, file: string, line: int}>
      */
     public function getWarnings(): array
     {
@@ -197,7 +199,7 @@ final class ExampleResult implements Results
     /**
      * Stores deprecation items collected during example execution.
      *
-     * @param array $deprecations array of deprecation items
+     * @param array<array{severity: int, message: string, file: string, line: int}> $deprecations array of deprecation items
      */
     public function setDeprecations(array $deprecations): void
     {
@@ -206,6 +208,8 @@ final class ExampleResult implements Results
 
     /**
      * Returns the deprecation items from this example.
+     *
+     * @return array<array{severity: int, message: string, file: string, line: int}>
      */
     public function getDeprecations(): array
     {
@@ -223,7 +227,7 @@ final class ExampleResult implements Results
     /**
      * Stores notice items collected during example execution.
      *
-     * @param array $notices array of notice items
+     * @param array<array{severity: int, message: string, file: string, line: int}> $notices array of notice items
      */
     public function setNotices(array $notices): void
     {
@@ -232,6 +236,8 @@ final class ExampleResult implements Results
 
     /**
      * Returns the notice items from this example.
+     *
+     * @return array<array{severity: int, message: string, file: string, line: int}>
      */
     public function getNotices(): array
     {

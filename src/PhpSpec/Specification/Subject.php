@@ -21,6 +21,8 @@ namespace PhpSpec\Specification;
 #[\AllowDynamicProperties]
 final class Subject implements World
 {
+    /** @var array<string, object> mocks created by let() parameter injection */
+    public array $__phpspec_let_mocks = [];
     /**
      * Loads the spec file, making describe()/context()/it() calls register their blocks.
      *

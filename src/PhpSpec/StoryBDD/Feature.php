@@ -179,7 +179,7 @@ final readonly class Feature implements SpecBlock
 
         foreach ($matchResults as $matchResult) {
             if ($matchResult->isFailure()) {
-                $message = $matchResult->getMessage();
+                $message = (string) $matchResult->getMessage();
                 $result = new StepResult($title, 'failure');
                 $ex = new \RuntimeException($message);
                 $result->setError(new StepError($message, $ex));

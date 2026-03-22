@@ -62,7 +62,7 @@ final class HtmlReport
     /**
      * Renders the index.html page with a summary table of all files and their coverage.
      *
-     * @param array $files per-file coverage info with lines, covered, executable, and pct keys
+     * @param array<string, array{lines: array<int, int>, covered: int, executable: int, pct: float}> $files per-file coverage info
      * @param int $totalCovered total number of covered lines across all files
      * @param int $totalExecutable total number of executable lines across all files
      * @param string $dirPath the directory to write index.html into
@@ -123,7 +123,7 @@ final class HtmlReport
      * Renders an individual source file with color-coded coverage highlighting.
      *
      * @param string $file the relative source file path
-     * @param array $lineData line-level coverage data for this file
+     * @param array<int, int> $lineData line-level coverage data for this file
      * @param string $dirPath the directory to write the file HTML into
      */
     private function renderFile(string $file, array $lineData, string $dirPath): void
@@ -134,6 +134,9 @@ final class HtmlReport
         }
 
         $source = file($srcPath);
+        if ($source === false) {
+            return;
+        }
         $lines = '';
 
         foreach ($source as $i => $line) {

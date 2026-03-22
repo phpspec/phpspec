@@ -56,7 +56,7 @@ abstract class Detail
     /**
      * Returns the surrounding source code lines at the failure site.
      *
-     * @return array empty by default; overridden in Failed subclass
+     * @return array<int, string> empty by default; overridden in Failed subclass
      */
     public function getSurroundingCode(): array
     {

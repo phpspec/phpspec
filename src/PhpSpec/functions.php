@@ -66,8 +66,8 @@ function its(string $title, Closure $example): void
 function expect(mixed $subject): Expectation
 {
     $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0];
-    $file = $trace['file'];
-    $line = $trace['line'];
+    $file = $trace['file'] ?? '';
+    $line = $trace['line'] ?? 0;
 
     if ($subject instanceof MatchableDouble) {
         \PhpSpec\Mock\Expectation::$lastDouble = null;
@@ -135,7 +135,7 @@ function let(string|Closure $propertyOrSetter, ?Closure $setter = null): void
     if ($scope instanceof Context) {
         if ($propertyOrSetter instanceof Closure) {
             $scope->modifyWithInjection($propertyOrSetter);
-        } else {
+        } elseif ($setter !== null) {
             $scope->modify($propertyOrSetter, $setter);
         }
     }

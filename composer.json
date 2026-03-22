@@ -56,7 +56,7 @@
 
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.75",
-        "vimeo/psalm": "^6.0",
+        "phpstan/phpstan": "^2.1",
         "papi-ai/papi-core": "^0.9",
         "papi-ai/google": "^0.9"
     },
