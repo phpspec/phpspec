@@ -194,8 +194,8 @@ final class Loader
             $features[] = new Feature(
                 $featureFile,
                 $featureNode,
-                StoryBDDRegistry::$steps,
-                StoryBDDRegistry::$hooks,
+                StoryBDDRegistry::steps(),
+                StoryBDDRegistry::hooks(),
             );
         }
 

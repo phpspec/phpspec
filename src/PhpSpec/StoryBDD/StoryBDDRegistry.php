@@ -18,17 +18,31 @@ namespace PhpSpec\StoryBDD;
  * @internal Not part of the public API.
  *
  * Static registry holding the global StepRegistry and HookRegistry instances.
- * Initialized on file load and used by the DSL functions (given/when/then/etc.).
+ * Lazily initialized on first access so autoloading this file has no side effects.
  */
 final class StoryBDDRegistry
 {
-    /** @var StepRegistry the global step definition registry */
-    public static StepRegistry $steps;
-    /** @var HookRegistry the global hook registry */
-    public static HookRegistry $hooks;
+    private static ?StepRegistry $steps = null;
+    private static ?HookRegistry $hooks = null;
 
     /**
-     * Initializes fresh StepRegistry and HookRegistry instances.
+     * Returns the step registry, creating it lazily on first access.
+     */
+    public static function steps(): StepRegistry
+    {
+        return self::$steps ??= new StepRegistry();
+    }
+
+    /**
+     * Returns the hook registry, creating it lazily on first access.
+     */
+    public static function hooks(): HookRegistry
+    {
+        return self::$hooks ??= new HookRegistry();
+    }
+
+    /**
+     * Resets to fresh registries. Used between in-process runs.
      */
     public static function init(): void
     {
@@ -37,26 +51,17 @@ final class StoryBDDRegistry
     }
 
     /**
-     * Clears all registered steps and hooks from both registries.
-     */
-    public static function reset(): void
-    {
-        self::$steps->clear();
-        self::$hooks->clear();
-    }
-
-    /**
-     * Captures the current StepRegistry and HookRegistry instances for later restoration.
+     * Captures the current registries for later restoration.
      *
      * @return array{steps: StepRegistry, hooks: HookRegistry}
      */
     public static function saveState(): array
     {
-        return ['steps' => self::$steps, 'hooks' => self::$hooks];
+        return ['steps' => self::steps(), 'hooks' => self::hooks()];
     }
 
     /**
-     * Restores previously saved StepRegistry and HookRegistry instances.
+     * Restores previously saved registries.
      *
      * @param array{steps: StepRegistry, hooks: HookRegistry} $state
      */

@@ -23,7 +23,7 @@ use PhpSpec\StoryBDD\StoryBDDRegistry;
  */
 function given(string $pattern, Closure $fn): void
 {
-    StoryBDDRegistry::$steps->addStep($pattern, $fn);
+    StoryBDDRegistry::steps()->addStep($pattern, $fn);
 }
 
 /**
@@ -35,7 +35,7 @@ function given(string $pattern, Closure $fn): void
  */
 function when(string $pattern, Closure $fn): void
 {
-    StoryBDDRegistry::$steps->addStep($pattern, $fn);
+    StoryBDDRegistry::steps()->addStep($pattern, $fn);
 }
 
 /**
@@ -47,7 +47,7 @@ function when(string $pattern, Closure $fn): void
  */
 function then(string $pattern, Closure $fn): void
 {
-    StoryBDDRegistry::$steps->addStep($pattern, $fn);
+    StoryBDDRegistry::steps()->addStep($pattern, $fn);
 }
 
 /**
@@ -59,7 +59,7 @@ function then(string $pattern, Closure $fn): void
  */
 function step_and(string $pattern, Closure $fn): void
 {
-    StoryBDDRegistry::$steps->addStep($pattern, $fn);
+    StoryBDDRegistry::steps()->addStep($pattern, $fn);
 }
 
 /**
@@ -71,7 +71,7 @@ function step_and(string $pattern, Closure $fn): void
  */
 function step_but(string $pattern, Closure $fn): void
 {
-    StoryBDDRegistry::$steps->addStep($pattern, $fn);
+    StoryBDDRegistry::steps()->addStep($pattern, $fn);
 }
 
 /**
@@ -82,7 +82,7 @@ function step_but(string $pattern, Closure $fn): void
  */
 function beforeFeature(Closure $fn): void
 {
-    StoryBDDRegistry::$hooks->addBeforeFeature($fn);
+    StoryBDDRegistry::hooks()->addBeforeFeature($fn);
 }
 
 /**
@@ -93,7 +93,7 @@ function beforeFeature(Closure $fn): void
  */
 function beforeScenario(Closure $fn): void
 {
-    StoryBDDRegistry::$hooks->addBeforeScenario($fn);
+    StoryBDDRegistry::hooks()->addBeforeScenario($fn);
 }
 
 /**
@@ -104,7 +104,5 @@ function beforeScenario(Closure $fn): void
  */
 function beforeStep(Closure $fn): void
 {
-    StoryBDDRegistry::$hooks->addBeforeStep($fn);
+    StoryBDDRegistry::hooks()->addBeforeStep($fn);
 }
-
-StoryBDDRegistry::init();
