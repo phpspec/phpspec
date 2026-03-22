@@ -3,7 +3,6 @@
 use PhpSpec\StoryBDD\GherkinParser;
 use PhpSpec\StoryBDD\FeatureNode;
 use PhpSpec\StoryBDD\ScenarioNode;
-use PhpSpec\StoryBDD\ScenarioOutlineNode;
 use PhpSpec\StoryBDD\StepNode;
 use PhpSpec\StoryBDD\BackgroundNode;
 use PhpSpec\StoryBDD\DataTable;
@@ -82,7 +81,7 @@ describe(GherkinParser::class, function () {
         expect($feature->scenarios[1]->title)->toBe("Second");
     });
 
-    it("parses a background", function () {
+    it("merges background steps into each scenario via pickles", function () {
         $feature = $this->parser->parse(<<<GHERKIN
         Feature: With background
           Background:
@@ -92,10 +91,14 @@ describe(GherkinParser::class, function () {
             When I do something
             Then something happens
         GHERKIN);
-        expect($feature->background)->toBeAnInstanceOf(BackgroundNode::class);
-        expect($feature->background->steps)->toHaveCount(1);
-        expect($feature->background->steps[0]->text)->toBe("a common precondition");
+        // Pickles merge background steps into scenarios; no separate BackgroundNode
+        expect($feature->background)->toBeNull();
         expect($feature->scenarios)->toHaveCount(1);
+        // The scenario should contain the background step followed by its own steps
+        expect($feature->scenarios[0]->steps)->toHaveCount(3);
+        expect($feature->scenarios[0]->steps[0]->text)->toBe("a common precondition");
+        expect($feature->scenarios[0]->steps[1]->text)->toBe("I do something");
+        expect($feature->scenarios[0]->steps[2]->text)->toBe("something happens");
     });
 
     it("ignores comment lines", function () {
@@ -183,7 +186,7 @@ describe(GherkinParser::class, function () {
         expect($feature->scenarios[0]->steps[0]->table)->toBeNull();
     });
 
-    it("parses a scenario outline with examples", function () {
+    it("expands a scenario outline into concrete scenarios", function () {
         $feature = $this->parser->parse(<<<GHERKIN
         Feature: Outlines
           Scenario Outline: Eating
@@ -196,32 +199,12 @@ describe(GherkinParser::class, function () {
               | 12    | 5   | 7    |
               | 20    | 5   | 15   |
         GHERKIN);
-        expect($feature->scenarios)->toHaveCount(1);
-        expect($feature->scenarios[0])->toBeAnInstanceOf(ScenarioOutlineNode::class);
-        expect($feature->scenarios[0]->title)->toBe("Eating");
-        expect($feature->scenarios[0]->examples)->toHaveCount(2);
+        // Pickles expand outlines into individual scenarios
+        expect($feature->scenarios)->toHaveCount(2);
+        expect($feature->scenarios[0])->toBeAnInstanceOf(ScenarioNode::class);
         expect($feature->scenarios[0]->steps)->toHaveCount(3);
-        expect($feature->scenarios[0]->steps[0]->text)->toBe("there are <start> cucumbers");
-    });
-
-    it("expands a scenario outline into concrete scenarios", function () {
-        $feature = $this->parser->parse(<<<GHERKIN
-        Feature: Expand
-          Scenario Outline: Greeting
-            Given I greet "<name>"
-
-            Examples:
-              | name  |
-              | Alice |
-              | Bob   |
-        GHERKIN);
-        $outline = $feature->scenarios[0];
-        $expanded = $outline->expand();
-        expect($expanded)->toHaveCount(2);
-        expect($expanded[0]->steps[0]->text)->toBe('I greet "Alice"');
-        expect($expanded[1]->steps[0]->text)->toBe('I greet "Bob"');
-        expect($expanded[0]->title)->toContain("Alice");
-        expect($expanded[1]->title)->toContain("Bob");
+        expect($feature->scenarios[0]->steps[0]->text)->toBe("there are 12 cucumbers");
+        expect($feature->scenarios[1]->steps[0]->text)->toBe("there are 20 cucumbers");
     });
 
     it("parses a tagged scenario outline", function () {
@@ -236,7 +219,7 @@ describe(GherkinParser::class, function () {
               | 1     |
         GHERKIN);
         expect($feature->scenarios[0]->tags)->toBe(["slow"]);
-        expect($feature->scenarios[0])->toBeAnInstanceOf(ScenarioOutlineNode::class);
+        expect($feature->scenarios[0])->toBeAnInstanceOf(ScenarioNode::class);
     });
 
     it("parses a doc string under a step", function () {
@@ -335,6 +318,39 @@ describe(GherkinParser::class, function () {
         $feature = $this->parser->parse("");
         expect($feature->title)->toBe("");
         expect($feature->scenarios)->toHaveCount(0);
+    });
+
+    it("handles Rule children transparently", function () {
+        $feature = $this->parser->parse(<<<GHERKIN
+        Feature: With rules
+          Rule: First rule
+            Scenario: Rule scenario one
+              Given a step in rule one
+
+          Rule: Second rule
+            Scenario: Rule scenario two
+              Given a step in rule two
+        GHERKIN);
+        expect($feature->scenarios)->toHaveCount(2);
+        expect($feature->scenarios[0]->title)->toBe("Rule scenario one");
+        expect($feature->scenarios[1]->title)->toBe("Rule scenario two");
+        expect($feature->scenarios[0]->steps[0]->text)->toBe("a step in rule one");
+    });
+
+    it("merges background within a Rule into its scenarios", function () {
+        $feature = $this->parser->parse(<<<GHERKIN
+        Feature: Rule with background
+          Rule: A rule
+            Background:
+              Given a rule-level setup
+
+            Scenario: In rule
+              When I act
+        GHERKIN);
+        expect($feature->scenarios)->toHaveCount(1);
+        expect($feature->scenarios[0]->steps)->toHaveCount(2);
+        expect($feature->scenarios[0]->steps[0]->text)->toBe("a rule-level setup");
+        expect($feature->scenarios[0]->steps[1]->text)->toBe("I act");
     });
 
 });

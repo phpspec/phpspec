@@ -46,7 +46,10 @@ final readonly class Feature implements SpecBlock
     ) {}
 
     /**
-     * Yields each ScenarioResult as it completes, expanding outlines on the fly.
+     * Yields each ScenarioResult as it completes.
+     *
+     * Pickles are already expanded (Scenario Outlines become individual scenarios,
+     * Background steps are merged), so no expansion is needed here.
      *
      * @return \Generator<ScenarioResult> one result per scenario
      */

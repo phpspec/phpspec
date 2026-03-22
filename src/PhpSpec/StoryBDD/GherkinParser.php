@@ -16,24 +16,32 @@ namespace PhpSpec\StoryBDD;
 
 use Cucumber\Gherkin\GherkinParser as CucumberParser;
 use Cucumber\Messages\Background;
-use Cucumber\Messages\DataTable as CucumberDataTable;
-use Cucumber\Messages\Examples;
 use Cucumber\Messages\Feature;
+use Cucumber\Messages\GherkinDocument;
+use Cucumber\Messages\Pickle;
+use Cucumber\Messages\PickleStep;
+use Cucumber\Messages\PickleStep\Type as PickleStepType;
+use Cucumber\Messages\PickleTable;
+use Cucumber\Messages\PickleTag;
 use Cucumber\Messages\Scenario;
 use Cucumber\Messages\Step;
-use Cucumber\Messages\TableRow;
 use Cucumber\Messages\Tag;
 
 /**
  * @internal
  * Parses .feature file content into a FeatureNode data structure.
- * Delegates to the official cucumber/gherkin parser and maps the AST
- * to PhpSpec's node types.
+ * Delegates to the official cucumber/gherkin parser and uses Cucumber pickles
+ * for scenario expansion. Pickles automatically merge Background steps,
+ * expand Scenario Outlines with Examples, and handle Rule children.
  */
 final class GherkinParser
 {
     /**
-     * Parses raw Gherkin text into a FeatureNode containing scenarios, background, and metadata.
+     * Parses raw Gherkin text into a FeatureNode containing scenarios and metadata.
+     *
+     * Uses Cucumber pickles for scenarios (which handle Background merging,
+     * Scenario Outline expansion, and Rule children transparently) and the
+     * GherkinDocument AST for feature-level metadata (name, description, tags).
      *
      * @param string $content the full text content of a .feature file
      * @param string $uri the file path used in error messages
@@ -44,15 +52,20 @@ final class GherkinParser
         $parser = new CucumberParser(
             includeSource: false,
             includeGherkinDocument: true,
-            includePickles: false,
+            includePickles: true,
         );
 
         $document = null;
+        /** @var Pickle[] $pickles */
+        $pickles = [];
         $errors = [];
 
         foreach ($parser->parseString($uri, $content) as $envelope) {
             if ($envelope->gherkinDocument !== null) {
                 $document = $envelope->gherkinDocument;
+            }
+            if ($envelope->pickle !== null) {
+                $pickles[] = $envelope->pickle;
             }
             if ($envelope->parseError !== null) {
                 $errors[] = $envelope->parseError->message;
@@ -67,101 +80,161 @@ final class GherkinParser
             return new FeatureNode('', '', null, []);
         }
 
-        return $this->mapFeature($document->feature);
-    }
+        $stepIndex = $this->buildStepIndex($document);
+        $featureTags = $this->mapTags($document->feature->tags);
 
-    private function mapFeature(Feature $feature): FeatureNode
-    {
-        $background = null;
-        $scenarios = [];
-
-        foreach ($feature->children as $child) {
-            if ($child->background !== null) {
-                $background = $this->mapBackground($child->background);
-            }
-            if ($child->scenario !== null) {
-                $scenarios[] = $this->mapScenario($child->scenario);
-            }
-        }
+        $scenarios = array_map(
+            fn(Pickle $pickle) => $this->mapPickle($pickle, $stepIndex, $featureTags),
+            $pickles,
+        );
 
         return new FeatureNode(
-            $feature->name,
-            trim($feature->description),
-            $background,
+            $document->feature->name,
+            trim($document->feature->description),
+            null,
             $scenarios,
-            $this->mapTags($feature->tags),
-        );
-    }
-
-    private function mapBackground(Background $background): BackgroundNode
-    {
-        return new BackgroundNode(
-            $this->mapSteps($background->steps),
+            $featureTags,
         );
     }
 
     /**
-     * @return ScenarioNode|ScenarioOutlineNode
+     * Builds an index of AST step IDs to their keyword strings.
+     * Walks the entire GherkinDocument AST including Feature children,
+     * Rule children, backgrounds, and scenarios to capture all step keywords.
+     *
+     * @return array<string, string> map of step ID to trimmed keyword
      */
-    private function mapScenario(Scenario $scenario): ScenarioNode
+    private function buildStepIndex(GherkinDocument $document): array
     {
-        $steps = $this->mapSteps($scenario->steps);
-        $tags = $this->mapTags($scenario->tags);
+        $index = [];
 
-        if (!empty($scenario->examples)) {
-            $examples = $this->mergeExamples($scenario->examples);
-            return new ScenarioOutlineNode($scenario->name, $steps, $tags, $examples);
+        if ($document->feature === null) {
+            return $index;
         }
 
-        return new ScenarioNode($scenario->name, $steps, $tags);
+        foreach ($document->feature->children as $child) {
+            if ($child->background !== null) {
+                $this->indexSteps($child->background->steps, $index);
+            }
+            if ($child->scenario !== null) {
+                $this->indexSteps($child->scenario->steps, $index);
+            }
+            if ($child->rule !== null) {
+                foreach ($child->rule->children as $ruleChild) {
+                    if ($ruleChild->background !== null) {
+                        $this->indexSteps($ruleChild->background->steps, $index);
+                    }
+                    if ($ruleChild->scenario !== null) {
+                        $this->indexSteps($ruleChild->scenario->steps, $index);
+                    }
+                }
+            }
+        }
+
+        return $index;
     }
 
     /**
+     * Indexes an array of AST steps by their ID.
+     *
      * @param Step[] $steps
-     * @return StepNode[]
+     * @param array<string, string> $index
      */
-    private function mapSteps(array $steps): array
+    private function indexSteps(array $steps, array &$index): void
     {
-        return array_map(fn(Step $step) => new StepNode(
-            trim($step->keyword),
-            $step->text,
-            $step->dataTable !== null ? $this->mapDataTable($step->dataTable) : null,
-            $step->docString?->content,
-        ), $steps);
+        foreach ($steps as $step) {
+            $index[$step->id] = trim($step->keyword);
+        }
     }
 
-    private function mapDataTable(CucumberDataTable $table): DataTable
+    /**
+     * Maps a Cucumber Pickle to a ScenarioNode.
+     *
+     * @param Pickle $pickle the pickle to map
+     * @param array<string, string> $stepIndex AST step ID to keyword map
+     * @param string[] $featureTags feature-level tags to exclude from scenario tags
+     */
+    private function mapPickle(Pickle $pickle, array $stepIndex, array $featureTags): ScenarioNode
+    {
+        $steps = array_map(
+            fn(PickleStep $step) => $this->mapPickleStep($step, $stepIndex),
+            $pickle->steps,
+        );
+
+        $pickleTags = array_map(
+            fn(PickleTag $tag) => ltrim($tag->name, '@'),
+            $pickle->tags,
+        );
+
+        // Pickles inherit feature tags; exclude them so scenario tags are scenario-only
+        $scenarioTags = array_values(array_diff($pickleTags, $featureTags));
+
+        return new ScenarioNode($pickle->name, $steps, $scenarioTags);
+    }
+
+    /**
+     * Maps a PickleStep to a StepNode, resolving the keyword from the AST step index.
+     *
+     * @param PickleStep $step the pickle step to map
+     * @param array<string, string> $stepIndex AST step ID to keyword map
+     */
+    private function mapPickleStep(PickleStep $step, array $stepIndex): StepNode
+    {
+        $keyword = $this->resolveKeyword($step, $stepIndex);
+
+        $table = null;
+        $docString = null;
+
+        if ($step->argument !== null) {
+            if ($step->argument->dataTable !== null) {
+                $table = $this->mapPickleTable($step->argument->dataTable);
+            }
+            if ($step->argument->docString !== null) {
+                $docString = $step->argument->docString->content;
+            }
+        }
+
+        return new StepNode($keyword, $step->text, $table, $docString);
+    }
+
+    /**
+     * Resolves the Gherkin keyword for a pickle step by looking up its AST node ID.
+     * Falls back to mapping from PickleStep type if the AST node is not found.
+     *
+     * @param PickleStep $step the pickle step
+     * @param array<string, string> $stepIndex AST step ID to keyword map
+     */
+    private function resolveKeyword(PickleStep $step, array $stepIndex): string
+    {
+        // The first astNodeId references the original AST Step
+        if (!empty($step->astNodeIds)) {
+            $astNodeId = $step->astNodeIds[0];
+            if (isset($stepIndex[$astNodeId])) {
+                return $stepIndex[$astNodeId];
+            }
+        }
+
+        // Fallback: derive from PickleStep type
+        return match ($step->type) {
+            PickleStepType::CONTEXT => 'Given',
+            PickleStepType::ACTION => 'When',
+            PickleStepType::OUTCOME => 'Then',
+            default => '',
+        };
+    }
+
+    /**
+     * Maps a PickleTable to a DataTable.
+     */
+    private function mapPickleTable(PickleTable $table): DataTable
     {
         return new DataTable(array_map(
-            fn(TableRow $row) => array_map(
+            fn($row) => array_map(
                 fn($cell) => $cell->value,
                 $row->cells,
             ),
             $table->rows,
         ));
-    }
-
-    /**
-     * Merges all Examples blocks into a single DataTable.
-     *
-     * @param Examples[] $examplesList
-     */
-    private function mergeExamples(array $examplesList): ?DataTable
-    {
-        $rawRows = [];
-        $header = null;
-
-        foreach ($examplesList as $examples) {
-            if ($examples->tableHeader !== null && $header === null) {
-                $header = array_map(fn($cell) => $cell->value, $examples->tableHeader->cells);
-                $rawRows[] = $header;
-            }
-            foreach ($examples->tableBody as $row) {
-                $rawRows[] = array_map(fn($cell) => $cell->value, $row->cells);
-            }
-        }
-
-        return !empty($rawRows) ? new DataTable($rawRows) : null;
     }
 
     /**
