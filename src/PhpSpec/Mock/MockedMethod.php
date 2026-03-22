@@ -19,7 +19,7 @@ namespace PhpSpec\Mock;
  * Records a single method invocation on a test double, tracking the subject,
  * method name, arguments, and a mutable call count used for verification.
  */
-/* readonly */ final class MockedMethod
+final class MockedMethod
 {
     /** @var int Number of times this method has been called (mutable for unCall/call adjustments) */
     private int $timesCalled;
