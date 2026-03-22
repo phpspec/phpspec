@@ -38,8 +38,8 @@ final class AiTools
             ],
             handler: function (array $args) use ($filesystem) {
                 $path = $args['path'];
-                if (!str_starts_with($path, '/')) {
-                    $path = getcwd() . '/' . $path;
+                if (!str_starts_with($path, DIRECTORY_SEPARATOR) && !preg_match('/^[A-Za-z]:[\\\\\\/]/', $path)) {
+                    $path = getcwd() . DIRECTORY_SEPARATOR . $path;
                 }
 
                 if (!$filesystem->exists($path)) {
