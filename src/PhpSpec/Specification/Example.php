@@ -15,7 +15,7 @@
 namespace PhpSpec\Specification;
 
 use Closure;
-use PhpSpec\EventDispatcher\Dispatcher;
+use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\ExampleCompleted;
 use PhpSpec\EventDispatcher\Event\ExampleErrored;
 use PhpSpec\EventDispatcher\Event\ExampleRunned;
@@ -99,14 +99,14 @@ class Example implements ExampleResultRegistry, SpecBlock
     public function run(): Results
     {
         $subscriber = new ExampleSubscriber($this);
-        Dispatcher::addSubscriber($subscriber);
+        DispatcherRegistry::dispatcher()->addSubscriber($subscriber);
 
-        Dispatcher::dispatch(new ExampleStarted($this->title), ExampleStarted::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->title), ExampleStarted::NAME);
 
         if ($this->pending) {
-            Dispatcher::removeSubscriber($subscriber);
+            DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->title, [], false, true);
-            Dispatcher::dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         }
 
@@ -126,28 +126,28 @@ class Example implements ExampleResultRegistry, SpecBlock
             ($this->example)(...$this->resolveClosureArgs($this->example));
         } catch (PendingException $e) {
             restore_error_handler();
-            Dispatcher::removeSubscriber($subscriber);
+            DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->title, [], false, true);
             $this->exampleResult->setWarnings($warnings);
-            Dispatcher::dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (SkippedException $e) {
             restore_error_handler();
-            Dispatcher::removeSubscriber($subscriber);
+            DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->title, [], false, false, true);
-            Dispatcher::dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+            DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (\Throwable $e) {
-            Dispatcher::dispatch(
+            DispatcherRegistry::dispatcher()->dispatch(
                 new ExampleErrored($this->title, new ExampleError($e->getMessage(), $e)),
                 ExampleErrored::NAME,
             );
         }
 
         $elapsed = (hrtime(true) - $start) / 1e9;
-        Dispatcher::dispatch(new ExampleRunned($this->title), ExampleRunned::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleRunned($this->title), ExampleRunned::NAME);
         restore_error_handler();
-        Dispatcher::removeSubscriber($subscriber);
+        DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
         $this->exampleResult->setDuration($elapsed);
         $unique = [];
         foreach ($warnings as $w) {
@@ -158,7 +158,7 @@ class Example implements ExampleResultRegistry, SpecBlock
         $this->exampleResult->setWarnings(array_values(array_filter($all, fn($w) => in_array($w['severity'], [E_WARNING, E_USER_WARNING]))));
         $this->exampleResult->setDeprecations(array_values(array_filter($all, fn($w) => in_array($w['severity'], [E_DEPRECATED, E_USER_DEPRECATED]))));
         $this->exampleResult->setNotices(array_values(array_filter($all, fn($w) => in_array($w['severity'], [E_NOTICE, E_USER_NOTICE]))));
-        Dispatcher::dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
         return $this->exampleResult;
     }
 

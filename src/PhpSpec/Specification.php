@@ -14,7 +14,7 @@
 
 namespace PhpSpec;
 
-use PhpSpec\EventDispatcher\Dispatcher;
+use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\SpecificationFinished;
 use PhpSpec\EventDispatcher\Event\SpecificationStarted;
 use PhpSpec\Result\SpecificationResult;
@@ -47,13 +47,13 @@ class Specification implements ExampleRegistry, SpecBlock
      */
     public function run(): Results
     {
-        Dispatcher::dispatch(new SpecificationStarted($this->path), SpecificationStarted::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new SpecificationStarted($this->path), SpecificationStarted::NAME);
 
         // loads the specification file from the Subject constructor
         // so $this in the examples refers to Subject
-        Dispatcher::pushScope($this);
+        DispatcherRegistry::dispatcher()->pushScope($this);
         $subject = $this->loadSubject();
-        Dispatcher::popScope();
+        DispatcherRegistry::dispatcher()->popScope();
 
         $blockResults = [];
 
@@ -66,7 +66,7 @@ class Specification implements ExampleRegistry, SpecBlock
         }
 
         $result = new SpecificationResult($this->getTitle(), $blockResults);
-        Dispatcher::dispatch(new SpecificationFinished($this->getTitle()), SpecificationFinished::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new SpecificationFinished($this->getTitle()), SpecificationFinished::NAME);
         return $result;
     }
 

@@ -15,7 +15,7 @@
 namespace PhpSpec\Extensions;
 
 use PhpSpec\Configuration;
-use PhpSpec\EventDispatcher\Dispatcher;
+use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Specification\Expectation;
@@ -197,7 +197,7 @@ final class ExtensionLoader
         }
         $instance = new $fqcn();
         if ($instance instanceof ListenerExtension) {
-            Dispatcher::addSubscriber(new ListenerBridge($instance));
+            DispatcherRegistry::dispatcher()->addSubscriber(new ListenerBridge($instance));
         }
     }
 

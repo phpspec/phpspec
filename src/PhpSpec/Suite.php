@@ -14,7 +14,7 @@
 
 namespace PhpSpec;
 
-use PhpSpec\EventDispatcher\Dispatcher;
+use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\SuiteFinished;
 use PhpSpec\EventDispatcher\Event\SuiteStarted;
 use PhpSpec\Result\ExampleResult;
@@ -51,7 +51,7 @@ final readonly class Suite implements SpecBlock
      */
     public function stream(StopConditions $stop = new StopConditions(), ?int $seed = null): \Generator
     {
-        Dispatcher::dispatch(new SuiteStarted(), SuiteStarted::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new SuiteStarted(), SuiteStarted::NAME);
 
         $specs = $this->specifications;
         if ($seed !== null) {
@@ -64,12 +64,12 @@ final readonly class Suite implements SpecBlock
             yield $result;
 
             if ($stop->any() && $this->shouldStop($result, $stop)) {
-                Dispatcher::dispatch(new SuiteFinished(), SuiteFinished::NAME);
+                DispatcherRegistry::dispatcher()->dispatch(new SuiteFinished(), SuiteFinished::NAME);
                 return;
             }
         }
 
-        Dispatcher::dispatch(new SuiteFinished(), SuiteFinished::NAME);
+        DispatcherRegistry::dispatcher()->dispatch(new SuiteFinished(), SuiteFinished::NAME);
     }
 
     /**

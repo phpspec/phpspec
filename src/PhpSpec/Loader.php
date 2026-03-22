@@ -14,7 +14,7 @@
 
 namespace PhpSpec;
 
-use PhpSpec\EventDispatcher\Dispatcher;
+use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Subscriber\SpecificationSubscriber;
 use PhpSpec\Specification\SpecBlock;
 use PhpSpec\StoryBDD\Feature;
@@ -133,7 +133,7 @@ final class Loader
     private function loadFile(string $file): Specification
     {
         $spec = new Specification($file, $this->specSuffix);
-        Dispatcher::addSubscriber(new SpecificationSubscriber($spec));
+        DispatcherRegistry::dispatcher()->addSubscriber(new SpecificationSubscriber($spec));
         return $spec;
     }
 

@@ -12,7 +12,7 @@
  * file that was distributed with this source code.
  */
 
-use PhpSpec\EventDispatcher\Dispatcher;
+use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\ContextCreated;
 use PhpSpec\EventDispatcher\Event\ExampleCreated;
 use PhpSpec\Mock\MatchableDouble;
@@ -32,12 +32,12 @@ function it(string $title, Closure $example): void
 {
     $it = new Example($title, $example);
 
-    $scope = Dispatcher::currentScope();
+    $scope = DispatcherRegistry::dispatcher()->currentScope();
     if ($scope) {
         $scope->addSpecBlock($it);
     }
 
-    Dispatcher::dispatch(
+    DispatcherRegistry::dispatcher()->dispatch(
         new ExampleCreated($title, $it),
         ExampleCreated::NAME,
     );
@@ -101,12 +101,12 @@ function describe(string $context, Closure $examples): void
 {
     $describe = new Context($context, $examples);
 
-    $scope = Dispatcher::currentScope();
+    $scope = DispatcherRegistry::dispatcher()->currentScope();
     if ($scope) {
         $scope->addSpecBlock($describe);
     }
 
-    Dispatcher::dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
+    DispatcherRegistry::dispatcher()->dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
 }
 
 /**
@@ -131,7 +131,7 @@ function context(string $context, Closure $examples): void
  */
 function let(string|Closure $propertyOrSetter, ?Closure $setter = null): void
 {
-    $scope = Dispatcher::currentScope();
+    $scope = DispatcherRegistry::dispatcher()->currentScope();
     if ($scope instanceof Context) {
         if ($propertyOrSetter instanceof Closure) {
             $scope->modifyWithInjection($propertyOrSetter);
@@ -148,7 +148,7 @@ function let(string|Closure $propertyOrSetter, ?Closure $setter = null): void
  */
 function beforeAll(Closure $hook): void
 {
-    $scope = Dispatcher::currentScope();
+    $scope = DispatcherRegistry::dispatcher()->currentScope();
     if ($scope instanceof Context) {
         $scope->addBeforeAll($hook);
     }
@@ -161,7 +161,7 @@ function beforeAll(Closure $hook): void
  */
 function afterAll(Closure $hook): void
 {
-    $scope = Dispatcher::currentScope();
+    $scope = DispatcherRegistry::dispatcher()->currentScope();
     if ($scope instanceof Context) {
         $scope->addAfterAll($hook);
     }
@@ -174,7 +174,7 @@ function afterAll(Closure $hook): void
  */
 function beforeEach(Closure $hook): void
 {
-    $scope = Dispatcher::currentScope();
+    $scope = DispatcherRegistry::dispatcher()->currentScope();
     if ($scope instanceof Context) {
         $scope->addBeforeEach($hook);
     }
@@ -187,7 +187,7 @@ function beforeEach(Closure $hook): void
  */
 function afterEach(Closure $hook): void
 {
-    $scope = Dispatcher::currentScope();
+    $scope = DispatcherRegistry::dispatcher()->currentScope();
     if ($scope instanceof Context) {
         $scope->addAfterEach($hook);
     }
@@ -204,10 +204,10 @@ function xit(string $title, Closure $example): void
     $it = new Example($title, $example);
     $it->setPending(true);
 
-    $scope = Dispatcher::currentScope();
+    $scope = DispatcherRegistry::dispatcher()->currentScope();
     $scope?->addSpecBlock($it);
 
-    Dispatcher::dispatch(
+    DispatcherRegistry::dispatcher()->dispatch(
         new ExampleCreated($title, $it),
         ExampleCreated::NAME,
     );
@@ -224,10 +224,10 @@ function xdescribe(string $context, Closure $examples): void
     $describe = new Context($context, $examples);
     $describe->setPending(true);
 
-    $scope = Dispatcher::currentScope();
+    $scope = DispatcherRegistry::dispatcher()->currentScope();
     $scope?->addSpecBlock($describe);
 
-    Dispatcher::dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
+    DispatcherRegistry::dispatcher()->dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
 }
 
 /**
@@ -286,10 +286,10 @@ function fit(string $title, Closure $example): void
     $it = new Example($title, $example);
     $it->setFocused(true);
 
-    $scope = Dispatcher::currentScope();
+    $scope = DispatcherRegistry::dispatcher()->currentScope();
     $scope?->addSpecBlock($it);
 
-    Dispatcher::dispatch(
+    DispatcherRegistry::dispatcher()->dispatch(
         new ExampleCreated($title, $it),
         ExampleCreated::NAME,
     );
@@ -306,10 +306,10 @@ function fdescribe(string $context, Closure $examples): void
     $describe = new Context($context, $examples);
     $describe->setFocused(true);
 
-    $scope = Dispatcher::currentScope();
+    $scope = DispatcherRegistry::dispatcher()->currentScope();
     $scope?->addSpecBlock($describe);
 
-    Dispatcher::dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
+    DispatcherRegistry::dispatcher()->dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
 }
 
 /**

@@ -15,7 +15,7 @@ describe(Example::class, function() {
             $ran = true;
         });
 
-        \PhpSpec\EventDispatcher\Dispatcher::addSubscriber(
+        \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher()->addSubscriber(
             new \PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber($example)
         );
         $result = $example->run();
@@ -26,7 +26,7 @@ describe(Example::class, function() {
     it("tracks error state", function() {
         $example = new Example("breaks", function() {});
 
-        \PhpSpec\EventDispatcher\Dispatcher::addSubscriber(
+        \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher()->addSubscriber(
             new \PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber($example)
         );
 
@@ -40,7 +40,7 @@ describe(Example::class, function() {
         });
         $example->setPending(true);
 
-        \PhpSpec\EventDispatcher\Dispatcher::addSubscriber(
+        \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher()->addSubscriber(
             new \PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber($example)
         );
         $result = $example->run();
@@ -54,7 +54,7 @@ describe(Example::class, function() {
             pending("not done yet");
         });
 
-        \PhpSpec\EventDispatcher\Dispatcher::addSubscriber(
+        \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher()->addSubscriber(
             new \PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber($example)
         );
         $result = $example->run();
@@ -73,7 +73,7 @@ describe(Example::class, function() {
         $example = new Example("duration test", function() {
             // quick operation
         });
-        \PhpSpec\EventDispatcher\Dispatcher::addSubscriber(
+        \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher()->addSubscriber(
             new \PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber($example)
         );
         $result = $example->run();
@@ -101,7 +101,7 @@ describe(Example::class, function() {
             skip("not applicable");
         });
 
-        \PhpSpec\EventDispatcher\Dispatcher::addSubscriber(
+        \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher()->addSubscriber(
             new \PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber($example)
         );
         $result = $example->run();

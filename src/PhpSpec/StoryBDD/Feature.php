@@ -14,7 +14,7 @@
 
 namespace PhpSpec\StoryBDD;
 
-use PhpSpec\EventDispatcher\Dispatcher;
+use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
@@ -100,7 +100,7 @@ final readonly class Feature implements SpecBlock
         $this->hooks->runBeforeScenario($world);
 
         $collector = new StepMatchCollector();
-        Dispatcher::addSubscriber($collector);
+        DispatcherRegistry::dispatcher()->addSubscriber($collector);
 
         $stepResults = [];
         $failed = false;
@@ -131,7 +131,7 @@ final readonly class Feature implements SpecBlock
             }
         }
 
-        Dispatcher::removeSubscriber($collector);
+        DispatcherRegistry::dispatcher()->removeSubscriber($collector);
 
         return new ScenarioResult($scenario->title, $stepResults);
     }
