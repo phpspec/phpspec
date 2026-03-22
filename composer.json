@@ -26,7 +26,6 @@
         "symfony/console": "^7.0 || ^8.0",
         "symfony/yaml": "^7.0 || ^8.0",
         "cucumber/gherkin": "^39.0",
-        "ext-dom": "*",
         "ext-mbstring": "*",
         "ext-tokenizer": "*"
     },
@@ -49,6 +48,7 @@
         "papi-ai/anthropic": "Anthropic Claude AI provider",
         "papi-ai/openai": "OpenAI GPT AI provider",
         "ext-curl": "Required for AI features (pair, next, refactor)",
+        "ext-dom": "For JUnit XML and Clover coverage reports",
         "ext-xdebug": "For code coverage reporting",
         "ext-posix": "For terminal width detection",
         "ext-readline": "For interactive pair mode"
