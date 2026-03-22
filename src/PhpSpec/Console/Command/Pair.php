@@ -93,7 +93,7 @@ final class Pair extends Command
             return 0;
         }
 
-        $repl = new Repl($dispatcher, $pairOutput);
+        $repl = new Repl($dispatcher, $pairOutput, $this->config->getAiConfig() !== null);
 
         return $repl->run();
     }

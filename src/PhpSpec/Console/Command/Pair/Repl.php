@@ -25,9 +25,13 @@ final readonly class Repl
      * @param CommandDispatcher $dispatcher the command dispatcher that handles parsed input
      * @param PairOutput $output the pair-mode output helper for terminal layout management
      */
+    /**
+     * @param bool $aiAvailable whether an AI provider is configured
+     */
     public function __construct(
         private CommandDispatcher $dispatcher,
         private PairOutput $output,
+        private bool $aiAvailable = false,
     ) {}
 
     /**
@@ -37,7 +41,7 @@ final readonly class Repl
      */
     public function run(): int
     {
-        $this->output->setupLayout();
+        $this->output->setupLayout($this->aiAvailable);
 
         while (true) {
             $this->output->prepareForInput();

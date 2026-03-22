@@ -243,8 +243,9 @@ describe(CommandDispatcher::class, function () {
         it('routes unrecognized input to AI fallback', function () {
             $this->dispatcher->dispatch('hello world');
             $output = $this->buffer->fetch();
-            // Without AI, handleAi falls back to handleUnknown
+            // Without AI, handleAi falls back to handleUnknown with config hint
             expect($output)->toContain('Unknown command');
+            expect($output)->toContain('configure an AI provider');
         });
 
         it('routes single-word describe argument as describe command', function (Filesystem $fs) {

@@ -30,6 +30,7 @@ final class PairOutput
     private int $width;
     private int $height;
     private ?ScrollRegionOutput $scrollOutput = null;
+    private bool $aiAvailable = false;
 
     /**
      * @param OutputInterface $output the underlying Symfony console output
@@ -52,9 +53,14 @@ final class PairOutput
 
     /**
      * Sets up the fixed terminal layout: header, scroll region, bottom divider, input line.
+     *
+     * @param bool $aiAvailable whether an AI provider is configured
      */
-    public function setupLayout(): void
+    public function setupLayout(bool $aiAvailable = false): void
     {
+        if ($aiAvailable) {
+            $this->aiAvailable = true;
+        }
         $terminal = new Terminal();
         $this->width = $terminal->getWidth() ?: 80;
         $this->height = $terminal->getHeight() ?: 24;
@@ -80,11 +86,16 @@ final class PairOutput
         $this->output->writeln('  <fg=gray>run</> <fg=gray>[path]</>                   <fg=gray>Run specs</>');
         $this->output->writeln('  <fg=gray>clear  /help  /quit</>');
         $this->output->writeln('');
-        $this->output->writeln('  <fg=white>AI assistant</> <fg=gray>— or just type in plain English:</>');
-        $this->output->writeln('  <fg=gray>> write a spec for a Calculator that adds and subtracts</>');
-        $this->output->writeln('  <fg=gray>> create a feature scenario for user registration</>');
-        $this->output->writeln('  <fg=gray>> run my specs and tell me what\'s failing</>');
-        $this->output->writeln('  <fg=gray>> explain how the Loader class works</>');
+        if ($aiAvailable) {
+            $this->output->writeln('  <fg=white>AI assistant</> <fg=gray>— or just type in plain English:</>');
+            $this->output->writeln('  <fg=gray>> write a spec for a Calculator that adds and subtracts</>');
+            $this->output->writeln('  <fg=gray>> create a feature scenario for user registration</>');
+            $this->output->writeln('  <fg=gray>> run my specs and tell me what\'s failing</>');
+            $this->output->writeln('  <fg=gray>> explain how the Loader class works</>');
+        } else {
+            $this->output->writeln('  <fg=gray>AI assistant not configured. Add an ai: section to phpspec.yaml</>');
+            $this->output->writeln('  <fg=gray>to enable natural language commands. See /help for details.</>');
+        }
         $this->output->writeln('');
         $divider = str_repeat("\u{2500}", $this->width);
         $this->output->writeln("\033[2m$divider\033[0m");
@@ -106,7 +117,7 @@ final class PairOutput
         // Lazy init or resize detection
         $newHeight = (new Terminal())->getHeight() ?: 24;
         if ($this->scrollOutput === null || $newHeight !== $this->height) {
-            $this->setupLayout();
+            $this->setupLayout($this->aiAvailable);
         }
 
         $this->scrollOutput?->prepareForInput();
@@ -138,7 +149,7 @@ final class PairOutput
      */
     public function clearScreen(): void
     {
-        $this->setupLayout();
+        $this->setupLayout($this->aiAvailable);
     }
 
     /**

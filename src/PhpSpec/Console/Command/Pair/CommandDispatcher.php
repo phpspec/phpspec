@@ -476,7 +476,10 @@ final class CommandDispatcher
      */
     private function handleUnknown(string $command): int
     {
-        $this->output->error("Unknown command: $command. Type /help for available commands.");
+        $this->output->error(
+            "Unknown command: $command. Type /help for available commands.\n"
+            . '  To use natural language, configure an AI provider in phpspec.yaml.',
+        );
         return self::CONTINUE;
     }
 

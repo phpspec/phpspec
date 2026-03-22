@@ -173,4 +173,20 @@ describe(CallCountExpectation::class, function () {
         $exp->setConstraint('atMost', 5);
     });
 
+    it('includes custom constraint label in failure message', function () {
+        $calls = new MethodCallsStack();
+        $subject = new stdClass();
+
+        $matchable = new LastCallDouble($subject, 'x');
+        $exp = new CallCountExpectation('x', $calls, 'stdClass', __FILE__, __LINE__, false, null, $matchable);
+        $exp->setConstraint('custom', 5);
+        $ref = new ReflectionMethod($exp, 'evaluate');
+        $result = $ref->invoke($exp);
+        expect($result->isFailure())->toBeTrue();
+        expect((string) $result->getMessage())->toContain('custom 5');
+
+        // Reset to passing
+        $exp->setConstraint('atLeast', 0);
+    });
+
 });
