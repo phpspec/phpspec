@@ -74,4 +74,36 @@ describe("Mock global functions", function () {
             );
     });
 
+    it("any returns an ArgumentMatcher", function () {
+        $m = any();
+        expect($m)->toBeAnInstanceOf(ArgumentMatcher::class);
+        expect($m->matches('anything'))->toBeTrue();
+    });
+
+    it("type returns an ArgumentMatcher", function () {
+        $m = type('string');
+        expect($m)->toBeAnInstanceOf(ArgumentMatcher::class);
+        expect($m->matches('hello'))->toBeTrue();
+        expect($m->matches(42))->toBeFalse();
+    });
+
+    it("callback returns an ArgumentMatcher", function () {
+        $m = callback(fn($v) => $v > 5);
+        expect($m)->toBeAnInstanceOf(ArgumentMatcher::class);
+        expect($m->matches(10))->toBeTrue();
+        expect($m->matches(2))->toBeFalse();
+    });
+
+    it("mock creates a double of a class", function () {
+        $double = mock(\stdClass::class);
+        expect($double)->toBeAnInstanceOf(\stdClass::class);
+    });
+
+    it("allow works with MatchableDouble from void method", function (\JsonSerializable $service) {
+        // service->jsonSerialize() returns MatchableDouble (no return type)
+        $double = mock(\JsonSerializable::class);
+        allow($double->jsonSerialize())->toReturn(['key' => 'val']);
+        expect($double->jsonSerialize())->toBe(['key' => 'val']);
+    });
+
 });

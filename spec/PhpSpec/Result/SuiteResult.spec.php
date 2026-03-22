@@ -95,4 +95,25 @@ describe(SuiteResult::class, function() {
         expect($slowest[0]->getTitle())->toBe("passing");
     });
 
+    it("getAllExamples collects from nested contexts", function() {
+        $ex1 = new ExampleResult("top", []);
+        $ex2 = new ExampleResult("nested", []);
+        $ctx = new ContextResult("ctx", [$ex2]);
+        $spec = new SpecificationResult("spec", [$ex1, $ctx]);
+        $result = new SuiteResult([$spec]);
+
+        $all = $result->getAllExamples();
+        expect($all)->toHaveCount(2);
+    });
+
+    it("getAllExamples returns empty for empty suite", function() {
+        $result = new SuiteResult([]);
+        expect($result->getAllExamples())->toBe([]);
+    });
+
+    it("returns 0 status for empty suite", function() {
+        $result = new SuiteResult([]);
+        expect($result->status())->toBe(0);
+    });
+
 });

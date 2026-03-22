@@ -28,4 +28,30 @@ describe(MockedMethod::class, function() {
         expect($method->wasCalled(0))->toBe(true);
     });
 
+    it("getTimesCalled returns the count", function() {
+        $method = new MockedMethod(new \stdClass(), "test", []);
+        expect($method->getTimesCalled())->toBe(1);
+        $method->call();
+        expect($method->getTimesCalled())->toBe(2);
+        $method->unCall();
+        expect($method->getTimesCalled())->toBe(1);
+    });
+
+    it("withoutCall starts at zero and can be called", function() {
+        $method = MockedMethod::withoutCall(new \stdClass(), "test", ["a", "b"]);
+        expect($method->getTimesCalled())->toBe(0);
+        expect($method->wasCalled(0))->toBe(true);
+        $method->call();
+        expect($method->getTimesCalled())->toBe(1);
+        expect($method->wasCalled(1))->toBe(true);
+    });
+
+    it("exposes method name and arguments", function() {
+        $subject = new \stdClass();
+        $method = new MockedMethod($subject, "doSomething", ["a", 1]);
+        expect($method->method)->toBe("doSomething");
+        expect($method->arguments)->toBe(["a", 1]);
+        expect($method->subject)->toBe($subject);
+    });
+
 });

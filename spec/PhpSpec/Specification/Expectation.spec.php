@@ -250,4 +250,86 @@ describe(Expectation::class, function() {
         });
     });
 
+    context("formatMessage", function() {
+        it("formats objects with class name and id", function() {
+            $obj = new \stdClass();
+            $result = Expectation::formatMessage("Expected %s", $obj);
+            expect($result)->toContain("stdClass");
+        });
+
+        it("formats strings with quotes", function() {
+            $result = Expectation::formatMessage("Expected %s", "hello");
+            expect($result)->toBe('Expected "hello"');
+        });
+
+        it("formats booleans as true/false", function() {
+            expect(Expectation::formatMessage("Got %s", true))->toBe("Got true");
+            expect(Expectation::formatMessage("Got %s", false))->toBe("Got false");
+        });
+
+        it("formats arrays with brackets", function() {
+            $result = Expectation::formatMessage("Got %s", [1, 2]);
+            expect($result)->toBe("Got [1, 2]");
+        });
+
+        it("formats null", function() {
+            expect(Expectation::formatMessage("Got %s", null))->toBe("Got null");
+        });
+
+        it("formats integers", function() {
+            expect(Expectation::formatMessage("Got %s", 42))->toBe("Got 42");
+        });
+
+        it("handles no placeholder", function() {
+            expect(Expectation::formatMessage("No placeholder", "val"))->toBe("No placeholder");
+        });
+    });
+
+    context("response matchers", function() {
+        it("toBeOk passes for 200 response", function() {
+            $response = new \PhpSpec\Browser\Response(200, '{}', ['Content-Type' => 'application/json']);
+            expect($response)->toBeOk();
+        });
+
+        it("toBeBad passes for 400 response", function() {
+            $response = new \PhpSpec\Browser\Response(400, '{}', ['Content-Type' => 'application/json']);
+            expect($response)->toBeBad();
+        });
+
+        it("toHaveStatus passes for matching status", function() {
+            $response = new \PhpSpec\Browser\Response(201, '{}', []);
+            expect($response)->toHaveStatus(201);
+        });
+
+        it("toHavePath matches JSON path", function() {
+            $response = new \PhpSpec\Browser\Response(200, '{"user":{"name":"John"}}', ['Content-Type' => 'application/json']);
+            expect($response)->toHavePath('user.name', 'John');
+        });
+
+        it("toHaveHeader checks header existence", function() {
+            $response = new \PhpSpec\Browser\Response(200, '{}', ['X-Custom' => 'test']);
+            expect($response)->toHaveHeader('X-Custom');
+        });
+
+        it("toHaveHeader checks header value", function() {
+            $response = new \PhpSpec\Browser\Response(200, '{}', ['X-Custom' => 'test']);
+            expect($response)->toHaveHeader('X-Custom', 'test');
+        });
+
+        it("toRedirectTo checks redirect", function() {
+            $response = new \PhpSpec\Browser\Response(302, '', ['Location' => '/dashboard']);
+            expect($response)->toRedirectTo('/dashboard');
+        });
+
+        it("not toBeOk for non-200", function() {
+            $response = new \PhpSpec\Browser\Response(404, '', []);
+            expect($response)->not()->toBeOk();
+        });
+
+        it("not toBeBad for non-400", function() {
+            $response = new \PhpSpec\Browser\Response(200, '', []);
+            expect($response)->not()->toBeBad();
+        });
+    });
+
 });

@@ -110,4 +110,40 @@ describe(ExampleResult::class, function() {
         expect($result->isContext())->toBe(false);
     });
 
+    it("returns failure message from first failing match", function() {
+        $passing = MatchResult::passed();
+        $failing = MatchResult::failed("a", "b", "First failure", __FILE__, __LINE__);
+        $failing2 = MatchResult::failed("c", "d", "Second failure", __FILE__, __LINE__);
+        $result = new ExampleResult("test", [$passing, $failing, $failing2]);
+        expect($result->getFailureMessage())->toBe("First failure");
+    });
+
+    it("returns empty string for failure message when no failures", function() {
+        $result = new ExampleResult("test", [MatchResult::passed()]);
+        expect($result->getFailureMessage())->toBe("");
+    });
+
+    it("getMessage returns error message when errored", function() {
+        $result = new ExampleResult("test", [], true);
+        $error = new ExampleError("error msg", new \RuntimeException("error msg"));
+        $result->setError($error);
+        expect($result->getMessage())->toBe("error msg");
+    });
+
+    it("getMessage returns failure message when not errored", function() {
+        $failing = MatchResult::failed("a", "b", "fail msg", __FILE__, __LINE__);
+        $result = new ExampleResult("test", [$failing]);
+        expect($result->getMessage())->toBe("fail msg");
+    });
+
+    it("getMessage returns empty string for passing example", function() {
+        $result = new ExampleResult("test", [MatchResult::passed()]);
+        expect($result->getMessage())->toBe("");
+    });
+
+    it("returns null error by default", function() {
+        $result = new ExampleResult("test", []);
+        expect($result->getError())->toBeNull();
+    });
+
 });

@@ -294,4 +294,130 @@ describe(Context::class, function() {
         expect($ctx->isError())->toBe(true);
     });
 
+    it("tracks focused state", function() {
+        $ctx = new Context("focus test", function() {});
+        expect($ctx->isFocused())->toBe(false);
+        $ctx->setFocused(true);
+        expect($ctx->isFocused())->toBe(true);
+    });
+
+    it("pending function throws PendingException", function() {
+        $ctx = new Context("pending test", function() {
+            it("is pending", function() {
+                pending("Not yet implemented");
+            });
+        });
+        $ctx->setWorld(new Subject(__FILE__));
+        $result = $ctx->run();
+        expect($result->getResults())->toHaveCount(1);
+        expect($result->getResults()[0]->isPending())->toBe(true);
+    });
+
+    it("skip function throws SkippedException", function() {
+        $ctx = new Context("skip test", function() {
+            it("is skipped", function() {
+                skip("Skipped");
+            });
+        });
+        $ctx->setWorld(new Subject(__FILE__));
+        $result = $ctx->run();
+        expect($result->getResults())->toHaveCount(1);
+        expect($result->getResults()[0]->isSkipped())->toBe(true);
+    });
+
+    it("nested contexts inherit let bindings", function() {
+        $ctx = new Context("let inheritance", function() {
+            let("value", fn() => 42);
+            context("nested", function() {
+                it("has the let value", function() {
+                    expect($this->value)->toBe(42);
+                });
+            });
+        });
+        $ctx->setWorld(new Subject(__FILE__));
+        $result = $ctx->run();
+        // The nested context should have 1 child result
+        $nestedCtx = $result->getResults()[0];
+        expect($nestedCtx->getResults())->toHaveCount(1);
+    });
+
+    it("re-evaluates let bindings for each example", function() {
+        $counter = 0;
+        $ctx = new Context("let re-eval", function() use (&$counter) {
+            let("val", function() use (&$counter) {
+                $counter++;
+                return $counter;
+            });
+            it("first", function() {
+                expect($this->val)->toBeOfType('int');
+            });
+            it("second", function() {
+                expect($this->val)->toBeOfType('int');
+            });
+        });
+        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->run();
+        // let should be called once during describe loading + once per example re-apply = 3 total
+        expect($counter)->toBeGreaterThanOrEqualTo(2);
+    });
+
+    it("addMatcher registers custom matchers", function() {
+        $ctx = new Context("custom matcher", function() {
+            it("uses custom matcher", function() {
+                addMatcher('toBeEven', fn($v) => $v % 2 === 0, 'Expected %s to be even');
+                expect(4)->toBeEven();
+            });
+        });
+        $ctx->setWorld(new Subject(__FILE__));
+        $result = $ctx->run();
+        expect($result->isError())->toBe(false);
+    });
+
+    it("custom matcher with closure message", function() {
+        $ctx = new Context("custom matcher closure msg", function() {
+            it("works", function() {
+                \PhpSpec\Specification\Expectation::addMatcher('toBeMultipleOf', fn($v, $d) => $v % $d === 0, fn($v, $d) => "Expected $v to be multiple of $d");
+                expect(10)->toBeMultipleOf(5);
+            });
+        });
+        $ctx->setWorld(new Subject(__FILE__));
+        $result = $ctx->run();
+        expect($result->isError())->toBe(false);
+    });
+
+    it("resolves let mocks in beforeEach hooks", function() {
+        $resolved = null;
+        $ctx = new Context("let mock resolve", function() use (&$resolved) {
+            let(fn(\JsonSerializable $serializer) => null);
+            beforeEach(function(\JsonSerializable $serializer) use (&$resolved) {
+                $resolved = $serializer;
+            });
+            it("checks", function() {
+                expect(true)->toBeTrue();
+            });
+        });
+        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->run();
+        expect($resolved)->toBeAnInstanceOf(\JsonSerializable::class);
+    });
+
+    it("skips beforeAll and afterAll when pending", function() {
+        $log = [];
+        $ctx = new Context("pending all hooks", function() use (&$log) {
+            beforeAll(function() use (&$log) {
+                $log[] = 'beforeAll';
+            });
+            afterAll(function() use (&$log) {
+                $log[] = 'afterAll';
+            });
+            it("pending", function() use (&$log) {
+                $log[] = 'ran';
+            });
+        });
+        $ctx->setPending(true);
+        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->run();
+        expect($log)->toBe([]);
+    });
+
 });

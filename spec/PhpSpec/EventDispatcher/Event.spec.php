@@ -38,11 +38,12 @@ describe("Event classes", function() {
     });
 
     context("ContextRunned", function() {
-        it("returns its name, title, and log", function() {
+        it("returns its name, title, context, and log", function() {
             $ctx = new Context("MyContext", function() {});
             $event = new ContextRan("MyContext", $ctx);
             expect($event->getName())->toBe('context.ran');
             expect($event->getTitle())->toBe("MyContext");
+            expect($event->getContext())->toBe($ctx);
             expect($event->getLog())->toContain("context.ran - MyContext");
         });
     });

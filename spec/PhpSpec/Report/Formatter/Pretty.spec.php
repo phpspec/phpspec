@@ -310,6 +310,53 @@ describe(Pretty::class, function() {
         expect($text)->toContain("pending");
     });
 
+    it("formats results with deprecations", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $match = MatchResult::passed();
+        $example = new ExampleResult("deprecated call", [$match]);
+        $example->setDeprecations([
+            ['severity' => E_DEPRECATED, 'message' => 'old function used', 'file' => __FILE__, 'line' => __LINE__]
+        ]);
+        $spec = new SpecificationResult("MySpec", [$example]);
+        $suite = new SuiteResult([$spec]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain("old function used");
+    });
+
+    it("formats results with notices", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $match = MatchResult::passed();
+        $example = new ExampleResult("notice fired", [$match]);
+        $example->setNotices([
+            ['severity' => E_NOTICE, 'message' => 'undefined var', 'file' => __FILE__, 'line' => __LINE__]
+        ]);
+        $spec = new SpecificationResult("MySpec", [$example]);
+        $suite = new SuiteResult([$spec]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain("undefined var");
+    });
+
+    it("formats skipped examples", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $example = new ExampleResult("is skipped", [], false, false, true);
+        $spec = new SpecificationResult("MySpec", [$example]);
+        $suite = new SuiteResult([$spec]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain("skipped");
+    });
+
     it("formats feature counts correctly", function () {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);

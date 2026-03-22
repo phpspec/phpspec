@@ -42,4 +42,22 @@ describe(MatchResult::class, function() {
         expect($result->getFakeExpression())->toBe("'hello'");
     });
 
+    it("returns empty results array", function() {
+        $result = MatchResult::passed();
+        expect($result->getResults())->toBe([]);
+    });
+
+    it("returns expected value from failed result", function() {
+        $result = MatchResult::failed("expected_val", "actual_val", "msg", __FILE__, __LINE__);
+        expect($result->getExpected())->toBe("expected_val");
+        expect($result->getActual())->toBe("actual_val");
+    });
+
+    it("returns null expected/actual for passed result", function() {
+        $result = MatchResult::passed();
+        expect($result->getExpected())->toBeNull();
+        expect($result->getActual())->toBeNull();
+        expect($result->getFakeExpression())->toBeNull();
+    });
+
 });

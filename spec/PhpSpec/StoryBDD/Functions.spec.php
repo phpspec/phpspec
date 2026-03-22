@@ -77,4 +77,14 @@ describe('StoryBDD DSL functions', function () {
         expect(\StoryBDDRegistry::$steps->count())->toBe(0);
     });
 
+    it("saves and restores state", function () {
+        given("original step", function () {});
+        expect(\StoryBDDRegistry::$steps->count())->toBe(1);
+        $state = \StoryBDDRegistry::saveState();
+        \StoryBDDRegistry::init();
+        expect(\StoryBDDRegistry::$steps->count())->toBe(0);
+        \StoryBDDRegistry::restoreState($state);
+        expect(\StoryBDDRegistry::$steps->count())->toBe(1);
+    });
+
 });
