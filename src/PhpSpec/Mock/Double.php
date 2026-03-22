@@ -57,7 +57,7 @@ final class Double
      */
     public static function getInstance(string $class): object
     {
-        if (!class_exists($class) && !interface_exists($class)) {
+        if (!class_exists($class) && !interface_exists($class) && !trait_exists($class) && !enum_exists($class)) {
             throw new LogicException("Cannot create test double: class or interface '$class' does not exist.");
         }
 

@@ -165,6 +165,16 @@ class DoubleSpecUnionNullDep {
     public function __construct(private string|null $value) {}
 }
 
+trait DoubleSpecTrait {
+    public function helper(): string { return 'help'; }
+}
+
+class DoubleSpecWithStackProperty {
+    protected string $stack = '';
+    public function push(string $item): void { $this->stack .= $item; }
+    public function getStack(): string { return $this->stack; }
+}
+
 final class DoubleSpecFinalClass {
     public function greet(): string { return 'hello'; }
 }
@@ -587,6 +597,35 @@ describe(Double::class, function() {
 
     it("throws when trying to double a readonly class", function() {
         expect(fn() => Double::getInstance(DoubleSpecReadonlyClass::class))->toThrow(\LogicException::class);
+    });
+
+    it("throws when trying to double a trait", function() {
+        expect(fn() => Double::getInstance(DoubleSpecTrait::class))->toThrow(\LogicException::class);
+    });
+
+    it("throws when trying to double an enum", function() {
+        expect(fn() => Double::getInstance(DoubleSpecStatus::class))->toThrow(\LogicException::class);
+    });
+
+    it("generates mock class in PhpspecDouble namespace", function() {
+        $double = Double::getInstance(DoubleSpecContract::class);
+        $className = get_class($double);
+        expect(str_starts_with($className, 'PhpspecDouble\\'))->toBeTrue();
+    });
+
+    it("uses prefixed internal properties to avoid conflicts", function() {
+        $double = Double::getInstance(DoubleSpecWithStackProperty::class);
+        expect($double)->toBeAnInstanceOf(DoubleSpecWithStackProperty::class);
+        // The mock should work even though the parent class has a $stack property
+        $double->push('test');
+        $stack = $double->______PhpSpecGetStubbedCalls();
+        expect($stack->exist('push', ['test']))->toBe(true);
+    });
+
+    it("caches class definitions for repeated getInstance calls", function() {
+        $double1 = Double::getInstance(DoubleSpecContract::class);
+        $double2 = Double::getInstance(DoubleSpecContract::class);
+        expect(get_class($double1))->toBe(get_class($double2));
     });
 
 });
