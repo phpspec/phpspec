@@ -353,4 +353,41 @@ describe(GherkinParser::class, function () {
         expect($feature->scenarios[0]->steps[1]->text)->toBe("I act");
     });
 
+    it("preserves doc strings on steps", function () {
+        $gherkin = "Feature: Doc string\n  Scenario: Has doc string\n    Given a step with doc string:\n      \"\"\"\n      Hello World\n      \"\"\"";
+        $feature = $this->parser->parse($gherkin);
+        expect($feature->scenarios[0]->steps[0]->docString)->toBe("Hello World");
+    });
+
+    it("preserves data tables on steps via pickles", function () {
+        $gherkin = "Feature: Table\n  Scenario: Has table\n    Given a table:\n      | name  | age |\n      | Alice | 30  |";
+        $feature = $this->parser->parse($gherkin);
+        expect($feature->scenarios[0]->steps[0]->table)->toBeAnInstanceOf(\PhpSpec\StoryBDD\DataTable::class);
+    });
+
+    it("resolves step keywords from AST", function () {
+        $feature = $this->parser->parse(<<<GHERKIN
+        Feature: Keywords
+          Scenario: Steps
+            Given a context
+            When an action
+            Then an outcome
+        GHERKIN);
+        expect($feature->scenarios[0]->steps[0]->keyword)->toBe("Given");
+        expect($feature->scenarios[0]->steps[1]->keyword)->toBe("When");
+        expect($feature->scenarios[0]->steps[2]->keyword)->toBe("Then");
+    });
+
+    it("filters feature tags from scenario tags", function () {
+        $feature = $this->parser->parse(<<<GHERKIN
+        @feature-tag
+        Feature: Tagged
+          @scenario-tag
+          Scenario: Tagged scenario
+            Given a step
+        GHERKIN);
+        expect($feature->tags)->toBe(["feature-tag"]);
+        expect($feature->scenarios[0]->tags)->toBe(["scenario-tag"]);
+    });
+
 });

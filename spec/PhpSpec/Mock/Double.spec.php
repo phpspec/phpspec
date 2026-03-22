@@ -628,4 +628,17 @@ describe(Double::class, function() {
         expect(get_class($double1))->toBe(get_class($double2));
     });
 
+    it("stubs return using callback on interface-return method via wrapper toReturnUsing", function() {
+        $double = Double::getInstance(DoubleSpecClassWithDeps::class);
+        $double->getDep()->toReturnUsing(fn() => mock(DoubleSpecContract::class));
+        $result = $double->getDep();
+        expect($result)->toBeAnInstanceOf(DoubleSpecContract::class);
+    });
+
+    it("stubs exception on void-return method via allow()->toThrow()", function() {
+        $double = Double::getInstance(DoubleSpecVoidReturn::class);
+        allow($double->doWork())->toThrow(\RuntimeException::class, 'void-fail');
+        expect(fn() => $double->doWork())->toThrow(\RuntimeException::class, 'void-fail');
+    });
+
 });

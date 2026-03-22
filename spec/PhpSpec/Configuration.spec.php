@@ -306,4 +306,24 @@ describe(Configuration::class, function () {
         expect($config->getSrcPath())->toBe('lib');
     });
 
+    it("returns psr4_prefix from top-level config", function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => true,
+            default => false,
+        });
+        allow($fs->read())->toReturn("psr4_prefix: App\\Models\\");
+        $config = new Configuration('/app', $fs);
+        expect($config->getPsr4Prefix())->toBe('App\\Models');
+    });
+
+    it("returns namespace from suite config as psr4_prefix", function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => true,
+            default => false,
+        });
+        allow($fs->read())->toReturn("suites:\n  default:\n    namespace: App\n    src: src");
+        $config = new Configuration('/app', $fs);
+        expect($config->getPsr4Prefix())->toBe('App');
+    });
+
 });
