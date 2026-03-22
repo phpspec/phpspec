@@ -78,6 +78,20 @@ final class Double
         // generate the methods for the double
         $reflectionClass = new ReflectionClass($class);
 
+        if ($reflectionClass->isTrait()) {
+            throw new LogicException(
+                "Cannot create a test double for trait $class. "
+                    . 'Type-hint against an interface or class instead.',
+            );
+        }
+
+        if ($reflectionClass->isEnum()) {
+            throw new LogicException(
+                "Cannot create a test double for enum $class. "
+                    . 'Enums cannot be mocked — use a real enum value instead.',
+            );
+        }
+
         if (!$reflectionClass->isInterface() && ($reflectionClass->isFinal() || $reflectionClass->isReadOnly())) {
             $modifier = $reflectionClass->isReadOnly() ? 'readonly' : 'final';
             throw new LogicException(
