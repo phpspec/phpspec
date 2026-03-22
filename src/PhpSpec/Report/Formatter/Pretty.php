@@ -15,35 +15,20 @@
 namespace PhpSpec\Report\Formatter;
 
 use PhpSpec\Report\AbstractFormatter;
-use PhpSpec\Report\TemplateRenderer;
+use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Result\Counts;
 use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
-use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * @internal
- * Renders spec results using PHP view templates for human-readable, indented output.
- * Delegates rendering to TemplateRenderer with the suite view hierarchy.
+ * Renders spec results using typed static methods for human-readable, indented output.
  */
 final class Pretty extends AbstractFormatter
 {
     private bool $hasResults = false;
-
-    private TemplateRenderer $template;
-
-    /**
-     * @param OutputInterface $output the console output to write to
-     */
-    public function __construct(OutputInterface $output)
-    {
-        parent::__construct($output);
-        $this->template = new TemplateRenderer(
-            __DIR__ . DIRECTORY_SEPARATOR . 'Pretty' . DIRECTORY_SEPARATOR . 'views',
-            $this->output,
-        );
-    }
 
     /**
      * No-op; the banner is deferred to the first printResult call.
@@ -54,7 +39,7 @@ final class Pretty extends AbstractFormatter
     }
 
     /**
-     * Renders a single specification or feature result using PHP view templates.
+     * Renders a single specification or feature result.
      *
      * @param Results $result one spec or feature result to render
      */
@@ -66,9 +51,9 @@ final class Pretty extends AbstractFormatter
         }
 
         if ($result instanceof FeatureResult) {
-            $this->template->render('feature', ['feature' => $result]);
-        } else {
-            $this->template->render('specification', ['specification' => $result, 'verbose' => $this->output->isVerbose()]);
+            PrettyViews::feature($this->output, $result);
+        } elseif ($result instanceof SpecificationResult) {
+            PrettyViews::specification($this->output, $result, $this->output->isVerbose());
         }
         $this->output->writeln('');
     }
@@ -87,15 +72,15 @@ final class Pretty extends AbstractFormatter
 
         foreach ($results->getResults() as $specificationResult) {
             if ($specificationResult instanceof FeatureResult) {
-                $this->template->render('feature.errors', ['feature' => $specificationResult]);
-            } else {
-                $this->template->render('specification.errors', ['specification' => $specificationResult]);
+                PrettyViews::featureErrors($this->output, $specificationResult);
+            } elseif ($specificationResult instanceof SpecificationResult) {
+                PrettyViews::specificationErrors($this->output, $specificationResult);
             }
         }
 
         $this->output->writeln('');
 
         $counts = new Counts($results);
-        $this->template->render('counts', ['counts' => $counts->toArray(), 'duration' => $results->getDuration()]);
+        PrettyViews::counts($this->output, $counts->toArray(), $results->getDuration());
     }
 }

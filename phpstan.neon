@@ -2,7 +2,5 @@ parameters:
     level: 8
     paths:
         - src
-    excludePaths:
-        - src/PhpSpec/Report/Formatter/Pretty/views
     ignoreErrors:
         - identifier: trait.unused
