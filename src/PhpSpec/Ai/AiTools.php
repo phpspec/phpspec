@@ -39,7 +39,7 @@ final class AiTools
             handler: function (array $args) use ($filesystem) {
                 $path = self::safePath($args['path']);
                 if ($path === null) {
-                    return "Access denied: path is outside the project directory";
+                    return 'Access denied: path is outside the project directory';
                 }
 
                 if (!$filesystem->exists($path)) {
@@ -73,7 +73,7 @@ final class AiTools
             handler: function (array $args) use ($filesystem) {
                 $dir = self::safePath($args['directory'] ?? '.');
                 if ($dir === null) {
-                    return "Access denied: path is outside the project directory";
+                    return 'Access denied: path is outside the project directory';
                 }
 
                 if (!$filesystem->exists($dir) || !$filesystem->isDir($dir)) {
