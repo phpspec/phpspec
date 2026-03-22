@@ -17,7 +17,7 @@ namespace PhpSpec\EventDispatcher;
 use PhpSpec\Specification\ExampleRegistry;
 
 /**
- * Instance-based event bus that coordinates DSL functions, spec tree building, and result collection.
+ * Static event bus that coordinates DSL functions, spec tree building, and result collection.
  *
  * Manages a scope stack to track the current context/example registry during spec
  * file loading, and dispatches events to registered subscribers and listeners.
@@ -25,19 +25,19 @@ use PhpSpec\Specification\ExampleRegistry;
 final class Dispatcher
 {
     /** @var Event[] Dispatched events log */
-    private array $events = [];
+    private static array $events = [];
 
     /** @var Listener[] Registered listeners that receive all events */
-    private array $listeners = [];
+    private static array $listeners = [];
 
     /** @var Subscriber[] Registered subscribers that receive specific named events */
-    private array $subscribers = [];
+    private static array $subscribers = [];
 
     /** @var array<string, array<int, array{subscriber: Subscriber, methods: string|string[]}>> Pre-indexed event→subscriber map */
-    private array $subscribersByEvent = [];
+    private static array $subscribersByEvent = [];
 
     /** @var ExampleRegistry[] Stack tracking the current scope during spec loading */
-    private array $scopeStack = [];
+    private static array $scopeStack = [];
 
     /**
      * Dispatches an event to all matching subscribers and all listeners.
@@ -45,10 +45,10 @@ final class Dispatcher
      * @param Event $event the event instance to dispatch
      * @param string $eventName the event name to match against subscriber registrations
      */
-    public function dispatch(Event $event, string $eventName): void
+    public static function dispatch(Event $event, string $eventName): void
     {
-        if (isset($this->subscribersByEvent[$eventName])) {
-            foreach ($this->subscribersByEvent[$eventName] as $entry) {
+        if (isset(self::$subscribersByEvent[$eventName])) {
+            foreach (self::$subscribersByEvent[$eventName] as $entry) {
                 $methods = $entry['methods'];
                 $subscriber = $entry['subscriber'];
                 if (is_array($methods)) {
@@ -61,7 +61,7 @@ final class Dispatcher
             }
         }
 
-        foreach ($this->listeners as $listener) {
+        foreach (self::$listeners as $listener) {
             $listener->listen($event);
         }
     }
@@ -71,9 +71,9 @@ final class Dispatcher
      *
      * @param Listener $listener the listener to add
      */
-    public function addListener(Listener $listener): void
+    public static function addListener(Listener $listener): void
     {
-        $this->listeners[] = $listener;
+        self::$listeners[] = $listener;
     }
 
     /**
@@ -81,12 +81,12 @@ final class Dispatcher
      *
      * @param Subscriber $subscriber the subscriber to add
      */
-    public function addSubscriber(Subscriber $subscriber): void
+    public static function addSubscriber(Subscriber $subscriber): void
     {
-        $this->subscribers[] = $subscriber;
+        self::$subscribers[] = $subscriber;
 
         foreach ($subscriber->getSubscribedEvents() as $eventName => $methods) {
-            $this->subscribersByEvent[$eventName][] = [
+            self::$subscribersByEvent[$eventName][] = [
                 'subscriber' => $subscriber,
                 'methods' => $methods,
             ];
@@ -98,20 +98,20 @@ final class Dispatcher
      *
      * @param Subscriber $subscriber the subscriber to remove
      */
-    public function removeSubscriber(Subscriber $subscriber): void
+    public static function removeSubscriber(Subscriber $subscriber): void
     {
-        $key = array_search($subscriber, $this->subscribers, true);
+        $key = array_search($subscriber, self::$subscribers, true);
         if ($key !== false) {
-            array_splice($this->subscribers, $key, 1);
+            array_splice(self::$subscribers, $key, 1);
         }
 
         foreach ($subscriber->getSubscribedEvents() as $eventName => $methods) {
-            if (!isset($this->subscribersByEvent[$eventName])) {
+            if (!isset(self::$subscribersByEvent[$eventName])) {
                 continue;
             }
-            foreach ($this->subscribersByEvent[$eventName] as $i => $entry) {
+            foreach (self::$subscribersByEvent[$eventName] as $i => $entry) {
                 if ($entry['subscriber'] === $subscriber) {
-                    array_splice($this->subscribersByEvent[$eventName], $i, 1);
+                    array_splice(self::$subscribersByEvent[$eventName], $i, 1);
                     break;
                 }
             }
@@ -123,66 +123,66 @@ final class Dispatcher
      *
      * @param ExampleRegistry $registry the registry to become the active scope
      */
-    public function pushScope(ExampleRegistry $registry): void
+    public static function pushScope(ExampleRegistry $registry): void
     {
-        $this->scopeStack[] = $registry;
+        self::$scopeStack[] = $registry;
     }
 
     /**
      * Removes the topmost registry from the scope stack.
      */
-    public function popScope(): void
+    public static function popScope(): void
     {
-        array_pop($this->scopeStack);
+        array_pop(self::$scopeStack);
     }
 
     /**
      * Returns the current active scope registry, or null if the stack is empty.
      */
-    public function currentScope(): ?ExampleRegistry
+    public static function currentScope(): ?ExampleRegistry
     {
-        return end($this->scopeStack) ?: null;
+        return end(self::$scopeStack) ?: null;
     }
 
     /**
-     * Captures all instance state so it can be restored later.
+     * Captures all static state so it can be restored after an in-process phpspec run.
      *
      * @return array{events: Event[], listeners: Listener[], subscribers: Subscriber[], subscribersByEvent: array, scopeStack: ExampleRegistry[]}
      */
-    public function saveState(): array
+    public static function saveState(): array
     {
         return [
-            'events' => $this->events,
-            'listeners' => $this->listeners,
-            'subscribers' => $this->subscribers,
-            'subscribersByEvent' => $this->subscribersByEvent,
-            'scopeStack' => $this->scopeStack,
+            'events' => self::$events,
+            'listeners' => self::$listeners,
+            'subscribers' => self::$subscribers,
+            'subscribersByEvent' => self::$subscribersByEvent,
+            'scopeStack' => self::$scopeStack,
         ];
     }
 
     /**
-     * Restores instance state previously captured by saveState().
+     * Restores static state previously captured by saveState().
      *
      * @param array{events: Event[], listeners: Listener[], subscribers: Subscriber[], subscribersByEvent: array, scopeStack: ExampleRegistry[]} $state
      */
-    public function restoreState(array $state): void
+    public static function restoreState(array $state): void
     {
-        $this->events = $state['events'];
-        $this->listeners = $state['listeners'];
-        $this->subscribers = $state['subscribers'];
-        $this->subscribersByEvent = $state['subscribersByEvent'];
-        $this->scopeStack = $state['scopeStack'];
+        self::$events = $state['events'];
+        self::$listeners = $state['listeners'];
+        self::$subscribers = $state['subscribers'];
+        self::$subscribersByEvent = $state['subscribersByEvent'];
+        self::$scopeStack = $state['scopeStack'];
     }
 
     /**
-     * Resets all instance state to empty.
+     * Resets all static state to empty. Used before an in-process phpspec run.
      */
-    public function reset(): void
+    public static function reset(): void
     {
-        $this->events = [];
-        $this->listeners = [];
-        $this->subscribers = [];
-        $this->subscribersByEvent = [];
-        $this->scopeStack = [];
+        self::$events = [];
+        self::$listeners = [];
+        self::$subscribers = [];
+        self::$subscribersByEvent = [];
+        self::$scopeStack = [];
     }
 }

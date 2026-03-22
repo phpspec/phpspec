@@ -15,7 +15,7 @@
 namespace PhpSpec;
 
 use PhpSpec\Console\Application;
-use PhpSpec\EventDispatcher\DispatcherRegistry;
+use PhpSpec\EventDispatcher\Dispatcher;
 use PhpSpec\Mock\Double;
 use PhpSpec\Mock\Expectation as MockExpectation;
 use ReflectionClass;
@@ -41,7 +41,7 @@ final class InProcessRunner
         self::checkForClassConflicts($projectDir);
 
         // Save outer state
-        $savedDispatcher = DispatcherRegistry::get();
+        $savedDispatcher = Dispatcher::saveState();
         $savedCwd = getcwd();
         $savedLastDouble = MockExpectation::$lastDouble;
         $savedLastMockReturn = MockExpectation::$lastMockReturn;
@@ -51,7 +51,8 @@ final class InProcessRunner
         $savedStoryBDD = \StoryBDDRegistry::saveState();
         $savedBrowser = \BrowserRegistry::saveState();
 
-        // Reset for inner run — Application constructor will set a fresh Dispatcher
+        // Reset for inner run
+        Dispatcher::reset();
         Double::resetCache();
         MockExpectation::$lastDouble = null;
         MockExpectation::$lastMockReturn = null;
@@ -76,7 +77,7 @@ final class InProcessRunner
         } finally {
             // Always restore, even on error
             chdir($savedCwd);
-            DispatcherRegistry::set($savedDispatcher);
+            Dispatcher::restoreState($savedDispatcher);
             MockExpectation::$lastDouble = $savedLastDouble;
             MockExpectation::$lastMockReturn = $savedLastMockReturn;
             MockExpectation::$lastCallForAllow = $savedLastCallForAllow;

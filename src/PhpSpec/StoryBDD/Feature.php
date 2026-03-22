@@ -15,7 +15,6 @@
 namespace PhpSpec\StoryBDD;
 
 use PhpSpec\EventDispatcher\Dispatcher;
-use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
@@ -30,8 +29,6 @@ use PhpSpec\Specification\SpecBlock;
  */
 final readonly class Feature implements SpecBlock
 {
-    private Dispatcher $dispatcher;
-
     /**
      * Creates a Feature runner for a parsed .feature file.
      *
@@ -39,17 +36,13 @@ final readonly class Feature implements SpecBlock
      * @param FeatureNode $featureNode parsed feature structure
      * @param StepRegistry $registry step pattern-to-closure mappings
      * @param HookRegistry $hooks before-feature/scenario/step hooks
-     * @param Dispatcher|null $dispatcher event dispatcher instance
      */
     public function __construct(
         private string $path,
         private FeatureNode $featureNode,
         private StepRegistry $registry,
         private HookRegistry $hooks,
-        ?Dispatcher $dispatcher = null,
-    ) {
-        $this->dispatcher = $dispatcher ?? DispatcherRegistry::get();
-    }
+    ) {}
 
     /**
      * Yields each ScenarioResult as it completes, expanding outlines on the fly.
@@ -107,7 +100,7 @@ final readonly class Feature implements SpecBlock
         $this->hooks->runBeforeScenario($world);
 
         $collector = new StepMatchCollector();
-        $this->dispatcher->addSubscriber($collector);
+        Dispatcher::addSubscriber($collector);
 
         $stepResults = [];
         $failed = false;
@@ -138,7 +131,7 @@ final readonly class Feature implements SpecBlock
             }
         }
 
-        $this->dispatcher->removeSubscriber($collector);
+        Dispatcher::removeSubscriber($collector);
 
         return new ScenarioResult($scenario->title, $stepResults);
     }

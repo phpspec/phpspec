@@ -16,7 +16,6 @@ namespace PhpSpec\Extensions;
 
 use PhpSpec\Configuration;
 use PhpSpec\EventDispatcher\Dispatcher;
-use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Specification\Expectation;
@@ -45,15 +44,10 @@ final class ExtensionLoader
      * @param Configuration   $config     The PhpSpec configuration instance
      * @param Filesystem|null $filesystem Optional filesystem abstraction for testability
      */
-    private readonly Dispatcher $dispatcher;
-
     public function __construct(
         private readonly Configuration $config,
-        ?Dispatcher $dispatcher = null,
         private readonly ?Filesystem $filesystem = null,
-    ) {
-        $this->dispatcher = $dispatcher ?? DispatcherRegistry::get();
-    }
+    ) {}
 
     /**
      * Loads and registers all extensions. Safe to call multiple times.
@@ -203,7 +197,7 @@ final class ExtensionLoader
         }
         $instance = new $fqcn();
         if ($instance instanceof ListenerExtension) {
-            $this->dispatcher->addSubscriber(new ListenerBridge($instance));
+            Dispatcher::addSubscriber(new ListenerBridge($instance));
         }
     }
 

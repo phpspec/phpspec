@@ -12,7 +12,7 @@
  * file that was distributed with this source code.
  */
 
-use PhpSpec\EventDispatcher\DispatcherRegistry;
+use PhpSpec\EventDispatcher\Dispatcher;
 use PhpSpec\EventDispatcher\Event\ContextCreated;
 use PhpSpec\EventDispatcher\Event\ExampleCreated;
 use PhpSpec\Mock\MatchableDouble;
@@ -30,15 +30,14 @@ use PhpSpec\Specification\SkippedException;
  */
 function it(string $title, Closure $example): void
 {
-    $d = DispatcherRegistry::get();
-    $it = new Example($title, $example, $d);
+    $it = new Example($title, $example);
 
-    $scope = $d->currentScope();
+    $scope = Dispatcher::currentScope();
     if ($scope) {
         $scope->addSpecBlock($it);
     }
 
-    $d->dispatch(
+    Dispatcher::dispatch(
         new ExampleCreated($title, $it),
         ExampleCreated::NAME,
     );
@@ -100,15 +99,14 @@ function expect(mixed $subject): Expectation
  */
 function describe(string $context, Closure $examples): void
 {
-    $d = DispatcherRegistry::get();
-    $describe = new Context($context, $examples, $d);
+    $describe = new Context($context, $examples);
 
-    $scope = $d->currentScope();
+    $scope = Dispatcher::currentScope();
     if ($scope) {
         $scope->addSpecBlock($describe);
     }
 
-    $d->dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
+    Dispatcher::dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
 }
 
 /**
@@ -133,7 +131,7 @@ function context(string $context, Closure $examples): void
  */
 function let(string|Closure $propertyOrSetter, ?Closure $setter = null): void
 {
-    $scope = DispatcherRegistry::get()->currentScope();
+    $scope = Dispatcher::currentScope();
     if ($scope instanceof Context) {
         if ($propertyOrSetter instanceof Closure) {
             $scope->modifyWithInjection($propertyOrSetter);
@@ -150,7 +148,7 @@ function let(string|Closure $propertyOrSetter, ?Closure $setter = null): void
  */
 function beforeAll(Closure $hook): void
 {
-    $scope = DispatcherRegistry::get()->currentScope();
+    $scope = Dispatcher::currentScope();
     if ($scope instanceof Context) {
         $scope->addBeforeAll($hook);
     }
@@ -163,7 +161,7 @@ function beforeAll(Closure $hook): void
  */
 function afterAll(Closure $hook): void
 {
-    $scope = DispatcherRegistry::get()->currentScope();
+    $scope = Dispatcher::currentScope();
     if ($scope instanceof Context) {
         $scope->addAfterAll($hook);
     }
@@ -176,7 +174,7 @@ function afterAll(Closure $hook): void
  */
 function beforeEach(Closure $hook): void
 {
-    $scope = DispatcherRegistry::get()->currentScope();
+    $scope = Dispatcher::currentScope();
     if ($scope instanceof Context) {
         $scope->addBeforeEach($hook);
     }
@@ -189,7 +187,7 @@ function beforeEach(Closure $hook): void
  */
 function afterEach(Closure $hook): void
 {
-    $scope = DispatcherRegistry::get()->currentScope();
+    $scope = Dispatcher::currentScope();
     if ($scope instanceof Context) {
         $scope->addAfterEach($hook);
     }
@@ -203,14 +201,13 @@ function afterEach(Closure $hook): void
  */
 function xit(string $title, Closure $example): void
 {
-    $d = DispatcherRegistry::get();
-    $it = new Example($title, $example, $d);
+    $it = new Example($title, $example);
     $it->setPending(true);
 
-    $scope = $d->currentScope();
+    $scope = Dispatcher::currentScope();
     $scope?->addSpecBlock($it);
 
-    $d->dispatch(
+    Dispatcher::dispatch(
         new ExampleCreated($title, $it),
         ExampleCreated::NAME,
     );
@@ -224,14 +221,13 @@ function xit(string $title, Closure $example): void
  */
 function xdescribe(string $context, Closure $examples): void
 {
-    $d = DispatcherRegistry::get();
-    $describe = new Context($context, $examples, $d);
+    $describe = new Context($context, $examples);
     $describe->setPending(true);
 
-    $scope = $d->currentScope();
+    $scope = Dispatcher::currentScope();
     $scope?->addSpecBlock($describe);
 
-    $d->dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
+    Dispatcher::dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
 }
 
 /**
@@ -287,14 +283,13 @@ function addMatcher(string $name, Closure $matcher, string $message): void
  */
 function fit(string $title, Closure $example): void
 {
-    $d = DispatcherRegistry::get();
-    $it = new Example($title, $example, $d);
+    $it = new Example($title, $example);
     $it->setFocused(true);
 
-    $scope = $d->currentScope();
+    $scope = Dispatcher::currentScope();
     $scope?->addSpecBlock($it);
 
-    $d->dispatch(
+    Dispatcher::dispatch(
         new ExampleCreated($title, $it),
         ExampleCreated::NAME,
     );
@@ -308,14 +303,13 @@ function fit(string $title, Closure $example): void
  */
 function fdescribe(string $context, Closure $examples): void
 {
-    $d = DispatcherRegistry::get();
-    $describe = new Context($context, $examples, $d);
+    $describe = new Context($context, $examples);
     $describe->setFocused(true);
 
-    $scope = $d->currentScope();
+    $scope = Dispatcher::currentScope();
     $scope?->addSpecBlock($describe);
 
-    $d->dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
+    Dispatcher::dispatch(new ContextCreated($context, $describe), ContextCreated::NAME);
 }
 
 /**

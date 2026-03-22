@@ -15,7 +15,6 @@
 namespace PhpSpec;
 
 use PhpSpec\EventDispatcher\Dispatcher;
-use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Subscriber\SpecificationSubscriber;
 use PhpSpec\Specification\SpecBlock;
 use PhpSpec\StoryBDD\Feature;
@@ -27,16 +26,12 @@ use StoryBDDRegistry;
  */
 final class Loader
 {
-    private readonly Dispatcher $dispatcher;
-
     /**
-     * @param Dispatcher|null $dispatcher event dispatcher instance
      * @param Filesystem|null $filesystem injectable filesystem for testability
      * @param string $specSuffix file suffix used to identify spec files
      */
-    public function __construct(?Dispatcher $dispatcher = null, private ?Filesystem $filesystem = null, private string $specSuffix = '.spec.php')
+    public function __construct(private ?Filesystem $filesystem = null, private string $specSuffix = '.spec.php')
     {
-        $this->dispatcher = $dispatcher ?? DispatcherRegistry::get();
         $this->filesystem ??= new RealFilesystem();
     }
 
@@ -137,8 +132,8 @@ final class Loader
      */
     private function loadFile(string $file): Specification
     {
-        $spec = new Specification($file, $this->specSuffix, $this->dispatcher);
-        $this->dispatcher->addSubscriber(new SpecificationSubscriber($spec));
+        $spec = new Specification($file, $this->specSuffix);
+        Dispatcher::addSubscriber(new SpecificationSubscriber($spec));
         return $spec;
     }
 
@@ -173,7 +168,6 @@ final class Loader
                 $featureNode,
                 StoryBDDRegistry::$steps,
                 StoryBDDRegistry::$hooks,
-                $this->dispatcher,
             );
         }
 

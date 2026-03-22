@@ -16,7 +16,6 @@ namespace PhpSpec\Specification;
 
 use Closure;
 use PhpSpec\EventDispatcher\Dispatcher;
-use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\ExampleCompleted;
 use PhpSpec\EventDispatcher\Event\ExampleErrored;
 use PhpSpec\EventDispatcher\Event\ExampleRunned;
@@ -53,20 +52,11 @@ class Example implements ExampleResultRegistry, SpecBlock
     /** @var bool whether this example is focused for exclusive execution */
     private bool $focused = false;
 
-    private readonly Dispatcher $dispatcher;
-
     /**
      * @param string $title descriptive label for the example
      * @param Closure $example executable test body
-     * @param Dispatcher|null $dispatcher event dispatcher instance
      */
-    public function __construct(
-        private readonly string $title,
-        private readonly Closure $example,
-        ?Dispatcher $dispatcher = null,
-    ) {
-        $this->dispatcher = $dispatcher ?? DispatcherRegistry::get();
-    }
+    public function __construct(private readonly string $title, private readonly Closure $example) {}
 
     /**
      * Marks this example as pending (skipped).
@@ -109,14 +99,14 @@ class Example implements ExampleResultRegistry, SpecBlock
     public function run(): Results
     {
         $subscriber = new ExampleSubscriber($this);
-        $this->dispatcher->addSubscriber($subscriber);
+        Dispatcher::addSubscriber($subscriber);
 
-        $this->dispatcher->dispatch(new ExampleStarted($this->title), ExampleStarted::NAME);
+        Dispatcher::dispatch(new ExampleStarted($this->title), ExampleStarted::NAME);
 
         if ($this->pending) {
-            $this->dispatcher->removeSubscriber($subscriber);
+            Dispatcher::removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->title, [], false, true);
-            $this->dispatcher->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+            Dispatcher::dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         }
 
@@ -136,28 +126,28 @@ class Example implements ExampleResultRegistry, SpecBlock
             ($this->example)(...$this->resolveClosureArgs($this->example));
         } catch (PendingException $e) {
             restore_error_handler();
-            $this->dispatcher->removeSubscriber($subscriber);
+            Dispatcher::removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->title, [], false, true);
             $this->exampleResult->setWarnings($warnings);
-            $this->dispatcher->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+            Dispatcher::dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (SkippedException $e) {
             restore_error_handler();
-            $this->dispatcher->removeSubscriber($subscriber);
+            Dispatcher::removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->title, [], false, false, true);
-            $this->dispatcher->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+            Dispatcher::dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (\Throwable $e) {
-            $this->dispatcher->dispatch(
+            Dispatcher::dispatch(
                 new ExampleErrored($this->title, new ExampleError($e->getMessage(), $e)),
                 ExampleErrored::NAME,
             );
         }
 
         $elapsed = (hrtime(true) - $start) / 1e9;
-        $this->dispatcher->dispatch(new ExampleRunned($this->title), ExampleRunned::NAME);
+        Dispatcher::dispatch(new ExampleRunned($this->title), ExampleRunned::NAME);
         restore_error_handler();
-        $this->dispatcher->removeSubscriber($subscriber);
+        Dispatcher::removeSubscriber($subscriber);
         $this->exampleResult->setDuration($elapsed);
         $unique = [];
         foreach ($warnings as $w) {
@@ -168,7 +158,7 @@ class Example implements ExampleResultRegistry, SpecBlock
         $this->exampleResult->setWarnings(array_values(array_filter($all, fn($w) => in_array($w['severity'], [E_WARNING, E_USER_WARNING]))));
         $this->exampleResult->setDeprecations(array_values(array_filter($all, fn($w) => in_array($w['severity'], [E_DEPRECATED, E_USER_DEPRECATED]))));
         $this->exampleResult->setNotices(array_values(array_filter($all, fn($w) => in_array($w['severity'], [E_NOTICE, E_USER_NOTICE]))));
-        $this->dispatcher->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
+        Dispatcher::dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
         return $this->exampleResult;
     }
 

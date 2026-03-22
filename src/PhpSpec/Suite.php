@@ -15,7 +15,6 @@
 namespace PhpSpec;
 
 use PhpSpec\EventDispatcher\Dispatcher;
-use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\SuiteFinished;
 use PhpSpec\EventDispatcher\Event\SuiteStarted;
 use PhpSpec\Result\ExampleResult;
@@ -28,18 +27,10 @@ use PhpSpec\Specification\SpecBlock;
  */
 final readonly class Suite implements SpecBlock
 {
-    private Dispatcher $dispatcher;
-
     /**
      * @param array<SpecBlock> $specifications spec files and features to run
-     * @param Dispatcher|null $dispatcher event dispatcher instance
      */
-    public function __construct(
-        private array $specifications,
-        ?Dispatcher $dispatcher = null,
-    ) {
-        $this->dispatcher = $dispatcher ?? DispatcherRegistry::get();
-    }
+    public function __construct(private array $specifications) {}
 
     /**
      * Returns all specifications and features registered in the suite.
@@ -60,7 +51,7 @@ final readonly class Suite implements SpecBlock
      */
     public function stream(StopConditions $stop = new StopConditions(), ?int $seed = null): \Generator
     {
-        $this->dispatcher->dispatch(new SuiteStarted(), SuiteStarted::NAME);
+        Dispatcher::dispatch(new SuiteStarted(), SuiteStarted::NAME);
 
         $specs = $this->specifications;
         if ($seed !== null) {
@@ -73,12 +64,12 @@ final readonly class Suite implements SpecBlock
             yield $result;
 
             if ($stop->any() && $this->shouldStop($result, $stop)) {
-                $this->dispatcher->dispatch(new SuiteFinished(), SuiteFinished::NAME);
+                Dispatcher::dispatch(new SuiteFinished(), SuiteFinished::NAME);
                 return;
             }
         }
 
-        $this->dispatcher->dispatch(new SuiteFinished(), SuiteFinished::NAME);
+        Dispatcher::dispatch(new SuiteFinished(), SuiteFinished::NAME);
     }
 
     /**
