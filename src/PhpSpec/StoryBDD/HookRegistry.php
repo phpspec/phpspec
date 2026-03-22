@@ -15,6 +15,7 @@
 namespace PhpSpec\StoryBDD;
 
 /**
+ * @internal
  * Stores and executes lifecycle hooks for feature, scenario, and step events.
  * Scenario and step hooks are bound to the StepWorld instance as $this.
  */

@@ -24,6 +24,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
+ * @internal
  * Reads extension config and auto-discovery, instantiates extensions, and wires them
  * into the appropriate PhpSpec systems (matchers, formatters, commands, listeners, tools).
  */

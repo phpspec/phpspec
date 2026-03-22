@@ -23,6 +23,7 @@ use PhpSpec\Results;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
+ * @internal
  * Renders spec results using PHP view templates for human-readable, indented output.
  * Delegates rendering to TemplateRenderer with the suite view hierarchy.
  */

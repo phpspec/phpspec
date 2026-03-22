@@ -17,6 +17,7 @@ namespace PhpSpec\Result;
 use PhpSpec\Results;
 
 /**
+ * @internal
  * Aggregates scenario results for a single feature file in Story BDD mode.
  */
 final readonly class FeatureResult implements Results

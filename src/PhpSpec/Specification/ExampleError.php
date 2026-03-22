@@ -18,6 +18,7 @@ use PhpSpec\CodeGeneration\SurroundingCode;
 use Throwable;
 
 /**
+ * @internal
  * Wraps an exception thrown during example execution, providing access to
  * surrounding source code, the original exception type, and a filtered stack trace.
  */

@@ -15,6 +15,7 @@
 namespace PhpSpec\Coverage;
 
 /**
+ * @internal
  * Wraps Xdebug code coverage collection, providing start/stop lifecycle and source path filtering.
  * Requires Xdebug with coverage mode enabled.
  */

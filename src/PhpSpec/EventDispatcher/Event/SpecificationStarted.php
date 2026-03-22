@@ -19,6 +19,7 @@ use PhpSpec\Logging\LogDateTime;
 use PhpSpec\Logging\Loggable;
 
 /**
+ * @internal
  * Dispatched when a specification file begins loading, before its DSL is evaluated.
  */
 final readonly class SpecificationStarted implements Event, Loggable

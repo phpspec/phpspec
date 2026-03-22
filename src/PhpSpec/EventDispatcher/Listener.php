@@ -15,6 +15,7 @@
 namespace PhpSpec\EventDispatcher;
 
 /**
+ * @internal
  * Contract for listeners that receive all dispatched events regardless of name.
  */
 interface Listener

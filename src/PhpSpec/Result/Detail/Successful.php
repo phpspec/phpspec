@@ -17,6 +17,7 @@ namespace PhpSpec\Result\Detail;
 use PhpSpec\Result\Detail;
 
 /**
+ * @internal
  * Represents a successful match detail with no failure information.
  */
 final class Successful extends Detail

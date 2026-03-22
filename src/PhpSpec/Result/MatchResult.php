@@ -18,6 +18,7 @@ use PhpSpec\CodeGeneration\SurroundingCode;
 use PhpSpec\Results;
 
 /**
+ * @internal
  * Wraps the pass/fail outcome of a single expectation along with its detail.
  *
  * Provides factory methods for creating passed and failed results, and delegates

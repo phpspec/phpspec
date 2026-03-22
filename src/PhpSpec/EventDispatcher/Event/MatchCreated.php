@@ -18,6 +18,7 @@ use Closure;
 use PhpSpec\EventDispatcher\Event;
 
 /**
+ * @internal
  * Dispatched when a deferred match closure is created, to be evaluated after the example runs.
  */
 final readonly class MatchCreated implements Event

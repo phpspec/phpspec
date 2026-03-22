@@ -14,6 +14,8 @@
 
 namespace PhpSpec\Ai;
 
+/** @internal */
+
 final class SpecRunner
 {
     private const TIMEOUT_SECONDS = 60;

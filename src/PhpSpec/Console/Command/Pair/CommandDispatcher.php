@@ -34,6 +34,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\StringInput;
 
 /**
+ * @internal
  * Maps parsed REPL input to service calls for the pair programming mode.
  */
 final class CommandDispatcher

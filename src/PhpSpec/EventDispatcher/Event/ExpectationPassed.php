@@ -17,6 +17,7 @@ namespace PhpSpec\EventDispatcher\Event;
 use PhpSpec\EventDispatcher\Event;
 
 /**
+ * @internal
  * Dispatched when an expectation matcher evaluates successfully.
  */
 final readonly class ExpectationPassed implements Event

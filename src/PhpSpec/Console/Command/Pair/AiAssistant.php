@@ -28,6 +28,7 @@ use PhpSpec\RealFilesystem;
 use Throwable;
 
 /**
+ * @internal
  * Handles natural-language input in pair mode via an LLM with tool use.
  *
  * Maintains full conversation history across calls so the LLM remembers

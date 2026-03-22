@@ -30,6 +30,7 @@ use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Command\Command;
 
 /**
+ * @internal
  * Symfony Console application that bootstraps PhpSpec by registering the Run and Describe commands
  * with their required dependencies.
  */

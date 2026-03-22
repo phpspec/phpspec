@@ -18,6 +18,7 @@ use PhpSpec\Results;
 use PhpSpec\StoryBDD\StepError;
 
 /**
+ * @internal
  * Holds the result of a single step (Given/When/Then) in Story BDD mode.
  *
  * Tracks the step's state (passed, failed, pending, undefined, skipped) and an optional error.

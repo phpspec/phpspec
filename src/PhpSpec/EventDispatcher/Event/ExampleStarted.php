@@ -19,6 +19,7 @@ use PhpSpec\Logging\LogDateTime;
 use PhpSpec\Logging\Loggable;
 
 /**
+ * @internal
  * Dispatched when an example begins running, before its closure is invoked.
  */
 final readonly class ExampleStarted implements Event, Loggable

@@ -15,6 +15,7 @@
 namespace PhpSpec\Specification;
 
 /**
+ * @internal
  * Marker interface for shared state containers used across examples in a context.
  */
 interface World {}

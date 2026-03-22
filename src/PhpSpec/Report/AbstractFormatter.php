@@ -18,6 +18,7 @@ use PhpSpec\Result\SuiteResult;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
+ * @internal
  * Base formatter that provides a default format() implementation
  * by delegating to the streaming begin/printResult/end methods.
  */

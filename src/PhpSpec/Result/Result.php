@@ -15,6 +15,7 @@
 namespace PhpSpec\Result;
 
 /**
+ * @internal
  * Enumeration of possible match outcomes: Passed, Failed, or Error.
  */
 enum Result

@@ -15,6 +15,7 @@
 namespace PhpSpec\Coverage;
 
 /**
+ * @internal
  * Renders an HTML code coverage report with an index page and per-file source views.
  * Lines are color-coded green (covered), red (uncovered), or grey (non-executable).
  */

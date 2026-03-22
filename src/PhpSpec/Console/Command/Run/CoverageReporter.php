@@ -22,6 +22,7 @@ use PhpSpec\Coverage\TextReport;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
 /**
+ * @internal
  * Manages the complete code coverage lifecycle: availability check, collection start/stop,
  * report rendering (text, Clover XML, HTML), and minimum threshold enforcement.
  */

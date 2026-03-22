@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command\Refactor;
 
 /**
+ * @internal
  * Value object capturing the outcome of an AI-driven refactoring attempt.
  */
 final readonly class RefactorResult

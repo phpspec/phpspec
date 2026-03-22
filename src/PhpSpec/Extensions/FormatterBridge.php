@@ -21,6 +21,7 @@ use PhpSpec\Results;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
+ * @internal
  * Adapts a FormatterExtension into the Formatter interface used by the runner.
  */
 final class FormatterBridge implements Formatter

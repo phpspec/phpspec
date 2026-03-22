@@ -29,6 +29,7 @@ use ReflectionException;
 use ReflectionFunction;
 
 /**
+ * @internal
  * Represents a single it() example. Executes the test closure, captures
  * match results and errors, and reports timing information.
  */

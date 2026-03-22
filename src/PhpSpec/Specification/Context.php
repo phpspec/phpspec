@@ -25,6 +25,7 @@ use ReflectionException;
 use Throwable;
 
 /**
+ * @internal
  * Represents a describe()/context() block containing examples, nested contexts,
  * lifecycle hooks, and shared world state.
  */

@@ -19,6 +19,7 @@ namespace PhpSpec\Specification;
  * on construction and holds shared state set by let() bindings.
  */
 #[\AllowDynamicProperties]
+/** @internal */
 final class Subject implements World
 {
     /** @var array<string, object> mocks created by let() parameter injection */

@@ -17,6 +17,7 @@ namespace PhpSpec;
 use PhpSpec\Result\SuiteResult;
 
 /**
+ * @internal
  * Orchestrates a spec suite run by delegating execution to the Suite.
  */
 final class Runner

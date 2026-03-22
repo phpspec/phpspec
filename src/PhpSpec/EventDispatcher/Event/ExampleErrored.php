@@ -20,6 +20,7 @@ use PhpSpec\Logging\Loggable;
 use PhpSpec\Specification\ExampleError;
 
 /**
+ * @internal
  * Dispatched when an example throws an unexpected error or exception during execution.
  */
 final readonly class ExampleErrored implements Event, Loggable

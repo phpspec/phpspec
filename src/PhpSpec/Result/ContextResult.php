@@ -17,6 +17,7 @@ namespace PhpSpec\Result;
 use PhpSpec\Results;
 
 /**
+ * @internal
  * Aggregates example results for a single describe/context block.
  *
  * Tracks a title, child example results, and an optional error state for the context itself.

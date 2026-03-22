@@ -14,6 +14,8 @@
 
 namespace PhpSpec\Console\Command\Pair;
 
+/** @internal */
+
 final class PairLogger
 {
     private const LOG_FILE = '.phpspec/pair.log';

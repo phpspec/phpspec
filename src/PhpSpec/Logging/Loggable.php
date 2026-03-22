@@ -15,6 +15,7 @@
 namespace PhpSpec\Logging;
 
 /**
+ * @internal
  * Defines the contract for objects that can produce a log representation of themselves.
  */
 interface Loggable

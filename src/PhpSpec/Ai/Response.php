@@ -15,6 +15,7 @@
 namespace PhpSpec\Ai;
 
 /**
+ * @internal
  * Represents an LLM chat completion response.
  */
 final readonly class Response

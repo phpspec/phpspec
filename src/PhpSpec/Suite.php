@@ -23,6 +23,7 @@ use PhpSpec\Result\SuiteResult;
 use PhpSpec\Specification\SpecBlock;
 
 /**
+ * @internal
  * Top-level container that holds all specifications and orchestrates their execution.
  */
 final readonly class Suite implements SpecBlock

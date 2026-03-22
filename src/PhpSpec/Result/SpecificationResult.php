@@ -17,6 +17,7 @@ namespace PhpSpec\Result;
 use PhpSpec\Results;
 
 /**
+ * @internal
  * Aggregates context and example results for a single specification file.
  */
 final readonly class SpecificationResult implements Results

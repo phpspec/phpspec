@@ -15,6 +15,7 @@
 namespace PhpSpec\Ai;
 
 /**
+ * @internal
  * Represents a tool call requested by the LLM.
  */
 final readonly class ToolCall

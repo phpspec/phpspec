@@ -27,6 +27,7 @@ use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
 
 /**
+ * @internal
  * Renders spec results as JUnit XML, compatible with CI tools that consume JUnit reports.
  * Produces a testsuites document with nested testsuite and testcase elements.
  */

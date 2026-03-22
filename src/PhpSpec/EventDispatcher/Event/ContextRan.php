@@ -20,6 +20,7 @@ use PhpSpec\Logging\Loggable;
 use PhpSpec\Specification\Context;
 
 /**
+ * @internal
  * Dispatched after a context (describe/context block) finishes running all its examples.
  */
 final readonly class ContextRan implements Event, Loggable

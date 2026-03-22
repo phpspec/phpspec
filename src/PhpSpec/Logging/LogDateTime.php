@@ -17,6 +17,7 @@ namespace PhpSpec\Logging;
 use DateTime;
 
 /**
+ * @internal
  * Provides microsecond-precision timestamp formatting for log entries.
  */
 trait LogDateTime

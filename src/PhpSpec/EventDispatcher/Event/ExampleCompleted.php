@@ -20,6 +20,7 @@ use PhpSpec\Logging\Loggable;
 use PhpSpec\Result\ExampleResult;
 
 /**
+ * @internal
  * Dispatched when an example finishes execution, carrying the result.
  */
 final readonly class ExampleCompleted implements Event, Loggable

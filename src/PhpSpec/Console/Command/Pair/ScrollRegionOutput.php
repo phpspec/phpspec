@@ -18,6 +18,7 @@ use Symfony\Component\Console\Formatter\OutputFormatterInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
+ * @internal
  * Decorates an OutputInterface to manage cursor positioning within
  * an ANSI scroll region. All write/writeln calls are redirected
  * into the scrollable content area, while prepareForInput() moves

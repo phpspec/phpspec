@@ -15,6 +15,7 @@
 namespace PhpSpec\Mock;
 
 /**
+ * @internal
  * Resolves which stub entry matches a given method call based on argument patterns.
  * Entries are stored as [$argPattern, $data] pairs; null argPattern is a catch-all.
  * Later-registered entries are checked first (prepend semantics).

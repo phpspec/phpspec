@@ -29,6 +29,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
 /**
+ * @internal
  * CLI command that launches an interactive pair programming REPL session.
  */
 final class Pair extends Command

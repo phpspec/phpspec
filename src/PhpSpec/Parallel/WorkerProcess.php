@@ -24,6 +24,7 @@ use PhpSpec\Specification\ExampleError;
 use PhpSpec\StoryBDD\StepError;
 
 /**
+ * @internal
  * Wraps a single child process that runs phpspec on a set of spec files
  * and produces JUnit XML output for result parsing.
  */

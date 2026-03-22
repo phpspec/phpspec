@@ -15,6 +15,7 @@
 namespace PhpSpec\StoryBDD;
 
 /**
+ * @internal
  * Data class representing a parsed Gherkin Feature with its title, description,
  * optional background, scenarios, and tags.
  */

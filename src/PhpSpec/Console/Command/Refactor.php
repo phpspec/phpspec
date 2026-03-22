@@ -27,6 +27,7 @@ use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
 /**
+ * @internal
  * CLI command that performs AI-powered, behaviour-preserving refactorings.
  *
  * Resolves a target (class FQCN, FQCN::method, or spec file path), verifies

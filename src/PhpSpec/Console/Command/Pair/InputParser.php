@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command\Pair;
 
 /**
+ * @internal
  * Parses raw REPL input into a command name and argument string.
  */
 final readonly class InputParser

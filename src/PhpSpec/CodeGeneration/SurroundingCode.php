@@ -18,6 +18,7 @@ use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 
 /**
+ * @internal
  * Extracts source code lines surrounding a given line number for error reporting context.
  * Returns a window of lines before and after the target line, preserving original line numbers.
  */

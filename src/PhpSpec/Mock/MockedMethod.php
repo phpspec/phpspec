@@ -15,6 +15,7 @@
 namespace PhpSpec\Mock;
 
 /**
+ * @internal
  * Records a single method invocation on a test double, tracking the subject,
  * method name, arguments, and a mutable call count used for verification.
  */

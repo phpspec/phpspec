@@ -15,6 +15,7 @@
 namespace PhpSpec\StoryBDD;
 
 /**
+ * @internal
  * Extends ScenarioNode for Scenario Outline with an Examples table.
  * Expands placeholder variables into concrete ScenarioNode instances.
  */

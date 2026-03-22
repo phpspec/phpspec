@@ -18,6 +18,7 @@ use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 
 /**
+ * @internal
  * Generates step definition files for undefined Story BDD steps.
  * Creates a steps PHP file alongside the feature file with placeholder step implementations.
  */

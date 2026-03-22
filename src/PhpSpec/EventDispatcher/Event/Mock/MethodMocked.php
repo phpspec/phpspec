@@ -18,6 +18,7 @@ use PhpSpec\EventDispatcher\Event;
 use PhpSpec\Mock\MockedMethod;
 
 /**
+ * @internal
  * Dispatched when a mocked method is invoked on a test double during example execution.
  */
 final readonly class MethodMocked implements Event

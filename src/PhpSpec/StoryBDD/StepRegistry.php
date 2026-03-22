@@ -15,6 +15,7 @@
 namespace PhpSpec\StoryBDD;
 
 /**
+ * @internal
  * Maps step patterns to closures for matching against Gherkin step text.
  * Patterns use {string}, {int}, {word}, and {*} placeholders that are converted to regex capture groups.
  */

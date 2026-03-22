@@ -15,6 +15,7 @@
 namespace PhpSpec\StoryBDD;
 
 /**
+ * @internal
  * Value object returned when step text matches a registered pattern.
  * Contains the step closure, captured arguments, and the original pattern.
  */

@@ -18,6 +18,7 @@ use PhpSpec\Results;
 use PhpSpec\Specification\ExampleError;
 
 /**
+ * @internal
  * Holds the result of a single example (it() block), including match results,
  * error/pending/skipped state, execution duration, and optional warnings/deprecations/notices.
  */

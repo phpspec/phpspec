@@ -24,6 +24,7 @@ use ReflectionClass;
 use ReflectionException;
 
 /**
+ * @internal
  * Walks the Results tree and extracts structured data about errors and failures.
  * Matches error messages against known patterns to identify missing types, undefined methods,
  * undefined steps, and fakeable method candidates.

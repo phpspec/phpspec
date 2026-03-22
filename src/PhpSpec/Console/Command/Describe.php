@@ -24,6 +24,7 @@ use Symfony\Component\Console\Input\InputOption as Option;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
 /**
+ * @internal
  * CLI command that generates spec files for a given class. Optionally adds an example
  * for a specific method and can trigger a spec run after generation.
  */

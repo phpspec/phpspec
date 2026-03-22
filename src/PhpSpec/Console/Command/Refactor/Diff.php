@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command\Refactor;
 
 /**
+ * @internal
  * Line-level diff utility using the Longest Common Subsequence algorithm.
  */
 final class Diff

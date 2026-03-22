@@ -15,6 +15,7 @@
 namespace PhpSpec\Specification;
 
 /**
+ * @internal
  * Contract for containers that accept child spec blocks (Specification, Context).
  */
 interface ExampleRegistry

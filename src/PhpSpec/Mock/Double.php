@@ -24,6 +24,7 @@ use ReflectionUnionType;
 use Throwable;
 
 /**
+ * @internal
  * Generates test double classes at runtime using reflection and eval().
  * Supports doubling classes and interfaces, handling constructors with complex
  * type signatures including nullable, union, intersection, and enum types.

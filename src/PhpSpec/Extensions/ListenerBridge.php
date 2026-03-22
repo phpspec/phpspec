@@ -24,6 +24,7 @@ use PhpSpec\EventDispatcher\Event\SuiteStarted;
 use PhpSpec\EventDispatcher\Subscriber;
 
 /**
+ * @internal
  * Adapts a ListenerExtension into a Subscriber, translating internal events
  * to simplified callback methods.
  */

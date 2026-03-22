@@ -20,6 +20,7 @@ use PhpSpec\Logging\LogDateTime;
 use PhpSpec\Logging\Loggable;
 
 /**
+ * @internal
  * Dispatched when a context is modified, such as when a let() hook or beforeEach is added.
  */
 final readonly class ContextModified implements Event, Loggable

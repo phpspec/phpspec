@@ -18,6 +18,7 @@ use Closure;
 use PhpSpec\Ai\Contracts\ToolInterface;
 
 /**
+ * @internal
  * A concrete AI tool implementation with a closure-based handler.
  */
 final class Tool implements ToolInterface

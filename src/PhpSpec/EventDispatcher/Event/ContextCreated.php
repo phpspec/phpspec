@@ -20,6 +20,7 @@ use PhpSpec\Logging\Loggable;
 use PhpSpec\Specification\Context;
 
 /**
+ * @internal
  * Dispatched when a context scope (describe/context block) is created during spec loading.
  */
 final readonly class ContextCreated implements Event, Loggable

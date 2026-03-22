@@ -19,6 +19,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Terminal;
 
 /**
+ * @internal
  * Output helpers for the pair programming REPL session.
  *
  * Manages a fixed-input-at-bottom terminal layout using ANSI scroll regions:

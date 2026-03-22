@@ -15,6 +15,7 @@
 namespace PhpSpec\CodeGeneration;
 
 /**
+ * @internal
  * Interactive PSR-4 autoloader that prompts the user to generate missing classes.
  * Registered via spl_autoload_register to intercept class-not-found errors during spec runs.
  */

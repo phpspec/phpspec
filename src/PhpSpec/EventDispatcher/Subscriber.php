@@ -15,6 +15,7 @@
 namespace PhpSpec\EventDispatcher;
 
 /**
+ * @internal
  * Contract for subscribers that declare interest in specific named events.
  */
 interface Subscriber

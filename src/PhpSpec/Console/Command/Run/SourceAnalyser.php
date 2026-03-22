@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command\Run;
 
 /**
+ * @internal
  * Reads spec source files to extract method signatures and expected return values.
  * Used by the code generation pipeline to determine argument counts and --fake return expressions.
  */

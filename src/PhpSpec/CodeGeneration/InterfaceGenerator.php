@@ -19,6 +19,7 @@ use PhpSpec\RealFilesystem;
 use RuntimeException;
 
 /**
+ * @internal
  * Generates PHP interface files from a fully qualified interface name.
  * Creates the directory structure and writes a minimal interface skeleton.
  */

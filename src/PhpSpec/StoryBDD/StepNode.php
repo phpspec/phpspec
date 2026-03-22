@@ -15,6 +15,7 @@
 namespace PhpSpec\StoryBDD;
 
 /**
+ * @internal
  * Data class representing a single Gherkin step with its keyword, text,
  * and optional DataTable or doc string attachment.
  */

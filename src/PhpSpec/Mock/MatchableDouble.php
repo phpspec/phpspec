@@ -15,6 +15,7 @@
 namespace PhpSpec\Mock;
 
 /**
+ * @internal
  * Marker interface for mock return value wrappers.
  * Implemented by generated method-return classes and LastCallDouble to signal
  * that a value originates from a mock call and can be used with mock expectations.

@@ -19,6 +19,7 @@ use PhpSpec\RealFilesystem;
 use RuntimeException;
 
 /**
+ * @internal
  * Generates PHP class files from a fully qualified class name.
  * Creates the directory structure and writes a minimal class skeleton.
  */

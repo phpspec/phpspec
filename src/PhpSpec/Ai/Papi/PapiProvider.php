@@ -24,6 +24,7 @@ use PhpSpec\Ai\Role;
 use PhpSpec\Ai\ToolCall;
 
 /**
+ * @internal
  * Adapter that bridges PhpSpec's AI provider interface to PapiAI.
  *
  * Converts PhpSpec Message/Response/ToolCall objects to and from their

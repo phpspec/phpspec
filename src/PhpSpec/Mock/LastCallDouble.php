@@ -17,6 +17,7 @@ namespace PhpSpec\Mock;
 use Exception;
 
 /**
+ * @internal
  * Tracks the most recent mock method call for scalar-return-type bridging.
  * When a doubled method returns a scalar (not a MatchableDouble wrapper),
  * this object is stored in Expectation::$lastDouble so that allow() can

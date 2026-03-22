@@ -19,6 +19,7 @@ use PhpSpec\EventDispatcher\Listener;
 use PhpSpec\Logging\Loggable;
 
 /**
+ * @internal
  * Outputs timestamped log lines for all Loggable events, useful for debugging spec execution.
  */
 final class LogListener implements Listener

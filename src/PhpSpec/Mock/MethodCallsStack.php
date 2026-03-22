@@ -15,6 +15,7 @@
 namespace PhpSpec\Mock;
 
 /**
+ * @internal
  * Stack-based tracker that records all method calls made on a test double.
  * Supports push/pop/peek operations and provides query methods for verifying
  * call counts and argument matching during mock assertions.

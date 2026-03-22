@@ -19,6 +19,7 @@ use PhpSpec\Logging\LogDateTime;
 use PhpSpec\Logging\Loggable;
 
 /**
+ * @internal
  * Dispatched when a specification file finishes execution.
  */
 final readonly class SpecificationFinished implements Event, Loggable

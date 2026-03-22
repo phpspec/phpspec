@@ -15,6 +15,7 @@
 namespace PhpSpec\StoryBDD;
 
 /**
+ * @internal
  * Data class representing a parsed Gherkin Scenario with its title, ordered steps, and tags.
  */
 readonly class ScenarioNode

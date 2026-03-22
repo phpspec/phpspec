@@ -19,6 +19,8 @@ use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Papi\PapiProvider;
 use RuntimeException;
 
+/** @internal */
+
 final class ProviderFactory
 {
     private const DEFAULTS = [

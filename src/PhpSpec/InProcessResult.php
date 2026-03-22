@@ -14,6 +14,8 @@
 
 namespace PhpSpec;
 
+/** @internal */
+
 final readonly class InProcessResult
 {
     /**

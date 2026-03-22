@@ -17,6 +17,7 @@ namespace PhpSpec\Coverage;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
+ * @internal
  * Renders a text-based code coverage report to the console.
  * Displays per-file coverage percentages with color-coded output and a total summary.
  */

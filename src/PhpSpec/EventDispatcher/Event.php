@@ -15,6 +15,7 @@
 namespace PhpSpec\EventDispatcher;
 
 /**
+ * @internal
  * Contract for all events dispatched through the event system.
  */
 interface Event

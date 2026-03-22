@@ -22,6 +22,7 @@ use PhpSpec\StoryBDD\GherkinParser;
 use StoryBDDRegistry;
 
 /**
+ * @internal
  * Scans directories for spec and feature files and builds a Suite from them.
  */
 final class Loader

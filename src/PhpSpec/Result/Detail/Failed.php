@@ -18,6 +18,7 @@ use PhpSpec\CodeGeneration\SurroundingCode;
 use PhpSpec\Result\Detail;
 
 /**
+ * @internal
  * Carries detailed information about a failed match, including expected/actual values,
  * surrounding source code, and the optional fake expression for --fake code generation.
  */

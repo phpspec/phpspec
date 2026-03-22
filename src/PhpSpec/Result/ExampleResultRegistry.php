@@ -17,6 +17,7 @@ namespace PhpSpec\Result;
 use PhpSpec\Specification\ExampleError;
 
 /**
+ * @internal
  * Contract for registries that collect deferred matches and example results during spec execution.
  *
  * Implementations track match closures per example and aggregate ExampleResult instances.

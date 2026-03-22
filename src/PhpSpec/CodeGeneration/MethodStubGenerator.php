@@ -19,6 +19,7 @@ use PhpSpec\RealFilesystem;
 use RuntimeException;
 
 /**
+ * @internal
  * Adds method stubs to existing class or interface files. Supports generating empty method
  * bodies, method bodies with return expressions (--fake mode), and filling in existing
  * empty method bodies with return expressions.

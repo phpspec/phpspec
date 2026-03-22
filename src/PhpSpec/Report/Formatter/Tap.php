@@ -21,6 +21,7 @@ use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
 
 /**
+ * @internal
  * Renders spec results in TAP (Test Anything Protocol) version 13 format.
  * Outputs one line per example with ok/not ok status and YAML diagnostics for failures.
  */

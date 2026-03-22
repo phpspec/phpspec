@@ -17,6 +17,7 @@ namespace PhpSpec\Browser;
 use Closure;
 
 /**
+ * @internal
  * Lightweight HTTP client using file_get_contents + stream contexts (zero dependencies).
  */
 final class Client

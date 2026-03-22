@@ -20,6 +20,7 @@ use PhpSpec\EventDispatcher\Event\MatchCreated;
 use PhpSpec\Result\MatchResult;
 
 /**
+ * @internal
  * Bridges the Expectation API with the event system. Creates and dispatches
  * MatchCreated events that carry deferred match evaluation closures.
  */

@@ -28,6 +28,7 @@ use Symfony\Component\Console\Output\OutputInterface as Output;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
+ * @internal
  * CLI command that uses AI to suggest what to describe (spec or feature) next.
  *
  * Scans the project's source, spec, and feature files, sends the project

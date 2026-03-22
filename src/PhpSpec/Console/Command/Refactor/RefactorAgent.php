@@ -26,6 +26,7 @@ use PhpSpec\RealFilesystem;
 use Throwable;
 
 /**
+ * @internal
  * AI agent that performs safe, single-step refactorings on PHP classes.
  *
  * Uses an LLM with tools to read source/spec files, apply a refactoring,

@@ -20,6 +20,7 @@ use PhpSpec\Logging\Loggable;
 use PhpSpec\Specification\Example;
 
 /**
+ * @internal
  * Dispatched when an example is created via the it() DSL function during spec loading.
  */
 final readonly class ExampleCreated implements Event, Loggable

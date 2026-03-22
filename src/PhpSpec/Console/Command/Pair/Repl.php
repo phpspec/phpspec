@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command\Pair;
 
 /**
+ * @internal
  * Thin readline loop for the pair programming REPL.
  * All logic is delegated to CommandDispatcher.
  */

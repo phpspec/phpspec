@@ -19,6 +19,7 @@ use PhpSpec\EventDispatcher\Subscriber;
 use PhpSpec\Result\MatchResult;
 
 /**
+ * @internal
  * Subscribes to MatchCreated events to collect expectations made during step execution.
  * After step completion, evaluates all collected matches and returns their results.
  */

@@ -17,6 +17,7 @@ namespace PhpSpec\EventDispatcher\Event;
 use PhpSpec\EventDispatcher\Event;
 
 /**
+ * @internal
  * Dispatched when an expectation begins evaluation, before a matcher is invoked.
  */
 final readonly class ExpectationStarted implements Event

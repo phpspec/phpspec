@@ -18,6 +18,7 @@ use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 
 /**
+ * @internal
  * Generates spec files with describe/it boilerplate for a given class.
  * Creates spec files using the Jasmine/RSpec-style DSL with a basic instantiation example.
  */

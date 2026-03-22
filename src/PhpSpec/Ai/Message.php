@@ -15,6 +15,7 @@
 namespace PhpSpec\Ai;
 
 /**
+ * @internal
  * Represents a message in an AI conversation.
  */
 final readonly class Message

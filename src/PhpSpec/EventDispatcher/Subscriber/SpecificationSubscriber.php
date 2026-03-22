@@ -19,6 +19,7 @@ use PhpSpec\EventDispatcher\Subscriber;
 use PhpSpec\Specification;
 
 /**
+ * @internal
  * Resets the Specification state when a new specification file starts loading.
  *
  * Ensures each specification file begins with a clean slate by listening for the

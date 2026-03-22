@@ -38,6 +38,7 @@ use Symfony\Component\Console\Input\InputOption as Option;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
 /**
+ * @internal
  * CLI command that runs specs and features, orchestrating the full lifecycle: bootstrap loading,
  * spec loading, execution, result formatting, coverage collection, and interactive code generation.
  */

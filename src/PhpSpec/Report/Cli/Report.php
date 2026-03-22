@@ -19,6 +19,7 @@ use PhpSpec\Report\Formatter;
 use PhpSpec\Result\SuiteResult;
 
 /**
+ * @internal
  * CLI report implementation that delegates rendering to a pluggable Formatter.
  */
 final class Report implements BaseReport

@@ -17,6 +17,7 @@ namespace PhpSpec\Result;
 use Closure;
 
 /**
+ * @internal
  * Static accumulator that collects deferred match closures and evaluates them into an ExampleResult.
  *
  * Acts as a lightweight alternative to the event-based result collection, storing closures

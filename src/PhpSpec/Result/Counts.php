@@ -17,6 +17,7 @@ namespace PhpSpec\Result;
 use PhpSpec\Results;
 
 /**
+ * @internal
  * Traverses a result tree to produce summary statistics (passes, failures, errors, pending, etc.).
  *
  * Recursively walks SpecificationResult, ContextResult, ExampleResult, FeatureResult,

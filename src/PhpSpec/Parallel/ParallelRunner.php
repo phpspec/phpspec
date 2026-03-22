@@ -20,6 +20,7 @@ use PhpSpec\Results;
 use PhpSpec\StopConditions;
 
 /**
+ * @internal
  * Runs spec files in parallel using child processes managed by Fibers for non-blocking I/O.
  *
  * Each worker process runs a partition of spec files via `phpspec run -f junit`,

@@ -17,6 +17,7 @@ namespace PhpSpec\Result;
 use PhpSpec\Results;
 
 /**
+ * @internal
  * Top-level result that aggregates all specification and feature results for the entire suite.
  *
  * Provides overall pass/fail status, suite duration, and profiling support for

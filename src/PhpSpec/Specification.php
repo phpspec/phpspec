@@ -23,6 +23,7 @@ use PhpSpec\Specification\SpecBlock;
 use PhpSpec\Specification\Subject;
 
 /**
+ * @internal
  * Represents a single .spec.php file. Loads the file, executes its describe/context
  * blocks, and collects results into a SpecificationResult.
  */

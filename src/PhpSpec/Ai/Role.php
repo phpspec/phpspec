@@ -15,6 +15,7 @@
 namespace PhpSpec\Ai;
 
 /**
+ * @internal
  * Roles for AI conversation messages.
  */
 enum Role: string

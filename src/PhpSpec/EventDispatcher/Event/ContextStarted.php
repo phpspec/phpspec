@@ -19,6 +19,7 @@ use PhpSpec\Logging\LogDateTime;
 use PhpSpec\Logging\Loggable;
 
 /**
+ * @internal
  * Dispatched when a context (describe/context block) begins running its examples.
  */
 final readonly class ContextStarted implements Event, Loggable

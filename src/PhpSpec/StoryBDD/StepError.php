@@ -17,6 +17,7 @@ namespace PhpSpec\StoryBDD;
 use PhpSpec\CodeGeneration\SurroundingCode;
 
 /**
+ * @internal
  * Wraps a throwable that occurred during step execution, preserving the original
  * exception's file, line, and class type for error reporting.
  */

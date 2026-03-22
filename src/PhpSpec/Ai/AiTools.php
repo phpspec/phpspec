@@ -16,6 +16,8 @@ namespace PhpSpec\Ai;
 
 use PhpSpec\Filesystem;
 
+/** @internal */
+
 final class AiTools
 {
     /**

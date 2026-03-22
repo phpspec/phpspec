@@ -25,6 +25,7 @@ use RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
 /**
+ * @internal
  * Mediator that coordinates result scanning, source analysis, and interactive code generation.
  * Orchestrates all generation phases: step definitions, missing classes/interfaces,
  * undefined methods, and --fake mode empty-body filling.

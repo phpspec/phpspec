@@ -18,6 +18,7 @@ use DOMDocument;
 use DOMException;
 
 /**
+ * @internal
  * Renders a Clover XML code coverage report, compatible with CI tools like Jenkins and Codecov.
  * Produces a standard Clover coverage XML document with per-file line-level data and project metrics.
  */

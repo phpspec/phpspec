@@ -25,6 +25,7 @@ use Cucumber\Messages\TableRow;
 use Cucumber\Messages\Tag;
 
 /**
+ * @internal
  * Parses .feature file content into a FeatureNode data structure.
  * Delegates to the official cucumber/gherkin parser and maps the AST
  * to PhpSpec's node types.

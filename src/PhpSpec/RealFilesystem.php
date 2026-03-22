@@ -15,6 +15,7 @@
 namespace PhpSpec;
 
 /**
+ * @internal
  * Production filesystem implementation backed by PHP's native file functions.
  */
 final class RealFilesystem implements Filesystem

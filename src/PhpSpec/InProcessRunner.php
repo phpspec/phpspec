@@ -24,6 +24,7 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 /**
+ * @internal
  * Runs phpspec programmatically within the current process.
  *
  * Saves and restores all static state (Dispatcher, Mock statics, Double cache)

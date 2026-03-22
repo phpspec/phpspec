@@ -21,6 +21,7 @@ use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
 /**
+ * @internal
  * CLI command that adds an it() example for a method to an existing spec file,
  * generating the spec file first if it doesn't exist.
  */

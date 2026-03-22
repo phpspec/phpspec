@@ -15,6 +15,7 @@
 namespace PhpSpec;
 
 /**
+ * @internal
  * Value object specifying which result states should halt the suite early.
  */
 final readonly class StopConditions

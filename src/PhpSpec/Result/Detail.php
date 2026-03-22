@@ -15,6 +15,7 @@
 namespace PhpSpec\Result;
 
 /**
+ * @internal
  * Base class for match result details, representing either a successful or failed match.
  *
  * Uses a sentinel value (Nothing) to distinguish between "no failure" and a null failure message.

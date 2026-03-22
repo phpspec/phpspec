@@ -17,6 +17,7 @@ namespace PhpSpec\Report;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
+ * @internal
  * Renders PHP view templates by extracting variables into scope and requiring the template file.
  * Provides a write() method that templates can use to output content to the console.
  */

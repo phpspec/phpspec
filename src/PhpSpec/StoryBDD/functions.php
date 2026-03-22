@@ -109,6 +109,7 @@ function beforeStep(Closure $fn): void
 }
 
 /**
+ * @internal
  * Static registry holding the global StepRegistry and HookRegistry instances.
  * Initialized on file load and used by the DSL functions (given/when/then/etc.).
  */

@@ -22,6 +22,7 @@ use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\ExampleResultRegistry;
 
 /**
+ * @internal
  * Wires example lifecycle events to collect match results and record example outcomes.
  *
  * Listens for match creation, example completion, and example error events to build

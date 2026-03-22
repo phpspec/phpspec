@@ -15,6 +15,7 @@
 namespace PhpSpec\StoryBDD;
 
 /**
+ * @internal
  * Data class representing a Gherkin Background section containing steps that run before each scenario.
  */
 readonly class BackgroundNode

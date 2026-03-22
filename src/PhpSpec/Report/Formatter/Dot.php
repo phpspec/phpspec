@@ -24,6 +24,7 @@ use PhpSpec\Results;
 use Symfony\Component\Console\Terminal;
 
 /**
+ * @internal
  * Renders spec results as single-character progress indicators: dot for pass,
  * F for failure, E for error, P for pending. Appends a summary with counts and errors.
  */

@@ -15,6 +15,7 @@
 namespace PhpSpec;
 
 /**
+ * @internal
  * Thrown when an in-process run detects a class name already loaded
  * from a different project directory, requiring subprocess fallback.
  */

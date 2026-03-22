@@ -17,6 +17,7 @@ namespace PhpSpec\Specification;
 use PhpSpec\Results;
 
 /**
+ * @internal
  * Contract for executable spec blocks (Suite, Specification, Context, Example).
  */
 interface SpecBlock

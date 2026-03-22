@@ -24,6 +24,7 @@ use PhpSpec\Specification\SkippedException;
 use PhpSpec\Specification\SpecBlock;
 
 /**
+ * @internal
  * Runs a parsed .feature file by executing scenarios and their steps against the step registry.
  * Handles Background steps, Scenario Outlines, hook invocation, and step match collection.
  */

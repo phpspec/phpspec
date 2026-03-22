@@ -19,6 +19,7 @@ use PhpSpec\Logging\LogDateTime;
 use PhpSpec\Logging\Loggable;
 
 /**
+ * @internal
  * Dispatched when the suite finishes execution.
  */
 final readonly class SuiteFinished implements Event, Loggable
