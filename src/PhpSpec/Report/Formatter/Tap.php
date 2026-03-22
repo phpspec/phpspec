@@ -128,12 +128,16 @@ final class Tap extends AbstractFormatter
 
     /**
      * Escapes a string for safe inclusion in YAML diagnostic output.
+     * Quotes the value when it contains characters that are special in YAML:
+     * colons, hashes, brackets, braces, quotes, newlines, tabs, etc.
      */
     private function yamlEscape(string $value): string
     {
-        if (str_contains($value, "\n") || str_contains($value, '"') || str_contains($value, ':')) {
-            return '"' . addcslashes($value, "\"\\\n") . '"';
+        // Characters that require double-quoting in YAML
+        if (preg_match('/[\n\r\t\\\\"\\x00-\\x1f]|^[\'"\-?:{}[\]|>&!%@`#,]|: |^ | $/', $value)) {
+            return '"' . addcslashes($value, "\"\\\n\r\t") . '"';
         }
+
         return $value;
     }
 }
