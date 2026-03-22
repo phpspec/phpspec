@@ -48,6 +48,14 @@ final class CoverageReporter
     }
 
     /**
+     * Periodically drains Xdebug's internal buffers. Call after each result.
+     */
+    public function flush(): void
+    {
+        $this->collector?->flush();
+    }
+
+    /**
      * Stops collection and renders all requested coverage reports.
      *
      * @param Output $output the console output
