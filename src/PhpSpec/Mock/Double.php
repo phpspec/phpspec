@@ -419,6 +419,27 @@ PHP;
     }
 
     /**
+     * Returns the method body statement that produces a default value for a builtin return type.
+     *
+     * @param string $typeName the builtin type name
+     * @return string|null the return statement, or null if the type is not a recognised builtin
+     */
+    private static function getBuiltinReturnCode(string $typeName): ?string
+    {
+        return match ($typeName) {
+            'string' => "\$__ret = ''; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret;",
+            'void' => 'return;',
+            'never' => "throw new \\RuntimeException('Mock method should not be called');",
+            'mixed' => 'return null;',
+            'array' => '$__ret = []; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;',
+            'int' => '$__ret = 0; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;',
+            'float' => '$__ret = 0.0; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;',
+            'bool' => '$__ret = false; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;',
+            default => null,
+        };
+    }
+
+    /**
      * Checks whether a type represents a class (non-builtin named type).
      *
      * @param ?ReflectionType $type the reflection type to check
@@ -491,7 +512,10 @@ PHP;
             // get method properties
             $methodName = $method->getName();
             $parameters = $method->getParameters();
-            $returnedType = $method->getReturnType();
+            // Tentative return types (e.g. JsonSerializable::jsonSerialize(): mixed) are not
+            // exposed via getReturnType(); declaring them explicitly avoids the PHP deprecation
+            // about incompatible/missing return types on internal interfaces.
+            $returnedType = $method->getReturnType() ?? $method->getTentativeReturnType();
 
             // format return type syntax using helper
             $returnedTypeSyntax = '';
@@ -662,26 +686,12 @@ PHP;
                 } else {
                     $return = 'return null;';
                 }
-            } elseif ($simpleReturnName === 'string') {
-                $return = "\$__ret = ''; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret;";
-            } elseif ($simpleReturnName === 'void') {
-                $return = 'return;';
-            } elseif ($simpleReturnName === 'never') {
-                $return = "throw new \\RuntimeException('Mock method should not be called');";
-            } elseif ($simpleReturnName === 'mixed') {
-                $return = 'return null;';
             } elseif (isset($className)) {
                 $return = 'return new \\' . $className . '($this);';
-            } elseif ($simpleReturnName === 'array') {
-                $return = '$__ret = []; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;';
-            } elseif ($simpleReturnName === 'int') {
-                $return = '$__ret = 0; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;';
-            } elseif ($simpleReturnName === 'float') {
-                $return = '$__ret = 0.0; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;';
-            } elseif ($simpleReturnName === 'bool') {
-                $return = '$__ret = false; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = $__ret; return $__ret;';
             } elseif ($isEnum) {
                 $return = "return \\{$simpleReturnName}::cases()[0];";
+            } elseif ($simpleReturnName !== null) {
+                $return = self::getBuiltinReturnCode($simpleReturnName) ?? '';
             }
 
             // stub check — uses StubRegistry to find matching stub by method + args
