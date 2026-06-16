@@ -67,5 +67,10 @@
         "branch-alias": {
             "dev-main": "9.0.x-dev"
         }
+    },
+    "config": {
+        "allow-plugins": {
+            "bamarni/composer-bin-plugin": true
+        }
     }
 }
