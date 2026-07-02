@@ -65,7 +65,9 @@ final class JsonReportBuilder
 
     /**
      * Filters covered files down to the source path, relativizes them against
-     * the project root and pairs each with a content checksum.
+     * the project root and pairs each with a content checksum. Paths are
+     * normalised to forward slashes on every platform (Xdebug and realpath()
+     * report backslash paths on Windows).
      *
      * @param array<string, array<int, array<int, string>>> $lines file path => line number => test identifiers
      * @param string $srcPath absolute path to the source directory to include
@@ -74,16 +76,18 @@ final class JsonReportBuilder
      */
     private function buildSources(array $lines, string $srcPath, string $projectRoot): array
     {
-        $srcPrefix = rtrim($srcPath, '/') . '/';
-        $rootPrefix = rtrim($projectRoot, '/') . '/';
+        $srcPrefix = rtrim(str_replace('\\', '/', $srcPath), '/') . '/';
+        $rootPrefix = rtrim(str_replace('\\', '/', $projectRoot), '/') . '/';
         $sources = [];
 
         foreach ($lines as $file => $fileLines) {
-            if (!str_starts_with($file, $srcPrefix) || str_contains($file, "eval()'d code")) {
+            $normalized = str_replace('\\', '/', $file);
+
+            if (!str_starts_with($normalized, $srcPrefix) || str_contains($normalized, "eval()'d code")) {
                 continue;
             }
 
-            $relative = str_starts_with($file, $rootPrefix) ? substr($file, strlen($rootPrefix)) : $file;
+            $relative = str_starts_with($normalized, $rootPrefix) ? substr($normalized, strlen($rootPrefix)) : $normalized;
             $sources[$relative] = [
                 'checksum' => md5($this->filesystem->read($file)),
                 'lines' => $fileLines,

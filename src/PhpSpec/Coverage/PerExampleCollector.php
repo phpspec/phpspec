@@ -44,12 +44,15 @@ final class PerExampleCollector
 
     /**
      * Records the spec file that examples are about to run from.
-     * A leading "./" is stripped so test identifiers use clean relative paths.
+     * A leading "./" is stripped and backslashes are normalised to forward
+     * slashes, so test identifiers use the same clean relative paths on
+     * every platform.
      *
      * @param string $path the spec file path
      */
     public function beginSpec(string $path): void
     {
+        $path = str_replace('\\', '/', $path);
         $this->specPath = str_starts_with($path, './') ? substr($path, 2) : $path;
         $this->contextTitles = [];
     }

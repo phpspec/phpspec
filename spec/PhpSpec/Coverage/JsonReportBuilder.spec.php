@@ -39,6 +39,23 @@ describe(JsonReportBuilder::class, function () {
         ]);
     });
 
+    it('handles Windows-style backslash paths', function (CoverageDriver $winDriver, Filesystem $filesystem) {
+        allow($winDriver->stop())->toReturn([
+            'C:\\project\\src\\App\\Calculator.php' => [12 => 1],
+        ]);
+        allow($filesystem->read())->toReturn('code');
+        $collector = new PerExampleCollector($winDriver);
+        $collector->beginSpec('spec\\App\\Calculator.spec.php');
+        $collector->beginExample();
+        $collector->endExample('adds');
+        $builder = new JsonReportBuilder($filesystem);
+
+        $report = $builder->build($collector, 'C:\\project\\src', 'C:\\project');
+
+        expect($report['sources'])->toHaveKey('src/App/Calculator.php');
+        expect($report['tests'])->toHaveKey('spec/App/Calculator.spec.php::adds');
+    });
+
     it('adds a checksum of each spec file to the test metadata', function (Filesystem $filesystem) {
         allow($filesystem->read())->toReturnUsing(
             fn(string $path) => $path === 'spec/App/Calculator.spec.php' ? 'spec code' : 'other',

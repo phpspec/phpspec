@@ -118,7 +118,8 @@ final class CoverageCollector
 
     /**
      * Filters raw coverage data to only include files under the given source path.
-     * Returns relative paths sorted alphabetically.
+     * Returns relative paths sorted alphabetically, using forward slashes on
+     * every platform (Xdebug and realpath() report backslash paths on Windows).
      *
      * @param array<string, array<int, int>> $data raw coverage data keyed by absolute file path
      * @param string $srcPath the source directory path to filter by
@@ -131,11 +132,13 @@ final class CoverageCollector
         if ($realSrcPath === false) {
             return [];
         }
-        $realSrcPath = rtrim($realSrcPath, '/') . '/';
+        $realSrcPath = rtrim(str_replace('\\', '/', $realSrcPath), '/') . '/';
 
         $filtered = [];
 
         foreach ($data as $file => $lines) {
+            $file = str_replace('\\', '/', $file);
+
             if (str_starts_with($file, $realSrcPath)
                 && !str_contains($file, "eval()'d code")
             ) {

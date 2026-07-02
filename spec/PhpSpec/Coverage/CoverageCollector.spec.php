@@ -38,6 +38,15 @@ describe(CoverageCollector::class, function () {
 
     }
 
+    it('filterData matches Windows-style backslash paths', function () {
+        $realSrc = (string) realpath('src');
+        $windowsStyleFile = str_replace('/', '\\', $realSrc . '/PhpSpec/Loader.php');
+
+        $filtered = CoverageCollector::filterData([$windowsStyleFile => [1 => 1]], 'src');
+
+        expect($filtered)->toHaveKey('PhpSpec/Loader.php');
+    });
+
     it('filter excludes eval\'d code paths', function () {
         $collector = new CoverageCollector();
 
