@@ -43,27 +43,52 @@ final class WorkerProcess
     /**
      * @param string[] $paths spec file paths to run in this worker
      * @param string $phpspecBin absolute path to the phpspec binary
+     * @param string|null $coveragePartial file path for the worker to dump raw coverage state to, or null to run without coverage
+     * @param string|null $configPath explicit config file path to forward to the worker, or null to use the working directory lookup
      */
     public function __construct(
         private readonly array $paths,
         private readonly string $phpspecBin,
+        private readonly ?string $coveragePartial = null,
+        private readonly ?string $configPath = null,
     ) {}
 
     /**
-     * Spawns the child phpspec process with non-blocking stdout/stderr pipes.
+     * Builds the child process command line. Coverage-enabled workers run with
+     * xdebug coverage mode and dump their raw coverage state to the partial path.
+     *
+     * @return list<string> the command and its arguments
      */
-    public function start(): void
+    public function buildCommand(): array
     {
-        $command = array_values([
+        $command = [
             PHP_BINARY,
-            '-d', 'xdebug.mode=off',
+            '-d', 'xdebug.mode=' . ($this->coveragePartial !== null ? 'coverage' : 'off'),
             $this->phpspecBin,
             'run',
             ...$this->paths,
             '-f', 'junit',
             '--no-ansi',
             '--no-interaction',
-        ]);
+        ];
+
+        if ($this->coveragePartial !== null) {
+            $command[] = '--coverage-partial=' . $this->coveragePartial;
+        }
+
+        if ($this->configPath !== null) {
+            $command[] = '--config=' . $this->configPath;
+        }
+
+        return array_values($command);
+    }
+
+    /**
+     * Spawns the child phpspec process with non-blocking stdout/stderr pipes.
+     */
+    public function start(): void
+    {
+        $command = $this->buildCommand();
 
         $descriptors = [
             0 => ['pipe', 'r'],

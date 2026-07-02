@@ -31,20 +31,38 @@ final class ParallelRunner
     private readonly int $workers;
     private readonly string $phpspecBin;
 
+    /** @var array<int, string> partial coverage state files assigned to workers */
+    private array $coveragePartials = [];
+
     /**
      * @param string[] $paths spec file paths to run
      * @param int|null $workers number of worker processes (null = auto-detect CPU count)
      * @param StopConditions $stop conditions under which to halt early
      * @param string|null $phpspecBin absolute path to phpspec binary (null = auto-detect)
+     * @param string|null $coveragePartialDir directory for workers to dump raw coverage state to, or null to run without coverage
+     * @param string|null $configPath explicit config file path to forward to workers, or null to use the working directory lookup
      */
     public function __construct(
         private readonly array $paths,
         ?int $workers = null,
         private readonly StopConditions $stop = new StopConditions(),
         ?string $phpspecBin = null,
+        private readonly ?string $coveragePartialDir = null,
+        private readonly ?string $configPath = null,
     ) {
         $this->workers = max(1, $workers ?? self::detectCpuCount());
         $this->phpspecBin = $phpspecBin ?? self::findPhpspecBin();
+    }
+
+    /**
+     * Returns the partial coverage state files assigned to workers, for the
+     * parent process to merge once the stream has been fully consumed.
+     *
+     * @return array<int, string> partial state file paths
+     */
+    public function getCoveragePartials(): array
+    {
+        return $this->coveragePartials;
     }
 
     /**
@@ -68,8 +86,15 @@ final class ParallelRunner
         $processes = [];
         $fibers = [];
 
-        foreach ($partitions as $partition) {
-            $process = new WorkerProcess($partition, $this->phpspecBin);
+        foreach ($partitions as $i => $partition) {
+            $coveragePartial = null;
+
+            if ($this->coveragePartialDir !== null) {
+                $coveragePartial = $this->coveragePartialDir . '/partial-' . $i . '.json';
+                $this->coveragePartials[] = $coveragePartial;
+            }
+
+            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->configPath);
             $processes[] = $process;
 
             $fiber = new \Fiber(function () use ($process) {

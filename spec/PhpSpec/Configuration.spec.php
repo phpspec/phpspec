@@ -326,4 +326,27 @@ describe(Configuration::class, function () {
         expect($config->getPsr4Prefix())->toBe('App');
     });
 
+    it("loads an explicit config file instead of the working directory cascade", function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === 'custom/my-config.json');
+        allow($fs->read())->toReturn(json_encode(['format' => 'dot']));
+
+        $config = new Configuration('/app', $fs, configFile: 'custom/my-config.json');
+
+        expect($config->getFormat())->toBe('dot');
+    });
+
+    it("throws when the explicit config file does not exist", function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
+
+        expect(fn() => new Configuration('/app', $fs, configFile: 'nope.yaml'))
+            ->toThrow(RuntimeException::class);
+    });
+
+    it("resolves the config path from argv tokens", function () {
+        expect(Configuration::configPathFromArgv(['phpspec', 'run', '--config=a.yaml']))->toBe('a.yaml');
+        expect(Configuration::configPathFromArgv(['phpspec', 'run', '--config', 'b.json']))->toBe('b.json');
+        expect(Configuration::configPathFromArgv(['phpspec', 'run', '-c', 'c.yml']))->toBe('c.yml');
+        expect(Configuration::configPathFromArgv(['phpspec', 'run']))->toBeNull();
+    });
+
 });

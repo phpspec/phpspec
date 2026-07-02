@@ -14,6 +14,7 @@
 
 namespace PhpSpec;
 
+use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\SpecificationFinished;
 use PhpSpec\EventDispatcher\Event\SpecificationStarted;
@@ -49,6 +50,7 @@ class Specification implements ExampleRegistry, SpecBlock
     public function run(): Results
     {
         DispatcherRegistry::dispatcher()->dispatch(new SpecificationStarted($this->path), SpecificationStarted::NAME);
+        CoverageRegistry::collector()?->beginSpec($this->path);
 
         // loads the specification file from the Subject constructor
         // so $this in the examples refers to Subject

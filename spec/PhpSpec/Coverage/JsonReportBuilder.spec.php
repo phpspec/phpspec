@@ -1,0 +1,56 @@
+<?php
+
+use PhpSpec\Coverage\CoverageDriver;
+use PhpSpec\Coverage\JsonReportBuilder;
+use PhpSpec\Coverage\PerExampleCollector;
+use PhpSpec\Filesystem;
+
+describe(JsonReportBuilder::class, function () {
+
+    beforeEach(function (CoverageDriver $driver) {
+        allow($driver->stop())->toReturn([
+            '/project/src/App/Calculator.php' => [12 => 1, 13 => -1],
+            '/project/spec/App/Calculator.spec.php' => [5 => 1],
+            '/project/vendor/lib/functions.php' => [3 => 1],
+        ]);
+
+        $this->collector = new PerExampleCollector($driver);
+        $this->collector->beginSpec('spec/App/Calculator.spec.php');
+        $this->collector->pushContext('Calculator');
+        $this->collector->beginExample();
+        $this->collector->endExample('adds two numbers');
+    });
+
+    it('keeps only sources under the src path, relative to the project root, with checksums', function (Filesystem $filesystem) {
+        allow($filesystem->read())->toReturnUsing(
+            fn(string $path) => $path === '/project/src/App/Calculator.php' ? 'source code' : 'other',
+        );
+        $builder = new JsonReportBuilder($filesystem);
+
+        $report = $builder->build($this->collector, '/project/src', '/project');
+
+        expect($report['sources'])->toBe([
+            'src/App/Calculator.php' => [
+                'checksum' => md5('source code'),
+                'lines' => [
+                    12 => ['spec/App/Calculator.spec.php::Calculator > adds two numbers'],
+                ],
+            ],
+        ]);
+    });
+
+    it('adds a checksum of each spec file to the test metadata', function (Filesystem $filesystem) {
+        allow($filesystem->read())->toReturnUsing(
+            fn(string $path) => $path === 'spec/App/Calculator.spec.php' ? 'spec code' : 'other',
+        );
+        $builder = new JsonReportBuilder($filesystem);
+
+        $report = $builder->build($this->collector, '/project/src', '/project');
+
+        $test = $report['tests']['spec/App/Calculator.spec.php::Calculator > adds two numbers'];
+        expect($test['spec_file'])->toBe('spec/App/Calculator.spec.php');
+        expect($test['spec_checksum'])->toBe(md5('spec code'));
+        expect($test['time'])->toBeGreaterThan(0);
+        expect($test['memory'])->toBeGreaterThan(0);
+    });
+});

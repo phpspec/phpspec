@@ -16,6 +16,7 @@ namespace PhpSpec;
 
 use PhpSpec\Browser\BrowserRegistry;
 use PhpSpec\Console\Application;
+use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Mock\Double;
 use PhpSpec\Mock\Expectation as MockExpectation;
@@ -53,6 +54,7 @@ final class InProcessRunner
         $savedAutoloaders = spl_autoload_functions();
         $savedStoryBDD = StoryBDDRegistry::saveState();
         $savedBrowser = BrowserRegistry::saveState();
+        $savedCoverage = CoverageRegistry::collector();
 
         // Reset for inner run — fresh Dispatcher for the nested Application
         DispatcherRegistry::reset();
@@ -63,12 +65,14 @@ final class InProcessRunner
         MockExpectation::$registry = [];
         StoryBDDRegistry::init();
         BrowserRegistry::reset();
+        CoverageRegistry::reset();
 
         $savedCwdStr = is_string($savedCwd) ? $savedCwd : $projectDir;
         chdir($projectDir);
 
         try {
-            $app = new Application('9.0.0');
+            $argv = preg_split('/\s+/', trim($args));
+            $app = new Application('9.0.0', $argv !== false ? $argv : []);
             $app->setAutoExit(false);
             $app->setCatchExceptions(true);
 
@@ -88,6 +92,12 @@ final class InProcessRunner
             MockExpectation::$registry = $savedRegistry;
             StoryBDDRegistry::restoreState($savedStoryBDD);
             BrowserRegistry::restoreState($savedBrowser);
+
+            if ($savedCoverage !== null) {
+                CoverageRegistry::activate($savedCoverage);
+            } else {
+                CoverageRegistry::reset();
+            }
 
             // Unregister any autoloaders added by the inner run
             $currentAutoloaders = spl_autoload_functions();

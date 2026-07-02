@@ -28,6 +28,8 @@ use PhpSpec\Loader;
 use PhpSpec\Runner;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputDefinition;
+use Symfony\Component\Console\Input\InputOption;
 
 /**
  * @internal
@@ -36,6 +38,39 @@ use Symfony\Component\Console\Command\Command;
  */
 final class Application extends BaseApplication
 {
+    /** @var array<int, string> raw argv tokens, used to resolve --config before commands are built */
+    private readonly array $argv;
+
+    /**
+     * @param string $version the application version
+     * @param array<int, string>|null $argv raw argv tokens; defaults to the process argv (in-process runners pass their own)
+     */
+    public function __construct(string $version = 'UNKNOWN', ?array $argv = null)
+    {
+        $globalArgv = $_SERVER['argv'] ?? null;
+        $this->argv = $argv ?? (is_array($globalArgv) ? $globalArgv : []);
+
+        parent::__construct($version);
+    }
+
+    /**
+     * Adds the application-level --config option so every command accepts it.
+     *
+     * @return InputDefinition the default input definition
+     */
+    public function getDefaultInputDefinition(): InputDefinition
+    {
+        $definition = parent::getDefaultInputDefinition();
+        $definition->addOption(new InputOption(
+            'config',
+            'c',
+            InputOption::VALUE_REQUIRED,
+            'Path to a phpspec configuration file (overrides the working directory lookup)',
+        ));
+
+        return $definition;
+    }
+
     /**
      * Returns the default commands including the PhpSpec run and describe commands.
      *
@@ -43,7 +78,7 @@ final class Application extends BaseApplication
      */
     public function getDefaultCommands(): array
     {
-        $config = new Configuration('.');
+        $config = new Configuration('.', configFile: Configuration::configPathFromArgv($this->argv));
 
         $config->registerAutoloaders();
         $extensionLoader = new ExtensionLoader($config);

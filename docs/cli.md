@@ -142,16 +142,22 @@ bin/phpspec run --format=junit > results.xml
 | Option | Description |
 |---|---|
 | `--filter=PATTERN` | Only run spec files whose path contains PATTERN |
+| `--paths-from=FILE` | Read spec/feature paths to run from a file, one per line |
 | `--stop-on-failure` | Stop execution after the first spec file with a failure or error |
 | `--order=ORDER` | Run order: `default` or `random` |
 | `--seed=SEED` | Seed for random ordering (for reproducibility) |
 
 ```bash
 bin/phpspec run --filter Calculator              # Only specs with "Calculator" in path
+bin/phpspec run --paths-from specs.txt            # Run the specs listed in specs.txt
 bin/phpspec run --stop-on-failure                 # Stop on first failing spec
 bin/phpspec run --order random                    # Randomize spec order
 bin/phpspec run --order random --seed 42          # Reproducible random order
 ```
+
+`--paths-from` is designed for tools that drive PhpSpec programmatically (such as
+mutation testing frameworks): a long list of spec paths passed as arguments can
+exceed the operating system's argument size limit, while a file cannot.
 
 ### Bootstrap
 
@@ -162,6 +168,22 @@ bin/phpspec run --order random --seed 42          # Reproducible random order
 ```bash
 bin/phpspec run --bootstrap tests/bootstrap.php
 ```
+
+### Configuration File
+
+| Option | Description |
+|---|---|
+| `-c`, `--config=FILE` | Path to a phpspec configuration file (overrides the working directory lookup) |
+
+```bash
+bin/phpspec run --config custom/phpspec.ci.yaml
+```
+
+By default PhpSpec looks for `phpspec.yaml`, `phpspec.yml`, `phpspec.json` or
+`phpspec.php` in the working directory. With `--config` exactly the given file
+is loaded instead (its format is resolved from the extension), and the command
+fails if the file does not exist. The option is available on every command and
+is forwarded to worker processes in `--parallel` runs.
 
 ### Code Generation
 
@@ -182,16 +204,62 @@ bin/phpspec run --fake
 | `--coverage` | Show text coverage report in terminal |
 | `--coverage-html=DIR` | Generate HTML coverage report in the specified directory |
 | `--coverage-clover=FILE` | Generate Clover XML coverage report |
+| `--coverage-json=FILE` | Generate JSON coverage report with per-example detail (experimental) |
+| `--coverage-src=DIR` | Source directory to scope coverage reports to (overrides config `src_path`) |
 | `--coverage-min=PCT` | Fail if coverage is below the threshold (0-100) |
 
 ```bash
 bin/phpspec run --coverage                       # Text report
 bin/phpspec run --coverage-html coverage/        # HTML report
 bin/phpspec run --coverage-clover clover.xml     # Clover XML
+bin/phpspec run --coverage-json coverage.json    # JSON report (per-example detail)
 bin/phpspec run --coverage-min 90                # Fail below 90%
+bin/phpspec run --coverage --coverage-src lib    # Scope the report to lib/
 ```
 
-Coverage requires the xdebug extension with `xdebug.mode=coverage`.
+Coverage requires the xdebug extension with `xdebug.mode=coverage`. Coverage
+options can be combined with `--parallel`: workers collect coverage per example
+and the parent process merges their results before rendering the reports.
+
+#### JSON Coverage Report (experimental)
+
+The JSON report is designed for tools that need to know **which example covers
+which source line** — most notably mutation testing frameworks such as
+[Infection](https://infection.github.io/). Its schema is experimental and may
+change while the integration is being finalised.
+
+```json
+{
+    "version": 1,
+    "tests": {
+        "spec/App/Calculator.spec.php::Calculator > adds two numbers": {
+            "time": 0.0021,
+            "memory": 524288,
+            "spec_file": "spec/App/Calculator.spec.php",
+            "spec_checksum": "9b4f1af43ee97a2924b320db64067458"
+        }
+    },
+    "sources": {
+        "src/App/Calculator.php": {
+            "checksum": "ac4a5f10068b3a275d47b87df2d78d59",
+            "lines": {
+                "9": ["spec/App/Calculator.spec.php::Calculator > adds two numbers"]
+            }
+        }
+    }
+}
+```
+
+- **Test identifiers** are `<spec file>::<context titles joined with " > ">`,
+  at example granularity. All paths are relative to the project root.
+- **`time`** is the example's wall-clock duration in seconds and **`memory`**
+  its peak memory usage in bytes, both measured across the example *and* its
+  `let`/`beforeEach`/`afterEach` hooks, so setup code counts as covered by the
+  example that ran it.
+- **`checksum`**/**`spec_checksum`** are MD5 hashes of the file contents,
+  letting consumers detect stale coverage data.
+- Code executed only in `beforeAll`/`afterAll` hooks is not attributed to any
+  example.
 
 ## Exit Codes
 

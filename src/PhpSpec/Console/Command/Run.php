@@ -18,6 +18,7 @@ use DOMException;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\CoverageReporter;
+use PhpSpec\Coverage\CoverageOptions;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Extensions\FormatterBridge;
 use PhpSpec\Loader;
@@ -44,6 +45,9 @@ use Symfony\Component\Console\Output\OutputInterface as Output;
  */
 final class Run extends Command
 {
+    /** @var array<int, string> partial coverage state files written by parallel workers */
+    private array $coveragePartials = [];
+
     /**
      * @param Loader $loader the spec/feature file loader
      * @param Runner $runner the spec runner
@@ -77,6 +81,7 @@ final class Run extends Command
             ->addOption('stop-on-skipped', null, Option::VALUE_NONE, 'Stop on first skipped example')
             ->addOption('stop-on-problems', null, Option::VALUE_NONE, 'Stop on any non-pass result')
             ->addOption('filter', null, Option::VALUE_REQUIRED, 'Run only specs matching pattern')
+            ->addOption('paths-from', null, Option::VALUE_REQUIRED, 'Read spec/feature paths to run from a file, one per line')
             ->addOption('format', 'f', Option::VALUE_REQUIRED, 'Output format (pretty, dot, tap, junit)', 'pretty')
             ->addOption('order', null, Option::VALUE_REQUIRED, 'Run order (default, random)', 'default')
             ->addOption('seed', null, Option::VALUE_REQUIRED, 'Seed for random order')
@@ -89,6 +94,9 @@ final class Run extends Command
             ->addOption('coverage-clover', null, Option::VALUE_REQUIRED, 'Generate Clover XML coverage report to file')
             ->addOption('coverage-html', null, Option::VALUE_REQUIRED, 'Generate HTML coverage report to directory')
             ->addOption('coverage-min', null, Option::VALUE_REQUIRED, 'Fail if coverage is below this percentage')
+            ->addOption('coverage-json', null, Option::VALUE_REQUIRED, 'Generate JSON coverage report with per-example detail, for mutation testing tools (experimental)')
+            ->addOption('coverage-src', null, Option::VALUE_REQUIRED, 'Source directory to scope coverage reports to (overrides config src_path)')
+            ->addOption('coverage-partial', null, Option::VALUE_REQUIRED, 'Dump raw coverage state to a file (internal, used by parallel workers)')
             ->addOption('parallel', null, Option::VALUE_OPTIONAL, 'Run specs in parallel processes (--parallel=N for N workers)', false)
             ->setDescription('Runs specifications');
     }
@@ -115,7 +123,8 @@ final class Run extends Command
      * 6. If --profile was given, prints the N slowest examples with their durations.
      *
      * 7. If coverage was collected, stops collection and renders reports (text,
-     *    clover XML, HTML). Enforces --coverage-min threshold, returning code 2
+     *    clover XML, HTML, JSON). In parallel runs, worker partial states are
+     *    merged first. Enforces --coverage-min threshold, returning code 2
      *    if coverage is below the minimum.
      *
      * 8. Runs interactive code generation: scans results for missing types, undefined
@@ -138,6 +147,14 @@ final class Run extends Command
             return 1;
         }
         $this->registerAutoloader();
+
+        $pathsFrom = $input->getOption('paths-from');
+
+        if ($pathsFrom !== null && !is_file($pathsFrom)) {
+            $output->writeln("<fg=red>Paths file not found: $pathsFrom</>");
+
+            return 1;
+        }
 
         $coverageReporter = $this->startCoverage($input, $output);
 
@@ -203,20 +220,39 @@ final class Run extends Command
      */
     private function startCoverage(Input $input, Output $output): CoverageReporter|null|false
     {
-        $wantsCoverage = $input->getOption('coverage')
-            || $input->getOption('coverage-clover')
-            || $input->getOption('coverage-html')
-            || $input->getOption('coverage-min') !== null;
-
-        if (!$wantsCoverage) {
+        if (!$this->wantsCoverage($input)) {
             return null;
         }
 
+        // Parallel runs also collect per example: workers dump raw per-example
+        // state and the parent merges it, which serves every report format.
+        $perExample = $input->getOption('coverage-json') !== null
+            || $input->getOption('coverage-partial') !== null
+            || $input->getOption('parallel') !== false;
+
         $reporter = new CoverageReporter();
-        if (!$reporter->start($output)) {
+
+        if (!$reporter->start($output, perExample: $perExample)) {
             return false;
         }
+
         return $reporter;
+    }
+
+    /**
+     * Checks whether any coverage option was given.
+     *
+     * @param Input $input the console input to check coverage options
+     * @return bool true if any coverage report or the partial dump was requested
+     */
+    private function wantsCoverage(Input $input): bool
+    {
+        return $input->getOption('coverage')
+            || $input->getOption('coverage-clover')
+            || $input->getOption('coverage-html')
+            || $input->getOption('coverage-json')
+            || $input->getOption('coverage-partial')
+            || $input->getOption('coverage-min') !== null;
     }
 
     /**
@@ -238,6 +274,13 @@ final class Run extends Command
         if ($parallel !== false && is_string($parallel) && !ctype_digit($parallel)) {
             $paths[] = $parallel;
             $input->setOption('parallel', null);
+        }
+
+        $pathsFrom = $input->getOption('paths-from');
+
+        if ($pathsFrom !== null) {
+            $listed = file($pathsFrom, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $paths = array_merge($paths, array_filter(array_map('trim', $listed ?: [])));
         }
 
         if (!empty($paths)) {
@@ -285,15 +328,35 @@ final class Run extends Command
                     $paths[] = $spec->getPath();
                 }
             }
-            $parallelRunner = new ParallelRunner($paths, $workers, $stop);
+
+            $coveragePartialDir = $this->wantsCoverage($input)
+                ? sys_get_temp_dir() . '/phpspec_coverage_' . uniqid()
+                : null;
+
+            // --config is defined at the application level, absent when the
+            // command runs standalone (e.g. under CommandTester)
+            $configPath = $input->hasOption('config') ? $input->getOption('config') : null;
+
+            $parallelRunner = new ParallelRunner(
+                $paths,
+                $workers,
+                $stop,
+                coveragePartialDir: $coveragePartialDir,
+                configPath: $configPath,
+            );
             $stream = $parallelRunner->stream();
         } else {
+            $parallelRunner = null;
             $stream = $this->runner->stream($suite, $stop, $seed);
         }
 
         foreach ($stream as $result) {
             $formatter->printResult($result);
             $accumulated[] = $result;
+        }
+
+        if ($parallelRunner !== null) {
+            $this->coveragePartials = $parallelRunner->getCoveragePartials();
         }
 
         $results = new SuiteResult($accumulated);
@@ -374,14 +437,20 @@ final class Run extends Command
      */
     private function reportCoverage(Input $input, Output $output, CoverageReporter $reporter): ?int
     {
-        return $reporter->report(
-            $output,
-            $this->config->getSrcPath(),
-            (bool) $input->getOption('coverage'),
-            $input->getOption('coverage-clover'),
-            $input->getOption('coverage-html'),
-            $input->getOption('coverage-min'),
-        );
+        if ($this->coveragePartials !== []) {
+            $reporter->mergePartials($this->coveragePartials);
+            $this->coveragePartials = [];
+        }
+
+        return $reporter->report($output, new CoverageOptions(
+            srcPath: $input->getOption('coverage-src') ?? $this->config->getSrcPath(),
+            showText: (bool) $input->getOption('coverage'),
+            cloverPath: $input->getOption('coverage-clover'),
+            htmlPath: $input->getOption('coverage-html'),
+            jsonPath: $input->getOption('coverage-json'),
+            coverageMin: $input->getOption('coverage-min'),
+            partialPath: $input->getOption('coverage-partial'),
+        ));
     }
 
     /**

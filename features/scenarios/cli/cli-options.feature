@@ -362,3 +362,47 @@ Feature: CLI options
     Then the exit code should be 0
     And the output should contain "1 scenario"
     And the output should not contain "example"
+
+  Scenario: Run only the specs listed in a paths file
+    Given a spec file "spec/App/Listed.spec.php":
+      """
+      <?php
+      describe('Listed', function () {
+          it('runs from the paths file', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/AlsoListed.spec.php":
+      """
+      <?php
+      describe('AlsoListed', function () {
+          it('also runs from the paths file', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/Unlisted.spec.php":
+      """
+      <?php
+      describe('Unlisted', function () {
+          it('must not run', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a file "paths.txt":
+      """
+      spec/App/Listed.spec.php
+      spec/App/AlsoListed.spec.php
+      """
+    When I run phpspec run with option "--paths-from=paths.txt"
+    Then the exit code should be 0
+    And the output should contain "Listed"
+    And the output should contain "AlsoListed"
+    And the output should not contain "Unlisted"
+
+  Scenario: Error when the paths file does not exist
+    When I run phpspec run with option "--paths-from=missing.txt"
+    Then the exit code should be 1
+    And the output should contain "missing.txt"

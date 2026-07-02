@@ -23,6 +23,21 @@ describe(CoverageCollector::class, function () {
         expect($result['executable'])->toBe(0);
     });
 
+    if (CoverageCollector::isAvailable() && !CoverageCollector::isCollecting()) {
+
+        it('tracks whether a whole-suite collection is in progress', function () {
+            $collector = new CoverageCollector();
+            expect(CoverageCollector::isCollecting())->toBeFalse();
+
+            $collector->start();
+            expect(CoverageCollector::isCollecting())->toBeTrue();
+
+            $collector->stop();
+            expect(CoverageCollector::isCollecting())->toBeFalse();
+        });
+
+    }
+
     it('filter excludes eval\'d code paths', function () {
         $collector = new CoverageCollector();
 

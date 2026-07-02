@@ -9,6 +9,17 @@ PhpSpec can be configured via a config file in the project root. The following f
 
 The first file found wins. If none exists, defaults are used.
 
+Alternatively, pass an explicit path with `--config` (or `-c`) to load exactly
+that file and skip the working directory lookup entirely:
+
+```bash
+bin/phpspec run --config custom/phpspec.ci.yaml
+```
+
+The format is resolved from the file extension, and the command fails if the
+file does not exist. Because the path is explicit, several processes can run
+side by side in the same directory with different configurations.
+
 ## phpspec.yaml
 
 ```yaml

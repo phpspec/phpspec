@@ -14,11 +14,13 @@
 
 namespace PhpSpec;
 
+use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
 /**
  * Reads and provides access to project configuration from phpspec.yaml, phpspec.yml,
- * phpspec.json, or phpspec.php (in priority order).
+ * phpspec.json, or phpspec.php (in priority order), or from an explicit config
+ * file passed with --config.
  */
 final class Configuration
 {
@@ -28,20 +30,63 @@ final class Configuration
     /**
      * @param string $rootDir project root directory containing config files
      * @param Filesystem|null $filesystem injectable filesystem for testability
+     * @param string|null $configFile explicit config file path; when set, the working directory cascade is skipped
      */
     private Filesystem $fs;
 
-    public function __construct(private string $rootDir, ?Filesystem $filesystem = null)
-    {
+    public function __construct(
+        private string $rootDir,
+        ?Filesystem $filesystem = null,
+        private readonly ?string $configFile = null,
+    ) {
         $this->fs = $filesystem ?? new RealFilesystem();
         $this->load();
     }
 
     /**
-     * Loads configuration from the first config file found: yaml > yml > json > php.
+     * Extracts the --config option value from raw argv tokens, supporting the
+     * "--config=FILE", "--config FILE" and "-c FILE" forms.
+     *
+     * @param array<int, mixed> $argv raw argv tokens
+     * @return string|null the config file path, or null when not given
+     */
+    public static function configPathFromArgv(array $argv): ?string
+    {
+        $tokens = array_values($argv);
+
+        foreach ($tokens as $i => $token) {
+            if (!is_string($token)) {
+                continue;
+            }
+
+            if (str_starts_with($token, '--config=')) {
+                return substr($token, strlen('--config='));
+            }
+
+            if ($token === '--config' || $token === '-c') {
+                $next = $tokens[$i + 1] ?? null;
+
+                if (is_string($next) && $next !== '' && !str_starts_with($next, '-')) {
+                    return $next;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Loads the explicit config file when given, otherwise the first config
+     * file found in the root directory: yaml > yml > json > php.
      */
     private function load(): void
     {
+        if ($this->configFile !== null) {
+            $this->loadFile($this->configFile);
+
+            return;
+        }
+
         $yamlPath = $this->rootDir . '/phpspec.yaml';
         $ymlPath = $this->rootDir . '/phpspec.yml';
         $jsonPath = $this->rootDir . '/phpspec.json';
@@ -57,6 +102,27 @@ final class Configuration
         } elseif ($this->fs->exists($phpPath)) {
             $this->config = $this->fs->requirePhp($phpPath);
         }
+    }
+
+    /**
+     * Loads configuration from an explicit file, resolving the parser from
+     * the file extension.
+     *
+     * @param string $path the config file path
+     * @throws RuntimeException when the file does not exist or has an unsupported extension
+     */
+    private function loadFile(string $path): void
+    {
+        if (!$this->fs->exists($path)) {
+            throw new RuntimeException("Configuration file not found: $path");
+        }
+
+        $this->config = match (pathinfo($path, PATHINFO_EXTENSION)) {
+            'yaml', 'yml' => Yaml::parse($this->fs->read($path)) ?? [],
+            'json' => json_decode($this->fs->read($path), true) ?? [],
+            'php' => $this->fs->requirePhp($path),
+            default => throw new RuntimeException("Unsupported configuration file type: $path"),
+        };
     }
 
     /**

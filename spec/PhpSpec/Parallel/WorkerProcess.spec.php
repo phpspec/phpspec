@@ -272,6 +272,31 @@ describe(WorkerProcess::class, function () {
         });
     });
 
+    context('buildCommand', function () {
+        it('disables xdebug and produces junit output by default', function () {
+            $worker = new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec');
+            $command = $worker->buildCommand();
+
+            expect($command)->toContain('xdebug.mode=off');
+            expect($command)->toContain('spec/A.spec.php');
+        });
+
+        it('enables xdebug coverage and requests a partial dump when a coverage partial path is set', function () {
+            $worker = new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', '/tmp/partial-0.json');
+            $command = $worker->buildCommand();
+
+            expect($command)->toContain('xdebug.mode=coverage');
+            expect($command)->toContain('--coverage-partial=/tmp/partial-0.json');
+        });
+
+        it('forwards the explicit config path to the worker', function () {
+            $worker = new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', configPath: 'custom/my-config.json');
+            $command = $worker->buildCommand();
+
+            expect($command)->toContain('--config=custom/my-config.json');
+        });
+    });
+
     context('getExitCode', function () {
         it('returns null before process runs', function () {
             $worker = new WorkerProcess([], '/dev/null');

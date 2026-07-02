@@ -117,7 +117,7 @@ final readonly class Feature implements SpecBlock
                 }
                 $result = $this->runStep($step, $world, $collector);
                 $stepResults[] = $result;
-                if ($result->isFailure()) {
+                if ($result->isFailure() || $result->isSkipped()) {
                     $failed = true;
                 }
             }
@@ -130,7 +130,7 @@ final readonly class Feature implements SpecBlock
             }
             $result = $this->runStep($step, $world, $collector);
             $stepResults[] = $result;
-            if ($result->isFailure()) {
+            if ($result->isFailure() || $result->isSkipped()) {
                 $failed = true;
             }
         }

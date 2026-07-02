@@ -24,6 +24,9 @@ final class CoverageCollector
     /** @var array<string, array<int, int>> raw coverage data keyed by file path */
     private array $data = [];
 
+    /** @var bool whether a whole-suite collection is currently in progress */
+    private static bool $collecting = false;
+
     /**
      * Checks whether Xdebug is loaded with coverage mode enabled.
      *
@@ -36,10 +39,23 @@ final class CoverageCollector
     }
 
     /**
+     * Checks whether a whole-suite collection is currently in progress.
+     * Xdebug coverage state is process-global, so cycling it (as the
+     * per-example driver does) would clobber a live whole-suite collection.
+     *
+     * @return bool true if a collection has been started and not yet stopped
+     */
+    public static function isCollecting(): bool
+    {
+        return self::$collecting;
+    }
+
+    /**
      * Starts Xdebug code coverage collection with unused and dead code analysis.
      */
     public function start(): void
     {
+        self::$collecting = true;
         xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
     }
 
@@ -50,6 +66,7 @@ final class CoverageCollector
     {
         $this->data = xdebug_get_code_coverage();
         xdebug_stop_code_coverage();
+        self::$collecting = false;
     }
 
     /**
@@ -96,14 +113,29 @@ final class CoverageCollector
      */
     public function filter(string $srcPath): array
     {
+        return self::filterData($this->data, $srcPath);
+    }
+
+    /**
+     * Filters raw coverage data to only include files under the given source path.
+     * Returns relative paths sorted alphabetically.
+     *
+     * @param array<string, array<int, int>> $data raw coverage data keyed by absolute file path
+     * @param string $srcPath the source directory path to filter by
+     * @return array<string, array<int, int>> relative file paths mapped to line-level hit counts
+     */
+    public static function filterData(array $data, string $srcPath): array
+    {
         $realSrcPath = realpath($srcPath);
+
         if ($realSrcPath === false) {
             return [];
         }
         $realSrcPath = rtrim($realSrcPath, '/') . '/';
 
         $filtered = [];
-        foreach ($this->data as $file => $lines) {
+
+        foreach ($data as $file => $lines) {
             if (str_starts_with($file, $realSrcPath)
                 && !str_contains($file, "eval()'d code")
             ) {

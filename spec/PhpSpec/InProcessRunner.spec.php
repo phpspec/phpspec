@@ -1,8 +1,11 @@
 <?php
 
-use PhpSpec\InProcessRunner;
-use PhpSpec\InProcessResult;
 use PhpSpec\ClassConflictException;
+use PhpSpec\Coverage\CoverageDriver;
+use PhpSpec\Coverage\CoverageRegistry;
+use PhpSpec\Coverage\PerExampleCollector;
+use PhpSpec\InProcessResult;
+use PhpSpec\InProcessRunner;
 
 describe(InProcessRunner::class, function () {
     let("inProcessRunner", fn() => new InProcessRunner());
@@ -167,6 +170,45 @@ describe(InProcessRunner::class, function () {
             @rmdir($dir . '/spec');
             @rmdir($dir . '/src');
             @rmdir($dir);
+        });
+
+        it('isolates the coverage registry from the inner run and restores it', function (CoverageDriver $driver) {
+            $cycles = [];
+            allow($driver->start())->toReturnUsing(function () use (&$cycles) {
+                $cycles[] = 'start';
+            });
+            allow($driver->stop())->toReturnUsing(function () use (&$cycles) {
+                $cycles[] = 'stop';
+                return [];
+            });
+            $outerCollector = new PerExampleCollector($driver);
+            CoverageRegistry::activate($outerCollector);
+
+            $dir = sys_get_temp_dir() . '/phpspec_inprocess_cov_' . uniqid();
+            mkdir($dir . '/spec/App', 0777, true);
+            mkdir($dir . '/src', 0777, true);
+            file_put_contents($dir . '/spec/App/Inner.spec.php', <<<'PHP'
+            <?php
+            describe('Inner', function () {
+                it('passes', function () {
+                    expect(true)->toBeTrue();
+                });
+            });
+            PHP);
+
+            try {
+                InProcessRunner::run($dir, 'run');
+
+                expect(CoverageRegistry::collector())->toBe($outerCollector);
+                expect($cycles)->toBe([]);
+            } finally {
+                CoverageRegistry::reset();
+                @unlink($dir . '/spec/App/Inner.spec.php');
+                @rmdir($dir . '/spec/App');
+                @rmdir($dir . '/spec');
+                @rmdir($dir . '/src');
+                @rmdir($dir);
+            }
         });
     });
 });

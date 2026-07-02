@@ -95,9 +95,9 @@ class Example implements ExampleResultRegistry, SpecBlock
      * Executes the example closure, dispatching lifecycle events, capturing
      * errors/warnings, and measuring execution duration.
      *
-     * @return Results ExampleResult containing match outcomes and metadata
+     * @return ExampleResult the match outcomes and metadata
      */
-    public function run(): Results
+    public function run(): ExampleResult
     {
         $subscriber = new ExampleSubscriber($this);
         DispatcherRegistry::dispatcher()->addSubscriber($subscriber);
