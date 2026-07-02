@@ -47,7 +47,9 @@ describe(Specification::class, function() {
             unlink($file);
         }
 
-        expect($collector->getTests())->toHaveKey($file . '::Sample > works');
+        // Test identifiers always use forward slashes, also on Windows
+        $expectedId = str_replace('\\', '/', $file) . '::Sample > works';
+        expect($collector->getTests())->toHaveKey($expectedId);
     });
 
 });
