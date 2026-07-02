@@ -118,6 +118,21 @@ then('the class {string} should contain {string}', function (string $path, strin
     expect($content)->toContain($text);
 });
 
+then('the file {string} should contain {string}', function (string $path, string $text) {
+    $content = file_get_contents($this->projectDir . '/' . $path);
+    expect($content)->toContain($text);
+});
+
+then('the file {string} should contain:', function (string $path, string $text) {
+    $content = file_get_contents($this->projectDir . '/' . $path);
+    expect($content)->toContain($text);
+});
+
+then('the file {string} should not contain:', function (string $path, string $text) {
+    $content = file_get_contents($this->projectDir . '/' . $path);
+    expect($content)->not()->toContain($text);
+});
+
 then('the class should have a {string} method stub', function (string $method) {
     $content = file_get_contents($this->lastFile);
     expect($content)->toContain("function {$method}");
