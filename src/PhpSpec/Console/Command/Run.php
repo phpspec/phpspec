@@ -20,6 +20,8 @@ use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\CoverageReporter;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Extensions\FormatterBridge;
+use PhpSpec\FilterRegistry;
+use PhpSpec\LineTargetRegistry;
 use PhpSpec\Loader;
 use PhpSpec\Parallel\ParallelRunner;
 use PhpSpec\Report\Formatter;
@@ -27,9 +29,13 @@ use PhpSpec\Report\Formatter\Dot;
 use PhpSpec\Report\Formatter\Junit;
 use PhpSpec\Report\Formatter\Pretty;
 use PhpSpec\Report\Formatter\Tap;
+use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
+use PhpSpec\Results;
 use PhpSpec\Runner;
 use PhpSpec\StopConditions;
+use PhpSpec\TitleFilter;
 use Random\RandomException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument as Argument;
@@ -250,7 +256,13 @@ final class Run extends Command
         } else {
             $files = $this->config->getAllLoadPaths();
         }
-        $suite = $this->loader->load($files, $input->getOption('filter'));
+        $filter = $input->getOption('filter');
+
+        if ($filter !== null) {
+            FilterRegistry::activate(new TitleFilter($filter));
+        }
+
+        $suite = $this->loader->load($files, $filter);
 
         $problems = (bool) $input->getOption('stop-on-problems');
         $configStop = $this->config->getStopConditions();
@@ -291,9 +303,20 @@ final class Run extends Command
             $stream = $this->runner->stream($suite, $stop, $seed);
         }
 
-        foreach ($stream as $result) {
-            $formatter->printResult($result);
-            $accumulated[] = $result;
+        $lineTargeted = str_contains($files, ':');
+
+        try {
+            foreach ($stream as $result) {
+                if (($filter !== null || $lineTargeted) && self::countLeaves($result) === 0) {
+                    continue;
+                }
+
+                $formatter->printResult($result);
+                $accumulated[] = $result;
+            }
+        } finally {
+            FilterRegistry::reset();
+            LineTargetRegistry::reset();
         }
 
         $results = new SuiteResult($accumulated);
@@ -301,6 +324,28 @@ final class Run extends Command
         $formatter->end($results);
 
         return $results;
+    }
+
+    /**
+     * Counts example and step results in a result tree, so spec files whose
+     * examples were all pruned by the title filter can be skipped entirely.
+     *
+     * @param Results $results the result tree to count
+     * @return int the number of example/step leaves
+     */
+    private static function countLeaves(Results $results): int
+    {
+        $count = 0;
+
+        foreach ($results->getResults() as $result) {
+            if ($result instanceof ExampleResult || $result instanceof StepResult) {
+                $count++;
+            } elseif ($result instanceof Results) {
+                $count += self::countLeaves($result);
+            }
+        }
+
+        return $count;
     }
 
     /**

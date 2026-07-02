@@ -18,7 +18,9 @@ use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Subscriber\SpecificationSubscriber;
 use PhpSpec\Specification\SpecBlock;
 use PhpSpec\StoryBDD\Feature;
+use PhpSpec\StoryBDD\FeatureNode;
 use PhpSpec\StoryBDD\GherkinParser;
+use PhpSpec\StoryBDD\ScenarioLineSelector;
 use PhpSpec\StoryBDD\StoryBDDRegistry;
 
 /**
@@ -57,9 +59,24 @@ final class Loader
             if ($path === '') {
                 continue;
             }
+
+            $lineTarget = null;
+
+            if (preg_match('/^(.+):(\d+)$/', $path, $matches) === 1
+                && (str_ends_with($matches[1], '.feature') || str_ends_with($matches[1], $this->specSuffix))
+            ) {
+                $path = $matches[1];
+                $lineTarget = (int) $matches[2];
+            }
+
             if ($this->isFeaturePath($path)) {
-                $blocks = array_merge($blocks, $this->loadFeatures($path));
+                $blocks = array_merge($blocks, $this->loadFeatures($path, $lineTarget));
             } else {
+                if ($lineTarget !== null) {
+                    // Example positions are only known at run time; the
+                    // registry hands the target to the spec as it runs
+                    LineTargetRegistry::add($path, $lineTarget);
+                }
                 $blocks = array_merge($blocks, $this->loadSuite($path));
             }
         }
@@ -77,21 +94,42 @@ final class Loader
      * @param string $path filesystem path to inspect
      */
     /**
-     * Filters spec blocks by path substring match.
+     * Filters spec blocks by path or title match.
+     *
+     * Blocks whose path matches are kept whole. Features are otherwise
+     * reduced to the scenarios whose title matches, and dropped when none
+     * does. Specifications are always kept: example titles are only known
+     * at run time, so they prune themselves as they run.
      *
      * @param array<SpecBlock> $blocks blocks to filter
-     * @param string $filter substring to match
+     * @param string $filter the --filter text
      * @return array<SpecBlock>
      */
     private function filterBlocks(array $blocks, string $filter): array
     {
+        $titleFilter = new TitleFilter($filter);
         $filtered = [];
+
         foreach ($blocks as $block) {
             $path = $this->getBlockPath($block);
-            if ($path === null || stripos($path, $filter) !== false) {
+
+            if ($path === null || $titleFilter->matchesPath($path)) {
                 $filtered[] = $block;
+                continue;
             }
+
+            if ($block instanceof Feature) {
+                $reduced = $block->withScenariosMatching($titleFilter);
+
+                if ($reduced !== null) {
+                    $filtered[] = $reduced;
+                }
+                continue;
+            }
+
+            $filtered[] = $block;
         }
+
         return $filtered;
     }
 
@@ -167,11 +205,14 @@ final class Loader
 
     /**
      * Parses Gherkin feature files and loads associated step definitions.
+     * When a line target is given, each feature is reduced to the scenarios
+     * addressed by that line.
      *
      * @param string $path directory or file containing .feature files
+     * @param int|null $lineTarget line number from a "file.feature:LINE" path, or null to load all scenarios
      * @return array<\PhpSpec\StoryBDD\Feature>
      */
-    private function loadFeatures(string $path): array
+    private function loadFeatures(string $path, ?int $lineTarget = null): array
     {
         $parser = new GherkinParser();
         $featureFiles = [];
@@ -191,6 +232,17 @@ final class Loader
         foreach ($featureFiles as $featureFile) {
             $content = $this->fs->read($featureFile);
             $featureNode = $parser->parse($content, $featureFile);
+
+            if ($lineTarget !== null) {
+                $featureNode = new FeatureNode(
+                    $featureNode->title,
+                    $featureNode->description,
+                    $featureNode->background,
+                    ScenarioLineSelector::select($featureNode->scenarios, $lineTarget),
+                    $featureNode->tags,
+                );
+            }
+
             $features[] = new Feature(
                 $featureFile,
                 $featureNode,

@@ -81,10 +81,11 @@ final class GherkinParser
         }
 
         $stepIndex = $this->buildStepIndex($document);
+        $scenarioLines = $this->buildScenarioLineIndex($document);
         $featureTags = $this->mapTags($document->feature->tags);
 
         $scenarios = array_map(
-            fn(Pickle $pickle) => $this->mapPickle($pickle, $stepIndex, $featureTags),
+            fn(Pickle $pickle) => $this->mapPickle($pickle, $stepIndex, $scenarioLines, $featureTags),
             $pickles,
         );
 
@@ -148,13 +149,48 @@ final class GherkinParser
     }
 
     /**
+     * Builds an index of AST scenario IDs to the line number of their
+     * "Scenario:"/"Scenario Outline:" keyword.
+     *
+     * @return array<string, int> map of scenario ID to keyword line number
+     */
+    private function buildScenarioLineIndex(GherkinDocument $document): array
+    {
+        $index = [];
+
+        if ($document->feature === null) {
+            return $index;
+        }
+
+        foreach ($document->feature->children as $child) {
+            if ($child->scenario !== null) {
+                $index[$child->scenario->id] = $child->scenario->location->line;
+            }
+            if ($child->rule !== null) {
+                foreach ($child->rule->children as $ruleChild) {
+                    if ($ruleChild->scenario !== null) {
+                        $index[$ruleChild->scenario->id] = $ruleChild->scenario->location->line;
+                    }
+                }
+            }
+        }
+
+        return $index;
+    }
+
+    /**
      * Maps a Cucumber Pickle to a ScenarioNode.
+     *
+     * The scenario line is the AST keyword line, shared by every scenario a
+     * Scenario Outline expands to; the pickle location (the examples table
+     * row for expanded outlines) is kept as the example line when it differs.
      *
      * @param Pickle $pickle the pickle to map
      * @param array<string, string> $stepIndex AST step ID to keyword map
+     * @param array<string, int> $scenarioLines AST scenario ID to keyword line map
      * @param string[] $featureTags feature-level tags to exclude from scenario tags
      */
-    private function mapPickle(Pickle $pickle, array $stepIndex, array $featureTags): ScenarioNode
+    private function mapPickle(Pickle $pickle, array $stepIndex, array $scenarioLines, array $featureTags): ScenarioNode
     {
         $steps = array_map(
             fn(PickleStep $step) => $this->mapPickleStep($step, $stepIndex),
@@ -169,7 +205,11 @@ final class GherkinParser
         // Pickles inherit feature tags; exclude them so scenario tags are scenario-only
         $scenarioTags = array_values(array_diff($pickleTags, $featureTags));
 
-        return new ScenarioNode($pickle->name, $steps, $scenarioTags);
+        $line = $scenarioLines[$pickle->astNodeIds[0] ?? ''] ?? 0;
+        $pickleLine = $pickle->location->line ?? 0;
+        $exampleLine = $pickleLine !== 0 && $pickleLine !== $line ? $pickleLine : null;
+
+        return new ScenarioNode($pickle->name, $steps, $scenarioTags, $line, $exampleLine);
     }
 
     /**

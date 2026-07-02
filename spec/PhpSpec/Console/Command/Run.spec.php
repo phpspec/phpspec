@@ -93,6 +93,70 @@ describe(Run::class, function () {
             expect($tester->getStatusCode())->toBe(0);
         });
 
+        it('filters examples by title and hides specs left with no examples', function (Filesystem $execFs) {
+            $dir = sys_get_temp_dir() . '/phpspec_run_filter_' . uniqid();
+            mkdir($dir, 0777, true);
+            file_put_contents($dir . '/Alpha.spec.php', <<<'PHP'
+            <?php
+            describe('Alpha', function () {
+                it('does the wanted thing', function () { expect(true)->toBeTrue(); });
+                it('does another thing', function () { expect(true)->toBeTrue(); });
+            });
+            PHP);
+            file_put_contents($dir . '/Beta.spec.php', <<<'PHP'
+            <?php
+            describe('Beta', function () {
+                it('does something else', function () { expect(true)->toBeTrue(); });
+            });
+            PHP);
+
+            $config = new Configuration('.', $execFs);
+            $cmd = new Run(new Loader(), new Runner(), $config);
+
+            try {
+                $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
+                $exitCode = $tester->execute(['files' => [$dir], '--filter' => 'wanted']);
+                $output = $tester->getDisplay();
+
+                expect($exitCode)->toBe(0);
+                expect($output)->toContain('does the wanted thing');
+                expect($output)->not()->toContain('another thing');
+                expect($output)->not()->toContain('Beta');
+            } finally {
+                unlink($dir . '/Alpha.spec.php');
+                unlink($dir . '/Beta.spec.php');
+                rmdir($dir);
+            }
+        });
+
+        it('runs a single example addressed by spec path and line', function (Filesystem $execFs) {
+            $dir = sys_get_temp_dir() . '/phpspec_run_line_' . uniqid();
+            mkdir($dir, 0777, true);
+            file_put_contents($dir . '/Picky.spec.php', <<<'PHP'
+            <?php
+            describe('Picky', function () {
+                it('first example', function () { expect(true)->toBeTrue(); });
+                it('second example', function () { expect(true)->toBeTrue(); });
+            });
+            PHP);
+
+            $config = new Configuration('.', $execFs);
+            $cmd = new Run(new Loader(), new Runner(), $config);
+
+            try {
+                $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
+                $exitCode = $tester->execute(['files' => [$dir . '/Picky.spec.php:4']]);
+                $output = $tester->getDisplay();
+
+                expect($exitCode)->toBe(0);
+                expect($output)->toContain('second example');
+                expect($output)->not()->toContain('first example');
+            } finally {
+                unlink($dir . '/Picky.spec.php');
+                rmdir($dir);
+            }
+        });
+
         it('loads bootstrap file when specified', function (Filesystem $execFs) {
             $tmpBootstrap = tempnam(sys_get_temp_dir(), 'phpspec_bs_') . '.php';
             file_put_contents($tmpBootstrap, '<?php // bootstrap loaded');

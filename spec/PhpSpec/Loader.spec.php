@@ -214,4 +214,20 @@ describe(Loader::class, function () {
         expect($suite)->toBeAnInstanceOf(Suite::class);
     });
 
+    it("loads only the scenario at the targeted line for a feature.feature:LINE path", function (Filesystem $fs) {
+        allow($fs->isFile())->toReturnUsing(fn(string $p) => $p === './features/greeting.feature');
+        allow($fs->isDir())->toReturn(false);
+        allow($fs->read())->toReturn(
+            "Feature: Test\n  Scenario: First\n    Given a step\n\n  Scenario: Second\n    Given a step\n"
+        );
+
+        $suite = (new Loader($fs))->load('./features/greeting.feature:5');
+
+        $features = $suite->getSpecifications();
+        expect($features)->toHaveCount(1);
+        $scenarios = $features[0]->run()->getResults();
+        expect($scenarios)->toHaveCount(1);
+        expect($scenarios[0]->getTitle())->toBe('Second');
+    });
+
 });

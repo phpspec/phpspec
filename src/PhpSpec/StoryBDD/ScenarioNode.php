@@ -26,6 +26,8 @@ readonly class ScenarioNode
      * @param string $title the scenario title from the "Scenario:" line
      * @param StepNode[] $steps ordered list of StepNode instances
      * @param string[] $tags tags applied to the scenario
+     * @param int $line line number of the "Scenario:"/"Scenario Outline:" keyword in the feature file (0 = unknown)
+     * @param int|null $exampleLine line number of the examples table row for outline-expanded scenarios, or null
      */
     public function __construct(
         public string $title,
@@ -33,5 +35,7 @@ readonly class ScenarioNode
         public array $steps,
         /** @var string[] */
         public array $tags = [],
+        public int $line = 0,
+        public ?int $exampleLine = null,
     ) {}
 }

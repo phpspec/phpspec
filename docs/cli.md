@@ -18,9 +18,11 @@ bin/phpspec run [files] [options]
 ```bash
 bin/phpspec run                                    # Run all specs in spec/
 bin/phpspec run spec/App/Calculator.spec.php        # Run a single spec
+bin/phpspec run spec/App/Calculator.spec.php:14     # Run the example at line 14
 bin/phpspec run spec/App/Console                    # Run all specs in a directory
 bin/phpspec run features/                           # Run all feature files
 bin/phpspec run features/greeting.feature           # Run a single feature
+bin/phpspec run features/greeting.feature:12        # Run the scenario at line 12
 ```
 
 ### `pair`
@@ -141,17 +143,37 @@ bin/phpspec run --format=junit > results.xml
 
 | Option | Description |
 |---|---|
-| `--filter=PATTERN` | Only run spec files whose path contains PATTERN |
+| `--filter=PATTERN` | Only run specs/scenarios whose file path, example title, or scenario title contains PATTERN |
 | `--stop-on-failure` | Stop execution after the first spec file with a failure or error |
 | `--order=ORDER` | Run order: `default` or `random` |
 | `--seed=SEED` | Seed for random ordering (for reproducibility) |
 
 ```bash
-bin/phpspec run --filter Calculator              # Only specs with "Calculator" in path
+bin/phpspec run --filter Calculator              # Path or title contains "Calculator"
+bin/phpspec run --filter "should be good"        # Example/scenario titles matching a phrase
+bin/phpspec run --filter "it should be good"     # Leading "it" on the filter is ignored
 bin/phpspec run --stop-on-failure                 # Stop on first failing spec
 bin/phpspec run --order random                    # Randomize spec order
 bin/phpspec run --order random --seed 42          # Reproducible random order
 ```
+
+Matching is a case-insensitive substring test. When a spec file's path matches,
+every example in it runs; otherwise only the examples whose title matches run.
+Feature files behave the same with scenario titles.
+
+#### Running a single example or scenario by line
+
+Append `:LINE` to a spec or feature path to run just the block at that line:
+
+```bash
+bin/phpspec run spec/App/Calculator.spec.php:14   # The example at line 14
+bin/phpspec run features/checkout.feature:12      # The scenario at line 12
+```
+
+Any line inside an example (or scenario) body selects it; a line inside a
+`describe` but outside its examples runs that whole context. For Gherkin,
+targeting a `Scenario Outline:` line runs every row of its examples table,
+while targeting a single examples row runs just that expansion.
 
 ### Bootstrap
 
