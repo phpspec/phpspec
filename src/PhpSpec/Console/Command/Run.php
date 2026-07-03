@@ -24,6 +24,7 @@ use PhpSpec\Loader;
 use PhpSpec\Parallel\ParallelRunner;
 use PhpSpec\Report\Formatter;
 use PhpSpec\Report\Formatter\Dot;
+use PhpSpec\Report\Formatter\Html;
 use PhpSpec\Report\Formatter\Junit;
 use PhpSpec\Report\Formatter\Pretty;
 use PhpSpec\Report\Formatter\Tap;
@@ -36,6 +37,7 @@ use Symfony\Component\Console\Input\InputArgument as Argument;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Input\InputOption as Option;
 use Symfony\Component\Console\Output\OutputInterface as Output;
+use Symfony\Component\Console\Output\StreamOutput;
 
 /**
  * @internal
@@ -77,7 +79,8 @@ final class Run extends Command
             ->addOption('stop-on-skipped', null, Option::VALUE_NONE, 'Stop on first skipped example')
             ->addOption('stop-on-problems', null, Option::VALUE_NONE, 'Stop on any non-pass result')
             ->addOption('filter', null, Option::VALUE_REQUIRED, 'Run only specs matching pattern')
-            ->addOption('format', 'f', Option::VALUE_REQUIRED, 'Output format (pretty, dot, tap, junit)', 'pretty')
+            ->addOption('format', 'f', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Output format(s): pretty, dot, tap, junit, html; repeatable, pair each with -o', [])
+            ->addOption('out', 'o', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Report destination for the corresponding --format; "std" is the console', [])
             ->addOption('order', null, Option::VALUE_REQUIRED, 'Run order (default, random)', 'default')
             ->addOption('seed', null, Option::VALUE_REQUIRED, 'Seed for random order')
             ->addOption('profile', null, Option::VALUE_OPTIONAL, 'Show N slowest examples', false)
@@ -109,7 +112,8 @@ final class Run extends Command
      *    applies --filter, --stop-on-failure, --order=random/--seed, then delegates
      *    execution to the Runner. Measures wall-clock duration.
      *
-     * 5. Renders results through the selected formatter (pretty, dot, tap, junit),
+     * 5. Renders results through the selected formatter (pretty, dot, tap,
+     *    junit, html), then writes any report files requested with --output-*,
      *    resolved from --format or the config file.
      *
      * 6. If --profile was given, prints the N slowest examples with their durations.
@@ -139,6 +143,14 @@ final class Run extends Command
         }
         $this->registerAutoloader();
 
+        $unknownFormats = $this->unknownFormats($input);
+
+        if ($unknownFormats !== []) {
+            $output->writeln('<fg=red>Unknown format: ' . implode(', ', $unknownFormats) . ' (available: pretty, dot, tap, junit, html)</>');
+
+            return 1;
+        }
+
         $coverageReporter = $this->startCoverage($input, $output);
 
         if ($coverageReporter === false) {
@@ -147,6 +159,7 @@ final class Run extends Command
 
         $results = $this->runSuiteStreaming($input, $output);
 
+        $this->writeReportFiles($input, $output, $results);
         $this->printProfile($input, $output, $results);
 
         if ($coverageReporter) {
@@ -157,11 +170,49 @@ final class Run extends Command
             }
         }
 
-        if ($this->resolveFormat($input) !== 'junit') {
+        if (!in_array($this->resolveFormat($input), ['junit', 'html'], true)) {
             $this->generateCode($output, $results, (bool) $input->getOption('fake'), $input->isInteractive());
         }
 
         return $results->status();
+    }
+
+    /**
+     * Writes the report files requested with --format/-o pairs, each rendered
+     * from the full suite results in addition to the console format, and
+     * renders any additional console-bound formats.
+     *
+     * @param Input $input the console input for the --format and -o options
+     * @param Output $output the console output for the confirmation notes
+     * @param SuiteResult $results the aggregated suite results
+     */
+    private function writeReportFiles(Input $input, Output $output, SuiteResult $results): void
+    {
+        $outputs = $this->resolveOutputs($input);
+
+        foreach ($outputs['files'] as [$format, $file]) {
+            $dir = dirname($file);
+
+            if (!is_dir($dir)) {
+                mkdir($dir, 0777, true);
+            }
+
+            $handle = fopen($file, 'w');
+
+            if ($handle === false) {
+                $output->writeln("<fg=red>Could not write report to $file</>");
+                continue;
+            }
+
+            $this->createFormatter($format, new StreamOutput($handle, StreamOutput::VERBOSITY_NORMAL, false))->format($results);
+            fclose($handle);
+
+            $output->writeln("  Report written to $file");
+        }
+
+        foreach ($outputs['extraConsole'] as $format) {
+            $this->createFormatter($format, $output)->format($results);
+        }
     }
 
     /**
@@ -270,7 +321,7 @@ final class Run extends Command
             $output->writeln("<fg=yellow>Randomised with seed $seed</>");
         }
 
-        $formatter = $this->createFormatter($input, $output);
+        $formatter = $this->createFormatter($this->resolveFormat($input), $output);
         $formatter->begin();
 
         $start = hrtime(true);
@@ -309,19 +360,72 @@ final class Run extends Command
      * @param Input $input the console input for the --format option
      * @return string
      */
-    private function resolveFormat(Input $input): string
+    /**
+     * Resolves the --format/-o pairs into the console format and the report
+     * files to write. Outs pair with formats by position, Behat style; "std"
+     * (the default when a format has no -o) means the console. The first
+     * console-bound format streams live; additional ones render at the end.
+     *
+     * @param Input $input the console input for the --format and -o options
+     * @return array{console: string, files: array<int, array{string, string}>, extraConsole: array<int, string>}
+     */
+    private function resolveOutputs(Input $input): array
     {
-        $format = $input->getOption('format') !== 'pretty'
-            ? $input->getOption('format')
-            : $this->config->getFormat();
+        $formats = (array) $input->getOption('format');
+        $outs = (array) $input->getOption('out');
 
-        return $format ?? 'pretty';
+        if ($formats === []) {
+            $formats = [$this->config->getFormat()];
+        }
+
+        $console = null;
+        $files = [];
+        $extraConsole = [];
+
+        foreach (array_values($formats) as $i => $format) {
+            $file = $outs[$i] ?? 'std';
+
+            if ($file !== 'std') {
+                $files[] = [$format, $file];
+            } elseif ($console === null) {
+                $console = $format;
+            } else {
+                $extraConsole[] = $format;
+            }
+        }
+
+        return [
+            'console' => $console ?? 'pretty',
+            'files' => $files,
+            'extraConsole' => $extraConsole,
+        ];
     }
 
-    private function createFormatter(Input $input, Output $output): Formatter
+    /**
+     * Returns the requested formats that neither the built-in set nor a
+     * loaded extension can provide.
+     *
+     * @param Input $input the console input for the --format option
+     * @return array<int, string> the unknown format names
+     */
+    private function unknownFormats(Input $input): array
     {
-        $format = $this->resolveFormat($input);
+        $known = ['pretty', 'dot', 'tap', 'junit', 'html'];
 
+        return array_values(array_filter(
+            (array) $input->getOption('format'),
+            fn(string $format) => !in_array($format, $known, true)
+                && !($this->extensionLoader?->hasFormatter($format) ?? false),
+        ));
+    }
+
+    private function resolveFormat(Input $input): string
+    {
+        return $this->resolveOutputs($input)['console'];
+    }
+
+    private function createFormatter(string $format, Output $output): Formatter
+    {
         if ($this->extensionLoader !== null && $this->extensionLoader->hasFormatter($format)) {
             return new FormatterBridge($this->extensionLoader->getFormatter($format), $output);
         }
@@ -330,6 +434,7 @@ final class Run extends Command
             'dot' => new Dot($output),
             'tap' => new Tap($output),
             'junit' => new Junit($output),
+            'html' => new Html($output),
             default => new Pretty($output),
         };
     }

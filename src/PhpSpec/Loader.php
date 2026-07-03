@@ -30,11 +30,17 @@ final class Loader
     /**
      * @param Filesystem|null $filesystem injectable filesystem for testability
      * @param string $specSuffix file suffix used to identify spec files
+     * @param string $featuresPath the features root; step definitions anywhere under it are discoverable
+     * @param string|null $stepsPath additional step definitions directory, or null when not configured
      */
     private Filesystem $fs;
 
-    public function __construct(?Filesystem $filesystem = null, private string $specSuffix = '.spec.php')
-    {
+    public function __construct(
+        ?Filesystem $filesystem = null,
+        private string $specSuffix = '.spec.php',
+        private string $featuresPath = './features',
+        private ?string $stepsPath = null,
+    ) {
         $this->fs = $filesystem ?? new RealFilesystem();
     }
 
@@ -179,11 +185,24 @@ final class Loader
 
         $this->scanFeatures($path, $featureFiles, $stepFiles);
 
+        // Step definitions are discoverable anywhere under the features root
+        // and in the configured steps directory, wherever the run points
+        $featuresRoot = rtrim($this->featuresPath, '/');
+
+        if ($this->fs->isDir($featuresRoot)) {
+            $this->collectStepFiles($featuresRoot, $stepFiles);
+        }
+
+        if ($this->stepsPath !== null && $this->fs->isDir($this->stepsPath)) {
+            $this->collectStepFiles($this->stepsPath, $stepFiles);
+        }
+
         // Fresh registry so prior spec execution can't pollute step definitions
         StoryBDDRegistry::init();
 
-        // Load step definitions into the fresh registry
-        foreach ($stepFiles as $stepFile) {
+        // Load step definitions into the fresh registry; ancestor and in-tree
+        // discovery can both find the same steps directory, so deduplicate
+        foreach (array_unique($stepFiles) as $stepFile) {
             require $stepFile;
         }
 
@@ -213,21 +232,18 @@ final class Loader
     {
         if ($this->fs->isFile($path) && str_ends_with($path, '.feature')) {
             $featureFiles[] = $path;
-            // Walk up from the feature file's directory to find steps/ dirs
-            $dir = dirname($path);
-            while ($dir !== dirname($dir)) {
-                $stepsDir = $dir . '/steps';
-                if ($this->fs->isDir($stepsDir)) {
-                    $this->collectStepFiles($stepsDir, $stepFiles);
-                }
-                $dir = dirname($dir);
-            }
+            $this->collectAncestorSteps(dirname($path), $stepFiles);
+
             return;
         }
 
         if (!$this->fs->isDir($path)) {
             return;
         }
+
+        // Steps may live beside an ancestor (e.g. features/steps/ when
+        // running features/scenarios/checkout), not only inside the tree
+        $this->collectAncestorSteps($path, $stepFiles);
 
         $files = $this->fs->scandir($path);
 
@@ -247,6 +263,26 @@ final class Loader
             } elseif (str_ends_with($file, '.feature')) {
                 $featureFiles[] = $filePath;
             }
+        }
+    }
+
+    /**
+     * Walks up from a directory collecting step files from every steps/
+     * directory found beside it or its ancestors.
+     *
+     * @param string $dir the directory to walk up from
+     * @param array<string> $stepFiles collected step file paths (by reference)
+     */
+    private function collectAncestorSteps(string $dir, array &$stepFiles): void
+    {
+        while ($dir !== dirname($dir)) {
+            $stepsDir = $dir . '/steps';
+
+            if ($this->fs->isDir($stepsDir)) {
+                $this->collectStepFiles($stepsDir, $stepFiles);
+            }
+
+            $dir = dirname($dir);
         }
     }
 

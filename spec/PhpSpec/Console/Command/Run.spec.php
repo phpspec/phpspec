@@ -56,6 +56,71 @@ describe(Run::class, function () {
             expect($output)->toContain('<?xml');
         });
 
+        it('runs with html format', function (Filesystem $execFs) {
+            $config = new Configuration('.', $execFs);
+            $cmd = new Run(new Loader($execFs), new Runner(), $config);
+
+            $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
+            $tester->execute(['--format' => 'html']);
+            expect($tester->getDisplay())->toContain('<!DOCTYPE html>');
+        });
+
+        it('rejects unknown formats', function (Filesystem $execFs) {
+            $config = new Configuration('.', $execFs);
+            $cmd = new Run(new Loader($execFs), new Runner(), $config);
+
+            $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
+            $exitCode = $tester->execute(['--format' => 'nope']);
+            expect($exitCode)->toBe(1);
+            expect($tester->getDisplay())->toContain('Unknown format: nope');
+        });
+
+        it('pairs each -o file with its format by position', function (Filesystem $execFs) {
+            $dir = sys_get_temp_dir() . '/phpspec_reports_' . uniqid();
+            $config = new Configuration('.', $execFs);
+            $cmd = new Run(new Loader($execFs), new Runner(), $config);
+
+            try {
+                $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
+                $tester->execute([
+                    '--format' => ['pretty', 'html', 'junit'],
+                    '--out' => ['std', $dir . '/report.html', $dir . '/report.xml'],
+                ]);
+                $output = $tester->getDisplay();
+
+                expect($output)->toContain('No specs found');
+                expect((string) file_get_contents($dir . '/report.html'))->toContain('<!DOCTYPE html>');
+                expect((string) file_get_contents($dir . '/report.xml'))->toContain('<testsuites');
+                expect($output)->toContain('Report written to ' . $dir . '/report.html');
+            } finally {
+                @unlink($dir . '/report.html');
+                @unlink($dir . '/report.xml');
+                @rmdir($dir);
+            }
+        });
+
+        it('defaults the console to pretty when every format writes to a file', function (Filesystem $execFs) {
+            $dir = sys_get_temp_dir() . '/phpspec_fileonly_' . uniqid();
+            $config = new Configuration('.', $execFs);
+            $cmd = new Run(new Loader($execFs), new Runner(), $config);
+
+            try {
+                $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
+                $tester->execute([
+                    '--format' => ['html'],
+                    '--out' => [$dir . '/report.html'],
+                ]);
+                $output = $tester->getDisplay();
+
+                expect($output)->toContain('No specs found');
+                expect($output)->not()->toContain('<!DOCTYPE html>');
+                expect((string) file_get_contents($dir . '/report.html'))->toContain('<!DOCTYPE html>');
+            } finally {
+                @unlink($dir . '/report.html');
+                @rmdir($dir);
+            }
+        });
+
         it('runs with profile option', function (Filesystem $execFs) {
             $config = new Configuration('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);

@@ -326,4 +326,18 @@ describe(Configuration::class, function () {
         expect($config->getPsr4Prefix())->toBe('App');
     });
 
+    it("has no steps path by default", function (Filesystem $fs) {
+        $config = new Configuration('/app', $fs);
+        expect($config->getStepsPath())->toBeNull();
+    });
+
+    it("returns the configured steps path", function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.json');
+        allow($fs->read())->toReturn(json_encode(['steps_path' => 'acceptance_steps']));
+
+        $config = new Configuration('/app', $fs);
+
+        expect($config->getStepsPath())->toBe('acceptance_steps');
+    });
+
 });
