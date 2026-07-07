@@ -167,12 +167,12 @@ final class InProcessRunner
             if (str_starts_with($part, '--')) {
                 if (str_contains($part, '=')) {
                     [$key, $value] = explode('=', $part, 2);
-                    $result[$key] = $value;
+                    self::addOptionValue($result, $key, $value);
                 } else {
                     // Check if next part is a value (not another option)
                     $next = $parts[$i + 1] ?? null;
                     if ($next !== null && !str_starts_with($next, '-')) {
-                        $result[$part] = $next;
+                        self::addOptionValue($result, $part, $next);
                         $skipNext = true;
                     } else {
                         $result[$part] = true;
@@ -182,7 +182,7 @@ final class InProcessRunner
                 // Short option: check if next part is a value
                 $next = $parts[$i + 1] ?? null;
                 if ($next !== null && !str_starts_with($next, '-')) {
-                    $result[$part] = $next;
+                    self::addOptionValue($result, $part, $next);
                     $skipNext = true;
                 } else {
                     $result[$part] = true;
@@ -209,5 +209,28 @@ final class InProcessRunner
         }
 
         return $result;
+    }
+
+    /**
+     * Records an option value, aggregating repeated occurrences into an
+     * ordered array so Behat-style --format/-o pairs survive parsing.
+     *
+     * @param array<string, mixed> $result the parsed arguments (by reference)
+     * @param string $key the option name including dashes
+     * @param string $value the option value
+     */
+    private static function addOptionValue(array &$result, string $key, string $value): void
+    {
+        if (!isset($result[$key])) {
+            $result[$key] = $value;
+
+            return;
+        }
+
+        if (!is_array($result[$key])) {
+            $result[$key] = [$result[$key]];
+        }
+
+        $result[$key][] = $value;
     }
 }

@@ -390,4 +390,36 @@ describe(GherkinParser::class, function () {
         expect($feature->scenarios[0]->tags)->toBe(["scenario-tag"]);
     });
 
+    it("records the line number of each scenario", function () {
+        $feature = $this->parser->parse(<<<GHERKIN
+        Feature: Lines
+          Scenario: First
+            Given a step
+
+          Scenario: Second
+            Given a step
+        GHERKIN);
+        expect($feature->scenarios[0]->line)->toBe(2);
+        expect($feature->scenarios[0]->exampleLine)->toBeNull();
+        expect($feature->scenarios[1]->line)->toBe(5);
+    });
+
+    it("gives outline-expanded scenarios the outline line and their example row line", function () {
+        $feature = $this->parser->parse(<<<GHERKIN
+        Feature: Outline lines
+          Scenario Outline: Adding
+            Given I add <a>
+
+            Examples:
+              | a |
+              | 1 |
+              | 2 |
+        GHERKIN);
+        expect($feature->scenarios)->toHaveCount(2);
+        expect($feature->scenarios[0]->line)->toBe(2);
+        expect($feature->scenarios[1]->line)->toBe(2);
+        expect($feature->scenarios[0]->exampleLine)->toBe(7);
+        expect($feature->scenarios[1]->exampleLine)->toBe(8);
+    });
+
 });

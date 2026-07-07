@@ -52,6 +52,157 @@ Feature: CLI options
     Then all examples should pass
     And the output should not contain "Excluded"
 
+  Scenario: Filter examples by title
+    Given a spec file "spec/App/Alpha.spec.php":
+      """
+      <?php
+      describe('Alpha', function () {
+          it('does the wanted thing', function () {
+              expect(true)->toBeTrue();
+          });
+          it('does another thing', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/Beta.spec.php":
+      """
+      <?php
+      describe('Beta', function () {
+          it('does something else', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--filter wanted"
+    Then all examples should pass
+    And the output should contain "does the wanted thing"
+    And the output should not contain "another thing"
+    And the output should not contain "Beta"
+    And the output should contain "1 example"
+
+  Scenario: Filter scenarios by title
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/paths.feature":
+      """
+      Feature: Paths
+        Scenario: Wanted path
+          Given a noted step
+
+        Scenario: Other path
+          Given another noted step
+      """
+    And a step file "features/steps/paths.steps.php":
+      """
+      <?php
+      given("a noted step", function () {
+          expect(true)->toBeTrue();
+      });
+
+      given("another noted step", function () {
+          expect(true)->toBeTrue();
+      });
+      """
+    When I run phpspec run with option "--story --filter Wanted"
+    Then all steps should pass
+    And the output should contain "Wanted path"
+    And the output should not contain "Other path"
+    And the output should contain "1 scenario"
+
+  Scenario: Run a single example by its line number
+    Given a spec file "spec/App/Picky.spec.php":
+      """
+      <?php
+      describe('Picky', function () {
+          it('first example', function () {
+              expect(true)->toBeTrue();
+          });
+          it('second example', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run "spec/App/Picky.spec.php:6"
+    Then all examples should pass
+    And the output should contain "second example"
+    And the output should not contain "first example"
+    And the output should contain "1 example"
+
+  Scenario: Run a single example by a line inside its body
+    Given a spec file "spec/App/Inner.spec.php":
+      """
+      <?php
+      describe('Inner', function () {
+          it('first example', function () {
+              expect(true)->toBeTrue();
+          });
+          it('second example', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run "spec/App/Inner.spec.php:4"
+    Then all examples should pass
+    And the output should contain "first example"
+    And the output should not contain "second example"
+    And the output should contain "1 example"
+
+  Scenario: Run a single scenario by its line number
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/numbers.feature":
+      """
+      Feature: Two scenarios
+        Scenario: First
+          Given a noted step
+
+        Scenario: Second
+          Given another noted step
+      """
+    And a step file "features/steps/numbers.steps.php":
+      """
+      <?php
+      given("a noted step", function () {
+          expect(true)->toBeTrue();
+      });
+
+      given("another noted step", function () {
+          expect(true)->toBeTrue();
+      });
+      """
+    When I run phpspec run "features/numbers.feature:5"
+    Then all steps should pass
+    And the output should contain "Second"
+    And the output should not contain "First"
+    And the output should contain "1 scenario"
+
+  Scenario: Run a single scenario by a line inside its body
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/inner.feature":
+      """
+      Feature: Two scenarios
+        Scenario: First
+          Given a noted step
+
+        Scenario: Second
+          Given another noted step
+      """
+    And a step file "features/steps/inner.steps.php":
+      """
+      <?php
+      given("a noted step", function () {
+          expect(true)->toBeTrue();
+      });
+
+      given("another noted step", function () {
+          expect(true)->toBeTrue();
+      });
+      """
+    When I run phpspec run "features/inner.feature:3"
+    Then all steps should pass
+    And the output should contain "First"
+    And the output should not contain "Second"
+    And the output should contain "1 scenario"
+
   Scenario: Dot formatter
     Given a spec file "spec/App/DotFormat.spec.php":
       """
@@ -93,6 +244,114 @@ Feature: CLI options
     When I run phpspec run with option "--format junit"
     Then the output should contain "<testsuites>"
     And the output should contain "<testcase"
+
+  Scenario: Run features from a nested directory with steps defined at the features root
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/scenarios/checkout/checkout.feature":
+      """
+      Feature: Checkout
+        Scenario: Buys an item
+          Given a checkout step
+      """
+    And a step file "features/steps/checkout.steps.php":
+      """
+      <?php
+      given("a checkout step", function () {
+          expect(true)->toBeTrue();
+      });
+      """
+    When I run phpspec run "features/scenarios/checkout"
+    Then all steps should pass
+    And the output should not contain "undefined"
+
+  Scenario: Steps are discoverable anywhere inside the features folder
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/checkout/checkout.feature":
+      """
+      Feature: Checkout
+        Scenario: Buys an item
+          Given a sibling step
+      """
+    And a file "features/checkout/checkout.steps.php":
+      """
+      <?php
+      given("a sibling step", function () {
+          expect(true)->toBeTrue();
+      });
+      """
+    When I run phpspec run "features/checkout/checkout.feature"
+    Then all steps should pass
+    And the output should not contain "undefined"
+
+  Scenario: HTML formatter
+    Given a spec file "spec/App/HtmlFormat.spec.php":
+      """
+      <?php
+      describe('HtmlFormat', function () {
+          it('renders a passing example', function () {
+              expect(true)->toBeTrue();
+          });
+          it('renders a failing example', function () {
+              expect(1)->toBe(2);
+          });
+      });
+      """
+    When I run phpspec run with option "--format html"
+    Then the output should contain "<!DOCTYPE html>"
+    And the output should contain "renders a passing example"
+    And the output should contain "renders a failing example"
+    And the output should contain "2 examples"
+    And the exit code should not be 0
+
+  Scenario: Write report files alongside the console format
+    Given a spec file "spec/App/Reports.spec.php":
+      """
+      <?php
+      describe('Reports', function () {
+          it('passes', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "-f pretty -o std -f html -o reports/report.html -f junit -o reports/report.xml"
+    Then all examples should pass
+    And the output should contain "Reports"
+    And a file "reports/report.html" should be generated
+    And the file "reports/report.html" should contain "<!DOCTYPE html>"
+    And a file "reports/report.xml" should be generated
+    And the file "reports/report.xml" should contain "<testsuites>"
+    And the output should contain "Report written to reports/report.html"
+    And the output should contain "Report written to reports/report.xml"
+
+  Scenario: File formats default the console to pretty
+    Given a spec file "spec/App/FileOnly.spec.php":
+      """
+      <?php
+      describe('FileOnly', function () {
+          it('passes', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "-f html -o report.html"
+    Then all examples should pass
+    And the output should contain "FileOnly"
+    And a file "report.html" should be generated
+    And the file "report.html" should contain "<!DOCTYPE html>"
+
+  Scenario: Unknown formats are rejected instead of silently falling back
+    Given a spec file "spec/App/BadFormat.spec.php":
+      """
+      <?php
+      describe('BadFormat', function () {
+          it('passes', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--format nope"
+    Then the exit code should not be 0
+    And the output should contain "Unknown format: nope"
 
   Scenario: Random execution order with seed
     Given a spec file "spec/App/Random.spec.php":

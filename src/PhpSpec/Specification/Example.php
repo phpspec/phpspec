@@ -60,6 +60,30 @@ class Example implements ExampleResultRegistry, SpecBlock
     public function __construct(private readonly string $title, private readonly Closure $example) {}
 
     /**
+     * Returns the descriptive label of the example.
+     *
+     * @return string the example title
+     */
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+
+    /**
+     * Checks whether a line number falls within this example's closure,
+     * used to resolve "file.spec.php:LINE" run targets.
+     *
+     * @param int $line the targeted line number
+     * @return bool true when the line is within the closure's span
+     */
+    public function containsLine(int $line): bool
+    {
+        $reflection = new ReflectionFunction($this->example);
+
+        return $line >= $reflection->getStartLine() && $line <= $reflection->getEndLine();
+    }
+
+    /**
      * Marks this example as pending (skipped).
      *
      * @param bool $pending whether to mark as pending

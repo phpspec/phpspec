@@ -203,6 +203,91 @@ describe(Loader::class, function () {
         expect($suite)->toBeAnInstanceOf(Suite::class);
     });
 
+    it("finds step definitions in ancestor steps directories when loading a feature directory", function () {
+        $root = sys_get_temp_dir() . '/phpspec_loader_steps_' . uniqid();
+        mkdir($root . '/features/scenarios/checkout', 0777, true);
+        mkdir($root . '/features/steps', 0777, true);
+        file_put_contents(
+            $root . '/features/scenarios/checkout/checkout.feature',
+            "Feature: Checkout\n  Scenario: Buys\n    Given a checkout step\n"
+        );
+        file_put_contents(
+            $root . '/features/steps/checkout.steps.php',
+            '<?php given("a checkout step", function () { expect(true)->toBeTrue(); });'
+        );
+
+        try {
+            $suite = (new Loader())->load($root . '/features/scenarios/checkout');
+
+            $steps = $suite->getSpecifications()[0]->run()->getResults()[0]->getResults();
+            expect($steps[0]->isUndefined())->toBeFalse();
+            expect($steps[0]->isPassed())->toBeTrue();
+        } finally {
+            unlink($root . '/features/scenarios/checkout/checkout.feature');
+            unlink($root . '/features/steps/checkout.steps.php');
+            rmdir($root . '/features/scenarios/checkout');
+            rmdir($root . '/features/scenarios');
+            rmdir($root . '/features/steps');
+            rmdir($root . '/features');
+            rmdir($root);
+        }
+    });
+
+    it("finds step definitions anywhere under the features root", function () {
+        $root = sys_get_temp_dir() . '/phpspec_loader_root_' . uniqid();
+        mkdir($root . '/features/checkout', 0777, true);
+        file_put_contents(
+            $root . '/features/checkout/checkout.feature',
+            "Feature: Checkout\n  Scenario: Buys\n    Given a sibling step\n"
+        );
+        file_put_contents(
+            $root . '/features/checkout/checkout.steps.php',
+            '<?php given("a sibling step", function () { expect(true)->toBeTrue(); });'
+        );
+
+        try {
+            $loader = new Loader(featuresPath: $root . '/features');
+            $suite = $loader->load($root . '/features/checkout/checkout.feature');
+
+            $steps = $suite->getSpecifications()[0]->run()->getResults()[0]->getResults();
+            expect($steps[0]->isPassed())->toBeTrue();
+        } finally {
+            unlink($root . '/features/checkout/checkout.feature');
+            unlink($root . '/features/checkout/checkout.steps.php');
+            rmdir($root . '/features/checkout');
+            rmdir($root . '/features');
+            rmdir($root);
+        }
+    });
+
+    it("finds step definitions in the configured steps path", function () {
+        $root = sys_get_temp_dir() . '/phpspec_loader_stepspath_' . uniqid();
+        mkdir($root . '/features', 0777, true);
+        mkdir($root . '/acceptance_steps', 0777, true);
+        file_put_contents(
+            $root . '/features/checkout.feature',
+            "Feature: Checkout\n  Scenario: Buys\n    Given a configured step\n"
+        );
+        file_put_contents(
+            $root . '/acceptance_steps/checkout.steps.php',
+            '<?php given("a configured step", function () { expect(true)->toBeTrue(); });'
+        );
+
+        try {
+            $loader = new Loader(featuresPath: $root . '/features', stepsPath: $root . '/acceptance_steps');
+            $suite = $loader->load($root . '/features');
+
+            $steps = $suite->getSpecifications()[0]->run()->getResults()[0]->getResults();
+            expect($steps[0]->isPassed())->toBeTrue();
+        } finally {
+            unlink($root . '/features/checkout.feature');
+            unlink($root . '/acceptance_steps/checkout.steps.php');
+            rmdir($root . '/features');
+            rmdir($root . '/acceptance_steps');
+            rmdir($root);
+        }
+    });
+
     it("filters features by path", function (Filesystem $fs) {
         allow($fs->isFile())->toReturnUsing(fn(string $p) => str_ends_with($p, '.feature'));
         allow($fs->isDir())->toReturnUsing(fn(string $p) => $p === './features');
@@ -212,6 +297,22 @@ describe(Loader::class, function () {
         $suite = (new Loader($fs))->load('./features', 'greeting');
 
         expect($suite)->toBeAnInstanceOf(Suite::class);
+    });
+
+    it("loads only the scenario at the targeted line for a feature.feature:LINE path", function (Filesystem $fs) {
+        allow($fs->isFile())->toReturnUsing(fn(string $p) => $p === './features/greeting.feature');
+        allow($fs->isDir())->toReturn(false);
+        allow($fs->read())->toReturn(
+            "Feature: Test\n  Scenario: First\n    Given a step\n\n  Scenario: Second\n    Given a step\n"
+        );
+
+        $suite = (new Loader($fs))->load('./features/greeting.feature:5');
+
+        $features = $suite->getSpecifications();
+        expect($features)->toHaveCount(1);
+        $scenarios = $features[0]->run()->getResults();
+        expect($scenarios)->toHaveCount(1);
+        expect($scenarios[0]->getTitle())->toBe('Second');
     });
 
 });

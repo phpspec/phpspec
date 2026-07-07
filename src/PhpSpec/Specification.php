@@ -49,6 +49,8 @@ class Specification implements ExampleRegistry, SpecBlock
     public function run(): Results
     {
         DispatcherRegistry::dispatcher()->dispatch(new SpecificationStarted($this->path), SpecificationStarted::NAME);
+        FilterRegistry::current()?->beginSpec($this->path);
+        LineTargetRegistry::beginSpec($this->path);
 
         // loads the specification file from the Subject constructor
         // so $this in the examples refers to Subject
@@ -58,7 +60,7 @@ class Specification implements ExampleRegistry, SpecBlock
 
         $blockResults = [];
 
-        foreach ($this->getSpecBlocks() as $specBlock) {
+        foreach ($this->targetedSpecBlocks() as $specBlock) {
             if ($specBlock instanceof Specification\Context) {
                 $specBlock->setWorld($subject);
             }
@@ -100,6 +102,27 @@ class Specification implements ExampleRegistry, SpecBlock
     public function getSpecBlocks(): array
     {
         return $this->specBlocks;
+    }
+
+    /**
+     * Returns the top-level blocks to run, honouring an active line target:
+     * only blocks whose closure spans the targeted line run, and none when
+     * the line falls outside every block.
+     *
+     * @return array<SpecBlock> the blocks addressed by the line target, or all blocks
+     */
+    private function targetedSpecBlocks(): array
+    {
+        $line = LineTargetRegistry::currentTarget();
+
+        if ($line === null) {
+            return $this->specBlocks;
+        }
+
+        return array_values(array_filter(
+            $this->specBlocks,
+            fn(SpecBlock $block) => $block instanceof Specification\Context && $block->containsLine($line),
+        ));
     }
 
     /**

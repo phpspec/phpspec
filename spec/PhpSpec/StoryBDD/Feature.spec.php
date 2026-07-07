@@ -2,6 +2,7 @@
 
 use PhpSpec\StoryBDD\Feature;
 use PhpSpec\StoryBDD\FeatureNode;
+use PhpSpec\TitleFilter;
 use PhpSpec\StoryBDD\ScenarioNode;
 use PhpSpec\StoryBDD\ScenarioOutlineNode;
 use PhpSpec\StoryBDD\StepNode;
@@ -108,6 +109,38 @@ describe(Feature::class, function () {
         expect($steps[0]->isFailure())->toBeTrue();
         expect($steps[0]->getError()->getMessage())->toBe("boom");
         expect($steps[1]->isSkipped())->toBeTrue();
+    });
+
+    it("reduces to the scenarios matching a title filter", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a step", function () {});
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Paths',
+            '',
+            null,
+            [
+                new ScenarioNode('Wanted path', [new StepNode('Given', 'a step')]),
+                new ScenarioNode('Other path', [new StepNode('Given', 'a step')]),
+            ]
+        ), $registry, new HookRegistry());
+
+        $reduced = $feature->withScenariosMatching(new TitleFilter('Wanted'));
+
+        $scenarios = $reduced->run()->getResults();
+        expect($scenarios)->toHaveCount(1);
+        expect($scenarios[0]->getTitle())->toBe('Wanted path');
+    });
+
+    it("reduces to null when no scenario title matches the filter", function () {
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Paths',
+            '',
+            null,
+            [new ScenarioNode('Only path', [new StepNode('Given', 'a step')])]
+        ), new StepRegistry(), new HookRegistry());
+
+        expect($feature->withScenariosMatching(new TitleFilter('nothing here')))->toBeNull();
     });
 
     it("shares world across steps in a scenario", function () {

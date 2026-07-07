@@ -14,10 +14,14 @@
 
 namespace PhpSpec\Coverage;
 
+use PhpSpec\Report\HtmlTheme;
+
 /**
  * @internal
- * Renders an HTML code coverage report with an index page and per-file source views.
- * Lines are color-coded green (covered), red (uncovered), or grey (non-executable).
+ * Renders an HTML code coverage report with an index page and per-file source
+ * views, in the PhpSpec brand shared with the results formatter (HtmlTheme).
+ * Lines are color-coded green (covered), red (uncovered), or plain
+ * (non-executable).
  */
 final class HtmlReport
 {
@@ -74,50 +78,39 @@ final class HtmlReport
 
         $rows = '';
         foreach ($files as $file => $info) {
-            $safeFile = htmlspecialchars($file);
+            $safeFile = htmlspecialchars($file, ENT_QUOTES);
             $linkFile = str_replace('/', '_', $file) . '.html';
-            $barColor = $this->barColor($info['pct']);
+            $grade = $this->barGrade($info['pct']);
+            $width = sprintf('%.1f', $info['pct']);
 
             $rows .= <<<ROW
             <tr>
                 <td><a href="$linkFile">$safeFile</a></td>
-                <td>
-                    <div class="bar"><div class="fill" style="width:{$info['pct']}%;background:$barColor"></div></div>
-                </td>
+                <td><div class="bar"><span class="$grade" style="width:$width%"></span></div></td>
                 <td class="num">{$info['covered']}/{$info['executable']}</td>
                 <td class="num">{$this->fmt($info['pct'])}</td>
             </tr>
             ROW;
         }
 
-        $barColor = $this->barColor($totalPct);
+        $meta = sprintf('%d/%d lines · %s', $totalCovered, $totalExecutable, $this->fmt($totalPct));
 
-        $html = <<<HTML
-        <!DOCTYPE html>
-        <html lang="en"><head><meta charset="utf-8"><title>Code Coverage</title>
-        <style>
-        body { font-family: sans-serif; margin: 2em; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ddd; }
-        .num { text-align: right; }
-        .bar { background: #eee; height: 14px; border-radius: 3px; width: 200px; }
-        .fill { height: 100%; border-radius: 3px; }
-        .total { font-weight: bold; font-size: 1.1em; margin-top: 1em; }
-        a { color: #0366d6; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        </style></head><body>
-        <h1>Code Coverage Report</h1>
-        <table>
-        <tr><th>File</th><th>Coverage</th><th>Lines</th><th>%</th></tr>
-        {$rows}
-        </table>
-        <p class="total">Total: $totalCovered/$totalExecutable ({$this->fmt($totalPct)})
-        <div class="bar" style="width:300px"><div class="fill" style="width:$totalPct%;background:$barColor"></div></div>
-        </p>
-        </body></html>
-        HTML;
+        $body = HtmlTheme::header('Coverage', $meta)
+            . HtmlTheme::meter($totalPct)
+            . "<main>\n"
+            . "<table class=\"coverage\">\n"
+            . "<tr><th>File</th><th>Coverage</th><th>Lines</th><th>%</th></tr>\n"
+            . $rows
+            . "\n</table>\n"
+            . sprintf(
+                "<footer class=\"summary\">\n<p>Total: %d/%d lines covered (%s)</p>\n</footer>\n",
+                $totalCovered,
+                $totalExecutable,
+                $this->fmt($totalPct),
+            )
+            . "</main>\n";
 
-        file_put_contents($dirPath . '/index.html', $html);
+        file_put_contents($dirPath . '/index.html', HtmlTheme::page('PhpSpec Coverage', $body));
     }
 
     /**
@@ -142,49 +135,38 @@ final class HtmlReport
 
         foreach ($source as $i => $line) {
             $lineNo = $i + 1;
-            $safeLine = htmlspecialchars($line);
+            $safeLine = htmlspecialchars($line, ENT_QUOTES);
+            $hit = $lineData[$lineNo] ?? -2;
 
-            if (isset($lineData[$lineNo])) {
-                $hit = $lineData[$lineNo];
-                if ($hit === -2) {
-                    $bg = '#f5f5f5';
-                } elseif ($hit >= 1) {
-                    $bg = '#dfd';
-                } else {
-                    $bg = '#fdd';
-                }
-            } else {
-                $bg = '#f5f5f5';
-            }
+            $class = match (true) {
+                $hit >= 1 => ' class="hit"',
+                $hit === -2 => '',
+                default => ' class="miss"',
+            };
 
             $lines .= sprintf(
-                '<tr style="background:%s"><td class="ln">%d</td><td class="code"><pre>%s</pre></td></tr>',
-                $bg,
+                '<tr%s><td class="ln">%d</td><td><pre>%s</pre></td></tr>',
+                $class,
                 $lineNo,
                 rtrim($safeLine),
             );
         }
 
-        $safeFile = htmlspecialchars($file);
-        $html = <<<HTML
-        <!DOCTYPE html>
-        <html lang="en"><head><meta charset="utf-8"><title>$safeFile - Coverage</title>
-        <style>
-        body { font-family: sans-serif; margin: 2em; }
-        table { border-collapse: collapse; width: 100%; }
-        td { padding: 0 8px; vertical-align: top; }
-        .ln { text-align: right; color: #999; width: 50px; user-select: none; }
-        .code pre { margin: 0; font-size: 13px; }
-        a { color: #0366d6; }
-        </style></head><body>
-        <p><a href="index.html">Back to index</a></p>
-        <h1>$safeFile</h1>
-        <table>$lines</table>
-        </body></html>
-        HTML;
+        $safeFile = htmlspecialchars($file, ENT_QUOTES);
+        $counts = CoverageCollector::countLines($lineData);
+        $pct = $counts['executable'] > 0 ? ($counts['covered'] / $counts['executable']) * 100 : 0;
+        $meta = sprintf('%d/%d lines · %s', $counts['covered'], $counts['executable'], $this->fmt($pct));
+
+        $body = HtmlTheme::header('Coverage', $meta)
+            . HtmlTheme::meter($pct)
+            . "<main>\n"
+            . "<p><a class=\"back\" href=\"index.html\">‹ Back to index</a></p>\n"
+            . "<h2>$safeFile</h2>\n"
+            . "<table class=\"source\">$lines</table>\n"
+            . "</main>\n";
 
         $linkFile = str_replace('/', '_', $file) . '.html';
-        file_put_contents($dirPath . '/' . $linkFile, $html);
+        file_put_contents($dirPath . '/' . $linkFile, HtmlTheme::page("$safeFile — PhpSpec Coverage", $body));
     }
 
     /**
@@ -206,20 +188,20 @@ final class HtmlReport
     }
 
     /**
-     * Returns the CSS color for a coverage percentage bar.
+     * Returns the bar grade class for a coverage percentage.
      *
      * @param float $pct the coverage percentage
-     * @return string the hex color code (green >= 80%, orange >= 50%, red otherwise)
+     * @return string "hi" (green, >= 80%), "mid" (amber, >= 50%) or "lo" (red)
      */
-    private function barColor(float $pct): string
+    private function barGrade(float $pct): string
     {
         if ($pct >= 80) {
-            return '#4caf50';
+            return 'hi';
         }
         if ($pct >= 50) {
-            return '#ff9800';
+            return 'mid';
         }
-        return '#f44336';
+        return 'lo';
     }
 
     /**

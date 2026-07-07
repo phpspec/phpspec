@@ -22,6 +22,7 @@ use PhpSpec\Results;
 use PhpSpec\Specification\PendingException;
 use PhpSpec\Specification\SkippedException;
 use PhpSpec\Specification\SpecBlock;
+use PhpSpec\TitleFilter;
 
 /**
  * @internal
@@ -44,6 +45,35 @@ final readonly class Feature implements SpecBlock
         private StepRegistry $registry,
         private HookRegistry $hooks,
     ) {}
+
+    /**
+     * Returns a copy of this feature reduced to the scenarios whose title
+     * matches the filter, or null when no scenario matches.
+     *
+     * @param TitleFilter $filter the active title filter
+     * @return self|null the reduced feature, or null when nothing matches
+     */
+    public function withScenariosMatching(TitleFilter $filter): ?self
+    {
+        $scenarios = array_values(array_filter(
+            $this->featureNode->scenarios,
+            fn(ScenarioNode $scenario) => $filter->matches($scenario->title),
+        ));
+
+        if ($scenarios === []) {
+            return null;
+        }
+
+        $featureNode = new FeatureNode(
+            $this->featureNode->title,
+            $this->featureNode->description,
+            $this->featureNode->background,
+            $scenarios,
+            $this->featureNode->tags,
+        );
+
+        return new self($this->path, $featureNode, $this->registry, $this->hooks);
+    }
 
     /**
      * Yields each ScenarioResult as it completes.
