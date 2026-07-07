@@ -83,7 +83,8 @@ bin/phpspec describe App/Calculator -e add          # with "add" method example
 
 | Option | Description |
 |---|---|
-| `-f`, `--format=FORMAT` | Output formatter: `pretty` (default), `dot`, `tap`, `junit` |
+| `-f`, `--format=FORMAT` | Output formatter: `pretty` (default), `dot`, `tap`, `junit`, `html`. Repeatable; pair each with `-o` |
+| `-o`, `--out=FILE` | Report destination for the corresponding `--format`; `std` means the console |
 | `-v` | Verbose mode -- shows per-example duration |
 | `-q` | Quiet mode -- suppresses all output, exit code still reflects pass/fail |
 | `--profile[=N]` | Show the N slowest examples (default: 10) |
@@ -136,6 +137,32 @@ Outputs JUnit XML for CI integration:
 ```bash
 bin/phpspec run --format=junit > results.xml
 ```
+
+#### HTML Formatter
+
+Outputs a self-contained HTML document with passed/failed examples and a
+summary, ready to open in a browser:
+
+```bash
+bin/phpspec run --format=html > report.html
+```
+
+#### Report Files
+
+Every formatter writes to standard output, so a single format is best saved
+with shell redirection as above. To produce report files *in addition to* the
+console output — or several formats in one run — repeat `--format`/`-f` and
+pair each occurrence with an `--out`/`-o` destination. Outs pair with formats
+by position (Behat style), and `std` names the console:
+
+```bash
+bin/phpspec run -f html -o report.html                             # pretty on console + HTML file
+bin/phpspec run -f pretty -o std -f html -o report.html -f junit -o report.xml
+```
+
+A format without a matching `-o` writes to the console; when every format
+targets a file, the console falls back to `pretty`. Unknown format names are
+rejected with an error rather than silently falling back.
 
 ### Filtering and Selection
 
