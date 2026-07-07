@@ -111,6 +111,33 @@ describe(Feature::class, function () {
         expect($steps[1]->isSkipped())->toBeTrue();
     });
 
+    it("skips remaining steps after a skipped step", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a skipped step", function () {
+            skip("environment not available");
+        });
+        $ran = false;
+        $registry->addStep("a following step", function () use (&$ran) {
+            $ran = true;
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Skipping',
+            '',
+            null,
+            [new ScenarioNode('Skips', [
+                new StepNode('When', 'a skipped step'),
+                new StepNode('Then', 'a following step'),
+            ])]
+        ), $registry, new HookRegistry());
+
+        $result = $feature->run();
+        $steps = $result->getResults()[0]->getResults();
+        expect($steps[0]->isSkipped())->toBeTrue();
+        expect($steps[1]->isSkipped())->toBeTrue();
+        expect($ran)->toBeFalse();
+    });
+
     it("reduces to the scenarios matching a title filter", function () {
         $registry = new StepRegistry();
         $registry->addStep("a step", function () {});

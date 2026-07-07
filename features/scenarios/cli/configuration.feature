@@ -277,6 +277,31 @@ Feature: Configuration
     When I run phpspec run
     Then all examples should pass
 
+  Scenario: Load configuration from an explicit path
+    Given a file "custom/my-config.json":
+      """
+      {
+          "format": "dot"
+      }
+      """
+    And a spec file "spec/App/ExplicitConfig.spec.php":
+      """
+      <?php
+      describe('ExplicitConfig', function () {
+          it('passes', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--config=custom/my-config.json"
+    Then the output should contain "."
+    And all examples should pass
+
+  Scenario: Error when the explicit config file does not exist
+    When I run phpspec run with option "--config=nope.yaml"
+    Then the exit code should not be 0
+    And the output should contain "nope.yaml"
+
   Scenario: Configure a steps directory outside the features folder
     Given a PSR-4 project with "spec", "src", and "features" directories
     And a phpspec.json config:

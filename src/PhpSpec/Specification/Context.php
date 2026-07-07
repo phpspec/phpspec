@@ -15,6 +15,7 @@
 namespace PhpSpec\Specification;
 
 use Closure;
+use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\ContextRan;
 use PhpSpec\EventDispatcher\Event\ContextStarted;
@@ -114,6 +115,8 @@ class Context implements ExampleRegistry, SpecBlock
     public function run(): Results
     {
         $results = [];
+        CoverageRegistry::collector()?->pushContext($this->context);
+
         try {
             DispatcherRegistry::dispatcher()->dispatch(new ContextStarted($this->context), ContextStarted::NAME);
             DispatcherRegistry::dispatcher()->pushScope($this);
@@ -134,24 +137,15 @@ class Context implements ExampleRegistry, SpecBlock
                 if ($this->pending && ($block instanceof Context || $block instanceof Example)) {
                     $block->setPending(true);
                 }
+
                 if ($block instanceof Context) {
                     $block->setWorld($this->world);
                     $block->inheritHooks($this->beforeEachHooks, $this->afterEachHooks, $this->letBindings);
                 }
-                if ($block instanceof Example && !$block->isPending()) {
-                    $this->reapplyLets();
-                    foreach ($this->beforeEachHooks as $hook) {
-                        $hook(...$this->resolveClosureArgs($hook));
-                    }
-                    $this->world->__phpspec_let_mocks = $this->letMocks;
-                }
-                $result = $block->run();
-                if ($block instanceof Example && !$block->isPending()) {
-                    foreach ($this->afterEachHooks as $hook) {
-                        $hook(...$this->resolveClosureArgs($hook));
-                    }
-                }
-                $results[] = $result;
+
+                $results[] = $block instanceof Example && !$block->isPending()
+                    ? $this->runExampleWithHooks($block)
+                    : $block->run();
             }
 
             if (!$this->pending) {
@@ -166,10 +160,46 @@ class Context implements ExampleRegistry, SpecBlock
             $result->setError($error);
             $contextResult = new ContextResult($this->context, [$result]);
             $contextResult->setError($error);
+
             return $contextResult;
+        } finally {
+            CoverageRegistry::collector()?->popContext();
         }
+
         DispatcherRegistry::dispatcher()->dispatch(new ContextRan($this->context, $this), ContextRan::NAME);
+
         return new ContextResult($this->context, $results);
+    }
+
+    /**
+     * Runs a single example surrounded by its beforeEach/afterEach hooks and
+     * let bindings. When per-example coverage is active, the whole sequence
+     * (setup, example, teardown) is collected and attributed to the example,
+     * so that code exercised only during setup still counts as covered by it.
+     *
+     * @param Example $example the example to run
+     * @return Results the example result
+     * @throws ReflectionException
+     */
+    private function runExampleWithHooks(Example $example): Results
+    {
+        $coverage = CoverageRegistry::collector();
+        $coverage?->beginExample();
+
+        $this->reapplyLets();
+        foreach ($this->beforeEachHooks as $hook) {
+            $hook(...$this->resolveClosureArgs($hook));
+        }
+        $this->world->__phpspec_let_mocks = $this->letMocks;
+
+        $result = $example->run();
+
+        foreach ($this->afterEachHooks as $hook) {
+            $hook(...$this->resolveClosureArgs($hook));
+        }
+        $coverage?->endExample($result->getTitle());
+
+        return $result;
     }
 
     /**

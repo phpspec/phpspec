@@ -244,6 +244,43 @@ describe(Run::class, function () {
             expect($exitCode)->toBe(1);
         });
 
+        it('runs with the parallel option on an empty suite', function (Filesystem $execFs) {
+            $config = new Configuration('.', $execFs);
+            $cmd = new Run(new Loader($execFs), new Runner(), $config);
+
+            $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
+            $exitCode = $tester->execute(['--parallel' => '2']);
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('No specs found');
+        });
+
+        it('errors when the paths file does not exist', function (Filesystem $execFs) {
+            $config = new Configuration('.', $execFs);
+            $cmd = new Run(new Loader($execFs), new Runner(), $config);
+
+            $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
+            $exitCode = $tester->execute(['--paths-from' => 'missing.txt']);
+            expect($exitCode)->toBe(1);
+            expect($tester->getDisplay())->toContain('missing.txt');
+        });
+
+        it('reads spec paths from the paths file', function (Filesystem $execFs) {
+            $pathsFile = tempnam(sys_get_temp_dir(), 'phpspec_paths_') . '.txt';
+            file_put_contents($pathsFile, "spec/App/NotThere.spec.php\n\n");
+
+            $config = new Configuration('.', $execFs);
+            $cmd = new Run(new Loader($execFs), new Runner(), $config);
+
+            try {
+                $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
+                $exitCode = $tester->execute(['--paths-from' => $pathsFile]);
+                expect($exitCode)->toBe(0);
+                expect($tester->getDisplay())->toContain('No specs found');
+            } finally {
+                unlink($pathsFile);
+            }
+        });
+
         it('registers PSR-4 autoloader from config', function (Filesystem $execFs) {
             allow($execFs->exists())->toReturnUsing(fn($p) => str_ends_with($p, 'phpspec.json'));
             allow($execFs->read())->toReturn(json_encode(['autoload' => ['TestNs\\' => 'src/']]));

@@ -23,6 +23,30 @@ describe(CoverageCollector::class, function () {
         expect($result['executable'])->toBe(0);
     });
 
+    if (CoverageCollector::isAvailable() && !CoverageCollector::isCollecting()) {
+
+        it('tracks whether a whole-suite collection is in progress', function () {
+            $collector = new CoverageCollector();
+            expect(CoverageCollector::isCollecting())->toBeFalse();
+
+            $collector->start();
+            expect(CoverageCollector::isCollecting())->toBeTrue();
+
+            $collector->stop();
+            expect(CoverageCollector::isCollecting())->toBeFalse();
+        });
+
+    }
+
+    it('filterData matches Windows-style backslash paths', function () {
+        $realSrc = (string) realpath('src');
+        $windowsStyleFile = str_replace('/', '\\', $realSrc . '/PhpSpec/Loader.php');
+
+        $filtered = CoverageCollector::filterData([$windowsStyleFile => [1 => 1]], 'src');
+
+        expect($filtered)->toHaveKey('PhpSpec/Loader.php');
+    });
+
     it('filter excludes eval\'d code paths', function () {
         $collector = new CoverageCollector();
 

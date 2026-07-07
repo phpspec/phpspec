@@ -30,9 +30,9 @@ if (!function_exists('_phpspec_exec')) {
         _phpspec_exec_subprocess($world, $args, $interactive);
     }
 
-    function _phpspec_exec_subprocess(object $world, string $args, bool $interactive = false): void
+    function _phpspec_exec_subprocess(object $world, string $args, bool $interactive = false, string $xdebugMode = 'off'): void
     {
-        $cmd = [$world->phpBin, '-d', 'xdebug.mode=off', $world->phpspecBin, ...preg_split('/\s+/', $args)];
+        $cmd = [$world->phpBin, '-d', 'xdebug.mode=' . $xdebugMode, $world->phpspecBin, ...preg_split('/\s+/', $args)];
 
         $descriptors = [
             0 => ['pipe', 'r'],
@@ -73,6 +73,15 @@ when('I run phpspec run with option {string}', function (string $options) {
 
 when('I run phpspec run {string}', function (string $path) {
     _phpspec_exec($this, 'run ' . $path);
+});
+
+// -- Coverage runs (subprocess so xdebug.mode=coverage can be forced) ---
+
+when('I run phpspec run with coverage options {string}', function (string $options) {
+    if (!extension_loaded('xdebug')) {
+        skip('Xdebug is not available');
+    }
+    _phpspec_exec_subprocess($this, 'run ' . $options, xdebugMode: 'coverage');
 });
 
 // -- Describe command --------------------------------------------------

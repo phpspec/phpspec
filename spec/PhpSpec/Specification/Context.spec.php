@@ -1,5 +1,8 @@
 <?php
 
+use PhpSpec\Coverage\CoverageDriver;
+use PhpSpec\Coverage\CoverageRegistry;
+use PhpSpec\Coverage\PerExampleCollector;
 use PhpSpec\FilterRegistry;
 use PhpSpec\LineTargetRegistry;
 use PhpSpec\Specification\Context;
@@ -421,6 +424,43 @@ describe(Context::class, function() {
         $ctx->setWorld(new Subject(__FILE__));
         $ctx->run();
         expect($log)->toBe([]);
+    });
+
+    it("cycles the active coverage collector around each example including hooks", function (CoverageDriver $driver) {
+        $log = [];
+        allow($driver->start())->toReturnUsing(function() use (&$log) {
+            $log[] = 'coverage start';
+        });
+        allow($driver->stop())->toReturnUsing(function() use (&$log) {
+            $log[] = 'coverage stop';
+            return ['/project/src/App/Calculator.php' => [12 => 1]];
+        });
+        $collector = new PerExampleCollector($driver);
+        $collector->beginSpec('spec/App/Calculator.spec.php');
+        CoverageRegistry::activate($collector);
+
+        try {
+            $ctx = new Context("Calculator", function() use (&$log) {
+                beforeEach(function() use (&$log) {
+                    $log[] = 'beforeEach';
+                });
+                afterEach(function() use (&$log) {
+                    $log[] = 'afterEach';
+                });
+                it("adds two numbers", function() use (&$log) {
+                    $log[] = 'example';
+                });
+            });
+            $ctx->setWorld(new Subject(__FILE__));
+            $ctx->run();
+        } finally {
+            CoverageRegistry::reset();
+        }
+
+        expect($log)->toBe(['coverage start', 'beforeEach', 'example', 'afterEach', 'coverage stop']);
+        expect($collector->getLines()['/project/src/App/Calculator.php'][12])->toBe([
+            'spec/App/Calculator.spec.php::Calculator > adds two numbers',
+        ]);
     });
 
     it("runs only the examples matching the active title filter", function () {
