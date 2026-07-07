@@ -56,6 +56,15 @@ describe(InProcessRunner::class, function () {
             ]);
         });
 
+        it('aggregates repeated options into arrays, preserving order', function () {
+            $result = ($this->parseArgs)('run -f pretty -o std -f html -o report.html');
+            expect($result)->toBe([
+                'command' => 'run',
+                '-f' => ['pretty', 'html'],
+                '-o' => ['std', 'report.html'],
+            ]);
+        });
+
         it('parses run with a short option and value', function () {
             $result = ($this->parseArgs)('run -f pretty');
             expect($result)->toBe([

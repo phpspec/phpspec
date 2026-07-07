@@ -3,8 +3,10 @@
 use PhpSpec\Coverage\CoverageDriver;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\Coverage\PerExampleCollector;
+use PhpSpec\FilterRegistry;
 use PhpSpec\Specification;
 use PhpSpec\Specification\Example;
+use PhpSpec\TitleFilter;
 
 describe(Specification::class, function() {
 
@@ -50,6 +52,22 @@ describe(Specification::class, function() {
         // Test identifiers always use forward slashes, also on Windows
         $expectedId = str_replace('\\', '/', $file) . '::Sample > works';
         expect($collector->getTests())->toHaveKey($expectedId);
+    });
+
+    it("announces its path to the active title filter so path matches keep all examples", function() {
+        FilterRegistry::activate(new TitleFilter('Targeted'));
+
+        $file = sys_get_temp_dir() . '/phpspec_Targeted_' . uniqid() . '.spec.php';
+        file_put_contents($file, '<?php describe("Sample", function () { it("unrelated title", function () {}); });');
+
+        try {
+            $result = (new Specification($file))->run();
+        } finally {
+            FilterRegistry::reset();
+            unlink($file);
+        }
+
+        expect($result->getResults()[0]->getResults())->toHaveCount(1);
     });
 
 });

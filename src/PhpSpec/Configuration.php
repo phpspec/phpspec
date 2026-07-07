@@ -316,6 +316,15 @@ final class Configuration
     }
 
     /**
+     * Returns the configured step definitions directory, searched in addition
+     * to the features folder, or null when not configured.
+     */
+    public function getStepsPath(): ?string
+    {
+        return $this->get('steps_path');
+    }
+
+    /**
      * Returns the extensions configuration block.
      *
      * @return array<string, mixed>

@@ -96,6 +96,25 @@ Directory containing source files. Used for code generation and coverage filteri
 src_path: lib
 ```
 
+### `features_path`
+
+Directory containing Gherkin `.feature` files, used by `--story` and step
+discovery. Default: `features/`.
+
+```yaml
+features_path: acceptance
+```
+
+### `steps_path`
+
+An additional directory to search for `*.steps.php` step definitions. Step
+definitions are always discoverable anywhere inside the features folder;
+when `steps_path` is set, that directory is searched as well. Default: unset.
+
+```yaml
+steps_path: acceptance_steps
+```
+
 ### `format`
 
 Default output formatter. Overridden by `--format` CLI flag.

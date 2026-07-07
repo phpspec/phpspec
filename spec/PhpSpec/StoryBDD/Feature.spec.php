@@ -2,6 +2,7 @@
 
 use PhpSpec\StoryBDD\Feature;
 use PhpSpec\StoryBDD\FeatureNode;
+use PhpSpec\TitleFilter;
 use PhpSpec\StoryBDD\ScenarioNode;
 use PhpSpec\StoryBDD\ScenarioOutlineNode;
 use PhpSpec\StoryBDD\StepNode;
@@ -135,6 +136,38 @@ describe(Feature::class, function () {
         expect($steps[0]->isSkipped())->toBeTrue();
         expect($steps[1]->isSkipped())->toBeTrue();
         expect($ran)->toBeFalse();
+    });
+
+    it("reduces to the scenarios matching a title filter", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a step", function () {});
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Paths',
+            '',
+            null,
+            [
+                new ScenarioNode('Wanted path', [new StepNode('Given', 'a step')]),
+                new ScenarioNode('Other path', [new StepNode('Given', 'a step')]),
+            ]
+        ), $registry, new HookRegistry());
+
+        $reduced = $feature->withScenariosMatching(new TitleFilter('Wanted'));
+
+        $scenarios = $reduced->run()->getResults();
+        expect($scenarios)->toHaveCount(1);
+        expect($scenarios[0]->getTitle())->toBe('Wanted path');
+    });
+
+    it("reduces to null when no scenario title matches the filter", function () {
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Paths',
+            '',
+            null,
+            [new ScenarioNode('Only path', [new StepNode('Given', 'a step')])]
+        ), new StepRegistry(), new HookRegistry());
+
+        expect($feature->withScenariosMatching(new TitleFilter('nothing here')))->toBeNull();
     });
 
     it("shares world across steps in a scenario", function () {
@@ -311,6 +344,91 @@ describe(Feature::class, function () {
         $result = $feature->run();
         $steps = $result->getResults()[0]->getResults();
         expect($steps[0]->isPassed())->toBeTrue();
+    });
+
+    it("runs afterScenario hooks after the steps, even when a step fails", function () {
+        $log = [];
+        $registry = new StepRegistry();
+        $registry->addStep("a passing step", function () use (&$log) {
+            $log[] = 'step';
+        });
+        $registry->addStep("a failing step", function () {
+            throw new \RuntimeException("boom");
+        });
+
+        $hooks = new HookRegistry();
+        $hooks->addAfterScenario(function () use (&$log) {
+            $log[] = 'afterScenario';
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'ScenarioTeardown',
+            '',
+            null,
+            [
+                new ScenarioNode('Passes', [new StepNode('Given', 'a passing step')]),
+                new ScenarioNode('Fails', [new StepNode('Given', 'a failing step')]),
+            ]
+        ), $registry, $hooks);
+
+        $feature->run();
+        expect($log)->toBe(['step', 'afterScenario', 'afterScenario']);
+    });
+
+    it("runs afterStep hooks after each executed step but not for cascade-skipped ones", function () {
+        $log = [];
+        $registry = new StepRegistry();
+        $registry->addStep("a failing step", function () use (&$log) {
+            $log[] = 'failing step';
+            throw new \RuntimeException("boom");
+        });
+        $registry->addStep("a following step", function () use (&$log) {
+            $log[] = 'following step';
+        });
+
+        $hooks = new HookRegistry();
+        $hooks->addAfterStep(function () use (&$log) {
+            $log[] = 'afterStep';
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'StepTeardown',
+            '',
+            null,
+            [new ScenarioNode('Fails midway', [
+                new StepNode('Given', 'a failing step'),
+                new StepNode('Then', 'a following step'),
+            ])]
+        ), $registry, $hooks);
+
+        $feature->run();
+        expect($log)->toBe(['failing step', 'afterStep']);
+    });
+
+    it("runs afterFeature hooks once after all scenarios", function () {
+        $log = [];
+        $registry = new StepRegistry();
+        $registry->addStep("a step", function () use (&$log) {
+            $log[] = 'step';
+        });
+
+        $hooks = new HookRegistry();
+        $hooks->addAfterFeature(function () use (&$log) {
+            $log[] = 'afterFeature';
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'FeatureTeardown',
+            '',
+            null,
+            [
+                new ScenarioNode('First', [new StepNode('Given', 'a step')]),
+                new ScenarioNode('Second', [new StepNode('Given', 'a step')]),
+            ]
+        ), $registry, $hooks);
+
+        $feature->run();
+        expect($log)->toBe(['step', 'step', 'afterFeature']);
     });
 
     it("skips remaining background steps after failure", function () {

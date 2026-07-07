@@ -301,3 +301,28 @@ Feature: Configuration
     When I run phpspec run with option "--config=nope.yaml"
     Then the exit code should not be 0
     And the output should contain "nope.yaml"
+
+  Scenario: Configure a steps directory outside the features folder
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a phpspec.json config:
+      """
+      {
+          "steps_path": "acceptance_steps"
+      }
+      """
+    And a feature file "features/checkout.feature":
+      """
+      Feature: Checkout
+        Scenario: Buys an item
+          Given a configured step
+      """
+    And a file "acceptance_steps/checkout.steps.php":
+      """
+      <?php
+      given("a configured step", function () {
+          expect(true)->toBeTrue();
+      });
+      """
+    When I run phpspec run "features/"
+    Then all steps should pass
+    And the output should not contain "undefined"

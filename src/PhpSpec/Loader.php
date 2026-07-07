@@ -18,7 +18,9 @@ use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Subscriber\SpecificationSubscriber;
 use PhpSpec\Specification\SpecBlock;
 use PhpSpec\StoryBDD\Feature;
+use PhpSpec\StoryBDD\FeatureNode;
 use PhpSpec\StoryBDD\GherkinParser;
+use PhpSpec\StoryBDD\ScenarioLineSelector;
 use PhpSpec\StoryBDD\StoryBDDRegistry;
 
 /**
@@ -30,11 +32,17 @@ final class Loader
     /**
      * @param Filesystem|null $filesystem injectable filesystem for testability
      * @param string $specSuffix file suffix used to identify spec files
+     * @param string $featuresPath the features root; step definitions anywhere under it are discoverable
+     * @param string|null $stepsPath additional step definitions directory, or null when not configured
      */
     private Filesystem $fs;
 
-    public function __construct(?Filesystem $filesystem = null, private string $specSuffix = '.spec.php')
-    {
+    public function __construct(
+        ?Filesystem $filesystem = null,
+        private string $specSuffix = '.spec.php',
+        private string $featuresPath = './features',
+        private ?string $stepsPath = null,
+    ) {
         $this->fs = $filesystem ?? new RealFilesystem();
     }
 
@@ -57,9 +65,24 @@ final class Loader
             if ($path === '') {
                 continue;
             }
+
+            $lineTarget = null;
+
+            if (preg_match('/^(.+):(\d+)$/', $path, $matches) === 1
+                && (str_ends_with($matches[1], '.feature') || str_ends_with($matches[1], $this->specSuffix))
+            ) {
+                $path = $matches[1];
+                $lineTarget = (int) $matches[2];
+            }
+
             if ($this->isFeaturePath($path)) {
-                $blocks = array_merge($blocks, $this->loadFeatures($path));
+                $blocks = array_merge($blocks, $this->loadFeatures($path, $lineTarget));
             } else {
+                if ($lineTarget !== null) {
+                    // Example positions are only known at run time; the
+                    // registry hands the target to the spec as it runs
+                    LineTargetRegistry::add($path, $lineTarget);
+                }
                 $blocks = array_merge($blocks, $this->loadSuite($path));
             }
         }
@@ -77,21 +100,42 @@ final class Loader
      * @param string $path filesystem path to inspect
      */
     /**
-     * Filters spec blocks by path substring match.
+     * Filters spec blocks by path or title match.
+     *
+     * Blocks whose path matches are kept whole. Features are otherwise
+     * reduced to the scenarios whose title matches, and dropped when none
+     * does. Specifications are always kept: example titles are only known
+     * at run time, so they prune themselves as they run.
      *
      * @param array<SpecBlock> $blocks blocks to filter
-     * @param string $filter substring to match
+     * @param string $filter the --filter text
      * @return array<SpecBlock>
      */
     private function filterBlocks(array $blocks, string $filter): array
     {
+        $titleFilter = new TitleFilter($filter);
         $filtered = [];
+
         foreach ($blocks as $block) {
             $path = $this->getBlockPath($block);
-            if ($path === null || stripos($path, $filter) !== false) {
+
+            if ($path === null || $titleFilter->matchesPath($path)) {
                 $filtered[] = $block;
+                continue;
             }
+
+            if ($block instanceof Feature) {
+                $reduced = $block->withScenariosMatching($titleFilter);
+
+                if ($reduced !== null) {
+                    $filtered[] = $reduced;
+                }
+                continue;
+            }
+
+            $filtered[] = $block;
         }
+
         return $filtered;
     }
 
@@ -167,11 +211,14 @@ final class Loader
 
     /**
      * Parses Gherkin feature files and loads associated step definitions.
+     * When a line target is given, each feature is reduced to the scenarios
+     * addressed by that line.
      *
      * @param string $path directory or file containing .feature files
+     * @param int|null $lineTarget line number from a "file.feature:LINE" path, or null to load all scenarios
      * @return array<\PhpSpec\StoryBDD\Feature>
      */
-    private function loadFeatures(string $path): array
+    private function loadFeatures(string $path, ?int $lineTarget = null): array
     {
         $parser = new GherkinParser();
         $featureFiles = [];
@@ -179,11 +226,33 @@ final class Loader
 
         $this->scanFeatures($path, $featureFiles, $stepFiles);
 
+        // Step definitions are discoverable anywhere under the features root
+        // and in the configured steps directory, wherever the run points
+        $featuresRoot = rtrim($this->featuresPath, '/');
+
+        if ($this->fs->isDir($featuresRoot)) {
+            $this->collectStepFiles($featuresRoot, $stepFiles);
+        }
+
+        if ($this->stepsPath !== null && $this->fs->isDir($this->stepsPath)) {
+            $this->collectStepFiles($this->stepsPath, $stepFiles);
+        }
+
         // Fresh registry so prior spec execution can't pollute step definitions
         StoryBDDRegistry::init();
 
-        // Load step definitions into the fresh registry
+        // Load step definitions into the fresh registry; ancestor and in-tree
+        // discovery can both find the same steps directory, so deduplicate.
+        // Dedupe by realpath, not the raw string: the same file can be
+        // reached through paths that differ only in slashes (e.g. a
+        // trailing slash on the run path yields "features//steps/x.php"
+        // alongside "features/steps/x.php"), which array_unique wouldn't catch.
+        $uniqueStepFiles = [];
         foreach ($stepFiles as $stepFile) {
+            $uniqueStepFiles[realpath($stepFile) ?: $stepFile] = $stepFile;
+        }
+
+        foreach ($uniqueStepFiles as $stepFile) {
             require $stepFile;
         }
 
@@ -191,6 +260,17 @@ final class Loader
         foreach ($featureFiles as $featureFile) {
             $content = $this->fs->read($featureFile);
             $featureNode = $parser->parse($content, $featureFile);
+
+            if ($lineTarget !== null) {
+                $featureNode = new FeatureNode(
+                    $featureNode->title,
+                    $featureNode->description,
+                    $featureNode->background,
+                    ScenarioLineSelector::select($featureNode->scenarios, $lineTarget),
+                    $featureNode->tags,
+                );
+            }
+
             $features[] = new Feature(
                 $featureFile,
                 $featureNode,
@@ -213,21 +293,18 @@ final class Loader
     {
         if ($this->fs->isFile($path) && str_ends_with($path, '.feature')) {
             $featureFiles[] = $path;
-            // Walk up from the feature file's directory to find steps/ dirs
-            $dir = dirname($path);
-            while ($dir !== dirname($dir)) {
-                $stepsDir = $dir . '/steps';
-                if ($this->fs->isDir($stepsDir)) {
-                    $this->collectStepFiles($stepsDir, $stepFiles);
-                }
-                $dir = dirname($dir);
-            }
+            $this->collectAncestorSteps(dirname($path), $stepFiles);
+
             return;
         }
 
         if (!$this->fs->isDir($path)) {
             return;
         }
+
+        // Steps may live beside an ancestor (e.g. features/steps/ when
+        // running features/scenarios/checkout), not only inside the tree
+        $this->collectAncestorSteps($path, $stepFiles);
 
         $files = $this->fs->scandir($path);
 
@@ -247,6 +324,26 @@ final class Loader
             } elseif (str_ends_with($file, '.feature')) {
                 $featureFiles[] = $filePath;
             }
+        }
+    }
+
+    /**
+     * Walks up from a directory collecting step files from every steps/
+     * directory found beside it or its ancestors.
+     *
+     * @param string $dir the directory to walk up from
+     * @param array<string> $stepFiles collected step file paths (by reference)
+     */
+    private function collectAncestorSteps(string $dir, array &$stepFiles): void
+    {
+        while ($dir !== dirname($dir)) {
+            $stepsDir = $dir . '/steps';
+
+            if ($this->fs->isDir($stepsDir)) {
+                $this->collectStepFiles($stepsDir, $stepFiles);
+            }
+
+            $dir = dirname($dir);
         }
     }
 

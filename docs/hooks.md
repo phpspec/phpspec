@@ -136,3 +136,9 @@ For a given example, hooks execute in this order:
 ## Pending Contexts and Hooks
 
 When a context is marked pending (`xdescribe`, `xcontext`), `beforeAll` and `afterAll` hooks are skipped entirely. Individual pending examples (`xit`, `pending()`) still trigger `beforeEach`/`afterEach` on the context but the example body is not executed.
+
+## Story BDD Hooks
+
+Feature files have their own lifecycle hooks, registered in step files:
+`beforeFeature`/`afterFeature`, `beforeScenario`/`afterScenario` and
+`beforeStep`/`afterStep`. See [Story BDD](story-bdd.md#hooks) for details.

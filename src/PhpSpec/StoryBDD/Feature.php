@@ -22,6 +22,7 @@ use PhpSpec\Results;
 use PhpSpec\Specification\PendingException;
 use PhpSpec\Specification\SkippedException;
 use PhpSpec\Specification\SpecBlock;
+use PhpSpec\TitleFilter;
 
 /**
  * @internal
@@ -46,6 +47,35 @@ final readonly class Feature implements SpecBlock
     ) {}
 
     /**
+     * Returns a copy of this feature reduced to the scenarios whose title
+     * matches the filter, or null when no scenario matches.
+     *
+     * @param TitleFilter $filter the active title filter
+     * @return self|null the reduced feature, or null when nothing matches
+     */
+    public function withScenariosMatching(TitleFilter $filter): ?self
+    {
+        $scenarios = array_values(array_filter(
+            $this->featureNode->scenarios,
+            fn(ScenarioNode $scenario) => $filter->matches($scenario->title),
+        ));
+
+        if ($scenarios === []) {
+            return null;
+        }
+
+        $featureNode = new FeatureNode(
+            $this->featureNode->title,
+            $this->featureNode->description,
+            $this->featureNode->background,
+            $scenarios,
+            $this->featureNode->tags,
+        );
+
+        return new self($this->path, $featureNode, $this->registry, $this->hooks);
+    }
+
+    /**
      * Yields each ScenarioResult as it completes.
      *
      * Pickles are already expanded (Scenario Outlines become individual scenarios,
@@ -66,6 +96,8 @@ final readonly class Feature implements SpecBlock
                 yield $this->runScenario($scenario);
             }
         }
+
+        $this->hooks->runAfterFeature();
     }
 
     /**
@@ -116,6 +148,7 @@ final readonly class Feature implements SpecBlock
                     continue;
                 }
                 $result = $this->runStep($step, $world, $collector);
+                $this->hooks->runAfterStep($world);
                 $stepResults[] = $result;
                 if ($result->isFailure() || $result->isSkipped()) {
                     $failed = true;
@@ -129,11 +162,14 @@ final readonly class Feature implements SpecBlock
                 continue;
             }
             $result = $this->runStep($step, $world, $collector);
+            $this->hooks->runAfterStep($world);
             $stepResults[] = $result;
             if ($result->isFailure() || $result->isSkipped()) {
                 $failed = true;
             }
         }
+
+        $this->hooks->runAfterScenario($world);
 
         DispatcherRegistry::dispatcher()->removeSubscriber($collector);
 

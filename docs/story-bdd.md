@@ -20,7 +20,11 @@ Feature: Greeting
 
 ## Step Definitions
 
-Define steps in `features/steps/*.steps.php`:
+Define steps in `*.steps.php` files. They are discoverable anywhere inside
+the features folder (conventionally `features/steps/`, but a file beside its
+feature works too), regardless of which feature path you run. An additional
+directory can be searched by setting `steps_path` in the
+[configuration](configuration.md#steps_path).
 
 ```php
 <?php
@@ -176,7 +180,24 @@ beforeScenario(function () {
 beforeStep(function () {
     // Runs before each step
 });
+
+afterStep(function () {
+    // Runs after each executed step (on the StepWorld as $this)
+});
+
+afterScenario(function () {
+    // Runs after each scenario (on the StepWorld as $this)
+});
+
+afterFeature(function () {
+    // Runs once after all scenarios in a feature
+});
 ```
+
+The after hooks are teardown hooks: `afterScenario` runs even when a step in
+the scenario failed, so resources are always cleaned up. `afterStep` runs after
+every step that executed, but not for steps skipped because an earlier step
+failed.
 
 ## Step States
 

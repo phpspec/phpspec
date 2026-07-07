@@ -19,10 +19,13 @@ use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\ContextRan;
 use PhpSpec\EventDispatcher\Event\ContextStarted;
+use PhpSpec\FilterRegistry;
+use PhpSpec\LineTargetRegistry;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Results;
 use ReflectionException;
+use ReflectionFunction;
 use Throwable;
 
 /**
@@ -121,6 +124,8 @@ class Context implements ExampleRegistry, SpecBlock
             DispatcherRegistry::dispatcher()->popScope();
 
             $this->resolveFocus();
+            $this->applyTitleFilter();
+            $this->applyLineFilter();
 
             if (!$this->pending) {
                 foreach ($this->beforeAllHooks as $hook) {
@@ -325,6 +330,65 @@ class Context implements ExampleRegistry, SpecBlock
                 }
             }
         }
+    }
+
+    /**
+     * Removes examples whose title does not match the active title filter.
+     * Unlike focus, filtered examples are removed rather than marked pending,
+     * so they do not appear in the output at all. Nested contexts are kept;
+     * they prune their own examples when they run.
+     */
+    private function applyTitleFilter(): void
+    {
+        $filter = FilterRegistry::current();
+
+        if ($filter === null) {
+            return;
+        }
+
+        $this->specBlocks = array_values(array_filter(
+            $this->specBlocks,
+            fn(SpecBlock $block) => !($block instanceof Example) || $filter->matches($block->getTitle()),
+        ));
+    }
+
+    /**
+     * Reduces this context to the block at the targeted line, when one is set
+     * for the running spec file. If a child example or context spans the line,
+     * only the spanning children are kept; otherwise the line addresses this
+     * context as a whole and every child runs.
+     */
+    private function applyLineFilter(): void
+    {
+        $line = LineTargetRegistry::currentTarget();
+
+        if ($line === null) {
+            return;
+        }
+
+        $containing = array_values(array_filter(
+            $this->specBlocks,
+            fn(SpecBlock $block) => ($block instanceof Example || $block instanceof Context)
+                && $block->containsLine($line),
+        ));
+
+        if ($containing !== []) {
+            $this->specBlocks = $containing;
+        }
+    }
+
+    /**
+     * Checks whether a line number falls within this context's closure,
+     * used to resolve "file.spec.php:LINE" run targets.
+     *
+     * @param int $line the targeted line number
+     * @return bool true when the line is within the closure's span
+     */
+    public function containsLine(int $line): bool
+    {
+        $reflection = new ReflectionFunction($this->specBlock);
+
+        return $line >= $reflection->getStartLine() && $line <= $reflection->getEndLine();
     }
 
     /**
