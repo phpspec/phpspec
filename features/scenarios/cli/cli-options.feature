@@ -52,6 +52,157 @@ Feature: CLI options
     Then all examples should pass
     And the output should not contain "Excluded"
 
+  Scenario: Filter examples by title
+    Given a spec file "spec/App/Alpha.spec.php":
+      """
+      <?php
+      describe('Alpha', function () {
+          it('does the wanted thing', function () {
+              expect(true)->toBeTrue();
+          });
+          it('does another thing', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And a spec file "spec/App/Beta.spec.php":
+      """
+      <?php
+      describe('Beta', function () {
+          it('does something else', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--filter wanted"
+    Then all examples should pass
+    And the output should contain "does the wanted thing"
+    And the output should not contain "another thing"
+    And the output should not contain "Beta"
+    And the output should contain "1 example"
+
+  Scenario: Filter scenarios by title
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/paths.feature":
+      """
+      Feature: Paths
+        Scenario: Wanted path
+          Given a noted step
+
+        Scenario: Other path
+          Given another noted step
+      """
+    And a step file "features/steps/paths.steps.php":
+      """
+      <?php
+      given("a noted step", function () {
+          expect(true)->toBeTrue();
+      });
+
+      given("another noted step", function () {
+          expect(true)->toBeTrue();
+      });
+      """
+    When I run phpspec run with option "--story --filter Wanted"
+    Then all steps should pass
+    And the output should contain "Wanted path"
+    And the output should not contain "Other path"
+    And the output should contain "1 scenario"
+
+  Scenario: Run a single example by its line number
+    Given a spec file "spec/App/Picky.spec.php":
+      """
+      <?php
+      describe('Picky', function () {
+          it('first example', function () {
+              expect(true)->toBeTrue();
+          });
+          it('second example', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run "spec/App/Picky.spec.php:6"
+    Then all examples should pass
+    And the output should contain "second example"
+    And the output should not contain "first example"
+    And the output should contain "1 example"
+
+  Scenario: Run a single example by a line inside its body
+    Given a spec file "spec/App/Inner.spec.php":
+      """
+      <?php
+      describe('Inner', function () {
+          it('first example', function () {
+              expect(true)->toBeTrue();
+          });
+          it('second example', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run "spec/App/Inner.spec.php:4"
+    Then all examples should pass
+    And the output should contain "first example"
+    And the output should not contain "second example"
+    And the output should contain "1 example"
+
+  Scenario: Run a single scenario by its line number
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/numbers.feature":
+      """
+      Feature: Two scenarios
+        Scenario: First
+          Given a noted step
+
+        Scenario: Second
+          Given another noted step
+      """
+    And a step file "features/steps/numbers.steps.php":
+      """
+      <?php
+      given("a noted step", function () {
+          expect(true)->toBeTrue();
+      });
+
+      given("another noted step", function () {
+          expect(true)->toBeTrue();
+      });
+      """
+    When I run phpspec run "features/numbers.feature:5"
+    Then all steps should pass
+    And the output should contain "Second"
+    And the output should not contain "First"
+    And the output should contain "1 scenario"
+
+  Scenario: Run a single scenario by a line inside its body
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/inner.feature":
+      """
+      Feature: Two scenarios
+        Scenario: First
+          Given a noted step
+
+        Scenario: Second
+          Given another noted step
+      """
+    And a step file "features/steps/inner.steps.php":
+      """
+      <?php
+      given("a noted step", function () {
+          expect(true)->toBeTrue();
+      });
+
+      given("another noted step", function () {
+          expect(true)->toBeTrue();
+      });
+      """
+    When I run phpspec run "features/inner.feature:3"
+    Then all steps should pass
+    And the output should contain "First"
+    And the output should not contain "Second"
+    And the output should contain "1 scenario"
+
   Scenario: Dot formatter
     Given a spec file "spec/App/DotFormat.spec.php":
       """

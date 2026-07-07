@@ -1,8 +1,11 @@
 <?php
 
+use PhpSpec\FilterRegistry;
+use PhpSpec\LineTargetRegistry;
 use PhpSpec\Specification\Context;
 use PhpSpec\Specification\Subject;
 use PhpSpec\Result\ContextResult;
+use PhpSpec\TitleFilter;
 
 describe(Context::class, function() {
 
@@ -418,6 +421,74 @@ describe(Context::class, function() {
         $ctx->setWorld(new Subject(__FILE__));
         $ctx->run();
         expect($log)->toBe([]);
+    });
+
+    it("runs only the examples matching the active title filter", function () {
+        FilterRegistry::activate(new TitleFilter('wanted'));
+        $ran = [];
+
+        try {
+            $ctx = new Context("Filtered", function () use (&$ran) {
+                it("does the wanted thing", function () use (&$ran) {
+                    $ran[] = 'wanted';
+                });
+                it("does another thing", function () use (&$ran) {
+                    $ran[] = 'other';
+                });
+            });
+            $ctx->setWorld(new Subject(__FILE__));
+            $result = $ctx->run();
+        } finally {
+            FilterRegistry::reset();
+        }
+
+        expect($ran)->toBe(['wanted']);
+        expect($result->getResults())->toHaveCount(1);
+    });
+
+    it("runs only the example at the targeted line", function () {
+        $ran = [];
+        // The closures below must stay on single lines: the target is
+        // the line of the second it() call, three lines down from here.
+        $secondLine = __LINE__ + 3;
+        $block = function () use (&$ran) {
+            it("first", function () use (&$ran) { $ran[] = 'first'; });
+            it("second", function () use (&$ran) { $ran[] = 'second'; });
+        };
+        LineTargetRegistry::add('ctx.spec.php', $secondLine);
+        LineTargetRegistry::beginSpec('ctx.spec.php');
+
+        try {
+            $ctx = new Context("LineTargeted", $block);
+            $ctx->setWorld(new Subject(__FILE__));
+            $result = $ctx->run();
+        } finally {
+            LineTargetRegistry::reset();
+        }
+
+        expect($ran)->toBe(['second']);
+        expect($result->getResults())->toHaveCount(1);
+    });
+
+    it("runs the whole context when the targeted line is inside it but on no example", function () {
+        $ran = [];
+        $blockLine = __LINE__ + 1;
+        $block = function () use (&$ran) {
+            it("first", function () use (&$ran) { $ran[] = 'first'; });
+            it("second", function () use (&$ran) { $ran[] = 'second'; });
+        };
+        LineTargetRegistry::add('ctx.spec.php', $blockLine);
+        LineTargetRegistry::beginSpec('ctx.spec.php');
+
+        try {
+            $ctx = new Context("WholeContext", $block);
+            $ctx->setWorld(new Subject(__FILE__));
+            $ctx->run();
+        } finally {
+            LineTargetRegistry::reset();
+        }
+
+        expect($ran)->toBe(['first', 'second']);
     });
 
 });

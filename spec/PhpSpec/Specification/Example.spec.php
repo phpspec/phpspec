@@ -184,4 +184,18 @@ describe(Example::class, function() {
         expect($receivedService)->toBeAnInstanceOf(\JsonSerializable::class);
     });
 
+    it("knows whether a line falls within its closure", function() {
+        $start = __LINE__ + 1;
+        $example = new Example("span test", function() {
+            $noop = true;
+        });
+        $end = $start + 2;
+
+        expect($example->containsLine($start))->toBeTrue();
+        expect($example->containsLine($start + 1))->toBeTrue();
+        expect($example->containsLine($end))->toBeTrue();
+        expect($example->containsLine($start - 1))->toBeFalse();
+        expect($example->containsLine($end + 1))->toBeFalse();
+    });
+
 });
