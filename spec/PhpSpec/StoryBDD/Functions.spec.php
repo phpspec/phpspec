@@ -64,6 +64,35 @@ describe('StoryBDD DSL functions', function () {
         expect($called)->toBeTrue();
     });
 
+    it("registers afterFeature hook", function () {
+        $called = false;
+        afterFeature(function () use (&$called) {
+            $called = true;
+        });
+        StoryBDDRegistry::hooks()->runAfterFeature();
+        expect($called)->toBeTrue();
+    });
+
+    it("registers afterScenario hook", function () {
+        $called = false;
+        afterScenario(function () use (&$called) {
+            $called = true;
+        });
+        $world = new \PhpSpec\StoryBDD\StepWorld();
+        StoryBDDRegistry::hooks()->runAfterScenario($world);
+        expect($called)->toBeTrue();
+    });
+
+    it("registers afterStep hook", function () {
+        $called = false;
+        afterStep(function () use (&$called) {
+            $called = true;
+        });
+        $world = new \PhpSpec\StoryBDD\StepWorld();
+        StoryBDDRegistry::hooks()->runAfterStep($world);
+        expect($called)->toBeTrue();
+    });
+
     it("reinitializes with init()", function () {
         given("a step", function () {});
         expect(StoryBDDRegistry::steps()->count())->toBe(1);

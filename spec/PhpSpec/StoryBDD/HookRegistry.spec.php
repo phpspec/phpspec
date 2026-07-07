@@ -35,22 +35,54 @@ describe(HookRegistry::class, function () {
         expect($world->stepPrepped)->toBeTrue();
     });
 
+    it("runs afterFeature hooks", function () {
+        $hooks = new HookRegistry();
+        $called = false;
+        $hooks->addAfterFeature(function () use (&$called) {
+            $called = true;
+        });
+        $hooks->runAfterFeature();
+        expect($called)->toBeTrue();
+    });
+
+    it("runs afterScenario hooks bound to world", function () {
+        $hooks = new HookRegistry();
+        $hooks->addAfterScenario(function () {
+            $this->tornDown = true;
+        });
+        $world = new StepWorld();
+        $hooks->runAfterScenario($world);
+        expect($world->tornDown)->toBeTrue();
+    });
+
+    it("runs afterStep hooks bound to world", function () {
+        $hooks = new HookRegistry();
+        $hooks->addAfterStep(function () {
+            $this->stepDone = true;
+        });
+        $world = new StepWorld();
+        $hooks->runAfterStep($world);
+        expect($world->stepDone)->toBeTrue();
+    });
+
     it("clears all hooks", function () {
         $hooks = new HookRegistry();
-        $featureCalled = false;
-        $scenarioCalled = false;
-        $stepCalled = false;
-        $hooks->addBeforeFeature(function () use (&$featureCalled) { $featureCalled = true; });
-        $hooks->addBeforeScenario(function () use (&$scenarioCalled) { $scenarioCalled = true; });
-        $hooks->addBeforeStep(function () use (&$stepCalled) { $stepCalled = true; });
+        $calls = [];
+        $hooks->addBeforeFeature(function () use (&$calls) { $calls[] = 'beforeFeature'; });
+        $hooks->addBeforeScenario(function () use (&$calls) { $calls[] = 'beforeScenario'; });
+        $hooks->addBeforeStep(function () use (&$calls) { $calls[] = 'beforeStep'; });
+        $hooks->addAfterFeature(function () use (&$calls) { $calls[] = 'afterFeature'; });
+        $hooks->addAfterScenario(function () use (&$calls) { $calls[] = 'afterScenario'; });
+        $hooks->addAfterStep(function () use (&$calls) { $calls[] = 'afterStep'; });
         $hooks->clear();
-        $hooks->runBeforeFeature();
         $world = new StepWorld();
+        $hooks->runBeforeFeature();
         $hooks->runBeforeScenario($world);
         $hooks->runBeforeStep($world);
-        expect($featureCalled)->toBeFalse();
-        expect($scenarioCalled)->toBeFalse();
-        expect($stepCalled)->toBeFalse();
+        $hooks->runAfterFeature();
+        $hooks->runAfterScenario($world);
+        $hooks->runAfterStep($world);
+        expect($calls)->toBe([]);
     });
 
     it("runs multiple hooks in order", function () {

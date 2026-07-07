@@ -27,6 +27,12 @@ final class HookRegistry
     private array $beforeScenario = [];
     /** @var \Closure[] hooks executed before each step, bound to StepWorld */
     private array $beforeStep = [];
+    /** @var \Closure[] hooks executed after each feature */
+    private array $afterFeature = [];
+    /** @var \Closure[] hooks executed after each scenario, bound to StepWorld */
+    private array $afterScenario = [];
+    /** @var \Closure[] hooks executed after each step, bound to StepWorld */
+    private array $afterStep = [];
 
     /**
      * Registers a hook to run before each feature.
@@ -100,6 +106,77 @@ final class HookRegistry
     }
 
     /**
+     * Registers a hook to run after each feature.
+     *
+     * @param \Closure $hook closure invoked without binding
+     * @return void
+     */
+    public function addAfterFeature(\Closure $hook): void
+    {
+        $this->afterFeature[] = $hook;
+    }
+
+    /**
+     * Registers a hook to run after each scenario, bound to the StepWorld.
+     *
+     * @param \Closure $hook closure called with StepWorld as $this
+     * @return void
+     */
+    public function addAfterScenario(\Closure $hook): void
+    {
+        $this->afterScenario[] = $hook;
+    }
+
+    /**
+     * Registers a hook to run after each step, bound to the StepWorld.
+     *
+     * @param \Closure $hook closure called with StepWorld as $this
+     * @return void
+     */
+    public function addAfterStep(\Closure $hook): void
+    {
+        $this->afterStep[] = $hook;
+    }
+
+    /**
+     * Executes all registered after-feature hooks in registration order.
+     *
+     * @return void
+     */
+    public function runAfterFeature(): void
+    {
+        foreach ($this->afterFeature as $hook) {
+            $hook();
+        }
+    }
+
+    /**
+     * Executes all registered after-scenario hooks, binding each to the world object.
+     *
+     * @param object $world the StepWorld instance to bind as $this
+     * @return void
+     */
+    public function runAfterScenario(object $world): void
+    {
+        foreach ($this->afterScenario as $hook) {
+            $hook->call($world);
+        }
+    }
+
+    /**
+     * Executes all registered after-step hooks, binding each to the world object.
+     *
+     * @param object $world the StepWorld instance to bind as $this
+     * @return void
+     */
+    public function runAfterStep(object $world): void
+    {
+        foreach ($this->afterStep as $hook) {
+            $hook->call($world);
+        }
+    }
+
+    /**
      * Removes all registered hooks from every lifecycle phase.
      *
      * @return void
@@ -109,5 +186,8 @@ final class HookRegistry
         $this->beforeFeature = [];
         $this->beforeScenario = [];
         $this->beforeStep = [];
+        $this->afterFeature = [];
+        $this->afterScenario = [];
+        $this->afterStep = [];
     }
 }

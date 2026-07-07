@@ -96,6 +96,8 @@ final readonly class Feature implements SpecBlock
                 yield $this->runScenario($scenario);
             }
         }
+
+        $this->hooks->runAfterFeature();
     }
 
     /**
@@ -146,6 +148,7 @@ final readonly class Feature implements SpecBlock
                     continue;
                 }
                 $result = $this->runStep($step, $world, $collector);
+                $this->hooks->runAfterStep($world);
                 $stepResults[] = $result;
                 if ($result->isFailure()) {
                     $failed = true;
@@ -159,11 +162,14 @@ final readonly class Feature implements SpecBlock
                 continue;
             }
             $result = $this->runStep($step, $world, $collector);
+            $this->hooks->runAfterStep($world);
             $stepResults[] = $result;
             if ($result->isFailure()) {
                 $failed = true;
             }
         }
+
+        $this->hooks->runAfterScenario($world);
 
         DispatcherRegistry::dispatcher()->removeSubscriber($collector);
 

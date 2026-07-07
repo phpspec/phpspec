@@ -242,8 +242,17 @@ final class Loader
         StoryBDDRegistry::init();
 
         // Load step definitions into the fresh registry; ancestor and in-tree
-        // discovery can both find the same steps directory, so deduplicate
-        foreach (array_unique($stepFiles) as $stepFile) {
+        // discovery can both find the same steps directory, so deduplicate.
+        // Dedupe by realpath, not the raw string: the same file can be
+        // reached through paths that differ only in slashes (e.g. a
+        // trailing slash on the run path yields "features//steps/x.php"
+        // alongside "features/steps/x.php"), which array_unique wouldn't catch.
+        $uniqueStepFiles = [];
+        foreach ($stepFiles as $stepFile) {
+            $uniqueStepFiles[realpath($stepFile) ?: $stepFile] = $stepFile;
+        }
+
+        foreach ($uniqueStepFiles as $stepFile) {
             require $stepFile;
         }
 

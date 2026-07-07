@@ -106,3 +106,37 @@ function beforeStep(Closure $fn): void
 {
     StoryBDDRegistry::hooks()->addBeforeStep($fn);
 }
+
+/**
+ * Registers a hook to run after each feature.
+ *
+ * @param Closure $fn closure invoked after each feature executes
+ * @return void
+ */
+function afterFeature(Closure $fn): void
+{
+    StoryBDDRegistry::hooks()->addAfterFeature($fn);
+}
+
+/**
+ * Registers a hook to run after each scenario, bound to the StepWorld.
+ * Runs regardless of the scenario outcome, so teardown always happens.
+ *
+ * @param Closure $fn closure invoked with StepWorld as $this after each scenario
+ * @return void
+ */
+function afterScenario(Closure $fn): void
+{
+    StoryBDDRegistry::hooks()->addAfterScenario($fn);
+}
+
+/**
+ * Registers a hook to run after each step, bound to the StepWorld.
+ *
+ * @param Closure $fn closure invoked with StepWorld as $this after each executed step
+ * @return void
+ */
+function afterStep(Closure $fn): void
+{
+    StoryBDDRegistry::hooks()->addAfterStep($fn);
+}
