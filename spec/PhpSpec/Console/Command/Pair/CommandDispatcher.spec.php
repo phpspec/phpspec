@@ -45,7 +45,7 @@ describe(CommandDispatcher::class, function () {
 
         $classContents = implode("\n", array_filter(
             $written,
-            fn(string $path) => str_ends_with($path, 'src/App/Basket.php'),
+            fn(string $path) => str_ends_with(str_replace('\\', '/', $path), 'src/App/Basket.php'),
             ARRAY_FILTER_USE_KEY,
         ));
         expect($classContents)->toContain('namespace App;');

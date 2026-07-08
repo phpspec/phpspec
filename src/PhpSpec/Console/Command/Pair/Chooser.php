@@ -88,7 +88,10 @@ final class Chooser
             return true;
         }
 
-        if ($this->keys !== null || ($this->detectTty && stream_isatty(STDIN))) {
+        // Raw key mode needs stty, so Windows terminals use line mode
+        $keyCapable = DIRECTORY_SEPARATOR === '/' && $this->detectTty && stream_isatty(STDIN);
+
+        if ($this->keys !== null || $keyCapable) {
             return $this->resolve($this->chooseByKey($action), $kind);
         }
 
