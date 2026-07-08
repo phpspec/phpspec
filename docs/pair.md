@@ -106,10 +106,35 @@ The AI assistant has access to these tools during a pair session:
 | `write_file` | Create a new file (class, interface, etc.) |
 | `update_file` | Modify an existing file (shows a diff) |
 | `run_specs` | Run specs and return the output |
+| `ask_user` | Ask you a yes/no question through the numbered chooser |
 | `read_file` | Read a project file for context |
 | `list_files` | List directory contents |
 
 The assistant automatically scans your project tree and existing step definitions so it can reuse patterns already in your codebase.
+
+### Interactive Questions
+
+Every question in a pair session -- whether asked by PhpSpec itself (creating
+a class, running specs) or by the AI via `ask_user` -- uses the same numbered
+chooser:
+
+```
+  Do you want me to create class App\Checkout for you?
+   ▸ 1. Yes
+     2. Yes, and don't ask again -- always create classes
+     3. No
+```
+
+A single keypress decides: `1`/`2`/`3`, or the shortcuts `y` (yes), `a`
+(always) and `n` or `Esc` (no) -- no Enter needed. The arrow keys move the
+highlight and Enter confirms it. When input is piped rather than a terminal,
+the chooser reads one answer line instead (digits or y/a/n; empty defaults to
+yes), so scripted sessions keep working.
+
+Option 2 is remembered per question kind for the rest of the session --
+answer "always" to class creation and PhpSpec stops asking about classes,
+while other questions (running specs, applying AI file changes) still prompt.
+Nothing is persisted between sessions.
 
 ### Project Context
 

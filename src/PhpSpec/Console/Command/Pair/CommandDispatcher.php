@@ -44,6 +44,7 @@ final class CommandDispatcher
 
     private InputParser $parser;
     private Filesystem $filesystem;
+    private readonly Chooser $chooser;
     private ?AiAssistant $ai = null;
 
     /**
@@ -68,9 +69,11 @@ final class CommandDispatcher
         ?Filesystem $filesystem = null,
         private readonly ?Application $application = null,
         private readonly ?ExtensionLoader $extensionLoader = null,
+        ?Chooser $chooser = null,
     ) {
         $this->parser = new InputParser();
         $this->filesystem = $filesystem ?? new RealFilesystem();
+        $this->chooser = $chooser ?? new Chooser($output, $interactive);
         $this->registerAutoloader();
 
         $aiConfig = $this->config->getAiConfig();
@@ -78,7 +81,7 @@ final class CommandDispatcher
             try {
                 $provider = ProviderFactory::create($aiConfig);
                 $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider']);
-                $this->ai = new AiAssistant($provider, $this->config, $this->output, $model, $this->filesystem, $this->interactive, $this->extensionLoader);
+                $this->ai = new AiAssistant($provider, $this->config, $this->output, $model, $this->filesystem, $this->interactive, $this->extensionLoader, $this->chooser);
             } catch (RuntimeException $e) {
                 $this->output->error($e->getMessage());
             }
@@ -152,7 +155,7 @@ final class CommandDispatcher
             return self::CONTINUE;
         }
 
-        $fqcn = $argument;
+        $fqcn = str_replace('/', '\\', $argument);
         $spec = str_replace('\\', '/', $fqcn);
 
         $specPath = $this->specGenerator->getSpecPath();
@@ -184,12 +187,8 @@ final class CommandDispatcher
 
         // Offer class generation
         if (!class_exists($fqcn)) {
-            $this->output->getOutput()->writeln('');
-            $this->output->getOutput()->writeln(sprintf(
-                '  <fg=yellow>Do you want me to create class <fg=white>%s</> for you?</> [Y/n] ',
-                $fqcn,
-            ));
-            if ($this->confirm()) {
+            $question = sprintf('Do you want me to create class <fg=white>%s</> for you?', $fqcn);
+            if ($this->chooser->choose($question, 'create-class', 'create classes')) {
                 try {
                     $message = $this->classGenerator->generate($fqcn);
                     $this->output->success($message);
@@ -205,9 +204,7 @@ final class CommandDispatcher
         }
 
         // Offer to run specs
-        $this->output->getOutput()->writeln('');
-        $this->output->getOutput()->writeln('  <fg=yellow>Do you want to run specs now?</> [Y/n] ');
-        if ($this->confirm()) {
+        if ($this->chooser->choose('Do you want to run specs now?', 'run-specs', 'run specs')) {
             $this->handleRun('');
         }
 
@@ -268,9 +265,7 @@ final class CommandDispatcher
         }
 
         // Offer to run specs
-        $this->output->getOutput()->writeln('');
-        $this->output->getOutput()->writeln('  <fg=yellow>Do you want to run specs now?</> [Y/n] ');
-        if ($this->confirm()) {
+        if ($this->chooser->choose('Do you want to run specs now?', 'run-specs', 'run specs')) {
             $this->handleRun('');
         }
 
@@ -481,41 +476,6 @@ final class CommandDispatcher
             . '  To use natural language, configure an AI provider in phpspec.yaml.',
         );
         return self::CONTINUE;
-    }
-
-    /**
-     * Prompts for Y/n confirmation. Returns true if accepted.
-     * In non-interactive mode, auto-accepts (returns true).
-     */
-    private function confirm(): bool
-    {
-        $answer = $this->ask('  > ');
-        return $answer === '' || strtolower($answer) === 'y';
-    }
-
-    /**
-     * Reads user input via readline (TTY) or fgets (pipe).
-     * In non-interactive mode, returns empty string (auto-accept).
-     */
-    private function ask(string $prompt): string
-    {
-        if (!$this->interactive) {
-            return '';
-        }
-
-        $this->output->prepareForInput();
-
-        if (function_exists('readline') && stream_isatty(STDIN)) {
-            $result = (string) readline($prompt);
-        } else {
-            $line = fgets(STDIN);
-            $result = $line === false ? '' : rtrim($line, "\r\n");
-        }
-
-        $this->output->returnToContent();
-        $this->output->echoInput($result ?: 'Y');
-
-        return $result;
     }
 
     /**

@@ -5,9 +5,52 @@
  * instantiates CommandDispatcher directly, bypassing the TTY check.
  */
 
-when('I run phpspec pair with input {string}', function (string $input) {
-    // Write a shim script that exercises CommandDispatcher directly
-    $shim = <<<'PHP'
+if (!function_exists('_pair_exec')) {
+    /**
+     * Runs the pair shim: dispatches each ";"-separated input in one session,
+     * optionally interactive with the given answers piped to stdin.
+     */
+    function _pair_exec(object $world, string $input, ?string $answers = null): void
+    {
+        $interactive = $answers !== null ? 'true' : 'false';
+
+        $shim = _pair_shim_source($interactive);
+        file_put_contents($world->projectDir . '/_pair_shim.php', $shim);
+
+        $cmd = [
+            $world->phpBin, '-d', 'xdebug.mode=off',
+            $world->projectDir . '/_pair_shim.php',
+            $input,
+        ];
+
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $process = proc_open($cmd, $descriptors, $pipes, $world->projectDir);
+
+        if ($answers !== null) {
+            fwrite($pipes[0], implode("\n", array_map('trim', explode(',', $answers))) . "\n");
+        }
+        fclose($pipes[0]);
+
+        $stdout = stream_get_contents($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $world->exitCode = proc_close($process);
+        $world->output = $stdout . $stderr;
+    }
+
+    /**
+     * Builds the shim source with the given interactivity flag.
+     */
+    function _pair_shim_source(string $interactive): string
+    {
+        $shim = <<<'PHP'
     <?php
     require __DIR__ . '/vendor/autoload.php';
 
@@ -36,36 +79,23 @@ when('I run phpspec pair with input {string}', function (string $input) {
         new ClassGenerator(ltrim($config->getSrcPath(), './')),
         $config,
         $pairOutput,
-        interactive: false,
+        interactive: %INTERACTIVE%,
         application: $app,
     );
 
-    $input = $argv[1] ?? '';
-    $dispatcher->dispatch($input);
+    foreach (array_filter(array_map('trim', explode(';', $argv[1] ?? ''))) as $command) {
+        $dispatcher->dispatch($command);
+    }
     PHP;
 
-    file_put_contents($this->projectDir . '/_pair_shim.php', $shim);
+        return str_replace('%INTERACTIVE%', $interactive, $shim);
+    }
+}
 
-    $cmd = [
-        $this->phpBin, '-d', 'xdebug.mode=off',
-        $this->projectDir . '/_pair_shim.php',
-        $input,
-    ];
+when('I run phpspec pair with input {string}', function (string $input) {
+    _pair_exec($this, $input);
+});
 
-    $descriptors = [
-        0 => ['pipe', 'r'],
-        1 => ['pipe', 'w'],
-        2 => ['pipe', 'w'],
-    ];
-
-    $process = proc_open($cmd, $descriptors, $pipes, $this->projectDir);
-    fclose($pipes[0]);
-
-    $stdout = stream_get_contents($pipes[1]);
-    $stderr = stream_get_contents($pipes[2]);
-    fclose($pipes[1]);
-    fclose($pipes[2]);
-
-    $this->exitCode = proc_close($process);
-    $this->output = $stdout . $stderr;
+when('I run phpspec pair with input {string} answering {string}', function (string $input, string $answers) {
+    _pair_exec($this, $input, $answers);
 });
