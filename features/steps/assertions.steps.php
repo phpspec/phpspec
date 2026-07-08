@@ -163,3 +163,7 @@ then('a step file should be generated with step definitions', function () {
     }
     expect($found)->toBeTrue();
 });
+
+then('no file {string} should be generated', function (string $path) {
+    expect(file_exists($this->projectDir . '/' . $path))->toBeFalse();
+});

@@ -50,7 +50,7 @@ final class AiAssistant
 
     private const WRITE_TOOLS = ['generate_spec', 'generate_feature', 'generate_steps', 'write_file', 'update_file'];
 
-    private bool $autoApproveWrites = false;
+    private readonly Chooser $chooser;
 
     /**
      * @param ProviderInterface $provider the AI provider for LLM interactions
@@ -60,6 +60,8 @@ final class AiAssistant
      * @param Filesystem|null $filesystem filesystem abstraction for testability
      * @param bool $interactive whether to prompt for user confirmation on write actions
      * @param ExtensionLoader|null $extensionLoader optional extension loader for custom tools
+     * @param Chooser|null $chooser the interactive chooser; shared with the dispatcher
+     *                              so "always" answers span the whole pair session
      */
     public function __construct(
         private readonly ProviderInterface $provider,
@@ -69,8 +71,10 @@ final class AiAssistant
         ?Filesystem $filesystem = null,
         private readonly bool $interactive = true,
         private readonly ?ExtensionLoader $extensionLoader = null,
+        ?Chooser $chooser = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
+        $this->chooser = $chooser ?? new Chooser($output, $interactive);
     }
 
     /**
@@ -155,7 +159,7 @@ final class AiAssistant
         PairLogger::log('TOOL', "$toolCall->name(" . json_encode($toolCall->arguments) . ')');
 
         if (in_array($toolCall->name, self::WRITE_TOOLS, true)) {
-            if (!$this->confirmTool($toolCall)) {
+            if (!$this->chooser->choose('Allow this action?', 'write-files', 'apply file changes')) {
                 PairLogger::log('RESULT', 'User declined');
                 return ['error' => 'User declined this action.'];
             }
@@ -169,38 +173,6 @@ final class AiAssistant
             PairLogger::log('RESULT', "ERROR: {$e->getMessage()}");
             return ['error' => $e->getMessage()];
         }
-    }
-
-    private function confirmTool(ToolCall $toolCall): bool
-    {
-        if (!$this->interactive || $this->autoApproveWrites) {
-            return true;
-        }
-
-        $out = $this->output->getOutput();
-        $out->writeln('');
-        $out->writeln('  <fg=yellow>Allow this action?</>');
-        $out->writeln('    <fg=white>1</> - Yes');
-        $out->writeln('    <fg=white>2</> - Always yes');
-        $out->writeln('    <fg=white>3</> - No');
-
-        $this->output->prepareForInput();
-
-        if (function_exists('readline') && stream_isatty(STDIN)) {
-            $answer = (string) readline('  > ');
-        } else {
-            $line = fgets(STDIN);
-            $answer = $line === false ? '' : rtrim($line, "\r\n");
-        }
-
-        $this->output->returnToContent();
-        $this->output->echoInput($answer ?: '1');
-
-        return match (trim($answer)) {
-            '', '1' => true,
-            '2' => $this->autoApproveWrites = true,
-            default => false,
-        };
     }
 
     private function ensureInitialised(): void
@@ -232,6 +204,7 @@ final class AiAssistant
             $this->writeFileTool(),
             $this->updateFileTool(),
             $this->runSpecsTool(),
+            $this->askUserTool(),
             AiTools::readFile($this->filesystem),
             AiTools::listFiles($this->filesystem),
         ];
@@ -245,6 +218,37 @@ final class AiAssistant
         }
 
         return $tools;
+    }
+
+    private function askUserTool(): Tool
+    {
+        $chooser = $this->chooser;
+
+        return Tool::make(
+            name: 'ask_user',
+            description: 'Ask the user a yes/no question before proceeding. Use this whenever you need '
+                . 'a confirmation or decision from the user instead of asking in plain text. '
+                . 'Returns "yes", "always" (yes now and for all similar future questions) or "no".',
+            parameters: [
+                'question' => [
+                    'type' => 'string',
+                    'description' => 'The question to show the user, e.g. "Do you want me to generate the method fooBar()?"',
+                ],
+                'action' => [
+                    'type' => 'string',
+                    'description' => 'Short verb phrase naming the action, completing the sentence "always ..." (e.g. "generate methods")',
+                ],
+            ],
+            handler: function (array $args) use ($chooser) {
+                $kind = 'ai-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($args['action']));
+
+                if (!$chooser->choose($args['question'], $kind, $args['action'])) {
+                    return 'no';
+                }
+
+                return $chooser->hasAlways($kind) ? 'always' : 'yes';
+            },
+        );
     }
 
     private function generateSpecTool(): Tool

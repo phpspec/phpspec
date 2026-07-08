@@ -35,6 +35,24 @@ describe(CommandDispatcher::class, function () {
 
     it('instantiates', fn() => expect($this->dispatcher)->toBeAnInstanceOf(CommandDispatcher::class));
 
+    it('normalises slash paths to namespaced classes in describe', function (Filesystem $fs) {
+        $written = [];
+        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+            $written[$path] = $content;
+        });
+
+        $this->dispatcher->dispatch('describe App/Basket');
+
+        $classContents = implode("\n", array_filter(
+            $written,
+            fn(string $path) => str_ends_with($path, 'src/App/Basket.php'),
+            ARRAY_FILTER_USE_KEY,
+        ));
+        expect($classContents)->toContain('namespace App;');
+        expect($classContents)->toContain('class Basket');
+        expect($classContents)->not()->toContain('class App/Basket');
+    });
+
     it('returns CONTINUE for /help', function () {
         expect($this->dispatcher->dispatch('/help'))->toBe(CommandDispatcher::CONTINUE);
     });
