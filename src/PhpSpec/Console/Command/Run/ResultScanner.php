@@ -202,12 +202,27 @@ final readonly class ResultScanner
                 $featurePath = $result->getPath();
                 foreach ($result->getResults() as $scenario) {
                     if ($scenario instanceof ScenarioResult) {
+                        // "And"/"But" continue the last primary keyword — tracked
+                        // across every step (including defined ones) so an
+                        // undefined "And" after a defined "When" resolves to when.
+                        $primary = 'Given';
                         foreach ($scenario->getResults() as $step) {
-                            if ($step instanceof StepResult && $step->isUndefined()) {
-                                $title = $step->getTitle();
-                                $parts = explode(' ', $title, 2);
+                            if (!$step instanceof StepResult) {
+                                continue;
+                            }
+                            $title = $step->getTitle();
+                            $parts = explode(' ', $title, 2);
+                            $keyword = $parts[0];
+
+                            if (in_array(strtolower($keyword), ['given', 'when', 'then'], true)) {
+                                $primary = $keyword;
+                            } else {
+                                $keyword = $primary;
+                            }
+
+                            if ($step->isUndefined()) {
                                 $byFeature[$featurePath][] = [
-                                    'keyword' => $parts[0],
+                                    'keyword' => $keyword,
                                     'text' => $parts[1] ?? $title,
                                 ];
                             }
