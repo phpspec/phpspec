@@ -221,3 +221,41 @@ Feature: Story BDD with Gherkin
       """
     When I run phpspec run "features/" and answer "y" to generation prompts
     Then a step file should be generated with step definitions
+
+  Scenario: And and But steps generate the keyword of the step they follow
+    Given a feature file "features/keywords.feature":
+      """
+      Feature: Keywords
+        Scenario: Mixed keywords
+          Given a precondition
+          And another precondition
+          When an action
+          But not another action
+          Then an outcome
+          And another outcome
+      """
+    When I run phpspec run "features/" and answer "y" to generation prompts
+    Then the file "features/steps/keywords.steps.php" should contain:
+      """
+      given("a precondition"
+      """
+    And the file "features/steps/keywords.steps.php" should contain:
+      """
+      given("another precondition"
+      """
+    And the file "features/steps/keywords.steps.php" should contain:
+      """
+      when("an action"
+      """
+    And the file "features/steps/keywords.steps.php" should contain:
+      """
+      when("not another action"
+      """
+    And the file "features/steps/keywords.steps.php" should contain:
+      """
+      then("an outcome"
+      """
+    And the file "features/steps/keywords.steps.php" should contain:
+      """
+      then("another outcome"
+      """

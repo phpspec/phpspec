@@ -55,10 +55,16 @@ class StepGenerator
 
         $content = "<?php\n";
 
+        // "And"/"But" continue the primary keyword of the step they follow, so
+        // an "And" under a When generates when(), under a Then generates then().
+        $primary = 'given';
+
         foreach ($undefinedSteps as $step) {
             $keyword = strtolower($step['keyword']);
-            if ($keyword === 'and' || $keyword === 'but') {
-                $keyword = 'given';
+            if (in_array($keyword, ['given', 'when', 'then'], true)) {
+                $primary = $keyword;
+            } else {
+                $keyword = $primary;
             }
             $pattern = $this->extractPattern($step['text']);
             $params = $this->extractParams($pattern);

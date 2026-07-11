@@ -220,6 +220,39 @@ describe(ResultScanner::class, function () {
             $result = $this->scanner->collectUndefinedSteps($suite);
             expect($result)->toBe([]);
         });
+
+        it('resolves And/But to the primary keyword of the step they follow', function () {
+            $steps = [
+                new StepResult("Given a precondition", "undefined"),
+                new StepResult("And another precondition", "undefined"),
+                new StepResult("When an action", "undefined"),
+                new StepResult("But not another action", "undefined"),
+                new StepResult("Then an outcome", "undefined"),
+                new StepResult("And another outcome", "undefined"),
+            ];
+            $scenario = new ScenarioResult("Test", $steps);
+            $feature = new FeatureResult("Feature", [$scenario], '/features/test.feature');
+
+            $collected = $this->scanner->collectUndefinedSteps(new SuiteResult([$feature]));
+            $keywords = array_column($collected['/features/test.feature'], 'keyword');
+
+            expect($keywords)->toBe(['Given', 'Given', 'When', 'When', 'Then', 'Then']);
+        });
+
+        it('resolves an undefined And that follows a defined primary step', function () {
+            $steps = [
+                new StepResult("When a defined action", "passed"),
+                new StepResult("And an undefined continuation", "undefined"),
+            ];
+            $scenario = new ScenarioResult("Test", $steps);
+            $feature = new FeatureResult("Feature", [$scenario], '/features/test.feature');
+
+            $collected = $this->scanner->collectUndefinedSteps(new SuiteResult([$feature]));
+
+            expect($collected['/features/test.feature'])->toHaveCount(1);
+            expect($collected['/features/test.feature'][0]['keyword'])->toBe('When');
+            expect($collected['/features/test.feature'][0]['text'])->toBe('an undefined continuation');
+        });
     });
 
     context('collectMissingStepClasses', function () {
