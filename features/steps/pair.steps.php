@@ -60,8 +60,6 @@ if (!function_exists('_pair_exec')) {
     use PhpSpec\Console\Application;
     use PhpSpec\Console\Command\Pair\CommandDispatcher;
     use PhpSpec\Console\Command\Pair\PairOutput;
-    use PhpSpec\Loader;
-    use PhpSpec\Runner;
     use Symfony\Component\Console\Output\StreamOutput;
 
     $config = new Configuration(__DIR__);
@@ -73,8 +71,6 @@ if (!function_exists('_pair_exec')) {
     $app->setAutoExit(false);
 
     $dispatcher = new CommandDispatcher(
-        new Loader(specSuffix: $specSuffix),
-        new Runner(),
         new SpecGenerator(ltrim($config->getSpecPath(), './'), specSuffix: $specSuffix),
         new ClassGenerator(ltrim($config->getSrcPath(), './')),
         $config,

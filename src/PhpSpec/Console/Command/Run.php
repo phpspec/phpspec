@@ -18,6 +18,7 @@ use DOMException;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\CoverageReporter;
+use PhpSpec\Console\Command\Run\GenerationReport;
 use PhpSpec\Coverage\CoverageOptions;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Extensions\FormatterBridge;
@@ -193,7 +194,13 @@ final class Run extends Command
             }
         }
 
-        if (!in_array($this->resolveFormat($input), ['junit', 'html'], true)) {
+        // When pair mode spawned this run (it sets an env var naming a report
+        // file), record the generation candidates there and let pair mode drive
+        // the interactive generation in the REPL. Otherwise generate here as usual.
+        $reportPath = GenerationReport::requestedPath();
+        if ($reportPath !== null) {
+            GenerationReport::write($reportPath, $this->codeGenerator(false)->scan($results));
+        } elseif (!in_array($this->resolveFormat($input), ['junit', 'html'], true)) {
             $this->generateCode($output, $results, (bool) $input->getOption('fake'), $input->isInteractive());
         }
 
@@ -613,9 +620,23 @@ final class Run extends Command
      */
     private function generateCode(Output $output, SuiteResult $results, bool $fake, bool $interactive = true): void
     {
-        $srcPath = ltrim($this->config->getSrcPath(), './');
-        $specPath = ltrim($this->config->getSpecPath(), './');
-        $codeGenerator = new CodeGenerator($srcPath, $specPath, $interactive, $this->config->getSpecSuffix(), $this->config->getPsr4Prefix());
-        $codeGenerator->generate($output, $results, $fake);
+        $this->codeGenerator($interactive)->generate($output, $results, $fake);
+    }
+
+    /**
+     * Builds a CodeGenerator configured from the project paths.
+     *
+     * @param bool $interactive whether generation should prompt (false = auto-accept)
+     * @return CodeGenerator
+     */
+    private function codeGenerator(bool $interactive): CodeGenerator
+    {
+        return new CodeGenerator(
+            ltrim($this->config->getSrcPath(), './'),
+            ltrim($this->config->getSpecPath(), './'),
+            $interactive,
+            $this->config->getSpecSuffix(),
+            $this->config->getPsr4Prefix(),
+        );
     }
 }

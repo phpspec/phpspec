@@ -5,8 +5,6 @@ use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair;
 use PhpSpec\Filesystem;
-use PhpSpec\Loader;
-use PhpSpec\Runner;
 use Symfony\Component\Console\Tester\CommandTester;
 
 describe(Pair::class, function () {
@@ -20,8 +18,6 @@ describe(Pair::class, function () {
     it('instantiates', function (Filesystem $fs) {
         $config = new Configuration('.', $fs);
         $cmd = new Pair(
-            new Loader($fs),
-            new Runner(),
             new SpecGenerator('spec', $fs),
             new ClassGenerator('src', $fs),
             $config,
@@ -32,8 +28,6 @@ describe(Pair::class, function () {
     it('rejects non-interactive terminal', function (Filesystem $fs) {
         $config = new Configuration('.', $fs);
         $cmd = new Pair(
-            new Loader($fs),
-            new Runner(),
             new SpecGenerator('spec', $fs),
             new ClassGenerator('src', $fs),
             $config,

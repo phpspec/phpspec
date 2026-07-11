@@ -66,14 +66,48 @@ final readonly class CodeGenerator
      */
     public function generate(Output $output, Results $results, bool $fake): void
     {
-        $this->generateStepDefinitions($output, $results);
-        $this->generateMissingSpecClasses($output, $results);
-        $this->generateMissingStepClasses($output, $results);
-        $this->generateMissingInterfaces($output, $results);
-        $this->generateMockInterfaceMethods($output, $results);
-        $this->generateClassMethods($output, $results, $fake);
+        $this->apply($output, $this->scan($results), $fake);
+    }
+
+    /**
+     * Extracts every code-generation opportunity from a run's results, without
+     * prompting or writing anything. Runs in the process that executed the
+     * specs (it relies on that run's in-memory state, e.g. the mock registry).
+     *
+     * @param Results $results the spec/feature results to scan
+     * @return GenerationCandidates the opportunities found
+     */
+    public function scan(Results $results): GenerationCandidates
+    {
+        return new GenerationCandidates(
+            $this->scanner->collectUndefinedSteps($results),
+            $this->scanner->collectMissingSpecClasses($results),
+            $this->scanner->collectMissingStepClasses($results),
+            $this->scanner->collectMissingMockTypes($results),
+            $this->scanner->collectUndefinedMockInterfaceMethods($results),
+            $this->scanner->collectUndefinedClassMethods($results),
+            $this->scanner->collectFakeableMethods($results),
+        );
+    }
+
+    /**
+     * Interactively generates the code for a set of candidates, prompting for
+     * each. May run in a different process than the one that produced them.
+     *
+     * @param Output $output the console output for prompts and confirmation messages
+     * @param GenerationCandidates $candidates the opportunities to offer
+     * @param bool $fake whether --fake mode is enabled
+     */
+    public function apply(Output $output, GenerationCandidates $candidates, bool $fake): void
+    {
+        $this->generateStepDefinitions($output, $candidates->undefinedSteps);
+        $this->generateMissingSpecClasses($output, $candidates->missingSpecClasses);
+        $this->generateMissingStepClasses($output, $candidates->missingStepClasses);
+        $this->generateMissingInterfaces($output, $candidates->missingMockTypes);
+        $this->generateMockInterfaceMethods($output, $candidates->undefinedMockInterfaceMethods);
+        $this->generateClassMethods($output, $candidates->undefinedClassMethods, $fake);
         if ($fake) {
-            $this->fillEmptyMethods($output, $results);
+            $this->fillEmptyMethods($output, $candidates->fakeableMethods);
         }
     }
 
@@ -81,11 +115,10 @@ final readonly class CodeGenerator
      * Offers to generate step definition stubs for undefined Gherkin steps.
      *
      * @param Output $output the console output for prompts and confirmation messages
-     * @param Results $results the results tree to scan for undefined steps
+     * @param array<string, array<array{keyword: string, text: string}>> $undefinedSteps undefined steps grouped by feature file path
      */
-    private function generateStepDefinitions(Output $output, Results $results): void
+    private function generateStepDefinitions(Output $output, array $undefinedSteps): void
     {
-        $undefinedSteps = $this->scanner->collectUndefinedSteps($results);
         if (empty($undefinedSteps)) {
             return;
         }
@@ -111,11 +144,10 @@ final readonly class CodeGenerator
      * Offers to generate classes for types referenced in spec examples that don't exist.
      *
      * @param Output $output the console output for prompts and confirmation messages
-     * @param Results $results the results tree to scan for missing spec classes
+     * @param array<string> $missingClasses FQCNs referenced in specs that do not exist
      */
-    private function generateMissingSpecClasses(Output $output, Results $results): void
+    private function generateMissingSpecClasses(Output $output, array $missingClasses): void
     {
-        $missingClasses = $this->scanner->collectMissingSpecClasses($results);
         if (empty($missingClasses)) {
             return;
         }
@@ -140,11 +172,10 @@ final readonly class CodeGenerator
      * Offers to generate specs and classes for types referenced in steps that don't exist.
      *
      * @param Output $output the console output for prompts and confirmation messages
-     * @param Results $results the results tree to scan for missing step classes
+     * @param array<string> $missingStepClasses FQCNs referenced in steps that do not exist
      */
-    private function generateMissingStepClasses(Output $output, Results $results): void
+    private function generateMissingStepClasses(Output $output, array $missingStepClasses): void
     {
-        $missingStepClasses = $this->scanner->collectMissingStepClasses($results);
         if (empty($missingStepClasses)) {
             return;
         }
@@ -178,12 +209,10 @@ final readonly class CodeGenerator
      * Offers to generate interface files for types that mock() couldn't find.
      *
      * @param Output $output the console output for prompts and confirmation messages
-     * @param Results $results the results tree to scan for missing mock types
+     * @param array<string> $missingMockTypes FQCNs that could not be mocked because they do not exist
      */
-    private function generateMissingInterfaces(Output $output, Results $results): void
+    private function generateMissingInterfaces(Output $output, array $missingMockTypes): void
     {
-        $missingMockTypes = $this->scanner->collectMissingMockTypes($results);
-
         $uniqueMissing = [];
         foreach ($missingMockTypes as $fqcn) {
             $uniqueMissing[$fqcn] = true;
@@ -209,13 +238,11 @@ final readonly class CodeGenerator
      * Offers to add method signatures to interfaces when mock doubles call undefined methods.
      *
      * @param Output $output the console output for prompts and confirmation messages
-     * @param Results $results the results tree to scan for undefined mock interface methods
+     * @param array<array{className: string, methodName: string, file: string, line: int}> $mockMethods undefined interface-mock methods
      */
-    private function generateMockInterfaceMethods(Output $output, Results $results): void
+    private function generateMockInterfaceMethods(Output $output, array $mockMethods): void
     {
-        $uniqueMockMethods = $this->uniqueByClassMethod(
-            $this->scanner->collectUndefinedMockInterfaceMethods($results),
-        );
+        $uniqueMockMethods = $this->uniqueByClassMethod($mockMethods);
 
         if (empty($uniqueMockMethods)) {
             return;
@@ -240,14 +267,12 @@ final readonly class CodeGenerator
      * In --fake mode, includes a hardcoded return value extracted from the spec's toBe() expectation.
      *
      * @param Output $output the console output for prompts and confirmation messages
-     * @param Results $results the results tree to scan for undefined class methods
+     * @param array<array{className: string, methodName: string, file: string, line: int}> $classMethods undefined real-class methods
      * @param bool $fake whether --fake mode is enabled
      */
-    private function generateClassMethods(Output $output, Results $results, bool $fake): void
+    private function generateClassMethods(Output $output, array $classMethods, bool $fake): void
     {
-        $unique = $this->uniqueByClassMethod(
-            $this->scanner->collectUndefinedClassMethods($results),
-        );
+        $unique = $this->uniqueByClassMethod($classMethods);
 
         if (empty($unique)) {
             return;
@@ -285,13 +310,11 @@ final readonly class CodeGenerator
      * derived from failed matcher expectations.
      *
      * @param Output $output the console output for prompts and confirmation messages
-     * @param Results $results the results tree to scan for fakeable empty methods
+     * @param array<array{className: string, methodName: string, fakeExpression: string, file: string, line: int}> $fakeableMethods empty methods that --fake could fill
      */
-    private function fillEmptyMethods(Output $output, Results $results): void
+    private function fillEmptyMethods(Output $output, array $fakeableMethods): void
     {
-        $uniqueEmpty = $this->uniqueByClassMethod(
-            $this->scanner->collectFakeableMethods($results),
-        );
+        $uniqueEmpty = $this->uniqueByClassMethod($fakeableMethods);
 
         if (empty($uniqueEmpty)) {
             return;
