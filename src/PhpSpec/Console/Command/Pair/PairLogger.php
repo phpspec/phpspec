@@ -18,7 +18,7 @@ namespace PhpSpec\Console\Command\Pair;
 
 final class PairLogger
 {
-    private const LOG_FILE = '.phpspec/pair.log';
+    private const LOG_FILE = '.phpspec/pair/session.log';
 
     /**
      * Appends a timestamped log entry to the pair session log file.

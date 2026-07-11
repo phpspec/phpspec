@@ -20,14 +20,10 @@ use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair;
 use PhpSpec\Console\Command\Run\CodeGenerator;
-use PhpSpec\EventDispatcher\DispatcherRegistry;
+use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Filesystem;
-use PhpSpec\Loader;
 use PhpSpec\RealFilesystem;
-use PhpSpec\Report\Formatter\Dot;
-use PhpSpec\Result\SuiteResult;
-use PhpSpec\Runner;
 use RuntimeException;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
@@ -45,11 +41,10 @@ final class CommandDispatcher
     private InputParser $parser;
     private Filesystem $filesystem;
     private readonly Chooser $chooser;
+    private readonly SpecRunner $specRunner;
     private ?AiAssistant $ai = null;
 
     /**
-     * @param Loader $loader the spec/feature file loader
-     * @param Runner $runner the spec runner
      * @param SpecGenerator $specGenerator the spec file generator
      * @param ClassGenerator $classGenerator the class file generator
      * @param Configuration $config the project configuration
@@ -57,10 +52,9 @@ final class CommandDispatcher
      * @param bool $interactive whether to prompt for user input (false = auto-accept all)
      * @param Filesystem|null $filesystem filesystem abstraction for testability
      * @param Application|null $application the Symfony console application for command delegation
+     * @param SpecRunner|null $specRunner runs specs for `run`; defaults to a fresh subprocess
      */
     public function __construct(
-        private readonly Loader $loader,
-        private readonly Runner $runner,
         private readonly SpecGenerator $specGenerator,
         private readonly ClassGenerator $classGenerator,
         private readonly Configuration $config,
@@ -70,10 +64,12 @@ final class CommandDispatcher
         private readonly ?Application $application = null,
         private readonly ?ExtensionLoader $extensionLoader = null,
         ?Chooser $chooser = null,
+        ?SpecRunner $specRunner = null,
     ) {
         $this->parser = new InputParser();
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
+        $this->specRunner = $specRunner ?? new SubprocessRunner();
         $this->registerAutoloader();
 
         $aiConfig = $this->config->getAiConfig();
@@ -273,41 +269,41 @@ final class CommandDispatcher
     }
 
     /**
-     * Runs specs, streaming results through the Dot formatter.
+     * Runs specs, then offers to generate any missing code.
+     *
+     * The run is delegated to the SpecRunner (a fresh subprocess in production)
+     * so that code generated earlier in the session is actually loaded; the
+     * interactive generation then runs here, in the REPL, keeping the shared
+     * numbered chooser.
      */
     private function handleRun(string $argument): int
     {
-        $path = $argument !== '' ? $argument : $this->config->getAllLoadPaths();
+        $candidates = $this->specRunner->run($argument, $this->output->getOutput());
 
-        $state = DispatcherRegistry::dispatcher();
-        DispatcherRegistry::reset();
-
-        try {
-            $suite = $this->loader->load($path);
-
-            $formatter = new Dot($this->output->getOutput());
-            $formatter->begin();
-
-            $start = hrtime(true);
-            $accumulated = [];
-            foreach ($this->runner->stream($suite) as $result) {
-                $formatter->printResult($result);
-                $accumulated[] = $result;
-            }
-
-            $results = new SuiteResult($accumulated);
-            $results->setDuration((hrtime(true) - $start) / 1e9);
-            $formatter->end($results);
-
-            $srcPath = ltrim($this->config->getSrcPath(), './');
-            $specPath = ltrim($this->config->getSpecPath(), './');
-            $codeGenerator = new CodeGenerator($srcPath, $specPath, psr4Prefix: $this->config->getPsr4Prefix(), chooser: $this->chooser);
-            $codeGenerator->generate($this->output->getOutput(), $results, false);
-        } finally {
-            DispatcherRegistry::set($state);
+        if ($candidates !== null && !$candidates->isEmpty()) {
+            $this->offerGeneration($candidates);
         }
 
         return self::CONTINUE;
+    }
+
+    /**
+     * Interactively offers to generate each reported candidate, using the
+     * shared numbered chooser.
+     *
+     * @param GenerationCandidates $candidates the candidates the run reported
+     */
+    private function offerGeneration(GenerationCandidates $candidates): void
+    {
+        $codeGenerator = new CodeGenerator(
+            ltrim($this->config->getSrcPath(), './'),
+            ltrim($this->config->getSpecPath(), './'),
+            $this->interactive,
+            $this->config->getSpecSuffix(),
+            $this->config->getPsr4Prefix(),
+            $this->chooser,
+        );
+        $codeGenerator->apply($this->output->getOutput(), $candidates, false);
     }
 
     /**

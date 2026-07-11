@@ -152,9 +152,10 @@ final class ParallelRunner
     }
 
     /**
-     * Resolves the absolute path to the phpspec binary.
+     * Resolves the absolute path to the phpspec binary, so a subprocess can
+     * re-invoke the same phpspec (used by parallel workers and pair mode).
      */
-    private static function findPhpspecBin(): string
+    public static function findPhpspecBin(): string
     {
         // This file is at src/PhpSpec/Parallel/ParallelRunner.php
         // bin/phpspec is 3 directories up

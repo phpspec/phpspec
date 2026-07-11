@@ -5,11 +5,27 @@ use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair\CommandDispatcher;
 use PhpSpec\Console\Command\Pair\PairOutput;
+use PhpSpec\Console\Command\Pair\SpecRunner;
+use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Filesystem;
-use PhpSpec\Loader;
-use PhpSpec\Runner;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Output\OutputInterface;
+
+// A fake SpecRunner so the REPL can be tested without spawning a real run
+// subprocess; it records the arguments it was asked to run.
+class CommandDispatcherFakeRunner implements SpecRunner
+{
+    /** @var list<string> */
+    public array $arguments = [];
+
+    public function run(string $argument, OutputInterface $output): ?GenerationCandidates
+    {
+        $this->arguments[] = $argument;
+
+        return null;
+    }
+}
 
 describe(CommandDispatcher::class, function () {
 
@@ -22,15 +38,15 @@ describe(CommandDispatcher::class, function () {
     let('buffer', fn() => new BufferedOutput());
     let('pairOutput', fn() => new PairOutput($this->buffer));
     let('config', fn(Filesystem $fs) => new Configuration('.', $fs));
+    let('specRunner', fn() => new CommandDispatcherFakeRunner());
     let('dispatcher', fn(Filesystem $fs) => new CommandDispatcher(
-        new Loader($fs),
-        new Runner(),
         new SpecGenerator('spec', $fs),
         new ClassGenerator('src', $fs),
         $this->config,
         $this->pairOutput,
         false,
         $fs,
+        specRunner: $this->specRunner,
     ));
 
     it('instantiates', fn() => expect($this->dispatcher)->toBeAnInstanceOf(CommandDispatcher::class));
@@ -235,13 +251,13 @@ describe(CommandDispatcher::class, function () {
     it('runs specs with run command', function () {
         $result = $this->dispatcher->dispatch('run');
         expect($result)->toBe(CommandDispatcher::CONTINUE);
-        $output = $this->buffer->fetch();
-        expect($output)->toContain('0 specs');
+        expect($this->specRunner->arguments)->toBe(['']);
     });
 
     it('runs specs at specific path with run command', function () {
         $result = $this->dispatcher->dispatch('run spec/NonExistent');
         expect($result)->toBe(CommandDispatcher::CONTINUE);
+        expect($this->specRunner->arguments)->toBe(['spec/NonExistent']);
     });
 
     context('smart command routing without AI', function () {
@@ -317,7 +333,7 @@ describe(CommandDispatcher::class, function () {
 
     context('logging', function () {
         it('creates log file on dispatch', function () {
-            $logFile = getcwd() . '/.phpspec/pair.log';
+            $logFile = getcwd() . '/.phpspec/pair/session.log';
             if (file_exists($logFile)) {
                 unlink($logFile);
             }
@@ -342,8 +358,6 @@ describe(CommandDispatcher::class, function () {
             return $app;
         });
         let('appDispatcher', fn(Filesystem $fs) => new CommandDispatcher(
-            new Loader($fs),
-            new Runner(),
             new SpecGenerator('spec', $fs),
             new ClassGenerator('src', $fs),
             $this->config,
@@ -351,6 +365,7 @@ describe(CommandDispatcher::class, function () {
             false,
             $fs,
             $this->app,
+            specRunner: $this->specRunner,
         ));
 
         it('delegates next command and returns CONTINUE', function () {
@@ -379,8 +394,6 @@ describe(CommandDispatcher::class, function () {
 
         it('does not list pair in additional commands', function () {
             $this->app->{method_exists($this->app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Pair(
-                new Loader(),
-                new Runner(),
                 new SpecGenerator('spec'),
                 new ClassGenerator('src'),
                 new Configuration('.'),
@@ -393,8 +406,6 @@ describe(CommandDispatcher::class, function () {
 
         it('silently ignores pair command input', function () {
             $this->app->{method_exists($this->app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Pair(
-                new Loader(),
-                new Runner(),
                 new SpecGenerator('spec'),
                 new ClassGenerator('src'),
                 new Configuration('.'),

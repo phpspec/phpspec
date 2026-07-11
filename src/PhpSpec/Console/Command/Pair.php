@@ -21,8 +21,6 @@ use PhpSpec\Console\Command\Pair\CommandDispatcher;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use PhpSpec\Console\Command\Pair\Repl;
 use PhpSpec\Extensions\ExtensionLoader;
-use PhpSpec\Loader;
-use PhpSpec\Runner;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Input\InputOption;
@@ -35,16 +33,12 @@ use Symfony\Component\Console\Output\OutputInterface as Output;
 final class Pair extends Command
 {
     /**
-     * @param Loader $loader the spec/feature file loader
-     * @param Runner $runner the spec runner
      * @param SpecGenerator $specGenerator the spec file generator
      * @param ClassGenerator $classGenerator the class file generator
      * @param Configuration $config the project configuration
      * @param ExtensionLoader|null $extensionLoader optional extension loader for custom commands and tools
      */
     public function __construct(
-        private readonly Loader $loader,
-        private readonly Runner $runner,
         private readonly SpecGenerator $specGenerator,
         private readonly ClassGenerator $classGenerator,
         private readonly Configuration $config,
@@ -77,8 +71,6 @@ final class Pair extends Command
 
         $pairOutput = new PairOutput($output);
         $dispatcher = new CommandDispatcher(
-            $this->loader,
-            $this->runner,
             $this->specGenerator,
             $this->classGenerator,
             $this->config,

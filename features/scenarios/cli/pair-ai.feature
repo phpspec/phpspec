@@ -171,3 +171,24 @@ Feature: AI-assisted pair programming
     When I run phpspec pair with input "run; run"
     Then the output should contain "1 example (1 passes)" exactly 2 times
     And the output should not contain "Cannot declare interface"
+
+  Scenario: A method generated mid-session is picked up by the next run
+    Given a class "src/App/Wallet.php":
+      """
+      <?php
+      namespace App;
+
+      class Wallet {}
+      """
+    And a spec file "spec/App/Wallet.spec.php":
+      """
+      <?php
+      use App\Wallet;
+
+      describe(Wallet::class, function () {
+          it('gets balances', fn() => expect((new Wallet())->getBalances())->toBe(null));
+      });
+      """
+    When I run phpspec pair with input "run; run" answering "1"
+    Then the file "src/App/Wallet.php" should contain "function getBalances"
+    And the output should contain "1 example (1 passes)"

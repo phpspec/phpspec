@@ -102,8 +102,6 @@ final class Application extends BaseApplication
             new SpecGenerator(ltrim($config->getSpecPath(), './'), specSuffix: $specSuffix),
         );
         $defaultCommands[] = new Pair(
-            new Loader(specSuffix: $specSuffix, featuresPath: $config->getFeaturesPath(), stepsPath: $config->getStepsPath()),
-            new Runner(),
             new SpecGenerator(ltrim($config->getSpecPath(), './'), specSuffix: $specSuffix),
             new ClassGenerator(ltrim($config->getSrcPath(), './'), psr4Prefix: $config->getPsr4Prefix()),
             $config,
