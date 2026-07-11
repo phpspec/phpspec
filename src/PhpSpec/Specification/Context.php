@@ -33,7 +33,7 @@ use Throwable;
  * Represents a describe()/context() block containing examples, nested contexts,
  * lifecycle hooks, and shared world state.
  */
-class Context implements ExampleRegistry, SpecBlock
+class Context implements ExampleRegistry, Rebindable
 {
     /** @var array<SpecBlock> child examples and nested contexts */
     private array $specBlocks = [];
@@ -73,6 +73,24 @@ class Context implements ExampleRegistry, SpecBlock
      * @param Closure $specBlock closure containing nested DSL calls
      */
     public function __construct(private readonly mixed $context, private readonly Closure $specBlock) {}
+
+    /**
+     * Returns a fresh, unrun copy of this context with its block closure bound
+     * to the given world. The nested it()/let()/hook closures the block defines
+     * inherit that binding when the copy runs, so every run gets its own world
+     * without re-parsing the spec file.
+     *
+     * @param Subject $world the world to bind the copy's closure to
+     * @return SpecBlock the fresh context copy
+     */
+    public function withWorld(Subject $world): SpecBlock
+    {
+        $copy = new self($this->context, Closure::bind($this->specBlock, $world, $world));
+        $copy->pending = $this->pending;
+        $copy->focused = $this->focused;
+
+        return $copy;
+    }
 
     /**
      * Marks this context and all its children as pending (skipped).

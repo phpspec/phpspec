@@ -33,7 +33,7 @@ use ReflectionFunction;
  * Represents a single it() example. Executes the test closure, captures
  * match results and errors, and reports timing information.
  */
-class Example implements ExampleResultRegistry, SpecBlock
+class Example implements ExampleResultRegistry, Rebindable
 {
     /** @var array<Closure> collected match closures from expectations */
     private array $matches = [];
@@ -58,6 +58,23 @@ class Example implements ExampleResultRegistry, SpecBlock
      * @param Closure $example executable test body
      */
     public function __construct(private readonly string $title, private readonly Closure $example) {}
+
+    /**
+     * Returns a fresh, unrun copy of this example with its closure bound to the
+     * given world, so a top-level it() gets a fresh world per run without
+     * re-parsing the spec file.
+     *
+     * @param Subject $world the world to bind the copy's closure to
+     * @return SpecBlock the fresh example copy
+     */
+    public function withWorld(Subject $world): SpecBlock
+    {
+        $copy = new self($this->title, Closure::bind($this->example, $world, $world));
+        $copy->pending = $this->pending;
+        $copy->focused = $this->focused;
+
+        return $copy;
+    }
 
     /**
      * Returns the descriptive label of the example.

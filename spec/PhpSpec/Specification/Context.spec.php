@@ -19,7 +19,7 @@ describe(Context::class, function() {
 
     it("runs its closure and returns a ContextResult", function() {
         $ctx = new Context("test context", function() {});
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $result = $ctx->run();
         expect($result)->toBeAnInstanceOf(ContextResult::class);
         expect($result->getTitle())->toBe("test context");
@@ -32,7 +32,7 @@ describe(Context::class, function() {
                 $ran = true;
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $result = $ctx->run();
         expect($ran)->toBe(true);
         expect($result->getResults())->toHaveCount(1);
@@ -42,7 +42,7 @@ describe(Context::class, function() {
         $ctx = new Context("broken", function() {
             throw new \RuntimeException("boom");
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $result = $ctx->run();
         expect($result->isError())->toBe(true);
     });
@@ -60,7 +60,7 @@ describe(Context::class, function() {
                 $log[] = 'ex2';
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $ctx->run();
         expect($log)->toBe(['before', 'ex1', 'before', 'ex2']);
     });
@@ -75,7 +75,7 @@ describe(Context::class, function() {
                 $log[] = 'ex1';
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $ctx->run();
         expect($log)->toBe(['ex1', 'after']);
     });
@@ -88,7 +88,7 @@ describe(Context::class, function() {
             });
         });
         $ctx->setPending(true);
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $result = $ctx->run();
         expect($ran)->toBe(false);
         expect($result->getResults())->toHaveCount(1);
@@ -109,7 +109,7 @@ describe(Context::class, function() {
             });
         });
         $ctx->setPending(true);
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $ctx->run();
         expect($log)->toBe([]);
     });
@@ -121,7 +121,7 @@ describe(Context::class, function() {
                 $ran = true;
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $result = $ctx->run();
         expect($ran)->toBe(false);
         expect($result->getResults())->toHaveCount(1);
@@ -137,7 +137,7 @@ describe(Context::class, function() {
                 });
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $result = $ctx->run();
         expect($ran)->toBe(false);
     });
@@ -152,7 +152,7 @@ describe(Context::class, function() {
                 $log[] = 'focused';
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $result = $ctx->run();
         expect($log)->toBe(['focused']);
         expect($result->getResults())->toHaveCount(2);
@@ -172,7 +172,7 @@ describe(Context::class, function() {
                 $log[] = 'ex2';
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $ctx->run();
         expect($log)->toBe(['beforeAll', 'ex1', 'ex2']);
     });
@@ -190,7 +190,7 @@ describe(Context::class, function() {
                 $log[] = 'ex2';
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $ctx->run();
         expect($log)->toBe(['ex1', 'ex2', 'afterAll']);
     });
@@ -210,7 +210,7 @@ describe(Context::class, function() {
                 });
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $result = $ctx->run();
         expect($log)->toContain('child1');
         expect($log)->toContain('child2');
@@ -231,7 +231,7 @@ describe(Context::class, function() {
                 });
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $ctx->run();
         expect($log)->toContain('parent-before');
         expect($log)->toContain('nested');
@@ -245,7 +245,7 @@ describe(Context::class, function() {
                 expect($this->calculator)->toBeAnInstanceOf(\stdClass::class);
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $result = $ctx->run();
         expect($result->isError())->toBe(false);
     });
@@ -257,7 +257,7 @@ describe(Context::class, function() {
                 $ran = true;
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $ctx->run();
         expect($ran)->toBe(true);
     });
@@ -271,7 +271,7 @@ describe(Context::class, function() {
                 });
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $ctx->run();
         expect($ran)->toBe(false);
     });
@@ -288,7 +288,7 @@ describe(Context::class, function() {
                 });
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $ctx->run();
         expect($log)->toContain('focused');
     });
@@ -313,7 +313,7 @@ describe(Context::class, function() {
                 pending("Not yet implemented");
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $result = $ctx->run();
         expect($result->getResults())->toHaveCount(1);
         expect($result->getResults()[0]->isPending())->toBe(true);
@@ -325,7 +325,7 @@ describe(Context::class, function() {
                 skip("Skipped");
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $result = $ctx->run();
         expect($result->getResults())->toHaveCount(1);
         expect($result->getResults()[0]->isSkipped())->toBe(true);
@@ -340,7 +340,7 @@ describe(Context::class, function() {
                 });
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $result = $ctx->run();
         // The nested context should have 1 child result
         $nestedCtx = $result->getResults()[0];
@@ -361,7 +361,7 @@ describe(Context::class, function() {
                 expect($this->val)->toBeOfType('int');
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $ctx->run();
         // let should be called once during describe loading + once per example re-apply = 3 total
         expect($counter)->toBeGreaterThanOrEqualTo(2);
@@ -374,7 +374,7 @@ describe(Context::class, function() {
                 expect(4)->toBeEven();
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $result = $ctx->run();
         expect($result->isError())->toBe(false);
     });
@@ -386,7 +386,7 @@ describe(Context::class, function() {
                 expect(10)->toBeMultipleOf(5);
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $result = $ctx->run();
         expect($result->isError())->toBe(false);
     });
@@ -402,7 +402,7 @@ describe(Context::class, function() {
                 expect(true)->toBeTrue();
             });
         });
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $ctx->run();
         expect($resolved)->toBeAnInstanceOf(\JsonSerializable::class);
     });
@@ -421,7 +421,7 @@ describe(Context::class, function() {
             });
         });
         $ctx->setPending(true);
-        $ctx->setWorld(new Subject(__FILE__));
+        $ctx->setWorld(new Subject());
         $ctx->run();
         expect($log)->toBe([]);
     });
@@ -451,7 +451,7 @@ describe(Context::class, function() {
                     $log[] = 'example';
                 });
             });
-            $ctx->setWorld(new Subject(__FILE__));
+            $ctx->setWorld(new Subject());
             $ctx->run();
         } finally {
             CoverageRegistry::reset();
@@ -476,7 +476,7 @@ describe(Context::class, function() {
                     $ran[] = 'other';
                 });
             });
-            $ctx->setWorld(new Subject(__FILE__));
+            $ctx->setWorld(new Subject());
             $result = $ctx->run();
         } finally {
             FilterRegistry::reset();
@@ -500,7 +500,7 @@ describe(Context::class, function() {
 
         try {
             $ctx = new Context("LineTargeted", $block);
-            $ctx->setWorld(new Subject(__FILE__));
+            $ctx->setWorld(new Subject());
             $result = $ctx->run();
         } finally {
             LineTargetRegistry::reset();
@@ -522,7 +522,7 @@ describe(Context::class, function() {
 
         try {
             $ctx = new Context("WholeContext", $block);
-            $ctx->setWorld(new Subject(__FILE__));
+            $ctx->setWorld(new Subject());
             $ctx->run();
         } finally {
             LineTargetRegistry::reset();
