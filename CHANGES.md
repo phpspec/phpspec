@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [9.0.0-beta.6](https://github.com/phpspec/phpspec/compare/9.0.0-beta.5...9.0.0-beta.6)
+
+### Fixed
+ - Pair mode picks up code generated earlier in the session by running each `run` in a fresh subprocess
+ - Generated `And`/`But` step definitions use the keyword of the step they follow (`when()`/`then()`), not always `given()`
+
 ## [9.0.0-beta.5](https://github.com/phpspec/phpspec/compare/9.0.0-beta.4...9.0.0-beta.5)
 
 ### Added
