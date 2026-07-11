@@ -27,10 +27,22 @@ final class Subject implements World
     /**
      * Loads the spec file, making describe()/context()/it() calls register their blocks.
      *
+     * A plain `require` is used, not `require_once`: describe()/context()/it()
+     * attach their blocks to whichever scope is currently pushed on the
+     * dispatcher (see Specification::run()), so the file must re-execute on
+     * every run — long-lived processes like `phpspec pair` run the same spec
+     * file's path more than once per session, and `require_once` would only
+     * ever fire the registration on the first run, silently dropping every
+     * later one. A spec file that also declares a class/function/interface at
+     * the top level (unusual for a spec file, but not disallowed) will fatal
+     * with a "Cannot redeclare" error on a second run in the same process —
+     * PHP does not allow catching that error, so it can't be worked around
+     * here; avoid top-level declarations in spec files.
+     *
      * @param string $path filesystem path to the .spec.php file
      */
     public function __construct(string $path)
     {
-        require_once($path);
+        require($path);
     }
 }

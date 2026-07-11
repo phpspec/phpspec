@@ -123,3 +123,32 @@ Feature: AI-assisted pair programming
     And the output should contain "2. Yes, and don't ask again"
     And the output should contain "3. No"
     And the class "src/App/Calculator.php" should contain "function add"
+
+  Scenario: Running specs twice in the same pair session shows results both times
+    Given a class "src/App/Calculator.php":
+      """
+      <?php
+      namespace App;
+
+      class Calculator
+      {
+          public function add(int $a, int $b): int
+          {
+              return $a + $b;
+          }
+      }
+      """
+    And a spec file "spec/App/Calculator.spec.php":
+      """
+      <?php
+      use App\Calculator;
+
+      describe(Calculator::class, function () {
+          it('adds numbers', function () {
+              $calc = new Calculator();
+              expect($calc->add(2, 3))->toBe(5);
+          });
+      });
+      """
+    When I run phpspec pair with input "run; run"
+    Then the output should contain "1 example (1 passes)" exactly 2 times

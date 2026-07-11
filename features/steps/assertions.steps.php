@@ -63,6 +63,15 @@ then('the output should not contain {string}', function (string $text) {
     }
 });
 
+then('the output should contain {string} exactly {int} times', function (string $text, int $times) {
+    $found = substr_count($this->output, $text);
+    if ($found !== $times) {
+        throw new \RuntimeException(
+            "Expected output to contain \"{$text}\" exactly {$times} time(s), found {$found}.\nOutput:\n{$this->output}"
+        );
+    }
+});
+
 // -- File existence (sets $this->lastFile for chained assertions) ------
 
 then('a spec file {string} should be generated', function (string $path) {
