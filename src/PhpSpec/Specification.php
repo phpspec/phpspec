@@ -20,7 +20,9 @@ use PhpSpec\EventDispatcher\Event\SpecificationFinished;
 use PhpSpec\EventDispatcher\Event\SpecificationStarted;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Specification\ExampleRegistry;
+use PhpSpec\Specification\Rebindable;
 use PhpSpec\Specification\SpecBlock;
+use PhpSpec\Specification\SpecFileCache;
 use PhpSpec\Specification\Subject;
 
 /**
@@ -54,11 +56,7 @@ class Specification implements ExampleRegistry, SpecBlock
         FilterRegistry::current()?->beginSpec($this->path);
         LineTargetRegistry::beginSpec($this->path);
 
-        // loads the specification file from the Subject constructor
-        // so $this in the examples refers to Subject
-        DispatcherRegistry::dispatcher()->pushScope($this);
         $subject = $this->loadSubject();
-        DispatcherRegistry::dispatcher()->popScope();
 
         $blockResults = [];
 
@@ -146,10 +144,21 @@ class Specification implements ExampleRegistry, SpecBlock
     }
 
     /**
-     * Creates a Subject that loads the spec file, making $this available inside closures.
+     * Builds a fresh world for this run and registers the spec file's top-level
+     * blocks against it, rebound to that world. The file is parsed (require'd)
+     * at most once per process by SpecFileCache; every run works from fresh
+     * copies of the cached templates so repeated runs never re-execute the file.
+     *
+     * @return Subject the world shared by this run's examples
      */
     private function loadSubject(): Subject
     {
-        return new Subject($this->path);
+        $world = new Subject();
+
+        foreach (SpecFileCache::templates($this->path) as $template) {
+            $this->addSpecBlock($template instanceof Rebindable ? $template->withWorld($world) : $template);
+        }
+
+        return $world;
     }
 }

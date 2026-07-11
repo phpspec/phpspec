@@ -4,35 +4,30 @@ use PhpSpec\Specification\Subject;
 
 describe(Subject::class, function () {
 
-    it('re-executes the spec file on every construction, not just the first', function () {
-        $counterFile = sys_get_temp_dir() . '/phpspec_subject_counter_' . uniqid() . '.txt';
-        $file = sys_get_temp_dir() . '/phpspec_subject_test_' . uniqid() . '.php';
-        file_put_contents($counterFile, '0');
-        file_put_contents($file, sprintf(
-            '<?php file_put_contents(%s, (int) file_get_contents(%s) + 1);',
-            var_export($counterFile, true),
-            var_export($counterFile, true),
-        ));
+    it('is a bare world when constructed without a file', function () {
+        $subject = new Subject();
+        $subject->foo = 'bar';
 
-        try {
-            new Subject($file);
-            new Subject($file);
-
-            expect((int) file_get_contents($counterFile))->toBe(2);
-        } finally {
-            unlink($file);
-            unlink($counterFile);
-        }
+        expect($subject->foo)->toBe('bar');
     });
 
-    it('propagates errors thrown while loading the spec file', function () {
-        $file = sys_get_temp_dir() . '/phpspec_subject_error_test_' . uniqid() . '.php';
-        file_put_contents($file, "<?php\nthrow new \\RuntimeException('boom');\n");
-        // `->toThrow()` evaluates the closure after this callback returns, so
-        // cleanup can't sit in a try/finally around it without deleting the
-        // file before the deferred assertion runs it.
+    it('runs a spec file with $this bound to itself, so top-level closures capture it as their world', function () {
+        $file = sys_get_temp_dir() . '/phpspec_subject_bind_' . uniqid() . '.php';
+        file_put_contents($file, "<?php\n\$GLOBALS['phpspec_subject_probe'] = function () { return \$this; };\n");
         register_shutdown_function(fn() => @unlink($file));
 
-        expect(fn() => new Subject($file))->toThrow(\RuntimeException::class);
+        $subject = new Subject();
+        $subject->load($file);
+
+        $captured = (new ReflectionFunction($GLOBALS['phpspec_subject_probe']))->getClosureThis();
+        expect($captured)->toBe($subject);
+    });
+
+    it('propagates errors thrown while loading a spec file', function () {
+        $file = sys_get_temp_dir() . '/phpspec_subject_error_' . uniqid() . '.php';
+        file_put_contents($file, "<?php\nthrow new \\RuntimeException('boom');\n");
+        register_shutdown_function(fn() => @unlink($file));
+
+        expect(fn() => (new Subject())->load($file))->toThrow(\RuntimeException::class);
     });
 });

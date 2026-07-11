@@ -152,3 +152,22 @@ Feature: AI-assisted pair programming
       """
     When I run phpspec pair with input "run; run"
     Then the output should contain "1 example (1 passes)" exactly 2 times
+
+  Scenario: Running a spec that declares a top-level type twice does not crash
+    Given a spec file "spec/App/Widget.spec.php":
+      """
+      <?php
+      interface WidgetCollaborator
+      {
+          public function help(): string;
+      }
+
+      describe('Widget', function () {
+          it('uses a collaborator', function (WidgetCollaborator $collaborator) {
+              expect($collaborator)->toBeAnInstanceOf(WidgetCollaborator::class);
+          });
+      });
+      """
+    When I run phpspec pair with input "run; run"
+    Then the output should contain "1 example (1 passes)" exactly 2 times
+    And the output should not contain "Cannot declare interface"
