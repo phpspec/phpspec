@@ -301,7 +301,7 @@ final class CommandDispatcher
 
             $srcPath = ltrim($this->config->getSrcPath(), './');
             $specPath = ltrim($this->config->getSpecPath(), './');
-            $codeGenerator = new CodeGenerator($srcPath, $specPath, psr4Prefix: $this->config->getPsr4Prefix());
+            $codeGenerator = new CodeGenerator($srcPath, $specPath, psr4Prefix: $this->config->getPsr4Prefix(), chooser: $this->chooser);
             $codeGenerator->generate($this->output->getOutput(), $results, false);
         } finally {
             DispatcherRegistry::set($state);

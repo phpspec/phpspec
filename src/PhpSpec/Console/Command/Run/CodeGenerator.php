@@ -19,6 +19,7 @@ use PhpSpec\CodeGeneration\InterfaceGenerator;
 use PhpSpec\CodeGeneration\MethodStubGenerator;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\CodeGeneration\StepGenerator;
+use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\ScrollRegionOutput;
 use PhpSpec\Results;
 use RuntimeException;
@@ -41,6 +42,8 @@ final readonly class CodeGenerator
      * @param bool $interactive whether to prompt for user input (false = auto-accept all)
      * @param string $specSuffix file suffix for spec files
      * @param string $psr4Prefix PSR-4 namespace prefix mapped to $srcPath
+     * @param Chooser|null $chooser when given, questions are presented through this
+     *                              numbered chooser (pair mode) instead of a plain [Y/n] prompt
      */
     public function __construct(
         private string $srcPath,
@@ -48,6 +51,7 @@ final readonly class CodeGenerator
         private bool $interactive = true,
         private string $specSuffix = '.spec.php',
         private string $psr4Prefix = '',
+        private ?Chooser $chooser = null,
     ) {
         $this->analyser = new SourceAnalyser();
         $this->scanner = new ResultScanner($this->analyser);
@@ -88,23 +92,14 @@ final readonly class CodeGenerator
 
         foreach ($undefinedSteps as $featurePath => $steps) {
             $count = count($steps);
-            $output->writeln('');
-            $output->writeln(sprintf(
-                '  <fg=bright-blue>%d undefined step%s in %s. Generate step definitions?</> [Y/n] ',
+            $question = sprintf(
+                '  <fg=bright-blue>%d undefined step%s in %s. Generate step definitions?</>',
                 $count,
                 $count !== 1 ? 's' : '',
                 basename($featurePath),
-            ));
+            );
 
-            if ($output instanceof ScrollRegionOutput) {
-                $output->prepareForInput();
-            }
-            $answer = $this->ask('  > ');
-            if ($output instanceof ScrollRegionOutput) {
-                $output->returnToContent();
-                $output->echoInput($answer ?: 'Y');
-            }
-            if ($answer === '' || strtolower($answer) === 'y') {
+            if ($this->confirm($output, $question, 'generate-steps', 'generate step definitions')) {
                 $generator = new StepGenerator();
                 $stepsFile = $generator->generate($featurePath, $steps);
                 $output->writeln("  <fg=green>Step definitions generated at $stepsFile</>");
@@ -135,9 +130,9 @@ final readonly class CodeGenerator
             }
 
             $this->confirmAndGenerate($output, sprintf(
-                '  <fg=yellow>Class <fg=white>%s</> not found. Do you want me to create it for you?</> [Y/n] ',
+                '  <fg=yellow>Class <fg=white>%s</> not found. Do you want me to create it for you?</>',
                 $fqcn,
-            ), fn() => $classGenerator->generate($fqcn), $filePath);
+            ), 'create-class', 'create classes', fn() => $classGenerator->generate($fqcn), $filePath);
         }
     }
 
@@ -160,30 +155,21 @@ final readonly class CodeGenerator
         foreach ($missingStepClasses as $fqcn) {
             $specName = str_replace('\\', '/', $fqcn);
 
-            $output->writeln('');
-            $output->writeln(sprintf(
-                '  <fg=yellow>Class <fg=white>%s</> not found in step. Do you want me to create a spec for it?</> [Y/n] ',
+            $question = sprintf(
+                '  <fg=yellow>Class <fg=white>%s</> not found in step. Do you want me to create a spec for it?</>',
                 $fqcn,
-            ));
+            );
 
-            if ($output instanceof ScrollRegionOutput) {
-                $output->prepareForInput();
-            }
-            $answer = $this->ask('  > ');
-            if ($output instanceof ScrollRegionOutput) {
-                $output->returnToContent();
-                $output->echoInput($answer ?: 'Y');
-            }
-            if ($answer === '' || strtolower($answer) === 'y') {
+            if ($this->confirm($output, $question, 'create-spec', 'create specs')) {
                 $specGenerator->generate($specName);
                 $output->writeln(sprintf('  <fg=green>Spec for %s created.</>', $fqcn));
 
                 $filePath = ClassGenerator::resolveFqcn($fqcn, $this->srcPath, $this->psr4Prefix)['filePath'];
 
                 $this->confirmAndGenerate($output, sprintf(
-                    '  <fg=yellow>Do you want me to create class <fg=white>%s</> for you?</> [Y/n] ',
+                    '  <fg=yellow>Do you want me to create class <fg=white>%s</> for you?</>',
                     $fqcn,
-                ), fn() => $classGenerator->generate($fqcn), $filePath);
+                ), 'create-class', 'create classes', fn() => $classGenerator->generate($fqcn), $filePath);
             }
         }
     }
@@ -213,9 +199,9 @@ final readonly class CodeGenerator
             $filePath = ClassGenerator::resolveFqcn($fqcn, $this->srcPath, $this->psr4Prefix)['filePath'];
 
             $this->confirmAndGenerate($output, sprintf(
-                '  <fg=yellow>Do you want me to create interface <fg=white>%s</> for you?</> [Y/n] ',
+                '  <fg=yellow>Do you want me to create interface <fg=white>%s</> for you?</>',
                 $fqcn,
-            ), fn() => $interfaceGenerator->generate($fqcn), $filePath);
+            ), 'create-interface', 'create interfaces', fn() => $interfaceGenerator->generate($fqcn), $filePath);
         }
     }
 
@@ -242,10 +228,10 @@ final readonly class CodeGenerator
             $filePath = ClassGenerator::resolveFqcn($error['className'], $this->srcPath, $this->psr4Prefix)['filePath'];
 
             $this->confirmAndGenerate($output, sprintf(
-                '  <fg=yellow>Do you want me to add method <fg=white>%s()</> to interface <fg=white>%s</>?</> [Y/n] ',
+                '  <fg=yellow>Do you want me to add method <fg=white>%s()</> to interface <fg=white>%s</>?</>',
                 $error['methodName'],
                 $error['className'],
-            ), fn() => $methodGenerator->generate($error['className'], $error['methodName'], $argCount), $filePath);
+            ), 'add-interface-method', 'add interface methods', fn() => $methodGenerator->generate($error['className'], $error['methodName'], $argCount), $filePath);
         }
     }
 
@@ -280,16 +266,16 @@ final readonly class CodeGenerator
 
             if ($fake && $returnExpr !== null) {
                 $this->confirmAndGenerate($output, sprintf(
-                    '  <fg=yellow>Are you sure you want <fg=white>%s()</> to always return <fg=white>%s</>?</> [Y/n] ',
+                    '  <fg=yellow>Are you sure you want <fg=white>%s()</> to always return <fg=white>%s</>?</>',
                     $error['methodName'],
                     $returnExpr,
-                ), fn() => $generator->generate($error['className'], $error['methodName'], $argCount, $returnExpr), $filePath);
+                ), 'confirm-fake-return', 'set fake return values', fn() => $generator->generate($error['className'], $error['methodName'], $argCount, $returnExpr), $filePath);
             } else {
                 $this->confirmAndGenerate($output, sprintf(
-                    '  <fg=yellow>Do you want me to create <fg=white>%s::%s()</> for you?</> [Y/n] ',
+                    '  <fg=yellow>Do you want me to create <fg=white>%s::%s()</> for you?</>',
                     $error['className'],
                     $error['methodName'],
-                ), fn() => $generator->generate($error['className'], $error['methodName'], $argCount), $filePath);
+                ), 'create-method', 'create methods', fn() => $generator->generate($error['className'], $error['methodName'], $argCount), $filePath);
             }
         }
     }
@@ -321,10 +307,10 @@ final readonly class CodeGenerator
             $filePath = ClassGenerator::resolveFqcn($candidate['className'], $this->srcPath, $this->psr4Prefix)['filePath'];
 
             $this->confirmAndGenerate($output, sprintf(
-                '  <fg=yellow>Are you sure you want <fg=white>%s()</> to always return <fg=white>%s</>?</> [Y/n] ',
+                '  <fg=yellow>Are you sure you want <fg=white>%s()</> to always return <fg=white>%s</>?</>',
                 $candidate['methodName'],
                 $candidate['fakeExpression'],
-            ), fn() => $generator->fillEmptyMethod(
+            ), 'confirm-fake-return', 'set fake return values', fn() => $generator->fillEmptyMethod(
                 $candidate['className'],
                 $candidate['methodName'],
                 $candidate['fakeExpression'],
@@ -351,18 +337,57 @@ final readonly class CodeGenerator
     }
 
     /**
-     * Prompts the user with a [Y/n] question and runs the action if confirmed.
+     * Asks a question and runs the action if confirmed.
      * When a file path is provided, shows a diff of changes after generation.
      *
      * @param Output $output the console output for displaying the question and result
-     * @param string $question the formatted prompt to display
-     * @param callable $action the generation action to run; should return a success message string
+     * @param string $question the question to display, without a "[Y/n]" suffix
+     * @param string $kind stable identifier grouping this question for chooser "always" memory
+     * @param string $action verb phrase completing "always ..." in the chooser
+     * @param callable $generate the generation action to run; should return a success message string
      * @param string|null $filePath path to the file being modified, for diff display
      */
-    private function confirmAndGenerate(Output $output, string $question, callable $action, ?string $filePath = null): void
+    private function confirmAndGenerate(Output $output, string $question, string $kind, string $action, callable $generate, ?string $filePath = null): void
     {
+        if (!$this->confirm($output, $question, $kind, $action)) {
+            return;
+        }
+
+        try {
+            $oldContent = ($filePath !== null && file_exists($filePath))
+                ? file_get_contents($filePath)
+                : false;
+            $oldLines = $oldContent !== false ? explode("\n", $oldContent) : null;
+
+            $message = $generate();
+            $output->writeln("  <fg=green>$message</>");
+
+            if ($filePath !== null && file_exists($filePath)) {
+                $this->showFileDiff($output, $filePath, $oldLines);
+            }
+        } catch (RuntimeException $e) {
+            $output->writeln("  <fg=red>{$e->getMessage()}</>");
+        }
+    }
+
+    /**
+     * Asks a yes/no question, through the pair-mode chooser when one is
+     * available, falling back to a plain [Y/n] prompt otherwise.
+     *
+     * @param Output $output the console output for displaying the question
+     * @param string $question the question to display, without a "[Y/n]" suffix
+     * @param string $kind stable identifier grouping this question for chooser "always" memory
+     * @param string $action verb phrase completing "always ..." in the chooser
+     * @return bool true when the user accepted
+     */
+    private function confirm(Output $output, string $question, string $kind, string $action): bool
+    {
+        if ($this->chooser !== null) {
+            return $this->chooser->choose($question, $kind, $action);
+        }
+
         $output->writeln('');
-        $output->writeln($question);
+        $output->writeln("$question [Y/n] ");
         if ($output instanceof ScrollRegionOutput) {
             $output->prepareForInput();
         }
@@ -371,23 +396,8 @@ final readonly class CodeGenerator
             $output->returnToContent();
             $output->echoInput($answer ?: 'Y');
         }
-        if ($answer === '' || strtolower($answer) === 'y') {
-            try {
-                $oldContent = ($filePath !== null && file_exists($filePath))
-                    ? file_get_contents($filePath)
-                    : false;
-                $oldLines = $oldContent !== false ? explode("\n", $oldContent) : null;
 
-                $message = $action();
-                $output->writeln("  <fg=green>$message</>");
-
-                if ($filePath !== null && file_exists($filePath)) {
-                    $this->showFileDiff($output, $filePath, $oldLines);
-                }
-            } catch (RuntimeException $e) {
-                $output->writeln("  <fg=red>{$e->getMessage()}</>");
-            }
-        }
+        return $answer === '' || strtolower($answer) === 'y';
     }
 
     /**
