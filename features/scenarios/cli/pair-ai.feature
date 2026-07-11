@@ -97,3 +97,29 @@ Feature: AI-assisted pair programming
     When I run phpspec pair with input "describe App/Basket" answering "1,3"
     Then the file "src/App/Basket.php" should contain "namespace App;"
     And the file "src/App/Basket.php" should contain "class Basket"
+
+  Scenario: Running specs in pair mode offers method generation as a numbered chooser
+    Given a class "src/App/Calculator.php":
+      """
+      <?php
+      namespace App;
+
+      class Calculator {}
+      """
+    And a spec file "spec/App/Calculator.spec.php":
+      """
+      <?php
+      use App\Calculator;
+
+      describe(Calculator::class, function () {
+          it('adds numbers', function () {
+              $calc = new Calculator();
+              expect($calc->add(2, 3))->toBe(5);
+          });
+      });
+      """
+    When I run phpspec pair with input "run" answering "1"
+    Then the output should contain "1. Yes"
+    And the output should contain "2. Yes, and don't ask again"
+    And the output should contain "3. No"
+    And the class "src/App/Calculator.php" should contain "function add"
