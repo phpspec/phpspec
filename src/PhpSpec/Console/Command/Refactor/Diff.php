@@ -70,7 +70,90 @@ final class Diff
             }
         }
 
-        return $result;
+        return self::renumber(self::slideChangesDown($result));
+    }
+
+    /**
+     * Slides runs of inserted or deleted lines downward so an appended block
+     * is anchored on the genuinely new lines rather than on identical lines
+     * that happen to precede it. Mirrors git's diff hunk-shifting: when the
+     * context line immediately after a change run equals the run's first line,
+     * the run can move down one line without changing which file it rebuilds.
+     * Without this, LCS parks an ambiguous insertion at its earliest position
+     * — e.g. crediting a preceding method's braces with the added lines.
+     *
+     * @param array<array{type: string, line: int, text: string}> $diff
+     * @return array<array{type: string, line: int, text: string}>
+     */
+    private static function slideChangesDown(array $diff): array
+    {
+        $count = count($diff);
+
+        do {
+            $moved = false;
+            $i = 0;
+            while ($i < $count) {
+                $type = $diff[$i]['type'];
+                if ($type !== '+' && $type !== '-') {
+                    $i++;
+                    continue;
+                }
+
+                // Extent of the maximal run of this single change type.
+                $start = $i;
+                $end = $i;
+                while ($end + 1 < $count && $diff[$end + 1]['type'] === $type) {
+                    $end++;
+                }
+
+                // While the following context line equals the run's first
+                // line, rotate the run down one: the first change becomes
+                // context and that context line becomes the new trailing change.
+                while ($end + 1 < $count
+                    && $diff[$end + 1]['type'] === ' '
+                    && $diff[$start]['text'] === $diff[$end + 1]['text']
+                ) {
+                    $diff[$start] = ['type' => ' ', 'line' => $diff[$start]['line'], 'text' => $diff[$start]['text']];
+                    $diff[$end + 1] = ['type' => $type, 'line' => $diff[$end + 1]['line'], 'text' => $diff[$end + 1]['text']];
+                    $start++;
+                    $end++;
+                    $moved = true;
+                }
+
+                $i = $end + 1;
+            }
+        } while ($moved);
+
+        return $diff;
+    }
+
+    /**
+     * Recomputes display line numbers after entries have been reordered:
+     * additions and context lines use the new-file line number, deletions
+     * the old-file line number.
+     *
+     * @param array<array{type: string, line: int, text: string}> $diff
+     * @return array<array{type: string, line: int, text: string}>
+     */
+    private static function renumber(array $diff): array
+    {
+        $oldLine = 0;
+        $newLine = 0;
+        foreach ($diff as $k => $entry) {
+            if ($entry['type'] === '-') {
+                $oldLine++;
+                $diff[$k]['line'] = $oldLine;
+            } elseif ($entry['type'] === '+') {
+                $newLine++;
+                $diff[$k]['line'] = $newLine;
+            } else {
+                $oldLine++;
+                $newLine++;
+                $diff[$k]['line'] = $newLine;
+            }
+        }
+
+        return $diff;
     }
 
     /**

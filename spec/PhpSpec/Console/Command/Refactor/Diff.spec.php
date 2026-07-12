@@ -58,6 +58,63 @@ describe(Diff::class, function () {
 
             expect($result)->toHaveCount(0);
         });
+
+        it('anchors an appended block on the new lines, not identical preceding ones', function () {
+            $old = [
+                'class Wallet',
+                '{',
+                '    public function getPlayer()',
+                '    {',
+                '    }',
+                '}',
+            ];
+            $new = [
+                'class Wallet',
+                '{',
+                '    public function getPlayer()',
+                '    {',
+                '    }',
+                '',
+                '    public function getId()',
+                '    {',
+                '    }',
+                '}',
+            ];
+
+            $result = Diff::compute($old, $new);
+
+            $added = array_values(array_map(
+                fn($e) => $e['text'],
+                array_filter($result, fn($e) => $e['type'] === '+'),
+            ));
+            $addedLines = array_values(array_map(
+                fn($e) => $e['line'],
+                array_filter($result, fn($e) => $e['type'] === '+'),
+            ));
+
+            expect($added)->toBe([
+                '',
+                '    public function getId()',
+                '    {',
+                '    }',
+            ]);
+            expect($addedLines)->toBe([6, 7, 8, 9]);
+        });
+
+        it('reconstructs the new file from context and added lines after sliding', function () {
+            $old = ['a', 'x', 'y', 'a'];
+            $new = ['a', 'x', 'y', 'a', 'x', 'y', 'a'];
+
+            $result = Diff::compute($old, $new);
+
+            $rebuilt = array_map(
+                fn($e) => $e['text'],
+                array_filter($result, fn($e) => $e['type'] !== '-'),
+            );
+            expect(array_values($rebuilt))->toBe($new);
+            // no spurious deletions when purely appending
+            expect(array_column($result, 'type'))->not()->toContain('-');
+        });
     });
 
     context('format', function () {
