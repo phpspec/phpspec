@@ -142,7 +142,11 @@ final class Next extends Command
 
         $response = $provider->chat($messages, [
             'model' => $model,
-            'maxTokens' => 512,
+            // Reasoning models (e.g. Gemini 2.5) spend part of the budget on
+            // internal thinking tokens; too small a cap leaves no room for the
+            // actual answer and the response comes back empty. Match the other
+            // AI call sites (AiAssistant, RefactorAgent) which use 8192.
+            'maxTokens' => 8192,
             'temperature' => 0.3,
         ]);
 
