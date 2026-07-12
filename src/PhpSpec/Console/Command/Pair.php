@@ -20,6 +20,7 @@ use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair\CommandDispatcher;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use PhpSpec\Console\Command\Pair\Repl;
+use PhpSpec\Console\Command\Pair\RoleState;
 use PhpSpec\Extensions\ExtensionLoader;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface as Input;
@@ -69,7 +70,17 @@ final class Pair extends Command
             require $bootstrap;
         }
 
+        $roleState = new RoleState();
         $pairOutput = new PairOutput($output);
+
+        $aiConfig = $this->config->getAiConfig();
+        $pairOutput->configureStatus(
+            $this->abbreviateHome(getcwd() ?: '.'),
+            $aiConfig !== null,
+            is_array($aiConfig) ? $aiConfig['provider'] : null,
+            $roleState,
+        );
+
         $dispatcher = new CommandDispatcher(
             $this->specGenerator,
             $this->classGenerator,
@@ -78,6 +89,7 @@ final class Pair extends Command
             $prompt === null, // non-interactive when using --prompt
             application: $this->getApplication(),
             extensionLoader: $this->extensionLoader,
+            roleState: $roleState,
         );
 
         if ($prompt !== null) {
@@ -88,5 +100,15 @@ final class Pair extends Command
         $repl = new Repl($dispatcher, $pairOutput, $this->config->getAiConfig() !== null);
 
         return $repl->run();
+    }
+
+    /**
+     * Replaces the home directory prefix with ~ for a shorter status display.
+     */
+    private function abbreviateHome(string $path): string
+    {
+        $home = getenv('HOME') ?: '';
+
+        return $home !== '' && str_starts_with($path, $home) ? '~' . substr($path, strlen($home)) : $path;
     }
 }

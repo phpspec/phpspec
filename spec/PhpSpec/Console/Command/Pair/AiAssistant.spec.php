@@ -109,6 +109,8 @@ describe(AiAssistant::class, function () {
 
         expect($fs->write())->not()->toHaveBeenCalled();
         expect((string) json_encode($captured))->toContain('navigating');
+        // A refused write is not displayed as if it ran.
+        expect($this->buffer->fetch())->not()->toContain('Generate spec');
     });
 
     it('blocks write tools when the chooser declines', function (Filesystem $fs) {
@@ -131,6 +133,38 @@ describe(AiAssistant::class, function () {
 
         expect($fs->write())->not()->toHaveBeenCalled();
         expect((string) json_encode($captured))->toContain('User declined');
+    });
+
+    it('ends the driver turn after one artifact instead of chasing a bigger goal', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\ndescribe(A::class, function () {});\n");
+
+        $calls = 0;
+        $this->provider->responder = function () use (&$calls) {
+            $calls++;
+            if ($calls === 1) {
+                return new Response('', [new ToolCall('t1', 'generate_spec', [
+                    'class_name' => 'App/A',
+                    'spec_content' => '<?php // a',
+                ])]);
+            }
+
+            // The model keeps reaching for more writes to "finish the goal".
+            return new Response('', [new ToolCall('t' . $calls, 'write_file', [
+                'path' => 'src/App/A.php',
+                'content' => '<?php // more',
+            ])]);
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives);
+        $this->answers = ['1'];
+        $assistant->handle('get to green');
+
+        // Exactly one artifact landed, and the turn handed back promptly rather
+        // than thrashing to the tool-turn ceiling.
+        expect($fs->write())->toBeCalled()->once();
+        expect($calls)->toBeLessThan(4);
+        expect($this->buffer->fetch())->toContain('one change');
     });
 
     it('writes only one artifact per turn while driving, rejecting the rest', function (Filesystem $fs) {

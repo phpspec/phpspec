@@ -1,6 +1,8 @@
 <?php
 
+use PhpSpec\Console\Command\Pair\RoleState;
 use PhpSpec\Console\Command\Pair\ScrollRegionOutput;
+use PhpSpec\Console\Command\Pair\StatusBar;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(ScrollRegionOutput::class, function () {
@@ -124,5 +126,24 @@ describe(ScrollRegionOutput::class, function () {
         $this->output->prepareForInput();
         $raw = $this->inner->fetch();
         expect($raw)->toContain("\u{2500}");
+    });
+
+    it('draws the full bottom chrome when a status bar is configured', function () {
+        $bar = new StatusBar('~/proj', true, 'google', new RoleState());
+        // inner, scrollBottom=19, input=21, topDivider=20, width=40,
+        // bottomDivider=22, statusRow=23, roleRow=24
+        $output = new ScrollRegionOutput($this->inner, 19, 21, 20, 40, 22, 23, 24, $bar);
+
+        $output->prepareForInput();
+        $raw = $this->inner->fetch();
+
+        expect($raw)->toContain("\033[20;1H"); // top divider
+        expect($raw)->toContain("\033[22;1H"); // bottom divider
+        expect($raw)->toContain("\033[23;1H"); // status row
+        expect($raw)->toContain("\033[24;1H"); // role row
+        expect($raw)->toContain("\033[21;1H"); // input row
+        expect($raw)->toContain('ai: on');
+        expect($raw)->toContain('provider: google');
+        expect($raw)->toContain('navigator');
     });
 });

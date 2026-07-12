@@ -18,6 +18,7 @@ use PhpSpec\Ai\AiTools;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Contracts\ToolInterface;
 use PhpSpec\Ai\Message;
+use PhpSpec\Ai\Response;
 use PhpSpec\Ai\SpecRunner;
 use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
@@ -49,6 +50,12 @@ final class AiAssistant
 
     private const MAX_TURNS = 50;
 
+    /**
+     * How many tool rounds a driving AI gets after its one artifact — enough to
+     * run the spec and report — before the turn hands back to the human.
+     */
+    private const DRIVER_WRAPUP_ROUNDS = 4;
+
     private const WRITE_TOOLS = ['generate_spec', 'add_example', 'generate_feature', 'generate_steps', 'write_file', 'update_file'];
 
     private readonly Chooser $chooser;
@@ -66,6 +73,9 @@ final class AiAssistant
 
     /** Whether the AI has written its one artifact this turn (while driving). */
     private bool $artifactWrittenThisHandle = false;
+
+    /** Tool rounds taken since the driving AI wrote its artifact this turn. */
+    private int $postArtifactRounds = 0;
 
     /**
      * @param ProviderInterface $provider the AI provider for LLM interactions
@@ -109,6 +119,7 @@ final class AiAssistant
             PairLogger::log('INPUT', $input);
             $this->ensureInitialised();
             $this->artifactWrittenThisHandle = false;
+            $this->postArtifactRounds = 0;
             $this->messages[] = Message::user($input);
 
             $text = $this->runLoop();
@@ -151,13 +162,61 @@ final class AiAssistant
                 return trim($response->text);
             }
 
+            $hadArtifact = $this->artifactWrittenThisHandle;
+
             foreach ($response->toolCalls as $toolCall) {
                 $result = $this->executeTool($toolCall);
                 $this->messages[] = Message::toolResult($toolCall->id, $result);
             }
+
+            if ($this->driverTurnComplete($hadArtifact, $response)) {
+                return $this->driverHandBack();
+            }
         }
 
         return 'Reached maximum tool turns. Please try a simpler request.';
+    }
+
+    /**
+     * Whether a driving AI's turn should hand back now. A driver takes one
+     * artifact, then runs and reports — so once the artifact is written the turn
+     * ends as soon as it reaches for another write (it is overreaching the goal),
+     * or once it has used up its brief wrap-up window. Never applies while the AI
+     * is navigating (the human's turn runs freely).
+     */
+    private function driverTurnComplete(bool $hadArtifactBeforeThisResponse, Response $response): bool
+    {
+        if (!$this->roleState->current()->aiIsDriver() || !$this->artifactWrittenThisHandle) {
+            return false;
+        }
+
+        if ($hadArtifactBeforeThisResponse && $this->attemptsWrite($response)) {
+            return true;
+        }
+
+        return ++$this->postArtifactRounds >= self::DRIVER_WRAPUP_ROUNDS;
+    }
+
+    /**
+     * Whether any of a response's tool calls is a write.
+     */
+    private function attemptsWrite(Response $response): bool
+    {
+        foreach ($response->toolCalls as $toolCall) {
+            if (in_array($toolCall->name, self::WRITE_TOOLS, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The line shown when a driving AI's turn ends after its one artifact.
+     */
+    private function driverHandBack(): string
+    {
+        return 'That\'s my one change for this turn. Run it, tell me the next step, or /swap to take the keyboard back.';
     }
 
     /**
@@ -205,17 +264,26 @@ final class AiAssistant
             return ['error' => "Unknown tool: $toolCall->name"];
         }
 
+        $isWrite = in_array($toolCall->name, self::WRITE_TOOLS, true);
+
+        // Auto-refuse a write the role or one-artifact rule forbids — before it
+        // is shown, so a refused write never appears on screen as if it ran.
+        if ($isWrite) {
+            $refusal = $this->autoRefuseWrite();
+
+            if ($refusal !== null) {
+                return $refusal;
+            }
+        }
+
         $this->output->getOutput()->writeln($this->formatToolDisplay($toolCall));
         PairLogger::log('TOOL', "$toolCall->name(" . json_encode($toolCall->arguments) . ')');
 
-        $isWrite = in_array($toolCall->name, self::WRITE_TOOLS, true);
+        // Writes the role allows still need the user's go-ahead.
+        if ($isWrite && !$this->chooser->choose('Allow this action?', 'write-files', 'apply file changes')) {
+            PairLogger::log('RESULT', 'User declined');
 
-        if ($isWrite) {
-            $denial = $this->denyWrite();
-
-            if ($denial !== null) {
-                return $denial;
-            }
+            return ['error' => 'User declined this action.'];
         }
 
         try {
@@ -236,14 +304,14 @@ final class AiAssistant
     }
 
     /**
-     * Decides whether a write tool may run this turn. Returns an error payload
-     * to send back to the model when the write is refused — the AI never writes
-     * while navigating, only one artifact per turn while driving, and the user
-     * can still decline — or null when the write may proceed.
+     * Refuses a write that the role or the one-artifact rule forbids, returning
+     * the error payload to send back to the model — the AI never writes while
+     * navigating, and only one artifact per turn while driving. Returns null when
+     * the write is allowed (subject to the user's go-ahead).
      *
      * @return array{error: string}|null
      */
-    private function denyWrite(): ?array
+    private function autoRefuseWrite(): ?array
     {
         $role = $this->roleState->current();
 
@@ -257,12 +325,6 @@ final class AiAssistant
             PairLogger::log('RESULT', 'One artifact per turn');
 
             return ['error' => 'One artifact per turn while I drive. Let\'s run or inspect what we have, then continue on the next turn.'];
-        }
-
-        if (!$this->chooser->choose('Allow this action?', 'write-files', 'apply file changes')) {
-            PairLogger::log('RESULT', 'User declined');
-
-            return ['error' => 'User declined this action.'];
         }
 
         return null;
