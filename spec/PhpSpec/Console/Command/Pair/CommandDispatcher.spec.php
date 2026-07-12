@@ -248,6 +248,16 @@ describe(CommandDispatcher::class, function () {
         expect($output)->toContain('Specification for');
     });
 
+    it('exemplify reports when an example already exists instead of duplicating it', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"should add\", fn() => expect(\$this->calculator->add())->toBe(null));\n});");
+
+        $this->dispatcher->dispatch('exemplify Acme\Calculator add');
+        $output = $this->buffer->fetch();
+        expect($output)->toContain('already exists');
+        expect($fs->write('', ''))->not()->toBeCalled();
+    });
+
     it('runs specs with run command', function () {
         $result = $this->dispatcher->dispatch('run');
         expect($result)->toBe(CommandDispatcher::CONTINUE);

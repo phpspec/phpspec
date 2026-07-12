@@ -78,10 +78,45 @@ describe(SpecGenerator::class, function () {
         expect($written)->toContain('$this->calculator->add()');
     });
 
+    it("returns true when an example is added", function (Filesystem $fs) {
+        $specPath = getcwd() . DIRECTORY_SEPARATOR . 'spec' . DIRECTORY_SEPARATOR . 'Calculator.spec.php';
+
+        allow($fs->exists($specPath))->toReturn(true);
+        allow($fs->read($specPath))->toReturn(<<<'PHP'
+        <?php
+
+        describe(Calculator::class, function() {
+            let("calculator", fn() => new Calculator());
+            it("instantiates", fn() => expect($this->calculator)->toBeAnInstanceOf(Calculator::class));
+        });
+        PHP);
+
+        expect($this->generator->addExample('Calculator', 'add'))->toBe(true);
+    });
+
+    it("does not add a duplicate example for the same method", function (Filesystem $fs) {
+        $specPath = getcwd() . DIRECTORY_SEPARATOR . 'spec' . DIRECTORY_SEPARATOR . 'Calculator.spec.php';
+
+        allow($fs->exists($specPath))->toReturn(true);
+        allow($fs->read($specPath))->toReturn(<<<'PHP'
+        <?php
+
+        describe(Calculator::class, function() {
+            let("calculator", fn() => new Calculator());
+            it("instantiates", fn() => expect($this->calculator)->toBeAnInstanceOf(Calculator::class));
+
+            it("should add", fn() => expect($this->calculator->add())->toBe(null));
+        });
+        PHP);
+
+        expect($this->generator->addExample('Calculator', 'add'))->toBe(false);
+        expect($fs->write($specPath, ''))->not()->toBeCalled();
+    });
+
     it("does not add example when spec file does not exist", function (Filesystem $fs) {
         allow($fs->exists())->toReturn(false);
 
-        $this->generator->addExample('Missing', 'foo');
+        expect($this->generator->addExample('Missing', 'foo'))->toBe(false);
 
         expect($fs->write('', ''))->not()->toBeCalled();
     });
@@ -92,7 +127,7 @@ describe(SpecGenerator::class, function () {
         allow($fs->exists($specPath))->toReturn(true);
         allow($fs->read($specPath))->toReturn('<?php // no closing marker');
 
-        $this->generator->addExample('Broken', 'foo');
+        expect($this->generator->addExample('Broken', 'foo'))->toBe(false);
 
         expect($fs->write($specPath, ''))->not()->toBeCalled();
     });

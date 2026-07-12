@@ -209,6 +209,20 @@ Feature: AI-assisted pair programming
     And the output should not contain "+ <?php"
     And the output should not contain "+ describe"
 
+  Scenario: Exemplifying the same method twice does not duplicate the example
+    Given a spec file "spec/App/Wallet.spec.php":
+      """
+      <?php
+      use App\Wallet;
+
+      describe(Wallet::class, function () {
+          it('gets balances', fn() => expect((new Wallet())->getBalances())->toBe(null));
+      });
+      """
+    When I run phpspec pair with input "exemplify App/Wallet getPlayer; exemplify App/Wallet getPlayer" answering "3,3"
+    Then the output should contain "already exists"
+    And the output should contain "should getPlayer" exactly 1 times
+
   Scenario: Generating a method marks only the new lines as added, not the shifted brace
     Given a class "src/App/Wallet.php":
       """

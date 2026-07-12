@@ -21,6 +21,7 @@ use PhpSpec\Ai\Message;
 use PhpSpec\Ai\SpecRunner;
 use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
+use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Filesystem;
@@ -48,7 +49,7 @@ final class AiAssistant
 
     private const MAX_TURNS = 50;
 
-    private const WRITE_TOOLS = ['generate_spec', 'generate_feature', 'generate_steps', 'write_file', 'update_file'];
+    private const WRITE_TOOLS = ['generate_spec', 'add_example', 'generate_feature', 'generate_steps', 'write_file', 'update_file'];
 
     private readonly Chooser $chooser;
 
@@ -199,6 +200,7 @@ final class AiAssistant
     {
         $tools = [
             $this->generateSpecTool(),
+            $this->addExampleTool(),
             $this->generateFeatureTool(),
             $this->generateStepsTool(),
             $this->writeFileTool(),
@@ -251,6 +253,36 @@ final class AiAssistant
         );
     }
 
+    /**
+     * Writes a generated file, creating parent directories as needed, then
+     * shows a diff when the file already existed or a full listing when it is
+     * new. This keeps an overwrite of an existing spec/feature from being
+     * rendered as an all-new file with every line marked added.
+     *
+     * @param Filesystem $filesystem the filesystem abstraction
+     * @param PairOutput $output the pair-mode output helper
+     * @param string $filePath the absolute path to write
+     * @param string $content the file content
+     */
+    private static function writeGenerated(Filesystem $filesystem, PairOutput $output, string $filePath, string $content): void
+    {
+        $existed = $filesystem->exists($filePath);
+        $oldContent = $existed ? $filesystem->read($filePath) : '';
+
+        $dir = dirname($filePath);
+        if (!$filesystem->exists($dir)) {
+            $filesystem->mkdir($dir);
+        }
+
+        $filesystem->write($filePath, $content);
+
+        if ($existed) {
+            $output->fileDiff($filePath, $oldContent, $content);
+        } else {
+            $output->fileDisplay($filePath, $content, true);
+        }
+    }
+
     private function generateSpecTool(): Tool
     {
         $specPath = ltrim($this->config->getSpecPath(), './');
@@ -260,7 +292,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'generate_spec',
-            description: 'Write a spec file for a PHP class. Provide the full spec file content including <?php tag, use statements, describe() block, and all it() examples.',
+            description: 'Write a WHOLE spec file for a PHP class (new spec, or a full rewrite). Provide the full spec file content including <?php tag, use statements, describe() block, and all it() examples. To add ONE example to a spec that already exists, use add_example instead — do NOT regenerate the whole file.',
             parameters: [
                 'class_name' => [
                     'type' => 'string',
@@ -280,15 +312,70 @@ final class AiAssistant
                     . str_replace('/', DIRECTORY_SEPARATOR, $classPath)
                     . $specSuffix;
 
-                $dir = dirname($filePath);
-                if (!$filesystem->exists($dir)) {
-                    $filesystem->mkdir($dir);
-                }
-
-                $filesystem->write($filePath, $content);
-                $output->fileDisplay($filePath, $content, true);
+                self::writeGenerated($filesystem, $output, $filePath, $content);
 
                 return "Spec file written to $filePath";
+            },
+        );
+    }
+
+    private function addExampleTool(): Tool
+    {
+        $specPath = ltrim($this->config->getSpecPath(), './');
+        $specSuffix = $this->config->getSpecSuffix();
+        $filesystem = $this->filesystem;
+        $output = $this->output;
+
+        return Tool::make(
+            name: 'add_example',
+            description: 'Add ONE it() example for a method to an existing spec, appending it without rewriting the rest of the file. Idempotent: does nothing if that method is already exemplified. Prefer this over generate_spec whenever the spec already exists and you only need to add a single example.',
+            parameters: [
+                'class_name' => [
+                    'type' => 'string',
+                    'description' => 'Class path using forward slashes (e.g. "App/Calculator")',
+                ],
+                'method' => [
+                    'type' => 'string',
+                    'description' => 'The method name to add an example for (e.g. "add")',
+                ],
+            ],
+            handler: function (array $args) use ($specPath, $specSuffix, $filesystem, $output) {
+                $classPath = $args['class_name'];
+                $method = $args['method'];
+
+                $filePath = getcwd() . DIRECTORY_SEPARATOR
+                    . $specPath . DIRECTORY_SEPARATOR
+                    . str_replace('/', DIRECTORY_SEPARATOR, $classPath)
+                    . $specSuffix;
+
+                $generator = new SpecGenerator($specPath, $filesystem, $specSuffix);
+
+                $existed = $filesystem->exists($filePath);
+                if (!$existed) {
+                    $generator->generate($classPath);
+                }
+
+                $before = $existed ? $filesystem->read($filePath) : '';
+                $added = $generator->addExample($classPath, $method);
+
+                if (!$added && $existed) {
+                    $output->getOutput()->writeln(sprintf(
+                        '  <fg=gray>An example for %s::%s already exists.</>',
+                        str_replace('/', '\\', $classPath),
+                        $method,
+                    ));
+
+                    return "Example for $classPath::$method already exists; no change made.";
+                }
+
+                $after = $filesystem->read($filePath);
+                if ($existed) {
+                    $output->fileDiff($filePath, $before, $after);
+                } else {
+                    $output->fileDisplay($filePath, $after, true);
+                }
+
+                return "Example for $classPath::$method added to $filePath.";
             },
         );
     }
@@ -318,13 +405,7 @@ final class AiAssistant
 
                 $filePath = getcwd() . '/' . $featuresPath . '/' . $name . '.feature';
 
-                $dir = dirname($filePath);
-                if (!$filesystem->exists($dir)) {
-                    $filesystem->mkdir($dir);
-                }
-
-                $filesystem->write($filePath, $content);
-                $output->fileDisplay($filePath, $content, true);
+                self::writeGenerated($filesystem, $output, $filePath, $content);
 
                 return "Feature file written to $filePath";
             },
@@ -356,13 +437,7 @@ final class AiAssistant
 
                 $filePath = getcwd() . '/' . $stepsPath . '/' . $name . '.steps.php';
 
-                $dir = dirname($filePath);
-                if (!$filesystem->exists($dir)) {
-                    $filesystem->mkdir($dir);
-                }
-
-                $filesystem->write($filePath, $content);
-                $output->fileDisplay($filePath, $content, true);
+                self::writeGenerated($filesystem, $output, $filePath, $content);
 
                 return "Steps file written to $filePath";
             },
@@ -596,6 +671,11 @@ final class AiAssistant
         - Use `let()` to set up shared state, `it()` for individual examples.
         - Use `context()` to group related examples.
         - Generate meaningful, descriptive example names.
+        - To add a SINGLE example for a method to a spec that ALREADY exists, use `add_example`
+          (it appends just that one it() and is idempotent). Do NOT call `generate_spec` to add
+          one example — regenerating the whole file re-marks every line as new and risks
+          duplicating existing examples. Reserve `generate_spec` for a brand-new spec or a
+          deliberate full rewrite.
         - Match the coding style and patterns of existing specs and step definitions in the project.
         - When asked to run specs, use the `run_specs` tool and report the results clearly.
         - Keep responses concise. Show what you did, not long explanations of what you will do.
@@ -793,6 +873,7 @@ final class AiAssistant
             'write_file' => ['Write', 'path'],
             'update_file' => ['Update', 'path'],
             'generate_spec' => ['Generate spec', 'class_name'],
+            'add_example' => ['Add example', 'class_name'],
             'generate_feature' => ['Generate feature', 'feature_name'],
             'generate_steps' => ['Generate steps', 'feature_name'],
             'run_specs' => ['Run', 'path'],
