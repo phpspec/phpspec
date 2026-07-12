@@ -25,6 +25,12 @@ use Symfony\Component\Console\Output\BufferedOutput;
  */
 final readonly class Greeter
 {
+    /**
+     * @param SpecRunner $specRunner runs the suite to learn its state
+     * @param PairOutput $output the pair screen to greet into
+     * @param bool $aiAvailable whether an AI provider is configured
+     * @param SuiteNarrator $narrator maps suite state to the greeting lines
+     */
     public function __construct(
         private SpecRunner $specRunner,
         private PairOutput $output,
@@ -32,6 +38,10 @@ final readonly class Greeter
         private SuiteNarrator $narrator = new SuiteNarrator(),
     ) {}
 
+    /**
+     * Opens the session by running the suite once, quietly, and printing the
+     * greeting drawn from its state.
+     */
     public function greet(): void
     {
         $outcome = $this->specRunner->run('', new BufferedOutput());

@@ -101,6 +101,7 @@ final class Next extends Command
             $output->writeln(sprintf('  A spec for <fg=bright-blue;options=bold>%s</> already exists.', $suggestion['target']));
             $output->writeln('  <fg=gray>Run it to drive out the class:</> bin/phpspec run');
             $output->writeln('');
+
             return 0;
         }
 

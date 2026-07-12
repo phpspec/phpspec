@@ -35,10 +35,10 @@ describe(Next::class, function () {
 
         it('displays a spec suggestion with target and reason', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath): bool {
+            allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
                 return $path === $yamlPath;
             });
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
+            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
                 if ($path === $yamlPath) {
                     return "ai:\n  provider: google\n  api_key: test-key\n";
                 }
@@ -71,8 +71,8 @@ describe(Next::class, function () {
         it('does not re-describe a spec that already exists, coaching to run instead', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             $specFile = getcwd() . '/spec/App/Existing.spec.php';
-            $fs->______PhpSpecStubReturnUsing('exists', fn(string $path): bool => $path === $yamlPath || $path === $specFile);
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
+            allow($fs->exists())->toReturnUsing(fn(string $path): bool => $path === $yamlPath || $path === $specFile);
+            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
                 return $path === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '';
             });
 
@@ -97,10 +97,10 @@ describe(Next::class, function () {
 
         it('displays a feature suggestion with confirmation', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath): bool {
+            allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
                 return $path === $yamlPath;
             });
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
+            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
                 if ($path === $yamlPath) {
                     return "ai:\n  provider: google\n  api_key: test-key\n";
                 }
@@ -130,10 +130,10 @@ describe(Next::class, function () {
 
         it('displays an example suggestion with exemplify hint', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath): bool {
+            allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
                 return $path === $yamlPath;
             });
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
+            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
                 if ($path === $yamlPath) {
                     return "ai:\n  provider: google\n  api_key: test-key\n";
                 }
@@ -159,10 +159,10 @@ describe(Next::class, function () {
 
         it('displays an info suggestion when well-covered', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath): bool {
+            allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
                 return $path === $yamlPath;
             });
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
+            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
                 if ($path === $yamlPath) {
                     return "ai:\n  provider: google\n  api_key: test-key\n";
                 }
@@ -186,10 +186,10 @@ describe(Next::class, function () {
 
         it('shows error when response is unusable', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath): bool {
+            allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
                 return $path === $yamlPath;
             });
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
+            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
                 if ($path === $yamlPath) {
                     return "ai:\n  provider: google\n  api_key: test-key\n";
                 }
@@ -213,10 +213,10 @@ describe(Next::class, function () {
 
         it('passes AI config to the suggest function', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath): bool {
+            allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
                 return $path === $yamlPath;
             });
-            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
+            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
                 if ($path === $yamlPath) {
                     return "ai:\n  provider: anthropic\n  api_key: sk-test\n";
                 }

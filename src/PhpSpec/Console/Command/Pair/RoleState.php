@@ -22,6 +22,9 @@ namespace PhpSpec\Console\Command\Pair;
  */
 final class RoleState
 {
+    /**
+     * @param PairRole $role the starting role (defaults to the human driving)
+     */
     public function __construct(private PairRole $role = PairRole::HumanDrives) {}
 
     /**

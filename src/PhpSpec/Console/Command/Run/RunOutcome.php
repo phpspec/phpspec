@@ -22,6 +22,10 @@ namespace PhpSpec\Console\Command\Run;
  */
 final readonly class RunOutcome
 {
+    /**
+     * @param GenerationCandidates|null $candidates what the run found to generate, if any
+     * @param SuiteSummary|null $summary the run's red/green summary, if captured
+     */
     public function __construct(
         public ?GenerationCandidates $candidates = null,
         public ?SuiteSummary $summary = null,

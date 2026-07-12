@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command\Pair;
 
 use PhpSpec\Console\Command\Run\RunOutcome;
+use PhpSpec\Console\Command\Run\SuiteSummary;
 
 /**
  * @internal
@@ -42,46 +43,67 @@ final class SuiteNarrator
     {
         $summary = $outcome?->summary;
 
-        $lines = [''];
+        $observation = match (true) {
+            $summary === null || $summary->isEmpty() => $this->emptyProjectGreeting($aiAvailable),
+            $summary->isRed() => $this->redGreeting($summary),
+            default => $this->greenGreeting($summary),
+        };
 
-        if ($summary === null || $summary->isEmpty()) {
-            if ($aiAvailable) {
-                $lines[] = '  Nothing here yet. So — what are we building?';
-                $lines[] = '  <fg=gray>Describe it in a sentence and we\'ll turn it into a spec together.</>';
-            } else {
-                $lines[] = '  Nothing here yet. Let\'s start with a spec.';
-                $lines[] = '  <fg=gray>Try <fg=white>describe App\\Something</> to write your first one.</>';
-            }
-        } elseif ($summary->isRed()) {
-            $failure = $summary->failing()[0] ?? null;
-            if ($failure !== null) {
-                $lines[] = sprintf(
-                    '  <fg=red>We\'re red</> on <options=bold>%s</> — %s',
-                    $failure['subject'],
-                    $failure['example'],
-                );
-                $lines[] = '  <fg=gray>Want to start there?</>';
-            } else {
-                $lines[] = '  <fg=red>We\'re red.</>';
-            }
-        } else {
-            $gap = $summary->nearestPendingGap();
-            if ($gap !== null) {
-                $lines[] = sprintf(
-                    '  <fg=green>Green.</> Nearest gap — <options=bold>%s</>: %s',
-                    $gap['subject'],
-                    $gap['example'],
-                );
-                $lines[] = '  <fg=gray>Shall we make it real?</>';
-            } else {
-                $lines[] = '  <fg=green>Green</> and clean. Your call.';
-            }
+        $footer = $aiAvailable ? self::FOOTER_AI : self::FOOTER_COMMANDS;
+
+        return ['', ...$observation, '', $footer];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function emptyProjectGreeting(bool $aiAvailable): array
+    {
+        if ($aiAvailable) {
+            return [
+                '  Nothing here yet. So — what are we building?',
+                '  <fg=gray>Describe it in a sentence and we\'ll turn it into a spec together.</>',
+            ];
         }
 
-        $lines[] = '';
-        $lines[] = $aiAvailable ? self::FOOTER_AI : self::FOOTER_COMMANDS;
+        return [
+            '  Nothing here yet. Let\'s start with a spec.',
+            '  <fg=gray>Try <fg=white>describe App\\Something</> to write your first one.</>',
+        ];
+    }
 
-        return $lines;
+    /**
+     * @return list<string>
+     */
+    private function redGreeting(SuiteSummary $summary): array
+    {
+        $failure = $summary->failing()[0] ?? null;
+
+        if ($failure === null) {
+            return ['  <fg=red>We\'re red.</>'];
+        }
+
+        return [
+            sprintf('  <fg=red>We\'re red</> on <options=bold>%s</> — %s', $failure['subject'], $failure['example']),
+            '  <fg=gray>Want to start there?</>',
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function greenGreeting(SuiteSummary $summary): array
+    {
+        $gap = $summary->nearestPendingGap();
+
+        if ($gap === null) {
+            return ['  <fg=green>Green</> and clean. Your call.'];
+        }
+
+        return [
+            sprintf('  <fg=green>Green.</> Nearest gap — <options=bold>%s</>: %s', $gap['subject'], $gap['example']),
+            '  <fg=gray>Shall we make it real?</>',
+        ];
     }
 
     /**
@@ -96,34 +118,60 @@ final class SuiteNarrator
     public function next(?RunOutcome $outcome, PairRole $role): array
     {
         $summary = $outcome?->summary;
-        $driving = $role->aiIsDriver();
 
-        if ($summary === null || $summary->isEmpty()) {
-            return [
-                'lines' => ['', '  Nothing to build on yet. Let\'s <fg=white>describe</> the first spec.'],
-                'action' => 'describe',
-                'target' => null,
-            ];
-        }
+        return match (true) {
+            $summary === null || $summary->isEmpty() => $this->describeFirstStep(),
+            $summary->isRed() => $this->runStep($summary, $role),
+            $summary->nearestPendingGap() !== null => $this->exemplifyStep($summary, $role),
+            default => $this->observeStep(),
+        };
+    }
 
-        if ($summary->isRed()) {
-            $failure = $summary->failing()[0] ?? ['subject' => '', 'example' => ''];
-            $line = $driving
-                ? sprintf('  We\'re red on <options=bold>%s</> — %s. I\'ll run it and generate what\'s missing.', $failure['subject'], $failure['example'])
-                : sprintf('  We\'re red on <options=bold>%s</> — %s. Type <fg=white>run</> and I\'ll offer to create what\'s missing.', $failure['subject'], $failure['example']);
+    /**
+     * @return array{lines: list<string>, action: 'describe', target: null}
+     */
+    private function describeFirstStep(): array
+    {
+        return [
+            'lines' => ['', '  Nothing to build on yet. Let\'s <fg=white>describe</> the first spec.'],
+            'action' => 'describe',
+            'target' => null,
+        ];
+    }
 
-            return ['lines' => ['', $line], 'action' => 'run', 'target' => $failure['subject']];
-        }
+    /**
+     * @return array{lines: list<string>, action: 'run', target: string}
+     */
+    private function runStep(SuiteSummary $summary, PairRole $role): array
+    {
+        $failure = $summary->failing()[0] ?? ['subject' => '', 'example' => ''];
 
-        $gap = $summary->nearestPendingGap();
-        if ($gap !== null) {
-            $line = $driving
-                ? sprintf('  Green. Nearest gap — <options=bold>%s</>: %s. I\'ll make it real.', $gap['subject'], $gap['example'])
-                : sprintf('  Green. Nearest gap — <options=bold>%s</>: %s. Let\'s exemplify it.', $gap['subject'], $gap['example']);
+        $line = $role->aiIsDriver()
+            ? sprintf('  We\'re red on <options=bold>%s</> — %s. I\'ll run it and generate what\'s missing.', $failure['subject'], $failure['example'])
+            : sprintf('  We\'re red on <options=bold>%s</> — %s. Type <fg=white>run</> and I\'ll offer to create what\'s missing.', $failure['subject'], $failure['example']);
 
-            return ['lines' => ['', $line], 'action' => 'exemplify', 'target' => $gap['subject']];
-        }
+        return ['lines' => ['', $line], 'action' => 'run', 'target' => $failure['subject']];
+    }
 
+    /**
+     * @return array{lines: list<string>, action: 'exemplify', target: string}
+     */
+    private function exemplifyStep(SuiteSummary $summary, PairRole $role): array
+    {
+        $gap = $summary->nearestPendingGap() ?? ['subject' => '', 'example' => ''];
+
+        $line = $role->aiIsDriver()
+            ? sprintf('  Green. Nearest gap — <options=bold>%s</>: %s. I\'ll make it real.', $gap['subject'], $gap['example'])
+            : sprintf('  Green. Nearest gap — <options=bold>%s</>: %s. Let\'s exemplify it.', $gap['subject'], $gap['example']);
+
+        return ['lines' => ['', $line], 'action' => 'exemplify', 'target' => $gap['subject']];
+    }
+
+    /**
+     * @return array{lines: list<string>, action: 'observe', target: null}
+     */
+    private function observeStep(): array
+    {
         return [
             'lines' => ['', '  Green and clean. What shall we build next?'],
             'action' => 'observe',

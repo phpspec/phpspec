@@ -209,38 +209,63 @@ final class AiAssistant
         PairLogger::log('TOOL', "$toolCall->name(" . json_encode($toolCall->arguments) . ')');
 
         $isWrite = in_array($toolCall->name, self::WRITE_TOOLS, true);
+
         if ($isWrite) {
-            $role = $this->roleState->current();
+            $denial = $this->denyWrite();
 
-            if ($role->aiIsNavigator()) {
-                PairLogger::log('RESULT', 'Navigator refusal');
-
-                return ['error' => 'I\'m navigating — you\'re driving, so I won\'t write files. Use the commands (describe, exemplify, run), or /swap to hand me the keyboard.'];
-            }
-
-            if ($role->aiIsDriver() && $this->artifactWrittenThisHandle) {
-                PairLogger::log('RESULT', 'One artifact per turn');
-
-                return ['error' => 'One artifact per turn while I drive. Let\'s run or inspect what we have, then continue on the next turn.'];
-            }
-
-            if (!$this->chooser->choose('Allow this action?', 'write-files', 'apply file changes')) {
-                PairLogger::log('RESULT', 'User declined');
-                return ['error' => 'User declined this action.'];
+            if ($denial !== null) {
+                return $denial;
             }
         }
 
         try {
             $result = $tool->execute($toolCall->arguments);
+
             if ($isWrite) {
                 $this->artifactWrittenThisHandle = true;
             }
+
             PairLogger::log('RESULT', is_string($result) ? $result : (json_encode($result) ?: ''));
+
             return $result;
         } catch (Throwable $e) {
             PairLogger::log('RESULT', "ERROR: {$e->getMessage()}");
+
             return ['error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Decides whether a write tool may run this turn. Returns an error payload
+     * to send back to the model when the write is refused — the AI never writes
+     * while navigating, only one artifact per turn while driving, and the user
+     * can still decline — or null when the write may proceed.
+     *
+     * @return array{error: string}|null
+     */
+    private function denyWrite(): ?array
+    {
+        $role = $this->roleState->current();
+
+        if ($role->aiIsNavigator()) {
+            PairLogger::log('RESULT', 'Navigator refusal');
+
+            return ['error' => 'I\'m navigating — you\'re driving, so I won\'t write files. Use the commands (describe, exemplify, run), or /swap to hand me the keyboard.'];
+        }
+
+        if ($role->aiIsDriver() && $this->artifactWrittenThisHandle) {
+            PairLogger::log('RESULT', 'One artifact per turn');
+
+            return ['error' => 'One artifact per turn while I drive. Let\'s run or inspect what we have, then continue on the next turn.'];
+        }
+
+        if (!$this->chooser->choose('Allow this action?', 'write-files', 'apply file changes')) {
+            PairLogger::log('RESULT', 'User declined');
+
+            return ['error' => 'User declined this action.'];
+        }
+
+        return null;
     }
 
     private function ensureInitialised(): void

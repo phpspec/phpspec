@@ -41,6 +41,11 @@ final readonly class SuiteSummary
         private array $pending = [],
     ) {}
 
+    /**
+     * Builds a compact summary from an in-process suite result.
+     *
+     * @param SuiteResult $result the aggregated suite result
+     */
     public static function fromSuiteResult(SuiteResult $result): self
     {
         $c = (new Counts($result))->toArray();
@@ -91,16 +96,25 @@ final readonly class SuiteSummary
         return $this->status;
     }
 
+    /**
+     * Whether the suite passed, with no failures or errors.
+     */
     public function isGreen(): bool
     {
         return $this->status === 'green';
     }
 
+    /**
+     * Whether the suite has any failures or errors.
+     */
     public function isRed(): bool
     {
         return $this->status === 'red';
     }
 
+    /**
+     * Whether the suite ran no examples at all.
+     */
     public function isEmpty(): bool
     {
         return $this->counts['examples'] === 0;
