@@ -76,11 +76,6 @@ final class PairOutput
         $this->output->write(sprintf("\033[1;%dr", $scrollBottom));
         $this->output->write("\033[1;1H");
 
-        // Draw the header into the scroll region. The command menu and the
-        // AI-availability note are gone: the analysis-driven greeting (printed
-        // by the Greeter right after this) opens the session with what matters
-        // now, and its footer carries the command hint. Full command help lives
-        // behind /help.
         $this->output->writeln('');
         $this->output->writeln('<fg=bright-blue;options=bold>  PhpSpec Pair Programming Mode</>');
         $this->output->writeln('');
