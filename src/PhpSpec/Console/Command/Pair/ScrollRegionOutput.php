@@ -32,15 +32,23 @@ final class ScrollRegionOutput implements OutputInterface
      * @param OutputInterface $inner the underlying Symfony console output to delegate to
      * @param int $scrollBottom the last row of the scrollable content region
      * @param int $inputRow the row number reserved for user input
-     * @param int $dividerRow the row number for the horizontal divider line
+     * @param int $topDividerRow the row for the divider above the input line
      * @param int $width the terminal width in columns
+     * @param int|null $bottomDividerRow the row for the divider below the input
+     * @param int|null $statusRow the row for the status line
+     * @param int|null $roleRow the row for the role/hint line
+     * @param StatusBar|null $statusBar renders the two footer lines
      */
     public function __construct(
         private readonly OutputInterface $inner,
         private readonly int $scrollBottom,
         private readonly int $inputRow,
-        private readonly int $dividerRow,
+        private readonly int $topDividerRow,
         private readonly int $width,
+        private readonly ?int $bottomDividerRow = null,
+        private readonly ?int $statusRow = null,
+        private readonly ?int $roleRow = null,
+        private readonly ?StatusBar $statusBar = null,
     ) {}
 
     /**
@@ -64,17 +72,28 @@ final class ScrollRegionOutput implements OutputInterface
     }
 
     /**
-     * Moves cursor to the input row for readline. Redraws the bottom divider.
+     * Moves the cursor to the input row for readline, redrawing the pinned
+     * chrome: a blue divider above the input, and — when configured — a blue
+     * divider below it plus the two status-bar footer lines.
      */
     public function prepareForInput(): void
     {
-        $divider = str_repeat("\u{2500}", $this->width);
-        $this->inner->write(sprintf(
-            "\033[%d;1H\033[K\033[2m%s\033[0m\033[%d;1H\033[K",
-            $this->dividerRow,
-            $divider,
-            $this->inputRow,
-        ));
+        $divider = "\033[34m" . str_repeat("\u{2500}", $this->width) . "\033[0m";
+
+        $out = sprintf("\033[%d;1H\033[K%s", $this->topDividerRow, $divider);
+
+        if ($this->bottomDividerRow !== null && $this->statusRow !== null
+            && $this->roleRow !== null && $this->statusBar !== null
+        ) {
+            [$status, $role] = $this->statusBar->lines($this->width);
+            $out .= sprintf("\033[%d;1H\033[K%s", $this->bottomDividerRow, $divider);
+            $out .= sprintf("\033[%d;1H\033[K%s", $this->statusRow, $status);
+            $out .= sprintf("\033[%d;1H\033[K%s", $this->roleRow, $role);
+        }
+
+        $out .= sprintf("\033[%d;1H\033[K", $this->inputRow);
+
+        $this->inner->write($out);
         $this->cursorInContent = false;
     }
 

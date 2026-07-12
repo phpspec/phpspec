@@ -31,6 +31,7 @@ final class PairOutput
     private int $height;
     private ?ScrollRegionOutput $scrollOutput = null;
     private bool $aiAvailable = false;
+    private ?StatusBar $statusBar = null;
 
     /**
      * @param OutputInterface $output the underlying Symfony console output
@@ -40,6 +41,21 @@ final class PairOutput
         $terminal = new Terminal();
         $this->width = $terminal->getWidth() ?: 80;
         $this->height = $terminal->getHeight() ?: 24;
+    }
+
+    /**
+     * Configures the pinned footer shown below the input: the working directory,
+     * the AI status, and a live role indicator. Called once, before the REPL
+     * starts. Without it the layout falls back to just the input divider.
+     *
+     * @param string $workingDir the working directory to show (already abbreviated)
+     * @param bool $aiAvailable whether an AI provider is configured
+     * @param string|null $provider the configured provider name, when AI is on
+     * @param RoleState $roleState the live pairing role, read on each redraw
+     */
+    public function configureStatus(string $workingDir, bool $aiAvailable, ?string $provider, RoleState $roleState): void
+    {
+        $this->statusBar = new StatusBar($workingDir, $aiAvailable, $provider, $roleState);
     }
 
     /**
@@ -65,14 +81,16 @@ final class PairOutput
         $this->width = $terminal->getWidth() ?: 80;
         $this->height = $terminal->getHeight() ?: 24;
 
-        $scrollBottom = $this->height - 2;
-        $dividerRow = $this->height - 1;
-        $inputRow = $this->height;
+        // Reserve rows at the bottom: a divider above the input, the input, and
+        // — when a status bar is configured — a divider below it plus the two
+        // footer lines. Otherwise fall back to the input divider alone.
+        $reserved = $this->statusBar !== null ? 5 : 2;
+        $scrollBottom = max(1, $this->height - $reserved);
 
         // Reset scroll region and clear entire screen
         $this->output->write("\033[r\033[2J\033[H");
 
-        // Set scroll region (rows 1 through H-2) — header scrolls away naturally
+        // Set scroll region (rows 1 through scrollBottom) — header scrolls away
         $this->output->write(sprintf("\033[1;%dr", $scrollBottom));
         $this->output->write("\033[1;1H");
 
@@ -80,15 +98,27 @@ final class PairOutput
         $this->output->writeln('<fg=bright-blue;options=bold>  PhpSpec Pair Programming Mode</>');
         $this->output->writeln('');
         $divider = str_repeat("\u{2500}", $this->width);
-        $this->output->writeln("\033[2m$divider\033[0m");
+        $this->output->writeln("\033[34m$divider\033[0m");
 
-        $this->scrollOutput = new ScrollRegionOutput(
-            $this->output,
-            $scrollBottom,
-            $inputRow,
-            $dividerRow,
-            $this->width,
-        );
+        $this->scrollOutput = $this->statusBar !== null
+            ? new ScrollRegionOutput(
+                $this->output,
+                $scrollBottom,
+                $this->height - 3,
+                $this->height - 4,
+                $this->width,
+                $this->height - 2,
+                $this->height - 1,
+                $this->height,
+                $this->statusBar,
+            )
+            : new ScrollRegionOutput(
+                $this->output,
+                $scrollBottom,
+                $this->height,
+                $this->height - 1,
+                $this->width,
+            );
     }
 
     /**

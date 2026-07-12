@@ -20,6 +20,8 @@ use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair\CommandDispatcher;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use PhpSpec\Console\Command\Pair\Repl;
+use PhpSpec\Console\Command\Pair\RoleState;
+use PhpSpec\Console\Command\Pair\StatusBar;
 use PhpSpec\Extensions\ExtensionLoader;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface as Input;
@@ -69,7 +71,17 @@ final class Pair extends Command
             require $bootstrap;
         }
 
+        $roleState = new RoleState();
         $pairOutput = new PairOutput($output);
+
+        $aiConfig = $this->config->getAiConfig();
+        $pairOutput->configureStatus(
+            StatusBar::abbreviateHome(getcwd() ?: '.', getenv('HOME') ?: ''),
+            $aiConfig !== null,
+            is_array($aiConfig) ? $aiConfig['provider'] : null,
+            $roleState,
+        );
+
         $dispatcher = new CommandDispatcher(
             $this->specGenerator,
             $this->classGenerator,
@@ -78,6 +90,7 @@ final class Pair extends Command
             $prompt === null, // non-interactive when using --prompt
             application: $this->getApplication(),
             extensionLoader: $this->extensionLoader,
+            roleState: $roleState,
         );
 
         if ($prompt !== null) {

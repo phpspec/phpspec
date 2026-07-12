@@ -1,6 +1,7 @@
 <?php
 
 use PhpSpec\Console\Command\Pair\PairOutput;
+use PhpSpec\Console\Command\Pair\RoleState;
 use PhpSpec\Console\Command\Pair\ScrollRegionOutput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -23,6 +24,18 @@ describe(PairOutput::class, function () {
         $this->pairOutput->setupLayout();
         $output = $this->buffer->fetch();
         expect($output)->toContain('PhpSpec Pair Programming Mode');
+    });
+
+    it('draws the configured status bar in the footer', function () {
+        $this->pairOutput->configureStatus('~/proj', true, 'google', new RoleState());
+        $this->pairOutput->setupLayout(true);
+        $this->buffer->fetch(); // discard setup output
+        $this->pairOutput->prepareForInput();
+        $output = $this->buffer->fetch();
+
+        expect($output)->toContain('ai: on');
+        expect($output)->toContain('provider: google');
+        expect($output)->toContain('navigator');
     });
 
     it('no longer draws the static command menu on setupLayout', function () {
