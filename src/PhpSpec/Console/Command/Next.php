@@ -142,7 +142,7 @@ final class Next extends Command
 
         $response = $provider->chat($messages, [
             'model' => $model,
-            'maxTokens' => 512,
+            'maxTokens' => 8192,
             'temperature' => 0.3,
         ]);
 
