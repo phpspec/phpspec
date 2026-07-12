@@ -289,7 +289,10 @@ final class AiAssistant
         try {
             $result = $tool->execute($toolCall->arguments);
 
-            if ($isWrite) {
+            // A write that came back with an error (e.g. a rejected legacy-style
+            // spec) did not land, so it does not count as the turn's artifact —
+            // the model may retry it in the correct form this same turn.
+            if ($isWrite && !(is_array($result) && isset($result['error']))) {
                 $this->artifactWrittenThisHandle = true;
             }
 
@@ -455,6 +458,32 @@ final class AiAssistant
     }
 
     /**
+     * Whether spec content is written in the legacy phpspec 8 ObjectBehavior
+     * style rather than the phpspec 9 describe()/it()/expect() DSL. The model's
+     * training prior leans hard on ObjectBehavior, so this is enforced, not just
+     * discouraged in the prompt.
+     */
+    private static function isLegacySpec(string $content): bool
+    {
+        return str_contains($content, 'ObjectBehavior');
+    }
+
+    /**
+     * The error handed back to the model when it writes a legacy-style spec, so
+     * it regenerates in the phpspec 9 DSL rather than the write landing.
+     *
+     * @return array{error: string}
+     */
+    private static function legacySpecRejection(): array
+    {
+        return ['error' => 'That is phpspec 8 ObjectBehavior syntax, which this project does not use. '
+            . 'Write the spec in the phpspec 9 DSL instead: '
+            . 'describe(Calculator::class, function () { it(\'adds numbers\', function () { expect((new Calculator())->add(2, 3))->toBe(5); }); }); '
+            . '— no spec class, no "extends ObjectBehavior", no shouldHaveType/shouldReturn. '
+            . 'Preserve the existing examples; do not replace them with a single initializable check.'];
+    }
+
+    /**
      * Writes a generated file, creating parent directories as needed, then
      * shows a diff when the file already existed or a full listing when it is
      * new. This keeps an overwrite of an existing spec/feature from being
@@ -507,6 +536,10 @@ final class AiAssistant
             handler: function (array $args) use ($specPath, $specSuffix, $filesystem, $output) {
                 $classPath = $args['class_name'];
                 $content = $args['spec_content'];
+
+                if (self::isLegacySpec($content)) {
+                    return self::legacySpecRejection();
+                }
 
                 $filePath = getcwd() . DIRECTORY_SEPARATOR
                     . $specPath . DIRECTORY_SEPARATOR
@@ -802,6 +835,11 @@ final class AiAssistant
 
         IMPORTANT: describe(), it(), let(), context(), expect() are GLOBAL functions.
         Do NOT add "use function" imports for them in spec files. Only `use` the class under test.
+
+        NEVER write phpspec 8 ObjectBehavior specs — they are rejected. There are no spec
+        classes: no `namespace spec\...`, no `class FooSpec extends ObjectBehavior`, no
+        `function it_is_initializable()`, no `->shouldHaveType()` / `->shouldReturn()`.
+        Use only the describe()/it()/expect() DSL shown above.
 
         ### Available Matchers
         toBe, toBeLike, toHaveCount, toBeAnInstanceOf, toBeTrue, toBeFalse, toBeNull,
