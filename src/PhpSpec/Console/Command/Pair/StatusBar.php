@@ -52,6 +52,14 @@ final readonly class StatusBar
         return [$this->statusLine($width), $this->roleLine()];
     }
 
+    /**
+     * Replaces the home-directory prefix with ~ for a shorter display.
+     */
+    public static function abbreviateHome(string $path, string $home): string
+    {
+        return $home !== '' && str_starts_with($path, $home) ? '~' . substr($path, strlen($home)) : $path;
+    }
+
     private function statusLine(int $width): string
     {
         $left = '  ' . $this->workingDir;

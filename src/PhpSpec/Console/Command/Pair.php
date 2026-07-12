@@ -21,6 +21,7 @@ use PhpSpec\Console\Command\Pair\CommandDispatcher;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use PhpSpec\Console\Command\Pair\Repl;
 use PhpSpec\Console\Command\Pair\RoleState;
+use PhpSpec\Console\Command\Pair\StatusBar;
 use PhpSpec\Extensions\ExtensionLoader;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface as Input;
@@ -75,7 +76,7 @@ final class Pair extends Command
 
         $aiConfig = $this->config->getAiConfig();
         $pairOutput->configureStatus(
-            $this->abbreviateHome(getcwd() ?: '.'),
+            StatusBar::abbreviateHome(getcwd() ?: '.', getenv('HOME') ?: ''),
             $aiConfig !== null,
             is_array($aiConfig) ? $aiConfig['provider'] : null,
             $roleState,
@@ -100,15 +101,5 @@ final class Pair extends Command
         $repl = new Repl($dispatcher, $pairOutput, $this->config->getAiConfig() !== null);
 
         return $repl->run();
-    }
-
-    /**
-     * Replaces the home directory prefix with ~ for a shorter status display.
-     */
-    private function abbreviateHome(string $path): string
-    {
-        $home = getenv('HOME') ?: '';
-
-        return $home !== '' && str_starts_with($path, $home) ? '~' . substr($path, strlen($home)) : $path;
     }
 }

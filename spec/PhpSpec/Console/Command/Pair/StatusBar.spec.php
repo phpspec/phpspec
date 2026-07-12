@@ -39,6 +39,12 @@ describe(StatusBar::class, function () {
         expect($role)->not()->toContain('navigator');
     });
 
+    it('abbreviates the home-directory prefix to ~', function () {
+        expect(StatusBar::abbreviateHome('/home/md/lab/proj', '/home/md'))->toBe('~/lab/proj');
+        expect(StatusBar::abbreviateHome('/var/www', '/home/md'))->toBe('/var/www');
+        expect(StatusBar::abbreviateHome('/home/md/x', ''))->toBe('/home/md/x');
+    });
+
     it('right-aligns the provider info within the given width', function () {
         $bar = new StatusBar('~/x', true, 'google', new RoleState());
 
