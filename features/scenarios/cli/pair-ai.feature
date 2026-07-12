@@ -192,3 +192,45 @@ Feature: AI-assisted pair programming
     When I run phpspec pair with input "run; run" answering "1"
     Then the file "src/App/Wallet.php" should contain "function getBalances"
     And the output should contain "1 example (1 passes)"
+
+  Scenario: Exemplify shows a diff, marking only the added example as new
+    Given a spec file "spec/App/Wallet.spec.php":
+      """
+      <?php
+      use App\Wallet;
+
+      describe(Wallet::class, function () {
+          it('gets balances', fn() => expect((new Wallet())->getBalances())->toBe(null));
+      });
+      """
+    When I run phpspec pair with input "exemplify App/Wallet getPlayer" answering "3"
+    Then the output should contain "[MODIFIED]"
+    And the output should contain "getPlayer"
+    And the output should not contain "+ <?php"
+    And the output should not contain "+ describe"
+
+  Scenario: Generating a method marks only the new lines as added, not the shifted brace
+    Given a class "src/App/Wallet.php":
+      """
+      <?php
+      namespace App;
+
+      class Wallet
+      {
+          public function getBalances()
+          {
+          }
+      }
+      """
+    And a spec file "spec/App/Wallet.spec.php":
+      """
+      <?php
+      use App\Wallet;
+
+      describe(Wallet::class, function () {
+          it('gets player', fn() => expect((new Wallet())->getPlayer())->toBe(null));
+      });
+      """
+    When I run phpspec pair with input "run" answering "1"
+    Then the output should contain "function getPlayer"
+    And the output should not contain "+ }"

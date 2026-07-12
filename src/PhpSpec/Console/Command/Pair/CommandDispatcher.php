@@ -231,7 +231,8 @@ final class CommandDispatcher
 
         // Generate spec if it doesn't exist
         $this->output->getOutput()->writeln('');
-        if (!$this->filesystem->exists($specFile)) {
+        $specExisted = $this->filesystem->exists($specFile);
+        if (!$specExisted) {
             try {
                 $this->specGenerator->generate($spec);
             } catch (RuntimeException $e) {
@@ -246,6 +247,8 @@ final class CommandDispatcher
             ));
         }
 
+        $before = $specExisted ? $this->filesystem->read($specFile) : '';
+
         // Add the example
         $this->specGenerator->addExample($spec, $method);
 
@@ -255,9 +258,15 @@ final class CommandDispatcher
             $method,
         ));
 
-        // Display updated spec file
+        // Show a full listing for a brand-new spec, a diff for an existing one
+        // (so only the added example is marked as new, not the whole file).
         if ($this->filesystem->exists($specFile)) {
-            $this->output->fileDisplay($specFile, $this->filesystem->read($specFile), false);
+            $after = $this->filesystem->read($specFile);
+            if ($specExisted) {
+                $this->output->fileDiff($specFile, $before, $after);
+            } else {
+                $this->output->fileDisplay($specFile, $after, true);
+            }
         }
 
         // Offer to run specs
