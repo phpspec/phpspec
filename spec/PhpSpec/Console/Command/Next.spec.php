@@ -70,7 +70,7 @@ describe(Next::class, function () {
 
         it('does not re-describe a spec that already exists, coaching to run instead', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            $specFile = getcwd() . '/spec/App/Existing.spec.php';
+            $specFile = getcwd() . DIRECTORY_SEPARATOR . 'spec' . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'Existing.spec.php';
             allow($fs->exists())->toReturnUsing(fn(string $path): bool => $path === $yamlPath || $path === $specFile);
             allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
                 return $path === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '';
