@@ -10,11 +10,11 @@ if (!function_exists('_pair_exec')) {
      * Runs the pair shim: dispatches each ";"-separated input in one session,
      * optionally interactive with the given answers piped to stdin.
      */
-    function _pair_exec(object $world, string $input, ?string $answers = null): void
+    function _pair_exec(object $world, string $input, ?string $answers = null, bool $greet = false): void
     {
         $interactive = $answers !== null ? 'true' : 'false';
 
-        $shim = _pair_shim_source($interactive);
+        $shim = _pair_shim_source($interactive, $greet);
         file_put_contents($world->projectDir . '/_pair_shim.php', $shim);
 
         $cmd = [
@@ -48,7 +48,7 @@ if (!function_exists('_pair_exec')) {
     /**
      * Builds the shim source with the given interactivity flag.
      */
-    function _pair_shim_source(string $interactive): string
+    function _pair_shim_source(string $interactive, bool $greet = false): string
     {
         $shim = <<<'PHP'
     <?php
@@ -79,12 +79,18 @@ if (!function_exists('_pair_exec')) {
         application: $app,
     );
 
+    %GREET%
+
     foreach (array_filter(array_map('trim', explode(';', $argv[1] ?? ''))) as $command) {
         $dispatcher->dispatch($command);
     }
     PHP;
 
-        return str_replace('%INTERACTIVE%', $interactive, $shim);
+        return str_replace(
+            ['%INTERACTIVE%', '%GREET%'],
+            [$interactive, $greet ? '$dispatcher->greet();' : ''],
+            $shim,
+        );
     }
 }
 
@@ -94,4 +100,8 @@ when('I run phpspec pair with input {string}', function (string $input) {
 
 when('I run phpspec pair with input {string} answering {string}', function (string $input, string $answers) {
     _pair_exec($this, $input, $answers);
+});
+
+when('I start a pair session', function () {
+    _pair_exec($this, '', null, true);
 });

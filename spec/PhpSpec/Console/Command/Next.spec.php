@@ -68,6 +68,33 @@ describe(Next::class, function () {
             expect($tester->getDisplay())->toContain('Would you like me to create that for you?');
         });
 
+        it('does not re-describe a spec that already exists, coaching to run instead', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            $specFile = getcwd() . '/spec/App/Existing.spec.php';
+            $fs->______PhpSpecStubReturnUsing('exists', fn(string $path): bool => $path === $yamlPath || $path === $specFile);
+            $fs->______PhpSpecStubReturnUsing('read', function (string $path) use ($yamlPath): string {
+                return $path === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '';
+            });
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'spec',
+                'target' => 'App\\Existing',
+                'reason' => 'The class has not been created yet.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $app = new Application();
+            method_exists($app, 'addCommand') ? $app->addCommand($cmd) : $app->add($cmd);
+
+            $tester = new CommandTester($app->find('next'));
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('already exists');
+            expect($tester->getDisplay())->not()->toContain('Would you like me to create');
+        });
+
         it('displays a feature suggestion with confirmation', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             $fs->______PhpSpecStubReturnUsing('exists', function (string $path) use ($yamlPath): bool {

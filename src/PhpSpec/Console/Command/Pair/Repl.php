@@ -42,6 +42,7 @@ final readonly class Repl
     public function run(): int
     {
         $this->output->setupLayout($this->aiAvailable);
+        $this->dispatcher->greet();
 
         while (true) {
             $this->output->prepareForInput();

@@ -14,14 +14,15 @@
 
 namespace PhpSpec\Console\Command\Pair;
 
-use PhpSpec\Console\Command\Run\GenerationCandidates;
+use PhpSpec\Console\Command\Run\RunOutcome;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * @internal
  * Runs the specs for a pair-mode `run` in isolation from the REPL process and
- * reports back what could be generated. Injected into CommandDispatcher so the
- * REPL can be unit-tested without actually running specs.
+ * reports back the run outcome (generation candidates + suite summary).
+ * Injected into CommandDispatcher so the REPL can be unit-tested without
+ * actually running specs.
  */
 interface SpecRunner
 {
@@ -31,7 +32,7 @@ interface SpecRunner
      *
      * @param string $argument the run argument (a path, or empty for all)
      * @param OutputInterface $output the output to stream the run into
-     * @return GenerationCandidates|null the reported candidates, or null when none
+     * @return RunOutcome|null the reported outcome, or null when none
      */
-    public function run(string $argument, OutputInterface $output): ?GenerationCandidates;
+    public function run(string $argument, OutputInterface $output): ?RunOutcome;
 }

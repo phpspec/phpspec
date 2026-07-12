@@ -6,7 +6,7 @@ use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair\CommandDispatcher;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use PhpSpec\Console\Command\Pair\SpecRunner;
-use PhpSpec\Console\Command\Run\GenerationCandidates;
+use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Filesystem;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -19,7 +19,7 @@ class CommandDispatcherFakeRunner implements SpecRunner
     /** @var list<string> */
     public array $arguments = [];
 
-    public function run(string $argument, OutputInterface $output): ?GenerationCandidates
+    public function run(string $argument, OutputInterface $output): ?RunOutcome
     {
         $this->arguments[] = $argument;
 
@@ -378,7 +378,7 @@ describe(CommandDispatcher::class, function () {
             specRunner: $this->specRunner,
         ));
 
-        it('delegates next command and returns CONTINUE', function () {
+        it('handles a bare next from suite state and returns CONTINUE', function () {
             $result = $this->appDispatcher->dispatch('next');
             expect($result)->toBe(CommandDispatcher::CONTINUE);
         });

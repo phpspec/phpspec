@@ -25,6 +25,15 @@ describe(PairOutput::class, function () {
         expect($output)->toContain('PhpSpec Pair Programming Mode');
     });
 
+    it('no longer draws the static command menu on setupLayout', function () {
+        // The analysis-driven greeting and its footer replace the menu card;
+        // command help now lives behind /help.
+        $this->pairOutput->setupLayout(true);
+        $output = $this->buffer->fetch();
+        expect($output)->not()->toContain('Generate a spec file');
+        expect($output)->not()->toContain('AI assistant');
+    });
+
     it('shows goodbye message', function () {
         $this->pairOutput->showGoodbye();
         $output = $this->buffer->fetch();

@@ -173,78 +173,78 @@ Feature: AI-assisted pair programming
     And the output should not contain "Cannot declare interface"
 
   Scenario: A method generated mid-session is picked up by the next run
-    Given a class "src/App/Wallet.php":
+    Given a class "src/App/Calculator.php":
       """
       <?php
       namespace App;
 
-      class Wallet {}
+      class Calculator {}
       """
-    And a spec file "spec/App/Wallet.spec.php":
+    And a spec file "spec/App/Calculator.spec.php":
       """
       <?php
-      use App\Wallet;
+      use App\Calculator;
 
-      describe(Wallet::class, function () {
-          it('gets balances', fn() => expect((new Wallet())->getBalances())->toBe(null));
+      describe(Calculator::class, function () {
+          it('adds numbers', fn() => expect((new Calculator())->add())->toBe(null));
       });
       """
     When I run phpspec pair with input "run; run" answering "1"
-    Then the file "src/App/Wallet.php" should contain "function getBalances"
+    Then the file "src/App/Calculator.php" should contain "function add"
     And the output should contain "1 example (1 passes)"
 
   Scenario: Exemplify shows a diff, marking only the added example as new
-    Given a spec file "spec/App/Wallet.spec.php":
+    Given a spec file "spec/App/Calculator.spec.php":
       """
       <?php
-      use App\Wallet;
+      use App\Calculator;
 
-      describe(Wallet::class, function () {
-          it('gets balances', fn() => expect((new Wallet())->getBalances())->toBe(null));
+      describe(Calculator::class, function () {
+          it('adds numbers', fn() => expect((new Calculator())->add())->toBe(null));
       });
       """
-    When I run phpspec pair with input "exemplify App/Wallet getPlayer" answering "3"
+    When I run phpspec pair with input "exemplify App/Calculator subtract" answering "3"
     Then the output should contain "[MODIFIED]"
-    And the output should contain "getPlayer"
+    And the output should contain "subtract"
     And the output should not contain "+ <?php"
     And the output should not contain "+ describe"
 
   Scenario: Exemplifying the same method twice does not duplicate the example
-    Given a spec file "spec/App/Wallet.spec.php":
+    Given a spec file "spec/App/Calculator.spec.php":
       """
       <?php
-      use App\Wallet;
+      use App\Calculator;
 
-      describe(Wallet::class, function () {
-          it('gets balances', fn() => expect((new Wallet())->getBalances())->toBe(null));
+      describe(Calculator::class, function () {
+          it('adds numbers', fn() => expect((new Calculator())->add())->toBe(null));
       });
       """
-    When I run phpspec pair with input "exemplify App/Wallet getPlayer; exemplify App/Wallet getPlayer" answering "3,3"
+    When I run phpspec pair with input "exemplify App/Calculator subtract; exemplify App/Calculator subtract" answering "3,3"
     Then the output should contain "already exists"
-    And the output should contain "should getPlayer" exactly 1 times
+    And the output should contain "should subtract" exactly 1 times
 
   Scenario: Generating a method marks only the new lines as added, not the shifted brace
-    Given a class "src/App/Wallet.php":
+    Given a class "src/App/Calculator.php":
       """
       <?php
       namespace App;
 
-      class Wallet
+      class Calculator
       {
-          public function getBalances()
+          public function add()
           {
           }
       }
       """
-    And a spec file "spec/App/Wallet.spec.php":
+    And a spec file "spec/App/Calculator.spec.php":
       """
       <?php
-      use App\Wallet;
+      use App\Calculator;
 
-      describe(Wallet::class, function () {
-          it('gets player', fn() => expect((new Wallet())->getPlayer())->toBe(null));
+      describe(Calculator::class, function () {
+          it('subtracts numbers', fn() => expect((new Calculator())->subtract())->toBe(null));
       });
       """
     When I run phpspec pair with input "run" answering "1"
-    Then the output should contain "function getPlayer"
+    Then the output should contain "function subtract"
     And the output should not contain "+ }"

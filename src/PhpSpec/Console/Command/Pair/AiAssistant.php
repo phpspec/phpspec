@@ -53,6 +53,20 @@ final class AiAssistant
 
     private readonly Chooser $chooser;
 
+    private readonly RoleState $roleState;
+
+    /** Role-neutral guidance (DSL, tools, project conventions), cached once. */
+    private string $baseGuidance = '';
+
+    /** The scanned project context, cached once so /swap never re-scans. */
+    private string $projectContext = '';
+
+    /** Index of the system message in the history, so /swap can rebuild only it. */
+    private int $systemIndex = 0;
+
+    /** Whether the AI has written its one artifact this turn (while driving). */
+    private bool $artifactWrittenThisHandle = false;
+
     /**
      * @param ProviderInterface $provider the AI provider for LLM interactions
      * @param Configuration $config the project configuration
@@ -63,6 +77,8 @@ final class AiAssistant
      * @param ExtensionLoader|null $extensionLoader optional extension loader for custom tools
      * @param Chooser|null $chooser the interactive chooser; shared with the dispatcher
      *                              so "always" answers span the whole pair session
+     * @param RoleState|null $roleState the current pairing role; shared with the
+     *                                  dispatcher so a /swap is seen by both
      */
     public function __construct(
         private readonly ProviderInterface $provider,
@@ -73,9 +89,11 @@ final class AiAssistant
         private readonly bool $interactive = true,
         private readonly ?ExtensionLoader $extensionLoader = null,
         ?Chooser $chooser = null,
+        ?RoleState $roleState = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
+        $this->roleState = $roleState ?? new RoleState();
     }
 
     /**
@@ -90,6 +108,7 @@ final class AiAssistant
         try {
             PairLogger::log('INPUT', $input);
             $this->ensureInitialised();
+            $this->artifactWrittenThisHandle = false;
             $this->messages[] = Message::user($input);
 
             $text = $this->runLoop();
@@ -119,14 +138,7 @@ final class AiAssistant
                 'model' => $model,
                 'maxTokens' => 8192,
                 'temperature' => 0.3,
-                'tools' => array_map(
-                    fn(ToolInterface $tool) => [
-                        'name' => $tool->getName(),
-                        'description' => $tool->getDescription(),
-                        'input_schema' => $tool->getParameterSchema(),
-                    ],
-                    array_values($this->tools),
-                ),
+                'tools' => $this->advertisedTools(),
             ]);
 
             $this->messages[] = Message::assistant(
@@ -148,6 +160,43 @@ final class AiAssistant
         return 'Reached maximum tool turns. Please try a simpler request.';
     }
 
+    /**
+     * The tools advertised to the model this turn, serialised for the provider.
+     *
+     * When the AI is navigating (the human drives) the write tools are withheld
+     * entirely — the role is enforced by not offering them, not merely by asking
+     * the model not to use them.
+     *
+     * @return list<array{name: string, description: string, input_schema: array<string, mixed>}>
+     */
+    private function advertisedTools(): array
+    {
+        $tools = array_values($this->tools);
+        $role = $this->roleState->current();
+
+        // Withhold the write tools when the AI is navigating (it never writes),
+        // and — while it drives — once it has already written its one artifact
+        // this turn, so it can only read and run for the rest of the turn.
+        $withholdWrites = $role->aiIsNavigator()
+            || ($role->aiIsDriver() && $this->artifactWrittenThisHandle);
+
+        if ($withholdWrites) {
+            $tools = array_values(array_filter(
+                $tools,
+                fn(ToolInterface $tool) => !in_array($tool->getName(), self::WRITE_TOOLS, true),
+            ));
+        }
+
+        return array_map(
+            fn(ToolInterface $tool) => [
+                'name' => $tool->getName(),
+                'description' => $tool->getDescription(),
+                'input_schema' => $tool->getParameterSchema(),
+            ],
+            $tools,
+        );
+    }
+
     private function executeTool(ToolCall $toolCall): mixed
     {
         $tool = $this->tools[$toolCall->name] ?? null;
@@ -159,7 +208,22 @@ final class AiAssistant
         $this->output->getOutput()->writeln($this->formatToolDisplay($toolCall));
         PairLogger::log('TOOL', "$toolCall->name(" . json_encode($toolCall->arguments) . ')');
 
-        if (in_array($toolCall->name, self::WRITE_TOOLS, true)) {
+        $isWrite = in_array($toolCall->name, self::WRITE_TOOLS, true);
+        if ($isWrite) {
+            $role = $this->roleState->current();
+
+            if ($role->aiIsNavigator()) {
+                PairLogger::log('RESULT', 'Navigator refusal');
+
+                return ['error' => 'I\'m navigating — you\'re driving, so I won\'t write files. Use the commands (describe, exemplify, run), or /swap to hand me the keyboard.'];
+            }
+
+            if ($role->aiIsDriver() && $this->artifactWrittenThisHandle) {
+                PairLogger::log('RESULT', 'One artifact per turn');
+
+                return ['error' => 'One artifact per turn while I drive. Let\'s run or inspect what we have, then continue on the next turn.'];
+            }
+
             if (!$this->chooser->choose('Allow this action?', 'write-files', 'apply file changes')) {
                 PairLogger::log('RESULT', 'User declined');
                 return ['error' => 'User declined this action.'];
@@ -168,6 +232,9 @@ final class AiAssistant
 
         try {
             $result = $tool->execute($toolCall->arguments);
+            if ($isWrite) {
+                $this->artifactWrittenThisHandle = true;
+            }
             PairLogger::log('RESULT', is_string($result) ? $result : (json_encode($result) ?: ''));
             return $result;
         } catch (Throwable $e) {
@@ -188,9 +255,56 @@ final class AiAssistant
             $this->tools[$tool->getName()] = $tool;
         }
 
-        $this->messages[] = Message::system(
-            $this->buildSystemPrompt() . "\n\n" . $this->buildProjectContext(),
+        $this->baseGuidance = $this->buildBaseGuidance();
+        $this->projectContext = $this->buildProjectContext();
+
+        $this->messages[] = $this->buildSystemMessage();
+        $this->systemIndex = array_key_last($this->messages);
+    }
+
+    /**
+     * Builds the system message for the current role: the role contract artifact
+     * first, then the role-neutral guidance and the scanned project context.
+     */
+    private function buildSystemMessage(): Message
+    {
+        return Message::system(
+            $this->loadRoleArtifact($this->roleState->current())
+            . "\n\n" . $this->baseGuidance
+            . "\n\n" . $this->projectContext,
         );
+    }
+
+    /**
+     * Loads the role's prompt artifact (navigator.txt / driver.txt) from disk,
+     * falling back to a short inline contract when it cannot be read (so a
+     * mocked filesystem or odd packaging never yields a role-less prompt).
+     */
+    private function loadRoleArtifact(PairRole $role): string
+    {
+        $path = dirname(__DIR__, 3) . '/Ai/Prompts/' . $role->promptArtifact() . '.txt';
+        $text = $this->filesystem->exists($path) ? $this->filesystem->read($path) : '';
+
+        if (trim($text) === '') {
+            return $role->aiIsNavigator()
+                ? 'You are the NAVIGATOR. The human is driving. You never write files — you review and suggest; the human triggers generation with the commands.'
+                : 'You are the DRIVER. The human is navigating. Execute exactly what they direct, one artifact per turn, then show the diff, run the spec, and hand back.';
+        }
+
+        return $text;
+    }
+
+    /**
+     * Rebuilds only the system message for the current role after a /swap. The
+     * cached base guidance and project context are reused, so swapping is cheap.
+     */
+    public function reloadPrompt(): void
+    {
+        if (!$this->initialised) {
+            return;
+        }
+
+        $this->messages[$this->systemIndex] = $this->buildSystemMessage();
     }
 
     /**
@@ -549,7 +663,11 @@ final class AiAssistant
         );
     }
 
-    private function buildSystemPrompt(): string
+    /**
+     * Role-neutral guidance shared by both roles: the DSL, the tools, and the
+     * project conventions. The role contract itself lives in the prompt artifacts.
+     */
+    private function buildBaseGuidance(): string
     {
         $specPath = ltrim($this->config->getSpecPath(), './');
         $srcPath = ltrim($this->config->getSrcPath(), './');

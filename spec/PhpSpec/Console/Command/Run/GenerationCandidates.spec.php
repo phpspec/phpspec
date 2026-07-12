@@ -10,7 +10,7 @@ describe(GenerationCandidates::class, function () {
 
     it('is not empty when any list has content', function () {
         $candidates = new GenerationCandidates(
-            undefinedClassMethods: [['className' => 'App\\Wallet', 'methodName' => 'getBalances', 'file' => '/spec.php', 'line' => 4]],
+            undefinedClassMethods: [['className' => 'App\\Calculator', 'methodName' => 'add', 'file' => '/spec.php', 'line' => 4]],
         );
 
         expect($candidates->isEmpty())->toBeFalse();
@@ -23,8 +23,8 @@ describe(GenerationCandidates::class, function () {
             missingStepClasses: ['App\\Bar'],
             missingMockTypes: ['App\\Repo'],
             undefinedMockInterfaceMethods: [['className' => 'App\\Repo', 'methodName' => 'find', 'file' => '/s.php', 'line' => 2]],
-            undefinedClassMethods: [['className' => 'App\\Wallet', 'methodName' => 'getBalances', 'file' => '/s.php', 'line' => 4]],
-            fakeableMethods: [['className' => 'App\\Wallet', 'methodName' => 'total', 'fakeExpression' => '0', 'file' => '/s.php', 'line' => 6]],
+            undefinedClassMethods: [['className' => 'App\\Calculator', 'methodName' => 'add', 'file' => '/s.php', 'line' => 4]],
+            fakeableMethods: [['className' => 'App\\Calculator', 'methodName' => 'total', 'fakeExpression' => '0', 'file' => '/s.php', 'line' => 6]],
         );
 
         $restored = GenerationCandidates::fromArray($candidates->toArray());
