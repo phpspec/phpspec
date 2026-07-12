@@ -167,6 +167,31 @@ describe(AiAssistant::class, function () {
         expect($this->buffer->fetch())->toContain('one change');
     });
 
+    it('rejects a spec written in legacy ObjectBehavior syntax without writing it', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\ndescribe(Wallet::class, function () {});\n");
+
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'generate_spec', [
+                    'class_name' => 'App/Wallet',
+                    'spec_content' => "<?php\n\nnamespace spec\\App;\n\nuse App\\Wallet;\nuse PhpSpec\\ObjectBehavior;\n\nclass WalletSpec extends ObjectBehavior\n{\n    function it_is_initializable()\n    {\n        \$this->shouldHaveType(Wallet::class);\n    }\n}\n",
+                ])]);
+            }
+            $captured = $messages;
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives);
+        $this->answers = ['1'];
+        $assistant->handle('bring it back to green');
+
+        expect($fs->write())->not()->toHaveBeenCalled();
+        expect((string) json_encode($captured))->toContain('describe(');
+    });
+
     it('writes only one artifact per turn while driving, rejecting the rest', function (Filesystem $fs) {
         $captured = null;
         $secondTurnMessages = null;
