@@ -231,7 +231,8 @@ final class CommandDispatcher
 
         // Generate spec if it doesn't exist
         $this->output->getOutput()->writeln('');
-        if (!$this->filesystem->exists($specFile)) {
+        $specExisted = $this->filesystem->exists($specFile);
+        if (!$specExisted) {
             try {
                 $this->specGenerator->generate($spec);
             } catch (RuntimeException $e) {
@@ -246,18 +247,34 @@ final class CommandDispatcher
             ));
         }
 
-        // Add the example
-        $this->specGenerator->addExample($spec, $method);
+        $before = $specExisted ? $this->filesystem->read($specFile) : '';
 
-        $this->output->getOutput()->writeln(sprintf(
-            '  Example for <fg=bright-blue>%s::%s</> added.',
-            $fqcn,
-            $method,
-        ));
+        // Add the example (no-op if this method is already exemplified)
+        $added = $this->specGenerator->addExample($spec, $method);
 
-        // Display updated spec file
-        if ($this->filesystem->exists($specFile)) {
-            $this->output->fileDisplay($specFile, $this->filesystem->read($specFile), false);
+        if (!$added && $specExisted) {
+            $this->output->getOutput()->writeln(sprintf(
+                '  <fg=gray>An example for %s::%s already exists.</>',
+                $fqcn,
+                $method,
+            ));
+        } else {
+            $this->output->getOutput()->writeln(sprintf(
+                '  Example for <fg=bright-blue>%s::%s</> added.',
+                $fqcn,
+                $method,
+            ));
+
+            // Show a full listing for a brand-new spec, a diff for an existing one
+            // (so only the added example is marked as new, not the whole file).
+            if ($this->filesystem->exists($specFile)) {
+                $after = $this->filesystem->read($specFile);
+                if ($specExisted) {
+                    $this->output->fileDiff($specFile, $before, $after);
+                } else {
+                    $this->output->fileDisplay($specFile, $after, true);
+                }
+            }
         }
 
         // Offer to run specs

@@ -97,11 +97,14 @@ final class SpecGenerator
     /**
      * Appends an it() example for a specific method to an existing spec file.
      *
+     * Idempotent: if an example for the same method is already present, the
+     * file is left untouched so repeated calls never duplicate the example.
+     *
      * @param string $spec the class path using forward slashes
      * @param string $method the method name to exemplify
-     * @return void
+     * @return bool true when an example was added, false when nothing changed
      */
-    public function addExample(string $spec, string $method): void
+    public function addExample(string $spec, string $method): bool
     {
         $filePath = getcwd() . DIRECTORY_SEPARATOR .
                     $this->specPath . DIRECTORY_SEPARATOR .
@@ -109,7 +112,19 @@ final class SpecGenerator
                     $this->specSuffix;
 
         if (!$this->filesystem->exists($filePath)) {
-            return;
+            return false;
+        }
+
+        $content = $this->filesystem->read($filePath);
+
+        // Already exemplified — don't append an identical example again.
+        if (str_contains($content, "it(\"should $method\",")) {
+            return false;
+        }
+
+        $pos = strrpos($content, '});');
+        if ($pos === false) {
+            return false;
         }
 
         $pieces = explode('/', $spec);
@@ -118,13 +133,9 @@ final class SpecGenerator
 
         $example = "    it(\"should $method\", fn() => expect(\$this->$lcClass->$method())->toBe(null));";
 
-        $content = $this->filesystem->read($filePath);
-        $pos = strrpos($content, '});');
-        if ($pos === false) {
-            return;
-        }
-
         $content = substr($content, 0, $pos) . "\n" . $example . "\n" . substr($content, $pos);
         $this->filesystem->write($filePath, $content);
+
+        return true;
     }
 }

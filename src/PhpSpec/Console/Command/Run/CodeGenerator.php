@@ -21,6 +21,7 @@ use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\CodeGeneration\StepGenerator;
 use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\ScrollRegionOutput;
+use PhpSpec\Console\Command\Refactor\Diff;
 use PhpSpec\Results;
 use RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface as Output;
@@ -441,16 +442,10 @@ final readonly class CodeGenerator
         $output->writeln("  <fg=yellow>$label</> <fg=white>$filePath</>");
         $output->writeln('');
 
-        $oldSet = $oldLines !== null ? array_flip($oldLines) : [];
-
-        foreach ($newLines as $i => $line) {
-            $lineNum = str_pad((string) ($i + 1), 4, ' ', STR_PAD_LEFT);
-            if ($oldLines === null || !isset($oldSet[$line]) || ($oldLines[$i] ?? null) !== $line) {
-                $output->writeln("  <fg=green>$lineNum + </>$line");
-            } else {
-                $output->writeln("  <fg=gray>$lineNum   </>$line");
-            }
-        }
+        // A proper line diff, so only genuinely new lines are marked "+" — a
+        // naive per-index comparison marks every line after an insertion (e.g.
+        // the class's closing brace shifting down) as added.
+        $output->writeln(Diff::format(Diff::compute($oldLines ?? [], $newLines)));
         $output->writeln('');
     }
 

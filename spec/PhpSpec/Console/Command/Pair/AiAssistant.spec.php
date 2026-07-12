@@ -130,6 +130,83 @@ describe(AiAssistant::class, function () {
         expect($fs->write())->toHaveBeenCalled();
     });
 
+    it('shows a diff, not a whole-file listing, when generate_spec overwrites an existing spec', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\ndescribe(Wallet::class, function() {\n    it(\"instantiates\", fn() => null);\n});\n");
+
+        $turn = 0;
+        $this->provider->responder = function () use (&$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'generate_spec', [
+                    'class_name' => 'App/Wallet',
+                    'spec_content' => "<?php\ndescribe(Wallet::class, function() {\n    it(\"instantiates\", fn() => null);\n    it(\"should getId\", fn() => null);\n});\n",
+                ])]);
+            }
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser);
+        $this->answers = ['1'];
+        $assistant->handle('add a getId example');
+
+        $text = $this->buffer->fetch();
+        expect($text)->toContain('[MODIFIED]');
+        expect($text)->not()->toContain('[NEW FILE]');
+    });
+
+    it('appends a single example with add_example instead of rewriting the whole spec', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\ndescribe(Wallet::class, function() {\n    it(\"instantiates\", fn() => null);\n});\n");
+        $written = null;
+        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+            $written = $content;
+        });
+
+        $turn = 0;
+        $this->provider->responder = function () use (&$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'add_example', [
+                    'class_name' => 'App/Wallet',
+                    'method' => 'getId',
+                ])]);
+            }
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser);
+        $this->answers = ['1'];
+        $assistant->handle('add a getId example to the wallet spec');
+
+        $text = $this->buffer->fetch();
+        expect($text)->toContain('[MODIFIED]');
+        expect($text)->not()->toContain('[NEW FILE]');
+        expect($written)->toContain('should getId');
+        expect($written)->toContain('instantiates');
+    });
+
+    it('does not duplicate an example when add_example targets an already-exemplified method', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\ndescribe(Wallet::class, function() {\n    it(\"instantiates\", fn() => null);\n    it(\"should getId\", fn() => null);\n});\n");
+
+        $turn = 0;
+        $this->provider->responder = function () use (&$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'add_example', [
+                    'class_name' => 'App/Wallet',
+                    'method' => 'getId',
+                ])]);
+            }
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser);
+        $this->answers = ['1'];
+        $assistant->handle('add a getId example');
+
+        expect($fs->write())->not()->toBeCalled();
+        expect($this->buffer->fetch())->toContain('already exists');
+    });
+
     it('reports unknown tools back to the model instead of crashing', function (Filesystem $fs) {
         $captured = null;
         $turn = 0;
