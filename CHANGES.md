@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [9.0.0-beta.7](https://github.com/phpspec/phpspec/compare/9.0.0-beta.6...9.0.0-beta.7)
+
+### Added
+ - Pair mode driver/navigator roles: `/swap` hands the keyboard between you and the AI. While you drive, the AI navigates and never writes files on its own (its write tools are withheld, not just discouraged); after `/swap` it drives, writing one artifact per turn before handing back. Role contracts live in reviewed prompt artifacts
+
+### Changed
+ - Pair mode opens with an observation drawn from your suite's state (the failure to start on, the nearest pending example, or a clean slate) instead of a static command menu; the greeting adapts to whether an AI provider is configured
+ - Pair mode `next` reads the real suite state and coaches the next step (run a red spec to drive out the class, fill the nearest pending example) instead of guessing
+ - Show a real diff for generated methods and exemplified specs
+ - Include an add example AI tool
+ - Give the next command enough output tokens for reasoning models to answer
+
+### Fixed
+ - `next` no longer loops suggesting you describe a spec that already exists; when the spec is there it coaches you to run it and drive out the missing class
+
 ## [9.0.0-beta.6](https://github.com/phpspec/phpspec/compare/9.0.0-beta.5...9.0.0-beta.6)
 
 ### Fixed

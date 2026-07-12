@@ -48,24 +48,31 @@ final class GenerationReport
     }
 
     /**
-     * Writes a run's candidates to the report file.
+     * Writes a run's outcome (candidates + suite summary) to the report file as
+     * an envelope: {"candidates": {...}|null, "suite": {...}|null}.
      *
      * @param string $path the report file path
-     * @param GenerationCandidates $candidates the candidates to report
+     * @param RunOutcome $outcome the outcome to report
      * @return void
      */
-    public static function write(string $path, GenerationCandidates $candidates): void
+    public static function write(string $path, RunOutcome $outcome): void
     {
-        file_put_contents($path, (string) json_encode($candidates->toArray()));
+        file_put_contents($path, (string) json_encode([
+            'candidates' => $outcome->candidates?->toArray(),
+            'suite' => $outcome->summary?->toArray(),
+        ]));
     }
 
     /**
-     * Reads the candidates a run reported, or null when the file is missing or empty.
+     * Reads the outcome a run reported, or null when the file is missing or empty.
+     *
+     * Accepts both the current envelope shape and a legacy report that held the
+     * bare candidates array (in which case the outcome carries no suite summary).
      *
      * @param string $path the report file path
-     * @return GenerationCandidates|null the reported candidates, or null
+     * @return RunOutcome|null the reported outcome, or null
      */
-    public static function read(string $path): ?GenerationCandidates
+    public static function read(string $path): ?RunOutcome
     {
         if (!is_file($path)) {
             return null;
@@ -74,6 +81,20 @@ final class GenerationReport
         $json = file_get_contents($path);
         $data = $json !== false && $json !== '' ? json_decode($json, true) : null;
 
-        return is_array($data) ? GenerationCandidates::fromArray($data) : null;
+        if (!is_array($data)) {
+            return null;
+        }
+
+        $isEnvelope = array_key_exists('candidates', $data) || array_key_exists('suite', $data);
+
+        if (!$isEnvelope) {
+            // Legacy report: the whole array was the candidates.
+            return new RunOutcome(GenerationCandidates::fromArray($data), null);
+        }
+
+        $candidates = is_array($data['candidates'] ?? null) ? GenerationCandidates::fromArray($data['candidates']) : null;
+        $summary = is_array($data['suite'] ?? null) ? SuiteSummary::fromArray($data['suite']) : null;
+
+        return new RunOutcome($candidates, $summary);
     }
 }

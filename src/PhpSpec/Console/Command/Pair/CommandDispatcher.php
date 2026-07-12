@@ -28,6 +28,7 @@ use RuntimeException;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\StringInput;
+use Symfony\Component\Console\Output\BufferedOutput;
 
 /**
  * @internal
@@ -42,6 +43,7 @@ final class CommandDispatcher
     private Filesystem $filesystem;
     private readonly Chooser $chooser;
     private readonly SpecRunner $specRunner;
+    private readonly RoleState $roleState;
     private ?AiAssistant $ai = null;
 
     /**
@@ -65,11 +67,13 @@ final class CommandDispatcher
         private readonly ?ExtensionLoader $extensionLoader = null,
         ?Chooser $chooser = null,
         ?SpecRunner $specRunner = null,
+        ?RoleState $roleState = null,
     ) {
         $this->parser = new InputParser();
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
         $this->specRunner = $specRunner ?? new SubprocessRunner();
+        $this->roleState = $roleState ?? new RoleState();
         $this->registerAutoloader();
 
         $aiConfig = $this->config->getAiConfig();
@@ -77,11 +81,69 @@ final class CommandDispatcher
             try {
                 $provider = ProviderFactory::create($aiConfig);
                 $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider']);
-                $this->ai = new AiAssistant($provider, $this->config, $this->output, $model, $this->filesystem, $this->interactive, $this->extensionLoader, $this->chooser);
+                $this->ai = new AiAssistant($provider, $this->config, $this->output, $model, $this->filesystem, $this->interactive, $this->extensionLoader, $this->chooser, $this->roleState);
             } catch (RuntimeException $e) {
                 $this->output->error($e->getMessage());
             }
         }
+    }
+
+    /**
+     * Opens the session with an observation drawn from the current suite state,
+     * in place of a static menu. Runs the suite once, quietly.
+     */
+    public function greet(): void
+    {
+        (new Greeter($this->specRunner, $this->output, $this->ai !== null))->greet();
+    }
+
+    /**
+     * Swaps who holds the keyboard and announces the new contract. Roles are an
+     * AI concept — without a provider there is no navigator or driver to swap
+     * between, so we say so instead of pretending.
+     */
+    private function handleSwap(): int
+    {
+        $console = $this->output->getOutput();
+        $console->writeln('');
+
+        if ($this->ai === null) {
+            $console->writeln('  <fg=gray>Swapping needs an AI provider — I can only navigate or drive when one is configured. See /help.</>');
+
+            return self::CONTINUE;
+        }
+
+        $role = $this->roleState->swap();
+        $this->ai->reloadPrompt();
+
+        $console->writeln('  <fg=cyan>' . $role->contractLine() . '</>');
+
+        return self::CONTINUE;
+    }
+
+    /**
+     * Suggests the single next step from a real suite run rather than a guess,
+     * so it never loops describing a spec that already exists: red means run and
+     * fix, a pending example is the nearest gap, an empty project starts a spec.
+     * While the human navigates it coaches; while the AI drives it takes the
+     * step itself (one artifact).
+     */
+    private function handleNext(): int
+    {
+        $outcome = $this->specRunner->run('', new BufferedOutput());
+        $role = $this->roleState->current();
+        $next = (new SuiteNarrator())->next($outcome, $role);
+
+        $console = $this->output->getOutput();
+        foreach ($next['lines'] as $line) {
+            $console->writeln($line);
+        }
+
+        if ($role->aiIsDriver() && $this->ai !== null && $next['action'] !== 'observe') {
+            $this->ai->handle('Take the single most valuable next step now, as one artifact, then hand back.');
+        }
+
+        return self::CONTINUE;
     }
 
     /**
@@ -104,6 +166,7 @@ final class CommandDispatcher
             'exemplify' => $this->handleExemplify($parsed['argument']),
             'run' => $this->handleRun($parsed['argument']),
             'clear' => $this->handleClear(),
+            '/swap' => $this->handleSwap(),
             '/help' => $this->handleHelp(),
             '/quit', '/exit' => self::QUIT,
             '' => self::CONTINUE,
@@ -295,8 +358,9 @@ final class CommandDispatcher
      */
     private function handleRun(string $argument): int
     {
-        $candidates = $this->specRunner->run($argument, $this->output->getOutput());
+        $outcome = $this->specRunner->run($argument, $this->output->getOutput());
 
+        $candidates = $outcome?->candidates;
         if ($candidates !== null && !$candidates->isEmpty()) {
             $this->offerGeneration($candidates);
         }
@@ -328,6 +392,10 @@ final class CommandDispatcher
      */
     private function handleDefault(string $command, string $rawInput): int
     {
+        if ($command === 'next' && $this->parser->parse($rawInput)['argument'] === '') {
+            return $this->handleNext();
+        }
+
         if ($this->application !== null && $this->application->has($command)) {
             $cmd = $this->application->find($command);
             if ($cmd instanceof Pair) {
@@ -406,6 +474,7 @@ final class CommandDispatcher
         $out->writeln('  <fg=white>run</>                                Run all specs');
         $out->writeln('  <fg=white>run</> <fg=gray>spec/path</>                    Run specs at path');
         $out->writeln('  <fg=white>clear</>                     Clear the screen');
+        $out->writeln("  <fg=white>/swap</>                     Swap who drives (you \u{21c4} AI)");
         $out->writeln('  <fg=white>/help</>                     Show this help');
         $out->writeln('  <fg=white>/quit</>                     Exit pair mode');
 
@@ -416,6 +485,7 @@ final class CommandDispatcher
         $aiAvailable = $this->config->get('ai') !== null;
         if ($aiAvailable) {
             $out->writeln('  <fg=bright-blue;options=bold>AI assistant</> <fg=green>(available)</>');
+            $out->writeln('  <fg=gray>Right now — ' . $this->roleState->current()->contractLine() . '</>');
         } else {
             $out->writeln('  <fg=bright-blue;options=bold>AI assistant</> <fg=gray>(not configured — add ai: section to phpspec.yml)</>');
         }

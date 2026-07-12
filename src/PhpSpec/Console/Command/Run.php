@@ -19,6 +19,8 @@ use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\CoverageReporter;
 use PhpSpec\Console\Command\Run\GenerationReport;
+use PhpSpec\Console\Command\Run\RunOutcome;
+use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Coverage\CoverageOptions;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Extensions\FormatterBridge;
@@ -199,7 +201,10 @@ final class Run extends Command
         // the interactive generation in the REPL. Otherwise generate here as usual.
         $reportPath = GenerationReport::requestedPath();
         if ($reportPath !== null) {
-            GenerationReport::write($reportPath, $this->codeGenerator(false)->scan($results));
+            GenerationReport::write($reportPath, new RunOutcome(
+                $this->codeGenerator(false)->scan($results),
+                SuiteSummary::fromSuiteResult($results),
+            ));
         } elseif (!in_array($this->resolveFormat($input), ['junit', 'html'], true)) {
             $this->generateCode($output, $results, (bool) $input->getOption('fake'), $input->isInteractive());
         }

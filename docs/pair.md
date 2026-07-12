@@ -18,6 +18,26 @@ bin/phpspec pair --prompt "write a spec for a Calculator that adds two numbers"
 
 The pair command requires an interactive terminal. It sets up a split-screen layout with a scrolling content area and a fixed input line at the bottom.
 
+### Session greeting
+
+Pair mode opens by looking at your project once and greeting you with what matters right now, rather than a static menu:
+
+- **Red suite** — it names the failing subject and its example, and offers to start there.
+- **Green with a pending example** — it names the nearest `xit()` gap to make real.
+- **Green and clean** — a short observation, then it's your call.
+- **Empty project** — an invitation to write the first spec.
+
+The greeting adapts to your configuration: with an AI provider configured it invites plain English; without one it points you at the deterministic commands (`describe`, `exemplify`, `run`). The full command list is always available behind `/help`.
+
+### Driving and navigating
+
+Pair mode is a pair, not a code agent: you share one keyboard and work in turns. Nobody hand-types code any more — the generators are the keyboard, and *driving* means deciding what gets generated and pulling the trigger. `/swap` changes who holds it (this needs an AI provider):
+
+- **You drive, the AI navigates** (the default). The AI reviews and suggests one step ahead — intent, then location, then the exact line only when you ask — but it never writes files on its own. You generate code by triggering it: `describe`, `exemplify`, `run`, and the numbered choosers.
+- **The AI drives, you navigate** (after `/swap`). You give the intent; the AI makes it real one artifact at a time, shows the diff, runs the spec, and hands back.
+
+`/help` shows the current contract. Swap back at any time with another `/swap`.
+
 ### Built-in Commands
 
 These commands work without AI configuration:
@@ -189,7 +209,9 @@ Example output:
   drive the step definitions and any missing specs.
 ```
 
-The `next` command requires AI configuration (the same `ai:` section in `phpspec.yaml`).
+The `next` command requires AI configuration (the same `ai:` section in `phpspec.yaml`). If it suggests a class whose spec already exists, it will not send you round in circles describing it again — it points you at `bin/phpspec run` to drive out the missing class.
+
+Inside pair mode, `next` reads the real suite state rather than guessing: a red spec means run it and generate what's missing; a pending example is the nearest gap to make real. This works even without an AI provider.
 
 ## The `refactor` Command
 

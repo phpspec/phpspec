@@ -61,21 +61,21 @@ describe(Diff::class, function () {
 
         it('anchors an appended block on the new lines, not identical preceding ones', function () {
             $old = [
-                'class Wallet',
+                'class Calculator',
                 '{',
-                '    public function getPlayer()',
+                '    public function subtract()',
                 '    {',
                 '    }',
                 '}',
             ];
             $new = [
-                'class Wallet',
+                'class Calculator',
                 '{',
-                '    public function getPlayer()',
+                '    public function subtract()',
                 '    {',
                 '    }',
                 '',
-                '    public function getId()',
+                '    public function total()',
                 '    {',
                 '    }',
                 '}',
@@ -94,7 +94,7 @@ describe(Diff::class, function () {
 
             expect($added)->toBe([
                 '',
-                '    public function getId()',
+                '    public function total()',
                 '    {',
                 '    }',
             ]);

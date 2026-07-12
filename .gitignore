@@ -1,6 +1,7 @@
 *.tgz
 *.phar
 vendor
+.claude/
 composer.lock
 /coverage/
 .phpspec/

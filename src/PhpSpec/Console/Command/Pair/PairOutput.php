@@ -76,26 +76,8 @@ final class PairOutput
         $this->output->write(sprintf("\033[1;%dr", $scrollBottom));
         $this->output->write("\033[1;1H");
 
-        // Draw header into the scroll region
         $this->output->writeln('');
         $this->output->writeln('<fg=bright-blue;options=bold>  PhpSpec Pair Programming Mode</>');
-        $this->output->writeln('');
-        $this->output->writeln('  <fg=white>Commands</>');
-        $this->output->writeln('  <fg=gray>describe</> <fg=gray>Acme\Greeter</>       <fg=gray>Generate a spec file</>');
-        $this->output->writeln('  <fg=gray>exemplify</> <fg=gray>Acme\Greeter greet</> <fg=gray>Add an example for a method</>');
-        $this->output->writeln('  <fg=gray>run</> <fg=gray>[path]</>                   <fg=gray>Run specs</>');
-        $this->output->writeln('  <fg=gray>clear  /help  /quit</>');
-        $this->output->writeln('');
-        if ($aiAvailable) {
-            $this->output->writeln('  <fg=white>AI assistant</> <fg=gray>— or just type in plain English:</>');
-            $this->output->writeln('  <fg=gray>> write a spec for a Calculator that adds and subtracts</>');
-            $this->output->writeln('  <fg=gray>> create a feature scenario for user registration</>');
-            $this->output->writeln('  <fg=gray>> run my specs and tell me what\'s failing</>');
-            $this->output->writeln('  <fg=gray>> explain how the Loader class works</>');
-        } else {
-            $this->output->writeln('  <fg=gray>AI assistant not configured. Add an ai: section to phpspec.yaml</>');
-            $this->output->writeln('  <fg=gray>to enable natural language commands. See /help for details.</>');
-        }
         $this->output->writeln('');
         $divider = str_repeat("\u{2500}", $this->width);
         $this->output->writeln("\033[2m$divider\033[0m");

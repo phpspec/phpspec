@@ -14,8 +14,8 @@
 
 namespace PhpSpec\Console\Command\Pair;
 
-use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Console\Command\Run\GenerationReport;
+use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Parallel\ParallelRunner;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -33,7 +33,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class SubprocessRunner implements SpecRunner
 {
-    public function run(string $argument, OutputInterface $output): ?GenerationCandidates
+    public function run(string $argument, OutputInterface $output): ?RunOutcome
     {
         $reportPath = self::reportPath();
         $this->ensureDir(dirname($reportPath));

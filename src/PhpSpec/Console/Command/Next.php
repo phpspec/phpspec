@@ -95,6 +95,16 @@ final class Next extends Command
             return 1;
         }
 
+        // 4b. If the suggested spec already exists, never re-describe it (that
+        // just loops) — coach to run so the missing class is driven out instead.
+        if ($suggestion['type'] === 'spec' && $this->specFileExists($suggestion['target'])) {
+            $output->writeln(sprintf('  A spec for <fg=bright-blue;options=bold>%s</> already exists.', $suggestion['target']));
+            $output->writeln('  <fg=gray>Run it to drive out the class:</> bin/phpspec run');
+            $output->writeln('');
+
+            return 0;
+        }
+
         // 5. Display
         $this->displaySuggestion($output, $suggestion);
 
@@ -112,6 +122,19 @@ final class Next extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * Whether a spec file already exists for the given class, so `next` never
+     * suggests describing a spec that is already there.
+     */
+    private function specFileExists(string $fqcn): bool
+    {
+        $specPath = ltrim($this->config->getSpecPath(), './');
+        $file = getcwd() . DIRECTORY_SEPARATOR . $specPath . DIRECTORY_SEPARATOR
+            . str_replace('\\', DIRECTORY_SEPARATOR, $fqcn) . $this->config->getSpecSuffix();
+
+        return $this->filesystem->exists($file);
     }
 
     /**
