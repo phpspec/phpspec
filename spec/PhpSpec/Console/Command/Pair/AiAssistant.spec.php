@@ -104,6 +104,8 @@ describe(AiAssistant::class, function () {
         expect($names)->not()->toContain('add_example');
         expect($names)->toContain('read_file');
         expect($names)->toContain('run_specs');
+        // Read tools like inspect_symbol stay available while navigating.
+        expect($names)->toContain('inspect_symbol');
     });
 
     it('refuses a write tool call while the human drives', function (Filesystem $fs) {
@@ -414,6 +416,28 @@ describe(AiAssistant::class, function () {
         $assistant->handle('describe the ledger');
 
         expect($this->buffer->fetch())->toContain('Plan: start a spec that pins down how the ledger records entries');
+    });
+
+    it('grounds a symbol via inspect_symbol, reporting its real signatures instead of guessing', function (Filesystem $fs) {
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'inspect_symbol', [
+                    'fqcn' => 'PhpSpec\\CodeGeneration\\ClassLocation',
+                ])]);
+            }
+            $captured = $messages;
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant->handle('what does ClassLocation offer?');
+
+        // The tool result carries the real class surface, not a guess or a "File not found".
+        $json = (string) json_encode($captured);
+        expect($json)->toContain('class PhpSpec');
+        expect($json)->toContain('isAutoloadable');
     });
 
     it('reports the structured red/green state from run_specs, not raw stdout', function (Filesystem $fs) {

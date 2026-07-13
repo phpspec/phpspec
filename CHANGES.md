@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
  - Pair mode driver/navigator roles: `/swap` hands the keyboard between you and the AI. While you drive, the AI navigates and never writes files on its own (its write tools are withheld, not just discouraged); after `/swap` it drives, writing one artifact per turn before handing back. Role contracts live in reviewed prompt artifacts
  - Configure the AI's per-call output-token ceiling with `ai.max_tokens` in your phpspec config (default 16384), so a slow reasoning model is not cut off mid-answer
+ - Pair mode's AI can inspect a class, interface or trait by name (`inspect_symbol`): whether it exists, where its file is, and its real public method signatures from Reflection — so it checks a type's actual API before writing against it, and a symbol that does not exist yet is reported cleanly instead of as a missing file
 
 ### Changed
  - Pair mode opens with an observation drawn from your suite's state (the failure to start on, the nearest pending example, or a clean slate) instead of a static command menu; the greeting adapts to whether an AI provider is configured

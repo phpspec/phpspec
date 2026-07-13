@@ -19,6 +19,7 @@ use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Contracts\ToolInterface;
 use PhpSpec\Ai\Message;
 use PhpSpec\Ai\Response;
+use PhpSpec\Ai\SymbolInspector;
 use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\CodeGeneration\SpecGenerator;
@@ -515,6 +516,7 @@ final class AiAssistant
             $this->writeFileTool(),
             $this->updateFileTool(),
             $this->runSpecsTool(),
+            $this->inspectSymbolTool(),
             $this->askUserTool(),
             AiTools::readFile($this->filesystem),
             AiTools::listFiles($this->filesystem),
@@ -982,6 +984,27 @@ final class AiAssistant
         );
     }
 
+    private function inspectSymbolTool(): Tool
+    {
+        $inspector = new SymbolInspector(
+            ltrim($this->config->getSrcPath(), './'),
+            $this->config->getPsr4Prefix(),
+            $this->filesystem,
+        );
+
+        return Tool::make(
+            name: 'inspect_symbol',
+            description: 'Inspect a PHP class, interface or trait by its fully-qualified name: whether it exists (is autoloadable), where its file is, and its real public method signatures from Reflection. Use this to learn what a type actually offers BEFORE writing a spec or a call against it. A symbol that does not exist yet is reported cleanly as such — it will not mislead you into thinking a file is merely missing.',
+            parameters: [
+                'fqcn' => [
+                    'type' => 'string',
+                    'description' => 'Fully-qualified class name, e.g. "App\\Calculator"',
+                ],
+            ],
+            handler: fn(array $args) => $inspector->describe($args['fqcn']),
+        );
+    }
+
     /**
      * Role-neutral guidance shared by both roles: the DSL, the tools, and the
      * project conventions. The role contract itself lives in the prompt artifacts.
@@ -1319,6 +1342,7 @@ final class AiAssistant
             'generate_feature' => ['Generate feature', 'feature_name'],
             'generate_steps' => ['Generate steps', 'feature_name'],
             'run_specs' => ['Run', 'path'],
+            'inspect_symbol' => ['Inspect', 'fqcn'],
         ];
 
         $info = $names[$toolCall->name] ?? null;
