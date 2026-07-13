@@ -16,11 +16,13 @@ namespace PhpSpec\Console\Command\Pair;
 
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\CodeGeneration\ClassGenerator;
+use PhpSpec\CodeGeneration\ClassLocation;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\GenerationCandidates;
+use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
@@ -45,6 +47,13 @@ final class CommandDispatcher
     private readonly SpecRunner $specRunner;
     private readonly RoleState $roleState;
     private ?AiAssistant $ai = null;
+
+    /**
+     * The most recent suite summary, remembered so every AI turn — including a
+     * freeform one that did not itself run the specs — is grounded in the same
+     * red/green state the human just saw.
+     */
+    private ?SuiteSummary $lastSituation = null;
 
     /**
      * @param SpecGenerator $specGenerator the spec file generator
@@ -131,6 +140,7 @@ final class CommandDispatcher
     private function handleNext(): int
     {
         $outcome = $this->specRunner->run('', new BufferedOutput());
+        $this->lastSituation = $outcome->summary ?? $this->lastSituation;
         $role = $this->roleState->current();
         $next = (new SuiteNarrator())->next($outcome, $role);
 
@@ -140,7 +150,7 @@ final class CommandDispatcher
         }
 
         if ($role->aiIsDriver() && $this->ai !== null && $next['action'] !== 'observe') {
-            $this->ai->handle('Take the single most valuable next step now, as one artifact, then hand back.');
+            $this->ai->handle('Take the single most valuable next step now, as one artifact, then hand back.', $this->lastSituation);
         }
 
         return self::CONTINUE;
@@ -244,17 +254,21 @@ final class CommandDispatcher
             $this->output->fileDisplay($specFile, $this->filesystem->read($specFile), true);
         }
 
-        // Offer class generation
-        if (!class_exists($fqcn)) {
+        // Offer class generation — gate on the file the generator would write,
+        // not class_exists(), which reports false for a class whose source is
+        // right there but fails to autoload (a PSR-4 mismatch) and would have us
+        // offer to create a file that already exists.
+        $location = ClassLocation::for($fqcn, ltrim($this->config->getSrcPath(), './'), $this->config->getPsr4Prefix());
+
+        if (!$location->exists($this->filesystem)) {
             $question = sprintf('Do you want me to create class <fg=white>%s</> for you?', $fqcn);
             if ($this->chooser->choose($question, 'create-class', 'create classes')) {
                 try {
                     $message = $this->classGenerator->generate($fqcn);
                     $this->output->success($message);
 
-                    $resolved = ClassGenerator::resolveFqcn($fqcn, ltrim($this->config->getSrcPath(), './'), $this->config->getPsr4Prefix());
-                    if ($this->filesystem->exists($resolved['filePath'])) {
-                        $this->output->fileDisplay($resolved['filePath'], $this->filesystem->read($resolved['filePath']), true);
+                    if ($this->filesystem->exists($location->filePath())) {
+                        $this->output->fileDisplay($location->filePath(), $this->filesystem->read($location->filePath()), true);
                     }
                 } catch (RuntimeException $e) {
                     $this->output->error($e->getMessage());
@@ -359,6 +373,7 @@ final class CommandDispatcher
     private function handleRun(string $argument): int
     {
         $outcome = $this->specRunner->run($argument, $this->output->getOutput());
+        $this->lastSituation = $outcome->summary ?? $this->lastSituation;
 
         $candidates = $outcome?->candidates;
         if ($candidates !== null && !$candidates->isEmpty()) {
@@ -545,7 +560,7 @@ final class CommandDispatcher
             return $this->handleUnknown($this->parser->parse($input)['command']);
         }
 
-        $this->ai->handle($input);
+        $this->ai->handle($input, $this->lastSituation);
         return self::CONTINUE;
     }
 

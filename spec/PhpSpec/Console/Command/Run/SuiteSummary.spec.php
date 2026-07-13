@@ -33,7 +33,82 @@ describe(SuiteSummary::class, function () {
 
         expect($summary->isRed())->toBe(true);
         expect($summary->failing())->toBe([
-            ['subject' => 'App\\Calculator', 'example' => 'adds numbers'],
+            ['subject' => 'App\\Calculator', 'example' => 'adds numbers', 'error' => ''],
+        ]);
+    });
+
+    it('carries the error message of a failing example so the navigator sees why', function () {
+        $example = new ExampleResult('adds numbers', [], isError: true);
+        $example->setError(new \PhpSpec\Specification\ExampleError(
+            'Expected 5 but got 3',
+            new \RuntimeException('Expected 5 but got 3'),
+        ));
+
+        $suite = new SuiteResult([
+            new SpecificationResult('App\\Calculator', [$example]),
+        ]);
+
+        expect(SuiteSummary::fromSuiteResult($suite)->failing())->toBe([
+            ['subject' => 'App\\Calculator', 'example' => 'adds numbers', 'error' => 'Expected 5 but got 3'],
+        ]);
+    });
+
+    it('collapses whitespace and clips a long error message to 300 characters', function () {
+        $long = str_repeat('very long assertion dump ', 40); // ~1000 chars, with newlines collapsed
+        $example = new ExampleResult('adds numbers', [], isError: true);
+        $example->setError(new \PhpSpec\Specification\ExampleError(
+            "line one\n" . $long,
+            new \RuntimeException('boom'),
+        ));
+
+        $suite = new SuiteResult([
+            new SpecificationResult('App\\Calculator', [$example]),
+        ]);
+
+        $error = SuiteSummary::fromSuiteResult($suite)->failing()[0]['error'];
+
+        expect(mb_strlen($error))->toBe(300);
+        expect($error)->toContain('line one very long');
+        expect($error)->toEndWith('…');
+    });
+
+    it('round-trips the error field through toArray/fromArray', function () {
+        $example = new ExampleResult('adds numbers', [], isError: true);
+        $example->setError(new \PhpSpec\Specification\ExampleError(
+            'Expected 5 but got 3',
+            new \RuntimeException('Expected 5 but got 3'),
+        ));
+        $summary = SuiteSummary::fromSuiteResult(new SuiteResult([
+            new SpecificationResult('App\\Calculator', [$example]),
+        ]));
+
+        expect(SuiteSummary::fromArray($summary->toArray())->failing())->toBe($summary->failing());
+    });
+
+    it('tolerates malformed failing/pending data from a decoded report', function () {
+        $summary = SuiteSummary::fromArray([
+            'status' => 'red',
+            'counts' => ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
+            'failing' => 'not-an-array',
+            'pending' => ['a scalar item', ['subject' => 'App\\X', 'example' => 'works', 'error' => 'boom']],
+        ]);
+
+        expect($summary->failing())->toBe([]);
+        expect($summary->pending())->toBe([
+            ['subject' => 'App\\X', 'example' => 'works', 'error' => 'boom'],
+        ]);
+    });
+
+    it('defaults the error field when a legacy report omits it', function () {
+        $summary = SuiteSummary::fromArray([
+            'status' => 'red',
+            'counts' => ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
+            'failing' => [['subject' => 'App\\Calculator', 'example' => 'adds numbers']],
+            'pending' => [],
+        ]);
+
+        expect($summary->failing())->toBe([
+            ['subject' => 'App\\Calculator', 'example' => 'adds numbers', 'error' => ''],
         ]);
     });
 
@@ -67,11 +142,12 @@ describe(SuiteSummary::class, function () {
 
         expect($summary->isGreen())->toBe(true);
         expect($summary->pending())->toBe([
-            ['subject' => 'App\\Basket', 'example' => 'applies a discount code'],
+            ['subject' => 'App\\Basket', 'example' => 'applies a discount code', 'error' => ''],
         ]);
         expect($summary->nearestPendingGap())->toBe([
             'subject' => 'App\\Basket',
             'example' => 'applies a discount code',
+            'error' => '',
         ]);
     });
 
@@ -85,7 +161,7 @@ describe(SuiteSummary::class, function () {
         ]);
 
         expect(SuiteSummary::fromSuiteResult($suite)->failing())->toBe([
-            ['subject' => 'App\\Calculator', 'example' => 'sums two numbers'],
+            ['subject' => 'App\\Calculator', 'example' => 'sums two numbers', 'error' => ''],
         ]);
     });
 

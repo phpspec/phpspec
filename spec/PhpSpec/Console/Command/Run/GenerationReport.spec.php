@@ -39,7 +39,7 @@ describe(GenerationReport::class, function () {
             new SuiteSummary(
                 'red',
                 ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
-                [['subject' => 'App\\Foo', 'example' => 'works']],
+                [['subject' => 'App\\Foo', 'example' => 'works', 'error' => 'Expected true but got false']],
             ),
         );
 
@@ -48,7 +48,9 @@ describe(GenerationReport::class, function () {
         $read = GenerationReport::read($this->path);
         expect($read->candidates->missingSpecClasses)->toBe(['App\\Foo']);
         expect($read->summary->status())->toBe('red');
-        expect($read->summary->failing())->toBe([['subject' => 'App\\Foo', 'example' => 'works']]);
+        expect($read->summary->failing())->toBe([
+            ['subject' => 'App\\Foo', 'example' => 'works', 'error' => 'Expected true but got false'],
+        ]);
     });
 
     it('reads a legacy bare-candidates report as an outcome without a summary', function () {

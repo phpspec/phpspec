@@ -19,11 +19,11 @@ use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Contracts\ToolInterface;
 use PhpSpec\Ai\Message;
 use PhpSpec\Ai\Response;
-use PhpSpec\Ai\SpecRunner;
 use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
+use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
@@ -51,16 +51,26 @@ final class AiAssistant
     private const MAX_TURNS = 50;
 
     /**
+     * The output-token ceiling per provider call when config does not set one.
+     * Generous enough for a reasoning model to plan, write one artifact, and
+     * report without truncation; `ai.max_tokens` in phpspec.yml can raise it.
+     */
+    private const DEFAULT_MAX_TOKENS = 16384;
+
+    /**
      * How many tool rounds a driving AI gets after its one artifact — enough to
      * run the spec and report — before the turn hands back to the human.
      */
     private const DRIVER_WRAPUP_ROUNDS = 4;
 
-    private const WRITE_TOOLS = ['generate_spec', 'add_example', 'generate_feature', 'generate_steps', 'write_file', 'update_file'];
+    private const WRITE_TOOLS = ['describe', 'add_example', 'generate_feature', 'generate_steps', 'write_file', 'update_file'];
 
     private readonly Chooser $chooser;
 
     private readonly RoleState $roleState;
+
+    /** Runs specs and returns structured red/green, for run_specs and auto-verify. */
+    private readonly SpecRunner $specRunner;
 
     /** Role-neutral guidance (DSL, tools, project conventions), cached once. */
     private string $baseGuidance = '';
@@ -89,6 +99,8 @@ final class AiAssistant
      *                              so "always" answers span the whole pair session
      * @param RoleState|null $roleState the current pairing role; shared with the
      *                                  dispatcher so a /swap is seen by both
+     * @param SpecRunner|null $specRunner runs specs for run_specs and auto-verify;
+     *                                    defaults to a fresh subprocess runner
      */
     public function __construct(
         private readonly ProviderInterface $provider,
@@ -100,17 +112,24 @@ final class AiAssistant
         private readonly ?ExtensionLoader $extensionLoader = null,
         ?Chooser $chooser = null,
         ?RoleState $roleState = null,
+        ?SpecRunner $specRunner = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
         $this->roleState = $roleState ?? new RoleState();
+        $this->specRunner = $specRunner ?? new SubprocessRunner();
     }
 
     /**
      * Sends natural-language input to the LLM and displays the response.
      * Conversation history is preserved between calls.
+     *
+     * When a suite summary is supplied it is rendered as a fresh per-turn
+     * grounding message ("[Current situation]") injected before the input, so
+     * the model reacts to the same red/green reality the human sees. The message
+     * is deliberately kept out of the cached system prompt.
      */
-    public function handle(string $input): void
+    public function handle(string $input, ?SuiteSummary $situation = null): void
     {
         $this->output->getOutput()->writeln('');
         $this->output->getOutput()->writeln('  <fg=gray>Thinking...</>');
@@ -120,6 +139,7 @@ final class AiAssistant
             $this->ensureInitialised();
             $this->artifactWrittenThisHandle = false;
             $this->postArtifactRounds = 0;
+            $this->injectSituation($situation);
             $this->messages[] = Message::user($input);
 
             $text = $this->runLoop();
@@ -137,17 +157,59 @@ final class AiAssistant
     }
 
     /**
+     * Appends the per-turn grounding as a fresh user message, so the model sees
+     * the suite's real state before it reads the input. It is a normal turn
+     * message, never merged into the cached system prompt, so the built-once
+     * prompt and /swap's reloadPrompt() stay untouched.
+     */
+    private function injectSituation(?SuiteSummary $situation): void
+    {
+        if ($situation === null) {
+            return;
+        }
+
+        $report = SituationReport::fromSummary($situation, $this->roleState->current());
+        $this->messages[] = Message::user("[Current situation]\n" . $report->render());
+    }
+
+    /**
+     * After the AI's one artifact lands this round, runs the suite and feeds the
+     * fresh red/green back as a message, so the model learns the outcome of its
+     * own change without having to choose to run. The run is a read — it never
+     * consumes the one-artifact budget — and only fires the round the artifact
+     * is written (not on later rounds of the same turn).
+     */
+    private function autoVerifyIfWritten(bool $hadArtifactBeforeThisRound): void
+    {
+        if ($hadArtifactBeforeThisRound || !$this->artifactWrittenThisHandle) {
+            return;
+        }
+
+        $this->output->getOutput()->writeln('  <fg=gray>Verifying your change...</>');
+
+        $outcome = $this->specRunner->run('', $this->output->getOutput());
+
+        if ($outcome === null) {
+            return;
+        }
+
+        $report = SituationReport::fromOutcome($outcome, $this->roleState->current());
+        $this->messages[] = Message::user("[Auto-verify after your change]\n" . $report->render());
+    }
+
+    /**
      * Agentic loop: call provider, execute any tool calls, repeat until
      * the LLM returns a plain text response or max turns is reached.
      */
     private function runLoop(): string
     {
         $model = $this->model ?? 'gemini-2.5-pro';
+        $maxTokens = $this->maxTokens();
 
         for ($turn = 0; $turn < self::MAX_TURNS; $turn++) {
             $response = $this->provider->chat($this->messages, [
                 'model' => $model,
-                'maxTokens' => 8192,
+                'maxTokens' => $maxTokens,
                 'temperature' => 0.3,
                 'tools' => $this->advertisedTools(),
             ]);
@@ -169,12 +231,26 @@ final class AiAssistant
                 $this->messages[] = Message::toolResult($toolCall->id, $result);
             }
 
+            $this->autoVerifyIfWritten($hadArtifact);
+
             if ($this->driverTurnComplete($hadArtifact, $response)) {
                 return $this->driverHandBack();
             }
         }
 
         return 'Reached maximum tool turns. Please try a simpler request.';
+    }
+
+    /**
+     * The per-call output-token ceiling, taken from `ai.max_tokens` in config
+     * when set, otherwise the generous default — so a slow reasoning model is
+     * not cut off mid-answer, and a project can lift the cap further.
+     */
+    private function maxTokens(): int
+    {
+        $aiConfig = $this->config->getAiConfig();
+
+        return $aiConfig['maxTokens'] ?? self::DEFAULT_MAX_TOKENS;
     }
 
     /**
@@ -279,11 +355,12 @@ final class AiAssistant
         $this->output->getOutput()->writeln($this->formatToolDisplay($toolCall));
         PairLogger::log('TOOL', "$toolCall->name(" . json_encode($toolCall->arguments) . ')');
 
-        // Writes the role allows still need the user's go-ahead.
-        if ($isWrite && !$this->chooser->choose('Allow this action?', 'write-files', 'apply file changes')) {
+        // Writes the role allows still need the user's go-ahead, shown against
+        // the driver's stated plan so the navigator confirms a real decision.
+        if ($isWrite && !$this->chooser->choose($this->confirmQuestion($toolCall), 'write-files', 'apply file changes')) {
             PairLogger::log('RESULT', 'User declined');
 
-            return ['error' => 'User declined this action.'];
+            return self::declineSteer();
         }
 
         try {
@@ -304,6 +381,34 @@ final class AiAssistant
 
             return ['error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * The confirm-step prompt: the driver's stated plan (the write tool's
+     * `intent`) so the navigator sees what they are agreeing to, falling back to
+     * a bare go-ahead when no plan was given.
+     */
+    private function confirmQuestion(ToolCall $toolCall): string
+    {
+        $intent = $toolCall->arguments['intent'] ?? null;
+
+        if (is_string($intent) && trim($intent) !== '') {
+            return 'Plan: ' . trim($intent) . "\n  Apply this change?";
+        }
+
+        return 'Allow this action?';
+    }
+
+    /**
+     * The reply handed back to the model when the navigator declines a write at
+     * the confirm step: it steers back into the cycle — re-clarify, don't retry.
+     *
+     * @return array{error: string}
+     */
+    private static function declineSteer(): array
+    {
+        return ['error' => 'You declined this step. Don\'t repeat the same write — ask what I should '
+            . 'change instead, then re-plan. Or /swap to take the keyboard back.'];
     }
 
     /**
@@ -403,7 +508,7 @@ final class AiAssistant
     private function buildTools(): array
     {
         $tools = [
-            $this->generateSpecTool(),
+            $this->describeTool(),
             $this->addExampleTool(),
             $this->generateFeatureTool(),
             $this->generateStepsTool(),
@@ -458,6 +563,22 @@ final class AiAssistant
     }
 
     /**
+     * The shared `intent` parameter for every write tool: the driver's one-line
+     * plan, surfaced to the navigator at the confirm prompt so the go-ahead is a
+     * real decision, not a blind "allow this action?".
+     *
+     * @return array{type: string, description: string}
+     */
+    private static function intentParameter(): array
+    {
+        return [
+            'type' => 'string',
+            'description' => 'One line stating what this change does and why, shown to the '
+                . 'navigator at the confirm prompt (e.g. "add an example that total() sums the line items").',
+        ];
+    }
+
+    /**
      * Whether spec content is written in the legacy phpspec 8 ObjectBehavior
      * style rather than the phpspec 9 describe()/it()/expect() DSL. The model's
      * training prior leans hard on ObjectBehavior, so this is enforced, not just
@@ -481,6 +602,63 @@ final class AiAssistant
             . 'describe(Calculator::class, function () { it(\'adds numbers\', function () { expect((new Calculator())->add(2, 3))->toBe(5); }); }); '
             . '— no spec class, no "extends ObjectBehavior", no shouldHaveType/shouldReturn. '
             . 'Preserve the existing examples; do not replace them with a single initializable check.'];
+    }
+
+    /**
+     * Guards a raw write (write_file/update_file) whose target resolves under the
+     * spec directory — the path arbitrary content can otherwise take around the
+     * spec tools. Rejects phpspec 8 syntax and any rewrite that would drop
+     * existing examples, so both bypasses of the describe/add_example surface are
+     * closed. Returns the rejection payload, or null when the write may proceed.
+     *
+     * @return array{error: string}|null
+     */
+    private static function specWriteRejection(string $absPath, string $specDir, string $newContent, string $oldContent): ?array
+    {
+        if (!str_starts_with($absPath, $specDir)) {
+            return null;
+        }
+
+        if (self::isLegacySpec($newContent)) {
+            return self::legacySpecRejection();
+        }
+
+        if ($oldContent !== '' && self::countExamples($newContent) < self::countExamples($oldContent)) {
+            return self::destructiveSpecRejection();
+        }
+
+        return null;
+    }
+
+    /**
+     * The error handed back when a spec write would delete existing examples, so
+     * the model grows the spec with add_example instead of overwriting it.
+     *
+     * @return array{error: string}
+     */
+    private static function destructiveSpecRejection(): array
+    {
+        return ['error' => 'That rewrite would drop existing examples from the spec. Specs grow, they '
+            . 'are not overwritten — add behaviour with add_example, one example at a time. If you truly '
+            . 'mean to remove an example, say why first and get the navigator\'s yes.'];
+    }
+
+    /**
+     * Counts the it()/xit()/fit() examples in spec content, so a rewrite that
+     * leaves fewer than it started with can be recognised as destructive.
+     */
+    private static function countExamples(string $content): int
+    {
+        return (int) preg_match_all('/\b[xf]?it\s*\(/', $content);
+    }
+
+    /**
+     * The spec directory as an absolute path prefix, for testing whether a write
+     * target lands under it.
+     */
+    private function specDir(): string
+    {
+        return getcwd() . DIRECTORY_SEPARATOR . ltrim($this->config->getSpecPath(), './') . DIRECTORY_SEPARATOR;
     }
 
     /**
@@ -513,7 +691,7 @@ final class AiAssistant
         }
     }
 
-    private function generateSpecTool(): Tool
+    private function describeTool(): Tool
     {
         $specPath = ltrim($this->config->getSpecPath(), './');
         $specSuffix = $this->config->getSpecSuffix();
@@ -521,34 +699,38 @@ final class AiAssistant
         $output = $this->output;
 
         return Tool::make(
-            name: 'generate_spec',
-            description: 'Write a WHOLE spec file for a PHP class (new spec, or a full rewrite). Provide the full spec file content including <?php tag, use statements, describe() block, and all it() examples. To add ONE example to a spec that already exists, use add_example instead — do NOT regenerate the whole file.',
+            name: 'describe',
+            description: 'Start a spec for a PHP class: writes an empty describe() skeleton in the phpspec 9 DSL, with no examples. Idempotent — does nothing if the spec already exists. This is how a new spec begins; then add behaviour one example at a time with add_example. There is no whole-file spec write and no way to overwrite a spec, so existing examples are never lost.',
             parameters: [
                 'class_name' => [
                     'type' => 'string',
                     'description' => 'Class path using forward slashes (e.g. "App/Calculator")',
                 ],
-                'spec_content' => [
-                    'type' => 'string',
-                    'description' => 'The complete PHP spec file content',
-                ],
+                'intent' => self::intentParameter(),
             ],
             handler: function (array $args) use ($specPath, $specSuffix, $filesystem, $output) {
                 $classPath = $args['class_name'];
-                $content = $args['spec_content'];
-
-                if (self::isLegacySpec($content)) {
-                    return self::legacySpecRejection();
-                }
 
                 $filePath = getcwd() . DIRECTORY_SEPARATOR
                     . $specPath . DIRECTORY_SEPARATOR
                     . str_replace('/', DIRECTORY_SEPARATOR, $classPath)
                     . $specSuffix;
 
-                self::writeGenerated($filesystem, $output, $filePath, $content);
+                if ($filesystem->exists($filePath)) {
+                    $output->getOutput()->writeln(sprintf(
+                        '  <fg=gray>Spec already exists: %s</>',
+                        $filePath,
+                    ));
 
-                return "Spec file written to $filePath";
+                    return "Spec for $classPath already exists at $filePath; no change made.";
+                }
+
+                $generator = new SpecGenerator($specPath, $filesystem, $specSuffix);
+                $generator->generate($classPath);
+
+                $output->fileDisplay($filePath, $filesystem->read($filePath), true);
+
+                return "Spec skeleton for $classPath created at $filePath. Add behaviour with add_example.";
             },
         );
     }
@@ -562,7 +744,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'add_example',
-            description: 'Add ONE it() example for a method to an existing spec, appending it without rewriting the rest of the file. Idempotent: does nothing if that method is already exemplified. Prefer this over generate_spec whenever the spec already exists and you only need to add a single example.',
+            description: 'Add ONE it() example for a method to a spec, appending it without rewriting the rest of the file (creating the spec first if it does not exist). Idempotent: does nothing if that method is already exemplified. This is the only way to add behaviour to a spec — specs are never overwritten.',
             parameters: [
                 'class_name' => [
                     'type' => 'string',
@@ -572,6 +754,7 @@ final class AiAssistant
                     'type' => 'string',
                     'description' => 'The method name to add an example for (e.g. "add")',
                 ],
+                'intent' => self::intentParameter(),
             ],
             handler: function (array $args) use ($specPath, $specSuffix, $filesystem, $output) {
                 $classPath = $args['class_name'];
@@ -632,6 +815,7 @@ final class AiAssistant
                     'type' => 'string',
                     'description' => 'The complete Gherkin feature file content',
                 ],
+                'intent' => self::intentParameter(),
             ],
             handler: function (array $args) use ($filesystem, $output, $featuresPath) {
                 $name = $args['feature_name'];
@@ -664,6 +848,7 @@ final class AiAssistant
                     'type' => 'string',
                     'description' => 'The complete PHP step definitions file content',
                 ],
+                'intent' => self::intentParameter(),
             ],
             handler: function (array $args) use ($filesystem, $output, $stepsPath) {
                 $name = $args['feature_name'];
@@ -682,10 +867,11 @@ final class AiAssistant
     {
         $filesystem = $this->filesystem;
         $output = $this->output;
+        $specDir = $this->specDir();
 
         return Tool::make(
             name: 'write_file',
-            description: 'Create a new file with the given content. Use this for any file type not covered by generate_spec/generate_feature/generate_steps.',
+            description: 'Create a new file with the given content. Use this for source and other files not covered by describe/generate_feature/generate_steps. Specs are written with describe/add_example, not here.',
             parameters: [
                 'path' => [
                     'type' => 'string',
@@ -695,14 +881,20 @@ final class AiAssistant
                     'type' => 'string',
                     'description' => 'The complete file content',
                 ],
+                'intent' => self::intentParameter(),
             ],
-            handler: function (array $args) use ($filesystem, $output) {
+            handler: function (array $args) use ($filesystem, $output, $specDir) {
                 $path = $args['path'];
                 $content = $args['content'];
                 $absPath = getcwd() . '/' . ltrim($path, '/');
 
                 if ($filesystem->exists($absPath)) {
                     return "File already exists: $path. Use update_file to modify it.";
+                }
+
+                $rejection = self::specWriteRejection($absPath, $specDir, $content, '');
+                if ($rejection !== null) {
+                    return $rejection;
                 }
 
                 $dir = dirname($absPath);
@@ -722,10 +914,11 @@ final class AiAssistant
     {
         $filesystem = $this->filesystem;
         $output = $this->output;
+        $specDir = $this->specDir();
 
         return Tool::make(
             name: 'update_file',
-            description: 'Update an existing file with new content. Use this to modify source files, config files, or any existing file.',
+            description: 'Update an existing file with new content. Use this to modify source files, config files, or any existing file. To change a spec, add behaviour with add_example — a spec rewrite that drops existing examples is rejected.',
             parameters: [
                 'path' => [
                     'type' => 'string',
@@ -735,8 +928,9 @@ final class AiAssistant
                     'type' => 'string',
                     'description' => 'The complete new file content',
                 ],
+                'intent' => self::intentParameter(),
             ],
-            handler: function (array $args) use ($filesystem, $output) {
+            handler: function (array $args) use ($filesystem, $output, $specDir) {
                 $path = $args['path'];
                 $content = $args['content'];
                 $absPath = getcwd() . '/' . ltrim($path, '/');
@@ -746,6 +940,12 @@ final class AiAssistant
                 }
 
                 $oldContent = $filesystem->read($absPath);
+
+                $rejection = self::specWriteRejection($absPath, $specDir, $content, $oldContent);
+                if ($rejection !== null) {
+                    return $rejection;
+                }
+
                 $filesystem->write($absPath, $content);
                 $output->fileDiff($absPath, $oldContent, $content);
 
@@ -757,10 +957,12 @@ final class AiAssistant
     private function runSpecsTool(): Tool
     {
         $output = $this->output;
+        $specRunner = $this->specRunner;
+        $roleState = $this->roleState;
 
         return Tool::make(
             name: 'run_specs',
-            description: 'Run phpspec specs via subprocess. Returns stdout and stderr so you can report results.',
+            description: 'Run phpspec specs via subprocess. Returns the suite\'s red/green state with the failing and pending examples and their errors, so you can report results and decide the next step.',
             parameters: [
                 'path' => [
                     'type' => 'string',
@@ -768,17 +970,14 @@ final class AiAssistant
                     'default' => '',
                 ],
             ],
-            handler: function (array $args) use ($output) {
+            handler: function (array $args) use ($output, $specRunner, $roleState) {
                 $path = $args['path'] ?? '';
-                if ($path === '') {
-                    $path = '.';
-                }
 
                 $output->getOutput()->writeln('  <fg=gray>Running specs...</>');
 
-                [, $result] = SpecRunner::run($path);
+                $outcome = $specRunner->run($path, $output->getOutput());
 
-                return $result ?: 'No output';
+                return SituationReport::fromOutcome($outcome, $roleState->current())->render();
             },
         );
     }
@@ -914,16 +1113,16 @@ final class AiAssistant
         - Use `let()` to set up shared state, `it()` for individual examples.
         - Use `context()` to group related examples.
         - Generate meaningful, descriptive example names.
-        - To add a SINGLE example for a method to a spec that ALREADY exists, use `add_example`
-          (it appends just that one it() and is idempotent). Do NOT call `generate_spec` to add
-          one example — regenerating the whole file re-marks every line as new and risks
-          duplicating existing examples. Reserve `generate_spec` for a brand-new spec or a
-          deliberate full rewrite.
+        - Grow specs, never overwrite them. To START a spec for a class, use `describe` (it writes
+          an empty describe() skeleton and no-ops if the spec already exists). To add behaviour,
+          use `add_example`, one it() at a time (idempotent). There is no whole-file spec write and
+          no way to overwrite a spec, so existing examples are never lost. A raw write_file/update_file
+          to a spec path that drops examples, or uses phpspec 8 ObjectBehavior syntax, is rejected.
         - Match the coding style and patterns of existing specs and step definitions in the project.
         - When asked to run specs, use the `run_specs` tool and report the results clearly.
         - Keep responses concise. Show what you did, not long explanations of what you will do.
-        - Use `write_file` to create any new file not covered by the generate_* tools.
-        - Use `update_file` to modify existing files. Always `read_file` first to see the current content.
+        - Use `write_file` to create source and other new files (not specs — use describe/add_example).
+        - Use `update_file` to modify existing source files. Always `read_file` first to see the current content.
 
         ## MANDATORY: Read before generating (applies to ALL generation tasks)
         Before generating ANY `.feature`, `.steps.php`, or `.spec.php` file you MUST first:
@@ -1115,7 +1314,7 @@ final class AiAssistant
             'list_files' => ['List', 'directory'],
             'write_file' => ['Write', 'path'],
             'update_file' => ['Update', 'path'],
-            'generate_spec' => ['Generate spec', 'class_name'],
+            'describe' => ['Describe', 'class_name'],
             'add_example' => ['Add example', 'class_name'],
             'generate_feature' => ['Generate feature', 'feature_name'],
             'generate_steps' => ['Generate steps', 'feature_name'],

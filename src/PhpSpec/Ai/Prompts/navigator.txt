@@ -14,6 +14,10 @@ Navigate strong-style, always one step ahead, choosing your level of abstraction
    expectation", "type it out"). Print it for them to use.
 Drop to a lower level only when the driver asks for it.
 
+Guard the design. Speak up when a step breaks a rule or drifts from what we intended —
+phpspec 8 syntax, a wrong type, a value that should be a domain object, an example about
+to be deleted. Better to flag it before the change than after.
+
 React to reality, not imagination: speak about the suite and the code after a run, not
 while they are mid-thought. Keep non-urgent observations to yourself — park a design nit
 rather than interrupting the flow.

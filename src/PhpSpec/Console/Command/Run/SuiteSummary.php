@@ -29,10 +29,16 @@ use PhpSpec\Results;
 final readonly class SuiteSummary
 {
     /**
+     * The longest an example's error message is carried at; enough to name the
+     * expectation that failed without flooding the model's context.
+     */
+    private const ERROR_MAX = 300;
+
+    /**
      * @param 'red'|'green' $status
      * @param array{examples: int, passes: int, failures: int, errors: int, pending: int} $counts
-     * @param list<array{subject: string, example: string}> $failing
-     * @param list<array{subject: string, example: string}> $pending
+     * @param list<array{subject: string, example: string, error: string}> $failing
+     * @param list<array{subject: string, example: string, error: string}> $pending
      */
     public function __construct(
         private string $status,
@@ -70,24 +76,43 @@ final readonly class SuiteSummary
     /**
      * Walks a result subtree, collecting failing and pending examples under the
      * subject of the specification they belong to (the subject lives on the
-     * SpecificationResult, not the ExampleResult, so it is threaded down).
+     * SpecificationResult, not the ExampleResult, so it is threaded down). Each
+     * failing example carries its error message so the navigator sees *why* it
+     * is red, not just that it is.
      *
-     * @param list<array{subject: string, example: string}> $failing
-     * @param list<array{subject: string, example: string}> $pending
+     * @param list<array{subject: string, example: string, error: string}> $failing
+     * @param list<array{subject: string, example: string, error: string}> $pending
      */
     private static function classify(Results $node, string $subject, array &$failing, array &$pending): void
     {
         foreach ($node->getResults() as $child) {
             if ($child instanceof ExampleResult) {
                 if ($child->isFailure() || $child->isError()) {
-                    $failing[] = ['subject' => $subject, 'example' => $child->getTitle()];
+                    $failing[] = [
+                        'subject' => $subject,
+                        'example' => $child->getTitle(),
+                        'error' => self::truncateError($child->getMessage()),
+                    ];
                 } elseif ($child->isPending()) {
-                    $pending[] = ['subject' => $subject, 'example' => $child->getTitle()];
+                    $pending[] = ['subject' => $subject, 'example' => $child->getTitle(), 'error' => ''];
                 }
             } elseif ($child instanceof Results) {
                 self::classify($child, $subject, $failing, $pending);
             }
         }
+    }
+
+    /**
+     * Collapses an error message to a single line and clips it to ERROR_MAX, so
+     * one runaway assertion dump cannot swamp the grounding the model receives.
+     */
+    private static function truncateError(string $message): string
+    {
+        $message = trim((string) preg_replace('/\s+/', ' ', $message));
+
+        return mb_strlen($message) > self::ERROR_MAX
+            ? mb_substr($message, 0, self::ERROR_MAX - 1) . '…'
+            : $message;
     }
 
     /** @return 'red'|'green' */
@@ -126,26 +151,26 @@ final readonly class SuiteSummary
         return $this->counts;
     }
 
-    /** @return list<array{subject: string, example: string}> */
+    /** @return list<array{subject: string, example: string, error: string}> */
     public function failing(): array
     {
         return $this->failing;
     }
 
-    /** @return list<array{subject: string, example: string}> */
+    /** @return list<array{subject: string, example: string, error: string}> */
     public function pending(): array
     {
         return $this->pending;
     }
 
-    /** @return array{subject: string, example: string}|null */
+    /** @return array{subject: string, example: string, error: string}|null */
     public function nearestPendingGap(): ?array
     {
         return $this->pending[0] ?? null;
     }
 
     /**
-     * @return array{status: string, counts: array<string, int>, failing: list<array{subject: string, example: string}>, pending: list<array{subject: string, example: string}>}
+     * @return array{status: string, counts: array<string, int>, failing: list<array{subject: string, example: string, error: string}>, pending: list<array{subject: string, example: string, error: string}>}
      */
     public function toArray(): array
     {
@@ -165,12 +190,6 @@ final readonly class SuiteSummary
         /** @var array<string, int> $counts */
         $counts = is_array($data['counts'] ?? null) ? $data['counts'] : [];
 
-        /** @var list<array{subject: string, example: string}> $failing */
-        $failing = is_array($data['failing'] ?? null) ? array_values($data['failing']) : [];
-
-        /** @var list<array{subject: string, example: string}> $pending */
-        $pending = is_array($data['pending'] ?? null) ? array_values($data['pending']) : [];
-
         return new self(
             ($data['status'] ?? 'green') === 'red' ? 'red' : 'green',
             [
@@ -180,8 +199,38 @@ final readonly class SuiteSummary
                 'errors' => $counts['errors'] ?? 0,
                 'pending' => $counts['pending'] ?? 0,
             ],
-            $failing,
-            $pending,
+            self::normaliseExamples($data['failing'] ?? null),
+            self::normaliseExamples($data['pending'] ?? null),
         );
+    }
+
+    /**
+     * Rebuilds a list of example tuples from decoded data, defaulting any missing
+     * field so a child report written before the `error` field existed (a
+     * mid-upgrade subprocess) never crashes the parent.
+     *
+     * @param mixed $items the decoded failing/pending list, of unknown shape
+     * @return list<array{subject: string, example: string, error: string}>
+     */
+    private static function normaliseExamples(mixed $items): array
+    {
+        if (!is_array($items)) {
+            return [];
+        }
+
+        $normalised = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $normalised[] = [
+                'subject' => is_string($item['subject'] ?? null) ? $item['subject'] : '',
+                'example' => is_string($item['example'] ?? null) ? $item['example'] : '',
+                'error' => is_string($item['error'] ?? null) ? $item['error'] : '',
+            ];
+        }
+
+        return $normalised;
     }
 }

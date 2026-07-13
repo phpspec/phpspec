@@ -3,14 +3,14 @@
 use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use PhpSpec\Console\Command\Run\CodeGenerator;
-use PhpSpec\Result\ExampleResult;
-use PhpSpec\Result\MatchResult;
 use PhpSpec\Result\ContextResult;
-use PhpSpec\Result\SpecificationResult;
-use PhpSpec\Result\SuiteResult;
+use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\MatchResult;
 use PhpSpec\Result\ScenarioResult;
+use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\StepResult;
+use PhpSpec\Result\SuiteResult;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(CodeGenerator::class, function () {
@@ -174,6 +174,52 @@ describe(CodeGenerator::class, function () {
             array_map('unlink', glob($absDir . '/src/CgTest2/*') ?: []);
             @rmdir($absDir . '/src/CgTest2');
             array_map('unlink', glob($absDir . '/spec/*'));
+            @rmdir($absDir . '/src');
+            @rmdir($absDir . '/spec');
+            @rmdir($absDir);
+        });
+    });
+
+    context('does not offer to create a class whose file already exists', function () {
+
+        it('skips the create-class offer for a "Class not found" that is really a PSR-4/autoload mismatch', function () {
+            // The bug: a run reports `Class "App\Model\User" not found` — a runtime
+            // autoload failure (no/mismatched PSR-4 mapping), not a missing file — and
+            // the generator, resolving the guard path with a *different* prefix than it
+            // would write with, offered to create a class that is already on disk.
+            $relDir = '.tmp_codegen_existing_' . getmypid();
+            $absDir = getcwd() . '/' . $relDir;
+            @mkdir($absDir . '/src/Model', 0777, true);
+            @mkdir($absDir . '/spec', 0777, true);
+
+            // File already present at the PSR-4 path (prefix "App" stripped -> src/Model/User.php)
+            file_put_contents(
+                $absDir . '/src/Model/User.php',
+                "<?php\n\nnamespace App\\Model;\n\nclass User\n{\n}\n",
+            );
+
+            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', false, psr4Prefix: 'App');
+
+            $original = new \RuntimeException('Class "App\Model\User" not found');
+            $error = new \PhpSpec\Specification\ExampleError('Class "App\Model\User" not found', $original);
+            $example = new ExampleResult('is a user', [], isError: true);
+            $example->setError($error);
+            $spec = new SpecificationResult('App\Model\User', [$example]);
+            $suite = new SuiteResult([$spec]);
+
+            $generator->generate($this->output, $suite, false);
+            $out = $this->output->fetch();
+
+            expect($out)->not()->toContain('Do you want me to create');
+            expect($out)->not()->toContain('not found');
+            expect($out)->toBe('');
+
+            // The existing file is untouched.
+            expect(file_get_contents($absDir . '/src/Model/User.php'))->toContain('class User');
+
+            // Cleanup
+            @unlink($absDir . '/src/Model/User.php');
+            @rmdir($absDir . '/src/Model');
             @rmdir($absDir . '/src');
             @rmdir($absDir . '/spec');
             @rmdir($absDir);
