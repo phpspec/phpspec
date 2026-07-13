@@ -622,7 +622,10 @@ final class AiAssistant
      */
     private static function specWriteRejection(string $absPath, string $specDir, string $newContent, string $oldContent): ?array
     {
-        if (!str_starts_with($absPath, $specDir)) {
+        // The write path is built with "/" while the spec dir uses the platform
+        // separator, so normalise both before comparing — otherwise the guard
+        // silently misses on Windows (mixed "\" and "/") and the write leaks through.
+        if (!str_starts_with(self::normalisePath($absPath), self::normalisePath($specDir))) {
             return null;
         }
 
@@ -666,6 +669,16 @@ final class AiAssistant
     private function specDir(): string
     {
         return getcwd() . DIRECTORY_SEPARATOR . ltrim($this->config->getSpecPath(), './') . DIRECTORY_SEPARATOR;
+    }
+
+    /**
+     * Normalises a path to forward slashes so "under the spec dir" comparisons
+     * hold regardless of the platform separator (and the mixed "\"/"/" a write
+     * path can carry on Windows).
+     */
+    private static function normalisePath(string $path): string
+    {
+        return str_replace('\\', '/', $path);
     }
 
     /**
