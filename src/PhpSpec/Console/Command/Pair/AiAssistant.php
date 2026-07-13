@@ -544,9 +544,12 @@ final class AiAssistant
 
         return Tool::make(
             name: 'ask_user',
-            description: 'Ask the user a yes/no question before proceeding. Use this whenever you need '
-                . 'a confirmation or decision from the user instead of asking in plain text. '
-                . 'Returns "yes", "always" (yes now and for all similar future questions) or "no".',
+            description: 'Ask the user a strictly YES/NO question before proceeding — it shows a '
+                . 'Yes / always / No chooser. Use it ONLY for a binary confirmation (e.g. "shall I '
+                . 'generate fooBar()?"). NEVER use it for an open-ended question such as "what should '
+                . 'the arguments be?" — ask those in plain text and end your turn so the user can type '
+                . 'a full answer at the prompt. Returns "yes", "always" (yes now and for all similar '
+                . 'future questions), or "no".',
             parameters: [
                 'question' => [
                     'type' => 'string',

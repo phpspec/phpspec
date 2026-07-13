@@ -24,4 +24,11 @@ describe('pair role prompt artifacts', function () {
         expect($text)->toContain('add_example');
     });
 
+    it('steers open clarifying questions to plain text, reserving ask_user for yes/no', function () use ($read) {
+        $text = $read('driver.txt');
+
+        expect($text)->toContain('plain-text question');
+        expect($text)->toContain('Use ask_user only for a straight yes/no.');
+    });
+
 });
