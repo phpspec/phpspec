@@ -337,7 +337,7 @@ final class Configuration
     /**
      * Returns the AI configuration block, or null if not configured.
      *
-     * @return array{provider: string, model?: string, api_key: string}|null
+     * @return array{provider: string, model?: string, maxTokens?: int, api_key: string}|null
      */
     public function getAiConfig(): ?array
     {
@@ -350,6 +350,9 @@ final class Configuration
         ];
         if (isset($ai['model']) && is_string($ai['model'])) {
             $result['model'] = $ai['model'];
+        }
+        if (isset($ai['max_tokens']) && is_numeric($ai['max_tokens']) && (int) $ai['max_tokens'] > 0) {
+            $result['maxTokens'] = (int) $ai['max_tokens'];
         }
         $result['api_key'] = $ai['api_key'];
         return $result;

@@ -8,9 +8,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
  - Pair mode driver/navigator roles: `/swap` hands the keyboard between you and the AI. While you drive, the AI navigates and never writes files on its own (its write tools are withheld, not just discouraged); after `/swap` it drives, writing one artifact per turn before handing back. Role contracts live in reviewed prompt artifacts
+ - Configure the AI's per-call output-token ceiling with `ai.max_tokens` in your phpspec config (default 16384), so a slow reasoning model is not cut off mid-answer
+ - Pair mode's AI can inspect a class, interface or trait by name (`inspect_symbol`): whether it exists, where its file is, and its real public method signatures from Reflection — so it checks a type's actual API before writing against it, and a symbol that does not exist yet is reported cleanly instead of as a missing file
 
 ### Changed
  - Pair mode opens with an observation drawn from your suite's state (the failure to start on, the nearest pending example, or a clean slate) instead of a static command menu; the greeting adapts to whether an AI provider is configured
+ - Pair mode's AI now reads the suite's real red/green state each turn — the failing and pending examples with their error messages — so it reasons from what the suite actually did rather than guessing, and stays grounded in the same reality you see
+ - Pair mode's AI runs specs through the structured runner (`run_specs` now reports red/green with the failing and pending examples, not raw stdout) and auto-verifies its own change: after the driver writes its one artifact, the suite runs and the fresh state is fed straight back, so it never has to guess whether the change worked
+ - Pair mode's driving AI works as a conversation — clarify the intent, state a one-line plan, confirm, make the one change, present the diff and result. The plan is shown at the go-ahead prompt so you agree to something concrete, and declining steers it to re-plan rather than repeat the same write
+ - Pair mode grows specs instead of overwriting them: the AI starts a spec with `describe` (an empty skeleton, idempotent) and adds behaviour one example at a time with `add_example`. There is no whole-file spec write; a raw write to a spec path that would drop existing examples, or that uses phpspec 8 ObjectBehavior syntax, is rejected
+ - Pair mode keeps long AI sessions fast and focused: superseded suite-state grounding is dropped each turn, stale tool output is trimmed, and once the history grows large the oldest turns are folded into a compact "earlier in this session" summary — always keeping the system prompt, the recent turns, and the current state
  - Pair mode `next` reads the real suite state and coaches the next step (run a red spec to drive out the class, fill the nearest pending example) instead of guessing
  - Show a real diff for generated methods and exemplified specs
  - Include an add example AI tool
@@ -18,6 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
  - `next` no longer loops suggesting you describe a spec that already exists; when the spec is there it coaches you to run it and drive out the missing class
+ - Code generation no longer offers to create a class, interface or spec whose file already exists: a `Class "X" not found` reported at runtime (a PSR-4/autoload mismatch, not a missing file) is now checked against the file the generator would actually write, using the configured PSR-4 prefix consistently for both the check and the write
 
 ## [9.0.0-beta.6](https://github.com/phpspec/phpspec/compare/9.0.0-beta.5...9.0.0-beta.6)
 

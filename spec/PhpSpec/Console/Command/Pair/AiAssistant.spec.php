@@ -9,8 +9,12 @@ use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use PhpSpec\Console\Command\Pair\PairRole;
 use PhpSpec\Console\Command\Pair\RoleState;
+use PhpSpec\Console\Command\Pair\SpecRunner;
+use PhpSpec\Console\Command\Run\RunOutcome;
+use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Filesystem;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 
 describe(AiAssistant::class, function () {
 
@@ -46,6 +50,18 @@ describe(AiAssistant::class, function () {
                 return ($this->responder)($messages, $options);
             }
         };
+
+        // Fake spec runner so run_specs and post-write auto-verify never spawn a
+        // real phpspec subprocess. Tests set ->outcome to script the result; the
+        // default null means auto-verify appends nothing.
+        $this->specRunner = new class implements SpecRunner {
+            public ?RunOutcome $outcome = null;
+
+            public function run(string $argument, OutputInterface $output): ?RunOutcome
+            {
+                return $this->outcome;
+            }
+        };
     });
 
     it('routes ask_user tool calls from the model through the chooser', function (Filesystem $fs) {
@@ -62,7 +78,7 @@ describe(AiAssistant::class, function () {
             return new Response('done');
         };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
         $this->answers = ['2'];
         $assistant->handle('add a fooBar method');
 
@@ -79,15 +95,17 @@ describe(AiAssistant::class, function () {
             return new Response('ok');
         };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
         $assistant->handle('write me a spec for a Calculator');
 
         $names = array_column($captured['tools'] ?? [], 'name');
-        expect($names)->not()->toContain('generate_spec');
+        expect($names)->not()->toContain('describe');
         expect($names)->not()->toContain('write_file');
         expect($names)->not()->toContain('add_example');
         expect($names)->toContain('read_file');
         expect($names)->toContain('run_specs');
+        // Read tools like inspect_symbol stay available while navigating.
+        expect($names)->toContain('inspect_symbol');
     });
 
     it('refuses a write tool call while the human drives', function (Filesystem $fs) {
@@ -95,22 +113,21 @@ describe(AiAssistant::class, function () {
         $turn = 0;
         $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
             if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'generate_spec', [
+                return new Response('', [new ToolCall('t1', 'describe', [
                     'class_name' => 'App/Thing',
-                    'spec_content' => '<?php // spec',
                 ])]);
             }
             $captured = $messages;
             return new Response('done');
         };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
         $assistant->handle('write a spec');
 
         expect($fs->write())->not()->toHaveBeenCalled();
         expect((string) json_encode($captured))->toContain('navigating');
         // A refused write is not displayed as if it ran.
-        expect($this->buffer->fetch())->not()->toContain('Generate spec');
+        expect($this->buffer->fetch())->not()->toContain('Describe');
     });
 
     it('blocks write tools when the chooser declines', function (Filesystem $fs) {
@@ -118,21 +135,21 @@ describe(AiAssistant::class, function () {
         $turn = 0;
         $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
             if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'generate_spec', [
+                return new Response('', [new ToolCall('t1', 'describe', [
                     'class_name' => 'App/Wanted',
-                    'spec_content' => '<?php // spec',
                 ])]);
             }
             $captured = $messages;
             return new Response('done');
         };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
         $this->answers = ['3'];
         $assistant->handle('spec App/Wanted');
 
         expect($fs->write())->not()->toHaveBeenCalled();
-        expect((string) json_encode($captured))->toContain('User declined');
+        // Declining steers the driver back into the cycle, rather than a bare "declined".
+        expect((string) json_encode($captured))->toContain('declined this step');
     });
 
     it('ends the driver turn after one artifact instead of chasing a bigger goal', function (Filesystem $fs) {
@@ -143,9 +160,9 @@ describe(AiAssistant::class, function () {
         $this->provider->responder = function () use (&$calls) {
             $calls++;
             if ($calls === 1) {
-                return new Response('', [new ToolCall('t1', 'generate_spec', [
+                return new Response('', [new ToolCall('t1', 'add_example', [
                     'class_name' => 'App/A',
-                    'spec_content' => '<?php // a',
+                    'method' => 'sum',
                 ])]);
             }
 
@@ -156,7 +173,7 @@ describe(AiAssistant::class, function () {
             ])]);
         };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
         $this->answers = ['1'];
         $assistant->handle('get to green');
 
@@ -167,7 +184,7 @@ describe(AiAssistant::class, function () {
         expect($this->buffer->fetch())->toContain('one change');
     });
 
-    it('rejects a spec written in legacy ObjectBehavior syntax without writing it', function (Filesystem $fs) {
+    it('rejects phpspec 8 ObjectBehavior syntax written to a spec path via update_file', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
         allow($fs->read())->toReturn("<?php\ndescribe(Wallet::class, function () {});\n");
 
@@ -175,16 +192,18 @@ describe(AiAssistant::class, function () {
         $turn = 0;
         $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
             if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'generate_spec', [
-                    'class_name' => 'App/Wallet',
-                    'spec_content' => "<?php\n\nnamespace spec\\App;\n\nuse App\\Wallet;\nuse PhpSpec\\ObjectBehavior;\n\nclass WalletSpec extends ObjectBehavior\n{\n    function it_is_initializable()\n    {\n        \$this->shouldHaveType(Wallet::class);\n    }\n}\n",
+                // The DSL guard applies to any write under the spec path, closing the
+                // write_file/update_file bypass of the describe/add_example surface.
+                return new Response('', [new ToolCall('t1', 'update_file', [
+                    'path' => 'spec/App/Wallet.spec.php',
+                    'content' => "<?php\n\nnamespace spec\\App;\n\nuse App\\Wallet;\nuse PhpSpec\\ObjectBehavior;\n\nclass WalletSpec extends ObjectBehavior\n{\n    function it_is_initializable()\n    {\n        \$this->shouldHaveType(Wallet::class);\n    }\n}\n",
                 ])]);
             }
             $captured = $messages;
             return new Response('done');
         };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
         $this->answers = ['1'];
         $assistant->handle('bring it back to green');
 
@@ -209,7 +228,7 @@ describe(AiAssistant::class, function () {
             return new Response('done');
         };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
         $this->answers = ['2'];
         $assistant->handle('build the checkout feature');
 
@@ -239,35 +258,37 @@ describe(AiAssistant::class, function () {
             return new Response('done');
         };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
         $this->answers = ['1'];
         $assistant->handle('update the checkout class');
 
         expect($fs->write())->toHaveBeenCalled();
     });
 
-    it('shows a diff, not a whole-file listing, when generate_spec overwrites an existing spec', function (Filesystem $fs) {
+    it('rejects a spec overwrite via update_file that would drop existing examples', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"instantiates\", fn() => null);\n});\n");
+        // The spec on disk has two examples; the rewrite keeps only one.
+        allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"adds\", fn() => null);\n    it(\"subtracts\", fn() => null);\n});\n");
 
+        $captured = null;
         $turn = 0;
-        $this->provider->responder = function () use (&$turn) {
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
             if (++$turn === 1) {
-                return new Response('', [new ToolCall('t1', 'generate_spec', [
-                    'class_name' => 'App/Calculator',
-                    'spec_content' => "<?php\ndescribe(Calculator::class, function() {\n    it(\"instantiates\", fn() => null);\n    it(\"should total\", fn() => null);\n});\n",
+                return new Response('', [new ToolCall('t1', 'update_file', [
+                    'path' => 'spec/App/Calculator.spec.php',
+                    'content' => "<?php\ndescribe(Calculator::class, function() {\n    it(\"adds\", fn() => null);\n});\n",
                 ])]);
             }
+            $captured = $messages;
             return new Response('done');
         };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
         $this->answers = ['1'];
-        $assistant->handle('add a total example');
+        $assistant->handle('trim the calculator spec');
 
-        $text = $this->buffer->fetch();
-        expect($text)->toContain('[MODIFIED]');
-        expect($text)->not()->toContain('[NEW FILE]');
+        expect($fs->write())->not()->toHaveBeenCalled();
+        expect((string) json_encode($captured))->toContain('add_example');
     });
 
     it('appends a single example with add_example instead of rewriting the whole spec', function (Filesystem $fs) {
@@ -289,7 +310,7 @@ describe(AiAssistant::class, function () {
             return new Response('done');
         };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
         $this->answers = ['1'];
         $assistant->handle('add a total example to the calculator spec');
 
@@ -315,12 +336,189 @@ describe(AiAssistant::class, function () {
             return new Response('done');
         };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
         $this->answers = ['1'];
         $assistant->handle('add a total example');
 
         expect($fs->write())->not()->toBeCalled();
         expect($this->buffer->fetch())->toContain('already exists');
+    });
+
+    it('starts a new spec with describe, writing a skeleton', function (Filesystem $fs) {
+        $turn = 0;
+        $this->provider->responder = function () use (&$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'describe', ['class_name' => 'App/Ledger'])]);
+            }
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('start a ledger spec');
+
+        expect($fs->write())->toHaveBeenCalled();
+    });
+
+    it('is idempotent: describe on an existing spec writes nothing', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\ndescribe(Ledger::class, function () {});\n");
+
+        $turn = 0;
+        $this->provider->responder = function () use (&$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'describe', ['class_name' => 'App/Ledger'])]);
+            }
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('describe the ledger');
+
+        expect($fs->write())->not()->toBeCalled();
+        expect($this->buffer->fetch())->toContain('already exists');
+    });
+
+    it('allows a source write via write_file, unaffected by the spec guard', function (Filesystem $fs) {
+        $turn = 0;
+        $this->provider->responder = function () use (&$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'write_file', [
+                    'path' => 'src/App/Ledger.php',
+                    'content' => "<?php\n\nnamespace App;\n\nclass Ledger {}\n",
+                ])]);
+            }
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('create the Ledger class');
+
+        expect($fs->write())->toHaveBeenCalled();
+    });
+
+    it('shows the driver\'s stated intent at the confirm prompt', function (Filesystem $fs) {
+        $turn = 0;
+        $this->provider->responder = function () use (&$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'describe', [
+                    'class_name' => 'App/Ledger',
+                    'intent' => 'start a spec that pins down how the ledger records entries',
+                ])]);
+            }
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('describe the ledger');
+
+        expect($this->buffer->fetch())->toContain('Plan: start a spec that pins down how the ledger records entries');
+    });
+
+    it('grounds a symbol via inspect_symbol, reporting its real signatures instead of guessing', function (Filesystem $fs) {
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'inspect_symbol', [
+                    'fqcn' => 'PhpSpec\\CodeGeneration\\ClassLocation',
+                ])]);
+            }
+            $captured = $messages;
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant->handle('what does ClassLocation offer?');
+
+        // The tool result carries the real class surface, not a guess or a "File not found".
+        $json = (string) json_encode($captured);
+        expect($json)->toContain('class PhpSpec');
+        expect($json)->toContain('isAutoloadable');
+    });
+
+    it('reports the structured red/green state from run_specs, not raw stdout', function (Filesystem $fs) {
+        $this->specRunner->outcome = new RunOutcome(null, new SuiteSummary(
+            'red',
+            ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
+            [['subject' => 'App\\Calculator', 'example' => 'adds numbers', 'error' => 'Expected 5 but got 3']],
+        ));
+
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'run_specs', ['path' => ''])]);
+            }
+            $captured = $messages;
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant->handle('run the specs');
+
+        $json = (string) json_encode($captured);
+        expect($json)->toContain('SUITE: red');
+        expect($json)->toContain('adds numbers');
+        expect($json)->toContain('Expected 5 but got 3');
+    });
+
+    it('auto-verifies after the driver writes, feeding the fresh state back to the model', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function () {});\n");
+
+        $this->specRunner->outcome = new RunOutcome(null, new SuiteSummary(
+            'green',
+            ['examples' => 1, 'passes' => 1, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+        ));
+
+        $secondTurnMessages = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$secondTurnMessages, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'add_example', [
+                    'class_name' => 'App/Calculator',
+                    'method' => 'total',
+                ])]);
+            }
+            $secondTurnMessages = $messages;
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('spec the calculator');
+
+        $json = (string) json_encode($secondTurnMessages);
+        expect($json)->toContain('[Auto-verify after your change]');
+        expect($json)->toContain('SUITE: green');
+    });
+
+    it('does not auto-verify a write the navigator role refused', function (Filesystem $fs) {
+        $this->specRunner->outcome = new RunOutcome(null, new SuiteSummary('green'));
+
+        $secondTurnMessages = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$secondTurnMessages, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'describe', [
+                    'class_name' => 'App/Thing',
+                ])]);
+            }
+            $secondTurnMessages = $messages;
+            return new Response('done');
+        };
+
+        // No role passed: the human drives, so the write is refused and nothing lands.
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant->handle('write a spec');
+
+        $json = (string) json_encode($secondTurnMessages);
+        expect($json)->toContain('navigating');
+        expect($json)->not()->toContain('[Auto-verify');
     });
 
     it('reports unknown tools back to the model instead of crashing', function (Filesystem $fs) {
@@ -334,7 +532,7 @@ describe(AiAssistant::class, function () {
             return new Response('done');
         };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
         $assistant->handle('do something odd');
 
         expect((string) json_encode($captured))->toContain('Unknown tool');
@@ -345,10 +543,80 @@ describe(AiAssistant::class, function () {
             throw new RuntimeException('rate limited');
         };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
         $assistant->handle('anything');
 
         expect($this->buffer->fetch())->toContain('AI error: rate limited');
+    });
+
+    it('grounds the turn in the real suite state, before the input, when a summary is supplied', function (Filesystem $fs) {
+        $captured = null;
+        $this->provider->responder = function (array $messages) use (&$captured) {
+            $captured = $messages;
+            return new Response('ok');
+        };
+
+        $summary = new SuiteSummary(
+            'red',
+            ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
+            [['subject' => 'App\\Calculator', 'example' => 'adds numbers', 'error' => 'Expected 5 but got 3']],
+        );
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant->handle('what should we do next?', $summary);
+
+        $json = (string) json_encode($captured);
+        expect($json)->toContain('[Current situation]');
+        expect($json)->toContain('FAILING');
+        expect($json)->toContain('adds numbers');
+        expect($json)->toContain('Expected 5 but got 3');
+
+        // The grounding is injected before the input, so the model reads state first.
+        expect(strpos($json, '[Current situation]'))->toBeLessThan(strpos($json, 'what should we do next?'));
+    });
+
+    it('does not accumulate stale [Current situation] grounding across turns', function (Filesystem $fs) {
+        $captured = null;
+        $this->provider->responder = function (array $messages) use (&$captured) {
+            $captured = $messages;
+            return new Response('ok');
+        };
+
+        $red = new SuiteSummary('red', ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0], [['subject' => 'App\\C', 'example' => 'adds', 'error' => 'boom']]);
+        $green = new SuiteSummary('green', ['examples' => 1, 'passes' => 1, 'failures' => 0, 'errors' => 0, 'pending' => 0]);
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant->handle('turn one', $red);
+        $assistant->handle('turn two', $green);
+
+        // Only the latest situation survives in what the model sees.
+        expect(substr_count((string) json_encode($captured), '[Current situation]'))->toBe(1);
+    });
+
+    it('injects no situation message when no summary is supplied', function (Filesystem $fs) {
+        $captured = null;
+        $this->provider->responder = function (array $messages) use (&$captured) {
+            $captured = $messages;
+            return new Response('ok');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant->handle('just chatting');
+
+        expect((string) json_encode($captured))->not()->toContain('[Current situation]');
+    });
+
+    it('asks the provider for the generous default token ceiling', function (Filesystem $fs) {
+        $captured = null;
+        $this->provider->responder = function (array $messages, array $options) use (&$captured) {
+            $captured = $options;
+            return new Response('ok');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant->handle('anything');
+
+        expect($captured['maxTokens'])->toBe(16384);
     });
 
     it('stops asking about write tools after answering always, across turns', function (Filesystem $fs) {
@@ -356,15 +624,15 @@ describe(AiAssistant::class, function () {
         $this->provider->responder = function () use (&$turn) {
             $turn++;
             if ($turn === 1) {
-                return new Response('', [new ToolCall('t1', 'generate_spec', ['class_name' => 'App/First', 'spec_content' => '<?php // a'])]);
+                return new Response('', [new ToolCall('t1', 'describe', ['class_name' => 'App/First'])]);
             }
             if ($turn === 3) {
-                return new Response('', [new ToolCall('t2', 'generate_spec', ['class_name' => 'App/Second', 'spec_content' => '<?php // b'])]);
+                return new Response('', [new ToolCall('t2', 'describe', ['class_name' => 'App/Second'])]);
             }
             return new Response('done');
         };
 
-        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives);
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
         // "always" on the first write; the artifact cap means one write per turn,
         // so the second spec comes on a second turn and must not ask again.
         $this->answers = ['2'];

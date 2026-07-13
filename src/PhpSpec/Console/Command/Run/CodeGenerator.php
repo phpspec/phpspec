@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command\Run;
 
 use PhpSpec\CodeGeneration\ClassGenerator;
+use PhpSpec\CodeGeneration\ClassLocation;
 use PhpSpec\CodeGeneration\InterfaceGenerator;
 use PhpSpec\CodeGeneration\MethodStubGenerator;
 use PhpSpec\CodeGeneration\SpecGenerator;
@@ -22,6 +23,8 @@ use PhpSpec\CodeGeneration\StepGenerator;
 use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\ScrollRegionOutput;
 use PhpSpec\Console\Command\Refactor\Diff;
+use PhpSpec\Filesystem;
+use PhpSpec\RealFilesystem;
 use PhpSpec\Results;
 use RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface as Output;
@@ -36,6 +39,7 @@ final readonly class CodeGenerator
 {
     private ResultScanner $scanner;
     private SourceAnalyser $analyser;
+    private Filesystem $filesystem;
 
     /**
      * @param string $srcPath relative path to the source directory
@@ -56,6 +60,7 @@ final readonly class CodeGenerator
     ) {
         $this->analyser = new SourceAnalyser();
         $this->scanner = new ResultScanner($this->analyser);
+        $this->filesystem = new RealFilesystem();
     }
 
     /**
@@ -153,19 +158,23 @@ final readonly class CodeGenerator
             return;
         }
 
-        $classGenerator = new ClassGenerator($this->srcPath);
+        $classGenerator = new ClassGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
 
         foreach ($missingClasses as $fqcn) {
-            $filePath = ClassGenerator::resolveFqcn($fqcn, $this->srcPath, $this->psr4Prefix)['filePath'];
+            $location = ClassLocation::for($fqcn, $this->srcPath, $this->psr4Prefix);
 
-            if (file_exists($filePath)) {
+            // "Class X not found" from a run is a runtime/autoload failure, not
+            // proof the source file is missing — a PSR-4 mismatch triggers it
+            // while the file is right there. Gate on the file the generator would
+            // write, so we never offer to create a class that already exists.
+            if ($location->exists($this->filesystem)) {
                 continue;
             }
 
             $this->confirmAndGenerate($output, sprintf(
                 '  <fg=yellow>Class <fg=white>%s</> not found. Do you want me to create it for you?</>',
                 $fqcn,
-            ), 'create-class', 'create classes', fn() => $classGenerator->generate($fqcn), $filePath);
+            ), 'create-class', 'create classes', fn() => $classGenerator->generate($fqcn), $location->filePath());
         }
     }
 
@@ -182,7 +191,7 @@ final readonly class CodeGenerator
         }
 
         $specGenerator = new SpecGenerator($this->specPath, specSuffix: $this->specSuffix);
-        $classGenerator = new ClassGenerator($this->srcPath);
+        $classGenerator = new ClassGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
 
         foreach ($missingStepClasses as $fqcn) {
             $specName = str_replace('\\', '/', $fqcn);
@@ -196,12 +205,16 @@ final readonly class CodeGenerator
                 $specGenerator->generate($specName);
                 $output->writeln(sprintf('  <fg=green>Spec for %s created.</>', $fqcn));
 
-                $filePath = ClassGenerator::resolveFqcn($fqcn, $this->srcPath, $this->psr4Prefix)['filePath'];
+                $location = ClassLocation::for($fqcn, $this->srcPath, $this->psr4Prefix);
+
+                if ($location->exists($this->filesystem)) {
+                    continue;
+                }
 
                 $this->confirmAndGenerate($output, sprintf(
                     '  <fg=yellow>Do you want me to create class <fg=white>%s</> for you?</>',
                     $fqcn,
-                ), 'create-class', 'create classes', fn() => $classGenerator->generate($fqcn), $filePath);
+                ), 'create-class', 'create classes', fn() => $classGenerator->generate($fqcn), $location->filePath());
             }
         }
     }
@@ -223,15 +236,19 @@ final readonly class CodeGenerator
             return;
         }
 
-        $interfaceGenerator = new InterfaceGenerator($this->srcPath);
+        $interfaceGenerator = new InterfaceGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
 
         foreach (array_keys($uniqueMissing) as $fqcn) {
-            $filePath = ClassGenerator::resolveFqcn($fqcn, $this->srcPath, $this->psr4Prefix)['filePath'];
+            $location = ClassLocation::for($fqcn, $this->srcPath, $this->psr4Prefix);
+
+            if ($location->exists($this->filesystem)) {
+                continue;
+            }
 
             $this->confirmAndGenerate($output, sprintf(
                 '  <fg=yellow>Do you want me to create interface <fg=white>%s</> for you?</>',
                 $fqcn,
-            ), 'create-interface', 'create interfaces', fn() => $interfaceGenerator->generate($fqcn), $filePath);
+            ), 'create-interface', 'create interfaces', fn() => $interfaceGenerator->generate($fqcn), $location->filePath());
         }
     }
 
@@ -249,7 +266,7 @@ final readonly class CodeGenerator
             return;
         }
 
-        $methodGenerator = new MethodStubGenerator($this->srcPath);
+        $methodGenerator = new MethodStubGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
 
         foreach ($uniqueMockMethods as $error) {
             $argCount = $this->analyser->extractArgumentCount($error['file'], $error['line'], $error['methodName']);
@@ -279,7 +296,7 @@ final readonly class CodeGenerator
             return;
         }
 
-        $generator = new MethodStubGenerator($this->srcPath);
+        $generator = new MethodStubGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
 
         foreach ($unique as $error) {
             $argCount = $this->analyser->extractArgumentCount($error['file'], $error['line'], $error['methodName']);
@@ -321,7 +338,7 @@ final readonly class CodeGenerator
             return;
         }
 
-        $generator = new MethodStubGenerator($this->srcPath);
+        $generator = new MethodStubGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
 
         foreach ($uniqueEmpty as $candidate) {
             if (!$generator->hasEmptyMethod($candidate['className'], $candidate['methodName'])) {
