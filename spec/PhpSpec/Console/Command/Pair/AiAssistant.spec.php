@@ -575,6 +575,24 @@ describe(AiAssistant::class, function () {
         expect(strpos($json, '[Current situation]'))->toBeLessThan(strpos($json, 'what should we do next?'));
     });
 
+    it('does not accumulate stale [Current situation] grounding across turns', function (Filesystem $fs) {
+        $captured = null;
+        $this->provider->responder = function (array $messages) use (&$captured) {
+            $captured = $messages;
+            return new Response('ok');
+        };
+
+        $red = new SuiteSummary('red', ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0], [['subject' => 'App\\C', 'example' => 'adds', 'error' => 'boom']]);
+        $green = new SuiteSummary('green', ['examples' => 1, 'passes' => 1, 'failures' => 0, 'errors' => 0, 'pending' => 0]);
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant->handle('turn one', $red);
+        $assistant->handle('turn two', $green);
+
+        // Only the latest situation survives in what the model sees.
+        expect(substr_count((string) json_encode($captured), '[Current situation]'))->toBe(1);
+    });
+
     it('injects no situation message when no summary is supplied', function (Filesystem $fs) {
         $captured = null;
         $this->provider->responder = function (array $messages) use (&$captured) {

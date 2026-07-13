@@ -73,6 +73,9 @@ final class AiAssistant
     /** Runs specs and returns structured red/green, for run_specs and auto-verify. */
     private readonly SpecRunner $specRunner;
 
+    /** Keeps the message history bounded, fresh, and focused across turns. */
+    private readonly ConversationWindow $window;
+
     /** Role-neutral guidance (DSL, tools, project conventions), cached once. */
     private string $baseGuidance = '';
 
@@ -119,6 +122,7 @@ final class AiAssistant
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
         $this->roleState = $roleState ?? new RoleState();
         $this->specRunner = $specRunner ?? new SubprocessRunner();
+        $this->window = new ConversationWindow();
     }
 
     /**
@@ -140,6 +144,7 @@ final class AiAssistant
             $this->ensureInitialised();
             $this->artifactWrittenThisHandle = false;
             $this->postArtifactRounds = 0;
+            $this->messages = $this->window->apply($this->messages);
             $this->injectSituation($situation);
             $this->messages[] = Message::user($input);
 
