@@ -377,11 +377,19 @@ final class Agent extends AbstractFormatter
             return null;
         }
 
+        // Normalise both sides to forward slashes before comparing: on Windows
+        // getcwd() yields backslashes while a file path may already carry
+        // forward slashes, so a raw DIRECTORY_SEPARATOR prefix check would miss
+        // and leak the absolute path.
+        $file = str_replace('\\', '/', $file);
         $cwd = getcwd();
-        if ($cwd !== false && str_starts_with($file, $cwd . DIRECTORY_SEPARATOR)) {
-            $file = substr($file, strlen($cwd) + 1);
+        if ($cwd !== false) {
+            $cwd = str_replace('\\', '/', $cwd);
+            if (str_starts_with($file, $cwd . '/')) {
+                $file = substr($file, strlen($cwd) + 1);
+            }
         }
 
-        return str_replace('\\', '/', $file) . ':' . $line;
+        return $file . ':' . $line;
     }
 }
