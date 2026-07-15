@@ -120,15 +120,21 @@ The AI assistant has access to these tools during a pair session:
 
 | Tool | Description |
 |---|---|
-| `generate_spec` | Write a `.spec.php` file with full content |
+| `describe` | Start a spec: writes an empty `describe()` skeleton for a class (idempotent) |
+| `add_example` | Add one `it()` example to a spec, one at a time (idempotent; never overwrites existing examples) |
 | `generate_feature` | Write a Gherkin `.feature` file |
 | `generate_steps` | Write a `.steps.php` step definitions file |
 | `write_file` | Create a new file (class, interface, etc.) |
 | `update_file` | Modify an existing file (shows a diff) |
+| `inspect_symbol` | Inspect a class or method's signature for context |
 | `run_specs` | Run specs and return the output |
 | `ask_user` | Ask you a yes/no question through the numbered chooser |
 | `read_file` | Read a project file for context |
 | `list_files` | List directory contents |
+
+Specs are never written whole-file: the assistant starts one with `describe`
+and grows it one example at a time with `add_example`, so your existing examples
+are never overwritten.
 
 The assistant automatically scans your project tree and existing step definitions so it can reuse patterns already in your codebase.
 
@@ -185,7 +191,7 @@ The AI maintains conversation history within a session. You can build on previou
 
 ### Logging
 
-All AI interactions are logged to `.phpspec/pair.log` with timestamps, tool calls, and results. This is useful for debugging or reviewing what the assistant did.
+All AI interactions are logged to `.phpspec/pair/session.log` with timestamps, tool calls, and results. This is useful for debugging or reviewing what the assistant did.
 
 ## The `next` Command
 

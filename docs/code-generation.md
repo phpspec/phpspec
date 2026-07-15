@@ -35,6 +35,34 @@ Generates a spec that includes an example for the `add` method.
 
 The argument uses `/` as separator: `App/Calculator` becomes `spec/App/Calculator.spec.php`. This maps to the namespace `App\Calculator`.
 
+## The `exemplify` Command
+
+Add an example for a single method to a spec (creating the spec first if it
+doesn't exist):
+
+```bash
+bin/phpspec exemplify App/Calculator add
+```
+
+Both `describe -e` and `exemplify` are idempotent -- an example for a method that
+is already present is not duplicated.
+
+## Machine-Readable Receipts (`--agent`)
+
+`describe` and `exemplify` accept an `--agent` flag that replaces their prose
+with a one-line JSON receipt, so a coding agent can scaffold without parsing
+English:
+
+```bash
+bin/phpspec describe App/Calculator --agent
+```
+```json
+{"v":1,"action":"describe","class":"App\\Calculator","spec":"spec/App/Calculator.spec.php","created":true}
+```
+
+`created` (and `exemplify`'s `added`) report whether anything changed. See
+[Coding Agents](agent.md) for the full contract.
+
 ## Auto-Class Generation
 
 When specs reference a class that doesn't exist, PhpSpec's custom autoloader prompts:
@@ -131,6 +159,23 @@ public function add()
 ```
 
 The `--fake` flag works by extracting the expected values from matcher results (via `fakeExpression` metadata) and using them as return values. This creates a quick feedback loop: write spec, run with `--fake`, get passing tests immediately, then replace the faked implementation with real logic.
+
+## Applying Offers Non-Interactively (`--accept-offers`)
+
+Everything above is offered interactively -- PhpSpec asks `[y/n]` before it
+writes. `--accept-offers` applies **every** pending offer (missing classes,
+interfaces, methods, and feature steps) in one non-interactive pass, then exits
+`0`:
+
+```bash
+bin/phpspec run --accept-offers            # generate all missing code, no prompts
+bin/phpspec run --accept-offers --fake     # ...and fill empty methods with spec'd returns
+```
+
+This is the scripted counterpart to the prompts -- built for
+`--format=agent` consumers and CI, where an agent reads the run's `offers` and
+then has PhpSpec generate them. See [Coding Agents](agent.md) for the offer
+format and the full loop.
 
 ## Step Definition Generation
 

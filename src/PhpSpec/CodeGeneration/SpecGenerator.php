@@ -59,15 +59,18 @@ final class SpecGenerator
     /**
      * Generates a spec file for the given class path with a describe block and basic example.
      *
+     * Idempotent: an existing spec file is left untouched.
+     *
      * @param string $spec the class path using forward slashes (e.g. "App/Model/User")
-     * @return void
+     * @return bool true when the spec file was created, false when it already existed
      */
-    public function generate(string $spec): void
+    public function generate(string $spec): bool
     {
-        $filePath = getcwd() . DIRECTORY_SEPARATOR .
-                    $this->specPath . DIRECTORY_SEPARATOR .
-                    str_replace('/', DIRECTORY_SEPARATOR, $spec) .
-                    $this->specSuffix;
+        $filePath = $this->filePath($spec);
+
+        if ($this->filesystem->exists($filePath)) {
+            return false;
+        }
 
         $pieces = explode('/', $spec);
         $use = '';
@@ -86,12 +89,25 @@ final class SpecGenerator
         });
         EOD;
 
-        if (!$this->filesystem->exists($filePath)) {
-            if (!$this->filesystem->exists(dirname($filePath))) {
-                $this->filesystem->mkdir(dirname($filePath));
-            }
-            $this->filesystem->write($filePath, $specContent);
+        if (!$this->filesystem->exists(dirname($filePath))) {
+            $this->filesystem->mkdir(dirname($filePath));
         }
+        $this->filesystem->write($filePath, $specContent);
+
+        return true;
+    }
+
+    /**
+     * The absolute path of the spec file for a class path.
+     *
+     * @param string $spec the class path using forward slashes
+     */
+    private function filePath(string $spec): string
+    {
+        return getcwd() . DIRECTORY_SEPARATOR .
+               $this->specPath . DIRECTORY_SEPARATOR .
+               str_replace('/', DIRECTORY_SEPARATOR, $spec) .
+               $this->specSuffix;
     }
 
     /**
@@ -106,10 +122,7 @@ final class SpecGenerator
      */
     public function addExample(string $spec, string $method): bool
     {
-        $filePath = getcwd() . DIRECTORY_SEPARATOR .
-                    $this->specPath . DIRECTORY_SEPARATOR .
-                    str_replace('/', DIRECTORY_SEPARATOR, $spec) .
-                    $this->specSuffix;
+        $filePath = $this->filePath($spec);
 
         if (!$this->filesystem->exists($filePath)) {
             return false;

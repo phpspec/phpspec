@@ -30,9 +30,13 @@ Bootstraps autoloading, registers the custom class autoloader, and runs the Symf
 
 ### 2. Application -- `Console\Application`
 
-Extends Symfony's `Application`. Registers two commands:
+Extends Symfony's `Application`. Registers six commands:
 - `run` -- load and execute specs
-- `describe` -- generate spec files
+- `describe` -- generate a spec file for a class
+- `exemplify` -- add a method example to a spec
+- `pair` -- interactive pair-programming REPL with an AI assistant
+- `next` -- AI suggests what to describe or specify next
+- `refactor` -- AI-powered, behaviour-preserving refactoring
 
 ### 3. Run Command -- `Console\Command\Run`
 
@@ -88,28 +92,31 @@ The `Dispatcher` uses a **scope stack** for structure building. DSL functions (`
 
 | Event | When |
 |---|---|
+| `SuiteStarted` | The suite begins running |
 | `SpecificationStarted` | A spec file begins running |
+| `SpecificationFinished` | A spec file finishes running |
 | `ContextCreated` | `describe()`/`context()` is called |
 | `ContextStarted` | A context block begins execution |
 | `ContextModified` | `let()` is called |
-| `ContextRunned` | A context block finishes |
+| `ContextRan` | A context block finishes |
 | `ExampleCreated` | `it()`/`its()` is called |
 | `ExampleStarted` | An example begins execution |
 | `ExampleRunned` | An example finishes |
+| `ExampleCompleted` | An example's result has been recorded |
 | `ExampleErrored` | An exception is thrown during an example |
 | `ExpectationStarted` | `expect()` begins a match |
 | `MatchCreated` | A matcher registers a match closure |
 | `ExpectationPassed` | A match passes |
 | `ExpectationFailed` | A match fails |
 | `MethodMocked` | A mock expectation is set |
+| `SuiteFinished` | The suite finishes running |
 
 ### Subscribers
 
-Subscribers react to events and wire the spec tree together:
+Subscribers (in `EventDispatcher/Subscriber/`) react to events:
 
-- **`SpecificationSubscriber`** -- Listens for `ExampleCreated` and `ContextCreated` to add blocks to the current `Specification`. Resets on `SpecificationStarted`.
-- **`ContextSubscriber`** -- Listens for `ExampleCreated`, `ContextCreated`, and `ContextModified` to add blocks and apply `let()` modifications to the current `Context`.
-- **`ExampleSubscriber`** -- Collects `MatchCreated` closures, executes them on `ExampleRunned`, and builds `ExampleResult`. Handles `ExampleErrored`.
+- **`SpecificationSubscriber`** -- Resets the subscribed `Specification` on `SpecificationStarted`, so each spec file builds its tree from a clean slate.
+- **`ExampleSubscriber`** -- Collects `MatchCreated` closures, executes them on `ExampleRunned`, and builds the `ExampleResult`. Handles `ExampleErrored`.
 
 ### Listeners
 
@@ -178,23 +185,24 @@ The `Report` interface delegates to a `Formatter`. Available formatters:
 | `Dot` | Compact one-character-per-example output |
 | `Tap` | TAP (Test Anything Protocol) format |
 | `Junit` | JUnit XML for CI integration |
+| `Html` | Self-contained HTML report |
+| `Agent` | Single machine-readable JSON document for coding agents (see [Coding Agents](agent.md)) |
 
 ### Pretty Formatter
 
-Uses PHP template files in `Report/Formatter/Pretty/views/`:
+Rendering lives in `Report/Formatter/Pretty/PrettyViews.php` -- a class of static
+methods, one per node type, each writing colorized output through the Symfony
+Console `OutputInterface`:
 
-| Template | Renders |
+| Method | Renders |
 |---|---|
-| `suite.view.php` | Top-level: tagline, specs, errors, counts |
-| `specification.view.php` | Spec file title + children |
-| `context.view.php` | Context title + indented children |
-| `example.view.php` | Pass or fail with title |
-| `example.errors.view.php` | Error details with message + code |
-| `matchResult.view.php` | Failure message + surrounding code |
-| `surroundingCode.view.php` | Source code snippet with error line highlighted |
-| `counts.view.php` | Summary line (X specs, Y examples, Z passes...) |
-
-Templates use a `TemplateRenderer` that supports nested rendering via `$this->render()` and colorized output via Symfony Console styles.
+| `specification()` / `specificationErrors()` | Spec file title + children; its error details |
+| `context()` / `contextErrors()` | Context title + indented children; its errors |
+| `example()` / `exampleErrors()` | Pass/fail line; error message + code |
+| `feature()` / `scenario()` / `step()` | Story BDD feature, scenario, and step lines |
+| `matchResult()` | Failure message with expected/actual |
+| `surroundingCode()` | Source snippet with the error line highlighted |
+| `counts()` | Summary line (X specs, Y examples, Z passes...) |
 
 ## Code Coverage
 

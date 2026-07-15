@@ -59,6 +59,8 @@ final readonly class MatchResult implements Results
      * @param string $file file path of the failing expectation
      * @param int $line line number of the failing expectation
      * @param ?string $fakeExpression optional expression for --fake code generation
+     * @param ?string $matcher the matcher method that produced the failure (e.g. "toBe")
+     * @param bool $negated whether the matcher was negated
      */
     public static function failed(
         mixed $expected,
@@ -67,6 +69,8 @@ final readonly class MatchResult implements Results
         string $file,
         int $line,
         ?string $fakeExpression = null,
+        ?string $matcher = null,
+        bool $negated = false,
     ): MatchResult {
         return new self(
             Result::Failed,
@@ -78,6 +82,8 @@ final readonly class MatchResult implements Results
                 $line,
                 $file,
                 $fakeExpression,
+                $matcher,
+                $negated,
             ),
         );
     }
@@ -154,5 +160,23 @@ final readonly class MatchResult implements Results
     public function getFakeExpression(): ?string
     {
         return $this->detail instanceof Detail\Failed ? $this->detail->getFakeExpression() : null;
+    }
+
+    /**
+     * Returns the matcher method that produced the failure (e.g. "toBe"), or null
+     * for a passed result or when the matcher could not be determined.
+     */
+    public function getMatcher(): ?string
+    {
+        return $this->detail instanceof Detail\Failed ? $this->detail->getMatcher() : null;
+    }
+
+    /**
+     * Returns whether the failing matcher was negated (expect(...)->not()->...);
+     * false for a passed result.
+     */
+    public function isNegated(): bool
+    {
+        return $this->detail instanceof Detail\Failed && $this->detail->isNegated();
     }
 }

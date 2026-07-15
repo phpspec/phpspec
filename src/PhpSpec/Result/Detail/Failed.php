@@ -42,6 +42,12 @@ final class Failed extends Detail
     /** @var string|null Expression used for --fake code generation */
     private ?string $fakeExpression = null;
 
+    /** @var string|null The matcher method that produced the failure (e.g. "toBe") */
+    private ?string $matcher = null;
+
+    /** @var bool Whether the matcher was negated (expect(...)->not()->...) */
+    private bool $negated = false;
+
     /**
      * Creates a Failed detail from a matcher comparison.
      *
@@ -52,8 +58,10 @@ final class Failed extends Detail
      * @param int $line line number of the failing expectation
      * @param string $file file path of the failing expectation
      * @param ?string $fakeExpression optional expression for --fake code generation
+     * @param ?string $matcher the matcher method that produced the failure (e.g. "toBe")
+     * @param bool $negated whether the matcher was negated
      */
-    public static function matcher(mixed $expected, mixed $actual, string $message, SurroundingCode $code, int $line, string $file, ?string $fakeExpression = null): Detail
+    public static function matcher(mixed $expected, mixed $actual, string $message, SurroundingCode $code, int $line, string $file, ?string $fakeExpression = null, ?string $matcher = null, bool $negated = false): Detail
     {
         $failed = new self($message);
         $failed->expected = $expected;
@@ -62,7 +70,25 @@ final class Failed extends Detail
         $failed->line = $line;
         $failed->file = $file;
         $failed->fakeExpression = $fakeExpression;
+        $failed->matcher = $matcher;
+        $failed->negated = $negated;
         return $failed;
+    }
+
+    /**
+     * Returns the matcher method that produced the failure, or null when unknown.
+     */
+    public function getMatcher(): ?string
+    {
+        return $this->matcher;
+    }
+
+    /**
+     * Returns whether the matcher was negated (expect(...)->not()->...).
+     */
+    public function isNegated(): bool
+    {
+        return $this->negated;
     }
 
     /**

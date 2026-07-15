@@ -125,6 +125,8 @@ Default output formatter. Overridden by `--format` CLI flag.
 | `dot` | One character per example |
 | `tap` | TAP (Test Anything Protocol) |
 | `junit` | JUnit XML for CI integration |
+| `html` | Self-contained HTML report |
+| `agent` | Machine-readable JSON for coding agents (see [Coding Agents](agent.md)) |
 
 ### `bootstrap`
 

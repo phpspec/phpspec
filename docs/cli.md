@@ -69,7 +69,9 @@ bin/phpspec describe <class> [options]
 - `class` -- The class path using `/` as namespace separator.
 
 **Options:**
-- `-e`, `--example` -- Include an example for the specified method.
+- `-e`, `--exemplify=METHOD` -- Include an example for the specified method.
+- `-r`, `--run` -- Run the specs after generating.
+- `--agent` -- Emit a machine-readable JSON receipt instead of prose (for coding agents).
 
 **Examples:**
 
@@ -77,7 +79,31 @@ bin/phpspec describe <class> [options]
 bin/phpspec describe App/Calculator
 bin/phpspec describe App/Console/Command/Run
 bin/phpspec describe App/Calculator -e add          # with "add" method example
+bin/phpspec describe App/Calculator --agent          # JSON receipt (see Coding Agents)
 ```
+
+### `exemplify`
+
+Adds an example for a method to a spec file, generating the spec first if needed.
+
+```bash
+bin/phpspec exemplify <class> <method> [options]
+```
+
+**Arguments:**
+- `class` -- The class path using `/` as namespace separator.
+- `method` -- The method to add an example for.
+
+**Options:**
+- `--agent` -- Emit a machine-readable JSON receipt instead of prose.
+
+```bash
+bin/phpspec exemplify App/Calculator add
+bin/phpspec exemplify App/Calculator add --agent
+```
+
+See [Coding Agents](agent.md) for the `--agent` receipts and
+[Code Generation](code-generation.md) for the generated templates.
 
 ## Run Options
 
@@ -85,7 +111,7 @@ bin/phpspec describe App/Calculator -e add          # with "add" method example
 
 | Option | Description |
 |---|---|
-| `-f`, `--format=FORMAT` | Output formatter: `pretty` (default), `dot`, `tap`, `junit`, `html`. Repeatable; pair each with `-o` |
+| `-f`, `--format=FORMAT` | Output formatter: `pretty` (default), `dot`, `tap`, `junit`, `html`, `agent`. Repeatable; pair each with `-o` |
 | `-o`, `--out=FILE` | Report destination for the corresponding `--format`; `std` means the console |
 | `-v` | Verbose mode -- shows per-example duration |
 | `-q` | Quiet mode -- suppresses all output, exit code still reflects pass/fail |
@@ -149,6 +175,20 @@ summary, ready to open in a browser:
 bin/phpspec run --format=html > report.html
 ```
 
+#### Agent Formatter
+
+Emits the whole run as a single machine-readable JSON document for coding agents
+— no ANSI, no prose. Each failing/erroring example carries the expectation, a
+stable `id`, a line-targeted `rerun` command, and any code-generation `offer`;
+the summary carries the counts and a run-wide `offers` list:
+
+```bash
+bin/phpspec run --format=agent
+```
+
+See [Coding Agents](agent.md) for the full contract, the `--accept-offers` /
+`--fake` apply flow, and a ready-made `CLAUDE.md` snippet.
+
 #### Report Files
 
 Every formatter writes to standard output, so a single format is best saved
@@ -172,9 +212,23 @@ rejected with an error rather than silently falling back.
 |---|---|
 | `--filter=PATTERN` | Only run specs/scenarios whose file path, example title, or scenario title contains PATTERN |
 | `--paths-from=FILE` | Read spec/feature paths to run from a file, one per line |
-| `--stop-on-failure` | Stop execution after the first spec file with a failure or error |
+| `--all` | Run all suites -- both specs and features |
+| `--story` | Run only features (Story BDD) |
 | `--order=ORDER` | Run order: `default` or `random` |
 | `--seed=SEED` | Seed for random ordering (for reproducibility) |
+
+**Stopping early.** By default a run continues to the end. These flags halt it at
+the first result of a given kind (useful for tight feedback loops and CI):
+
+| Option | Stops on the first... |
+|---|---|
+| `--stop-on-failure` | failure or error |
+| `--stop-on-error` | error |
+| `--stop-on-warning` | warning |
+| `--stop-on-deprecation` | deprecation |
+| `--stop-on-notice` | notice |
+| `--stop-on-skipped` | skipped example |
+| `--stop-on-problems` | any non-passing result |
 
 ```bash
 bin/phpspec run --filter Calculator              # Path or title contains "Calculator"
@@ -234,17 +288,47 @@ is loaded instead (its format is resolved from the extension), and the command
 fails if the file does not exist. The option is available on every command and
 is forwarded to worker processes in `--parallel` runs.
 
+### Parallel Execution
+
+| Option | Description |
+|---|---|
+| `--parallel[=N]` | Run specs across N worker processes (defaults to the number of CPU cores) |
+
+```bash
+bin/phpspec run --parallel        # one worker per CPU core
+bin/phpspec run --parallel=4      # four workers
+```
+
+Each worker runs a slice of the spec files in its own process and reports back
+via JUnit; the parent merges the results before rendering. Coverage
+(`--coverage*`) composes with `--parallel` -- workers collect per-example
+coverage and the parent merges it. `--format=agent` is parallel-safe too, since
+its single document is emitted once the parent holds the complete result.
+
 ### Code Generation
 
 | Option | Description |
 |---|---|
 | `--fake` | Auto-generate method bodies with hardcoded return values from spec expectations |
+| `--accept-offers` | Apply all pending code-generation offers non-interactively, then exit (for `--format=agent` consumers) |
 
 When specs reference methods that don't exist, PhpSpec can generate method stubs. With `--fake`, it goes further and fills in the method body based on what your specs expect:
 
 ```bash
 bin/phpspec run --fake
 ```
+
+`--accept-offers` applies every pending offer (missing classes, interfaces,
+methods, feature steps) in one non-interactive pass and exits `0` -- the
+scripted counterpart to the interactive "shall I create this?" prompts. Combine
+it with `--fake` to also fill empty method bodies:
+
+```bash
+bin/phpspec run --accept-offers            # generate all missing code, no prompts
+bin/phpspec run --accept-offers --fake     # ...and fill empty methods with spec'd returns
+```
+
+See [Coding Agents](agent.md) for the offer format and the full agent workflow.
 
 ### Code Coverage
 

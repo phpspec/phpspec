@@ -2,7 +2,7 @@
 
 A specification-oriented BDD framework for PHP 8.2+, inspired by RSpec and Jasmine.
 
-PhpSpec lets you write expressive, readable specs using `describe`, `context`, `it`, and `expect` -- bringing the best of Ruby and JavaScript testing to PHP. Version 9.0 is a ground-up rewrite that unifies Story BDD and Spec BDD in a single tool and adds AI-native features for the modern development workflow.
+PhpSpec lets you write expressive, readable specs using `describe`, `context`, `it`, and `expect` -- bringing the best of Ruby and JavaScript testing to PHP. Version 9.0 is a ground-up rewrite that unifies Story BDD and Spec BDD in a single tool and adds AI-native features for the modern development workflow -- including a machine-readable [`--format=agent`](agent.md) for coding agents.
 
 ## Table of Contents
 
@@ -15,11 +15,12 @@ PhpSpec lets you write expressive, readable specs using `describe`, `context`, `
 6. [Story BDD](story-bdd.md) -- Gherkin `.feature` files and step definitions
 7. [Code Generation](code-generation.md) -- Specs, classes, interfaces, method stubs, step definitions
 8. [Pair Programming & AI](pair.md) -- Interactive pair mode, AI assistant, refactoring
-9. [Extensions](extensions.md) -- Custom formatters, matchers, commands, listeners
-10. [CLI Reference](cli.md) -- Commands, options, formatters, coverage
-11. [Configuration](configuration.md) -- `phpspec.json` reference, autoloading
-12. [Architecture](architecture.md) -- Internal design: loader, runner, events, results, reporting
-13. [Roadmap](roadmap.md) -- Status and planned features
+9. [Coding Agents](agent.md) -- `--format=agent`, offers, `--accept-offers`, and a CLAUDE.md snippet
+10. [Extensions](extensions.md) -- Custom formatters, matchers, commands, listeners
+11. [CLI Reference](cli.md) -- Commands, options, formatters, coverage
+12. [Configuration](configuration.md) -- `phpspec.json` reference, autoloading
+13. [Architecture](architecture.md) -- Internal design: loader, runner, events, results, reporting
+14. [Roadmap](roadmap.md) -- Status and planned features
 
 ## Quick Example
 

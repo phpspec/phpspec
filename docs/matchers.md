@@ -60,6 +60,24 @@ expect([])->toBeEmpty();     // passes
 expect('')->toBeEmpty();     // passes
 ```
 
+### `toBeTruthy()`
+
+Asserts the subject is loosely truthy (`(bool) $subject === true`).
+
+```php
+expect(1)->toBeTruthy();     // passes
+expect('0')->toBeTruthy();   // fails
+```
+
+### `toBeFalsy()`
+
+Asserts the subject is loosely falsy (`(bool) $subject === false`).
+
+```php
+expect(0)->toBeFalsy();      // passes
+expect('')->toBeFalsy();     // passes
+```
+
 ## Type Matchers
 
 ### `toBeAnInstanceOf(string $class)`
@@ -146,6 +164,23 @@ expect(['name' => 'Alice'])->toHaveKey('name');
 expect([10, 20])->toHaveKey(0);
 ```
 
+### `toHaveLength(int $length)`
+
+Asserts the subject string or array has the given length.
+
+```php
+expect('hello')->toHaveLength(5);
+expect([1, 2, 3])->toHaveLength(3);
+```
+
+### `toContainEqual(mixed $value)`
+
+Asserts the array contains an element loosely equal (`==`) to the value.
+
+```php
+expect([1, 2, 3])->toContainEqual('2');   // passes (loose comparison)
+```
+
 ## Comparison Matchers
 
 ### `toBeGreaterThan(int|float $value)`
@@ -164,6 +199,40 @@ Asserts the subject is less than the given value.
 expect(3)->toBeLessThan(10);
 ```
 
+### `toBeGreaterThanOrEqualTo(mixed $value)`
+
+Asserts the subject is greater than or equal to the given value.
+
+```php
+expect(5)->toBeGreaterThanOrEqualTo(5);
+```
+
+### `toBeLessThanOrEqualTo(mixed $value)`
+
+Asserts the subject is less than or equal to the given value.
+
+```php
+expect(5)->toBeLessThanOrEqualTo(5);
+```
+
+### `toBeBetween(mixed $min, mixed $max)`
+
+Asserts the subject is between `$min` and `$max`, inclusive.
+
+```php
+expect(5)->toBeBetween(1, 10);
+```
+
+### `toBeCloseTo(float $value, float $delta = 0.00001)`
+
+Asserts the subject is within `$delta` of the given float — for comparing
+floating-point numbers without exact-equality surprises.
+
+```php
+expect(0.1 + 0.2)->toBeCloseTo(0.3);
+expect(3.14159)->toBeCloseTo(3.14, 0.01);
+```
+
 ## Object Matchers
 
 ### `toHaveProperty(string $property)`
@@ -174,6 +243,24 @@ Asserts the object has a public property with the given name.
 $obj = new stdClass();
 $obj->name = 'Alice';
 expect($obj)->toHaveProperty('name');
+```
+
+### `toRespondTo(string $method)`
+
+Asserts the object has (responds to) the given method.
+
+```php
+expect(new Calculator())->toRespondTo('add');
+```
+
+### `toSatisfy(callable $predicate)`
+
+Asserts the subject satisfies a custom predicate — a callback that receives the
+subject and returns `true` (pass) or `false` (fail). Handy for one-off checks
+that don't warrant a named custom matcher.
+
+```php
+expect(42)->toSatisfy(fn ($n) => $n % 2 === 0);
 ```
 
 ## Exception Matcher
@@ -189,6 +276,60 @@ expect(fn () => throw new \RuntimeException('boom'))
 // With message check:
 expect(fn () => throw new \RuntimeException('boom'))
     ->toThrow(\RuntimeException::class, 'boom');
+```
+
+## HTTP Response Matchers
+
+For asserting on HTTP responses. All work with the built-in `Browser\Response`
+(see [Browser Testing](browser.md)) and any PSR-7 `ResponseInterface`.
+
+### `toBeOk()`
+
+Asserts the response status is `200`.
+
+```php
+expect($response)->toBeOk();
+```
+
+### `toBeBad()`
+
+Asserts the response status is `400`.
+
+```php
+expect($response)->toBeBad();
+```
+
+### `toHaveStatus(int $code)`
+
+Asserts the response has the given HTTP status code.
+
+```php
+expect($response)->toHaveStatus(201);
+```
+
+### `toHavePath(string $path, mixed $expected)`
+
+Asserts a dot-notation path in the response's JSON body equals the expected value.
+
+```php
+expect($response)->toHavePath('data.user.name', 'Alice');
+```
+
+### `toHaveHeader(string $name, ?string $value = null)`
+
+Asserts the response has the given header — optionally matching a value.
+
+```php
+expect($response)->toHaveHeader('Content-Type');
+expect($response)->toHaveHeader('Content-Type', 'application/json');
+```
+
+### `toRedirectTo(string $url)`
+
+Asserts the response is a redirect (`3xx`) whose `Location` header matches the URL.
+
+```php
+expect($response)->toRedirectTo('/login');
 ```
 
 ## Negation

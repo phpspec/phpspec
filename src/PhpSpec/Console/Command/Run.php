@@ -29,6 +29,7 @@ use PhpSpec\LineTargetRegistry;
 use PhpSpec\Loader;
 use PhpSpec\Parallel\ParallelRunner;
 use PhpSpec\Report\Formatter;
+use PhpSpec\Report\Formatter\Agent;
 use PhpSpec\Report\Formatter\Dot;
 use PhpSpec\Report\Formatter\Html;
 use PhpSpec\Report\Formatter\Junit;
@@ -46,6 +47,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument as Argument;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Input\InputOption as Option;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 use Symfony\Component\Console\Output\StreamOutput;
 
@@ -102,6 +104,7 @@ final class Run extends Command
             ->addOption('all', null, Option::VALUE_NONE, 'Run all suites (specs and features)')
             ->addOption('story', null, Option::VALUE_NONE, 'Run only features (story BDD)')
             ->addOption('fake', null, Option::VALUE_NONE, 'Generate method bodies with hardcoded return values from specs')
+            ->addOption('accept-offers', null, Option::VALUE_NONE, 'Apply all pending code-generation offers non-interactively, then exit (for --format=agent consumers)')
             ->addOption('coverage', null, Option::VALUE_NONE, 'Generate code coverage report')
             ->addOption('coverage-clover', null, Option::VALUE_REQUIRED, 'Generate Clover XML coverage report to file')
             ->addOption('coverage-html', null, Option::VALUE_REQUIRED, 'Generate HTML coverage report to directory')
@@ -172,7 +175,7 @@ final class Run extends Command
         $unknownFormats = $this->unknownFormats($input);
 
         if ($unknownFormats !== []) {
-            $output->writeln('<fg=red>Unknown format: ' . implode(', ', $unknownFormats) . ' (available: pretty, dot, tap, junit, html)</>');
+            $output->writeln('<fg=red>Unknown format: ' . implode(', ', $unknownFormats) . ' (available: pretty, dot, tap, junit, html, agent)</>');
 
             return 1;
         }
@@ -196,6 +199,15 @@ final class Run extends Command
             }
         }
 
+        if ($input->getOption('accept-offers')) {
+            // Apply every pending generation offer without prompting, then exit.
+            // The run's own output already went out; generation notes are discarded
+            // so an upstream --format=agent document stays a single clean object.
+            $this->generateCode(new BufferedOutput(), $results, (bool) $input->getOption('fake'), false);
+
+            return 0;
+        }
+
         // When pair mode spawned this run (it sets an env var naming a report
         // file), record the generation candidates there and let pair mode drive
         // the interactive generation in the REPL. Otherwise generate here as usual.
@@ -205,7 +217,7 @@ final class Run extends Command
                 $this->codeGenerator(false)->scan($results),
                 SuiteSummary::fromSuiteResult($results),
             ));
-        } elseif (!in_array($this->resolveFormat($input), ['junit', 'html'], true)) {
+        } elseif (!in_array($this->resolveFormat($input), ['junit', 'html', 'agent'], true)) {
             $this->generateCode($output, $results, (bool) $input->getOption('fake'), $input->isInteractive());
         }
 
@@ -530,7 +542,7 @@ final class Run extends Command
      */
     private function unknownFormats(Input $input): array
     {
-        $known = ['pretty', 'dot', 'tap', 'junit', 'html'];
+        $known = ['pretty', 'dot', 'tap', 'junit', 'html', 'agent'];
 
         return array_values(array_filter(
             (array) $input->getOption('format'),
@@ -555,6 +567,7 @@ final class Run extends Command
             'tap' => new Tap($output),
             'junit' => new Junit($output),
             'html' => new Html($output),
+            'agent' => new Agent($output, fn(SuiteResult $results) => $this->codeGenerator(false)->scan($results)->toArray()),
             default => new Pretty($output),
         };
     }
