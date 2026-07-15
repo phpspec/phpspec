@@ -15,9 +15,11 @@
 namespace PhpSpec\Console\Command;
 
 use PhpSpec\CodeGeneration\SpecGenerator;
+use PhpSpec\Report\Formatter\Agent\Schema;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument as Argument;
 use Symfony\Component\Console\Input\InputInterface as Input;
+use Symfony\Component\Console\Input\InputOption as Option;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
 /**
@@ -44,6 +46,7 @@ final class Exemplify extends Command
                 new Argument('class', Argument::REQUIRED, 'Class to add the example to'),
                 new Argument('method', Argument::REQUIRED, 'Method to exemplify'),
             ])
+            ->addOption('agent', null, Option::VALUE_NONE, 'Emit a machine-readable JSON receipt instead of prose (for coding agents)')
             ->setDescription('Add an example for a method to a spec file');
     }
 
@@ -54,7 +57,23 @@ final class Exemplify extends Command
         $spec = str_replace('\\', '/', $class);
 
         $this->generator->generate($spec);
-        $this->generator->addExample($spec, $method);
+        $added = $this->generator->addExample($spec, $method);
+
+        if ($input->getOption('agent')) {
+            $receipt = [
+                'v' => Schema::V,
+                'action' => 'exemplify',
+                'class' => str_replace('/', '\\', $spec),
+                'method' => $method,
+                'spec' => $this->generator->getSpecPath() . '/' . $spec . $this->generator->getSpecSuffix(),
+                'added' => $added,
+            ];
+
+            $json = json_encode($receipt, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+            $output->write($json . "\n", false, Output::OUTPUT_RAW);
+
+            return 0;
+        }
 
         $output->writeln(sprintf(
             'Example for <info>%s::%s</info> added.',

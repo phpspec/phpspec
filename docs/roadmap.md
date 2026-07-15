@@ -32,19 +32,24 @@ PhpSpec is a fully-featured Spec BDD and Story BDD framework for PHP 8.2+. It su
 
 #### Code Generation
 - Spec generation (`describe` command)
+- Method example generation (`exemplify` command, `describe -e`)
 - Auto-class generation (from spec errors)
 - Interface generation (from mock errors)
 - Method stub generation (from method-not-found errors)
 - `--fake` mode for auto-generating method bodies
+- Non-interactive apply for agents/CI (`--accept-offers`, `--accept-offers --fake`)
 
 #### CLI & Reporting
-- Pretty, Dot, TAP, JUnit XML formatters
+- Pretty, Dot, TAP, JUnit XML, HTML, and Agent (JSON) formatters
+- Machine-readable agent workflow (`--format=agent`, `describe/exemplify --agent`)
+- Parallel execution (`--parallel[=N]`)
 - Verbose mode (`-v`) with per-example timing
 - Quiet mode (`-q`)
 - Profile mode (`--profile`)
 - Random ordering (`--order=random`, `--seed`)
-- Filter (`--filter`)
-- Stop on failure (`--stop-on-failure`)
+- Filter (`--filter`), path list (`--paths-from`), line-targeted runs (`spec.php:LINE`)
+- Suite selection (`--all`, `--story`)
+- Stop-on family (`--stop-on-failure`, `-error`, `-warning`, `-deprecation`, `-notice`, `-skipped`, `-problems`)
 - Bootstrap file support
 
 #### Code Coverage

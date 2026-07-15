@@ -36,6 +36,18 @@ describe(SpecGenerator::class, function () {
         expect($fs->write('', ''))->toBeCalled();
     });
 
+    it("returns true when it creates the spec file", function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
+
+        expect($this->generator->generate('Calculator'))->toBe(true);
+    });
+
+    it("returns false when the spec file already exists", function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+
+        expect($this->generator->generate('Existing'))->toBe(false);
+    });
+
     it("adds example for a method to existing spec", function (Filesystem $fs) {
         $specPath = getcwd() . DIRECTORY_SEPARATOR . 'spec' . DIRECTORY_SEPARATOR . 'Calculator.spec.php';
 

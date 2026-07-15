@@ -38,6 +38,56 @@ describe(Exemplify::class, function () {
         expect($output->fetch())->toContain('Example for Acme\Calculator::add added.');
     });
 
+    it('emits a JSON receipt with --agent instead of prose', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn(<<<'PHP'
+        <?php
+
+        describe(Calculator::class, function() {
+            it("instantiates", fn() => null);
+        });
+        PHP);
+        allow($fs->write())->toReturn(null);
+
+        $output = new BufferedOutput();
+        $this->exemplify->run(
+            new ArrayInput(['class' => 'Acme\Calculator', 'method' => 'add', '--agent' => true]),
+            $output
+        );
+
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+        expect($doc)->toBe([
+            'v' => 1,
+            'action' => 'exemplify',
+            'class' => 'Acme\\Calculator',
+            'method' => 'add',
+            'spec' => 'spec/Acme/Calculator.spec.php',
+            'added' => true,
+        ]);
+    });
+
+    it('reports added false in the receipt when the example already exists', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn(<<<'PHP'
+        <?php
+
+        describe(Calculator::class, function() {
+            it("instantiates", fn() => null);
+            it("should add", fn() => null);
+        });
+        PHP);
+        allow($fs->write())->toReturn(null);
+
+        $output = new BufferedOutput();
+        $this->exemplify->run(
+            new ArrayInput(['class' => 'Acme\Calculator', 'method' => 'add', '--agent' => true]),
+            $output
+        );
+
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+        expect($doc['added'])->toBe(false);
+    });
+
     it('does not duplicate spec when it already exists', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
         allow($fs->read())->toReturn(<<<'PHP'

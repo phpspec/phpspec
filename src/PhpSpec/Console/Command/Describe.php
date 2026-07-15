@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command;
 
 use PhpSpec\CodeGeneration\SpecGenerator;
+use PhpSpec\Report\Formatter\Agent\Schema;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\ExceptionInterface;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -55,6 +56,7 @@ final class Describe extends Command
             ])
             ->addOption('exemplify', 'e', Option::VALUE_REQUIRED, 'Add an example for a method')
             ->addOption('run', 'r', Option::VALUE_NONE, 'Run specs after generating')
+            ->addOption('agent', null, Option::VALUE_NONE, 'Emit a machine-readable JSON receipt instead of prose (for coding agents)')
             ->setDescription('Generate spec for a class');
     }
 
@@ -70,6 +72,11 @@ final class Describe extends Command
     {
         $class = $input->getArgument('class');
         $spec = str_replace('\\', '/', $class);
+
+        if ($input->getOption('agent')) {
+            return $this->describeForAgent($spec, $input, $output);
+        }
+
         $this->generator->generate($spec);
         $specPath = $this->generator->getSpecPath();
         $output->writeln(
@@ -93,6 +100,43 @@ final class Describe extends Command
             }
             return $application->find('run')->run(new ArrayInput([]), $output);
         }
+
+        return 0;
+    }
+
+    /**
+     * Scaffolds the spec and emits a single JSON receipt — the class, the spec
+     * path, whether it was created, and (with -e) whether the example was added
+     * — so a coding agent can scaffold without parsing prose. No file content:
+     * the agent reads the file itself.
+     *
+     * @param string $spec the class path using forward slashes
+     * @param Input $input the console input
+     * @param Output $output the console output
+     * @return int the exit code (0 for success)
+     */
+    private function describeForAgent(string $spec, Input $input, Output $output): int
+    {
+        $created = $this->generator->generate($spec);
+
+        $receipt = [
+            'v' => Schema::V,
+            'action' => 'describe',
+            'class' => str_replace('/', '\\', $spec),
+            'spec' => $this->generator->getSpecPath() . '/' . $spec . $this->generator->getSpecSuffix(),
+            'created' => $created,
+        ];
+
+        $method = $input->getOption('exemplify');
+        if ($method) {
+            $receipt['example'] = [
+                'method' => $method,
+                'added' => $this->generator->addExample($spec, $method),
+            ];
+        }
+
+        $json = json_encode($receipt, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+        $output->write($json . "\n", false, Output::OUTPUT_RAW);
 
         return 0;
     }

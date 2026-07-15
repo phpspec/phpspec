@@ -137,6 +137,56 @@ Matches using a custom callback:
 expect($repo->save($user))->toBeCalledWith(callback(fn ($arg) => $arg->name === 'Alice'));
 ```
 
+### `satisfy(Closure $fn)`
+
+Matches a single argument against a predicate — like `callback()`, reads well
+alongside the others:
+
+```php
+expect($repo->save($user))->toBeCalledWith(satisfy(fn ($u) => $u->isActive()));
+```
+
+### `anInstanceOf(string $class)`
+
+Matches an argument that is an instance of the given class or interface:
+
+```php
+expect($bus->dispatch($cmd))->toBeCalledWith(anInstanceOf(Command::class));
+```
+
+### `arrayIncluding(array $subset)`
+
+Matches an array argument that contains (at least) the given key/value subset:
+
+```php
+expect($api->send($payload))->toBeCalledWith(arrayIncluding(['type' => 'order']));
+```
+
+### `startWith(string $prefix)`
+
+Matches a string argument that starts with the given prefix:
+
+```php
+expect($logger->log($line))->toBeCalledWith(startWith('ERROR:'));
+```
+
+### `noArgs()`
+
+Matches a call made with no arguments at all:
+
+```php
+expect($service->flush())->toBeCalledWith(noArgs());
+```
+
+### `cetera()`
+
+Matches all remaining arguments (zero or more) — the "and so on" wildcard. Must
+be the last matcher in the expected list:
+
+```php
+expect($logger->log('hello', 'x', 'y'))->toBeCalledWith('hello', cetera());
+```
+
 ## Negation
 
 All mock matchers support negation via `not()`:

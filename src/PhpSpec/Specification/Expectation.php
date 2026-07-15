@@ -774,6 +774,12 @@ class Expectation
      */
     private function match($match, ...$message): static
     {
+        // The matcher name is the public method that called this chokepoint
+        // (e.g. toBe); __call-based custom/predicate matchers stay anonymous.
+        $caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'] ?? null;
+        $matcher = $caller !== null && !in_array($caller, ['__call', 'match'], true) ? $caller : null;
+        $negated = $this->negated;
+
         $fakeExpression = null;
         // Extract fakeExpression if last argument is an array with '__fake' key
         if (!empty($message) && is_array(end($message)) && array_key_exists('__fake', end($message))) {
@@ -789,7 +795,7 @@ class Expectation
             }
             $fakeExpression = null; // negated matchers don't produce fakes
         }
-        $this->eventCreator?->createMatchEvent($match, $message[0], $fakeExpression, ...array_slice($message, 1));
+        $this->eventCreator?->createMatchEvent($match, $message[0], $fakeExpression, $matcher, $negated, ...array_slice($message, 1));
         return $this;
     }
 

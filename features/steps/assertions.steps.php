@@ -10,7 +10,7 @@
 then('all examples should pass', function () {
     if ($this->exitCode !== 0) {
         throw new \RuntimeException(
-            "Expected exit code 0, got {$this->exitCode}.\nOutput:\n{$this->output}"
+            "Expected exit code 0, got {$this->exitCode}.\nOutput:\n{$this->output}",
         );
     }
 });
@@ -18,7 +18,7 @@ then('all examples should pass', function () {
 then('all steps should pass', function () {
     if ($this->exitCode !== 0) {
         throw new \RuntimeException(
-            "Expected exit code 0, got {$this->exitCode}.\nOutput:\n{$this->output}"
+            "Expected exit code 0, got {$this->exitCode}.\nOutput:\n{$this->output}",
         );
     }
 });
@@ -32,7 +32,7 @@ then('{int} example should fail', function (int $count) {
 then('the exit code should be {int}', function (int $code) {
     if ($this->exitCode !== $code) {
         throw new \RuntimeException(
-            "Expected exit code {$code}, got {$this->exitCode}.\nOutput:\n{$this->output}"
+            "Expected exit code {$code}, got {$this->exitCode}.\nOutput:\n{$this->output}",
         );
     }
 });
@@ -40,7 +40,7 @@ then('the exit code should be {int}', function (int $code) {
 then('the exit code should not be {int}', function (int $code) {
     if ($this->exitCode === $code) {
         throw new \RuntimeException(
-            "Expected exit code NOT to be {$code}, got {$this->exitCode}.\nOutput:\n{$this->output}"
+            "Expected exit code NOT to be {$code}, got {$this->exitCode}.\nOutput:\n{$this->output}",
         );
     }
 });
@@ -50,7 +50,7 @@ then('the exit code should not be {int}', function (int $code) {
 then('the output should contain {string}', function (string $text) {
     if (!str_contains($this->output, $text)) {
         throw new \RuntimeException(
-            "Expected output to contain \"{$text}\".\nOutput:\n{$this->output}"
+            "Expected output to contain \"{$text}\".\nOutput:\n{$this->output}",
         );
     }
 });
@@ -58,7 +58,7 @@ then('the output should contain {string}', function (string $text) {
 then('the output should not contain {string}', function (string $text) {
     if (str_contains($this->output, $text)) {
         throw new \RuntimeException(
-            "Expected output NOT to contain \"{$text}\".\nOutput:\n{$this->output}"
+            "Expected output NOT to contain \"{$text}\".\nOutput:\n{$this->output}",
         );
     }
 });
@@ -67,7 +67,17 @@ then('the output should contain {string} exactly {int} times', function (string 
     $found = substr_count($this->output, $text);
     if ($found !== $times) {
         throw new \RuntimeException(
-            "Expected output to contain \"{$text}\" exactly {$times} time(s), found {$found}.\nOutput:\n{$this->output}"
+            "Expected output to contain \"{$text}\" exactly {$times} time(s), found {$found}.\nOutput:\n{$this->output}",
+        );
+    }
+});
+
+then('the output should be valid JSON', function () {
+    try {
+        json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
+    } catch (\JsonException $e) {
+        throw new \RuntimeException(
+            "Expected valid JSON output ({$e->getMessage()}).\nOutput:\n{$this->output}",
         );
     }
 });
