@@ -142,7 +142,6 @@ describe(Expectation::class, function() {
         $md = $service->save();
         $exp = new \PhpSpec\Mock\Expectation($md, __FILE__, __LINE__);
         $method = new \ReflectionMethod($exp, 'formatMessage');
-        $method->setAccessible(true);
         $obj = new \stdClass();
         $result = $method->invoke($exp, "Expected %s", $obj);
         expect($result)->toContain("stdClass");
@@ -152,7 +151,6 @@ describe(Expectation::class, function() {
         $md = $service->save();
         $exp = new \PhpSpec\Mock\Expectation($md, __FILE__, __LINE__);
         $method = new \ReflectionMethod($exp, 'formatMessage');
-        $method->setAccessible(true);
         $result = $method->invoke($exp, "Expected %s", "hello");
         expect($result)->toContain('"hello"');
     });
@@ -161,7 +159,6 @@ describe(Expectation::class, function() {
         $md = $service->save();
         $exp = new \PhpSpec\Mock\Expectation($md, __FILE__, __LINE__);
         $method = new \ReflectionMethod($exp, 'formatMessage');
-        $method->setAccessible(true);
         $result = $method->invoke($exp, "Expected %s", false);
         expect($result)->toContain("false");
     });
@@ -170,7 +167,6 @@ describe(Expectation::class, function() {
         $md = $service->save();
         $exp = new \PhpSpec\Mock\Expectation($md, __FILE__, __LINE__);
         $method = new \ReflectionMethod($exp, 'formatMessage');
-        $method->setAccessible(true);
         $result = $method->invoke($exp, "Expected %s", [1, 2]);
         expect($result)->toContain("[1, 2]");
     });
@@ -179,7 +175,6 @@ describe(Expectation::class, function() {
         $md = $service->save();
         $exp = new \PhpSpec\Mock\Expectation($md, __FILE__, __LINE__);
         $method = new \ReflectionMethod($exp, 'formatMessage');
-        $method->setAccessible(true);
         $result = $method->invoke($exp, "Expected %s", null);
         expect($result)->toContain("null");
     });
@@ -256,7 +251,6 @@ describe(Expectation::class, function() {
         $md = $service->save();
         $exp = new \PhpSpec\Mock\Expectation($md, __FILE__, __LINE__);
         $method = new \ReflectionMethod($exp, 'formatMessage');
-        $method->setAccessible(true);
         $result = $method->invoke($exp, "Expected %s", 42);
         expect($result)->toContain("42");
     });
