@@ -584,7 +584,7 @@ PHP;
 class $className extends $returnTypeFqcn implements \PhpSpec\Mock\MatchableDouble {
     use \PhpSpec\Mock\MatchableDoubleBehaviour;
 
-    public function __construct(object \$mockedObject = null) {
+    public function __construct(?object \$mockedObject = null) {
         if (\$mockedObject !== null) {
             \$this->______phpspec_mockedObject = \$mockedObject;
             \$this->______phpspec_methodName = '$methodName';
