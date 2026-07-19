@@ -78,7 +78,7 @@ final class ScrollRegionOutput implements OutputInterface
      */
     public function prepareForInput(): void
     {
-        $divider = "\033[34m" . str_repeat("\u{2500}", $this->width) . "\033[0m";
+        $divider = "\033[36m" . str_repeat("\u{2500}", $this->width) . "\033[0m";
 
         $out = sprintf("\033[%d;1H\033[K%s", $this->topDividerRow, $divider);
 

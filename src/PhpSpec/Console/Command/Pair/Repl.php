@@ -58,7 +58,7 @@ final readonly class Repl
 
         while (true) {
             $this->output->prepareForInput();
-            $line = $this->editor->readLine('> ', $suggestion, $history);
+            $line = $this->editor->readLine('❯ ', $suggestion, $history);
 
             if ($line === null) {
                 break;
