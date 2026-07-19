@@ -62,6 +62,35 @@ describe(SituationReport::class, function () {
         expect($report)->toContain('one-step plan');
     });
 
+    it('adds a FEATURES line with tallies and names each non-green feature', function () {
+        $summary = new SuiteSummary(
+            'red',
+            ['examples' => 0, 'passes' => 0, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+            [],
+            [],
+            ['features' => 2, 'scenarios' => 3, 'steps' => 9, 'stepFailures' => 1, 'undefined' => 2],
+            [
+                ['path' => 'features/adding.feature', 'status' => 'red', 'undefined' => 0],
+                ['path' => 'features/subtracting.feature', 'status' => 'todo', 'undefined' => 2],
+            ],
+        );
+        $report = SituationReport::fromSummary($summary, PairRole::HumanDrives)->render();
+
+        expect($report)->toContain('FEATURES: 2 features, 3 scenarios, 9 steps');
+        expect($report)->toContain('adding.feature');
+        expect($report)->toContain('subtracting.feature');
+    });
+
+    it('omits the FEATURES line for a spec-only suite', function () {
+        $summary = new SuiteSummary(
+            'green',
+            ['examples' => 1, 'passes' => 1, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+        );
+        $report = SituationReport::fromSummary($summary, PairRole::HumanDrives)->render();
+
+        expect($report)->not()->toContain('FEATURES:');
+    });
+
     it('renders without ANSI escape codes', function () {
         $summary = new SuiteSummary(
             'red',

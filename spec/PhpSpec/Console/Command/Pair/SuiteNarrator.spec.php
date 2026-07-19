@@ -149,4 +149,86 @@ describe(SuiteNarrator::class, function () {
         expect(implode("\n", $next['lines']))->toContain("I'll");
     });
 
+    // next() — feature-first, outside-in. Features lead when present.
+
+    it('advises writing the steps when a feature still has undefined steps', function () {
+        $outcome = new RunOutcome(null, new SuiteSummary(
+            'green',
+            ['examples' => 0, 'passes' => 0, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+            [],
+            [],
+            ['features' => 1, 'scenarios' => 1, 'steps' => 3, 'stepFailures' => 0, 'undefined' => 3],
+            [['path' => 'features/adding.feature', 'status' => 'todo', 'undefined' => 3]],
+        ));
+
+        $next = $this->narrator->next($outcome, PairRole::HumanDrives);
+
+        $text = implode("\n", $next['lines']);
+        expect($text)->toContain('adding.feature');
+        expect($text)->toContain('steps');
+    });
+
+    it('drops into the inner cycle, naming the failing example, when a scenario is red', function () {
+        $outcome = new RunOutcome(null, new SuiteSummary(
+            'red',
+            ['examples' => 1, 'passes' => 0, 'failures' => 0, 'errors' => 1, 'pending' => 0],
+            [['subject' => 'App\\Calculator', 'example' => 'adds numbers']],
+            [],
+            ['features' => 1, 'scenarios' => 1, 'steps' => 2, 'stepFailures' => 1, 'undefined' => 0],
+            [['path' => 'features/adding.feature', 'status' => 'red', 'undefined' => 0]],
+        ));
+
+        $next = $this->narrator->next($outcome, PairRole::HumanDrives);
+
+        expect($next['action'])->toBe('run');
+        expect(implode("\n", $next['lines']))->toContain('App\\Calculator');
+    });
+
+    it('advises running to drive out the behaviour a red scenario needs, even with no failing example yet', function () {
+        $outcome = new RunOutcome(null, new SuiteSummary(
+            'red',
+            ['examples' => 0, 'passes' => 0, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+            [],
+            [],
+            ['features' => 1, 'scenarios' => 1, 'steps' => 2, 'stepFailures' => 1, 'undefined' => 0],
+            [['path' => 'features/checkout.feature', 'status' => 'red', 'undefined' => 0]],
+        ));
+
+        $next = $this->narrator->next($outcome, PairRole::HumanDrives);
+
+        expect($next['action'])->toBe('run');
+        expect(implode("\n", $next['lines']))->toContain('checkout.feature');
+    });
+
+    it('offers refactor, a new scenario, or a new feature when the features are green', function () {
+        $outcome = new RunOutcome(null, new SuiteSummary(
+            'green',
+            ['examples' => 2, 'passes' => 2, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+            [],
+            [],
+            ['features' => 1, 'scenarios' => 2, 'steps' => 6, 'stepFailures' => 0, 'undefined' => 0],
+            [['path' => 'features/adding.feature', 'status' => 'green', 'undefined' => 0]],
+        ));
+
+        $next = $this->narrator->next($outcome, PairRole::HumanDrives, 'features/adding.feature', 'src/App/Calculator.php');
+
+        $text = implode("\n", $next['lines']);
+        expect($text)->toContain('refactor');
+        expect($text)->toContain('Calculator.php');
+        expect($text)->toContain('new scenario');
+        expect($text)->toContain('adding.feature');
+        expect($text)->toContain('new feature');
+    });
+
+    it('falls back to the spec flow when there are no features', function () {
+        $outcome = new RunOutcome(null, new SuiteSummary(
+            'green',
+            ['examples' => 1, 'passes' => 1, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+        ));
+
+        $next = $this->narrator->next($outcome, PairRole::HumanDrives);
+
+        expect($next['action'])->toBe('observe');
+    });
+
 });

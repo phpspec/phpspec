@@ -38,7 +38,7 @@ See [Pair Programming & AI](pair.md) for full documentation.
 
 ### `next`
 
-AI suggests what to describe or specify next.
+Coaches the single next step in outside-in, feature-first TDD — favouring story tests, grounded in the real suite state.
 
 ```bash
 bin/phpspec next

@@ -2,9 +2,30 @@
 
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Next;
+use PhpSpec\Console\Command\Pair\SpecRunner;
+use PhpSpec\Console\Command\Run\RunOutcome;
+use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Filesystem;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
+
+// A fake SpecRunner that records its argument and returns a scripted outcome, so
+// the features-present path can be exercised without spawning a real run.
+class NextFakeRunner implements SpecRunner
+{
+    /** @var list<string> */
+    public array $arguments = [];
+
+    public ?RunOutcome $outcome = null;
+
+    public function run(string $argument, OutputInterface $output): ?RunOutcome
+    {
+        $this->arguments[] = $argument;
+
+        return $this->outcome;
+    }
+}
 
 describe(Next::class, function () {
 
@@ -209,6 +230,53 @@ describe(Next::class, function () {
 
             expect($exitCode)->toBe(1);
             expect($tester->getDisplay())->toContain('Could not get a suggestion');
+        });
+
+        it('runs the features (--all) and grounds the suggestion in their state when features are present', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            $featuresDir = getcwd() . '/features';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir);
+            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $runner = new NextFakeRunner();
+            $runner->outcome = new RunOutcome(null, new SuiteSummary(
+                'green',
+                ['examples' => 0, 'passes' => 0, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+                [],
+                [],
+                ['features' => 1, 'scenarios' => 1, 'steps' => 3, 'stepFailures' => 0, 'undefined' => 3],
+                [['path' => 'features/adding.feature', 'status' => 'todo', 'undefined' => 3]],
+            ));
+
+            $captured = '';
+            $suggestFn = function (array $aiConfig, string $context) use (&$captured): array {
+                $captured = $context;
+
+                return ['type' => 'info', 'target' => '', 'reason' => 'ok'];
+            };
+            $cmd = new Next(new Configuration('.', $fs), $fs, $suggestFn, $runner);
+
+            $tester = new CommandTester($cmd);
+            $tester->execute([]);
+
+            expect($runner->arguments)->toContain('--all');
+            expect($captured)->toContain('FEATURES');
+            expect($captured)->toContain('adding.feature');
+        });
+
+        it('does not run the suite when there are no features', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $runner = new NextFakeRunner();
+            $cmd = new Next(new Configuration('.', $fs), $fs, fn(array $aiConfig): array => ['type' => 'info', 'target' => '', 'reason' => 'ok'], $runner);
+
+            $tester = new CommandTester($cmd);
+            $tester->execute([]);
+
+            expect($runner->arguments)->toBe([]);
         });
 
         it('passes AI config to the suggest function', function (Filesystem $fs) {

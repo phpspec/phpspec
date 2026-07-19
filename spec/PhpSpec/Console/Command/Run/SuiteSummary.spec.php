@@ -3,7 +3,10 @@
 use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
+use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 
 describe(SuiteSummary::class, function () {
@@ -149,6 +152,88 @@ describe(SuiteSummary::class, function () {
             'example' => 'applies a discount code',
             'error' => '',
         ]);
+    });
+
+    it('summarises features: hasFeatures, per-feature red/todo status, and featuresAreGreen', function () {
+        $suite = new SuiteResult([
+            new FeatureResult('Adding', [
+                new ScenarioResult('adds two numbers', [
+                    new StepResult('Given a calculator', 'passed'),
+                    new StepResult('When I add 2 and 3', 'failure'),
+                ]),
+            ], 'features/adding.feature'),
+            new FeatureResult('Subtracting', [
+                new ScenarioResult('subtracts two numbers', [
+                    new StepResult('Given a calculator', 'undefined'),
+                ]),
+            ], 'features/subtracting.feature'),
+        ]);
+
+        $summary = SuiteSummary::fromSuiteResult($suite);
+
+        expect($summary->hasFeatures())->toBe(true);
+        expect($summary->featuresAreGreen())->toBe(false);
+        expect($summary->features())->toBe([
+            ['path' => 'features/adding.feature', 'status' => 'red', 'undefined' => 0],
+            ['path' => 'features/subtracting.feature', 'status' => 'todo', 'undefined' => 1],
+        ]);
+        expect($summary->redFeature())->toBe(['path' => 'features/adding.feature', 'status' => 'red', 'undefined' => 0]);
+    });
+
+    it('reports features as green when every step passes', function () {
+        $suite = new SuiteResult([
+            new FeatureResult('Adding', [
+                new ScenarioResult('adds', [
+                    new StepResult('Given a calculator', 'passed'),
+                    new StepResult('Then it sums', 'passed'),
+                ]),
+            ], 'features/adding.feature'),
+        ]);
+
+        $summary = SuiteSummary::fromSuiteResult($suite);
+
+        expect($summary->hasFeatures())->toBe(true);
+        expect($summary->featuresAreGreen())->toBe(true);
+        expect($summary->redFeature())->toBeNull();
+    });
+
+    it('reports no features for a spec-only suite', function () {
+        $suite = new SuiteResult([
+            new SpecificationResult('App\\Greeter', [new ExampleResult('greets', [])]),
+        ]);
+
+        $summary = SuiteSummary::fromSuiteResult($suite);
+
+        expect($summary->hasFeatures())->toBe(false);
+        expect($summary->featuresAreGreen())->toBe(false);
+        expect($summary->features())->toBe([]);
+    });
+
+    it('round-trips feature data through toArray/fromArray', function () {
+        $suite = new SuiteResult([
+            new FeatureResult('Adding', [
+                new ScenarioResult('adds', [new StepResult('Given a calculator', 'undefined')]),
+            ], 'features/adding.feature'),
+        ]);
+        $summary = SuiteSummary::fromSuiteResult($suite);
+
+        $restored = SuiteSummary::fromArray($summary->toArray());
+
+        expect($restored->hasFeatures())->toBe(true);
+        expect($restored->features())->toBe($summary->features());
+        expect($restored->featureCounts())->toBe($summary->featureCounts());
+    });
+
+    it('treats a legacy report without feature data as having no features', function () {
+        $summary = SuiteSummary::fromArray([
+            'status' => 'green',
+            'counts' => ['examples' => 1, 'passes' => 1, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+            'failing' => [],
+            'pending' => [],
+        ]);
+
+        expect($summary->hasFeatures())->toBe(false);
+        expect($summary->features())->toBe([]);
     });
 
     it('keeps the subject when examples are nested in a context', function () {

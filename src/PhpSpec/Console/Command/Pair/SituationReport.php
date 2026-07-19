@@ -58,6 +58,10 @@ final readonly class SituationReport
     {
         $lines = [$this->suiteLine()];
 
+        foreach ($this->featureLines() as $line) {
+            $lines[] = $line;
+        }
+
         foreach ($this->exampleLines('FAILING', $this->summary?->failing() ?? []) as $line) {
             $lines[] = $line;
         }
@@ -94,6 +98,40 @@ final readonly class SituationReport
         );
 
         return sprintf('SUITE: %s — %d examples: %s', $this->summary->status(), $c['examples'], $breakdown);
+    }
+
+    /**
+     * The feature (story) grounding: a FEATURES tally line, then each non-green
+     * feature named so the model knows which scenario to drive. Empty for a
+     * spec-only suite, so nothing about features leaks into that report.
+     *
+     * @return list<string>
+     */
+    private function featureLines(): array
+    {
+        if ($this->summary === null || !$this->summary->hasFeatures()) {
+            return [];
+        }
+
+        $c = $this->summary->featureCounts();
+        $lines = [sprintf(
+            'FEATURES: %d features, %d scenarios, %d steps (%d failing, %d undefined)',
+            $c['features'],
+            $c['scenarios'],
+            $c['steps'],
+            $c['stepFailures'],
+            $c['undefined'],
+        )];
+
+        foreach ($this->summary->features() as $feature) {
+            if ($feature['status'] === 'red') {
+                $lines[] = sprintf('  - red scenario in %s', $feature['path']);
+            } elseif ($feature['status'] === 'todo') {
+                $lines[] = sprintf('  - steps to write in %s (%d undefined)', $feature['path'], $feature['undefined']);
+            }
+        }
+
+        return $lines;
     }
 
     /**

@@ -235,7 +235,7 @@ When you're not sure what to work on next, ask PhpSpec:
 bin/phpspec next
 ```
 
-The command scans your project's source files, specs, and features, sends the context to the AI, and suggests the single most impactful next step. The suggestion follows the scenario-first workflow — it will recommend a feature scenario before a spec, and a spec before an implementation.
+The command coaches the single next step in **outside-in, story-first TDD**, favouring feature (story) tests. When feature files are present it runs the whole suite (`--all`) and reads the real red/green state: a red or unwritten scenario drives the inner spec cycle; when the features are green it offers one baby step over the files you last touched — refactor the last code, add a new scenario, or start a new feature. The shared coaching lives in `src/PhpSpec/Ai/Prompts/next.txt`. With no feature files it falls back to the spec cycle (describe the missing class, or make the nearest pending example real).
 
 Example output:
 
@@ -249,9 +249,9 @@ Example output:
   drive the step definitions and any missing specs.
 ```
 
-The `next` command requires AI configuration (the same `ai:` section in `phpspec.yaml`). If it suggests a class whose spec already exists, it will not send you round in circles describing it again — it points you at `bin/phpspec run` to drive out the missing class.
+The standalone `next` command requires AI configuration (the same `ai:` section in `phpspec.yaml`). If it suggests a class whose spec already exists, it will not send you round in circles describing it again — it points you at `bin/phpspec run` to drive out the missing class.
 
-Inside pair mode, `next` reads the real suite state rather than guessing: a red spec means run it and generate what's missing; a pending example is the nearest gap to make real. This works even without an AI provider.
+Inside pair mode, `/next` reads the real suite state rather than guessing, and follows the same outside-in, feature-first logic — a red scenario drops into the inner cycle, undefined steps get written, and green features prompt a baby step over the last-touched feature and source. **This works even without an AI provider**: the deterministic narrator gives the advice, and `next.txt` enriches it when a provider is configured (the navigator advises, the driver takes the step).
 
 ## The `refactor` Command
 

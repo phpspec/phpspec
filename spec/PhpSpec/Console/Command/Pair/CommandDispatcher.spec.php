@@ -1,13 +1,19 @@
 <?php
 
+use PhpSpec\Ai\Contracts\ProviderInterface;
+use PhpSpec\Ai\Response;
 use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Generate\GenerateAgent;
+use PhpSpec\Console\Command\Pair\AiAssistant;
+use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\CommandDispatcher;
 use PhpSpec\Console\Command\Pair\PairOutput;
+use PhpSpec\Console\Command\Pair\RoleState;
 use PhpSpec\Console\Command\Pair\SpecRunner;
 use PhpSpec\Console\Command\Run\RunOutcome;
+use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Filesystem;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -20,11 +26,13 @@ class CommandDispatcherFakeRunner implements SpecRunner
     /** @var list<string> */
     public array $arguments = [];
 
+    public ?RunOutcome $outcome = null;
+
     public function run(string $argument, OutputInterface $output): ?RunOutcome
     {
         $this->arguments[] = $argument;
 
-        return null;
+        return $this->outcome;
     }
 }
 
@@ -319,6 +327,69 @@ describe(CommandDispatcher::class, function () {
             $output = $this->buffer->fetch();
             expect($output)->toContain('natural language');
             expect($output)->not()->toContain('Unknown command');
+        });
+    });
+
+    context('next favours features, outside-in', function () {
+        it('runs the features too (--all) when suggesting the next step', function () {
+            $this->dispatcher->dispatch('/next');
+
+            expect($this->specRunner->arguments)->toContain('--all');
+        });
+
+        it('prints feature-first advice when features are present and no AI is configured', function () {
+            $this->specRunner->outcome = new RunOutcome(null, new SuiteSummary(
+                'green',
+                ['examples' => 0, 'passes' => 0, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+                [],
+                [],
+                ['features' => 1, 'scenarios' => 1, 'steps' => 3, 'stepFailures' => 0, 'undefined' => 3],
+                [['path' => 'features/adding.feature', 'status' => 'todo', 'undefined' => 3]],
+            ));
+
+            $this->dispatcher->dispatch('/next');
+
+            expect($this->buffer->fetch())->toContain('adding.feature');
+        });
+
+        it('hands the AI the outside-in next.txt coaching, in both roles', function (Filesystem $fs) {
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => str_ends_with($p, '/Prompts/next.txt'));
+            allow($fs->read())->toReturnUsing(fn(string $p): string => str_ends_with($p, '/Prompts/next.txt') ? 'OUTSIDE-IN feature-first BABY STEP coaching' : '');
+
+            foreach ([new RoleState(\PhpSpec\Console\Command\Pair\PairRole::HumanDrives), new RoleState(\PhpSpec\Console\Command\Pair\PairRole::AiDrives)] as $roleState) {
+                $captured = null;
+                $provider = new class implements ProviderInterface {
+                    /** @var callable|null */
+                    public $responder = null;
+
+                    public function chat(array $messages, array $options = []): Response
+                    {
+                        return ($this->responder)($messages, $options);
+                    }
+                };
+                $provider->responder = function (array $messages) use (&$captured): Response {
+                    $captured = $messages;
+
+                    return new Response('Suggested the next scenario.');
+                };
+
+                $ai = new AiAssistant($provider, $this->config, $this->pairOutput, 'test-model', $fs, false, null, new Chooser($this->pairOutput, false), $roleState, $this->specRunner);
+                $dispatcher = new CommandDispatcher(
+                    new SpecGenerator('spec', $fs),
+                    new ClassGenerator('src', $fs),
+                    $this->config,
+                    $this->pairOutput,
+                    false,
+                    $fs,
+                    specRunner: $this->specRunner,
+                    roleState: $roleState,
+                    ai: $ai,
+                );
+
+                $dispatcher->dispatch('/next');
+
+                expect((string) json_encode($captured))->toContain('OUTSIDE-IN');
+            }
         });
     });
 

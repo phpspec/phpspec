@@ -84,4 +84,12 @@ interface Filesystem
      * @param string $path PHP file to require
      */
     public function requirePhp(string $path): mixed;
+
+    /**
+     * Returns a file's last-modified time as a Unix timestamp, or 0 when it
+     * cannot be determined.
+     *
+     * @param string $path file to inspect
+     */
+    public function mtime(string $path): int;
 }

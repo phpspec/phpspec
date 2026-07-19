@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [9.0.0-beta.8](https://github.com/phpspec/phpspec/compare/9.0.0-beta.7...9.0.0-beta.8)
+
+### Added
+ - `--format=agent` machine-readable JSON for coding agents; with `describe --agent`, `exemplify --agent`, and `--accept-offers`
+ - Slash commands in pair mode: `/describe`, `/exemplify`, `/run`, `/next`, `/generate`, `/clear` (joining `/swap`, `/help`, `/quit`)
+ - Generate command and `/generate` to turn a plain-English instruction into a spec example or code
+ - Ghost-text next step, the prompt pre-fills a dim suggestion of the next command (Right-arrow/Tab accepts)
+ - `next` follows outside-in, feature-first TDD — favours story tests and advises the next baby step from real suite state; works without AI.
+
+### Fixed
+ - Native PHP 8.4/8.5 deprecations in mock generation (nullable `?object` constructor param; dropped `setAccessible()`).
+ - Pair `ai:` status reflects whether the provider actually started (`ai: on` / `ai: unavailable` / `ai: off`)
+
 ## [9.0.0-beta.7](https://github.com/phpspec/phpspec/compare/9.0.0-beta.6...9.0.0-beta.7)
 
 ### Added

@@ -31,4 +31,25 @@ describe('pair role prompt artifacts', function () {
         expect($text)->toContain('Use ask_user only for a straight yes/no.');
     });
 
+    it('ships a next prompt that teaches the outside-in, feature-first cycle in baby steps', function () use ($read) {
+        $text = $read('next.txt');
+
+        expect($text)->toContain('OUTSIDE-IN');
+        expect($text)->toContain('FEATURE FIRST');
+        expect($text)->toContain('OUTER CYCLE');
+        expect($text)->toContain('INNER CYCLE');
+        expect($text)->toContain('BARELY-ENOUGH-DESIGN');
+        expect($text)->toContain('BABY STEP');
+        expect($text)->toContain('NO FEATURES');
+        expect($text)->toContain('Voice:');
+    });
+
+    it('keeps the machine-readable suggestion contract at the tail of the next prompt', function () use ($read) {
+        $text = $read('next.txt');
+
+        expect($text)->toContain('"type"');
+        expect($text)->toContain('"target"');
+        expect($text)->toContain('"reason"');
+    });
+
 });
