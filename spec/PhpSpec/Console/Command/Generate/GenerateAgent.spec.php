@@ -54,25 +54,18 @@ describe(GenerateAgent::class, function () {
         expect($agent->propose($this->aiConfig, 'x'))->toBeNull();
     });
 
-    it('rejects a spec edit that would drop an example', function (Filesystem $fs) {
+    it('proposes a spec rewrite, leaving any example change for the diff to reveal', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
         allow($fs->read())->toReturn('<?php describe("X", function () { it("a", fn() => null); it("b", fn() => null); });');
+        // Even a rewrite that removes an example is proposed — the diff + confirm is the safety net.
         $fn = fn() => json_encode(['path' => 'spec/App/X.spec.php', 'content' => '<?php describe("X", function () { it("a", fn() => null); });']);
         $agent = new GenerateAgent($this->config, $fs, $fn);
 
-        expect($agent->propose($this->aiConfig, 'rewrite'))->toBeNull();
-    });
-
-    it('allows a spec edit that keeps the example count', function (Filesystem $fs) {
-        allow($fs->exists())->toReturn(true);
-        allow($fs->read())->toReturn('<?php describe("X", function () { it("a", fn() => null); });');
-        $fn = fn() => json_encode(['path' => 'spec/App/X.spec.php', 'content' => '<?php describe("X", function () { it("returns zero", fn() => expect(1)->toBe(0)); });']);
-        $agent = new GenerateAgent($this->config, $fs, $fn);
-
-        $proposal = $agent->propose($this->aiConfig, 'rewrite');
+        $proposal = $agent->propose($this->aiConfig, 'remove the b example');
 
         expect($proposal)->not()->toBeNull();
-        expect($proposal['new'])->toContain('returns zero');
+        expect($proposal['old'])->toContain('it("b"');
+        expect($proposal['new'])->not()->toContain('it("b"');
     });
 
     it('feeds the AI the project tree and the files the instruction names', function (Filesystem $fs) {

@@ -24,8 +24,8 @@ use RuntimeException;
  * @internal
  * Turns a natural-language instruction into a single proposed file edit — a
  * spec example or a piece of implementation code — authored by the AI. It only
- * *proposes*: the caller shows the diff, confirms, and writes. A spec edit that
- * would drop an existing example is rejected, so growing a spec never loses one.
+ * *proposes*: the caller shows the diff, confirms, and writes, so any change
+ * (including one that removes an example) is visible before it lands.
  */
 final class GenerateAgent
 {
@@ -47,7 +47,7 @@ final class GenerateAgent
 
     /**
      * Proposes a single file edit for the instruction, or null when the AI
-     * produced nothing usable (or the edit would drop a spec example).
+     * produced nothing usable.
      *
      * @param array{provider: string, model?: string, api_key: string} $aiConfig
      * @return array{path: string, old: string, new: string, isNew: bool}|null
@@ -68,17 +68,8 @@ final class GenerateAgent
         $fullPath = $this->fullPath($relPath);
         $exists = $this->filesystem->exists($fullPath);
         $old = $exists ? $this->filesystem->read($fullPath) : '';
-        $new = $raw['content'];
 
-        // A spec edit must never drop an example — specs are grown, not shrunk.
-        if ($exists
-            && str_ends_with($relPath, $this->config->getSpecSuffix())
-            && $this->countExamples($new) < $this->countExamples($old)
-        ) {
-            return null;
-        }
-
-        return ['path' => $relPath, 'old' => $old, 'new' => $new, 'isNew' => !$exists];
+        return ['path' => $relPath, 'old' => $old, 'new' => $raw['content'], 'isNew' => !$exists];
     }
 
     /**
@@ -103,15 +94,6 @@ final class GenerateAgent
     private function fullPath(string $relPath): string
     {
         return getcwd() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relPath);
-    }
-
-    /**
-     * Counts the it()/its() examples in spec source, so a rewrite can be
-     * checked against dropping one.
-     */
-    private function countExamples(string $content): int
-    {
-        return (int) preg_match_all('/\b(?:it|its)\s*\(/', $content);
     }
 
     /**

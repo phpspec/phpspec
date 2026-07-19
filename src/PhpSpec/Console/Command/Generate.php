@@ -36,21 +36,21 @@ final class Generate extends Command
 {
     private Filesystem $filesystem;
 
-    /** @var (callable(array{provider: string, model?: string, api_key: string}, string): (array{path: string, content: string}|null))|null */
-    private $generateFn;
+    /** @var (callable(array{provider: string, model?: string, api_key: string}, string): (string|null))|null */
+    private $chatFn;
 
     /**
      * @param Configuration $config
      * @param Filesystem|null $filesystem
-     * @param (callable(array{provider: string, model?: string, api_key: string}, string): (array{path: string, content: string}|null))|null $generateFn injectable AI seam for specs
+     * @param (callable(array{provider: string, model?: string, api_key: string}, string): (string|null))|null $chatFn injectable AI seam for specs
      */
     public function __construct(
         private readonly Configuration $config,
         ?Filesystem $filesystem = null,
-        ?callable $generateFn = null,
+        ?callable $chatFn = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
-        $this->generateFn = $generateFn;
+        $this->chatFn = $chatFn;
         parent::__construct();
     }
 
@@ -83,7 +83,7 @@ final class Generate extends Command
         $output->writeln('  <fg=gray>Generating...</>');
         $output->writeln('');
 
-        $agent = new GenerateAgent($this->config, $this->filesystem, $this->generateFn);
+        $agent = new GenerateAgent($this->config, $this->filesystem, $this->chatFn);
         $proposal = $agent->propose($aiConfig, $instruction);
 
         if ($proposal === null) {
