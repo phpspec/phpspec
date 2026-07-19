@@ -19,6 +19,7 @@ use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Describe;
 use PhpSpec\Console\Command\Exemplify;
+use PhpSpec\Console\Command\Generate;
 use PhpSpec\Console\Command\Next;
 use PhpSpec\Console\Command\Pair;
 use PhpSpec\Console\Command\Refactor;
@@ -109,6 +110,7 @@ final class Application extends BaseApplication
         );
         $defaultCommands[] = new Refactor($config);
         $defaultCommands[] = new Next($config);
+        $defaultCommands[] = new Generate($config);
 
         foreach ($extensionLoader->getCommands() as $cmd) {
             $defaultCommands[] = $cmd;

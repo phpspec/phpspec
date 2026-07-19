@@ -57,7 +57,21 @@ bin/phpspec refactor "App\Calculator::sum"
 
 See [Pair Programming & AI](pair.md#the-refactor-command) for full documentation.
 
-### `describe`
+### `generate`
+
+Turns a natural-language instruction into a single file edit — a spec example or a
+piece of implementation code — authored by the AI, shown as a diff, and written after a
+`[Y/n]` confirmation. Requires an AI provider (see [Configuration](configuration.md#ai)).
+
+```bash
+bin/phpspec generate an example for App/Calculator add where it sums two numbers
+bin/phpspec generate implement Calculator::add to return the sum of its arguments
+```
+
+The instruction is free-form text after `generate`. Use it when a spec is red for a
+*missing implementation* (not a missing class or method — those are offered automatically
+on `run`). Also available in pair mode as `/generate <instruction>`.
+
 
 Generates a spec file for a class.
 

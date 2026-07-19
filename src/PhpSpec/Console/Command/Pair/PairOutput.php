@@ -68,6 +68,16 @@ final class PairOutput
     }
 
     /**
+     * Returns the undecorated console output, for writing directly at the fixed
+     * input row (the scroll-region decorator would reposition into the content
+     * area). This is how the line editor paints the prompt, buffer, and ghost.
+     */
+    public function rawOutput(): OutputInterface
+    {
+        return $this->output;
+    }
+
+    /**
      * Sets up the fixed terminal layout: header, scroll region, bottom divider, input line.
      *
      * @param bool $aiAvailable whether an AI provider is configured

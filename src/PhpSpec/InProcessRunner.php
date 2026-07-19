@@ -214,6 +214,11 @@ final class InProcessRunner
                     }
                 } elseif ($command === 'refactor') {
                     $result['target'] = $part;
+                } elseif ($command === 'generate') {
+                    if (!isset($result['instruction']) || !is_array($result['instruction'])) {
+                        $result['instruction'] = [];
+                    }
+                    $result['instruction'][] = $part;
                 }
             }
         }

@@ -177,6 +177,24 @@ This is the scripted counterpart to the prompts -- built for
 then has PhpSpec generate them. See [Coding Agents](agent.md) for the offer
 format and the full loop.
 
+## Generating From an Instruction (`generate`)
+
+The generators above are deterministic — they emit fixed stubs (`toBe(null)`, empty
+method bodies). When a spec is red because an existing method needs *real behaviour*
+(not because a class or method is missing), the `generate` command turns a
+natural-language instruction into one file edit — a spec example or a piece of
+implementation code — authored by the AI, shown as a diff, and written after you confirm:
+
+```bash
+bin/phpspec generate an example for App/Calculator add where it sums two numbers
+bin/phpspec generate implement Calculator::add to return the sum of its arguments
+```
+
+It requires an AI provider. A spec edit is checked so it never drops an existing example
+(specs are grown, not shrunk). In pair mode the same thing is `/generate <instruction>`,
+with the diff confirmed through the numbered chooser. See
+[Pair Programming & AI](pair.md) and the [CLI Reference](cli.md#generate).
+
 ## Step Definition Generation
 
 When running feature files with undefined steps, PhpSpec generates step definition stubs:
