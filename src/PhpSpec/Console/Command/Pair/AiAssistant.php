@@ -298,7 +298,7 @@ final class AiAssistant
      */
     private function driverHandBack(): string
     {
-        return 'That\'s my one change for this turn. Run it, tell me the next step, or /swap to take the keyboard back.';
+        return 'That\'s my one change for this turn. /run it, tell me the next step, or /swap to take the keyboard back.';
     }
 
     /**
@@ -432,7 +432,7 @@ final class AiAssistant
         if ($role->aiIsNavigator()) {
             PairLogger::log('RESULT', 'Navigator refusal');
 
-            return ['error' => 'I\'m navigating — you\'re driving, so I won\'t write files. Use the commands (describe, exemplify, run), or /swap to hand me the keyboard.'];
+            return ['error' => 'I\'m navigating — you\'re driving, so I won\'t write files. Use the commands (/describe, /exemplify, /run), or /swap to hand me the keyboard.'];
         }
 
         if ($role->aiIsDriver() && $this->artifactWrittenThisHandle) {

@@ -27,13 +27,13 @@ Pair mode opens by looking at your project once and greeting you with what matte
 - **Green and clean** — a short observation, then it's your call.
 - **Empty project** — an invitation to write the first spec.
 
-The greeting adapts to your configuration: with an AI provider configured it invites plain English; without one it points you at the deterministic commands (`describe`, `exemplify`, `run`). The full command list is always available behind `/help`.
+The greeting adapts to your configuration: with an AI provider configured it invites plain English; without one it points you at the deterministic commands (`/describe`, `/exemplify`, `/run`). The full command list is always available behind `/help`.
 
 ### Driving and navigating
 
 Pair mode is a pair, not a code agent: you share one keyboard and work in turns. Nobody hand-types code any more — the generators are the keyboard, and *driving* means deciding what gets generated and pulling the trigger. `/swap` changes who holds it (this needs an AI provider):
 
-- **You drive, the AI navigates** (the default). The AI reviews and suggests one step ahead — intent, then location, then the exact line only when you ask — but it never writes files on its own. You generate code by triggering it: `describe`, `exemplify`, `run`, and the numbered choosers.
+- **You drive, the AI navigates** (the default). The AI reviews and suggests one step ahead — intent, then location, then the exact line only when you ask — but it never writes files on its own. You generate code by triggering it: `/describe`, `/exemplify`, `/run`, and the numbered choosers.
 - **The AI drives, you navigate** (after `/swap`). You give the intent; the AI makes it real one artifact at a time, shows the diff, runs the spec, and hands back.
 
 `/help` shows the current contract. Swap back at any time with another `/swap`.
@@ -42,27 +42,46 @@ Pair mode is a pair, not a code agent: you share one keyboard and work in turns.
 
 These commands work without AI configuration:
 
+Every command starts with a slash. These work without AI configuration:
+
 | Command | Description |
 |---|---|
-| `describe <Class>` | Generate a spec file and optionally create the class |
-| `exemplify <Class> <method>` | Add a method example to an existing spec |
-| `run [path]` | Run specs and offer code generation for failures |
-| `clear` | Clear the terminal |
+| `/describe <Class>` | Generate a spec file and optionally create the class |
+| `/exemplify <Class> <method>` | Add a method example to an existing spec |
+| `/run [path]` | Run specs and offer code generation for failures |
+| `/next` | Suggest the next step from the real suite state |
+| `/generate <instruction>` | Turn plain English into a spec example or code — diff, then confirm (requires AI) |
+| `/clear` | Clear the terminal |
 | `/help` | Show available commands and AI status |
 | `/quit`, `/exit` | Exit pair mode |
 
-Commands mirror the CLI but add interactive prompts. For example, `describe` shows the generated spec, then asks whether to create the source class. `run` displays results and offers to generate missing classes or methods.
+Commands mirror the CLI but add interactive prompts. For example, `/describe` shows the generated spec, then asks whether to create the source class. `/run` displays results and offers to generate missing classes or methods.
 
-### Smart Routing
+### Command or prompt: the slash rule
 
-When AI is configured, input that doesn't match a built-in command is sent to the AI assistant. PhpSpec also detects when you're addressing the AI even if the input starts with a command name:
+The leading slash is the one signal that a line is a command. Anything **without** a slash is sent to the AI assistant (or, with no AI configured, shows the unknown-command hint). No keyword guessing — `/describe App/Calculator` runs the command; `describe what the Loader class does` is a prompt.
 
 ```
-> describe App/Calculator                       # runs describe command
-> describe what the Loader class does            # routes to AI (too many words)
-> run spec/App                                   # runs specs
-> run my specs and explain the failures          # routes to AI
+> /describe App/Calculator                      # runs the describe command
+> describe what the Loader class does           # no slash → routes to the AI
+> /run spec/App                                 # runs specs at a path
+> run my specs and explain the failures         # no slash → routes to the AI
 ```
+
+### Suggested next command (ghost text)
+
+After each command the prompt is pre-filled with a dim **ghost** of the natural next
+step — describe a spec and it suggests running it, run and it suggests `/next`, and so on:
+
+```
+> /describe App/Todo
+  ...
+> /run spec/App/Todo.spec.php          ← the greyed-out suggestion, cursor before the /
+```
+
+Press **Right-arrow** or **Tab** to accept it (it turns full colour, cursor to the end),
+or just start typing to dismiss it. **Up/Down** walk your history. On a terminal that
+can't enter raw mode (or piped input) the prompt falls back to a plain line reader.
 
 ## AI Configuration
 

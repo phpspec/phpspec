@@ -14,7 +14,7 @@ Feature: Pair mode next coaches the next step from real suite state
           it('adds numbers', fn() => expect((new Calculator())->add(2, 3))->toBe(5));
       });
       """
-    When I run phpspec pair with input "next"
+    When I run phpspec pair with input "/next"
     Then the output should contain "run"
     And the output should contain "Calculator"
     And the output should not contain "Specification for"
@@ -30,6 +30,6 @@ Feature: Pair mode next coaches the next step from real suite state
           });
       });
       """
-    When I run phpspec pair with input "next"
+    When I run phpspec pair with input "/next"
     Then the output should contain "reconciles entries"
     And the output should not contain "Specification for"

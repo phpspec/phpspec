@@ -19,6 +19,7 @@ use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\ClassLocation;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
+use PhpSpec\Console\Command\Generate\GenerateAgent;
 use PhpSpec\Console\Command\Pair;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\GenerationCandidates;
@@ -46,6 +47,7 @@ final class CommandDispatcher
     private readonly Chooser $chooser;
     private readonly SpecRunner $specRunner;
     private readonly RoleState $roleState;
+    private readonly GenerateAgent $generateAgent;
     private ?AiAssistant $ai = null;
 
     /**
@@ -54,6 +56,13 @@ final class CommandDispatcher
      * red/green state the human just saw.
      */
     private ?SuiteSummary $lastSituation = null;
+
+    /**
+     * The command to pre-fill the next prompt with as a dim ghost suggestion —
+     * the natural next step after the command just run (e.g. run the spec you
+     * just described). Null when there is nothing obvious to suggest.
+     */
+    private ?string $suggestion = null;
 
     /**
      * @param SpecGenerator $specGenerator the spec file generator
@@ -77,12 +86,14 @@ final class CommandDispatcher
         ?Chooser $chooser = null,
         ?SpecRunner $specRunner = null,
         ?RoleState $roleState = null,
+        ?GenerateAgent $generateAgent = null,
     ) {
         $this->parser = new InputParser();
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
         $this->specRunner = $specRunner ?? new SubprocessRunner();
         $this->roleState = $roleState ?? new RoleState();
+        $this->generateAgent = $generateAgent ?? new GenerateAgent($this->config, $this->filesystem);
         $this->registerAutoloader();
 
         $aiConfig = $this->config->getAiConfig();
@@ -166,52 +177,72 @@ final class CommandDispatcher
     {
         PairLogger::log('CMD', $input);
         $parsed = $this->parser->parse($input);
+        $command = $parsed['command'];
 
-        if ($this->shouldRouteToAi($parsed['command'], $parsed['argument'])) {
+        if ($command === '') {
+            return self::CONTINUE;
+        }
+
+        // A leading slash is the one signal that this line is a command; every
+        // other line is a prompt for the AI (or the unknown-command hint when no
+        // AI is configured). No keyword guessing, no argument-count heuristics.
+        if (!str_starts_with($command, '/')) {
+            $this->suggestion = null;
+
             return $this->handleAi($input);
         }
 
-        return match ($parsed['command']) {
-            'describe' => $this->handleDescribe($parsed['argument']),
-            'exemplify' => $this->handleExemplify($parsed['argument']),
-            'run' => $this->handleRun($parsed['argument']),
-            'clear' => $this->handleClear(),
+        $result = match ($command) {
+            '/describe' => $this->handleDescribe($parsed['argument']),
+            '/exemplify' => $this->handleExemplify($parsed['argument']),
+            '/run' => $this->handleRun($parsed['argument']),
+            '/next' => $this->handleNext(),
+            '/generate' => $this->handleGenerate($parsed['argument']),
+            '/clear' => $this->handleClear(),
             '/swap' => $this->handleSwap(),
             '/help' => $this->handleHelp(),
             '/quit', '/exit' => self::QUIT,
-            '' => self::CONTINUE,
-            default => $this->handleDefault($parsed['command'], $input),
+            default => $this->handleSlashCommand($command, $input),
+        };
+
+        // Set from the top-level command only, so a nested run (e.g. the "run
+        // now?" step of /describe) never clobbers the hint.
+        $this->suggestion = $this->suggestionFor($command, $parsed['argument']);
+
+        return $result;
+    }
+
+    /**
+     * The command to pre-fill the next prompt with, chosen from what was just
+     * run: describe a spec then run it, run then ask what's next, and so on.
+     */
+    public function suggestion(): ?string
+    {
+        return $this->suggestion;
+    }
+
+    /**
+     * The natural next command after the given one, or null when there is no
+     * obvious follow-up to ghost into the prompt.
+     */
+    private function suggestionFor(string $command, string $argument): ?string
+    {
+        return match ($command) {
+            '/describe' => $argument !== '' ? '/run ' . $this->specPathFor($argument) : null,
+            '/exemplify', '/generate' => '/run',
+            '/run' => '/next',
+            default => null,
         };
     }
 
     /**
-     * Checks whether input that matches a command keyword should be routed
-     * to AI instead, based on argument count exceeding what the command expects.
+     * The project-relative spec path for a described class argument.
      */
-    private function shouldRouteToAi(string $command, string $argument): bool
+    private function specPathFor(string $argument): string
     {
-        if ($this->ai === null || $argument === '') {
-            return false;
-        }
+        $spec = str_replace('\\', '/', $argument);
 
-        return self::exceedsCommandArgLimit($command, $argument);
-    }
-
-    /**
-     * Checks whether argument word count exceeds the expected limit for a command.
-     */
-    public static function exceedsCommandArgLimit(string $command, string $argument): bool
-    {
-        $maxArgs = match ($command) {
-            'run','describe' => 1,
-            'exemplify' => 2,
-            default => 0,
-        };
-
-        $tokens = preg_split('/\s+/', $argument);
-        $tokenCount = $tokens !== false ? count($tokens) : 0;
-
-        return $maxArgs > 0 && $tokenCount > $maxArgs;
+        return $this->specGenerator->getSpecPath() . '/' . $spec . $this->specGenerator->getSpecSuffix();
     }
 
     /**
@@ -220,7 +251,7 @@ final class CommandDispatcher
     private function handleDescribe(string $argument): int
     {
         if ($argument === '') {
-            $this->output->error('Usage: describe Acme\Greeter');
+            $this->output->error('Usage: /describe Acme\Greeter');
             return self::CONTINUE;
         }
 
@@ -294,7 +325,7 @@ final class CommandDispatcher
         $method = $parts[1] ?? '';
 
         if ($fqcn === '' || $method === '') {
-            $this->output->error('Usage: exemplify Acme\Calculator add');
+            $this->output->error('Usage: /exemplify Acme\Calculator add');
             return self::CONTINUE;
         }
 
@@ -403,56 +434,32 @@ final class CommandDispatcher
     }
 
     /**
-     * Tries to delegate to a registered Application command, falling back to AI.
+     * Handles a slash command that isn't one of the built-in arms: delegates to
+     * a registered Application command of the same name (minus the slash), or
+     * reports it as unknown.
      */
-    private function handleDefault(string $command, string $rawInput): int
+    private function handleSlashCommand(string $command, string $rawInput): int
     {
-        if ($command === 'next' && $this->parser->parse($rawInput)['argument'] === '') {
-            return $this->handleNext();
-        }
+        $name = ltrim($command, '/');
 
-        if ($this->application !== null && $this->application->has($command)) {
-            $cmd = $this->application->find($command);
+        if ($this->application !== null && $this->application->has($name)) {
+            $cmd = $this->application->find($name);
             if ($cmd instanceof Pair) {
                 return self::CONTINUE;
-            }
-
-            // If the argument exceeds what the command accepts, route to AI
-            $parsed = $this->parser->parse($rawInput);
-            if ($parsed['argument'] !== '' && $this->exceedsDefinitionArgLimit($cmd, $parsed['argument'])) {
-                return $this->handleAi($rawInput);
             }
 
             return $this->delegateToCommand($cmd, $command, $rawInput);
         }
 
-        return $this->handleAi($rawInput);
-    }
-
-    /**
-     * Checks whether argument word count exceeds a command's defined argument limit.
-     */
-    private function exceedsDefinitionArgLimit(Command $cmd, string $argument): bool
-    {
-        $def = $cmd->getDefinition();
-        $maxArgs = 0;
-        foreach ($def->getArguments() as $arg) {
-            if ($arg->isArray()) {
-                return false;
-            }
-            $maxArgs++;
-        }
-        $tokens = preg_split('/\s+/', $argument);
-        $tokenCount = $tokens !== false ? count($tokens) : 0;
-        return $maxArgs === 0 || $tokenCount > $maxArgs;
+        return $this->handleUnknown($command);
     }
 
     /**
      * Runs a Symfony console command with arguments parsed from raw input.
      */
-    private function delegateToCommand(Command $cmd, string $name, string $rawInput): int
+    private function delegateToCommand(Command $cmd, string $commandToken, string $rawInput): int
     {
-        $argString = trim(substr($rawInput, strlen($name)));
+        $argString = trim(substr($rawInput, strlen($commandToken)));
         $input = new StringInput($argString);
         $input->setInteractive($this->interactive);
 
@@ -461,6 +468,47 @@ final class CommandDispatcher
             $cmd->run($input, $this->output->getOutput());
         } catch (\Exception $e) {
             $this->output->error($e->getMessage());
+        }
+
+        return self::CONTINUE;
+    }
+
+    /**
+     * Turns a natural-language instruction into one AI-authored file edit, shows
+     * it as a diff, and writes it once confirmed. Requires an AI provider.
+     */
+    private function handleGenerate(string $argument): int
+    {
+        $instruction = trim($argument);
+        if ($instruction === '') {
+            $this->output->error('Usage: /generate <what to build in plain English>');
+
+            return self::CONTINUE;
+        }
+
+        $aiConfig = $this->config->getAiConfig();
+        if ($aiConfig === null) {
+            $this->output->error('AI configuration required for /generate — add an "ai" section to phpspec.yaml.');
+
+            return self::CONTINUE;
+        }
+
+        $proposal = $this->generateAgent->propose($aiConfig, $instruction);
+        if ($proposal === null) {
+            $this->output->error('Could not generate anything for that instruction. Try rephrasing.');
+
+            return self::CONTINUE;
+        }
+
+        if ($proposal['isNew']) {
+            $this->output->fileDisplay($proposal['path'], $proposal['new'], true);
+        } else {
+            $this->output->fileDiff($proposal['path'], $proposal['old'], $proposal['new']);
+        }
+
+        if ($this->chooser->choose('Apply this change?', 'generate', 'apply generated changes')) {
+            $this->generateAgent->write($proposal);
+            $this->output->success(($proposal['isNew'] ? 'Created ' : 'Updated ') . $proposal['path']);
         }
 
         return self::CONTINUE;
@@ -484,11 +532,13 @@ final class CommandDispatcher
         $out->writeln('');
         $out->writeln('  <fg=bright-blue;options=bold>Available commands:</>');
         $out->writeln('');
-        $out->writeln('  <fg=white>describe</> <fg=gray>Acme\Greeter</>           Generate a spec file');
-        $out->writeln('  <fg=white>exemplify</> <fg=gray>Acme\Greeter greet</>  Add an example for a method');
-        $out->writeln('  <fg=white>run</>                                Run all specs');
-        $out->writeln('  <fg=white>run</> <fg=gray>spec/path</>                    Run specs at path');
-        $out->writeln('  <fg=white>clear</>                     Clear the screen');
+        $out->writeln('  <fg=white>/describe</> <fg=gray>Acme\Greeter</>          Generate a spec file');
+        $out->writeln('  <fg=white>/exemplify</> <fg=gray>Acme\Greeter greet</> Add an example for a method');
+        $out->writeln('  <fg=white>/run</>                               Run all specs');
+        $out->writeln('  <fg=white>/run</> <fg=gray>spec/path</>                   Run specs at path');
+        $out->writeln('  <fg=white>/next</>                              Suggest the next step');
+        $out->writeln('  <fg=white>/generate</> <fg=gray>what to build</>        Generate a spec or code from words (AI)');
+        $out->writeln('  <fg=white>/clear</>                    Clear the screen');
         $out->writeln("  <fg=white>/swap</>                     Swap who drives (you \u{21c4} AI)");
         $out->writeln('  <fg=white>/help</>                     Show this help');
         $out->writeln('  <fg=white>/quit</>                     Exit pair mode');
@@ -505,7 +555,7 @@ final class CommandDispatcher
             $out->writeln('  <fg=bright-blue;options=bold>AI assistant</> <fg=gray>(not configured — add ai: section to phpspec.yml)</>');
         }
         $out->writeln('');
-        $out->writeln('  Anything that isn\'t a built-in command is sent to the AI assistant.');
+        $out->writeln('  Anything without a leading <fg=white>/</> is sent to the AI assistant.');
         $out->writeln('  It can generate specs, features, step definitions, and run your specs.');
         $out->writeln('');
         $out->writeln('  <fg=bright-blue>Examples:</>');
@@ -528,7 +578,7 @@ final class CommandDispatcher
             return;
         }
 
-        $skip = ['pair', 'describe', 'exemplify', 'run', 'list', 'help', 'completion', '_complete'];
+        $skip = ['pair', 'describe', 'exemplify', 'run', 'next', 'list', 'help', 'completion', '_complete'];
         $extra = [];
 
         foreach ($this->application->all() as $name => $cmd) {
@@ -547,7 +597,7 @@ final class CommandDispatcher
         $out->writeln('  <fg=bright-blue;options=bold>Additional commands:</>');
         $out->writeln('');
         foreach ($extra as $name => $description) {
-            $out->writeln(sprintf('  <fg=white>%s</>  %s', str_pad($name, 22), $description));
+            $out->writeln(sprintf('  <fg=white>%s</>  %s', str_pad('/' . $name, 22), $description));
         }
     }
 

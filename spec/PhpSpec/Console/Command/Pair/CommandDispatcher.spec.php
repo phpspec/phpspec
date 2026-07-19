@@ -3,6 +3,7 @@
 use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
+use PhpSpec\Console\Command\Generate\GenerateAgent;
 use PhpSpec\Console\Command\Pair\CommandDispatcher;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use PhpSpec\Console\Command\Pair\SpecRunner;
@@ -33,6 +34,7 @@ describe(CommandDispatcher::class, function () {
         allow($fs->exists())->toReturn(false);
         allow($fs->isFile())->toReturn(false);
         allow($fs->isDir())->toReturn(false);
+        allow($fs->scandir())->toReturn([]);
     });
 
     let('buffer', fn() => new BufferedOutput());
@@ -51,13 +53,13 @@ describe(CommandDispatcher::class, function () {
 
     it('instantiates', fn() => expect($this->dispatcher)->toBeAnInstanceOf(CommandDispatcher::class));
 
-    it('normalises slash paths to namespaced classes in describe', function (Filesystem $fs) {
+    it('normalises slash paths to namespaced classes in /describe', function (Filesystem $fs) {
         $written = [];
         allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
             $written[$path] = $content;
         });
 
-        $this->dispatcher->dispatch('describe App/Basket');
+        $this->dispatcher->dispatch('/describe App/Basket');
 
         $classContents = implode("\n", array_filter(
             $written,
@@ -91,24 +93,24 @@ describe(CommandDispatcher::class, function () {
         expect($this->dispatcher->dispatch(''))->toBe(CommandDispatcher::CONTINUE);
     });
 
-    it('returns CONTINUE for unknown command', function () {
-        expect($this->dispatcher->dispatch('foobar'))->toBe(CommandDispatcher::CONTINUE);
+    it('returns CONTINUE for an unknown slash command', function () {
+        expect($this->dispatcher->dispatch('/foobar'))->toBe(CommandDispatcher::CONTINUE);
     });
 
-    it('shows error for unknown command', function () {
-        $this->dispatcher->dispatch('foobar');
+    it('shows an error for an unknown slash command', function () {
+        $this->dispatcher->dispatch('/foobar');
         $output = $this->buffer->fetch();
-        expect($output)->toContain('Unknown command: foobar');
+        expect($output)->toContain('Unknown command: /foobar');
     });
 
-    it('returns CONTINUE for clear command', function () {
-        expect($this->dispatcher->dispatch('clear'))->toBe(CommandDispatcher::CONTINUE);
+    it('returns CONTINUE for /clear', function () {
+        expect($this->dispatcher->dispatch('/clear'))->toBe(CommandDispatcher::CONTINUE);
     });
 
-    it('shows error when describe is missing argument', function () {
-        $this->dispatcher->dispatch('describe');
+    it('shows error when /describe is missing argument', function () {
+        $this->dispatcher->dispatch('/describe');
         $output = $this->buffer->fetch();
-        expect($output)->toContain('Usage: describe');
+        expect($output)->toContain('Usage: /describe');
     });
 
     it('describe auto-generates spec and shows confirmation', function (Filesystem $fs) {
@@ -119,7 +121,7 @@ describe(CommandDispatcher::class, function () {
         allow($fs->mkdir())->toReturn(null);
         allow($fs->write())->toReturn(null);
 
-        $result = $this->dispatcher->dispatch('describe Acme\Greeter');
+        $result = $this->dispatcher->dispatch('/describe Acme\Greeter');
         expect($result)->toBe(CommandDispatcher::CONTINUE);
         $output = $this->buffer->fetch();
         expect($output)->toContain('Specification for');
@@ -132,7 +134,7 @@ describe(CommandDispatcher::class, function () {
         allow($fs->mkdir())->toReturn(null);
         allow($fs->write())->toReturn(null);
 
-        $this->dispatcher->dispatch('describe Acme\Greeter');
+        $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
         expect($output)->toContain('Do you want me to create class');
     });
@@ -145,7 +147,7 @@ describe(CommandDispatcher::class, function () {
         allow($fs->mkdir())->toReturn(null);
         allow($fs->write())->toReturn(null);
 
-        $this->dispatcher->dispatch('describe Acme\Greeter');
+        $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
         expect($output)->toContain('Do you want me to create class');
     });
@@ -155,7 +157,7 @@ describe(CommandDispatcher::class, function () {
         allow($fs->mkdir())->toReturn(null);
         allow($fs->write())->toReturn(null);
 
-        $this->dispatcher->dispatch('describe Acme\Greeter');
+        $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
         expect($output)->toContain('Do you want to run specs now');
     });
@@ -163,7 +165,7 @@ describe(CommandDispatcher::class, function () {
     it('describe shows existing spec message when spec exists', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $p) => str_ends_with($p, '.spec.php'));
 
-        $this->dispatcher->dispatch('describe Acme\Greeter');
+        $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
         expect($output)->toContain('Spec already exists');
     });
@@ -181,7 +183,7 @@ describe(CommandDispatcher::class, function () {
         allow($fs->write())->toReturn(null);
         allow($fs->read())->toReturn("<?php\n// spec content");
 
-        $this->dispatcher->dispatch('describe Acme\Greeter');
+        $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
         expect($output)->toContain('[NEW FILE]');
         expect($output)->toContain('spec content');
@@ -204,21 +206,21 @@ describe(CommandDispatcher::class, function () {
         allow($fs->write())->toReturn(null);
         allow($fs->read())->toReturn("<?php\nclass Greeter {}");
 
-        $this->dispatcher->dispatch('describe Acme\Greeter');
+        $this->dispatcher->dispatch('/describe Acme\Greeter');
         $output = $this->buffer->fetch();
         expect($output)->toContain('class Greeter');
     });
 
-    it('shows error when exemplify is missing arguments', function () {
-        $this->dispatcher->dispatch('exemplify');
+    it('shows error when /exemplify is missing arguments', function () {
+        $this->dispatcher->dispatch('/exemplify');
         $output = $this->buffer->fetch();
-        expect($output)->toContain('Usage: exemplify');
+        expect($output)->toContain('Usage: /exemplify');
     });
 
-    it('shows error when exemplify is missing method argument', function () {
-        $this->dispatcher->dispatch('exemplify Acme\Calculator');
+    it('shows error when /exemplify is missing method argument', function () {
+        $this->dispatcher->dispatch('/exemplify Acme\Calculator');
         $output = $this->buffer->fetch();
-        expect($output)->toContain('Usage: exemplify');
+        expect($output)->toContain('Usage: /exemplify');
     });
 
     it('exemplify adds example and shows confirmation', function (Filesystem $fs) {
@@ -230,7 +232,7 @@ describe(CommandDispatcher::class, function () {
         allow($fs->write())->toReturn(null);
         allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n});");
 
-        $result = $this->dispatcher->dispatch('exemplify Acme\Calculator add');
+        $result = $this->dispatcher->dispatch('/exemplify Acme\Calculator add');
         expect($result)->toBe(CommandDispatcher::CONTINUE);
         $output = $this->buffer->fetch();
         expect($output)->toContain('Example for');
@@ -243,7 +245,7 @@ describe(CommandDispatcher::class, function () {
         allow($fs->write())->toReturn(null);
         allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n});");
 
-        $this->dispatcher->dispatch('exemplify Acme\Calculator add');
+        $this->dispatcher->dispatch('/exemplify Acme\Calculator add');
         $output = $this->buffer->fetch();
         expect($output)->toContain('Specification for');
     });
@@ -252,84 +254,129 @@ describe(CommandDispatcher::class, function () {
         allow($fs->exists())->toReturn(true);
         allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n    it(\"should add\", fn() => expect(\$this->calculator->add())->toBe(null));\n});");
 
-        $this->dispatcher->dispatch('exemplify Acme\Calculator add');
+        $this->dispatcher->dispatch('/exemplify Acme\Calculator add');
         $output = $this->buffer->fetch();
         expect($output)->toContain('already exists');
         expect($fs->write('', ''))->not()->toBeCalled();
     });
 
-    it('runs specs with run command', function () {
-        $result = $this->dispatcher->dispatch('run');
+    it('runs specs with /run', function () {
+        $result = $this->dispatcher->dispatch('/run');
         expect($result)->toBe(CommandDispatcher::CONTINUE);
         expect($this->specRunner->arguments)->toBe(['']);
     });
 
-    it('runs specs at specific path with run command', function () {
-        $result = $this->dispatcher->dispatch('run spec/NonExistent');
+    it('runs specs at a specific path with /run', function () {
+        $result = $this->dispatcher->dispatch('/run spec/NonExistent');
         expect($result)->toBe(CommandDispatcher::CONTINUE);
         expect($this->specRunner->arguments)->toBe(['spec/NonExistent']);
     });
 
-    context('smart command routing without AI', function () {
-        it('falls through to run command for multi-word argument without AI', function () {
-            $result = $this->dispatcher->dispatch('run the scenarios and fix them');
+    context('slash marks a command; anything else is an AI prompt', function () {
+        it('runs a slash command with a path argument', function () {
+            $result = $this->dispatcher->dispatch('/run spec/App');
             expect($result)->toBe(CommandDispatcher::CONTINUE);
-            $output = $this->buffer->fetch();
-            // Without AI, shouldRouteToAi returns false, so it goes to handleRun
-            expect($output)->not()->toContain('Unknown command');
+            expect($this->specRunner->arguments)->toBe(['spec/App']);
         });
 
-        it('routes single-word run argument as run command', function () {
-            $result = $this->dispatcher->dispatch('run spec/App');
-            expect($result)->toBe(CommandDispatcher::CONTINUE);
-        });
-
-        it('routes unrecognized input to AI fallback', function () {
-            $this->dispatcher->dispatch('hello world');
+        it('routes non-slash prose to the AI (unknown fallback without AI)', function () {
+            $this->dispatcher->dispatch('run the scenarios and fix them');
             $output = $this->buffer->fetch();
-            // Without AI, handleAi falls back to handleUnknown with config hint
+            // No leading slash → an AI prompt; with no AI it degrades to the hint.
             expect($output)->toContain('Unknown command');
             expect($output)->toContain('configure an AI provider');
         });
 
-        it('routes single-word describe argument as describe command', function (Filesystem $fs) {
+        it('routes a bare command word (no slash) to the AI, not the command', function () {
+            $this->dispatcher->dispatch('describe Acme\\Foo');
+            $output = $this->buffer->fetch();
+            // `describe` without a slash is prose now, so no spec is generated.
+            expect($output)->not()->toContain('Specification for');
+            expect($this->specRunner->arguments)->toBe([]);
+        });
+
+        it('routes unrecognized prose to the AI fallback', function () {
+            $this->dispatcher->dispatch('hello world');
+            $output = $this->buffer->fetch();
+            expect($output)->toContain('Unknown command');
+            expect($output)->toContain('configure an AI provider');
+        });
+    });
+
+    context('/generate (AI-required)', function () {
+        it('shows usage when /generate has no instruction', function () {
+            $this->dispatcher->dispatch('/generate');
+            expect($this->buffer->fetch())->toContain('Usage: /generate');
+        });
+
+        it('requires AI configuration', function () {
+            $this->dispatcher->dispatch('/generate build a Calculator');
+            expect($this->buffer->fetch())->toContain('AI configuration required');
+        });
+
+        it('shows a diff and writes the proposal once confirmed', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p) => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p) => $p === $yamlPath ? "ai:\n  provider: openai\n  api_key: k\n" : '');
+            allow($fs->mkdir())->toReturn(null);
+            $written = [];
+            allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
+                $written[$p] = $c;
+            });
+
+            $config = new Configuration('.', $fs);
+            $agent = new GenerateAgent($config, $fs, fn() => json_encode(['path' => 'src/App/Calc.php', 'content' => "<?php\nclass Calc {}"]));
+            $dispatcher = new CommandDispatcher(
+                new SpecGenerator('spec', $fs),
+                new ClassGenerator('src', $fs),
+                $config,
+                $this->pairOutput,
+                false,
+                $fs,
+                generateAgent: $agent,
+            );
+
+            $dispatcher->dispatch('/generate a Calc class');
+
+            $out = $this->buffer->fetch();
+            expect($out)->toContain('[NEW FILE]');
+            expect($written)->toHaveLength(1);
+            expect(array_values($written)[0])->toContain('class Calc');
+        });
+    });
+
+    context('next-command suggestion (ghost hint)', function () {
+        it('suggests running the new spec after /describe', function (Filesystem $fs) {
             allow($fs->exists())->toReturn(false);
             allow($fs->mkdir())->toReturn(null);
             allow($fs->write())->toReturn(null);
 
-            $this->dispatcher->dispatch('describe Acme\\Foo');
-            $output = $this->buffer->fetch();
-            expect($output)->not()->toContain('Unknown command');
-        });
-    });
+            $this->dispatcher->dispatch('/describe App/Basket');
 
-    context('exceedsCommandArgLimit', function () {
-        it('returns false for run with single argument', function () {
-            expect(CommandDispatcher::exceedsCommandArgLimit('run', 'spec/App'))->toBeFalse();
+            expect($this->dispatcher->suggestion())->toBe('/run spec/App/Basket.spec.php');
         });
 
-        it('returns true for run with multiple arguments', function () {
-            expect(CommandDispatcher::exceedsCommandArgLimit('run', 'the scenarios and fix them'))->toBeTrue();
+        it('suggests /next after /run', function () {
+            $this->dispatcher->dispatch('/run');
+
+            expect($this->dispatcher->suggestion())->toBe('/next');
         });
 
-        it('returns false for describe with single argument', function () {
-            expect(CommandDispatcher::exceedsCommandArgLimit('describe', 'Acme\\Foo'))->toBeFalse();
+        it('suggests /run after /exemplify', function (Filesystem $fs) {
+            allow($fs->exists())->toReturn(true);
+            allow($fs->read())->toReturn("<?php\ndescribe(Calculator::class, function() {\n});");
+            allow($fs->write())->toReturn(null);
+
+            $this->dispatcher->dispatch('/exemplify App/Calc add');
+
+            expect($this->dispatcher->suggestion())->toBe('/run');
         });
 
-        it('returns true for describe with multiple arguments', function () {
-            expect(CommandDispatcher::exceedsCommandArgLimit('describe', 'a calculator class'))->toBeTrue();
-        });
+        it('clears the suggestion after a non-command prompt', function () {
+            $this->dispatcher->dispatch('/run');
+            $this->dispatcher->dispatch('hello there');
 
-        it('returns false for exemplify with two arguments', function () {
-            expect(CommandDispatcher::exceedsCommandArgLimit('exemplify', 'Acme\\Foo bar'))->toBeFalse();
-        });
-
-        it('returns true for exemplify with more than two arguments', function () {
-            expect(CommandDispatcher::exceedsCommandArgLimit('exemplify', 'a class that does things'))->toBeTrue();
-        });
-
-        it('returns false for unknown command', function () {
-            expect(CommandDispatcher::exceedsCommandArgLimit('unknown', 'some args here'))->toBeFalse();
+            expect($this->dispatcher->suggestion())->toBeNull();
         });
     });
 
@@ -378,18 +425,18 @@ describe(CommandDispatcher::class, function () {
             specRunner: $this->specRunner,
         ));
 
-        it('handles a bare next from suite state and returns CONTINUE', function () {
-            $result = $this->appDispatcher->dispatch('next');
+        it('handles /next from suite state and returns CONTINUE', function () {
+            $result = $this->appDispatcher->dispatch('/next');
             expect($result)->toBe(CommandDispatcher::CONTINUE);
         });
 
-        it('delegates refactor with argument', function () {
-            $result = $this->appDispatcher->dispatch('refactor App\\Calculator');
+        it('delegates /refactor with argument', function () {
+            $result = $this->appDispatcher->dispatch('/refactor App\\Calculator');
             expect($result)->toBe(CommandDispatcher::CONTINUE);
         });
 
-        it('routes next with natural language to unknown when no AI', function () {
-            $this->appDispatcher->dispatch('next what should I build');
+        it('routes non-slash prose to unknown when no AI', function () {
+            $this->appDispatcher->dispatch('what should I build next');
             $output = $this->buffer->fetch();
             expect($output)->toContain('Unknown command');
         });
@@ -414,21 +461,21 @@ describe(CommandDispatcher::class, function () {
             expect($output)->not()->toMatch('/Additional commands.*pair/s');
         });
 
-        it('silently ignores pair command input', function () {
+        it('silently ignores /pair command input', function () {
             $this->app->{method_exists($this->app, 'addCommand') ? 'addCommand' : 'add'}(new \PhpSpec\Console\Command\Pair(
                 new SpecGenerator('spec'),
                 new ClassGenerator('src'),
                 new Configuration('.'),
             ));
-            $result = $this->appDispatcher->dispatch('pair');
+            $result = $this->appDispatcher->dispatch('/pair');
             expect($result)->toBe(CommandDispatcher::CONTINUE);
             $output = $this->buffer->fetch();
             expect($output)->not()->toContain('Unknown command');
         });
 
-        it('shows error when delegated command fails', function () {
-            // refactor without required arg triggers an exception in bind
-            $result = $this->appDispatcher->dispatch('refactor');
+        it('shows error when a delegated command fails', function () {
+            // /refactor without its required arg triggers an exception in bind
+            $result = $this->appDispatcher->dispatch('/refactor');
             expect($result)->toBe(CommandDispatcher::CONTINUE);
             $output = $this->buffer->fetch();
             expect($output)->toContain('Not enough arguments');

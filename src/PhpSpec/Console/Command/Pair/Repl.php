@@ -28,11 +28,20 @@ final readonly class Repl
     /**
      * @param bool $aiAvailable whether an AI provider is configured
      */
+    private readonly LineEditor $editor;
+
+    /**
+     * @param bool $aiAvailable whether an AI provider is configured
+     * @param LineEditor|null $editor the line reader; injectable for specs
+     */
     public function __construct(
         private CommandDispatcher $dispatcher,
         private PairOutput $output,
         private bool $aiAvailable = false,
-    ) {}
+        ?LineEditor $editor = null,
+    ) {
+        $this->editor = $editor ?? new LineEditor($this->output);
+    }
 
     /**
      * Runs the REPL loop: setup layout, read, dispatch, repeat until quit or EOF.
@@ -44,11 +53,14 @@ final readonly class Repl
         $this->output->setupLayout($this->aiAvailable);
         $this->dispatcher->greet();
 
+        $history = [];
+        $suggestion = null;
+
         while (true) {
             $this->output->prepareForInput();
-            $line = readline('> ');
+            $line = $this->editor->readLine('> ', $suggestion, $history);
 
-            if ($line === false) {
+            if ($line === null) {
                 break;
             }
 
@@ -56,7 +68,7 @@ final readonly class Repl
 
             $line = trim($line);
             if ($line !== '') {
-                readline_add_history($line);
+                $history[] = $line;
                 $this->output->echoInput($line);
             }
 
@@ -64,6 +76,9 @@ final readonly class Repl
             if ($result === CommandDispatcher::QUIT) {
                 break;
             }
+
+            // Ghost the natural next command into the next prompt.
+            $suggestion = $this->dispatcher->suggestion();
         }
 
         $this->output->showGoodbye();

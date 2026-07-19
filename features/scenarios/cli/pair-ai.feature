@@ -62,7 +62,7 @@ Feature: AI-assisted pair programming
       """
       spec_path: spec
       """
-    When I run phpspec pair with input "next"
+    When I run phpspec pair with input "/next"
     Then the output should not contain "Unknown command"
 
   Scenario: Help lists additional delegated commands
@@ -77,24 +77,24 @@ Feature: AI-assisted pair programming
     And the output should contain "refactor"
 
   Scenario: Interactive questions offer numbered choices
-    When I run phpspec pair with input "describe App/Wanted" answering "1,3"
+    When I run phpspec pair with input "/describe App/Wanted" answering "1,3"
     Then the output should contain "1. Yes"
     And the output should contain "2. Yes, and don't ask again"
     And the output should contain "3. No"
     And a class file "src/App/Wanted.php" should be generated
 
   Scenario: Answering No declines the offer
-    When I run phpspec pair with input "describe App/Declined" answering "3,3"
+    When I run phpspec pair with input "/describe App/Declined" answering "3,3"
     Then no file "src/App/Declined.php" should be generated
 
   Scenario: Answering always suppresses repeat questions of the same kind
-    When I run phpspec pair with input "describe App/First; describe App/Second" answering "2,3,3"
+    When I run phpspec pair with input "/describe App/First; /describe App/Second" answering "2,3,3"
     Then a class file "src/App/First.php" should be generated
     And a class file "src/App/Second.php" should be generated
     And the output should not contain "create class App\Second"
 
   Scenario: Describe with a slash path generates a namespaced class
-    When I run phpspec pair with input "describe App/Basket" answering "1,3"
+    When I run phpspec pair with input "/describe App/Basket" answering "1,3"
     Then the file "src/App/Basket.php" should contain "namespace App;"
     And the file "src/App/Basket.php" should contain "class Basket"
 
@@ -118,7 +118,7 @@ Feature: AI-assisted pair programming
           });
       });
       """
-    When I run phpspec pair with input "run" answering "1"
+    When I run phpspec pair with input "/run" answering "1"
     Then the output should contain "1. Yes"
     And the output should contain "2. Yes, and don't ask again"
     And the output should contain "3. No"
@@ -150,7 +150,7 @@ Feature: AI-assisted pair programming
           });
       });
       """
-    When I run phpspec pair with input "run; run"
+    When I run phpspec pair with input "/run; /run"
     Then the output should contain "1 example (1 passes)" exactly 2 times
 
   Scenario: Running a spec that declares a top-level type twice does not crash
@@ -168,7 +168,7 @@ Feature: AI-assisted pair programming
           });
       });
       """
-    When I run phpspec pair with input "run; run"
+    When I run phpspec pair with input "/run; /run"
     Then the output should contain "1 example (1 passes)" exactly 2 times
     And the output should not contain "Cannot declare interface"
 
@@ -189,7 +189,7 @@ Feature: AI-assisted pair programming
           it('adds numbers', fn() => expect((new Calculator())->add())->toBe(null));
       });
       """
-    When I run phpspec pair with input "run; run" answering "1"
+    When I run phpspec pair with input "/run; /run" answering "1"
     Then the file "src/App/Calculator.php" should contain "function add"
     And the output should contain "1 example (1 passes)"
 
@@ -203,7 +203,7 @@ Feature: AI-assisted pair programming
           it('adds numbers', fn() => expect((new Calculator())->add())->toBe(null));
       });
       """
-    When I run phpspec pair with input "exemplify App/Calculator subtract" answering "3"
+    When I run phpspec pair with input "/exemplify App/Calculator subtract" answering "3"
     Then the output should contain "[MODIFIED]"
     And the output should contain "subtract"
     And the output should not contain "+ <?php"
@@ -219,7 +219,7 @@ Feature: AI-assisted pair programming
           it('adds numbers', fn() => expect((new Calculator())->add())->toBe(null));
       });
       """
-    When I run phpspec pair with input "exemplify App/Calculator subtract; exemplify App/Calculator subtract" answering "3,3"
+    When I run phpspec pair with input "/exemplify App/Calculator subtract; /exemplify App/Calculator subtract" answering "3,3"
     Then the output should contain "already exists"
     And the output should contain "should subtract" exactly 1 times
 
@@ -245,6 +245,6 @@ Feature: AI-assisted pair programming
           it('subtracts numbers', fn() => expect((new Calculator())->subtract())->toBe(null));
       });
       """
-    When I run phpspec pair with input "run" answering "1"
+    When I run phpspec pair with input "/run" answering "1"
     Then the output should contain "function subtract"
     And the output should not contain "+ }"

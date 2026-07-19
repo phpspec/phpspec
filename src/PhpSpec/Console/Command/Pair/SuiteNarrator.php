@@ -26,8 +26,8 @@ use PhpSpec\Console\Command\Run\SuiteSummary;
  */
 final class SuiteNarrator
 {
-    private const FOOTER_AI = '  <fg=gray>plain English works · next · /swap · /help · /quit</>';
-    private const FOOTER_COMMANDS = '  <fg=gray>describe · exemplify · run · next · /swap · /help · /quit</>';
+    private const FOOTER_AI = '  <fg=gray>plain English works · /next · /swap · /help · /quit</>';
+    private const FOOTER_COMMANDS = '  <fg=gray>/describe · /exemplify · /run · /next · /swap · /help · /quit</>';
 
     /**
      * The opening lines for a pairing session, chosen by suite state.
@@ -68,7 +68,7 @@ final class SuiteNarrator
 
         return [
             '  Nothing here yet. Let\'s start with a spec.',
-            '  <fg=gray>Try <fg=white>describe App\\Something</> to write your first one.</>',
+            '  <fg=gray>Try <fg=white>/describe App\\Something</> to write your first one.</>',
         ];
     }
 
@@ -133,7 +133,7 @@ final class SuiteNarrator
     private function describeFirstStep(): array
     {
         return [
-            'lines' => ['', '  Nothing to build on yet. Let\'s <fg=white>describe</> the first spec.'],
+            'lines' => ['', '  Nothing to build on yet. Let\'s <fg=white>/describe</> the first spec.'],
             'action' => 'describe',
             'target' => null,
         ];
@@ -148,7 +148,7 @@ final class SuiteNarrator
 
         $line = $role->aiIsDriver()
             ? sprintf('  We\'re red on <options=bold>%s</> — %s. I\'ll run it and generate what\'s missing.', $failure['subject'], $failure['example'])
-            : sprintf('  We\'re red on <options=bold>%s</> — %s. Type <fg=white>run</> and I\'ll offer to create what\'s missing.', $failure['subject'], $failure['example']);
+            : sprintf('  We\'re red on <options=bold>%s</> — %s. Type <fg=white>/run</> and I\'ll offer to create what\'s missing.', $failure['subject'], $failure['example']);
 
         return ['lines' => ['', $line], 'action' => 'run', 'target' => $failure['subject']];
     }
@@ -162,7 +162,7 @@ final class SuiteNarrator
 
         $line = $role->aiIsDriver()
             ? sprintf('  Green. Nearest gap — <options=bold>%s</>: %s. I\'ll make it real.', $gap['subject'], $gap['example'])
-            : sprintf('  Green. Nearest gap — <options=bold>%s</>: %s. Let\'s exemplify it.', $gap['subject'], $gap['example']);
+            : sprintf('  Green. Nearest gap — <options=bold>%s</>: %s. Let\'s <fg=white>/exemplify</> it.', $gap['subject'], $gap['example']);
 
         return ['lines' => ['', $line], 'action' => 'exemplify', 'target' => $gap['subject']];
     }
