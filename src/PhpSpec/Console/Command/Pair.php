@@ -74,14 +74,6 @@ final class Pair extends Command
         $roleState = new RoleState();
         $pairOutput = new PairOutput($output);
 
-        $aiConfig = $this->config->getAiConfig();
-        $pairOutput->configureStatus(
-            StatusBar::abbreviateHome(getcwd() ?: '.', getenv('HOME') ?: ''),
-            $aiConfig !== null,
-            is_array($aiConfig) ? $aiConfig['provider'] : null,
-            $roleState,
-        );
-
         $dispatcher = new CommandDispatcher(
             $this->specGenerator,
             $this->classGenerator,
@@ -93,12 +85,25 @@ final class Pair extends Command
             roleState: $roleState,
         );
 
+        // The banner reflects whether the provider actually started, not merely
+        // that an ai: block exists, so "ai: on" never contradicts a session that
+        // can't answer natural language.
+        $aiConfig = $this->config->getAiConfig();
+        $pairOutput->configureStatus(
+            StatusBar::abbreviateHome(getcwd() ?: '.', getenv('HOME') ?: ''),
+            $dispatcher->aiIsReady(),
+            is_array($aiConfig) ? $aiConfig['provider'] : null,
+            $roleState,
+            $dispatcher->aiUnavailableReason(),
+        );
+
         if ($prompt !== null) {
             $dispatcher->dispatch($prompt);
+
             return 0;
         }
 
-        $repl = new Repl($dispatcher, $pairOutput, $this->config->getAiConfig() !== null);
+        $repl = new Repl($dispatcher, $pairOutput, $dispatcher->aiIsReady());
 
         return $repl->run();
     }

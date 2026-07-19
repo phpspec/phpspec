@@ -39,6 +39,16 @@ describe(StatusBar::class, function () {
         expect($role)->not()->toContain('navigator');
     });
 
+    it('shows ai unavailable when a configured provider could not start', function () {
+        $bar = new StatusBar('~/x', false, 'anthropic', new RoleState(), 'provider package not installed');
+
+        [$status, $role] = $bar->lines(80);
+
+        expect($status)->toContain('ai: unavailable');
+        expect($role)->toContain('could not start');
+        expect($role)->not()->toContain('navigator');
+    });
+
     it('abbreviates the home-directory prefix to ~', function () {
         expect(StatusBar::abbreviateHome('/home/md/lab/proj', '/home/md'))->toBe('~/lab/proj');
         expect(StatusBar::abbreviateHome('/var/www', '/home/md'))->toBe('/var/www');
