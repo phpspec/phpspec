@@ -15,8 +15,12 @@
 namespace PhpSpec\Console\Command;
 
 use PhpSpec\Ai\Message;
+use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Configuration;
+use PhpSpec\Console\Command\Pair\SpecRunner;
+use PhpSpec\Console\Command\Pair\SubprocessRunner;
+use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 use RuntimeException;
@@ -24,6 +28,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface as Input;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
@@ -41,21 +46,26 @@ final class Next extends Command
 
     private Filesystem $filesystem;
 
-    /** @var (callable(array{provider: string, model?: string, api_key: string}): array{type: string, target: string, reason: string})|null */
+    private readonly SpecRunner $specRunner;
+
+    /** @var (callable(array{provider: string, model?: string, api_key: string}, string): array{type: string, target: string, reason: string})|null */
     private $suggestFn;
 
     /**
      * @param Configuration $config
      * @param Filesystem|null $filesystem
-     * @param (callable(array{provider: string, model?: string, api_key: string}): array{type: string, target: string, reason: string})|null $suggestFn
+     * @param (callable(array{provider: string, model?: string, api_key: string}, string): array{type: string, target: string, reason: string})|null $suggestFn injectable suggestion seam; receives the AI config and the built context
+     * @param SpecRunner|null $specRunner runs the suite for feature grounding; defaults to a subprocess
      */
     public function __construct(
         private readonly Configuration $config,
         ?Filesystem $filesystem = null,
         ?callable $suggestFn = null,
+        ?SpecRunner $specRunner = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->suggestFn = $suggestFn;
+        $this->specRunner = $specRunner ?? new SubprocessRunner();
         parent::__construct();
     }
 
@@ -143,8 +153,12 @@ final class Next extends Command
      */
     private function getSuggestion(array $aiConfig): array
     {
+        // Feature (story) state grounds the suggestion so `next` can favour
+        // features when they are present; it is empty for a spec-only project.
+        $situation = $this->featureSituation();
+
         if ($this->suggestFn !== null) {
-            return ($this->suggestFn)($aiConfig);
+            return ($this->suggestFn)($aiConfig, $situation);
         }
 
         try {
@@ -156,6 +170,9 @@ final class Next extends Command
         $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider']);
 
         $projectContext = $this->getCachedProjectContext();
+        if ($situation !== '') {
+            $projectContext = $situation . "\n\n" . $projectContext;
+        }
         $systemPrompt = $this->buildSystemPrompt();
 
         $messages = [
@@ -311,8 +328,65 @@ final class Next extends Command
         return 0;
     }
 
+    /**
+     * The live feature (story) grounding for the suggestion: a run of the whole
+     * suite (--all) rendered as a compact FEATURES block plus the last-touched
+     * feature and source. Empty for a spec-only project (no `features/` dir, or a
+     * run that executed no feature), so `next` keeps its spec-only behaviour then.
+     */
+    private function featureSituation(): string
+    {
+        $featuresDir = getcwd() . '/features';
+        if (!$this->filesystem->exists($featuresDir) || !$this->filesystem->isDir($featuresDir)) {
+            return '';
+        }
+
+        $summary = $this->specRunner->run('--all', new BufferedOutput())?->summary;
+        if ($summary === null || !$summary->hasFeatures()) {
+            return '';
+        }
+
+        $c = $summary->featureCounts();
+        $lines = [sprintf(
+            "# Suite state\nFEATURES: %d features, %d scenarios, %d steps (%d failing, %d undefined). Favour these — the outside drives the inside.",
+            $c['features'],
+            $c['scenarios'],
+            $c['steps'],
+            $c['stepFailures'],
+            $c['undefined'],
+        )];
+
+        foreach ($summary->features() as $feature) {
+            if ($feature['status'] !== 'green') {
+                $lines[] = sprintf('- %s: %s', $feature['status'], $feature['path']);
+            }
+        }
+
+        $recency = new RecencyScanner($this->filesystem);
+        $recentFeature = $recency->mostRecentFeature($featuresDir);
+        if ($recentFeature !== null) {
+            $lines[] = 'Last-touched feature: ' . $recentFeature;
+        }
+
+        $recentSource = $recency->mostRecentSource(getcwd() . '/' . ltrim($this->config->getSrcPath(), './'));
+        if ($recentSource !== null) {
+            $lines[] = 'Last-touched source: ' . $recentSource;
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * The outside-in coaching prompt, shared with pair-mode `next` via the
+     * `next.txt` artifact, falling back to an inline prompt if it cannot be read.
+     */
     private function buildSystemPrompt(): string
     {
+        $prompt = (new PromptLibrary($this->filesystem))->read('next');
+        if (trim($prompt) !== '') {
+            return $prompt . "\n\nRespond now with ONLY the JSON suggestion described above.";
+        }
+
         return <<<'PROMPT'
 You are a BDD coach advising what to build next in a PHP project. Study the project structure and suggest ONE concrete next step — a new class, a new feature scenario, or a new example for an existing spec.
 

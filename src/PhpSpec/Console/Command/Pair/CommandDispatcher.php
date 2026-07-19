@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command\Pair;
 
 use Exception;
+use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\ClassLocation;
@@ -24,6 +25,7 @@ use PhpSpec\Console\Command\Generate\GenerateAgent;
 use PhpSpec\Console\Command\Pair;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\GenerationCandidates;
+use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Filesystem;
@@ -96,6 +98,7 @@ final class CommandDispatcher
         ?SpecRunner $specRunner = null,
         ?RoleState $roleState = null,
         ?GenerateAgent $generateAgent = null,
+        ?AiAssistant $ai = null,
     ) {
         $this->parser = new InputParser();
         $this->filesystem = $filesystem ?? new RealFilesystem();
@@ -104,6 +107,12 @@ final class CommandDispatcher
         $this->roleState = $roleState ?? new RoleState();
         $this->generateAgent = $generateAgent ?? new GenerateAgent($this->config, $this->filesystem);
         $this->registerAutoloader();
+
+        if ($ai !== null) {
+            $this->ai = $ai;
+
+            return;
+        }
 
         $aiConfig = $this->config->getAiConfig();
         if ($aiConfig !== null) {
@@ -173,29 +182,55 @@ final class CommandDispatcher
     }
 
     /**
-     * Suggests the single next step from a real suite run rather than a guess,
-     * so it never loops describing a spec that already exists: red means run and
-     * fix, a pending example is the nearest gap, an empty project starts a spec.
-     * While the human navigates it coaches; while the AI drives it takes the
-     * step itself (one artifact).
+     * Suggests the single next step from a real suite run, following outside-in,
+     * feature-first TDD. Features run too (--all), so a red or unwritten scenario
+     * leads; when features are green it points at a baby step over the last-touched
+     * files. With AI it hands the shared outside-in coaching to the assistant (the
+     * navigator advises, the driver takes the step); without AI it prints the
+     * deterministic, feature-aware narrator.
      */
     private function handleNext(): int
     {
-        $outcome = $this->specRunner->run('', new BufferedOutput());
+        // --all runs features too, so the advice can favour them. A fake SpecRunner
+        // in specs ignores the argument; SubprocessRunner appends it to the child
+        // argv (an empty argument would mean specs only).
+        $outcome = $this->specRunner->run('--all', new BufferedOutput());
         $this->lastSituation = $outcome->summary ?? $this->lastSituation;
-        $role = $this->roleState->current();
-        $next = (new SuiteNarrator())->next($outcome, $role);
+
+        if ($this->ai !== null) {
+            $this->ai->handle($this->nextInstruction(), $this->lastSituation);
+
+            return self::CONTINUE;
+        }
+
+        $recency = new RecencyScanner($this->filesystem);
+        $cwd = getcwd() ?: '.';
+        $recentFeature = $recency->mostRecentFeature($cwd . '/features');
+        $recentSource = $recency->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './'));
+
+        $next = (new SuiteNarrator())->next($outcome, $this->roleState->current(), $recentFeature, $recentSource);
 
         $console = $this->output->getOutput();
         foreach ($next['lines'] as $line) {
             $console->writeln($line);
         }
 
-        if ($role->aiIsDriver() && $this->ai !== null && $next['action'] !== 'observe') {
-            $this->ai->handle('Take the single most valuable next step now, as one artifact, then hand back.', $this->lastSituation);
+        return self::CONTINUE;
+    }
+
+    /**
+     * The `next` coaching handed to the AI: the shared outside-in prompt file plus
+     * a short ask. The role in force (navigator advises, driver executes) is already
+     * encoded in the AI's cached system prompt, so the ask stays role-agnostic.
+     */
+    private function nextInstruction(): string
+    {
+        $coaching = (new PromptLibrary($this->filesystem))->read('next');
+        if (trim($coaching) === '') {
+            $coaching = 'Follow outside-in, feature-first TDD — favour feature (story) tests, always a baby step.';
         }
 
-        return self::CONTINUE;
+        return $coaching . "\n\n" . 'Based on our current suite state, name and take the single next baby step now — one artifact, then hand back.';
     }
 
     /**

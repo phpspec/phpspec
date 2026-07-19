@@ -81,4 +81,10 @@ final class RealFilesystem implements Filesystem
     {
         return require $path;
     }
+
+    /** {@inheritdoc} */
+    public function mtime(string $path): int
+    {
+        return @filemtime($path) ?: 0;
+    }
 }

@@ -16,7 +16,10 @@ namespace PhpSpec\Console\Command\Run;
 
 use PhpSpec\Result\Counts;
 use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\FeatureResult;
+use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
+use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
 
@@ -39,12 +42,16 @@ final readonly class SuiteSummary
      * @param array{examples: int, passes: int, failures: int, errors: int, pending: int} $counts
      * @param list<array{subject: string, example: string, error: string}> $failing
      * @param list<array{subject: string, example: string, error: string}> $pending
+     * @param array{features: int, scenarios: int, steps: int, stepFailures: int, undefined: int} $featureCounts
+     * @param list<array{path: string, status: 'red'|'green'|'todo', undefined: int}> $features
      */
     public function __construct(
         private string $status,
         private array $counts = ['examples' => 0, 'passes' => 0, 'failures' => 0, 'errors' => 0, 'pending' => 0],
         private array $failing = [],
         private array $pending = [],
+        private array $featureCounts = ['features' => 0, 'scenarios' => 0, 'steps' => 0, 'stepFailures' => 0, 'undefined' => 0],
+        private array $features = [],
     ) {}
 
     /**
@@ -62,15 +69,60 @@ final readonly class SuiteSummary
             'errors' => $c['errors'],
             'pending' => $c['pending'],
         ];
+        $featureCounts = [
+            'features' => $c['features'],
+            'scenarios' => $c['scenarios'],
+            'steps' => $c['steps'],
+            'stepFailures' => $c['stepFailures'],
+            'undefined' => $c['undefined'],
+        ];
 
         $failing = [];
         $pending = [];
+        $features = [];
         foreach ($result->getResults() as $node) {
             $subject = $node instanceof SpecificationResult ? $node->getTitle() : '';
             self::classify($node, $subject, $failing, $pending);
+            if ($node instanceof FeatureResult) {
+                $features[] = self::summariseFeature($node);
+            }
         }
 
-        return new self($result->status() === 0 ? 'green' : 'red', $counts, $failing, $pending);
+        return new self($result->status() === 0 ? 'green' : 'red', $counts, $failing, $pending, $featureCounts, $features);
+    }
+
+    /**
+     * Reduces a feature to a single red/green/todo verdict plus its undefined-step
+     * count: red if any step failed, todo if any step is still undefined (steps to
+     * write), green otherwise.
+     *
+     * @return array{path: string, status: 'red'|'green'|'todo', undefined: int}
+     */
+    private static function summariseFeature(FeatureResult $feature): array
+    {
+        $failures = 0;
+        $undefined = 0;
+        foreach ($feature->getResults() as $scenario) {
+            if (!$scenario instanceof ScenarioResult) {
+                continue;
+            }
+
+            foreach ($scenario->getResults() as $step) {
+                if (!$step instanceof StepResult) {
+                    continue;
+                }
+
+                if ($step->isFailure()) {
+                    ++$failures;
+                } elseif ($step->isUndefined()) {
+                    ++$undefined;
+                }
+            }
+        }
+
+        $status = $failures > 0 ? 'red' : ($undefined > 0 ? 'todo' : 'green');
+
+        return ['path' => $feature->getPath(), 'status' => $status, 'undefined' => $undefined];
     }
 
     /**
@@ -170,7 +222,57 @@ final readonly class SuiteSummary
     }
 
     /**
-     * @return array{status: string, counts: array<string, int>, failing: list<array{subject: string, example: string, error: string}>, pending: list<array{subject: string, example: string, error: string}>}
+     * Whether the run executed any feature (story) tests. Outside-in advice keys
+     * off this: with features present `next` favours them; without, it falls back
+     * to the spec-only flow.
+     */
+    public function hasFeatures(): bool
+    {
+        return $this->features !== [];
+    }
+
+    /**
+     * Whether every feature step passed. Checked explicitly against failures and
+     * undefined steps because the suite status stays green on undefined-only
+     * steps, so "features are done" needs more than a green status.
+     */
+    public function featuresAreGreen(): bool
+    {
+        return $this->hasFeatures()
+            && $this->featureCounts['stepFailures'] === 0
+            && $this->featureCounts['undefined'] === 0;
+    }
+
+    /** @return list<array{path: string, status: 'red'|'green'|'todo', undefined: int}> */
+    public function features(): array
+    {
+        return $this->features;
+    }
+
+    /**
+     * The first feature with a failing step, or null when none is red.
+     *
+     * @return array{path: string, status: 'red'|'green'|'todo', undefined: int}|null
+     */
+    public function redFeature(): ?array
+    {
+        foreach ($this->features as $feature) {
+            if ($feature['status'] === 'red') {
+                return $feature;
+            }
+        }
+
+        return null;
+    }
+
+    /** @return array{features: int, scenarios: int, steps: int, stepFailures: int, undefined: int} */
+    public function featureCounts(): array
+    {
+        return $this->featureCounts;
+    }
+
+    /**
+     * @return array{status: string, counts: array<string, int>, failing: list<array{subject: string, example: string, error: string}>, pending: list<array{subject: string, example: string, error: string}>, feature_counts: array<string, int>, features: list<array{path: string, status: string, undefined: int}>}
      */
     public function toArray(): array
     {
@@ -179,6 +281,8 @@ final readonly class SuiteSummary
             'counts' => $this->counts,
             'failing' => $this->failing,
             'pending' => $this->pending,
+            'feature_counts' => $this->featureCounts,
+            'features' => $this->features,
         ];
     }
 
@@ -189,6 +293,9 @@ final readonly class SuiteSummary
     {
         /** @var array<string, int> $counts */
         $counts = is_array($data['counts'] ?? null) ? $data['counts'] : [];
+
+        /** @var array<string, int> $featureCounts */
+        $featureCounts = is_array($data['feature_counts'] ?? null) ? $data['feature_counts'] : [];
 
         return new self(
             ($data['status'] ?? 'green') === 'red' ? 'red' : 'green',
@@ -201,7 +308,47 @@ final readonly class SuiteSummary
             ],
             self::normaliseExamples($data['failing'] ?? null),
             self::normaliseExamples($data['pending'] ?? null),
+            [
+                'features' => $featureCounts['features'] ?? 0,
+                'scenarios' => $featureCounts['scenarios'] ?? 0,
+                'steps' => $featureCounts['steps'] ?? 0,
+                'stepFailures' => $featureCounts['stepFailures'] ?? 0,
+                'undefined' => $featureCounts['undefined'] ?? 0,
+            ],
+            self::normaliseFeatures($data['features'] ?? null),
         );
+    }
+
+    /**
+     * Rebuilds the per-feature list from decoded data, defaulting any missing
+     * field so a child report written before feature data existed (a mid-upgrade
+     * subprocess) is simply read as having no features.
+     *
+     * @param mixed $items the decoded features list, of unknown shape
+     * @return list<array{path: string, status: 'red'|'green'|'todo', undefined: int}>
+     */
+    private static function normaliseFeatures(mixed $items): array
+    {
+        if (!is_array($items)) {
+            return [];
+        }
+
+        $normalised = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $status = $item['status'] ?? null;
+
+            $normalised[] = [
+                'path' => is_string($item['path'] ?? null) ? $item['path'] : '',
+                'status' => in_array($status, ['red', 'green', 'todo'], true) ? $status : 'green',
+                'undefined' => is_int($item['undefined'] ?? null) ? $item['undefined'] : 0,
+            ];
+        }
+
+        return $normalised;
     }
 
     /**

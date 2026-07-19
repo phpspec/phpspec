@@ -113,11 +113,20 @@ final class SuiteNarrator
      * lines are phrased for the current role; the action lets the caller act when
      * the AI is driving.
      *
+     * When the suite includes feature (story) tests they lead — outside-in — and
+     * the last-touched feature/source ground the green-suite advice.
+     *
+     * @param string|null $recentFeature the most recently modified `.feature`, for green advice
+     * @param string|null $recentSource the most recently modified source file, for green advice
      * @return array{lines: list<string>, action: 'run'|'exemplify'|'describe'|'observe', target: ?string}
      */
-    public function next(?RunOutcome $outcome, PairRole $role): array
+    public function next(?RunOutcome $outcome, PairRole $role, ?string $recentFeature = null, ?string $recentSource = null): array
     {
         $summary = $outcome?->summary;
+
+        if ($summary !== null && $summary->hasFeatures()) {
+            return $this->featureStep($summary, $role, $recentFeature, $recentSource);
+        }
 
         return match (true) {
             $summary === null || $summary->isEmpty() => $this->describeFirstStep(),
@@ -125,6 +134,100 @@ final class SuiteNarrator
             $summary->nearestPendingGap() !== null => $this->exemplifyStep($summary, $role),
             default => $this->observeStep(),
         };
+    }
+
+    /**
+     * The next step when the suite includes features, favouring them: a concrete
+     * red example is the inner step; a red scenario with nothing failing yet is
+     * run to drive out its behaviour; undefined steps get written; and a green
+     * feature suite offers one baby step over the last-touched files.
+     *
+     * @return array{lines: list<string>, action: 'run'|'exemplify'|'describe'|'observe', target: ?string}
+     */
+    private function featureStep(SuiteSummary $summary, PairRole $role, ?string $recentFeature, ?string $recentSource): array
+    {
+        if ($summary->failing() !== []) {
+            return $this->runStep($summary, $role);
+        }
+
+        $red = $summary->redFeature();
+        if ($red !== null) {
+            return $this->redFeatureStep($red, $role);
+        }
+
+        $todo = $this->firstTodoFeature($summary);
+        if ($todo !== null) {
+            return $this->writeStepsStep($todo, $role);
+        }
+
+        return $this->greenFeatureStep($role, $recentFeature, $recentSource);
+    }
+
+    /**
+     * @param array{path: string, status: string, undefined: int} $red
+     * @return array{lines: list<string>, action: 'run', target: string}
+     */
+    private function redFeatureStep(array $red, PairRole $role): array
+    {
+        $name = basename($red['path']);
+
+        $line = $role->aiIsDriver()
+            ? sprintf('  <fg=red>Red scenario</> in <options=bold>%s</> — I\'ll run and spec the behaviour its steps need.', $name)
+            : sprintf('  <fg=red>Red scenario</> in <options=bold>%s</> — <fg=white>/run</>, then we spec the behaviour its steps need.', $name);
+
+        return ['lines' => ['', $line], 'action' => 'run', 'target' => $red['path']];
+    }
+
+    /**
+     * @param array{path: string, status: string, undefined: int} $todo
+     * @return array{lines: list<string>, action: 'observe', target: string}
+     */
+    private function writeStepsStep(array $todo, PairRole $role): array
+    {
+        $name = basename($todo['path']);
+
+        $line = $role->aiIsDriver()
+            ? sprintf('  <options=bold>%s</> has undefined steps — I\'ll write the steps so the scenario can drive the code.', $name)
+            : sprintf('  <options=bold>%s</> has undefined steps — let\'s write the steps so the scenario can drive the code.', $name);
+
+        return ['lines' => ['', $line], 'action' => 'observe', 'target' => $todo['path']];
+    }
+
+    /**
+     * @return array{lines: list<string>, action: 'observe', target: ?string}
+     */
+    private function greenFeatureStep(PairRole $role, ?string $recentFeature, ?string $recentSource): array
+    {
+        $options = [];
+        if ($recentSource !== null) {
+            $options[] = sprintf('<fg=white>refactor</> the last code (<options=bold>%s</>)', basename($recentSource));
+        }
+
+        if ($recentFeature !== null) {
+            $options[] = sprintf('a <fg=white>new scenario</> on <options=bold>%s</>', basename($recentFeature));
+        }
+
+        $options[] = 'a <fg=white>new feature</> if that story feels complete';
+
+        return [
+            'lines' => ['', '  <fg=green>Features green.</> One baby step — ' . implode('; or ', $options) . '.'],
+            'action' => 'observe',
+            'target' => $recentFeature,
+        ];
+    }
+
+    /**
+     * @return array{path: string, status: string, undefined: int}|null
+     */
+    private function firstTodoFeature(SuiteSummary $summary): ?array
+    {
+        foreach ($summary->features() as $feature) {
+            if ($feature['status'] === 'todo') {
+                return $feature;
+            }
+        }
+
+        return null;
     }
 
     /**
