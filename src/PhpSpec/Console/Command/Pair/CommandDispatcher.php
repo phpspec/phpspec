@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Console\Command\Pair;
 
+use Exception;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\ClassLocation;
@@ -49,6 +50,14 @@ final class CommandDispatcher
     private readonly RoleState $roleState;
     private readonly GenerateAgent $generateAgent;
     private ?AiAssistant $ai = null;
+
+    /**
+     * Why a configured AI provider failed to start, captured at construction so
+     * it can be shown when the human actually reaches for the AI — instead of
+     * being printed once at startup and buried by the scroll region. Null when
+     * AI is ready or was never configured.
+     */
+    private ?string $aiUnavailableReason = null;
 
     /**
      * The most recent suite summary, remembered so every AI turn — including a
@@ -102,10 +111,32 @@ final class CommandDispatcher
                 $provider = ProviderFactory::create($aiConfig);
                 $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider']);
                 $this->ai = new AiAssistant($provider, $this->config, $this->output, $model, $this->filesystem, $this->interactive, $this->extensionLoader, $this->chooser, $this->roleState);
-            } catch (RuntimeException $e) {
-                $this->output->error($e->getMessage());
+            } catch (Exception $e) {
+                // Any provider failure — an unknown name, a missing package, a bad
+                // key — leaves AI unavailable rather than crashing the session.
+                $this->aiUnavailableReason = $e->getMessage();
             }
         }
+    }
+
+    /**
+     * Whether the AI assistant actually started: an "ai" block was configured
+     * and its provider was constructed. False both when no AI is configured and
+     * when a configured provider failed to load — {@see aiUnavailableReason()}
+     * tells the two apart.
+     */
+    public function aiIsReady(): bool
+    {
+        return $this->ai !== null;
+    }
+
+    /**
+     * The reason a configured AI provider failed to start, or null when AI is
+     * ready or was never configured.
+     */
+    public function aiUnavailableReason(): ?string
+    {
+        return $this->aiUnavailableReason;
     }
 
     /**
@@ -466,7 +497,7 @@ final class CommandDispatcher
         try {
             $input->bind($cmd->getDefinition());
             $cmd->run($input, $this->output->getOutput());
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->output->error($e->getMessage());
         }
 
@@ -547,10 +578,14 @@ final class CommandDispatcher
 
         $out->writeln('');
 
-        $aiAvailable = $this->config->get('ai') !== null;
-        if ($aiAvailable) {
+        if ($this->ai !== null) {
             $out->writeln('  <fg=bright-blue;options=bold>AI assistant</> <fg=green>(available)</>');
             $out->writeln('  <fg=gray>Right now — ' . $this->roleState->current()->contractLine() . '</>');
+        } elseif ($this->config->get('ai') !== null) {
+            $out->writeln('  <fg=bright-blue;options=bold>AI assistant</> <fg=yellow>(configured, but unavailable)</>');
+            if ($this->aiUnavailableReason !== null) {
+                $out->writeln('  <fg=gray>' . $this->aiUnavailableReason . '</>');
+            }
         } else {
             $out->writeln('  <fg=bright-blue;options=bold>AI assistant</> <fg=gray>(not configured — add ai: section to phpspec.yml)</>');
         }
@@ -607,22 +642,45 @@ final class CommandDispatcher
     private function handleAi(string $input): int
     {
         if ($this->ai === null) {
-            return $this->handleUnknown($this->parser->parse($input)['command']);
+            return $this->handleAiUnavailable();
         }
 
         $this->ai->handle($input, $this->lastSituation);
+
         return self::CONTINUE;
     }
 
     /**
-     * Displays an error for an unrecognized command.
+     * Explains why a natural-language line could not reach the AI: either a
+     * configured provider failed to start (with the captured reason), or no
+     * provider is configured at all.
+     */
+    private function handleAiUnavailable(): int
+    {
+        if ($this->aiUnavailableReason !== null) {
+            $this->output->error(
+                "AI is configured but its provider could not start, so I can't use natural language:\n"
+                . '  ' . $this->aiUnavailableReason,
+            );
+
+            return self::CONTINUE;
+        }
+
+        $this->output->error(
+            "No AI provider is configured, so I can't use natural language.\n"
+            . '  Add an "ai" section to phpspec.yaml, or type /help for the available commands.',
+        );
+
+        return self::CONTINUE;
+    }
+
+    /**
+     * Displays an error for an unrecognized slash command.
      */
     private function handleUnknown(string $command): int
     {
-        $this->output->error(
-            "Unknown command: $command. Type /help for available commands.\n"
-            . '  To use natural language, configure an AI provider in phpspec.yaml.',
-        );
+        $this->output->error("Unknown command: $command. Type /help for the available commands.");
+
         return self::CONTINUE;
     }
 

@@ -59,7 +59,7 @@ Commands mirror the CLI but add interactive prompts. For example, `/describe` sh
 
 ### Command or prompt: the slash rule
 
-The leading slash is the one signal that a line is a command. Anything **without** a slash is sent to the AI assistant (or, with no AI configured, shows the unknown-command hint). No keyword guessing — `/describe App/Calculator` runs the command; `describe what the Loader class does` is a prompt.
+The leading slash is the one signal that a line is a command. Anything **without** a slash is sent to the AI assistant. With no working AI it doesn't call your sentence an "unknown command" — it explains that natural language needs a provider. No keyword guessing — `/describe App/Calculator` runs the command; `describe what the Loader class does` is a prompt.
 
 ```
 > /describe App/Calculator                      # runs the describe command
@@ -117,6 +117,21 @@ ai:
 | `openai` | `gpt-4o` | API key |
 
 All three providers support tool calling, vision, and streaming.
+
+Each provider needs its PapiAI package installed alongside `papi-ai/papi-core`:
+
+```bash
+composer require papi-ai/papi-core papi-ai/google      # for Gemini
+composer require papi-ai/papi-core papi-ai/anthropic   # for Claude
+composer require papi-ai/papi-core papi-ai/openai       # for GPT
+```
+
+The status bar reflects whether the provider actually started, not merely that an `ai:`
+section exists. If a provider is configured but can't start — its package isn't installed,
+the name is misspelt, the key is for a different provider — the bar shows **`ai: unavailable`**
+rather than `ai: on`, and the reason is shown the moment you type a prompt or run `/help`.
+So an `AIza…` (Google) key under `provider: openai` will read as unavailable until you set
+`provider: google`.
 
 ## AI Assistant
 

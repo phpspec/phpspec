@@ -49,13 +49,14 @@ final class PairOutput
      * starts. Without it the layout falls back to just the input divider.
      *
      * @param string $workingDir the working directory to show (already abbreviated)
-     * @param bool $aiAvailable whether an AI provider is configured
+     * @param bool $aiAvailable whether the AI provider actually started
      * @param string|null $provider the configured provider name, when AI is on
      * @param RoleState $roleState the live pairing role, read on each redraw
+     * @param string|null $unavailableReason why a configured provider could not start, when it did not
      */
-    public function configureStatus(string $workingDir, bool $aiAvailable, ?string $provider, RoleState $roleState): void
+    public function configureStatus(string $workingDir, bool $aiAvailable, ?string $provider, RoleState $roleState, ?string $unavailableReason = null): void
     {
-        $this->statusBar = new StatusBar($workingDir, $aiAvailable, $provider, $roleState);
+        $this->statusBar = new StatusBar($workingDir, $aiAvailable, $provider, $roleState, $unavailableReason);
     }
 
     /**

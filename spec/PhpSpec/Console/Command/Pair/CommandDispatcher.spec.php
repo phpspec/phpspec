@@ -28,6 +28,25 @@ class CommandDispatcherFakeRunner implements SpecRunner
     }
 }
 
+// Builds a dispatcher whose Configuration reports an ai: block for the given
+// provider, by faking the phpspec.yaml the Configuration reads.
+function commandDispatcherWithAi(Filesystem $fs, PairOutput $pairOutput, SpecRunner $specRunner, string $provider): CommandDispatcher
+{
+    $yamlPath = './phpspec.yaml';
+    allow($fs->exists())->toReturnUsing(fn(string $path): bool => $path === $yamlPath);
+    allow($fs->read())->toReturnUsing(fn(string $path): string => $path === $yamlPath ? "ai:\n  provider: $provider\n  api_key: test-key\n" : '');
+
+    return new CommandDispatcher(
+        new SpecGenerator('spec', $fs),
+        new ClassGenerator('src', $fs),
+        new Configuration('.', $fs),
+        $pairOutput,
+        false,
+        $fs,
+        specRunner: $specRunner,
+    );
+}
+
 describe(CommandDispatcher::class, function () {
 
     beforeEach(function (Filesystem $fs) {
@@ -279,12 +298,12 @@ describe(CommandDispatcher::class, function () {
             expect($this->specRunner->arguments)->toBe(['spec/App']);
         });
 
-        it('routes non-slash prose to the AI (unknown fallback without AI)', function () {
+        it('routes non-slash prose to the AI (explains AI is off without a provider)', function () {
             $this->dispatcher->dispatch('run the scenarios and fix them');
             $output = $this->buffer->fetch();
-            // No leading slash → an AI prompt; with no AI it degrades to the hint.
-            expect($output)->toContain('Unknown command');
-            expect($output)->toContain('configure an AI provider');
+            // No leading slash → an AI prompt; with no AI it explains, without calling it an unknown command.
+            expect($output)->toContain('natural language');
+            expect($output)->not()->toContain('Unknown command');
         });
 
         it('routes a bare command word (no slash) to the AI, not the command', function () {
@@ -298,8 +317,51 @@ describe(CommandDispatcher::class, function () {
         it('routes unrecognized prose to the AI fallback', function () {
             $this->dispatcher->dispatch('hello world');
             $output = $this->buffer->fetch();
-            expect($output)->toContain('Unknown command');
-            expect($output)->toContain('configure an AI provider');
+            expect($output)->toContain('natural language');
+            expect($output)->not()->toContain('Unknown command');
+        });
+    });
+
+    context('AI provider readiness', function () {
+        it('is ready, with no failure reason, when a working provider is configured', function (Filesystem $fs) {
+            $dispatcher = commandDispatcherWithAi($fs, $this->pairOutput, $this->specRunner, 'google');
+
+            expect($dispatcher->aiIsReady())->toBe(true);
+            expect($dispatcher->aiUnavailableReason())->toBeNull();
+        });
+
+        it('is not ready, with a reason, when the provider package is not installed', function (Filesystem $fs) {
+            $dispatcher = commandDispatcherWithAi($fs, $this->pairOutput, $this->specRunner, 'anthropic');
+
+            expect($dispatcher->aiIsReady())->toBe(false);
+            expect($dispatcher->aiUnavailableReason())->toContain('anthropic');
+        });
+
+        it('degrades gracefully instead of crashing when the provider name is unknown', function (Filesystem $fs) {
+            $dispatcher = commandDispatcherWithAi($fs, $this->pairOutput, $this->specRunner, 'nonesuch');
+
+            expect($dispatcher->aiIsReady())->toBe(false);
+            expect($dispatcher->aiUnavailableReason())->toContain('nonesuch');
+        });
+
+        it('explains why a prompt could not reach the AI when the provider cannot start', function (Filesystem $fs) {
+            $dispatcher = commandDispatcherWithAi($fs, $this->pairOutput, $this->specRunner, 'anthropic');
+
+            $dispatcher->dispatch('write a spec for a Calculator');
+            $output = $this->buffer->fetch();
+
+            expect($output)->toContain('could not start');
+            expect($output)->not()->toContain('Unknown command');
+        });
+
+        it('reports the provider as configured but unavailable in help', function (Filesystem $fs) {
+            $dispatcher = commandDispatcherWithAi($fs, $this->pairOutput, $this->specRunner, 'anthropic');
+
+            $dispatcher->dispatch('/help');
+            $output = $this->buffer->fetch();
+
+            expect($output)->toContain('unavailable');
+            expect($output)->not()->toContain('(available)');
         });
     });
 
@@ -435,10 +497,11 @@ describe(CommandDispatcher::class, function () {
             expect($result)->toBe(CommandDispatcher::CONTINUE);
         });
 
-        it('routes non-slash prose to unknown when no AI', function () {
+        it('explains AI is off for non-slash prose when no AI', function () {
             $this->appDispatcher->dispatch('what should I build next');
             $output = $this->buffer->fetch();
-            expect($output)->toContain('Unknown command');
+            expect($output)->toContain('natural language');
+            expect($output)->not()->toContain('Unknown command');
         });
 
         it('shows additional commands in help', function () {

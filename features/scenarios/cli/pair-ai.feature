@@ -15,7 +15,7 @@ Feature: AI-assisted pair programming
     Then the output should contain "AI assistant"
     And the output should contain "available"
 
-  Scenario: Help shows AI as available with Anthropic provider
+  Scenario: Help shows AI as unavailable when the configured provider cannot start
     Given a phpspec.yaml config:
       """
       ai:
@@ -24,18 +24,19 @@ Feature: AI-assisted pair programming
       """
     When I run phpspec pair with input "/help"
     Then the output should contain "AI assistant"
-    And the output should contain "available"
+    And the output should contain "unavailable"
+    And the output should not contain "(available)"
 
-  Scenario: Help shows AI as available with OpenAI provider
+  Scenario: A configured provider that cannot start explains why on a prompt
     Given a phpspec.yaml config:
       """
       ai:
-        provider: openai
+        provider: anthropic
         api_key: test-key-789
       """
-    When I run phpspec pair with input "/help"
-    Then the output should contain "AI assistant"
-    And the output should contain "available"
+    When I run phpspec pair with input "write a spec for a Calculator"
+    Then the output should contain "could not start"
+    And the output should not contain "Unknown command"
 
   Scenario: Help shows AI as not configured when missing
     Given no phpspec.json config
@@ -47,14 +48,15 @@ Feature: AI-assisted pair programming
     Then the output should contain "AI assistant"
     And the output should contain "not configured"
 
-  Scenario: Unknown command falls back to error without AI config
+  Scenario: Natural language without any AI config explains AI is off
     Given no phpspec.json config
     And a phpspec.yaml config:
       """
       spec_path: spec
       """
     When I run phpspec pair with input "hello world"
-    Then the output should contain "Unknown command"
+    Then the output should contain "natural language"
+    And the output should not contain "Unknown command"
 
   Scenario: Next command is available via auto-delegation
     Given no phpspec.json config

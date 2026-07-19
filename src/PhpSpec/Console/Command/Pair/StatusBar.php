@@ -30,15 +30,17 @@ final readonly class StatusBar
 
     /**
      * @param string $workingDir the working directory to show (already abbreviated)
-     * @param bool $aiAvailable whether an AI provider is configured
+     * @param bool $aiAvailable whether the AI provider actually started
      * @param string|null $provider the configured provider name, when AI is on
      * @param RoleState $roleState the live pairing role, read at render time
+     * @param string|null $unavailableReason why a configured provider could not start (drives the "unavailable" state)
      */
     public function __construct(
         private string $workingDir,
         private bool $aiAvailable,
         private ?string $provider,
         private RoleState $roleState,
+        private ?string $unavailableReason = null,
     ) {}
 
     /**
@@ -63,9 +65,11 @@ final readonly class StatusBar
     private function statusLine(int $width): string
     {
         $left = '  ' . $this->workingDir;
-        $right = $this->aiAvailable
-            ? sprintf('ai: on | provider: %s', $this->provider ?? '?')
-            : 'ai: off';
+        $right = match (true) {
+            $this->aiAvailable => sprintf('ai: on | provider: %s', $this->provider ?? '?'),
+            $this->unavailableReason !== null => 'ai: unavailable',
+            default => 'ai: off',
+        };
 
         $gap = max(2, $width - mb_strlen($left) - mb_strlen($right) - 2);
 
@@ -74,9 +78,11 @@ final readonly class StatusBar
 
     private function roleLine(): string
     {
-        $text = $this->aiAvailable
-            ? sprintf('ai is %s (/swap to change)', $this->roleState->current()->aiIsDriver() ? 'driver' : 'navigator')
-            : 'add an ai: section to phpspec.yaml to pair with AI';
+        $text = match (true) {
+            $this->aiAvailable => sprintf('ai is %s (/swap to change)', $this->roleState->current()->aiIsDriver() ? 'driver' : 'navigator'),
+            $this->unavailableReason !== null => 'ai provider could not start — type a prompt or /help to see why',
+            default => 'add an ai: section to phpspec.yaml to pair with AI',
+        };
 
         return self::BLUE . ' ' . self::MARKER . ' ' . self::RESET . self::DIM . $text . self::RESET;
     }
