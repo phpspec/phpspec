@@ -113,6 +113,14 @@ describe(GenerateAgent::class, function () {
         expect($proposal['new'])->toContain('the content');
     });
 
+    it('rejects a spec the model wrote in ObjectBehavior syntax rather than proposing it', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
+        $fn = fn() => json_encode(['path' => 'spec/App/Calc.spec.php', 'content' => "<?php\ndescribe('Calc', fn() => \$this->add()->shouldReturn(1));"]);
+        $agent = new GenerateAgent($this->config, $fs, $fn);
+
+        expect($agent->propose($this->aiConfig, 'change the Calc spec'))->toBeNull();
+    });
+
     it('writes the proposal content to the filesystem', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
         $written = [];

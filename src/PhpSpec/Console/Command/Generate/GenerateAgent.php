@@ -88,7 +88,28 @@ final class GenerateAgent
             return null;
         }
 
+        // Never propose a spec written in phpspec-8 ObjectBehavior syntax — reject
+        // it rather than write invalid DSL that would fatal when phpspec loads it.
+        if (str_ends_with($path, '.spec.php') && self::looksLikeLegacySpec($raw['content'])) {
+            return null;
+        }
+
         return $this->proposeContent($path, $raw['content']);
+    }
+
+    /**
+     * Whether spec content uses phpspec-8 ObjectBehavior idioms rather than the
+     * phpspec-9 functional DSL: an "ObjectBehavior" class, the old `spec\` file
+     * namespace, `->shouldXxx()` matchers, or a method called directly on `$this`
+     * (the subject) — none of which are valid phpspec-9 (where `$this->x` is only
+     * a `let`-bound value).
+     */
+    private static function looksLikeLegacySpec(string $content): bool
+    {
+        return str_contains($content, 'ObjectBehavior')
+            || str_contains($content, 'namespace spec\\')
+            || preg_match('~->should[A-Z]~', $content) === 1
+            || preg_match('~\$this->\w+\s*\(~', $content) === 1;
     }
 
     /**

@@ -1,0 +1,11 @@
+{
+  "case": "generate-spec-this-subject",
+  "instruction": "a spec for a TodoList",
+  "aiConfig": { "provider": "google", "api_key": "test-key" },
+  "provider": "google",
+  "model": "gemini-2.5-pro",
+  "response": {
+    "text": "{\"path\": \"spec/TodoList.spec.php\", \"content\": \"<?php\\ndescribe('TodoList', function () { it('is empty', fn() => expect($this->getTasks())->toBe([])); });\\n\"}",
+    "tool_calls": []
+  }
+}

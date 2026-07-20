@@ -57,7 +57,7 @@ final class InstructionTarget
             return ['path' => 'spec/' . str_replace('\\', '/', $class) . '.spec.php', 'type' => 'spec'];
         }
 
-        if ($class !== null && preg_match('~\b(?:implement|method|function|class)\b~i', $instruction)) {
+        if ($class !== null && preg_match('~\b(?:implement|method|function)\b~i', $instruction)) {
             return ['path' => 'src/' . str_replace('\\', '/', $class) . '.php', 'type' => 'code'];
         }
 
