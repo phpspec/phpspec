@@ -19,8 +19,15 @@ describe(InstructionTarget::class, function () {
             ->toBe(['path' => 'src/App/TodoList.php', 'type' => 'code']);
     });
 
-    it('returns null when the instruction names no path', function () {
-        expect(InstructionTarget::parse('a feature for a user adding a task'))->toBeNull();
+    it('infers a feature target from feature-intent wording without a path', function () {
+        $target = InstructionTarget::parse('a feature describing a user adding a task to a todo list');
+
+        expect($target['type'])->toBe('feature');
+        expect($target['path'])->toMatch('~^features/.+\.feature$~');
+    });
+
+    it('returns null when the instruction names neither a path nor a known intent', function () {
+        expect(InstructionTarget::parse('make the calculator add two numbers'))->toBeNull();
     });
 
 });

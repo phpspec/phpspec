@@ -22,22 +22,41 @@ namespace PhpSpec\Console\Command\Generate;
  */
 final class InstructionTarget
 {
+    private const STOP_WORDS = ['a', 'an', 'the', 'feature', 'scenario', 'story', 'describing', 'description', 'for', 'about', 'of', 'to', 'in', 'on', 'at', 'that', 'which', 'where'];
+
     /**
      * @return array{path: string, type: 'feature'|'spec'|'code'}|null
      */
     public static function parse(string $instruction): ?array
     {
-        if (!preg_match('~[A-Za-z0-9_./-]+\.(?:feature|php)~', $instruction, $matches)) {
-            return null;
+        if (preg_match('~[A-Za-z0-9_./-]+\.(?:feature|php)~', $instruction, $matches)) {
+            $path = $matches[0];
+            $type = match (true) {
+                str_ends_with($path, '.feature') => 'feature',
+                str_ends_with($path, '.spec.php') => 'spec',
+                default => 'code',
+            };
+
+            return ['path' => $path, 'type' => $type];
         }
 
-        $path = $matches[0];
-        $type = match (true) {
-            str_ends_with($path, '.feature') => 'feature',
-            str_ends_with($path, '.spec.php') => 'spec',
-            default => 'code',
-        };
+        // No explicit path: infer a feature target from feature-intent wording,
+        // deriving a slug filename from the instruction's subject.
+        if (preg_match('~\b(?:feature|scenario|story)\b~i', $instruction)) {
+            $slug = self::slug($instruction);
+            if ($slug !== '') {
+                return ['path' => 'features/' . $slug . '.feature', 'type' => 'feature'];
+            }
+        }
 
-        return ['path' => $path, 'type' => $type];
+        return null;
+    }
+
+    private static function slug(string $instruction): string
+    {
+        $words = preg_split('~[^a-z0-9]+~', strtolower($instruction), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $words = array_values(array_filter($words, static fn(string $word): bool => !in_array($word, self::STOP_WORDS, true)));
+
+        return implode('_', array_slice($words, 0, 6));
     }
 }

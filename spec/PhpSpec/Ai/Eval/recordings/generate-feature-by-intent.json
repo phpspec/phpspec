@@ -1,0 +1,11 @@
+{
+  "case": "generate-feature-by-intent",
+  "instruction": "a feature describing a user adding a task to a todo list",
+  "aiConfig": { "provider": "google", "api_key": "test-key" },
+  "provider": "google",
+  "model": "gemini-2.5-pro",
+  "response": {
+    "text": "{\"path\": \"spec/App/TodoList.spec.php\", \"content\": \"<?php // a spec\"}",
+    "tool_calls": []
+  }
+}
