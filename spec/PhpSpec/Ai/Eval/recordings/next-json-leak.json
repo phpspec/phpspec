@@ -1,0 +1,8 @@
+{
+  "case": "next-json-leak",
+  "instruction": "what should we build next?",
+  "response": {
+    "text": "Let's write the first scenario for a user adding a task.\n{\"type\": \"feature\", \"target\": \"user adds tasks\", \"reason\": \"No scenario yet pins down how a user adds a task.\"}\nShall we start there?",
+    "tool_calls": []
+  }
+}
