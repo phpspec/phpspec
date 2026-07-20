@@ -188,12 +188,16 @@ implementation code — authored by the AI, shown as a diff, and written after y
 ```bash
 bin/phpspec generate an example for App/Calculator add where it sums two numbers
 bin/phpspec generate implement Calculator::add to return the sum of its arguments
+bin/phpspec generate a scenario in features/user_adds_tasks.feature
 ```
 
 It requires an AI provider. A spec edit is checked so it never drops an existing example
-(specs are grown, not shrunk). In pair mode the same thing is `/generate <instruction>`,
-with the diff confirmed through the numbered chooser. See
-[Pair Programming & AI](pair.md) and the [CLI Reference](cli.md#generate).
+(specs are grown, not shrunk). When your instruction **names a file path**, that path is
+honoured over anything the model picks, and its extension decides the artifact: a
+`.feature` path is written as a Gherkin scenario by a deterministic generator (never as a
+spec), a `.spec.php` path stays a spec, and a `src/…php` path stays implementation code. In
+pair mode the same thing is `/generate <instruction>`, with the diff confirmed through the
+numbered chooser. See [Pair Programming & AI](pair.md) and the [CLI Reference](cli.md#generate).
 
 ## Step Definition Generation
 

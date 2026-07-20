@@ -16,6 +16,7 @@ namespace PhpSpec\Console\Command\Generate;
 
 use PhpSpec\Ai\Message;
 use PhpSpec\Ai\ProviderFactory;
+use PhpSpec\CodeGeneration\FeatureGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
 use RuntimeException;
@@ -32,17 +33,22 @@ final class GenerateAgent
     /** @var (callable(array{provider: string, model?: string, api_key: string}, string): (string|null))|null the raw AI reply for a built context; injectable for specs */
     private $chatFn;
 
+    private readonly FeatureGenerator $featureGenerator;
+
     /**
      * @param Configuration $config the project configuration
      * @param Filesystem $filesystem the filesystem abstraction
      * @param (callable(array{provider: string, model?: string, api_key: string}, string): (string|null))|null $chatFn injectable AI-chat seam for specs
+     * @param FeatureGenerator|null $featureGenerator deterministic Gherkin generator for feature targets
      */
     public function __construct(
         private readonly Configuration $config,
         private readonly Filesystem $filesystem,
         ?callable $chatFn = null,
+        ?FeatureGenerator $featureGenerator = null,
     ) {
         $this->chatFn = $chatFn;
+        $this->featureGenerator = $featureGenerator ?? new FeatureGenerator();
     }
 
     /**
@@ -54,22 +60,55 @@ final class GenerateAgent
      */
     public function propose(array $aiConfig, string $instruction): ?array
     {
+        $target = InstructionTarget::parse($instruction);
+
+        // A .feature target is fully deterministic: the path and a valid Gherkin
+        // skeleton are ours, so a wrong-artifact or phpspec-8 model reply can't
+        // leak through — the model is not consulted for the file's shape.
+        if ($target !== null && $target['type'] === 'feature') {
+            return $this->proposeContent(
+                $target['path'],
+                $this->featureGenerator->skeleton(FeatureGenerator::titleFromPath($target['path'])),
+            );
+        }
+
         $context = $this->buildContext($instruction);
         $reply = $this->chatFn !== null
             ? ($this->chatFn)($aiConfig, $context)
             : $this->chat($aiConfig, $context);
 
         $raw = is_string($reply) ? $this->parse($reply) : null;
-        if ($raw === null || $raw['path'] === '' || $raw['content'] === '') {
+        if ($raw === null || $raw['content'] === '') {
             return null;
         }
 
-        $relPath = ltrim(str_replace('\\', '/', $raw['path']), '/');
+        // Honour a path named in the instruction over the model's choice.
+        $path = $target !== null ? $target['path'] : $raw['path'];
+        if ($path === '') {
+            return null;
+        }
+
+        return $this->proposeContent($path, $raw['content']);
+    }
+
+    /**
+     * Builds a proposal for a known project-relative path and content, reading any
+     * existing file so the caller can show a modified-file diff.
+     *
+     * @return array{path: string, old: string, new: string, isNew: bool}
+     */
+    private function proposeContent(string $path, string $content): array
+    {
+        $relPath = ltrim(str_replace('\\', '/', $path), '/');
         $fullPath = $this->fullPath($relPath);
         $exists = $this->filesystem->exists($fullPath);
-        $old = $exists ? $this->filesystem->read($fullPath) : '';
 
-        return ['path' => $relPath, 'old' => $old, 'new' => $raw['content'], 'isNew' => !$exists];
+        return [
+            'path' => $relPath,
+            'old' => $exists ? $this->filesystem->read($fullPath) : '',
+            'new' => $content,
+            'isNew' => !$exists,
+        ];
     }
 
     /**
