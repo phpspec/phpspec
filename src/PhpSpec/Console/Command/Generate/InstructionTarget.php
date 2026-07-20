@@ -49,6 +49,13 @@ final class InstructionTarget
             }
         }
 
+        // No explicit path: infer a spec target from spec-intent wording and the
+        // class named in the instruction, so the path comes from the user's words
+        // rather than the model echoing a prompt example.
+        if (preg_match('~\bspec\b~i', $instruction) && preg_match('~\b([A-Z][A-Za-z0-9]*(?:\\\\[A-Z][A-Za-z0-9]*)*)\b~', $instruction, $class)) {
+            return ['path' => 'spec/' . str_replace('\\', '/', $class[1]) . '.spec.php', 'type' => 'spec'];
+        }
+
         return null;
     }
 

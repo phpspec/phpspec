@@ -26,6 +26,11 @@ describe(InstructionTarget::class, function () {
         expect($target['path'])->toMatch('~^features/.+\.feature$~');
     });
 
+    it('infers a spec target from spec-intent wording and a class name', function () {
+        expect(InstructionTarget::parse('a spec for a Coupon that reduces a total'))
+            ->toBe(['path' => 'spec/Coupon.spec.php', 'type' => 'spec']);
+    });
+
     it('returns null when the instruction names neither a path nor a known intent', function () {
         expect(InstructionTarget::parse('make the calculator add two numbers'))->toBeNull();
     });
