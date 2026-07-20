@@ -49,14 +49,24 @@ final class InstructionTarget
             }
         }
 
-        // No explicit path: infer a spec target from spec-intent wording and the
-        // class named in the instruction, so the path comes from the user's words
-        // rather than the model echoing a prompt example.
-        if (preg_match('~\bspec\b~i', $instruction) && preg_match('~\b([A-Z][A-Za-z0-9]*(?:\\\\[A-Z][A-Za-z0-9]*)*)\b~', $instruction, $class)) {
-            return ['path' => 'spec/' . str_replace('\\', '/', $class[1]) . '.spec.php', 'type' => 'spec'];
+        // No explicit path: infer a spec or code target from intent wording and
+        // the class named in the instruction, so the path comes from the user's
+        // words rather than the model echoing a prompt example.
+        $class = self::classToken($instruction);
+        if ($class !== null && preg_match('~\bspec\b~i', $instruction)) {
+            return ['path' => 'spec/' . str_replace('\\', '/', $class) . '.spec.php', 'type' => 'spec'];
+        }
+
+        if ($class !== null && preg_match('~\b(?:implement|method|function|class)\b~i', $instruction)) {
+            return ['path' => 'src/' . str_replace('\\', '/', $class) . '.php', 'type' => 'code'];
         }
 
         return null;
+    }
+
+    private static function classToken(string $instruction): ?string
+    {
+        return preg_match('~\b([A-Z][A-Za-z0-9]*(?:\\\\[A-Z][A-Za-z0-9]*)*)\b~', $instruction, $matches) ? $matches[1] : null;
     }
 
     private static function slug(string $instruction): string

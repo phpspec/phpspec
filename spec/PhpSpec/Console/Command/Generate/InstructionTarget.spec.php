@@ -31,6 +31,11 @@ describe(InstructionTarget::class, function () {
             ->toBe(['path' => 'spec/Coupon.spec.php', 'type' => 'spec']);
     });
 
+    it('infers a code target from implementation-intent wording and a class name', function () {
+        expect(InstructionTarget::parse('implement the add method on the TodoList class'))
+            ->toBe(['path' => 'src/TodoList.php', 'type' => 'code']);
+    });
+
     it('returns null when the instruction names neither a path nor a known intent', function () {
         expect(InstructionTarget::parse('make the calculator add two numbers'))->toBeNull();
     });
