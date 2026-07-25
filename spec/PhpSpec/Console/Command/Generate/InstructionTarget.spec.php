@@ -19,21 +19,21 @@ describe(InstructionTarget::class, function () {
             ->toBe(['path' => 'src/App/TodoList.php', 'type' => 'code']);
     });
 
-    it('infers a feature target from feature-intent wording without a path', function () {
+    it('infers a feature intent (with a subject slug) from feature-intent wording without a path', function () {
         $target = InstructionTarget::parse('a feature describing a user adding a task to a todo list');
 
         expect($target['type'])->toBe('feature');
-        expect($target['path'])->toMatch('~^features/.+\.feature$~');
+        expect($target['slug'])->toContain('user');
     });
 
-    it('infers a spec target from spec-intent wording and a class name', function () {
+    it('infers a spec intent and the class from spec-intent wording', function () {
         expect(InstructionTarget::parse('a spec for a Coupon that reduces a total'))
-            ->toBe(['path' => 'spec/Coupon.spec.php', 'type' => 'spec']);
+            ->toBe(['type' => 'spec', 'class' => 'Coupon']);
     });
 
-    it('infers a code target from implementation-intent wording and a class name', function () {
+    it('infers a code intent and the class from implementation-intent wording', function () {
         expect(InstructionTarget::parse('implement the add method on the TodoList class'))
-            ->toBe(['path' => 'src/TodoList.php', 'type' => 'code']);
+            ->toBe(['type' => 'code', 'class' => 'TodoList']);
     });
 
     it('returns null when the instruction names neither a path nor a known intent', function () {

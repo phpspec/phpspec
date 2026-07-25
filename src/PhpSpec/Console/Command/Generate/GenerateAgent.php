@@ -16,6 +16,7 @@ namespace PhpSpec\Console\Command\Generate;
 
 use PhpSpec\Ai\Message;
 use PhpSpec\Ai\ProviderFactory;
+use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\FeatureGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
@@ -61,14 +62,15 @@ final class GenerateAgent
     public function propose(array $aiConfig, string $instruction): ?array
     {
         $target = InstructionTarget::parse($instruction);
+        $targetPath = $target !== null ? $this->resolveTargetPath($target) : null;
 
         // A .feature target is fully deterministic: the path and a valid Gherkin
         // skeleton are ours, so a wrong-artifact or phpspec-8 model reply can't
         // leak through — the model is not consulted for the file's shape.
-        if ($target !== null && $target['type'] === 'feature') {
+        if ($targetPath !== null && $target['type'] === 'feature') {
             return $this->proposeContent(
-                $target['path'],
-                $this->featureGenerator->skeleton(FeatureGenerator::titleFromPath($target['path'])),
+                $targetPath,
+                $this->featureGenerator->skeleton(FeatureGenerator::titleFromPath($targetPath)),
             );
         }
 
@@ -82,8 +84,8 @@ final class GenerateAgent
             return null;
         }
 
-        // Honour a path named in the instruction over the model's choice.
-        $path = $target !== null ? $target['path'] : $raw['path'];
+        // Honour the path derived from the instruction over the model's choice.
+        $path = $targetPath ?? $raw['path'];
         if ($path === '') {
             return null;
         }
@@ -95,6 +97,41 @@ final class GenerateAgent
         }
 
         return $this->proposeContent($path, $raw['content']);
+    }
+
+    /**
+     * Resolves an instruction target to a project-relative path using the project's
+     * configured layout — the src/spec/features directories, the spec suffix, and
+     * the PSR-4 prefix — never hardcoded directories. An explicit path the user
+     * named is used as-is. Specs mirror the full namespace under the spec dir;
+     * source strips the PSR-4 prefix, exactly as phpspec's own generators do.
+     *
+     * @param array{type: 'feature'|'spec'|'code', path?: string, slug?: string, class?: string} $target
+     */
+    private function resolveTargetPath(array $target): string
+    {
+        if (isset($target['path'])) {
+            return $target['path'];
+        }
+
+        if ($target['type'] === 'feature') {
+            return rtrim($this->config->getFeaturesPath(), '/') . '/' . ($target['slug'] ?? '') . '.feature';
+        }
+
+        $class = $target['class'] ?? '';
+
+        if ($target['type'] === 'spec') {
+            $specDir = ltrim(str_replace('\\', '/', $this->config->getSpecPath()), './');
+
+            return $specDir . '/' . str_replace('\\', '/', $class) . $this->config->getSpecSuffix();
+        }
+
+        $srcDir = ltrim(str_replace('\\', '/', $this->config->getSrcPath()), './');
+        $absolute = ClassGenerator::resolveFqcn($class, $srcDir, $this->config->getPsr4Prefix())['filePath'];
+        $cwd = getcwd() . DIRECTORY_SEPARATOR;
+        $relative = str_starts_with($absolute, $cwd) ? substr($absolute, strlen($cwd)) : $absolute;
+
+        return str_replace(DIRECTORY_SEPARATOR, '/', $relative);
     }
 
     /**

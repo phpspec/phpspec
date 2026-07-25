@@ -16,16 +16,18 @@ namespace PhpSpec\Console\Command\Generate;
 
 /**
  * @internal
- * Extracts an explicit target file named in a `/generate` instruction and
- * classifies it by extension, so the path and artifact type come from the user's
- * own words rather than the model's guess. Null when no path is named.
+ * Reads a `/generate` instruction and reports what the user is asking for: an
+ * explicit file path they named, or — failing that — the intent (feature, spec,
+ * or code) plus the subject (a slug or a class). It deliberately does NOT decide
+ * a directory for the inferred cases; the caller resolves the real path through
+ * the project's configured layout. Null when nothing is named.
  */
 final class InstructionTarget
 {
     private const STOP_WORDS = ['a', 'an', 'the', 'feature', 'scenario', 'story', 'describing', 'description', 'for', 'about', 'of', 'to', 'in', 'on', 'at', 'that', 'which', 'where'];
 
     /**
-     * @return array{path: string, type: 'feature'|'spec'|'code'}|null
+     * @return array{type: 'feature'|'spec'|'code', path?: string, slug?: string, class?: string}|null
      */
     public static function parse(string $instruction): ?array
     {
@@ -41,24 +43,24 @@ final class InstructionTarget
         }
 
         // No explicit path: infer a feature target from feature-intent wording,
-        // deriving a slug filename from the instruction's subject.
+        // carrying a slug derived from the instruction's subject.
         if (preg_match('~\b(?:feature|scenario|story)\b~i', $instruction)) {
             $slug = self::slug($instruction);
             if ($slug !== '') {
-                return ['path' => 'features/' . $slug . '.feature', 'type' => 'feature'];
+                return ['type' => 'feature', 'slug' => $slug];
             }
         }
 
         // No explicit path: infer a spec or code target from intent wording and
-        // the class named in the instruction, so the path comes from the user's
+        // the class named in the instruction, so the subject comes from the user's
         // words rather than the model echoing a prompt example.
         $class = self::classToken($instruction);
         if ($class !== null && preg_match('~\bspec\b~i', $instruction)) {
-            return ['path' => 'spec/' . str_replace('\\', '/', $class) . '.spec.php', 'type' => 'spec'];
+            return ['type' => 'spec', 'class' => $class];
         }
 
         if ($class !== null && preg_match('~\b(?:implement|method|function)\b~i', $instruction)) {
-            return ['path' => 'src/' . str_replace('\\', '/', $class) . '.php', 'type' => 'code'];
+            return ['type' => 'code', 'class' => $class];
         }
 
         return null;
