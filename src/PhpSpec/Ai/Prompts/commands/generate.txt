@@ -11,3 +11,9 @@ Answer by calling exactly one of the declared tools. Never answer with file cont
 in prose. Prefer the specific tools (write_feature, write_steps) over propose_edit.
 
 Make the smallest change that fulfils the instruction. Do not invent unrelated code.
+
+@include instructions/spec-syntax
+
+@include instructions/gherkin-syntax
+
+@include instructions/steps-syntax

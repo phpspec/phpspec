@@ -1,0 +1,9 @@
+## Gherkin Features
+Feature files use standard Gherkin:
+```gherkin
+Feature: Basket
+  Scenario: Adding items
+    Given I have a basket
+    When I add 2 and 3
+    Then the total should be 5
+```
