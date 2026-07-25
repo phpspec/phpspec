@@ -44,6 +44,14 @@ describe('pair role prompt artifacts', function () {
         expect($text)->toContain('Voice:');
     });
 
+    it('ships the refactor command as a manifest with its rules as editable prose', function () use ($read) {
+        $text = $read('commands/refactor.txt');
+
+        expect($text)->toContain('temperature: 0.3');
+        expect($text)->toContain('ONE baby-step refactoring');
+        expect($text)->toContain('apply_refactoring');
+    });
+
     it('ships the pair base guidance as an editable file with layout placeholders', function () use ($read) {
         $text = $read('instructions/pair-guidance.txt');
 
