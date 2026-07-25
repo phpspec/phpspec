@@ -57,8 +57,8 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.75",
         "phpstan/phpstan": "^2.1",
-        "papi-ai/papi-core": "^0.9",
-        "papi-ai/google": "^0.9"
+        "papi-ai/papi-core": "^0.12",
+        "papi-ai/google": "^0.12"
     },
 
     "bin": ["bin/phpspec"],

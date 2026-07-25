@@ -24,6 +24,7 @@ use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 use RuntimeException;
+use Throwable;
 
 /**
  * @internal
@@ -120,14 +121,25 @@ final class Agent
         }
 
         $messages = [Message::system($request->system), Message::user($request->context)];
-        $response = $provider->chat($messages, $options);
 
-        // The channel rail: structure only ever arrives as tool calls, so a
-        // tool_call command answered in prose gets ONE corrective re-ask.
-        if ($profile->answer === 'tool_call' && !$response->hasToolCalls()) {
-            $messages[] = Message::assistant($response->text);
-            $messages[] = Message::user('Answer by calling exactly one of the declared tools; do not answer in prose.');
+        try {
             $response = $provider->chat($messages, $options);
+
+            // The channel rail: structure only ever arrives as tool calls, so a
+            // tool_call command answered in prose gets ONE corrective re-ask.
+            // Providers that honour toolChoice (papi-core >= 0.13) make this a
+            // rare fallback; older ones ignore the option and rely on it.
+            if ($profile->answer === 'tool_call' && !$response->hasToolCalls()) {
+                $messages[] = Message::assistant($response->text);
+                $messages[] = Message::user('Answer by calling exactly one of the declared tools; do not answer in prose.');
+                $response = $provider->chat($messages, $options);
+            }
+        } catch (Throwable $e) {
+            // A live provider failure (bad key, HTTP error, an unenforceable
+            // toolChoice) becomes prose for the human, never a crash.
+            $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], null);
+
+            return new Outcome($step, [], $e->getMessage());
         }
 
         try {
@@ -194,6 +206,13 @@ final class Agent
         $tools = $this->registry->definitions($profile);
         if ($tools !== []) {
             $options['tools'] = $tools;
+
+            // Force the answer channel at the provider where supported
+            // (papi-core >= 0.13); one declared tool is forced by name, several
+            // leave the model the choice of tool but not of channel.
+            if ($profile->answer === 'tool_call') {
+                $options['toolChoice'] = count($profile->tools) === 1 ? ['name' => $profile->tools[0]] : 'required';
+            }
         }
 
         return $options;

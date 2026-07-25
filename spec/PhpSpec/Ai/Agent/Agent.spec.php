@@ -10,6 +10,16 @@ use PhpSpec\Filesystem;
 
 require_once __DIR__ . '/../ReplayProvider.php';
 
+// A provider whose chat always fails, the way a live one does on a bad key or
+// an unenforceable toolChoice (papi-core 0.13 throws before any HTTP call).
+class AgentSpecThrowingProvider implements PhpSpec\Ai\Contracts\ProviderInterface
+{
+    public function chat(array $messages, array $options = []): Response
+    {
+        throw new RuntimeException('Google API error (400): API key not valid.');
+    }
+}
+
 // The one verb every AI command calls: ground, resolve the step, act
 // deterministically when the step fully determines the artifact, otherwise ask
 // the model on the declared answer channel (with one corrective re-ask), and
@@ -66,6 +76,48 @@ describe(Agent::class, function () {
         expect($replay->requests[0]['messages'][1]->content)->toContain('a spec for a Coupon');
         expect($replay->requests[0]['options']['temperature'])->toBe(0.2);
         expect($replay->requests[0]['options']['tools'])->toHaveLength(3);
+    });
+
+    it('forces the tool channel via toolChoice: required with several tools declared', function (Filesystem $fs) {
+        $replay = new ReplayProvider([
+            new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),
+        ]);
+        $agent = new Agent($this->config, $fs, $replay);
+
+        $agent->do($this->profile, 'a spec for a Coupon');
+
+        expect($replay->requests[0]['options']['toolChoice'])->toBe('required');
+    });
+
+    it('forces the one declared tool by name when the manifest declares exactly one', function (Filesystem $fs) {
+        $profile = new CommandProfile(name: 'next', body: 'ADVISE', tools: ['suggest_next'], answer: 'tool_call');
+        $replay = new ReplayProvider([
+            new Response('', [new ToolCall('1', 'suggest_next', ['type' => 'spec', 'target' => 'App\\Coupon', 'reason' => 'ok'])]),
+        ]);
+        $agent = new Agent($this->config, $fs, $replay);
+
+        $agent->do($profile, '');
+
+        expect($replay->requests[0]['options']['toolChoice'])->toBe(['name' => 'suggest_next']);
+    });
+
+    it('sends no toolChoice for a prose command', function (Filesystem $fs) {
+        $profile = new CommandProfile(name: 'chat', body: 'TALK', tools: [], answer: 'prose');
+        $replay = new ReplayProvider([new Response('some advice')]);
+        $agent = new Agent($this->config, $fs, $replay);
+
+        $agent->do($profile, 'what next?');
+
+        expect($replay->requests[0]['options'])->not()->toHaveKey('toolChoice');
+    });
+
+    it('surfaces a provider failure as prose instead of crashing the command', function (Filesystem $fs) {
+        $agent = new Agent($this->config, $fs, new AgentSpecThrowingProvider());
+
+        $outcome = $agent->do($this->profile, 'a spec for a Coupon');
+
+        expect($outcome->proposals)->toBe([]);
+        expect($outcome->prose)->toContain('API key not valid');
     });
 
     it('re-asks once when a tool_call command is answered in prose', function (Filesystem $fs) {
