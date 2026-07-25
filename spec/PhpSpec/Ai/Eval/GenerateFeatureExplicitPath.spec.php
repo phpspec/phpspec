@@ -1,17 +1,17 @@
 <?php
 
+use PhpSpec\Ai\Agent\Agent;
+use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Configuration;
-use PhpSpec\Console\Command\Generate\GenerateAgent;
 use PhpSpec\Filesystem;
 
-// E1 (eval, red-first) — when the instruction names an explicit feature path,
-// /generate must produce a .feature at THAT exact path, never a spec. The model
-// reply is replayed from a recorded fixture (the actual bad output from the bug),
-// so the grader is deterministic and needs no provider or network.
-//
-// RED against current /generate, which honours whatever path the model chose —
-// here spec/App/Calculator.spec.php. Goes green once GenerateAgent parses the
-// explicit path from the instruction and generates a feature for a .feature path.
+require_once __DIR__ . '/../ReplayProvider.php';
+
+// E1 (eval) — when the instruction names an explicit feature path, generate
+// must produce a .feature at THAT exact path, never a spec. Under the agent
+// pipeline this is fully deterministic: the recorded model reply (the actual
+// bad output from the bug: a spec at the model's own path) must never even be
+// consulted.
 describe('E1 generate: feature at an explicit path', function () {
 
     beforeEach(function (Filesystem $fs) {
@@ -19,20 +19,22 @@ describe('E1 generate: feature at an explicit path', function () {
         allow($fs->isFile())->toReturn(false);
         allow($fs->isDir())->toReturn(false);
         allow($fs->scandir())->toReturn([]);
+        allow($fs->read())->toReturn('');
+        allow($fs->mkdir())->toReturn(null);
+        allow($fs->write())->toReturn(null);
     });
 
-    it('writes a .feature at the requested path, never a spec', function (Filesystem $fs) {
+    it('writes a .feature at the requested path without consulting the model', function (Filesystem $fs) {
         $rec = json_decode((string) file_get_contents(__DIR__ . '/recordings/generate-feature-explicit-path.json'), true);
-        $replay = fn(array $ai, string $context): ?string => $rec['response']['text'];
+        $replay = ReplayProvider::fromRecording($rec);
 
-        $agent = new GenerateAgent(new Configuration('.', $fs), $fs, $replay);
-        $proposal = $agent->propose($rec['aiConfig'], $rec['instruction']);
+        $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
+        $outcome = $agent->do(CommandProfile::load('generate'), $rec['instruction']);
 
-        expect($proposal['path'])->toBe('features/user_adds_tasks.feature');   // right path/type
-        expect(str_ends_with($proposal['path'], '.feature'))->toBe(true);       // a feature file
-        expect(str_starts_with($proposal['path'], 'spec/'))->toBe(false);       // not a spec
-        expect($proposal['new'])->toContain('Feature:');                        // valid Gherkin
-        expect($proposal['new'])->toContain('Scenario:');
+        expect($replay->requests)->toBe([]);                                       // deterministic: no model
+        expect($outcome->proposals[0]->path)->toBe('features/user_adds_tasks.feature');
+        expect($outcome->proposals[0]->new)->toContain('Feature:');                 // valid Gherkin
+        expect($outcome->proposals[0]->new)->toContain('Scenario:');
     });
 
 });

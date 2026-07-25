@@ -21,3 +21,22 @@ Feature: Generate code from a natural-language instruction
       """
     When I run phpspec command "generate a Calculator that adds two numbers"
     Then the output should contain "Generating"
+
+  Scenario: generate writes step definitions for the last-touched feature deterministically
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key
+      """
+    And a feature file "features/adding_a_task.feature":
+      """
+      Feature: Adding a task
+        Scenario: Adding a task
+          Given I have a todo list
+          When I add the task "Buy milk"
+          Then I should have 1 task on my list
+      """
+    When I run phpspec command "generate the steps"
+    Then the output should contain "features/steps/adding_a_task.steps.php"
+    And the file "features/steps/adding_a_task.steps.php" should contain "given("

@@ -1,9 +1,13 @@
 <?php
 
+use PhpSpec\Ai\Response;
+use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Generate;
 use PhpSpec\Filesystem;
 use Symfony\Component\Console\Tester\CommandTester;
+
+require_once __DIR__ . '/../../Ai/ReplayProvider.php';
 
 describe(Generate::class, function () {
 
@@ -12,6 +16,8 @@ describe(Generate::class, function () {
         allow($fs->isFile())->toReturn(false);
         allow($fs->isDir())->toReturn(false);
         allow($fs->scandir())->toReturn([]);
+        allow($fs->read())->toReturn('');
+        allow($fs->mkdir())->toReturn(null);
     });
 
     $withAi = function (Filesystem $fs): void {
@@ -37,10 +43,11 @@ describe(Generate::class, function () {
         allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
             $written[$p] = $c;
         });
-        allow($fs->mkdir())->toReturn(null);
 
-        $fn = fn(array $ai, string $context) => json_encode(['path' => 'src/App/Calc.php', 'content' => "<?php\nclass Calc {}"]);
-        $cmd = new Generate(new Configuration('.', $fs), $fs, $fn);
+        $provider = new ReplayProvider([
+            new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'src/App/Calc.php', 'content' => "<?php\nclass Calc {}"])]),
+        ]);
+        $cmd = new Generate(new Configuration('.', $fs), $fs, $provider);
         $tester = new CommandTester($cmd);
 
         $tester->execute(['instruction' => ['a', 'Calc', 'class']], ['interactive' => false]);
@@ -49,18 +56,17 @@ describe(Generate::class, function () {
         expect($out)->toContain('[NEW FILE]');
         expect($out)->toContain('src/App/Calc.php');
         expect($out)->toContain('Created');
-        expect($written)->toHaveLength(1);
-        expect(array_values($written)[0])->toContain('class Calc');
+        expect($written[getcwd() . '/src/App/Calc.php'] ?? '')->toContain('class Calc');
     });
 
     it('reports when nothing could be generated', function (Filesystem $fs) use ($withAi) {
         $withAi($fs);
-        $cmd = new Generate(new Configuration('.', $fs), $fs, fn() => null);
+        $cmd = new Generate(new Configuration('.', $fs), $fs, new ReplayProvider());
         $tester = new CommandTester($cmd);
 
         $tester->execute(['instruction' => ['x']], ['interactive' => false]);
 
-        expect($tester->getDisplay())->toContain('Could not generate');
+        expect($tester->getDisplay())->toContain('did not produce a usable artifact');
     });
 
 });

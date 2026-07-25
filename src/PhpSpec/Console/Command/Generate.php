@@ -14,8 +14,12 @@
 
 namespace PhpSpec\Console\Command;
 
+use PhpSpec\Ai\Agent\Agent;
+use PhpSpec\Ai\Agent\CommandProfile;
+use PhpSpec\Ai\Agent\Proposal;
+use PhpSpec\Ai\Agent\Writer;
+use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Configuration;
-use PhpSpec\Console\Command\Generate\GenerateAgent;
 use PhpSpec\Console\Command\Refactor\Diff;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
@@ -28,29 +32,26 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
  * @internal
- * CLI command that turns a natural-language instruction into one file edit —
- * a spec example or a piece of implementation code — authored by the AI, shown
- * as a diff, and written after a confirmation. Requires an AI provider.
+ * CLI command that turns a natural-language instruction into one artifact
+ * through the agent pipeline: deterministic when the step fully determines it
+ * (an explicit path, a feature skeleton, the steps of a known feature), the AI
+ * otherwise. Every proposal is shown as a diff and written after confirmation.
  */
 final class Generate extends Command
 {
     private Filesystem $filesystem;
 
-    /** @var (callable(array{provider: string, model?: string, api_key: string}, string): (string|null))|null */
-    private $chatFn;
-
     /**
      * @param Configuration $config
      * @param Filesystem|null $filesystem
-     * @param (callable(array{provider: string, model?: string, api_key: string}, string): (string|null))|null $chatFn injectable AI seam for specs
+     * @param ProviderInterface|null $provider injectable AI seam for specs
      */
     public function __construct(
         private readonly Configuration $config,
         ?Filesystem $filesystem = null,
-        ?callable $chatFn = null,
+        private readonly ?ProviderInterface $provider = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
-        $this->chatFn = $chatFn;
         parent::__construct();
     }
 
@@ -58,7 +59,7 @@ final class Generate extends Command
     {
         $this
             ->setName('generate')
-            ->setDescription('Generate a spec example or code from a natural-language instruction (requires AI)')
+            ->setDescription('Generate a feature, steps, spec, or code from a natural-language instruction (requires AI)')
             ->addArgument('instruction', Argument::IS_ARRAY, 'What to build, in plain English');
     }
 
@@ -83,42 +84,46 @@ final class Generate extends Command
         $output->writeln('  <fg=gray>Generating...</>');
         $output->writeln('');
 
-        $agent = new GenerateAgent($this->config, $this->filesystem, $this->chatFn);
-        $proposal = $agent->propose($aiConfig, $instruction);
+        // The profile is shipped package code, so it always loads from the real
+        // filesystem; the project filesystem seam only grounds and writes.
+        $agent = new Agent($this->config, $this->filesystem, $this->provider);
+        $outcome = $agent->do(CommandProfile::load('generate'), $instruction);
 
-        if ($proposal === null) {
-            $output->writeln('  <fg=yellow>Could not generate anything for that instruction. Try rephrasing.</>');
+        if ($outcome->proposals === []) {
+            $reason = $outcome->prose !== '' ? $outcome->prose : 'Could not generate anything for that instruction. Try rephrasing.';
+            $output->writeln("  <fg=yellow>$reason</>");
 
             return 1;
         }
 
-        $this->showDiff($output, $proposal);
+        $writer = new Writer($this->filesystem);
+        foreach ($outcome->proposals as $proposal) {
+            $this->showDiff($output, $proposal);
 
-        if ($input->isInteractive() && !$this->confirm($input, $output)) {
-            $output->writeln('  <fg=gray>Left unchanged.</>');
+            if ($input->isInteractive() && !$this->confirm($input, $output)) {
+                $output->writeln('  <fg=gray>Left unchanged.</>');
 
-            return 0;
+                continue;
+            }
+
+            $writer->apply($proposal);
+            $output->writeln(sprintf('  <fg=green>%s %s</>', $proposal->isNew ? 'Created' : 'Updated', $proposal->path));
         }
-
-        $agent->write($proposal);
-        $output->writeln(sprintf('  <fg=green>%s %s</>', $proposal['isNew'] ? 'Created' : 'Updated', $proposal['path']));
 
         return 0;
     }
 
     /**
-     * Renders the proposed change as a labelled unified diff.
-     *
-     * @param array{path: string, old: string, new: string, isNew: bool} $proposal
+     * Renders a proposed change as a labelled unified diff.
      */
-    private function showDiff(Output $output, array $proposal): void
+    private function showDiff(Output $output, Proposal $proposal): void
     {
-        $label = $proposal['isNew'] ? '[NEW FILE]' : '[MODIFIED]';
-        $output->writeln("  <fg=yellow>$label</> <fg=white>{$proposal['path']}</>");
+        $label = $proposal->isNew ? '[NEW FILE]' : '[MODIFIED]';
+        $output->writeln("  <fg=yellow>$label</> <fg=white>{$proposal->path}</>");
         $output->writeln('');
 
-        $old = $proposal['old'] === '' ? [] : explode("\n", $proposal['old']);
-        $new = explode("\n", $proposal['new']);
+        $old = $proposal->old === '' ? [] : explode("\n", $proposal->old);
+        $new = explode("\n", $proposal->new);
         $output->writeln(Diff::format(Diff::compute($old, $new)));
         $output->writeln('');
     }

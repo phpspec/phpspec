@@ -53,13 +53,31 @@ class StepGenerator
             $this->filesystem->mkdir($stepsDir);
         }
 
-        $content = "<?php\n";
+        $existing = $this->filesystem->exists($stepsFile) ? $this->filesystem->read($stepsFile) : '';
+
+        $this->filesystem->write($stepsFile, $this->skeleton($undefinedSteps, $existing));
+
+        return $stepsFile;
+    }
+
+    /**
+     * Drafts the complete content of a steps file for the given steps without
+     * touching disk: existing content (when any) with a placeholder function
+     * appended for every step whose pattern is not already defined.
+     *
+     * @param array<int, array{keyword: string, text: string}> $steps steps with 'keyword' and 'text' keys
+     * @param string $existing the current steps-file content, empty for a new file
+     * @return string the complete new steps-file content
+     */
+    public function skeleton(array $steps, string $existing = ''): string
+    {
+        $content = $existing === '' ? "<?php\n" : rtrim($existing) . "\n";
 
         // "And"/"But" continue the primary keyword of the step they follow, so
         // an "And" under a When generates when(), under a Then generates then().
         $primary = 'given';
 
-        foreach ($undefinedSteps as $step) {
+        foreach ($steps as $step) {
             $keyword = strtolower($step['keyword']);
             if (in_array($keyword, ['given', 'when', 'then'], true)) {
                 $primary = $keyword;
@@ -67,6 +85,9 @@ class StepGenerator
                 $keyword = $primary;
             }
             $pattern = $this->extractPattern($step['text']);
+            if ($existing !== '' && str_contains($existing, '"' . $pattern . '"')) {
+                continue;
+            }
             $params = $this->extractParams($pattern);
 
             $content .= "\n$keyword(\"$pattern\", function ($params) {\n";
@@ -74,15 +95,27 @@ class StepGenerator
             $content .= "});\n";
         }
 
-        if ($this->filesystem->exists($stepsFile)) {
-            $existing = $this->filesystem->read($stepsFile);
-            // Append new steps before the end
-            $content = rtrim($existing) . "\n" . substr($content, 6); // skip <?php\n
+        return $content;
+    }
+
+    /**
+     * Extracts the Given/When/Then/And/But step lines from a feature's text, in
+     * order, so a steps file can be drafted from the feature alone (no runner).
+     *
+     * @param string $featureText the raw contents of a .feature file
+     * @return array<int, array{keyword: string, text: string}>
+     */
+    public static function parseSteps(string $featureText): array
+    {
+        $steps = [];
+
+        foreach (preg_split('/\R/', $featureText) ?: [] as $line) {
+            if (preg_match('~^\s*(Given|When|Then|And|But)\s+(.+?)\s*$~', $line, $matches) === 1) {
+                $steps[] = ['keyword' => $matches[1], 'text' => $matches[2]];
+            }
         }
 
-        $this->filesystem->write($stepsFile, $content);
-
-        return $stepsFile;
+        return $steps;
     }
 
     /**

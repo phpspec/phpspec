@@ -1,14 +1,17 @@
 <?php
 
+use PhpSpec\Ai\Agent\Agent;
+use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Configuration;
-use PhpSpec\Console\Command\Generate\GenerateAgent;
 use PhpSpec\Filesystem;
 
-// E5 & E6 (evals, adversarial) — when the model returns a spec in phpspec-8
-// ObjectBehavior syntax (a `->shouldReturn()` matcher, or a method called on the
-// subject `$this`), the scaffold must never propose it. One-shot behaviour is to
-// reject (return null) rather than write DSL that would fatal when phpspec loads
-// it; a re-ask loop can retry later.
+require_once __DIR__ . '/../ReplayProvider.php';
+
+// E5 & E6 (evals, adversarial) — when the model proposes a spec in phpspec-8
+// ObjectBehavior syntax (a `->shouldReturn()` matcher, or a method called on
+// the subject `$this`), the scaffold must never propose it. The pipeline
+// rejects the tool call and surfaces the reason as prose instead of writing
+// DSL that would fatal when phpspec loads it.
 describe('E5/E6 generate: reject ObjectBehavior spec syntax', function () {
 
     beforeEach(function (Filesystem $fs) {
@@ -16,16 +19,21 @@ describe('E5/E6 generate: reject ObjectBehavior spec syntax', function () {
         allow($fs->isFile())->toReturn(false);
         allow($fs->isDir())->toReturn(false);
         allow($fs->scandir())->toReturn([]);
+        allow($fs->read())->toReturn('');
+        allow($fs->mkdir())->toReturn(null);
+        allow($fs->write())->toReturn(null);
     });
 
     $reject = function (string $case) {
         return function (Filesystem $fs) use ($case) {
             $rec = json_decode((string) file_get_contents(__DIR__ . '/recordings/' . $case . '.json'), true);
-            $replay = fn(array $ai, string $context): ?string => $rec['response']['text'];
+            $replay = ReplayProvider::fromRecording($rec);
 
-            $agent = new GenerateAgent(new Configuration('.', $fs), $fs, $replay);
+            $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
+            $outcome = $agent->do(CommandProfile::load('generate'), $rec['instruction']);
 
-            expect($agent->propose($rec['aiConfig'], $rec['instruction']))->toBeNull();
+            expect($outcome->proposals)->toBe([]);
+            expect($outcome->prose)->toContain('ObjectBehavior');
         };
     };
 
