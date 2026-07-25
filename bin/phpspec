@@ -24,4 +24,4 @@
 
     (new PhpSpec\Console\Application($version))->run();
 
-})('9.0.0-beta.8');
+})('9.0.0-beta.9');
