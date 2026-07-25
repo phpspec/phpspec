@@ -27,10 +27,12 @@ final readonly class Outcome
      * @param Step|null $step the resolved step, null when nothing determined one
      * @param list<Proposal> $proposals the file changes to confirm and apply
      * @param string $prose text for the human: advice, or the reason nothing was proposed
+     * @param array<string, string> $data a reporting tool's structured payload (e.g. suggest_next)
      */
     public function __construct(
         public ?Step $step,
         public array $proposals = [],
         public string $prose = '',
+        public array $data = [],
     ) {}
 }

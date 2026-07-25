@@ -44,12 +44,13 @@ describe('pair role prompt artifacts', function () {
         expect($text)->toContain('Voice:');
     });
 
-    it('keeps the machine-readable suggestion contract at the tail of the next prompt', function () use ($read) {
+    it('keeps next.txt pure coaching, with no machine-readable contract to leak', function () use ($read) {
+        // The {type,target,reason} contract lives in the suggest_next tool
+        // schema now; prose prompts carry nothing a conversation could leak.
         $text = $read('next.txt');
 
-        expect($text)->toContain('"type"');
-        expect($text)->toContain('"target"');
-        expect($text)->toContain('"reason"');
+        expect($text)->not()->toContain('"type"');
+        expect($text)->not()->toContain('machine-readable');
     });
 
 });

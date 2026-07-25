@@ -70,16 +70,19 @@ final class Agent
     }
 
     /**
-     * Runs one turn of the pipeline for a command and an instruction.
+     * Runs one turn of the pipeline for a command and an instruction. A caller
+     * that already knows part of its world (a suite it just ran, the recency it
+     * scanned) passes a seed grounding; the manifest's remaining sections are
+     * filled in around it.
      */
-    public function do(CommandProfile $profile, string $instruction): Outcome
+    public function do(CommandProfile $profile, string $instruction, ?Grounding $seed = null): Outcome
     {
-        $grounding = $this->ground($profile, $instruction);
+        $grounding = $this->ground($profile, $instruction, $seed);
         $step = Step::resolve($instruction, $grounding);
         $aiConfig = $this->config->getAiConfig();
 
         try {
-            $proposals = $this->registry->deterministic($step, $grounding);
+            $proposals = $this->registry->deterministic($step, $grounding, $profile);
         } catch (RuntimeException $e) {
             $this->recorder->capture($profile->name, $instruction, $step, null, $aiConfig ?? [], null);
 
@@ -135,15 +138,16 @@ final class Agent
             return new Outcome($step, [], $e->getMessage());
         }
 
+        $data = $this->registry->reportFrom($response->toolCalls);
         $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], $response, $proposals);
 
-        if ($profile->answer === 'tool_call' && $proposals === []) {
+        if ($profile->answer === 'tool_call' && $proposals === [] && $data === []) {
             $prose = trim($response->text);
 
             return new Outcome($step, [], $prose !== '' ? $prose : 'The model did not produce a usable artifact. Try rephrasing.');
         }
 
-        return new Outcome($step, $proposals, trim($response->text));
+        return new Outcome($step, $proposals, trim($response->text), $data);
     }
 
     /**
@@ -196,33 +200,35 @@ final class Agent
     }
 
     /**
-     * Builds the grounding sections the command's manifest asks for.
+     * Builds the grounding sections the command's manifest asks for, around
+     * whatever the caller already seeded (a seeded section is never rebuilt).
+     * The suite section has no builder here; it always comes from the seed.
      */
-    private function ground(CommandProfile $profile, string $instruction): Grounding
+    private function ground(CommandProfile $profile, string $instruction, ?Grounding $seed): Grounding
     {
         $cwd = getcwd() ?: '.';
-        $recentFeature = null;
-        $recentSource = null;
-        $tree = '';
-        $namedFiles = [];
+        $recentFeature = $seed?->recentFeature;
+        $recentSource = $seed?->recentSource;
+        $tree = $seed->tree ?? '';
+        $namedFiles = $seed->namedFiles ?? [];
 
-        if (in_array('recency', $profile->grounding, true)) {
+        if (in_array('recency', $profile->grounding, true) && $recentFeature === null && $recentSource === null) {
             $scanner = new RecencyScanner($this->filesystem);
             $recentFeature = $scanner->mostRecentFeature($cwd . '/' . trim($this->config->getFeaturesPath(), './'));
             $recentSource = $scanner->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './'));
         }
 
-        if (in_array('tree', $profile->grounding, true)) {
+        if (in_array('tree', $profile->grounding, true) && $tree === '') {
             $srcPath = ltrim($this->config->getSrcPath(), './');
             $specPath = ltrim($this->config->getSpecPath(), './');
             $tree = trim($this->scanTree($cwd . '/' . $srcPath) . "\n" . $this->scanTree($cwd . '/' . $specPath));
         }
 
-        if (in_array('named_files', $profile->grounding, true)) {
+        if (in_array('named_files', $profile->grounding, true) && $namedFiles === []) {
             $namedFiles = $this->namedFiles($instruction);
         }
 
-        return new Grounding(null, $recentFeature, $recentSource, $tree, $namedFiles);
+        return new Grounding($seed?->suite, $recentFeature, $recentSource, $tree, $namedFiles);
     }
 
     /**

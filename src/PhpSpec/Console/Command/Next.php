@@ -14,16 +14,17 @@
 
 namespace PhpSpec\Console\Command;
 
-use PhpSpec\Ai\Message;
-use PhpSpec\Ai\PromptLibrary;
-use PhpSpec\Ai\ProviderFactory;
+use PhpSpec\Ai\Agent\Agent;
+use PhpSpec\Ai\Agent\CommandProfile;
+use PhpSpec\Ai\Agent\Grounding;
+use PhpSpec\Ai\Agent\Request;
+use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair\SpecRunner;
 use PhpSpec\Console\Command\Pair\SubprocessRunner;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
-use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -42,8 +43,6 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  */
 final class Next extends Command
 {
-    private const CACHE_TTL = 30;
-
     private Filesystem $filesystem;
 
     private readonly SpecRunner $specRunner;
@@ -54,14 +53,16 @@ final class Next extends Command
     /**
      * @param Configuration $config
      * @param Filesystem|null $filesystem
-     * @param (callable(array{provider: string, model?: string, api_key: string}, string): array{type: string, target: string, reason: string})|null $suggestFn injectable suggestion seam; receives the AI config and the built context
+     * @param (callable(array{provider: string, model?: string, api_key: string}, string): array{type: string, target: string, reason: string})|null $suggestFn injectable display seam; receives the AI config and the rendered situation
      * @param SpecRunner|null $specRunner runs the suite for feature grounding; defaults to a subprocess
+     * @param ProviderInterface|null $provider injectable AI seam for the agent pipeline
      */
     public function __construct(
         private readonly Configuration $config,
         ?Filesystem $filesystem = null,
         ?callable $suggestFn = null,
         ?SpecRunner $specRunner = null,
+        private readonly ?ProviderInterface $provider = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->suggestFn = $suggestFn;
@@ -148,118 +149,36 @@ final class Next extends Command
     }
 
     /**
+     * The suggestion for what to build next, through the agent pipeline: the
+     * suite grounding is seeded from a real run, the current TDD step resolves
+     * deterministically, and the model answers with a suggest_next tool call
+     * (never JSON-in-prose to parse).
+     *
      * @param array{provider: string, model?: string, api_key: string} $aiConfig
      * @return array{type: string, target: string, reason: string}
      */
     private function getSuggestion(array $aiConfig): array
     {
         // Feature (story) state grounds the suggestion so `next` can favour
-        // features when they are present; it is empty for a spec-only project.
-        $situation = $this->featureSituation();
+        // features when they are present; it is null for a spec-only project.
+        $grounding = $this->featureGrounding();
 
         if ($this->suggestFn !== null) {
+            $situation = $grounding === null ? '' : Request::suiteText($grounding);
+
             return ($this->suggestFn)($aiConfig, $situation);
         }
 
-        try {
-            $provider = ProviderFactory::create($aiConfig);
-        } catch (RuntimeException $e) {
-            return ['type' => 'info', 'target' => '', 'reason' => $e->getMessage()];
-        }
+        $agent = new Agent($this->config, $this->filesystem, $this->provider);
+        $outcome = $agent->do(CommandProfile::load('next'), '', $grounding);
 
-        $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider']);
+        $reason = (string) ($outcome->data['reason'] ?? '');
 
-        $projectContext = $this->getCachedProjectContext();
-        if ($situation !== '') {
-            $projectContext = $situation . "\n\n" . $projectContext;
-        }
-        $systemPrompt = $this->buildSystemPrompt();
-
-        $messages = [
-            Message::system($systemPrompt),
-            Message::user($projectContext),
+        return [
+            'type' => (string) ($outcome->data['type'] ?? 'info'),
+            'target' => (string) ($outcome->data['target'] ?? ''),
+            'reason' => $reason !== '' ? $reason : $outcome->prose,
         ];
-
-        $response = $provider->chat($messages, [
-            'model' => $model,
-            'maxTokens' => 8192,
-            'temperature' => 0.3,
-        ]);
-
-        return $this->parseResponse($response->text);
-    }
-
-    /**
-     * Returns the project context, using a time-based cache to avoid
-     * rescanning the filesystem on every call.
-     */
-    private function getCachedProjectContext(): string
-    {
-        $cacheFile = getcwd() . '/.phpspec/next-context.cache';
-
-        if (file_exists($cacheFile)) {
-            $contents = file_get_contents($cacheFile);
-            $data = $contents !== false ? json_decode($contents, true) : null;
-            if (is_array($data) && isset($data['time'], $data['context'])) {
-                if (time() - $data['time'] < self::CACHE_TTL) {
-                    return $data['context'];
-                }
-            }
-        }
-
-        $context = $this->buildProjectContext();
-
-        $dir = dirname($cacheFile);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        file_put_contents($cacheFile, json_encode([
-            'time' => time(),
-            'context' => $context,
-        ]));
-
-        return $context;
-    }
-
-    /**
-     * Parses the LLM text response into a structured suggestion.
-     *
-     * @return array{type: string, target: string, reason: string}
-     */
-    private function parseResponse(string $text): array
-    {
-        $json = $text;
-
-        // Strip markdown code fences if present
-        if (preg_match('/```(?:json)?\s*(\{.*?\})\s*```/s', $text, $m)) {
-            $json = $m[1];
-        }
-
-        $data = json_decode($json, true);
-
-        if (is_array($data) && isset($data['type'], $data['target'], $data['reason'])) {
-            return [
-                'type' => $data['type'],
-                'target' => $data['target'],
-                'reason' => $data['reason'],
-            ];
-        }
-
-        // Try to salvage truncated JSON by extracting individual fields
-        $type = $this->extractJsonField($text, 'type') ?? 'info';
-        $target = $this->extractJsonField($text, 'target') ?? '';
-        $reason = $this->extractJsonField($text, 'reason') ?? '';
-
-        return compact('type', 'target', 'reason');
-    }
-
-    private function extractJsonField(string $text, string $field): ?string
-    {
-        if (preg_match('/"' . preg_quote($field, '/') . '"\s*:\s*"((?:[^"\\\\]|\\\\.)*)"/', $text, $m)) {
-            return stripcslashes($m[1]);
-        }
-        return null;
     }
 
     /**
@@ -330,148 +249,29 @@ final class Next extends Command
 
     /**
      * The live feature (story) grounding for the suggestion: a run of the whole
-     * suite (--all) rendered as a compact FEATURES block plus the last-touched
-     * feature and source. Empty for a spec-only project (no `features/` dir, or a
-     * run that executed no feature), so `next` keeps its spec-only behaviour then.
+     * suite (--all) plus the last-touched feature and source. Null for a
+     * spec-only project (no features dir, or a run that executed no feature),
+     * so `next` keeps its spec-only behaviour then.
      */
-    private function featureSituation(): string
+    private function featureGrounding(): ?Grounding
     {
         $featuresDir = getcwd() . '/' . trim($this->config->getFeaturesPath(), './');
         if (!$this->filesystem->exists($featuresDir) || !$this->filesystem->isDir($featuresDir)) {
-            return '';
+            return null;
         }
 
         $summary = $this->specRunner->run('--all', new BufferedOutput())?->summary;
         if ($summary === null || !$summary->hasFeatures()) {
-            return '';
-        }
-
-        $c = $summary->featureCounts();
-        $lines = [sprintf(
-            "# Suite state\nFEATURES: %d features, %d scenarios, %d steps (%d failing, %d undefined). Favour these — the outside drives the inside.",
-            $c['features'],
-            $c['scenarios'],
-            $c['steps'],
-            $c['stepFailures'],
-            $c['undefined'],
-        )];
-
-        foreach ($summary->features() as $feature) {
-            if ($feature['status'] !== 'green') {
-                $lines[] = sprintf('- %s: %s', $feature['status'], $feature['path']);
-            }
+            return null;
         }
 
         $recency = new RecencyScanner($this->filesystem);
-        $recentFeature = $recency->mostRecentFeature($featuresDir);
-        if ($recentFeature !== null) {
-            $lines[] = 'Last-touched feature: ' . $recentFeature;
-        }
 
-        $recentSource = $recency->mostRecentSource(getcwd() . '/' . ltrim($this->config->getSrcPath(), './'));
-        if ($recentSource !== null) {
-            $lines[] = 'Last-touched source: ' . $recentSource;
-        }
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * The outside-in coaching prompt, shared with pair-mode `next` via the
-     * `next.txt` artifact, falling back to an inline prompt if it cannot be read.
-     */
-    private function buildSystemPrompt(): string
-    {
-        $prompt = (new PromptLibrary($this->filesystem))->read('next');
-        if (trim($prompt) !== '') {
-            return $prompt . "\n\nRespond now with ONLY the JSON suggestion described above.";
-        }
-
-        return <<<'PROMPT'
-You are a BDD coach advising what to build next in a PHP project. Study the project structure and suggest ONE concrete next step — a new class, a new feature scenario, or a new example for an existing spec.
-
-Think about what functionality is MISSING. Look at the domain: what logical next class, behaviour, or capability would extend this project? What would a developer naturally build next? Always suggest something specific and actionable.
-
-NEVER say the project is "well-covered" or "looks good". There is always something to build next.
-
-Respond with ONLY this JSON. Keep "reason" to one short sentence:
-
-{"type": "spec", "target": "App\\Calculator", "reason": "No Calculator exists to evaluate parsed expressions."}
-
-type is one of:
-- spec: a new class to create. target = fully qualified class name.
-- feature: a user-facing behaviour. target = short name.
-- example: a new example for an existing spec. target = fully qualified class name.
-PROMPT;
-    }
-
-    private function buildProjectContext(): string
-    {
-        $cwd = getcwd();
-        $sections = [];
-
-        // Scan src/
-        $srcPath = ltrim($this->config->getSrcPath(), './');
-        $srcDir = $cwd . '/' . $srcPath;
-        $srcTree = $this->scanTree($srcDir, 2);
-        if ($srcTree !== '') {
-            $sections[] = "## Source files ($srcPath/)\n$srcTree";
-        }
-
-        // Scan spec/
-        $specPath = ltrim($this->config->getSpecPath(), './');
-        $specDir = $cwd . '/' . $specPath;
-        $specTree = $this->scanTree($specDir, 2);
-        if ($specTree !== '') {
-            $sections[] = "## Spec files ($specPath/)\n$specTree";
-        }
-
-        // Scan the configured features directory
-        $featDir = $cwd . '/' . trim($this->config->getFeaturesPath(), './');
-        if ($this->filesystem->exists($featDir) && $this->filesystem->isDir($featDir)) {
-            $featTree = $this->scanTree($featDir, 2);
-            if ($featTree !== '') {
-                $sections[] = "## Feature files\n$featTree";
-            }
-        }
-
-        if (empty($sections)) {
-            return 'Empty project — no source, spec, or feature files found.';
-        }
-
-        return "# Project structure\n\n" . implode("\n\n", $sections);
-    }
-
-    /**
-     * Recursively scans a directory tree up to a given depth.
-     */
-    private function scanTree(string $absPath, int $maxDepth, int $depth = 0): string
-    {
-        if ($depth >= $maxDepth || !$this->filesystem->exists($absPath) || !$this->filesystem->isDir($absPath)) {
-            return '';
-        }
-
-        $entries = $this->filesystem->scandir($absPath);
-        $entries = array_filter($entries, fn($e) => $e !== '.' && $e !== '..');
-        sort($entries);
-
-        $lines = [];
-        $indent = str_repeat('  ', $depth);
-
-        foreach ($entries as $entry) {
-            $full = $absPath . '/' . $entry;
-            if ($this->filesystem->isDir($full)) {
-                $lines[] = "$indent$entry/";
-                $sub = $this->scanTree($full, $maxDepth, $depth + 1);
-                if ($sub !== '') {
-                    $lines[] = $sub;
-                }
-            } else {
-                $lines[] = "$indent$entry";
-            }
-        }
-
-        return implode("\n", $lines);
+        return new Grounding(
+            $summary,
+            $recency->mostRecentFeature($featuresDir),
+            $recency->mostRecentSource(getcwd() . '/' . ltrim($this->config->getSrcPath(), './')),
+        );
     }
 
     private function loadBootstrap(): bool

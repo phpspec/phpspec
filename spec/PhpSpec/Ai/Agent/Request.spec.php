@@ -6,6 +6,7 @@ use PhpSpec\Ai\Agent\Phase;
 use PhpSpec\Ai\Agent\Request;
 use PhpSpec\Ai\Agent\Step;
 use PhpSpec\Ai\PromptLibrary;
+use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Filesystem;
 
 // The request is composed by CONVENTION, not templates: command body, then the
@@ -66,6 +67,25 @@ describe(Request::class, function () {
         $request = Request::compose($this->profile, null, Grounding::empty(), 'the steps', new PromptLibrary($fs));
 
         expect($request->context)->toBe("# Instruction\nthe steps");
+    });
+
+    it('renders the suite state block ahead of everything when the grounding carries one', function (Filesystem $fs) {
+        $suite = new SuiteSummary(
+            'green',
+            ['examples' => 0, 'passes' => 0, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+            [],
+            [],
+            ['features' => 1, 'scenarios' => 1, 'steps' => 3, 'stepFailures' => 0, 'undefined' => 3],
+            [['path' => 'features/adding.feature', 'status' => 'todo', 'undefined' => 3]],
+        );
+        $grounding = new Grounding(suite: $suite, recentFeature: 'features/adding.feature');
+
+        $request = Request::compose($this->profile, null, $grounding, '', new PromptLibrary($fs));
+
+        expect($request->context)->toMatch('~# Suite state.*# Instruction~s');
+        expect($request->context)->toContain('FEATURES: 1 features, 1 scenarios, 3 steps (0 failing, 3 undefined)');
+        expect($request->context)->toContain('- todo: features/adding.feature');
+        expect($request->context)->toContain('Last-touched feature: features/adding.feature');
     });
 
 });

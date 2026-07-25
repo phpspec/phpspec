@@ -25,6 +25,7 @@ describe(ToolRegistry::class, function () {
 
     let('config', fn(Filesystem $fs) => new Configuration('.', $fs));
     let('registry', fn(Filesystem $fs) => new ToolRegistry($this->config, $fs));
+    let('genProfile', fn() => new CommandProfile(name: 'generate', body: '', tools: ['write_feature', 'write_steps', 'propose_edit']));
 
     context('definitions', function () {
 
@@ -53,7 +54,7 @@ describe(ToolRegistry::class, function () {
         it('resolves a write-feature step to a Gherkin skeleton at the explicit path', function () {
             $step = new Step(Phase::WriteFeature, 'features/user_adds_tasks.feature', null, 'you named it');
 
-            $proposals = $this->registry->deterministic($step, Grounding::empty());
+            $proposals = $this->registry->deterministic($step, Grounding::empty(), $this->genProfile);
 
             expect($proposals[0]->path)->toBe('features/user_adds_tasks.feature');
             expect($proposals[0]->new)->toContain('Feature:');
@@ -64,7 +65,7 @@ describe(ToolRegistry::class, function () {
         it('derives the feature path from the slug under the configured features path', function () {
             $step = new Step(Phase::WriteFeature, null, 'user_adds_tasks', 'feature intent');
 
-            $proposals = $this->registry->deterministic($step, Grounding::empty());
+            $proposals = $this->registry->deterministic($step, Grounding::empty(), $this->genProfile);
 
             expect($proposals[0]->path)->toBe('features/user_adds_tasks.feature');
         });
@@ -74,7 +75,7 @@ describe(ToolRegistry::class, function () {
             allow($fs->read())->toReturn("Feature: Adding\n  Scenario: Adding\n    Given I have a todo list\n    When I add the task \"Buy milk\"\n");
             $step = new Step(Phase::WriteSteps, null, 'features/adding_a_task.feature', 'steps are undefined');
 
-            $proposals = $this->registry->deterministic($step, Grounding::empty());
+            $proposals = $this->registry->deterministic($step, Grounding::empty(), $this->genProfile);
 
             expect($proposals[0]->path)->toBe('features/steps/adding_a_task.steps.php');
             expect($proposals[0]->new)->toContain('given("I have a todo list"');
@@ -89,7 +90,7 @@ describe(ToolRegistry::class, function () {
                 : "<?php\n\ngiven(\"I have a todo list\", function () {\n    pending();\n});\n");
             $step = new Step(Phase::WriteSteps, null, 'features/adding_a_task.feature', 'steps are undefined');
 
-            $proposals = $this->registry->deterministic($step, Grounding::empty());
+            $proposals = $this->registry->deterministic($step, Grounding::empty(), $this->genProfile);
 
             expect($proposals[0]->isNew)->toBe(false);
             expect(substr_count($proposals[0]->new, 'I have a todo list'))->toBe(1);
@@ -99,15 +100,38 @@ describe(ToolRegistry::class, function () {
         it('refuses steps for a feature that does not exist, naming it', function () {
             $step = new Step(Phase::WriteSteps, null, 'features/missing.feature', 'steps asked for');
 
-            expect(fn() => $this->registry->deterministic($step, Grounding::empty()))
+            expect(fn() => $this->registry->deterministic($step, Grounding::empty(), $this->genProfile))
                 ->toThrow(RuntimeException::class, 'Feature file "features/missing.feature" was not found, so there are no steps to write.');
         });
 
         it('leaves write-spec, write-code, and unresolved steps to the model', function () {
-            expect($this->registry->deterministic(new Step(Phase::WriteSpec, null, 'Coupon', 'spec intent'), Grounding::empty()))->toBeNull();
-            expect($this->registry->deterministic(new Step(Phase::WriteCode, null, 'Coupon', 'code intent'), Grounding::empty()))->toBeNull();
-            expect($this->registry->deterministic(new Step(Phase::WriteSteps, null, null, 'no feature found'), Grounding::empty()))->toBeNull();
-            expect($this->registry->deterministic(null, Grounding::empty()))->toBeNull();
+            expect($this->registry->deterministic(new Step(Phase::WriteSpec, null, 'Coupon', 'spec intent'), Grounding::empty(), $this->genProfile))->toBeNull();
+            expect($this->registry->deterministic(new Step(Phase::WriteCode, null, 'Coupon', 'code intent'), Grounding::empty(), $this->genProfile))->toBeNull();
+            expect($this->registry->deterministic(new Step(Phase::WriteSteps, null, null, 'no feature found'), Grounding::empty(), $this->genProfile))->toBeNull();
+            expect($this->registry->deterministic(null, Grounding::empty(), $this->genProfile))->toBeNull();
+        });
+
+        it('never short-circuits a tool the command did not declare', function () {
+            // `next` derives a write-steps step from a todo feature, but it only
+            // advises: with no write_steps in its manifest, nothing is proposed.
+            $next = new CommandProfile(name: 'next', body: '', tools: ['suggest_next']);
+            $step = new Step(Phase::WriteSteps, null, 'features/adding.feature', 'derived from the suite');
+
+            expect($this->registry->deterministic($step, Grounding::empty(), $next))->toBeNull();
+        });
+
+    });
+
+    context('reportFrom', function () {
+
+        it('collects a suggest_next call as the report payload', function () {
+            $calls = [new ToolCall('1', 'suggest_next', ['type' => 'spec', 'target' => 'App\\Coupon', 'reason' => 'Nothing persists coupons yet.'])];
+
+            expect($this->registry->reportFrom($calls))->toBe(['type' => 'spec', 'target' => 'App\\Coupon', 'reason' => 'Nothing persists coupons yet.']);
+        });
+
+        it('reports nothing when no report tool was called', function () {
+            expect($this->registry->reportFrom([new ToolCall('1', 'propose_edit', ['path' => 'x', 'content' => 'y'])]))->toBe([]);
         });
 
     });

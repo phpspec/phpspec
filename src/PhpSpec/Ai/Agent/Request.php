@@ -68,12 +68,17 @@ final readonly class Request
     }
 
     /**
-     * The user message: grounding first (tree, then any named files), the
-     * instruction last so the ask sits closest to the answer.
+     * The user message: grounding first (suite state, tree, then any named
+     * files), the instruction last so the ask sits closest to the answer.
      */
     private static function context(Grounding $grounding, string $instruction): string
     {
         $sections = [];
+
+        $suite = self::suiteText($grounding);
+        if ($suite !== '') {
+            $sections[] = $suite;
+        }
 
         if (trim($grounding->tree) !== '') {
             $sections[] = "# Project files\n" . $grounding->tree;
@@ -86,5 +91,45 @@ final readonly class Request
         $sections[] = "# Instruction\n$instruction";
 
         return implode("\n\n", $sections);
+    }
+
+    /**
+     * The compact feature-state block for a grounding that carries a suite with
+     * features: the counts, every non-green feature, and the last-touched
+     * files. Empty for a spec-only (or unknown) suite, so spec-only projects
+     * keep their leaner context.
+     */
+    public static function suiteText(Grounding $grounding): string
+    {
+        $suite = $grounding->suite;
+        if ($suite === null || !$suite->hasFeatures()) {
+            return '';
+        }
+
+        $counts = $suite->featureCounts();
+        $lines = [sprintf(
+            "# Suite state\nFEATURES: %d features, %d scenarios, %d steps (%d failing, %d undefined). Favour these: the outside drives the inside.",
+            $counts['features'],
+            $counts['scenarios'],
+            $counts['steps'],
+            $counts['stepFailures'],
+            $counts['undefined'],
+        )];
+
+        foreach ($suite->features() as $feature) {
+            if ($feature['status'] !== 'green') {
+                $lines[] = sprintf('- %s: %s', $feature['status'], $feature['path']);
+            }
+        }
+
+        if ($grounding->recentFeature !== null) {
+            $lines[] = 'Last-touched feature: ' . $grounding->recentFeature;
+        }
+
+        if ($grounding->recentSource !== null) {
+            $lines[] = 'Last-touched source: ' . $grounding->recentSource;
+        }
+
+        return implode("\n", $lines);
     }
 }

@@ -48,6 +48,11 @@ final class ToolRegistry
             'path' => ['type' => 'string', 'description' => 'Project-relative path of the file'],
             'content' => ['type' => 'string', 'description' => 'The complete new file content, not a diff'],
         ],
+        'suggest_next' => [
+            'type' => ['type' => 'string', 'enum' => ['spec', 'feature', 'example', 'info'], 'description' => 'What to build next: spec (a class to describe), feature (a user-facing behaviour), example (grow an existing spec), or info'],
+            'target' => ['type' => 'string', 'description' => 'The class name, feature name, or spec the suggestion is about'],
+            'reason' => ['type' => 'string', 'description' => 'One short sentence on why this is the next baby step'],
+        ],
     ];
 
     private readonly PromptLibrary $prompts;
@@ -100,30 +105,51 @@ final class ToolRegistry
     /**
      * The proposals fully determined by the step alone, or null when the model
      * is needed: a feature skeleton at a known path or slug, or the steps file
-     * of a known feature. Throws when the determined action is impossible, so
-     * the user gets the real reason instead of a generic failure.
+     * of a known feature. Only tools the command's manifest declares may
+     * short-circuit (an advising command derives steps too, but never writes).
+     * Throws when the determined action is impossible, so the user gets the
+     * real reason instead of a generic failure.
      *
      * @return list<Proposal>|null
      */
-    public function deterministic(?Step $step, Grounding $grounding): ?array
+    public function deterministic(?Step $step, Grounding $grounding, CommandProfile $profile): ?array
     {
         if ($step === null) {
             return null;
         }
 
-        if ($step->phase === Phase::WriteFeature) {
+        if ($step->phase === Phase::WriteFeature && in_array('write_feature', $profile->tools, true)) {
             $path = $this->featurePath($step);
 
             return $path === null ? null : [$this->featureProposal($path)];
         }
 
-        if ($step->phase === Phase::WriteSteps) {
+        if ($step->phase === Phase::WriteSteps && in_array('write_steps', $profile->tools, true)) {
             $feature = $step->subject ?? self::featureBesideSteps($step->path);
 
             return $feature === null ? null : [$this->stepsProposal($feature)];
         }
 
         return null;
+    }
+
+    /**
+     * The structured report a reporting tool call carries (suggest_next's
+     * {type, target, reason}), or an empty array when none was called. Reports
+     * are terminal answers, not proposals; nothing reaches disk.
+     *
+     * @param ToolCall[] $toolCalls
+     * @return array<string, string>
+     */
+    public function reportFrom(array $toolCalls): array
+    {
+        foreach ($toolCalls as $call) {
+            if ($call->name === 'suggest_next') {
+                return array_map(strval(...), array_filter($call->arguments, is_scalar(...)));
+            }
+        }
+
+        return [];
     }
 
     /**
