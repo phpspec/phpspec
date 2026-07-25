@@ -1,0 +1,11 @@
+{
+  "case": "generate-spec-objectbehavior",
+  "instruction": "a spec for a Calculator that adds numbers",
+  "aiConfig": { "provider": "google", "api_key": "test-key" },
+  "provider": "google",
+  "model": "gemini-2.5-pro",
+  "response": {
+    "text": "{\"path\": \"spec/Calculator.spec.php\", \"content\": \"<?php\\ndescribe('Calc', function () { it('adds', function () { $this->add(2, 3)->shouldReturn(5); }); });\\n\"}",
+    "tool_calls": []
+  }
+}

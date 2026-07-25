@@ -148,7 +148,7 @@ final class AiAssistant
             $this->injectSituation($situation);
             $this->messages[] = Message::user($input);
 
-            $text = $this->runLoop();
+            $text = self::withoutMachineSuggestion($this->runLoop());
 
             if ($text !== '') {
                 $this->output->getOutput()->writeln('');
@@ -160,6 +160,19 @@ final class AiAssistant
         } catch (Throwable $e) {
             $this->output->error("AI error: {$e->getMessage()}");
         }
+    }
+
+    /**
+     * Strips a stray machine-readable {type,target,reason} suggestion block from
+     * conversational output. That JSON is the standalone `next` command's contract
+     * for a script to parse — never something the human should read in pair mode —
+     * so an output rail removes it no matter why the model emitted it.
+     */
+    private static function withoutMachineSuggestion(string $text): string
+    {
+        $stripped = preg_replace('~\{(?=[^{}]*"type")(?=[^{}]*"target")(?=[^{}]*"reason")[^{}]*}~', '', $text);
+
+        return trim((string) $stripped);
     }
 
     /**

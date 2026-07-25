@@ -88,6 +88,39 @@ describe(GenerateAgent::class, function () {
         expect($captured)->toContain('Calc.php');
     });
 
+    it('writes a feature at an explicit path, ignoring a wrong-artifact model reply', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
+        // The model returns a spec (the bug); the .feature target must win.
+        $fn = fn() => json_encode(['path' => 'spec/App/Calculator.spec.php', 'content' => '<?php // spec']);
+        $agent = new GenerateAgent($this->config, $fs, $fn);
+
+        $proposal = $agent->propose($this->aiConfig, 'a simple scenario in features/user_adds_tasks.feature');
+
+        expect($proposal['path'])->toBe('features/user_adds_tasks.feature');
+        expect($proposal['new'])->toContain('Feature:');
+        expect($proposal['new'])->toContain('Scenario:');
+        expect($proposal['new'])->not()->toContain('spec');
+    });
+
+    it('honours an explicit spec path over the path the model chose', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
+        $fn = fn() => json_encode(['path' => 'spec/App/Wrong.spec.php', 'content' => "<?php\n// the content"]);
+        $agent = new GenerateAgent($this->config, $fs, $fn);
+
+        $proposal = $agent->propose($this->aiConfig, 'add an example to spec/App/Calculator.spec.php');
+
+        expect($proposal['path'])->toBe('spec/App/Calculator.spec.php');
+        expect($proposal['new'])->toContain('the content');
+    });
+
+    it('rejects a spec the model wrote in ObjectBehavior syntax rather than proposing it', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
+        $fn = fn() => json_encode(['path' => 'spec/App/Calc.spec.php', 'content' => "<?php\ndescribe('Calc', fn() => \$this->add()->shouldReturn(1));"]);
+        $agent = new GenerateAgent($this->config, $fs, $fn);
+
+        expect($agent->propose($this->aiConfig, 'change the Calc spec'))->toBeNull();
+    });
+
     it('writes the proposal content to the filesystem', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
         $written = [];

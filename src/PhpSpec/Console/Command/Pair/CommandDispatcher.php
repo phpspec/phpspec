@@ -205,7 +205,7 @@ final class CommandDispatcher
 
         $recency = new RecencyScanner($this->filesystem);
         $cwd = getcwd() ?: '.';
-        $recentFeature = $recency->mostRecentFeature($cwd . '/features');
+        $recentFeature = $recency->mostRecentFeature($cwd . '/' . trim($this->config->getFeaturesPath(), './'));
         $recentSource = $recency->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './'));
 
         $next = (new SuiteNarrator())->next($outcome, $this->roleState->current(), $recentFeature, $recentSource);

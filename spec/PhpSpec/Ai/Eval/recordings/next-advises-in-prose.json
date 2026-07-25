@@ -1,0 +1,8 @@
+{
+  "case": "next-advises-in-prose",
+  "instruction": "what should we build next?",
+  "response": {
+    "text": "Features are green. Next baby step: refactor the Calculator we just added, or add a new scenario on the last feature.",
+    "tool_calls": []
+  }
+}

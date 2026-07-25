@@ -16,6 +16,8 @@ namespace PhpSpec\Console\Command\Generate;
 
 use PhpSpec\Ai\Message;
 use PhpSpec\Ai\ProviderFactory;
+use PhpSpec\CodeGeneration\ClassGenerator;
+use PhpSpec\CodeGeneration\FeatureGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
 use RuntimeException;
@@ -32,17 +34,22 @@ final class GenerateAgent
     /** @var (callable(array{provider: string, model?: string, api_key: string}, string): (string|null))|null the raw AI reply for a built context; injectable for specs */
     private $chatFn;
 
+    private readonly FeatureGenerator $featureGenerator;
+
     /**
      * @param Configuration $config the project configuration
      * @param Filesystem $filesystem the filesystem abstraction
      * @param (callable(array{provider: string, model?: string, api_key: string}, string): (string|null))|null $chatFn injectable AI-chat seam for specs
+     * @param FeatureGenerator|null $featureGenerator deterministic Gherkin generator for feature targets
      */
     public function __construct(
         private readonly Configuration $config,
         private readonly Filesystem $filesystem,
         ?callable $chatFn = null,
+        ?FeatureGenerator $featureGenerator = null,
     ) {
         $this->chatFn = $chatFn;
+        $this->featureGenerator = $featureGenerator ?? new FeatureGenerator();
     }
 
     /**
@@ -54,22 +61,112 @@ final class GenerateAgent
      */
     public function propose(array $aiConfig, string $instruction): ?array
     {
+        $target = InstructionTarget::parse($instruction);
+        $targetPath = $target !== null ? $this->resolveTargetPath($target) : null;
+
+        // A .feature target is fully deterministic: the path and a valid Gherkin
+        // skeleton are ours, so a wrong-artifact or phpspec-8 model reply can't
+        // leak through — the model is not consulted for the file's shape.
+        if ($targetPath !== null && $target['type'] === 'feature') {
+            return $this->proposeContent(
+                $targetPath,
+                $this->featureGenerator->skeleton(FeatureGenerator::titleFromPath($targetPath)),
+            );
+        }
+
         $context = $this->buildContext($instruction);
         $reply = $this->chatFn !== null
             ? ($this->chatFn)($aiConfig, $context)
             : $this->chat($aiConfig, $context);
 
         $raw = is_string($reply) ? $this->parse($reply) : null;
-        if ($raw === null || $raw['path'] === '' || $raw['content'] === '') {
+        if ($raw === null || $raw['content'] === '') {
             return null;
         }
 
-        $relPath = ltrim(str_replace('\\', '/', $raw['path']), '/');
+        // Honour the path derived from the instruction over the model's choice.
+        $path = $targetPath ?? $raw['path'];
+        if ($path === '') {
+            return null;
+        }
+
+        // Never propose a spec written in phpspec-8 ObjectBehavior syntax — reject
+        // it rather than write invalid DSL that would fatal when phpspec loads it.
+        if (str_ends_with($path, '.spec.php') && self::looksLikeLegacySpec($raw['content'])) {
+            return null;
+        }
+
+        return $this->proposeContent($path, $raw['content']);
+    }
+
+    /**
+     * Resolves an instruction target to a project-relative path using the project's
+     * configured layout — the src/spec/features directories, the spec suffix, and
+     * the PSR-4 prefix — never hardcoded directories. An explicit path the user
+     * named is used as-is. Specs mirror the full namespace under the spec dir;
+     * source strips the PSR-4 prefix, exactly as phpspec's own generators do.
+     *
+     * @param array{type: 'feature'|'spec'|'code', path?: string, slug?: string, class?: string} $target
+     */
+    private function resolveTargetPath(array $target): string
+    {
+        if (isset($target['path'])) {
+            return $target['path'];
+        }
+
+        if ($target['type'] === 'feature') {
+            return rtrim($this->config->getFeaturesPath(), '/') . '/' . ($target['slug'] ?? '') . '.feature';
+        }
+
+        $class = $target['class'] ?? '';
+
+        if ($target['type'] === 'spec') {
+            $specDir = ltrim(str_replace('\\', '/', $this->config->getSpecPath()), './');
+
+            return $specDir . '/' . str_replace('\\', '/', $class) . $this->config->getSpecSuffix();
+        }
+
+        $srcDir = ltrim(str_replace('\\', '/', $this->config->getSrcPath()), './');
+        $absolute = ClassGenerator::resolveFqcn($class, $srcDir, $this->config->getPsr4Prefix())['filePath'];
+        $cwd = getcwd() . DIRECTORY_SEPARATOR;
+        $relative = str_starts_with($absolute, $cwd) ? substr($absolute, strlen($cwd)) : $absolute;
+
+        return str_replace(DIRECTORY_SEPARATOR, '/', $relative);
+    }
+
+    /**
+     * Whether spec content uses phpspec-8 ObjectBehavior idioms rather than the
+     * phpspec-9 functional DSL: an "ObjectBehavior" class, the old `spec\` file
+     * namespace, `->shouldXxx()` matchers, or a method called directly on `$this`
+     * (the subject) — none of which are valid phpspec-9 (where `$this->x` is only
+     * a `let`-bound value).
+     */
+    private static function looksLikeLegacySpec(string $content): bool
+    {
+        return str_contains($content, 'ObjectBehavior')
+            || str_contains($content, 'namespace spec\\')
+            || preg_match('~->should[A-Z]~', $content) === 1
+            || preg_match('~\$this->\w+\s*\(~', $content) === 1;
+    }
+
+    /**
+     * Builds a proposal for a known project-relative path and content, reading any
+     * existing file so the caller can show a modified-file diff.
+     *
+     * @return array{path: string, old: string, new: string, isNew: bool}
+     */
+    private function proposeContent(string $path, string $content): array
+    {
+        $relPath = ltrim(str_replace('\\', '/', $path), '/');
         $fullPath = $this->fullPath($relPath);
         $exists = $this->filesystem->exists($fullPath);
-        $old = $exists ? $this->filesystem->read($fullPath) : '';
 
-        return ['path' => $relPath, 'old' => $old, 'new' => $raw['content'], 'isNew' => !$exists];
+        return [
+            'path' => $relPath,
+            'old' => $exists ? $this->filesystem->read($fullPath) : '',
+            'new' => $content,
+            'isNew' => !$exists,
+        ];
     }
 
     /**

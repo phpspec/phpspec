@@ -1,0 +1,11 @@
+{
+  "case": "generate-feature-explicit-path",
+  "instruction": "a simple scenario in features/user_adds_tasks.feature",
+  "aiConfig": { "provider": "google", "api_key": "test-key" },
+  "provider": "google",
+  "model": "gemini-2.5-pro",
+  "response": {
+    "text": "{\"path\": \"spec/App/Calculator.spec.php\", \"content\": \"<?php\\ndescribe('Calc', function () { it('adds', fn() => expect(1)->toBe(1)); });\\n\"}",
+    "tool_calls": []
+  }
+}

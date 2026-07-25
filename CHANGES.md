@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [9.0.0-beta.9](https://github.com/phpspec/phpspec/compare/9.0.0-beta.8...9.0.0-beta.9)
+
+### Fixed
+ - `generate` honours a file path named in the instruction and picks the artifact from its extension — a `.feature` request is written as Gherkin, never a spec — and infers a feature, spec, or code target from the wording when no path is given.
+ - `generate` rejects a spec the model wrote in phpspec-8 ObjectBehavior syntax instead of writing invalid DSL.
+ - Pair `/next` no longer leaks the machine-readable `{type, target, reason}` suggestion JSON into its conversational reply.
+
 ## [9.0.0-beta.8](https://github.com/phpspec/phpspec/compare/9.0.0-beta.7...9.0.0-beta.8)
 
 ### Added
