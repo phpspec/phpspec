@@ -1,0 +1,2 @@
+Creates a Gherkin .feature skeleton. phpspec owns the path and the Gherkin shape;
+give it the feature's name (a short slug) or an explicit project-relative path.

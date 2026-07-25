@@ -1,0 +1,2 @@
+Write ONE Gherkin feature file: a Feature line, one Scenario, and Given/When/Then
+steps in the user's domain language. No step definitions yet; the scenario leads.

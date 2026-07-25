@@ -1,0 +1,3 @@
+Describe ONE class with the phpspec 9 functional DSL: describe/context/it/let/expect.
+Never the old ObjectBehavior class syntax. Grow a spec: keep every existing example,
+add or refine only what the instruction asks for.

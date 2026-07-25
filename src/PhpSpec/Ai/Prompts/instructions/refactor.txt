@@ -1,0 +1,3 @@
+The suite is green: improve the design without changing behaviour. Remove duplication,
+clarify names, simplify structure. Or grow the story with the next scenario or feature
+when the current one feels complete.

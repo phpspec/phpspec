@@ -1,0 +1,12 @@
+Follow OUTSIDE-IN, story-first TDD. The outside drives the inside: a feature (story)
+test leads, the unit specs follow.
+
+OUTER CYCLE: write a feature scenario, generate its empty steps, write the steps,
+watch it go red, drop into the INNER CYCLE until the scenario is green, then begin
+the next scenario.
+
+INNER CYCLE: barely-enough design first (tell-don't-ask, respect the Law of Demeter,
+name for the domain). Spec the next method, watch it go red, write the smallest code
+that goes green, refactor on green, and re-run the scenario.
+
+Always the smallest next move: one artifact, then reassess.

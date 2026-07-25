@@ -1,0 +1,3 @@
+Creates the .steps.php step definitions for a feature's undefined steps. phpspec
+parses the feature and owns the path and the step patterns; give it the feature's
+project-relative path.
