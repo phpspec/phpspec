@@ -101,6 +101,33 @@ describe(Agent::class, function () {
         expect($replay->requests[0]['options']['toolChoice'])->toBe(['name' => 'suggest_next']);
     });
 
+    it('lets the user config max_tokens beat the manifest and the default', function (Filesystem $fs) {
+        $yamlPath = './phpspec.yaml';
+        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+        allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: k\n  max_tokens: 9999\n" : '');
+        $profile = new CommandProfile(name: 'generate', body: '', tools: ['propose_edit'], answer: 'tool_call', maxTokens: 4096);
+        $replay = new ReplayProvider([
+            new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),
+        ]);
+        $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
+
+        $agent->do($profile, 'a spec for a Coupon');
+
+        expect($replay->requests[0]['options']['maxTokens'])->toBe(9999);
+    });
+
+    it('falls back from the manifest max_tokens to it before any code default', function (Filesystem $fs) {
+        $profile = new CommandProfile(name: 'generate', body: '', tools: ['propose_edit'], answer: 'tool_call', maxTokens: 4096);
+        $replay = new ReplayProvider([
+            new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),
+        ]);
+        $agent = new Agent($this->config, $fs, $replay);
+
+        $agent->do($profile, 'a spec for a Coupon');
+
+        expect($replay->requests[0]['options']['maxTokens'])->toBe(4096);
+    });
+
     it('sends no toolChoice for a prose command', function (Filesystem $fs) {
         $profile = new CommandProfile(name: 'chat', body: 'TALK', tools: [], answer: 'prose');
         $replay = new ReplayProvider([new Response('some advice')]);

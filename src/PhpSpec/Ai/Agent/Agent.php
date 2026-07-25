@@ -182,8 +182,9 @@ final class Agent
     }
 
     /**
-     * The provider options for a command: the manifest's model params over the
-     * defaults, plus the declared tools.
+     * The provider options for a command, plus the declared tools. Precedence
+     * for model params: the user's phpspec config beats the shipped command
+     * manifest, which beats the code default.
      *
      * @param array{provider?: string, model?: string, maxTokens?: int} $aiConfig
      * @return array<string, mixed>
@@ -191,7 +192,7 @@ final class Agent
     private function options(CommandProfile $profile, array $aiConfig): array
     {
         $options = [
-            'maxTokens' => $profile->maxTokens ?? $aiConfig['maxTokens'] ?? self::DEFAULT_MAX_TOKENS,
+            'maxTokens' => $aiConfig['maxTokens'] ?? $profile->maxTokens ?? self::DEFAULT_MAX_TOKENS,
         ];
 
         $model = $aiConfig['model'] ?? (isset($aiConfig['provider']) ? ProviderFactory::defaultModel($aiConfig['provider']) : null);

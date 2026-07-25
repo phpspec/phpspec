@@ -19,6 +19,7 @@ use PhpSpec\Ai\AiTools;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Contracts\ToolInterface;
 use PhpSpec\Ai\Message;
+use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\SpecRunner;
 use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
@@ -101,7 +102,7 @@ final class RefactorAgent
      */
     private function runLoop(): void
     {
-        $model = $this->model ?? 'gemini-2.5-pro';
+        $model = $this->model ?? ProviderFactory::defaultModel('google');
         $profile = $this->profile();
 
         for ($turn = 0; $turn < self::MAX_TURNS; $turn++) {

@@ -19,6 +19,7 @@ use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Contracts\ToolInterface;
 use PhpSpec\Ai\Message;
 use PhpSpec\Ai\PromptLibrary;
+use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\SymbolInspector;
 use PhpSpec\Ai\Tool;
@@ -224,7 +225,7 @@ final class AiAssistant
      */
     private function runLoop(): string
     {
-        $model = $this->model ?? 'gemini-2.5-pro';
+        $model = $this->model ?? ProviderFactory::defaultModel('google');
         $maxTokens = $this->maxTokens();
 
         for ($turn = 0; $turn < self::MAX_TURNS; $turn++) {
