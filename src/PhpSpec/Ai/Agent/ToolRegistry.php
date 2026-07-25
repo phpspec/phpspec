@@ -20,6 +20,7 @@ use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\FeatureGenerator;
+use PhpSpec\CodeGeneration\LegacySpecDetector;
 use PhpSpec\CodeGeneration\StepGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
@@ -222,7 +223,7 @@ final class ToolRegistry
             return null;
         }
 
-        if (str_ends_with($path, $this->config->getSpecSuffix()) && self::looksLikeLegacySpec($content)) {
+        if (str_ends_with($path, $this->config->getSpecSuffix()) && LegacySpecDetector::looksLegacy($content)) {
             throw new RuntimeException('The proposed spec uses phpspec 8 ObjectBehavior syntax; phpspec 9 specs use the describe/it/expect DSL, so it was rejected.');
         }
 
@@ -338,20 +339,6 @@ final class ToolRegistry
         }
 
         return dirname($stepsPath, 2) . '/' . basename($stepsPath, '.steps.php') . '.feature';
-    }
-
-    /**
-     * Whether spec content uses phpspec-8 ObjectBehavior idioms rather than the
-     * phpspec-9 functional DSL: an "ObjectBehavior" class, the old `spec\` file
-     * namespace, `->shouldXxx()` matchers, or a method called directly on
-     * `$this` (the subject), none of which are valid phpspec 9.
-     */
-    private static function looksLikeLegacySpec(string $content): bool
-    {
-        return str_contains($content, 'ObjectBehavior')
-            || str_contains($content, 'namespace spec\\')
-            || preg_match('~->should[A-Z]~', $content) === 1
-            || preg_match('~\$this->\w+\s*\(~', $content) === 1;
     }
 
     /**

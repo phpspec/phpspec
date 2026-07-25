@@ -23,6 +23,7 @@ use PhpSpec\Ai\Response;
 use PhpSpec\Ai\SymbolInspector;
 use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
+use PhpSpec\CodeGeneration\LegacySpecDetector;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\SuiteSummary;
@@ -604,13 +605,12 @@ final class AiAssistant
 
     /**
      * Whether spec content is written in the legacy phpspec 8 ObjectBehavior
-     * style rather than the phpspec 9 describe()/it()/expect() DSL. The model's
-     * training prior leans hard on ObjectBehavior, so this is enforced, not just
-     * discouraged in the prompt.
+     * style rather than the phpspec 9 describe()/it()/expect() DSL, via the
+     * shared detector so this guard and the agent pipeline's never drift apart.
      */
     private static function isLegacySpec(string $content): bool
     {
-        return str_contains($content, 'ObjectBehavior');
+        return LegacySpecDetector::looksLegacy($content);
     }
 
     /**
