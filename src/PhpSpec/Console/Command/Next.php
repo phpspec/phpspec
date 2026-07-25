@@ -336,7 +336,7 @@ final class Next extends Command
      */
     private function featureSituation(): string
     {
-        $featuresDir = getcwd() . '/features';
+        $featuresDir = getcwd() . '/' . trim($this->config->getFeaturesPath(), './');
         if (!$this->filesystem->exists($featuresDir) || !$this->filesystem->isDir($featuresDir)) {
             return '';
         }
@@ -426,8 +426,8 @@ PROMPT;
             $sections[] = "## Spec files ($specPath/)\n$specTree";
         }
 
-        // Scan features/
-        $featDir = $cwd . '/features';
+        // Scan the configured features directory
+        $featDir = $cwd . '/' . trim($this->config->getFeaturesPath(), './');
         if ($this->filesystem->exists($featDir) && $this->filesystem->isDir($featDir)) {
             $featTree = $this->scanTree($featDir, 2);
             if ($featTree !== '') {
