@@ -214,8 +214,8 @@ final class Agent
 
         if (in_array('recency', $profile->grounding, true) && $recentFeature === null && $recentSource === null) {
             $scanner = new RecencyScanner($this->filesystem);
-            $recentFeature = $scanner->mostRecentFeature($cwd . '/' . trim($this->config->getFeaturesPath(), './'));
-            $recentSource = $scanner->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './'));
+            $recentFeature = self::relativeOrNull($scanner->mostRecentFeature($cwd . '/' . trim($this->config->getFeaturesPath(), './')));
+            $recentSource = self::relativeOrNull($scanner->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './')));
         }
 
         if (in_array('tree', $profile->grounding, true) && $tree === '') {
@@ -229,6 +229,23 @@ final class Agent
         }
 
         return new Grounding($seed?->suite, $recentFeature, $recentSource, $tree, $namedFiles);
+    }
+
+    /**
+     * A scanned path made project-relative (separator-normalised on both sides,
+     * so a Windows cwd still strips cleanly), keeping steps, prompts, and the
+     * capture log readable.
+     */
+    private static function relativeOrNull(?string $path): ?string
+    {
+        if ($path === null) {
+            return null;
+        }
+
+        $path = str_replace('\\', '/', $path);
+        $cwd = str_replace('\\', '/', getcwd() ?: '.') . '/';
+
+        return str_starts_with($path, $cwd) ? substr($path, strlen($cwd)) : $path;
     }
 
     /**
