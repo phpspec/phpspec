@@ -44,6 +44,16 @@ describe('pair role prompt artifacts', function () {
         expect($text)->toContain('Voice:');
     });
 
+    it('ships the pair base guidance as an editable file with layout placeholders', function () use ($read) {
+        $text = $read('instructions/pair-guidance.txt');
+
+        expect($text)->toContain('%spec_path%');
+        expect($text)->toContain('%features_path%');
+        expect($text)->toContain('ObjectBehavior');           // the DSL guard rides along
+        expect($text)->toContain('describe(');                 // the positive exemplar too
+        expect($text)->toContain('given(), when(), then() are GLOBAL functions');
+    });
+
     it('keeps next.txt pure coaching, with no machine-readable contract to leak', function () use ($read) {
         // The {type,target,reason} contract lives in the suggest_next tool
         // schema now; prose prompts carry nothing a conversation could leak.
