@@ -59,19 +59,29 @@ See [Pair Programming & AI](pair.md#the-refactor-command) for full documentation
 
 ### `generate`
 
-Turns a natural-language instruction into a single file edit — a spec example or a
-piece of implementation code — authored by the AI, shown as a diff, and written after a
-`[Y/n]` confirmation. Requires an AI provider (see [Configuration](configuration.md#ai)).
+Turns a natural-language instruction into ONE artifact: a Gherkin feature, step
+definitions, a spec, or implementation code. The current TDD step is resolved
+deterministically from your words (an explicit path, or feature/steps/spec/code
+wording), and fully determined artifacts are generated without any model call: a
+feature request becomes a Gherkin skeleton, and `generate the steps` writes the
+step definitions for the last-touched feature by parsing it. Everything else is
+authored by the AI. Each proposal is shown as a diff and written after a `[Y/n]`
+confirmation. Requires an AI provider (see [Configuration](configuration.md#ai)).
 
 ```bash
-bin/phpspec generate an example for App/Calculator add where it sums two numbers
+bin/phpspec generate a feature for adding a task    # Gherkin under features/, no model call
+bin/phpspec generate the steps                      # steps for the last-touched feature, no model call
+bin/phpspec generate a spec for a Coupon that reduces a total
 bin/phpspec generate implement Calculator::add to return the sum of its arguments
 ```
 
-The instruction is free-form text after `generate`. Use it when a spec is red for a
-*missing implementation* (not a missing class or method — those are offered automatically
-on `run`). Also available in pair mode as `/generate <instruction>`.
+An explicit path in the instruction (`... in features/adding.feature`) always wins,
+and the artifact type follows its extension. Every exchange is captured to
+`.phpspec/ai/last-request.json`: the resolved step and its reason, the composed
+prompt files, and the model's reply, so a surprising result is debuggable at a
+glance. Also available in pair mode as `/generate <instruction>`.
 
+### `describe`
 
 Generates a spec file for a class.
 

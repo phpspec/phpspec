@@ -195,9 +195,16 @@ It requires an AI provider. A spec edit is checked so it never drops an existing
 (specs are grown, not shrunk). When your instruction **names a file path**, that path is
 honoured over anything the model picks, and its extension decides the artifact: a
 `.feature` path is written as a Gherkin scenario by a deterministic generator (never as a
-spec), a `.spec.php` path stays a spec, and a `src/…php` path stays implementation code. In
-pair mode the same thing is `/generate <instruction>`, with the diff confirmed through the
-numbered chooser. See [Pair Programming & AI](pair.md) and the [CLI Reference](cli.md#generate).
+spec), a `.spec.php` path stays a spec, and a `src/…php` path stays implementation code.
+
+With no path, the **wording routes the request**: feature/scenario/story wording becomes a
+Gherkin skeleton under your configured `features_path` (no model call), `the steps` writes
+step definitions for the last-touched feature by parsing it (no model call), spec wording
+derives the spec path from the class you named, and implement/method wording derives the
+source path through your configured layout (PSR-4 prefix included). Every exchange is
+captured to `.phpspec/ai/last-request.json` for debugging. In pair mode the same thing is
+`/generate <instruction>`, with the diff confirmed through the numbered chooser. See
+[Pair Programming & AI](pair.md) and the [CLI Reference](cli.md#generate).
 
 ## Step Definition Generation
 
