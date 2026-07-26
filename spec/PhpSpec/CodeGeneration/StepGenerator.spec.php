@@ -53,4 +53,46 @@ describe(StepGenerator::class, function () {
 
         expect($this->written['content'])->toContain('given("a stray step"');
     });
+
+    it('parses the Given/When/Then lines out of a feature text', function () {
+        $steps = StepGenerator::parseSteps(<<<'GHERKIN'
+        Feature: Adding a task
+          Scenario: Adding a task
+            Given I have a todo list
+            When I add the task "Buy milk"
+            Then I should have 1 task on my list
+            And the task "Buy milk" should be on my list
+        GHERKIN);
+
+        expect($steps)->toBe([
+            ['keyword' => 'Given', 'text' => 'I have a todo list'],
+            ['keyword' => 'When', 'text' => 'I add the task "Buy milk"'],
+            ['keyword' => 'Then', 'text' => 'I should have 1 task on my list'],
+            ['keyword' => 'And', 'text' => 'the task "Buy milk" should be on my list'],
+        ]);
+    });
+
+    it('drafts a complete steps file from parsed steps without touching disk', function () {
+        $content = (new StepGenerator($this->filesystem))->skeleton([
+            ['keyword' => 'Given', 'text' => 'I have a todo list'],
+            ['keyword' => 'When', 'text' => 'I add the task "Buy milk"'],
+        ]);
+
+        expect($content)->toContain('<?php');
+        expect($content)->toContain('given("I have a todo list"');
+        expect($content)->toContain('when("I add the task {string}", function (string $arg1)');
+        expect($content)->toContain('pending();');
+    });
+
+    it('appends only the missing steps to an existing steps file', function () {
+        $existing = "<?php\n\ngiven(\"I have a todo list\", function () {\n    pending();\n});\n";
+
+        $content = (new StepGenerator($this->filesystem))->skeleton([
+            ['keyword' => 'Given', 'text' => 'I have a todo list'],
+            ['keyword' => 'Then', 'text' => 'I should have 1 task on my list'],
+        ], $existing);
+
+        expect(substr_count($content, 'I have a todo list'))->toBe(1); // kept, not duplicated
+        expect($content)->toContain('then("I should have {int} task on my list"');
+    });
 });

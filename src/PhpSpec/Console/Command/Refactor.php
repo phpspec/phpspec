@@ -15,7 +15,7 @@
 namespace PhpSpec\Console\Command;
 
 use PhpSpec\Ai\ProviderFactory;
-use PhpSpec\Ai\SpecRunner;
+use PhpSpec\Ai\SpecSubprocess;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\RefactorAgent;
 use PhpSpec\Console\Command\Refactor\RefactorResult;
@@ -208,7 +208,7 @@ final class Refactor extends Command
     /**
      * Performs the refactoring via injected callable or RefactorAgent.
      *
-     * @param array{provider: string, model?: string, api_key: string} $aiConfig
+     * @param array{provider: string, model?: string, api_key: string, effort?: string} $aiConfig
      */
     private function performRefactoring(array $aiConfig, string $srcPath, string $specPath, ?string $method): RefactorResult
     {
@@ -230,7 +230,7 @@ final class Refactor extends Command
 
         $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider']);
 
-        return (new RefactorAgent($provider, $model, $this->filesystem))->refactor($srcPath, $specPath, $method);
+        return (new RefactorAgent($provider, $model, $this->filesystem, $aiConfig['effort'] ?? null))->refactor($srcPath, $specPath, $method);
     }
 
     /**
@@ -244,7 +244,7 @@ final class Refactor extends Command
             return ($this->specRunner)($specPath);
         }
 
-        return SpecRunner::run($specPath);
+        return SpecSubprocess::run($specPath);
     }
 
     private function loadBootstrap(): bool

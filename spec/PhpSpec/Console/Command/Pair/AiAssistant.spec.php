@@ -64,6 +64,24 @@ describe(AiAssistant::class, function () {
         };
     });
 
+    it('passes the configured reasoning effort through to the provider', function (Filesystem $fs) {
+        $yamlPath = './phpspec.yaml';
+        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+        allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: k\n  effort: high\n" : '');
+
+        $options = null;
+        $this->provider->responder = function (array $messages, array $chatOptions) use (&$options) {
+            $options = $chatOptions;
+
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, new Configuration('.', $fs), $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant->handle('hello');
+
+        expect($options['effort'])->toBe('high');
+    });
+
     it('routes ask_user tool calls from the model through the chooser', function (Filesystem $fs) {
         $captured = null;
         $turn = 0;
@@ -209,6 +227,36 @@ describe(AiAssistant::class, function () {
 
         expect($fs->write())->not()->toHaveBeenCalled();
         expect((string) json_encode($captured))->toContain('describe(');
+    });
+
+    it('rejects shouldXxx spec content even without the ObjectBehavior literal', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\ndescribe(Basket::class, function () {});\n");
+
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            if (++$turn === 1) {
+                // The E5-shaped reply: modern-looking describe() wrapping the old
+                // matcher DSL. The shared detector catches it, not just the literal.
+                return new Response('', [new ToolCall('t1', 'update_file', [
+                    'path' => 'spec/App/Basket.spec.php',
+                    'content' => "<?php\ndescribe('Basket', function () { it('adds', function () { \$this->add(2, 3)->shouldReturn(5); }); });\n",
+                ])]);
+            }
+            $captured = $messages;
+
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('bring it back to green');
+
+        expect($fs->write())->not()->toHaveBeenCalled();
+        // The rejection reached the model as a tool error (not a swallowed crash),
+        // steering it back to the phpspec 9 DSL.
+        expect((string) json_encode($captured))->toContain('phpspec 9');
     });
 
     it('writes only one artifact per turn while driving, rejecting the rest', function (Filesystem $fs) {

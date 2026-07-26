@@ -1,11 +1,12 @@
 <?php
 
+use PhpSpec\Ai\Agent\Agent;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Response;
+use PhpSpec\Ai\ToolCall;
 use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
-use PhpSpec\Console\Command\Generate\GenerateAgent;
 use PhpSpec\Console\Command\Pair\AiAssistant;
 use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\CommandDispatcher;
@@ -18,6 +19,8 @@ use PhpSpec\Filesystem;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
+
+require_once __DIR__ . '/../../../Ai/ReplayProvider.php';
 
 // A fake SpecRunner so the REPL can be tested without spawning a real run
 // subprocess; it records the arguments it was asked to run.
@@ -458,7 +461,9 @@ describe(CommandDispatcher::class, function () {
             });
 
             $config = new Configuration('.', $fs);
-            $agent = new GenerateAgent($config, $fs, fn() => json_encode(['path' => 'src/App/Calc.php', 'content' => "<?php\nclass Calc {}"]));
+            $replay = new ReplayProvider([
+                new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'src/App/Calc.php', 'content' => "<?php\nclass Calc {}"])]),
+            ]);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
                 new ClassGenerator('src', $fs),
@@ -466,15 +471,14 @@ describe(CommandDispatcher::class, function () {
                 $this->pairOutput,
                 false,
                 $fs,
-                generateAgent: $agent,
+                agent: new Agent($config, $fs, $replay),
             );
 
             $dispatcher->dispatch('/generate a Calc class');
 
             $out = $this->buffer->fetch();
             expect($out)->toContain('[NEW FILE]');
-            expect($written)->toHaveLength(1);
-            expect(array_values($written)[0])->toContain('class Calc');
+            expect($written[getcwd() . '/src/App/Calc.php'] ?? '')->toContain('class Calc');
         });
     });
 

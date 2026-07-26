@@ -1,0 +1,4 @@
+Proposes the complete new content of ONE file at a project-relative path. Use it for
+spec and source edits the other tools do not cover. content is the WHOLE file after
+the change, not a diff. Specs must use the phpspec 9 functional DSL; a spec written
+in ObjectBehavior syntax is rejected.

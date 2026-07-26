@@ -15,13 +15,15 @@
 namespace PhpSpec\Console\Command\Pair;
 
 use Exception;
+use PhpSpec\Ai\Agent\Agent;
+use PhpSpec\Ai\Agent\CommandProfile;
+use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\ClassLocation;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
-use PhpSpec\Console\Command\Generate\GenerateAgent;
 use PhpSpec\Console\Command\Pair;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\GenerationCandidates;
@@ -50,7 +52,7 @@ final class CommandDispatcher
     private readonly Chooser $chooser;
     private readonly SpecRunner $specRunner;
     private readonly RoleState $roleState;
-    private readonly GenerateAgent $generateAgent;
+    private readonly Agent $agent;
     private ?AiAssistant $ai = null;
 
     /**
@@ -97,7 +99,7 @@ final class CommandDispatcher
         ?Chooser $chooser = null,
         ?SpecRunner $specRunner = null,
         ?RoleState $roleState = null,
-        ?GenerateAgent $generateAgent = null,
+        ?Agent $agent = null,
         ?AiAssistant $ai = null,
     ) {
         $this->parser = new InputParser();
@@ -105,7 +107,7 @@ final class CommandDispatcher
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
         $this->specRunner = $specRunner ?? new SubprocessRunner();
         $this->roleState = $roleState ?? new RoleState();
-        $this->generateAgent = $generateAgent ?? new GenerateAgent($this->config, $this->filesystem);
+        $this->agent = $agent ?? new Agent($this->config, $this->filesystem);
         $this->registerAutoloader();
 
         if ($ai !== null) {
@@ -559,22 +561,26 @@ final class CommandDispatcher
             return self::CONTINUE;
         }
 
-        $proposal = $this->generateAgent->propose($aiConfig, $instruction);
-        if ($proposal === null) {
-            $this->output->error('Could not generate anything for that instruction. Try rephrasing.');
+        // The profile is shipped package code, loaded from the real filesystem.
+        $outcome = $this->agent->do(CommandProfile::load('generate'), $instruction);
+        if ($outcome->proposals === []) {
+            $this->output->error($outcome->prose !== '' ? $outcome->prose : 'Could not generate anything for that instruction. Try rephrasing.');
 
             return self::CONTINUE;
         }
 
-        if ($proposal['isNew']) {
-            $this->output->fileDisplay($proposal['path'], $proposal['new'], true);
-        } else {
-            $this->output->fileDiff($proposal['path'], $proposal['old'], $proposal['new']);
-        }
+        $writer = new Writer($this->filesystem);
+        foreach ($outcome->proposals as $proposal) {
+            if ($proposal->isNew) {
+                $this->output->fileDisplay($proposal->path, $proposal->new, true);
+            } else {
+                $this->output->fileDiff($proposal->path, $proposal->old, $proposal->new);
+            }
 
-        if ($this->chooser->choose('Apply this change?', 'generate', 'apply generated changes')) {
-            $this->generateAgent->write($proposal);
-            $this->output->success(($proposal['isNew'] ? 'Created ' : 'Updated ') . $proposal['path']);
+            if ($this->chooser->choose('Apply this change?', 'generate', 'apply generated changes')) {
+                $writer->apply($proposal);
+                $this->output->success(($proposal->isNew ? 'Created ' : 'Updated ') . $proposal->path);
+            }
         }
 
         return self::CONTINUE;

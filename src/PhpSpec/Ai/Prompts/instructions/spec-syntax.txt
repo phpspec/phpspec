@@ -1,0 +1,58 @@
+## PhpSpec DSL
+Spec files use a Jasmine/RSpec-style syntax:
+
+```php
+<?php
+
+use App\Basket;
+
+describe(Basket::class, function () {
+    let('basket', fn() => new Basket());
+
+    it('starts empty', function () {
+        expect($this->basket->total())->toBe(0);
+    });
+
+    it('adds an item to the total', function () {
+        expect($this->basket->add(5)->total())->toBe(5);
+    });
+
+    context('with several items', function () {
+        it('sums them', function () {
+            expect($this->basket->add(2)->add(3)->total())->toBe(5);
+        });
+    });
+});
+```
+
+IMPORTANT: describe(), it(), let(), context(), expect() are GLOBAL functions.
+Do NOT add "use function" imports for them in spec files. Only `use` the class under test.
+
+NEVER write phpspec 8 ObjectBehavior specs: they are rejected. There are no spec
+classes: no `namespace spec\...`, no `class FooSpec extends ObjectBehavior`, no
+`function it_is_initializable()`, no `->shouldHaveType()` / `->shouldReturn()`.
+Use only the describe()/it()/expect() DSL shown above. Never reuse the example's
+class or names: derive them from the instruction and the project.
+
+### Available Matchers
+toBe, toBeLike, toHaveCount, toBeAnInstanceOf, toBeTrue, toBeFalse, toBeNull,
+toBeEmpty, toContain, toMatch, toBeGreaterThan, toBeLessThan, toHaveKey,
+toStartWith, toEndWith, toHaveProperty, toBeCallable, toBeOfType, toThrow
+
+### Negation
+`expect($x)->not()->toBe($y)`
+
+### Mocks
+Type-hinted parameters in it() closures are auto-mocked:
+```php
+it('uses a collaborator', function (Logger $logger) {
+    allow($logger->log())->toReturn(true);
+    // ... use $logger
+    expect($logger->log())->toBeCalled();
+});
+```
+
+### Pending/Focused/Skipped
+- `xit()`, `xdescribe()`, `xcontext()`: pending (skipped)
+- `fit()`, `fdescribe()`, `fcontext()`: focused (only these run)
+- `pending()` / `skip()`: skip from inside an example

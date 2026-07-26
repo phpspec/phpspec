@@ -1,0 +1,3 @@
+Create a new file with the given content. Use this for source and other files
+not covered by describe/generate_feature/generate_steps. Specs are written with
+describe/add_example, not here.

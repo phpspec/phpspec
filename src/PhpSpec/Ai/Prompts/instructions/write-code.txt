@@ -1,0 +1,2 @@
+Write the smallest implementation that satisfies the failing example or step: plain
+PHP under the source dir. No speculative code; only what the red demands.

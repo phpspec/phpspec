@@ -14,15 +14,18 @@
 
 namespace PhpSpec\Console\Command\Refactor;
 
+use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Ai\AiTools;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Contracts\ToolInterface;
 use PhpSpec\Ai\Message;
-use PhpSpec\Ai\SpecRunner;
+use PhpSpec\Ai\ProviderFactory;
+use PhpSpec\Ai\SpecSubprocess;
 use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -52,11 +55,13 @@ final class RefactorAgent
      * @param ProviderInterface $provider the AI provider for LLM interactions
      * @param string|null $model the LLM model identifier, or null for the default
      * @param Filesystem|null $filesystem filesystem abstraction for testability
+     * @param string|null $effort the configured reasoning effort, passed through to the provider
      */
     public function __construct(
         private readonly ProviderInterface $provider,
         private readonly ?string $model = null,
         ?Filesystem $filesystem = null,
+        private readonly ?string $effort = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
     }
@@ -99,13 +104,18 @@ final class RefactorAgent
      */
     private function runLoop(): void
     {
-        $model = $this->model ?? 'gemini-2.5-pro';
+        $profile = $this->profile();
+        $options = [
+            'model' => $this->model ?? ProviderFactory::defaultModel('google'),
+            'maxTokens' => $profile->maxTokens ?? 8192,
+            'temperature' => $profile->temperature ?? 0.3,
+        ];
+        if ($this->effort !== null) {
+            $options['effort'] = $this->effort;
+        }
 
         for ($turn = 0; $turn < self::MAX_TURNS; $turn++) {
-            $response = $this->provider->chat($this->messages, [
-                'model' => $model,
-                'maxTokens' => 8192,
-                'temperature' => 0.3,
+            $response = $this->provider->chat($this->messages, $options + [
                 'tools' => array_map(
                     fn(ToolInterface $tool) => [
                         'name' => $tool->getName(),
@@ -246,47 +256,35 @@ final class RefactorAgent
      */
     private static function runSpecs(string $specPath): array
     {
-        return SpecRunner::run($specPath);
+        return SpecSubprocess::run($specPath);
     }
 
+    /**
+     * The refactor prompt comes from the command's manifest file
+     * (`Ai/Prompts/commands/refactor.txt`), so tuning the refactoring rules is
+     * a text edit; a short inline contract covers odd packaging.
+     */
     private function buildSystemPrompt(): string
     {
-        return <<<'PROMPT'
-        You are a PHP refactoring assistant for PhpSpec. Your job is to perform safe,
-        behaviour-preserving refactorings on PHP classes.
+        $body = $this->profile()->body ?? '';
+        if (trim($body) !== '') {
+            return $body;
+        }
 
-        ## Rules
+        return 'You are a PHP refactoring assistant for PhpSpec. Propose exactly ONE behaviour-preserving, named refactoring and apply it with the apply_refactoring tool; specs must pass before and after.';
+    }
 
-        1. Propose exactly ONE baby-step refactoring per request.
-        2. The refactoring must be a named technique, such as:
-           - Extract Method
-           - Inline Variable
-           - Rename Variable/Method
-           - Extract Class
-           - Replace Conditional with Polymorphism
-           - Introduce Parameter Object
-           - Move Method
-           - Replace Magic Number with Constant
-           - Simplify Conditional
-           - Remove Dead Code
-        3. The refactoring MUST NOT change the class's external behaviour.
-           Specs must pass before and after.
-        4. Read the source and spec files first to understand the code.
-        5. Use `apply_refactoring` to apply your change. It will automatically:
-           - Run the specs
-           - Revert if specs fail
-        6. If a method focus is given, only refactor that method and its immediate helpers.
-        7. Provide the complete file content in `apply_refactoring` — not a partial diff.
-        8. Choose the most impactful single refactoring that improves code quality.
-        9. If the code is already clean and no meaningful refactoring is possible,
-           say so and do not call `apply_refactoring`.
-
-        ## Process
-
-        1. Read the source file and spec file (already provided in the user message).
-        2. Identify the best single refactoring opportunity.
-        3. Call `apply_refactoring` with the new content, technique name, and description.
-        4. If it fails, explain why and optionally try a different approach.
-        PROMPT;
+    /**
+     * The refactor command's manifest, or null when its prompt file cannot be
+     * loaded (prompts are shipped package code, so they load from the real
+     * filesystem).
+     */
+    private function profile(): ?CommandProfile
+    {
+        try {
+            return CommandProfile::load('refactor');
+        } catch (RuntimeException) {
+            return null;
+        }
     }
 }

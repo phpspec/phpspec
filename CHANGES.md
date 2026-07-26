@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [9.0.0-beta.10](https://github.com/phpspec/phpspec/compare/9.0.0-beta.9...9.0.0-beta.10)
+
+### Added
+ - One agent pipeline behind every AI command: the current TDD step is resolved deterministically from the instruction and the suite state, fully determined artifacts are generated without a model call (`generate the steps` writes the step definitions for the last-touched feature, offline), and every exchange is captured to `.phpspec/ai/last-request.json` for debugging.
+ - Prompts are editable files: command manifests (`commands/*.txt` with the tools, answer channel, and model params in YAML frontmatter), per-step instructions, shared syntax primers composed with a one-line `@include` directive, and every pair write-tool description.
+ - `ai.effort` passes a reasoning effort through to the provider; `ai.model` and `ai.max_tokens` always beat the shipped defaults.
+ - The pair status bar shows the resolved model next to the provider.
+ - The tool answer channel is enforced at the provider (`toolChoice`, papi-core/google 0.13); a single corrective re-ask remains as the fallback.
+
+### Changed
+ - `next` answers with a `suggest_next` tool call instead of JSON parsed out of prose, and suggests the determined step directly (no model call) when the suite state determines it: undefined steps, a failing example, or a pending gap.
+ - Every AI write, pair mode included, is a proposal applied through one write gate after confirmation, and all spec-content guards share one ObjectBehavior detector.
+ - Default models refreshed per provider: `gemini-3-pro-preview`, `claude-sonnet-5`, `gpt-5.1`, `grok-4`.
+
+### Fixed
+ - A live provider failure (a bad key, an HTTP error) surfaces as a message instead of crashing `generate` and `next`.
+ - Pair mode's project context honours a configured `features_path`.
+
 ## [9.0.0-beta.9](https://github.com/phpspec/phpspec/compare/9.0.0-beta.8...9.0.0-beta.9)
 
 ### Fixed

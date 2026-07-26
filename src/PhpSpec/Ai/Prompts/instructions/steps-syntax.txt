@@ -1,0 +1,30 @@
+## Step Definitions
+Step files define handlers for Gherkin steps.
+IMPORTANT: given(), when(), then() are GLOBAL functions auto-loaded by PhpSpec.
+Do NOT add "use function" imports for them: they are NOT namespaced.
+The only <?php tag at the top is required, but NO use/import statements for step functions.
+
+```php
+<?php
+
+given('I have a basket', function () {
+    $this->basket = new App\Basket();
+});
+
+when('I add {int} and {int}', function (int $a, int $b) {
+    $this->total = $this->basket->add($a)->add($b)->total();
+});
+
+then('the total should be {int}', function (int $expected) {
+    expect($this->total)->toBe($expected);
+});
+```
+
+Placeholders: `{string}`, `{int}`, `{float}` are auto-captured.
+
+NEVER include any of these in step files:
+- `use function PhpSpec\StoryBDD\given;`
+- `use function PhpSpec\StoryBDD\when;`
+- `use function PhpSpec\StoryBDD\then;`
+- `use PhpSpec\StoryBDD\...;`
+These will cause fatal errors. The functions are globally available.

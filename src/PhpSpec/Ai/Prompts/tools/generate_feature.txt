@@ -1,0 +1,2 @@
+Write a Gherkin .feature file. Provide complete feature content with Feature:,
+Scenario:, and Given/When/Then steps composed from the existing step patterns.

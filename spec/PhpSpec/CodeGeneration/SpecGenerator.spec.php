@@ -154,4 +154,29 @@ describe(SpecGenerator::class, function () {
         expect($fs->write($expectedPath, ''))->not()->toBeCalled();
     });
 
+    it('drafts a spec skeleton without touching disk', function () {
+        $content = $this->generator->skeleton('App/Basket');
+
+        expect($content)->toContain('use App\\Basket;');
+        expect($content)->toContain('describe(Basket::class');
+        expect($content)->toContain('let("basket"');
+        expect($content)->toContain('it("instantiates"');
+    });
+
+    it('drafts an added example into given content without touching disk', function () {
+        $content = $this->generator->skeleton('App/Basket');
+
+        $grown = $this->generator->withExample($content, 'App/Basket', 'total');
+
+        expect($grown)->toContain('it("should total"');
+        expect($grown)->toContain('$this->basket->total()');
+    });
+
+    it('drafts nothing when the method is already exemplified', function () {
+        $content = $this->generator->skeleton('App/Basket');
+        $grown = $this->generator->withExample($content, 'App/Basket', 'total');
+
+        expect($this->generator->withExample((string) $grown, 'App/Basket', 'total'))->toBeNull();
+    });
+
 });

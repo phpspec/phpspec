@@ -306,9 +306,11 @@ ai:
 | Key | Required | Description |
 |---|---|---|
 | `provider` | Yes | LLM provider: `google`, `anthropic`, or `openai` |
-| `model` | No | Model identifier (defaults to provider's recommended model) |
+| `model` | No | Model identifier; your setting always beats the shipped default |
+| `max_tokens` | No | Output-token ceiling per call; beats the per-command defaults |
+| `effort` | No | Reasoning effort passed to the provider (e.g. `low`, `medium`, `high`), applied once the provider supports it |
 | `api_key` | Yes | API key for the provider. Without this, AI features are disabled. |
 
-Default models per provider: `gemini-2.5-pro` (google), `claude-sonnet-4-20250514` (anthropic), `gpt-4o` (openai).
+Default models per provider: `gemini-3-pro-preview` (google), `claude-sonnet-5` (anthropic), `gpt-5.1` (openai).
 
 See [Pair Programming & AI](pair.md) for full documentation on pair mode, the AI assistant, and the refactor command.

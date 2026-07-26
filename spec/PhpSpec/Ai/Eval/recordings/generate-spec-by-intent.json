@@ -1,11 +1,23 @@
 {
-  "case": "generate-spec-by-intent",
-  "instruction": "a spec for a Coupon that reduces a total",
-  "aiConfig": { "provider": "google", "api_key": "test-key" },
-  "provider": "google",
-  "model": "gemini-2.5-pro",
-  "response": {
-    "text": "{\"path\": \"spec/App/Whatever.spec.php\", \"content\": \"<?php\\ndescribe('Coupon', function () { it('reduces a total', fn() => expect(1)->toBe(1)); });\\n\"}",
-    "tool_calls": []
-  }
+    "case": "generate-spec-by-intent",
+    "instruction": "a spec for a Coupon that reduces a total",
+    "aiConfig": {
+        "provider": "google",
+        "api_key": "test-key"
+    },
+    "provider": "google",
+    "model": "gemini-2.5-pro",
+    "response": {
+        "text": "",
+        "tool_calls": [
+            {
+                "id": "1",
+                "name": "propose_edit",
+                "arguments": {
+                    "path": "spec/App/Whatever.spec.php",
+                    "content": "<?php\ndescribe('Coupon', function () { it('reduces a total', fn() => expect(1)->toBe(1)); });\n"
+                }
+            }
+        ]
+    }
 }

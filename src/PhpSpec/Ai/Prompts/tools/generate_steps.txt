@@ -1,0 +1,3 @@
+Write a .steps.php file with step definitions for a feature. Uses bare given(),
+when(), then() global functions (NO use/import statements for them). Placeholders:
+{string}, {int}.

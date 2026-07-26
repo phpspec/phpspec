@@ -1,0 +1,3 @@
+Update an existing file with new content. Use this to modify source files, config
+files, or any existing file. To change a spec, add behaviour with add_example: a
+spec rewrite that drops existing examples is rejected.

@@ -1,0 +1,380 @@
+<?php
+
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ * (c) Ciaran McNulty <ciaran@ciaranmcnulty.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PhpSpec\Ai\Agent;
+
+use PhpSpec\Ai\Contracts\ToolInterface;
+use PhpSpec\Ai\PromptLibrary;
+use PhpSpec\Ai\Tool;
+use PhpSpec\Ai\ToolCall;
+use PhpSpec\CodeGeneration\ClassGenerator;
+use PhpSpec\CodeGeneration\FeatureGenerator;
+use PhpSpec\CodeGeneration\LegacySpecDetector;
+use PhpSpec\CodeGeneration\StepGenerator;
+use PhpSpec\Configuration;
+use PhpSpec\Filesystem;
+use RuntimeException;
+
+/**
+ * @internal
+ * The shared tool definitions of the agent pipeline. Each tool's model-facing
+ * description lives in `Ai/Prompts/tools/<name>.txt` (editable text); its
+ * schema and deterministic backing generator live here. Tools only ever return
+ * Proposals; nothing touches disk. The registry also owns the deterministic
+ * short-circuit: when the step fully determines the artifact (a feature
+ * skeleton, the steps of a known feature), the model is never consulted.
+ */
+final class ToolRegistry
+{
+    private const SCHEMAS = [
+        'write_feature' => [
+            'name' => ['type' => 'string', 'description' => 'Short feature name (a snake_case slug)', 'default' => ''],
+            'path' => ['type' => 'string', 'description' => 'Explicit project-relative .feature path', 'default' => ''],
+        ],
+        'write_steps' => [
+            'feature_path' => ['type' => 'string', 'description' => 'Project-relative path of the .feature to write steps for', 'default' => ''],
+        ],
+        'propose_edit' => [
+            'path' => ['type' => 'string', 'description' => 'Project-relative path of the file'],
+            'content' => ['type' => 'string', 'description' => 'The complete new file content, not a diff'],
+        ],
+        'suggest_next' => [
+            'type' => ['type' => 'string', 'enum' => ['spec', 'feature', 'example', 'info'], 'description' => 'What to build next: spec (a class to describe), feature (a user-facing behaviour), example (grow an existing spec), or info'],
+            'target' => ['type' => 'string', 'description' => 'The class name, feature name, or spec the suggestion is about'],
+            'reason' => ['type' => 'string', 'description' => 'One short sentence on why this is the next baby step'],
+        ],
+    ];
+
+    private readonly PromptLibrary $prompts;
+
+    private readonly FeatureGenerator $featureGenerator;
+
+    private readonly StepGenerator $stepGenerator;
+
+    /**
+     * @param Configuration $config the project configuration (layout paths)
+     * @param Filesystem $filesystem filesystem abstraction for testability
+     * @param PromptLibrary|null $prompts loads the tool descriptions
+     */
+    public function __construct(
+        private readonly Configuration $config,
+        private readonly Filesystem $filesystem,
+        ?PromptLibrary $prompts = null,
+    ) {
+        $this->prompts = $prompts ?? new PromptLibrary($filesystem);
+        $this->featureGenerator = new FeatureGenerator();
+        $this->stepGenerator = new StepGenerator($filesystem);
+    }
+
+    /**
+     * The tool definitions a command's manifest declares, descriptions read
+     * from their prompt files.
+     *
+     * @return list<ToolInterface>
+     */
+    public function definitions(CommandProfile $profile): array
+    {
+        $tools = [];
+
+        foreach ($profile->tools as $name) {
+            if (!isset(self::SCHEMAS[$name])) {
+                throw new RuntimeException(sprintf('Unknown tool "%s" declared by command "%s".', $name, $profile->name));
+            }
+
+            $tools[] = Tool::make(
+                name: $name,
+                description: trim($this->prompts->read('tools/' . $name)),
+                parameters: self::SCHEMAS[$name],
+                handler: static fn(array $arguments): string => '',
+            );
+        }
+
+        return $tools;
+    }
+
+    /**
+     * The proposals fully determined by the step alone, or null when the model
+     * is needed: a feature skeleton at a known path or slug, or the steps file
+     * of a known feature. Only tools the command's manifest declares may
+     * short-circuit (an advising command derives steps too, but never writes).
+     * Throws when the determined action is impossible, so the user gets the
+     * real reason instead of a generic failure.
+     *
+     * @return list<Proposal>|null
+     */
+    public function deterministic(?Step $step, Grounding $grounding, CommandProfile $profile): ?array
+    {
+        if ($step === null) {
+            return null;
+        }
+
+        if ($step->phase === Phase::WriteFeature && in_array('write_feature', $profile->tools, true)) {
+            $path = $this->featurePath($step);
+
+            return $path === null ? null : [$this->featureProposal($path)];
+        }
+
+        if ($step->phase === Phase::WriteSteps && in_array('write_steps', $profile->tools, true)) {
+            $feature = $step->subject ?? self::featureBesideSteps($step->path);
+
+            return $feature === null ? null : [$this->stepsProposal($feature)];
+        }
+
+        return null;
+    }
+
+    /**
+     * The structured report a reporting tool call carries (suggest_next's
+     * {type, target, reason}), or an empty array when none was called. Reports
+     * are terminal answers, not proposals; nothing reaches disk.
+     *
+     * @param ToolCall[] $toolCalls
+     * @return array<string, string>
+     */
+    public function reportFrom(array $toolCalls): array
+    {
+        foreach ($toolCalls as $call) {
+            if ($call->name === 'suggest_next') {
+                return array_map(strval(...), array_filter($call->arguments, is_scalar(...)));
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Executes the model's tool calls into proposals, never touching disk. A
+     * path the step derived always wins over the path the model chose, and a
+     * spec written in phpspec-8 ObjectBehavior syntax is rejected outright.
+     *
+     * @param ToolCall[] $toolCalls
+     * @return list<Proposal>
+     */
+    public function fromCalls(array $toolCalls, ?Step $step): array
+    {
+        $proposals = [];
+
+        foreach ($toolCalls as $call) {
+            $proposal = match ($call->name) {
+                'write_feature' => $this->featureCall($step, $call->arguments),
+                'write_steps' => $this->stepsCall($step, $call->arguments),
+                'propose_edit' => $this->editCall($step, $call->arguments),
+                default => null,
+            };
+
+            if ($proposal !== null) {
+                $proposals[] = $proposal;
+            }
+        }
+
+        return $proposals;
+    }
+
+    /**
+     * A write_feature call: the step's own path or slug wins over the model's
+     * arguments; with neither, nothing is proposed.
+     *
+     * @param array<string, mixed> $arguments
+     */
+    private function featureCall(?Step $step, array $arguments): ?Proposal
+    {
+        $path = ($step !== null ? $this->featurePath($step) : null)
+            ?? $this->slugPath((string) ($arguments['name'] ?? ''))
+            ?? $this->nonEmpty((string) ($arguments['path'] ?? ''));
+
+        return $path === null ? null : $this->featureProposal($this->relative($path));
+    }
+
+    /**
+     * A write_steps call: the step's subject feature wins over the argument.
+     *
+     * @param array<string, mixed> $arguments
+     */
+    private function stepsCall(?Step $step, array $arguments): ?Proposal
+    {
+        $feature = $step !== null ? $step->subject : null;
+        $feature ??= $this->nonEmpty((string) ($arguments['feature_path'] ?? ''));
+
+        return $feature === null ? null : $this->stepsProposal($feature);
+    }
+
+    /**
+     * A propose_edit call: the step-derived path wins over the model's, and
+     * legacy ObjectBehavior spec content is rejected with the reason.
+     *
+     * @param array<string, mixed> $arguments
+     */
+    private function editCall(?Step $step, array $arguments): ?Proposal
+    {
+        $path = $this->derivedPath($step) ?? $this->relative((string) ($arguments['path'] ?? ''));
+        $content = (string) ($arguments['content'] ?? '');
+        if ($path === '' || $content === '') {
+            return null;
+        }
+
+        if (str_ends_with($path, $this->config->getSpecSuffix()) && LegacySpecDetector::looksLegacy($content)) {
+            throw new RuntimeException('The proposed spec uses phpspec 8 ObjectBehavior syntax; phpspec 9 specs use the describe/it/expect DSL, so it was rejected.');
+        }
+
+        return $this->proposal($path, $content, 'propose_edit');
+    }
+
+    /**
+     * The project-relative path a step derives through the configured layout:
+     * an explicit path verbatim, a spec mirroring the class under the spec dir,
+     * or source with the PSR-4 prefix stripped, exactly as phpspec's own
+     * generators lay files out.
+     */
+    private function derivedPath(?Step $step): ?string
+    {
+        if ($step === null) {
+            return null;
+        }
+
+        if ($step->path !== null) {
+            return $this->relative($step->path);
+        }
+
+        if ($step->subject === null) {
+            return null;
+        }
+
+        if ($step->phase === Phase::WriteSpec) {
+            $specDir = ltrim(str_replace('\\', '/', $this->config->getSpecPath()), './');
+
+            return $specDir . '/' . str_replace('\\', '/', $step->subject) . $this->config->getSpecSuffix();
+        }
+
+        if ($step->phase === Phase::WriteCode) {
+            $srcDir = ltrim(str_replace('\\', '/', $this->config->getSrcPath()), './');
+
+            return $this->relative(ClassGenerator::resolveFqcn($step->subject, $srcDir, $this->config->getPsr4Prefix())['filePath']);
+        }
+
+        if ($step->phase === Phase::WriteFeature) {
+            return $this->featurePath($step);
+        }
+
+        return null;
+    }
+
+    /**
+     * The feature path a write-feature step determines: its explicit path, or
+     * the slug under the configured features path.
+     */
+    private function featurePath(Step $step): ?string
+    {
+        if ($step->path !== null) {
+            return $this->relative($step->path);
+        }
+
+        return $this->slugPath($step->subject ?? '');
+    }
+
+    /**
+     * The feature path for a slug under the configured features path, or null
+     * for an empty slug.
+     */
+    private function slugPath(string $slug): ?string
+    {
+        if ($slug === '') {
+            return null;
+        }
+
+        return rtrim(trim($this->config->getFeaturesPath(), './'), '/') . '/' . $slug . '.feature';
+    }
+
+    /**
+     * A deterministic Gherkin skeleton proposal at the given path.
+     */
+    private function featureProposal(string $path): Proposal
+    {
+        return $this->proposal($path, $this->featureGenerator->skeleton(FeatureGenerator::titleFromPath($path)), 'write_feature');
+    }
+
+    /**
+     * The steps-file proposal for a feature: the feature is parsed and the
+     * missing step definitions drafted beside it, in the same layout the
+     * runner's own generator uses (`<feature dir>/steps/<name>.steps.php`).
+     */
+    private function stepsProposal(string $featurePath): Proposal
+    {
+        $relFeature = $this->relative($featurePath);
+        $absFeature = $this->absolute($relFeature);
+        if (!$this->filesystem->exists($absFeature)) {
+            throw new RuntimeException(sprintf('Feature file "%s" was not found, so there are no steps to write.', $relFeature));
+        }
+
+        $steps = StepGenerator::parseSteps($this->filesystem->read($absFeature));
+        if ($steps === []) {
+            throw new RuntimeException(sprintf('No Given/When/Then steps found in "%s".', $relFeature));
+        }
+
+        $relSteps = dirname($relFeature) . '/steps/' . basename($relFeature, '.feature') . '.steps.php';
+        $absSteps = $this->absolute($relSteps);
+        $existing = $this->filesystem->exists($absSteps) ? $this->filesystem->read($absSteps) : '';
+
+        return new Proposal($relSteps, $existing, $this->stepGenerator->skeleton($steps, $existing), $existing === '', 'write_steps');
+    }
+
+    /**
+     * The feature that a named `.steps.php` path belongs to, in the standard
+     * layout (`features/steps/x.steps.php` steps `features/x.feature`).
+     */
+    private static function featureBesideSteps(?string $stepsPath): ?string
+    {
+        if ($stepsPath === null || !str_ends_with($stepsPath, '.steps.php')) {
+            return null;
+        }
+
+        return dirname($stepsPath, 2) . '/' . basename($stepsPath, '.steps.php') . '.feature';
+    }
+
+    /**
+     * A proposal for a path and content, reading any existing file so the
+     * presenter can show a modified-file diff.
+     */
+    private function proposal(string $path, string $content, string $origin): Proposal
+    {
+        $relPath = $this->relative($path);
+        $absPath = $this->absolute($relPath);
+        $exists = $this->filesystem->exists($absPath);
+
+        return new Proposal($relPath, $exists ? $this->filesystem->read($absPath) : '', $content, !$exists, $origin);
+    }
+
+    /**
+     * Normalises a path to project-relative with forward slashes.
+     */
+    private function relative(string $path): string
+    {
+        return ProjectPath::relative($path);
+    }
+
+    /**
+     * The absolute path for a project-relative one.
+     */
+    private function absolute(string $relPath): string
+    {
+        return ProjectPath::absolute($relPath);
+    }
+
+    /**
+     * The string itself, or null when empty; keeps argument fallbacks terse.
+     */
+    private function nonEmpty(string $value): ?string
+    {
+        return $value === '' ? null : $value;
+    }
+}

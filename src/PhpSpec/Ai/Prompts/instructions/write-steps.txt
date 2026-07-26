@@ -1,0 +1,3 @@
+Write step definitions for the feature's undefined steps: bare given()/when()/then()
+global functions (no imports for them), {string}/{int} placeholders, one function per
+step. Let the steps drive out the domain code they need; never stub behaviour away.

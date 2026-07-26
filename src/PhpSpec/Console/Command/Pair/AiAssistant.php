@@ -14,14 +14,21 @@
 
 namespace PhpSpec\Console\Command\Pair;
 
+use PhpSpec\Ai\Agent\ProjectPath;
+use PhpSpec\Ai\Agent\Proposal;
+use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\AiTools;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Contracts\ToolInterface;
 use PhpSpec\Ai\Message;
+use PhpSpec\Ai\PromptLibrary;
+use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\SymbolInspector;
 use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
+use PhpSpec\Ai\TreeScanner;
+use PhpSpec\CodeGeneration\LegacySpecDetector;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\SuiteSummary;
@@ -222,16 +229,21 @@ final class AiAssistant
      */
     private function runLoop(): string
     {
-        $model = $this->model ?? 'gemini-2.5-pro';
-        $maxTokens = $this->maxTokens();
+        $options = [
+            'model' => $this->model ?? ProviderFactory::defaultModel('google'),
+            'maxTokens' => $this->maxTokens(),
+            'temperature' => 0.3,
+        ];
+
+        // Reasoning effort is the user's call; providers that cannot map it yet
+        // simply ignore the option.
+        $effort = $this->config->getAiConfig()['effort'] ?? null;
+        if ($effort !== null) {
+            $options['effort'] = $effort;
+        }
 
         for ($turn = 0; $turn < self::MAX_TURNS; $turn++) {
-            $response = $this->provider->chat($this->messages, [
-                'model' => $model,
-                'maxTokens' => $maxTokens,
-                'temperature' => 0.3,
-                'tools' => $this->advertisedTools(),
-            ]);
+            $response = $this->provider->chat($this->messages, ['tools' => $this->advertisedTools()] + $options);
 
             $this->messages[] = Message::assistant(
                 $response->text,
@@ -490,18 +502,18 @@ final class AiAssistant
     }
 
     /**
-     * Loads the role's prompt artifact (navigator.txt / driver.txt) from disk,
-     * falling back to a short inline contract when it cannot be read (so a
-     * mocked filesystem or odd packaging never yields a role-less prompt).
+     * Loads the role's prompt artifact (navigator.txt / driver.txt) through the
+     * prompt library on the real filesystem (prompts are shipped package code),
+     * falling back to a short inline contract when it cannot be read, so odd
+     * packaging never yields a role-less prompt.
      */
     private function loadRoleArtifact(PairRole $role): string
     {
-        $path = dirname(__DIR__, 3) . '/Ai/Prompts/' . $role->promptArtifact() . '.txt';
-        $text = $this->filesystem->exists($path) ? $this->filesystem->read($path) : '';
+        $text = (new PromptLibrary())->read($role->promptArtifact());
 
         if (trim($text) === '') {
             return $role->aiIsNavigator()
-                ? 'You are the NAVIGATOR. The human is driving. You never write files — you review and suggest; the human triggers generation with the commands.'
+                ? 'You are the NAVIGATOR. The human is driving. You never write files; you review and suggest, and the human triggers generation with the commands.'
                 : 'You are the DRIVER. The human is navigating. Execute exactly what they direct, one artifact per turn, then show the diff, run the spec, and hand back.';
         }
 
@@ -603,13 +615,12 @@ final class AiAssistant
 
     /**
      * Whether spec content is written in the legacy phpspec 8 ObjectBehavior
-     * style rather than the phpspec 9 describe()/it()/expect() DSL. The model's
-     * training prior leans hard on ObjectBehavior, so this is enforced, not just
-     * discouraged in the prompt.
+     * style rather than the phpspec 9 describe()/it()/expect() DSL, via the
+     * shared detector so this guard and the agent pipeline's never drift apart.
      */
     private static function isLegacySpec(string $content): bool
     {
-        return str_contains($content, 'ObjectBehavior');
+        return LegacySpecDetector::looksLegacy($content);
     }
 
     /**
@@ -698,32 +709,42 @@ final class AiAssistant
     }
 
     /**
-     * Writes a generated file, creating parent directories as needed, then
-     * shows a diff when the file already existed or a full listing when it is
-     * new. This keeps an overwrite of an existing spec/feature from being
-     * rendered as an all-new file with every line marked added.
-     *
-     * @param Filesystem $filesystem the filesystem abstraction
-     * @param PairOutput $output the pair-mode output helper
-     * @param string $filePath the absolute path to write
-     * @param string $content the file content
+     * The model-facing description of a write tool, from its editable prompt
+     * file (`Ai/Prompts/tools/<name>.txt`, shipped package code, so it loads
+     * from the real filesystem). Tuning what a tool tells the model is a text
+     * edit.
      */
-    private static function writeGenerated(Filesystem $filesystem, PairOutput $output, string $filePath, string $content): void
+    private static function toolDescription(string $name): string
     {
-        $existed = $filesystem->exists($filePath);
-        $oldContent = $existed ? $filesystem->read($filePath) : '';
+        return trim((new PromptLibrary())->read('tools/' . $name));
+    }
 
-        $dir = dirname($filePath);
-        if (!$filesystem->exists($dir)) {
-            $filesystem->mkdir($dir);
-        }
+    /**
+     * A proposal for an absolute path and content, reading any existing file so
+     * the diff shown is real. Tools only ever produce these; nothing writes
+     * except the gate below.
+     */
+    private function proposalFor(string $absPath, string $content, string $origin): Proposal
+    {
+        $exists = $this->filesystem->exists($absPath);
 
-        $filesystem->write($filePath, $content);
+        return new Proposal(ProjectPath::relative($absPath), $exists ? $this->filesystem->read($absPath) : '', $content, !$exists, $origin);
+    }
 
-        if ($existed) {
-            $output->fileDiff($filePath, $oldContent, $content);
+    /**
+     * Pair's single write gate: applies a confirmed proposal through the shared
+     * Writer, then shows a diff when the file already existed or a full listing
+     * when it is new, so an overwrite is never rendered as an all-new file.
+     */
+    private function applyProposal(Proposal $proposal): void
+    {
+        (new Writer($this->filesystem))->apply($proposal);
+
+        $absPath = (getcwd() ?: '.') . '/' . $proposal->path;
+        if ($proposal->isNew) {
+            $this->output->fileDisplay($absPath, $proposal->new, true);
         } else {
-            $output->fileDisplay($filePath, $content, true);
+            $this->output->fileDiff($absPath, $proposal->old, $proposal->new);
         }
     }
 
@@ -736,7 +757,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'describe',
-            description: 'Start a spec for a PHP class: writes an empty describe() skeleton in the phpspec 9 DSL, with no examples. Idempotent — does nothing if the spec already exists. This is how a new spec begins; then add behaviour one example at a time with add_example. There is no whole-file spec write and no way to overwrite a spec, so existing examples are never lost.',
+            description: self::toolDescription('describe'),
             parameters: [
                 'class_name' => [
                     'type' => 'string',
@@ -762,9 +783,7 @@ final class AiAssistant
                 }
 
                 $generator = new SpecGenerator($specPath, $filesystem, $specSuffix);
-                $generator->generate($classPath);
-
-                $output->fileDisplay($filePath, $filesystem->read($filePath), true);
+                $this->applyProposal($this->proposalFor($filePath, $generator->skeleton($classPath), 'describe'));
 
                 return "Spec skeleton for $classPath created at $filePath. Add behaviour with add_example.";
             },
@@ -780,7 +799,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'add_example',
-            description: 'Add ONE it() example for a method to a spec, appending it without rewriting the rest of the file (creating the spec first if it does not exist). Idempotent: does nothing if that method is already exemplified. This is the only way to add behaviour to a spec — specs are never overwritten.',
+            description: self::toolDescription('add_example'),
             parameters: [
                 'class_name' => [
                     'type' => 'string',
@@ -804,14 +823,10 @@ final class AiAssistant
                 $generator = new SpecGenerator($specPath, $filesystem, $specSuffix);
 
                 $existed = $filesystem->exists($filePath);
-                if (!$existed) {
-                    $generator->generate($classPath);
-                }
+                $before = $existed ? $filesystem->read($filePath) : $generator->skeleton($classPath);
+                $grown = $generator->withExample($before, $classPath, $method);
 
-                $before = $existed ? $filesystem->read($filePath) : '';
-                $added = $generator->addExample($classPath, $method);
-
-                if (!$added && $existed) {
+                if ($grown === null && $existed) {
                     $output->getOutput()->writeln(sprintf(
                         '  <fg=gray>An example for %s::%s already exists.</>',
                         str_replace('/', '\\', $classPath),
@@ -821,12 +836,11 @@ final class AiAssistant
                     return "Example for $classPath::$method already exists; no change made.";
                 }
 
-                $after = $filesystem->read($filePath);
-                if ($existed) {
-                    $output->fileDiff($filePath, $before, $after);
-                } else {
-                    $output->fileDisplay($filePath, $after, true);
+                if ($grown === null) {
+                    return ['error' => "Could not add an example for $classPath::$method."];
                 }
+
+                $this->applyProposal($this->proposalFor($filePath, $grown, 'add_example'));
 
                 return "Example for $classPath::$method added to $filePath.";
             },
@@ -841,7 +855,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'generate_feature',
-            description: 'Write a Gherkin .feature file. Provide complete feature content with Feature:, Scenario:, Given/When/Then steps.',
+            description: self::toolDescription('generate_feature'),
             parameters: [
                 'feature_name' => [
                     'type' => 'string',
@@ -853,13 +867,10 @@ final class AiAssistant
                 ],
                 'intent' => self::intentParameter(),
             ],
-            handler: function (array $args) use ($filesystem, $output, $featuresPath) {
-                $name = $args['feature_name'];
-                $content = $args['content'];
+            handler: function (array $args) use ($featuresPath) {
+                $filePath = getcwd() . '/' . $featuresPath . '/' . $args['feature_name'] . '.feature';
 
-                $filePath = getcwd() . '/' . $featuresPath . '/' . $name . '.feature';
-
-                self::writeGenerated($filesystem, $output, $filePath, $content);
+                $this->applyProposal($this->proposalFor($filePath, $args['content'], 'generate_feature'));
 
                 return "Feature file written to $filePath";
             },
@@ -874,7 +885,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'generate_steps',
-            description: 'Write a .steps.php file with step definitions for a feature. Uses bare given(), when(), then() global functions (NO use/import statements for them). Placeholders: {string}, {int}.',
+            description: self::toolDescription('generate_steps'),
             parameters: [
                 'feature_name' => [
                     'type' => 'string',
@@ -886,13 +897,10 @@ final class AiAssistant
                 ],
                 'intent' => self::intentParameter(),
             ],
-            handler: function (array $args) use ($filesystem, $output, $stepsPath) {
-                $name = $args['feature_name'];
-                $content = $args['content'];
+            handler: function (array $args) use ($stepsPath) {
+                $filePath = getcwd() . '/' . $stepsPath . '/' . $args['feature_name'] . '.steps.php';
 
-                $filePath = getcwd() . '/' . $stepsPath . '/' . $name . '.steps.php';
-
-                self::writeGenerated($filesystem, $output, $filePath, $content);
+                $this->applyProposal($this->proposalFor($filePath, $args['content'], 'generate_steps'));
 
                 return "Steps file written to $filePath";
             },
@@ -907,7 +915,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'write_file',
-            description: 'Create a new file with the given content. Use this for source and other files not covered by describe/generate_feature/generate_steps. Specs are written with describe/add_example, not here.',
+            description: self::toolDescription('write_file'),
             parameters: [
                 'path' => [
                     'type' => 'string',
@@ -919,7 +927,7 @@ final class AiAssistant
                 ],
                 'intent' => self::intentParameter(),
             ],
-            handler: function (array $args) use ($filesystem, $output, $specDir) {
+            handler: function (array $args) use ($filesystem, $specDir) {
                 $path = $args['path'];
                 $content = $args['content'];
                 $absPath = getcwd() . '/' . ltrim($path, '/');
@@ -933,13 +941,7 @@ final class AiAssistant
                     return $rejection;
                 }
 
-                $dir = dirname($absPath);
-                if (!$filesystem->exists($dir)) {
-                    $filesystem->mkdir($dir);
-                }
-
-                $filesystem->write($absPath, $content);
-                $output->fileDisplay($absPath, $content, true);
+                $this->applyProposal($this->proposalFor($absPath, $content, 'write_file'));
 
                 return "File written to $absPath";
             },
@@ -954,7 +956,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'update_file',
-            description: 'Update an existing file with new content. Use this to modify source files, config files, or any existing file. To change a spec, add behaviour with add_example — a spec rewrite that drops existing examples is rejected.',
+            description: self::toolDescription('update_file'),
             parameters: [
                 'path' => [
                     'type' => 'string',
@@ -966,7 +968,7 @@ final class AiAssistant
                 ],
                 'intent' => self::intentParameter(),
             ],
-            handler: function (array $args) use ($filesystem, $output, $specDir) {
+            handler: function (array $args) use ($filesystem, $specDir) {
                 $path = $args['path'];
                 $content = $args['content'];
                 $absPath = getcwd() . '/' . ltrim($path, '/');
@@ -975,15 +977,12 @@ final class AiAssistant
                     return "File not found: $path. Use write_file to create it.";
                 }
 
-                $oldContent = $filesystem->read($absPath);
-
-                $rejection = self::specWriteRejection($absPath, $specDir, $content, $oldContent);
+                $rejection = self::specWriteRejection($absPath, $specDir, $content, $filesystem->read($absPath));
                 if ($rejection !== null) {
                     return $rejection;
                 }
 
-                $filesystem->write($absPath, $content);
-                $output->fileDiff($absPath, $oldContent, $content);
+                $this->applyProposal($this->proposalFor($absPath, $content, 'update_file'));
 
                 return "File updated: $absPath";
             },
@@ -1045,185 +1044,23 @@ final class AiAssistant
      */
     private function buildBaseGuidance(): string
     {
-        $specPath = ltrim($this->config->getSpecPath(), './');
-        $srcPath = ltrim($this->config->getSrcPath(), './');
-        $specSuffix = $this->config->getSpecSuffix();
         $featurePaths = $this->resolveFeaturePaths();
-        $featuresPath = $featurePaths['features'];
-        $stepsPath = $featurePaths['steps'];
 
-        return <<<PROMPT
-        You are an AI assistant for PhpSpec, a specification-driven BDD framework for PHP.
-        You help developers write specs, features, step definitions, and understand their codebase.
+        // The role-neutral guidance is an editable prompt file (shipped package
+        // code, so it loads from the real filesystem); only the project layout
+        // is interpolated. Editing the pairing behaviour is a text edit.
+        $guidance = (new PromptLibrary())->read('instructions/pair-guidance');
+        if (trim($guidance) !== '') {
+            return strtr($guidance, [
+                '%spec_path%' => ltrim($this->config->getSpecPath(), './'),
+                '%spec_suffix%' => $this->config->getSpecSuffix(),
+                '%src_path%' => ltrim($this->config->getSrcPath(), './'),
+                '%features_path%' => $featurePaths['features'],
+                '%steps_path%' => $featurePaths['steps'],
+            ]);
+        }
 
-        ## Project Layout
-        - Spec files: $specPath/ (suffix: $specSuffix)
-        - Source files: $srcPath/
-        - Feature files: $featuresPath/
-        - Step definitions: $stepsPath/
-
-        ## PhpSpec DSL
-        Spec files use a Jasmine/RSpec-style syntax:
-
-        ```php
-        <?php
-
-        use App\Calculator;
-
-        describe(Calculator::class, function () {
-            let('calculator', fn() => new Calculator());
-
-            it('adds two numbers', function () {
-                expect(\$this->calculator->add(2, 3))->toBe(5);
-            });
-
-            it('subtracts two numbers', function () {
-                expect(\$this->calculator->subtract(5, 3))->toBe(2);
-            });
-
-            context('with negative numbers', function () {
-                it('adds negative numbers', function () {
-                    expect(\$this->calculator->add(-1, -2))->toBe(-3);
-                });
-            });
-        });
-        ```
-
-        IMPORTANT: describe(), it(), let(), context(), expect() are GLOBAL functions.
-        Do NOT add "use function" imports for them in spec files. Only `use` the class under test.
-
-        NEVER write phpspec 8 ObjectBehavior specs — they are rejected. There are no spec
-        classes: no `namespace spec\...`, no `class FooSpec extends ObjectBehavior`, no
-        `function it_is_initializable()`, no `->shouldHaveType()` / `->shouldReturn()`.
-        Use only the describe()/it()/expect() DSL shown above.
-
-        ### Available Matchers
-        toBe, toBeLike, toHaveCount, toBeAnInstanceOf, toBeTrue, toBeFalse, toBeNull,
-        toBeEmpty, toContain, toMatch, toBeGreaterThan, toBeLessThan, toHaveKey,
-        toStartWith, toEndWith, toHaveProperty, toBeCallable, toBeOfType, toThrow
-
-        ### Negation
-        `expect(\$x)->not()->toBe(\$y)`
-
-        ### Mocks
-        Type-hinted parameters in it() closures are auto-mocked:
-        ```php
-        it('uses a collaborator', function (Logger \$logger) {
-            allow(\$logger->log())->toReturn(true);
-            // ... use \$logger
-            expect(\$logger->log())->toBeCalled();
-        });
-        ```
-
-        ### Pending/Focused/Skipped
-        - `xit()`, `xdescribe()`, `xcontext()` — pending (skipped)
-        - `fit()`, `fdescribe()`, `fcontext()` — focused (only these run)
-        - `pending()` / `skip()` — skip from inside an example
-
-        ## Gherkin Features
-        Feature files use standard Gherkin:
-        ```gherkin
-        Feature: Calculator
-          Scenario: Adding numbers
-            Given I have a calculator
-            When I add 2 and 3
-            Then the result should be 5
-        ```
-
-        ## Step Definitions
-        Step files define handlers for Gherkin steps.
-        IMPORTANT: given(), when(), then() are GLOBAL functions auto-loaded by PhpSpec.
-        Do NOT add "use function" imports for them — they are NOT namespaced.
-        The only <?php tag at the top is required, but NO use/import statements for step functions.
-
-        ```php
-        <?php
-
-        given('I have a calculator', function () {
-            \$this->calculator = new App\Calculator();
-        });
-
-        when('I add {int} and {int}', function (int \$a, int \$b) {
-            \$this->result = \$this->calculator->add(\$a, \$b);
-        });
-
-        then('the result should be {int}', function (int \$expected) {
-            expect(\$this->result)->toBe(\$expected);
-        });
-        ```
-
-        Placeholders: `{string}`, `{int}`, `{float}` are auto-captured.
-
-        NEVER include any of these in step files:
-        - `use function PhpSpec\StoryBDD\given;`
-        - `use function PhpSpec\StoryBDD\when;`
-        - `use function PhpSpec\StoryBDD\then;`
-        - `use PhpSpec\StoryBDD\...;`
-        These will cause fatal errors. The functions are globally available.
-
-        ## Guidelines
-        - You are working on THIS project. The project file tree is provided below.
-        - ALWAYS use `read_file` to inspect existing source code and specs BEFORE generating new files.
-          Look at the actual classes, method signatures, and existing spec patterns in the project.
-        - ALWAYS use `list_files` first if you need to discover what files exist in a directory.
-        - When generating specs, always include the `<?php` tag and appropriate `use` statements.
-        - Use `let()` to set up shared state, `it()` for individual examples.
-        - Use `context()` to group related examples.
-        - Generate meaningful, descriptive example names.
-        - Grow specs, never overwrite them. To START a spec for a class, use `describe` (it writes
-          an empty describe() skeleton and no-ops if the spec already exists). To add behaviour,
-          use `add_example`, one it() at a time (idempotent). There is no whole-file spec write and
-          no way to overwrite a spec, so existing examples are never lost. A raw write_file/update_file
-          to a spec path that drops examples, or uses phpspec 8 ObjectBehavior syntax, is rejected.
-        - Match the coding style and patterns of existing specs and step definitions in the project.
-        - When asked to run specs, use the `run_specs` tool and report the results clearly.
-        - Keep responses concise. Show what you did, not long explanations of what you will do.
-        - Use `write_file` to create source and other new files (not specs — use describe/add_example).
-        - Use `update_file` to modify existing source files. Always `read_file` first to see the current content.
-
-        ## MANDATORY: Read before generating (applies to ALL generation tasks)
-        Before generating ANY `.feature`, `.steps.php`, or `.spec.php` file you MUST first:
-        1. `read_file` at least one existing file of the same type to learn the project conventions.
-        2. For features: read at least one existing step file to learn what step patterns exist.
-           Your Gherkin steps MUST use the exact patterns from existing step definitions listed in
-           "Existing step definitions" below. Do NOT invent step patterns like `Given a class` if
-           the existing steps use `Given a source file`. If you need a step that doesn't exist,
-           generate a new `.steps.php` file for it.
-        3. For specs: read at least one existing spec to see the DSL style used in THIS project.
-           This project uses describe/it/expect syntax — NOT ObjectBehavior/shouldReturn/willReturn.
-
-        ## Feature scenario rules
-        - BEFORE generating a `.feature` file, you MUST first read the "Existing step definitions"
-          section below AND `read_file` at least one existing step file to learn the exact step
-          patterns available. Every Given/When/Then line in your feature MUST match an existing
-          step definition or be a new step you will define in a new `.steps.php` file.
-          NEVER invent step patterns — if you are unsure what steps exist, use `list_files` and
-          `read_file` on the steps directory first.
-        - Feature scenarios run in temporary project directories created by the test harness.
-          NEVER use `write_file` or `update_file` to create source files, spec files, or config
-          files in the actual project for scenario support. Instead, define them inline in the
-          `.feature` file using Gherkin DocString blocks with the step patterns from existing
-          step definitions (e.g. `Given a source file`, `Given a spec file`, `Given a class`).
-        - Only use `write_file` for files the user explicitly asks to create in their project.
-        - NEVER modify existing shared step files (like `runner.steps.php`, `setup.steps.php`).
-          Create new `.steps.php` files for new step definitions instead.
-
-        ## Step definition quality rules
-        - BEFORE generating step files, ALWAYS `read_file` at least one existing step file to learn
-          the project's conventions (how state is set up, how commands are executed, what `\$this`
-          properties are available on the world object, etc.).
-        - Reuse existing step definitions. The "Existing step definitions" section below lists all
-          steps already defined in this project. Write feature scenarios that compose these existing
-          steps whenever possible — only define new steps when no existing step covers the need.
-        - Steps MUST execute real code. NEVER hardcode, stub, or simulate output in a step body.
-          Every step must interact with real files, real objects, or real commands.
-        - Steps MUST NOT assert against values they set themselves. If a `when` step sets
-          `\$this->output`, the value must come from actually running something, not from a string
-          literal written in the step body.
-        - When a feature needs behaviour that doesn't exist yet, the steps should exercise the
-          real (not-yet-implemented) code path so the scenario fails for the right reason —
-          a missing class, a missing method, or wrong output — not because of a placeholder.
-        PROMPT;
+        return 'You assist with phpspec 9 specs (describe/it/expect DSL), Gherkin features, and step definitions.';
     }
 
     /**
@@ -1232,23 +1069,24 @@ final class AiAssistant
     private function buildProjectContext(): string
     {
         $sections = [];
+        $scanner = new TreeScanner($this->filesystem);
 
         $specPath = ltrim($this->config->getSpecPath(), './');
         $srcPath = ltrim($this->config->getSrcPath(), './');
 
-        $srcTree = $this->scanTree(getcwd() . '/' . $srcPath, 3);
+        $srcTree = $scanner->scan(getcwd() . '/' . $srcPath, 3);
         if ($srcTree !== '') {
             $sections[] = "## Source files ($srcPath/)\n$srcTree";
         }
 
-        $specTree = $this->scanTree(getcwd() . '/' . $specPath, 3);
+        $specTree = $scanner->scan(getcwd() . '/' . $specPath, 3);
         if ($specTree !== '') {
             $sections[] = "## Spec files ($specPath/)\n$specTree";
         }
 
-        $featuresDir = getcwd() . '/features';
+        $featuresDir = getcwd() . '/' . trim($this->config->getFeaturesPath(), './');
         if ($this->filesystem->exists($featuresDir) && $this->filesystem->isDir($featuresDir)) {
-            $featTree = $this->scanTree($featuresDir, 3);
+            $featTree = $scanner->scan($featuresDir, 3);
             if ($featTree !== '') {
                 $sections[] = "## Feature files\n$featTree";
             }
@@ -1265,38 +1103,6 @@ final class AiAssistant
         }
 
         return "# Project file tree\n\n" . implode("\n\n", $sections);
-    }
-
-    /**
-     * Recursively scans a directory tree up to a given depth, returning an indented listing.
-     */
-    private function scanTree(string $absPath, int $maxDepth, int $depth = 0): string
-    {
-        if ($depth >= $maxDepth || !$this->filesystem->exists($absPath) || !$this->filesystem->isDir($absPath)) {
-            return '';
-        }
-
-        $entries = $this->filesystem->scandir($absPath);
-        $entries = array_filter($entries, fn($e) => $e !== '.' && $e !== '..');
-        sort($entries);
-
-        $lines = [];
-        $indent = str_repeat('  ', $depth);
-
-        foreach ($entries as $entry) {
-            $full = $absPath . '/' . $entry;
-            if ($this->filesystem->isDir($full)) {
-                $lines[] = "$indent$entry/";
-                $sub = $this->scanTree($full, $maxDepth, $depth + 1);
-                if ($sub !== '') {
-                    $lines[] = $sub;
-                }
-            } else {
-                $lines[] = "$indent$entry";
-            }
-        }
-
-        return implode("\n", $lines);
     }
 
     /**

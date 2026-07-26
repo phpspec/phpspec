@@ -24,10 +24,10 @@ use RuntimeException;
 final class ProviderFactory
 {
     private const DEFAULTS = [
-        'google' => ['class' => 'PapiAI\Google\GoogleProvider', 'model' => 'gemini-2.5-pro'],
-        'anthropic' => ['class' => 'PapiAI\Anthropic\AnthropicProvider', 'model' => 'claude-sonnet-4-20250514'],
-        'openai' => ['class' => 'PapiAI\OpenAI\OpenAIProvider', 'model' => 'gpt-4o'],
-        'grok' => ['class' => 'PapiAI\Grok\GrokProvider', 'model' => 'grok-3'],
+        'google' => ['class' => 'PapiAI\Google\GoogleProvider', 'model' => 'gemini-3-pro-preview'],
+        'anthropic' => ['class' => 'PapiAI\Anthropic\AnthropicProvider', 'model' => 'claude-sonnet-5'],
+        'openai' => ['class' => 'PapiAI\OpenAI\OpenAIProvider', 'model' => 'gpt-5.1'],
+        'grok' => ['class' => 'PapiAI\Grok\GrokProvider', 'model' => 'grok-4'],
         'deepseek' => ['class' => 'PapiAI\DeepSeek\DeepSeekProvider', 'model' => 'deepseek-chat'],
         'ollama' => ['class' => 'PapiAI\Ollama\OllamaProvider', 'model' => 'llama3.1'],
     ];

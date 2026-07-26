@@ -1,0 +1,4 @@
+Add ONE it() example for a method to a spec, appending it without rewriting the
+rest of the file (creating the spec first if it does not exist). Idempotent: does
+nothing if that method is already exemplified. This is the only way to add
+behaviour to a spec: specs are never overwritten.

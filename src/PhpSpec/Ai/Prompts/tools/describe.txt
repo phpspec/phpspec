@@ -1,0 +1,5 @@
+Start a spec for a PHP class: writes an empty describe() skeleton in the phpspec 9
+DSL, with no examples. Idempotent: does nothing if the spec already exists. This is
+how a new spec begins; then add behaviour one example at a time with add_example.
+There is no whole-file spec write and no way to overwrite a spec, so existing
+examples are never lost.
