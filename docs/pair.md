@@ -33,39 +33,47 @@ The greeting adapts to your configuration: with an AI provider configured it inv
 
 Pair mode is a pair, not a code agent: you share one keyboard and work in turns. Nobody hand-types code any more — the generators are the keyboard, and *driving* means deciding what gets generated and pulling the trigger. `/swap` changes who holds it (this needs an AI provider):
 
-- **You drive, the AI navigates** (the default). The AI reviews and suggests one step ahead — intent, then location, then the exact line only when you ask — but it never writes files on its own. You generate code by triggering it: `/describe`, `/exemplify`, `/run`, and the numbered choosers.
+- **You drive, the AI navigates** (the default). The AI reviews and suggests one step ahead (intent, then location, then the exact line only when you ask), but it never writes files unbidden. When its advice becomes concrete it **offers** the change instead of dictating code: you see the exact diff and accept or decline through the numbered chooser; an accepted offer lands through the same write gate as every other change and auto-verifies. One offer per turn, and a declined offer is never re-offered.
 - **The AI drives, you navigate** (after `/swap`). You give the intent; the AI makes it real one artifact at a time, shows the diff, runs the spec, and hands back.
 
 `/help` shows the current contract. Swap back at any time with another `/swap`.
 
 ### Built-in Commands
 
-These commands work without AI configuration:
-
-Every command starts with a slash. These work without AI configuration:
+These commands work without AI configuration, and each works with or without its leading slash:
 
 | Command | Description |
 |---|---|
 | `/describe <Class>` | Generate a spec file and optionally create the class |
 | `/exemplify <Class> <method>` | Add a method example to an existing spec |
-| `/run [path]` | Run specs and offer code generation for failures |
+| `/run [path\|keyword] [options]` | Run specs (or features) and offer code generation for failures |
 | `/next` | Suggest the next step from the real suite state |
 | `/generate <instruction>` | Turn plain English into a spec example or code — diff, then confirm (requires AI) |
 | `/clear` | Clear the terminal |
+| `/swap` | Swap who drives (needs an AI provider) |
 | `/help` | Show available commands and AI status |
 | `/quit`, `/exit` | Exit pair mode |
 
-Commands mirror the CLI but add interactive prompts. For example, `/describe` shows the generated spec, then asks whether to create the source class. `/run` displays results and offers to generate missing classes or methods.
+Commands mirror the CLI but add interactive prompts. For example, `/describe` shows the generated spec, then asks whether to create the source class. `/run` displays results and offers to generate missing classes or methods. Run options pass straight through to the runner: `/run --all`, `/run spec/App --stop-on-failure`.
 
-### Command or prompt: the slash rule
+### Command or prompt: how a line is read
 
-The leading slash is the one signal that a line is a command. Anything **without** a slash is sent to the AI assistant. With no working AI it doesn't call your sentence an "unknown command" — it explains that natural language needs a provider. No keyword guessing — `/describe App/Calculator` runs the command; `describe what the Loader class does` is a prompt.
+A leading slash always marks a command. A bare line routes as a command too when its first word unambiguously reads as one, so the conversation flows without syntax in the way:
+
+- `run` routes when everything after it is a path, a spec or feature file, a suite keyword, or an option: `run`, `run features`, `run --all`, `run spec/App`. Suite keywords translate to their options: `features`/`stories` mean `--story`, `all`/`everything` means `--all`, `specs` is the default run.
+- `describe`, `exemplify`, and `refactor` route when the first argument looks like a class: `describe App/Basket`, `exemplify App\Calculator add`, `refactor Todo`.
+- `generate` always routes: plain English is its argument.
+- `next`, `help`, `swap`, `clear`, `quit`, and `exit` route only as the bare word.
+
+Anything else is a prompt for the AI, and the guards keep conversation as conversation: "run me through the design", "help me understand this project", "next time we should tidy up" all reach the assistant, never a command. With no working AI your sentence isn't called an "unknown command": pair mode explains that natural language needs a provider.
 
 ```
 > /describe App/Calculator                      # runs the describe command
-> describe what the Loader class does           # no slash → routes to the AI
-> /run spec/App                                 # runs specs at a path
-> run my specs and explain the failures         # no slash → routes to the AI
+> describe App/Calculator                       # the same command, no slash needed
+> run features                                  # a story-only run (--story)
+> run --all                                     # specs and features together
+> describe what the Loader class does           # prose → routes to the AI
+> run my specs and explain the failures         # prose → routes to the AI
 ```
 
 ### Suggested next command (ghost text)
@@ -82,6 +90,10 @@ step — describe a spec and it suggests running it, run and it suggests `/next`
 Press **Right-arrow** or **Tab** to accept it (it turns full colour, cursor to the end),
 or just start typing to dismiss it. **Up/Down** walk your history. On a terminal that
 can't enter raw mode (or piped input) the prompt falls back to a plain line reader.
+
+After `/next` with an AI provider, the ghost is built from the suggestion the AI
+registers: a matching `/generate ...` pre-filled in the prompt, so acting on the
+advice is Tab and Enter, never retyping it.
 
 ## AI Configuration
 
@@ -104,19 +116,27 @@ ai:
 
 | Key | Required | Description |
 |---|---|---|
-| `provider` | Yes | `google`, `anthropic`, or `openai` |
+| `provider` | Yes | `google`, `anthropic`, `openai`, `grok`, `deepseek`, or `ollama` |
 | `model` | No | Model identifier (see defaults below) |
-| `api_key` | Yes | API key for the provider |
+| `api_key` | Yes (hosted providers) | API key for the provider |
+| `max_tokens` | No | Output-token ceiling per reply |
+| `effort` | No | Reasoning effort forwarded to the provider (where supported) |
+
+Your `model` and `max_tokens` always beat the shipped defaults, and the pair
+status bar shows the resolved model next to the provider.
 
 ### Providers and Default Models
 
 | Provider | Default Model | Auth |
 |---|---|---|
-| `google` | `gemini-2.5-pro` | API key |
-| `anthropic` | `claude-sonnet-4-20250514` | API key |
-| `openai` | `gpt-4o` | API key |
+| `google` | `gemini-3.1-pro-preview` | API key |
+| `anthropic` | `claude-sonnet-5` | API key |
+| `openai` | `gpt-5.1` | API key |
+| `grok` | `grok-4` | API key |
+| `deepseek` | `deepseek-chat` | API key |
+| `ollama` | `llama3.1` | local, no key |
 
-All three providers support tool calling, vision, and streaming.
+The hosted providers support tool calling, vision, and streaming.
 
 Each provider needs its PapiAI package installed alongside `papi-ai/papi-core`:
 
@@ -165,6 +185,8 @@ The AI assistant has access to these tools during a pair session:
 | `ask_user` | Ask you a yes/no question through the numbered chooser |
 | `read_file` | Read a project file for context |
 | `list_files` | List directory contents |
+| `offer_change` | Navigator only: offer one concrete file change, shown to you as a diff to accept or decline |
+| `suggest_next` | Register the next-step suggestion that pre-fills the prompt after `/next` |
 
 Specs are never written whole-file: the assistant starts one with `describe`
 and grows it one example at a time with `add_example`, so your existing examples
