@@ -66,7 +66,7 @@ describe(Generate::class, function () {
 
         $tester->execute(['instruction' => ['x']], ['interactive' => false]);
 
-        expect($tester->getDisplay())->toContain('did not produce a usable artifact');
+        expect($tester->getDisplay())->toContain('no usable answer');
     });
 
 });
