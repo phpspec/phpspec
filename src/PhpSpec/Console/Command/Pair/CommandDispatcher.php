@@ -260,6 +260,7 @@ final class CommandDispatcher
             'feature' => '/generate a feature for ' . $target,
             'spec' => '/generate a spec for ' . $target,
             'example' => '/generate add a spec example for ' . $target,
+            'refactor' => '/refactor ' . $target,
             default => null,
         };
     }
@@ -581,28 +582,32 @@ final class CommandDispatcher
         $name = ltrim($command, '/');
 
         if ($this->application !== null && $this->application->has($name)) {
-            $cmd = $this->application->find($name);
-            if ($cmd instanceof Pair) {
+            if ($this->application->find($name) instanceof Pair) {
                 return self::CONTINUE;
             }
 
-            return $this->delegateToCommand($cmd, $tail);
+            return $this->delegateToCommand($name, $tail);
         }
 
         return $this->handleUnknown($command);
     }
 
     /**
-     * Runs a Symfony console command with the raw argument tail of the input.
+     * Runs a registered command with the raw argument tail of the input,
+     * through the Application itself (the canonical path), so argument
+     * binding and definition merging behave exactly as on the command line.
      */
-    private function delegateToCommand(Command $cmd, string $argString): int
+    private function delegateToCommand(string $name, string $argString): int
     {
-        $input = new StringInput($argString);
+        if ($this->application === null) {
+            return self::CONTINUE;
+        }
+
+        $input = new StringInput(trim($name . ' ' . $argString));
         $input->setInteractive($this->interactive);
 
         try {
-            $input->bind($cmd->getDefinition());
-            $cmd->run($input, $this->output->getOutput());
+            $this->application->doRun($input, $this->output->getOutput());
         } catch (Exception $e) {
             $this->output->error($e->getMessage());
         }

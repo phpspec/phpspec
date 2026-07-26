@@ -665,6 +665,48 @@ describe(CommandDispatcher::class, function () {
             expect($dispatcher->suggestion())->toBe('/generate add a spec example for App\\TodoList');
         });
 
+        it('pre-fills a /refactor ghost from a refactor suggestion the AI registered on /next', function (Filesystem $fs) {
+            allow($fs->exists())->toReturn(false);
+            allow($fs->isDir())->toReturn(false);
+            allow($fs->isFile())->toReturn(false);
+            allow($fs->scandir())->toReturn([]);
+            allow($fs->read())->toReturn('');
+
+            $provider = new class implements ProviderInterface {
+                public int $turn = 0;
+
+                public function chat(array $messages, array $options = []): Response
+                {
+                    if (++$this->turn === 1) {
+                        return new Response('', [new ToolCall('t1', 'suggest_next', [
+                            'type' => 'refactor',
+                            'target' => 'App\\TodoList',
+                            'reason' => 'The suite is green; complete() and isComplete() duplicate the lookup.',
+                        ])]);
+                    }
+
+                    return new Response('Green: time to clean up.');
+                }
+            };
+
+            $config = new Configuration('.', $fs);
+            $assistant = new AiAssistant($provider, $config, $this->pairOutput, 'test-model', $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
+            $dispatcher = new CommandDispatcher(
+                new SpecGenerator('spec', $fs),
+                new ClassGenerator('src', $fs),
+                $config,
+                $this->pairOutput,
+                false,
+                $fs,
+                specRunner: $this->specRunner,
+                ai: $assistant,
+            );
+
+            $dispatcher->dispatch('/next');
+
+            expect($dispatcher->suggestion())->toBe('/refactor App\\TodoList');
+        });
+
         it('suggests running the new spec after /describe', function (Filesystem $fs) {
             allow($fs->exists())->toReturn(false);
             allow($fs->mkdir())->toReturn(null);
@@ -749,17 +791,22 @@ describe(CommandDispatcher::class, function () {
             expect($result)->toBe(CommandDispatcher::CONTINUE);
         });
 
-        it('delegates /refactor with argument', function () {
+        it('delegates /refactor with its target actually bound', function () {
             $result = $this->appDispatcher->dispatch('/refactor App\\Calculator');
+            $output = $this->buffer->fetch();
             expect($result)->toBe(CommandDispatcher::CONTINUE);
+            // The target must reach the command: binding past the arguments and
+            // into execute, which asks for the missing AI config by name.
+            expect($output)->not()->toContain('Not enough arguments');
+            expect($output)->toContain('AI configuration required');
         });
 
         it('delegates a bare "refactor Class" to the refactor command', function () {
             $result = $this->appDispatcher->dispatch('refactor App\\Calculator');
             $output = $this->buffer->fetch();
             expect($result)->toBe(CommandDispatcher::CONTINUE);
-            expect($output)->not()->toContain('natural language');
-            expect($output)->not()->toContain('Unknown command');
+            expect($output)->not()->toContain('Not enough arguments');
+            expect($output)->toContain('AI configuration required');
         });
 
         it('explains AI is off for non-slash prose when no AI', function () {

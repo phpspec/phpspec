@@ -134,6 +134,10 @@ final class Next extends Command
             return $this->offerExemplify($input, $output, $suggestion['target']);
         }
 
+        if ($suggestion['type'] === 'refactor') {
+            return $this->offerRefactor($output, $suggestion['target']);
+        }
+
         return 0;
     }
 
@@ -199,6 +203,7 @@ final class Next extends Command
             'spec' => 'Describe a spec for',
             'feature' => 'Write a feature scenario for',
             'example' => 'Add an example to',
+            'refactor' => 'Refactor',
             default => '',
         };
 
@@ -252,6 +257,20 @@ final class Next extends Command
         $classArg = str_replace('\\', '/', $target);
 
         $output->writeln("  <fg=gray>Run:</> bin/phpspec exemplify $classArg <method>");
+
+        return 0;
+    }
+
+    /**
+     * The green-suite step: point at the refactor command for the suggested
+     * target. A hint, not a run, because refactoring starts with a baseline
+     * the human should see.
+     */
+    private function offerRefactor(Output $output, string $target): int
+    {
+        $classArg = str_replace('\\', '/', $target);
+
+        $output->writeln("  <fg=gray>Run:</> bin/phpspec refactor $classArg");
 
         return 0;
     }
