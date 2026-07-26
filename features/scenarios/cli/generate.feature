@@ -22,6 +22,41 @@ Feature: Generate code from a natural-language instruction
     When I run phpspec command "generate a Calculator that adds two numbers"
     Then the output should contain "Generating"
 
+  Scenario: asking for the step bodies when all steps exist is not answered by the scaffolder
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key
+      """
+    And a feature file "features/completing_a_task.feature":
+      """
+      Feature: Completing a task
+        Scenario: Completing a task
+          Given a starting context
+          When something happens
+          Then the outcome is checked
+      """
+    And a step file "features/steps/completing_a_task.steps.php":
+      """
+      <?php
+
+      given("a starting context", function () {
+          pending();
+      });
+
+      when("something happens", function () {
+          pending();
+      });
+
+      then("the outcome is checked", function () {
+          pending();
+      });
+      """
+    When I run phpspec command "generate the body of the steps in features/completing_a_task.feature"
+    Then the output should not contain "steps.php"
+    And the output should not contain "pending();"
+
   Scenario: a bare feature filename lands under the features directory, not the project root
     Given a phpspec.yaml config:
       """

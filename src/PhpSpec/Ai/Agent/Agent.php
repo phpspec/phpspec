@@ -20,6 +20,7 @@ use PhpSpec\Ai\Message;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\TreeScanner;
+use PhpSpec\CodeGeneration\FeatureLayout;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Filesystem;
@@ -55,6 +56,8 @@ final class Agent
 
     private readonly PromptLibrary $prompts;
 
+    private readonly FeatureLayout $layout;
+
     /**
      * @param Configuration $config the project configuration
      * @param Filesystem|null $filesystem filesystem abstraction for testability
@@ -75,6 +78,7 @@ final class Agent
         $this->registry = $registry ?? new ToolRegistry($config, $this->filesystem);
         $this->recorder = $recorder ?? new Recorder($this->filesystem);
         $this->prompts = $prompts ?? new PromptLibrary($this->filesystem);
+        $this->layout = new FeatureLayout();
     }
 
     /**
@@ -276,10 +280,11 @@ final class Agent
     }
 
     /**
-     * The existing spec/source files for any class-like token in the
-     * instruction, found by basename anywhere under the configured spec and
-     * source trees, so the model edits what is really there even in a
-     * namespaced project.
+     * The existing files the instruction names: any class-like token found by
+     * basename under the configured spec and source trees, plus any explicit
+     * path token that exists (a named .feature also brings its steps file
+     * along), so the model edits what is really there even in a namespaced
+     * project.
      *
      * @return array<string, string> relative path => contents
      */
@@ -295,6 +300,22 @@ final class Agent
             foreach ([[$srcPath, $class . '.php'], [$specPath, $class . $this->config->getSpecSuffix()]] as [$dir, $name]) {
                 foreach ($this->findByName($cwd . '/' . $dir, $name) as $rel) {
                     $files["$dir/$rel"] = $this->filesystem->read($cwd . '/' . $dir . '/' . $rel);
+                }
+            }
+        }
+
+        foreach (ProjectPath::tokensIn($instruction) as $named) {
+            $rel = ProjectPath::normalize($named);
+            if (!$this->filesystem->exists($cwd . '/' . $rel)) {
+                continue;
+            }
+
+            $files[$rel] = $this->filesystem->read($cwd . '/' . $rel);
+
+            if (str_ends_with($rel, '.feature')) {
+                $steps = $this->layout->stepsPathFor($rel);
+                if ($this->filesystem->exists($cwd . '/' . $steps)) {
+                    $files[$steps] = $this->filesystem->read($cwd . '/' . $steps);
                 }
             }
         }

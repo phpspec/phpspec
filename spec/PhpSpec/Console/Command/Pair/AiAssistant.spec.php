@@ -414,6 +414,30 @@ describe(AiAssistant::class, function () {
         expect((string) json_encode($captured))->toContain('declined this step');
     });
 
+    it('hands an ask_user note back to the model with the answer', function (Filesystem $fs) {
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'ask_user', [
+                    'question' => 'Shall I generate fooBar()?',
+                    'action' => 'generate methods',
+                ])]);
+            }
+            $captured = $messages;
+
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $this->answers = ['3, name it barFoo instead'];
+        $assistant->handle('what next?');
+
+        $text = (string) json_encode($captured);
+        expect($text)->toContain('no. The human added');
+        expect($text)->toContain('name it barFoo instead');
+    });
+
     it('hands the confirm-step notes to the driving model, on yes and on no', function (Filesystem $fs) {
         $captured = null;
         $turn = 0;

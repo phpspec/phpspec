@@ -388,6 +388,91 @@ describe(CommandDispatcher::class, function () {
         });
     });
 
+    context('a /generate chooser note becomes the follow-up round', function () {
+
+        function generateNoteWorld(Filesystem $fs, PairOutput $pairOutput, object $example): CommandDispatcher
+        {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+            allow($fs->write())->toReturnUsing(function (string $p, string $c) use ($example) {
+                $example->written[$p] = $c;
+            });
+            allow($fs->mkdir())->toReturn(null);
+
+            $config = new Configuration('.', $fs);
+
+            return new CommandDispatcher(
+                new SpecGenerator('spec', $fs),
+                new ClassGenerator('src', $fs),
+                $config,
+                $pairOutput,
+                true,
+                $fs,
+                chooser: new Chooser($pairOutput, true, function () use ($example) {
+                    return array_shift($example->answers) ?? '';
+                }),
+                specRunner: $example->specRunner,
+                agent: new Agent($config, $fs, $example->provider),
+            );
+        }
+
+        beforeEach(function () {
+            $this->written = [];
+            $this->answers = [];
+            $this->provider = new class implements ProviderInterface {
+                /** @var list<array> */
+                public array $rounds = [];
+
+                public function chat(array $messages, array $options = []): Response
+                {
+                    $this->rounds[] = $messages;
+                    $content = count($this->rounds) === 1
+                        ? "<?php\nclass Calc { /* v1 */ }"
+                        : "<?php\nclass Calc { public function add() {} /* v2 */ }";
+
+                    return new Response('', [new ToolCall('t', 'propose_edit', ['path' => 'src/App/Calc.php', 'content' => $content])]);
+                }
+            };
+        });
+
+        it('feeds a declined-with-note proposal back as the follow-up instruction', function (Filesystem $fs) {
+            $dispatcher = generateNoteWorld($fs, $this->pairOutput, $this);
+
+            $this->answers = ['3, implement add for real', '1'];
+            $dispatcher->dispatch('/generate implement add on App\\Calc');
+
+            expect(count($this->provider->rounds))->toBe(2);
+            expect((string) json_encode($this->provider->rounds[1]))->toContain('implement add for real');
+            expect((string) json_encode($this->provider->rounds[1]))->toContain('declined');
+            $calc = array_filter($this->written, fn(string $p) => str_ends_with(str_replace('\\', '/', $p), 'src/App/Calc.php'), ARRAY_FILTER_USE_KEY);
+            expect(implode('', $calc))->toContain('v2');
+        });
+
+        it('runs an accepted-with-note follow-up after applying the proposal', function (Filesystem $fs) {
+            $dispatcher = generateNoteWorld($fs, $this->pairOutput, $this);
+
+            $this->answers = ['1, now cover subtraction too', '1'];
+            $dispatcher->dispatch('/generate implement add on App\\Calc');
+
+            expect(count($this->provider->rounds))->toBe(2);
+            expect((string) json_encode($this->provider->rounds[1]))->toContain('now cover subtraction too');
+            expect((string) json_encode($this->provider->rounds[1]))->toContain('applied');
+            $calc = array_filter($this->written, fn(string $p) => str_ends_with(str_replace('\\', '/', $p), 'src/App/Calc.php'), ARRAY_FILTER_USE_KEY);
+            expect(implode('', $calc))->toContain('v2');
+        });
+
+        it('stays a single round when the answer carries no note', function (Filesystem $fs) {
+            $dispatcher = generateNoteWorld($fs, $this->pairOutput, $this);
+
+            $this->answers = ['1'];
+            $dispatcher->dispatch('/generate implement add on App\\Calc');
+
+            expect(count($this->provider->rounds))->toBe(1);
+        });
+
+    });
+
     context('next favours features, outside-in', function () {
         it('runs the features too (--all) when suggesting the next step', function () {
             $this->dispatcher->dispatch('/next');

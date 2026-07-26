@@ -40,6 +40,35 @@ final class ProjectPath
     }
 
     /**
+     * Normalises a path as the user typed it: separators to forward slashes,
+     * a leading dot-slash stripped. No cwd involved, so it is safe for tokens
+     * lifted out of an instruction.
+     */
+    public static function normalize(string $path): string
+    {
+        $path = str_replace('\\', '/', $path);
+        if (str_starts_with($path, './')) {
+            $path = substr($path, 2);
+        }
+
+        return $path;
+    }
+
+    /**
+     * The path-like tokens (ending .feature or .php) named in a piece of text,
+     * each once, in order of appearance. Backslash separators are captured, so
+     * a Windows-typed path stays one token; normalize() makes it canonical.
+     *
+     * @return list<string>
+     */
+    public static function tokensIn(string $text): array
+    {
+        preg_match_all('~[A-Za-z0-9_./\\\\-]+\.(?:feature|php)~', $text, $matches);
+
+        return array_values(array_unique($matches[0]));
+    }
+
+    /**
      * The nullable form, for optional scan results (recency and friends).
      */
     public static function relativeOrNull(?string $path): ?string

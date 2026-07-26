@@ -1,0 +1,20 @@
+{
+    "case": "generate-steps-bodies",
+    "instruction": "the body of the steps in features/completing_a_task.feature",
+    "aiConfig": { "provider": "google", "api_key": "test-key" },
+    "provider": "google",
+    "model": "gemini-3.1-pro-preview",
+    "response": {
+        "text": "",
+        "tool_calls": [
+            {
+                "id": "1",
+                "name": "propose_edit",
+                "arguments": {
+                    "path": "features/steps/completing_a_task.steps.php",
+                    "content": "<?php\n\ngiven(\"a starting context\", function () {\n    $this->todo = new \\App\\TodoList();\n    $this->todo->add('Walk the dog');\n});\n\nwhen(\"something happens\", function () {\n    $this->todo->complete('Walk the dog');\n});\n\nthen(\"the outcome is checked\", function () {\n    expect($this->todo->completed())->toBe(['Walk the dog']);\n});\n"
+                }
+            }
+        ]
+    }
+}
