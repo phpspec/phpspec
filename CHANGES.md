@@ -4,14 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [9.0.0-beta.13](https://github.com/phpspec/phpspec/compare/9.0.0-beta.12...9.0.0-beta.13)
 
 ### Added
- - Pair commands work as plain English, with or without the slash: "run features", "run --all", "describe App\Basket", "refactor Todo", "generate a spec for addTask" all route to the command, guarded so conversation never does ("run me through the design" still reaches the AI). Suite keywords translate to their options (features to --story, all to --all), and options on any run form now actually reach the runner: /run --all was silently dropping the flag.
- - Tab on the chooser's Yes or No opens an editable note ("1. Yes, rename the method to tasks" / "3. No, make it a Feature instead"): the note travels with the answer into the AI's tool result, so an accepted change carries the human's amendment and a declined offer carries the direction to take instead of a mute no. Piped answers carry a note after a comma.
+ - Pair commands work as plain English, with or without the slash
+ - Choice menu accepts a typed amendment on Tab, and the AI reads it
 
 ### Fixed
- - The navigator is capped at one offer and one registered suggestion per turn (the used-up tool is withheld, so the turn winds down into prose), and its prompts steer a run request to run_specs instead of turning it into an offer: pair `/next` no longer chains suggestion after suggestion.
+ - The navigator is capped at one offer and one suggestion per turn
+ - Options on pair `/run` (e.g. `--all`) now reach the runner
 
 ## [9.0.0-beta.12](https://github.com/phpspec/phpspec/compare/9.0.0-beta.11...9.0.0-beta.12)
 
