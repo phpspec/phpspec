@@ -6,14 +6,14 @@ use PhpSpec\Console\Command\Pair\StatusBar;
 describe(StatusBar::class, function () {
 
     it('shows the working directory, the provider, and the model when AI is on', function () {
-        $bar = new StatusBar('~/lab/test-phpspec-9', true, 'google', new RoleState(), null, 'gemini-3-pro-preview');
+        $bar = new StatusBar('~/lab/test-phpspec-9', true, 'google', new RoleState(), null, 'gemini-3.1-pro-preview');
 
         [$status, $role] = $bar->lines(120);
 
         expect($status)->toContain('~/lab/test-phpspec-9');
         expect($status)->toContain('ai: on');
         expect($status)->toContain('provider: google');
-        expect($status)->toContain('model: gemini-3-pro-preview');
+        expect($status)->toContain('model: gemini-3.1-pro-preview');
         expect($role)->toContain('ai is navigator');
         expect($role)->toContain('/swap');
     });
