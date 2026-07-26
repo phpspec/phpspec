@@ -311,6 +311,6 @@ ai:
 | `effort` | No | Reasoning effort passed to the provider (e.g. `low`, `medium`, `high`), applied once the provider supports it |
 | `api_key` | Yes | API key for the provider. Without this, AI features are disabled. |
 
-Default models per provider: `gemini-3-pro-preview` (google), `claude-sonnet-5` (anthropic), `gpt-5.1` (openai).
+Default models per provider: `gemini-3.1-pro-preview` (google), `claude-sonnet-5` (anthropic), `gpt-5.1` (openai).
 
 See [Pair Programming & AI](pair.md) for full documentation on pair mode, the AI assistant, and the refactor command.

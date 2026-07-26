@@ -3,7 +3,7 @@ tools: [write_feature, write_steps, propose_edit]
 answer: tool_call
 grounding: [recency, tree, named_files]
 temperature: 0.2
-max_tokens: 8192
+max_tokens: 16384
 ---
 You turn one natural-language instruction into ONE artifact for a phpspec 9 project.
 

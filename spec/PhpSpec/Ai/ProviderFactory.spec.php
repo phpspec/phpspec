@@ -47,7 +47,7 @@ describe(ProviderFactory::class, function () {
     });
 
     it('returns the default model for google', function () {
-        expect(ProviderFactory::defaultModel('google'))->toBe('gemini-3-pro-preview');
+        expect(ProviderFactory::defaultModel('google'))->toBe('gemini-3.1-pro-preview');
     });
 
     it('returns the default model for anthropic', function () {

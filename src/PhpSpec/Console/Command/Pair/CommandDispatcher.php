@@ -564,7 +564,13 @@ final class CommandDispatcher
         // The profile is shipped package code, loaded from the real filesystem.
         $outcome = $this->agent->do(CommandProfile::load('generate'), $instruction);
         if ($outcome->proposals === []) {
-            $this->output->error($outcome->prose !== '' ? $outcome->prose : 'Could not generate anything for that instruction. Try rephrasing.');
+            $reason = $outcome->prose !== '' ? $outcome->prose : 'Could not generate anything for that instruction. Try rephrasing.';
+            if ($this->ai !== null) {
+                // /generate is the context-free one-shot; the assistant holds
+                // the conversation, so steer a miss back to plain English.
+                $reason .= ' Or just tell me in plain English; I hold the pair context that /generate does not.';
+            }
+            $this->output->error($reason);
 
             return self::CONTINUE;
         }
