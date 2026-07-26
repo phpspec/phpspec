@@ -103,6 +103,13 @@ final class AiAssistant
      */
     private ?array $lastSuggestion = null;
 
+    /**
+     * Whether an offer was resolved (accepted OR declined) this turn: the
+     * navigator gets ONE offer per turn, mirroring the driver's one artifact,
+     * so a turn always winds down into prose instead of chaining offers.
+     */
+    private bool $offerResolvedThisHandle = false;
+
     /** Tool rounds taken since the driving AI wrote its artifact this turn. */
     private int $postArtifactRounds = 0;
 
@@ -160,6 +167,7 @@ final class AiAssistant
             $this->artifactWrittenThisHandle = false;
             $this->postArtifactRounds = 0;
             $this->lastSuggestion = null;
+            $this->offerResolvedThisHandle = false;
             $this->messages = $this->window->apply($this->messages);
             $this->injectSituation($situation);
             $this->messages[] = Message::user($input);
@@ -375,11 +383,21 @@ final class AiAssistant
             ));
         }
 
-        // Offering is the navigator's channel; a driving AI writes instead.
-        if ($role->aiIsDriver()) {
+        // Offering is the navigator's channel (a driving AI writes instead),
+        // and it happens at most once per turn; likewise one registered
+        // suggestion per turn. Withholding the used-up tool is what lets the
+        // loop end in prose instead of chaining suggestion after suggestion.
+        $spent = [];
+        if ($role->aiIsDriver() || $this->offerResolvedThisHandle) {
+            $spent[] = 'offer_change';
+        }
+        if ($this->lastSuggestion !== null) {
+            $spent[] = 'suggest_next';
+        }
+        if ($spent !== []) {
             $tools = array_values(array_filter(
                 $tools,
-                fn(ToolInterface $tool) => $tool->getName() !== 'offer_change',
+                fn(ToolInterface $tool) => !in_array($tool->getName(), $spent, true),
             ));
         }
 
@@ -1062,6 +1080,10 @@ final class AiAssistant
                 'intent' => self::intentParameter(),
             ],
             handler: function (array $args) use ($filesystem, $specDir) {
+                if ($this->offerResolvedThisHandle) {
+                    return ['error' => 'One offer per turn. React to its outcome in prose, or wait for the human.'];
+                }
+
                 $path = $args['path'];
                 $content = $args['content'];
                 $absPath = getcwd() . '/' . ltrim($path, '/');
@@ -1079,6 +1101,8 @@ final class AiAssistant
                 } else {
                     $this->output->fileDiff($absPath, $proposal->old, $proposal->new);
                 }
+
+                $this->offerResolvedThisHandle = true;
 
                 if (!$this->chooser->choose($this->offerQuestion($args), 'offer-change', 'apply offered changes')) {
                     PairLogger::log('RESULT', 'Offer declined');
@@ -1160,7 +1184,11 @@ final class AiAssistant
                     'description' => 'One short sentence why',
                 ],
             ],
-            handler: function (array $args): string {
+            handler: function (array $args): string|array {
+                if ($this->lastSuggestion !== null) {
+                    return ['error' => 'One suggestion per turn is already registered. Advise in prose now.'];
+                }
+
                 $this->lastSuggestion = array_map(strval(...), array_filter($args, is_scalar(...)));
 
                 return 'Suggestion noted. Keep advising in prose; never repeat it as JSON.';
