@@ -46,7 +46,7 @@ final class Recorder
      * Writes the capture document for one `do()` call. A deterministic run has
      * a null request and response; the step and proposals still tell the story.
      *
-     * @param array{provider?: string, model?: string, api_key?: string} $aiConfig
+     * @param array{provider?: string, model?: string, api_key?: string, effort?: string} $aiConfig
      * @param list<Proposal> $proposals
      */
     public function capture(string $command, string $instruction, ?Step $step, ?Request $request, array $aiConfig, ?Response $response, array $proposals = []): void
@@ -68,7 +68,7 @@ final class Recorder
      * "instruction", "aiConfig", "response") plus the pipeline's own view
      * (step, request, proposals). The api_key is deliberately dropped.
      *
-     * @param array{provider?: string, model?: string, api_key?: string} $aiConfig
+     * @param array{provider?: string, model?: string, api_key?: string, effort?: string} $aiConfig
      * @param list<Proposal> $proposals
      * @return array<string, mixed>
      */
@@ -78,7 +78,7 @@ final class Recorder
             'case' => '',
             'command' => $command,
             'instruction' => $instruction,
-            'aiConfig' => ['provider' => $aiConfig['provider'] ?? '', 'model' => $aiConfig['model'] ?? null],
+            'aiConfig' => ['provider' => $aiConfig['provider'] ?? '', 'model' => $aiConfig['model'] ?? null, 'effort' => $aiConfig['effort'] ?? null],
             'step' => $step === null ? null : [
                 'phase' => $step->phase->value,
                 'path' => $step->path,

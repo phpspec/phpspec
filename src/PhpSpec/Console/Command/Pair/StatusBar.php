@@ -34,6 +34,7 @@ final readonly class StatusBar
      * @param string|null $provider the configured provider name, when AI is on
      * @param RoleState $roleState the live pairing role, read at render time
      * @param string|null $unavailableReason why a configured provider could not start (drives the "unavailable" state)
+     * @param string|null $model the resolved model in use, when AI is on
      */
     public function __construct(
         private string $workingDir,
@@ -41,6 +42,7 @@ final readonly class StatusBar
         private ?string $provider,
         private RoleState $roleState,
         private ?string $unavailableReason = null,
+        private ?string $model = null,
     ) {}
 
     /**
@@ -66,7 +68,8 @@ final readonly class StatusBar
     {
         $left = '  ' . $this->workingDir;
         $right = match (true) {
-            $this->aiAvailable => sprintf('ai: on | provider: %s', $this->provider ?? '?'),
+            $this->aiAvailable => sprintf('ai: on | provider: %s', $this->provider ?? '?')
+                . ($this->model !== null ? sprintf(' | model: %s', $this->model) : ''),
             $this->unavailableReason !== null => 'ai: unavailable',
             default => 'ai: off',
         };

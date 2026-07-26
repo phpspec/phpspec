@@ -259,6 +259,29 @@ describe(Configuration::class, function () {
         ]);
     });
 
+    it('exposes a configured reasoning effort, ignoring a non-string value', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => true,
+            default => false,
+        });
+        allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n  effort: high\n");
+
+        $config = new Configuration('/app', $fs);
+
+        expect($config->getAiConfig())->toBe([
+            'provider' => 'google',
+            'effort' => 'high',
+            'api_key' => 'test-key-123',
+        ]);
+
+        allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: test-key-123\n  effort: 12\n");
+
+        expect((new Configuration('/app', $fs))->getAiConfig())->toBe([
+            'provider' => 'google',
+            'api_key' => 'test-key-123',
+        ]);
+    });
+
     it('returns null for ai config when not configured', function (Filesystem $fs) {
         $config = new Configuration('/app', $fs);
 

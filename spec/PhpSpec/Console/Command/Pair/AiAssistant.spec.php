@@ -64,6 +64,24 @@ describe(AiAssistant::class, function () {
         };
     });
 
+    it('passes the configured reasoning effort through to the provider', function (Filesystem $fs) {
+        $yamlPath = './phpspec.yaml';
+        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+        allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: k\n  effort: high\n" : '');
+
+        $options = null;
+        $this->provider->responder = function (array $messages, array $chatOptions) use (&$options) {
+            $options = $chatOptions;
+
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, new Configuration('.', $fs), $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant->handle('hello');
+
+        expect($options['effort'])->toBe('high');
+    });
+
     it('routes ask_user tool calls from the model through the chooser', function (Filesystem $fs) {
         $captured = null;
         $turn = 0;

@@ -116,6 +116,20 @@ describe(Agent::class, function () {
         expect($replay->requests[0]['options']['maxTokens'])->toBe(9999);
     });
 
+    it('passes the configured reasoning effort through to the provider', function (Filesystem $fs) {
+        $yamlPath = './phpspec.yaml';
+        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+        allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: k\n  effort: high\n" : '');
+        $replay = new ReplayProvider([
+            new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),
+        ]);
+        $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
+
+        $agent->do($this->profile, 'a spec for a Coupon');
+
+        expect($replay->requests[0]['options']['effort'])->toBe('high');
+    });
+
     it('falls back from the manifest max_tokens to it before any code default', function (Filesystem $fs) {
         $profile = new CommandProfile(name: 'generate', body: '', tools: ['propose_edit'], answer: 'tool_call', maxTokens: 4096);
         $replay = new ReplayProvider([

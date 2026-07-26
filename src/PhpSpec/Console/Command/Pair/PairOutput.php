@@ -54,9 +54,9 @@ final class PairOutput
      * @param RoleState $roleState the live pairing role, read on each redraw
      * @param string|null $unavailableReason why a configured provider could not start, when it did not
      */
-    public function configureStatus(string $workingDir, bool $aiAvailable, ?string $provider, RoleState $roleState, ?string $unavailableReason = null): void
+    public function configureStatus(string $workingDir, bool $aiAvailable, ?string $provider, RoleState $roleState, ?string $unavailableReason = null, ?string $model = null): void
     {
-        $this->statusBar = new StatusBar($workingDir, $aiAvailable, $provider, $roleState, $unavailableReason);
+        $this->statusBar = new StatusBar($workingDir, $aiAvailable, $provider, $roleState, $unavailableReason, $model);
     }
 
     /**

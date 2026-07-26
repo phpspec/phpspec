@@ -225,16 +225,21 @@ final class AiAssistant
      */
     private function runLoop(): string
     {
-        $model = $this->model ?? ProviderFactory::defaultModel('google');
-        $maxTokens = $this->maxTokens();
+        $options = [
+            'model' => $this->model ?? ProviderFactory::defaultModel('google'),
+            'maxTokens' => $this->maxTokens(),
+            'temperature' => 0.3,
+        ];
+
+        // Reasoning effort is the user's call; providers that cannot map it yet
+        // simply ignore the option.
+        $effort = $this->config->getAiConfig()['effort'] ?? null;
+        if ($effort !== null) {
+            $options['effort'] = $effort;
+        }
 
         for ($turn = 0; $turn < self::MAX_TURNS; $turn++) {
-            $response = $this->provider->chat($this->messages, [
-                'model' => $model,
-                'maxTokens' => $maxTokens,
-                'temperature' => 0.3,
-                'tools' => $this->advertisedTools(),
-            ]);
+            $response = $this->provider->chat($this->messages, ['tools' => $this->advertisedTools()] + $options);
 
             $this->messages[] = Message::assistant(
                 $response->text,

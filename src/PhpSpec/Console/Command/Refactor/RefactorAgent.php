@@ -55,11 +55,13 @@ final class RefactorAgent
      * @param ProviderInterface $provider the AI provider for LLM interactions
      * @param string|null $model the LLM model identifier, or null for the default
      * @param Filesystem|null $filesystem filesystem abstraction for testability
+     * @param string|null $effort the configured reasoning effort, passed through to the provider
      */
     public function __construct(
         private readonly ProviderInterface $provider,
         private readonly ?string $model = null,
         ?Filesystem $filesystem = null,
+        private readonly ?string $effort = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
     }
@@ -102,14 +104,18 @@ final class RefactorAgent
      */
     private function runLoop(): void
     {
-        $model = $this->model ?? ProviderFactory::defaultModel('google');
         $profile = $this->profile();
+        $options = [
+            'model' => $this->model ?? ProviderFactory::defaultModel('google'),
+            'maxTokens' => $profile->maxTokens ?? 8192,
+            'temperature' => $profile->temperature ?? 0.3,
+        ];
+        if ($this->effort !== null) {
+            $options['effort'] = $this->effort;
+        }
 
         for ($turn = 0; $turn < self::MAX_TURNS; $turn++) {
-            $response = $this->provider->chat($this->messages, [
-                'model' => $model,
-                'maxTokens' => $profile->maxTokens ?? 8192,
-                'temperature' => $profile->temperature ?? 0.3,
+            $response = $this->provider->chat($this->messages, $options + [
                 'tools' => array_map(
                     fn(ToolInterface $tool) => [
                         'name' => $tool->getName(),

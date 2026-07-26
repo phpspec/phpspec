@@ -105,7 +105,7 @@ final class Agent
      * answers in prose), executes the tool calls into proposals, and captures
      * the exchange.
      *
-     * @param array{provider: string, model?: string, api_key: string, maxTokens?: int}|null $aiConfig
+     * @param array{provider: string, model?: string, api_key: string, maxTokens?: int, effort?: string}|null $aiConfig
      */
     private function ask(CommandProfile $profile, ?Step $step, Grounding $grounding, string $instruction, ?array $aiConfig): Outcome
     {
@@ -166,7 +166,7 @@ final class Agent
      * The provider to talk to: the injected seam, or one built from the ai
      * config; a missing config is reported like any other provider failure.
      *
-     * @param array{provider: string, model?: string, api_key: string, maxTokens?: int}|null $aiConfig
+     * @param array{provider: string, model?: string, api_key: string, maxTokens?: int, effort?: string}|null $aiConfig
      */
     private function providerFor(?array $aiConfig): ProviderInterface
     {
@@ -186,7 +186,7 @@ final class Agent
      * for model params: the user's phpspec config beats the shipped command
      * manifest, which beats the code default.
      *
-     * @param array{provider?: string, model?: string, maxTokens?: int} $aiConfig
+     * @param array{provider?: string, model?: string, maxTokens?: int, effort?: string} $aiConfig
      * @return array<string, mixed>
      */
     private function options(CommandProfile $profile, array $aiConfig): array
@@ -194,6 +194,12 @@ final class Agent
         $options = [
             'maxTokens' => $aiConfig['maxTokens'] ?? $profile->maxTokens ?? self::DEFAULT_MAX_TOKENS,
         ];
+
+        // Reasoning effort is the user's call entirely; providers that cannot
+        // map it yet simply ignore the option.
+        if (isset($aiConfig['effort'])) {
+            $options['effort'] = $aiConfig['effort'];
+        }
 
         $model = $aiConfig['model'] ?? (isset($aiConfig['provider']) ? ProviderFactory::defaultModel($aiConfig['provider']) : null);
         if ($model !== null) {
