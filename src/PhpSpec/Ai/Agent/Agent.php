@@ -39,7 +39,13 @@ use Throwable;
  */
 final class Agent
 {
-    private const DEFAULT_MAX_TOKENS = 8192;
+    /**
+     * The output-token ceiling when neither the user config nor the command
+     * manifest sets one. Generous, because a reasoning model's thinking counts
+     * against it: a tight cap comes back as an EMPTY response on both channels
+     * (seen live with gemini-3.1-pro-preview at 8192).
+     */
+    private const DEFAULT_MAX_TOKENS = 16384;
 
     private readonly Filesystem $filesystem;
 
@@ -80,7 +86,7 @@ final class Agent
     public function do(CommandProfile $profile, string $instruction, ?Grounding $seed = null): Outcome
     {
         $grounding = $this->ground($profile, $instruction, $seed);
-        $step = Step::resolve($instruction, $grounding);
+        $step = $this->refineSubject(Step::resolve($instruction, $grounding));
         $aiConfig = $this->config->getAiConfig();
 
         try {
@@ -247,10 +253,17 @@ final class Agent
 
         if (in_array('tree', $profile->grounding, true) && $tree === '') {
             $scanner = new TreeScanner($this->filesystem);
-            $srcPath = ltrim($this->config->getSrcPath(), './');
-            $specPath = ltrim($this->config->getSpecPath(), './');
-            // One level keeps a one-shot's context lean; the pair loop scans deeper.
-            $tree = trim($scanner->scan($cwd . '/' . $srcPath, 1) . "\n" . $scanner->scan($cwd . '/' . $specPath, 1));
+            $sections = [];
+            foreach ([ltrim($this->config->getSrcPath(), './'), ltrim($this->config->getSpecPath(), './')] as $dir) {
+                // Deep enough to NAME files in a namespaced project (a one-level
+                // scan of src/App/... shows nothing but "App/"), each tree
+                // labelled with the directory it describes.
+                $listing = $scanner->scan($cwd . '/' . $dir, 3);
+                if ($listing !== '') {
+                    $sections[] = "$dir/:\n" . $listing;
+                }
+            }
+            $tree = implode("\n\n", $sections);
         }
 
         if (in_array('named_files', $profile->grounding, true) && $namedFiles === []) {
@@ -262,27 +275,121 @@ final class Agent
 
     /**
      * The existing spec/source files for any class-like token in the
-     * instruction, so the model edits what is really there.
+     * instruction, found by basename anywhere under the configured spec and
+     * source trees, so the model edits what is really there even in a
+     * namespaced project.
      *
      * @return array<string, string> relative path => contents
      */
     private function namedFiles(string $instruction): array
     {
+        $cwd = getcwd() ?: '.';
         $specPath = ltrim($this->config->getSpecPath(), './');
         $srcPath = ltrim($this->config->getSrcPath(), './');
         $files = [];
         preg_match_all('/\b[A-Z][A-Za-z0-9]+\b/', $instruction, $matches);
 
         foreach (array_unique($matches[0]) as $class) {
-            foreach (["$srcPath/$class.php", "$specPath/$class" . $this->config->getSpecSuffix()] as $rel) {
-                $full = getcwd() . '/' . $rel;
-                if ($this->filesystem->exists($full)) {
-                    $files[$rel] = $this->filesystem->read($full);
+            foreach ([[$srcPath, $class . '.php'], [$specPath, $class . $this->config->getSpecSuffix()]] as [$dir, $name]) {
+                foreach ($this->findByName($cwd . '/' . $dir, $name) as $rel) {
+                    $files["$dir/$rel"] = $this->filesystem->read($cwd . '/' . $dir . '/' . $rel);
                 }
             }
         }
 
         return $files;
+    }
+
+    /**
+     * A bare class subject (no namespace, no path) resolved against the files
+     * that actually exist: "TodoList" in a project holding
+     * spec/App/TodoList.spec.php becomes "App\TodoList", so the derived path
+     * updates the real spec instead of creating a flat sibling. An ambiguous or
+     * unknown name is left as the user said it.
+     */
+    private function refineSubject(?Step $step): ?Step
+    {
+        if ($step === null || $step->path !== null || $step->subject === null) {
+            return $step;
+        }
+
+        if ($step->phase !== Phase::WriteSpec && $step->phase !== Phase::WriteCode) {
+            return $step;
+        }
+
+        if (str_contains($step->subject, '\\') || str_contains($step->subject, '/')) {
+            return $step;
+        }
+
+        $resolved = $this->locateClass($step->subject);
+        if ($resolved === null || $resolved === $step->subject) {
+            return $step;
+        }
+
+        return new Step($step->phase, null, $resolved, $step->because . sprintf(', resolved to "%s" from the project tree', $resolved));
+    }
+
+    /**
+     * The namespaced class path a bare name denotes, when exactly one existing
+     * spec or source file matches it; null when none or several do.
+     */
+    private function locateClass(string $class): ?string
+    {
+        $cwd = getcwd() ?: '.';
+        $specDir = ltrim($this->config->getSpecPath(), './');
+        $srcDir = ltrim($this->config->getSrcPath(), './');
+        $suffix = $this->config->getSpecSuffix();
+        $prefix = trim($this->config->getPsr4Prefix(), '\\');
+
+        $candidates = [];
+        foreach ($this->findByName($cwd . '/' . $specDir, $class . $suffix) as $rel) {
+            // Specs mirror the full namespace under the spec dir.
+            $candidates[] = str_replace('/', '\\', substr($rel, 0, -strlen($suffix)));
+        }
+        foreach ($this->findByName($cwd . '/' . $srcDir, $class . '.php') as $rel) {
+            // Source strips the PSR-4 prefix, so put it back for the class name.
+            $bare = str_replace('/', '\\', substr($rel, 0, -strlen('.php')));
+            $candidates[] = $prefix !== '' ? $prefix . '\\' . $bare : $bare;
+        }
+
+        $unique = array_values(array_unique($candidates));
+
+        return count($unique) === 1 ? $unique[0] : null;
+    }
+
+    /**
+     * Every file under a directory (to a sane depth) whose name is exactly the
+     * given one, as paths relative to that directory.
+     *
+     * @return list<string>
+     */
+    private function findByName(string $root, string $fileName, int $depth = 0): array
+    {
+        if ($depth > 6 || !$this->filesystem->exists($root) || !$this->filesystem->isDir($root)) {
+            return [];
+        }
+
+        $found = [];
+        foreach ($this->filesystem->scandir($root) as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+
+            $full = $root . '/' . $entry;
+            if ($this->filesystem->isDir($full)) {
+                foreach ($this->findByName($full, $fileName, $depth + 1) as $childRel) {
+                    $found[] = $entry . '/' . $childRel;
+                }
+
+                continue;
+            }
+
+            if ($entry === $fileName) {
+                $found[] = $entry;
+            }
+        }
+
+        return $found;
     }
 
 }

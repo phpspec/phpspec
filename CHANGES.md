@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
  - The google default model is `gemini-3.1-pro-preview`: its predecessor `gemini-3-pro-preview` was retired from the API and answered every request with a 404. Set `ai.model` to choose differently.
+ - `generate` resolves a bare class name against the project tree ("the TodoList spec" finds `App\TodoList`), so the model is shown the real current file and the proposal updates it in place instead of creating a flat sibling.
+ - `generate` grounds the model in a labelled, deeper file listing (a namespaced project no longer renders as a bare `App/`), and one-shot commands default to a 16384 output-token ceiling so a reasoning model's thinking cannot come back as an empty answer.
+ - A failed pair `/generate` points back to plain English, which holds the conversation context the one-shot does not.
 
 ## [9.0.0-beta.10](https://github.com/phpspec/phpspec/compare/9.0.0-beta.9...9.0.0-beta.10)
 
