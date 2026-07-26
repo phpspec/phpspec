@@ -19,6 +19,7 @@ use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Message;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
+use PhpSpec\Ai\TreeScanner;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Filesystem;
@@ -240,14 +241,16 @@ final class Agent
 
         if (in_array('recency', $profile->grounding, true) && $recentFeature === null && $recentSource === null) {
             $scanner = new RecencyScanner($this->filesystem);
-            $recentFeature = self::relativeOrNull($scanner->mostRecentFeature($cwd . '/' . trim($this->config->getFeaturesPath(), './')));
-            $recentSource = self::relativeOrNull($scanner->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './')));
+            $recentFeature = ProjectPath::relativeOrNull($scanner->mostRecentFeature($cwd . '/' . trim($this->config->getFeaturesPath(), './')));
+            $recentSource = ProjectPath::relativeOrNull($scanner->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './')));
         }
 
         if (in_array('tree', $profile->grounding, true) && $tree === '') {
+            $scanner = new TreeScanner($this->filesystem);
             $srcPath = ltrim($this->config->getSrcPath(), './');
             $specPath = ltrim($this->config->getSpecPath(), './');
-            $tree = trim($this->scanTree($cwd . '/' . $srcPath) . "\n" . $this->scanTree($cwd . '/' . $specPath));
+            // One level keeps a one-shot's context lean; the pair loop scans deeper.
+            $tree = trim($scanner->scan($cwd . '/' . $srcPath, 1) . "\n" . $scanner->scan($cwd . '/' . $specPath, 1));
         }
 
         if (in_array('named_files', $profile->grounding, true) && $namedFiles === []) {
@@ -255,23 +258,6 @@ final class Agent
         }
 
         return new Grounding($seed?->suite, $recentFeature, $recentSource, $tree, $namedFiles);
-    }
-
-    /**
-     * A scanned path made project-relative (separator-normalised on both sides,
-     * so a Windows cwd still strips cleanly), keeping steps, prompts, and the
-     * capture log readable.
-     */
-    private static function relativeOrNull(?string $path): ?string
-    {
-        if ($path === null) {
-            return null;
-        }
-
-        $path = str_replace('\\', '/', $path);
-        $cwd = str_replace('\\', '/', getcwd() ?: '.') . '/';
-
-        return str_starts_with($path, $cwd) ? substr($path, strlen($cwd)) : $path;
     }
 
     /**
@@ -299,25 +285,4 @@ final class Agent
         return $files;
     }
 
-    /**
-     * A shallow listing of the files under a directory, one per line.
-     */
-    private function scanTree(string $dir): string
-    {
-        if (!$this->filesystem->exists($dir) || !$this->filesystem->isDir($dir)) {
-            return '';
-        }
-
-        $lines = [];
-        foreach ($this->filesystem->scandir($dir) as $entry) {
-            if ($entry === '.' || $entry === '..') {
-                continue;
-            }
-
-            $full = $dir . '/' . $entry;
-            $lines[] = $this->filesystem->isDir($full) ? "$entry/" : $entry;
-        }
-
-        return implode("\n", $lines);
-    }
 }

@@ -20,7 +20,7 @@ use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Contracts\ToolInterface;
 use PhpSpec\Ai\Message;
 use PhpSpec\Ai\ProviderFactory;
-use PhpSpec\Ai\SpecRunner;
+use PhpSpec\Ai\SpecSubprocess;
 use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Filesystem;
@@ -256,7 +256,7 @@ final class RefactorAgent
      */
     private static function runSpecs(string $specPath): array
     {
-        return SpecRunner::run($specPath);
+        return SpecSubprocess::run($specPath);
     }
 
     /**

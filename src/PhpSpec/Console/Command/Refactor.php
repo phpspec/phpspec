@@ -15,7 +15,7 @@
 namespace PhpSpec\Console\Command;
 
 use PhpSpec\Ai\ProviderFactory;
-use PhpSpec\Ai\SpecRunner;
+use PhpSpec\Ai\SpecSubprocess;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\RefactorAgent;
 use PhpSpec\Console\Command\Refactor\RefactorResult;
@@ -244,7 +244,7 @@ final class Refactor extends Command
             return ($this->specRunner)($specPath);
         }
 
-        return SpecRunner::run($specPath);
+        return SpecSubprocess::run($specPath);
     }
 
     private function loadBootstrap(): bool

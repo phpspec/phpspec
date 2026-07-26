@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Console\Command\Pair;
 
+use PhpSpec\Ai\Agent\ProjectPath;
 use PhpSpec\Ai\Agent\Proposal;
 use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\AiTools;
@@ -26,6 +27,7 @@ use PhpSpec\Ai\Response;
 use PhpSpec\Ai\SymbolInspector;
 use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
+use PhpSpec\Ai\TreeScanner;
 use PhpSpec\CodeGeneration\LegacySpecDetector;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
@@ -724,12 +726,9 @@ final class AiAssistant
      */
     private function proposalFor(string $absPath, string $content, string $origin): Proposal
     {
-        $path = self::normalisePath($absPath);
-        $cwd = self::normalisePath(getcwd() ?: '.') . '/';
-        $relPath = str_starts_with($path, $cwd) ? substr($path, strlen($cwd)) : ltrim($path, '/');
         $exists = $this->filesystem->exists($absPath);
 
-        return new Proposal($relPath, $exists ? $this->filesystem->read($absPath) : '', $content, !$exists, $origin);
+        return new Proposal(ProjectPath::relative($absPath), $exists ? $this->filesystem->read($absPath) : '', $content, !$exists, $origin);
     }
 
     /**
@@ -1070,23 +1069,24 @@ final class AiAssistant
     private function buildProjectContext(): string
     {
         $sections = [];
+        $scanner = new TreeScanner($this->filesystem);
 
         $specPath = ltrim($this->config->getSpecPath(), './');
         $srcPath = ltrim($this->config->getSrcPath(), './');
 
-        $srcTree = $this->scanTree(getcwd() . '/' . $srcPath, 3);
+        $srcTree = $scanner->scan(getcwd() . '/' . $srcPath, 3);
         if ($srcTree !== '') {
             $sections[] = "## Source files ($srcPath/)\n$srcTree";
         }
 
-        $specTree = $this->scanTree(getcwd() . '/' . $specPath, 3);
+        $specTree = $scanner->scan(getcwd() . '/' . $specPath, 3);
         if ($specTree !== '') {
             $sections[] = "## Spec files ($specPath/)\n$specTree";
         }
 
-        $featuresDir = getcwd() . '/features';
+        $featuresDir = getcwd() . '/' . trim($this->config->getFeaturesPath(), './');
         if ($this->filesystem->exists($featuresDir) && $this->filesystem->isDir($featuresDir)) {
-            $featTree = $this->scanTree($featuresDir, 3);
+            $featTree = $scanner->scan($featuresDir, 3);
             if ($featTree !== '') {
                 $sections[] = "## Feature files\n$featTree";
             }
@@ -1103,38 +1103,6 @@ final class AiAssistant
         }
 
         return "# Project file tree\n\n" . implode("\n\n", $sections);
-    }
-
-    /**
-     * Recursively scans a directory tree up to a given depth, returning an indented listing.
-     */
-    private function scanTree(string $absPath, int $maxDepth, int $depth = 0): string
-    {
-        if ($depth >= $maxDepth || !$this->filesystem->exists($absPath) || !$this->filesystem->isDir($absPath)) {
-            return '';
-        }
-
-        $entries = $this->filesystem->scandir($absPath);
-        $entries = array_filter($entries, fn($e) => $e !== '.' && $e !== '..');
-        sort($entries);
-
-        $lines = [];
-        $indent = str_repeat('  ', $depth);
-
-        foreach ($entries as $entry) {
-            $full = $absPath . '/' . $entry;
-            if ($this->filesystem->isDir($full)) {
-                $lines[] = "$indent$entry/";
-                $sub = $this->scanTree($full, $maxDepth, $depth + 1);
-                if ($sub !== '') {
-                    $lines[] = $sub;
-                }
-            } else {
-                $lines[] = "$indent$entry";
-            }
-        }
-
-        return implode("\n", $lines);
     }
 
     /**

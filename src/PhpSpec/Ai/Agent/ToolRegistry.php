@@ -355,18 +355,11 @@ final class ToolRegistry
     }
 
     /**
-     * Normalises a path to project-relative with forward slashes (both sides
-     * separator-normalised, so a Windows cwd still strips cleanly).
+     * Normalises a path to project-relative with forward slashes.
      */
     private function relative(string $path): string
     {
-        $path = str_replace('\\', '/', $path);
-        $cwd = str_replace('\\', '/', getcwd() ?: '.') . '/';
-        if (str_starts_with($path, $cwd)) {
-            $path = substr($path, strlen($cwd));
-        }
-
-        return ltrim($path, '/');
+        return ProjectPath::relative($path);
     }
 
     /**
@@ -374,7 +367,7 @@ final class ToolRegistry
      */
     private function absolute(string $relPath): string
     {
-        return (getcwd() ?: '.') . '/' . $relPath;
+        return ProjectPath::absolute($relPath);
     }
 
     /**

@@ -1,11 +1,11 @@
 <?php
 
-use PhpSpec\Ai\SpecRunner;
+use PhpSpec\Ai\SpecSubprocess;
 
-describe(SpecRunner::class, function () {
+describe(SpecSubprocess::class, function () {
 
     it('instantiates', function () {
-        expect(class_exists(SpecRunner::class))->toBeTrue();
+        expect(class_exists(SpecSubprocess::class))->toBeTrue();
     });
 
     it('runs a passing spec file and returns exit code 0', function () {
@@ -17,7 +17,7 @@ describe(SpecRunner::class, function () {
         });
         PHP);
 
-        [$exitCode, $output] = SpecRunner::run($tmp);
+        [$exitCode, $output] = SpecSubprocess::run($tmp);
         unlink($tmp);
 
         expect($exitCode)->toBe(0);
@@ -33,7 +33,7 @@ describe(SpecRunner::class, function () {
         });
         PHP);
 
-        [$exitCode, $output] = SpecRunner::run($tmp);
+        [$exitCode, $output] = SpecSubprocess::run($tmp);
         unlink($tmp);
 
         expect($exitCode)->not()->toBe(0);
@@ -41,7 +41,7 @@ describe(SpecRunner::class, function () {
     });
 
     it('returns output for non-existent spec path', function () {
-        [$exitCode, $output] = SpecRunner::run('/nonexistent/path/spec.php');
+        [$exitCode, $output] = SpecSubprocess::run('/nonexistent/path/spec.php');
         expect($output)->toContain('No specs found');
     });
 });
