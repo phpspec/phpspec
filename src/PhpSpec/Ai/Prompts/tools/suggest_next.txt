@@ -1,5 +1,5 @@
-Register the single next-step suggestion in structured form: what to build next
-(spec, feature, or example), its target, and one short reason. In pair mode this
-feeds the prompt's ghost suggestion; keep advising the human in prose as well.
-Once per turn, and only when the human asks what to do next; never as a side
-effect of another request.
+Register the single next-step suggestion in structured form: what to do next
+(spec, feature, example, or refactor on a green suite), its target, and one
+short reason. In pair mode this feeds the prompt's ghost suggestion; keep
+advising the human in prose as well. Once per turn, and only when the human
+asks what to do next; never as a side effect of another request.

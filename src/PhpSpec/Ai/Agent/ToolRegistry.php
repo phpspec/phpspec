@@ -51,7 +51,7 @@ final class ToolRegistry
             'content' => ['type' => 'string', 'description' => 'The complete new file content, not a diff'],
         ],
         'suggest_next' => [
-            'type' => ['type' => 'string', 'enum' => ['spec', 'feature', 'example', 'info'], 'description' => 'What to build next: spec (a class to describe), feature (a user-facing behaviour), example (grow an existing spec), or info'],
+            'type' => ['type' => 'string', 'enum' => ['spec', 'feature', 'example', 'refactor', 'info'], 'description' => 'What to do next: spec (a class to describe), feature (a user-facing behaviour), example (grow an existing spec), refactor (the suite is green and a class deserves cleaning), or info'],
             'target' => ['type' => 'string', 'description' => 'The class name, feature name, or spec the suggestion is about'],
             'reason' => ['type' => 'string', 'description' => 'One short sentence on why this is the next baby step'],
         ],

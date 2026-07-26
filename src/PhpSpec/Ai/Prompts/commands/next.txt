@@ -11,6 +11,8 @@ build next.
 
 Answer by calling suggest_next exactly once. type is spec (a new class to
 describe; target is its fully qualified name), feature (a user-facing behaviour;
-target is a short name), or example (grow an existing spec; target is the class).
-Use type info only when nothing concrete applies. Keep reason to one short
-sentence.
+target is a short name), example (grow an existing spec; target is the class),
+or refactor (the suite is green and a class deserves cleaning; target is the
+class). On a green suite, weigh refactor first: red, green, REFACTOR is the
+cycle, so only pass over it when the code is genuinely clean. Use type info
+only when nothing concrete applies. Keep reason to one short sentence.

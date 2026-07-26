@@ -153,6 +153,35 @@ describe(Next::class, function () {
             expect($tester->getDisplay())->toContain('Would you like me to create that for you?');
         });
 
+        it('displays a refactor suggestion with the refactor hint', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
+                return $path === $yamlPath;
+            });
+            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
+                if ($path === $yamlPath) {
+                    return "ai:\n  provider: google\n  api_key: test-key\n";
+                }
+                return '';
+            });
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'refactor',
+                'target' => 'App\\TodoList',
+                'reason' => 'The suite is green and complete() duplicates the lookup.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $tester = new CommandTester($cmd);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('Refactor');
+            expect($tester->getDisplay())->toContain('App\\TodoList');
+            expect($tester->getDisplay())->toContain('bin/phpspec refactor App/TodoList');
+        });
+
         it('displays an example suggestion with exemplify hint', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {

@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - One-shot AI commands declare their tools on the wire again (they were sent as zero declarations, so the model answered empty)
  - Composer now refuses papi-ai packages older than 0.13
 
+## [Unreleased]
+
+### Added
+ - On a green suite, `next` can recommend refactoring, pointing at (or ghosting) `refactor` with the target
+
+### Fixed
+ - Pair delegates commands with their arguments actually bound, so `/refactor App/TodoList` runs
+
 ## [9.0.0-beta.13](https://github.com/phpspec/phpspec/compare/9.0.0-beta.12...9.0.0-beta.13)
 
 ### Added
