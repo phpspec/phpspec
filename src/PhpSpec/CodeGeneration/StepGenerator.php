@@ -35,6 +35,24 @@ class StepGenerator
     }
 
     /**
+     * The steps file a feature's definitions live in, in the standard layout
+     * (`<feature dir>/steps/<name>.steps.php`). The single home of that
+     * convention; {@see featurePathFor()} is its inverse.
+     */
+    public static function stepsPathFor(string $featurePath): string
+    {
+        return dirname($featurePath) . '/steps/' . basename($featurePath, '.feature') . '.steps.php';
+    }
+
+    /**
+     * The feature a steps file belongs to, inverting {@see stepsPathFor()}.
+     */
+    public static function featurePathFor(string $stepsPath): string
+    {
+        return dirname($stepsPath, 2) . '/' . basename($stepsPath, '.steps.php') . '.feature';
+    }
+
+    /**
      * Generates step definition functions for the given undefined steps and writes them to a steps file.
      * Appends to an existing steps file if one already exists.
      *

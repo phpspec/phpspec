@@ -387,7 +387,7 @@ final class ToolRegistry
             throw new RuntimeException(sprintf('No Given/When/Then steps found in "%s".', $relFeature));
         }
 
-        $relSteps = dirname($relFeature) . '/steps/' . basename($relFeature, '.feature') . '.steps.php';
+        $relSteps = StepGenerator::stepsPathFor($relFeature);
         $absSteps = $this->absolute($relSteps);
         $existing = $this->filesystem->exists($absSteps) ? $this->filesystem->read($absSteps) : '';
 
@@ -404,7 +404,7 @@ final class ToolRegistry
             return null;
         }
 
-        return dirname($stepsPath, 2) . '/' . basename($stepsPath, '.steps.php') . '.feature';
+        return StepGenerator::featurePathFor($stepsPath);
     }
 
     /**

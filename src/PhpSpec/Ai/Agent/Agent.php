@@ -20,6 +20,7 @@ use PhpSpec\Ai\Message;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\TreeScanner;
+use PhpSpec\CodeGeneration\StepGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Filesystem;
@@ -300,9 +301,8 @@ final class Agent
             }
         }
 
-        preg_match_all('~[A-Za-z0-9_.\/-]+\.(?:feature|php)~', $instruction, $paths);
-        foreach (array_unique($paths[0]) as $named) {
-            $rel = ltrim(str_replace('\\', '/', $named), './');
+        foreach (ProjectPath::tokensIn($instruction) as $named) {
+            $rel = ProjectPath::normalize($named);
             if (!$this->filesystem->exists($cwd . '/' . $rel)) {
                 continue;
             }
@@ -310,7 +310,7 @@ final class Agent
             $files[$rel] = $this->filesystem->read($cwd . '/' . $rel);
 
             if (str_ends_with($rel, '.feature')) {
-                $steps = dirname($rel) . '/steps/' . basename($rel, '.feature') . '.steps.php';
+                $steps = StepGenerator::stepsPathFor($rel);
                 if ($this->filesystem->exists($cwd . '/' . $steps)) {
                     $files[$steps] = $this->filesystem->read($cwd . '/' . $steps);
                 }

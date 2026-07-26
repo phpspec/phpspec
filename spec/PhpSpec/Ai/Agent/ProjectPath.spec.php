@@ -28,4 +28,24 @@ describe(ProjectPath::class, function () {
         expect(ProjectPath::absolute('src/X.php'))->toBe(getcwd() . '/src/X.php');
     });
 
+    it('normalises separators and strips a leading dot-slash', function () {
+        expect(ProjectPath::normalize('features\\completing_a_task.feature'))->toBe('features/completing_a_task.feature');
+        expect(ProjectPath::normalize('./features/adding.feature'))->toBe('features/adding.feature');
+        expect(ProjectPath::normalize('spec/App/Calc.spec.php'))->toBe('spec/App/Calc.spec.php');
+    });
+
+    it('finds the path-like tokens named in a piece of text, once each', function () {
+        $tokens = ProjectPath::tokensIn('the body of the steps in features/completing_a_task.feature and src/App/Calc.php, yes features/completing_a_task.feature');
+
+        expect($tokens)->toBe(['features/completing_a_task.feature', 'src/App/Calc.php']);
+    });
+
+    it('captures a backslash-typed path token whole', function () {
+        expect(ProjectPath::tokensIn('the steps in features\\completing_a_task.feature'))->toBe(['features\\completing_a_task.feature']);
+    });
+
+    it('finds no path tokens in plain prose', function () {
+        expect(ProjectPath::tokensIn('make the basket total the items'))->toBe([]);
+    });
+
 });
