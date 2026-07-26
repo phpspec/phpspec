@@ -45,8 +45,12 @@ final class SubprocessRunner implements SpecRunner
                 ParallelRunner::findPhpspecBin(),
                 'run',
             ];
+            // The argument is a command-line fragment ("spec/App --stop-on-failure"),
+            // so each token must become its own argv element for the child.
             if ($argument !== '') {
-                $command[] = $argument;
+                foreach (preg_split('/\s+/', $argument) ?: [] as $token) {
+                    $command[] = $token;
+                }
             }
             $command[] = '-f';
             $command[] = 'dot';

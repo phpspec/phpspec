@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+ - Pair commands work as plain English, with or without the slash: "run features", "run --all", "describe App\Basket", "refactor Todo", "generate a spec for addTask" all route to the command, guarded so conversation never does ("run me through the design" still reaches the AI). Suite keywords translate to their options (features to --story, all to --all), and options on any run form now actually reach the runner: /run --all was silently dropping the flag.
+
 ### Fixed
  - The navigator is capped at one offer and one registered suggestion per turn (the used-up tool is withheld, so the turn winds down into prose), and its prompts steer a run request to run_specs instead of turning it into an offer: pair `/next` no longer chains suggestion after suggestion.
 

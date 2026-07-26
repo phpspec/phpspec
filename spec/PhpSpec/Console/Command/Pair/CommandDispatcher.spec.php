@@ -302,7 +302,7 @@ describe(CommandDispatcher::class, function () {
         expect($this->specRunner->arguments)->toBe(['spec/NonExistent']);
     });
 
-    context('slash marks a command; anything else is an AI prompt', function () {
+    context('commands read as commands with or without the slash; prose stays with the AI', function () {
         it('runs a slash command with a path argument', function () {
             $result = $this->dispatcher->dispatch('/run spec/App');
             expect($result)->toBe(CommandDispatcher::CONTINUE);
@@ -312,17 +312,72 @@ describe(CommandDispatcher::class, function () {
         it('routes non-slash prose to the AI (explains AI is off without a provider)', function () {
             $this->dispatcher->dispatch('run the scenarios and fix them');
             $output = $this->buffer->fetch();
-            // No leading slash → an AI prompt; with no AI it explains, without calling it an unknown command.
+            // Prose after the command word → an AI prompt; with no AI it explains, without calling it an unknown command.
             expect($output)->toContain('natural language');
             expect($output)->not()->toContain('Unknown command');
+            expect($this->specRunner->arguments)->toBe([]);
         });
 
-        it('routes a bare command word (no slash) to the AI, not the command', function () {
-            $this->dispatcher->dispatch('describe Acme\\Foo');
-            $output = $this->buffer->fetch();
-            // `describe` without a slash is prose now, so no spec is generated.
-            expect($output)->not()->toContain('Specification for');
-            expect($this->specRunner->arguments)->toBe([]);
+        it('routes a bare "describe Class" to the describe command', function (Filesystem $fs) {
+            $written = [];
+            allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+                $written[$path] = $content;
+            });
+
+            $this->dispatcher->dispatch('describe Acme\Foo');
+
+            expect($this->buffer->fetch())->toContain('Specification for');
+            $specFiles = array_filter(
+                $written,
+                fn(string $path) => str_ends_with(str_replace('\\', '/', $path), 'spec/Acme/Foo.spec.php'),
+                ARRAY_FILTER_USE_KEY,
+            );
+            expect($specFiles)->not()->toBe([]);
+        });
+
+        it('routes a bare "next" like /next', function () {
+            $this->dispatcher->dispatch('next');
+            expect($this->specRunner->arguments)->toContain('--all');
+        });
+
+        it('translates "run features" into a story-only run', function () {
+            $this->dispatcher->dispatch('run features');
+            expect($this->specRunner->arguments)->toBe(['--story']);
+        });
+
+        it('translates "run all" into a full-suite run', function () {
+            $this->dispatcher->dispatch('run all');
+            expect($this->specRunner->arguments)->toBe(['--all']);
+        });
+
+        it('translates "run specs" into the default spec run', function () {
+            $this->dispatcher->dispatch('run specs');
+            expect($this->specRunner->arguments)->toBe(['']);
+        });
+
+        it('passes "run --all" through without a slash', function () {
+            $this->dispatcher->dispatch('run --all');
+            expect($this->specRunner->arguments)->toBe(['--all']);
+        });
+
+        it('translates "/run features" the same as the plain form', function () {
+            $this->dispatcher->dispatch('/run features');
+            expect($this->specRunner->arguments)->toBe(['--story']);
+        });
+
+        it('passes options through /run to the runner', function () {
+            $this->dispatcher->dispatch('/run --stop-on-failure');
+            expect($this->specRunner->arguments)->toBe(['--stop-on-failure']);
+        });
+
+        it('keeps a path and its option together for the runner', function () {
+            $this->dispatcher->dispatch('/run spec/App --stop-on-failure');
+            expect($this->specRunner->arguments)->toBe(['spec/App --stop-on-failure']);
+        });
+
+        it('never rewrites an option value that matches a suite keyword', function () {
+            $this->dispatcher->dispatch('/run --filter features');
+            expect($this->specRunner->arguments)->toBe(['--filter features']);
         });
 
         it('routes unrecognized prose to the AI fallback', function () {
@@ -612,6 +667,14 @@ describe(CommandDispatcher::class, function () {
         it('delegates /refactor with argument', function () {
             $result = $this->appDispatcher->dispatch('/refactor App\\Calculator');
             expect($result)->toBe(CommandDispatcher::CONTINUE);
+        });
+
+        it('delegates a bare "refactor Class" to the refactor command', function () {
+            $result = $this->appDispatcher->dispatch('refactor App\\Calculator');
+            $output = $this->buffer->fetch();
+            expect($result)->toBe(CommandDispatcher::CONTINUE);
+            expect($output)->not()->toContain('natural language');
+            expect($output)->not()->toContain('Unknown command');
         });
 
         it('explains AI is off for non-slash prose when no AI', function () {

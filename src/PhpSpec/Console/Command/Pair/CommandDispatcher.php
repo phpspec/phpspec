@@ -280,9 +280,11 @@ final class CommandDispatcher
             return self::CONTINUE;
         }
 
-        // A leading slash is the one signal that this line is a command; every
-        // other line is a prompt for the AI (or the unknown-command hint when no
-        // AI is configured). No keyword guessing, no argument-count heuristics.
+        // A leading slash always marks a command, and a bare line reaches these
+        // arms only when the parser routed it as one: its first word read
+        // unambiguously as a command (see InputParser::route()). Every other
+        // line is a prompt for the AI (or the unknown-command hint when no AI
+        // is configured).
         if (!str_starts_with($command, '/')) {
             $this->suggestion = null;
 
@@ -292,14 +294,14 @@ final class CommandDispatcher
         $result = match ($command) {
             '/describe' => $this->handleDescribe($parsed['argument']),
             '/exemplify' => $this->handleExemplify($parsed['argument']),
-            '/run' => $this->handleRun($parsed['argument']),
+            '/run' => $this->handleRun($this->runArgument($parsed['tail'])),
             '/next' => $this->handleNext(),
             '/generate' => $this->handleGenerate($parsed['argument']),
             '/clear' => $this->handleClear(),
             '/swap' => $this->handleSwap(),
             '/help' => $this->handleHelp(),
             '/quit', '/exit' => self::QUIT,
-            default => $this->handleSlashCommand($command, $input),
+            default => $this->handleSlashCommand($command, $parsed['tail']),
         };
 
         // Set from the top-level command only, so a nested run (e.g. the "run
@@ -493,6 +495,43 @@ final class CommandDispatcher
     }
 
     /**
+     * Turns leading suite keywords into their run options ("features" into
+     * --story, "all" into --all, "specs" into the default), leaving everything
+     * from the first non-keyword token on untouched, so an option value that
+     * happens to match a keyword (--filter features) is never rewritten.
+     */
+    private function runArgument(string $tail): string
+    {
+        $tail = trim($tail);
+        if ($tail === '') {
+            return '';
+        }
+
+        $tokens = preg_split('/\s+/', $tail) ?: [];
+        $translated = [];
+        foreach ($tokens as $i => $token) {
+            $mapped = match (strtolower($token)) {
+                'features', 'feature', 'stories', 'story' => '--story',
+                'all', 'everything' => '--all',
+                'specs', 'spec' => '',
+                default => null,
+            };
+
+            if ($mapped === null) {
+                $translated = array_merge($translated, array_slice($tokens, $i));
+
+                break;
+            }
+
+            if ($mapped !== '') {
+                $translated[] = $mapped;
+            }
+        }
+
+        return implode(' ', $translated);
+    }
+
+    /**
      * Runs specs, then offers to generate any missing code.
      *
      * The run is delegated to the SpecRunner (a fresh subprocess in production)
@@ -533,11 +572,11 @@ final class CommandDispatcher
     }
 
     /**
-     * Handles a slash command that isn't one of the built-in arms: delegates to
-     * a registered Application command of the same name (minus the slash), or
+     * Handles a command that isn't one of the built-in arms: delegates to a
+     * registered Application command of the same name (minus the slash), or
      * reports it as unknown.
      */
-    private function handleSlashCommand(string $command, string $rawInput): int
+    private function handleSlashCommand(string $command, string $tail): int
     {
         $name = ltrim($command, '/');
 
@@ -547,18 +586,17 @@ final class CommandDispatcher
                 return self::CONTINUE;
             }
 
-            return $this->delegateToCommand($cmd, $command, $rawInput);
+            return $this->delegateToCommand($cmd, $tail);
         }
 
         return $this->handleUnknown($command);
     }
 
     /**
-     * Runs a Symfony console command with arguments parsed from raw input.
+     * Runs a Symfony console command with the raw argument tail of the input.
      */
-    private function delegateToCommand(Command $cmd, string $commandToken, string $rawInput): int
+    private function delegateToCommand(Command $cmd, string $argString): int
     {
-        $argString = trim(substr($rawInput, strlen($commandToken)));
         $input = new StringInput($argString);
         $input->setInteractive($this->interactive);
 
@@ -668,7 +706,8 @@ final class CommandDispatcher
             $out->writeln('  <fg=bright-blue;options=bold>AI assistant</> <fg=gray>(not configured — add ai: section to phpspec.yml)</>');
         }
         $out->writeln('');
-        $out->writeln('  Anything without a leading <fg=white>/</> is sent to the AI assistant.');
+        $out->writeln('  Commands also work as plain words: <fg=gray>run features</>, <fg=gray>run --all</>, <fg=gray>describe App\Basket</>.');
+        $out->writeln('  Anything else without a leading <fg=white>/</> is sent to the AI assistant.');
         $out->writeln('  It can generate specs, features, step definitions, and run your specs.');
         $out->writeln('');
         $out->writeln('  <fg=bright-blue>Examples:</>');
