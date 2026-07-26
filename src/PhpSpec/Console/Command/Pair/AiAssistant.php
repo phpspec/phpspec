@@ -639,7 +639,8 @@ final class AiAssistant
                 . 'generate fooBar()?"). NEVER use it for an open-ended question such as "what should '
                 . 'the arguments be?" — ask those in plain text and end your turn so the user can type '
                 . 'a full answer at the prompt. Returns "yes", "always" (yes now and for all similar '
-                . 'future questions), or "no".',
+                . 'future questions), or "no", plus any note the human typed alongside the answer; '
+                . 'treat that note as their direction.',
             parameters: [
                 'question' => [
                     'type' => 'string',
@@ -653,11 +654,15 @@ final class AiAssistant
             handler: function (array $args) use ($chooser) {
                 $kind = 'ai-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($args['action']));
 
-                if (!$chooser->choose($args['question'], $kind, $args['action'])) {
-                    return 'no';
+                $accepted = $chooser->choose($args['question'], $kind, $args['action']);
+                $answer = !$accepted ? 'no' : ($chooser->hasAlways($kind) ? 'always' : 'yes');
+                $note = $chooser->lastNote();
+
+                if ($note !== '') {
+                    return sprintf('%s. The human added: "%s".', $answer, $note);
                 }
 
-                return $chooser->hasAlways($kind) ? 'always' : 'yes';
+                return $answer;
             },
         );
     }
