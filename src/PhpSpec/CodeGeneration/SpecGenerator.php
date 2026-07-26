@@ -72,6 +72,23 @@ final class SpecGenerator
             return false;
         }
 
+        if (!$this->filesystem->exists(dirname($filePath))) {
+            $this->filesystem->mkdir(dirname($filePath));
+        }
+        $this->filesystem->write($filePath, $this->skeleton($spec));
+
+        return true;
+    }
+
+    /**
+     * Drafts the skeleton spec content for a class path without touching disk:
+     * the use statement, an empty-ish describe block, and the instantiation
+     * example.
+     *
+     * @param string $spec the class path using forward slashes
+     */
+    public function skeleton(string $spec): string
+    {
         $pieces = explode('/', $spec);
         $use = '';
         if (count($pieces) > 1) {
@@ -80,7 +97,7 @@ final class SpecGenerator
         $class = array_pop($pieces);
         $lcClass = lcfirst($class);
 
-        $specContent = <<<EOD
+        return <<<EOD
         <?php$use
 
         describe($class::class, function() {
@@ -88,13 +105,37 @@ final class SpecGenerator
             it("instantiates", fn() => expect(\$this->$lcClass)->toBeAnInstanceOf($class::class));
         });
         EOD;
+    }
 
-        if (!$this->filesystem->exists(dirname($filePath))) {
-            $this->filesystem->mkdir(dirname($filePath));
+    /**
+     * Drafts the given spec content grown by one it() example for a method,
+     * without touching disk. Null when the method is already exemplified or the
+     * content has no closing anchor to grow at, so repeated calls never
+     * duplicate an example.
+     *
+     * @param string $content the current spec content
+     * @param string $spec the class path using forward slashes
+     * @param string $method the method name to exemplify
+     */
+    public function withExample(string $content, string $spec, string $method): ?string
+    {
+        // Already exemplified: don't append an identical example again.
+        if (str_contains($content, "it(\"should $method\",")) {
+            return null;
         }
-        $this->filesystem->write($filePath, $specContent);
 
-        return true;
+        $pos = strrpos($content, '});');
+        if ($pos === false) {
+            return null;
+        }
+
+        $pieces = explode('/', $spec);
+        $class = array_pop($pieces);
+        $lcClass = lcfirst($class);
+
+        $example = "    it(\"should $method\", fn() => expect(\$this->$lcClass->$method())->toBe(null));";
+
+        return substr($content, 0, $pos) . "\n" . $example . "\n" . substr($content, $pos);
     }
 
     /**
@@ -128,26 +169,12 @@ final class SpecGenerator
             return false;
         }
 
-        $content = $this->filesystem->read($filePath);
-
-        // Already exemplified — don't append an identical example again.
-        if (str_contains($content, "it(\"should $method\",")) {
+        $grown = $this->withExample($this->filesystem->read($filePath), $spec, $method);
+        if ($grown === null) {
             return false;
         }
 
-        $pos = strrpos($content, '});');
-        if ($pos === false) {
-            return false;
-        }
-
-        $pieces = explode('/', $spec);
-        $class = array_pop($pieces);
-        $lcClass = lcfirst($class);
-
-        $example = "    it(\"should $method\", fn() => expect(\$this->$lcClass->$method())->toBe(null));";
-
-        $content = substr($content, 0, $pos) . "\n" . $example . "\n" . substr($content, $pos);
-        $this->filesystem->write($filePath, $content);
+        $this->filesystem->write($filePath, $grown);
 
         return true;
     }

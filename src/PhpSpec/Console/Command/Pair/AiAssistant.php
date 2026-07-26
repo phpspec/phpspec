@@ -14,6 +14,8 @@
 
 namespace PhpSpec\Console\Command\Pair;
 
+use PhpSpec\Ai\Agent\Proposal;
+use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\AiTools;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Contracts\ToolInterface;
@@ -705,32 +707,45 @@ final class AiAssistant
     }
 
     /**
-     * Writes a generated file, creating parent directories as needed, then
-     * shows a diff when the file already existed or a full listing when it is
-     * new. This keeps an overwrite of an existing spec/feature from being
-     * rendered as an all-new file with every line marked added.
-     *
-     * @param Filesystem $filesystem the filesystem abstraction
-     * @param PairOutput $output the pair-mode output helper
-     * @param string $filePath the absolute path to write
-     * @param string $content the file content
+     * The model-facing description of a write tool, from its editable prompt
+     * file (`Ai/Prompts/tools/<name>.txt`, shipped package code, so it loads
+     * from the real filesystem). Tuning what a tool tells the model is a text
+     * edit.
      */
-    private static function writeGenerated(Filesystem $filesystem, PairOutput $output, string $filePath, string $content): void
+    private static function toolDescription(string $name): string
     {
-        $existed = $filesystem->exists($filePath);
-        $oldContent = $existed ? $filesystem->read($filePath) : '';
+        return trim((new PromptLibrary())->read('tools/' . $name));
+    }
 
-        $dir = dirname($filePath);
-        if (!$filesystem->exists($dir)) {
-            $filesystem->mkdir($dir);
-        }
+    /**
+     * A proposal for an absolute path and content, reading any existing file so
+     * the diff shown is real. Tools only ever produce these; nothing writes
+     * except the gate below.
+     */
+    private function proposalFor(string $absPath, string $content, string $origin): Proposal
+    {
+        $path = self::normalisePath($absPath);
+        $cwd = self::normalisePath(getcwd() ?: '.') . '/';
+        $relPath = str_starts_with($path, $cwd) ? substr($path, strlen($cwd)) : ltrim($path, '/');
+        $exists = $this->filesystem->exists($absPath);
 
-        $filesystem->write($filePath, $content);
+        return new Proposal($relPath, $exists ? $this->filesystem->read($absPath) : '', $content, !$exists, $origin);
+    }
 
-        if ($existed) {
-            $output->fileDiff($filePath, $oldContent, $content);
+    /**
+     * Pair's single write gate: applies a confirmed proposal through the shared
+     * Writer, then shows a diff when the file already existed or a full listing
+     * when it is new, so an overwrite is never rendered as an all-new file.
+     */
+    private function applyProposal(Proposal $proposal): void
+    {
+        (new Writer($this->filesystem))->apply($proposal);
+
+        $absPath = (getcwd() ?: '.') . '/' . $proposal->path;
+        if ($proposal->isNew) {
+            $this->output->fileDisplay($absPath, $proposal->new, true);
         } else {
-            $output->fileDisplay($filePath, $content, true);
+            $this->output->fileDiff($absPath, $proposal->old, $proposal->new);
         }
     }
 
@@ -743,7 +758,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'describe',
-            description: 'Start a spec for a PHP class: writes an empty describe() skeleton in the phpspec 9 DSL, with no examples. Idempotent — does nothing if the spec already exists. This is how a new spec begins; then add behaviour one example at a time with add_example. There is no whole-file spec write and no way to overwrite a spec, so existing examples are never lost.',
+            description: self::toolDescription('describe'),
             parameters: [
                 'class_name' => [
                     'type' => 'string',
@@ -769,9 +784,7 @@ final class AiAssistant
                 }
 
                 $generator = new SpecGenerator($specPath, $filesystem, $specSuffix);
-                $generator->generate($classPath);
-
-                $output->fileDisplay($filePath, $filesystem->read($filePath), true);
+                $this->applyProposal($this->proposalFor($filePath, $generator->skeleton($classPath), 'describe'));
 
                 return "Spec skeleton for $classPath created at $filePath. Add behaviour with add_example.";
             },
@@ -787,7 +800,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'add_example',
-            description: 'Add ONE it() example for a method to a spec, appending it without rewriting the rest of the file (creating the spec first if it does not exist). Idempotent: does nothing if that method is already exemplified. This is the only way to add behaviour to a spec — specs are never overwritten.',
+            description: self::toolDescription('add_example'),
             parameters: [
                 'class_name' => [
                     'type' => 'string',
@@ -811,14 +824,10 @@ final class AiAssistant
                 $generator = new SpecGenerator($specPath, $filesystem, $specSuffix);
 
                 $existed = $filesystem->exists($filePath);
-                if (!$existed) {
-                    $generator->generate($classPath);
-                }
+                $before = $existed ? $filesystem->read($filePath) : $generator->skeleton($classPath);
+                $grown = $generator->withExample($before, $classPath, $method);
 
-                $before = $existed ? $filesystem->read($filePath) : '';
-                $added = $generator->addExample($classPath, $method);
-
-                if (!$added && $existed) {
+                if ($grown === null && $existed) {
                     $output->getOutput()->writeln(sprintf(
                         '  <fg=gray>An example for %s::%s already exists.</>',
                         str_replace('/', '\\', $classPath),
@@ -828,12 +837,11 @@ final class AiAssistant
                     return "Example for $classPath::$method already exists; no change made.";
                 }
 
-                $after = $filesystem->read($filePath);
-                if ($existed) {
-                    $output->fileDiff($filePath, $before, $after);
-                } else {
-                    $output->fileDisplay($filePath, $after, true);
+                if ($grown === null) {
+                    return ['error' => "Could not add an example for $classPath::$method."];
                 }
+
+                $this->applyProposal($this->proposalFor($filePath, $grown, 'add_example'));
 
                 return "Example for $classPath::$method added to $filePath.";
             },
@@ -848,7 +856,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'generate_feature',
-            description: 'Write a Gherkin .feature file. Provide complete feature content with Feature:, Scenario:, Given/When/Then steps.',
+            description: self::toolDescription('generate_feature'),
             parameters: [
                 'feature_name' => [
                     'type' => 'string',
@@ -860,13 +868,10 @@ final class AiAssistant
                 ],
                 'intent' => self::intentParameter(),
             ],
-            handler: function (array $args) use ($filesystem, $output, $featuresPath) {
-                $name = $args['feature_name'];
-                $content = $args['content'];
+            handler: function (array $args) use ($featuresPath) {
+                $filePath = getcwd() . '/' . $featuresPath . '/' . $args['feature_name'] . '.feature';
 
-                $filePath = getcwd() . '/' . $featuresPath . '/' . $name . '.feature';
-
-                self::writeGenerated($filesystem, $output, $filePath, $content);
+                $this->applyProposal($this->proposalFor($filePath, $args['content'], 'generate_feature'));
 
                 return "Feature file written to $filePath";
             },
@@ -881,7 +886,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'generate_steps',
-            description: 'Write a .steps.php file with step definitions for a feature. Uses bare given(), when(), then() global functions (NO use/import statements for them). Placeholders: {string}, {int}.',
+            description: self::toolDescription('generate_steps'),
             parameters: [
                 'feature_name' => [
                     'type' => 'string',
@@ -893,13 +898,10 @@ final class AiAssistant
                 ],
                 'intent' => self::intentParameter(),
             ],
-            handler: function (array $args) use ($filesystem, $output, $stepsPath) {
-                $name = $args['feature_name'];
-                $content = $args['content'];
+            handler: function (array $args) use ($stepsPath) {
+                $filePath = getcwd() . '/' . $stepsPath . '/' . $args['feature_name'] . '.steps.php';
 
-                $filePath = getcwd() . '/' . $stepsPath . '/' . $name . '.steps.php';
-
-                self::writeGenerated($filesystem, $output, $filePath, $content);
+                $this->applyProposal($this->proposalFor($filePath, $args['content'], 'generate_steps'));
 
                 return "Steps file written to $filePath";
             },
@@ -914,7 +916,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'write_file',
-            description: 'Create a new file with the given content. Use this for source and other files not covered by describe/generate_feature/generate_steps. Specs are written with describe/add_example, not here.',
+            description: self::toolDescription('write_file'),
             parameters: [
                 'path' => [
                     'type' => 'string',
@@ -926,7 +928,7 @@ final class AiAssistant
                 ],
                 'intent' => self::intentParameter(),
             ],
-            handler: function (array $args) use ($filesystem, $output, $specDir) {
+            handler: function (array $args) use ($filesystem, $specDir) {
                 $path = $args['path'];
                 $content = $args['content'];
                 $absPath = getcwd() . '/' . ltrim($path, '/');
@@ -940,13 +942,7 @@ final class AiAssistant
                     return $rejection;
                 }
 
-                $dir = dirname($absPath);
-                if (!$filesystem->exists($dir)) {
-                    $filesystem->mkdir($dir);
-                }
-
-                $filesystem->write($absPath, $content);
-                $output->fileDisplay($absPath, $content, true);
+                $this->applyProposal($this->proposalFor($absPath, $content, 'write_file'));
 
                 return "File written to $absPath";
             },
@@ -961,7 +957,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'update_file',
-            description: 'Update an existing file with new content. Use this to modify source files, config files, or any existing file. To change a spec, add behaviour with add_example — a spec rewrite that drops existing examples is rejected.',
+            description: self::toolDescription('update_file'),
             parameters: [
                 'path' => [
                     'type' => 'string',
@@ -973,7 +969,7 @@ final class AiAssistant
                 ],
                 'intent' => self::intentParameter(),
             ],
-            handler: function (array $args) use ($filesystem, $output, $specDir) {
+            handler: function (array $args) use ($filesystem, $specDir) {
                 $path = $args['path'];
                 $content = $args['content'];
                 $absPath = getcwd() . '/' . ltrim($path, '/');
@@ -982,15 +978,12 @@ final class AiAssistant
                     return "File not found: $path. Use write_file to create it.";
                 }
 
-                $oldContent = $filesystem->read($absPath);
-
-                $rejection = self::specWriteRejection($absPath, $specDir, $content, $oldContent);
+                $rejection = self::specWriteRejection($absPath, $specDir, $content, $filesystem->read($absPath));
                 if ($rejection !== null) {
                     return $rejection;
                 }
 
-                $filesystem->write($absPath, $content);
-                $output->fileDiff($absPath, $oldContent, $content);
+                $this->applyProposal($this->proposalFor($absPath, $content, 'update_file'));
 
                 return "File updated: $absPath";
             },

@@ -60,6 +60,15 @@ describe('prompt artifacts', function () {
         expect($text)->not()->toContain('given(');
     });
 
+    it('ships every pair write tool description as an editable file', function () use ($read) {
+        expect($read('tools/describe'))->toContain('describe() skeleton');
+        expect($read('tools/add_example'))->toContain('ONE it() example');
+        expect($read('tools/generate_feature'))->toContain('Gherkin');
+        expect($read('tools/generate_steps'))->toContain('.steps.php');
+        expect($read('tools/write_file'))->toContain('not covered by describe');
+        expect($read('tools/update_file'))->toContain('add_example');
+    });
+
     it('ships the refactor command as a manifest with its rules as editable prose', function () use ($read) {
         $text = $read('commands/refactor');
 
