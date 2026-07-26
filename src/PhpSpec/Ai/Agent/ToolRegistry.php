@@ -20,6 +20,7 @@ use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\FeatureGenerator;
+use PhpSpec\CodeGeneration\FeatureLayout;
 use PhpSpec\CodeGeneration\LegacySpecDetector;
 use PhpSpec\CodeGeneration\StepGenerator;
 use PhpSpec\Configuration;
@@ -62,6 +63,8 @@ final class ToolRegistry
 
     private readonly StepGenerator $stepGenerator;
 
+    private readonly FeatureLayout $layout;
+
     /**
      * @param Configuration $config the project configuration (layout paths)
      * @param Filesystem $filesystem filesystem abstraction for testability
@@ -75,6 +78,7 @@ final class ToolRegistry
         $this->prompts = $prompts ?? new PromptLibrary($filesystem);
         $this->featureGenerator = new FeatureGenerator();
         $this->stepGenerator = new StepGenerator($filesystem);
+        $this->layout = new FeatureLayout();
     }
 
     /**
@@ -130,13 +134,13 @@ final class ToolRegistry
         }
 
         if ($step->phase === Phase::WriteSteps && in_array('write_steps', $profile->tools, true)) {
-            $feature = $step->subject ?? self::featureBesideSteps($step->path);
+            $feature = $step->subject ?? $this->featureBesideSteps($step->path);
             if ($feature === null) {
                 return null;
             }
 
             $proposal = $this->stepsProposal($feature);
-            if (self::scaffoldsNothing($proposal)) {
+            if ($this->scaffoldsNothing($proposal)) {
                 // Every step is already defined: nothing is determined here.
                 // The human wants content (the bodies), which is the model's job.
                 return null;
@@ -231,7 +235,7 @@ final class ToolRegistry
 
         // A scaffold that adds nothing is not an answer; filling in existing
         // step bodies is propose_edit's job.
-        return self::scaffoldsNothing($proposal) ? null : $proposal;
+        return $this->scaffoldsNothing($proposal) ? null : $proposal;
     }
 
     /**
@@ -239,7 +243,7 @@ final class ToolRegistry
      * normalise the trailing newline, so a whitespace-only difference still
      * counts as nothing to add.
      */
-    private static function scaffoldsNothing(Proposal $proposal): bool
+    private function scaffoldsNothing(Proposal $proposal): bool
     {
         return rtrim($proposal->new) === rtrim($proposal->old);
     }
@@ -387,7 +391,7 @@ final class ToolRegistry
             throw new RuntimeException(sprintf('No Given/When/Then steps found in "%s".', $relFeature));
         }
 
-        $relSteps = StepGenerator::stepsPathFor($relFeature);
+        $relSteps = $this->layout->stepsPathFor($relFeature);
         $absSteps = $this->absolute($relSteps);
         $existing = $this->filesystem->exists($absSteps) ? $this->filesystem->read($absSteps) : '';
 
@@ -398,13 +402,13 @@ final class ToolRegistry
      * The feature that a named `.steps.php` path belongs to, in the standard
      * layout (`features/steps/x.steps.php` steps `features/x.feature`).
      */
-    private static function featureBesideSteps(?string $stepsPath): ?string
+    private function featureBesideSteps(?string $stepsPath): ?string
     {
         if ($stepsPath === null || !str_ends_with($stepsPath, '.steps.php')) {
             return null;
         }
 
-        return StepGenerator::featurePathFor($stepsPath);
+        return $this->layout->featurePathFor($stepsPath);
     }
 
     /**

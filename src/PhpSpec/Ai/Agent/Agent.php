@@ -20,7 +20,7 @@ use PhpSpec\Ai\Message;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\TreeScanner;
-use PhpSpec\CodeGeneration\StepGenerator;
+use PhpSpec\CodeGeneration\FeatureLayout;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Filesystem;
@@ -56,6 +56,8 @@ final class Agent
 
     private readonly PromptLibrary $prompts;
 
+    private readonly FeatureLayout $layout;
+
     /**
      * @param Configuration $config the project configuration
      * @param Filesystem|null $filesystem filesystem abstraction for testability
@@ -76,6 +78,7 @@ final class Agent
         $this->registry = $registry ?? new ToolRegistry($config, $this->filesystem);
         $this->recorder = $recorder ?? new Recorder($this->filesystem);
         $this->prompts = $prompts ?? new PromptLibrary($this->filesystem);
+        $this->layout = new FeatureLayout();
     }
 
     /**
@@ -310,7 +313,7 @@ final class Agent
             $files[$rel] = $this->filesystem->read($cwd . '/' . $rel);
 
             if (str_ends_with($rel, '.feature')) {
-                $steps = StepGenerator::stepsPathFor($rel);
+                $steps = $this->layout->stepsPathFor($rel);
                 if ($this->filesystem->exists($cwd . '/' . $steps)) {
                     $files[$steps] = $this->filesystem->read($cwd . '/' . $steps);
                 }

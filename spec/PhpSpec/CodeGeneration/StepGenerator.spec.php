@@ -95,9 +95,4 @@ describe(StepGenerator::class, function () {
         expect(substr_count($content, 'I have a todo list'))->toBe(1); // kept, not duplicated
         expect($content)->toContain('then("I should have {int} task on my list"');
     });
-
-    it('lays the steps file beside its feature, and back', function () {
-        expect(StepGenerator::stepsPathFor('features/completing_a_task.feature'))->toBe('features/steps/completing_a_task.steps.php');
-        expect(StepGenerator::featurePathFor('features/steps/completing_a_task.steps.php'))->toBe('features/completing_a_task.feature');
-    });
 });
