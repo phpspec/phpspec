@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+ - Asking `generate` for step bodies (or to grow an existing feature) consults the model instead of re-emitting a no-op scaffold
+ - A `/generate` chooser note now runs a follow-up round with that note as the instruction
+
 ## [9.0.0-beta.13](https://github.com/phpspec/phpspec/compare/9.0.0-beta.12...9.0.0-beta.13)
 
 ### Added

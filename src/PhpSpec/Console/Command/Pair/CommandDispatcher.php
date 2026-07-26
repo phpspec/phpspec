@@ -612,7 +612,10 @@ final class CommandDispatcher
 
     /**
      * Turns a natural-language instruction into one AI-authored file edit, shows
-     * it as a diff, and writes it once confirmed. Requires an AI provider.
+     * it as a diff, and writes it once confirmed. Requires an AI provider. A
+     * note typed at the chooser (Tab, or "3, ..." piped) is a course correction:
+     * it becomes the follow-up instruction for another round through the same
+     * pipeline, bounded so a session cannot loop forever.
      */
     private function handleGenerate(string $argument): int
     {
@@ -625,37 +628,64 @@ final class CommandDispatcher
 
         $aiConfig = $this->config->getAiConfig();
         if ($aiConfig === null) {
-            $this->output->error('AI configuration required for /generate — add an "ai" section to phpspec.yaml.');
-
-            return self::CONTINUE;
-        }
-
-        // The profile is shipped package code, loaded from the real filesystem.
-        $outcome = $this->agent->do(CommandProfile::load('generate'), $instruction);
-        if ($outcome->proposals === []) {
-            $reason = $outcome->prose !== '' ? $outcome->prose : 'Could not generate anything for that instruction. Try rephrasing.';
-            if ($this->ai !== null) {
-                // /generate is the context-free one-shot; the assistant holds
-                // the conversation, so steer a miss back to plain English.
-                $reason .= ' Or just tell me in plain English; I hold the pair context that /generate does not.';
-            }
-            $this->output->error($reason);
+            $this->output->error('AI configuration required for /generate: add an "ai" section to phpspec.yaml.');
 
             return self::CONTINUE;
         }
 
         $writer = new Writer($this->filesystem);
-        foreach ($outcome->proposals as $proposal) {
-            if ($proposal->isNew) {
-                $this->output->fileDisplay($proposal->path, $proposal->new, true);
-            } else {
-                $this->output->fileDiff($proposal->path, $proposal->old, $proposal->new);
+        $original = $instruction;
+
+        for ($round = 0; $round < 3; $round++) {
+            // The profile is shipped package code, loaded from the real filesystem.
+            $outcome = $this->agent->do(CommandProfile::load('generate'), $instruction);
+            if ($outcome->proposals === []) {
+                $reason = $outcome->prose !== '' ? $outcome->prose : 'Could not generate anything for that instruction. Try rephrasing.';
+                if ($this->ai !== null) {
+                    // /generate is the context-free one-shot; the assistant holds
+                    // the conversation, so steer a miss back to plain English.
+                    $reason .= ' Or just tell me in plain English; I hold the pair context that /generate does not.';
+                }
+                $this->output->error($reason);
+
+                return self::CONTINUE;
             }
 
-            if ($this->chooser->choose('Apply this change?', 'generate', 'apply generated changes')) {
-                $writer->apply($proposal);
-                $this->output->success(($proposal->isNew ? 'Created ' : 'Updated ') . $proposal->path);
+            $note = '';
+            $notedPath = '';
+            $noteFollowsApply = false;
+            foreach ($outcome->proposals as $proposal) {
+                if ($proposal->isNew) {
+                    $this->output->fileDisplay($proposal->path, $proposal->new, true);
+                } else {
+                    $this->output->fileDiff($proposal->path, $proposal->old, $proposal->new);
+                }
+
+                $applied = $this->chooser->choose('Apply this change?', 'generate', 'apply generated changes');
+                if ($applied) {
+                    $writer->apply($proposal);
+                    $this->output->success(($proposal->isNew ? 'Created ' : 'Updated ') . $proposal->path);
+                }
+
+                if ($note === '' && $this->chooser->lastNote() !== '') {
+                    $note = $this->chooser->lastNote();
+                    $notedPath = $proposal->path;
+                    $noteFollowsApply = $applied;
+                }
             }
+
+            if ($note === '') {
+                return self::CONTINUE;
+            }
+
+            $this->output->getOutput()->writeln(sprintf('  <fg=gray>Following up: %s</>', $note));
+            $instruction = $original . ' ' . sprintf(
+                $noteFollowsApply
+                    ? 'The proposal for %s was applied. The human then asked: "%s".'
+                    : 'The human declined the proposal for %s, saying: "%s". Address that.',
+                $notedPath,
+                $note,
+            );
         }
 
         return self::CONTINUE;

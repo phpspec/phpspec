@@ -1,3 +1,4 @@
 Creates the .steps.php step definitions for a feature's undefined steps. phpspec
 parses the feature and owns the path and the step patterns; give it the feature's
-project-relative path.
+project-relative path. Scaffolding only: when the steps already exist and the ask
+is about their bodies, edit the steps file with propose_edit instead.

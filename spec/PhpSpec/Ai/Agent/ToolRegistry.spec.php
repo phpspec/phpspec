@@ -87,7 +87,7 @@ describe(ToolRegistry::class, function () {
             allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, '.steps.php'));
             allow($fs->read())->toReturnUsing(fn(string $path): string => str_ends_with($path, '.feature')
                 ? "Feature: Adding\n  Scenario: Adding\n    Given I have a todo list\n    Then I should have 1 task on my list\n"
-                : "<?php\n\ngiven(\"I have a todo list\", function () {\n    pending();\n});\n");
+                : "<?php\n\ngiven(\"I have a todo list\", function () {\n    pending();\n});");
             $step = new Step(Phase::WriteSteps, null, 'features/adding_a_task.feature', 'steps are undefined');
 
             $proposals = $this->registry->deterministic($step, Grounding::empty(), $this->genProfile);
@@ -95,6 +95,24 @@ describe(ToolRegistry::class, function () {
             expect($proposals[0]->isNew)->toBe(false);
             expect(substr_count($proposals[0]->new, 'I have a todo list'))->toBe(1);
             expect($proposals[0]->new)->toContain('then("I should have {int} task on my list"');
+        });
+
+        it('declines the steps short-circuit when every step is already defined', function (Filesystem $fs) {
+            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, '.steps.php'));
+            allow($fs->read())->toReturnUsing(fn(string $path): string => str_ends_with($path, '.feature')
+                ? "Feature: Adding\n  Scenario: Adding\n    Given I have a todo list\n"
+                : "<?php\n\ngiven(\"I have a todo list\", function () {\n    pending();\n});");
+            $step = new Step(Phase::WriteSteps, null, 'features/adding_a_task.feature', 'you asked for steps');
+
+            expect($this->registry->deterministic($step, Grounding::empty(), $this->genProfile))->toBeNull();
+        });
+
+        it('declines to re-scaffold a feature file that already exists', function (Filesystem $fs) {
+            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
+            allow($fs->read())->toReturn("Feature: Adding\n  Scenario: Adding\n    Given something\n");
+            $step = new Step(Phase::WriteFeature, 'features/adding.feature', null, 'you named it');
+
+            expect($this->registry->deterministic($step, Grounding::empty(), $this->genProfile))->toBeNull();
         });
 
         it('refuses steps for a feature that does not exist, naming it', function () {
@@ -165,6 +183,26 @@ describe(ToolRegistry::class, function () {
             expect($proposals[0]->path)->toBe('src/App/Calc.php');
             expect($proposals[0]->old)->toBe("<?php\n// old");
             expect($proposals[0]->isNew)->toBe(false);
+        });
+
+        it('skips a write_steps call when every step is already defined', function (Filesystem $fs) {
+            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, '.feature') || str_ends_with($path, '.steps.php'));
+            allow($fs->read())->toReturnUsing(fn(string $path): string => str_ends_with($path, '.feature')
+                ? "Feature: Adding\n  Scenario: Adding\n    Given I have a todo list\n"
+                : "<?php\n\ngiven(\"I have a todo list\", function () {\n    pending();\n});");
+            $step = new Step(Phase::WriteSteps, null, 'features/adding_a_task.feature', 'you asked for steps');
+            $call = new ToolCall('1', 'write_steps', ['feature_path' => 'features/adding_a_task.feature']);
+
+            expect($this->registry->fromCalls([$call], $step))->toHaveLength(0);
+        });
+
+        it('skips a write_feature call for a feature file that already exists', function (Filesystem $fs) {
+            allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding.feature'));
+            allow($fs->read())->toReturn("Feature: Adding\n  Scenario: Adding\n    Given something\n");
+            $step = new Step(Phase::WriteFeature, 'features/adding.feature', null, 'you named it');
+            $call = new ToolCall('1', 'write_feature', ['path' => 'features/adding.feature']);
+
+            expect($this->registry->fromCalls([$call], $step))->toHaveLength(0);
         });
 
         it('turns a write_feature call into a skeleton at the step slug path', function () {

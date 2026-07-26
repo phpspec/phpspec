@@ -121,14 +121,28 @@ final class ToolRegistry
 
         if ($step->phase === Phase::WriteFeature && in_array('write_feature', $profile->tools, true)) {
             $path = $this->featurePath($step);
+            if ($path === null || $this->filesystem->exists($this->absolute($path))) {
+                // An existing feature is grown by the model, never re-scaffolded.
+                return null;
+            }
 
-            return $path === null ? null : [$this->featureProposal($path)];
+            return [$this->featureProposal($path)];
         }
 
         if ($step->phase === Phase::WriteSteps && in_array('write_steps', $profile->tools, true)) {
             $feature = $step->subject ?? self::featureBesideSteps($step->path);
+            if ($feature === null) {
+                return null;
+            }
 
-            return $feature === null ? null : [$this->stepsProposal($feature)];
+            $proposal = $this->stepsProposal($feature);
+            if (self::scaffoldsNothing($proposal)) {
+                // Every step is already defined: nothing is determined here.
+                // The human wants content (the bodies), which is the model's job.
+                return null;
+            }
+
+            return [$proposal];
         }
 
         return null;
@@ -193,7 +207,11 @@ final class ToolRegistry
             ?? $this->slugPath((string) ($arguments['name'] ?? ''))
             ?? $this->nonEmpty((string) ($arguments['path'] ?? ''));
 
-        return $path === null ? null : $this->featureProposal($this->relative($path));
+        if ($path === null || $this->filesystem->exists($this->absolute($this->relative($path)))) {
+            return null;
+        }
+
+        return $this->featureProposal($this->relative($path));
     }
 
     /**
@@ -205,8 +223,25 @@ final class ToolRegistry
     {
         $feature = $step !== null ? $step->subject : null;
         $feature ??= $this->nonEmpty((string) ($arguments['feature_path'] ?? ''));
+        if ($feature === null) {
+            return null;
+        }
 
-        return $feature === null ? null : $this->stepsProposal($feature);
+        $proposal = $this->stepsProposal($feature);
+
+        // A scaffold that adds nothing is not an answer; filling in existing
+        // step bodies is propose_edit's job.
+        return self::scaffoldsNothing($proposal) ? null : $proposal;
+    }
+
+    /**
+     * Whether a scaffold proposal adds nothing meaningful: the generator may
+     * normalise the trailing newline, so a whitespace-only difference still
+     * counts as nothing to add.
+     */
+    private static function scaffoldsNothing(Proposal $proposal): bool
+    {
+        return rtrim($proposal->new) === rtrim($proposal->old);
     }
 
     /**
