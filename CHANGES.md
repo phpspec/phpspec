@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+ - The navigator is capped at one offer and one registered suggestion per turn (the used-up tool is withheld, so the turn winds down into prose), and its prompts steer a run request to run_specs instead of turning it into an offer: pair `/next` no longer chains suggestion after suggestion.
+
 ## [9.0.0-beta.12](https://github.com/phpspec/phpspec/compare/9.0.0-beta.11...9.0.0-beta.12)
 
 ### Added
