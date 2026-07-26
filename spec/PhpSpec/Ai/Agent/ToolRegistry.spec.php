@@ -70,6 +70,14 @@ describe(ToolRegistry::class, function () {
             expect($proposals[0]->path)->toBe('features/user_adds_tasks.feature');
         });
 
+        it('places a bare feature filename under the configured features path, never the project root', function () {
+            $step = new Step(Phase::WriteFeature, 'completing_a_task.feature', null, 'you named it');
+
+            $proposals = $this->registry->deterministic($step, Grounding::empty(), $this->genProfile);
+
+            expect($proposals[0]->path)->toBe('features/completing_a_task.feature');
+        });
+
         it('parses the subject feature and drafts its steps file deterministically', function (Filesystem $fs) {
             allow($fs->exists())->toReturnUsing(fn(string $path): bool => str_ends_with($path, 'features/adding_a_task.feature'));
             allow($fs->read())->toReturn("Feature: Adding\n  Scenario: Adding\n    Given I have a todo list\n    When I add the task \"Buy milk\"\n");
@@ -146,6 +154,24 @@ describe(ToolRegistry::class, function () {
 
             expect($proposals[0]->path)->toBe('spec/Coupon.spec.php');
             expect($proposals[0]->new)->toContain('Coupon');
+        });
+
+        it('places a bare spec filename from the step under the spec path', function () {
+            $step = new Step(Phase::WriteSpec, 'Coupon.spec.php', null, 'you named it');
+            $call = new ToolCall('1', 'propose_edit', ['path' => 'Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"]);
+
+            $proposals = $this->registry->fromCalls([$call], $step);
+
+            expect($proposals[0]->path)->toBe('spec/Coupon.spec.php');
+        });
+
+        it('places a bare source filename from the step under the source path', function () {
+            $step = new Step(Phase::WriteCode, 'Coupon.php', null, 'you named it');
+            $call = new ToolCall('1', 'propose_edit', ['path' => 'Coupon.php', 'content' => "<?php\nclass Coupon {}"]);
+
+            $proposals = $this->registry->fromCalls([$call], $step);
+
+            expect($proposals[0]->path)->toBe('src/Coupon.php');
         });
 
         it('rejects a propose_edit spec written in ObjectBehavior syntax', function () {
