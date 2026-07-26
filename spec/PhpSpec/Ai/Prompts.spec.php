@@ -67,6 +67,15 @@ describe('prompt artifacts', function () {
         expect($read('tools/generate_steps'))->toContain('.steps.php');
         expect($read('tools/write_file'))->toContain('not covered by describe');
         expect($read('tools/update_file'))->toContain('add_example');
+        expect($read('tools/offer_change'))->toContain('diff');
+        expect($read('tools/suggest_next'))->toContain('suggestion');
+    });
+
+    it('teaches the navigator to offer concrete changes instead of dictating typing', function () use ($read) {
+        $text = $read('navigator');
+
+        expect($text)->toContain('offer_change');
+        expect($text)->toContain('never write');   // unbidden writes stay forbidden
     });
 
     it('ships the refactor command as a manifest with its rules as editable prose', function () use ($read) {

@@ -163,7 +163,9 @@ final class Agent
         if ($profile->answer === 'tool_call' && $proposals === [] && $data === []) {
             $prose = trim($response->text);
 
-            return new Outcome($step, [], $prose !== '' ? $prose : 'The model did not produce a usable artifact. Try rephrasing.');
+            // Command-neutral: `next` has no instruction to rephrase, so the
+            // fallback names the likely levers instead.
+            return new Outcome($step, [], $prose !== '' ? $prose : 'The model returned no usable answer. Try again, or set ai.model to a stronger model.');
         }
 
         return new Outcome($step, $proposals, trim($response->text), $data);

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+ - The pair navigator can OFFER a concrete change: the human sees it as a diff and accepts or declines through the numbered chooser (1. Yes / 2. Always / 3. No), the accepted change lands through the shared write gate and auto-verifies, and unbidden writes stay forbidden. Spec offers must grow the spec, exactly like writes.
+ - Pair `/next` pre-fills the prompt with a matching `/generate` ghost built from the suggestion the AI registers (via `suggest_next`), so acting on the advice is Tab and Enter, never retyping it.
+
 ## [9.0.0-beta.11](https://github.com/phpspec/phpspec/compare/9.0.0-beta.10...9.0.0-beta.11)
 
 ### Fixed

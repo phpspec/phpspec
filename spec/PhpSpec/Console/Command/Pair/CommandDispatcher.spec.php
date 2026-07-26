@@ -483,6 +483,48 @@ describe(CommandDispatcher::class, function () {
     });
 
     context('next-command suggestion (ghost hint)', function () {
+        it('pre-fills a /generate ghost from the suggestion the AI registered on /next', function (Filesystem $fs) {
+            allow($fs->exists())->toReturn(false);
+            allow($fs->isDir())->toReturn(false);
+            allow($fs->isFile())->toReturn(false);
+            allow($fs->scandir())->toReturn([]);
+            allow($fs->read())->toReturn('');
+
+            $provider = new class implements ProviderInterface {
+                public int $turn = 0;
+
+                public function chat(array $messages, array $options = []): Response
+                {
+                    if (++$this->turn === 1) {
+                        return new Response('', [new ToolCall('t1', 'suggest_next', [
+                            'type' => 'example',
+                            'target' => 'App\\TodoList',
+                            'reason' => 'The current examples assert null.',
+                        ])]);
+                    }
+
+                    return new Response('Let us make the example real.');
+                }
+            };
+
+            $config = new Configuration('.', $fs);
+            $assistant = new AiAssistant($provider, $config, $this->pairOutput, 'test-model', $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
+            $dispatcher = new CommandDispatcher(
+                new SpecGenerator('spec', $fs),
+                new ClassGenerator('src', $fs),
+                $config,
+                $this->pairOutput,
+                false,
+                $fs,
+                specRunner: $this->specRunner,
+                ai: $assistant,
+            );
+
+            $dispatcher->dispatch('/next');
+
+            expect($dispatcher->suggestion())->toBe('/generate add a spec example for App\\TodoList');
+        });
+
         it('suggests running the new spec after /describe', function (Filesystem $fs) {
             allow($fs->exists())->toReturn(false);
             allow($fs->mkdir())->toReturn(null);

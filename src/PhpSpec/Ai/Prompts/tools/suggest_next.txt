@@ -1,0 +1,3 @@
+Register the single next-step suggestion in structured form: what to build next
+(spec, feature, or example), its target, and one short reason. In pair mode this
+feeds the prompt's ghost suggestion; keep advising the human in prose as well.
