@@ -436,11 +436,15 @@ final class AiAssistant
 
         // Writes the role allows still need the user's go-ahead, shown against
         // the driver's stated plan so the navigator confirms a real decision.
+        // Either answer may carry a typed note (Tab on the chooser), which is
+        // handed to the model as part of the outcome.
         if ($isWrite && !$this->chooser->choose($this->confirmQuestion($toolCall), 'write-files', 'apply file changes')) {
             PairLogger::log('RESULT', 'User declined');
 
-            return self::declineSteer();
+            return self::declineSteer($this->chooser->lastNote());
         }
+
+        $note = $isWrite ? $this->chooser->lastNote() : '';
 
         try {
             $result = $tool->execute($toolCall->arguments);
@@ -450,6 +454,10 @@ final class AiAssistant
             // the model may retry it in the correct form this same turn.
             if ($isWrite && !(is_array($result) && isset($result['error']))) {
                 $this->artifactWrittenThisHandle = true;
+
+                if ($note !== '' && is_string($result)) {
+                    $result .= sprintf(' The human added: "%s".', $note);
+                }
             }
 
             PairLogger::log('RESULT', is_string($result) ? $result : (json_encode($result) ?: ''));
@@ -480,13 +488,20 @@ final class AiAssistant
 
     /**
      * The reply handed back to the model when the navigator declines a write at
-     * the confirm step: it steers back into the cycle — re-clarify, don't retry.
+     * the confirm step: it steers back into the cycle (re-clarify, don't retry),
+     * carrying the typed note as the direction to take when one was given.
      *
+     * @param string $note the note typed alongside the decline, empty when none
      * @return array{error: string}
      */
-    private static function declineSteer(): array
+    private static function declineSteer(string $note): array
     {
-        return ['error' => 'You declined this step. Don\'t repeat the same write — ask what I should '
+        if ($note !== '') {
+            return ['error' => sprintf('You declined this step, saying: "%s". Address that instead; '
+                . 'don\'t repeat the same write. Or /swap to take the keyboard back.', $note)];
+        }
+
+        return ['error' => 'You declined this step. Don\'t repeat the same write, ask what I should '
             . 'change instead, then re-plan. Or /swap to take the keyboard back.'];
     }
 
@@ -1092,11 +1107,17 @@ final class AiAssistant
                 if (!$this->chooser->choose($this->offerQuestion($args), 'offer-change', 'apply offered changes')) {
                     PairLogger::log('RESULT', 'Offer declined');
 
-                    return self::offerDeclined();
+                    return self::offerDeclined($this->chooser->lastNote());
                 }
+
+                $note = $this->chooser->lastNote();
 
                 (new Writer($filesystem))->apply($proposal);
                 $this->artifactWrittenThisHandle = true;
+
+                if ($note !== '') {
+                    return sprintf('Change applied to %s. The human added: "%s".', $absPath, $note);
+                }
 
                 return "Change applied to $absPath.";
             },
@@ -1122,12 +1143,19 @@ final class AiAssistant
 
     /**
      * The reply handed back when the human declines an offer: re-plan, never
-     * re-offer.
+     * re-offer, and when the decline carried a typed note, that note is the
+     * direction to take instead.
      *
+     * @param string $note the note typed alongside the decline, empty when none
      * @return array{error: string}
      */
-    private static function offerDeclined(): array
+    private static function offerDeclined(string $note): array
     {
+        if ($note !== '') {
+            return ['error' => sprintf('The human declined this offer, saying: "%s". Address that '
+                . 'instead; do not re-offer the same change.', $note)];
+        }
+
         return ['error' => 'The human declined this offer. Ask what they would prefer or refine the '
             . 'suggestion; do not re-offer the same change.'];
     }

@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command\Pair;
 
 use Closure;
+use Symfony\Component\Console\Formatter\OutputFormatter;
 
 /**
  * @internal
@@ -37,6 +38,12 @@ final class Chooser
 {
     /** @var array<string, true> question kinds answered with "always" this session */
     private array $always = [];
+
+    /**
+     * The note typed alongside the latest answer (Tab on Yes/No opens an
+     * editable trailer; line mode reads it after a comma), empty when none.
+     */
+    private string $note = '';
 
     private readonly Closure $reader;
 
@@ -76,6 +83,8 @@ final class Chooser
      */
     public function choose(string $question, string $kind, string $action): bool
     {
+        $this->note = '';
+
         if (isset($this->always[$kind])) {
             return true;
         }
@@ -110,6 +119,17 @@ final class Chooser
     }
 
     /**
+     * The note the human typed alongside the latest answer: Tab on Yes or No
+     * opens an editable trailer ("1. Yes, rename it"), and a piped answer line
+     * carries it after a comma ("3, make it a Feature instead"). Empty when the
+     * answer came without one.
+     */
+    public function lastNote(): string
+    {
+        return $this->note;
+    }
+
+    /**
      * Applies the chosen option: records "always", reports acceptance.
      *
      * @param int $choice the selected option (1 yes, 2 always, 3 no)
@@ -127,7 +147,9 @@ final class Chooser
 
     /**
      * Key mode (TTY): a single keypress decides, the arrow keys move the
-     * highlight and Enter confirms it.
+     * highlight and Enter confirms it. Tab on Yes or No opens an editable note
+     * trailer on the highlighted line (Enter confirms answer and note together,
+     * Esc discards the note, backspace edits it).
      *
      * @param string $action verb phrase for option 2
      * @return int the selected option (1, 2 or 3)
@@ -136,6 +158,7 @@ final class Chooser
     {
         $selected = 1;
         $rendered = false;
+        $note = null;
         $rawMode = $this->keys === null;
 
         if ($rawMode) {
@@ -148,12 +171,41 @@ final class Chooser
             while (true) {
                 $key = $this->keys !== null ? ($this->keys)() : $this->readKeyToken();
 
+                if ($note !== null) {
+                    switch ($key) {
+                        case "\n":
+                        case "\r":
+                            $this->note = trim($note);
+
+                            return $selected;
+                        case "\033":
+                            $note = null;
+                            break;
+                        case "\x7f":
+                        case "\x08":
+                            $note = substr($note, 0, -1);
+                            break;
+                        default:
+                            if (strlen($key) === 1 && $key >= ' ') {
+                                $note .= $key;
+                            }
+                    }
+
+                    $this->renderOptions($selected, $action, $rendered, $note);
+                    continue;
+                }
+
                 switch ($key) {
                     case "\033[A":
                         $selected = max(1, $selected - 1);
                         break;
                     case "\033[B":
                         $selected = min(3, $selected + 1);
+                        break;
+                    case "\t":
+                        if ($selected !== 2) {
+                            $note = '';
+                        }
                         break;
                     case "\n":
                     case "\r":
@@ -181,7 +233,7 @@ final class Chooser
                         continue 2;
                 }
 
-                $this->renderOptions($selected, $action, $rendered);
+                $this->renderOptions($selected, $action, $rendered, $note);
             }
         } finally {
             if ($rawMode) {
@@ -192,6 +244,8 @@ final class Chooser
 
     /**
      * Line mode (piped input): prints the options and reads one answer line.
+     * Anything after a comma is kept as the answer's note ("3, make it a
+     * Feature instead").
      *
      * @param string $action verb phrase for option 2
      * @return int the selected option (1, 2 or 3)
@@ -201,7 +255,13 @@ final class Chooser
         $rendered = false;
         $this->renderOptions(1, $action, $rendered);
 
-        return match (strtolower(trim(($this->reader)()))) {
+        $answer = trim(($this->reader)());
+        if (str_contains($answer, ',')) {
+            [$answer, $note] = explode(',', $answer, 2);
+            $this->note = trim($note);
+        }
+
+        return match (strtolower(trim($answer))) {
             '2', 'a' => 2,
             '3', 'n' => 3,
             default => 1,
@@ -210,13 +270,15 @@ final class Chooser
 
     /**
      * Renders the three options with the current highlight, redrawing in
-     * place after the first paint.
+     * place after the first paint. A non-null note renders as an editable
+     * trailer on the highlighted line ("Yes, rename it▮").
      *
      * @param int $selected the highlighted option
      * @param string $action verb phrase for option 2
      * @param bool $rendered whether a previous paint must be overwritten (by reference)
+     * @param string|null $note the note being typed, null when not in note mode
      */
-    private function renderOptions(int $selected, string $action, bool &$rendered): void
+    private function renderOptions(int $selected, string $action, bool &$rendered, ?string $note = null): void
     {
         $console = $this->output->getOutput();
 
@@ -231,6 +293,10 @@ final class Chooser
             2 => "Yes, and don't ask again — always $action",
             3 => 'No',
         ];
+
+        if ($note !== null && $selected !== 2) {
+            $labels[$selected] .= ', ' . OutputFormatter::escape($note) . '▮';
+        }
 
         foreach ($labels as $number => $label) {
             if ($number === $selected) {

@@ -144,4 +144,96 @@ describe(Chooser::class, function () {
         expect($this->reads)->toBe(0);
         expect($this->buffer->fetch())->toContain('Create class App\Auto?');
     });
+
+    context('Tab annotates the answer with a note', function () {
+        it('captures a note after Tab on Yes and exposes it', function () {
+            $keys = ["\t", 'r', 'e', 'n', 'a', 'm', 'e', "\n"];
+            $chooser = new Chooser($this->output, true, null, function () use (&$keys) {
+                return array_shift($keys) ?? "\n";
+            });
+
+            expect($chooser->choose('Apply?', 'k', 'do it'))->toBeTrue();
+            expect($chooser->lastNote())->toBe('rename');
+            expect($this->buffer->fetch())->toContain('1. Yes, rename');
+        });
+
+        it('captures a note after Tab on No', function () {
+            $keys = ["\033[B", "\033[B", "\t", 'u', 's', 'e', ' ', 'X', "\n"];
+            $chooser = new Chooser($this->output, true, null, function () use (&$keys) {
+                return array_shift($keys) ?? "\n";
+            });
+
+            expect($chooser->choose('Apply?', 'k', 'do it'))->toBeFalse();
+            expect($chooser->lastNote())->toBe('use X');
+            expect($this->buffer->fetch())->toContain('3. No, use X');
+        });
+
+        it('edits the note with backspace', function () {
+            $keys = ["\t", 'a', 'b', "\x7f", "\n"];
+            $chooser = new Chooser($this->output, true, null, function () use (&$keys) {
+                return array_shift($keys) ?? "\n";
+            });
+
+            expect($chooser->choose('Apply?', 'k', 'do it'))->toBeTrue();
+            expect($chooser->lastNote())->toBe('a');
+        });
+
+        it('cancels the note on escape but keeps the selection', function () {
+            $keys = ["\t", 'a', "\033", "\n"];
+            $chooser = new Chooser($this->output, true, null, function () use (&$keys) {
+                return array_shift($keys) ?? "\n";
+            });
+
+            expect($chooser->choose('Apply?', 'k', 'do it'))->toBeTrue();
+            expect($chooser->lastNote())->toBe('');
+        });
+
+        it('ignores Tab on the always option', function () {
+            $keys = ["\033[B", "\t", "\n"];
+            $chooser = new Chooser($this->output, true, null, function () use (&$keys) {
+                return array_shift($keys) ?? "\n";
+            });
+
+            expect($chooser->choose('Apply?', 'k', 'do it'))->toBeTrue();
+            expect($chooser->hasAlways('k'))->toBeTrue();
+            expect($chooser->lastNote())->toBe('');
+        });
+
+        it('resets the note between questions', function () {
+            $keys = ["\t", 'x', "\n", "\n"];
+            $chooser = new Chooser($this->output, true, null, function () use (&$keys) {
+                return array_shift($keys) ?? "\n";
+            });
+
+            $chooser->choose('First?', 'k', 'do it');
+            expect($chooser->lastNote())->toBe('x');
+
+            $chooser->choose('Second?', 'k2', 'do it');
+            expect($chooser->lastNote())->toBe('');
+        });
+
+        it('reads a note after a comma in line mode', function () {
+            $chooser = new Chooser($this->output, true, $this->reader);
+
+            $this->answers = ['1, rename it to tasks'];
+            expect($chooser->choose('Apply?', 'k', 'do it'))->toBeTrue();
+            expect($chooser->lastNote())->toBe('rename it to tasks');
+        });
+
+        it('reads a decline note after a comma in line mode', function () {
+            $chooser = new Chooser($this->output, true, $this->reader);
+
+            $this->answers = ['n, make it a Feature instead'];
+            expect($chooser->choose('Apply?', 'k', 'do it'))->toBeFalse();
+            expect($chooser->lastNote())->toBe('make it a Feature instead');
+        });
+
+        it('leaves the note empty for a plain line answer', function () {
+            $chooser = new Chooser($this->output, true, $this->reader);
+
+            $this->answers = ['3'];
+            expect($chooser->choose('Apply?', 'k', 'do it'))->toBeFalse();
+            expect($chooser->lastNote())->toBe('');
+        });
+    });
 });
