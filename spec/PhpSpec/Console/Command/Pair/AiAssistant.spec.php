@@ -191,6 +191,59 @@ describe(AiAssistant::class, function () {
         expect($names)->not()->toContain('offer_change');
     });
 
+    it('allows at most one offer per turn, withholding and refusing the second', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\n// old");
+        allow($fs->mkdir())->toReturn(null);
+        $written = [];
+        allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
+            $written[$p] = $c;
+        });
+
+        $secondTurnTools = null;
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages, array $options) use (&$secondTurnTools, &$captured, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [
+                    new ToolCall('t1', 'offer_change', ['path' => 'src/A.php', 'content' => "<?php\n// first", 'intent' => 'first change']),
+                    new ToolCall('t2', 'offer_change', ['path' => 'src/B.php', 'content' => "<?php\n// second", 'intent' => 'second change']),
+                ]);
+            }
+            $secondTurnTools = array_column($options['tools'], 'name');
+            $captured = $messages;
+
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('thoughts?');
+
+        expect($written)->toHaveLength(1);                                 // only the first offer landed
+        expect((string) json_encode($captured))->toContain('One offer per turn');
+        expect($secondTurnTools)->not()->toContain('offer_change');        // and none advertised after
+    });
+
+    it('registers at most one suggestion per turn, ending the advice in prose', function (Filesystem $fs) {
+        $secondTurnTools = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages, array $options) use (&$secondTurnTools, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'suggest_next', ['type' => 'spec', 'target' => 'App\\First', 'reason' => 'one'])]);
+            }
+            $secondTurnTools = array_column($options['tools'], 'name');
+
+            return new Response('My advice in prose.');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant->handle('what next?');
+
+        expect($assistant->lastSuggestion()['target'])->toBe('App\\First');
+        expect($secondTurnTools)->not()->toContain('suggest_next');        // one registration per turn
+    });
+
     it('registers the model suggestion for the dispatcher ghost', function (Filesystem $fs) {
         $turn = 0;
         $this->provider->responder = function () use (&$turn) {
