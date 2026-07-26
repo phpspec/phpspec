@@ -17,7 +17,9 @@ namespace PhpSpec\Console\Command;
 use PhpSpec\Ai\Agent\Agent;
 use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Ai\Agent\Grounding;
+use PhpSpec\Ai\Agent\Phase;
 use PhpSpec\Ai\Agent\Request;
+use PhpSpec\Ai\Agent\Step;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair\SpecRunner;
@@ -169,6 +171,13 @@ final class Next extends Command
             return ($this->suggestFn)($aiConfig, $situation);
         }
 
+        // The grounded cases need no imagination: when the suite state
+        // determines the step and its subject, the suggestion IS the step.
+        $suggestion = self::suggestionFromStep(Step::resolve('', $grounding ?? Grounding::empty()));
+        if ($suggestion !== null) {
+            return $suggestion;
+        }
+
         $agent = new Agent($this->config, $this->filesystem, $this->provider);
         $outcome = $agent->do(CommandProfile::load('next'), '', $grounding);
 
@@ -245,6 +254,29 @@ final class Next extends Command
         $output->writeln("  <fg=gray>Run:</> bin/phpspec exemplify $classArg <method>");
 
         return 0;
+    }
+
+    /**
+     * The suggestion a resolved step determines on its own: undefined steps to
+     * write, a failing example to make green, or a pending gap to fill need no
+     * imagination, so no model call and no latency. Null for the open-ended
+     * states (empty project, everything green) where the model's suggestion is
+     * the value.
+     *
+     * @return array{type: string, target: string, reason: string}|null
+     */
+    private static function suggestionFromStep(?Step $step): ?array
+    {
+        if ($step === null || $step->subject === null) {
+            return null;
+        }
+
+        return match ($step->phase) {
+            Phase::WriteSteps => ['type' => 'info', 'target' => $step->subject, 'reason' => ucfirst($step->because) . '. Write the steps.'],
+            Phase::WriteCode => ['type' => 'info', 'target' => $step->subject, 'reason' => ucfirst($step->because) . '. Make it green.'],
+            Phase::WriteSpec => ['type' => 'example', 'target' => $step->subject, 'reason' => ucfirst($step->because) . '.'],
+            default => null,
+        };
     }
 
     /**

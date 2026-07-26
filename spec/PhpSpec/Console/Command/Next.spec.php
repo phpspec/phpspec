@@ -283,7 +283,7 @@ describe(Next::class, function () {
             expect($runner->arguments)->toBe([]);
         });
 
-        it('suggests through the agent pipeline, grounded in the suite and the derived step', function (Filesystem $fs) {
+        it('suggests through the agent pipeline when the step needs imagination (features green)', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             $featuresDir = getcwd() . '/features';
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir);
@@ -296,15 +296,15 @@ describe(Next::class, function () {
             $runner = new NextFakeRunner();
             $runner->outcome = new RunOutcome(null, new SuiteSummary(
                 'green',
-                ['examples' => 0, 'passes' => 0, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+                ['examples' => 3, 'passes' => 3, 'failures' => 0, 'errors' => 0, 'pending' => 0],
                 [],
                 [],
-                ['features' => 1, 'scenarios' => 1, 'steps' => 3, 'stepFailures' => 0, 'undefined' => 3],
-                [['path' => 'features/adding.feature', 'status' => 'todo', 'undefined' => 3]],
+                ['features' => 1, 'scenarios' => 1, 'steps' => 3, 'stepFailures' => 0, 'undefined' => 0],
+                [['path' => 'features/adding.feature', 'status' => 'green', 'undefined' => 0]],
             ));
 
             $replay = new ReplayProvider([
-                new Response('', [new ToolCall('1', 'suggest_next', ['type' => 'feature', 'target' => 'adding a task', 'reason' => 'The steps are still undefined.'])]),
+                new Response('', [new ToolCall('1', 'suggest_next', ['type' => 'feature', 'target' => 'listing tasks', 'reason' => 'Adding is done; nothing shows the list yet.'])]),
             ]);
             $cmd = new Next(new Configuration('.', $fs), $fs, null, $runner, $replay);
 
@@ -315,10 +315,39 @@ describe(Next::class, function () {
             $tester->execute([]);
 
             expect($tester->getDisplay())->toContain('Write a feature scenario for');
-            expect($tester->getDisplay())->toContain('adding a task');
+            expect($tester->getDisplay())->toContain('listing tasks');
             expect($runner->arguments)->toContain('--all');
-            expect($replay->requests[0]['messages'][1]->content)->toContain('FEATURES');       // suite grounding reached the model
-            expect($replay->requests[0]['messages'][0]->content)->toContain('write-steps');    // so did the derived step
+            expect($replay->requests[0]['messages'][1]->content)->toContain('FEATURES');    // suite grounding reached the model
+            expect($replay->requests[0]['messages'][0]->content)->toContain('refactor');    // so did the derived step
+        });
+
+        it('suggests the determined step itself, without the model, when the suite determines it', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            $featuresDir = getcwd() . '/features';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir);
+            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
+            allow($fs->scandir())->toReturn([]);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $runner = new NextFakeRunner();
+            $runner->outcome = new RunOutcome(null, new SuiteSummary(
+                'green',
+                ['examples' => 0, 'passes' => 0, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+                [],
+                [],
+                ['features' => 1, 'scenarios' => 1, 'steps' => 3, 'stepFailures' => 0, 'undefined' => 3],
+                [['path' => 'features/adding.feature', 'status' => 'todo', 'undefined' => 3]],
+            ));
+
+            $replay = new ReplayProvider([new Response('should never be consulted')]);
+            $cmd = new Next(new Configuration('.', $fs), $fs, null, $runner, $replay);
+
+            $tester = new CommandTester($cmd);
+            $tester->execute([]);
+
+            expect($replay->requests)->toBe([]);                                  // deterministic: no model
+            expect($tester->getDisplay())->toContain('undefined steps');
+            expect($tester->getDisplay())->toContain('Write the steps.');
         });
 
         it('passes AI config to the suggest function', function (Filesystem $fs) {
