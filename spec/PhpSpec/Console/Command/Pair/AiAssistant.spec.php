@@ -82,6 +82,137 @@ describe(AiAssistant::class, function () {
         expect($options['effort'])->toBe('high');
     });
 
+    it('shows a navigator offer as a diff and applies it on yes', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\nnamespace App;\nclass TodoList {}\n");
+        $written = [];
+        allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
+            $written[$p] = $c;
+        });
+        allow($fs->mkdir())->toReturn(null);
+
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'offer_change', [
+                    'path' => 'src/App/TodoList.php',
+                    'content' => "<?php\nnamespace App;\nclass TodoList {\n    public function tasks(): array { return []; }\n}\n",
+                    'intent' => 'add a tasks() accessor so the example can assert on it',
+                ])]);
+            }
+            $captured = $messages;
+
+            return new Response('done');
+        };
+
+        // Default role: the human drives, the AI navigates and may only offer.
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('how do we make this real?');
+
+        $text = $this->buffer->fetch();
+        expect($text)->toContain('add a tasks() accessor');   // the stated intent at the chooser
+        expect($written)->toHaveLength(1);
+        expect((string) json_encode($captured))->toContain('applied');
+    });
+
+    it('keeps a declined offer unwritten and steers the model to re-plan', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\n// old");
+        allow($fs->mkdir())->toReturn(null);
+
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'offer_change', [
+                    'path' => 'src/App/TodoList.php',
+                    'content' => "<?php\n// new",
+                    'intent' => 'rewrite it',
+                ])]);
+            }
+            $captured = $messages;
+
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $this->answers = ['3'];
+        $assistant->handle('thoughts?');
+
+        expect($fs->write())->not()->toHaveBeenCalled();
+        expect((string) json_encode($captured))->toContain('declined this offer');
+    });
+
+    it('rejects an offer that would drop spec examples, before any chooser', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\ndescribe('TodoList', function () {\n    it(\"should add\", fn() => expect(null)->toBe(null));\n    it(\"should tasks\", fn() => expect(null)->toBe(null));\n});\n");
+
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'offer_change', [
+                    'path' => 'spec/App/TodoList.spec.php',
+                    'content' => "<?php\ndescribe('TodoList', function () {\n    it('keeps track of added tasks', fn() => expect(true)->toBe(true));\n});\n",
+                    'intent' => 'replace the anemic examples',
+                ])]);
+            }
+            $captured = $messages;
+
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('sharpen the spec');
+
+        expect($fs->write())->not()->toHaveBeenCalled();
+        expect((string) json_encode($captured))->toContain('drop existing examples');
+    });
+
+    it('offers replace writes while navigating, and writes replace offers while driving', function (Filesystem $fs) {
+        $names = null;
+        $this->provider->responder = function (array $messages, array $options) use (&$names) {
+            $names = array_column($options['tools'], 'name');
+
+            return new Response('done');
+        };
+
+        $navigator = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $navigator->handle('hello');
+        expect($names)->toContain('offer_change');
+        expect($names)->not()->toContain('write_file');
+
+        $driver = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+        $driver->handle('hello');
+        expect($names)->toContain('write_file');
+        expect($names)->not()->toContain('offer_change');
+    });
+
+    it('registers the model suggestion for the dispatcher ghost', function (Filesystem $fs) {
+        $turn = 0;
+        $this->provider->responder = function () use (&$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'suggest_next', [
+                    'type' => 'example',
+                    'target' => 'App\\TodoList',
+                    'reason' => 'The current examples assert null.',
+                ])]);
+            }
+
+            return new Response('Let us make the example real.');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        expect($assistant->lastSuggestion())->toBeNull();
+
+        $assistant->handle('what next?');
+
+        expect($assistant->lastSuggestion())->toBe(['type' => 'example', 'target' => 'App\\TodoList', 'reason' => 'The current examples assert null.']);
+    });
+
     it('routes ask_user tool calls from the model through the chooser', function (Filesystem $fs) {
         $captured = null;
         $turn = 0;

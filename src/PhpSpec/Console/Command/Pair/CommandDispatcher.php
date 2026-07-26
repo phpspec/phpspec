@@ -202,6 +202,13 @@ final class CommandDispatcher
         if ($this->ai !== null) {
             $this->ai->handle($this->nextInstruction(), $this->lastSituation);
 
+            // A registered suggestion becomes a ghost-prefilled /generate, so
+            // acting on the advice is Tab + Enter, never retyping it.
+            $ghost = self::generateGhost($this->ai->lastSuggestion());
+            if ($ghost !== null) {
+                $this->suggestion = $ghost;
+            }
+
             return self::CONTINUE;
         }
 
@@ -232,7 +239,29 @@ final class CommandDispatcher
             $coaching = 'Follow outside-in, feature-first TDD — favour feature (story) tests, always a baby step.';
         }
 
-        return $coaching . "\n\n" . 'Based on our current suite state, name and take the single next baby step now — one artifact, then hand back.';
+        return $coaching . "\n\n" . 'Based on our current suite state, name and take the single next baby step now: one artifact, then hand back. Register the step with suggest_next first, then advise in prose.';
+    }
+
+    /**
+     * The /generate ghost a registered suggestion maps to, phrased so the
+     * one-shot's step resolution routes it (feature/spec wording, a class to
+     * resolve), or null for suggestions with nothing concrete to prefill.
+     *
+     * @param array<string, string>|null $suggestion
+     */
+    private static function generateGhost(?array $suggestion): ?string
+    {
+        $target = trim($suggestion['target'] ?? '');
+        if ($target === '') {
+            return null;
+        }
+
+        return match ($suggestion['type'] ?? '') {
+            'feature' => '/generate a feature for ' . $target,
+            'spec' => '/generate a spec for ' . $target,
+            'example' => '/generate add a spec example for ' . $target,
+            default => null,
+        };
     }
 
     /**
@@ -275,7 +304,9 @@ final class CommandDispatcher
 
         // Set from the top-level command only, so a nested run (e.g. the "run
         // now?" step of /describe) never clobbers the hint.
-        $this->suggestion = $this->suggestionFor($command, $parsed['argument']);
+        // The static follow-up table never overrides a ghost the handler itself
+        // set (e.g. /next prefilling a /generate from the AI's suggestion).
+        $this->suggestion = $this->suggestionFor($command, $parsed['argument']) ?? $this->suggestion;
 
         return $result;
     }

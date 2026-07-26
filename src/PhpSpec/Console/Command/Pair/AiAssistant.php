@@ -95,6 +95,14 @@ final class AiAssistant
     /** Whether the AI has written its one artifact this turn (while driving). */
     private bool $artifactWrittenThisHandle = false;
 
+    /**
+     * The structured next-step suggestion the model registered this turn via
+     * suggest_next, for the dispatcher to turn into a ghost prompt.
+     *
+     * @var array<string, string>|null
+     */
+    private ?array $lastSuggestion = null;
+
     /** Tool rounds taken since the driving AI wrote its artifact this turn. */
     private int $postArtifactRounds = 0;
 
@@ -151,6 +159,7 @@ final class AiAssistant
             $this->ensureInitialised();
             $this->artifactWrittenThisHandle = false;
             $this->postArtifactRounds = 0;
+            $this->lastSuggestion = null;
             $this->messages = $this->window->apply($this->messages);
             $this->injectSituation($situation);
             $this->messages[] = Message::user($input);
@@ -167,6 +176,18 @@ final class AiAssistant
         } catch (Throwable $e) {
             $this->output->error("AI error: {$e->getMessage()}");
         }
+    }
+
+    /**
+     * The structured suggestion the model registered on its last turn (via the
+     * suggest_next tool), or null when it registered none. The dispatcher turns
+     * it into a ghost-prefilled /generate.
+     *
+     * @return array<string, string>|null
+     */
+    public function lastSuggestion(): ?array
+    {
+        return $this->lastSuggestion;
     }
 
     /**
@@ -340,9 +361,10 @@ final class AiAssistant
         $tools = array_values($this->tools);
         $role = $this->roleState->current();
 
-        // Withhold the write tools when the AI is navigating (it never writes),
-        // and — while it drives — once it has already written its one artifact
-        // this turn, so it can only read and run for the rest of the turn.
+        // Withhold the write tools when the AI is navigating (it never writes
+        // unbidden; it OFFERS instead), and — while it drives — once it has
+        // already written its one artifact this turn, so it can only read and
+        // run for the rest of the turn.
         $withholdWrites = $role->aiIsNavigator()
             || ($role->aiIsDriver() && $this->artifactWrittenThisHandle);
 
@@ -350,6 +372,14 @@ final class AiAssistant
             $tools = array_values(array_filter(
                 $tools,
                 fn(ToolInterface $tool) => !in_array($tool->getName(), self::WRITE_TOOLS, true),
+            ));
+        }
+
+        // Offering is the navigator's channel; a driving AI writes instead.
+        if ($role->aiIsDriver()) {
+            $tools = array_values(array_filter(
+                $tools,
+                fn(ToolInterface $tool) => $tool->getName() !== 'offer_change',
             ));
         }
 
@@ -545,6 +575,8 @@ final class AiAssistant
             $this->generateStepsTool(),
             $this->writeFileTool(),
             $this->updateFileTool(),
+            $this->offerChangeTool(),
+            $this->suggestNextTool(),
             $this->runSpecsTool(),
             $this->inspectSymbolTool(),
             $this->askUserTool(),
@@ -985,6 +1017,125 @@ final class AiAssistant
                 $this->applyProposal($this->proposalFor($absPath, $content, 'update_file'));
 
                 return "File updated: $absPath";
+            },
+        );
+    }
+
+    /**
+     * The navigator's channel for concrete advice: an offered change is shown
+     * to the human as a diff FIRST, then accepted or declined through the
+     * chooser, and only an accepted offer reaches disk (through the shared
+     * Writer). The spec guards apply to offers exactly as to writes.
+     */
+    private function offerChangeTool(): Tool
+    {
+        $filesystem = $this->filesystem;
+        $specDir = $this->specDir();
+
+        return Tool::make(
+            name: 'offer_change',
+            description: self::toolDescription('offer_change'),
+            parameters: [
+                'path' => [
+                    'type' => 'string',
+                    'description' => 'Relative path from project root (e.g. "src/App/Service.php")',
+                ],
+                'content' => [
+                    'type' => 'string',
+                    'description' => 'The complete new file content',
+                ],
+                'intent' => self::intentParameter(),
+            ],
+            handler: function (array $args) use ($filesystem, $specDir) {
+                $path = $args['path'];
+                $content = $args['content'];
+                $absPath = getcwd() . '/' . ltrim($path, '/');
+
+                $rejection = self::specWriteRejection($absPath, $specDir, $content, $filesystem->exists($absPath) ? $filesystem->read($absPath) : '');
+                if ($rejection !== null) {
+                    return $rejection;
+                }
+
+                $proposal = $this->proposalFor($absPath, $content, 'offer_change');
+
+                // The diff IS the offer: the human sees it before deciding.
+                if ($proposal->isNew) {
+                    $this->output->fileDisplay($absPath, $proposal->new, true);
+                } else {
+                    $this->output->fileDiff($absPath, $proposal->old, $proposal->new);
+                }
+
+                if (!$this->chooser->choose($this->offerQuestion($args), 'offer-change', 'apply offered changes')) {
+                    PairLogger::log('RESULT', 'Offer declined');
+
+                    return self::offerDeclined();
+                }
+
+                (new Writer($filesystem))->apply($proposal);
+                $this->artifactWrittenThisHandle = true;
+
+                return "Change applied to $absPath.";
+            },
+        );
+    }
+
+    /**
+     * The offer's confirm prompt: the stated intent so the human decides on the
+     * plan, not just the mechanics.
+     *
+     * @param array<string, mixed> $args
+     */
+    private function offerQuestion(array $args): string
+    {
+        $intent = $args['intent'] ?? null;
+
+        if (is_string($intent) && trim($intent) !== '') {
+            return 'Plan: ' . trim($intent) . "\n  Apply this change?";
+        }
+
+        return 'Apply this offered change?';
+    }
+
+    /**
+     * The reply handed back when the human declines an offer: re-plan, never
+     * re-offer.
+     *
+     * @return array{error: string}
+     */
+    private static function offerDeclined(): array
+    {
+        return ['error' => 'The human declined this offer. Ask what they would prefer or refine the '
+            . 'suggestion; do not re-offer the same change.'];
+    }
+
+    /**
+     * Registers the model's structured next-step suggestion, so the dispatcher
+     * can pre-fill the prompt with a matching /generate ghost.
+     */
+    private function suggestNextTool(): Tool
+    {
+        return Tool::make(
+            name: 'suggest_next',
+            description: self::toolDescription('suggest_next'),
+            parameters: [
+                'type' => [
+                    'type' => 'string',
+                    'enum' => ['spec', 'feature', 'example', 'info'],
+                    'description' => 'What to build next',
+                ],
+                'target' => [
+                    'type' => 'string',
+                    'description' => 'The class or feature the suggestion is about',
+                ],
+                'reason' => [
+                    'type' => 'string',
+                    'description' => 'One short sentence why',
+                ],
+            ],
+            handler: function (array $args): string {
+                $this->lastSuggestion = array_map(strval(...), array_filter($args, is_scalar(...)));
+
+                return 'Suggestion noted. Keep advising in prose; never repeat it as JSON.';
             },
         );
     }

@@ -1,0 +1,6 @@
+Offer ONE concrete file change while navigating: give the complete new content of
+one file, and the human sees it as a diff they accept or decline. Use it the moment
+your advice has become concrete (an exact example, a step definition, a small
+method) instead of asking the human to type it. Never re-offer a declined change:
+ask what they would prefer instead. A spec offer must grow the spec; dropping
+existing examples is rejected.
