@@ -4,25 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Fixed
- - `generate` places a bare filename under its configured directory (features, spec, or src), never the project root
- - Asking `generate` for step bodies (or to grow an existing feature) consults the model instead of re-emitting a no-op scaffold
- - A `/generate` chooser note now runs a follow-up round with that note as the instruction
-
-## [Unreleased]
-
-### Fixed
- - One-shot AI commands declare their tools on the wire again (they were sent as zero declarations, so the model answered empty)
- - Composer now refuses papi-ai packages older than 0.13
-
-## [Unreleased]
+## [9.0.0-beta.14](https://github.com/phpspec/phpspec/compare/9.0.0-beta.13...9.0.0-beta.14)
 
 ### Added
  - On a green suite, `next` can recommend refactoring, pointing at (or ghosting) `refactor` with the target
 
 ### Fixed
+ - One-shot AI commands declare their tools on the wire again (they were sent as zero declarations, so the model answered empty)
+ - Composer now refuses papi-ai packages older than 0.13
+ - `generate` places a bare filename under its configured directory (features, spec, or src), never the project root
+ - Asking `generate` for step bodies (or to grow an existing feature) consults the model instead of re-emitting a no-op scaffold
+ - A `/generate` chooser note now runs a follow-up round with that note as the instruction
  - Pair delegates commands with their arguments actually bound, so `/refactor App/TodoList` runs
 
 ## [9.0.0-beta.13](https://github.com/phpspec/phpspec/compare/9.0.0-beta.12...9.0.0-beta.13)
