@@ -47,15 +47,15 @@ describe(ProviderFactory::class, function () {
     });
 
     it('returns the default model for google', function () {
-        expect(ProviderFactory::defaultModel('google'))->toBe('gemini-2.5-pro');
+        expect(ProviderFactory::defaultModel('google'))->toBe('gemini-3-pro-preview');
     });
 
     it('returns the default model for anthropic', function () {
-        expect(ProviderFactory::defaultModel('anthropic'))->toBe('claude-sonnet-4-20250514');
+        expect(ProviderFactory::defaultModel('anthropic'))->toBe('claude-sonnet-5');
     });
 
     it('returns the default model for openai', function () {
-        expect(ProviderFactory::defaultModel('openai'))->toBe('gpt-4o');
+        expect(ProviderFactory::defaultModel('openai'))->toBe('gpt-5.1');
     });
 
     it('throws on unknown provider in defaultModel', function () {

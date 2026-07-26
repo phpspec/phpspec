@@ -98,7 +98,7 @@ Or with an explicit model:
 ```yaml
 ai:
   provider: openai
-  model: gpt-4o
+  model: gpt-5.1
   api_key: YOUR_API_KEY
 ```
 
