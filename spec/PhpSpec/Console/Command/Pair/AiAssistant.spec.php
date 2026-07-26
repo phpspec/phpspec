@@ -145,6 +145,66 @@ describe(AiAssistant::class, function () {
         expect((string) json_encode($captured))->toContain('declined this offer');
     });
 
+    it('hands the acceptance note to the model when an offer is applied', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\nnamespace App;\nclass TodoList {}\n");
+        allow($fs->write())->toReturn(null);
+        allow($fs->mkdir())->toReturn(null);
+
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'offer_change', [
+                    'path' => 'src/App/TodoList.php',
+                    'content' => "<?php\nnamespace App;\nclass TodoList {\n    public function items(): array { return []; }\n}\n",
+                    'intent' => 'add an accessor',
+                ])]);
+            }
+            $captured = $messages;
+
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $this->answers = ['1, rename the method to tasks'];
+        $assistant->handle('how do we make this real?');
+
+        $text = (string) json_encode($captured);
+        expect($text)->toContain('The human added');
+        expect($text)->toContain('rename the method to tasks');
+    });
+
+    it('hands the decline note to the model as the direction to take instead', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\n// old");
+        allow($fs->mkdir())->toReturn(null);
+
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'offer_change', [
+                    'path' => 'src/App/TodoList.php',
+                    'content' => "<?php\n// new",
+                    'intent' => 'rewrite it',
+                ])]);
+            }
+            $captured = $messages;
+
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $this->answers = ['3, make it a Feature instead'];
+        $assistant->handle('thoughts?');
+
+        expect($fs->write())->not()->toHaveBeenCalled();
+        $text = (string) json_encode($captured);
+        expect($text)->toContain('make it a Feature instead');
+        expect($text)->toContain('Address that');
+    });
+
     it('rejects an offer that would drop spec examples, before any chooser', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
         allow($fs->read())->toReturn("<?php\ndescribe('TodoList', function () {\n    it(\"should add\", fn() => expect(null)->toBe(null));\n    it(\"should tasks\", fn() => expect(null)->toBe(null));\n});\n");
@@ -299,6 +359,41 @@ describe(AiAssistant::class, function () {
         expect($fs->write())->not()->toHaveBeenCalled();
         // Declining steers the driver back into the cycle, rather than a bare "declined".
         expect((string) json_encode($captured))->toContain('declined this step');
+    });
+
+    it('hands the confirm-step notes to the driving model, on yes and on no', function (Filesystem $fs) {
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'describe', [
+                    'class_name' => 'App/Wanted',
+                ])]);
+            }
+            $captured = $messages;
+
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+        $this->answers = ['3, exemplify addTask first'];
+        $assistant->handle('spec App/Wanted');
+
+        $text = (string) json_encode($captured);
+        expect($text)->toContain('exemplify addTask first');
+        expect($text)->toContain('Address that');
+
+        $captured = null;
+        $turn = 0;
+        allow($fs->write())->toReturn(null);
+        allow($fs->mkdir())->toReturn(null);
+        $accepting = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, new RoleState(PairRole::AiDrives), $this->specRunner);
+        $this->answers = ['1, then run it'];
+        $accepting->handle('spec App/Wanted');
+
+        $text = (string) json_encode($captured);
+        expect($text)->toContain('The human added');
+        expect($text)->toContain('then run it');
     });
 
     it('ends the driver turn after one artifact instead of chasing a bigger goal', function (Filesystem $fs) {

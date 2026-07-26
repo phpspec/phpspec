@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+ - Tab on the chooser's Yes or No opens an editable note ("1. Yes, rename the method to tasks" / "3. No, make it a Feature instead"): the note travels with the answer into the AI's tool result, so an accepted change carries the human's amendment and a declined offer carries the direction to take instead of a mute no. Piped answers carry a note after a comma.
+
 ## [9.0.0-beta.12](https://github.com/phpspec/phpspec/compare/9.0.0-beta.11...9.0.0-beta.12)
 
 ### Added

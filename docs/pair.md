@@ -196,6 +196,23 @@ answer "always" to class creation and PhpSpec stops asking about classes,
 while other questions (running specs, applying AI file changes) still prompt.
 Nothing is persisted between sessions.
 
+Press **Tab** on Yes or No to annotate the answer before giving it: the
+highlighted line becomes an editable trailer.
+
+```
+  Apply this offered change?
+   ▸ 1. Yes, rename the method to tasks▮
+     2. Yes, and don't ask again -- always apply offered changes
+     3. No
+```
+
+Type the note, backspace to edit, Enter to answer with it, Esc to drop it.
+The note travels with the answer: accept an AI offer with "Yes, rename the
+method to tasks" and the model reads exactly that amendment; decline with
+"No, make it a Feature instead" and that becomes the direction it takes next,
+instead of guessing why you said no. Piped input carries a note after a comma
+(an answer line of "3, make it a Feature instead").
+
 ### Project Context
 
 On each request, the AI receives:
