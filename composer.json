@@ -43,8 +43,8 @@
     },
 
     "suggest": {
-        "papi-ai/papi-core": "Required for AI features (pair, next, refactor)",
-        "papi-ai/google": "Google Gemini AI provider",
+        "papi-ai/papi-core": "Required for AI features (pair, next, refactor); ^0.13 or newer",
+        "papi-ai/google": "Google Gemini AI provider; ^0.13 or newer",
         "papi-ai/anthropic": "Anthropic Claude AI provider",
         "papi-ai/openai": "OpenAI GPT AI provider",
         "ext-curl": "Required for AI features (pair, next, refactor)",
@@ -59,6 +59,11 @@
         "phpstan/phpstan": "^2.1",
         "papi-ai/papi-core": "^0.13",
         "papi-ai/google": "^0.13"
+    },
+
+    "conflict": {
+        "papi-ai/papi-core": "<0.13",
+        "papi-ai/google": "<0.13"
     },
 
     "bin": ["bin/phpspec"],

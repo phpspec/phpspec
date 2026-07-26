@@ -18,6 +18,7 @@ use PapiAI\Core\Contracts\ProviderInterface as PapiProviderInterface;
 use PapiAI\Core\Message as PapiMessage;
 use PapiAI\Core\ToolCall as PapiToolCall;
 use PhpSpec\Ai\Contracts\ProviderInterface;
+use PhpSpec\Ai\Contracts\ToolInterface;
 use PhpSpec\Ai\Message;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\Role;
@@ -43,9 +44,36 @@ final class PapiProvider implements ProviderInterface
     {
         $papiMessages = array_map(self::toPapiMessage(...), $messages);
 
+        // Papi providers only consume tool declarations in array shape; an
+        // object slips through their conversion silently and the request goes
+        // out declaring NO tools at all, so the adapter serialises here.
+        if (isset($options['tools']) && is_array($options['tools'])) {
+            $options['tools'] = array_map(self::toPapiTool(...), $options['tools']);
+        }
+
         $papiResponse = $this->provider->chat($papiMessages, $options);
 
         return self::fromPapiResponse($papiResponse);
+    }
+
+    /**
+     * The array shape papi providers consume for one tool declaration; a tool
+     * already in array shape passes through untouched.
+     *
+     * @param ToolInterface|array<string, mixed> $tool
+     * @return array<string, mixed>
+     */
+    private static function toPapiTool(ToolInterface|array $tool): array
+    {
+        if ($tool instanceof ToolInterface) {
+            return [
+                'name' => $tool->getName(),
+                'description' => $tool->getDescription(),
+                'input_schema' => $tool->getParameterSchema(),
+            ];
+        }
+
+        return $tool;
     }
 
     private static function toPapiMessage(Message $message): PapiMessage

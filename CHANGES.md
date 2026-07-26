@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Asking `generate` for step bodies (or to grow an existing feature) consults the model instead of re-emitting a no-op scaffold
  - A `/generate` chooser note now runs a follow-up round with that note as the instruction
 
+## [Unreleased]
+
+### Fixed
+ - One-shot AI commands declare their tools on the wire again (they were sent as zero declarations, so the model answered empty)
+ - Composer now refuses papi-ai packages older than 0.13
+
 ## [9.0.0-beta.13](https://github.com/phpspec/phpspec/compare/9.0.0-beta.12...9.0.0-beta.13)
 
 ### Added
