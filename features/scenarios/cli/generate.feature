@@ -57,6 +57,18 @@ Feature: Generate code from a natural-language instruction
     Then the output should not contain "steps.php"
     And the output should not contain "pending();"
 
+  Scenario: a bare feature filename lands under the features directory, not the project root
+    Given a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api_key: test-key
+      """
+    When I run phpspec command "generate a feature for completing_a_task.feature"
+    Then a file "features/completing_a_task.feature" should be generated
+    And the file "features/completing_a_task.feature" should contain "Feature:"
+    And the output should contain "features/completing_a_task.feature"
+
   Scenario: generate writes step definitions for the last-touched feature deterministically
     Given a phpspec.yaml config:
       """

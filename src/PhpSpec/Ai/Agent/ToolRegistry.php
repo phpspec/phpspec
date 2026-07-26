@@ -278,7 +278,7 @@ final class ToolRegistry
         }
 
         if ($step->path !== null) {
-            return $this->relative($step->path);
+            return $this->locatedPath($this->relative($step->path));
         }
 
         if ($step->subject === null) {
@@ -311,10 +311,41 @@ final class ToolRegistry
     private function featurePath(Step $step): ?string
     {
         if ($step->path !== null) {
-            return $this->relative($step->path);
+            return $this->locatedPath($this->relative($step->path));
         }
 
         return $this->slugPath($step->subject ?? '');
+    }
+
+    /**
+     * A bare file name is a name, not a location: the runner only discovers
+     * files under the configured directories, so the name is placed in the
+     * directory its suffix belongs to (feature, spec, or source). A path that
+     * already names a directory is honoured verbatim, and steps files are
+     * laid out beside their feature elsewhere.
+     */
+    private function locatedPath(string $path): string
+    {
+        if (str_starts_with($path, './')) {
+            $path = substr($path, 2);
+        }
+
+        if (str_contains($path, '/') || str_ends_with($path, '.steps.php')) {
+            return $path;
+        }
+
+        $dir = match (true) {
+            str_ends_with($path, '.feature') => trim($this->config->getFeaturesPath(), './'),
+            str_ends_with($path, $this->config->getSpecSuffix()) => ltrim(str_replace('\\', '/', $this->config->getSpecPath()), './'),
+            str_ends_with($path, '.php') => ltrim($this->config->getSrcPath(), './'),
+            default => null,
+        };
+
+        if ($dir === null) {
+            return $path;
+        }
+
+        return rtrim($dir, '/') . '/' . $path;
     }
 
     /**

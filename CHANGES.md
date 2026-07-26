@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
+ - `generate` places a bare filename under its configured directory (features, spec, or src), never the project root
  - Asking `generate` for step bodies (or to grow an existing feature) consults the model instead of re-emitting a no-op scaffold
  - A `/generate` chooser note now runs a follow-up round with that note as the instruction
 
