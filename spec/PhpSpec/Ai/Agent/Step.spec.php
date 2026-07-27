@@ -143,6 +143,21 @@ describe(Step::class, function () {
         expect($step->because)->toContain('it adds a task');
     });
 
+    it('names a degenerate failure once when its subject and example coincide', function () {
+        $suite = new SuiteSummary(
+            'red',
+            ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
+            [['subject' => 'deleting_a_task', 'example' => 'deleting_a_task', 'error' => 'boom']],
+            [],
+            ['features' => 1, 'scenarios' => 1, 'steps' => 2, 'stepFailures' => 0, 'undefined' => 0],
+            [['path' => 'features/deleting_a_task.feature', 'status' => 'green', 'undefined' => 0]],
+        );
+
+        $step = Step::resolve('', new Grounding(suite: $suite));
+
+        expect($step->because)->toBe('the suite is red: deleting_a_task');
+    });
+
     it('derives refactor when features are green', function () {
         $suite = new SuiteSummary(
             'green',

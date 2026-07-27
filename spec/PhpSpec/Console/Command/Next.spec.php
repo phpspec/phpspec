@@ -592,12 +592,119 @@ describe(Next::class, function () {
             $replay = new ReplayProvider([new Response('should never be consulted')]);
             $cmd = new Next(new Configuration('.', $fs), $fs, null, $runner, $replay);
 
-            $tester = new CommandTester($cmd);
+            $app = new Application();
+            method_exists($app, 'addCommand') ? $app->addCommand($cmd) : $app->add($cmd);
+            $tester = new CommandTester($app->find('next'));
+            $tester->setInputs(['n']);
             $tester->execute([]);
 
             expect($replay->requests)->toBe([]);                                  // deterministic: no model
             expect($tester->getDisplay())->toContain('undefined steps');
             expect($tester->getDisplay())->toContain('Write the steps.');
+            expect($tester->getDisplay())->toContain('Would you like me to create that for you?');
+        });
+
+        it('actuates an accepted steps suggestion through generate', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'steps',
+                'target' => 'features/adding.feature',
+                'reason' => 'Undefined steps block the story.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $fakeGenerate = new class extends SymfonyCommand {
+                public string $received = '';
+                protected function configure(): void
+                {
+                    $this->setName('generate')->addArgument('instruction', InputArgument::IS_ARRAY);
+                }
+                protected function execute(InputInterface $input, OutputInterface $output): int
+                {
+                    $this->received = implode(' ', (array) $input->getArgument('instruction'));
+
+                    return 0;
+                }
+            };
+
+            $app = new Application();
+            foreach ([$cmd, $fakeGenerate] as $command) {
+                method_exists($app, 'addCommand') ? $app->addCommand($command) : $app->add($command);
+            }
+
+            $tester = new CommandTester($app->find('next'));
+            $tester->setInputs(['Y']);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('Write the steps for');
+            expect($fakeGenerate->received)->toBe('the steps for features/adding.feature');
+        });
+
+        it('actuates an accepted implement suggestion for a class through generate', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'implement',
+                'target' => 'App\\TodoList',
+                'reason' => 'The suite is red: App\\TodoList, it deletes a task.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $fakeGenerate = new class extends SymfonyCommand {
+                public string $received = '';
+                protected function configure(): void
+                {
+                    $this->setName('generate')->addArgument('instruction', InputArgument::IS_ARRAY);
+                }
+                protected function execute(InputInterface $input, OutputInterface $output): int
+                {
+                    $this->received = implode(' ', (array) $input->getArgument('instruction'));
+
+                    return 0;
+                }
+            };
+
+            $app = new Application();
+            foreach ([$cmd, $fakeGenerate] as $command) {
+                method_exists($app, 'addCommand') ? $app->addCommand($command) : $app->add($command);
+            }
+
+            $tester = new CommandTester($app->find('next'));
+            $tester->setInputs(['Y']);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('Implement');
+            expect($fakeGenerate->received)->toBe('implement App\\TodoList');
+        });
+
+        it('falls back to a run hint when the failing subject is no class', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'implement',
+                'target' => 'deleting_a_task',
+                'reason' => 'The suite is red: deleting_a_task. Make it green.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $tester = new CommandTester($cmd);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('run');
+            expect($tester->getDisplay())->not()->toContain('Would you like me to create that for you?');
         });
 
         it('passes AI config to the suggest function', function (Filesystem $fs) {

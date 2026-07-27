@@ -124,7 +124,7 @@ final readonly class Step
 
         if ($suite->hasFeatures()) {
             if ($failure !== null) {
-                return new self(Phase::WriteCode, null, $failure['subject'], sprintf('the suite is red: %s, %s', $failure['subject'], $failure['example']));
+                return new self(Phase::WriteCode, null, $failure['subject'], self::redBecause($failure));
             }
 
             $red = $suite->redFeature();
@@ -145,7 +145,7 @@ final readonly class Step
         }
 
         if ($suite->isRed()) {
-            return new self(Phase::WriteCode, null, $failure['subject'] ?? null, sprintf('the suite is red: %s, %s', $failure['subject'] ?? '', $failure['example'] ?? ''));
+            return new self(Phase::WriteCode, null, $failure['subject'] ?? null, self::redBecause($failure));
         }
 
         $gap = $suite->nearestPendingGap();
@@ -154,6 +154,20 @@ final readonly class Step
         }
 
         return new self(Phase::Refactor, null, null, 'green and clean: refactor, or pick the next behaviour');
+    }
+
+    /**
+     * The red-suite because, naming the failure's subject and example once
+     * each: a degenerate spec repeats its subject as the example, and printing
+     * it twice reads like a stutter.
+     *
+     * @param array{subject?: string, example?: string}|null $failure
+     */
+    private static function redBecause(?array $failure): string
+    {
+        $parts = array_unique(array_filter([$failure['subject'] ?? '', $failure['example'] ?? '']));
+
+        return 'the suite is red' . ($parts === [] ? '' : ': ' . implode(', ', $parts));
     }
 
     /**

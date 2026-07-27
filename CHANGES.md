@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
  - Accepting a feature suggestion from `next` runs `generate`, so it writes the feature instead of describing a spec at the project root
+ - Determined steps offer too: `next` asks before writing the steps or implementing the failing class, instead of printing advice and exiting
+ - A degenerate failure whose subject matches its example is named once, not twice
  - Auto-verify runs the whole suite when the change touches a feature or steps file
  - A verified change ends the turn; no fresh suggestion rides on its back
  - `refactor` runs its baseline with the installed phpspec, wherever it lives (vendor installs failed to launch it and blamed the specs)

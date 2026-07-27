@@ -140,6 +140,14 @@ final class Next extends Command
             return $this->offerFeature($input, $output, $suggestion['target']);
         }
 
+        if ($suggestion['type'] === 'steps') {
+            return $this->offerSteps($input, $output, $suggestion['target']);
+        }
+
+        if ($suggestion['type'] === 'implement') {
+            return $this->offerImplement($input, $output, $suggestion['target']);
+        }
+
         if ($suggestion['type'] === 'example') {
             return $this->offerExemplify($input, $output, $suggestion['target']);
         }
@@ -212,6 +220,8 @@ final class Next extends Command
         $typeLabel = match ($suggestion['type']) {
             'spec' => 'Describe a spec for',
             'feature' => 'Write a feature scenario for',
+            'steps' => 'Write the steps for',
+            'implement' => 'Implement',
             'example' => 'Add an example to',
             'refactor' => 'Refactor',
             default => '',
@@ -246,6 +256,36 @@ final class Next extends Command
     private function offerFeature(Input $input, Output $output, string $target): int
     {
         $instruction = 'a feature for ' . $target;
+
+        return $this->offerToRun($input, $output, sprintf('generate "%s"', $instruction), 'generate', ['instruction' => [$instruction]]);
+    }
+
+    /**
+     * A steps suggestion actuates through `generate`, whose step resolution
+     * writes the step definitions for the named feature deterministically.
+     */
+    private function offerSteps(Input $input, Output $output, string $target): int
+    {
+        $instruction = 'the steps for ' . $target;
+
+        return $this->offerToRun($input, $output, sprintf('generate "%s"', $instruction), 'generate', ['instruction' => [$instruction]]);
+    }
+
+    /**
+     * A failing class actuates through `generate`, whose "implement" wording
+     * routes to the write-code step with the class and its spec in context. A
+     * subject that is no class (a story slug, a bare string) has no one-shot
+     * actuator, so the hint is the run that shows the failure.
+     */
+    private function offerImplement(Input $input, Output $output, string $target): int
+    {
+        if (preg_match('~^[A-Z][A-Za-z0-9]*(?:\\\\[A-Z][A-Za-z0-9]*)*$~', $target) !== 1) {
+            $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . ' run');
+
+            return 0;
+        }
+
+        $instruction = 'implement ' . $target;
 
         return $this->offerToRun($input, $output, sprintf('generate "%s"', $instruction), 'generate', ['instruction' => [$instruction]]);
     }
@@ -362,8 +402,8 @@ final class Next extends Command
         }
 
         return match ($step->phase) {
-            Phase::WriteSteps => ['type' => 'info', 'target' => $step->subject, 'reason' => ucfirst($step->because) . '. Write the steps.'],
-            Phase::WriteCode => ['type' => 'info', 'target' => $step->subject, 'reason' => ucfirst($step->because) . '. Make it green.'],
+            Phase::WriteSteps => ['type' => 'steps', 'target' => $step->subject, 'reason' => ucfirst($step->because) . '. Write the steps.'],
+            Phase::WriteCode => ['type' => 'implement', 'target' => $step->subject, 'reason' => ucfirst($step->because) . '. Make it green.'],
             Phase::WriteSpec => ['type' => 'example', 'target' => $step->subject, 'reason' => ucfirst($step->because) . '.'],
             default => null,
         };
