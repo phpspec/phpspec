@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Console\Command;
 
+use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\SpecSubprocess;
 use PhpSpec\Configuration;
@@ -22,9 +23,11 @@ use PhpSpec\Console\Command\Refactor\RefactorResult;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument as Argument;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Output\OutputInterface as Output;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
  * @internal
@@ -49,12 +52,14 @@ final class Refactor extends Command
      * @param Filesystem|null $filesystem
      * @param (callable(string): array{0: int, 1: string})|null $specRunner
      * @param (callable(string, string, ?string): RefactorResult)|null $refactorFn
+     * @param ProviderInterface|null $provider injectable AI seam for the agent
      */
     public function __construct(
         private readonly Configuration $config,
         ?Filesystem $filesystem = null,
         ?callable $specRunner = null,
         ?callable $refactorFn = null,
+        private readonly ?ProviderInterface $provider = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->specRunner = $specRunner;
@@ -117,38 +122,72 @@ final class Refactor extends Command
             return 1;
         }
 
-        // 6. Run refactoring
+        // 6. Run refactoring; the proposal is shown and confirmed BEFORE the
+        // write, so nothing reaches disk unbidden.
         $output->writeln('  <fg=gray>Analysing code for refactoring opportunities...</>');
         $output->writeln('');
 
-        $result = $this->performRefactoring($aiConfig, $srcPath, $specPath, $method);
+        $displayed = false;
+        $confirm = function (string $technique, string $description, string $diff) use ($input, $output, $srcPath, &$displayed): bool {
+            $displayed = true;
+            $this->displayProposal($output, $technique, $description, $diff, $srcPath);
+
+            if (!$input->isInteractive()) {
+                return true;
+            }
+
+            /** @var QuestionHelper $helper */
+            $helper = $this->getHelper('question');
+
+            return (bool) $helper->ask($input, $output, new ConfirmationQuestion('  <fg=yellow>Apply this refactoring?</> [Y/n] ', true));
+        };
+
+        $result = $this->performRefactoring($aiConfig, $srcPath, $specPath, $method, $confirm);
 
         // 7. Display result
-        return $this->displayResult($output, $result, $srcPath);
+        return $this->displayResult($output, $result, $srcPath, $displayed);
     }
 
     /**
-     * Displays the refactoring result and returns the exit code.
+     * Displays the proposed refactoring: technique, description, and the diff.
      */
-    private function displayResult(Output $output, RefactorResult $result, string $srcPath): int
+    private function displayProposal(Output $output, string $technique, string $description, string $diff, string $srcPath): void
+    {
+        $output->writeln("  <fg=white;options=bold>Refactoring technique:</> $technique");
+        $output->writeln('');
+        $output->writeln("  $description");
+        $output->writeln('');
+
+        if ($diff !== '') {
+            $relativeSrc = $this->relativePath($srcPath);
+            $output->writeln("  <fg=white>$relativeSrc</>");
+            $output->writeln($diff);
+        }
+
+        $output->writeln('');
+    }
+
+    /**
+     * Displays the refactoring result and returns the exit code. When the
+     * confirm hook already showed the proposal, it is not repeated.
+     */
+    private function displayResult(Output $output, RefactorResult $result, string $srcPath, bool $alreadyDisplayed = false): int
     {
         if (!$result->success && $result->technique === 'None') {
             $output->writeln("  <fg=yellow>$result->description</>");
             return 0;
         }
 
-        $output->writeln("  <fg=white;options=bold>Refactoring technique:</> $result->technique");
-        $output->writeln('');
-        $output->writeln("  $result->description");
-        $output->writeln('');
-
-        if ($result->diff !== '') {
-            $relativeSrc = $this->relativePath($srcPath);
-            $output->writeln("  <fg=white>$relativeSrc</>");
-            $output->writeln($result->diff);
+        if (!$alreadyDisplayed) {
+            $this->displayProposal($output, $result->technique, $result->description, $result->diff, $srcPath);
         }
 
-        $output->writeln('');
+        if (!$result->applied) {
+            $output->writeln('  <fg=yellow>Not applied; the file is untouched.</>');
+
+            return 0;
+        }
+
         if ($result->success) {
             $output->writeln('  <fg=green>Specs still pass ✓</>');
             return 0;
@@ -209,15 +248,16 @@ final class Refactor extends Command
      * Performs the refactoring via injected callable or RefactorAgent.
      *
      * @param array{provider: string, model?: string, api_key: string, effort?: string} $aiConfig
+     * @param callable(string, string, string): bool $confirm asked with (technique, description, diff) before the write
      */
-    private function performRefactoring(array $aiConfig, string $srcPath, string $specPath, ?string $method): RefactorResult
+    private function performRefactoring(array $aiConfig, string $srcPath, string $specPath, ?string $method, callable $confirm): RefactorResult
     {
         if ($this->refactorFn !== null) {
             return ($this->refactorFn)($srcPath, $specPath, $method);
         }
 
         try {
-            $provider = ProviderFactory::create($aiConfig);
+            $provider = $this->provider ?? ProviderFactory::create($aiConfig);
         } catch (\RuntimeException $e) {
             return new RefactorResult(
                 success: false,
@@ -230,7 +270,7 @@ final class Refactor extends Command
 
         $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider']);
 
-        return (new RefactorAgent($provider, $model, $this->filesystem, $aiConfig['effort'] ?? null))->refactor($srcPath, $specPath, $method);
+        return (new RefactorAgent($provider, $model, $this->filesystem, $aiConfig['effort'] ?? null, $this->specRunner, $confirm))->refactor($srcPath, $specPath, $method);
     }
 
     /**
