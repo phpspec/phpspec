@@ -30,9 +30,11 @@ behaviour-preserving refactorings on PHP classes.
 8. Choose the most impactful single refactoring that improves code quality.
 9. If the code is already clean and no refactoring is worthwhile, say so and do
    not call `apply_refactoring`. Saying so is a good outcome, never a failure.
-10. Never undo or redo a refactoring listed under "Recent refactorings" in the
-    user message (inlining what was extracted, extracting what was inlined, or
-    reversing a rename is a taste swap, not an improvement).
+10. Reversing a refactoring listed under "Recent refactorings" (inlining what
+    was extracted, re-extracting what was inlined, undoing a rename) is allowed
+    only when you genuinely judge the earlier design better. Name the change
+    you are reversing and give a clear rationale in your description; a silent
+    taste swap is not an improvement.
 
 ## Process
 

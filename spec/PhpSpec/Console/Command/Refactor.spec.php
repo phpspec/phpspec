@@ -147,7 +147,7 @@ describe(Refactor::class, function () {
             expect(count($written))->toBe(0);
         });
 
-        it('grounds the model with the recent refactorings so it never undoes them', function (Filesystem $fs) {
+        it('grounds the model with the recent refactorings, reversals demanding a rationale', function (Filesystem $fs) {
             $written = [];
             $cmd = refactorConsentWorld($fs, $written, '{"at":100,"command":"refactor","target":"App\\\\Good","technique":"Inline Method","description":"Inlined helper"}' . "\n");
 
@@ -156,7 +156,7 @@ describe(Refactor::class, function () {
             $tester->execute(['target' => 'App\\Good']);
 
             expect($GLOBALS['refactor_seen_prompt'] ?? '')->toContain('Inline Method');
-            expect($GLOBALS['refactor_seen_prompt'] ?? '')->toContain('do not undo');
+            expect($GLOBALS['refactor_seen_prompt'] ?? '')->toContain('clear rationale');
         });
 
     });

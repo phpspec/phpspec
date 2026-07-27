@@ -96,7 +96,7 @@ final class RefactorAgent
 
         $focus = $method !== null ? "\n\nFocus your refactoring on the `$method()` method only." : '';
         $memory = $history !== ''
-            ? "\n\nRecent refactorings, do not undo or redo any of these (say no refactoring is worthwhile instead):\n$history"
+            ? "\n\nRecent refactorings:\n$history\nReverse one of these only when you genuinely judge the earlier design better, and then name it with a clear rationale in your description; a silent taste swap is not an improvement. When nothing worthwhile remains, say no refactoring is worthwhile."
             : '';
 
         $this->messages[] = Message::user(
