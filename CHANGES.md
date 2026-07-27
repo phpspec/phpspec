@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `next` reads the journal: a polished, unchanged class is never re-suggested, and the model proposes the next scenario or feature instead
 
 ### Fixed
+ - Accepting a feature suggestion from `next` runs `generate`, so it writes the feature instead of describing a spec at the project root
  - Auto-verify runs the whole suite when the change touches a feature or steps file
  - A verified change ends the turn; no fresh suggestion rides on its back
  - `refactor` runs its baseline with the installed phpspec, wherever it lives (vendor installs failed to launch it and blamed the specs)
