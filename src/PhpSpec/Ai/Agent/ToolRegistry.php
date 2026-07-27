@@ -42,6 +42,7 @@ final class ToolRegistry
         'write_feature' => [
             'name' => ['type' => 'string', 'description' => 'Short feature name (a snake_case slug)', 'default' => ''],
             'path' => ['type' => 'string', 'description' => 'Explicit project-relative .feature path', 'default' => ''],
+            'content' => ['type' => 'string', 'description' => 'The complete Gherkin content, starting with "Feature:" and holding at least one concrete Scenario', 'default' => ''],
         ],
         'write_steps' => [
             'feature_path' => ['type' => 'string', 'description' => 'Project-relative path of the .feature to write steps for', 'default' => ''],
@@ -51,8 +52,8 @@ final class ToolRegistry
             'content' => ['type' => 'string', 'description' => 'The complete new file content, not a diff'],
         ],
         'suggest_next' => [
-            'type' => ['type' => 'string', 'enum' => ['spec', 'feature', 'example', 'refactor', 'info'], 'description' => 'What to do next: spec (a class to describe), feature (a user-facing behaviour), example (grow an existing spec), refactor (the suite is green and a class deserves cleaning), or info'],
-            'target' => ['type' => 'string', 'description' => 'The class name, feature name, or spec the suggestion is about'],
+            'type' => ['type' => 'string', 'enum' => ['spec', 'feature', 'example', 'steps', 'implement', 'refactor', 'info'], 'description' => 'What to do next: spec (a class to describe), feature (a user-facing behaviour), example (grow an existing spec with a NEW example), steps (a feature\'s step definitions need writing, or their bodies are pending or failing; target is the .feature path), implement (source code must change to make the suite green; target is the class), refactor (the suite is green and a class deserves cleaning), or info'],
+            'target' => ['type' => 'string', 'description' => 'The class name, feature path, or spec the suggestion is about'],
             'reason' => ['type' => 'string', 'description' => 'One short sentence on why this is the next baby step'],
         ],
     ];
@@ -123,16 +124,6 @@ final class ToolRegistry
             return null;
         }
 
-        if ($step->phase === Phase::WriteFeature && in_array('write_feature', $profile->tools, true)) {
-            $path = $this->featurePath($step);
-            if ($path === null || $this->filesystem->exists($this->absolute($path))) {
-                // An existing feature is grown by the model, never re-scaffolded.
-                return null;
-            }
-
-            return [$this->featureProposal($path)];
-        }
-
         if ($step->phase === Phase::WriteSteps && in_array('write_steps', $profile->tools, true)) {
             $feature = $step->subject ?? $this->featureBesideSteps($step->path);
             if ($feature === null) {
@@ -187,7 +178,13 @@ final class ToolRegistry
             $proposal = match ($call->name) {
                 'write_feature' => $this->featureCall($step, $call->arguments),
                 'write_steps' => $this->stepsCall($step, $call->arguments),
-                'propose_edit' => $this->editCall($step, $call->arguments),
+                // The step owns the artifact type: a write-feature step turns
+                // any edit answer into feature content (Gherkin or fallback),
+                // so a model that reaches for the wrong tool cannot write a
+                // spec where a feature belongs.
+                'propose_edit' => $step?->phase === Phase::WriteFeature
+                    ? $this->featureCall($step, $call->arguments)
+                    : $this->editCall($step, $call->arguments),
                 default => null,
             };
 
@@ -200,8 +197,30 @@ final class ToolRegistry
     }
 
     /**
+     * The skeleton stand-in for a write-feature step whose ask produced no
+     * usable proposal, so the loop still moves with a valid artifact at the
+     * derived path. Null when the step is no write-feature, no path derives,
+     * or the file exists (an existing feature is never scaffolded over).
+     */
+    public function featureFallback(?Step $step): ?Proposal
+    {
+        if ($step === null || $step->phase !== Phase::WriteFeature) {
+            return null;
+        }
+
+        $path = $this->featurePath($step);
+        if ($path === null || $this->filesystem->exists($this->absolute($path))) {
+            return null;
+        }
+
+        return $this->featureProposal($path);
+    }
+
+    /**
      * A write_feature call: the step's own path or slug wins over the model's
-     * arguments; with neither, nothing is proposed.
+     * arguments (with neither, nothing is proposed), and the model's Gherkin
+     * is the content. The skeleton stands in only when no Gherkin arrived: a
+     * feature's scenarios are imagination, never scaffolding.
      *
      * @param array<string, mixed> $arguments
      */
@@ -215,7 +234,12 @@ final class ToolRegistry
             return null;
         }
 
-        return $this->featureProposal($this->relative($path));
+        $content = trim((string) ($arguments['content'] ?? ''));
+        if (!str_contains($content, 'Feature:')) {
+            return $this->featureProposal($this->relative($path));
+        }
+
+        return $this->proposal($this->relative($path), $content . "\n", 'write_feature');
     }
 
     /**

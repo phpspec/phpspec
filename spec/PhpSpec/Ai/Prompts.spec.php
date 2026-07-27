@@ -114,11 +114,25 @@ describe('prompt artifacts', function () {
         expect($raw('next'))->toContain('@include instructions/tdd-cycle');   // the cycle is single-sourced
     });
 
+    it('demands real scenario content from write_feature, never a placeholder', function () use ($read) {
+        $text = $read('tools/write_feature');
+
+        expect($text)->toContain('Gherkin content');
+        expect($text)->toContain('concrete');
+    });
+
     it('teaches next that a polished, unchanged class gets growth, not more polish', function () use ($read) {
         $text = $read('commands/next');
 
         expect($text)->toContain('journal');
         expect($text)->toContain('scenario or feature');
+    });
+
+    it('keeps next on the working story while its steps are pending', function () use ($read) {
+        $text = $read('commands/next');
+
+        expect($text)->toContain('pending');
+        expect($text)->toContain('working story');
     });
 
     it('keeps next.txt pure coaching, with no machine-readable contract to leak', function () use ($read) {

@@ -51,31 +51,23 @@ describe(ToolRegistry::class, function () {
 
     context('deterministic', function () {
 
-        it('resolves a write-feature step to a Gherkin skeleton at the explicit path', function () {
+        it('defers a new feature to the model: scenario content is imagination, not scaffolding', function () {
             $step = new Step(Phase::WriteFeature, 'features/user_adds_tasks.feature', null, 'you named it');
 
-            $proposals = $this->registry->deterministic($step, Grounding::empty(), $this->genProfile);
-
-            expect($proposals[0]->path)->toBe('features/user_adds_tasks.feature');
-            expect($proposals[0]->new)->toContain('Feature:');
-            expect($proposals[0]->new)->toContain('Scenario:');
-            expect($proposals[0]->origin)->toBe('write_feature');
+            expect($this->registry->deterministic($step, Grounding::empty(), $this->genProfile))->toBeNull();
         });
 
-        it('derives the feature path from the slug under the configured features path', function () {
+        it('stands in with the skeleton when a feature ask produced nothing usable', function () {
             $step = new Step(Phase::WriteFeature, null, 'user_adds_tasks', 'feature intent');
 
-            $proposals = $this->registry->deterministic($step, Grounding::empty(), $this->genProfile);
+            $proposal = $this->registry->featureFallback($step);
 
-            expect($proposals[0]->path)->toBe('features/user_adds_tasks.feature');
+            expect($proposal->path)->toBe('features/user_adds_tasks.feature');
+            expect($proposal->new)->toContain('Scenario:');
         });
 
-        it('places a bare feature filename under the configured features path, never the project root', function () {
-            $step = new Step(Phase::WriteFeature, 'completing_a_task.feature', null, 'you named it');
-
-            $proposals = $this->registry->deterministic($step, Grounding::empty(), $this->genProfile);
-
-            expect($proposals[0]->path)->toBe('features/completing_a_task.feature');
+        it('has no feature fallback for other steps', function () {
+            expect($this->registry->featureFallback(new Step(Phase::WriteCode, null, 'App\\X', 'code intent')))->toBeNull();
         });
 
         it('parses the subject feature and drafts its steps file deterministically', function (Filesystem $fs) {
@@ -239,6 +231,37 @@ describe(ToolRegistry::class, function () {
 
             expect($proposals[0]->path)->toBe('features/user_adds_tasks.feature');
             expect($proposals[0]->new)->toContain('Feature:');
+        });
+
+        it('writes the model Gherkin at the explicit step path', function () {
+            $step = new Step(Phase::WriteFeature, 'features/user_adds_tasks.feature', null, 'you named it');
+            $call = new ToolCall('1', 'write_feature', ['content' => "Feature: Adding tasks\n  Scenario: Adds a task\n    Given an empty list\n    When I add \"milk\"\n    Then the list holds it\n"]);
+
+            $proposals = $this->registry->fromCalls([$call], $step);
+
+            expect($proposals[0]->path)->toBe('features/user_adds_tasks.feature');
+            expect($proposals[0]->new)->toContain('When I add "milk"');
+            expect($proposals[0]->origin)->toBe('write_feature');
+        });
+
+        it('places a bare feature filename under the configured features path, never the project root', function () {
+            $step = new Step(Phase::WriteFeature, 'completing_a_task.feature', null, 'you named it');
+            $call = new ToolCall('1', 'write_feature', ['content' => "Feature: Completing\n  Scenario: Done\n    Given a task\n    When I complete it\n    Then it is done\n"]);
+
+            $proposals = $this->registry->fromCalls([$call], $step);
+
+            expect($proposals[0]->path)->toBe('features/completing_a_task.feature');
+        });
+
+        it('falls back to the skeleton when the model content is no Gherkin', function () {
+            $step = new Step(Phase::WriteFeature, null, 'user_adds_tasks', 'feature intent');
+            $call = new ToolCall('1', 'write_feature', ['content' => 'here is your feature, enjoy']);
+
+            $proposals = $this->registry->fromCalls([$call], $step);
+
+            expect($proposals[0]->path)->toBe('features/user_adds_tasks.feature');
+            expect($proposals[0]->new)->toContain('Feature:');
+            expect($proposals[0]->new)->toContain('Scenario:');
         });
 
         it('serves a write_steps call from the argument feature path when the step has none', function (Filesystem $fs) {

@@ -1,4 +1,6 @@
-Creates a Gherkin .feature skeleton for a feature file that does not exist yet.
-phpspec owns the path and the Gherkin shape; give it the feature's name (a short
-slug) or an explicit project-relative path. Grow an existing feature file with
-propose_edit instead.
+Creates a Gherkin .feature file that does not exist yet. phpspec owns the path:
+give it the feature's name (a short slug) or an explicit project-relative path.
+You own the Gherkin content: a Feature line and at least one concrete Scenario
+whose Given/When/Then describe the real behaviour asked for, with real values,
+never placeholder steps. Grow an existing feature file with propose_edit
+instead.

@@ -89,13 +89,10 @@ final readonly class Step
             return new self($phase, $path, null, sprintf('you named "%s"', $path));
         }
 
-        if (preg_match('~\b(?:feature|scenario|story)\b~i', $instruction) === 1) {
-            $slug = self::slug($instruction);
-            if ($slug !== '') {
-                return new self(Phase::WriteFeature, null, $slug, 'you asked for a feature');
-            }
-        }
-
+        // A named class is the most specific anchor there is, so class-bound
+        // wording beats loose feature/scenario words later in the sentence
+        // ("a spec example for App\TodoList: drive the pending feature" is a
+        // spec ask, not a feature ask).
         $class = self::classToken($instruction);
         if ($class !== null && preg_match('~\bspec\b~i', $instruction) === 1) {
             return new self(Phase::WriteSpec, null, $class, sprintf('you asked for a spec for "%s"', $class));
@@ -103,6 +100,13 @@ final readonly class Step
 
         if ($class !== null && preg_match('~\b(?:implement|method|function)\b~i', $instruction) === 1) {
             return new self(Phase::WriteCode, null, $class, sprintf('you asked for code on "%s"', $class));
+        }
+
+        if (preg_match('~\b(?:feature|scenario|story)\b~i', $instruction) === 1) {
+            $slug = self::slug($instruction);
+            if ($slug !== '') {
+                return new self(Phase::WriteFeature, null, $slug, 'you asked for a feature');
+            }
         }
 
         return null;
@@ -135,6 +139,14 @@ final readonly class Step
             $todo = self::firstTodoFeature($suite);
             if ($todo !== null) {
                 return new self(Phase::WriteSteps, null, $todo['path'], sprintf('%d undefined steps in "%s"', $todo['undefined'], $todo['path']));
+            }
+
+            $wip = self::firstPendingFeature($suite);
+            if ($wip !== null) {
+                // Writing the bodies is the convergent move: against ready code
+                // they go green, against missing code they go red, and red
+                // names the class to implement. Pending names nothing.
+                return new self(Phase::WriteSteps, null, $wip['path'], sprintf('steps are pending in "%s": write their bodies to drive the code', $wip['path']));
             }
 
             return new self(Phase::Refactor, null, null, 'features are green: refactor, or grow the story');
@@ -179,6 +191,23 @@ final readonly class Step
     {
         foreach ($suite->features() as $feature) {
             if ($feature['status'] === 'todo') {
+                return $feature;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The first feature whose defined steps still await their implementation:
+     * the working story, to finish before any growth.
+     *
+     * @return array{path: string, status: string, undefined: int}|null
+     */
+    private static function firstPendingFeature(SuiteSummary $suite): ?array
+    {
+        foreach ($suite->features() as $feature) {
+            if ($feature['status'] === 'pending') {
                 return $feature;
             }
         }

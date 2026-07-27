@@ -197,6 +197,46 @@ describe(SuiteSummary::class, function () {
         expect($summary->redFeature())->toBeNull();
     });
 
+    it('marks a feature with pending steps as pending, never green', function () {
+        $suite = new SuiteResult([
+            new FeatureResult('Clearing completed tasks', [
+                new ScenarioResult('Clearing completed tasks', [
+                    new StepResult('I have a todo list', 'passed'),
+                    new StepResult('I clear completed tasks', 'pending'),
+                ]),
+            ], 'features/clearing_completed_tasks.feature'),
+        ]);
+
+        $summary = SuiteSummary::fromSuiteResult($suite);
+
+        expect($summary->features()[0]['status'])->toBe('pending');
+        expect($summary->featuresAreGreen())->toBe(false);
+    });
+
+    it('keeps undefined steps ranked above pending ones in the feature verdict', function () {
+        $suite = new SuiteResult([
+            new FeatureResult('Adding', [
+                new ScenarioResult('Adds', [
+                    new StepResult('I add a task', 'pending'),
+                    new StepResult('the list holds it', 'undefined'),
+                ]),
+            ], 'features/adding.feature'),
+        ]);
+
+        $summary = SuiteSummary::fromSuiteResult($suite);
+
+        expect($summary->features()[0]['status'])->toBe('todo');
+    });
+
+    it('round-trips a pending feature status across the subprocess boundary', function () {
+        $summary = SuiteSummary::fromArray([
+            'status' => 'green',
+            'features' => [['path' => 'features/clearing.feature', 'status' => 'pending', 'undefined' => 0]],
+        ]);
+
+        expect($summary->features()[0]['status'])->toBe('pending');
+    });
+
     it('reports no features for a spec-only suite', function () {
         $suite = new SuiteResult([
             new SpecificationResult('App\\Greeter', [new ExampleResult('greets', [])]),

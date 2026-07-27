@@ -51,16 +51,18 @@ describe(Agent::class, function () {
 
     let('config', fn(Filesystem $fs) => new Configuration('.', $fs));
 
-    it('acts deterministically for a fully determined step, never consulting the model', function (Filesystem $fs) {
-        $replay = new ReplayProvider([new Response('should not be used')]);
+    it('consults the model for a named new feature and keeps the derived path over its content', function (Filesystem $fs) {
+        $replay = new ReplayProvider([
+            new Response('', [new ToolCall('1', 'write_feature', ['content' => "Feature: Adding tasks\n  Scenario: Adds a task\n    Given an empty list\n    When I add \"milk\"\n    Then the list holds it"])]),
+        ]);
         $agent = new Agent($this->config, $fs, $replay);
 
         $outcome = $agent->do($this->profile, 'a simple scenario in features/user_adds_tasks.feature');
 
-        expect($replay->requests)->toBe([]);
+        expect($replay->requests)->toHaveLength(1);
         expect($outcome->step->phase)->toBe(Phase::WriteFeature);
         expect($outcome->proposals[0]->path)->toBe('features/user_adds_tasks.feature');
-        expect($outcome->proposals[0]->new)->toContain('Feature:');
+        expect($outcome->proposals[0]->new)->toContain('When I add "milk"');
     });
 
     it('asks the model on the tool channel and lands its call as a proposal', function (Filesystem $fs) {

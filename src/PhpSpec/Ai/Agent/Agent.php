@@ -166,6 +166,14 @@ final class Agent
         $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], $response, $proposals);
 
         if ($profile->answer === 'tool_call' && $proposals === [] && $data === []) {
+            // A write-feature ask that produced nothing usable still moves the
+            // loop: the skeleton at the derived path stands in, and only there
+            // (provider errors above stay errors).
+            $fallback = $this->registry->featureFallback($step);
+            if ($fallback !== null) {
+                return new Outcome($step, [$fallback]);
+            }
+
             $prose = trim($response->text);
 
             // Command-neutral: `next` has no instruction to rephrase, so the

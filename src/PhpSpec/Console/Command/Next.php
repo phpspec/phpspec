@@ -18,14 +18,17 @@ use PhpSpec\Ai\Agent\Agent;
 use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Ai\Agent\Grounding;
 use PhpSpec\Ai\Agent\Phase;
+use PhpSpec\Ai\Agent\ProjectPath;
 use PhpSpec\Ai\Agent\Request;
 use PhpSpec\Ai\Agent\Step;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\RefactorJournal;
+use PhpSpec\CodeGeneration\FeatureLayout;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair\SpecRunner;
 use PhpSpec\Console\Command\Pair\SubprocessRunner;
 use PhpSpec\Console\Command\Run\RecencyScanner;
+use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 use Symfony\Component\Console\Command\Command;
@@ -145,15 +148,15 @@ final class Next extends Command
         }
 
         if ($suggestion['type'] === 'implement') {
-            return $this->offerImplement($input, $output, $suggestion['target']);
+            return $this->offerImplement($input, $output, $suggestion['target'], $suggestion['reason']);
         }
 
         if ($suggestion['type'] === 'example') {
-            return $this->offerExemplify($input, $output, $suggestion['target']);
+            return $this->offerExemplify($input, $output, $suggestion['target'], $suggestion['reason']);
         }
 
         if ($suggestion['type'] === 'refactor') {
-            return $this->offerRefactor($output, $suggestion['target']);
+            return $this->offerRefactor($input, $output, $suggestion['target']);
         }
 
         return 0;
@@ -277,7 +280,7 @@ final class Next extends Command
      * subject that is no class (a story slug, a bare string) has no one-shot
      * actuator, so the hint is the run that shows the failure.
      */
-    private function offerImplement(Input $input, Output $output, string $target): int
+    private function offerImplement(Input $input, Output $output, string $target, string $reason): int
     {
         if (preg_match('~^[A-Z][A-Za-z0-9]*(?:\\\\[A-Z][A-Za-z0-9]*)*$~', $target) !== 1) {
             $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . ' run');
@@ -285,7 +288,7 @@ final class Next extends Command
             return 0;
         }
 
-        $instruction = 'implement ' . $target;
+        $instruction = $this->taskInstruction('implement ' . $target, $reason);
 
         return $this->offerToRun($input, $output, sprintf('generate "%s"', $instruction), 'generate', ['instruction' => [$instruction]]);
     }
@@ -296,7 +299,7 @@ final class Next extends Command
      *
      * @param array<string, mixed> $args the bound arguments for the command
      */
-    private function offerToRun(Input $input, Output $output, string $hint, string $command, array $args): int
+    private function offerToRun(Input $input, Output $output, string $hint, string $command, array $args, string $ask = 'Would you like me to create that for you?'): int
     {
         if (!$input->isInteractive()) {
             $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . ' ' . $hint);
@@ -306,10 +309,7 @@ final class Next extends Command
 
         /** @var QuestionHelper $helper */
         $helper = $this->getHelper('question');
-        $question = new ConfirmationQuestion(
-            '  <fg=yellow>Would you like me to create that for you?</> [Y/n] ',
-            true,
-        );
+        $question = new ConfirmationQuestion("  <fg=yellow>$ask</> [Y/n] ", true);
 
         if (!$helper->ask($input, $output, $question)) {
             return 0;
@@ -323,13 +323,28 @@ final class Next extends Command
         return $application->find($command)->run(new ArrayInput($args), $output);
     }
 
-    private function offerExemplify(Input $input, Output $output, string $target): int
+    /**
+     * An example suggestion actuates through `generate`, whose spec wording
+     * routes to growing the existing spec (same phrasing the pair ghost uses).
+     */
+    private function offerExemplify(Input $input, Output $output, string $target, string $reason): int
     {
-        $classArg = str_replace('\\', '/', $target);
+        $instruction = $this->taskInstruction('add a spec example for ' . $target, $reason);
 
-        $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . " exemplify $classArg <method>");
+        return $this->offerToRun($input, $output, sprintf('generate "%s"', $instruction), 'generate', ['instruction' => [$instruction]]);
+    }
 
-        return 0;
+    /**
+     * The generate instruction for an offer: the task, then the suggestion's
+     * reason so the one-shot makes the change the suggestion meant. File
+     * tokens are stripped from the reason, because a path in it would reroute
+     * the instruction to that file's artifact.
+     */
+    private function taskInstruction(string $task, string $reason): string
+    {
+        $hint = trim((string) preg_replace(['~[A-Za-z0-9_./\\\\-]+\.(?:feature|php)~', '~\s+~'], ['', ' '], $reason));
+
+        return $task . ($hint !== '' ? ': ' . $hint : '');
     }
 
     /**
@@ -361,17 +376,14 @@ final class Next extends Command
     }
 
     /**
-     * The green-suite step: point at the refactor command for the suggested
-     * target. A hint, not a run, because refactoring starts with a baseline
-     * the human should see.
+     * The green-suite step: offer to run the refactor command, which shows
+     * its baseline and asks its own consent before anything is applied.
      */
-    private function offerRefactor(Output $output, string $target): int
+    private function offerRefactor(Input $input, Output $output, string $target): int
     {
         $classArg = str_replace('\\', '/', $target);
 
-        $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . " refactor $classArg");
-
-        return 0;
+        return $this->offerToRun($input, $output, "refactor $classArg", 'refactor', ['target' => $classArg], 'Would you like me to run it now?');
     }
 
     /**
@@ -431,9 +443,49 @@ final class Next extends Command
 
         return new Grounding(
             $summary,
-            $recency->mostRecentFeature($featuresDir),
-            $recency->mostRecentSource(getcwd() . '/' . ltrim($this->config->getSrcPath(), './')),
+            ProjectPath::relativeOrNull($recency->mostRecentFeature($featuresDir)),
+            ProjectPath::relativeOrNull($recency->mostRecentSource(getcwd() . '/' . ltrim($this->config->getSrcPath(), './'))),
+            namedFiles: $this->workingStoryFiles($summary, $recency),
         );
+    }
+
+    /**
+     * The files of the story being worked on, for the model to actually read:
+     * a red feature with no failing example means judgement is needed (is the
+     * behaviour specified and the code lagging, or the other way round?), and
+     * that judgement is impossible from file names alone. Empty when no
+     * feature is red, keeping the leaner context everywhere else.
+     *
+     * @return array<string, string> relative path => contents
+     */
+    private function workingStoryFiles(SuiteSummary $summary, RecencyScanner $recency): array
+    {
+        $red = $summary->redFeature();
+        if ($red === null) {
+            return [];
+        }
+
+        $cwd = getcwd() ?: '.';
+        $layout = new FeatureLayout();
+        $feature = ProjectPath::normalize($red['path']);
+        $candidates = [$feature, $layout->stepsPathFor($feature)];
+
+        $spec = $recency->mostRecentSource($cwd . '/' . ltrim($this->config->getSpecPath(), './'));
+        $source = $recency->mostRecentSource($cwd . '/' . ltrim($this->config->getSrcPath(), './'));
+        foreach ([$spec, $source] as $absolute) {
+            if ($absolute !== null) {
+                $candidates[] = ProjectPath::relativeOrNull($absolute) ?? $absolute;
+            }
+        }
+
+        $files = [];
+        foreach ($candidates as $rel) {
+            if ($this->filesystem->exists($cwd . '/' . $rel)) {
+                $files[$rel] = $this->filesystem->read($cwd . '/' . $rel);
+            }
+        }
+
+        return $files;
     }
 
     private function loadBootstrap(): bool

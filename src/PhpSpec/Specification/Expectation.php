@@ -813,12 +813,33 @@ class Expectation
                 'object' => self::replaceOne('%s', get_class($value) . '#' . spl_object_id($value), $message),
                 'string' => self::replaceOne('%s', '"' . $value . '"', $message),
                 'boolean' => self::replaceOne('%s', $value ? 'true' : 'false', $message),
-                'array' => self::replaceOne('%s', '[' . implode(', ', $value) . ']', $message),
+                'array' => self::replaceOne('%s', self::formatArray($value), $message),
                 'NULL' => self::replaceOne('%s', 'null', $message),
                 default => self::replaceOne('%s', (string) $value, $message)
             };
         }
         return $message;
+    }
+
+    /**
+     * Renders an array for a failure message, element-safe: objects appear as
+     * Class#id and nested arrays by size, so a failing expectation on a list
+     * of objects reports the failure instead of crashing the formatter.
+     *
+     * @param array<array-key, mixed> $value
+     */
+    private static function formatArray(array $value): string
+    {
+        $parts = array_map(static fn(mixed $item): string => match (gettype($item)) {
+            'object' => get_class($item) . '#' . spl_object_id($item),
+            'array' => 'array(' . count($item) . ')',
+            'string' => '"' . $item . '"',
+            'boolean' => $item ? 'true' : 'false',
+            'NULL' => 'null',
+            default => (string) $item,
+        }, $value);
+
+        return '[' . implode(', ', $parts) . ']';
     }
 
     /**
