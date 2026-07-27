@@ -19,6 +19,7 @@ use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Message;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
+use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\Ai\TreeScanner;
 use PhpSpec\CodeGeneration\FeatureLayout;
 use PhpSpec\Configuration;
@@ -276,7 +277,12 @@ final class Agent
             $namedFiles = $this->namedFiles($instruction);
         }
 
-        return new Grounding($seed?->suite, $recentFeature, $recentSource, $tree, $namedFiles);
+        $polished = $seed->polished ?? [];
+        if (in_array('journal', $profile->grounding, true) && $polished === []) {
+            $polished = (new RefactorJournal($this->filesystem))->unchangedTargets($cwd . '/' . ltrim($this->config->getSrcPath(), './'));
+        }
+
+        return new Grounding($seed?->suite, $recentFeature, $recentSource, $tree, $namedFiles, $polished);
     }
 
     /**
