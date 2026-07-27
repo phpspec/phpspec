@@ -112,7 +112,7 @@ final class Next extends Command
         // just loops) — coach to run so the missing class is driven out instead.
         if ($suggestion['type'] === 'spec' && $this->specFileExists($suggestion['target'])) {
             $output->writeln(sprintf('  A spec for <fg=bright-blue;options=bold>%s</> already exists.', $suggestion['target']));
-            $output->writeln('  <fg=gray>Run it to drive out the class:</> bin/phpspec run');
+            $output->writeln('  <fg=gray>Run it to drive out the class:</> ' . self::invokedBinary() . ' run');
             $output->writeln('');
 
             return 0;
@@ -226,7 +226,7 @@ final class Next extends Command
         $classArg = str_replace('\\', '/', $target);
 
         if (!$input->isInteractive()) {
-            $output->writeln("  <fg=gray>Run:</> bin/phpspec describe $classArg");
+            $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . " describe $classArg");
             return 0;
         }
 
@@ -256,7 +256,7 @@ final class Next extends Command
     {
         $classArg = str_replace('\\', '/', $target);
 
-        $output->writeln("  <fg=gray>Run:</> bin/phpspec exemplify $classArg <method>");
+        $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . " exemplify $classArg <method>");
 
         return 0;
     }
@@ -270,9 +270,21 @@ final class Next extends Command
     {
         $classArg = str_replace('\\', '/', $target);
 
-        $output->writeln("  <fg=gray>Run:</> bin/phpspec refactor $classArg");
+        $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . " refactor $classArg");
 
         return 0;
+    }
+
+    /**
+     * The phpspec invocation as the user typed it, so a hint points at a
+     * binary that exists in their install (vendor/bin/phpspec, bin/phpspec,
+     * or a global phpspec), never at a hardcoded path.
+     */
+    private static function invokedBinary(): string
+    {
+        $argv0 = $_SERVER['argv'][0] ?? '';
+
+        return is_string($argv0) && $argv0 !== '' ? $argv0 : 'phpspec';
     }
 
     /**
