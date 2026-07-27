@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+ - The navigator offers directly; the chooser is the question, never "shall I offer?"
+
+### Fixed
+ - Auto-verify runs the whole suite when the change touches a feature or steps file
+ - A verified change ends the turn; no fresh suggestion rides on its back
+
 ## [9.0.0-beta.14](https://github.com/phpspec/phpspec/compare/9.0.0-beta.13...9.0.0-beta.14)
 
 ### Added

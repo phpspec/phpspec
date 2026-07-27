@@ -57,8 +57,13 @@ describe(AiAssistant::class, function () {
         $this->specRunner = new class implements SpecRunner {
             public ?RunOutcome $outcome = null;
 
+            /** @var list<string> */
+            public array $arguments = [];
+
             public function run(string $argument, OutputInterface $output): ?RunOutcome
             {
+                $this->arguments[] = $argument;
+
                 return $this->outcome;
             }
         };
@@ -143,6 +148,97 @@ describe(AiAssistant::class, function () {
 
         expect($fs->write())->not()->toHaveBeenCalled();
         expect((string) json_encode($captured))->toContain('declined this offer');
+    });
+
+    it('verifies a feature offer with the whole suite, not specs alone', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("Feature: Adding\n  Scenario: One\n    Given something\n");
+        allow($fs->write())->toReturn(null);
+        allow($fs->mkdir())->toReturn(null);
+
+        $turn = 0;
+        $this->provider->responder = function () use (&$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'offer_change', [
+                    'path' => 'features/adding.feature',
+                    'content' => "Feature: Adding\n  Scenario: One\n    Given something\n    Then it lands\n",
+                    'intent' => 'grow the scenario',
+                ])]);
+            }
+
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('tighten the feature');
+
+        expect($this->specRunner->arguments)->toContain('--all');
+    });
+
+    it('keeps the plain spec run when the landed artifact is a spec', function (Filesystem $fs) {
+        allow($fs->write())->toReturn(null);
+        allow($fs->mkdir())->toReturn(null);
+
+        $turn = 0;
+        $this->provider->responder = function () use (&$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'describe', [
+                    'class_name' => 'App/Wanted',
+                ])]);
+            }
+
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('spec App/Wanted');
+
+        expect($this->specRunner->arguments)->toContain('');
+        expect($this->specRunner->arguments)->not()->toContain('--all');
+    });
+
+    it('winds the turn down after a verified change instead of registering another suggestion', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("Feature: Adding\n  Scenario: One\n    Given something\n");
+        allow($fs->write())->toReturn(null);
+        allow($fs->mkdir())->toReturn(null);
+
+        $captured = null;
+        $toolsByRound = [];
+        $turn = 0;
+        $this->provider->responder = function (array $messages, array $options) use (&$turn, &$captured, &$toolsByRound) {
+            $toolsByRound[] = array_map(fn(array $tool) => $tool['name'], $options['tools'] ?? []);
+
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'offer_change', [
+                    'path' => 'features/adding.feature',
+                    'content' => "Feature: Adding\n  Scenario: One\n    Given something\n    Then more\n",
+                    'intent' => 'grow the scenario',
+                ])]);
+            }
+
+            if ($turn === 2) {
+                return new Response('', [new ToolCall('t2', 'suggest_next', [
+                    'type' => 'example',
+                    'target' => 'App\\TodoList',
+                    'reason' => 'next up',
+                ])]);
+            }
+
+            $captured = $messages;
+
+            return new Response('done, handing back');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, null, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('tighten the feature');
+
+        expect($toolsByRound[1] ?? [])->not()->toContain('suggest_next');
+        expect((string) json_encode($captured))->toContain('hand back');
+        expect($assistant->lastSuggestion())->toBeNull();
     });
 
     it('hands the acceptance note to the model when an offer is applied', function (Filesystem $fs) {

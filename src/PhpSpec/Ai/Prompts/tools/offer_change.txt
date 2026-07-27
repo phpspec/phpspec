@@ -1,7 +1,8 @@
 Offer ONE concrete file change while navigating: give the complete new content of
 one file, and the human sees it as a diff they accept or decline. Use it the moment
 your advice has become concrete (an exact example, a step definition, a small
-method) instead of asking the human to type it. At most one offer per turn, and
+method) instead of asking the human to type it, and never ask permission to offer:
+the chooser is the question. At most one offer per turn, and
 only when the human's current ask is about changing code: when they ask to run or
 inspect, do that and report; never turn a run request into an offer. Never re-offer
 a declined change: ask what they would prefer instead. A spec offer must grow the

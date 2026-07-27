@@ -96,6 +96,14 @@ final class AiAssistant
     private bool $artifactWrittenThisHandle = false;
 
     /**
+     * Whether this handle's auto-verify must run the whole suite (--all): a
+     * spec, or source the specs exercise, is verified by the spec run alone,
+     * but a feature or steps change (or any other artifact) can only be
+     * verified by running the stories too.
+     */
+    private bool $verifyWholeSuite = false;
+
+    /**
      * The structured next-step suggestion the model registered this turn via
      * suggest_next, for the dispatcher to turn into a ghost prompt.
      *
@@ -165,6 +173,7 @@ final class AiAssistant
             PairLogger::log('INPUT', $input);
             $this->ensureInitialised();
             $this->artifactWrittenThisHandle = false;
+            $this->verifyWholeSuite = false;
             $this->postArtifactRounds = 0;
             $this->lastSuggestion = null;
             $this->offerResolvedThisHandle = false;
@@ -228,6 +237,34 @@ final class AiAssistant
     }
 
     /**
+     * Records the artifact that landed this handle and widens the auto-verify
+     * scope when the spec run alone cannot vouch for it. A null path means a
+     * spec generator wrote it (describe, add_example), which specs verify.
+     */
+    private function noteArtifact(?string $path): void
+    {
+        $this->artifactWrittenThisHandle = true;
+
+        if ($path !== null && !self::specsCanVerify($path)) {
+            $this->verifyWholeSuite = true;
+        }
+    }
+
+    /**
+     * Whether the spec run alone verifies an artifact at this path: a spec, or
+     * source code the specs exercise. Features, steps files, and anything else
+     * need the whole suite.
+     */
+    private static function specsCanVerify(string $path): bool
+    {
+        if (str_ends_with($path, '.steps.php') || str_ends_with($path, '.feature')) {
+            return false;
+        }
+
+        return str_ends_with($path, '.php');
+    }
+
+    /**
      * After the AI's one artifact lands this round, runs the suite and feeds the
      * fresh red/green back as a message, so the model learns the outcome of its
      * own change without having to choose to run. The run is a read — it never
@@ -242,7 +279,7 @@ final class AiAssistant
 
         $this->output->getOutput()->writeln('  <fg=gray>Verifying your change...</>');
 
-        $outcome = $this->specRunner->run('', $this->output->getOutput());
+        $outcome = $this->specRunner->run($this->verifyWholeSuite ? '--all' : '', $this->output->getOutput());
 
         if ($outcome === null) {
             return;
@@ -391,7 +428,9 @@ final class AiAssistant
         if ($role->aiIsDriver() || $this->offerResolvedThisHandle) {
             $spent[] = 'offer_change';
         }
-        if ($this->lastSuggestion !== null) {
+        // A verified change ends the turn: no fresh suggestion rides on its
+        // back; the human asks for the next step.
+        if ($this->lastSuggestion !== null || $this->artifactWrittenThisHandle) {
             $spent[] = 'suggest_next';
         }
         if ($spent !== []) {
@@ -453,7 +492,8 @@ final class AiAssistant
             // spec) did not land, so it does not count as the turn's artifact —
             // the model may retry it in the correct form this same turn.
             if ($isWrite && !(is_array($result) && isset($result['error']))) {
-                $this->artifactWrittenThisHandle = true;
+                $path = $toolCall->arguments['path'] ?? null;
+                $this->noteArtifact(is_string($path) ? $path : null);
 
                 if ($note !== '' && is_string($result)) {
                     $result .= sprintf(' The human added: "%s".', $note);
@@ -1118,7 +1158,7 @@ final class AiAssistant
                 $note = $this->chooser->lastNote();
 
                 (new Writer($filesystem))->apply($proposal);
-                $this->artifactWrittenThisHandle = true;
+                $this->noteArtifact($path);
 
                 if ($note !== '') {
                     return sprintf('Change applied to %s. The human added: "%s".', $absPath, $note);
@@ -1190,6 +1230,9 @@ final class AiAssistant
                 ],
             ],
             handler: function (array $args): string|array {
+                if ($this->artifactWrittenThisHandle) {
+                    return ['error' => 'The change just landed and was verified. Report the outcome and hand back; the human will ask for the next step.'];
+                }
                 if ($this->lastSuggestion !== null) {
                     return ['error' => 'One suggestion per turn is already registered. Advise in prose now.'];
                 }
