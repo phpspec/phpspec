@@ -19,6 +19,7 @@ use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\SpecSubprocess;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\RefactorAgent;
+use PhpSpec\Console\Command\Refactor\RefactorJournal;
 use PhpSpec\Console\Command\Refactor\RefactorResult;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
@@ -269,8 +270,33 @@ final class Refactor extends Command
         }
 
         $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider']);
+        $journal = new RefactorJournal($this->filesystem);
 
-        return (new RefactorAgent($provider, $model, $this->filesystem, $aiConfig['effort'] ?? null, $this->specRunner, $confirm))->refactor($srcPath, $specPath, $method);
+        $agent = new RefactorAgent($provider, $model, $this->filesystem, $aiConfig['effort'] ?? null, $this->specRunner, $confirm);
+        $result = $agent->refactor($srcPath, $specPath, $method, $journal->rendered());
+
+        // Only a kept change becomes memory: the journal is what stops a later
+        // run from undoing this refactoring or redoing it forever.
+        if ($result->success && $result->applied && $result->technique !== 'None') {
+            $journal->record($this->relativeClass($srcPath), $result->technique, $result->description);
+        }
+
+        return $result;
+    }
+
+    /**
+     * The class-ish name a source path denotes, for the journal (src/App/X.php
+     * reads as App\X).
+     */
+    private function relativeClass(string $srcPath): string
+    {
+        $relative = $this->relativePath($srcPath);
+        $srcDir = ltrim($this->config->getSrcPath(), './');
+        if (str_starts_with($relative, $srcDir . '/')) {
+            $relative = substr($relative, strlen($srcDir) + 1);
+        }
+
+        return str_replace('/', '\\', preg_replace('/\.php$/', '', $relative) ?? $relative);
     }
 
     /**

@@ -87,7 +87,7 @@ final class RefactorAgent
      * @param string $specPath absolute path to the spec file
      * @param string|null $method optional method to focus refactoring on
      */
-    public function refactor(string $srcPath, string $specPath, ?string $method): RefactorResult
+    public function refactor(string $srcPath, string $specPath, ?string $method, string $history = ''): RefactorResult
     {
         $this->ensureInitialised($srcPath, $specPath);
 
@@ -95,10 +95,13 @@ final class RefactorAgent
         $specContent = $this->filesystem->read($specPath);
 
         $focus = $method !== null ? "\n\nFocus your refactoring on the `$method()` method only." : '';
+        $memory = $history !== ''
+            ? "\n\nRecent refactorings, do not undo or redo any of these (say no refactoring is worthwhile instead):\n$history"
+            : '';
 
         $this->messages[] = Message::user(
             "Refactor this class. Here is the source file ($srcPath):\n\n```php\n$sourceContent\n```\n\n"
-            . "Here is the spec file ($specPath):\n\n```php\n$specContent\n```$focus",
+            . "Here is the spec file ($specPath):\n\n```php\n$specContent\n```$focus$memory",
         );
 
         $this->runLoop();

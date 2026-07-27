@@ -24,6 +24,7 @@ use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair\SpecRunner;
 use PhpSpec\Console\Command\Pair\SubprocessRunner;
+use PhpSpec\Console\Command\Refactor\RefactorJournal;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
@@ -117,6 +118,11 @@ final class Next extends Command
 
             return 0;
         }
+
+        // 4c. Red, green, REFACTOR happens once: a refactor suggestion for a
+        // target unchanged since the last recorded refactoring steers to
+        // growth instead of polishing the same class forever.
+        $suggestion = $this->steerAwayFromStaleRefactor($suggestion);
 
         // 5. Display
         $this->displaySuggestion($output, $suggestion);
@@ -259,6 +265,38 @@ final class Next extends Command
         $output->writeln("  <fg=gray>Run:</> bin/phpspec exemplify $classArg <method>");
 
         return 0;
+    }
+
+    /**
+     * Replaces a refactor suggestion with a growth steer when its target has
+     * not changed since the last recorded refactoring: the file's mtime at or
+     * before the journal's last entry means the polish step already happened.
+     *
+     * @param array{type: string, target: string, reason: string} $suggestion
+     * @return array{type: string, target: string, reason: string}
+     */
+    private function steerAwayFromStaleRefactor(array $suggestion): array
+    {
+        if ($suggestion['type'] !== 'refactor' || $suggestion['target'] === '') {
+            return $suggestion;
+        }
+
+        $last = (new RefactorJournal($this->filesystem))->lastRefactoringAt();
+        if ($last === null) {
+            return $suggestion;
+        }
+
+        $srcDir = ltrim($this->config->getSrcPath(), './');
+        $srcFile = getcwd() . '/' . $srcDir . '/' . str_replace('\\', '/', $suggestion['target']) . '.php';
+        if (!$this->filesystem->exists($srcFile) || $this->filesystem->mtime($srcFile) > $last) {
+            return $suggestion;
+        }
+
+        return [
+            'type' => 'info',
+            'target' => '',
+            'reason' => sprintf('"%s" was already refactored and has not changed since. Grow the story instead: add the next scenario or feature.', $suggestion['target']),
+        ];
     }
 
     /**

@@ -13,17 +13,22 @@ use Symfony\Component\Console\Tester\CommandTester;
 // Builds a Refactor command wired to a scripted provider that proposes one
 // Extract Method refactoring, over a mocked project, capturing writes; the
 // consent examples drive the REAL agent flow, not the refactorFn shortcut.
-function refactorConsentWorld(Filesystem $fs, array &$written): Refactor
+// A non-empty $journal seeds .phpspec/ai/journal.jsonl with prior entries.
+function refactorConsentWorld(Filesystem $fs, array &$written, string $journal = ''): Refactor
 {
     $yamlPath = './phpspec.yaml';
     $cwd = getcwd();
     $srcPath = $cwd . '/src/App/Good.php';
     $specPath = $cwd . '/spec/App/Good.spec.php';
 
-    allow($fs->exists())->toReturnUsing(fn(string $path): bool => in_array($path, [$yamlPath, $srcPath, $specPath], true));
-    allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
+    allow($fs->exists())->toReturnUsing(fn(string $path): bool => in_array($path, [$yamlPath, $srcPath, $specPath], true)
+        || ($journal !== '' && str_contains($path, 'journal.jsonl')));
+    allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath, $journal): string {
         if ($path === $yamlPath) {
             return "ai:\n  provider: google\n  api_key: test-key\n";
+        }
+        if (str_contains($path, 'journal.jsonl')) {
+            return $journal;
         }
 
         return "<?php\nclass Good {}\n";
@@ -31,6 +36,7 @@ function refactorConsentWorld(Filesystem $fs, array &$written): Refactor
     allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
         $written[$path] = $content;
     });
+    allow($fs->mkdir())->toReturn(null);
 
     $provider = new class implements ProviderInterface {
         public int $turn = 0;
@@ -38,6 +44,11 @@ function refactorConsentWorld(Filesystem $fs, array &$written): Refactor
         public function chat(array $messages, array $options = []): Response
         {
             if (++$this->turn === 1) {
+                $GLOBALS['refactor_seen_prompt'] = implode("\n", array_map(
+                    fn($message) => is_string($message->content ?? null) ? $message->content : '',
+                    $messages,
+                ));
+
                 return new Response('', [new ToolCall('t1', 'apply_refactoring', [
                     'content' => "<?php\nclass Good { /* extracted */ }\n",
                     'technique' => 'Extract Method',
@@ -110,6 +121,42 @@ describe(Refactor::class, function () {
             expect($exitCode)->toBe(0);
             expect($tester->getDisplay())->not()->toContain('Apply this refactoring?');
             expect(implode('', $written))->toContain('extracted');
+        });
+
+        it('records an applied refactoring in the journal, and a declined one not at all', function (Filesystem $fs) {
+            $written = [];
+            $cmd = refactorConsentWorld($fs, $written);
+
+            $tester = new CommandTester($cmd);
+            $tester->setInputs(['']);
+            $tester->execute(['target' => 'App\\Good']);
+
+            $journal = implode('', array_filter($written, fn(string $p) => str_contains($p, 'journal.jsonl'), ARRAY_FILTER_USE_KEY));
+            expect($journal)->toContain('Extract Method');
+            expect($journal)->toContain('App\\\\Good');
+        });
+
+        it('does not record a declined refactoring', function (Filesystem $fs) {
+            $written = [];
+            $cmd = refactorConsentWorld($fs, $written);
+
+            $tester = new CommandTester($cmd);
+            $tester->setInputs(['n']);
+            $tester->execute(['target' => 'App\\Good']);
+
+            expect(count($written))->toBe(0);
+        });
+
+        it('grounds the model with the recent refactorings so it never undoes them', function (Filesystem $fs) {
+            $written = [];
+            $cmd = refactorConsentWorld($fs, $written, '{"at":100,"command":"refactor","target":"App\\\\Good","technique":"Inline Method","description":"Inlined helper"}' . "\n");
+
+            $tester = new CommandTester($cmd);
+            $tester->setInputs(['n']);
+            $tester->execute(['target' => 'App\\Good']);
+
+            expect($GLOBALS['refactor_seen_prompt'] ?? '')->toContain('Inline Method');
+            expect($GLOBALS['refactor_seen_prompt'] ?? '')->toContain('do not undo');
         });
 
     });

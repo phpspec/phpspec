@@ -153,6 +153,69 @@ describe(Next::class, function () {
             expect($tester->getDisplay())->toContain('Would you like me to create that for you?');
         });
 
+        it('steers to growth instead of re-refactoring a target unchanged since the last refactoring', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            $cwd = getcwd();
+            $srcFile = $cwd . '/src/App/TodoList.php';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $srcFile || str_contains($p, 'journal.jsonl'));
+            allow($fs->read())->toReturnUsing(function (string $p) use ($yamlPath): string {
+                if ($p === $yamlPath) {
+                    return "ai:\n  provider: google\n  api_key: test-key\n";
+                }
+                if (str_contains($p, 'journal.jsonl')) {
+                    return '{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Inline Method","description":"x"}' . "\n";
+                }
+                return '';
+            });
+            allow($fs->mtime())->toReturn(900);
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'refactor',
+                'target' => 'App\\TodoList',
+                'reason' => 'The suite is green.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $tester = new CommandTester($cmd);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('already refactored');
+            expect($tester->getDisplay())->not()->toContain('refactor App/TodoList');
+        });
+
+        it('keeps the refactor suggestion when the target changed after the last refactoring', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            $cwd = getcwd();
+            $srcFile = $cwd . '/src/App/TodoList.php';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $srcFile || str_contains($p, 'journal.jsonl'));
+            allow($fs->read())->toReturnUsing(function (string $p) use ($yamlPath): string {
+                if ($p === $yamlPath) {
+                    return "ai:\n  provider: google\n  api_key: test-key\n";
+                }
+                if (str_contains($p, 'journal.jsonl')) {
+                    return '{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Inline Method","description":"x"}' . "\n";
+                }
+                return '';
+            });
+            allow($fs->mtime())->toReturn(1100);
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'refactor',
+                'target' => 'App\\TodoList',
+                'reason' => 'The suite is green.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $tester = new CommandTester($cmd);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('refactor App/TodoList');
+        });
+
         it('displays a refactor suggestion with the refactor hint', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {

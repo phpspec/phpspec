@@ -28,8 +28,11 @@ behaviour-preserving refactorings on PHP classes.
 6. If a method focus is given, only refactor that method and its immediate helpers.
 7. Provide the complete file content in `apply_refactoring`, not a partial diff.
 8. Choose the most impactful single refactoring that improves code quality.
-9. If the code is already clean and no meaningful refactoring is possible,
-   say so and do not call `apply_refactoring`.
+9. If the code is already clean and no refactoring is worthwhile, say so and do
+   not call `apply_refactoring`. Saying so is a good outcome, never a failure.
+10. Never undo or redo a refactoring listed under "Recent refactorings" in the
+    user message (inlining what was extracted, extracting what was inlined, or
+    reversing a rename is a taste swap, not an improvement).
 
 ## Process
 
