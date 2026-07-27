@@ -6,22 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+ - Applied refactorings are journalled (.phpspec/ai/journal.jsonl); reversing one demands a stated rationale
+
 ### Changed
  - The navigator offers directly; the chooser is the question, never "shall I offer?"
+ - `refactor` shows the change and asks before applying; non-interactive runs keep auto-apply
+ - `next` reads the journal: a polished, unchanged class is never re-suggested, and the model proposes the next scenario or feature instead
 
 ### Fixed
  - Auto-verify runs the whole suite when the change touches a feature or steps file
  - A verified change ends the turn; no fresh suggestion rides on its back
  - `refactor` runs its baseline with the installed phpspec, wherever it lives (vendor installs failed to launch it and blamed the specs)
  - Standalone hints name the binary you invoked, never a hardcoded bin/phpspec
-
-## [Unreleased]
-
-### Added
- - Applied refactorings are journalled (.phpspec/ai/journal.jsonl); reversing one demands a stated rationale, and `next` steers to growth when the target has not changed since
-
-### Changed
- - `refactor` shows the change and asks before applying; non-interactive runs keep auto-apply
 
 ## [9.0.0-beta.14](https://github.com/phpspec/phpspec/compare/9.0.0-beta.13...9.0.0-beta.14)
 

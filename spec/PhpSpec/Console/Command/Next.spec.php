@@ -216,6 +216,85 @@ describe(Next::class, function () {
             expect($tester->getDisplay())->toContain('refactor App/TodoList');
         });
 
+        it('keeps a refactor suggestion for a class the journal never recorded', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            $cwd = getcwd();
+            $srcFile = $cwd . '/src/App/TaskQueue.php';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $srcFile || str_contains($p, 'journal.jsonl'));
+            allow($fs->read())->toReturnUsing(function (string $p) use ($yamlPath): string {
+                if ($p === $yamlPath) {
+                    return "ai:\n  provider: google\n  api_key: test-key\n";
+                }
+                if (str_contains($p, 'journal.jsonl')) {
+                    return '{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Inline Method","description":"x"}' . "\n";
+                }
+                return '';
+            });
+            allow($fs->mtime())->toReturn(900);
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'refactor',
+                'target' => 'App\\TaskQueue',
+                'reason' => 'The suite is green.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $tester = new CommandTester($cmd);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('refactor App/TaskQueue');
+        });
+
+        it('tells the model which classes are already polished, so it proposes growth itself', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            $cwd = getcwd();
+            $featuresDir = $cwd . '/features';
+            $srcFile = $cwd . '/src/App/TodoList.php';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir || $p === $srcFile || str_contains($p, 'journal.jsonl'));
+            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
+            allow($fs->scandir())->toReturn([]);
+            allow($fs->read())->toReturnUsing(function (string $p) use ($yamlPath): string {
+                if ($p === $yamlPath) {
+                    return "ai:\n  provider: google\n  api_key: test-key\n";
+                }
+                if (str_contains($p, 'journal.jsonl')) {
+                    return '{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Extract Method","description":"Pulled hasTask out"}' . "\n";
+                }
+                return '';
+            });
+            allow($fs->mtime())->toReturn(900);
+            allow($fs->mkdir())->toReturn(null);
+            allow($fs->write())->toReturn(null);
+
+            $runner = new NextFakeRunner();
+            $runner->outcome = new RunOutcome(null, new SuiteSummary(
+                'green',
+                ['examples' => 3, 'passes' => 3, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+                [],
+                [],
+                ['features' => 1, 'scenarios' => 1, 'steps' => 3, 'stepFailures' => 0, 'undefined' => 0],
+                [['path' => 'features/adding.feature', 'status' => 'green', 'undefined' => 0]],
+            ));
+
+            $replay = new ReplayProvider([
+                new Response('', [new ToolCall('1', 'suggest_next', ['type' => 'feature', 'target' => 'clearing completed tasks', 'reason' => 'The list only grows; nothing clears what is done.'])]),
+            ]);
+            $cmd = new Next(new Configuration('.', $fs), $fs, null, $runner, $replay);
+
+            $app = new Application();
+            method_exists($app, 'addCommand') ? $app->addCommand($cmd) : $app->add($cmd);
+            $tester = new CommandTester($app->find('next'));
+            $tester->setInputs(['n']);
+            $tester->execute([]);
+
+            expect($replay->requests[0]['messages'][0]->content)->toContain('journal');
+            expect($replay->requests[0]['messages'][1]->content)->toContain('Already refactored and unchanged since: App\\TodoList');
+            expect($tester->getDisplay())->toContain('Write a feature scenario for');
+            expect($tester->getDisplay())->toContain('clearing completed tasks');
+        });
+
         it('displays a refactor suggestion with the refactor hint', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {

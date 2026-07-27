@@ -69,6 +69,15 @@ describe(Request::class, function () {
         expect($request->context)->toBe("# Instruction\nthe steps");
     });
 
+    it('renders the journal grounding so polish already done is visible to the model', function (Filesystem $fs) {
+        $grounding = new Grounding(polished: ['App\\TodoList', 'App\\TaskQueue']);
+
+        $request = Request::compose($this->profile, null, $grounding, '', new PromptLibrary($fs));
+
+        expect($request->context)->toContain('# Refactoring journal');
+        expect($request->context)->toContain('Already refactored and unchanged since: App\\TodoList, App\\TaskQueue.');
+    });
+
     it('renders the suite state block ahead of everything when the grounding carries one', function (Filesystem $fs) {
         $suite = new SuiteSummary(
             'green',

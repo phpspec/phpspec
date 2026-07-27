@@ -80,6 +80,10 @@ final readonly class Request
             $sections[] = $suite;
         }
 
+        if ($grounding->polished !== []) {
+            $sections[] = "# Refactoring journal\nAlready refactored and unchanged since: " . implode(', ', $grounding->polished) . '.';
+        }
+
         if (trim($grounding->tree) !== '') {
             $sections[] = "# Project files\n" . $grounding->tree;
         }

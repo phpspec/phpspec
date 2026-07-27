@@ -12,16 +12,16 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Console\Command\Refactor;
+namespace PhpSpec\Ai;
 
 use PhpSpec\Filesystem;
 
 /**
  * @internal
  * Append-only memory of the applied refactorings (.phpspec/ai/journal.jsonl),
- * one JSON line each. Later runs read it so the model never undoes or redoes
- * a recent refactoring, and `next` can steer to growth when nothing changed
- * since the last one.
+ * one JSON line each. Later runs read it so the model reverses a recent
+ * refactoring only with a stated rationale, and `next` grounds itself in
+ * which classes are already polished and unchanged since.
  */
 final class RefactorJournal
 {
@@ -50,17 +50,6 @@ final class RefactorJournal
 
         $existing = $this->filesystem->exists($path) ? $this->filesystem->read($path) : '';
         $this->filesystem->write($path, $existing . $entry);
-    }
-
-    /**
-     * The timestamp of the most recent refactoring, or null for none yet.
-     */
-    public function lastRefactoringAt(): ?int
-    {
-        $entries = $this->entries();
-        $last = end($entries);
-
-        return $last === false ? null : (int) $last['at'];
     }
 
     /**
@@ -96,6 +85,33 @@ final class RefactorJournal
         }
 
         return $entries;
+    }
+
+    /**
+     * The journalled classes whose source has not changed since their latest
+     * refactoring: polishing is done there, so the next step is growth. A
+     * class modified after (or gone) is fair game for refactoring again.
+     *
+     * @param string $srcDir absolute path of the source root the targets live under
+     * @return list<string>
+     */
+    public function unchangedTargets(string $srcDir): array
+    {
+        $latest = [];
+        foreach ($this->entries() as $entry) {
+            $target = (string) $entry['target'];
+            $latest[$target] = max((int) $entry['at'], $latest[$target] ?? 0);
+        }
+
+        $unchanged = [];
+        foreach ($latest as $target => $at) {
+            $file = $srcDir . '/' . str_replace('\\', '/', $target) . '.php';
+            if ($this->filesystem->exists($file) && $this->filesystem->mtime($file) <= $at) {
+                $unchanged[] = $target;
+            }
+        }
+
+        return $unchanged;
     }
 
     private function path(): string

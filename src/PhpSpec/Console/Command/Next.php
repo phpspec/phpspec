@@ -21,10 +21,10 @@ use PhpSpec\Ai\Agent\Phase;
 use PhpSpec\Ai\Agent\Request;
 use PhpSpec\Ai\Agent\Step;
 use PhpSpec\Ai\Contracts\ProviderInterface;
+use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair\SpecRunner;
 use PhpSpec\Console\Command\Pair\SubprocessRunner;
-use PhpSpec\Console\Command\Refactor\RefactorJournal;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
@@ -268,9 +268,10 @@ final class Next extends Command
     }
 
     /**
-     * Replaces a refactor suggestion with a growth steer when its target has
-     * not changed since the last recorded refactoring: the file's mtime at or
-     * before the journal's last entry means the polish step already happened.
+     * Replaces a refactor suggestion with a growth steer when the journal
+     * shows its target already polished and unchanged since: red, green,
+     * REFACTOR happens once per change. A backstop; the model is told the
+     * same journal up front, so it normally proposes growth itself.
      *
      * @param array{type: string, target: string, reason: string} $suggestion
      * @return array{type: string, target: string, reason: string}
@@ -281,14 +282,9 @@ final class Next extends Command
             return $suggestion;
         }
 
-        $last = (new RefactorJournal($this->filesystem))->lastRefactoringAt();
-        if ($last === null) {
-            return $suggestion;
-        }
-
-        $srcDir = ltrim($this->config->getSrcPath(), './');
-        $srcFile = getcwd() . '/' . $srcDir . '/' . str_replace('\\', '/', $suggestion['target']) . '.php';
-        if (!$this->filesystem->exists($srcFile) || $this->filesystem->mtime($srcFile) > $last) {
+        $srcDir = getcwd() . '/' . ltrim($this->config->getSrcPath(), './');
+        $polished = (new RefactorJournal($this->filesystem))->unchangedTargets($srcDir);
+        if (!in_array($suggestion['target'], $polished, true)) {
             return $suggestion;
         }
 

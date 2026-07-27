@@ -31,6 +31,7 @@ final readonly class Grounding
      * @param string|null $recentSource project-relative path of the most recently modified source file
      * @param string $tree a compact listing of the project's source/spec/feature files
      * @param array<string, string> $namedFiles relative path => contents, for files the instruction names
+     * @param list<string> $polished classes already refactored and unchanged since, per the refactoring journal
      */
     public function __construct(
         public ?SuiteSummary $suite = null,
@@ -38,6 +39,7 @@ final readonly class Grounding
         public ?string $recentSource = null,
         public string $tree = '',
         public array $namedFiles = [],
+        public array $polished = [],
     ) {}
 
     /**

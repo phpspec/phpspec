@@ -114,6 +114,13 @@ describe('prompt artifacts', function () {
         expect($raw('next'))->toContain('@include instructions/tdd-cycle');   // the cycle is single-sourced
     });
 
+    it('teaches next that a polished, unchanged class gets growth, not more polish', function () use ($read) {
+        $text = $read('commands/next');
+
+        expect($text)->toContain('journal');
+        expect($text)->toContain('scenario or feature');
+    });
+
     it('keeps next.txt pure coaching, with no machine-readable contract to leak', function () use ($read) {
         // The {type,target,reason} contract lives in the suggest_next tool
         // schema now; prose prompts carry nothing a conversation could leak.

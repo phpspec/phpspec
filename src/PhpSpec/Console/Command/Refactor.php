@@ -16,10 +16,10 @@ namespace PhpSpec\Console\Command;
 
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\ProviderFactory;
+use PhpSpec\Ai\RefactorJournal;
 use PhpSpec\Ai\SpecSubprocess;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\RefactorAgent;
-use PhpSpec\Console\Command\Refactor\RefactorJournal;
 use PhpSpec\Console\Command\Refactor\RefactorResult;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
