@@ -132,8 +132,12 @@ final class Next extends Command
             return 0;
         }
 
-        if ($suggestion['type'] === 'spec' || $suggestion['type'] === 'feature') {
+        if ($suggestion['type'] === 'spec') {
             return $this->offerDescribe($input, $output, $suggestion['target']);
+        }
+
+        if ($suggestion['type'] === 'feature') {
+            return $this->offerFeature($input, $output, $suggestion['target']);
         }
 
         if ($suggestion['type'] === 'example') {
@@ -231,8 +235,32 @@ final class Next extends Command
     {
         $classArg = str_replace('\\', '/', $target);
 
+        return $this->offerToRun($input, $output, "describe $classArg", 'describe', ['class' => $classArg]);
+    }
+
+    /**
+     * A feature suggestion actuates through `generate`, which owns Gherkin,
+     * the features directory, and the scenario content; `describe` would turn
+     * the story name into a spec.
+     */
+    private function offerFeature(Input $input, Output $output, string $target): int
+    {
+        $instruction = 'a feature for ' . $target;
+
+        return $this->offerToRun($input, $output, sprintf('generate "%s"', $instruction), 'generate', ['instruction' => [$instruction]]);
+    }
+
+    /**
+     * Offers to act on the suggestion: a printed hint when not interactive, a
+     * [Y/n] confirmation and the command run when it is.
+     *
+     * @param array<string, mixed> $args the bound arguments for the command
+     */
+    private function offerToRun(Input $input, Output $output, string $hint, string $command, array $args): int
+    {
         if (!$input->isInteractive()) {
-            $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . " describe $classArg");
+            $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . ' ' . $hint);
+
             return 0;
         }
 
@@ -252,10 +280,7 @@ final class Next extends Command
             return 1;
         }
 
-        return $application->find('describe')->run(
-            new ArrayInput(['class' => $classArg]),
-            $output,
-        );
+        return $application->find($command)->run(new ArrayInput($args), $output);
     }
 
     private function offerExemplify(Input $input, Output $output, string $target): int

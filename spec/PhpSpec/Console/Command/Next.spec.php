@@ -9,6 +9,9 @@ use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Filesystem;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command as SymfonyCommand;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -151,6 +154,82 @@ describe(Next::class, function () {
             expect($tester->getDisplay())->toContain('Write a feature scenario for');
             expect($tester->getDisplay())->toContain('user registration');
             expect($tester->getDisplay())->toContain('Would you like me to create that for you?');
+        });
+
+        it('actuates an accepted feature suggestion through generate, never describe', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'feature',
+                'target' => 'deleting_a_task',
+                'reason' => 'The suite is green; grow the story.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $fakeGenerate = new class extends SymfonyCommand {
+                public string $received = '';
+                protected function configure(): void
+                {
+                    $this->setName('generate')->addArgument('instruction', InputArgument::IS_ARRAY);
+                }
+                protected function execute(InputInterface $input, OutputInterface $output): int
+                {
+                    $this->received = implode(' ', (array) $input->getArgument('instruction'));
+                    $output->writeln('feature written');
+
+                    return 0;
+                }
+            };
+            $fakeDescribe = new class extends SymfonyCommand {
+                protected function configure(): void
+                {
+                    $this->setName('describe')->addArgument('class', InputArgument::REQUIRED);
+                }
+                protected function execute(InputInterface $input, OutputInterface $output): int
+                {
+                    $output->writeln('Specification created');
+
+                    return 0;
+                }
+            };
+
+            $app = new Application();
+            foreach ([$cmd, $fakeGenerate, $fakeDescribe] as $command) {
+                method_exists($app, 'addCommand') ? $app->addCommand($command) : $app->add($command);
+            }
+
+            $tester = new CommandTester($app->find('next'));
+            $tester->setInputs(['Y']);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($fakeGenerate->received)->toBe('a feature for deleting_a_task');
+            expect($tester->getDisplay())->toContain('feature written');
+            expect($tester->getDisplay())->not()->toContain('Specification');
+        });
+
+        it('hints generate for a feature suggestion when not interactive', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'feature',
+                'target' => 'deleting_a_task',
+                'reason' => 'The suite is green; grow the story.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $tester = new CommandTester($cmd);
+            $exitCode = $tester->execute([], ['interactive' => false]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('generate "a feature for deleting_a_task"');
+            expect($tester->getDisplay())->not()->toContain('describe');
         });
 
         it('steers to growth instead of re-refactoring a target unchanged since the last refactoring', function (Filesystem $fs) {
