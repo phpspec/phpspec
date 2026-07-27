@@ -14,6 +14,8 @@
 
 namespace PhpSpec\Ai;
 
+use PhpSpec\Parallel\ParallelRunner;
+
 /** @internal */
 
 final class SpecSubprocess
@@ -108,12 +110,10 @@ final class SpecSubprocess
      */
     private static function buildCommand(string $specPath): array
     {
-        $phpspecBin = realpath(getcwd() . '/bin/phpspec') ?: getcwd() . '/bin/phpspec';
-
         return [
             PHP_BINARY,
             '-d', 'xdebug.mode=off',
-            $phpspecBin,
+            ParallelRunner::findPhpspecBin(),
             'run',
             $specPath,
             '--no-ansi',
