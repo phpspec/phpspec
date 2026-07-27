@@ -6,7 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+ - The navigator offers directly; the chooser is the question, never "shall I offer?"
+
 ### Fixed
+ - Auto-verify runs the whole suite when the change touches a feature or steps file
+ - A verified change ends the turn; no fresh suggestion rides on its back
  - `refactor` runs its baseline with the installed phpspec, wherever it lives (vendor installs failed to launch it and blamed the specs)
  - Standalone hints name the binary you invoked, never a hardcoded bin/phpspec
 

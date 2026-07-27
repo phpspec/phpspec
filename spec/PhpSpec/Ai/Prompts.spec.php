@@ -18,6 +18,8 @@ describe('prompt artifacts', function () {
         expect($text)->toContain('Intent');
         expect($text)->toContain('park');
         expect($text)->toContain('Guard the design');
+        expect($text)->toContain('never ask whether to offer');
+        expect($text)->toContain('report the outcome and hand back');
     });
 
     it('ships a driver prompt that runs the collaboration cycle and caps one artifact per turn', function () use ($read) {
