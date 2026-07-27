@@ -57,13 +57,27 @@ final class RefactorAgent
      * @param Filesystem|null $filesystem filesystem abstraction for testability
      * @param string|null $effort the configured reasoning effort, passed through to the provider
      */
+    /** @var callable(string): array{0: int, 1: string} */
+    private $specRunner;
+
+    /** @var (callable(string, string, string): bool)|null */
+    private $confirm;
+
+    /**
+     * @param callable(string): array{0: int, 1: string}|null $specRunner runs the spec file; defaults to a subprocess
+     * @param (callable(string, string, string): bool)|null $confirm asked with (technique, description, diff) before the write; null applies without asking
+     */
     public function __construct(
         private readonly ProviderInterface $provider,
         private readonly ?string $model = null,
         ?Filesystem $filesystem = null,
         private readonly ?string $effort = null,
+        ?callable $specRunner = null,
+        ?callable $confirm = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
+        $this->specRunner = $specRunner ?? SpecSubprocess::run(...);
+        $this->confirm = $confirm;
     }
 
     /**
@@ -217,11 +231,26 @@ final class RefactorAgent
                 $diffEntries = Diff::compute($oldLines, $newLines);
                 $diffText = Diff::format($diffEntries);
 
+                // The change is the human's to accept: the diff is shown and
+                // answered before anything reaches disk.
+                if ($this->confirm !== null && !($this->confirm)($technique, $description, $diffText)) {
+                    $this->result = new RefactorResult(
+                        success: true,
+                        technique: $technique,
+                        description: $description,
+                        diff: $diffText,
+                        specOutput: '',
+                        applied: false,
+                    );
+
+                    return 'The human declined this refactoring. Do not retry it; end your turn.';
+                }
+
                 // Write new content
                 $this->filesystem->write($srcPath, $newContent);
 
                 // Run specs
-                [$exitCode, $output] = self::runSpecs($specPath);
+                [$exitCode, $output] = $this->runSpecs($specPath);
 
                 if ($exitCode !== 0) {
                     // Revert
@@ -254,9 +283,9 @@ final class RefactorAgent
     /**
      * @return array{0: int, 1: string} [exitCode, output]
      */
-    private static function runSpecs(string $specPath): array
+    private function runSpecs(string $specPath): array
     {
-        return SpecSubprocess::run($specPath);
+        return ($this->specRunner)($specPath);
     }
 
     /**

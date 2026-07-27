@@ -33,5 +33,6 @@ final readonly class RefactorResult
         public string $description,
         public string $diff,
         public string $specOutput,
+        public bool $applied = true,
     ) {}
 }

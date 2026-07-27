@@ -1,10 +1,66 @@
 <?php
 
+use PhpSpec\Ai\Contracts\ProviderInterface;
+use PhpSpec\Ai\Response;
+use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor;
 use PhpSpec\Console\Command\Refactor\RefactorResult;
 use PhpSpec\Filesystem;
+use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
+
+// Builds a Refactor command wired to a scripted provider that proposes one
+// Extract Method refactoring, over a mocked project, capturing writes; the
+// consent examples drive the REAL agent flow, not the refactorFn shortcut.
+function refactorConsentWorld(Filesystem $fs, array &$written): Refactor
+{
+    $yamlPath = './phpspec.yaml';
+    $cwd = getcwd();
+    $srcPath = $cwd . '/src/App/Good.php';
+    $specPath = $cwd . '/spec/App/Good.spec.php';
+
+    allow($fs->exists())->toReturnUsing(fn(string $path): bool => in_array($path, [$yamlPath, $srcPath, $specPath], true));
+    allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
+        if ($path === $yamlPath) {
+            return "ai:\n  provider: google\n  api_key: test-key\n";
+        }
+
+        return "<?php\nclass Good {}\n";
+    });
+    allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {
+        $written[$path] = $content;
+    });
+
+    $provider = new class implements ProviderInterface {
+        public int $turn = 0;
+
+        public function chat(array $messages, array $options = []): Response
+        {
+            if (++$this->turn === 1) {
+                return new Response('', [new ToolCall('t1', 'apply_refactoring', [
+                    'content' => "<?php\nclass Good { /* extracted */ }\n",
+                    'technique' => 'Extract Method',
+                    'description' => 'Pull the guard out',
+                ])]);
+            }
+
+            return new Response('done');
+        }
+    };
+
+    $specRunner = fn(string $path): array => [0, '1 pass'];
+
+    $cmd = new Refactor(new Configuration('.', $fs), $fs, $specRunner, null, $provider);
+
+    // Registered on an application so the command has a helper set: the
+    // consent question needs the question helper, exactly as in production.
+    $app = new Application('phpspec-test', '1.0');
+    $app->setAutoExit(false);
+    $app->{method_exists($app, 'addCommand') ? 'addCommand' : 'add'}($cmd);
+
+    return $cmd;
+}
 
 describe(Refactor::class, function () {
 
@@ -12,6 +68,50 @@ describe(Refactor::class, function () {
         allow($fs->exists())->toReturn(false);
         allow($fs->isFile())->toReturn(false);
         allow($fs->isDir())->toReturn(false);
+    });
+
+    context('consent before applying', function () {
+
+        it('shows the proposal and asks before applying; declining leaves the file untouched', function (Filesystem $fs) {
+            $written = [];
+            $cmd = refactorConsentWorld($fs, $written);
+
+            $tester = new CommandTester($cmd);
+            $tester->setInputs(['n']);
+            $exitCode = $tester->execute(['target' => 'App\\Good']);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('Extract Method');
+            expect($tester->getDisplay())->toContain('Apply this refactoring?');
+            expect($tester->getDisplay())->toContain('Not applied');
+            expect(count($written))->toBe(0);
+        });
+
+        it('applies on yes and verifies', function (Filesystem $fs) {
+            $written = [];
+            $cmd = refactorConsentWorld($fs, $written);
+
+            $tester = new CommandTester($cmd);
+            $tester->setInputs(['']);
+            $exitCode = $tester->execute(['target' => 'App\\Good']);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('Specs still pass');
+            expect(implode('', $written))->toContain('extracted');
+        });
+
+        it('applies without asking when non-interactive', function (Filesystem $fs) {
+            $written = [];
+            $cmd = refactorConsentWorld($fs, $written);
+
+            $tester = new CommandTester($cmd);
+            $exitCode = $tester->execute(['target' => 'App\\Good'], ['interactive' => false]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->not()->toContain('Apply this refactoring?');
+            expect(implode('', $written))->toContain('extracted');
+        });
+
     });
 
     it('instantiates', function (Filesystem $fs) {
