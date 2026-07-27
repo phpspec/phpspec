@@ -86,6 +86,7 @@ describe('prompt artifacts', function () {
         expect($text)->toContain('temperature: 0.3');
         expect($text)->toContain('ONE baby-step refactoring');
         expect($text)->toContain('apply_refactoring');
+        expect($text)->toContain('no refactoring is worthwhile');
     });
 
     it('ships the pair base guidance with layout placeholders, composed from the primers', function () use ($read, $raw) {

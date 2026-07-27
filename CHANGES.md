@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+ - Applied refactorings are journalled (.phpspec/ai/journal.jsonl); reversing one demands a stated rationale, and `next` steers to growth when the target has not changed since
+
 ### Changed
  - `refactor` shows the change and asks before applying; non-interactive runs keep auto-apply
 
