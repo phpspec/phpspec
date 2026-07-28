@@ -259,3 +259,40 @@ Feature: Story BDD with Gherkin
       """
       then("another outcome"
       """
+
+  Scenario: Two step definitions sharing a title error, whatever their keywords
+    Given a feature file "features/filtering.feature":
+      """
+      Feature: Filtering
+        Scenario: Filtering
+          Given I filter the list
+      """
+    And a step file "features/steps/filtering.steps.php":
+      """
+      <?php
+
+      given("I filter the list", function () {
+          pending();
+      });
+
+      when("I filter the list", function () {
+          pending();
+      });
+      """
+    When I run phpspec run "features/"
+    Then the exit code should be 1
+    And the output should contain "already defined"
+    And the output should contain "I filter the list"
+
+  Scenario: A step used twice in a scenario generates one definition, not two
+    Given a feature file "features/repeats.feature":
+      """
+      Feature: Repeats
+        Scenario: Repeats
+          Given I add a "pending" task "Buy milk"
+          And I add a "completed" task "Buy eggs"
+          When I look at the list
+          Then I see 2 tasks
+      """
+    When I run phpspec run "features/" and answer "y" to generation prompts
+    Then the file "features/steps/repeats.steps.php" should contain "I add a {string} task {string}" exactly 1 times

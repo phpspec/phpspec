@@ -35,6 +35,8 @@ use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
+use PhpSpec\StoryBDD\StepVocabulary;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -832,10 +834,20 @@ final class AiAssistant
     /**
      * A proposal for an absolute path and content, reading any existing file so
      * the diff shown is real. Tools only ever produce these; nothing writes
-     * except the gate below.
+     * except the gate below. Steps content is checked against the project's
+     * step vocabulary first: a title registers once across all steps files,
+     * so a duplicate is rejected here instead of erroring at the next load.
      */
     private function proposalFor(string $absPath, string $content, string $origin): Proposal
     {
+        if (str_ends_with($absPath, '.steps.php')) {
+            $root = getcwd() . '/' . trim($this->config->getFeaturesPath(), './');
+            $rejection = (new StepVocabulary($this->filesystem))->rejectionFor($content, $absPath, $root);
+            if ($rejection !== null) {
+                throw new RuntimeException($rejection);
+            }
+        }
+
         $exists = $this->filesystem->exists($absPath);
 
         return new Proposal(ProjectPath::relative($absPath), $exists ? $this->filesystem->read($absPath) : '', $content, !$exists, $origin);

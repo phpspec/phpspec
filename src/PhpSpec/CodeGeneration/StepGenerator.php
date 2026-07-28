@@ -67,15 +67,21 @@ class StepGenerator
      *
      * @param array<int, array{keyword: string, text: string}> $steps steps with 'keyword' and 'text' keys
      * @param string $existing the current steps-file content, empty for a new file
+     * @param list<string> $definedElsewhere titles other steps files already define, never re-scaffolded
      * @return string the complete new steps-file content
      */
-    public function skeleton(array $steps, string $existing = ''): string
+    public function skeleton(array $steps, string $existing = '', array $definedElsewhere = []): string
     {
         $content = $existing === '' ? "<?php\n" : rtrim($existing) . "\n";
 
         // "And"/"But" continue the primary keyword of the step they follow, so
         // an "And" under a When generates when(), under a Then generates then().
         $primary = 'given';
+
+        // One definition per title: a step used twice in a scenario (or an
+        // already-defined one, whichever quotes it uses) registers once, and a
+        // second definition would now be rejected at load.
+        $emitted = [];
 
         foreach ($steps as $step) {
             $keyword = strtolower($step['keyword']);
@@ -85,9 +91,10 @@ class StepGenerator
                 $keyword = $primary;
             }
             $pattern = $this->extractPattern($step['text']);
-            if ($existing !== '' && str_contains($existing, '"' . $pattern . '"')) {
+            if (isset($emitted[$pattern]) || in_array($pattern, $definedElsewhere, true) || ($existing !== '' && $this->defines($existing, $pattern))) {
                 continue;
             }
+            $emitted[$pattern] = true;
             $params = $this->extractParams($pattern);
 
             $content .= "\n$keyword(\"$pattern\", function ($params) {\n";
@@ -96,6 +103,15 @@ class StepGenerator
         }
 
         return $content;
+    }
+
+    /**
+     * Whether a steps file's content already defines the given pattern, in
+     * either quoting style.
+     */
+    private function defines(string $content, string $pattern): bool
+    {
+        return str_contains($content, '"' . $pattern . '"') || str_contains($content, "'" . $pattern . "'");
     }
 
     /**

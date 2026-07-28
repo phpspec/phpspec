@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+ - Two step definitions sharing a title now error at load, naming both locations; matching is keyword-blind, so the duplicate could only shadow silently
+ - A step used twice in a scenario generates one definition, not two
+ - AI-written steps respect the vocabulary too: content redefining a title another steps file owns is rejected with a pointer to reuse it, and scaffolds skip titles defined elsewhere
+
 ## [9.0.0-beta.15](https://github.com/phpspec/phpspec/compare/9.0.0-beta.14...9.0.0-beta.15)
 
 ### Added

@@ -11,6 +11,41 @@ describe(StepRegistry::class, function () {
         expect($this->registry)->toBeAnInstanceOf(StepRegistry::class);
     });
 
+    it("rejects a second definition with the same title", function () {
+        $this->registry->addStep("I filter the list", function () {});
+
+        expect(fn() => $this->registry->addStep("I filter the list", function () {}))
+            ->toThrow(RuntimeException::class);
+    });
+
+    it("rejects the duplicate whatever its keyword, because matching is keyword-blind", function () {
+        given("the list is filtered", function () {});
+
+        expect(fn() => then("the list is filtered", function () {}))
+            ->toThrow(RuntimeException::class);
+
+        PhpSpec\StoryBDD\StoryBDDRegistry::init();
+    });
+
+    it("names both definitions in the duplicate error", function () {
+        $this->registry->addStep("I filter the list", function () {});
+
+        try {
+            $this->registry->addStep("I filter the list", function () {});
+        } catch (RuntimeException $e) {
+            expect($e->getMessage())->toContain('"I filter the list"');
+            expect($e->getMessage())->toContain('StepRegistry.spec.php');
+        }
+    });
+
+    it("accepts the same title again after a clear", function () {
+        $this->registry->addStep("I filter the list", function () {});
+        $this->registry->clear();
+        $this->registry->addStep("I filter the list", function () {});
+
+        expect($this->registry->count())->toBe(1);
+    });
+
     it("returns null for unmatched step", function () {
         expect($this->registry->match("no such step"))->toBeNull();
     });

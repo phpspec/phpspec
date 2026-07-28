@@ -95,4 +95,33 @@ describe(StepGenerator::class, function () {
         expect(substr_count($content, 'I have a todo list'))->toBe(1); // kept, not duplicated
         expect($content)->toContain('then("I should have {int} task on my list"');
     });
+
+    it('emits one definition for a step used twice, whatever its values', function () {
+        $content = (new StepGenerator($this->filesystem))->skeleton([
+            ['keyword' => 'Given', 'text' => 'I add a "pending" task "Buy milk"'],
+            ['keyword' => 'And', 'text' => 'I add a "completed" task "Buy eggs"'],
+        ]);
+
+        expect(substr_count($content, 'I add a {string} task {string}'))->toBe(1);
+    });
+
+    it('never scaffolds a title another steps file already defines', function () {
+        $content = (new StepGenerator($this->filesystem))->skeleton([
+            ['keyword' => 'Given', 'text' => 'I have a todo list'],
+            ['keyword' => 'When', 'text' => 'I clear the list'],
+        ], '', ['I have a todo list']);
+
+        expect($content)->not()->toContain('I have a todo list');
+        expect($content)->toContain('when("I clear the list"');
+    });
+
+    it('recognises a single-quoted existing definition as already defined', function () {
+        $existing = "<?php\n\ngiven('I have a todo list', function () {\n    pending();\n});\n";
+
+        $content = (new StepGenerator($this->filesystem))->skeleton([
+            ['keyword' => 'Given', 'text' => 'I have a todo list'],
+        ], $existing);
+
+        expect(substr_count($content, 'I have a todo list'))->toBe(1);
+    });
 });

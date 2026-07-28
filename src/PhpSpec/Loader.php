@@ -51,6 +51,8 @@ final class Loader
      *
      * @param string|null $files directory or file path; defaults to ./spec
      * @param string|null $filter substring to match against spec file paths
+     *
+     * @throws \RuntimeException when a steps file registers a step title that is already defined
      */
     public function load(?string $files, ?string $filter = null): Suite
     {

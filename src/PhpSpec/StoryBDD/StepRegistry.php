@@ -14,15 +14,23 @@
 
 namespace PhpSpec\StoryBDD;
 
+use RuntimeException;
+
 /**
  * @internal
  * Maps step patterns to closures for matching against Gherkin step text.
  * Patterns use {string}, {int}, {word}, and {*} placeholders that are converted to regex capture groups.
+ * A title registers once: matching is global and keyword-blind, so a second
+ * definition of the same title (even under another keyword) could only shadow
+ * or be shadowed silently, and is rejected instead.
  */
 final class StepRegistry
 {
     /** @var array<int, array{pattern: string, regex: string, callback: \Closure}> registered step definitions */
     private array $steps = [];
+
+    /** @var array<string, string> pattern => source location of its definition */
+    private array $definedAt = [];
 
     /**
      * Registers a step definition with a pattern and its implementing closure.
@@ -30,14 +38,42 @@ final class StepRegistry
      * @param string $pattern step pattern with optional {string}/{int}/{word}/{*} placeholders
      * @param \Closure $callback the closure to execute when the pattern matches
      * @return void
+     *
+     * @throws RuntimeException when the pattern is already registered
      */
     public function addStep(string $pattern, \Closure $callback): void
     {
+        if (isset($this->definedAt[$pattern])) {
+            throw new RuntimeException(sprintf(
+                'Step "%s" is already defined at %s; remove the duplicate at %s. Step titles must be unique across all steps files, whatever their keyword.',
+                $pattern,
+                $this->definedAt[$pattern],
+                self::locationOf($callback),
+            ));
+        }
+
+        $this->definedAt[$pattern] = self::locationOf($callback);
         $this->steps[] = [
             'pattern' => $pattern,
             'regex' => $this->patternToRegex($pattern),
             'callback' => $callback,
         ];
+    }
+
+    /**
+     * The file:line a step closure was written at, relative to the project when
+     * possible, so a duplicate error points straight at both definitions.
+     */
+    private static function locationOf(\Closure $callback): string
+    {
+        $reflection = new \ReflectionFunction($callback);
+        $file = $reflection->getFileName() ?: 'unknown';
+        $cwd = getcwd();
+        if (is_string($cwd) && str_starts_with($file, $cwd . DIRECTORY_SEPARATOR)) {
+            $file = substr($file, strlen($cwd) + 1);
+        }
+
+        return $file . ':' . ($reflection->getStartLine() ?: 0);
     }
 
     /**
@@ -66,6 +102,7 @@ final class StepRegistry
     public function clear(): void
     {
         $this->steps = [];
+        $this->definedAt = [];
     }
 
     /**
