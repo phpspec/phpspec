@@ -16,6 +16,8 @@ namespace PhpSpec\Console\Command;
 
 use PhpSpec\Ai\Agent\Agent;
 use PhpSpec\Ai\Agent\CommandProfile;
+use PhpSpec\Ai\Agent\Outcome;
+use PhpSpec\Ai\Agent\OutcomePresenter;
 use PhpSpec\Ai\Agent\Proposal;
 use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\Contracts\ProviderInterface;
@@ -27,6 +29,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument as Argument;
 use Symfony\Component\Console\Input\InputInterface as Input;
+use Symfony\Component\Console\Input\InputOption as Option;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
@@ -60,7 +63,8 @@ final class Generate extends Command
         $this
             ->setName('generate')
             ->setDescription('Generate a feature, steps, spec, or code from a natural-language instruction (requires AI)')
-            ->addArgument('instruction', Argument::IS_ARRAY, 'What to build, in plain English');
+            ->addArgument('instruction', Argument::IS_ARRAY, 'What to build, in plain English')
+            ->addOption('format', 'f', Option::VALUE_REQUIRED, 'Output format: pretty, or agent (machine-readable JSON; applies without prompting)', 'pretty');
     }
 
     protected function execute(Input $input, Output $output): int
@@ -80,14 +84,21 @@ final class Generate extends Command
             return 1;
         }
 
-        $output->writeln('');
-        $output->writeln('  <fg=gray>Generating...</>');
-        $output->writeln('');
+        $forAgent = $input->getOption('format') === 'agent';
+        if (!$forAgent) {
+            $output->writeln('');
+            $output->writeln('  <fg=gray>Generating...</>');
+            $output->writeln('');
+        }
 
         // The profile is shipped package code, so it always loads from the real
         // filesystem; the project filesystem seam only grounds and writes.
         $agent = new Agent($this->config, $this->filesystem, $this->provider);
         $outcome = $agent->do(CommandProfile::load('generate'), $instruction);
+
+        if ($forAgent) {
+            return $this->generateForAgent($output, $outcome);
+        }
 
         if ($outcome->proposals === []) {
             $reason = $outcome->prose !== '' ? $outcome->prose : 'Could not generate anything for that instruction. Try rephrasing.';
@@ -111,6 +122,25 @@ final class Generate extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * The agent path: a machine consumer is never prompted, so every proposal
+     * applies, and the one JSON document carries the receipts (path, action,
+     * applied), never file content: the agent reads the files it now owns.
+     */
+    private function generateForAgent(Output $output, Outcome $outcome): int
+    {
+        $writer = new Writer($this->filesystem);
+        $applied = [];
+        foreach ($outcome->proposals as $proposal) {
+            $writer->apply($proposal);
+            $applied[] = true;
+        }
+
+        $output->write((new OutcomePresenter())->render('generate', $outcome, $applied), false, Output::OUTPUT_RAW);
+
+        return $outcome->proposals === [] ? 1 : 0;
     }
 
     /**

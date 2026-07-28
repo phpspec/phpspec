@@ -31,6 +31,19 @@ describe(Agent::class, function () {
         expect($doc['suite'])->toBe(['v' => 1, 'event' => 'run_started', 'suite' => 'default', 'examples' => 1, 'steps' => 0, 'seed' => null]);
     });
 
+    it('reports the seed and suite it was told about, so a flaky order is reproducible', function () {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->describeRun(424242, 'spec,features/');
+        $formatter->format(new SuiteResult([
+            new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
+        ]));
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+
+        expect($doc['suite']['seed'])->toBe(424242);
+        expect($doc['suite']['suite'])->toBe('spec,features/');
+    });
+
     it('omits passing examples from the entries but still counts them', function () use ($render) {
         $doc = $render(new SuiteResult([
             new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
