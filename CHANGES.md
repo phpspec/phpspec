@@ -13,9 +13,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The navigator offers directly; the chooser is the question, never "shall I offer?"
  - `refactor` shows the change and asks before applying; non-interactive runs keep auto-apply
  - `next` reads the journal: a polished, unchanged class is never re-suggested, and the model proposes the next scenario or feature instead
+ - A generated feature carries real model-written scenarios; the skeleton stands in when the model cannot be reached, with the failure shown beside it
+ - Every `next` suggestion offers to act (example, steps, implement, and refactor included), and the model can suggest steps and implement too
+ - A feature whose step bodies are pending reads as the working story: `next` steers to finishing it, never to a new feature
+ - When the working story is red, `next` shows the model its actual files, so the advice names the real gap
 
 ### Fixed
  - Accepting a feature suggestion from `next` runs `generate`, so it writes the feature instead of describing a spec at the project root
+ - Determined steps offer too: `next` asks before writing the steps or implementing the failing class, instead of printing advice and exiting
+ - An accepted example or implement offer forwards the suggestion's reason, so `generate` makes the change the suggestion meant
+ - A named class with spec wording routes as a spec ask even when the sentence also says "feature"
+ - A degenerate failure whose subject matches its example is named once, not twice
+ - A failing expectation on a list of objects reports the failure instead of crashing the message formatter
  - Auto-verify runs the whole suite when the change touches a feature or steps file
  - A verified change ends the turn; no fresh suggestion rides on its back
  - `refactor` runs its baseline with the installed phpspec, wherever it lives (vendor installs failed to launch it and blamed the specs)

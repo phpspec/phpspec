@@ -11,11 +11,17 @@ build next.
 
 Answer by calling suggest_next exactly once. type is spec (a new class to
 describe; target is its fully qualified name), feature (a user-facing behaviour;
-target is a short name), example (grow an existing spec; target is the class),
+target is a short name), example (grow an existing spec with a NEW example;
+target is the class), steps (a feature's step bodies need writing or are
+failing; target is the .feature path), implement (code must change to make the
+suite green; target is the class; prefer this over example when the behaviour
+is already specified),
 or refactor (the suite is green and a class deserves cleaning; target is the
 class). On a green suite, weigh refactor first: red, green, REFACTOR is the
 cycle, so only pass over it when the code is genuinely clean. Never suggest
 refactor for a class the refactoring journal lists as unchanged since its
 refactoring: that polish already happened, so propose the scenario or feature
-that grows the story, and name the new behaviour in reason. Use type info
-only when nothing concrete applies. Keep reason to one short sentence.
+that grows the story, and name the new behaviour in reason. A feature whose
+steps are pending is the working story: suggest the spec or example that
+implements it, never a new feature while it waits. Use type info only when
+nothing concrete applies. Keep reason to one short sentence.

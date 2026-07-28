@@ -289,7 +289,7 @@ describe(Next::class, function () {
             $cmd = new Next($configWithAi, $fs, $suggestFn);
 
             $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute([]);
+            $exitCode = $tester->execute([], ['interactive' => false]);
 
             expect($exitCode)->toBe(0);
             expect($tester->getDisplay())->toContain('refactor App/TodoList');
@@ -320,7 +320,7 @@ describe(Next::class, function () {
             $cmd = new Next($configWithAi, $fs, $suggestFn);
 
             $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute([]);
+            $exitCode = $tester->execute([], ['interactive' => false]);
 
             expect($exitCode)->toBe(0);
             expect($tester->getDisplay())->toContain('refactor App/TaskQueue');
@@ -374,17 +374,52 @@ describe(Next::class, function () {
             expect($tester->getDisplay())->toContain('clearing completed tasks');
         });
 
-        it('displays a refactor suggestion with the refactor hint', function (Filesystem $fs) {
+        it('actuates an accepted refactor suggestion by running the refactor command', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
-                return $path === $yamlPath;
-            });
-            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
-                if ($path === $yamlPath) {
-                    return "ai:\n  provider: google\n  api_key: test-key\n";
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'refactor',
+                'target' => 'App\\TodoList',
+                'reason' => 'The suite is green and complete() duplicates the lookup.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $fakeRefactor = new class extends SymfonyCommand {
+                public string $received = '';
+                protected function configure(): void
+                {
+                    $this->setName('refactor')->addArgument('target', InputArgument::REQUIRED);
                 }
-                return '';
-            });
+                protected function execute(InputInterface $input, OutputInterface $output): int
+                {
+                    $this->received = (string) $input->getArgument('target');
+
+                    return 0;
+                }
+            };
+
+            $app = new Application();
+            foreach ([$cmd, $fakeRefactor] as $command) {
+                method_exists($app, 'addCommand') ? $app->addCommand($command) : $app->add($command);
+            }
+
+            $tester = new CommandTester($app->find('next'));
+            $tester->setInputs(['Y']);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('Refactor');
+            expect($tester->getDisplay())->toContain('Would you like me to run it now?');
+            expect($fakeRefactor->received)->toBe('App/TodoList');
+        });
+
+        it('hints the refactor command when not interactive', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $configWithAi = new Configuration('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -395,25 +430,100 @@ describe(Next::class, function () {
             $cmd = new Next($configWithAi, $fs, $suggestFn);
 
             $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute([]);
+            $exitCode = $tester->execute([], ['interactive' => false]);
 
             expect($exitCode)->toBe(0);
             expect($tester->getDisplay())->toContain('Refactor');
-            expect($tester->getDisplay())->toContain('App\\TodoList');
-            expect($tester->getDisplay())->toContain('bin/phpspec refactor App/TodoList');
+            expect($tester->getDisplay())->toContain('refactor App/TodoList');
         });
 
-        it('displays an example suggestion with exemplify hint', function (Filesystem $fs) {
+        it('actuates an accepted example suggestion through generate', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
-            allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
-                return $path === $yamlPath;
-            });
-            allow($fs->read())->toReturnUsing(function (string $path) use ($yamlPath): string {
-                if ($path === $yamlPath) {
-                    return "ai:\n  provider: google\n  api_key: test-key\n";
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'example',
+                'target' => 'App\\Calculator',
+                'reason' => 'The Calculator spec covers add() but not divide().',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $fakeGenerate = new class extends SymfonyCommand {
+                public string $received = '';
+                protected function configure(): void
+                {
+                    $this->setName('generate')->addArgument('instruction', InputArgument::IS_ARRAY);
                 }
-                return '';
-            });
+                protected function execute(InputInterface $input, OutputInterface $output): int
+                {
+                    $this->received = implode(' ', (array) $input->getArgument('instruction'));
+
+                    return 0;
+                }
+            };
+
+            $app = new Application();
+            foreach ([$cmd, $fakeGenerate] as $command) {
+                method_exists($app, 'addCommand') ? $app->addCommand($command) : $app->add($command);
+            }
+
+            $tester = new CommandTester($app->find('next'));
+            $tester->setInputs(['Y']);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('Add an example to');
+            expect($tester->getDisplay())->toContain('App\\Calculator');
+            expect($fakeGenerate->received)->toBe('add a spec example for App\\Calculator: The Calculator spec covers add() but not divide().');
+        });
+
+        it('strips file tokens from the reason it forwards, so routing stays on the spec', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'example',
+                'target' => 'App\\TodoList',
+                'reason' => 'Implement the pending scenario in features/clearing_completed_tasks.feature now.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $fakeGenerate = new class extends SymfonyCommand {
+                public string $received = '';
+                protected function configure(): void
+                {
+                    $this->setName('generate')->addArgument('instruction', InputArgument::IS_ARRAY);
+                }
+                protected function execute(InputInterface $input, OutputInterface $output): int
+                {
+                    $this->received = implode(' ', (array) $input->getArgument('instruction'));
+
+                    return 0;
+                }
+            };
+
+            $app = new Application();
+            foreach ([$cmd, $fakeGenerate] as $command) {
+                method_exists($app, 'addCommand') ? $app->addCommand($command) : $app->add($command);
+            }
+
+            $tester = new CommandTester($app->find('next'));
+            $tester->setInputs(['Y']);
+            $tester->execute([]);
+
+            expect($fakeGenerate->received)->toContain('add a spec example for App\\TodoList');
+            expect($fakeGenerate->received)->toContain('pending scenario');
+            expect($fakeGenerate->received)->not()->toContain('.feature');
+        });
+
+        it('hints the example generate line when not interactive', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $configWithAi = new Configuration('.', $fs);
             $suggestFn = fn(array $aiConfig): array => [
@@ -424,12 +534,10 @@ describe(Next::class, function () {
             $cmd = new Next($configWithAi, $fs, $suggestFn);
 
             $tester = new CommandTester($cmd);
-            $exitCode = $tester->execute([]);
+            $exitCode = $tester->execute([], ['interactive' => false]);
 
             expect($exitCode)->toBe(0);
-            expect($tester->getDisplay())->toContain('Add an example to');
-            expect($tester->getDisplay())->toContain('App\\Calculator');
-            expect($tester->getDisplay())->toContain('bin/phpspec exemplify');
+            expect($tester->getDisplay())->toContain('generate "add a spec example for App\\Calculator');
         });
 
         it('displays an info suggestion when well-covered', function (Filesystem $fs) {
@@ -491,6 +599,8 @@ describe(Next::class, function () {
             $featuresDir = getcwd() . '/features';
             allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir);
             allow($fs->isDir())->toReturnUsing(fn(string $p): bool => $p === $featuresDir);
+            allow($fs->scandir())->toReturnUsing(fn(string $d): array => $d === $featuresDir ? ['adding.feature'] : []);
+            allow($fs->mtime())->toReturn(100);
             allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
 
             $runner = new NextFakeRunner();
@@ -516,7 +626,8 @@ describe(Next::class, function () {
 
             expect($runner->arguments)->toContain('--all');
             expect($captured)->toContain('FEATURES');
-            expect($captured)->toContain('adding.feature');
+            expect($captured)->toContain('Last-touched feature: features/adding.feature');
+            expect($captured)->not()->toContain(getcwd());
         });
 
         it('does not run the suite when there are no features', function (Filesystem $fs) {
@@ -571,6 +682,57 @@ describe(Next::class, function () {
             expect($replay->requests[0]['messages'][0]->content)->toContain('refactor');    // so did the derived step
         });
 
+        it('shows the model the working story files when a feature is red', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            $cwd = getcwd();
+            $featuresDir = $cwd . '/features';
+            $known = [
+                $cwd . '/features/clearing.feature' => "Feature: Clearing\n  Scenario: Clears\n    When I clear completed tasks\n",
+                $cwd . '/features/steps/clearing.steps.php' => "<?php\nwhen('I clear completed tasks', fn() => \$this->todoList->getTasks());\n",
+                $cwd . '/spec/App/TodoList.spec.php' => "<?php\ndescribe('TodoList', function () { it('clears completed tasks', fn() => null); });\n",
+                $cwd . '/src/App/TodoList.php' => "<?php\nclass TodoList { public function tasks(): array { return []; } }\n",
+            ];
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $featuresDir || isset($known[$p]) || in_array($p, [$cwd . '/spec', $cwd . '/src'], true));
+            allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$featuresDir, $cwd . '/spec', $cwd . '/src'], true));
+            allow($fs->scandir())->toReturnUsing(fn(string $d): array => match ($d) {
+                $cwd . '/spec' => ['App/TodoList.spec.php'],
+                $cwd . '/src' => ['App/TodoList.php'],
+                default => [],
+            });
+            allow($fs->isFile())->toReturnUsing(fn(string $p): bool => isset($known[$p]));
+            allow($fs->mtime())->toReturn(100);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : ($known[$p] ?? ''));
+            allow($fs->mkdir())->toReturn(null);
+            allow($fs->write())->toReturn(null);
+
+            $runner = new NextFakeRunner();
+            $runner->outcome = new RunOutcome(null, new SuiteSummary(
+                'red',
+                ['examples' => 3, 'passes' => 3, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+                [],
+                [],
+                ['features' => 1, 'scenarios' => 1, 'steps' => 3, 'stepFailures' => 1, 'undefined' => 0],
+                [['path' => 'features/clearing.feature', 'status' => 'red', 'undefined' => 0]],
+            ));
+
+            $replay = new ReplayProvider([
+                new Response('', [new ToolCall('1', 'suggest_next', ['type' => 'implement', 'target' => 'App\\TodoList', 'reason' => 'The step calls getTasks() but the class only has tasks().'])]),
+            ]);
+            $cmd = new Next(new Configuration('.', $fs), $fs, null, $runner, $replay);
+
+            $app = new Application();
+            method_exists($app, 'addCommand') ? $app->addCommand($cmd) : $app->add($cmd);
+            $tester = new CommandTester($app->find('next'));
+            $tester->setInputs(['n']);
+            $tester->execute([]);
+
+            $context = $replay->requests[0]['messages'][1]->content;
+            expect($context)->toContain('features/clearing.feature');
+            expect($context)->toContain('I clear completed tasks');
+            expect($context)->toContain('getTasks');                    // the steps file content
+            expect($tester->getDisplay())->toContain('Implement');
+        });
+
         it('suggests the determined step itself, without the model, when the suite determines it', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             $featuresDir = getcwd() . '/features';
@@ -592,12 +754,119 @@ describe(Next::class, function () {
             $replay = new ReplayProvider([new Response('should never be consulted')]);
             $cmd = new Next(new Configuration('.', $fs), $fs, null, $runner, $replay);
 
-            $tester = new CommandTester($cmd);
+            $app = new Application();
+            method_exists($app, 'addCommand') ? $app->addCommand($cmd) : $app->add($cmd);
+            $tester = new CommandTester($app->find('next'));
+            $tester->setInputs(['n']);
             $tester->execute([]);
 
             expect($replay->requests)->toBe([]);                                  // deterministic: no model
             expect($tester->getDisplay())->toContain('undefined steps');
             expect($tester->getDisplay())->toContain('Write the steps.');
+            expect($tester->getDisplay())->toContain('Would you like me to create that for you?');
+        });
+
+        it('actuates an accepted steps suggestion through generate', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'steps',
+                'target' => 'features/adding.feature',
+                'reason' => 'Undefined steps block the story.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $fakeGenerate = new class extends SymfonyCommand {
+                public string $received = '';
+                protected function configure(): void
+                {
+                    $this->setName('generate')->addArgument('instruction', InputArgument::IS_ARRAY);
+                }
+                protected function execute(InputInterface $input, OutputInterface $output): int
+                {
+                    $this->received = implode(' ', (array) $input->getArgument('instruction'));
+
+                    return 0;
+                }
+            };
+
+            $app = new Application();
+            foreach ([$cmd, $fakeGenerate] as $command) {
+                method_exists($app, 'addCommand') ? $app->addCommand($command) : $app->add($command);
+            }
+
+            $tester = new CommandTester($app->find('next'));
+            $tester->setInputs(['Y']);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('Write the steps for');
+            expect($fakeGenerate->received)->toBe('the steps for features/adding.feature');
+        });
+
+        it('actuates an accepted implement suggestion for a class through generate', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'implement',
+                'target' => 'App\\TodoList',
+                'reason' => 'The suite is red: App\\TodoList, it deletes a task.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $fakeGenerate = new class extends SymfonyCommand {
+                public string $received = '';
+                protected function configure(): void
+                {
+                    $this->setName('generate')->addArgument('instruction', InputArgument::IS_ARRAY);
+                }
+                protected function execute(InputInterface $input, OutputInterface $output): int
+                {
+                    $this->received = implode(' ', (array) $input->getArgument('instruction'));
+
+                    return 0;
+                }
+            };
+
+            $app = new Application();
+            foreach ([$cmd, $fakeGenerate] as $command) {
+                method_exists($app, 'addCommand') ? $app->addCommand($command) : $app->add($command);
+            }
+
+            $tester = new CommandTester($app->find('next'));
+            $tester->setInputs(['Y']);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('Implement');
+            expect($fakeGenerate->received)->toBe('implement App\\TodoList: The suite is red: App\\TodoList, it deletes a task.');
+        });
+
+        it('falls back to a run hint when the failing subject is no class', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'implement',
+                'target' => 'deleting_a_task',
+                'reason' => 'The suite is red: deleting_a_task. Make it green.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $tester = new CommandTester($cmd);
+            $exitCode = $tester->execute([]);
+
+            expect($exitCode)->toBe(0);
+            expect($tester->getDisplay())->toContain('run');
+            expect($tester->getDisplay())->not()->toContain('Would you like me to create that for you?');
         });
 
         it('passes AI config to the suggest function', function (Filesystem $fs) {

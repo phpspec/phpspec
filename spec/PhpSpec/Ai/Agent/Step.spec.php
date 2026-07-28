@@ -73,6 +73,13 @@ describe(Step::class, function () {
         expect($step->subject)->toContain('user');
     });
 
+    it('prefers the named class with spec wording over loose feature wording in the tail', function () {
+        $step = Step::resolve('add a spec example for App\\TodoList: drive the pending feature', Grounding::empty());
+
+        expect($step->phase)->toBe(Phase::WriteSpec);
+        expect($step->subject)->toBe('App\\TodoList');
+    });
+
     it('infers write-spec and the class from spec wording', function () {
         $step = Step::resolve('a spec for a Coupon that reduces a total', Grounding::empty());
 
@@ -141,6 +148,41 @@ describe(Step::class, function () {
         expect($step->phase)->toBe(Phase::WriteCode);
         expect($step->subject)->toBe('App\\TodoList');
         expect($step->because)->toContain('it adds a task');
+    });
+
+    it('names a degenerate failure once when its subject and example coincide', function () {
+        $suite = new SuiteSummary(
+            'red',
+            ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
+            [['subject' => 'deleting_a_task', 'example' => 'deleting_a_task', 'error' => 'boom']],
+            [],
+            ['features' => 1, 'scenarios' => 1, 'steps' => 2, 'stepFailures' => 0, 'undefined' => 0],
+            [['path' => 'features/deleting_a_task.feature', 'status' => 'green', 'undefined' => 0]],
+        );
+
+        $step = Step::resolve('', new Grounding(suite: $suite));
+
+        expect($step->because)->toBe('the suite is red: deleting_a_task');
+    });
+
+    it('derives write-steps for a feature whose steps are pending: finish the working story', function () {
+        $suite = new SuiteSummary(
+            'green',
+            ['examples' => 5, 'passes' => 5, 'failures' => 0, 'errors' => 0, 'pending' => 0],
+            [],
+            [],
+            ['features' => 3, 'scenarios' => 4, 'steps' => 20, 'stepFailures' => 0, 'undefined' => 0],
+            [
+                ['path' => 'features/adding.feature', 'status' => 'green', 'undefined' => 0],
+                ['path' => 'features/clearing_completed_tasks.feature', 'status' => 'pending', 'undefined' => 0],
+            ],
+        );
+
+        $step = Step::resolve('', new Grounding(suite: $suite));
+
+        expect($step->phase)->toBe(Phase::WriteSteps);
+        expect($step->subject)->toBe('features/clearing_completed_tasks.feature');
+        expect($step->because)->toContain('pending');
     });
 
     it('derives refactor when features are green', function () {

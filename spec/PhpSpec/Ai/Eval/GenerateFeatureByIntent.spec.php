@@ -9,8 +9,9 @@ require_once __DIR__ . '/../ReplayProvider.php';
 
 // E2 (eval) — when the instruction asks for a feature BY INTENT (no explicit
 // path in the words), generate must still produce a .feature under features/,
-// never a spec. Deterministic under the pipeline: the recorded bad reply (a
-// spec) is never consulted.
+// never a spec. The model is consulted for the scenario content; the recorded
+// bad reply (a spec, in prose) dies at the rails: one corrective re-ask, then
+// the skeleton at the derived path stands in.
 describe('E2 generate: feature by intent', function () {
 
     beforeEach(function (Filesystem $fs) {
@@ -32,11 +33,12 @@ describe('E2 generate: feature by intent', function () {
 
         // Assert on the value (not a boolean derived from it) so a failure carries
         // the actual path into --format=agent, keeping the JSON actionable.
-        expect($replay->requests)->toBe([]);
+        expect($replay->requests)->toHaveLength(2);                                // consulted, then re-asked once
         expect($outcome->proposals[0]->path)->toMatch('~^features/.+\.feature$~'); // a feature under features/
         expect($outcome->proposals[0]->path)->not()->toEndWith('.spec.php');       // not a spec
         expect($outcome->proposals[0]->new)->toContain('Feature:');                 // valid Gherkin
         expect($outcome->proposals[0]->new)->toContain('Scenario:');
+        expect($outcome->proposals[0]->new)->not()->toContain('describe(');         // the recorded spec died at the rail
     });
 
 });

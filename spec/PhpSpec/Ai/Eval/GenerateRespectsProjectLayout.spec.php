@@ -50,14 +50,17 @@ describe('E10 generate: inferred paths respect the project layout', function () 
         expect($outcome->proposals[0]->path)->toBe('test/spec/App/Coupon.spec.php');
     });
 
-    it('places an inferred feature under the configured features_path, without the model', function (Filesystem $fs) use ($agentFor) {
-        $replay = new ReplayProvider();
+    it('places an inferred feature under the configured features_path, whatever the model says', function (Filesystem $fs) use ($agentFor) {
+        $replay = new ReplayProvider([
+            new Response('', [new ToolCall('1', 'write_feature', ['path' => 'features/wrong_place.feature', 'content' => "Feature: Adding\n  Scenario: Adds\n    Given a list\n    When I add \"milk\"\n    Then it is there"])]),
+        ]);
         $agent = $agentFor($fs, "features_path: test/features\nai:\n  provider: google\n  api_key: x\n", $replay);
 
         $outcome = $agent->do(CommandProfile::load('generate'), 'a feature for adding a task');
 
-        expect($replay->requests)->toBe([]);
+        expect($replay->requests)->toHaveLength(1);
         expect($outcome->proposals[0]->path)->toMatch('~^test/features/.+\.feature$~');
+        expect($outcome->proposals[0]->new)->toContain('When I add "milk"');
     });
 
 });

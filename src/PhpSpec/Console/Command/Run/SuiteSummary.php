@@ -43,7 +43,7 @@ final readonly class SuiteSummary
      * @param list<array{subject: string, example: string, error: string}> $failing
      * @param list<array{subject: string, example: string, error: string}> $pending
      * @param array{features: int, scenarios: int, steps: int, stepFailures: int, undefined: int} $featureCounts
-     * @param list<array{path: string, status: 'red'|'green'|'todo', undefined: int}> $features
+     * @param list<array{path: string, status: 'red'|'green'|'todo'|'pending', undefined: int}> $features
      */
     public function __construct(
         private string $status,
@@ -92,16 +92,18 @@ final readonly class SuiteSummary
     }
 
     /**
-     * Reduces a feature to a single red/green/todo verdict plus its undefined-step
-     * count: red if any step failed, todo if any step is still undefined (steps to
-     * write), green otherwise.
+     * Reduces a feature to a single verdict plus its undefined-step count: red
+     * if any step failed, todo if any step is still undefined (steps to
+     * write), pending if any defined step awaits its implementation (the
+     * working story), green otherwise.
      *
-     * @return array{path: string, status: 'red'|'green'|'todo', undefined: int}
+     * @return array{path: string, status: 'red'|'green'|'todo'|'pending', undefined: int}
      */
     private static function summariseFeature(FeatureResult $feature): array
     {
         $failures = 0;
         $undefined = 0;
+        $pending = 0;
         foreach ($feature->getResults() as $scenario) {
             if (!$scenario instanceof ScenarioResult) {
                 continue;
@@ -116,11 +118,18 @@ final readonly class SuiteSummary
                     ++$failures;
                 } elseif ($step->isUndefined()) {
                     ++$undefined;
+                } elseif ($step->isPending()) {
+                    ++$pending;
                 }
             }
         }
 
-        $status = $failures > 0 ? 'red' : ($undefined > 0 ? 'todo' : 'green');
+        $status = match (true) {
+            $failures > 0 => 'red',
+            $undefined > 0 => 'todo',
+            $pending > 0 => 'pending',
+            default => 'green',
+        };
 
         return ['path' => $feature->getPath(), 'status' => $status, 'undefined' => $undefined];
     }
@@ -240,10 +249,11 @@ final readonly class SuiteSummary
     {
         return $this->hasFeatures()
             && $this->featureCounts['stepFailures'] === 0
-            && $this->featureCounts['undefined'] === 0;
+            && $this->featureCounts['undefined'] === 0
+            && !in_array('pending', array_column($this->features, 'status'), true);
     }
 
-    /** @return list<array{path: string, status: 'red'|'green'|'todo', undefined: int}> */
+    /** @return list<array{path: string, status: 'red'|'green'|'todo'|'pending', undefined: int}> */
     public function features(): array
     {
         return $this->features;
@@ -252,7 +262,7 @@ final readonly class SuiteSummary
     /**
      * The first feature with a failing step, or null when none is red.
      *
-     * @return array{path: string, status: 'red'|'green'|'todo', undefined: int}|null
+     * @return array{path: string, status: 'red'|'green'|'todo'|'pending', undefined: int}|null
      */
     public function redFeature(): ?array
     {
@@ -325,7 +335,7 @@ final readonly class SuiteSummary
      * subprocess) is simply read as having no features.
      *
      * @param mixed $items the decoded features list, of unknown shape
-     * @return list<array{path: string, status: 'red'|'green'|'todo', undefined: int}>
+     * @return list<array{path: string, status: 'red'|'green'|'todo'|'pending', undefined: int}>
      */
     private static function normaliseFeatures(mixed $items): array
     {
@@ -343,7 +353,7 @@ final readonly class SuiteSummary
 
             $normalised[] = [
                 'path' => is_string($item['path'] ?? null) ? $item['path'] : '',
-                'status' => in_array($status, ['red', 'green', 'todo'], true) ? $status : 'green',
+                'status' => in_array($status, ['red', 'green', 'todo', 'pending'], true) ? $status : 'green',
                 'undefined' => is_int($item['undefined'] ?? null) ? $item['undefined'] : 0,
             ];
         }
