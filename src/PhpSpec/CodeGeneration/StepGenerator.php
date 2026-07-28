@@ -67,9 +67,10 @@ class StepGenerator
      *
      * @param array<int, array{keyword: string, text: string}> $steps steps with 'keyword' and 'text' keys
      * @param string $existing the current steps-file content, empty for a new file
+     * @param list<string> $definedElsewhere titles other steps files already define, never re-scaffolded
      * @return string the complete new steps-file content
      */
-    public function skeleton(array $steps, string $existing = ''): string
+    public function skeleton(array $steps, string $existing = '', array $definedElsewhere = []): string
     {
         $content = $existing === '' ? "<?php\n" : rtrim($existing) . "\n";
 
@@ -90,7 +91,7 @@ class StepGenerator
                 $keyword = $primary;
             }
             $pattern = $this->extractPattern($step['text']);
-            if (isset($emitted[$pattern]) || ($existing !== '' && $this->defines($existing, $pattern))) {
+            if (isset($emitted[$pattern]) || in_array($pattern, $definedElsewhere, true) || ($existing !== '' && $this->defines($existing, $pattern))) {
                 continue;
             }
             $emitted[$pattern] = true;

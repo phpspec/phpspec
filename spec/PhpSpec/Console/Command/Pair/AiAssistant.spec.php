@@ -628,6 +628,43 @@ describe(AiAssistant::class, function () {
         expect((string) json_encode($captured))->toContain('describe(');
     });
 
+    it('rejects steps content redefining a title another steps file owns, steering to reuse', function (Filesystem $fs) {
+        $cwd = getcwd();
+        allow($fs->exists())->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps/adding.steps.php'], true));
+        allow($fs->isDir())->toReturnUsing(fn(string $p): bool => in_array($p, [$cwd . '/features', $cwd . '/features/steps'], true));
+        allow($fs->isFile())->toReturnUsing(fn(string $p): bool => str_ends_with($p, 'adding.steps.php'));
+        allow($fs->scandir())->toReturnUsing(fn(string $p): array => match ($p) {
+            $cwd . '/features' => ['steps'],
+            $cwd . '/features/steps' => ['adding.steps.php'],
+            default => [],
+        });
+        allow($fs->read())->toReturnUsing(fn(string $p): string => str_ends_with($p, 'adding.steps.php')
+            ? "<?php\ngiven('I have a todo list', function () { \$this->list = new App\\TodoList(); });\n"
+            : '');
+
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'generate_steps', [
+                    'feature_name' => 'clearing',
+                    'content' => "<?php\ngiven(\"I have a todo list\", function () {\n    \$this->todoList = new App\\TodoList();\n});\n",
+                ])]);
+            }
+            $captured = $messages;
+
+            return new Response('done');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, 'test-model', $fs, true, null, $this->chooser, $this->aiDrives, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('write the steps for clearing');
+
+        expect($fs->write())->not()->toHaveBeenCalled();
+        expect((string) json_encode($captured))->toContain('already defined in');
+        expect((string) json_encode($captured))->toContain('reuse');
+    });
+
     it('rejects shouldXxx spec content even without the ObjectBehavior literal', function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
         allow($fs->read())->toReturn("<?php\ndescribe(Basket::class, function () {});\n");

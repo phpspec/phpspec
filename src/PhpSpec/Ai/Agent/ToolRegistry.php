@@ -25,6 +25,7 @@ use PhpSpec\CodeGeneration\LegacySpecDetector;
 use PhpSpec\CodeGeneration\StepGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
+use PhpSpec\StoryBDD\StepVocabulary;
 use RuntimeException;
 
 /**
@@ -66,6 +67,8 @@ final class ToolRegistry
 
     private readonly FeatureLayout $layout;
 
+    private readonly StepVocabulary $vocabulary;
+
     /**
      * @param Configuration $config the project configuration (layout paths)
      * @param Filesystem $filesystem filesystem abstraction for testability
@@ -80,6 +83,7 @@ final class ToolRegistry
         $this->featureGenerator = new FeatureGenerator();
         $this->stepGenerator = new StepGenerator($filesystem);
         $this->layout = new FeatureLayout();
+        $this->vocabulary = new StepVocabulary($filesystem);
     }
 
     /**
@@ -290,6 +294,13 @@ final class ToolRegistry
             throw new RuntimeException('The proposed spec uses phpspec 8 ObjectBehavior syntax; phpspec 9 specs use the describe/it/expect DSL, so it was rejected.');
         }
 
+        if (str_ends_with($path, '.steps.php')) {
+            $rejection = $this->vocabulary->rejectionFor($content, $path, $this->featuresRoot());
+            if ($rejection !== null) {
+                throw new RuntimeException($rejection);
+            }
+        }
+
         return $this->proposal($path, $content, 'propose_edit');
     }
 
@@ -419,7 +430,25 @@ final class ToolRegistry
         $absSteps = $this->absolute($relSteps);
         $existing = $this->filesystem->exists($absSteps) ? $this->filesystem->read($absSteps) : '';
 
-        return new Proposal($relSteps, $existing, $this->stepGenerator->skeleton($steps, $existing), $existing === '', 'write_steps');
+        // A title another steps file owns is already defined for the whole
+        // suite, so the scaffold skips it instead of planting a duplicate
+        // that would error at the next load.
+        $foreign = [];
+        foreach ($this->vocabulary->definedTitles($this->featuresRoot()) as $title => $file) {
+            if (basename($file) !== basename($relSteps)) {
+                $foreign[] = $title;
+            }
+        }
+
+        return new Proposal($relSteps, $existing, $this->stepGenerator->skeleton($steps, $existing, $foreign), $existing === '', 'write_steps');
+    }
+
+    /**
+     * The absolute features root the vocabulary scans.
+     */
+    private function featuresRoot(): string
+    {
+        return $this->absolute(trim($this->config->getFeaturesPath(), './'));
     }
 
     /**
