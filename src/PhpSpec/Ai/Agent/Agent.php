@@ -129,7 +129,11 @@ final class Agent
         } catch (RuntimeException|InvalidArgumentException $e) {
             $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], null);
 
-            return new Outcome($step, [], $e->getMessage());
+            // A missing ai section stays an honest config error; any other
+            // construction failure degrades like a failed call below.
+            return $aiConfig === null
+                ? new Outcome($step, [], $e->getMessage())
+                : $this->failedAsk($step, $e->getMessage());
         }
 
         $messages = [Message::system($request->system), Message::user($request->context)];
@@ -151,7 +155,7 @@ final class Agent
             // toolChoice) becomes prose for the human, never a crash.
             $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], null);
 
-            return new Outcome($step, [], $e->getMessage());
+            return $this->failedAsk($step, $e->getMessage());
         }
 
         try {
@@ -182,6 +186,21 @@ final class Agent
         }
 
         return new Outcome($step, $proposals, trim($response->text), $data);
+    }
+
+    /**
+     * The outcome of an ask the provider could not answer: for a write-feature
+     * step the derived skeleton stands in so the loop still moves offline,
+     * with the failure kept visible beside it; anything else is the error.
+     */
+    private function failedAsk(?Step $step, string $error): Outcome
+    {
+        $fallback = $this->registry->featureFallback($step);
+        if ($fallback !== null) {
+            return new Outcome($step, [$fallback], $error);
+        }
+
+        return new Outcome($step, [], $error);
     }
 
     /**

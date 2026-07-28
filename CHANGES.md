@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The navigator offers directly; the chooser is the question, never "shall I offer?"
  - `refactor` shows the change and asks before applying; non-interactive runs keep auto-apply
  - `next` reads the journal: a polished, unchanged class is never re-suggested, and the model proposes the next scenario or feature instead
- - A generated feature carries real model-written scenarios; the skeleton is only the fallback
+ - A generated feature carries real model-written scenarios; the skeleton stands in when the model cannot be reached, with the failure shown beside it
  - Every `next` suggestion offers to act (example, steps, implement, and refactor included), and the model can suggest steps and implement too
  - A feature whose step bodies are pending reads as the working story: `next` steers to finishing it, never to a new feature
  - When the working story is red, `next` shows the model its actual files, so the advice names the real gap

@@ -163,6 +163,16 @@ describe(Agent::class, function () {
         expect($outcome->prose)->toContain('API key not valid');
     });
 
+    it('stands in with the feature skeleton when the provider fails on a write-feature ask', function (Filesystem $fs) {
+        $agent = new Agent($this->config, $fs, new AgentSpecThrowingProvider());
+
+        $outcome = $agent->do($this->profile, 'a feature for completing_a_task.feature');
+
+        expect($outcome->proposals[0]->path)->toBe('features/completing_a_task.feature');
+        expect($outcome->proposals[0]->new)->toContain('Feature:');
+        expect($outcome->prose)->toContain('API key not valid');   // the failure stays visible beside the stand-in
+    });
+
     it('re-asks once when a tool_call command is answered in prose', function (Filesystem $fs) {
         $replay = new ReplayProvider([
             new Response('here is some chatty prose instead'),
