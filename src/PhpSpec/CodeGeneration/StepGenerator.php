@@ -77,6 +77,11 @@ class StepGenerator
         // an "And" under a When generates when(), under a Then generates then().
         $primary = 'given';
 
+        // One definition per title: a step used twice in a scenario (or an
+        // already-defined one, whichever quotes it uses) registers once, and a
+        // second definition would now be rejected at load.
+        $emitted = [];
+
         foreach ($steps as $step) {
             $keyword = strtolower($step['keyword']);
             if (in_array($keyword, ['given', 'when', 'then'], true)) {
@@ -85,9 +90,10 @@ class StepGenerator
                 $keyword = $primary;
             }
             $pattern = $this->extractPattern($step['text']);
-            if ($existing !== '' && str_contains($existing, '"' . $pattern . '"')) {
+            if (isset($emitted[$pattern]) || ($existing !== '' && $this->defines($existing, $pattern))) {
                 continue;
             }
+            $emitted[$pattern] = true;
             $params = $this->extractParams($pattern);
 
             $content .= "\n$keyword(\"$pattern\", function ($params) {\n";
@@ -96,6 +102,15 @@ class StepGenerator
         }
 
         return $content;
+    }
+
+    /**
+     * Whether a steps file's content already defines the given pattern, in
+     * either quoting style.
+     */
+    private function defines(string $content, string $pattern): bool
+    {
+        return str_contains($content, '"' . $pattern . '"') || str_contains($content, "'" . $pattern . "'");
     }
 
     /**

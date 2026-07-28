@@ -72,6 +72,16 @@ then('the output should contain {string} exactly {int} times', function (string 
     }
 });
 
+then('the file {string} should contain {string} exactly {int} times', function (string $path, string $text, int $times) {
+    $content = (string) file_get_contents($this->projectDir . '/' . $path);
+    $found = substr_count($content, $text);
+    if ($found !== $times) {
+        throw new \RuntimeException(
+            "Expected \"{$path}\" to contain \"{$text}\" exactly {$times} time(s), found {$found}.\nContent:\n{$content}",
+        );
+    }
+});
+
 then('the output should be valid JSON', function () {
     try {
         json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
@@ -138,8 +148,16 @@ then('the class {string} should contain {string}', function (string $path, strin
 });
 
 then('the file {string} should contain {string}', function (string $path, string $text) {
-    $content = file_get_contents($this->projectDir . '/' . $path);
-    expect($content)->toContain($text);
+    $full = $this->projectDir . '/' . $path;
+    if (!file_exists($full)) {
+        throw new \RuntimeException("File not found: $full");
+    }
+    $content = (string) file_get_contents($full);
+    if (!str_contains($content, $text)) {
+        throw new \RuntimeException(
+            "Expected file \"$path\" to contain \"$text\".\nActual content:\n$content",
+        );
+    }
 });
 
 then('the file {string} should contain:', function (string $path, string $text) {

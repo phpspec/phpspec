@@ -186,7 +186,15 @@ final class Run extends Command
             return 1;
         }
 
-        $results = $this->runSuiteStreaming($input, $output);
+        try {
+            $results = $this->runSuiteStreaming($input, $output);
+        } catch (\RuntimeException $e) {
+            // A load-time contract violation (e.g. two step definitions
+            // sharing a title) is the user's to fix; report it, never a trace.
+            $output->writeln(sprintf('<fg=red>%s</>', $e->getMessage()));
+
+            return 1;
+        }
 
         $this->writeReportFiles($input, $output, $results);
         $this->printProfile($input, $output, $results);
@@ -345,6 +353,7 @@ final class Run extends Command
      * @return SuiteResult the aggregated suite results
      *
      * @throws RandomException
+     * @throws \RuntimeException when the loader rejects a duplicate step title
      */
     private function runSuiteStreaming(Input $input, Output $output): SuiteResult
     {
