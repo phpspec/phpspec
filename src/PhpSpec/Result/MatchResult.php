@@ -71,7 +71,6 @@ final readonly class MatchResult implements Results
         ?string $fakeExpression = null,
         ?string $matcher = null,
         bool $negated = false,
-        ?string $relation = null,
     ): MatchResult {
         return new self(
             Result::Failed,
@@ -85,7 +84,6 @@ final readonly class MatchResult implements Results
                 $fakeExpression,
                 $matcher,
                 $negated,
-                $relation,
             ),
         );
     }
@@ -180,14 +178,5 @@ final readonly class MatchResult implements Results
     public function isNegated(): bool
     {
         return $this->detail instanceof Detail\Failed && $this->detail->isNegated();
-    }
-
-    /**
-     * Returns the matcher's relation phrase for the expected/actual pair, or
-     * null when the matcher declares none.
-     */
-    public function getRelation(): ?string
-    {
-        return $this->detail instanceof Detail\Failed ? $this->detail->getRelation() : null;
     }
 }

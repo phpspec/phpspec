@@ -71,35 +71,54 @@ describe(Pretty::class, function() {
         $haystack = "the hay" . "stack text";
         $needle = "the nee" . "dle";
         $example = new ExampleResult("looks for the needle", [
-            MatchResult::failed($haystack, $needle, "Expected \"$haystack\" to contain \"$needle\"", __FILE__, __LINE__, null, "toContain", false, "to be contained in"),
+            MatchResult::failed($haystack, $needle, "Expected \"$haystack\" to contain \"$needle\"", __FILE__, __LINE__, null, "toContain", false),
         ]);
         $spec = new SpecificationResult("MySpec", [$example]);
         $suite = new SuiteResult([$spec]);
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain('expected: "' . $needle . '"');
-        expect($text)->toContain('to be contained in: "' . $haystack . '"');
-        expect($text)->not()->toContain('to contain "' . $needle . '"');   // the sentence is gone
+        expect($text)->toContain('expected: "' . $haystack . '"');
+        expect($text)->toContain('to contain: "' . $needle . '"');
+        expect($text)->not()->toContain('Expected "' . $haystack . '"');   // the sentence is gone
         expect(substr_count($text, $haystack))->toBe(1);                   // the value appears once
         // The colons align: both labels end at the same column.
-        expect($text)->toMatch('~ {14}expected: ~');
-        expect($text)->toMatch('~ {4}to be contained in: ~');
+        expect($text)->toMatch('~ {4}expected: ~');
+        expect($text)->toMatch('~ {2}to contain: ~');
     });
 
-    it("prefixes the relation with not for a negated matcher", function() {
+    it("prefixes the inferred label with not for a negated matcher", function() {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);
 
         $example = new ExampleResult("rejects the needle", [
-            MatchResult::failed("the haystack", "the needle", "irrelevant", __FILE__, __LINE__, null, "toContain", true, "to be contained in"),
+            MatchResult::failed("the haystack", "the needle", "irrelevant", __FILE__, __LINE__, null, "toContain", true),
         ]);
         $spec = new SpecificationResult("MySpec", [$example]);
         $suite = new SuiteResult([$spec]);
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain('not to be contained in: "the haystack"');
+        expect($text)->toContain('not to contain: "the needle"');
+    });
+
+    it("caps a long multiline value to head and tail around a marker, newlines escaped", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $blob = "\n  Analysing project...\n\n  Refactor App\\TodoList\n\n  Would you like me to refactor that? [Y/n] ";
+        $example = new ExampleResult("reads the transcript", [
+            MatchResult::failed($blob, "Would you like me to run it now?", "irrelevant", __FILE__, __LINE__, null, "toContain", false),
+        ]);
+        $spec = new SpecificationResult("MySpec", [$example]);
+        $suite = new SuiteResult([$spec]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain('expected: "\n  Analysing project...\n\n  Ref[...]');
+        expect($text)->toContain('e me to refactor that? [Y/n] "');
+        expect($text)->not()->toContain("Analysing project...\n");          // raw newlines never reach the pair
+        expect($text)->toContain('to contain: "Would you like me to run it now?"');
     });
 
     it("groups the detail into Failures, Errors, Warnings, Deprecations, and Skipped sections, in that order", function() {

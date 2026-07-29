@@ -250,8 +250,8 @@ describe(Expectation::class, function() {
         });
     });
 
-    context("relation declarations", function() {
-        it("carries the matcher's own relation phrase onto the failed result", function() {
+    context("matcher identity on the result", function() {
+        it("carries the matcher name and both values onto the failed result", function() {
             $original = \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher();
             $captured = [];
             $listener = new class($captured) implements \PhpSpec\EventDispatcher\Listener {
@@ -275,8 +275,8 @@ describe(Expectation::class, function() {
             }
 
             expect($captured)->toHaveCount(1);
-            expect($captured[0]->getRelation())->toBe("to be contained in");
             expect($captured[0]->getMatcher())->toBe("toContain");
+            expect($captured[0]->getExpected())->toBe("the haystack");
             expect($captured[0]->getActual())->toBe("missing needle");
         });
     });

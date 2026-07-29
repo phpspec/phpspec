@@ -45,11 +45,10 @@ final readonly class EventfulExpectation
      * @param string|null $fakeExpression PHP expression for --fake code generation
      * @param string|null $matcher the matcher method that produced the expectation (e.g. "toBe")
      * @param bool $negated whether the matcher was negated
-     * @param string|null $relation the matcher's relation phrase for the expected/actual pair (e.g. "to be contained in")
      * @param mixed ...$values format values for the failure message
      * @return void
      */
-    public function createMatchEvent(\Closure $match, string $message, ?string $fakeExpression = null, ?string $matcher = null, bool $negated = false, ?string $relation = null, ...$values): void
+    public function createMatchEvent(\Closure $match, string $message, ?string $fakeExpression = null, ?string $matcher = null, bool $negated = false, ...$values): void
     {
         DispatcherRegistry::dispatcher()->dispatch(new ExpectationStarted(), ExpectationStarted::NAME);
         DispatcherRegistry::dispatcher()->dispatch(new MatchCreated(fn() => match (true) {
@@ -63,7 +62,6 @@ final readonly class EventfulExpectation
                 $fakeExpression,
                 $matcher,
                 $negated,
-                $relation,
             )
         }), MatchCreated::NAME);
     }

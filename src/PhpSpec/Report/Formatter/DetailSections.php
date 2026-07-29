@@ -166,24 +166,23 @@ final class DetailSections
     }
 
     /**
-     * One failed expectation: a relation-mapped matcher reads as the labeled
-     * pair alone (the values are the whole story); anything else keeps its
-     * message with the generic expected/got pair beneath.
+     * One failed expectation: a named matcher reads as a labeled pair, its
+     * label inferred from the matcher's own name (toContain reads "expected X
+     * to contain Y"); an anonymous failure keeps its message with the generic
+     * pair beneath.
      */
     private function matchFailure(OutputInterface $output, MatchResult $failure): void
     {
         // The constructor's parameter names are crossed: callers pass the
         // SUBJECT first (stored as "expected") and the matcher's target value
-        // second (stored as "actual"), so the view uncrosses them. The
-        // relation phrase is the matcher's own declaration, carried on the
-        // result; the formatter knows no matcher by name.
+        // second (stored as "actual"), so the view uncrosses them.
         $subject = $failure->getExpected();
         $target = $failure->getActual();
-        $relation = $failure->getRelation();
+        $matcher = $failure->getMatcher();
 
-        if ($relation !== null) {
-            $relation = ($failure->isNegated() ? 'not ' : '') . $relation;
-            $this->pair($output, 'expected', self::value($target), $relation, self::value($subject));
+        if ($matcher !== null && $target !== null) {
+            $label = ($failure->isNegated() ? 'not ' : '') . self::phrase($matcher);
+            $this->pair($output, 'expected', self::value($subject), $label, self::value($target));
         } else {
             $output->write(PHP_EOL . '  ' . $failure->getMessage() . PHP_EOL);
 
@@ -201,23 +200,41 @@ final class DetailSections
     }
 
     /**
-     * The two labeled value lines, colons aligned to the longer label.
+     * The matcher's name as words: "toContain" reads "to contain",
+     * "toBeGreaterThan" reads "to be greater than".
      */
-    private function pair(OutputInterface $output, string $expectedLabel, string $expectedValue, string $actualLabel, string $actualValue): void
+    private static function phrase(string $matcher): string
     {
-        $width = max(strlen($expectedLabel), strlen($actualLabel));
-
-        $output->write(PHP_EOL . '    ' . str_pad($expectedLabel, $width, ' ', STR_PAD_LEFT) . ': "' . $expectedValue . '"' . PHP_EOL);
-        $output->write('    ' . str_pad($actualLabel, $width, ' ', STR_PAD_LEFT) . ': "' . $actualValue . '"' . PHP_EOL);
+        return strtolower(trim((string) preg_replace('/(?<!^)[A-Z]/', ' $0', $matcher)));
     }
 
     /**
-     * A scalar-safe rendering of an expected/actual value for the generic pair.
+     * The two labeled value lines, colons aligned to the longer label.
+     */
+    private function pair(OutputInterface $output, string $firstLabel, string $firstValue, string $secondLabel, string $secondValue): void
+    {
+        $width = max(strlen($firstLabel), strlen($secondLabel));
+
+        $output->write(PHP_EOL . '  ' . str_pad($firstLabel, $width, ' ', STR_PAD_LEFT) . ': "' . $firstValue . '"' . PHP_EOL);
+        $output->write('  ' . str_pad($secondLabel, $width, ' ', STR_PAD_LEFT) . ': "' . $secondValue . '"' . PHP_EOL);
+    }
+
+    /**
+     * A value as the pair shows it: newlines escaped, and a long or multiline
+     * string capped to its first thirty and last thirty characters around a
+     * [...] marker, because the pair names the difference, not the whole blob.
      */
     private static function value(mixed $value): string
     {
+        if (is_string($value)) {
+            $capped = strlen($value) > 60
+                ? substr($value, 0, 30) . '[...]' . substr($value, -30)
+                : $value;
+
+            return str_replace(["\r\n", "\n", "\r"], '\n', $capped);
+        }
+
         return match (true) {
-            is_string($value) => $value,
             is_bool($value) => $value ? 'true' : 'false',
             is_null($value) => 'null',
             is_array($value) => var_export($value, true),

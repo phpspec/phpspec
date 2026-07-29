@@ -272,7 +272,7 @@ class Expectation
             'Expected %s to contain %s',
             $this->subject,
             $value,
-            ['__fake' => $fake, '__relation' => 'to be contained in'],
+            ['__fake' => $fake],
         );
     }
 
@@ -289,7 +289,6 @@ class Expectation
             'Expected %s to match %s',
             $this->subject,
             $pattern,
-            ['__relation' => 'to be matched by'],
         );
     }
 
@@ -340,7 +339,7 @@ class Expectation
             'Expected %s to have key %s',
             $this->subject,
             $key,
-            ['__fake' => '[' . self::exportValue($key) . ' => null]', '__relation' => 'to be a key of'],
+            ['__fake' => '[' . self::exportValue($key) . ' => null]'],
         );
     }
 
@@ -357,7 +356,7 @@ class Expectation
             'Expected %s to start with %s',
             $this->subject,
             $prefix,
-            ['__fake' => self::exportValue($prefix), '__relation' => 'to be the start of'],
+            ['__fake' => self::exportValue($prefix)],
         );
     }
 
@@ -374,7 +373,7 @@ class Expectation
             'Expected %s to end with %s',
             $this->subject,
             $suffix,
-            ['__fake' => self::exportValue($suffix), '__relation' => 'to be the end of'],
+            ['__fake' => self::exportValue($suffix)],
         );
     }
 
@@ -560,7 +559,6 @@ class Expectation
             'Expected %s to contain equal %s',
             $this->subject,
             $value,
-            ['__relation' => 'to be contained in'],
         );
     }
 
@@ -783,13 +781,10 @@ class Expectation
         $negated = $this->negated;
 
         $fakeExpression = null;
-        $relation = null;
-        // A matcher's trailing option array declares its fake expression and
-        // its relation phrase, beside the message template they belong to.
-        if (!empty($message) && is_array(end($message)) && (array_key_exists('__fake', end($message)) || array_key_exists('__relation', end($message)))) {
-            $options = array_pop($message);
-            $fakeExpression = $options['__fake'] ?? null;
-            $relation = $options['__relation'] ?? null;
+        // Extract fakeExpression if last argument is an array with '__fake' key
+        if (!empty($message) && is_array(end($message)) && array_key_exists('__fake', end($message))) {
+            $fakeArg = array_pop($message);
+            $fakeExpression = $fakeArg['__fake'];
         }
 
         if ($this->negated) {
@@ -800,7 +795,7 @@ class Expectation
             }
             $fakeExpression = null; // negated matchers don't produce fakes
         }
-        $this->eventCreator?->createMatchEvent($match, $message[0], $fakeExpression, $matcher, $negated, $relation, ...array_slice($message, 1));
+        $this->eventCreator?->createMatchEvent($match, $message[0], $fakeExpression, $matcher, $negated, ...array_slice($message, 1));
         return $this;
     }
 

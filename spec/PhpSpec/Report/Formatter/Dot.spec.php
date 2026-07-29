@@ -413,7 +413,7 @@ describe(Dot::class, function() {
         $formatter = new Dot($output);
 
         $failing = new ExampleResult("fails", [
-            MatchResult::failed("the haystack text", "the needle", "irrelevant", __FILE__, __LINE__, null, "toContain", false, "to be contained in"),
+            MatchResult::failed("the haystack text", "the needle", "irrelevant", __FILE__, __LINE__, null, "toContain", false),
         ]);
         $skipped = new ExampleResult("skipped one", [], false, false, true);
         $spec = new SpecificationResult("MySpec", [$failing, $skipped]);
@@ -423,8 +423,8 @@ describe(Dot::class, function() {
         $text = $output->fetch();
         expect($text)->toContain("Failures:");
         expect($text)->toContain("MySpec > fails");
-        expect($text)->toContain('expected: "the needle"');
-        expect($text)->toContain('to be contained in: "the haystack text"');
+        expect($text)->toContain('expected: "the haystack text"');
+        expect($text)->toContain('to contain: "the needle"');
         expect($text)->toContain("Skipped:");
         expect($text)->toContain("MySpec > skipped one");
     });
