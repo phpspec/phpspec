@@ -14,11 +14,9 @@
 
 namespace PhpSpec\Report\Formatter\Pretty;
 
-use PhpSpec\CodeGeneration\SurroundingCode;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
-use PhpSpec\Result\MatchResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\StepResult;
@@ -43,23 +41,6 @@ final class PrettyViews
         }
     }
 
-    public static function specificationErrors(OutputInterface $output, SpecificationResult $specification): void
-    {
-        foreach ($specification->getResults() as $exampleResult) {
-            if ($exampleResult instanceof ContextResult && !$exampleResult->isError()) {
-                self::contextErrors($output, $exampleResult, $specification->getTitle() . ' > ' . $exampleResult->getTitle());
-            } elseif ($exampleResult instanceof ContextResult && $exampleResult->isError()) {
-                $error = $exampleResult->getError();
-                $output->write(PHP_EOL . '  <fg=red>• ' . $specification->getTitle() . ' > ' . $exampleResult->getTitle() . '</>' . PHP_EOL);
-                $output->write(PHP_EOL);
-                $output->write('  <fg=red>' . '</>' . $error->getType() . ': ' . $error->getMessage() . "\n\n");
-                self::surroundingCode($output, $error->getSurroundingCode(), $error->getLine());
-                $output->write(PHP_EOL . '  at ' . $error->getFile() . ':' . $error->getLine() . PHP_EOL);
-            } elseif ($exampleResult instanceof ExampleResult) {
-                self::exampleErrors($output, $exampleResult, $specification->getTitle());
-            }
-        }
-    }
 
     public static function context(OutputInterface $output, ContextResult $context, int $indentation, bool $verbose = false): void
     {
@@ -74,16 +55,6 @@ final class PrettyViews
         }
     }
 
-    public static function contextErrors(OutputInterface $output, ContextResult $context, string $specification): void
-    {
-        foreach ($context->getResults() as $example) {
-            if ($example instanceof ContextResult) {
-                self::contextErrors($output, $example, $specification . ' > ' . $example->getTitle());
-            } elseif ($example instanceof ExampleResult) {
-                self::exampleErrors($output, $example, $specification);
-            }
-        }
-    }
 
     public static function example(OutputInterface $output, ExampleResult $example, int $indentation, bool $verbose = false): void
     {
@@ -124,57 +95,6 @@ final class PrettyViews
         }
     }
 
-    public static function exampleErrors(OutputInterface $output, ExampleResult $example, string $specification): void
-    {
-        if ($example->isError()) {
-            $error = $example->getError();
-            if ($error !== null) {
-                $output->write(PHP_EOL . '  <fg=red>• ' . $specification . ' > ' . $example->getTitle() . '</>' . PHP_EOL);
-                $output->write(PHP_EOL . '  <fg=red>' . '</>' . 'Error: ' . $error->getMessage() . PHP_EOL . PHP_EOL);
-                self::surroundingCode($output, $error->getSurroundingCode(), $error->getLine());
-                $output->write(PHP_EOL . '  at ' . $error->getFile() . ':' . $error->getLine() . PHP_EOL);
-                $trace = $error->getFilteredTrace();
-                if (!empty($trace)) {
-                    foreach (array_slice($trace, 0, 5) as $frame) {
-                        $output->write('     ' . ($frame['file'] ?? '?') . ':' . ($frame['line'] ?? '?') . PHP_EOL);
-                    }
-                }
-            }
-        } elseif ($example->isFailure()) {
-            $output->write(str_repeat(' ', 2));
-            $output->write(PHP_EOL . '  <fg=red>• ' . $specification . ' > ' . $example->getTitle() . '</>' . PHP_EOL);
-            $output->write(PHP_EOL);
-            /** @var MatchResult $matchResult */
-            foreach ($example->getResults() as $matchResult) {
-                $output->write(str_repeat(' ', 2));
-                self::matchResult($output, $matchResult);
-            }
-        }
-        if ($example->hasWarnings()) {
-            foreach ($example->getWarnings() as $warning) {
-                $output->write(PHP_EOL . '  <fg=yellow>⚠️ ' . $specification . ' > ' . $example->getTitle() . '</>' . PHP_EOL);
-                $output->write(PHP_EOL . '  Warning: ' . $warning['message'] . PHP_EOL . PHP_EOL);
-                self::surroundingCode($output, (new SurroundingCode($warning['file'], $warning['line']))->toArray(), $warning['line']);
-                $output->write(PHP_EOL . '  at ' . $warning['file'] . ':' . $warning['line'] . PHP_EOL);
-            }
-        }
-        if ($example->hasDeprecations()) {
-            foreach ($example->getDeprecations() as $deprecation) {
-                $output->write(PHP_EOL . '  <fg=yellow>⚠️ ' . $specification . ' > ' . $example->getTitle() . '</>' . PHP_EOL);
-                $output->write(PHP_EOL . '  Deprecated: ' . $deprecation['message'] . PHP_EOL . PHP_EOL);
-                self::surroundingCode($output, (new SurroundingCode($deprecation['file'], $deprecation['line']))->toArray(), $deprecation['line']);
-                $output->write(PHP_EOL . '  at ' . $deprecation['file'] . ':' . $deprecation['line'] . PHP_EOL);
-            }
-        }
-        if ($example->hasNotices()) {
-            foreach ($example->getNotices() as $notice) {
-                $output->write(PHP_EOL . '  <fg=yellow>⚠️ ' . $specification . ' > ' . $example->getTitle() . '</>' . PHP_EOL);
-                $output->write(PHP_EOL . '  Notice: ' . $notice['message'] . PHP_EOL . PHP_EOL);
-                self::surroundingCode($output, (new SurroundingCode($notice['file'], $notice['line']))->toArray(), $notice['line']);
-                $output->write(PHP_EOL . '  at ' . $notice['file'] . ':' . $notice['line'] . PHP_EOL);
-            }
-        }
-    }
 
     public static function feature(OutputInterface $output, FeatureResult $feature): void
     {
@@ -187,23 +107,6 @@ final class PrettyViews
         }
     }
 
-    public static function featureErrors(OutputInterface $output, FeatureResult $feature): void
-    {
-        foreach ($feature->getResults() as $scenario) {
-            if (!$scenario instanceof ScenarioResult) {
-                continue;
-            }
-            foreach ($scenario->getResults() as $step) {
-                if (!$step instanceof StepResult) {
-                    continue;
-                }
-                if ($step->isFailure() && $step->getError() !== null) {
-                    $output->write(PHP_EOL . '  <fg=red>• ' . $feature->getTitle() . ' > ' . $scenario->getTitle() . ' > ' . $step->getTitle() . '</>' . PHP_EOL);
-                    $output->write(PHP_EOL . '  ' . $step->getError()->getMessage() . PHP_EOL);
-                }
-            }
-        }
-    }
 
     public static function scenario(OutputInterface $output, ScenarioResult $scenario): void
     {
@@ -231,41 +134,6 @@ final class PrettyViews
         }
     }
 
-    public static function matchResult(OutputInterface $output, MatchResult $matchResult): void
-    {
-        $output->write('Failure: ' . $matchResult->getMessage() . PHP_EOL . PHP_EOL);
-
-        $expected = $matchResult->getExpected();
-        $actual = $matchResult->getActual();
-        if ($expected !== null || $actual !== null) {
-            $format = static function (mixed $value): string {
-                if (is_string($value)) {
-                    return '"' . $value . '"';
-                }
-                if (is_bool($value)) {
-                    return $value ? 'true' : 'false';
-                }
-                if (is_null($value)) {
-                    return 'null';
-                }
-                if (is_array($value)) {
-                    return var_export($value, true);
-                }
-                if (is_object($value)) {
-                    return get_class($value) . '#' . spl_object_id($value);
-                }
-                return (string) $value;
-            };
-            $output->write('  <fg=red>  expected: ' . $format($actual) . '</>' . PHP_EOL);
-            $output->write('  <fg=green>       got: ' . $format($expected) . '</>' . PHP_EOL . PHP_EOL);
-        }
-
-        $line = $matchResult->getLine();
-        if ($line !== null) {
-            self::surroundingCode($output, $matchResult->getCode(), $line);
-            $output->write(PHP_EOL . '  at ' . $matchResult->getFile() . ':' . $line . PHP_EOL);
-        }
-    }
 
     /**
      * @param array<int, string> $surroundingCode

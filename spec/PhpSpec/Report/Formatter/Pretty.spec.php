@@ -45,6 +45,123 @@ describe(Pretty::class, function() {
         expect($text)->toContain("Expected a to be b");
     });
 
+    it("reports only the failed expectation, never the passing ones before it", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $message = "Expected true" . " to be false";
+        $example = new ExampleResult("fails after passing expectations", [
+            MatchResult::passed(),
+            MatchResult::passed(),
+            MatchResult::failed("actual_val", "expected_val", $message, __FILE__, __LINE__),
+        ]);
+        $spec = new SpecificationResult("MySpec", [$example]);
+        $suite = new SuiteResult([$spec]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->not()->toContain("Detail::Nothing");
+        expect(substr_count($text, $message))->toBe(1);
+    });
+
+    it("renders a toContain failure as an aligned labeled pair, with no sentence repeating the values", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $haystack = "the hay" . "stack text";
+        $needle = "the nee" . "dle";
+        $example = new ExampleResult("looks for the needle", [
+            MatchResult::failed($haystack, $needle, "Expected \"$haystack\" to contain \"$needle\"", __FILE__, __LINE__, null, "toContain", false),
+        ]);
+        $spec = new SpecificationResult("MySpec", [$example]);
+        $suite = new SuiteResult([$spec]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain('expected: "' . $haystack . '"');
+        expect($text)->toContain('to contain: "' . $needle . '"');
+        expect($text)->not()->toContain('Expected "' . $haystack . '"');   // the sentence is gone
+        expect(substr_count($text, $haystack))->toBe(1);                   // the value appears once
+        // The colons align: both labels end at the same column.
+        expect($text)->toMatch('~ {4}expected: ~');
+        expect($text)->toMatch('~ {2}to contain: ~');
+    });
+
+    it("prefixes the inferred label with not for a negated matcher", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $example = new ExampleResult("rejects the needle", [
+            MatchResult::failed("the haystack", "the needle", "irrelevant", __FILE__, __LINE__, null, "toContain", true),
+        ]);
+        $spec = new SpecificationResult("MySpec", [$example]);
+        $suite = new SuiteResult([$spec]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain('not to contain: "the needle"');
+    });
+
+    it("caps a long multiline value to head and tail around a marker, newlines escaped", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $blob = "\n  Analysing project...\n\n  Refactor App\\TodoList\n\n  Would you like me to refactor that? [Y/n] ";
+        $example = new ExampleResult("reads the transcript", [
+            MatchResult::failed($blob, "Would you like me to run it now?", "irrelevant", __FILE__, __LINE__, null, "toContain", false),
+        ]);
+        $spec = new SpecificationResult("MySpec", [$example]);
+        $suite = new SuiteResult([$spec]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain('expected: "\n  Analysing project...\n\n  Ref[...]');
+        expect($text)->toContain('e me to refactor that? [Y/n] "');
+        expect($text)->not()->toContain("Analysing project...\n");          // raw newlines never reach the pair
+        expect($text)->toContain('to contain: "Would you like me to run it now?"');
+    });
+
+    it("groups the detail into Failures, Errors, Warnings, Deprecations, and Skipped sections, in that order", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $failing = new ExampleResult("fails", [
+            MatchResult::failed("a", "b", "Expected a to be b", __FILE__, __LINE__),
+        ]);
+        $erroring = new ExampleResult("errors", [], true);
+        $erroring->setError(new ExampleError("boom", new \RuntimeException("boom")));
+        $warning = new ExampleResult("warns", [MatchResult::passed()]);
+        $warning->setWarnings([['severity' => E_WARNING, 'message' => 'a warning', 'file' => __FILE__, 'line' => __LINE__]]);
+        $deprecated = new ExampleResult("deprecates", [MatchResult::passed()]);
+        $deprecated->setDeprecations([['severity' => E_USER_DEPRECATED, 'message' => 'a deprecation', 'file' => __FILE__, 'line' => __LINE__]]);
+        $skipped = new ExampleResult("skips", [], false, false, true);
+        $spec = new SpecificationResult("MySpec", [$failing, $erroring, $warning, $deprecated, $skipped]);
+        $suite = new SuiteResult([$spec]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        $positions = [];
+        foreach (["Failures:", "Errors:", "Warnings:", "Deprecations:", "Skipped:"] as $header) {
+            expect($text)->toContain($header);
+            $positions[] = strpos($text, $header);
+        }
+        $ordered = $positions;
+        sort($ordered);
+        expect($positions)->toBe($ordered);
+    });
+
+    it("prints no section headers when everything passes", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $spec = new SpecificationResult("MySpec", [new ExampleResult("passes", [MatchResult::passed()])]);
+        $formatter->format(new SuiteResult([$spec]));
+
+        $text = $output->fetch();
+        expect($text)->not()->toContain("Failures:");
+        expect($text)->not()->toContain("Skipped:");
+    });
+
     it("formats error results with details", function() {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);

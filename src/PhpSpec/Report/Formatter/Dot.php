@@ -79,10 +79,11 @@ final class Dot extends AbstractFormatter
         }
         $this->output->writeln('');
 
-        $this->formatErrors($results);
-        $this->formatWarnings($results);
-        $this->formatDeprecations($results);
+        // The same sectioned detail as the pretty formatter: the dots are the
+        // progress, the catch-up story at the bottom is identical.
+        (new DetailSections())->render($this->output, $results);
         $this->formatNotices($results);
+        $this->output->writeln('');
 
         $counts = new Counts($results);
         $c = $counts->toArray();
@@ -253,114 +254,9 @@ final class Dot extends AbstractFormatter
         return $count;
     }
 
-    /**
-     * Outputs numbered error and failure messages collected from all results.
-     */
-    private function formatErrors(Results $results): void
-    {
-        $errors = $this->collectErrors($results);
-        if (empty($errors)) {
-            return;
-        }
 
-        foreach ($errors as $i => $error) {
-            $num = $i + 1;
-            $this->output->writeln("  <fg=red>$num) {$error['title']}</>");
-            $this->output->writeln("     <fg=red>{$error['message']}</>");
-            $this->output->writeln('');
-        }
-    }
 
-    /**
-     * Outputs warnings with surrounding source code context.
-     */
-    private function formatWarnings(Results $results): void
-    {
-        $warnings = $this->collectWarnings($results);
-        if (empty($warnings)) {
-            return;
-        }
 
-        foreach ($warnings as $warning) {
-            $this->output->writeln("  <fg=yellow>⚠️ {$warning['title']}</>");
-            $this->output->writeln('');
-            $this->output->writeln("    Warning: {$warning['message']}");
-            $this->output->writeln('');
-            $surrounding = (new SurroundingCode($warning['file'], $warning['line']))->toArray();
-            $lastLine = array_key_last($surrounding);
-            $decimalPlace = strlen((string) $lastLine);
-            foreach ($surrounding as $lineNum => $code) {
-                $indent = strlen((string) $lineNum) < $decimalPlace ? ' ' : '';
-                if ($lineNum === $warning['line']) {
-                    $this->output->writeln("  <fg=red> ></> $indent<options=bold>$lineNum</>  <fg=gray>|</> <fg=red>$code</>");
-                } else {
-                    $this->output->writeln("     $indent<fg=gray>$lineNum  |</> $code");
-                }
-            }
-            $this->output->writeln('');
-            $this->output->writeln("    at {$warning['file']}:{$warning['line']}");
-            $this->output->writeln('');
-        }
-    }
-
-    /**
-     * Recursively collects warning details from all example results.
-     *
-     * @param array<int, array{title: string, message: string, file: string, line: int}> $warnings
-     * @return array<int, array{title: string, message: string, file: string, line: int}>
-     */
-    private function collectWarnings(Results $results, array &$warnings = []): array
-    {
-        foreach ($results->getResults() as $result) {
-            if ($result instanceof ExampleResult) {
-                if ($result->hasWarnings()) {
-                    foreach ($result->getWarnings() as $warning) {
-                        $warnings[] = [
-                            'title' => $result->getTitle(),
-                            'message' => $warning['message'],
-                            'file' => $warning['file'],
-                            'line' => $warning['line'],
-                        ];
-                    }
-                }
-            } elseif ($result instanceof Results) {
-                $this->collectWarnings($result, $warnings);
-            }
-        }
-        return $warnings;
-    }
-
-    /**
-     * Outputs deprecations with surrounding source code context.
-     */
-    private function formatDeprecations(Results $results): void
-    {
-        $deprecations = $this->collectDeprecations($results);
-        if (empty($deprecations)) {
-            return;
-        }
-
-        foreach ($deprecations as $deprecation) {
-            $this->output->writeln("  <fg=yellow>⚠️ {$deprecation['title']}</>");
-            $this->output->writeln('');
-            $this->output->writeln("    Deprecated: {$deprecation['message']}");
-            $this->output->writeln('');
-            $surrounding = (new SurroundingCode($deprecation['file'], $deprecation['line']))->toArray();
-            $lastLine = array_key_last($surrounding);
-            $decimalPlace = strlen((string) $lastLine);
-            foreach ($surrounding as $lineNum => $code) {
-                $indent = strlen((string) $lineNum) < $decimalPlace ? ' ' : '';
-                if ($lineNum === $deprecation['line']) {
-                    $this->output->writeln("  <fg=red> ></> $indent<options=bold>$lineNum</>  <fg=gray>|</> <fg=red>$code</>");
-                } else {
-                    $this->output->writeln("     $indent<fg=gray>$lineNum  |</> $code");
-                }
-            }
-            $this->output->writeln('');
-            $this->output->writeln("    at {$deprecation['file']}:{$deprecation['line']}");
-            $this->output->writeln('');
-        }
-    }
 
     /**
      * Outputs notices with surrounding source code context.
@@ -394,32 +290,6 @@ final class Dot extends AbstractFormatter
         }
     }
 
-    /**
-     * Recursively collects deprecation details from all example results.
-     *
-     * @param array<int, array{title: string, message: string, file: string, line: int}> $deprecations
-     * @return array<int, array{title: string, message: string, file: string, line: int}>
-     */
-    private function collectDeprecations(Results $results, array &$deprecations = []): array
-    {
-        foreach ($results->getResults() as $result) {
-            if ($result instanceof ExampleResult) {
-                if ($result->hasDeprecations()) {
-                    foreach ($result->getDeprecations() as $deprecation) {
-                        $deprecations[] = [
-                            'title' => $result->getTitle(),
-                            'message' => $deprecation['message'],
-                            'file' => $deprecation['file'],
-                            'line' => $deprecation['line'],
-                        ];
-                    }
-                }
-            } elseif ($result instanceof Results) {
-                $this->collectDeprecations($result, $deprecations);
-            }
-        }
-        return $deprecations;
-    }
 
     /**
      * Recursively collects notice details from all example results.
@@ -448,33 +318,4 @@ final class Dot extends AbstractFormatter
         return $notices;
     }
 
-    /**
-     * Recursively collects error and failure details from all example results.
-     *
-     * @param array<int, array{title: string, message: string}> $errors
-     * @return array<int, array{title: string, message: string}>
-     */
-    private function collectErrors(Results $results, array &$errors = []): array
-    {
-        foreach ($results->getResults() as $result) {
-            if ($result instanceof ExampleResult) {
-                if ($result->isError() || $result->isFailure()) {
-                    $errors[] = [
-                        'title' => $result->getTitle(),
-                        'message' => $result->getMessage(),
-                    ];
-                }
-            } elseif ($result instanceof StepResult) {
-                if ($result->isFailure() && $result->getError() !== null) {
-                    $errors[] = [
-                        'title' => $result->getTitle(),
-                        'message' => $result->getError()->getMessage(),
-                    ];
-                }
-            } elseif ($result instanceof Results) {
-                $this->collectErrors($result, $errors);
-            }
-        }
-        return $errors;
-    }
 }

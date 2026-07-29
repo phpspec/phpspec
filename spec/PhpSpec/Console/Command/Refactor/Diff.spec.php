@@ -135,16 +135,73 @@ describe(Diff::class, function () {
             expect($output)->toContain('- old line');
         });
 
-        it('formats unchanged lines in gray', function () {
-            $diff = [['type' => ' ', 'line' => 1, 'text' => 'same line']];
+        it('formats unchanged lines near a change in gray', function () {
+            $diff = [
+                ['type' => ' ', 'line' => 1, 'text' => 'same line'],
+                ['type' => '+', 'line' => 2, 'text' => 'new line'],
+            ];
             $output = Diff::format($diff);
 
             expect($output)->toContain('<fg=gray>');
             expect($output)->toContain('same line');
         });
 
+        it('shows only three unchanged lines around a change, never the whole file', function () {
+            $old = array_map(fn(int $n) => sprintf('line %02d', $n), range(1, 20));
+            $new = $old;
+            array_splice($new, 11, 0, ['inserted a', 'inserted b']);
+
+            $output = Diff::format(Diff::compute($old, $new));
+
+            expect($output)->not()->toContain('line 01');
+            expect($output)->not()->toContain('line 08');
+            expect($output)->toContain('line 09');    // three before the insertion
+            expect($output)->toContain('+ inserted a');
+            expect($output)->toContain('line 14');    // three after
+            expect($output)->not()->toContain('line 15');
+            expect($output)->not()->toContain('...');
+        });
+
+        it('elides the stretch between distant changes to a single line', function () {
+            $old = array_map(fn(int $n) => sprintf('line %02d', $n), range(1, 40));
+            $new = $old;
+            $new[2] = 'changed near the top';
+            $new[35] = 'changed near the bottom';
+
+            $output = Diff::format(Diff::compute($old, $new));
+
+            expect($output)->toContain('changed near the top');
+            expect($output)->toContain('changed near the bottom');
+            expect($output)->not()->toContain('line 20');
+            expect(substr_count($output, '...'))->toBe(1);
+        });
+
+        it('keeps nearby changes in one uninterrupted stretch', function () {
+            $old = array_map(fn(int $n) => sprintf('line %02d', $n), range(1, 12));
+            $new = $old;
+            $new[3] = 'first change';
+            $new[7] = 'second change';
+
+            $output = Diff::format(Diff::compute($old, $new));
+
+            expect($output)->toContain('first change');
+            expect($output)->toContain('second change');
+            expect($output)->toContain('line 06');     // the short gap stays visible
+            expect($output)->not()->toContain('...');
+        });
+
+        it('shows a new file in full: every line is a change', function () {
+            $new = array_map(fn(int $n) => "line $n", range(1, 10));
+
+            $output = Diff::format(Diff::compute([], $new));
+
+            expect($output)->toContain('+ line 1');
+            expect($output)->toContain('+ line 10');
+            expect($output)->not()->toContain('...');
+        });
+
         it('pads line numbers to 4 characters', function () {
-            $diff = [['type' => ' ', 'line' => 5, 'text' => 'line']];
+            $diff = [['type' => '+', 'line' => 5, 'text' => 'line']];
             $output = Diff::format($diff);
 
             expect($output)->toContain('   5');

@@ -70,13 +70,7 @@ final class Pretty extends AbstractFormatter
             return;
         }
 
-        foreach ($results->getResults() as $specificationResult) {
-            if ($specificationResult instanceof FeatureResult) {
-                PrettyViews::featureErrors($this->output, $specificationResult);
-            } elseif ($specificationResult instanceof SpecificationResult) {
-                PrettyViews::specificationErrors($this->output, $specificationResult);
-            }
-        }
+        (new DetailSections())->render($this->output, $results);
 
         $this->output->writeln('');
 

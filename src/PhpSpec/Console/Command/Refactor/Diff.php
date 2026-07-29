@@ -157,14 +157,37 @@ final class Diff
     }
 
     /**
-     * Formats diff entries as a colored string for console output.
+     * How many unchanged lines are shown on each side of a change; anything
+     * further from every change is elided.
+     */
+    private const CONTEXT = 3;
+
+    /**
+     * Formats diff entries as a colored string for console output: each change
+     * with three unchanged lines around it, and one elision line between
+     * stretches too far apart to touch. A file whose every line changed (a new
+     * file) therefore shows in full.
      *
      * @param array<array{type: string, line: int, text: string}> $diff
      */
     public static function format(array $diff): string
     {
+        $keep = self::nearChanges($diff);
         $lines = [];
-        foreach ($diff as $entry) {
+        $skipped = false;
+
+        foreach ($diff as $index => $entry) {
+            if (!isset($keep[$index])) {
+                $skipped = true;
+
+                continue;
+            }
+
+            if ($skipped && $lines !== []) {
+                $lines[] = '  <fg=gray>' . str_pad('...', 4, ' ', STR_PAD_LEFT) . '</>';
+            }
+            $skipped = false;
+
             $lineNum = str_pad((string) $entry['line'], 4, ' ', STR_PAD_LEFT);
             if ($entry['type'] === '+') {
                 $lines[] = "  <fg=green>$lineNum + {$entry['text']}</>";
@@ -174,6 +197,32 @@ final class Diff
                 $lines[] = "  <fg=gray>$lineNum   {$entry['text']}</>";
             }
         }
+
         return implode("\n", $lines);
+    }
+
+    /**
+     * The entry indices worth showing: every change, plus the unchanged lines
+     * within CONTEXT of one.
+     *
+     * @param array<array{type: string, line: int, text: string}> $diff
+     * @return array<int, true>
+     */
+    private static function nearChanges(array $diff): array
+    {
+        $count = count($diff);
+        $keep = [];
+
+        foreach ($diff as $index => $entry) {
+            if ($entry['type'] === ' ') {
+                continue;
+            }
+
+            for ($i = max(0, $index - self::CONTEXT); $i <= min($count - 1, $index + self::CONTEXT); $i++) {
+                $keep[$i] = true;
+            }
+        }
+
+        return $keep;
     }
 }

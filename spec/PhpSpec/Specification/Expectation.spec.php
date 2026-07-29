@@ -250,6 +250,37 @@ describe(Expectation::class, function() {
         });
     });
 
+    context("matcher identity on the result", function() {
+        it("carries the matcher name and both values onto the failed result", function() {
+            $original = \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher();
+            $captured = [];
+            $listener = new class($captured) implements \PhpSpec\EventDispatcher\Listener {
+                public function __construct(private array &$captured) {}
+                public function listen(\PhpSpec\EventDispatcher\Event $event): void
+                {
+                    if ($event instanceof \PhpSpec\EventDispatcher\Event\MatchCreated) {
+                        $this->captured[] = ($event->getMatch())();
+                    }
+                }
+            };
+
+            try {
+                $isolated = new \PhpSpec\EventDispatcher\Dispatcher();
+                $isolated->addListener($listener);
+                \PhpSpec\EventDispatcher\DispatcherRegistry::set($isolated);
+
+                (new Expectation("the haystack", __FILE__, __LINE__))->toContain("missing needle");
+            } finally {
+                \PhpSpec\EventDispatcher\DispatcherRegistry::set($original);
+            }
+
+            expect($captured)->toHaveCount(1);
+            expect($captured[0]->getMatcher())->toBe("toContain");
+            expect($captured[0]->getExpected())->toBe("the haystack");
+            expect($captured[0]->getActual())->toBe("missing needle");
+        });
+    });
+
     context("formatMessage", function() {
         it("formats objects with class name and id", function() {
             $obj = new \stdClass();
@@ -260,6 +291,23 @@ describe(Expectation::class, function() {
         it("formats strings with quotes", function() {
             $result = Expectation::formatMessage("Expected %s", "hello");
             expect($result)->toBe('Expected "hello"');
+        });
+
+        it("clips a multiline string to its first line in the headline: expected/got carry it in full", function() {
+            $blob = "\n  Analysing project...\n\n  Refactor App\\TodoList\n\n  Would you like me to refactor that? [Y/n] ";
+            $result = Expectation::formatMessage('Expected %s to contain %s', $blob, 'run it now');
+
+            expect($result)->toContain('to contain "run it now"');
+            expect($result)->not()->toContain('Refactor App\\TodoList');
+            expect($result)->toContain('…');
+        });
+
+        it("clips an overlong single-line string in the headline", function() {
+            $long = str_repeat('a', 200);
+            $result = Expectation::formatMessage('Expected %s', $long);
+
+            expect(strlen($result))->toBeLessThan(100);
+            expect($result)->toContain('…');
         });
 
         it("formats booleans as true/false", function() {
