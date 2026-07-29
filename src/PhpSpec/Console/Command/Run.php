@@ -410,6 +410,9 @@ final class Run extends Command
         }
 
         $formatter = $this->createFormatter($this->resolveFormat($input), $output);
+        if ($formatter instanceof Agent) {
+            $formatter->describeRun($seed, $files);
+        }
         $formatter->begin();
 
         $start = hrtime(true);

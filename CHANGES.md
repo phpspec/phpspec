@@ -6,10 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+ - `--format=agent` on every command: `next` emits its suggestion with the exact command that acts on it, `generate` applies and emits receipts, `describe`/`exemplify` accept it as the canonical spelling of `--agent` (now a deprecated alias)
+
 ### Fixed
  - Two step definitions sharing a title now error at load, naming both locations; matching is keyword-blind, so the duplicate could only shadow silently
  - A step used twice in a scenario generates one definition, not two
  - AI-written steps respect the vocabulary too: content redefining a title another steps file owns is rejected with a pointer to reuse it, and scaffolds skip titles defined elsewhere
+ - The run agent document reports the real random seed and what was run, never `seed: null` and `suite: "default"` placeholders
 
 ## [9.0.0-beta.15](https://github.com/phpspec/phpspec/compare/9.0.0-beta.14...9.0.0-beta.15)
 

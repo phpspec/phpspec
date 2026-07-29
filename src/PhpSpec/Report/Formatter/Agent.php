@@ -50,10 +50,29 @@ final class Agent extends AbstractFormatter
     /** @var (\Closure(SuiteResult): mixed)|null resolves the run's generation candidates as a plain array */
     private readonly ?\Closure $resolveCandidates;
 
+    /** The randomisation seed of this run, when order is random. */
+    private ?int $seed = null;
+
+    /** What was run, as the paths the loader was given. */
+    private string $suite = 'default';
+
     public function __construct(OutputInterface $output, ?\Closure $resolveCandidates = null)
     {
         parent::__construct($output);
         $this->resolveCandidates = $resolveCandidates;
+    }
+
+    /**
+     * Tells the formatter about the run it is rendering, so the document
+     * carries the real seed (an agent reruns a flaky order with it) and what
+     * was run instead of placeholders.
+     */
+    public function describeRun(?int $seed, string $suite): void
+    {
+        $this->seed = $seed;
+        if ($suite !== '') {
+            $this->suite = $suite;
+        }
     }
 
     public function begin(): void {}
@@ -73,10 +92,10 @@ final class Agent extends AbstractFormatter
             'suite' => [
                 'v' => Schema::V,
                 'event' => Schema::EVENT_RUN_STARTED,
-                'suite' => 'default',
+                'suite' => $this->suite,
                 'examples' => $this->exampleCount,
                 'steps' => $this->stepCount,
-                'seed' => null,
+                'seed' => $this->seed,
             ],
             'examples' => $this->examples,
             'result' => [

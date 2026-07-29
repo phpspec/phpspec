@@ -17,6 +17,8 @@ namespace PhpSpec\Console\Command;
 use PhpSpec\Ai\Agent\Agent;
 use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Ai\Agent\Grounding;
+use PhpSpec\Ai\Agent\Outcome;
+use PhpSpec\Ai\Agent\OutcomePresenter;
 use PhpSpec\Ai\Agent\Phase;
 use PhpSpec\Ai\Agent\ProjectPath;
 use PhpSpec\Ai\Agent\Request;
@@ -35,6 +37,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface as Input;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
@@ -80,11 +83,14 @@ final class Next extends Command
     {
         $this
             ->setName('next')
-            ->setDescription('AI suggests what to describe or specify next');
+            ->setDescription('AI suggests what to describe or specify next')
+            ->addOption('format', 'f', InputOption::VALUE_REQUIRED, 'Output format: pretty, or agent (machine-readable JSON for coding agents)', 'pretty');
     }
 
     protected function execute(Input $input, Output $output): int
     {
+        $forAgent = $input->getOption('format') === 'agent';
+
         // 1. Check AI config
         $aiConfig = $this->config->getAiConfig();
         if ($aiConfig === null) {
@@ -99,14 +105,21 @@ final class Next extends Command
         }
 
         // 3. Scan project and get suggestion
-        $output->writeln('');
-        $output->writeln('  <fg=gray>Analysing project...</>');
-        $output->writeln('');
+        if (!$forAgent) {
+            $output->writeln('');
+            $output->writeln('  <fg=gray>Analysing project...</>');
+            $output->writeln('');
+        }
 
         $suggestion = $this->getSuggestion($aiConfig);
 
         // 4. Validate — if we got no target and no reason, the response was unusable
         if ($suggestion['target'] === '' && $suggestion['reason'] === '') {
+            if ($forAgent) {
+                $output->write((new OutcomePresenter())->render('next', new Outcome(null, [], 'Could not get a suggestion. Please try again.')), false, Output::OUTPUT_RAW);
+
+                return 1;
+            }
             $output->writeln('  <fg=yellow>Could not get a suggestion. Please try again.</>');
             $output->writeln('');
             return 1;
@@ -115,11 +128,11 @@ final class Next extends Command
         // 4b. If the suggested spec already exists, never re-describe it (that
         // just loops) — coach to run so the missing class is driven out instead.
         if ($suggestion['type'] === 'spec' && $this->specFileExists($suggestion['target'])) {
-            $output->writeln(sprintf('  A spec for <fg=bright-blue;options=bold>%s</> already exists.', $suggestion['target']));
-            $output->writeln('  <fg=gray>Run it to drive out the class:</> ' . self::invokedBinary() . ' run');
-            $output->writeln('');
-
-            return 0;
+            $suggestion = [
+                'type' => 'info',
+                'target' => '',
+                'reason' => sprintf('A spec for "%s" already exists. Run it to drive out the class.', $suggestion['target']),
+            ];
         }
 
         // 4c. Red, green, REFACTOR happens once: a refactor suggestion for a
@@ -127,39 +140,79 @@ final class Next extends Command
         // growth instead of polishing the same class forever.
         $suggestion = $this->steerAwayFromStaleRefactor($suggestion);
 
-        // 5. Display
-        $this->displaySuggestion($output, $suggestion);
+        $actuation = $this->actuationFor($suggestion);
 
-        // 6. Offer to create (only when we have a proper target)
-        if ($suggestion['target'] === '') {
+        // The agent document carries the suggestion and the exact command that
+        // acts on it; a machine consumer is never prompted.
+        if ($forAgent) {
+            $run = $actuation !== null ? self::invokedBinary() . ' ' . $actuation['display'] : null;
+            $outcome = new Outcome(null, [], '', $suggestion);
+            $output->write((new OutcomePresenter())->render('next', $outcome, [], $run), false, Output::OUTPUT_RAW);
+
             return 0;
         }
 
-        if ($suggestion['type'] === 'spec') {
-            return $this->offerDescribe($input, $output, $suggestion['target']);
+        // 5. Display
+        $this->displaySuggestion($output, $suggestion);
+
+        // 6. Offer to act (only when the suggestion determined an actuation)
+        if ($actuation === null) {
+            if ($suggestion['type'] === 'implement' && $suggestion['target'] !== '') {
+                $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . ' run');
+            }
+
+            return 0;
         }
 
-        if ($suggestion['type'] === 'feature') {
-            return $this->offerFeature($input, $output, $suggestion['target']);
+        return $this->offerToRun($input, $output, $actuation['display'], $actuation['command'], $actuation['args'], $actuation['ask']);
+    }
+
+    /**
+     * The command a suggestion actuates through, with its bound arguments and
+     * display line, shared by the interactive offer and the agent document so
+     * both always name the same invocation. Null when nothing actuates: an
+     * info suggestion, or a failing subject that is no class (its honest next
+     * move is a run, which shows the failure).
+     *
+     * @param array{type: string, target: string, reason: string} $suggestion
+     * @return array{command: string, args: array<string, mixed>, display: string, ask: string}|null
+     */
+    private function actuationFor(array $suggestion): ?array
+    {
+        $target = $suggestion['target'];
+        if ($target === '') {
+            return null;
         }
 
-        if ($suggestion['type'] === 'steps') {
-            return $this->offerSteps($input, $output, $suggestion['target']);
-        }
+        $create = 'Would you like me to create that for you?';
+        $generate = fn(string $instruction): array => [
+            'command' => 'generate',
+            'args' => ['instruction' => [$instruction]],
+            'display' => sprintf('generate "%s"', $instruction),
+            'ask' => $create,
+        ];
 
-        if ($suggestion['type'] === 'implement') {
-            return $this->offerImplement($input, $output, $suggestion['target'], $suggestion['reason']);
-        }
-
-        if ($suggestion['type'] === 'example') {
-            return $this->offerExemplify($input, $output, $suggestion['target'], $suggestion['reason']);
-        }
-
-        if ($suggestion['type'] === 'refactor') {
-            return $this->offerRefactor($input, $output, $suggestion['target']);
-        }
-
-        return 0;
+        return match ($suggestion['type']) {
+            'spec' => [
+                'command' => 'describe',
+                'args' => ['class' => str_replace('\\', '/', $target)],
+                'display' => 'describe ' . str_replace('\\', '/', $target),
+                'ask' => $create,
+            ],
+            'feature' => $generate('a feature for ' . $target),
+            'steps' => $generate('the steps for ' . $target),
+            'example' => $generate($this->taskInstruction('add a spec example for ' . $target, $suggestion['reason'])),
+            'implement' => preg_match('~^[A-Z][A-Za-z0-9]*(?:\\\\[A-Z][A-Za-z0-9]*)*$~', $target) === 1
+                ? $generate($this->taskInstruction('implement ' . $target, $suggestion['reason']))
+                : null,
+            'refactor' => [
+                'command' => 'refactor',
+                'args' => ['target' => str_replace('\\', '/', $target)],
+                'display' => 'refactor ' . str_replace('\\', '/', $target),
+                'ask' => 'Would you like me to run it now?',
+            ],
+            default => null,
+        };
     }
 
     /**
@@ -244,55 +297,6 @@ final class Next extends Command
         $output->writeln('');
     }
 
-    private function offerDescribe(Input $input, Output $output, string $target): int
-    {
-        $classArg = str_replace('\\', '/', $target);
-
-        return $this->offerToRun($input, $output, "describe $classArg", 'describe', ['class' => $classArg]);
-    }
-
-    /**
-     * A feature suggestion actuates through `generate`, which owns Gherkin,
-     * the features directory, and the scenario content; `describe` would turn
-     * the story name into a spec.
-     */
-    private function offerFeature(Input $input, Output $output, string $target): int
-    {
-        $instruction = 'a feature for ' . $target;
-
-        return $this->offerToRun($input, $output, sprintf('generate "%s"', $instruction), 'generate', ['instruction' => [$instruction]]);
-    }
-
-    /**
-     * A steps suggestion actuates through `generate`, whose step resolution
-     * writes the step definitions for the named feature deterministically.
-     */
-    private function offerSteps(Input $input, Output $output, string $target): int
-    {
-        $instruction = 'the steps for ' . $target;
-
-        return $this->offerToRun($input, $output, sprintf('generate "%s"', $instruction), 'generate', ['instruction' => [$instruction]]);
-    }
-
-    /**
-     * A failing class actuates through `generate`, whose "implement" wording
-     * routes to the write-code step with the class and its spec in context. A
-     * subject that is no class (a story slug, a bare string) has no one-shot
-     * actuator, so the hint is the run that shows the failure.
-     */
-    private function offerImplement(Input $input, Output $output, string $target, string $reason): int
-    {
-        if (preg_match('~^[A-Z][A-Za-z0-9]*(?:\\\\[A-Z][A-Za-z0-9]*)*$~', $target) !== 1) {
-            $output->writeln('  <fg=gray>Run:</> ' . self::invokedBinary() . ' run');
-
-            return 0;
-        }
-
-        $instruction = $this->taskInstruction('implement ' . $target, $reason);
-
-        return $this->offerToRun($input, $output, sprintf('generate "%s"', $instruction), 'generate', ['instruction' => [$instruction]]);
-    }
-
     /**
      * Offers to act on the suggestion: a printed hint when not interactive, a
      * [Y/n] confirmation and the command run when it is.
@@ -321,17 +325,6 @@ final class Next extends Command
         }
 
         return $application->find($command)->run(new ArrayInput($args), $output);
-    }
-
-    /**
-     * An example suggestion actuates through `generate`, whose spec wording
-     * routes to growing the existing spec (same phrasing the pair ghost uses).
-     */
-    private function offerExemplify(Input $input, Output $output, string $target, string $reason): int
-    {
-        $instruction = $this->taskInstruction('add a spec example for ' . $target, $reason);
-
-        return $this->offerToRun($input, $output, sprintf('generate "%s"', $instruction), 'generate', ['instruction' => [$instruction]]);
     }
 
     /**
@@ -373,17 +366,6 @@ final class Next extends Command
             'target' => '',
             'reason' => sprintf('"%s" was already refactored and has not changed since. Grow the story instead: add the next scenario or feature.', $suggestion['target']),
         ];
-    }
-
-    /**
-     * The green-suite step: offer to run the refactor command, which shows
-     * its baseline and asks its own consent before anything is applied.
-     */
-    private function offerRefactor(Input $input, Output $output, string $target): int
-    {
-        $classArg = str_replace('\\', '/', $target);
-
-        return $this->offerToRun($input, $output, "refactor $classArg", 'refactor', ['target' => $classArg], 'Would you like me to run it now?');
     }
 
     /**

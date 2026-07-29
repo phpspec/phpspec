@@ -869,6 +869,64 @@ describe(Next::class, function () {
             expect($tester->getDisplay())->not()->toContain('Would you like me to create that for you?');
         });
 
+        it('emits the agent document with the actuating command under --format=agent, never a prompt', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
+            allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: test-key\n" : '');
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'feature',
+                'target' => 'deleting_a_task',
+                'reason' => 'The list only grows.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $tester = new CommandTester($cmd);
+            $exitCode = $tester->execute(['--format' => 'agent']);
+
+            expect($exitCode)->toBe(0);
+            $document = json_decode(trim($tester->getDisplay()), true);
+            expect($document['command']['command'])->toBe('next');
+            expect($document['suggestion']['type'])->toBe('feature');
+            expect($document['suggestion']['run'])->toContain('generate "a feature for deleting_a_task"');
+            expect($tester->getDisplay())->not()->toContain('Would you like');
+            expect($tester->getDisplay())->not()->toContain('Analysing');
+        });
+
+        it('keeps the growth steer inside the agent document', function (Filesystem $fs) {
+            $yamlPath = './phpspec.yaml';
+            $cwd = getcwd();
+            $srcFile = $cwd . '/src/App/TodoList.php';
+            allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath || $p === $srcFile || str_contains($p, 'journal.jsonl'));
+            allow($fs->read())->toReturnUsing(function (string $p) use ($yamlPath): string {
+                if ($p === $yamlPath) {
+                    return "ai:\n  provider: google\n  api_key: test-key\n";
+                }
+                if (str_contains($p, 'journal.jsonl')) {
+                    return '{"at":1000,"command":"refactor","target":"App\\\\TodoList","technique":"Inline Method","description":"x"}' . "\n";
+                }
+                return '';
+            });
+            allow($fs->mtime())->toReturn(900);
+
+            $configWithAi = new Configuration('.', $fs);
+            $suggestFn = fn(array $aiConfig): array => [
+                'type' => 'refactor',
+                'target' => 'App\\TodoList',
+                'reason' => 'The suite is green.',
+            ];
+            $cmd = new Next($configWithAi, $fs, $suggestFn);
+
+            $tester = new CommandTester($cmd);
+            $exitCode = $tester->execute(['--format' => 'agent']);
+
+            expect($exitCode)->toBe(0);
+            $document = json_decode(trim($tester->getDisplay()), true);
+            expect($document['suggestion']['type'])->toBe('info');
+            expect($document['prose'] ?? $document['suggestion']['reason'])->toContain('already refactored');
+        });
+
         it('passes AI config to the suggest function', function (Filesystem $fs) {
             $yamlPath = './phpspec.yaml';
             allow($fs->exists())->toReturnUsing(function (string $path) use ($yamlPath): bool {
