@@ -176,7 +176,7 @@ describe(Dot::class, function() {
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain("Deprecated:");
+        expect($text)->toContain("Deprecations:");
         expect($text)->toContain("Function foo() is deprecated");
         expect($text)->toContain("1 deprecation");
     });
@@ -402,9 +402,31 @@ describe(Dot::class, function() {
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain("1) err1");
-        expect($text)->toContain("2) err2");
+        expect($text)->toContain("Errors:");
+        expect($text)->toContain("Spec > err1");
+        expect($text)->toContain("Spec > err2");
         expect($text)->toContain("2 errors");
+    });
+
+    it("tells the same detailed story at the bottom as the pretty formatter", function() {
+        $output = new BufferedOutput();
+        $formatter = new Dot($output);
+
+        $failing = new ExampleResult("fails", [
+            MatchResult::failed("the haystack text", "the needle", "irrelevant", __FILE__, __LINE__, null, "toContain", false, "to be contained in"),
+        ]);
+        $skipped = new ExampleResult("skipped one", [], false, false, true);
+        $spec = new SpecificationResult("MySpec", [$failing, $skipped]);
+        $suite = new SuiteResult([$spec]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain("Failures:");
+        expect($text)->toContain("MySpec > fails");
+        expect($text)->toContain('expected: "the needle"');
+        expect($text)->toContain('to be contained in: "the haystack text"');
+        expect($text)->toContain("Skipped:");
+        expect($text)->toContain("MySpec > skipped one");
     });
 
     it("formats suite with no examples", function() {

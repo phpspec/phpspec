@@ -48,6 +48,9 @@ final class Failed extends Detail
     /** @var bool Whether the matcher was negated (expect(...)->not()->...) */
     private bool $negated = false;
 
+    /** @var string|null The matcher's relation phrase for the expected/actual pair (e.g. "to be contained in") */
+    private ?string $relation = null;
+
     /**
      * Creates a Failed detail from a matcher comparison.
      *
@@ -60,8 +63,9 @@ final class Failed extends Detail
      * @param ?string $fakeExpression optional expression for --fake code generation
      * @param ?string $matcher the matcher method that produced the failure (e.g. "toBe")
      * @param bool $negated whether the matcher was negated
+     * @param ?string $relation the matcher's relation phrase for the expected/actual pair
      */
-    public static function matcher(mixed $expected, mixed $actual, string $message, SurroundingCode $code, int $line, string $file, ?string $fakeExpression = null, ?string $matcher = null, bool $negated = false): Detail
+    public static function matcher(mixed $expected, mixed $actual, string $message, SurroundingCode $code, int $line, string $file, ?string $fakeExpression = null, ?string $matcher = null, bool $negated = false, ?string $relation = null): Detail
     {
         $failed = new self($message);
         $failed->expected = $expected;
@@ -72,6 +76,7 @@ final class Failed extends Detail
         $failed->fakeExpression = $fakeExpression;
         $failed->matcher = $matcher;
         $failed->negated = $negated;
+        $failed->relation = $relation;
         return $failed;
     }
 
@@ -89,6 +94,15 @@ final class Failed extends Detail
     public function isNegated(): bool
     {
         return $this->negated;
+    }
+
+    /**
+     * Returns the matcher's relation phrase for the expected/actual pair, or
+     * null when the matcher declares none.
+     */
+    public function getRelation(): ?string
+    {
+        return $this->relation;
     }
 
     /**

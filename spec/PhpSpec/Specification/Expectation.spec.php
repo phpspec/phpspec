@@ -250,6 +250,37 @@ describe(Expectation::class, function() {
         });
     });
 
+    context("relation declarations", function() {
+        it("carries the matcher's own relation phrase onto the failed result", function() {
+            $original = \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher();
+            $captured = [];
+            $listener = new class($captured) implements \PhpSpec\EventDispatcher\Listener {
+                public function __construct(private array &$captured) {}
+                public function listen(\PhpSpec\EventDispatcher\Event $event): void
+                {
+                    if ($event instanceof \PhpSpec\EventDispatcher\Event\MatchCreated) {
+                        $this->captured[] = ($event->getMatch())();
+                    }
+                }
+            };
+
+            try {
+                $isolated = new \PhpSpec\EventDispatcher\Dispatcher();
+                $isolated->addListener($listener);
+                \PhpSpec\EventDispatcher\DispatcherRegistry::set($isolated);
+
+                (new Expectation("the haystack", __FILE__, __LINE__))->toContain("missing needle");
+            } finally {
+                \PhpSpec\EventDispatcher\DispatcherRegistry::set($original);
+            }
+
+            expect($captured)->toHaveCount(1);
+            expect($captured[0]->getRelation())->toBe("to be contained in");
+            expect($captured[0]->getMatcher())->toBe("toContain");
+            expect($captured[0]->getActual())->toBe("missing needle");
+        });
+    });
+
     context("formatMessage", function() {
         it("formats objects with class name and id", function() {
             $obj = new \stdClass();
