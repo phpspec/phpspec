@@ -262,6 +262,23 @@ describe(Expectation::class, function() {
             expect($result)->toBe('Expected "hello"');
         });
 
+        it("clips a multiline string to its first line in the headline: expected/got carry it in full", function() {
+            $blob = "\n  Analysing project...\n\n  Refactor App\\TodoList\n\n  Would you like me to refactor that? [Y/n] ";
+            $result = Expectation::formatMessage('Expected %s to contain %s', $blob, 'run it now');
+
+            expect($result)->toContain('to contain "run it now"');
+            expect($result)->not()->toContain('Refactor App\\TodoList');
+            expect($result)->toContain('…');
+        });
+
+        it("clips an overlong single-line string in the headline", function() {
+            $long = str_repeat('a', 200);
+            $result = Expectation::formatMessage('Expected %s', $long);
+
+            expect(strlen($result))->toBeLessThan(100);
+            expect($result)->toContain('…');
+        });
+
         it("formats booleans as true/false", function() {
             expect(Expectation::formatMessage("Got %s", true))->toBe("Got true");
             expect(Expectation::formatMessage("Got %s", false))->toBe("Got false");

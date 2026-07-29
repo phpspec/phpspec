@@ -811,7 +811,7 @@ class Expectation
         foreach ($values as $value) {
             $message = match (gettype($value)) {
                 'object' => self::replaceOne('%s', get_class($value) . '#' . spl_object_id($value), $message),
-                'string' => self::replaceOne('%s', '"' . $value . '"', $message),
+                'string' => self::replaceOne('%s', '"' . self::clip($value) . '"', $message),
                 'boolean' => self::replaceOne('%s', $value ? 'true' : 'false', $message),
                 'array' => self::replaceOne('%s', self::formatArray($value), $message),
                 'NULL' => self::replaceOne('%s', 'null', $message),
@@ -819,6 +819,28 @@ class Expectation
             };
         }
         return $message;
+    }
+
+    /**
+     * A string as the failure headline shows it: short single-line values
+     * verbatim, anything multiline or overlong clipped to a first-line
+     * excerpt. The full values ride the expected/actual detail, so the
+     * headline never repeats a wall of captured output.
+     */
+    private static function clip(string $value): string
+    {
+        $firstLine = strtok(ltrim($value), "\n");
+        $excerpt = $firstLine === false ? '' : trim($firstLine);
+
+        if ($excerpt === $value && mb_strlen($excerpt) <= 60) {
+            return $value;
+        }
+
+        if (mb_strlen($excerpt) > 60) {
+            $excerpt = mb_substr($excerpt, 0, 59);
+        }
+
+        return $excerpt . '…';
     }
 
     /**
