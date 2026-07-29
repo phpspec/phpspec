@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
  - End-of-run detail is grouped into Failures, Errors, Warnings, Deprecations, and Skipped sections, and the dot formatter tells the same detailed story as pretty
  - A failure reads as an aligned pair labeled by its matcher (expected / to contain), long multiline values capped head[...]tail with newlines escaped
+ - Offered-code diffs show three unchanged lines around each change with one elision line between distant stretches, never the whole file
 
 ### Fixed
  - The pretty formatter reports only the failed expectation; passing ones before it no longer print a bogus sentinel Failure line

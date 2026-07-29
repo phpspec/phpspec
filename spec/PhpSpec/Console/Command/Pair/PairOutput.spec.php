@@ -160,12 +160,13 @@ describe(PairOutput::class, function () {
             expect($output)->toContain('- old line');
         });
 
-        it('shows unchanged lines without marker', function () {
-            $this->pairOutput->fileDiff('/tmp/f.php', "same\n", "same\n");
+        it('shows unchanged lines near a change without marker', function () {
+            $this->pairOutput->fileDiff('/tmp/f.php', "same\n", "same\nadded\n");
             $output = $this->buffer->fetch();
             expect($output)->toContain('same');
             expect($output)->not()->toContain('+ same');
             expect($output)->not()->toContain('- same');
+            expect($output)->toContain('+ added');
         });
 
         it('shows mixed diff with adds, removes, and unchanged', function () {
