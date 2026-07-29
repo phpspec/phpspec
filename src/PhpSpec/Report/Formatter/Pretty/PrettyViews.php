@@ -146,6 +146,12 @@ final class PrettyViews
             $output->write(PHP_EOL);
             /** @var MatchResult $matchResult */
             foreach ($example->getResults() as $matchResult) {
+                // Passing expectations carry the Nothing sentinel, not a
+                // message; only the failure is the story.
+                if (!$matchResult->isFailure()) {
+                    continue;
+                }
+
                 $output->write(str_repeat(' ', 2));
                 self::matchResult($output, $matchResult);
             }

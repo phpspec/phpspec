@@ -45,6 +45,24 @@ describe(Pretty::class, function() {
         expect($text)->toContain("Expected a to be b");
     });
 
+    it("reports only the failed expectation, never the passing ones before it", function() {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $example = new ExampleResult("fails after passing expectations", [
+            MatchResult::passed(),
+            MatchResult::passed(),
+            MatchResult::failed("actual_val", "expected_val", "Expected true to be false", __FILE__, __LINE__),
+        ]);
+        $spec = new SpecificationResult("MySpec", [$example]);
+        $suite = new SuiteResult([$spec]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->not()->toContain("Detail::Nothing");
+        expect(substr_count($text, "Failure:"))->toBe(1);
+    });
+
     it("formats error results with details", function() {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);

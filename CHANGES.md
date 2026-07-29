@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+ - The pretty formatter reports only the failed expectation; passing ones before it no longer print a bogus sentinel Failure line
+
 ### Added
  - `--format=agent` on every command: `next` emits its suggestion with the exact command that acts on it, `generate` applies and emits receipts, `describe`/`exemplify` accept it as the canonical spelling of `--agent` (now a deprecated alias)
 
