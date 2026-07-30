@@ -37,13 +37,9 @@ class AgentSpecScriptedExecutor implements PhpSpec\Ai\Contracts\ToolExecutor
     {
     }
 
-    public function advertised(array $declared): array
+    public function advertised(): array
     {
-        return array_map(fn($tool) => [
-            'name' => $tool->getName(),
-            'description' => $tool->getDescription(),
-            'input_schema' => $tool->getParameterSchema(),
-        ], $declared);
+        return [];
     }
 
     public function execute(PhpSpec\Ai\ToolCall $call): mixed

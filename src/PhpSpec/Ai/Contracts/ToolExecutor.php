@@ -38,13 +38,13 @@ interface ToolExecutor
 
     /**
      * The tools to advertise this round, serialised for the provider: the
-     * declared surface filtered by the session's turn state (a spent offer, a
-     * written artifact), plus any extension tools.
+     * session's declared surface filtered by its turn state (a spent offer, a
+     * written artifact), plus any extension tools. The executor owns the whole
+     * surface; the pipeline only forwards what it answers.
      *
-     * @param list<ToolInterface> $declared the command's manifest-declared tools
      * @return list<array{name: string, description: string, input_schema: array<string, mixed>}>
      */
-    public function advertised(array $declared): array;
+    public function advertised(): array;
 
     /**
      * Executes one tool call against the session and returns the result the

@@ -166,7 +166,7 @@ final class Agent
             for ($turn = 0; $turn < $limit; $turn++) {
                 $roundOptions = $options;
                 if ($this->executor !== null) {
-                    $roundOptions['tools'] = $this->executor->advertised($options['tools'] ?? []);
+                    $roundOptions['tools'] = $this->executor->advertised();
                 }
 
                 $response = $provider->chat($transcript->messages(), $roundOptions);
