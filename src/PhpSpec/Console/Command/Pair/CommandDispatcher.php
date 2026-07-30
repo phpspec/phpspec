@@ -263,6 +263,8 @@ final class CommandDispatcher
             'feature' => '/generate a feature for ' . $target,
             'spec' => '/generate a spec for ' . $target,
             'example' => '/generate add a spec example for ' . $target,
+            'steps' => '/generate the steps for ' . $target,
+            'implement' => '/generate implement ' . $target,
             'refactor' => '/refactor ' . $target,
             default => null,
         };

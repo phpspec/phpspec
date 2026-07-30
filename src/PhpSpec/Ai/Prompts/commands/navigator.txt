@@ -1,0 +1,10 @@
+---
+tools: [offer_change, suggest_next, ask_user, run_specs, inspect_symbol, read_file, list_files]
+answer: prose
+grounding: [suite]
+temperature: 0.3
+max_turns: 50
+---
+@include navigator
+
+@include instructions/pair-guidance

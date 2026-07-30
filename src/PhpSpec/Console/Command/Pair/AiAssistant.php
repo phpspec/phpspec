@@ -14,8 +14,11 @@
 
 namespace PhpSpec\Console\Command\Pair;
 
+use Closure;
+use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Ai\Agent\ProjectPath;
 use PhpSpec\Ai\Agent\Proposal;
+use PhpSpec\Ai\Agent\ToolRegistry;
 use PhpSpec\Ai\Agent\Transcript;
 use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\AiTools;
@@ -25,7 +28,6 @@ use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\SymbolInspector;
-use PhpSpec\Ai\Tool;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Ai\TreeScanner;
 use PhpSpec\CodeGeneration\LegacySpecDetector;
@@ -82,8 +84,26 @@ final class AiAssistant
     /** Runs specs and returns structured red/green, for run_specs and auto-verify. */
     private readonly SpecRunner $specRunner;
 
+    /** Serves the tool schemas and descriptions the role manifests declare. */
+    private readonly ToolRegistry $registry;
+
     /** The session's conversation with the model, windowed across turns. */
     private readonly Transcript $transcript;
+
+    /**
+     * Each role's manifest-declared tool names, keyed by command name, so
+     * advertising filters to the current role's declared surface.
+     *
+     * @var array<string, list<string>>
+     */
+    private array $roleTools = [];
+
+    /**
+     * Extension-provided tool names: outside any manifest, always advertised.
+     *
+     * @var list<string>
+     */
+    private array $extensionToolNames = [];
 
     /** Role-neutral guidance (DSL, tools, project conventions), cached once. */
     private string $baseGuidance = '';
@@ -152,6 +172,7 @@ final class AiAssistant
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
         $this->roleState = $roleState ?? new RoleState();
         $this->specRunner = $specRunner ?? new SubprocessRunner();
+        $this->registry = new ToolRegistry($config, $this->filesystem, $this->prompts);
         $this->transcript = new Transcript();
     }
 
@@ -399,29 +420,34 @@ final class AiAssistant
      */
     private function advertisedTools(): array
     {
-        $tools = array_values($this->tools);
         $role = $this->roleState->current();
 
-        // Withhold the write tools when the AI is navigating (it never writes
-        // unbidden; it OFFERS instead), and — while it drives — once it has
-        // already written its one artifact this turn, so it can only read and
-        // run for the rest of the turn.
-        $withholdWrites = $role->aiIsNavigator()
-            || ($role->aiIsDriver() && $this->artifactWrittenThisHandle);
+        // The role's manifest declares its static tool surface (a navigator
+        // has no write tools to withhold; a driver has no offer_change), so
+        // the static filter is data. Extension tools sit outside any manifest
+        // and are always advertised.
+        $declared = $this->roleTools[$role->commandName()] ?? [];
+        $tools = array_values(array_filter(
+            $this->tools,
+            fn(ToolInterface $tool) => in_array($tool->getName(), $declared, true)
+                || in_array($tool->getName(), $this->extensionToolNames, true),
+        ));
 
-        if ($withholdWrites) {
+        // While the AI drives, once it has written its one artifact this turn
+        // the write tools are withheld, so it can only read and run for the
+        // rest of the turn.
+        if ($role->aiIsDriver() && $this->artifactWrittenThisHandle) {
             $tools = array_values(array_filter(
                 $tools,
                 fn(ToolInterface $tool) => !in_array($tool->getName(), self::WRITE_TOOLS, true),
             ));
         }
 
-        // Offering is the navigator's channel (a driving AI writes instead),
-        // and it happens at most once per turn; likewise one registered
+        // An offer happens at most once per turn; likewise one registered
         // suggestion per turn. Withholding the used-up tool is what lets the
         // loop end in prose instead of chaining suggestion after suggestion.
         $spent = [];
-        if ($role->aiIsDriver() || $this->offerResolvedThisHandle) {
+        if ($this->offerResolvedThisHandle) {
             $spent[] = 'offer_change';
         }
         // A verified change ends the turn: no fresh suggestion rides on its
@@ -635,90 +661,100 @@ final class AiAssistant
     }
 
     /**
+     * Builds the session's tool surface from the role manifests: each role's
+     * `commands/<name>.txt` declares its tools, the registry serves their
+     * schemas and editable descriptions, and pair binds its live handlers. The
+     * union of both roles is built once; advertising filters per turn.
+     *
      * @return ToolInterface[]
      */
     private function buildTools(): array
     {
-        $tools = [
-            $this->describeTool(),
-            $this->addExampleTool(),
-            $this->generateFeatureTool(),
-            $this->generateStepsTool(),
-            $this->writeFileTool(),
-            $this->updateFileTool(),
-            $this->offerChangeTool(),
-            $this->suggestNextTool(),
-            $this->runSpecsTool(),
-            $this->inspectSymbolTool(),
-            $this->askUserTool(),
-            AiTools::readFile($this->filesystem),
-            AiTools::listFiles($this->filesystem),
-        ];
+        $handlers = $this->handlers();
+        $byName = [];
+
+        foreach ([PairRole::HumanDrives, PairRole::AiDrives] as $role) {
+            $profile = $this->roleProfile($role);
+            $this->roleTools[$role->commandName()] = $profile->tools;
+
+            foreach ($this->registry->definitions($profile, $handlers) as $tool) {
+                $byName[$tool->getName()] ??= $tool;
+            }
+        }
 
         if ($this->extensionLoader !== null) {
             foreach ($this->extensionLoader->getToolProviders() as $provider) {
                 foreach ($provider->getTools() as $tool) {
-                    $tools[] = $tool;
+                    $byName[$tool->getName()] = $tool;
+                    $this->extensionToolNames[] = $tool->getName();
                 }
             }
         }
 
-        return $tools;
-    }
-
-    private function askUserTool(): Tool
-    {
-        $chooser = $this->chooser;
-
-        return Tool::make(
-            name: 'ask_user',
-            description: 'Ask the user a strictly YES/NO question before proceeding — it shows a '
-                . 'Yes / always / No chooser. Use it ONLY for a binary confirmation (e.g. "shall I '
-                . 'generate fooBar()?"). NEVER use it for an open-ended question such as "what should '
-                . 'the arguments be?" — ask those in plain text and end your turn so the user can type '
-                . 'a full answer at the prompt. Returns "yes", "always" (yes now and for all similar '
-                . 'future questions), or "no", plus any note the human typed alongside the answer; '
-                . 'treat that note as their direction.',
-            parameters: [
-                'question' => [
-                    'type' => 'string',
-                    'description' => 'The question to show the user, e.g. "Do you want me to generate the method fooBar()?"',
-                ],
-                'action' => [
-                    'type' => 'string',
-                    'description' => 'Short verb phrase naming the action, completing the sentence "always ..." (e.g. "generate methods")',
-                ],
-            ],
-            handler: function (array $args) use ($chooser) {
-                $kind = 'ai-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($args['action']));
-
-                $accepted = $chooser->choose($args['question'], $kind, $args['action']);
-                $answer = !$accepted ? 'no' : ($chooser->hasAlways($kind) ? 'always' : 'yes');
-                $note = $chooser->lastNote();
-
-                if ($note !== '') {
-                    return sprintf('%s. The human added: "%s".', $answer, $note);
-                }
-
-                return $answer;
-            },
-        );
+        return array_values($byName);
     }
 
     /**
-     * The shared `intent` parameter for every write tool: the driver's one-line
-     * plan, surfaced to the navigator at the confirm prompt so the go-ahead is a
-     * real decision, not a blind "allow this action?".
-     *
-     * @return array{type: string, description: string}
+     * The role's command profile, its manifest layers resolved through the
+     * prompt library (project overrides first).
      */
-    private static function intentParameter(): array
+    private function roleProfile(PairRole $role): CommandProfile
+    {
+        return CommandProfile::compose($role->commandName(), ...$this->prompts->stack('commands/' . $role->commandName()));
+    }
+
+    /**
+     * Pair's live handlers, keyed by tool name. The registry serves what a tool
+     * IS (schema, description); these closures are what it DOES in a session:
+     * generate, write through the confirm gate, run, inspect, ask.
+     *
+     * @return array<string, Closure>
+     */
+    private function handlers(): array
     {
         return [
-            'type' => 'string',
-            'description' => 'One line stating what this change does and why, shown to the '
-                . 'navigator at the confirm prompt (e.g. "add an example that total() sums the line items").',
+            'describe' => $this->describeHandler(),
+            'add_example' => $this->addExampleHandler(),
+            'generate_feature' => $this->generateFeatureHandler(),
+            'generate_steps' => $this->generateStepsHandler(),
+            'write_file' => $this->writeFileHandler(),
+            'update_file' => $this->updateFileHandler(),
+            'offer_change' => $this->offerChangeHandler(),
+            'suggest_next' => $this->suggestNextHandler(),
+            'ask_user' => $this->askUserHandler(),
+            'run_specs' => $this->runSpecsHandler(),
+            'inspect_symbol' => $this->inspectSymbolHandler(),
+            'read_file' => self::executes(AiTools::readFile($this->filesystem)),
+            'list_files' => self::executes(AiTools::listFiles($this->filesystem)),
         ];
+    }
+
+    /**
+     * A handler that delegates to an existing tool's implementation, so shared
+     * tools (read_file, list_files) are defined once and executed here.
+     */
+    private static function executes(ToolInterface $tool): Closure
+    {
+        return static fn(array $arguments) => $tool->execute($arguments);
+    }
+
+    private function askUserHandler(): Closure
+    {
+        $chooser = $this->chooser;
+
+        return function (array $args) use ($chooser) {
+            $kind = 'ai-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($args['action']));
+
+            $accepted = $chooser->choose($args['question'], $kind, $args['action']);
+            $answer = !$accepted ? 'no' : ($chooser->hasAlways($kind) ? 'always' : 'yes');
+            $note = $chooser->lastNote();
+
+            if ($note !== '') {
+                return sprintf('%s. The human added: "%s".', $answer, $note);
+            }
+
+            return $answer;
+        };
     }
 
     /**
@@ -817,17 +853,6 @@ final class AiAssistant
     }
 
     /**
-     * The model-facing description of a write tool, from its editable prompt
-     * file (`Ai/Prompts/tools/<name>.txt`, shipped package code, so it loads
-     * from the real filesystem). Tuning what a tool tells the model is a text
-     * edit.
-     */
-    private function toolDescription(string $name): string
-    {
-        return trim($this->prompts->read('tools/' . $name));
-    }
-
-    /**
      * A proposal for an absolute path and content, reading any existing file so
      * the diff shown is real. Tools only ever produce these; nothing writes
      * except the gate below. Steps content is checked against the project's
@@ -866,245 +891,153 @@ final class AiAssistant
         }
     }
 
-    private function describeTool(): Tool
+    private function describeHandler(): Closure
     {
         $specPath = ltrim($this->config->getSpecPath(), './');
         $specSuffix = $this->config->getSpecSuffix();
         $filesystem = $this->filesystem;
         $output = $this->output;
 
-        return Tool::make(
-            name: 'describe',
-            description: $this->toolDescription('describe'),
-            parameters: [
-                'class_name' => [
-                    'type' => 'string',
-                    'description' => 'Class path using forward slashes (e.g. "App/Calculator")',
-                ],
-                'intent' => self::intentParameter(),
-            ],
-            handler: function (array $args) use ($specPath, $specSuffix, $filesystem, $output) {
-                $classPath = $args['class_name'];
+        return function (array $args) use ($specPath, $specSuffix, $filesystem, $output) {
+            $classPath = $args['class_name'];
 
-                $filePath = getcwd() . DIRECTORY_SEPARATOR
-                    . $specPath . DIRECTORY_SEPARATOR
-                    . str_replace('/', DIRECTORY_SEPARATOR, $classPath)
-                    . $specSuffix;
+            $filePath = getcwd() . DIRECTORY_SEPARATOR
+                . $specPath . DIRECTORY_SEPARATOR
+                . str_replace('/', DIRECTORY_SEPARATOR, $classPath)
+                . $specSuffix;
 
-                if ($filesystem->exists($filePath)) {
-                    $output->getOutput()->writeln(sprintf(
-                        '  <fg=gray>Spec already exists: %s</>',
-                        $filePath,
-                    ));
+            if ($filesystem->exists($filePath)) {
+                $output->getOutput()->writeln(sprintf(
+                    '  <fg=gray>Spec already exists: %s</>',
+                    $filePath,
+                ));
 
-                    return "Spec for $classPath already exists at $filePath; no change made.";
-                }
+                return "Spec for $classPath already exists at $filePath; no change made.";
+            }
 
-                $generator = new SpecGenerator($specPath, $filesystem, $specSuffix);
-                $this->applyProposal($this->proposalFor($filePath, $generator->skeleton($classPath), 'describe'));
+            $generator = new SpecGenerator($specPath, $filesystem, $specSuffix);
+            $this->applyProposal($this->proposalFor($filePath, $generator->skeleton($classPath), 'describe'));
 
-                return "Spec skeleton for $classPath created at $filePath. Add behaviour with add_example.";
-            },
-        );
+            return "Spec skeleton for $classPath created at $filePath. Add behaviour with add_example.";
+        };
     }
 
-    private function addExampleTool(): Tool
+    private function addExampleHandler(): Closure
     {
         $specPath = ltrim($this->config->getSpecPath(), './');
         $specSuffix = $this->config->getSpecSuffix();
         $filesystem = $this->filesystem;
         $output = $this->output;
 
-        return Tool::make(
-            name: 'add_example',
-            description: $this->toolDescription('add_example'),
-            parameters: [
-                'class_name' => [
-                    'type' => 'string',
-                    'description' => 'Class path using forward slashes (e.g. "App/Calculator")',
-                ],
-                'method' => [
-                    'type' => 'string',
-                    'description' => 'The method name to add an example for (e.g. "add")',
-                ],
-                'intent' => self::intentParameter(),
-            ],
-            handler: function (array $args) use ($specPath, $specSuffix, $filesystem, $output) {
-                $classPath = $args['class_name'];
-                $method = $args['method'];
+        return function (array $args) use ($specPath, $specSuffix, $filesystem, $output) {
+            $classPath = $args['class_name'];
+            $method = $args['method'];
 
-                $filePath = getcwd() . DIRECTORY_SEPARATOR
-                    . $specPath . DIRECTORY_SEPARATOR
-                    . str_replace('/', DIRECTORY_SEPARATOR, $classPath)
-                    . $specSuffix;
+            $filePath = getcwd() . DIRECTORY_SEPARATOR
+                . $specPath . DIRECTORY_SEPARATOR
+                . str_replace('/', DIRECTORY_SEPARATOR, $classPath)
+                . $specSuffix;
 
-                $generator = new SpecGenerator($specPath, $filesystem, $specSuffix);
+            $generator = new SpecGenerator($specPath, $filesystem, $specSuffix);
 
-                $existed = $filesystem->exists($filePath);
-                $before = $existed ? $filesystem->read($filePath) : $generator->skeleton($classPath);
-                $grown = $generator->withExample($before, $classPath, $method);
+            $existed = $filesystem->exists($filePath);
+            $before = $existed ? $filesystem->read($filePath) : $generator->skeleton($classPath);
+            $grown = $generator->withExample($before, $classPath, $method);
 
-                if ($grown === null && $existed) {
-                    $output->getOutput()->writeln(sprintf(
-                        '  <fg=gray>An example for %s::%s already exists.</>',
-                        str_replace('/', '\\', $classPath),
-                        $method,
-                    ));
+            if ($grown === null && $existed) {
+                $output->getOutput()->writeln(sprintf(
+                    '  <fg=gray>An example for %s::%s already exists.</>',
+                    str_replace('/', '\\', $classPath),
+                    $method,
+                ));
 
-                    return "Example for $classPath::$method already exists; no change made.";
-                }
+                return "Example for $classPath::$method already exists; no change made.";
+            }
 
-                if ($grown === null) {
-                    return ['error' => "Could not add an example for $classPath::$method."];
-                }
+            if ($grown === null) {
+                return ['error' => "Could not add an example for $classPath::$method."];
+            }
 
-                $this->applyProposal($this->proposalFor($filePath, $grown, 'add_example'));
+            $this->applyProposal($this->proposalFor($filePath, $grown, 'add_example'));
 
-                return "Example for $classPath::$method added to $filePath.";
-            },
-        );
+            return "Example for $classPath::$method added to $filePath.";
+        };
     }
 
-    private function generateFeatureTool(): Tool
+    private function generateFeatureHandler(): Closure
     {
-        $filesystem = $this->filesystem;
-        $output = $this->output;
         $featuresPath = $this->resolveFeaturePaths()['features'];
 
-        return Tool::make(
-            name: 'generate_feature',
-            description: $this->toolDescription('generate_feature'),
-            parameters: [
-                'feature_name' => [
-                    'type' => 'string',
-                    'description' => 'Feature file name without extension (e.g. "user-registration")',
-                ],
-                'content' => [
-                    'type' => 'string',
-                    'description' => 'The complete Gherkin feature file content',
-                ],
-                'intent' => self::intentParameter(),
-            ],
-            handler: function (array $args) use ($featuresPath) {
-                $filePath = getcwd() . '/' . $featuresPath . '/' . $args['feature_name'] . '.feature';
+        return function (array $args) use ($featuresPath) {
+            $filePath = getcwd() . '/' . $featuresPath . '/' . $args['feature_name'] . '.feature';
 
-                $this->applyProposal($this->proposalFor($filePath, $args['content'], 'generate_feature'));
+            $this->applyProposal($this->proposalFor($filePath, $args['content'], 'generate_feature'));
 
-                return "Feature file written to $filePath";
-            },
-        );
+            return "Feature file written to $filePath";
+        };
     }
 
-    private function generateStepsTool(): Tool
+    private function generateStepsHandler(): Closure
     {
-        $filesystem = $this->filesystem;
-        $output = $this->output;
         $stepsPath = $this->resolveFeaturePaths()['steps'];
 
-        return Tool::make(
-            name: 'generate_steps',
-            description: $this->toolDescription('generate_steps'),
-            parameters: [
-                'feature_name' => [
-                    'type' => 'string',
-                    'description' => 'Step file name without extension (e.g. "user-registration")',
-                ],
-                'content' => [
-                    'type' => 'string',
-                    'description' => 'The complete PHP step definitions file content',
-                ],
-                'intent' => self::intentParameter(),
-            ],
-            handler: function (array $args) use ($stepsPath) {
-                $filePath = getcwd() . '/' . $stepsPath . '/' . $args['feature_name'] . '.steps.php';
+        return function (array $args) use ($stepsPath) {
+            $filePath = getcwd() . '/' . $stepsPath . '/' . $args['feature_name'] . '.steps.php';
 
-                $this->applyProposal($this->proposalFor($filePath, $args['content'], 'generate_steps'));
+            $this->applyProposal($this->proposalFor($filePath, $args['content'], 'generate_steps'));
 
-                return "Steps file written to $filePath";
-            },
-        );
+            return "Steps file written to $filePath";
+        };
     }
 
-    private function writeFileTool(): Tool
+    private function writeFileHandler(): Closure
     {
         $filesystem = $this->filesystem;
-        $output = $this->output;
         $specDir = $this->specDir();
 
-        return Tool::make(
-            name: 'write_file',
-            description: $this->toolDescription('write_file'),
-            parameters: [
-                'path' => [
-                    'type' => 'string',
-                    'description' => 'Relative path from project root (e.g. "src/App/Service.php")',
-                ],
-                'content' => [
-                    'type' => 'string',
-                    'description' => 'The complete file content',
-                ],
-                'intent' => self::intentParameter(),
-            ],
-            handler: function (array $args) use ($filesystem, $specDir) {
-                $path = $args['path'];
-                $content = $args['content'];
-                $absPath = getcwd() . '/' . ltrim($path, '/');
+        return function (array $args) use ($filesystem, $specDir) {
+            $path = $args['path'];
+            $content = $args['content'];
+            $absPath = getcwd() . '/' . ltrim($path, '/');
 
-                if ($filesystem->exists($absPath)) {
-                    return "File already exists: $path. Use update_file to modify it.";
-                }
+            if ($filesystem->exists($absPath)) {
+                return "File already exists: $path. Use update_file to modify it.";
+            }
 
-                $rejection = self::specWriteRejection($absPath, $specDir, $content, '');
-                if ($rejection !== null) {
-                    return $rejection;
-                }
+            $rejection = self::specWriteRejection($absPath, $specDir, $content, '');
+            if ($rejection !== null) {
+                return $rejection;
+            }
 
-                $this->applyProposal($this->proposalFor($absPath, $content, 'write_file'));
+            $this->applyProposal($this->proposalFor($absPath, $content, 'write_file'));
 
-                return "File written to $absPath";
-            },
-        );
+            return "File written to $absPath";
+        };
     }
 
-    private function updateFileTool(): Tool
+    private function updateFileHandler(): Closure
     {
         $filesystem = $this->filesystem;
-        $output = $this->output;
         $specDir = $this->specDir();
 
-        return Tool::make(
-            name: 'update_file',
-            description: $this->toolDescription('update_file'),
-            parameters: [
-                'path' => [
-                    'type' => 'string',
-                    'description' => 'Relative path from project root (e.g. "src/App/Service.php")',
-                ],
-                'content' => [
-                    'type' => 'string',
-                    'description' => 'The complete new file content',
-                ],
-                'intent' => self::intentParameter(),
-            ],
-            handler: function (array $args) use ($filesystem, $specDir) {
-                $path = $args['path'];
-                $content = $args['content'];
-                $absPath = getcwd() . '/' . ltrim($path, '/');
+        return function (array $args) use ($filesystem, $specDir) {
+            $path = $args['path'];
+            $content = $args['content'];
+            $absPath = getcwd() . '/' . ltrim($path, '/');
 
-                if (!$filesystem->exists($absPath)) {
-                    return "File not found: $path. Use write_file to create it.";
-                }
+            if (!$filesystem->exists($absPath)) {
+                return "File not found: $path. Use write_file to create it.";
+            }
 
-                $rejection = self::specWriteRejection($absPath, $specDir, $content, $filesystem->read($absPath));
-                if ($rejection !== null) {
-                    return $rejection;
-                }
+            $rejection = self::specWriteRejection($absPath, $specDir, $content, $filesystem->read($absPath));
+            if ($rejection !== null) {
+                return $rejection;
+            }
 
-                $this->applyProposal($this->proposalFor($absPath, $content, 'update_file'));
+            $this->applyProposal($this->proposalFor($absPath, $content, 'update_file'));
 
-                return "File updated: $absPath";
-            },
-        );
+            return "File updated: $absPath";
+        };
     }
 
     /**
@@ -1113,68 +1046,53 @@ final class AiAssistant
      * chooser, and only an accepted offer reaches disk (through the shared
      * Writer). The spec guards apply to offers exactly as to writes.
      */
-    private function offerChangeTool(): Tool
+    private function offerChangeHandler(): Closure
     {
         $filesystem = $this->filesystem;
         $specDir = $this->specDir();
 
-        return Tool::make(
-            name: 'offer_change',
-            description: $this->toolDescription('offer_change'),
-            parameters: [
-                'path' => [
-                    'type' => 'string',
-                    'description' => 'Relative path from project root (e.g. "src/App/Service.php")',
-                ],
-                'content' => [
-                    'type' => 'string',
-                    'description' => 'The complete new file content',
-                ],
-                'intent' => self::intentParameter(),
-            ],
-            handler: function (array $args) use ($filesystem, $specDir) {
-                if ($this->offerResolvedThisHandle) {
-                    return ['error' => 'One offer per turn. React to its outcome in prose, or wait for the human.'];
-                }
+        return function (array $args) use ($filesystem, $specDir) {
+            if ($this->offerResolvedThisHandle) {
+                return ['error' => 'One offer per turn. React to its outcome in prose, or wait for the human.'];
+            }
 
-                $path = $args['path'];
-                $content = $args['content'];
-                $absPath = getcwd() . '/' . ltrim($path, '/');
+            $path = $args['path'];
+            $content = $args['content'];
+            $absPath = getcwd() . '/' . ltrim($path, '/');
 
-                $rejection = self::specWriteRejection($absPath, $specDir, $content, $filesystem->exists($absPath) ? $filesystem->read($absPath) : '');
-                if ($rejection !== null) {
-                    return $rejection;
-                }
+            $rejection = self::specWriteRejection($absPath, $specDir, $content, $filesystem->exists($absPath) ? $filesystem->read($absPath) : '');
+            if ($rejection !== null) {
+                return $rejection;
+            }
 
-                $proposal = $this->proposalFor($absPath, $content, 'offer_change');
+            $proposal = $this->proposalFor($absPath, $content, 'offer_change');
 
-                // The diff IS the offer: the human sees it before deciding.
-                if ($proposal->isNew) {
-                    $this->output->fileDisplay($absPath, $proposal->new, true);
-                } else {
-                    $this->output->fileDiff($absPath, $proposal->old, $proposal->new);
-                }
+            // The diff IS the offer: the human sees it before deciding.
+            if ($proposal->isNew) {
+                $this->output->fileDisplay($absPath, $proposal->new, true);
+            } else {
+                $this->output->fileDiff($absPath, $proposal->old, $proposal->new);
+            }
 
-                $this->offerResolvedThisHandle = true;
+            $this->offerResolvedThisHandle = true;
 
-                if (!$this->chooser->choose($this->offerQuestion($args), 'offer-change', 'apply offered changes')) {
-                    PairLogger::log('RESULT', 'Offer declined');
+            if (!$this->chooser->choose($this->offerQuestion($args), 'offer-change', 'apply offered changes')) {
+                PairLogger::log('RESULT', 'Offer declined');
 
-                    return self::offerDeclined($this->chooser->lastNote());
-                }
+                return self::offerDeclined($this->chooser->lastNote());
+            }
 
-                $note = $this->chooser->lastNote();
+            $note = $this->chooser->lastNote();
 
-                (new Writer($filesystem))->apply($proposal);
-                $this->noteArtifact($path);
+            (new Writer($filesystem))->apply($proposal);
+            $this->noteArtifact($path);
 
-                if ($note !== '') {
-                    return sprintf('Change applied to %s. The human added: "%s".', $absPath, $note);
-                }
+            if ($note !== '') {
+                return sprintf('Change applied to %s. The human added: "%s".', $absPath, $note);
+            }
 
-                return "Change applied to $absPath.";
-            },
-        );
+            return "Change applied to $absPath.";
+        };
     }
 
     /**
@@ -1217,70 +1135,40 @@ final class AiAssistant
      * Registers the model's structured next-step suggestion, so the dispatcher
      * can pre-fill the prompt with a matching /generate ghost.
      */
-    private function suggestNextTool(): Tool
+    private function suggestNextHandler(): Closure
     {
-        return Tool::make(
-            name: 'suggest_next',
-            description: $this->toolDescription('suggest_next'),
-            parameters: [
-                'type' => [
-                    'type' => 'string',
-                    'enum' => ['spec', 'feature', 'example', 'info'],
-                    'description' => 'What to build next',
-                ],
-                'target' => [
-                    'type' => 'string',
-                    'description' => 'The class or feature the suggestion is about',
-                ],
-                'reason' => [
-                    'type' => 'string',
-                    'description' => 'One short sentence why',
-                ],
-            ],
-            handler: function (array $args): string|array {
-                if ($this->artifactWrittenThisHandle) {
-                    return ['error' => 'The change just landed and was verified. Report the outcome and hand back; the human will ask for the next step.'];
-                }
-                if ($this->lastSuggestion !== null) {
-                    return ['error' => 'One suggestion per turn is already registered. Advise in prose now.'];
-                }
+        return function (array $args): string|array {
+            if ($this->artifactWrittenThisHandle) {
+                return ['error' => 'The change just landed and was verified. Report the outcome and hand back; the human will ask for the next step.'];
+            }
+            if ($this->lastSuggestion !== null) {
+                return ['error' => 'One suggestion per turn is already registered. Advise in prose now.'];
+            }
 
-                $this->lastSuggestion = array_map(strval(...), array_filter($args, is_scalar(...)));
+            $this->lastSuggestion = array_map(strval(...), array_filter($args, is_scalar(...)));
 
-                return 'Suggestion noted. Keep advising in prose; never repeat it as JSON.';
-            },
-        );
+            return 'Suggestion noted. Keep advising in prose; never repeat it as JSON.';
+        };
     }
 
-    private function runSpecsTool(): Tool
+    private function runSpecsHandler(): Closure
     {
         $output = $this->output;
         $specRunner = $this->specRunner;
         $roleState = $this->roleState;
 
-        return Tool::make(
-            name: 'run_specs',
-            description: 'Run phpspec specs via subprocess. Returns the suite\'s red/green state with the failing and pending examples and their errors, so you can report results and decide the next step.',
-            parameters: [
-                'path' => [
-                    'type' => 'string',
-                    'description' => 'Optional path to run (e.g. "spec/App/Calculator.spec.php"). Leave empty to run all.',
-                    'default' => '',
-                ],
-            ],
-            handler: function (array $args) use ($output, $specRunner, $roleState) {
-                $path = $args['path'] ?? '';
+        return function (array $args) use ($output, $specRunner, $roleState) {
+            $path = $args['path'] ?? '';
 
-                $output->getOutput()->writeln('  <fg=gray>Running specs...</>');
+            $output->getOutput()->writeln('  <fg=gray>Running specs...</>');
 
-                $outcome = $specRunner->run($path, $output->getOutput());
+            $outcome = $specRunner->run($path, $output->getOutput());
 
-                return SituationReport::fromOutcome($outcome, $roleState->current())->render();
-            },
-        );
+            return SituationReport::fromOutcome($outcome, $roleState->current())->render();
+        };
     }
 
-    private function inspectSymbolTool(): Tool
+    private function inspectSymbolHandler(): Closure
     {
         $inspector = new SymbolInspector(
             ltrim($this->config->getSrcPath(), './'),
@@ -1288,17 +1176,7 @@ final class AiAssistant
             $this->filesystem,
         );
 
-        return Tool::make(
-            name: 'inspect_symbol',
-            description: 'Inspect a PHP class, interface or trait by its fully-qualified name: whether it exists (is autoloadable), where its file is, and its real public method signatures from Reflection. Use this to learn what a type actually offers BEFORE writing a spec or a call against it. A symbol that does not exist yet is reported cleanly as such — it will not mislead you into thinking a file is merely missing.',
-            parameters: [
-                'fqcn' => [
-                    'type' => 'string',
-                    'description' => 'Fully-qualified class name, e.g. "App\\Calculator"',
-                ],
-            ],
-            handler: fn(array $args) => $inspector->describe($args['fqcn']),
-        );
+        return fn(array $args) => $inspector->describe($args['fqcn']);
     }
 
     /**

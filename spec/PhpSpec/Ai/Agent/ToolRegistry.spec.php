@@ -47,6 +47,32 @@ describe(ToolRegistry::class, function () {
                 ->toThrow(RuntimeException::class, 'Unknown tool "nonsense" declared by command "generate".');
         });
 
+        it('serves the pair tool schemas, write tools carrying the shared intent parameter', function () {
+            $names = ['describe', 'add_example', 'generate_feature', 'generate_steps', 'write_file', 'update_file', 'offer_change', 'ask_user', 'run_specs', 'inspect_symbol', 'read_file', 'list_files'];
+            $profile = new CommandProfile(name: 'driver', body: '', tools: $names);
+
+            $schemas = [];
+            foreach ($this->registry->definitions($profile) as $tool) {
+                $schemas[$tool->getName()] = $tool->getParameterSchema();
+            }
+
+            expect(array_keys($schemas))->toBe($names);
+            foreach (['describe', 'add_example', 'generate_feature', 'generate_steps', 'write_file', 'update_file', 'offer_change'] as $write) {
+                expect($schemas[$write]['properties']['intent']['type'] ?? null)->toBe('string');
+            }
+            expect(in_array('path', $schemas['run_specs']['required'] ?? [], true))->toBe(false);
+            expect($schemas['inspect_symbol']['properties']['fqcn']['type'] ?? null)->toBe('string');
+            expect($schemas['ask_user']['properties']['question']['type'] ?? null)->toBe('string');
+        });
+
+        it('binds a provided handler in place of the propose-only no-op', function () {
+            $profile = new CommandProfile(name: 'driver', body: '', tools: ['run_specs']);
+
+            $tools = $this->registry->definitions($profile, ['run_specs' => fn(array $arguments) => 'RAN ' . $arguments['path']]);
+
+            expect($tools[0]->execute(['path' => 'spec/App']))->toBe('RAN spec/App');
+        });
+
     });
 
     context('deterministic', function () {

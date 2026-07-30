@@ -1,5 +1,6 @@
 <?php
 
+use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Ai\PromptLibrary;
 
 // The shipped prompt artifacts, asserted through the library (with @include
@@ -30,6 +31,31 @@ describe('prompt artifacts', function () {
         expect($text)->toContain('CLARIFY');
         expect($text)->toContain('CONFIRM');
         expect($text)->toContain('add_example');
+    });
+
+    it('ships navigator and driver as command manifests declaring each role\'s tool surface', function () {
+        $stack = fn(string $name) => (new PromptLibrary())->stack($name);
+
+        $navigator = CommandProfile::compose('navigator', ...$stack('commands/navigator'));
+        $driver = CommandProfile::compose('driver', ...$stack('commands/driver'));
+
+        expect($navigator->tools)->toContain('offer_change');
+        expect($navigator->tools)->not()->toContain('write_file');
+        expect($driver->tools)->toContain('write_file');
+        expect($driver->tools)->not()->toContain('offer_change');
+        expect($navigator->answer)->toBe('prose');
+        expect($navigator->maxTurns)->toBe(50);
+        expect($driver->maxTurns)->toBe(50);
+        expect($navigator->body)->toContain('NAVIGATOR');
+        expect($driver->body)->toContain('DRIVER');
+    });
+
+    it('ships editable descriptions for the live pair tools', function () use ($read) {
+        expect($read('tools/run_specs'))->toContain('red/green');
+        expect($read('tools/inspect_symbol'))->toContain('Reflection');
+        expect($read('tools/ask_user'))->toContain('YES/NO');
+        expect($read('tools/read_file'))->toContain('contents of a file');
+        expect($read('tools/list_files'))->toContain('List files');
     });
 
     it('steers open clarifying questions to plain text, reserving ask_user for yes/no', function () use ($read) {

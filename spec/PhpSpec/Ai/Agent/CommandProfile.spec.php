@@ -34,6 +34,12 @@ describe(CommandProfile::class, function () {
         expect($profile->origin)->toBe(Prompt::SHIPPED);
     });
 
+    it('reads max_turns from the frontmatter', function () {
+        $profile = CommandProfile::compose('navigator', new Prompt('commands/navigator', "---\nmax_turns: 50\n---\nYou are the NAVIGATOR.", Prompt::SHIPPED));
+
+        expect($profile->maxTurns)->toBe(50);
+    });
+
     it('treats a file without frontmatter as pure prose with defaults', function () {
         $profile = CommandProfile::compose('generate', new Prompt('commands/generate', "Just the prose.\n", Prompt::SHIPPED));
 
