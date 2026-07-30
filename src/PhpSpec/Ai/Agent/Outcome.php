@@ -16,7 +16,7 @@ namespace PhpSpec\Ai\Agent;
 
 /**
  * @internal
- * What one `do()` call produced: the step it resolved, the proposals to
+ * What one `chat()` call produced: the step it resolved, the proposals to
  * confirm, and any prose for the human. Presenters render this and nothing
  * else, so every command surface (interactive diff, plain advice, agent JSON)
  * is a rendering of the same value.

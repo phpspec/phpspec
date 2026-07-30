@@ -313,4 +313,23 @@ ai:
 
 Default models per provider: `gemini-3.1-pro-preview` (google), `claude-sonnet-5` (anthropic), `gpt-5.1` (openai).
 
+### Customising the prompts
+
+Every prompt the AI commands use is a text file. The shipped ones live inside the package; a project overrides any of them by placing a file of the same name under `.phpspec/prompts/`, which is committable and survives composer updates. A project file fully replaces the shipped one.
+
+```
+.phpspec/prompts/
+  commands/next.txt            the next advisor's manifest and voice
+  commands/generate.txt        the generate command
+  commands/refactor.txt        the refactor rules
+  instructions/write-spec.txt  step guidance (also: write-feature, write-steps, write-code, refactor, tdd-cycle)
+  instructions/spec-syntax.txt syntax primers (also: steps-syntax, gherkin-syntax, pair-guidance)
+  tools/offer_change.txt       any tool description, by tool name
+  navigator.txt                the pair navigator role (also: driver.txt, next.txt)
+```
+
+Command files under `commands/` may start with YAML frontmatter (tools, answer channel, grounding, temperature, max_tokens). Overrides inherit the shipped frontmatter per key: a prose-only file keeps the shipped machine contract, and declaring only `temperature: 0.2` keeps the shipped tools. An `@include <name>` line inside any prompt resolves project-first.
+
+`.phpspec/ai/last-request.json` marks overridden prompts in `composed_from` (e.g. `"commands/next (project)"`), so you can always see whose words the model heard.
+
 See [Pair Programming & AI](pair.md) for full documentation on pair mode, the AI assistant, and the refactor command.

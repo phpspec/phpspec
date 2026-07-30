@@ -40,15 +40,6 @@ describe(Agent::class, function () {
         });
     });
 
-    let('profile', fn() => new CommandProfile(
-        name: 'generate',
-        body: 'THE-BODY',
-        tools: ['write_feature', 'write_steps', 'propose_edit'],
-        answer: 'tool_call',
-        grounding: ['recency', 'tree', 'named_files'],
-        temperature: 0.2,
-    ));
-
     let('config', fn(Filesystem $fs) => new Configuration('.', $fs));
 
     it('consults the model for a named new feature and keeps the derived path over its content', function (Filesystem $fs) {
@@ -57,7 +48,7 @@ describe(Agent::class, function () {
         ]);
         $agent = new Agent($this->config, $fs, $replay);
 
-        $outcome = $agent->do($this->profile, 'a simple scenario in features/user_adds_tasks.feature');
+        $outcome = $agent->chat('generate', 'a simple scenario in features/user_adds_tasks.feature');
 
         expect($replay->requests)->toHaveLength(1);
         expect($outcome->step->phase)->toBe(Phase::WriteFeature);
@@ -71,7 +62,7 @@ describe(Agent::class, function () {
         ]);
         $agent = new Agent($this->config, $fs, $replay);
 
-        $outcome = $agent->do($this->profile, 'a spec for a Coupon that reduces a total');
+        $outcome = $agent->chat('generate', 'a spec for a Coupon that reduces a total');
 
         expect($outcome->proposals[0]->path)->toBe('spec/Coupon.spec.php');
         expect($replay->requests)->toHaveLength(1);
@@ -86,19 +77,18 @@ describe(Agent::class, function () {
         ]);
         $agent = new Agent($this->config, $fs, $replay);
 
-        $agent->do($this->profile, 'a spec for a Coupon');
+        $agent->chat('generate', 'a spec for a Coupon');
 
         expect($replay->requests[0]['options']['toolChoice'])->toBe('required');
     });
 
     it('forces the one declared tool by name when the manifest declares exactly one', function (Filesystem $fs) {
-        $profile = new CommandProfile(name: 'next', body: 'ADVISE', tools: ['suggest_next'], answer: 'tool_call');
         $replay = new ReplayProvider([
             new Response('', [new ToolCall('1', 'suggest_next', ['type' => 'spec', 'target' => 'App\\Coupon', 'reason' => 'ok'])]),
         ]);
         $agent = new Agent($this->config, $fs, $replay);
 
-        $agent->do($profile, '');
+        $agent->chat('next', '');
 
         expect($replay->requests[0]['options']['toolChoice'])->toBe(['name' => 'suggest_next']);
     });
@@ -107,13 +97,12 @@ describe(Agent::class, function () {
         $yamlPath = './phpspec.yaml';
         allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $yamlPath);
         allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $yamlPath ? "ai:\n  provider: google\n  api_key: k\n  max_tokens: 9999\n" : '');
-        $profile = new CommandProfile(name: 'generate', body: '', tools: ['propose_edit'], answer: 'tool_call', maxTokens: 4096);
         $replay = new ReplayProvider([
             new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),
         ]);
         $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
 
-        $agent->do($profile, 'a spec for a Coupon');
+        $agent->chat('generate', 'a spec for a Coupon');
 
         expect($replay->requests[0]['options']['maxTokens'])->toBe(9999);
     });
@@ -127,37 +116,64 @@ describe(Agent::class, function () {
         ]);
         $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
 
-        $agent->do($this->profile, 'a spec for a Coupon');
+        $agent->chat('generate', 'a spec for a Coupon');
 
         expect($replay->requests[0]['options']['effort'])->toBe('high');
     });
 
     it('falls back from the manifest max_tokens to it before any code default', function (Filesystem $fs) {
-        $profile = new CommandProfile(name: 'generate', body: '', tools: ['propose_edit'], answer: 'tool_call', maxTokens: 4096);
         $replay = new ReplayProvider([
             new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),
         ]);
         $agent = new Agent($this->config, $fs, $replay);
 
-        $agent->do($profile, 'a spec for a Coupon');
+        $agent->chat('generate', 'a spec for a Coupon');
 
-        expect($replay->requests[0]['options']['maxTokens'])->toBe(4096);
+        expect($replay->requests[0]['options']['maxTokens'])->toBe(16384);   // the shipped generate manifest
     });
 
-    it('sends no toolChoice for a prose command', function (Filesystem $fs) {
-        $profile = new CommandProfile(name: 'chat', body: 'TALK', tools: [], answer: 'prose');
+    it('sends no toolChoice for a prose command, resolved from a project prompt', function (Filesystem $fs) {
+        $override = getcwd() . '/.phpspec/prompts/commands/advice.txt';
+        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $override);
+        allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $override ? 'TALK to the human.' : '');
         $replay = new ReplayProvider([new Response('some advice')]);
         $agent = new Agent($this->config, $fs, $replay);
 
-        $agent->do($profile, 'what next?');
+        $agent->chat('advice', 'what next?');
 
         expect($replay->requests[0]['options'])->not()->toHaveKey('toolChoice');
+        expect($replay->requests[0]['messages'][0]->content)->toContain('TALK to the human.');
+    });
+
+    it('folds a project override over the shipped manifest per key', function (Filesystem $fs) {
+        $override = getcwd() . '/.phpspec/prompts/commands/generate.txt';
+        allow($fs->exists())->toReturnUsing(fn(string $p): bool => $p === $override);
+        allow($fs->read())->toReturnUsing(fn(string $p): string => $p === $override ? "---\ntemperature: 0.9\n---\nOUR house rules." : '');
+        $replay = new ReplayProvider([
+            new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'spec/Coupon.spec.php', 'content' => "<?php\ndescribe('Coupon', fn() => null);"])]),
+        ]);
+        $agent = new Agent($this->config, $fs, $replay);
+
+        $agent->chat('generate', 'a spec for a Coupon');
+
+        expect($replay->requests[0]['options']['temperature'])->toBe(0.9);        // the project's key
+        expect($replay->requests[0]['options']['tools'])->toHaveLength(3);        // the shipped tools survive
+        expect($replay->requests[0]['messages'][0]->content)->toContain('OUR house rules.');
+    });
+
+    it('reports an unknown command as prose instead of crashing', function (Filesystem $fs) {
+        $agent = new Agent($this->config, $fs, new ReplayProvider());
+
+        $outcome = $agent->chat('nonsense', 'anything');
+
+        expect($outcome->proposals)->toBe([]);
+        expect($outcome->prose)->toContain('Unknown AI command "nonsense"');
     });
 
     it('surfaces a provider failure as prose instead of crashing the command', function (Filesystem $fs) {
         $agent = new Agent($this->config, $fs, new AgentSpecThrowingProvider());
 
-        $outcome = $agent->do($this->profile, 'a spec for a Coupon');
+        $outcome = $agent->chat('generate', 'a spec for a Coupon');
 
         expect($outcome->proposals)->toBe([]);
         expect($outcome->prose)->toContain('API key not valid');
@@ -166,7 +182,7 @@ describe(Agent::class, function () {
     it('stands in with the feature skeleton when the provider fails on a write-feature ask', function (Filesystem $fs) {
         $agent = new Agent($this->config, $fs, new AgentSpecThrowingProvider());
 
-        $outcome = $agent->do($this->profile, 'a feature for completing_a_task.feature');
+        $outcome = $agent->chat('generate', 'a feature for completing_a_task.feature');
 
         expect($outcome->proposals[0]->path)->toBe('features/completing_a_task.feature');
         expect($outcome->proposals[0]->new)->toContain('Feature:');
@@ -180,7 +196,7 @@ describe(Agent::class, function () {
         ]);
         $agent = new Agent($this->config, $fs, $replay);
 
-        $outcome = $agent->do($this->profile, 'a spec for a Coupon');
+        $outcome = $agent->chat('generate', 'a spec for a Coupon');
 
         expect($replay->requests)->toHaveLength(2);
         expect($outcome->proposals[0]->path)->toBe('spec/Coupon.spec.php');
@@ -190,7 +206,7 @@ describe(Agent::class, function () {
         $replay = new ReplayProvider([new Response('prose'), new Response('more prose')]);
         $agent = new Agent($this->config, $fs, $replay);
 
-        $outcome = $agent->do($this->profile, 'a spec for a Coupon');
+        $outcome = $agent->chat('generate', 'a spec for a Coupon');
 
         expect($outcome->proposals)->toBe([]);
         expect($outcome->prose)->not()->toBe('');
@@ -203,7 +219,7 @@ describe(Agent::class, function () {
         ]);
         $agent = new Agent($this->config, $fs, $replay);
 
-        $outcome = $agent->do($this->profile, 'a spec for a Calc');
+        $outcome = $agent->chat('generate', 'a spec for a Calc');
 
         expect($outcome->proposals)->toBe([]);
         expect($outcome->prose)->toContain('ObjectBehavior');
@@ -212,7 +228,7 @@ describe(Agent::class, function () {
     it('surfaces a deterministic refusal as the outcome prose', function (Filesystem $fs) {
         $agent = new Agent($this->config, $fs, new ReplayProvider());
 
-        $outcome = $agent->do($this->profile, 'the steps for features/missing.feature');
+        $outcome = $agent->chat('generate', 'the steps for features/missing.feature');
 
         expect($outcome->proposals)->toBe([]);
         expect($outcome->prose)->toContain('features/missing.feature');
@@ -228,7 +244,7 @@ describe(Agent::class, function () {
         ]);
         $agent = new Agent($this->config, $fs, $replay);
 
-        $agent->do($this->profile, 'change Calc to do something');
+        $agent->chat('generate', 'change Calc to do something');
 
         $context = $replay->requests[0]['messages'][1]->content;
         expect($context)->toContain('Calc.php');            // the tree
@@ -242,7 +258,7 @@ describe(Agent::class, function () {
         ]);
         $agent = new Agent($this->config, $fs, $replay);
 
-        $agent->do($this->profile, 'a spec for a Coupon');
+        $agent->chat('generate', 'a spec for a Coupon');
 
         $captures = array_filter(array_keys($this->written), fn(string $path) => str_ends_with($path, '.phpspec/ai/last-request.json'));
 

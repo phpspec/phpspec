@@ -16,7 +16,6 @@ namespace PhpSpec\Console\Command\Pair;
 
 use Exception;
 use PhpSpec\Ai\Agent\Agent;
-use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
@@ -53,6 +52,9 @@ final class CommandDispatcher
     private readonly SpecRunner $specRunner;
     private readonly RoleState $roleState;
     private readonly Agent $agent;
+
+    /** Resolves prompt files, project overrides first. */
+    private readonly PromptLibrary $prompts;
     private ?AiAssistant $ai = null;
 
     /**
@@ -104,6 +106,7 @@ final class CommandDispatcher
     ) {
         $this->parser = new InputParser();
         $this->filesystem = $filesystem ?? new RealFilesystem();
+        $this->prompts = new PromptLibrary($this->filesystem);
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
         $this->specRunner = $specRunner ?? new SubprocessRunner();
         $this->roleState = $roleState ?? new RoleState();
@@ -234,7 +237,7 @@ final class CommandDispatcher
      */
     private function nextInstruction(): string
     {
-        $coaching = (new PromptLibrary($this->filesystem))->read('next');
+        $coaching = $this->prompts->read('next');
         if (trim($coaching) === '') {
             $coaching = 'Follow outside-in, feature-first TDD — favour feature (story) tests, always a baby step.';
         }
@@ -642,8 +645,7 @@ final class CommandDispatcher
         $original = $instruction;
 
         for ($round = 0; $round < 3; $round++) {
-            // The profile is shipped package code, loaded from the real filesystem.
-            $outcome = $this->agent->do(CommandProfile::load('generate'), $instruction);
+            $outcome = $this->agent->chat('generate', $instruction);
             if ($outcome->proposals === []) {
                 $reason = $outcome->prose !== '' ? $outcome->prose : 'Could not generate anything for that instruction. Try rephrasing.';
                 if ($this->ai !== null) {

@@ -28,7 +28,7 @@ describe(Request::class, function () {
     it('composes system as body, then the shared cycle, then the step instruction', function (Filesystem $fs) {
         $step = new Step(Phase::WriteSteps, null, 'features/adding.feature', 'steps are undefined');
 
-        $request = Request::compose($this->profile, $step, Grounding::empty(), 'the steps', new PromptLibrary($fs));
+        $request = Request::compose($this->profile, $step, Grounding::empty(), 'the steps', new PromptLibrary(null, $fs));
 
         expect($request->system)->toMatch('~THE-BODY.*THE-CYCLE.*STEPS-GUIDE~s');
         expect($request->composedFrom)->toBe(['commands/generate', 'instructions/tdd-cycle', 'instructions/write-steps']);
@@ -37,14 +37,14 @@ describe(Request::class, function () {
     it('names the current step and its because, so the model knows where we are', function (Filesystem $fs) {
         $step = new Step(Phase::WriteSteps, null, null, 'steps are undefined');
 
-        $request = Request::compose($this->profile, $step, Grounding::empty(), 'the steps', new PromptLibrary($fs));
+        $request = Request::compose($this->profile, $step, Grounding::empty(), 'the steps', new PromptLibrary(null, $fs));
 
         expect($request->system)->toContain('write-steps');
         expect($request->system)->toContain('steps are undefined');
     });
 
     it('composes without a step section when no step resolved', function (Filesystem $fs) {
-        $request = Request::compose($this->profile, null, Grounding::empty(), 'help me', new PromptLibrary($fs));
+        $request = Request::compose($this->profile, null, Grounding::empty(), 'help me', new PromptLibrary(null, $fs));
 
         expect($request->system)->toMatch('~THE-BODY.*THE-CYCLE~s');
         expect($request->system)->not()->toContain('STEPS-GUIDE');
@@ -57,22 +57,36 @@ describe(Request::class, function () {
             namedFiles: ['src/TodoList.php' => '<?php class TodoList {}'],
         );
 
-        $request = Request::compose($this->profile, null, $grounding, 'the steps', new PromptLibrary($fs));
+        $request = Request::compose($this->profile, null, $grounding, 'the steps', new PromptLibrary(null, $fs));
 
         expect($request->context)->toMatch('~# Project files.*# src/TodoList\.php.*# Instruction\nthe steps~s');
         expect($request->context)->toContain('class TodoList');
     });
 
     it('keeps the context to just the instruction when the grounding is empty', function (Filesystem $fs) {
-        $request = Request::compose($this->profile, null, Grounding::empty(), 'the steps', new PromptLibrary($fs));
+        $request = Request::compose($this->profile, null, Grounding::empty(), 'the steps', new PromptLibrary(null, $fs));
 
         expect($request->context)->toBe("# Instruction\nthe steps");
+    });
+
+    it('marks overridden prompt names in composedFrom so the capture shows whose words the model heard', function (Filesystem $project, Filesystem $fs) {
+        allow($project->exists())->toReturnUsing(fn(string $p): bool => str_ends_with($p, '.phpspec/prompts/instructions/tdd-cycle.txt'));
+        allow($project->read())->toReturn('OUR-CYCLE');
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturnUsing(fn(string $p): string => str_contains($p, 'write-steps') ? 'STEPS-GUIDE' : '');
+        $profile = new CommandProfile(name: 'generate', body: 'THE-BODY', origin: PhpSpec\Ai\Prompt::PROJECT);
+        $step = new Step(Phase::WriteSteps, null, 'features/adding.feature', 'steps are undefined');
+
+        $request = Request::compose($profile, $step, Grounding::empty(), 'the steps', new PromptLibrary($project, $fs));
+
+        expect($request->system)->toContain('OUR-CYCLE');
+        expect($request->composedFrom)->toBe(['commands/generate (project)', 'instructions/tdd-cycle (project)', 'instructions/write-steps']);
     });
 
     it('renders the journal grounding so polish already done is visible to the model', function (Filesystem $fs) {
         $grounding = new Grounding(polished: ['App\\TodoList', 'App\\TaskQueue']);
 
-        $request = Request::compose($this->profile, null, $grounding, '', new PromptLibrary($fs));
+        $request = Request::compose($this->profile, null, $grounding, '', new PromptLibrary(null, $fs));
 
         expect($request->context)->toContain('# Refactoring journal');
         expect($request->context)->toContain('Already refactored and unchanged since: App\\TodoList, App\\TaskQueue.');
@@ -89,7 +103,7 @@ describe(Request::class, function () {
         );
         $grounding = new Grounding(suite: $suite, recentFeature: 'features/adding.feature');
 
-        $request = Request::compose($this->profile, null, $grounding, '', new PromptLibrary($fs));
+        $request = Request::compose($this->profile, null, $grounding, '', new PromptLibrary(null, $fs));
 
         expect($request->context)->toMatch('~# Suite state.*# Instruction~s');
         expect($request->context)->toContain('FEATURES: 1 features, 1 scenarios, 3 steps (0 failing, 3 undefined)');

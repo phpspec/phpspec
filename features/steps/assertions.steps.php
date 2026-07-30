@@ -72,6 +72,15 @@ then('the output should contain {string} exactly {int} times', function (string 
     }
 });
 
+then('the file {string} should not contain {string}', function (string $path, string $text) {
+    $content = (string) file_get_contents($this->projectDir . '/' . $path);
+    if (str_contains($content, $text)) {
+        throw new \RuntimeException(
+            "Expected \"{$path}\" NOT to contain \"{$text}\".\nContent:\n{$content}",
+        );
+    }
+});
+
 then('the file {string} should contain {string} exactly {int} times', function (string $path, string $text, int $times) {
     $content = (string) file_get_contents($this->projectDir . '/' . $path);
     $found = substr_count($content, $text);

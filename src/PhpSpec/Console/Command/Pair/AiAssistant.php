@@ -77,6 +77,9 @@ final class AiAssistant
 
     private readonly Chooser $chooser;
 
+    /** Resolves prompt files, project overrides first. */
+    private readonly PromptLibrary $prompts;
+
     private readonly RoleState $roleState;
 
     /** Runs specs and returns structured red/green, for run_specs and auto-verify. */
@@ -151,6 +154,7 @@ final class AiAssistant
         ?SpecRunner $specRunner = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
+        $this->prompts = new PromptLibrary($this->filesystem);
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
         $this->roleState = $roleState ?? new RoleState();
         $this->specRunner = $specRunner ?? new SubprocessRunner();
@@ -614,7 +618,7 @@ final class AiAssistant
      */
     private function loadRoleArtifact(PairRole $role): string
     {
-        $text = (new PromptLibrary())->read($role->promptArtifact());
+        $text = $this->prompts->read($role->promptArtifact());
 
         if (trim($text) === '') {
             return $role->aiIsNavigator()
@@ -826,9 +830,9 @@ final class AiAssistant
      * from the real filesystem). Tuning what a tool tells the model is a text
      * edit.
      */
-    private static function toolDescription(string $name): string
+    private function toolDescription(string $name): string
     {
-        return trim((new PromptLibrary())->read('tools/' . $name));
+        return trim($this->prompts->read('tools/' . $name));
     }
 
     /**
@@ -879,7 +883,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'describe',
-            description: self::toolDescription('describe'),
+            description: $this->toolDescription('describe'),
             parameters: [
                 'class_name' => [
                     'type' => 'string',
@@ -921,7 +925,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'add_example',
-            description: self::toolDescription('add_example'),
+            description: $this->toolDescription('add_example'),
             parameters: [
                 'class_name' => [
                     'type' => 'string',
@@ -977,7 +981,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'generate_feature',
-            description: self::toolDescription('generate_feature'),
+            description: $this->toolDescription('generate_feature'),
             parameters: [
                 'feature_name' => [
                     'type' => 'string',
@@ -1007,7 +1011,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'generate_steps',
-            description: self::toolDescription('generate_steps'),
+            description: $this->toolDescription('generate_steps'),
             parameters: [
                 'feature_name' => [
                     'type' => 'string',
@@ -1037,7 +1041,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'write_file',
-            description: self::toolDescription('write_file'),
+            description: $this->toolDescription('write_file'),
             parameters: [
                 'path' => [
                     'type' => 'string',
@@ -1078,7 +1082,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'update_file',
-            description: self::toolDescription('update_file'),
+            description: $this->toolDescription('update_file'),
             parameters: [
                 'path' => [
                     'type' => 'string',
@@ -1124,7 +1128,7 @@ final class AiAssistant
 
         return Tool::make(
             name: 'offer_change',
-            description: self::toolDescription('offer_change'),
+            description: $this->toolDescription('offer_change'),
             parameters: [
                 'path' => [
                     'type' => 'string',
@@ -1225,7 +1229,7 @@ final class AiAssistant
     {
         return Tool::make(
             name: 'suggest_next',
-            description: self::toolDescription('suggest_next'),
+            description: $this->toolDescription('suggest_next'),
             parameters: [
                 'type' => [
                     'type' => 'string',
@@ -1316,7 +1320,7 @@ final class AiAssistant
         // The role-neutral guidance is an editable prompt file (shipped package
         // code, so it loads from the real filesystem); only the project layout
         // is interpolated. Editing the pairing behaviour is a text edit.
-        $guidance = (new PromptLibrary())->read('instructions/pair-guidance');
+        $guidance = $this->prompts->read('instructions/pair-guidance');
         if (trim($guidance) !== '') {
             return strtr($guidance, [
                 '%spec_path%' => ltrim($this->config->getSpecPath(), './'),

@@ -15,7 +15,6 @@
 namespace PhpSpec\Console\Command;
 
 use PhpSpec\Ai\Agent\Agent;
-use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Ai\Agent\Outcome;
 use PhpSpec\Ai\Agent\OutcomePresenter;
 use PhpSpec\Ai\Agent\Proposal;
@@ -91,10 +90,8 @@ final class Generate extends Command
             $output->writeln('');
         }
 
-        // The profile is shipped package code, so it always loads from the real
-        // filesystem; the project filesystem seam only grounds and writes.
         $agent = new Agent($this->config, $this->filesystem, $this->provider);
-        $outcome = $agent->do(CommandProfile::load('generate'), $instruction);
+        $outcome = $agent->chat('generate', $instruction);
 
         if ($forAgent) {
             return $this->generateForAgent($output, $outcome);

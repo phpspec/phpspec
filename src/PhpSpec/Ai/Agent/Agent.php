@@ -31,7 +31,7 @@ use Throwable;
 
 /**
  * @internal
- * The one verb every AI command calls. One `do()` grounds the command per its
+ * The one verb every AI command calls. One `chat()` resolves the command per its
  * manifest, resolves the current TDD step (the user's words first, the suite
  * state second), acts deterministically when the step fully determines the
  * artifact, and otherwise asks the model on the command's declared answer
@@ -76,20 +76,27 @@ final class Agent
         ?PromptLibrary $prompts = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
-        $this->registry = $registry ?? new ToolRegistry($config, $this->filesystem);
-        $this->recorder = $recorder ?? new Recorder($this->filesystem);
         $this->prompts = $prompts ?? new PromptLibrary($this->filesystem);
+        $this->registry = $registry ?? new ToolRegistry($config, $this->filesystem, $this->prompts);
+        $this->recorder = $recorder ?? new Recorder($this->filesystem);
         $this->layout = new FeatureLayout();
     }
 
     /**
-     * Runs one turn of the pipeline for a command and an instruction. A caller
-     * that already knows part of its world (a suite it just ran, the recency it
-     * scanned) passes a seed grounding; the manifest's remaining sections are
-     * filled in around it.
+     * Runs one turn of the pipeline for a named command and an instruction:
+     * the command's profile resolves through the prompt library (project
+     * overrides first). A caller that already knows part of its world (a suite
+     * it just ran, the recency it scanned) passes a seed grounding; the
+     * manifest's remaining sections are filled in around it.
      */
-    public function do(CommandProfile $profile, string $instruction, ?Grounding $seed = null): Outcome
+    public function chat(string $command, string $instruction, ?Grounding $seed = null): Outcome
     {
+        try {
+            $profile = CommandProfile::compose($command, ...$this->prompts->stack('commands/' . $command));
+        } catch (RuntimeException $e) {
+            return new Outcome(null, [], $e->getMessage());
+        }
+
         $grounding = $this->ground($profile, $instruction, $seed);
         $step = $this->refineSubject(Step::resolve($instruction, $grounding));
         $aiConfig = $this->config->getAiConfig();

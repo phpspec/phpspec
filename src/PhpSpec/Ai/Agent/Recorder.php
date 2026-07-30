@@ -43,7 +43,7 @@ final class Recorder
     }
 
     /**
-     * Writes the capture document for one `do()` call. A deterministic run has
+     * Writes the capture document for one `chat()` call. A deterministic run has
      * a null request and response; the step and proposals still tell the story.
      *
      * @param array{provider?: string, model?: string, api_key?: string, effort?: string} $aiConfig

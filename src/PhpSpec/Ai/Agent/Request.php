@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Ai\Agent;
 
+use PhpSpec\Ai\Prompt;
 use PhpSpec\Ai\PromptLibrary;
 
 /**
@@ -46,25 +47,47 @@ final readonly class Request
      */
     public static function compose(CommandProfile $profile, ?Step $step, Grounding $grounding, string $instruction, PromptLibrary $prompts): self
     {
-        $composedFrom = ['commands/' . $profile->name];
+        $composedFrom = [self::mark('commands/' . $profile->name, $profile->origin)];
         $sections = [$profile->body];
 
-        $cycle = trim($prompts->read('instructions/tdd-cycle'));
-        if ($cycle !== '') {
-            $sections[] = $cycle;
-            $composedFrom[] = 'instructions/tdd-cycle';
+        $cycle = self::layer($prompts, 'instructions/tdd-cycle');
+        if ($cycle !== null) {
+            $sections[] = trim($cycle->text);
+            $composedFrom[] = self::mark($cycle->name, $cycle->origin);
         }
 
         if ($step !== null) {
             $header = sprintf('Current step: %s (%s).', $step->phase->value, $step->because);
-            $guide = trim($prompts->read('instructions/' . $step->phase->value));
-            $sections[] = $guide !== '' ? $header . "\n\n" . $guide : $header;
-            if ($guide !== '') {
-                $composedFrom[] = 'instructions/' . $step->phase->value;
+            $guide = self::layer($prompts, 'instructions/' . $step->phase->value);
+            $sections[] = $guide !== null ? $header . "\n\n" . trim($guide->text) : $header;
+            if ($guide !== null) {
+                $composedFrom[] = self::mark($guide->name, $guide->origin);
             }
         }
 
         return new self(implode("\n\n", $sections), self::context($grounding, $instruction), $composedFrom);
+    }
+
+    /**
+     * The winning layer for a name, or null when nothing non-empty resolves.
+     */
+    private static function layer(PromptLibrary $prompts, string $name): ?Prompt
+    {
+        $stack = $prompts->stack($name);
+        if ($stack === [] || trim($stack[0]->text) === '') {
+            return null;
+        }
+
+        return $stack[0];
+    }
+
+    /**
+     * A composedFrom entry: the prompt name, marked when the project spoke, so
+     * the capture log shows whose words the model heard.
+     */
+    private static function mark(string $name, string $origin): string
+    {
+        return $origin === Prompt::PROJECT ? $name . ' (project)' : $name;
     }
 
     /**

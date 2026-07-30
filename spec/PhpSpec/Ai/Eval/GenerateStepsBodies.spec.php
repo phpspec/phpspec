@@ -1,7 +1,6 @@
 <?php
 
 use PhpSpec\Ai\Agent\Agent;
-use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
 
@@ -42,7 +41,7 @@ describe('E13 generate: step bodies come from the model when the scaffold is com
         $replay = ReplayProvider::fromRecording($rec);
 
         $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
-        $outcome = $agent->do(CommandProfile::load('generate'), $rec['instruction']);
+        $outcome = $agent->chat('generate', $rec['instruction']);
 
         $context = $replay->requests[0]['messages'][1]->content;
         expect($context)->toContain('pending()');                 // the current steps file reached the model
