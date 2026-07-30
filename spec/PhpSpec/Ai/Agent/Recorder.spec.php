@@ -25,6 +25,55 @@ describe(Recorder::class, function () {
         });
     });
 
+    it('appends each turn of a conversation to the session capture', function (Filesystem $fs) {
+        $store = [];
+        $stored = &$store;
+        allow($fs->exists())->toReturnUsing(function (string $path) use (&$stored): bool {
+            return isset($stored[$path]);
+        });
+        allow($fs->read())->toReturnUsing(function (string $path) use (&$stored): string {
+            return $stored[$path] ?? '';
+        });
+        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$stored) {
+            $stored[$path] = $content;
+        });
+        $recorder = new Recorder($fs, '/proj');
+
+        $recorder->captureSession('navigator', 'first ask', null, null, [], new Response('first answer'), [], [], fresh: true);
+        $recorder->captureSession('navigator', 'second ask', null, null, [], new Response('second answer'), [], [], fresh: false);
+
+        $doc = json_decode($store['/proj/.phpspec/ai/last-session.json'] ?? '', true);
+
+        expect($doc['command'])->toBe('navigator');
+        expect($doc['turns'])->toHaveLength(2);
+        expect($doc['turns'][0]['instruction'])->toBe('first ask');
+        expect($doc['turns'][1]['response']['text'])->toBe('second answer');
+    });
+
+    it('starts the session capture over when the conversation is fresh', function (Filesystem $fs) {
+        $store = [];
+        $stored = &$store;
+        allow($fs->exists())->toReturnUsing(function (string $path) use (&$stored): bool {
+            return isset($stored[$path]);
+        });
+        allow($fs->read())->toReturnUsing(function (string $path) use (&$stored): string {
+            return $stored[$path] ?? '';
+        });
+        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$stored) {
+            $stored[$path] = $content;
+        });
+        $recorder = new Recorder($fs, '/proj');
+
+        $recorder->captureSession('navigator', 'old session', null, null, [], new Response('stale'), [], [], fresh: true);
+        $recorder->captureSession('driver', 'new session', null, null, [], new Response('fresh'), [], [], fresh: true);
+
+        $doc = json_decode($store['/proj/.phpspec/ai/last-session.json'] ?? '', true);
+
+        expect($doc['command'])->toBe('driver');
+        expect($doc['turns'])->toHaveLength(1);
+        expect($doc['turns'][0]['instruction'])->toBe('new session');
+    });
+
     it('captures every round of a multi-round turn', function (Filesystem $fs) {
         $recorder = new Recorder($fs, '/proj');
 

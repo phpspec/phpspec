@@ -31,6 +31,8 @@ final class Recorder
 {
     private const CAPTURE_FILE = '.phpspec/ai/last-request.json';
 
+    private const SESSION_FILE = '.phpspec/ai/last-session.json';
+
     private readonly Filesystem $filesystem;
 
     /**
@@ -64,6 +66,38 @@ final class Recorder
             $this->document($command, $instruction, $step, $request, $aiConfig, $response, $proposals, $rounds),
             JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
         ));
+    }
+
+    /**
+     * Appends one conversational turn to the session capture, so a whole pair
+     * session is replayable, not only its last exchange. A fresh conversation
+     * starts the file over; the turn document is the same shape `capture()`
+     * writes, keyed under "turns".
+     *
+     * @param array{provider?: string, model?: string, api_key?: string, effort?: string} $aiConfig
+     * @param list<Proposal> $proposals
+     * @param list<array{response: Response, tool_results?: array<string, mixed>}> $rounds
+     */
+    public function captureSession(string $command, string $instruction, ?Step $step, ?Request $request, array $aiConfig, ?Response $response, array $proposals = [], array $rounds = [], bool $fresh = false): void
+    {
+        $file = ($this->baseDir ?? (getcwd() ?: '.')) . '/' . self::SESSION_FILE;
+        $dir = dirname($file);
+        if (!$this->filesystem->exists($dir)) {
+            $this->filesystem->mkdir($dir);
+        }
+
+        $session = ['command' => $command, 'turns' => []];
+        if (!$fresh && $this->filesystem->exists($file)) {
+            $existing = json_decode($this->filesystem->read($file), true);
+            if (is_array($existing) && isset($existing['turns']) && is_array($existing['turns'])) {
+                $session = $existing;
+            }
+        }
+
+        $session['command'] = $command;
+        $session['turns'][] = $this->document($command, $instruction, $step, $request, $aiConfig, $response, $proposals, $rounds);
+
+        $this->filesystem->write($file, (string) json_encode($session, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 
     /**

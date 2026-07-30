@@ -20,6 +20,7 @@ use PhpSpec\Ai\Contracts\ToolExecutor;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\RefactorJournal;
+use PhpSpec\Ai\Response;
 use PhpSpec\Ai\TreeScanner;
 use PhpSpec\CodeGeneration\FeatureLayout;
 use PhpSpec\Configuration;
@@ -62,6 +63,9 @@ final class Agent
 
     /** The conversation's standing project map, built once per session. */
     private ?string $projectMap = null;
+
+    /** Whether this session's first turn already reset the session capture. */
+    private bool $sessionCaptured = false;
 
     /**
      * @param Configuration $config the project configuration
@@ -206,7 +210,7 @@ final class Agent
 
                 $handBack = $this->executor->turnComplete($response);
                 if ($handBack !== null) {
-                    $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], $response, [], $rounds);
+                    $this->captureTurn($profile, $instruction, $step, $request, $aiConfig, $response, $rounds);
 
                     return new Outcome($step, [], $handBack, $this->executor->lastSuggestion() ?? []);
                 }
@@ -214,7 +218,7 @@ final class Agent
         } catch (Throwable $e) {
             // A live provider failure (bad key, HTTP error, an unenforceable
             // toolChoice) becomes prose for the human, never a crash.
-            $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], null, [], $rounds);
+            $this->captureTurn($profile, $instruction, $step, $request, $aiConfig, null, $rounds);
 
             return $this->failedAsk($step, $e->getMessage());
         }
@@ -224,7 +228,7 @@ final class Agent
             if ($ended) {
                 $rounds[] = ['response' => $response];
             }
-            $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], $response, [], $rounds);
+            $this->captureTurn($profile, $instruction, $step, $request, $aiConfig, $response, $rounds);
 
             return new Outcome(
                 $step,
@@ -268,6 +272,27 @@ final class Agent
         }
 
         return new Outcome($step, $proposals, trim($response->text), $data);
+    }
+
+    /**
+     * Captures one turn: the last-request debug file always, and, when a live
+     * session is running, the turn is appended to the session capture so the
+     * whole conversation is replayable. The session's first turn starts the
+     * file over.
+     *
+     * @param array{provider?: string, model?: string, api_key?: string, effort?: string}|null $aiConfig
+     * @param list<array{response: Response, tool_results?: array<string, mixed>}> $rounds
+     */
+    private function captureTurn(CommandProfile $profile, string $instruction, ?Step $step, Request $request, ?array $aiConfig, ?Response $response, array $rounds): void
+    {
+        $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], $response, [], $rounds);
+
+        if ($this->executor === null) {
+            return;
+        }
+
+        $this->recorder->captureSession($profile->name, $instruction, $step, $request, $aiConfig ?? [], $response, [], $rounds, !$this->sessionCaptured);
+        $this->sessionCaptured = true;
     }
 
     /**
