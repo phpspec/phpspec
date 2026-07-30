@@ -34,6 +34,7 @@ final class Dot extends AbstractFormatter
     private int $subtotalWidth = 3;
     private int $col = 0;
     private int $total = 0;
+    private bool $hasResults = false;
 
     /**
      * Calculates line widths and delegates to the parent format pipeline.
@@ -58,7 +59,6 @@ final class Dot extends AbstractFormatter
      */
     public function begin(): void
     {
-        $this->output->writeln('');
     }
 
     /**
@@ -66,6 +66,12 @@ final class Dot extends AbstractFormatter
      */
     public function printResult(Results $result): void
     {
+        if (!$this->hasResults) {
+            $this->output->writeln('Once you spec, you never go back!');
+            $this->output->writeln('');
+            $this->hasResults = true;
+        }
+
         $this->printDots($result);
     }
 
@@ -74,6 +80,11 @@ final class Dot extends AbstractFormatter
      */
     public function end(SuiteResult $results): void
     {
+        if (count($results->getResults()) === 0) {
+            $this->output->writeln('No specs found.');
+            return;
+        }
+
         if ($this->col > 0) {
             $this->printSubtotal();
         }
@@ -253,10 +264,6 @@ final class Dot extends AbstractFormatter
         }
         return $count;
     }
-
-
-
-
 
     /**
      * Outputs notices with surrounding source code context.

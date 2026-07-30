@@ -33,7 +33,7 @@ describe(Run::class, function () {
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
             $tester->execute(['--format' => 'dot']);
             $output = $tester->getDisplay();
-            expect($output)->toContain('0 specs');
+            expect($output)->toContain('No specs found');
         });
 
         it('runs with tap format', function (Filesystem $execFs) {
@@ -335,7 +335,7 @@ describe(Run::class, function () {
             $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
             $tester->execute([]);
             $output = $tester->getDisplay();
-            expect($output)->toContain('0 specs');
+            expect($output)->toContain('No specs found');
         });
 
         it('runs with random order without explicit seed', function (Filesystem $execFs) {
