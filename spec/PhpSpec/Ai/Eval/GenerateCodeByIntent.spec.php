@@ -1,7 +1,6 @@
 <?php
 
 use PhpSpec\Ai\Agent\Agent;
-use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
 
@@ -26,7 +25,7 @@ describe('E4 generate: code by intent', function () {
         $replay = ReplayProvider::fromRecording($rec);
 
         $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
-        $outcome = $agent->do(CommandProfile::load('generate'), $rec['instruction']);
+        $outcome = $agent->chat('generate', $rec['instruction']);
 
         expect($outcome->proposals[0]->path)->toMatch('~^src/.*\.php$~');        // under src/
         expect($outcome->proposals[0]->path)->not()->toEndWith('.spec.php');     // not a spec

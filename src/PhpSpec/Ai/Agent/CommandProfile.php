@@ -14,8 +14,7 @@
 
 namespace PhpSpec\Ai\Agent;
 
-use PhpSpec\Ai\PromptLibrary;
-use PhpSpec\Filesystem;
+use PhpSpec\Ai\Prompt;
 use RuntimeException;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
@@ -38,6 +37,7 @@ final readonly class CommandProfile
      * @param list<string> $grounding the grounding sections to build (e.g. recency, tree)
      * @param float|null $temperature sampling temperature, when the command pins one
      * @param int|null $maxTokens per-call output-token ceiling, when pinned
+     * @param string $origin where the winning prompt layer came from (Prompt::PROJECT or Prompt::SHIPPED)
      */
     public function __construct(
         public string $name,
@@ -47,22 +47,28 @@ final readonly class CommandProfile
         public array $grounding = [],
         public ?float $temperature = null,
         public ?int $maxTokens = null,
+        public string $origin = Prompt::SHIPPED,
     ) {}
 
     /**
-     * Loads a command's profile from its prompt file, parsing the optional YAML
-     * frontmatter into the manifest fields.
+     * Composes a command's profile from its prompt layers, nearest first: the
+     * body is the first layer's prose, and each manifest key comes from the
+     * first layer whose frontmatter declares it, so a prose-only project
+     * override keeps the shipped machine contract.
      *
-     * @throws RuntimeException when the file is missing or the manifest is invalid
+     * @throws RuntimeException when no layer exists or the manifest is invalid
      */
-    public static function load(string $name, ?Filesystem $filesystem = null): self
+    public static function compose(string $name, Prompt ...$layers): self
     {
-        $text = (new PromptLibrary($filesystem))->read('commands/' . $name);
-        if (trim($text) === '') {
+        if ($layers === []) {
             throw new RuntimeException(sprintf('Unknown AI command "%s": no "commands/%s.txt" prompt found.', $name, $name));
         }
 
-        [$meta, $body] = self::split($text, $name);
+        [$meta, $body] = self::split($layers[0]->text, $name);
+        foreach (array_slice($layers, 1) as $layer) {
+            [$layerMeta] = self::split($layer->text, $name);
+            $meta += $layerMeta;
+        }
 
         $answer = $meta['answer'] ?? 'prose';
         if (!in_array($answer, ['tool_call', 'prose'], true)) {
@@ -77,6 +83,7 @@ final readonly class CommandProfile
             self::names($meta['grounding'] ?? []),
             isset($meta['temperature']) ? (float) $meta['temperature'] : null,
             isset($meta['max_tokens']) ? (int) $meta['max_tokens'] : null,
+            $layers[0]->origin,
         );
     }
 

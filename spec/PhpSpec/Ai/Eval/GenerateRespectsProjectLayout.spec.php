@@ -1,7 +1,6 @@
 <?php
 
 use PhpSpec\Ai\Agent\Agent;
-use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
@@ -37,7 +36,7 @@ describe('E10 generate: inferred paths respect the project layout', function () 
     it('places inferred code under the configured src_path with the PSR-4 prefix stripped', function (Filesystem $fs) use ($agentFor, $editCall) {
         $agent = $agentFor($fs, "src_path: lib\npsr4_prefix: App\nai:\n  provider: google\n  api_key: x\n", $editCall('src/App/Coupon.php', '<?php // impl'));
 
-        $outcome = $agent->do(CommandProfile::load('generate'), 'implement the apply method on App\\Coupon');
+        $outcome = $agent->chat('generate', 'implement the apply method on App\\Coupon');
 
         expect($outcome->proposals[0]->path)->toBe('lib/Coupon.php');
     });
@@ -45,7 +44,7 @@ describe('E10 generate: inferred paths respect the project layout', function () 
     it('places an inferred spec under the configured spec_path, mirroring the namespace', function (Filesystem $fs) use ($agentFor, $editCall) {
         $agent = $agentFor($fs, "spec_path: test/spec\nai:\n  provider: google\n  api_key: x\n", $editCall('spec/Whatever.spec.php', "<?php\ndescribe('Coupon', fn() => null);"));
 
-        $outcome = $agent->do(CommandProfile::load('generate'), 'a spec for App\\Coupon');
+        $outcome = $agent->chat('generate', 'a spec for App\\Coupon');
 
         expect($outcome->proposals[0]->path)->toBe('test/spec/App/Coupon.spec.php');
     });
@@ -56,7 +55,7 @@ describe('E10 generate: inferred paths respect the project layout', function () 
         ]);
         $agent = $agentFor($fs, "features_path: test/features\nai:\n  provider: google\n  api_key: x\n", $replay);
 
-        $outcome = $agent->do(CommandProfile::load('generate'), 'a feature for adding a task');
+        $outcome = $agent->chat('generate', 'a feature for adding a task');
 
         expect($replay->requests)->toHaveLength(1);
         expect($outcome->proposals[0]->path)->toMatch('~^test/features/.+\.feature$~');

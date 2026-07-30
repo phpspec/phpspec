@@ -19,6 +19,7 @@ use PhpSpec\Ai\AiTools;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Contracts\ToolInterface;
 use PhpSpec\Ai\Message;
+use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\SpecSubprocess;
 use PhpSpec\Ai\Tool;
@@ -63,6 +64,8 @@ final class RefactorAgent
     /** @var (callable(string, string, string): bool)|null */
     private $confirm;
 
+    private readonly PromptLibrary $prompts;
+
     /**
      * @param callable(string): array{0: int, 1: string}|null $specRunner runs the spec file; defaults to a subprocess
      * @param (callable(string, string, string): bool)|null $confirm asked with (technique, description, diff) before the write; null applies without asking
@@ -74,10 +77,12 @@ final class RefactorAgent
         private readonly ?string $effort = null,
         ?callable $specRunner = null,
         ?callable $confirm = null,
+        ?PromptLibrary $prompts = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->specRunner = $specRunner ?? SpecSubprocess::run(...);
         $this->confirm = $confirm;
+        $this->prompts = $prompts ?? new PromptLibrary($this->filesystem);
     }
 
     /**
@@ -307,14 +312,13 @@ final class RefactorAgent
     }
 
     /**
-     * The refactor command's manifest, or null when its prompt file cannot be
-     * loaded (prompts are shipped package code, so they load from the real
-     * filesystem).
+     * The refactor command's manifest resolved through the prompt library
+     * (project overrides first), or null when no prompt file exists.
      */
     private function profile(): ?CommandProfile
     {
         try {
-            return CommandProfile::load('refactor');
+            return CommandProfile::compose('refactor', ...$this->prompts->stack('commands/refactor'));
         } catch (RuntimeException) {
             return null;
         }

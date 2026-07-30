@@ -15,7 +15,6 @@
 namespace PhpSpec\Console\Command;
 
 use PhpSpec\Ai\Agent\Agent;
-use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Ai\Agent\Grounding;
 use PhpSpec\Ai\Agent\Outcome;
 use PhpSpec\Ai\Agent\OutcomePresenter;
@@ -257,7 +256,7 @@ final class Next extends Command
         }
 
         $agent = new Agent($this->config, $this->filesystem, $this->provider);
-        $outcome = $agent->do(CommandProfile::load('next'), '', $grounding);
+        $outcome = $agent->chat('next', '', $grounding);
 
         $reason = (string) ($outcome->data['reason'] ?? '');
 

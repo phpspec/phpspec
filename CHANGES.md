@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+ - Any AI prompt can be overridden per project under .phpspec/prompts/; prose-only command overrides inherit the shipped tools and params, and the capture log marks overridden names
+
+### Changed
+ - The pipeline's one verb is `Agent::chat(command, instruction)`; commands pass a name and the agent resolves the manifest through its own prompt library
+
+## [Unreleased]
+
 ### Changed
  - End-of-run detail is grouped into Failures, Errors, Warnings, Deprecations, and Skipped sections, and the dot formatter tells the same detailed story as pretty
  - A failure reads as an aligned pair labeled by its matcher (expected / to contain), long multiline values capped head[...]tail with newlines escaped

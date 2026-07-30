@@ -1,7 +1,6 @@
 <?php
 
 use PhpSpec\Ai\Agent\Agent;
-use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
 
@@ -28,7 +27,7 @@ describe('E3 generate: spec by intent', function () {
         $replay = ReplayProvider::fromRecording($rec);
 
         $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
-        $outcome = $agent->do(CommandProfile::load('generate'), $rec['instruction']);
+        $outcome = $agent->chat('generate', $rec['instruction']);
 
         expect($outcome->proposals[0]->path)->toMatch('~^spec/.*\.spec\.php$~'); // a spec, at a spec path
         expect($outcome->proposals[0]->path)->toContain('Coupon');               // the class from the instruction

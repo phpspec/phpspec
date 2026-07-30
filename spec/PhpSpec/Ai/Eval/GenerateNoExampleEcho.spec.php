@@ -1,7 +1,6 @@
 <?php
 
 use PhpSpec\Ai\Agent\Agent;
-use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
 
@@ -28,7 +27,7 @@ describe('E7 generate: the prompt example never leaks into the path', function (
         $replay = ReplayProvider::fromRecording($rec);
 
         $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
-        $outcome = $agent->do(CommandProfile::load('generate'), $rec['instruction']);
+        $outcome = $agent->chat('generate', $rec['instruction']);
 
         expect($outcome->proposals[0]->path)->toContain('Coupon');               // the instruction's subject
         expect($outcome->proposals[0]->path)->not()->toContain('Calculator');    // not the prompt example

@@ -1,7 +1,6 @@
 <?php
 
 use PhpSpec\Ai\Agent\Agent;
-use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
 
@@ -29,7 +28,7 @@ describe('E2 generate: feature by intent', function () {
         $replay = ReplayProvider::fromRecording($rec);
 
         $agent = new Agent(new Configuration('.', $fs), $fs, $replay);
-        $outcome = $agent->do(CommandProfile::load('generate'), $rec['instruction']);
+        $outcome = $agent->chat('generate', $rec['instruction']);
 
         // Assert on the value (not a boolean derived from it) so a failure carries
         // the actual path into --format=agent, keeping the JSON actionable.
