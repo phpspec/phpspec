@@ -16,11 +16,11 @@ namespace PhpSpec\Console\Command\Pair;
 
 use PhpSpec\Ai\Agent\ProjectPath;
 use PhpSpec\Ai\Agent\Proposal;
+use PhpSpec\Ai\Agent\Transcript;
 use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\AiTools;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Contracts\ToolInterface;
-use PhpSpec\Ai\Message;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\Response;
@@ -48,9 +48,6 @@ use Throwable;
  */
 final class AiAssistant
 {
-    /** @var Message[] */
-    private array $messages = [];
-
     /** @var array<string, ToolInterface> */
     private array $tools = [];
 
@@ -85,17 +82,14 @@ final class AiAssistant
     /** Runs specs and returns structured red/green, for run_specs and auto-verify. */
     private readonly SpecRunner $specRunner;
 
-    /** Keeps the message history bounded, fresh, and focused across turns. */
-    private readonly ConversationWindow $window;
+    /** The session's conversation with the model, windowed across turns. */
+    private readonly Transcript $transcript;
 
     /** Role-neutral guidance (DSL, tools, project conventions), cached once. */
     private string $baseGuidance = '';
 
     /** The scanned project context, cached once so /swap never re-scans. */
     private string $projectContext = '';
-
-    /** Index of the system message in the history, so /swap can rebuild only it. */
-    private int $systemIndex = 0;
 
     /** Whether the AI has written its one artifact this turn (while driving). */
     private bool $artifactWrittenThisHandle = false;
@@ -158,7 +152,7 @@ final class AiAssistant
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
         $this->roleState = $roleState ?? new RoleState();
         $this->specRunner = $specRunner ?? new SubprocessRunner();
-        $this->window = new ConversationWindow();
+        $this->transcript = new Transcript();
     }
 
     /**
@@ -183,9 +177,9 @@ final class AiAssistant
             $this->postArtifactRounds = 0;
             $this->lastSuggestion = null;
             $this->offerResolvedThisHandle = false;
-            $this->messages = $this->window->apply($this->messages);
+            $this->transcript->beginTurn();
             $this->injectSituation($situation);
-            $this->messages[] = Message::user($input);
+            $this->transcript->say($input);
 
             $text = self::withoutMachineSuggestion($this->runLoop());
 
@@ -239,7 +233,7 @@ final class AiAssistant
         }
 
         $report = SituationReport::fromSummary($situation, $this->roleState->current());
-        $this->messages[] = Message::user("[Current situation]\n" . $report->render());
+        $this->transcript->situate($report->render());
     }
 
     /**
@@ -292,7 +286,7 @@ final class AiAssistant
         }
 
         $report = SituationReport::fromOutcome($outcome, $this->roleState->current());
-        $this->messages[] = Message::user("[Auto-verify after your change]\n" . $report->render());
+        $this->transcript->say("[Auto-verify after your change]\n" . $report->render());
     }
 
     /**
@@ -315,12 +309,9 @@ final class AiAssistant
         }
 
         for ($turn = 0; $turn < self::MAX_TURNS; $turn++) {
-            $response = $this->provider->chat($this->messages, ['tools' => $this->advertisedTools()] + $options);
+            $response = $this->provider->chat($this->transcript->messages(), ['tools' => $this->advertisedTools()] + $options);
 
-            $this->messages[] = Message::assistant(
-                $response->text,
-                $response->toolCalls ?: null,
-            );
+            $this->transcript->heard($response);
 
             if (!$response->hasToolCalls()) {
                 PairLogger::log('RESPONSE', trim($response->text));
@@ -330,8 +321,7 @@ final class AiAssistant
             $hadArtifact = $this->artifactWrittenThisHandle;
 
             foreach ($response->toolCalls as $toolCall) {
-                $result = $this->executeTool($toolCall);
-                $this->messages[] = Message::toolResult($toolCall->id, $result);
+                $this->transcript->observed($toolCall->id, $this->executeTool($toolCall));
             }
 
             $this->autoVerifyIfWritten($hadArtifact);
@@ -593,18 +583,20 @@ final class AiAssistant
         $this->baseGuidance = $this->buildBaseGuidance();
         $this->projectContext = $this->buildProjectContext();
 
-        $this->messages[] = $this->buildSystemMessage();
-        $this->systemIndex = array_key_last($this->messages);
+        $this->orientTranscript();
     }
 
     /**
-     * Builds the system message for the current role: the role contract artifact
+     * Seats the system prompt for the current role: the role contract artifact
      * first, then the role-neutral guidance and the scanned project context.
      */
-    private function buildSystemMessage(): Message
+    private function orientTranscript(): void
     {
-        return Message::system(
-            $this->loadRoleArtifact($this->roleState->current())
+        $role = $this->roleState->current();
+
+        $this->transcript->orient(
+            $role->promptArtifact(),
+            $this->loadRoleArtifact($role)
             . "\n\n" . $this->baseGuidance
             . "\n\n" . $this->projectContext,
         );
@@ -630,8 +622,8 @@ final class AiAssistant
     }
 
     /**
-     * Rebuilds only the system message for the current role after a /swap. The
-     * cached base guidance and project context are reused, so swapping is cheap.
+     * Re-orients the transcript for the current role after a /swap. The cached
+     * base guidance and project context are reused, so swapping is cheap.
      */
     public function reloadPrompt(): void
     {
@@ -639,7 +631,7 @@ final class AiAssistant
             return;
         }
 
-        $this->messages[$this->systemIndex] = $this->buildSystemMessage();
+        $this->orientTranscript();
     }
 
     /**

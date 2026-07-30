@@ -3,7 +3,7 @@
 use PhpSpec\Ai\Message;
 use PhpSpec\Ai\Role;
 use PhpSpec\Ai\ToolCall;
-use PhpSpec\Console\Command\Pair\ConversationWindow;
+use PhpSpec\Ai\Agent\ConversationWindow;
 
 describe(ConversationWindow::class, function () {
 
