@@ -4,17 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [9.0.0-beta.16](https://github.com/phpspec/phpspec/compare/9.0.0-beta.15...9.0.0-beta.16)
 
 ### Added
  - Any AI prompt can be overridden per project under .phpspec/prompts/; prose-only command overrides inherit the shipped tools and params, and the capture log marks overridden names
+ - `--format=agent` on every command: `next` emits its suggestion with the exact command that acts on it, `generate` applies and emits receipts, `describe`/`exemplify` accept it as the canonical spelling of `--agent` (now a deprecated alias)
 
 ### Changed
  - The pipeline's one verb is `Agent::chat(command, instruction)`; commands pass a name and the agent resolves the manifest through its own prompt library
-
-## [Unreleased]
-
-### Changed
  - End-of-run detail is grouped into Failures, Errors, Warnings, Deprecations, and Skipped sections, and the dot formatter tells the same detailed story as pretty
  - A failure reads as an aligned pair labeled by its matcher (expected / to contain), long multiline values capped head[...]tail with newlines escaped
  - Offered-code diffs show three unchanged lines around each change with one elision line between distant stretches, never the whole file
@@ -22,11 +19,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
  - The pretty formatter reports only the failed expectation; passing ones before it no longer print a bogus sentinel Failure line
  - Failure headlines clip multiline or overlong values to a first-line excerpt; the full value appears once, under expected/got
-
-### Added
- - `--format=agent` on every command: `next` emits its suggestion with the exact command that acts on it, `generate` applies and emits receipts, `describe`/`exemplify` accept it as the canonical spelling of `--agent` (now a deprecated alias)
-
-### Fixed
  - Two step definitions sharing a title now error at load, naming both locations; matching is keyword-blind, so the duplicate could only shadow silently
  - A step used twice in a scenario generates one definition, not two
  - AI-written steps respect the vocabulary too: content redefining a title another steps file owns is rejected with a pointer to reuse it, and scaffolds skip titles defined elsewhere
