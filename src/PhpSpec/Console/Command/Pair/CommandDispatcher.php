@@ -123,8 +123,7 @@ final class CommandDispatcher
         if ($aiConfig !== null) {
             try {
                 $provider = ProviderFactory::create($aiConfig);
-                $model = $aiConfig['model'] ?? ProviderFactory::defaultModel($aiConfig['provider']);
-                $this->ai = new AiAssistant($provider, $this->config, $this->output, $model, $this->filesystem, $this->interactive, $this->extensionLoader, $this->chooser, $this->roleState);
+                $this->ai = new AiAssistant($provider, $this->config, $this->output, $this->filesystem, $this->interactive, $this->extensionLoader, $this->chooser, $this->roleState);
             } catch (Exception $e) {
                 // Any provider failure — an unknown name, a missing package, a bad
                 // key — leaves AI unavailable rather than crashing the session.
@@ -178,8 +177,10 @@ final class CommandDispatcher
             return self::CONTINUE;
         }
 
+        // The next turn re-orients the transcript for the new role by itself:
+        // the agent seats the other command's system prompt when it sees the
+        // command name change.
         $role = $this->roleState->swap();
-        $this->ai->reloadPrompt();
 
         $console->writeln('  <fg=cyan>' . $role->contractLine() . '</>');
 

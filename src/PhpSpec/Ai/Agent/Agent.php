@@ -26,6 +26,7 @@ use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
+use PhpSpec\StoryBDD\StepVocabulary;
 use RuntimeException;
 use Throwable;
 
@@ -58,6 +59,9 @@ final class Agent
     private readonly PromptLibrary $prompts;
 
     private readonly FeatureLayout $layout;
+
+    /** The conversation's standing project map, built once per session. */
+    private ?string $projectMap = null;
 
     /**
      * @param Configuration $config the project configuration
@@ -153,8 +157,9 @@ final class Agent
         $transcript = $this->transcript ?? new Transcript();
         $transcript->beginTurn();
         if (!$transcript->isOrientedFor($profile->name)) {
-            $transcript->orient($profile->name, $request->system);
+            $transcript->orient($profile->name, $this->orientation($request->system));
         }
+        $this->situate($transcript, $step, $grounding);
         $transcript->say($request->context);
         $this->executor?->beginTurn();
 
@@ -263,6 +268,119 @@ final class Agent
         }
 
         return new Outcome($step, $proposals, trim($response->text), $data);
+    }
+
+    /**
+     * The system text for a transcript's orient slot: the composed prompt with
+     * the project layout tokens resolved, plus, for a persistent conversation,
+     * the standing project map (fresh state rides the per-turn situation).
+     */
+    private function orientation(string $system): string
+    {
+        if (str_contains($system, '%')) {
+            $roots = $this->layout->roots($this->filesystem);
+            $system = strtr($system, [
+                '%spec_path%' => ltrim($this->config->getSpecPath(), './'),
+                '%spec_suffix%' => $this->config->getSpecSuffix(),
+                '%src_path%' => ltrim($this->config->getSrcPath(), './'),
+                '%features_path%' => $roots['features'],
+                '%steps_path%' => $roots['steps'],
+            ]);
+        }
+
+        if ($this->transcript === null) {
+            return $system;
+        }
+
+        $map = $this->projectMap();
+
+        return $map === '' ? $system : $system . "\n\n" . $map;
+    }
+
+    /**
+     * Grounds a conversational turn in the live suite state and the resolved
+     * step, as the one fresh "[Current situation]" the window keeps.
+     */
+    private function situate(Transcript $transcript, ?Step $step, Grounding $grounding): void
+    {
+        if ($this->transcript === null || $grounding->suite === null) {
+            return;
+        }
+
+        $report = SituationReport::fromSummary($grounding->suite)->render();
+        if ($step !== null) {
+            $report .= sprintf("\nCurrent step: %s (%s).", $step->phase->value, $step->because);
+        }
+
+        $transcript->situate($report);
+    }
+
+    /**
+     * The conversation's standing project map: the source, spec, and feature
+     * trees plus the step titles the suite already owns, built once per
+     * session for the orient slot.
+     */
+    private function projectMap(): string
+    {
+        if ($this->projectMap !== null) {
+            return $this->projectMap;
+        }
+
+        $cwd = getcwd() ?: '.';
+        $scanner = new TreeScanner($this->filesystem);
+        $sections = [];
+
+        $srcPath = ltrim($this->config->getSrcPath(), './');
+        $srcTree = $scanner->scan($cwd . '/' . $srcPath, 3);
+        if ($srcTree !== '') {
+            $sections[] = "## Source files ($srcPath/)\n$srcTree";
+        }
+
+        $specPath = ltrim($this->config->getSpecPath(), './');
+        $specTree = $scanner->scan($cwd . '/' . $specPath, 3);
+        if ($specTree !== '') {
+            $sections[] = "## Spec files ($specPath/)\n$specTree";
+        }
+
+        $featuresDir = $cwd . '/' . trim($this->config->getFeaturesPath(), './');
+        if ($this->filesystem->exists($featuresDir) && $this->filesystem->isDir($featuresDir)) {
+            $featTree = $scanner->scan($featuresDir, 3);
+            if ($featTree !== '') {
+                $sections[] = "## Feature files\n$featTree";
+            }
+        }
+
+        $titles = $this->stepTitles($featuresDir);
+        if ($titles !== '') {
+            $sections[] = "## Existing step definitions\nThese steps are already defined, reuse them in new scenarios:\n$titles";
+        }
+
+        $this->projectMap = $sections === [] ? '' : "# Project file tree\n\n" . implode("\n\n", $sections);
+
+        return $this->projectMap;
+    }
+
+    /**
+     * The step titles the suite already owns, grouped by their file, from the
+     * step vocabulary (titles are keyword-blind: each registers once).
+     */
+    private function stepTitles(string $featuresRoot): string
+    {
+        $byFile = [];
+        foreach ((new StepVocabulary($this->filesystem))->definedTitles($featuresRoot) as $title => $file) {
+            $byFile[basename($file)][] = $title;
+        }
+
+        $lines = [];
+        foreach ($byFile as $file => $titles) {
+            $lines[] = "# $file";
+            foreach ($titles as $title) {
+                $lines[] = "- $title";
+            }
+            $lines[] = '';
+        }
+
+        return implode("\n", $lines);
     }
 
     /**

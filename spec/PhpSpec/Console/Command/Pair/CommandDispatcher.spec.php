@@ -516,7 +516,7 @@ describe(CommandDispatcher::class, function () {
                     return new Response('Suggested the next scenario.');
                 };
 
-                $ai = new AiAssistant($provider, $this->config, $this->pairOutput, 'test-model', $fs, false, null, new Chooser($this->pairOutput, false), $roleState, $this->specRunner);
+                $ai = new AiAssistant($provider, $this->config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), $roleState, $this->specRunner);
                 $dispatcher = new CommandDispatcher(
                     new SpecGenerator('spec', $fs),
                     new ClassGenerator('src', $fs),
@@ -648,7 +648,7 @@ describe(CommandDispatcher::class, function () {
             };
 
             $config = new Configuration('.', $fs);
-            $assistant = new AiAssistant($provider, $config, $this->pairOutput, 'test-model', $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
+            $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
                 new ClassGenerator('src', $fs),
@@ -690,7 +690,7 @@ describe(CommandDispatcher::class, function () {
             };
 
             $config = new Configuration('.', $fs);
-            $assistant = new AiAssistant($provider, $config, $this->pairOutput, 'test-model', $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
+            $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
                 new ClassGenerator('src', $fs),
@@ -732,7 +732,7 @@ describe(CommandDispatcher::class, function () {
             };
 
             $config = new Configuration('.', $fs);
-            $assistant = new AiAssistant($provider, $config, $this->pairOutput, 'test-model', $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
+            $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
                 new ClassGenerator('src', $fs),

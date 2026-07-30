@@ -12,7 +12,7 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Console\Command\Pair;
+namespace PhpSpec\Ai\Agent;
 
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
@@ -20,39 +20,38 @@ use PhpSpec\Console\Command\Run\SuiteSummary;
 /**
  * @internal
  * The plain-text grounding a turn hands the AI: the suite's real red/green
- * state, the failing and pending examples with their errors, and a one-line
- * reminder of the role being played. ANSI-free and compact, it is the single
- * source of the state the model sees — the same reality the human does — so it
- * stops guessing at what the suite is doing.
+ * state, with the failing and pending examples and their errors. ANSI-free and
+ * compact, it is the single source of the state the model sees (the same
+ * reality the human does), so it stops guessing at what the suite is doing.
+ * The role contract lives in the role manifests, not here.
  */
 final readonly class SituationReport
 {
     private function __construct(
         private ?SuiteSummary $summary,
-        private PairRole $role,
     ) {}
 
     /**
-     * Builds the report from the latest run outcome (which may be null before
-     * anything has run, or carry no summary) and the role in force this turn.
+     * Builds the report from the latest run outcome, which may be null before
+     * anything has run, or carry no summary.
      */
-    public static function fromOutcome(?RunOutcome $outcome, PairRole $role): self
+    public static function fromOutcome(?RunOutcome $outcome): self
     {
-        return new self($outcome?->summary, $role);
+        return new self($outcome?->summary);
     }
 
     /**
-     * Builds the report straight from a suite summary (which may be null before
-     * anything has run) and the role in force this turn.
+     * Builds the report straight from a suite summary, which may be null
+     * before anything has run.
      */
-    public static function fromSummary(?SuiteSummary $summary, PairRole $role): self
+    public static function fromSummary(?SuiteSummary $summary): self
     {
-        return new self($summary, $role);
+        return new self($summary);
     }
 
     /**
-     * Renders the grounding block: a SUITE line, any FAILING/PENDING examples,
-     * and the role note. No ANSI, one fact per line.
+     * Renders the grounding block: a SUITE line and any FAILING/PENDING
+     * examples. No ANSI, one fact per line.
      */
     public function render(): string
     {
@@ -69,8 +68,6 @@ final readonly class SituationReport
         foreach ($this->exampleLines('PENDING', $this->summary?->pending() ?? []) as $line) {
             $lines[] = $line;
         }
-
-        $lines[] = $this->roleNote();
 
         return implode("\n", $lines);
     }
@@ -159,15 +156,5 @@ final readonly class SituationReport
         }
 
         return $lines;
-    }
-
-    /**
-     * The one-line reminder of the contract for the role in force this turn.
-     */
-    private function roleNote(): string
-    {
-        return $this->role->aiIsDriver()
-            ? 'NOTE: You are driving — state your one-step plan, make exactly that change, then present the diff and the new red/green state.'
-            : 'NOTE: You are navigating — review the step, draw out the intent, and flag any rule or design break; do not write files.';
     }
 }

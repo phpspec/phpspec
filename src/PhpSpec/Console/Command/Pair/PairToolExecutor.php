@@ -18,6 +18,7 @@ use Closure;
 use PhpSpec\Ai\Agent\CommandProfile;
 use PhpSpec\Ai\Agent\ProjectPath;
 use PhpSpec\Ai\Agent\Proposal;
+use PhpSpec\Ai\Agent\SituationReport;
 use PhpSpec\Ai\Agent\ToolRegistry;
 use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Ai\AiTools;
@@ -283,7 +284,7 @@ final class PairToolExecutor implements ToolExecutor
             return [];
         }
 
-        $report = SituationReport::fromOutcome($outcome, $this->roleState->current());
+        $report = SituationReport::fromOutcome($outcome);
 
         return ["[Auto-verify after your change]\n" . $report->render()];
     }
@@ -848,16 +849,15 @@ final class PairToolExecutor implements ToolExecutor
     {
         $output = $this->output;
         $specRunner = $this->specRunner;
-        $roleState = $this->roleState;
 
-        return function (array $args) use ($output, $specRunner, $roleState) {
+        return function (array $args) use ($output, $specRunner) {
             $path = $args['path'] ?? '';
 
             $output->getOutput()->writeln('  <fg=gray>Running specs...</>');
 
             $outcome = $specRunner->run($path, $output->getOutput());
 
-            return SituationReport::fromOutcome($outcome, $roleState->current())->render();
+            return SituationReport::fromOutcome($outcome)->render();
         };
     }
 
