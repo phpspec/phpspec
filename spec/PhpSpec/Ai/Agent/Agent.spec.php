@@ -2,12 +2,14 @@
 
 use PhpSpec\Ai\Agent\Agent;
 use PhpSpec\Ai\Agent\CommandProfile;
+use PhpSpec\Ai\Agent\Grounding;
 use PhpSpec\Ai\Agent\Phase;
 use PhpSpec\Ai\Agent\Transcript;
 use PhpSpec\Ai\Response;
 use PhpSpec\Ai\Role;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
+use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Filesystem;
 
 require_once __DIR__ . '/../ReplayProvider.php';
@@ -374,6 +376,27 @@ describe(Agent::class, function () {
             expect($second[0]->content)->toContain('DRIVER');
             expect(count(array_filter($second, fn($message) => $message->role === Role::System)))->toBe(1);
             expect($second[1]->content)->toContain('hello');
+        });
+
+        it('grounds the suite state once: the situation message carries it, the context block does not', function (Filesystem $fs) {
+            $replay = new ReplayProvider([new Response('understood')]);
+            $agent = new Agent($this->config, $fs, $replay, transcript: new Transcript(), executor: new AgentSpecScriptedExecutor());
+            $suite = new SuiteSummary(
+                'red',
+                ['examples' => 3, 'passes' => 2, 'failures' => 1, 'errors' => 0, 'pending' => 0],
+                [],
+                [],
+                ['features' => 1, 'scenarios' => 1, 'steps' => 3, 'stepFailures' => 1, 'undefined' => 0],
+                [['path' => 'features/adding.feature', 'status' => 'red', 'undefined' => 0]],
+            );
+
+            $agent->chat('navigator', 'what now?', new Grounding(suite: $suite));
+
+            $messages = $replay->requests[0]['messages'];
+            $situations = array_values(array_filter($messages, fn($message) => is_string($message->content) && str_starts_with($message->content, '[Current situation]')));
+            expect($situations)->toHaveLength(1);
+            expect($situations[0]->content)->toContain('FEATURES: 1 features');
+            expect(end($messages)->content)->not()->toContain('# Suite state');
         });
 
         it('never executes a tool call without an executor: the call stays a proposal', function (Filesystem $fs) {

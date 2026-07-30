@@ -140,7 +140,9 @@ final class Agent
      */
     private function ask(CommandProfile $profile, ?Step $step, Grounding $grounding, string $instruction, ?array $aiConfig): Outcome
     {
-        $request = Request::compose($profile, $step, $grounding, $instruction, $this->prompts);
+        // A conversation grounds the suite through the per-turn situation
+        // message, so the composed context must not repeat it.
+        $request = Request::compose($profile, $step, $this->transcript !== null ? $grounding->withoutSuite() : $grounding, $instruction, $this->prompts);
 
         try {
             $provider = $this->providerFor($aiConfig);
@@ -291,7 +293,7 @@ final class Agent
             return;
         }
 
-        $this->recorder->captureSession($profile->name, $instruction, $step, $request, $aiConfig ?? [], $response, [], $rounds, !$this->sessionCaptured);
+        $this->recorder->captureSession($profile->name, $instruction, $step, $aiConfig ?? [], $response, [], $rounds, !$this->sessionCaptured);
         $this->sessionCaptured = true;
     }
 

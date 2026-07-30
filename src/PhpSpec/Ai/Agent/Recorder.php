@@ -72,13 +72,15 @@ final class Recorder
      * Appends one conversational turn to the session capture, so a whole pair
      * session is replayable, not only its last exchange. A fresh conversation
      * starts the file over; the turn document is the same shape `capture()`
-     * writes, keyed under "turns".
+     * writes, keyed under "turns", minus the composed request: that prompt is
+     * identical every turn and already sits in last-request.json, so repeating
+     * it would grow the session by the whole system prompt per turn.
      *
      * @param array{provider?: string, model?: string, api_key?: string, effort?: string} $aiConfig
      * @param list<Proposal> $proposals
      * @param list<array{response: Response, tool_results?: array<string, mixed>}> $rounds
      */
-    public function captureSession(string $command, string $instruction, ?Step $step, ?Request $request, array $aiConfig, ?Response $response, array $proposals = [], array $rounds = [], bool $fresh = false): void
+    public function captureSession(string $command, string $instruction, ?Step $step, array $aiConfig, ?Response $response, array $proposals = [], array $rounds = [], bool $fresh = false): void
     {
         $file = ($this->baseDir ?? (getcwd() ?: '.')) . '/' . self::SESSION_FILE;
         $dir = dirname($file);
@@ -95,7 +97,7 @@ final class Recorder
         }
 
         $session['command'] = $command;
-        $session['turns'][] = $this->document($command, $instruction, $step, $request, $aiConfig, $response, $proposals, $rounds);
+        $session['turns'][] = $this->document($command, $instruction, $step, null, $aiConfig, $response, $proposals, $rounds);
 
         $this->filesystem->write($file, (string) json_encode($session, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
