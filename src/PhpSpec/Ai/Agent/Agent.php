@@ -16,7 +16,7 @@ namespace PhpSpec\Ai\Agent;
 
 use InvalidArgumentException;
 use PhpSpec\Ai\Contracts\ProviderInterface;
-use PhpSpec\Ai\Message;
+use PhpSpec\Ai\Contracts\ToolExecutor;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\RefactorJournal;
@@ -66,6 +66,8 @@ final class Agent
      * @param ToolRegistry|null $registry the shared tool definitions
      * @param Recorder|null $recorder captures every exchange
      * @param PromptLibrary|null $prompts loads the prompt files
+     * @param Transcript|null $transcript a persistent conversation; every chat() extends it instead of starting fresh
+     * @param ToolExecutor|null $executor a live session's tool half; chat() loops and executes instead of proposing
      */
     public function __construct(
         private readonly Configuration $config,
@@ -74,6 +76,8 @@ final class Agent
         ?ToolRegistry $registry = null,
         ?Recorder $recorder = null,
         ?PromptLibrary $prompts = null,
+        private readonly ?Transcript $transcript = null,
+        private readonly ?ToolExecutor $executor = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->prompts = $prompts ?? new PromptLibrary($this->filesystem);
@@ -143,26 +147,92 @@ final class Agent
                 : $this->failedAsk($step, $e->getMessage());
         }
 
-        $messages = [Message::system($request->system), Message::user($request->context)];
+        // The conversation: the caller's persistent transcript when one was
+        // injected (a pair session), otherwise a fresh one for this exchange.
+        // The system slot seats once per command; a swap re-orients it.
+        $transcript = $this->transcript ?? new Transcript();
+        $transcript->beginTurn();
+        if (!$transcript->isOrientedFor($profile->name)) {
+            $transcript->orient($profile->name, $request->system);
+        }
+        $transcript->say($request->context);
+        $this->executor?->beginTurn();
+
+        $rounds = [];
+        $limit = $this->executor !== null ? ($profile->maxTurns ?? 50) : 1;
+        $response = null;
 
         try {
-            $response = $provider->chat($messages, $options);
+            for ($turn = 0; $turn < $limit; $turn++) {
+                $roundOptions = $options;
+                if ($this->executor !== null) {
+                    $roundOptions['tools'] = $this->executor->advertised($options['tools'] ?? []);
+                }
 
-            // The channel rail: structure only ever arrives as tool calls, so a
-            // tool_call command answered in prose gets ONE corrective re-ask.
-            // Providers that honour toolChoice (papi-core >= 0.13) make this a
-            // rare fallback; older ones ignore the option and rely on it.
-            if ($profile->answer === 'tool_call' && !$response->hasToolCalls()) {
-                $messages[] = Message::assistant($response->text);
-                $messages[] = Message::user('Answer by calling exactly one of the declared tools; do not answer in prose.');
-                $response = $provider->chat($messages, $options);
+                $response = $provider->chat($transcript->messages(), $roundOptions);
+
+                // The channel rail: structure only ever arrives as tool calls, so a
+                // tool_call command answered in prose gets ONE corrective re-ask.
+                // Providers that honour toolChoice (papi-core >= 0.13) make this a
+                // rare fallback; older ones ignore the option and rely on it.
+                if ($this->executor === null && $profile->answer === 'tool_call' && !$response->hasToolCalls()) {
+                    $transcript->heard($response);
+                    $transcript->say('Answer by calling exactly one of the declared tools; do not answer in prose.');
+                    $response = $provider->chat($transcript->messages(), $roundOptions);
+                }
+
+                $transcript->heard($response);
+
+                if ($this->executor === null || !$response->hasToolCalls()) {
+                    break;
+                }
+
+                $results = [];
+                foreach ($response->toolCalls as $toolCall) {
+                    $result = $this->executor->execute($toolCall);
+                    $results[$toolCall->id] = $result;
+                    $transcript->observed($toolCall->id, $result);
+                }
+                $rounds[] = ['response' => $response, 'tool_results' => $results];
+
+                foreach ($this->executor->observations() as $report) {
+                    $transcript->say($report);
+                }
+
+                $handBack = $this->executor->turnComplete($response);
+                if ($handBack !== null) {
+                    $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], $response, [], $rounds);
+
+                    return new Outcome($step, [], $handBack, $this->executor->lastSuggestion() ?? []);
+                }
             }
         } catch (Throwable $e) {
             // A live provider failure (bad key, HTTP error, an unenforceable
             // toolChoice) becomes prose for the human, never a crash.
-            $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], null);
+            $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], null, [], $rounds);
 
             return $this->failedAsk($step, $e->getMessage());
+        }
+
+        if ($this->executor !== null) {
+            $ended = $response !== null && !$response->hasToolCalls();
+            if ($ended) {
+                $rounds[] = ['response' => $response];
+            }
+            $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], $response, [], $rounds);
+
+            return new Outcome(
+                $step,
+                [],
+                $ended ? trim($response->text) : 'Reached maximum tool turns. Please try a simpler request.',
+                $this->executor->lastSuggestion() ?? [],
+            );
+        }
+
+        if ($response === null) {
+            // Unreachable in practice: the single propose-only round always ran
+            // and its failures returned above; kept honest for the type.
+            return $this->failedAsk($step, 'The provider returned no response.');
         }
 
         try {

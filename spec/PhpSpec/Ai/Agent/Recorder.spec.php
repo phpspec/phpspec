@@ -25,6 +25,22 @@ describe(Recorder::class, function () {
         });
     });
 
+    it('captures every round of a multi-round turn', function (Filesystem $fs) {
+        $recorder = new Recorder($fs, '/proj');
+
+        $recorder->capture('navigator', 'run the suite', null, null, ['provider' => 'google'], new Response('all green'), [], [
+            ['response' => new Response('', [new ToolCall('t1', 'run_specs', ['path' => ''])]), 'tool_results' => ['t1' => 'SUITE: green']],
+            ['response' => new Response('all green')],
+        ]);
+
+        $doc = json_decode($this->written['/proj/.phpspec/ai/last-request.json'] ?? '', true);
+
+        expect($doc['rounds'])->toHaveLength(2);
+        expect($doc['rounds'][0]['response']['tool_calls'][0]['name'])->toBe('run_specs');
+        expect($doc['rounds'][0]['tool_results']['t1'])->toBe('SUITE: green');
+        expect($doc['response']['text'])->toBe('all green');
+    });
+
     it('captures the exchange to .phpspec/ai/last-request.json in the recording schema', function (Filesystem $fs) {
         $recorder = new Recorder($fs, '/proj');
         $step = new Step(Phase::WriteSteps, null, 'features/adding.feature', 'steps are undefined');
