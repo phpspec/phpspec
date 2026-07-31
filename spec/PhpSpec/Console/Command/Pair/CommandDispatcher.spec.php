@@ -516,7 +516,7 @@ describe(CommandDispatcher::class, function () {
                     return new Response('Suggested the next scenario.');
                 };
 
-                $ai = new AiAssistant($provider, $this->config, $this->pairOutput, 'test-model', $fs, false, null, new Chooser($this->pairOutput, false), $roleState, $this->specRunner);
+                $ai = new AiAssistant($provider, $this->config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), $roleState, $this->specRunner);
                 $dispatcher = new CommandDispatcher(
                     new SpecGenerator('spec', $fs),
                     new ClassGenerator('src', $fs),
@@ -648,7 +648,7 @@ describe(CommandDispatcher::class, function () {
             };
 
             $config = new Configuration('.', $fs);
-            $assistant = new AiAssistant($provider, $config, $this->pairOutput, 'test-model', $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
+            $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
                 new ClassGenerator('src', $fs),
@@ -690,7 +690,7 @@ describe(CommandDispatcher::class, function () {
             };
 
             $config = new Configuration('.', $fs);
-            $assistant = new AiAssistant($provider, $config, $this->pairOutput, 'test-model', $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
+            $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
             $dispatcher = new CommandDispatcher(
                 new SpecGenerator('spec', $fs),
                 new ClassGenerator('src', $fs),
@@ -705,6 +705,48 @@ describe(CommandDispatcher::class, function () {
             $dispatcher->dispatch('/next');
 
             expect($dispatcher->suggestion())->toBe('/refactor App\\TodoList');
+        });
+
+        it('pre-fills a /generate ghost for steps and implement suggestions', function (Filesystem $fs) {
+            allow($fs->exists())->toReturn(false);
+            allow($fs->isDir())->toReturn(false);
+            allow($fs->isFile())->toReturn(false);
+            allow($fs->scandir())->toReturn([]);
+            allow($fs->read())->toReturn('');
+
+            $provider = new class implements ProviderInterface {
+                public int $turn = 0;
+
+                public function chat(array $messages, array $options = []): Response
+                {
+                    if (++$this->turn === 1) {
+                        return new Response('', [new ToolCall('t1', 'suggest_next', [
+                            'type' => 'steps',
+                            'target' => 'features/basket.feature',
+                            'reason' => 'The feature has undefined steps.',
+                        ])]);
+                    }
+
+                    return new Response('The steps come next.');
+                }
+            };
+
+            $config = new Configuration('.', $fs);
+            $assistant = new AiAssistant($provider, $config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), null, $this->specRunner);
+            $dispatcher = new CommandDispatcher(
+                new SpecGenerator('spec', $fs),
+                new ClassGenerator('src', $fs),
+                $config,
+                $this->pairOutput,
+                false,
+                $fs,
+                specRunner: $this->specRunner,
+                ai: $assistant,
+            );
+
+            $dispatcher->dispatch('/next');
+
+            expect($dispatcher->suggestion())->toBe('/generate the steps for features/basket.feature');
         });
 
         it('suggests running the new spec after /describe', function (Filesystem $fs) {

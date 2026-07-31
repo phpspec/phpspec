@@ -322,13 +322,14 @@ Every prompt the AI commands use is a text file. The shipped ones live inside th
   commands/next.txt            the next advisor's manifest and voice
   commands/generate.txt        the generate command
   commands/refactor.txt        the refactor rules
+  commands/navigator.txt       the pair navigator's manifest: its tools, params, and voice (also: driver.txt)
   instructions/write-spec.txt  step guidance (also: write-feature, write-steps, write-code, refactor, tdd-cycle)
   instructions/spec-syntax.txt syntax primers (also: steps-syntax, gherkin-syntax, pair-guidance)
-  tools/offer_change.txt       any tool description, by tool name
-  navigator.txt                the pair navigator role (also: driver.txt, next.txt)
+  tools/offer_change.txt       any tool description, by tool name (write tools and the live ones: run_specs, inspect_symbol, ask_user, read_file, list_files)
+  navigator.txt                the pair navigator role contract (also: driver.txt, next.txt)
 ```
 
-Command files under `commands/` may start with YAML frontmatter (tools, answer channel, grounding, temperature, max_tokens). Overrides inherit the shipped frontmatter per key: a prose-only file keeps the shipped machine contract, and declaring only `temperature: 0.2` keeps the shipped tools. An `@include <name>` line inside any prompt resolves project-first.
+Command files under `commands/` may start with YAML frontmatter (tools, answer channel, grounding, temperature, max_tokens, max_turns). Overrides inherit the shipped frontmatter per key: a prose-only file keeps the shipped machine contract, and declaring only `temperature: 0.2` keeps the shipped tools. An `@include <name>` line inside any prompt resolves project-first.
 
 `.phpspec/ai/last-request.json` marks overridden prompts in `composed_from` (e.g. `"commands/next (project)"`), so you can always see whose words the model heard.
 

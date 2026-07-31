@@ -37,6 +37,7 @@ final readonly class CommandProfile
      * @param list<string> $grounding the grounding sections to build (e.g. recency, tree)
      * @param float|null $temperature sampling temperature, when the command pins one
      * @param int|null $maxTokens per-call output-token ceiling, when pinned
+     * @param int|null $maxTurns tool-round ceiling for a conversational command, when pinned
      * @param string $origin where the winning prompt layer came from (Prompt::PROJECT or Prompt::SHIPPED)
      */
     public function __construct(
@@ -47,6 +48,7 @@ final readonly class CommandProfile
         public array $grounding = [],
         public ?float $temperature = null,
         public ?int $maxTokens = null,
+        public ?int $maxTurns = null,
         public string $origin = Prompt::SHIPPED,
     ) {}
 
@@ -83,6 +85,7 @@ final readonly class CommandProfile
             self::names($meta['grounding'] ?? []),
             isset($meta['temperature']) ? (float) $meta['temperature'] : null,
             isset($meta['max_tokens']) ? (int) $meta['max_tokens'] : null,
+            isset($meta['max_turns']) ? (int) $meta['max_turns'] : null,
             $layers[0]->origin,
         );
     }

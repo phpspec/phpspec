@@ -55,6 +55,17 @@ enum PairRole
     }
 
     /**
+     * The AI command this role runs as: its manifest (`commands/<name>.txt`)
+     * declares the role's tool surface and model params.
+     *
+     * @return 'navigator'|'driver'
+     */
+    public function commandName(): string
+    {
+        return $this->promptArtifact();
+    }
+
+    /**
      * The role after a /swap.
      */
     public function swapped(): self

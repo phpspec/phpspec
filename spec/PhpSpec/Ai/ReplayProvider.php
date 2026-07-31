@@ -39,6 +39,28 @@ final class ReplayProvider implements ProviderInterface
     }
 
     /**
+     * Builds a whole-conversation replay from a session recording: one scripted
+     * response per provider call, in order, across every turn's rounds.
+     *
+     * @param array{turns: list<array{rounds?: list<array{response: array{text?: string, tool_calls?: list<array{id?: string, name: string, arguments?: array<string, mixed>}>}}>}>} $recording
+     */
+    public static function fromConversation(array $recording): self
+    {
+        $responses = [];
+        foreach ($recording['turns'] ?? [] as $turn) {
+            foreach ($turn['rounds'] ?? [] as $round) {
+                $calls = array_map(
+                    static fn(array $call): ToolCall => new ToolCall($call['id'] ?? '1', $call['name'], $call['arguments'] ?? []),
+                    $round['response']['tool_calls'] ?? [],
+                );
+                $responses[] = new Response($round['response']['text'] ?? '', $calls);
+            }
+        }
+
+        return new self($responses);
+    }
+
+    /**
      * Records the request and replays the next scripted response (an empty
      * prose response once the script runs out).
      */
