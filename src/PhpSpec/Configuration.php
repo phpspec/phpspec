@@ -341,8 +341,8 @@ final class Configuration
      */
     public function getAiConfig(): ?array
     {
-        $ai = $this->get('ai');
-        if (!is_array($ai) || !isset($ai['api_key']) || !is_string($ai['api_key'])) {
+        $ai = $this->normalisedAiSection();
+        if ($ai === null || !isset($ai['api_key']) || !is_string($ai['api_key'])) {
             return null;
         }
         $result = [
@@ -401,5 +401,47 @@ final class Configuration
     public function toArray(): array
     {
         return $this->config;
+    }
+
+    /**
+     * What stands between the user and a working AI config, or null when the
+     * config is usable: a present-but-keyless section is told which key is
+     * missing, never that the section does not exist.
+     */
+    public function aiConfigProblem(): ?string
+    {
+        if ($this->getAiConfig() !== null) {
+            return null;
+        }
+
+        if ($this->normalisedAiSection() !== null) {
+            return 'The ai section is missing api_key. Add it to your phpspec config.';
+        }
+
+        return 'AI configuration required. Add an "ai" section to your phpspec config.';
+    }
+
+    /**
+     * The raw ai section with hyphenated spellings of its keys folded onto the
+     * canonical snake_case names (api-key reads as api_key), or null when the
+     * config has no ai section. Snake case stays the documented spelling; the
+     * common YAML hyphen habit simply keeps working.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function normalisedAiSection(): ?array
+    {
+        $ai = $this->get('ai');
+        if (!is_array($ai)) {
+            return null;
+        }
+
+        foreach (['api-key' => 'api_key', 'max-tokens' => 'max_tokens'] as $hyphenated => $canonical) {
+            if (isset($ai[$hyphenated]) && !isset($ai[$canonical])) {
+                $ai[$canonical] = $ai[$hyphenated];
+            }
+        }
+
+        return $ai;
     }
 }

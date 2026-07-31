@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
  - A step whose code throws reports under Errors with its type, code excerpt, and location, and tallies as "N errored"; only a failed expectation reads as a Failure
  - PHP warnings raised inside a step land in the Warnings section with their location instead of leaking raw to the terminal
+ - The ai config accepts hyphenated key spellings (api-key, max-tokens), and a present ai section missing its key is told exactly which key, never that the section does not exist
 
 ## [9.0.0-beta.16](https://github.com/phpspec/phpspec/compare/9.0.0-beta.15...9.0.0-beta.16)
 

@@ -438,7 +438,7 @@ final class Agent
         }
 
         if ($aiConfig === null) {
-            throw new RuntimeException('AI configuration required. Add an "ai" section to your phpspec config.');
+            throw new RuntimeException($this->config->aiConfigProblem() ?? 'AI configuration required. Add an "ai" section to your phpspec config.');
         }
 
         return ProviderFactory::create($aiConfig);

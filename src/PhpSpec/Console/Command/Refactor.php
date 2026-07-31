@@ -81,7 +81,7 @@ final class Refactor extends Command
         // 1. Check AI config
         $aiConfig = $this->config->getAiConfig();
         if ($aiConfig === null) {
-            $output->writeln('<fg=red>AI configuration required. Add an "ai" section to your phpspec config.</>');
+            $output->writeln('<fg=red>' . $this->config->aiConfigProblem() . '</>');
             return 1;
         }
 

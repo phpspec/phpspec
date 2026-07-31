@@ -639,7 +639,7 @@ final class CommandDispatcher
 
         $aiConfig = $this->config->getAiConfig();
         if ($aiConfig === null) {
-            $this->output->error('AI configuration required for /generate: add an "ai" section to phpspec.yaml.');
+            $this->output->error('/generate needs AI. ' . $this->config->aiConfigProblem());
 
             return self::CONTINUE;
         }
@@ -825,7 +825,7 @@ final class CommandDispatcher
 
         $this->output->error(
             "No AI provider is configured, so I can't use natural language.\n"
-            . '  Add an "ai" section to phpspec.yaml, or type /help for the available commands.',
+            . '  ' . $this->config->aiConfigProblem() . ' Or type /help for the available commands.',
         );
 
         return self::CONTINUE;
