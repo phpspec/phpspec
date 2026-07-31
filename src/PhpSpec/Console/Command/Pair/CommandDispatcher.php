@@ -120,15 +120,24 @@ final class CommandDispatcher
         }
 
         $aiConfig = $this->config->getAiConfig();
-        if ($aiConfig !== null) {
-            try {
-                $provider = ProviderFactory::create($aiConfig);
-                $this->ai = new AiAssistant($provider, $this->config, $this->output, $this->filesystem, $this->interactive, $this->extensionLoader, $this->chooser, $this->roleState);
-            } catch (Exception $e) {
-                // Any provider failure — an unknown name, a missing package, a bad
-                // key — leaves AI unavailable rather than crashing the session.
-                $this->aiUnavailableReason = $e->getMessage();
+        if ($aiConfig === null) {
+            // A present-but-unusable ai section is a reason worth showing (the
+            // config diagnosis names the exact gap); a wholly absent section
+            // stays quiet, keeping pair usable without AI.
+            if ($this->config->hasAiSection()) {
+                $this->aiUnavailableReason = $this->config->aiConfigProblem();
             }
+
+            return;
+        }
+
+        try {
+            $provider = ProviderFactory::create($aiConfig);
+            $this->ai = new AiAssistant($provider, $this->config, $this->output, $this->filesystem, $this->interactive, $this->extensionLoader, $this->chooser, $this->roleState);
+        } catch (Exception $e) {
+            // Any provider failure — a missing package, a bad key — leaves AI
+            // unavailable rather than crashing the session.
+            $this->aiUnavailableReason = $e->getMessage();
         }
     }
 

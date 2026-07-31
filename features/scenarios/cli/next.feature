@@ -36,6 +36,18 @@ Feature: AI-powered next suggestion
     And the output should contain "The ai section is missing api_key"
     And the output should not contain "AI configuration required"
 
+  Scenario: Forgetting the provider points at the installed papi package
+    Given no phpspec.json config
+    And a phpspec.yaml config:
+      """
+      ai:
+        api_key: bogus-key
+      """
+    When I run phpspec next
+    Then the exit code should not be 0
+    And the output should contain "The ai section is missing provider"
+    And the output should contain "set provider: google"
+
   Scenario: Suggest next step for a project with specs but no features
     Given a phpspec.yaml config:
       """

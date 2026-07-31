@@ -18,7 +18,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
  - A step whose code throws reports under Errors with its type, code excerpt, and location, and tallies as "N errored"; only a failed expectation reads as a Failure
  - PHP warnings raised inside a step land in the Warnings section with their location instead of leaking raw to the terminal
- - The ai config accepts hyphenated key spellings (api-key, max-tokens), and a present ai section missing its key is told exactly which key, never that the section does not exist
+ - The ai section is validated as documented: unknown or misspelled keys get a did-you-mean, hyphenated spellings are accepted, wrong-typed values are named instead of silently dropped, and a missing key is named precisely, never reported as a missing section
+ - Forgetting the ai provider names the installed papi package as the answer, instead of silently assuming openai and then blaming a missing composer package
+ - An ollama config works without api_key and its base_url reaches the provider; all six providers (google, anthropic, openai, grok, deepseek, ollama) are documented
 
 ## [9.0.0-beta.16](https://github.com/phpspec/phpspec/compare/9.0.0-beta.15...9.0.0-beta.16)
 

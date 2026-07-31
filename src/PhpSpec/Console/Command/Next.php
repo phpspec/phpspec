@@ -55,13 +55,13 @@ final class Next extends Command
 
     private readonly SpecRunner $specRunner;
 
-    /** @var (callable(array{provider: string, model?: string, api_key: string}, string): array{type: string, target: string, reason: string})|null */
+    /** @var (callable(array{provider: string, model?: string, api_key?: string}, string): array{type: string, target: string, reason: string})|null */
     private $suggestFn;
 
     /**
      * @param Configuration $config
      * @param Filesystem|null $filesystem
-     * @param (callable(array{provider: string, model?: string, api_key: string}, string): array{type: string, target: string, reason: string})|null $suggestFn injectable display seam; receives the AI config and the rendered situation
+     * @param (callable(array{provider: string, model?: string, api_key?: string}, string): array{type: string, target: string, reason: string})|null $suggestFn injectable display seam; receives the AI config and the rendered situation
      * @param SpecRunner|null $specRunner runs the suite for feature grounding; defaults to a subprocess
      * @param ProviderInterface|null $provider injectable AI seam for the agent pipeline
      */
@@ -233,7 +233,7 @@ final class Next extends Command
      * deterministically, and the model answers with a suggest_next tool call
      * (never JSON-in-prose to parse).
      *
-     * @param array{provider: string, model?: string, api_key: string} $aiConfig
+     * @param array{provider: string, model?: string, api_key?: string} $aiConfig
      * @return array{type: string, target: string, reason: string}
      */
     private function getSuggestion(array $aiConfig): array

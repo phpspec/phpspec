@@ -29,13 +29,46 @@ final class ProviderFactory
         'openai' => ['class' => 'PapiAI\OpenAI\OpenAIProvider', 'model' => 'gpt-5.1'],
         'grok' => ['class' => 'PapiAI\Grok\GrokProvider', 'model' => 'grok-4'],
         'deepseek' => ['class' => 'PapiAI\DeepSeek\DeepSeekProvider', 'model' => 'deepseek-chat'],
-        'ollama' => ['class' => 'PapiAI\Ollama\OllamaProvider', 'model' => 'llama3.1'],
+        'ollama' => ['class' => 'PapiAI\Ollama\OllamaProvider', 'model' => 'llama3.1', 'needs_key' => false],
     ];
+
+    /**
+     * Every provider name this factory can construct.
+     *
+     * @return list<string>
+     */
+    public static function providers(): array
+    {
+        return array_keys(self::DEFAULTS);
+    }
+
+    /**
+     * The providers whose papi package is actually installed, so a config
+     * message can point at the one the project already has.
+     *
+     * @return list<string>
+     */
+    public static function installed(): array
+    {
+        return array_values(array_filter(
+            array_keys(self::DEFAULTS),
+            static fn(string $provider): bool => class_exists(self::DEFAULTS[$provider]['class']),
+        ));
+    }
+
+    /**
+     * Whether a provider authenticates with an api_key (a local ollama does
+     * not; it connects to a base_url instead).
+     */
+    public static function needsApiKey(string $provider): bool
+    {
+        return self::DEFAULTS[$provider]['needs_key'] ?? true;
+    }
 
     /**
      * Creates an AI provider instance from the given configuration.
      *
-     * @param array{provider?: string, api_key: string, model?: string, base_url?: string} $aiConfig
+     * @param array{provider?: string, api_key?: string, model?: string, base_url?: string} $aiConfig
      *
      * @return ProviderInterface
      *
@@ -68,9 +101,9 @@ final class ProviderFactory
             );
         }
 
-        $papiProvider = $provider === 'ollama'
-            ? new $class($aiConfig['base_url'] ?? 'http://localhost:11434')
-            : new $class($aiConfig['api_key']);
+        $papiProvider = self::needsApiKey($provider)
+            ? new $class($aiConfig['api_key'] ?? throw new InvalidArgumentException(sprintf('Provider "%s" needs an api_key.', $provider)))
+            : new $class($aiConfig['base_url'] ?? 'http://localhost:11434');
 
         return new PapiProvider($papiProvider);
     }
