@@ -272,6 +272,19 @@ describe(Configuration::class, function () {
         expect($config->aiConfigProblem())->toBe('The ai section is missing api_key. Add it to your phpspec config.');
     });
 
+    it('names the wrong type when api_key is present but not a string', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => true,
+            default => false,
+        });
+        allow($fs->read())->toReturn("ai:\n  provider: google\n  api_key: 12345\n");
+
+        $config = new Configuration('/app', $fs);
+
+        expect($config->getAiConfig())->toBeNull();
+        expect($config->aiConfigProblem())->toBe('The ai section\'s api_key must be a string. Quote it in your phpspec config.');
+    });
+
     it('asks for the ai section when the config has none', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,

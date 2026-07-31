@@ -342,7 +342,7 @@ final class Configuration
     public function getAiConfig(): ?array
     {
         $ai = $this->normalisedAiSection();
-        if ($ai === null || !isset($ai['api_key']) || !is_string($ai['api_key'])) {
+        if ($ai === null || $this->aiSectionGap($ai) !== null) {
             return null;
         }
         $result = [
@@ -405,20 +405,39 @@ final class Configuration
 
     /**
      * What stands between the user and a working AI config, or null when the
-     * config is usable: a present-but-keyless section is told which key is
-     * missing, never that the section does not exist.
+     * config is usable: a present-but-unusable section is told exactly what
+     * the gap is, never that the section does not exist. The message comes
+     * from the same check that makes {@see getAiConfig()} return null, so the
+     * two can never disagree.
      */
     public function aiConfigProblem(): ?string
     {
-        if ($this->getAiConfig() !== null) {
-            return null;
+        $ai = $this->normalisedAiSection();
+        if ($ai === null) {
+            return 'AI configuration required. Add an "ai" section to your phpspec config.';
         }
 
-        if ($this->normalisedAiSection() !== null) {
+        return $this->aiSectionGap($ai);
+    }
+
+    /**
+     * The first unmet requirement of the ai section as a user-facing message,
+     * or null when the section is usable. The one statement of what a usable
+     * ai config requires: the reader and the diagnosis both derive from it.
+     *
+     * @param array<string, mixed> $ai the normalised ai section
+     */
+    private function aiSectionGap(array $ai): ?string
+    {
+        if (!isset($ai['api_key'])) {
             return 'The ai section is missing api_key. Add it to your phpspec config.';
         }
 
-        return 'AI configuration required. Add an "ai" section to your phpspec config.';
+        if (!is_string($ai['api_key'])) {
+            return 'The ai section\'s api_key must be a string. Quote it in your phpspec config.';
+        }
+
+        return null;
     }
 
     /**
