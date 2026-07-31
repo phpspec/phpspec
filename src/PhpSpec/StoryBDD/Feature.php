@@ -150,7 +150,7 @@ final readonly class Feature implements SpecBlock
                 $result = $this->runStep($step, $world, $collector);
                 $this->hooks->runAfterStep($world);
                 $stepResults[] = $result;
-                if ($result->isFailure() || $result->isSkipped()) {
+                if ($result->isFailure() || $result->isError() || $result->isSkipped()) {
                     $failed = true;
                 }
             }
@@ -164,7 +164,7 @@ final readonly class Feature implements SpecBlock
             $result = $this->runStep($step, $world, $collector);
             $this->hooks->runAfterStep($world);
             $stepResults[] = $result;
-            if ($result->isFailure() || $result->isSkipped()) {
+            if ($result->isFailure() || $result->isError() || $result->isSkipped()) {
                 $failed = true;
             }
         }
@@ -196,6 +196,37 @@ final readonly class Feature implements SpecBlock
             return new StepResult($title, 'undefined');
         }
 
+        // PHP warnings and notices raised inside the step are collected onto
+        // its result (the same net examples run under), so they report in the
+        // Warnings section instead of leaking raw to the terminal.
+        $warnings = [];
+        set_error_handler(function (int $severity, string $message, string $file, int $line) use (&$warnings) {
+            $warnings[] = [
+                'severity' => $severity,
+                'message' => $message,
+                'file' => $file,
+                'line' => $line,
+            ];
+            return true;
+        }, E_WARNING | E_NOTICE | E_DEPRECATED | E_USER_WARNING | E_USER_NOTICE | E_USER_DEPRECATED);
+
+        try {
+            $result = $this->executeStep($step, $title, $match, $world, $collector);
+        } finally {
+            restore_error_handler();
+        }
+
+        $result->setWarnings($warnings);
+
+        return $result;
+    }
+
+    /**
+     * Runs the matched step body and settles its outcome: an expectation that
+     * did not hold is a failure; a step whose code threw is an error.
+     */
+    private function executeStep(StepNode $step, string $title, StepMatch $match, object $world, StepMatchCollector $collector): StepResult
+    {
         try {
             $args = $match->args;
             if ($step->docString !== null) {
@@ -210,7 +241,7 @@ final readonly class Feature implements SpecBlock
         } catch (SkippedException $e) {
             return new StepResult($title, 'skipped');
         } catch (\Throwable $e) {
-            $result = new StepResult($title, 'failure');
+            $result = new StepResult($title, 'error');
             $result->setError(new StepError($e->getMessage(), $e));
             return $result;
         }

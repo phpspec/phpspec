@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
  - Pair conversations are recorded: every exchange lands in .phpspec/ai/last-request.json and the whole session accumulates in last-session.json, so a live pair session can be promoted straight to a replayable eval
 
+### Fixed
+ - A step whose code throws reports under Errors with its type, code excerpt, and location, and tallies as "N errored"; only a failed expectation reads as a Failure
+ - PHP warnings raised inside a step land in the Warnings section with their location instead of leaking raw to the terminal
+
 ## [9.0.0-beta.16](https://github.com/phpspec/phpspec/compare/9.0.0-beta.15...9.0.0-beta.16)
 
 ### Added

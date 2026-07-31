@@ -196,7 +196,7 @@ final class ParallelRunner
                     return true;
                 }
             } elseif ($result instanceof StepResult) {
-                if ($stop->onFailure && $result->isFailure()) {
+                if ($stop->onFailure && ($result->isFailure() || $result->isError())) {
                     return true;
                 }
             } elseif ($result instanceof Results) {

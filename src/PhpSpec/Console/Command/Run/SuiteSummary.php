@@ -73,7 +73,9 @@ final readonly class SuiteSummary
             'features' => $c['features'],
             'scenarios' => $c['scenarios'],
             'steps' => $c['steps'],
-            'stepFailures' => $c['stepFailures'],
+            // A step that errored is as red as one that failed: the grounding
+            // and the next advisor only care that the story is not green.
+            'stepFailures' => $c['stepFailures'] + $c['stepErrors'],
             'undefined' => $c['undefined'],
         ];
 
@@ -114,7 +116,7 @@ final readonly class SuiteSummary
                     continue;
                 }
 
-                if ($step->isFailure()) {
+                if ($step->isFailure() || $step->isError()) {
                     ++$failures;
                 } elseif ($step->isUndefined()) {
                     ++$undefined;

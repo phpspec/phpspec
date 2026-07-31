@@ -87,7 +87,7 @@ describe(Feature::class, function () {
         expect($steps[0]->isPending())->toBeTrue();
     });
 
-    it("marks failed steps and skips remaining", function () {
+    it("marks a throwing step as an error, not a failure, and skips remaining", function () {
         $registry = new StepRegistry();
         $registry->addStep("a failing step", function () {
             throw new \RuntimeException("boom");
@@ -106,9 +106,32 @@ describe(Feature::class, function () {
 
         $result = $feature->run();
         $steps = $result->getResults()[0]->getResults();
-        expect($steps[0]->isFailure())->toBeTrue();
+        expect($steps[0]->isError())->toBeTrue();
+        expect($steps[0]->isFailure())->toBeFalse();
         expect($steps[0]->getError()->getMessage())->toBe("boom");
         expect($steps[1]->isSkipped())->toBeTrue();
+    });
+
+    it("captures PHP warnings raised inside a step instead of leaking them", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a noisy step", function () {
+            trigger_error("watch out", E_USER_WARNING);
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Noisy',
+            '',
+            null,
+            [new ScenarioNode('Warns', [
+                new StepNode('Given', 'a noisy step'),
+            ])]
+        ), $registry, new HookRegistry());
+
+        $result = $feature->run();
+        $step = $result->getResults()[0]->getResults()[0];
+        expect($step->isPassed())->toBeTrue();
+        expect($step->getWarnings())->toHaveLength(1);
+        expect($step->getWarnings()[0]['message'])->toBe("watch out");
     });
 
     it("skips remaining steps after a skipped step", function () {
@@ -455,7 +478,7 @@ describe(Feature::class, function () {
 
         $result = $feature->run();
         $steps = $result->getResults()[0]->getResults();
-        expect($steps[0]->isFailure())->toBeTrue();
+        expect($steps[0]->isError())->toBeTrue();
         expect($steps[1]->isSkipped())->toBeTrue();
         expect($steps[2]->isSkipped())->toBeTrue();
     });

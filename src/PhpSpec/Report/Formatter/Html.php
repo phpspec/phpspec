@@ -247,7 +247,7 @@ final class Html extends AbstractFormatter
      */
     private function renderStep(StepResult $step): string
     {
-        if ($step->isFailure() && $step->getError() !== null) {
+        if (($step->isFailure() || $step->isError()) && $step->getError() !== null) {
             $detail = sprintf(
                 "<p class=\"message\">%s</p>\n",
                 $this->escape($step->getError()->getMessage()),
@@ -427,7 +427,7 @@ final class Html extends AbstractFormatter
                     return true;
                 }
             } elseif ($child instanceof StepResult) {
-                if ($child->isFailure()) {
+                if ($child->isFailure() || $child->isError()) {
                     return true;
                 }
             } elseif ($this->hasFailure($child)) {
@@ -473,7 +473,7 @@ final class Html extends AbstractFormatter
             if ($child instanceof ExampleResult) {
                 $count += $child->isFailure() || $child->isError() ? 1 : 0;
             } elseif ($child instanceof StepResult) {
-                $count += $child->isFailure() ? 1 : 0;
+                $count += $child->isFailure() || $child->isError() ? 1 : 0;
             } else {
                 $count += $this->countFailures($child);
             }

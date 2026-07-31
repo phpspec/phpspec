@@ -25,6 +25,19 @@ describe(Counts::class, function() {
         expect($c['failures'])->toBe(0);
     });
 
+    it("tallies an errored step apart from failed ones", function() {
+        $failed = new StepResult("When it mismatches", "failure");
+        $errored = new StepResult("When it explodes", "error");
+        $scenario = new ScenarioResult("Mixed", [$failed, $errored]);
+        $feature = new FeatureResult("Story", [$scenario]);
+        $results = new SuiteResult([$feature]);
+
+        $counts = new Counts($results);
+        $c = $counts->toArray();
+        expect($c['stepFailures'])->toBe(1);
+        expect($c['stepErrors'])->toBe(1);
+    });
+
     it("counts failures", function() {
         $passing = new ExampleResult("pass", [MatchResult::passed()]);
         $failing = new ExampleResult("fail", [MatchResult::failed("a", "b", "msg", __FILE__, __LINE__)]);

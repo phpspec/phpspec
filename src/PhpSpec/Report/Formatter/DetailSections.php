@@ -151,16 +151,37 @@ final class DetailSections
             }
 
             foreach ($scenario->getResults() as $step) {
-                if (!$step instanceof StepResult || !$step->isFailure() || $step->getError() === null) {
+                if (!$step instanceof StepResult) {
                     continue;
                 }
 
                 $title = $feature->getTitle() . ' > ' . $scenario->getTitle() . ' > ' . $step->getTitle();
-                $message = $step->getError()->getMessage();
-                $this->sections['Failures'][] = static function (OutputInterface $output) use ($title, $message): void {
-                    $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
-                    $output->write(PHP_EOL . '  ' . $message . PHP_EOL);
-                };
+
+                // A step whose code threw is an error, exactly like an example
+                // whose code threw; only a failed expectation is a failure.
+                $error = $step->getError();
+                if ($step->isError() && $error !== null) {
+                    $this->sections['Errors'][] = static function (OutputInterface $output) use ($title, $error): void {
+                        $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
+                        $output->write(PHP_EOL . '  ' . $error->getType() . ': ' . $error->getMessage() . PHP_EOL . PHP_EOL);
+                        PrettyViews::surroundingCode($output, $error->getSurroundingCode(), $error->getLine());
+                        $output->write(PHP_EOL . '  at ' . $error->getFile() . ':' . $error->getLine() . PHP_EOL);
+                        foreach (array_slice($error->getFilteredTrace(), 0, 5) as $frame) {
+                            $output->write('     ' . ($frame['file'] ?? '?') . ':' . ($frame['line'] ?? '?') . PHP_EOL);
+                        }
+                    };
+                } elseif ($step->isFailure() && $error !== null) {
+                    $message = $error->getMessage();
+                    $this->sections['Failures'][] = static function (OutputInterface $output) use ($title, $message): void {
+                        $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
+                        $output->write(PHP_EOL . '  ' . $message . PHP_EOL);
+                    };
+                }
+
+                foreach ($step->getWarnings() as $warning) {
+                    $section = in_array($warning['severity'], [E_DEPRECATED, E_USER_DEPRECATED], true) ? 'Deprecations' : 'Warnings';
+                    $this->sections[$section][] = self::noteEntry($title, $warning);
+                }
             }
         }
     }

@@ -408,6 +408,43 @@ describe(Pretty::class, function() {
         expect($text)->toContain("something broke");
     });
 
+    it("routes a step that threw to the Errors section, never Failures", function () {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $erroredStep = new StepResult("When I complete the task", "error");
+        $erroredStep->setError(new StepError("Call to a member function complete() on null", new \Error("Call to a member function complete() on null")));
+
+        $scenario = new ScenarioResult("Completing a task", [$erroredStep]);
+        $feature = new FeatureResult("Completing", [$scenario]);
+        $suite = new SuiteResult([$feature]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain("Errors:");
+        expect($text)->toContain("Call to a member function complete() on null");
+        expect($text)->not()->toContain("Failures:");
+    });
+
+    it("reports a step's PHP warnings in the Warnings section", function () {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $noisyStep = new StepResult("Given I have added a task", "passed");
+        $noisyStep->setWarnings([
+            ['severity' => E_WARNING, 'message' => 'Undefined property: StepWorld::$list', 'file' => 'features/steps/adding.steps.php', 'line' => 4],
+        ]);
+
+        $scenario = new ScenarioResult("Adding", [$noisyStep]);
+        $feature = new FeatureResult("Adding tasks", [$scenario]);
+        $suite = new SuiteResult([$feature]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain("Warnings:");
+        expect($text)->toContain('Undefined property: StepWorld::$list');
+    });
+
     it("formats a feature with undefined and pending steps", function () {
         $output = new BufferedOutput();
         $formatter = new Pretty($output);

@@ -64,7 +64,7 @@ final class SuiteResult implements Results
     {
         $counts = new Counts($this);
         $c = $counts->toArray();
-        return ($c['failures'] > 0 || $c['errors'] > 0 || $c['stepFailures'] > 0) ? 1 : 0;
+        return ($c['failures'] > 0 || $c['errors'] > 0 || $c['stepFailures'] > 0 || $c['stepErrors'] > 0) ? 1 : 0;
     }
 
     /**

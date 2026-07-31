@@ -293,6 +293,11 @@ final class WorkerProcess
 
                 if (isset($testcase->skipped)) {
                     $steps[] = new StepResult($title, 'pending');
+                } elseif (isset($testcase->error)) {
+                    $message = (string) ($testcase->error['message'] ?? 'Errored');
+                    $step = new StepResult($title, 'error');
+                    $step->setError(new StepError($message, new \RuntimeException($message)));
+                    $steps[] = $step;
                 } elseif (isset($testcase->failure)) {
                     $message = (string) ($testcase->failure['message'] ?? 'Failed');
                     $step = new StepResult($title, 'failure');

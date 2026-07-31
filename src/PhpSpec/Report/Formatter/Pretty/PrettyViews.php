@@ -123,7 +123,7 @@ final class PrettyViews
         $output->write(PHP_EOL);
         if ($step->isPassed()) {
             $output->write('    <fg=green>✓ ' . $step->getTitle() . '</>');
-        } elseif ($step->isFailure()) {
+        } elseif ($step->isFailure() || $step->isError()) {
             $output->write('    <fg=red>✗ ' . $step->getTitle() . '</>');
         } elseif ($step->isPending()) {
             $output->write('    <fg=yellow>○ ' . $step->getTitle() . '</>');
@@ -170,6 +170,9 @@ final class PrettyViews
             }
             if ($counts['stepFailures']) {
                 $parts[] = '<fg=red>' . $counts['stepFailures'] . ' failed</>';
+            }
+            if (!empty($counts['stepErrors'])) {
+                $parts[] = '<fg=red>' . $counts['stepErrors'] . ' errored</>';
             }
             if ($counts['pending']) {
                 $parts[] = '<fg=yellow>' . $counts['pending'] . ' pending</>';
