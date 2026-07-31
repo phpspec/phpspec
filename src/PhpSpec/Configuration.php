@@ -14,6 +14,7 @@
 
 namespace PhpSpec;
 
+use PhpSpec\Ai\ProviderFactory;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -335,29 +336,44 @@ final class Configuration
     }
 
     /**
-     * Returns the AI configuration block, or null if not configured.
+     * The keys a valid ai section may hold, in their canonical snake_case
+     * spellings; the documented contract in one place.
+     */
+    private const AI_KEYS = ['provider', 'model', 'max_tokens', 'effort', 'api_key', 'base_url'];
+
+    /**
+     * Returns the AI configuration block, or null when it is absent or
+     * unusable ({@see aiConfigProblem()} says why). api_key is present for
+     * every provider that authenticates with one; a local ollama has none.
      *
-     * @return array{provider: string, model?: string, maxTokens?: int, effort?: string, api_key: string}|null
+     * @return array{provider: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string}|null
      */
     public function getAiConfig(): ?array
     {
-        $ai = $this->get('ai');
-        if (!is_array($ai) || !isset($ai['api_key']) || !is_string($ai['api_key'])) {
+        $ai = $this->normalisedAiSection();
+        if ($ai === null || $this->aiSectionGap($ai) !== null) {
             return null;
         }
-        $result = [
-            'provider' => isset($ai['provider']) && is_string($ai['provider']) ? $ai['provider'] : 'openai',
-        ];
-        if (isset($ai['model']) && is_string($ai['model'])) {
+
+        // The gap check above vouched for every key and type, so the values
+        // read straight through; nothing here is silently defaulted or dropped.
+        $result = ['provider' => $ai['provider']];
+        if (isset($ai['model'])) {
             $result['model'] = $ai['model'];
         }
-        if (isset($ai['max_tokens']) && is_numeric($ai['max_tokens']) && (int) $ai['max_tokens'] > 0) {
+        if (isset($ai['max_tokens'])) {
             $result['maxTokens'] = (int) $ai['max_tokens'];
         }
-        if (isset($ai['effort']) && is_string($ai['effort']) && $ai['effort'] !== '') {
+        if (isset($ai['effort'])) {
             $result['effort'] = $ai['effort'];
         }
-        $result['api_key'] = $ai['api_key'];
+        if (isset($ai['base_url'])) {
+            $result['base_url'] = $ai['base_url'];
+        }
+        if (isset($ai['api_key'])) {
+            $result['api_key'] = $ai['api_key'];
+        }
+
         return $result;
     }
 
@@ -401,5 +417,167 @@ final class Configuration
     public function toArray(): array
     {
         return $this->config;
+    }
+
+    /**
+     * What stands between the user and a working AI config, or null when the
+     * config is usable: a present-but-unusable section is told exactly what
+     * the gap is, never that the section does not exist. The message comes
+     * from the same check that makes {@see getAiConfig()} return null, so the
+     * two can never disagree.
+     */
+    public function aiConfigProblem(): ?string
+    {
+        $ai = $this->normalisedAiSection();
+        if ($ai === null) {
+            return 'AI configuration required. Add an "ai" section to your phpspec config.';
+        }
+
+        return $this->aiSectionGap($ai);
+    }
+
+    /**
+     * Whether the config declares an ai section at all, usable or not.
+     */
+    public function hasAiSection(): bool
+    {
+        return is_array($this->get('ai'));
+    }
+
+    /**
+     * The first unmet requirement of the ai section as a user-facing message,
+     * or null when the section is usable. The one statement of what a usable
+     * ai config requires: the reader and the diagnosis both derive from it,
+     * and the provider knowledge comes from the factory that constructs them,
+     * so neither the message nor the acceptance can drift from reality.
+     *
+     * @param array<string, mixed> $ai the normalised ai section
+     */
+    private function aiSectionGap(array $ai): ?string
+    {
+        foreach (array_keys($ai) as $key) {
+            if (!in_array($key, self::AI_KEYS, true)) {
+                return $this->unknownAiKey((string) $key);
+            }
+        }
+
+        if (!isset($ai['provider'])) {
+            return $this->missingProvider();
+        }
+
+        if (!is_string($ai['provider']) || !in_array($ai['provider'], ProviderFactory::providers(), true)) {
+            return sprintf(
+                'Unknown ai provider "%s". The known providers are %s.',
+                is_scalar($ai['provider']) ? (string) $ai['provider'] : get_debug_type($ai['provider']),
+                self::naturalList(ProviderFactory::providers()),
+            );
+        }
+
+        if (ProviderFactory::needsApiKey($ai['provider'])) {
+            if (!isset($ai['api_key'])) {
+                return 'The ai section is missing api_key. Add it to your phpspec config.';
+            }
+
+            if (!is_string($ai['api_key'])) {
+                return 'The ai section\'s api_key must be a string. Quote it in your phpspec config.';
+            }
+        }
+
+        if (isset($ai['model']) && !is_string($ai['model'])) {
+            return 'The ai section\'s model must be a string.';
+        }
+
+        if (isset($ai['max_tokens']) && (!is_numeric($ai['max_tokens']) || (int) $ai['max_tokens'] <= 0)) {
+            return 'The ai section\'s max_tokens must be a positive number.';
+        }
+
+        if (isset($ai['effort']) && (!is_string($ai['effort']) || $ai['effort'] === '')) {
+            return 'The ai section\'s effort must be a non-empty string.';
+        }
+
+        if (isset($ai['base_url']) && !is_string($ai['base_url'])) {
+            return 'The ai section\'s base_url must be a string.';
+        }
+
+        return null;
+    }
+
+    /**
+     * The message for an unrecognised ai key: the nearest known key when the
+     * spelling is close (a typo), the full list otherwise.
+     */
+    private function unknownAiKey(string $key): string
+    {
+        $closest = null;
+        $best = 4;
+        foreach (self::AI_KEYS as $known) {
+            $distance = levenshtein($key, $known);
+            if ($distance < $best) {
+                $best = $distance;
+                $closest = $known;
+            }
+        }
+
+        if ($closest !== null) {
+            return sprintf('Unknown ai key "%s". Did you mean "%s"?', $key, $closest);
+        }
+
+        return sprintf('Unknown ai key "%s". The known keys are %s.', $key, self::naturalList(self::AI_KEYS));
+    }
+
+    /**
+     * The missing-provider message: when exactly one papi provider package is
+     * installed, the error names it as the answer.
+     */
+    private function missingProvider(): string
+    {
+        $installed = ProviderFactory::installed();
+        if (count($installed) === 1) {
+            return sprintf('The ai section is missing provider. papi-ai/%s is installed, so set provider: %s.', $installed[0], $installed[0]);
+        }
+
+        return sprintf('The ai section is missing provider. Set it to %s.', self::naturalList(ProviderFactory::providers()));
+    }
+
+    /**
+     * Joins words as prose: "google, anthropic, and openai".
+     *
+     * @param list<string> $items
+     */
+    private static function naturalList(array $items): string
+    {
+        if (count($items) <= 1) {
+            return implode('', $items);
+        }
+
+        $last = array_pop($items);
+
+        return implode(', ', $items) . ', and ' . $last;
+    }
+
+    /**
+     * The raw ai section with hyphenated spellings of its keys folded onto the
+     * canonical snake_case names (api-key reads as api_key, for every known
+     * key), or null when the config has no ai section. Snake case stays the
+     * documented spelling; the common YAML hyphen habit simply keeps working.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function normalisedAiSection(): ?array
+    {
+        $ai = $this->get('ai');
+        if (!is_array($ai)) {
+            return null;
+        }
+
+        foreach (array_keys($ai) as $key) {
+            $canonical = str_replace('-', '_', (string) $key);
+            if ($canonical !== $key && in_array($canonical, self::AI_KEYS, true) && !isset($ai[$canonical])) {
+                $ai[$canonical] = $ai[$key];
+                unset($ai[$key]);
+            }
+        }
+
+        return $ai;
     }
 }

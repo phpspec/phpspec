@@ -13,6 +13,41 @@ Feature: AI-powered next suggestion
     Then the exit code should not be 0
     And the output should contain "AI configuration required"
 
+  Scenario: A hyphenated api-key spelling is accepted
+    Given no phpspec.json config
+    And a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+        api-key: bogus-key
+      """
+    When I run phpspec next
+    Then the output should not contain "AI configuration required"
+
+  Scenario: An ai section without its key is told which key is missing
+    Given no phpspec.json config
+    And a phpspec.yaml config:
+      """
+      ai:
+        provider: google
+      """
+    When I run phpspec next
+    Then the exit code should not be 0
+    And the output should contain "The ai section is missing api_key"
+    And the output should not contain "AI configuration required"
+
+  Scenario: Forgetting the provider points at the installed papi package
+    Given no phpspec.json config
+    And a phpspec.yaml config:
+      """
+      ai:
+        api_key: bogus-key
+      """
+    When I run phpspec next
+    Then the exit code should not be 0
+    And the output should contain "The ai section is missing provider"
+    And the output should contain "set provider: google"
+
   Scenario: Suggest next step for a project with specs but no features
     Given a phpspec.yaml config:
       """

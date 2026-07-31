@@ -81,7 +81,7 @@ final class Refactor extends Command
         // 1. Check AI config
         $aiConfig = $this->config->getAiConfig();
         if ($aiConfig === null) {
-            $output->writeln('<fg=red>AI configuration required. Add an "ai" section to your phpspec config.</>');
+            $output->writeln('<fg=red>' . $this->config->aiConfigProblem() . '</>');
             return 1;
         }
 
@@ -248,7 +248,7 @@ final class Refactor extends Command
     /**
      * Performs the refactoring via injected callable or RefactorAgent.
      *
-     * @param array{provider: string, model?: string, api_key: string, effort?: string} $aiConfig
+     * @param array{provider: string, model?: string, api_key?: string, effort?: string} $aiConfig
      * @param callable(string, string, string): bool $confirm asked with (technique, description, diff) before the write
      */
     private function performRefactoring(array $aiConfig, string $srcPath, string $specPath, ?string $method, callable $confirm): RefactorResult

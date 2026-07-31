@@ -305,13 +305,16 @@ ai:
 
 | Key | Required | Description |
 |---|---|---|
-| `provider` | Yes | LLM provider: `google`, `anthropic`, or `openai` |
+| `provider` | Yes | LLM provider: `google`, `anthropic`, `openai`, `grok`, `deepseek`, or `ollama` |
 | `model` | No | Model identifier; your setting always beats the shipped default |
 | `max_tokens` | No | Output-token ceiling per call; beats the per-command defaults |
 | `effort` | No | Reasoning effort passed to the provider (e.g. `low`, `medium`, `high`), applied once the provider supports it |
-| `api_key` | Yes | API key for the provider. Without this, AI features are disabled. |
+| `api_key` | Yes* | API key for the provider. Required for every provider except `ollama`. |
+| `base_url` | No | The local ollama endpoint (defaults to `http://localhost:11434`); only `ollama` reads it |
 
-Default models per provider: `gemini-3.1-pro-preview` (google), `claude-sonnet-5` (anthropic), `gpt-5.1` (openai).
+Default models per provider: `gemini-3.1-pro-preview` (google), `claude-sonnet-5` (anthropic), `gpt-5.1` (openai), `grok-4` (grok), `deepseek-chat` (deepseek), `llama3.1` (ollama).
+
+Key names are snake_case; hyphenated spellings (`api-key`) are accepted. A misspelled or unknown key, a missing required one, or a wrong-typed value is reported precisely, naming the key and the fix.
 
 ### Customising the prompts
 
