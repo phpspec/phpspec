@@ -57,8 +57,8 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.75",
         "phpstan/phpstan": "^2.1",
-        "papi-ai/papi-core": "^0.13",
-        "papi-ai/google": "^0.13"
+        "papi-ai/papi-core": "^0.13 || ^0.14 || ^0.15",
+        "papi-ai/google": "^0.13 || ^0.14 || ^0.15"
     },
 
     "conflict": {
