@@ -21,20 +21,25 @@ use PhpSpec\StoryBDD\StepError;
  * @internal
  * Holds the result of a single step (Given/When/Then) in Story BDD mode.
  *
- * Tracks the step's state (passed, failed, pending, undefined, skipped) and an optional error.
+ * Tracks the step's state (passed, failure, error, pending, undefined, skipped)
+ * and an optional error. A failure is an expectation that did not hold; an
+ * error is a step whose code threw.
  */
 final class StepResult implements Results
 {
     /** @var StepError|null Error that occurred during step execution */
     private ?StepError $error = null;
 
+    /** @var list<array{severity: int, message: string, file: string, line: int}> */
+    private array $warnings = [];
+
     /**
      * @param string $title the step description
-     * @param string $state the outcome state: passed, failure, pending, undefined, or skipped
+     * @param string $state the outcome state: passed, failure, error, pending, undefined, or skipped
      */
     public function __construct(
         private readonly string $title,
-        private readonly string $state, // passed, failure, pending, undefined, skipped
+        private readonly string $state, // passed, failure, error, pending, undefined, skipped
     ) {}
 
     /**
@@ -117,5 +122,34 @@ final class StepResult implements Results
     public function getError(): ?StepError
     {
         return $this->error;
+    }
+
+    /**
+     * Checks whether this step's code threw, as opposed to an expectation
+     * failing.
+     */
+    public function isError(): bool
+    {
+        return $this->state === 'error';
+    }
+
+    /**
+     * Stores the PHP warnings raised while the step ran.
+     *
+     * @param list<array{severity: int, message: string, file: string, line: int}> $warnings
+     */
+    public function setWarnings(array $warnings): void
+    {
+        $this->warnings = $warnings;
+    }
+
+    /**
+     * Returns the PHP warnings raised while the step ran.
+     *
+     * @return list<array{severity: int, message: string, file: string, line: int}>
+     */
+    public function getWarnings(): array
+    {
+        return $this->warnings;
     }
 }

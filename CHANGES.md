@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+ - A step whose code throws reports under Errors with its type, code excerpt, and location, and tallies as "N errored"; only a failed expectation reads as a Failure
+ - PHP warnings raised inside a step land in the Warnings section with their location instead of leaking raw to the terminal
+
 ## [9.0.0-beta.16](https://github.com/phpspec/phpspec/compare/9.0.0-beta.15...9.0.0-beta.16)
 
 ### Added

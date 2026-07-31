@@ -40,6 +40,7 @@ final class Counts
     private int $steps = 0;
     private int $stepPasses = 0;
     private int $stepFailures = 0;
+    private int $stepErrors = 0;
     private int $undefined = 0;
     private int $skipped = 0;
 
@@ -75,6 +76,7 @@ final class Counts
             'steps' => $this->steps,
             'stepPasses' => $this->stepPasses,
             'stepFailures' => $this->stepFailures,
+            'stepErrors' => $this->stepErrors,
             'undefined' => $this->undefined,
             'skipped' => $this->skipped,
         ];
@@ -113,6 +115,8 @@ final class Counts
             $this->steps++;
             if ($result->isPassed()) {
                 $this->stepPasses++;
+            } elseif ($result->isError()) {
+                $this->stepErrors++;
             } elseif ($result->isFailure()) {
                 $this->stepFailures++;
             } elseif ($result->isPending()) {

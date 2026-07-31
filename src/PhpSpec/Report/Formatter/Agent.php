@@ -330,7 +330,7 @@ final class Agent extends AbstractFormatter
     {
         $state = match (true) {
             $step->isPending() || $step->isUndefined() => 'pending',
-            $step->isFailure() => 'failing',
+            $step->isFailure() || $step->isError() => 'failing',
             $step->isSkipped() => 'skipped',
             default => 'passing',
         };

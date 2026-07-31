@@ -270,6 +270,23 @@ describe(Dot::class, function() {
         expect($text)->toContain("1 failed");
     });
 
+    it("formats an errored step with E and tallies it as errored", function() {
+        $output = new BufferedOutput();
+        $formatter = new Dot($output);
+
+        $errored = new StepResult("When it explodes", "error");
+        $errored->setError(new StepError("Call to a member function add() on null", new \Error("Call to a member function add() on null")));
+        $scenario = new ScenarioResult("bad", [$errored]);
+        $feature = new FeatureResult("Erroring", [$scenario]);
+        $suite = new SuiteResult([$feature]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain("E");
+        expect($text)->toContain("1 errored");
+        expect($text)->not()->toContain("1 failed");
+    });
+
     it("shows duration when available", function() {
         $output = new BufferedOutput();
         $formatter = new Dot($output);

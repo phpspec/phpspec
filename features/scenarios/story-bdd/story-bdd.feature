@@ -60,7 +60,7 @@ Feature: Story BDD with Gherkin
     When I run phpspec run "features/"
     Then the output should contain "pending"
 
-  Scenario: Failed steps skip remaining steps in scenario
+  Scenario: A step that throws is an error and skips the remaining steps
     Given a feature file "features/failing.feature":
       """
       Feature: Failing
@@ -80,7 +80,7 @@ Feature: Story BDD with Gherkin
       });
       """
     When I run phpspec run "features/"
-    Then the output should contain "failed"
+    Then the output should contain "errored"
     And the output should contain "skipped"
 
   Scenario: Background steps run before each scenario

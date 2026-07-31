@@ -276,7 +276,7 @@ final readonly class ResultScanner
                 foreach ($result->getResults() as $scenario) {
                     if ($scenario instanceof ScenarioResult) {
                         foreach ($scenario->getResults() as $step) {
-                            if ($step instanceof StepResult && $step->isFailure() && $step->getError()) {
+                            if ($step instanceof StepResult && ($step->isFailure() || $step->isError()) && $step->getError()) {
                                 $msg = $step->getError()->getMessage();
                                 if (preg_match('/^Class "([^"]+)" not found$/', $msg, $m)) {
                                     $missing[$m[1]] = true;

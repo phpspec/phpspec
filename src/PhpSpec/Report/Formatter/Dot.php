@@ -57,9 +57,7 @@ final class Dot extends AbstractFormatter
     /**
      * Outputs an initial blank line before the progress dots.
      */
-    public function begin(): void
-    {
-    }
+    public function begin(): void {}
 
     /**
      * Outputs progress characters for each example or step in the result tree.
@@ -162,6 +160,9 @@ final class Dot extends AbstractFormatter
         if ($c['stepFailures']) {
             $parts[] = "<fg=red>{$c['stepFailures']} failed</>";
         }
+        if ($c['stepErrors']) {
+            $parts[] = "<fg=red>{$c['stepErrors']} errored</>";
+        }
         if ($c['pending']) {
             $parts[] = "<fg=yellow>{$c['pending']} pending</>";
         }
@@ -222,6 +223,8 @@ final class Dot extends AbstractFormatter
     {
         if ($step->isPending() || $step->isUndefined()) {
             $this->output->write('<fg=yellow>P</>');
+        } elseif ($step->isError()) {
+            $this->output->write('<fg=red>E</>');
         } elseif ($step->isFailure()) {
             $this->output->write('<fg=red>F</>');
         } elseif ($step->isSkipped()) {
