@@ -1,0 +1,10 @@
+---
+tools: [describe, add_example, generate_feature, generate_steps, write_file, update_file, suggest_next, ask_user, run_specs, inspect_symbol, read_file, list_files]
+answer: prose
+grounding: [suite]
+temperature: 0.3
+max_turns: 50
+---
+@include driver
+
+@include instructions/pair-guidance

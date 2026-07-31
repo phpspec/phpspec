@@ -14,11 +14,14 @@
 
 namespace PhpSpec\CodeGeneration;
 
+use PhpSpec\Filesystem;
+
 /**
  * @internal
  * The one home of the steps-beside-feature layout convention
  * (`<feature dir>/steps/<name>.steps.php`): where a feature's step
- * definitions live, and the way back.
+ * definitions live, the way back, and where a project keeps its feature
+ * and steps roots.
  */
 final class FeatureLayout
 {
@@ -37,5 +40,38 @@ final class FeatureLayout
     public function featurePathFor(string $stepsPath): string
     {
         return dirname($stepsPath, 2) . '/' . basename($stepsPath, '.steps.php') . '.feature';
+    }
+
+    /**
+     * The project's feature and steps roots, resolved from the layout on disk:
+     * features live under `features/scenarios` when that subdirectory exists
+     * (plain `features` otherwise), and steps under `features/steps` unless the
+     * scenarios directory keeps its own `steps/`.
+     *
+     * @return array{features: string, steps: string} relative paths
+     */
+    public function roots(Filesystem $filesystem): array
+    {
+        $base = getcwd() . '/features';
+
+        $featuresPath = 'features/scenarios';
+        $stepsPath = 'features/steps';
+
+        if ($filesystem->exists($base) && $filesystem->isDir($base)) {
+            $entries = $filesystem->scandir($base);
+
+            if (!in_array('scenarios', $entries)) {
+                $featuresPath = 'features';
+            }
+
+            if (!in_array('steps', $entries)) {
+                $scenariosSteps = $base . '/scenarios/steps';
+                if ($filesystem->exists($scenariosSteps) && $filesystem->isDir($scenariosSteps)) {
+                    $stepsPath = 'features/scenarios/steps';
+                }
+            }
+        }
+
+        return ['features' => $featuresPath, 'steps' => $stepsPath];
     }
 }

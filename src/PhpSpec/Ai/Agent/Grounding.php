@@ -49,4 +49,13 @@ final readonly class Grounding
     {
         return new self();
     }
+
+    /**
+     * The same grounding without the suite, for a caller that grounds the suite
+     * state through another channel and must not repeat it.
+     */
+    public function withoutSuite(): self
+    {
+        return new self(null, $this->recentFeature, $this->recentSource, $this->tree, $this->namedFiles, $this->polished);
+    }
 }

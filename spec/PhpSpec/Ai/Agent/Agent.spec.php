@@ -2,10 +2,14 @@
 
 use PhpSpec\Ai\Agent\Agent;
 use PhpSpec\Ai\Agent\CommandProfile;
+use PhpSpec\Ai\Agent\Grounding;
 use PhpSpec\Ai\Agent\Phase;
+use PhpSpec\Ai\Agent\Transcript;
 use PhpSpec\Ai\Response;
+use PhpSpec\Ai\Role;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\Configuration;
+use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Filesystem;
 
 require_once __DIR__ . '/../ReplayProvider.php';
@@ -17,6 +21,49 @@ class AgentSpecThrowingProvider implements PhpSpec\Ai\Contracts\ProviderInterfac
     public function chat(array $messages, array $options = []): Response
     {
         throw new RuntimeException('Google API error (400): API key not valid.');
+    }
+}
+
+// A scripted live-session seam: records what the loop executes, optionally ends
+// the turn with a hand-back line, exactly the contract pair's executor fulfils.
+class AgentSpecScriptedExecutor implements PhpSpec\Ai\Contracts\ToolExecutor
+{
+    /** @var list<string> */
+    public array $executed = [];
+
+    public ?string $handBackAfter = null;
+
+    public ?array $suggestion = null;
+
+    public function beginTurn(): void
+    {
+    }
+
+    public function advertised(): array
+    {
+        return [];
+    }
+
+    public function execute(PhpSpec\Ai\ToolCall $call): mixed
+    {
+        $this->executed[] = $call->name;
+
+        return 'ok:' . $call->name;
+    }
+
+    public function observations(): array
+    {
+        return [];
+    }
+
+    public function turnComplete(Response $response): ?string
+    {
+        return $this->handBackAfter;
+    }
+
+    public function lastSuggestion(): ?array
+    {
+        return $this->suggestion;
     }
 }
 
@@ -263,6 +310,110 @@ describe(Agent::class, function () {
         $captures = array_filter(array_keys($this->written), fn(string $path) => str_ends_with($path, '.phpspec/ai/last-request.json'));
 
         expect($captures)->toHaveLength(1);
+    });
+
+    context('conversation: a persistent transcript and a live executor', function () {
+
+        it('keeps one system message across two chats on the same transcript', function (Filesystem $fs) {
+            $replay = new ReplayProvider([new Response('first answer'), new Response('second answer')]);
+            $agent = new Agent($this->config, $fs, $replay, transcript: new Transcript(), executor: new AgentSpecScriptedExecutor());
+
+            $agent->chat('navigator', 'hello');
+            $agent->chat('navigator', 'and again');
+
+            $first = $replay->requests[0]['messages'];
+            $second = $replay->requests[1]['messages'];
+
+            expect(count(array_filter($second, fn($message) => $message->role === Role::System)))->toBe(1);
+            expect($second[0]->content)->toBe($first[0]->content);
+            expect(end($second)->content)->toContain('and again');
+            expect(count($second))->toBe(count($first) + 2);
+        });
+
+        it('executes tool calls through the executor and feeds results back until prose', function (Filesystem $fs) {
+            $replay = new ReplayProvider([
+                new Response('', [new ToolCall('t1', 'run_specs', ['path' => ''])]),
+                new Response('all green'),
+            ]);
+            $executor = new AgentSpecScriptedExecutor();
+            $agent = new Agent($this->config, $fs, $replay, transcript: new Transcript(), executor: $executor);
+
+            $outcome = $agent->chat('navigator', 'run the suite');
+
+            expect($executor->executed)->toBe(['run_specs']);
+            expect($replay->requests)->toHaveLength(2);
+            $toolResults = array_values(array_filter($replay->requests[1]['messages'], fn($message) => $message->role === Role::Tool));
+            expect($toolResults[0]->content)->toBe('ok:run_specs');
+            expect($toolResults[0]->toolCallId)->toBe('t1');
+            expect($outcome->prose)->toBe('all green');
+        });
+
+        it('ends the turn with the executor\'s hand-back line', function (Filesystem $fs) {
+            $replay = new ReplayProvider([
+                new Response('', [new ToolCall('t1', 'run_specs', ['path' => ''])]),
+                new Response('never reached'),
+            ]);
+            $executor = new AgentSpecScriptedExecutor();
+            $executor->handBackAfter = 'That is my one change for this turn.';
+            $agent = new Agent($this->config, $fs, $replay, transcript: new Transcript(), executor: $executor);
+
+            $outcome = $agent->chat('navigator', 'do the thing');
+
+            expect($replay->requests)->toHaveLength(1);
+            expect($outcome->prose)->toBe('That is my one change for this turn.');
+        });
+
+        it('re-orients the system slot when the command changes mid-transcript', function (Filesystem $fs) {
+            $replay = new ReplayProvider([new Response('as navigator'), new Response('as driver')]);
+            $agent = new Agent($this->config, $fs, $replay, transcript: new Transcript(), executor: new AgentSpecScriptedExecutor());
+
+            $agent->chat('navigator', 'hello');
+            $agent->chat('driver', 'you drive now');
+
+            $second = $replay->requests[1]['messages'];
+
+            expect($second[0]->role)->toBe(Role::System);
+            expect($second[0]->content)->toContain('DRIVER');
+            expect(count(array_filter($second, fn($message) => $message->role === Role::System)))->toBe(1);
+            expect($second[1]->content)->toContain('hello');
+        });
+
+        it('grounds the suite state once: the situation message carries it, the context block does not', function (Filesystem $fs) {
+            $replay = new ReplayProvider([new Response('understood')]);
+            $agent = new Agent($this->config, $fs, $replay, transcript: new Transcript(), executor: new AgentSpecScriptedExecutor());
+            $suite = new SuiteSummary(
+                'red',
+                ['examples' => 3, 'passes' => 2, 'failures' => 1, 'errors' => 0, 'pending' => 0],
+                [],
+                [],
+                ['features' => 1, 'scenarios' => 1, 'steps' => 3, 'stepFailures' => 1, 'undefined' => 0],
+                [['path' => 'features/adding.feature', 'status' => 'red', 'undefined' => 0]],
+            );
+
+            $agent->chat('navigator', 'what now?', new Grounding(suite: $suite));
+
+            $messages = $replay->requests[0]['messages'];
+            $situations = array_values(array_filter($messages, fn($message) => is_string($message->content) && str_starts_with($message->content, '[Current situation]')));
+            expect($situations)->toHaveLength(1);
+            expect($situations[0]->content)->toContain('FEATURES: 1 features');
+            expect(end($messages)->content)->not()->toContain('# Suite state');
+        });
+
+        it('never executes a tool call without an executor: the call stays a proposal', function (Filesystem $fs) {
+            $replay = new ReplayProvider([
+                new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'src/App/A.php', 'content' => '<?php class A {}'])]),
+                new Response('never reached'),
+            ]);
+            $agent = new Agent($this->config, $fs, $replay);
+
+            $outcome = $agent->chat('generate', 'update src/App/A.php please');
+
+            expect($replay->requests)->toHaveLength(1);
+            expect($outcome->proposals)->toHaveLength(1);
+            $captures = array_filter(array_keys($this->written), fn(string $path) => str_ends_with($path, '.phpspec/ai/last-request.json'));
+            expect(array_keys($this->written))->toBe(array_values($captures));
+        });
+
     });
 
 });

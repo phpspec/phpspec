@@ -31,6 +31,8 @@ final class Recorder
 {
     private const CAPTURE_FILE = '.phpspec/ai/last-request.json';
 
+    private const SESSION_FILE = '.phpspec/ai/last-session.json';
+
     private readonly Filesystem $filesystem;
 
     /**
@@ -45,11 +47,14 @@ final class Recorder
     /**
      * Writes the capture document for one `chat()` call. A deterministic run has
      * a null request and response; the step and proposals still tell the story.
+     * A conversational turn passes its rounds, so the log holds every provider
+     * exchange of the turn, not only the last.
      *
      * @param array{provider?: string, model?: string, api_key?: string, effort?: string} $aiConfig
      * @param list<Proposal> $proposals
+     * @param list<array{response: Response, tool_results?: array<string, mixed>}> $rounds
      */
-    public function capture(string $command, string $instruction, ?Step $step, ?Request $request, array $aiConfig, ?Response $response, array $proposals = []): void
+    public function capture(string $command, string $instruction, ?Step $step, ?Request $request, array $aiConfig, ?Response $response, array $proposals = [], array $rounds = []): void
     {
         $file = ($this->baseDir ?? (getcwd() ?: '.')) . '/' . self::CAPTURE_FILE;
         $dir = dirname($file);
@@ -58,9 +63,43 @@ final class Recorder
         }
 
         $this->filesystem->write($file, (string) json_encode(
-            $this->document($command, $instruction, $step, $request, $aiConfig, $response, $proposals),
+            $this->document($command, $instruction, $step, $request, $aiConfig, $response, $proposals, $rounds),
             JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
         ));
+    }
+
+    /**
+     * Appends one conversational turn to the session capture, so a whole pair
+     * session is replayable, not only its last exchange. A fresh conversation
+     * starts the file over; the turn document is the same shape `capture()`
+     * writes, keyed under "turns", minus the composed request: that prompt is
+     * identical every turn and already sits in last-request.json, so repeating
+     * it would grow the session by the whole system prompt per turn.
+     *
+     * @param array{provider?: string, model?: string, api_key?: string, effort?: string} $aiConfig
+     * @param list<Proposal> $proposals
+     * @param list<array{response: Response, tool_results?: array<string, mixed>}> $rounds
+     */
+    public function captureSession(string $command, string $instruction, ?Step $step, array $aiConfig, ?Response $response, array $proposals = [], array $rounds = [], bool $fresh = false): void
+    {
+        $file = ($this->baseDir ?? (getcwd() ?: '.')) . '/' . self::SESSION_FILE;
+        $dir = dirname($file);
+        if (!$this->filesystem->exists($dir)) {
+            $this->filesystem->mkdir($dir);
+        }
+
+        $session = ['command' => $command, 'turns' => []];
+        if (!$fresh && $this->filesystem->exists($file)) {
+            $existing = json_decode($this->filesystem->read($file), true);
+            if (is_array($existing) && isset($existing['turns']) && is_array($existing['turns'])) {
+                $session = $existing;
+            }
+        }
+
+        $session['command'] = $command;
+        $session['turns'][] = $this->document($command, $instruction, $step, null, $aiConfig, $response, $proposals, $rounds);
+
+        $this->filesystem->write($file, (string) json_encode($session, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 
     /**
@@ -70,11 +109,12 @@ final class Recorder
      *
      * @param array{provider?: string, model?: string, api_key?: string, effort?: string} $aiConfig
      * @param list<Proposal> $proposals
+     * @param list<array{response: Response, tool_results?: array<string, mixed>}> $rounds
      * @return array<string, mixed>
      */
-    private function document(string $command, string $instruction, ?Step $step, ?Request $request, array $aiConfig, ?Response $response, array $proposals): array
+    private function document(string $command, string $instruction, ?Step $step, ?Request $request, array $aiConfig, ?Response $response, array $proposals, array $rounds = []): array
     {
-        return [
+        $document = [
             'case' => '',
             'command' => $command,
             'instruction' => $instruction,
@@ -90,13 +130,7 @@ final class Recorder
                 'context' => $request->context,
                 'composed_from' => $request->composedFrom,
             ],
-            'response' => $response === null ? null : [
-                'text' => $response->text,
-                'tool_calls' => array_map(
-                    static fn(ToolCall $call): array => ['id' => $call->id, 'name' => $call->name, 'arguments' => $call->arguments],
-                    $response->toolCalls,
-                ),
-            ],
+            'response' => $response === null ? null : self::responseDocument($response),
             'proposals' => array_map(
                 static fn(Proposal $proposal): array => [
                     'path' => $proposal->path,
@@ -105,6 +139,32 @@ final class Recorder
                     'new' => $proposal->new,
                 ],
                 $proposals,
+            ),
+        ];
+
+        if ($rounds !== []) {
+            $document['rounds'] = array_map(
+                static fn(array $round): array => array_filter([
+                    'response' => self::responseDocument($round['response']),
+                    'tool_results' => $round['tool_results'] ?? null,
+                ], static fn(mixed $value): bool => $value !== null),
+                $rounds,
+            );
+        }
+
+        return $document;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function responseDocument(Response $response): array
+    {
+        return [
+            'text' => $response->text,
+            'tool_calls' => array_map(
+                static fn(ToolCall $call): array => ['id' => $call->id, 'name' => $call->name, 'arguments' => $call->arguments],
+                $response->toolCalls,
             ),
         ];
     }

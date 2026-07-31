@@ -1,0 +1,1 @@
+Run phpspec specs via subprocess. Returns the suite's red/green state with the failing and pending examples and their errors, so you can report results and decide the next step.

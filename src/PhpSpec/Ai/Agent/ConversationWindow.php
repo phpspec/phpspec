@@ -12,7 +12,7 @@
  * file that was distributed with this source code.
  */
 
-namespace PhpSpec\Console\Command\Pair;
+namespace PhpSpec\Ai\Agent;
 
 use PhpSpec\Ai\Message;
 use PhpSpec\Ai\Role;

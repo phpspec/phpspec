@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+ - Pair's conversation runs through the one `Agent::chat()` pipeline: a persistent Transcript carries the history, the PairToolExecutor runs the tools live, and pair's own provider loop is deleted
+ - Navigator and driver are command manifests (`commands/navigator.txt`, `commands/driver.txt`): each role's tool surface, temperature, and turn ceiling are project-overridable data, and the live tool descriptions (run_specs, inspect_symbol, ask_user, read_file, list_files) are editable prompt files
+ - Pair turns are step-grounded: the situation report carries the resolved TDD step, and pair's suggest_next speaks the unified seven-type vocabulary, with steps and implement suggestions getting /generate ghosts
+ - Pair model and token settings resolve through the unified config-beats-manifest precedence, and a provider failure surfaces as readable prose instead of an error banner
+
+### Added
+ - Pair conversations are recorded: every exchange lands in .phpspec/ai/last-request.json and the whole session accumulates in last-session.json, so a live pair session can be promoted straight to a replayable eval
+
 ## [9.0.0-beta.16](https://github.com/phpspec/phpspec/compare/9.0.0-beta.15...9.0.0-beta.16)
 
 ### Added

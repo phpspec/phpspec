@@ -44,7 +44,7 @@ function evalNextOutput(Filesystem $fs, string $case): string
         }
     };
 
-    $assistant = new AiAssistant($provider, new Configuration('.', $fs), $pairOutput, 'test-model', $fs, false, null, new Chooser($pairOutput, false), null, $specRunner);
+    $assistant = new AiAssistant($provider, new Configuration('.', $fs), $pairOutput, $fs, false, null, new Chooser($pairOutput, false), null, $specRunner);
     $assistant->handle($rec['instruction']);
 
     return $buffer->fetch();

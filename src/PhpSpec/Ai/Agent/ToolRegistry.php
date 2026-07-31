@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Ai\Agent;
 
+use Closure;
 use PhpSpec\Ai\Contracts\ToolInterface;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\Tool;
@@ -39,6 +40,17 @@ use RuntimeException;
  */
 final class ToolRegistry
 {
+    /**
+     * The shared `intent` parameter of every pair write tool: the driver's
+     * one-line plan, surfaced to the navigator at the confirm prompt so the
+     * go-ahead is a real decision, not a blind "allow this action?".
+     */
+    private const INTENT = [
+        'type' => 'string',
+        'description' => 'One line stating what this change does and why, shown to the '
+            . 'navigator at the confirm prompt (e.g. "add an example that total() sums the line items").',
+    ];
+
     private const SCHEMAS = [
         'write_feature' => [
             'name' => ['type' => 'string', 'description' => 'Short feature name (a snake_case slug)', 'default' => ''],
@@ -56,6 +68,56 @@ final class ToolRegistry
             'type' => ['type' => 'string', 'enum' => ['spec', 'feature', 'example', 'steps', 'implement', 'refactor', 'info'], 'description' => 'What to do next: spec (a class to describe), feature (a user-facing behaviour), example (grow an existing spec with a NEW example), steps (a feature\'s step definitions need writing, or their bodies are pending or failing; target is the .feature path), implement (source code must change to make the suite green; target is the class), refactor (the suite is green and a class deserves cleaning), or info'],
             'target' => ['type' => 'string', 'description' => 'The class name, feature path, or spec the suggestion is about'],
             'reason' => ['type' => 'string', 'description' => 'One short sentence on why this is the next baby step'],
+        ],
+        'describe' => [
+            'class_name' => ['type' => 'string', 'description' => 'Class path using forward slashes (e.g. "App/Calculator")'],
+            'intent' => self::INTENT,
+        ],
+        'add_example' => [
+            'class_name' => ['type' => 'string', 'description' => 'Class path using forward slashes (e.g. "App/Calculator")'],
+            'method' => ['type' => 'string', 'description' => 'The method name to add an example for (e.g. "add")'],
+            'intent' => self::INTENT,
+        ],
+        'generate_feature' => [
+            'feature_name' => ['type' => 'string', 'description' => 'Feature file name without extension (e.g. "user-registration")'],
+            'content' => ['type' => 'string', 'description' => 'The complete Gherkin feature file content'],
+            'intent' => self::INTENT,
+        ],
+        'generate_steps' => [
+            'feature_name' => ['type' => 'string', 'description' => 'Step file name without extension (e.g. "user-registration")'],
+            'content' => ['type' => 'string', 'description' => 'The complete PHP step definitions file content'],
+            'intent' => self::INTENT,
+        ],
+        'write_file' => [
+            'path' => ['type' => 'string', 'description' => 'Relative path from project root (e.g. "src/App/Service.php")'],
+            'content' => ['type' => 'string', 'description' => 'The complete file content'],
+            'intent' => self::INTENT,
+        ],
+        'update_file' => [
+            'path' => ['type' => 'string', 'description' => 'Relative path from project root (e.g. "src/App/Service.php")'],
+            'content' => ['type' => 'string', 'description' => 'The complete new file content'],
+            'intent' => self::INTENT,
+        ],
+        'offer_change' => [
+            'path' => ['type' => 'string', 'description' => 'Relative path from project root (e.g. "src/App/Service.php")'],
+            'content' => ['type' => 'string', 'description' => 'The complete new file content'],
+            'intent' => self::INTENT,
+        ],
+        'ask_user' => [
+            'question' => ['type' => 'string', 'description' => 'The question to show the user, e.g. "Do you want me to generate the method fooBar()?"'],
+            'action' => ['type' => 'string', 'description' => 'Short verb phrase naming the action, completing the sentence "always ..." (e.g. "generate methods")'],
+        ],
+        'run_specs' => [
+            'path' => ['type' => 'string', 'description' => 'Optional path to run (e.g. "spec/App/Calculator.spec.php"). Leave empty to run all.', 'default' => ''],
+        ],
+        'inspect_symbol' => [
+            'fqcn' => ['type' => 'string', 'description' => 'Fully-qualified class name, e.g. "App\\Calculator"'],
+        ],
+        'read_file' => [
+            'path' => ['type' => 'string', 'description' => 'Absolute or relative path to a file'],
+        ],
+        'list_files' => [
+            'directory' => ['type' => 'string', 'description' => 'Relative directory path (e.g. "spec/App", "src/App")', 'default' => '.'],
         ],
     ];
 
@@ -88,11 +150,14 @@ final class ToolRegistry
 
     /**
      * The tool definitions a command's manifest declares, descriptions read
-     * from their prompt files.
+     * from their prompt files. Without handlers every tool is propose-only (a
+     * no-op the pipeline turns into Proposals); a caller running a live session
+     * binds its own handler per name, and execution stays the caller's concern.
      *
+     * @param array<string, Closure> $handlers live handlers keyed by tool name
      * @return list<ToolInterface>
      */
-    public function definitions(CommandProfile $profile): array
+    public function definitions(CommandProfile $profile, array $handlers = []): array
     {
         $tools = [];
 
@@ -105,7 +170,7 @@ final class ToolRegistry
                 name: $name,
                 description: trim($this->prompts->read('tools/' . $name)),
                 parameters: self::SCHEMAS[$name],
-                handler: static fn(array $arguments): string => '',
+                handler: $handlers[$name] ?? static fn(array $arguments): string => '',
             );
         }
 

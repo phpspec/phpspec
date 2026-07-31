@@ -57,9 +57,7 @@ final class Dot extends AbstractFormatter
     /**
      * Outputs an initial blank line before the progress dots.
      */
-    public function begin(): void
-    {
-    }
+    public function begin(): void {}
 
     /**
      * Outputs progress characters for each example or step in the result tree.

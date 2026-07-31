@@ -25,6 +25,93 @@ describe(Recorder::class, function () {
         });
     });
 
+    it('appends each turn of a conversation to the session capture', function (Filesystem $fs) {
+        $store = [];
+        $stored = &$store;
+        allow($fs->exists())->toReturnUsing(function (string $path) use (&$stored): bool {
+            return isset($stored[$path]);
+        });
+        allow($fs->read())->toReturnUsing(function (string $path) use (&$stored): string {
+            return $stored[$path] ?? '';
+        });
+        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$stored) {
+            $stored[$path] = $content;
+        });
+        $recorder = new Recorder($fs, '/proj');
+
+        $recorder->captureSession('navigator', 'first ask', null, [], new Response('first answer'), [], [], fresh: true);
+        $recorder->captureSession('navigator', 'second ask', null, [], new Response('second answer'), [], [], fresh: false);
+
+        $doc = json_decode($store['/proj/.phpspec/ai/last-session.json'] ?? '', true);
+
+        expect($doc['command'])->toBe('navigator');
+        expect($doc['turns'])->toHaveLength(2);
+        expect($doc['turns'][0]['instruction'])->toBe('first ask');
+        expect($doc['turns'][1]['response']['text'])->toBe('second answer');
+    });
+
+    it('keeps session turns slim: the request never repeats into the session capture', function (Filesystem $fs) {
+        $store = [];
+        $stored = &$store;
+        allow($fs->exists())->toReturnUsing(function (string $path) use (&$stored): bool {
+            return isset($stored[$path]);
+        });
+        allow($fs->read())->toReturnUsing(function (string $path) use (&$stored): string {
+            return $stored[$path] ?? '';
+        });
+        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$stored) {
+            $stored[$path] = $content;
+        });
+        $recorder = new Recorder($fs, '/proj');
+
+        $recorder->captureSession('navigator', 'an ask', null, [], new Response('answer'), [], [], fresh: true);
+
+        $doc = json_decode($store['/proj/.phpspec/ai/last-session.json'] ?? '', true);
+
+        expect($doc['turns'][0]['request'])->toBeNull();
+        expect($doc['turns'][0]['response']['text'])->toBe('answer');
+    });
+
+    it('starts the session capture over when the conversation is fresh', function (Filesystem $fs) {
+        $store = [];
+        $stored = &$store;
+        allow($fs->exists())->toReturnUsing(function (string $path) use (&$stored): bool {
+            return isset($stored[$path]);
+        });
+        allow($fs->read())->toReturnUsing(function (string $path) use (&$stored): string {
+            return $stored[$path] ?? '';
+        });
+        allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$stored) {
+            $stored[$path] = $content;
+        });
+        $recorder = new Recorder($fs, '/proj');
+
+        $recorder->captureSession('navigator', 'old session', null, [], new Response('stale'), [], [], fresh: true);
+        $recorder->captureSession('driver', 'new session', null, [], new Response('fresh'), [], [], fresh: true);
+
+        $doc = json_decode($store['/proj/.phpspec/ai/last-session.json'] ?? '', true);
+
+        expect($doc['command'])->toBe('driver');
+        expect($doc['turns'])->toHaveLength(1);
+        expect($doc['turns'][0]['instruction'])->toBe('new session');
+    });
+
+    it('captures every round of a multi-round turn', function (Filesystem $fs) {
+        $recorder = new Recorder($fs, '/proj');
+
+        $recorder->capture('navigator', 'run the suite', null, null, ['provider' => 'google'], new Response('all green'), [], [
+            ['response' => new Response('', [new ToolCall('t1', 'run_specs', ['path' => ''])]), 'tool_results' => ['t1' => 'SUITE: green']],
+            ['response' => new Response('all green')],
+        ]);
+
+        $doc = json_decode($this->written['/proj/.phpspec/ai/last-request.json'] ?? '', true);
+
+        expect($doc['rounds'])->toHaveLength(2);
+        expect($doc['rounds'][0]['response']['tool_calls'][0]['name'])->toBe('run_specs');
+        expect($doc['rounds'][0]['tool_results']['t1'])->toBe('SUITE: green');
+        expect($doc['response']['text'])->toBe('all green');
+    });
+
     it('captures the exchange to .phpspec/ai/last-request.json in the recording schema', function (Filesystem $fs) {
         $recorder = new Recorder($fs, '/proj');
         $step = new Step(Phase::WriteSteps, null, 'features/adding.feature', 'steps are undefined');

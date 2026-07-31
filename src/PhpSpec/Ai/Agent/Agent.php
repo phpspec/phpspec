@@ -16,16 +16,18 @@ namespace PhpSpec\Ai\Agent;
 
 use InvalidArgumentException;
 use PhpSpec\Ai\Contracts\ProviderInterface;
-use PhpSpec\Ai\Message;
+use PhpSpec\Ai\Contracts\ToolExecutor;
 use PhpSpec\Ai\PromptLibrary;
 use PhpSpec\Ai\ProviderFactory;
 use PhpSpec\Ai\RefactorJournal;
+use PhpSpec\Ai\Response;
 use PhpSpec\Ai\TreeScanner;
 use PhpSpec\CodeGeneration\FeatureLayout;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
+use PhpSpec\StoryBDD\StepVocabulary;
 use RuntimeException;
 use Throwable;
 
@@ -59,6 +61,12 @@ final class Agent
 
     private readonly FeatureLayout $layout;
 
+    /** The conversation's standing project map, built once per session. */
+    private ?string $projectMap = null;
+
+    /** Whether this session's first turn already reset the session capture. */
+    private bool $sessionCaptured = false;
+
     /**
      * @param Configuration $config the project configuration
      * @param Filesystem|null $filesystem filesystem abstraction for testability
@@ -66,6 +74,8 @@ final class Agent
      * @param ToolRegistry|null $registry the shared tool definitions
      * @param Recorder|null $recorder captures every exchange
      * @param PromptLibrary|null $prompts loads the prompt files
+     * @param Transcript|null $transcript a persistent conversation; every chat() extends it instead of starting fresh
+     * @param ToolExecutor|null $executor a live session's tool half; chat() loops and executes instead of proposing
      */
     public function __construct(
         private readonly Configuration $config,
@@ -74,6 +84,8 @@ final class Agent
         ?ToolRegistry $registry = null,
         ?Recorder $recorder = null,
         ?PromptLibrary $prompts = null,
+        private readonly ?Transcript $transcript = null,
+        private readonly ?ToolExecutor $executor = null,
     ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->prompts = $prompts ?? new PromptLibrary($this->filesystem);
@@ -128,7 +140,9 @@ final class Agent
      */
     private function ask(CommandProfile $profile, ?Step $step, Grounding $grounding, string $instruction, ?array $aiConfig): Outcome
     {
-        $request = Request::compose($profile, $step, $grounding, $instruction, $this->prompts);
+        // A conversation grounds the suite through the per-turn situation
+        // message, so the composed context must not repeat it.
+        $request = Request::compose($profile, $step, $this->transcript !== null ? $grounding->withoutSuite() : $grounding, $instruction, $this->prompts);
 
         try {
             $provider = $this->providerFor($aiConfig);
@@ -143,26 +157,93 @@ final class Agent
                 : $this->failedAsk($step, $e->getMessage());
         }
 
-        $messages = [Message::system($request->system), Message::user($request->context)];
+        // The conversation: the caller's persistent transcript when one was
+        // injected (a pair session), otherwise a fresh one for this exchange.
+        // The system slot seats once per command; a swap re-orients it.
+        $transcript = $this->transcript ?? new Transcript();
+        $transcript->beginTurn();
+        if (!$transcript->isOrientedFor($profile->name)) {
+            $transcript->orient($profile->name, $this->orientation($request->system));
+        }
+        $this->situate($transcript, $step, $grounding);
+        $transcript->say($request->context);
+        $this->executor?->beginTurn();
+
+        $rounds = [];
+        $limit = $this->executor !== null ? ($profile->maxTurns ?? 50) : 1;
+        $response = null;
 
         try {
-            $response = $provider->chat($messages, $options);
+            for ($turn = 0; $turn < $limit; $turn++) {
+                $roundOptions = $options;
+                if ($this->executor !== null) {
+                    $roundOptions['tools'] = $this->executor->advertised();
+                }
 
-            // The channel rail: structure only ever arrives as tool calls, so a
-            // tool_call command answered in prose gets ONE corrective re-ask.
-            // Providers that honour toolChoice (papi-core >= 0.13) make this a
-            // rare fallback; older ones ignore the option and rely on it.
-            if ($profile->answer === 'tool_call' && !$response->hasToolCalls()) {
-                $messages[] = Message::assistant($response->text);
-                $messages[] = Message::user('Answer by calling exactly one of the declared tools; do not answer in prose.');
-                $response = $provider->chat($messages, $options);
+                $response = $provider->chat($transcript->messages(), $roundOptions);
+
+                // The channel rail: structure only ever arrives as tool calls, so a
+                // tool_call command answered in prose gets ONE corrective re-ask.
+                // Providers that honour toolChoice (papi-core >= 0.13) make this a
+                // rare fallback; older ones ignore the option and rely on it.
+                if ($this->executor === null && $profile->answer === 'tool_call' && !$response->hasToolCalls()) {
+                    $transcript->heard($response);
+                    $transcript->say('Answer by calling exactly one of the declared tools; do not answer in prose.');
+                    $response = $provider->chat($transcript->messages(), $roundOptions);
+                }
+
+                $transcript->heard($response);
+
+                if ($this->executor === null || !$response->hasToolCalls()) {
+                    break;
+                }
+
+                $results = [];
+                foreach ($response->toolCalls as $toolCall) {
+                    $result = $this->executor->execute($toolCall);
+                    $results[$toolCall->id] = $result;
+                    $transcript->observed($toolCall->id, $result);
+                }
+                $rounds[] = ['response' => $response, 'tool_results' => $results];
+
+                foreach ($this->executor->observations() as $report) {
+                    $transcript->say($report);
+                }
+
+                $handBack = $this->executor->turnComplete($response);
+                if ($handBack !== null) {
+                    $this->captureTurn($profile, $instruction, $step, $request, $aiConfig, $response, $rounds);
+
+                    return new Outcome($step, [], $handBack, $this->executor->lastSuggestion() ?? []);
+                }
             }
         } catch (Throwable $e) {
             // A live provider failure (bad key, HTTP error, an unenforceable
             // toolChoice) becomes prose for the human, never a crash.
-            $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], null);
+            $this->captureTurn($profile, $instruction, $step, $request, $aiConfig, null, $rounds);
 
             return $this->failedAsk($step, $e->getMessage());
+        }
+
+        if ($this->executor !== null) {
+            $ended = $response !== null && !$response->hasToolCalls();
+            if ($ended) {
+                $rounds[] = ['response' => $response];
+            }
+            $this->captureTurn($profile, $instruction, $step, $request, $aiConfig, $response, $rounds);
+
+            return new Outcome(
+                $step,
+                [],
+                $ended ? trim($response->text) : 'Reached maximum tool turns. Please try a simpler request.',
+                $this->executor->lastSuggestion() ?? [],
+            );
+        }
+
+        if ($response === null) {
+            // Unreachable in practice: the single propose-only round always ran
+            // and its failures returned above; kept honest for the type.
+            return $this->failedAsk($step, 'The provider returned no response.');
         }
 
         try {
@@ -193,6 +274,140 @@ final class Agent
         }
 
         return new Outcome($step, $proposals, trim($response->text), $data);
+    }
+
+    /**
+     * Captures one turn: the last-request debug file always, and, when a live
+     * session is running, the turn is appended to the session capture so the
+     * whole conversation is replayable. The session's first turn starts the
+     * file over.
+     *
+     * @param array{provider?: string, model?: string, api_key?: string, effort?: string}|null $aiConfig
+     * @param list<array{response: Response, tool_results?: array<string, mixed>}> $rounds
+     */
+    private function captureTurn(CommandProfile $profile, string $instruction, ?Step $step, Request $request, ?array $aiConfig, ?Response $response, array $rounds): void
+    {
+        $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], $response, [], $rounds);
+
+        if ($this->executor === null) {
+            return;
+        }
+
+        $this->recorder->captureSession($profile->name, $instruction, $step, $aiConfig ?? [], $response, [], $rounds, !$this->sessionCaptured);
+        $this->sessionCaptured = true;
+    }
+
+    /**
+     * The system text for a transcript's orient slot: the composed prompt with
+     * the project layout tokens resolved, plus, for a persistent conversation,
+     * the standing project map (fresh state rides the per-turn situation).
+     */
+    private function orientation(string $system): string
+    {
+        if (str_contains($system, '%')) {
+            $roots = $this->layout->roots($this->filesystem);
+            $system = strtr($system, [
+                '%spec_path%' => ltrim($this->config->getSpecPath(), './'),
+                '%spec_suffix%' => $this->config->getSpecSuffix(),
+                '%src_path%' => ltrim($this->config->getSrcPath(), './'),
+                '%features_path%' => $roots['features'],
+                '%steps_path%' => $roots['steps'],
+            ]);
+        }
+
+        if ($this->transcript === null) {
+            return $system;
+        }
+
+        $map = $this->projectMap();
+
+        return $map === '' ? $system : $system . "\n\n" . $map;
+    }
+
+    /**
+     * Grounds a conversational turn in the live suite state and the resolved
+     * step, as the one fresh "[Current situation]" the window keeps.
+     */
+    private function situate(Transcript $transcript, ?Step $step, Grounding $grounding): void
+    {
+        if ($this->transcript === null || $grounding->suite === null) {
+            return;
+        }
+
+        $report = SituationReport::fromSummary($grounding->suite)->render();
+        if ($step !== null) {
+            $report .= sprintf("\nCurrent step: %s (%s).", $step->phase->value, $step->because);
+        }
+
+        $transcript->situate($report);
+    }
+
+    /**
+     * The conversation's standing project map: the source, spec, and feature
+     * trees plus the step titles the suite already owns, built once per
+     * session for the orient slot.
+     */
+    private function projectMap(): string
+    {
+        if ($this->projectMap !== null) {
+            return $this->projectMap;
+        }
+
+        $cwd = getcwd() ?: '.';
+        $scanner = new TreeScanner($this->filesystem);
+        $sections = [];
+
+        $srcPath = ltrim($this->config->getSrcPath(), './');
+        $srcTree = $scanner->scan($cwd . '/' . $srcPath, 3);
+        if ($srcTree !== '') {
+            $sections[] = "## Source files ($srcPath/)\n$srcTree";
+        }
+
+        $specPath = ltrim($this->config->getSpecPath(), './');
+        $specTree = $scanner->scan($cwd . '/' . $specPath, 3);
+        if ($specTree !== '') {
+            $sections[] = "## Spec files ($specPath/)\n$specTree";
+        }
+
+        $featuresDir = $cwd . '/' . trim($this->config->getFeaturesPath(), './');
+        if ($this->filesystem->exists($featuresDir) && $this->filesystem->isDir($featuresDir)) {
+            $featTree = $scanner->scan($featuresDir, 3);
+            if ($featTree !== '') {
+                $sections[] = "## Feature files\n$featTree";
+            }
+        }
+
+        $titles = $this->stepTitles($featuresDir);
+        if ($titles !== '') {
+            $sections[] = "## Existing step definitions\nThese steps are already defined, reuse them in new scenarios:\n$titles";
+        }
+
+        $this->projectMap = $sections === [] ? '' : "# Project file tree\n\n" . implode("\n\n", $sections);
+
+        return $this->projectMap;
+    }
+
+    /**
+     * The step titles the suite already owns, grouped by their file, from the
+     * step vocabulary (titles are keyword-blind: each registers once).
+     */
+    private function stepTitles(string $featuresRoot): string
+    {
+        $byFile = [];
+        foreach ((new StepVocabulary($this->filesystem))->definedTitles($featuresRoot) as $title => $file) {
+            $byFile[basename($file)][] = $title;
+        }
+
+        $lines = [];
+        foreach ($byFile as $file => $titles) {
+            $lines[] = "# $file";
+            foreach ($titles as $title) {
+                $lines[] = "- $title";
+            }
+            $lines[] = '';
+        }
+
+        return implode("\n", $lines);
     }
 
     /**
