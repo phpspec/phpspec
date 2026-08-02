@@ -107,6 +107,20 @@ Feature: Agent output format
     And the output should contain "required"
     And the exit code should be 1
 
+  Scenario: A run that cannot start still answers with a document
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () { expect(2)->toBe(2); });
+      });
+      """
+    When I run phpspec run with option "--format=agent --bootstrap=nope.php"
+    Then the output should be valid JSON
+    And the output should contain "fatal"
+    And the output should contain "Bootstrap file not found"
+    And the exit code should be 1
+
   Scenario: A fatal still leaves a document, naming what stopped the run
     Given a spec file "spec/App/Broken.spec.php":
       """

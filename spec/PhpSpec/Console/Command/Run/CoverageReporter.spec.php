@@ -18,11 +18,11 @@ describe(CoverageReporter::class, function () {
             // whole-suite collection (xdebug coverage state is process-global).
             if (!CoverageCollector::isCollecting()) {
 
-                it('returns true when Xdebug coverage is available', function () {
+                it('starts with nothing to report when Xdebug coverage is available', function () {
                     $output = new BufferedOutput();
                     $reporter = new CoverageReporter();
 
-                    expect($reporter->start($output))->toBeTrue();
+                    expect($reporter->start())->toBeNull();
 
                     // Stop the collection so no state leaks into later examples
                     $reporter->report($output, new CoverageOptions(srcPath: 'src'));
@@ -36,7 +36,7 @@ describe(CoverageReporter::class, function () {
                 $reporter = new CoverageReporter();
 
                 try {
-                    expect($reporter->start($output, perExample: true))->toBeTrue();
+                    expect($reporter->start(perExample: true))->toBeNull();
                     expect(CoverageRegistry::collector())->toBeAnInstanceOf(PerExampleCollector::class);
                 } finally {
                     CoverageRegistry::reset();
@@ -45,23 +45,14 @@ describe(CoverageReporter::class, function () {
 
         } else {
 
-            it('returns false when Xdebug coverage is not available', function () {
-                $output = new BufferedOutput();
+            it('returns the reason when Xdebug coverage is not available', function () {
                 $reporter = new CoverageReporter();
-                expect($reporter->start($output))->toBeFalse();
+                expect($reporter->start())->toContain('Code coverage requires Xdebug');
             });
 
-            it('returns false in per-example mode when Xdebug coverage is not available', function () {
-                $output = new BufferedOutput();
+            it('returns the reason in per-example mode when Xdebug coverage is not available', function () {
                 $reporter = new CoverageReporter();
-                expect($reporter->start($output, perExample: true))->toBeFalse();
-            });
-
-            it('writes error message when Xdebug coverage is not available', function () {
-                $output = new BufferedOutput();
-                $reporter = new CoverageReporter();
-                $reporter->start($output);
-                expect($output->fetch())->toContain('Code coverage requires Xdebug');
+                expect($reporter->start(perExample: true))->toContain('Code coverage requires Xdebug');
             });
 
         }

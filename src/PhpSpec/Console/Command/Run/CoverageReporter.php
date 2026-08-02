@@ -48,28 +48,25 @@ final class CoverageReporter
      * is activated in the CoverageRegistry and the runner cycles it around
      * each example.
      *
-     * @param Output $output the console output for error messages
      * @param bool $perExample whether to collect coverage per example
-     * @return bool true if collection started, false if unavailable
+     * @return string|null null once collection started, or why it could not
      */
-    public function start(Output $output, bool $perExample = false): bool
+    public function start(bool $perExample = false): ?string
     {
         if (!CoverageCollector::isAvailable()) {
-            $output->writeln('<fg=red>Code coverage requires Xdebug with coverage mode enabled</>');
-
-            return false;
+            return 'Code coverage requires Xdebug with coverage mode enabled';
         }
 
         if ($perExample) {
             CoverageRegistry::activate(new PerExampleCollector(new XdebugDriver()));
 
-            return true;
+            return null;
         }
 
         $this->collector = new CoverageCollector();
         $this->collector->start();
 
-        return true;
+        return null;
     }
 
     /**

@@ -200,31 +200,29 @@ final class Run extends Command
      */
     private function perform(Input $input, Output $prose, Formatter $formatter): int
     {
-        if (!$this->loadBootstrap($input, $prose)) {
-            return 1;
+        $missingBootstrap = $this->loadBootstrap($input);
+
+        if ($missingBootstrap !== null) {
+            return $this->stopped($prose, $formatter, $missingBootstrap);
         }
         $this->registerAutoloader();
 
         $pathsFrom = $input->getOption('paths-from');
 
         if ($pathsFrom !== null && !is_file($pathsFrom)) {
-            $prose->writeln("<fg=red>Paths file not found: $pathsFrom</>");
-
-            return 1;
+            return $this->stopped($prose, $formatter, "Paths file not found: $pathsFrom");
         }
 
         $unknownFormats = $this->unknownFormats($input);
 
         if ($unknownFormats !== []) {
-            $prose->writeln('<fg=red>Unknown format: ' . implode(', ', $unknownFormats) . ' (available: pretty, dot, tap, junit, html, agent)</>');
-
-            return 1;
+            return $this->stopped($prose, $formatter, 'Unknown format: ' . implode(', ', $unknownFormats) . ' (available: pretty, dot, tap, junit, html, agent)');
         }
 
-        $coverageReporter = $this->startCoverage($input, $prose);
+        $coverageReporter = $this->startCoverage($input);
 
-        if ($coverageReporter === false) {
-            return 1;
+        if (is_string($coverageReporter)) {
+            return $this->stopped($prose, $formatter, $coverageReporter);
         }
 
         try {
@@ -232,9 +230,7 @@ final class Run extends Command
         } catch (\RuntimeException $e) {
             // A load-time contract violation (e.g. two step definitions
             // sharing a title) is the user's to fix; report it, never a trace.
-            $prose->writeln(sprintf('<fg=red>%s</>', $e->getMessage()));
-
-            return 1;
+            return $this->stopped($prose, $formatter, $e->getMessage());
         }
 
         $this->writeReportFiles($input, $prose, $results);
@@ -321,28 +317,47 @@ final class Run extends Command
     }
 
     /**
+     * Reports what stopped the run before it could produce results: red on the
+     * console for a human, and inside the document for an agent, so a run that
+     * returns nothing never leaves either of them guessing why.
+     *
+     * @param Output $prose the channel for the run's human-facing lines
+     * @param Formatter $formatter the console formatter for the run's results
+     * @param string $message what went wrong
+     * @return int the exit code the caller returns
+     */
+    private function stopped(Output $prose, Formatter $formatter, string $message): int
+    {
+        $prose->writeln(sprintf('<fg=red>%s</>', $message));
+
+        if ($formatter instanceof Agent) {
+            $formatter->stopped($message);
+        }
+
+        return 1;
+    }
+
+    /**
      * Resolves and requires the bootstrap file from --bootstrap, config, or vendor/autoload.php.
-     * Returns false if the specified file does not exist.
      *
      * @param Input $input the console input to read --bootstrap from
-     * @param Output $output the console output for error messages
-     * @return bool true if bootstrap loaded (or none needed), false if file not found
+     * @return string|null null once loaded (or when none is needed), or why it could not be
      */
-    private function loadBootstrap(Input $input, Output $output): bool
+    private function loadBootstrap(Input $input): ?string
     {
         $bootstrap = $input->getOption('bootstrap') ?? $this->config->getBootstrap();
         if ($bootstrap === null && file_exists('vendor/autoload.php')) {
             $bootstrap = 'vendor/autoload.php';
         }
         if ($bootstrap === null) {
-            return true;
+            return null;
         }
         if (!file_exists($bootstrap)) {
-            $output->writeln("<fg=red>Bootstrap file not found: $bootstrap</>");
-            return false;
+            return "Bootstrap file not found: $bootstrap";
         }
         require $bootstrap;
-        return true;
+
+        return null;
     }
 
     private function registerAutoloader(): void
@@ -354,10 +369,10 @@ final class Run extends Command
      * Starts code coverage collection if any --coverage* option was given.
      *
      * @param Input $input the console input to check coverage options
-     * @param Output $output the console output for error messages
-     * @return CoverageReporter|null|false reporter if started, null if not requested, false on error
+     * @return CoverageReporter|null|string the reporter once started, null when no
+     *                                      coverage was asked for, or why it could not start
      */
-    private function startCoverage(Input $input, Output $output): CoverageReporter|null|false
+    private function startCoverage(Input $input): CoverageReporter|null|string
     {
         if (!$this->wantsCoverage($input)) {
             return null;
@@ -371,11 +386,7 @@ final class Run extends Command
 
         $reporter = new CoverageReporter();
 
-        if (!$reporter->start($output, perExample: $perExample)) {
-            return false;
-        }
-
-        return $reporter;
+        return $reporter->start(perExample: $perExample) ?? $reporter;
     }
 
     /**
