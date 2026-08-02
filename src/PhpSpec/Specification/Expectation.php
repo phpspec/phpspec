@@ -539,9 +539,13 @@ class Expectation
     {
         return $this->match(
             fn($expected) => is_string($expected) ? strlen($expected) === $length : count($expected) === $length,
-            'Expected %s to have length %s',
+            // The subject alone leaves the reader counting: an array of one array
+            // prints as "[array(2)]", which reads like a length of 2. The length
+            // asserted on is the one thing the message must state outright.
+            'Expected %s to have length %s, has %s',
             $this->subject,
             $length,
+            self::lengthOf($this->subject),
             ['__fake' => is_string($this->subject) ? "str_repeat('x', {$length})" : "array_fill(0, {$length}, null)"],
         );
     }
@@ -819,6 +823,20 @@ class Expectation
             };
         }
         return $message;
+    }
+
+    /**
+     * How long a subject is in the terms toHaveLength asserts on: characters for
+     * a string, elements for anything countable, and "no length" for a subject
+     * that has none (the matcher fails it either way, and the message says why).
+     */
+    private static function lengthOf(mixed $subject): int|string
+    {
+        return match (true) {
+            is_string($subject) => strlen($subject),
+            is_countable($subject) => count($subject),
+            default => 'no length',
+        };
     }
 
     /**

@@ -107,6 +107,31 @@ Feature: Agent output format
     And the output should contain "required"
     And the exit code should be 1
 
+  Scenario: A length failure reports the length the subject actually has
+    Given a spec file "spec/App/Bag.spec.php":
+      """
+      <?php
+      describe('App\Bag', function () {
+          it('holds two', function () { expect([1])->toHaveLength(2); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "Expected [1] to have length 2, has 1"
+
+  Scenario: The summary carries one command that re-runs everything that failed
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds', function () { expect(1)->toBe(2); });
+          it('subtracts', function () { expect(3)->toBe(4); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "spec/App/Calc.spec.php:3 spec/App/Calc.spec.php:4"
+
   Scenario: A run that cannot start still answers with a document
     Given a spec file "spec/App/Calc.spec.php":
       """

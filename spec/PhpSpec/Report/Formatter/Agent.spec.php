@@ -179,6 +179,27 @@ describe(Agent::class, function () {
         expect($doc['fatal']['at'])->toBeNull();
     });
 
+    it('joins every failing target into one rerun command, without repeats', function () use ($render) {
+        $spec = getcwd() . '/spec/App/Basket.spec.php';
+        $doc = $render(new SuiteResult([
+            new SpecificationResult('App\\Basket', [
+                new ExampleResult('totals', [MatchResult::failed(1, 2, 'Expected 1 to be 2', $spec, 12, null, 'toBe')]),
+                new ExampleResult('counts', [MatchResult::failed(3, 4, 'Expected 3 to be 4', $spec, 20, null, 'toBe')]),
+                new ExampleResult('repeats', [MatchResult::failed(3, 4, 'Expected 3 to be 4', $spec, 20, null, 'toBe')]),
+            ]),
+        ]));
+
+        expect($doc['result']['rerun'])->toBe('run spec/App/Basket.spec.php:12 spec/App/Basket.spec.php:20');
+    });
+
+    it('offers no rerun command when nothing failed', function () use ($render) {
+        $doc = $render(new SuiteResult([
+            new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
+        ]));
+
+        expect($doc['result'])->not()->toHaveKey('rerun');
+    });
+
     it('omits coverage from the result when none was collected', function () use ($render) {
         $doc = $render(new SuiteResult([
             new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),

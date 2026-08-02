@@ -224,6 +224,11 @@ final class Agent extends AbstractFormatter
             ],
         ];
 
+        $rerun = $this->rerunEverything();
+        if ($rerun !== null) {
+            $result['result']['rerun'] = $rerun;
+        }
+
         if ($this->coverage !== null) {
             $result['result']['coverage'] = [
                 'percent' => round($this->coverage->percent, 1),
@@ -237,6 +242,27 @@ final class Agent extends AbstractFormatter
         }
 
         return $result;
+    }
+
+    /**
+     * The one command that re-runs everything this run reported, so a fix can be
+     * checked against the whole of what it was meant to fix instead of one
+     * example at a time. Null when nothing failed anywhere with a location.
+     */
+    private function rerunEverything(): ?string
+    {
+        $targets = [];
+
+        foreach ($this->examples as $entry) {
+            $rerun = $entry['rerun'] ?? null;
+            if (is_string($rerun)) {
+                $targets[] = substr($rerun, strlen('run '));
+            }
+        }
+
+        $targets = array_values(array_unique($targets));
+
+        return $targets !== [] ? 'run ' . implode(' ', $targets) : null;
     }
 
     /**
