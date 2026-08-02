@@ -22,6 +22,7 @@ use PhpSpec\Console\Command\Run\GenerationReport;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Coverage\CoverageOptions;
+use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Extensions\FormatterBridge;
 use PhpSpec\FilterRegistry;
@@ -231,10 +232,19 @@ final class Run extends Command
         $this->printProfile($input, $prose, $results);
 
         if ($coverageReporter) {
-            $exitCode = $this->reportCoverage($input, $prose, $coverageReporter);
+            $verdict = $this->reportCoverage($input, $prose, $coverageReporter);
 
-            if ($exitCode !== null) {
-                return $exitCode;
+            if ($verdict !== null) {
+                // The gate's verdict belongs in the document as much as in the
+                // exit code: an agent that reads one and not the other would
+                // otherwise call a failed run green.
+                if ($formatter instanceof Agent) {
+                    $formatter->covered($verdict);
+                }
+
+                if ($verdict->exitCode() !== null) {
+                    return $verdict->exitCode();
+                }
             }
         }
 
@@ -650,10 +660,10 @@ final class Run extends Command
      * @param Input $input the console input for coverage report options
      * @param Output $output the console output for report rendering
      * @param CoverageReporter $reporter the active coverage reporter
-     * @return int|null exit code if coverage below minimum, null otherwise
+     * @return CoverageVerdict|null what the run covered, or null when nothing was collected
      * @throws DOMException
      */
-    private function reportCoverage(Input $input, Output $output, CoverageReporter $reporter): ?int
+    private function reportCoverage(Input $input, Output $output, CoverageReporter $reporter): ?CoverageVerdict
     {
         if ($this->coveragePartials !== []) {
             $reporter->mergePartials($this->coveragePartials);

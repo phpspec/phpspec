@@ -93,7 +93,7 @@ describe(CoverageReporter::class, function () {
             $reporter = new CoverageReporter();
 
             try {
-                $exitCode = $reporter->report($output, new CoverageOptions(
+                $verdict = $reporter->report($output, new CoverageOptions(
                     srcPath: dirname($fixture),
                     showText: true,
                     cloverPath: $dir . '/clover.xml',
@@ -102,7 +102,10 @@ describe(CoverageReporter::class, function () {
                     coverageMin: '100',
                 ));
 
-                expect($exitCode)->toBeNull();
+                expect($verdict->met())->toBeTrue();
+                expect($verdict->exitCode())->toBeNull();
+                expect($verdict->percent)->toBe(100.0);
+                expect($verdict->required)->toBe(100.0);
                 expect(file_exists($dir . '/clover.xml'))->toBeTrue();
                 expect(file_exists($dir . '/html/index.html'))->toBeTrue();
                 expect(file_exists($dir . '/coverage.json'))->toBeTrue();
@@ -119,7 +122,7 @@ describe(CoverageReporter::class, function () {
             }
         });
 
-        it('returns exit code 1 when coverage is below the minimum', function (CoverageDriver $driver) {
+        it('returns a verdict that demands exit code 1 when coverage is below the minimum', function (CoverageDriver $driver) {
             $fixture = (string) realpath(__DIR__ . '/../../../Coverage/Driver/fixtures/covered_probe.php');
             allow($driver->stop())->toReturn([$fixture => [3 => 1, 4 => -1]]);
             $collector = new PerExampleCollector($driver);
@@ -132,12 +135,14 @@ describe(CoverageReporter::class, function () {
             $reporter = new CoverageReporter();
 
             try {
-                $exitCode = $reporter->report($output, new CoverageOptions(
+                $verdict = $reporter->report($output, new CoverageOptions(
                     srcPath: dirname($fixture),
                     coverageMin: '90',
                 ));
 
-                expect($exitCode)->toBe(1);
+                expect($verdict->met())->toBeFalse();
+                expect($verdict->exitCode())->toBe(1);
+                expect($verdict->percent)->toBe(50.0);
                 expect($output->fetch())->toContain('below the required');
             } finally {
                 CoverageRegistry::reset();

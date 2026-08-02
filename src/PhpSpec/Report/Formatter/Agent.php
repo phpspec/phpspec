@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Report\Formatter;
 
+use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Report\Formatter\Agent\Offers;
 use PhpSpec\Report\Formatter\Agent\Schema;
@@ -62,6 +63,9 @@ final class Agent extends AbstractFormatter
     /** Whether the document has gone out, so it goes out exactly once. */
     private bool $published = false;
 
+    /** What the run covered, when coverage was collected. */
+    private ?CoverageVerdict $coverage = null;
+
     public function __construct(OutputInterface $output, ?\Closure $resolveCandidates = null)
     {
         parent::__construct($output);
@@ -97,6 +101,15 @@ final class Agent extends AbstractFormatter
     public function end(SuiteResult $results): void
     {
         $this->results = $results;
+    }
+
+    /**
+     * Takes what the coverage run concluded, so the document reports it rather
+     * than a line printed after the document could ever say.
+     */
+    public function covered(CoverageVerdict $verdict): void
+    {
+        $this->coverage = $verdict;
     }
 
     /**
@@ -138,8 +151,12 @@ final class Agent extends AbstractFormatter
         $failing = $this->counts['failing'] ?? 0;
         $errors = $this->counts['error'] ?? 0;
         $pending = $this->counts['pending'] ?? 0;
+        // A coverage gate the run missed is work left to do, exactly like a red
+        // example: the number an agent checks must not say "nothing to do" while
+        // the exit code says otherwise.
+        $shortfall = $this->coverage !== null && !$this->coverage->met() ? 1 : 0;
 
-        return [
+        $result = [
             'suite' => [
                 'v' => Schema::V,
                 'event' => Schema::EVENT_RUN_STARTED,
@@ -160,12 +177,23 @@ final class Agent extends AbstractFormatter
                 'pending' => $pending,
                 'skipped' => $this->counts['skipped'] ?? 0,
                 // The one number an agent checks: everything red or unfinished
-                // (failures + errors + pending). Zero means nothing to do.
-                'actionable' => $failing + $errors + $pending,
+                // (failures + errors + pending) plus a missed coverage gate.
+                // Zero means nothing to do.
+                'actionable' => $failing + $errors + $pending + $shortfall,
                 'duration_ms' => (int) round(($this->results?->getDuration() ?? 0.0) * 1000),
                 'offers' => $this->results !== null ? $this->offers($this->results) : [],
             ],
         ];
+
+        if ($this->coverage !== null) {
+            $result['result']['coverage'] = [
+                'percent' => round($this->coverage->percent, 1),
+                'required' => $this->coverage->required,
+                'met' => $this->coverage->met(),
+            ];
+        }
+
+        return $result;
     }
 
     /**

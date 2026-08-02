@@ -1,5 +1,6 @@
 <?php
 
+use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Report\Formatter\Agent;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
@@ -72,6 +73,45 @@ describe(Agent::class, function () {
         expect($doc['result']['failing'])->toBe(1);
         expect($doc['result']['duration_ms'])->toBe(0);
         expect($doc['examples'][0]['example'])->toBe('App\\Basket holds products');
+    });
+
+    it('carries a missed coverage gate in the result, and counts it as work left', function () {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->begin();
+        $formatter->printResult(new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]));
+        $formatter->end(new SuiteResult([]));
+        $formatter->covered(new CoverageVerdict(24.34, 90.0));
+        $formatter->publish();
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+
+        // JSON has one number type, so 90.0 comes back as 90.
+        expect($doc['result']['coverage']['percent'])->toBe(24.3);
+        expect((float) $doc['result']['coverage']['required'])->toBe(90.0);
+        expect($doc['result']['coverage']['met'])->toBeFalse();
+        expect($doc['result']['failing'])->toBe(0);
+        expect($doc['result']['actionable'])->toBe(1);
+    });
+
+    it('reports coverage without a threshold as met, adding no work', function () {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->begin();
+        $formatter->end(new SuiteResult([]));
+        $formatter->covered(new CoverageVerdict(72.5));
+        $formatter->publish();
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+
+        expect($doc['result']['coverage'])->toBe(['percent' => 72.5, 'required' => null, 'met' => true]);
+        expect($doc['result']['actionable'])->toBe(0);
+    });
+
+    it('omits coverage from the result when none was collected', function () use ($render) {
+        $doc = $render(new SuiteResult([
+            new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
+        ]));
+
+        expect($doc['result'])->not()->toHaveKey('coverage');
     });
 
     it('omits passing examples from the entries but still counts them', function () use ($render) {

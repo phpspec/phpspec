@@ -68,6 +68,45 @@ Feature: Agent output format
     When I run phpspec run with option "--format=agent --profile=3"
     Then the output should be valid JSON
 
+  Scenario: A failed coverage gate rides inside the document instead of printing after it
+    Given a PSR-4 project with "spec" and "src" directories
+    And a class "src/App/Calc.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Calc
+      {
+          public function add(int $a, int $b): int
+          {
+              return $a + $b;
+          }
+
+          public function unused(): int
+          {
+              return 0;
+          }
+      }
+      """
+    And a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+
+      use App\Calc;
+
+      describe('Calc', function () {
+          it('adds two numbers', function () {
+              expect((new Calc())->add(1, 2))->toBe(3);
+          });
+      });
+      """
+    When I run phpspec run with coverage options "--format=agent --coverage-min=90"
+    Then the output should be valid JSON
+    And the output should contain "coverage"
+    And the output should contain "required"
+    And the exit code should be 1
+
   Scenario: A missing class surfaces as an offer, and --accept-offers generates it
     Given a spec file "spec/App/Basket.spec.php":
       """
