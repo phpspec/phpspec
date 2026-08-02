@@ -9,11 +9,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
  - The agent document reports the coverage verdict, and a missed --coverage-min gate now counts as actionable
  - The agent summary carries one rerun command covering every failure
+ - A failing Story BDD scenario carries its own spec location and rerun command, in parallel runs too
 
 ### Fixed
  - --format=agent keeps standard output to the document alone: the seed line, profile table, coverage lines and error text no longer break it
  - A run that cannot start, or that dies partway, still emits an agent document naming what stopped it
  - toHaveLength failures now say what length the subject actually has
+ - Agent entries are named as a path (App\Basket > totals the prices), so two scenarios sharing a step title no longer share an id
+ - An errored entry carries its message in the same field a failure does
+ - Failure values keep a float's fraction and name an object by what it is (an enum case, a stringable's string, else its class) instead of by a per-run object id
+ - A directory argument with a trailing slash no longer doubles the separator in reported paths
  - Notes typed on any pair question now reach the assistant, not just the ones the AI asked
  - /next no longer overrides the pairing role's own prompt, so the navigator offers a change instead of asking permission to offer it
 
