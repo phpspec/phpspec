@@ -3,6 +3,7 @@
 use PhpSpec\Ai\Agent\Agent;
 use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Ai\Response;
+use PhpSpec\Ai\Role;
 use PhpSpec\Ai\ToolCall;
 use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\SpecGenerator;
@@ -533,6 +534,57 @@ describe(CommandDispatcher::class, function () {
 
                 expect((string) json_encode($captured))->toContain('OUTSIDE-IN');
             }
+        });
+
+        it('leaves how the advice is delivered to the role artifact, not the next coaching', function (Filesystem $fs) {
+            allow($fs->exists())->toReturn(false);
+            allow($fs->read())->toReturn('');
+
+            $captured = null;
+            $provider = new class implements ProviderInterface {
+                /** @var callable|null */
+                public $responder = null;
+
+                public function chat(array $messages, array $options = []): Response
+                {
+                    return ($this->responder)($messages, $options);
+                }
+            };
+            $provider->responder = function (array $messages) use (&$captured): Response {
+                $captured = $messages;
+
+                return new Response('Suggested the next scenario.');
+            };
+
+            $roleState = new RoleState(\PhpSpec\Console\Command\Pair\PairRole::HumanDrives);
+            $ai = new AiAssistant($provider, $this->config, $this->pairOutput, $fs, false, null, new Chooser($this->pairOutput, false), $roleState, $this->specRunner);
+            $dispatcher = new CommandDispatcher(
+                new SpecGenerator('spec', $fs),
+                new ClassGenerator('src', $fs),
+                $this->config,
+                $this->pairOutput,
+                false,
+                $fs,
+                specRunner: $this->specRunner,
+                roleState: $roleState,
+                ai: $ai,
+            );
+
+            $dispatcher->dispatch('/next');
+
+            // The navigator's own artifact says to offer the concrete change and
+            // never to ask whether to offer; a per-turn ask that also rules on
+            // delivery ("advise in prose", "hand back") contradicts it.
+            $instruction = '';
+            foreach ($captured as $message) {
+                if ($message->role === Role::User) {
+                    $instruction = (string) $message->content;
+                }
+            }
+
+            expect($instruction)->toContain('suggest_next');
+            expect($instruction)->not()->toContain('in prose');
+            expect($instruction)->not()->toContain('hand back');
         });
     });
 

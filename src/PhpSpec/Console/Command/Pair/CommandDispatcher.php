@@ -248,7 +248,9 @@ final class CommandDispatcher
     /**
      * The `next` coaching handed to the AI: the shared outside-in prompt file plus
      * a short ask. The role in force (navigator advises, driver executes) is already
-     * encoded in the AI's cached system prompt, so the ask stays role-agnostic.
+     * encoded in the AI's cached system prompt, so the ask names the step and stays
+     * out of how it is delivered: a second ruling on that can only contradict the
+     * role's own, and the model obeys whichever it read last.
      */
     private function nextInstruction(): string
     {
@@ -257,7 +259,7 @@ final class CommandDispatcher
             $coaching = 'Follow outside-in, feature-first TDD — favour feature (story) tests, always a baby step.';
         }
 
-        return $coaching . "\n\n" . 'Based on our current suite state, name and take the single next baby step now: one artifact, then hand back. Register the step with suggest_next first, then advise in prose.';
+        return $coaching . "\n\n" . 'Based on our current suite state, name the single next baby step now. Register it with suggest_next first, then act on it the way your role acts.';
     }
 
     /**

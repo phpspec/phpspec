@@ -140,6 +140,16 @@ describe('prompt artifacts', function () {
         expect($raw('next'))->toContain('@include instructions/tdd-cycle');   // the cycle is single-sourced
     });
 
+    it('keeps next.txt to choosing the step, leaving delivery to the role artifact', function () use ($read) {
+        // The coaching rides on top of navigator.txt or driver.txt, so a second
+        // statement of what a role does can only contradict the first.
+        $text = $read('next');
+
+        expect($text)->not()->toContain('NAVIGATOR');
+        expect($text)->not()->toContain('DRIVER');
+        expect($text)->not()->toContain('only when asked');
+    });
+
     it('demands real scenario content from write_feature, never a placeholder', function () use ($read) {
         $text = $read('tools/write_feature');
 
