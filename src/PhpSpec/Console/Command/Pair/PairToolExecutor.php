@@ -110,6 +110,9 @@ final class PairToolExecutor implements ToolExecutor
     /** Tool rounds taken since the driving AI wrote its artifact this turn. */
     private int $postArtifactRounds = 0;
 
+    /** The chooser's note book: a note answered here is claimed, never left pending. */
+    private readonly Notes $notes;
+
     public function __construct(
         private readonly Configuration $config,
         private readonly Filesystem $filesystem,
@@ -121,6 +124,7 @@ final class PairToolExecutor implements ToolExecutor
         private readonly ?ExtensionLoader $extensionLoader = null,
     ) {
         $this->registry = new ToolRegistry($config, $filesystem, $prompts);
+        $this->notes = $chooser->notes();
     }
 
     /**
@@ -231,10 +235,10 @@ final class PairToolExecutor implements ToolExecutor
         if ($isWrite && !$this->chooser->choose($this->confirmQuestion($toolCall), 'write-files', 'apply file changes')) {
             PairLogger::log('RESULT', 'User declined');
 
-            return self::declineSteer($this->chooser->lastNote());
+            return self::declineSteer($this->notes->take());
         }
 
-        $note = $isWrite ? $this->chooser->lastNote() : '';
+        $note = $isWrite ? $this->notes->take() : '';
 
         try {
             $result = $tool->execute($toolCall->arguments);
@@ -530,13 +534,14 @@ final class PairToolExecutor implements ToolExecutor
     private function askUserHandler(): Closure
     {
         $chooser = $this->chooser;
+        $notes = $this->notes;
 
-        return function (array $args) use ($chooser) {
+        return function (array $args) use ($chooser, $notes) {
             $kind = 'ai-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($args['action']));
 
             $accepted = $chooser->choose($args['question'], $kind, $args['action']);
             $answer = !$accepted ? 'no' : ($chooser->hasAlways($kind) ? 'always' : 'yes');
-            $note = $chooser->lastNote();
+            $note = $notes->take();
 
             if ($note !== '') {
                 return sprintf('%s. The human added: "%s".', $answer, $note);
@@ -773,10 +778,10 @@ final class PairToolExecutor implements ToolExecutor
             if (!$this->chooser->choose($this->offerQuestion($args), 'offer-change', 'apply offered changes')) {
                 PairLogger::log('RESULT', 'Offer declined');
 
-                return self::offerDeclined($this->chooser->lastNote());
+                return self::offerDeclined($this->notes->take());
             }
 
-            $note = $this->chooser->lastNote();
+            $note = $this->notes->take();
 
             (new Writer($filesystem))->apply($proposal);
             $this->noteArtifact($path);

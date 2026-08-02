@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+ - Notes typed on any pair question now reach the assistant, not just the ones the AI asked
+
 ### Changed
  - papi-ai 0.15 is pulled in, so a configured ai.effort now maps to each provider's native thinking controls (older papi installs keep working; effort stays inert there)
 

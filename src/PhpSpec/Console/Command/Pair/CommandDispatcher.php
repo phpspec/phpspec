@@ -49,6 +49,10 @@ final class CommandDispatcher
     private InputParser $parser;
     private Filesystem $filesystem;
     private readonly Chooser $chooser;
+
+    /** The chooser's note book, so a note answered here is claimed, not left pending. */
+    private readonly Notes $notes;
+
     private readonly SpecRunner $specRunner;
     private readonly RoleState $roleState;
     private readonly Agent $agent;
@@ -108,6 +112,7 @@ final class CommandDispatcher
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->prompts = new PromptLibrary($this->filesystem);
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
+        $this->notes = $this->chooser->notes();
         $this->specRunner = $specRunner ?? new SubprocessRunner();
         $this->roleState = $roleState ?? new RoleState();
         $this->agent = $agent ?? new Agent($this->config, $this->filesystem);
@@ -686,8 +691,10 @@ final class CommandDispatcher
                     $this->output->success(($proposal->isNew ? 'Created ' : 'Updated ') . $proposal->path);
                 }
 
-                if ($note === '' && $this->chooser->lastNote() !== '') {
-                    $note = $this->chooser->lastNote();
+                // Only the first note steers the follow-up round, so later ones
+                // stay unclaimed and reach the assistant on its next turn.
+                if ($note === '') {
+                    $note = $this->notes->take();
                     $notedPath = $proposal->path;
                     $noteFollowsApply = $applied;
                 }

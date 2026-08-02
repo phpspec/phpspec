@@ -1090,6 +1090,55 @@ describe(AiAssistant::class, function () {
         expect($json)->toContain('Current step:');
     });
 
+    it('carries a note left on a deterministic question into the next turn', function (Filesystem $fs) {
+        $captured = null;
+        $this->provider->responder = function (array $messages) use (&$captured) {
+            $captured = $messages;
+
+            return new Response('a value object it is');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+
+        // A scaffolding question answered with a note while no AI turn was running.
+        $this->answers = ['n, it should be a value object'];
+        $this->chooser->choose('Do you want me to create class App\Todo for you?', 'create-class', 'create classes');
+
+        $assistant->handle('what next?');
+
+        $json = (string) json_encode($captured);
+        expect($json)->toContain('[Notes I left on the choices I just made]');
+        expect($json)->toContain('I declined \"Do you want me to create class App\\\\Todo for you?\" and said: it should be a value object');
+        expect(strpos($json, 'Notes I left'))->toBeLessThan(strpos($json, 'what next?'));
+    });
+
+    it('does not repeat a note the turn already answered', function (Filesystem $fs) {
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            $captured = $messages;
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'offer_change', [
+                    'path' => 'src/App/Todo.php',
+                    'content' => "<?php\nnamespace App;\nclass Todo {}\n",
+                    'intent' => 'add the class',
+                ])]);
+            }
+
+            return new Response('understood');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+        $this->answers = ['3, use a collection'];
+        $assistant->handle('offer me something');
+
+        // The decline steer already told the model, so the second turn must not
+        // hand it the same note again.
+        $assistant->handle('and now?');
+
+        expect((string) json_encode($captured))->not()->toContain('[Notes I left on the choices I just made]');
+    });
+
     it('captures the pair turn to the ai debug recording', function (Filesystem $fs) {
         $written = [];
         allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {

@@ -235,6 +235,11 @@ method to tasks" and the model reads exactly that amendment; decline with
 instead of guessing why you said no. Piped input carries a note after a comma
 (an answer line of "3, make it a Feature instead").
 
+Every question takes a note, not just the AI's own. Decline the scaffolding
+prompt with "No, it should be a value object" and that reaches the assistant
+at the start of its next turn, so a decision you made on your own is never
+news to it.
+
 ### Project Context
 
 On each request, the AI receives:
