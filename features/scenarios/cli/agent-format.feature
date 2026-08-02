@@ -131,6 +131,31 @@ Feature: Agent output format
     And the failing entries should have distinct ids
     And the output should contain "run features/counting.feature:2 features/counting.feature:5"
 
+  Scenario: An errored example says what went wrong in the same field a failure does
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () { throw new RuntimeException('the adder exploded'); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And every reported entry should carry a message
+    And the output should contain "the adder exploded"
+
+  Scenario: A whole float is not reported as an integer
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () { expect(90.0)->toBe(90); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "Expected 90.0 to be 90"
+
   Scenario: A length failure reports the length the subject actually has
     Given a spec file "spec/App/Bag.spec.php":
       """

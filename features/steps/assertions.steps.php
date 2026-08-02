@@ -101,6 +101,19 @@ then('the output should be valid JSON', function () {
     }
 });
 
+// One field answers "what went wrong", whatever the entry's state: a consumer
+// should not have to know that an error hides its text somewhere else.
+then('every reported entry should carry a message', function () {
+    $document = json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
+    $entries = $document['examples'] ?? [];
+
+    expect($entries)->not()->toBe([]);
+
+    foreach ($entries as $entry) {
+        expect($entry)->toHaveKey('message');
+    }
+});
+
 // Every reported entry must be addressable on its own: an id that two entries
 // share cannot answer "is THIS failure still here?".
 then('the failing entries should have distinct ids', function () {

@@ -174,7 +174,9 @@ final class Agent extends AbstractFormatter
         }
 
         $this->published = true;
-        $json = json_encode($this->document(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+        // The zero fraction is kept: a float that lost it would read as the int
+        // it was compared against, turning a type failure into a tautology.
+        $json = json_encode($this->document(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION) ?: '{}';
 
         $this->output->write($json . "\n", false, OutputInterface::OUTPUT_RAW);
     }
@@ -380,6 +382,9 @@ final class Agent extends AbstractFormatter
                 'message' => $error?->getMessage(),
                 'at' => $this->location($error?->getFile(), $error?->getLine()),
             ];
+            // Mirrored, so one field answers "what went wrong" whatever the
+            // state: the exception adds the class and the site, not the text.
+            $entry['message'] = $error?->getMessage();
             $location = $this->location($error?->getFile(), $error?->getLine());
             $entry['spec'] = $location;
             $this->addRerun($entry, $location);

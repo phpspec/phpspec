@@ -819,10 +819,22 @@ class Expectation
                 'boolean' => self::replaceOne('%s', $value ? 'true' : 'false', $message),
                 'array' => self::replaceOne('%s', self::formatArray($value), $message),
                 'NULL' => self::replaceOne('%s', 'null', $message),
+                'double' => self::replaceOne('%s', self::formatFloat($value), $message),
                 default => self::replaceOne('%s', (string) $value, $message)
             };
         }
         return $message;
+    }
+
+    /**
+     * A float as a failure message must show it: keeping the fraction, so a
+     * strict comparison that failed on type alone does not read as a tautology
+     * ("Expected 90 to be 90"), and at full precision, so the one that failed on
+     * a rounding tail says so instead of tidying itself up to 0.3.
+     */
+    private static function formatFloat(float $value): string
+    {
+        return is_finite($value) ? var_export($value, true) : (string) $value;
     }
 
     /**
@@ -876,6 +888,7 @@ class Expectation
             'string' => '"' . $item . '"',
             'boolean' => $item ? 'true' : 'false',
             'NULL' => 'null',
+            'double' => self::formatFloat($item),
             default => (string) $item,
         }, $value);
 
