@@ -45,6 +45,29 @@ Feature: Agent output format
     And the output should contain "rerun"
     And the output should contain "run spec/App/Calc.spec.php:"
 
+  Scenario: A randomised run keeps the document the only thing on stdout
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () { expect(2)->toBe(2); });
+      });
+      """
+    When I run phpspec run with option "--format=agent --order=random"
+    Then the output should be valid JSON
+    And the output should contain "seed"
+
+  Scenario: A profiled run keeps the document the only thing on stdout
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () { expect(2)->toBe(2); });
+      });
+      """
+    When I run phpspec run with option "--format=agent --profile=3"
+    Then the output should be valid JSON
+
   Scenario: A missing class surfaces as an offer, and --accept-offers generates it
     Given a spec file "spec/App/Basket.spec.php":
       """

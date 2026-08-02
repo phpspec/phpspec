@@ -56,6 +56,12 @@ final class Agent extends AbstractFormatter
     /** What was run, as the paths the loader was given. */
     private string $suite = 'default';
 
+    /** The run's results, once it reached the end; null while it is still going. */
+    private ?SuiteResult $results = null;
+
+    /** Whether the document has gone out, so it goes out exactly once. */
+    private bool $published = false;
+
     public function __construct(OutputInterface $output, ?\Closure $resolveCandidates = null)
     {
         parent::__construct($output);
@@ -82,13 +88,58 @@ final class Agent extends AbstractFormatter
         $this->collect($result, $this->subjectOf($result));
     }
 
+    /**
+     * Takes the run's results. The document is not written here: it is the whole
+     * command's artifact, not the suite runner's, so it waits for {@see publish()}
+     * and can still be told what the command learns after the last example (the
+     * coverage verdict).
+     */
     public function end(SuiteResult $results): void
+    {
+        $this->results = $results;
+    }
+
+    /**
+     * A whole-suite render is complete in itself (a report file, a spec), so it
+     * publishes as it ends.
+     */
+    public function format(SuiteResult $results): void
+    {
+        parent::format($results);
+        $this->publish();
+    }
+
+    /**
+     * Writes the document, once. Every path out of the command comes through
+     * here, so an agent reads exactly one JSON object whether the run finished,
+     * failed its coverage gate, or died: calling it twice is a no-op.
+     */
+    public function publish(): void
+    {
+        if ($this->published) {
+            return;
+        }
+
+        $this->published = true;
+        $json = json_encode($this->document(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+
+        $this->output->write($json . "\n", false, OutputInterface::OUTPUT_RAW);
+    }
+
+    /**
+     * The document as it stands: the header, every actionable entry, and the
+     * totals. Built from whatever has been collected, so a run cut short still
+     * reports what it managed to see.
+     *
+     * @return array<string, mixed>
+     */
+    private function document(): array
     {
         $failing = $this->counts['failing'] ?? 0;
         $errors = $this->counts['error'] ?? 0;
         $pending = $this->counts['pending'] ?? 0;
 
-        $document = [
+        return [
             'suite' => [
                 'v' => Schema::V,
                 'event' => Schema::EVENT_RUN_STARTED,
@@ -111,14 +162,10 @@ final class Agent extends AbstractFormatter
                 // The one number an agent checks: everything red or unfinished
                 // (failures + errors + pending). Zero means nothing to do.
                 'actionable' => $failing + $errors + $pending,
-                'duration_ms' => (int) round($results->getDuration() * 1000),
-                'offers' => $this->offers($results),
+                'duration_ms' => (int) round(($this->results?->getDuration() ?? 0.0) * 1000),
+                'offers' => $this->results !== null ? $this->offers($this->results) : [],
             ],
         ];
-
-        $json = json_encode($document, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
-
-        $this->output->write($json . "\n", false, OutputInterface::OUTPUT_RAW);
     }
 
     /**

@@ -44,6 +44,36 @@ describe(Agent::class, function () {
         expect($doc['suite']['suite'])->toBe('spec,features/');
     });
 
+    it('writes the document once, however often the command publishes it', function () {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->format(new SuiteResult([
+            new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
+        ]));
+
+        $formatter->publish();
+        $formatter->publish();
+
+        expect(substr_count($output->fetch(), '"run_started"'))->toBe(1);
+    });
+
+    it('publishes what it collected even when the run never reached its end', function () {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->begin();
+        $formatter->printResult(new SpecificationResult('App\\Basket', [
+            new ExampleResult('holds products', [MatchResult::failed(1, 2, 'Expected 1 to be 2', getcwd() . '/spec/App/Basket.spec.php', 9, null, 'toBe')]),
+        ]));
+
+        // No end(): a fatal took the process before the last example.
+        $formatter->publish();
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+
+        expect($doc['result']['failing'])->toBe(1);
+        expect($doc['result']['duration_ms'])->toBe(0);
+        expect($doc['examples'][0]['example'])->toBe('App\\Basket holds products');
+    });
+
     it('omits passing examples from the entries but still counts them', function () use ($render) {
         $doc = $render(new SuiteResult([
             new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),

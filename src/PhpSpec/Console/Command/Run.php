@@ -159,7 +159,38 @@ final class Run extends Command
      */
     protected function execute(Input $input, Output $output): int
     {
-        if (!$this->loadBootstrap($input, $output)) {
+        $format = $this->resolveFormat($input);
+        $formatter = $this->createFormatter($format, $output);
+        // The agent document IS the console under --format=agent, so every human
+        // line the command would otherwise print (the seed, the profile table, the
+        // coverage verdict, an error) is routed off the console: what an agent
+        // needs is told to the formatter instead and rides inside the document.
+        // For every other format the two are the same stream.
+        $document = $formatter instanceof Agent ? $formatter : null;
+        $prose = $document !== null ? new BufferedOutput() : $output;
+
+        try {
+            return $this->perform($input, $prose, $formatter);
+        } finally {
+            $document?->publish();
+        }
+    }
+
+    /**
+     * The run itself, writing every human line to the prose channel and results
+     * through the formatter.
+     *
+     * @param Input $input the console input (arguments and options)
+     * @param Output $prose where human-facing lines go
+     * @param Formatter $formatter the console formatter for the run's results
+     * @return int exit code: 0 = success, 1 = failure/error or bootstrap missing, 2 = coverage below minimum
+     *
+     * @throws RandomException
+     * @throws DOMException
+     */
+    private function perform(Input $input, Output $prose, Formatter $formatter): int
+    {
+        if (!$this->loadBootstrap($input, $prose)) {
             return 1;
         }
         $this->registerAutoloader();
@@ -167,7 +198,7 @@ final class Run extends Command
         $pathsFrom = $input->getOption('paths-from');
 
         if ($pathsFrom !== null && !is_file($pathsFrom)) {
-            $output->writeln("<fg=red>Paths file not found: $pathsFrom</>");
+            $prose->writeln("<fg=red>Paths file not found: $pathsFrom</>");
 
             return 1;
         }
@@ -175,32 +206,32 @@ final class Run extends Command
         $unknownFormats = $this->unknownFormats($input);
 
         if ($unknownFormats !== []) {
-            $output->writeln('<fg=red>Unknown format: ' . implode(', ', $unknownFormats) . ' (available: pretty, dot, tap, junit, html, agent)</>');
+            $prose->writeln('<fg=red>Unknown format: ' . implode(', ', $unknownFormats) . ' (available: pretty, dot, tap, junit, html, agent)</>');
 
             return 1;
         }
 
-        $coverageReporter = $this->startCoverage($input, $output);
+        $coverageReporter = $this->startCoverage($input, $prose);
 
         if ($coverageReporter === false) {
             return 1;
         }
 
         try {
-            $results = $this->runSuiteStreaming($input, $output);
+            $results = $this->runSuiteStreaming($input, $prose, $formatter);
         } catch (\RuntimeException $e) {
             // A load-time contract violation (e.g. two step definitions
             // sharing a title) is the user's to fix; report it, never a trace.
-            $output->writeln(sprintf('<fg=red>%s</>', $e->getMessage()));
+            $prose->writeln(sprintf('<fg=red>%s</>', $e->getMessage()));
 
             return 1;
         }
 
-        $this->writeReportFiles($input, $output, $results);
-        $this->printProfile($input, $output, $results);
+        $this->writeReportFiles($input, $prose, $results);
+        $this->printProfile($input, $prose, $results);
 
         if ($coverageReporter) {
-            $exitCode = $this->reportCoverage($input, $output, $coverageReporter);
+            $exitCode = $this->reportCoverage($input, $prose, $coverageReporter);
 
             if ($exitCode !== null) {
                 return $exitCode;
@@ -226,7 +257,7 @@ final class Run extends Command
                 SuiteSummary::fromSuiteResult($results),
             ));
         } elseif (!in_array($this->resolveFormat($input), ['junit', 'html', 'agent'], true)) {
-            $this->generateCode($output, $results, (bool) $input->getOption('fake'), $input->isInteractive());
+            $this->generateCode($prose, $results, (bool) $input->getOption('fake'), $input->isInteractive());
         }
 
         return $results->status();
@@ -349,13 +380,14 @@ final class Run extends Command
      * and returns the aggregated suite results.
      *
      * @param Input $input the console input for files, filter, order, and format options
-     * @param Output $output the console output for displaying results
+     * @param Output $prose the channel for the run's human-facing lines
+     * @param Formatter $formatter the console formatter the results stream through
      * @return SuiteResult the aggregated suite results
      *
      * @throws RandomException
      * @throws \RuntimeException when the loader rejects a duplicate step title
      */
-    private function runSuiteStreaming(Input $input, Output $output): SuiteResult
+    private function runSuiteStreaming(Input $input, Output $prose, Formatter $formatter): SuiteResult
     {
         $paths = $input->getArgument('files');
 
@@ -406,10 +438,9 @@ final class Run extends Command
         $seed = null;
         if ($input->getOption('order') === 'random') {
             $seed = $input->getOption('seed') !== null ? (int) $input->getOption('seed') : random_int(0, 999999);
-            $output->writeln("<fg=yellow>Randomised with seed $seed</>");
+            $prose->writeln("<fg=yellow>Randomised with seed $seed</>");
         }
 
-        $formatter = $this->createFormatter($this->resolveFormat($input), $output);
         if ($formatter instanceof Agent) {
             $formatter->describeRun($seed, $files);
         }
