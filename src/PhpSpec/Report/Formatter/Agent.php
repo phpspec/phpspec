@@ -18,12 +18,14 @@ use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Report\Formatter\Agent\Fatal;
 use PhpSpec\Report\Formatter\Agent\Offers;
+use PhpSpec\Report\Formatter\Agent\Origin;
 use PhpSpec\Report\Formatter\Agent\ProcessEnd;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use PhpSpec\Report\Formatter\Agent\ValueExporter;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\MatchResult;
+use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
@@ -101,7 +103,7 @@ final class Agent extends AbstractFormatter
 
     public function printResult(Results $result): void
     {
-        $this->collect($result, $this->subjectOf($result));
+        $this->collect($result, $this->within(new Origin(), $result));
     }
 
     /**
@@ -283,31 +285,33 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * The subject a result names its children after — the described class for a
-     * spec, the title for a feature — or null when it carries none.
+     * The origin one level into a result: a spec or feature adds its title (and
+     * a feature the file it lives in), a scenario adds its title and the line
+     * that re-runs it. Anything else passes the origin through untouched.
      */
-    private function subjectOf(Results $result): ?string
+    private function within(Origin $origin, Results $result): Origin
     {
-        if ($result instanceof SpecificationResult || $result instanceof FeatureResult) {
-            return $result->getTitle();
-        }
-
-        return null;
+        return match (true) {
+            $result instanceof FeatureResult => $origin->within($result->getTitle(), $result->getPath()),
+            $result instanceof ScenarioResult => $origin->within($result->getTitle(), line: $result->getLine()),
+            $result instanceof SpecificationResult => $origin->within($result->getTitle()),
+            default => $origin,
+        };
     }
 
     /**
      * Walks the result tree, emitting one entry per example/step and threading
-     * the enclosing subject down so each entry is named in full.
+     * the origin down so each entry is named in full and knows where it lives.
      */
-    private function collect(Results $results, ?string $subject): void
+    private function collect(Results $results, Origin $origin): void
     {
         foreach ($results->getResults() as $child) {
             if ($child instanceof ExampleResult) {
-                $this->record($this->fromExample($child, $subject), 'example');
+                $this->record($this->fromExample($child, $origin), 'example');
             } elseif ($child instanceof StepResult) {
-                $this->record($this->fromStep($child, $subject), 'step');
+                $this->record($this->fromStep($child, $origin), 'step');
             } elseif ($child instanceof Results) {
-                $this->collect($child, $this->subjectOf($child) ?? $subject);
+                $this->collect($child, $this->within($origin, $child));
             }
         }
     }
@@ -339,10 +343,10 @@ final class Agent extends AbstractFormatter
     /**
      * @return array<string, mixed>
      */
-    private function fromExample(ExampleResult $example, ?string $subject): array
+    private function fromExample(ExampleResult $example, Origin $origin): array
     {
         $state = $this->exampleState($example);
-        $name = $this->name($subject, $example->getTitle());
+        $name = $origin->name($example->getTitle());
         $entry = [
             'v' => Schema::V,
             'id' => $this->identify($name),
@@ -470,7 +474,7 @@ final class Agent extends AbstractFormatter
     /**
      * @return array<string, mixed>
      */
-    private function fromStep(StepResult $step, ?string $subject): array
+    private function fromStep(StepResult $step, Origin $origin): array
     {
         $state = match (true) {
             $step->isPending() || $step->isUndefined() => 'pending',
@@ -479,7 +483,7 @@ final class Agent extends AbstractFormatter
             default => 'passing',
         };
 
-        $name = $this->name($subject, $step->getTitle());
+        $name = $origin->name($step->getTitle());
         $entry = [
             'v' => Schema::V,
             'id' => $this->identify($name),
@@ -491,15 +495,16 @@ final class Agent extends AbstractFormatter
             $entry['message'] = $step->getError()->getMessage();
         }
 
-        return $entry;
-    }
+        // A scenario is addressed by the line its keyword sits on, which is what
+        // "file.feature:LINE" already selects, so a failing scenario re-runs on
+        // its own instead of dragging the whole story suite with it.
+        $location = $this->location($origin->path, $origin->line);
+        if ($state !== 'passing' && $location !== null) {
+            $entry['spec'] = $location;
+            $this->addRerun($entry, $location);
+        }
 
-    /**
-     * Joins the subject and the title into the example's full name.
-     */
-    private function name(?string $subject, string $title): string
-    {
-        return $subject !== null && $subject !== '' ? $subject . ' ' . $title : $title;
+        return $entry;
     }
 
     /**

@@ -101,6 +101,16 @@ then('the output should be valid JSON', function () {
     }
 });
 
+// Every reported entry must be addressable on its own: an id that two entries
+// share cannot answer "is THIS failure still here?".
+then('the failing entries should have distinct ids', function () {
+    $document = json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
+    $ids = array_column($document['examples'] ?? [], 'id');
+
+    expect(count($ids))->toBeGreaterThan(1);
+    expect(array_unique($ids))->toHaveLength(count($ids));
+});
+
 // Standard output on its own, for the runs where the error stream carries text
 // of its own (PHP's fatal report) and the document must still stand alone.
 then('the standard output should be valid JSON', function () {

@@ -107,6 +107,30 @@ Feature: Agent output format
     And the output should contain "required"
     And the exit code should be 1
 
+  Scenario: Two scenarios failing the same step are told apart and re-run one by one
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/counting.feature":
+      """
+      Feature: Counting
+        Scenario: Counting up
+          Given a broken step
+
+        Scenario: Counting down
+          Given a broken step
+      """
+    And a step file "features/steps/counting.steps.php":
+      """
+      <?php
+
+      given('a broken step', function () {
+          throw new RuntimeException('this step is broken');
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the failing entries should have distinct ids
+    And the output should contain "run features/counting.feature:2 features/counting.feature:5"
+
   Scenario: A length failure reports the length the subject actually has
     Given a spec file "spec/App/Bag.spec.php":
       """

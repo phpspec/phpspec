@@ -90,7 +90,7 @@ describe(Agent::class, function () {
 
         expect($doc['result']['failing'])->toBe(1);
         expect($doc['result']['duration_ms'])->toBe(0);
-        expect($doc['examples'][0]['example'])->toBe('App\\Basket holds products');
+        expect($doc['examples'][0]['example'])->toBe('App\\Basket > holds products');
     });
 
     it('carries a missed coverage gate in the result, and counts it as work left', function () {
@@ -253,7 +253,7 @@ describe(Agent::class, function () {
             ]),
         ]))['examples'][0];
 
-        expect($example['id'])->toBe(substr(sha1('App\\Basket totals the prices'), 0, 12));
+        expect($example['id'])->toBe(substr(sha1('App\\Basket > totals the prices'), 0, 12));
     });
 
     it('keeps an example id stable when only its line moves', function () use ($render) {
@@ -360,6 +360,50 @@ describe(Agent::class, function () {
         expect($doc['examples'][0]['state'])->toBe('failing');
         expect($doc['examples'][0]['example'])->toContain('Given a basket');
         expect($doc['examples'][0]['id'])->toBe(substr(sha1($doc['examples'][0]['example']), 0, 12));
+    });
+
+    it('names a step by feature, scenario and step, so two scenarios never share an id', function () use ($render) {
+        $failing = function (string $title): StepResult {
+            $step = new StepResult($title, 'error');
+            $step->setError(new \PhpSpec\StoryBDD\StepError('this step is broken', new \RuntimeException('this step is broken')));
+
+            return $step;
+        };
+
+        $doc = $render(new SuiteResult([
+            new FeatureResult('Counting', [
+                new ScenarioResult('Counting up', [$failing('Given a broken step')], 2),
+                new ScenarioResult('Counting down', [$failing('Given a broken step')], 5),
+            ], 'features/counting.feature'),
+        ]));
+
+        expect($doc['examples'][0]['example'])->toBe('Counting > Counting up > Given a broken step');
+        expect($doc['examples'][1]['example'])->toBe('Counting > Counting down > Given a broken step');
+        expect($doc['examples'][0]['id'])->not()->toBe($doc['examples'][1]['id']);
+    });
+
+    it('addresses a failing scenario by the line that re-runs it', function () use ($render) {
+        $step = new StepResult('Given a broken step', 'error');
+        $step->setError(new \PhpSpec\StoryBDD\StepError('this step is broken', new \RuntimeException('this step is broken')));
+
+        $doc = $render(new SuiteResult([
+            new FeatureResult('Counting', [new ScenarioResult('Counting up', [$step], 5)], 'features/counting.feature'),
+        ]));
+
+        expect($doc['examples'][0]['spec'])->toBe('features/counting.feature:5');
+        expect($doc['examples'][0]['rerun'])->toBe('run features/counting.feature:5');
+        expect($doc['result']['rerun'])->toBe('run features/counting.feature:5');
+    });
+
+    it('leaves a passing scenario out, location and all', function () use ($render) {
+        $doc = $render(new SuiteResult([
+            new FeatureResult('Counting', [
+                new ScenarioResult('Counting up', [new StepResult('Given a good step', 'passed')], 2),
+            ], 'features/counting.feature'),
+        ]));
+
+        expect($doc['examples'])->toBe([]);
+        expect($doc['result'])->not()->toHaveKey('rerun');
     });
 
 });

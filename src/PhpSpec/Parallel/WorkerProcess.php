@@ -308,10 +308,10 @@ final class WorkerProcess
                 }
             }
 
-            $scenarios[] = new ScenarioResult((string) $scenarioXml['name'], $steps);
+            $scenarios[] = new ScenarioResult((string) $scenarioXml['name'], $steps, (int) ($scenarioXml['line'] ?? 0));
         }
 
-        return new FeatureResult((string) $featureXml['name'], $scenarios);
+        return new FeatureResult((string) $featureXml['name'], $scenarios, (string) ($featureXml['file'] ?? ''));
     }
 
     /**

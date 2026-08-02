@@ -147,6 +147,12 @@ final class Junit extends AbstractFormatter
         $featureSuite->setAttribute('name', $feature->getTitle());
         $featureSuite->setAttribute('type', 'feature');
 
+        // Where each scenario lives travels with the report, so a parallel run
+        // rebuilding results from a worker's XML can still say how to re-run one.
+        if ($feature->getPath() !== '') {
+            $featureSuite->setAttribute('file', $feature->getPath());
+        }
+
         foreach ($feature->getResults() as $scenario) {
             if (!$scenario instanceof ScenarioResult) {
                 continue;
@@ -154,6 +160,10 @@ final class Junit extends AbstractFormatter
             $scenarioSuite = $xml->createElement('testsuite');
             $scenarioSuite->setAttribute('name', $scenario->getTitle());
             $scenarioSuite->setAttribute('type', 'scenario');
+
+            if ($scenario->getLine() > 0) {
+                $scenarioSuite->setAttribute('line', (string) $scenario->getLine());
+            }
 
             foreach ($scenario->getResults() as $step) {
                 if (!$step instanceof StepResult) {
