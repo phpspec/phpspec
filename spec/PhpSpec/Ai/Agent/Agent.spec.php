@@ -33,6 +33,8 @@ class AgentSpecScriptedExecutor implements PhpSpec\Ai\Contracts\ToolExecutor
 
     public ?string $handBackAfter = null;
 
+    public ?string $correction = null;
+
     public ?array $suggestion = null;
 
     public function beginTurn(): void
@@ -59,6 +61,14 @@ class AgentSpecScriptedExecutor implements PhpSpec\Ai\Contracts\ToolExecutor
     public function turnComplete(Response $response): ?string
     {
         return $this->handBackAfter;
+    }
+
+    public function correction(Response $response): ?string
+    {
+        $correction = $this->correction;
+        $this->correction = null;
+
+        return $correction;
     }
 
     public function lastSuggestion(): ?array
@@ -361,6 +371,32 @@ describe(Agent::class, function () {
 
             expect($replay->requests)->toHaveLength(1);
             expect($outcome->prose)->toBe('That is my one change for this turn.');
+        });
+
+        it('re-asks the round the session says was misdelivered', function (Filesystem $fs) {
+            $replay = new ReplayProvider([
+                new Response('Shall I offer the updated spec?'),
+                new Response('here is the change'),
+            ]);
+            $executor = new AgentSpecScriptedExecutor();
+            $executor->correction = 'Make the offer now with offer_change.';
+            $agent = new Agent($this->config, $fs, $replay, transcript: new Transcript(), executor: $executor);
+
+            $outcome = $agent->chat('navigator', 'what next?');
+
+            expect($replay->requests)->toHaveLength(2);
+            expect((string) json_encode($replay->requests[1]['messages']))->toContain('Make the offer now with offer_change.');
+            expect($outcome->prose)->toBe('here is the change');
+        });
+
+        it('ends a prose turn the session has nothing to correct', function (Filesystem $fs) {
+            $replay = new ReplayProvider([new Response('what should the argument be?'), new Response('never reached')]);
+            $agent = new Agent($this->config, $fs, $replay, transcript: new Transcript(), executor: new AgentSpecScriptedExecutor());
+
+            $outcome = $agent->chat('navigator', 'what next?');
+
+            expect($replay->requests)->toHaveLength(1);
+            expect($outcome->prose)->toBe('what should the argument be?');
         });
 
         it('re-orients the system slot when the command changes mid-transcript', function (Filesystem $fs) {
