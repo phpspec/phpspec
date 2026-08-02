@@ -130,8 +130,42 @@ marker; objects render as `ClassName#id`) so the document never blows up.
 
 The counts (`passing`, `failing`, `errors`, `pending`, `skipped`) are for the
 whole run. The one number to branch on is **`actionable`** = failing + errors +
-pending. **Zero means there is nothing to do.** `duration_ms` is the run's wall
-time; `offers` is the run-wide, de-duplicated list of code PhpSpec can generate.
+pending, plus a coverage gate the run missed and anything that stopped it.
+**Zero means there is nothing to do**, and it never disagrees with the exit code.
+`duration_ms` is the run's wall time; `offers` is the run-wide, de-duplicated
+list of code PhpSpec can generate.
+
+| Field | Present when | Meaning |
+|---|---|---|
+| `rerun` | anything failed with a location | One command that re-runs every failing example at once, so a fix is checked against all of what it was meant to fix. |
+| `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
+
+### `fatal`: when the run could not finish
+
+A run that never started (a missing bootstrap, an unknown format) or that died
+partway (a parse error, a class that fails to compile) still answers with a
+document. It carries a top-level `fatal` of `{ "message", "at" }`, holds whatever
+the run did manage to collect, and counts 1 in `actionable`.
+
+```json
+{
+  "suite": { "v": 1, "event": "run_started", "suite": "default", "examples": 0, "steps": 0, "seed": null },
+  "examples": [],
+  "result": { "v": 1, "event": "summary", "examples": 0, "actionable": 1, "…": "…" },
+  "fatal": {
+    "message": "Class Mute contains 1 abstract method and must therefore be declared abstract or implement the remaining methods (Speaks::speak)",
+    "at": "spec/App/Broken.spec.php:8"
+  }
+}
+```
+
+### Standard output carries the document, and nothing else
+
+Under `--format=agent` the document is the only thing written to standard
+output: the randomised-order seed, the `--profile` table, coverage lines, report
+notes and error text all go elsewhere, and PHP's own fatal reports are sent to
+the error stream. Parse the whole of stdout as one JSON object; read stderr when
+you want the human text as well.
 
 ## Offers — code PhpSpec can generate for you
 
@@ -229,8 +263,11 @@ Always run PhpSpec with the machine-readable formatter and parse the JSON:
 
 Read the single JSON object it prints:
 
-- `result.actionable` is the number to act on. **0 means the suite is green —
-  stop.** Otherwise it's `failing + errors + pending`.
+- `result.actionable` is the number to act on. **0 means there is nothing left,
+  so stop.** It counts `failing + errors + pending`, plus a missed
+  `--coverage-min` gate and anything that stopped the run.
+- A run that could not finish carries a top-level `fatal` of `{ message, at }`.
+  Read it before anything else: the counts describe only what ran before it.
 - `examples[]` lists only what needs attention (passing examples are omitted).
   Each has a `state`:
   - `failing` — the code ran but behaviour is wrong. Look at `expected.value`
@@ -242,7 +279,8 @@ Read the single JSON object it prints:
   - `pending` — an unimplemented example; implement it.
 - To verify a single fix, re-run just that example: take its `rerun` value and
   prepend the binary — e.g. `bin/phpspec run spec/App/Basket.spec.php:6`. Don't
-  re-run the whole suite to check one change.
+  re-run the whole suite to check one change. `result.rerun` does the same for
+  every failure at once.
 - Track a specific failure across runs by its `id` (stable across edits that
   move lines). A failure is fixed when its `id` no longer appears.
 

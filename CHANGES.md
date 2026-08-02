@@ -6,7 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+ - The agent document reports the coverage verdict, and a missed --coverage-min gate now counts as actionable
+ - The agent summary carries one rerun command covering every failure
+
 ### Fixed
+ - --format=agent keeps standard output to the document alone: the seed line, profile table, coverage lines and error text no longer break it
+ - A run that cannot start, or that dies partway, still emits an agent document naming what stopped it
+ - toHaveLength failures now say what length the subject actually has
  - Notes typed on any pair question now reach the assistant, not just the ones the AI asked
  - /next no longer overrides the pairing role's own prompt, so the navigator offers a change instead of asking permission to offer it
 

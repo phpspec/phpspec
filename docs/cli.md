@@ -204,11 +204,16 @@ bin/phpspec run --format=html > report.html
 Emits the whole run as a single machine-readable JSON document for coding agents
 — no ANSI, no prose. Each failing/erroring example carries the expectation, a
 stable `id`, a line-targeted `rerun` command, and any code-generation `offer`;
-the summary carries the counts and a run-wide `offers` list:
+the summary carries the counts, one `rerun` for every failure at once, the
+coverage verdict when coverage was collected, and a run-wide `offers` list:
 
 ```bash
 bin/phpspec run --format=agent
 ```
+
+The document is the only thing on standard output, whatever happens: the seed
+line, the `--profile` table, coverage lines and error text move aside, and a run
+that dies partway still ends with a document naming the `fatal` that stopped it.
 
 See [Coding Agents](agent.md) for the full contract, the `--accept-offers` /
 `--fake` apply flow, and a ready-made `CLAUDE.md` snippet.
