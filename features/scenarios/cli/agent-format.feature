@@ -107,6 +107,27 @@ Feature: Agent output format
     And the output should contain "required"
     And the exit code should be 1
 
+  Scenario: A fatal still leaves a document, naming what stopped the run
+    Given a spec file "spec/App/Broken.spec.php":
+      """
+      <?php
+
+      interface Speaks
+      {
+          public function speak(): string;
+      }
+
+      class Mute implements Speaks {}
+
+      describe('App\Broken', function () {
+          it('never runs', function () {});
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the standard output should be valid JSON
+    And the output should contain "fatal"
+    And the output should contain "abstract method"
+
   Scenario: A missing class surfaces as an offer, and --accept-offers generates it
     Given a spec file "spec/App/Basket.spec.php":
       """

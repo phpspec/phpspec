@@ -54,6 +54,9 @@ if (!function_exists('_phpspec_exec')) {
 
         $world->exitCode = proc_close($process);
         $world->output = $stdout . $stderr;
+        // Kept apart as well: a machine-readable format owns standard output
+        // alone, and PHP's own error text belongs on the error stream.
+        $world->stdout = $stdout;
     }
 }
 
@@ -69,6 +72,12 @@ when('I run the spec', function () {
 
 when('I run phpspec run with option {string}', function (string $options) {
     _phpspec_exec($this, 'run ' . $options);
+});
+
+// A run expected to kill its process (a fatal in a spec file) must not take
+// this suite down with it, so it always gets a process of its own.
+when('I run phpspec run in a fresh process with option {string}', function (string $options) {
+    _phpspec_exec_subprocess($this, 'run ' . $options);
 });
 
 when('I run phpspec run {string}', function (string $path) {

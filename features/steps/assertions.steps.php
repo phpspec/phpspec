@@ -101,6 +101,18 @@ then('the output should be valid JSON', function () {
     }
 });
 
+// Standard output on its own, for the runs where the error stream carries text
+// of its own (PHP's fatal report) and the document must still stand alone.
+then('the standard output should be valid JSON', function () {
+    try {
+        json_decode(trim($this->stdout), true, 512, JSON_THROW_ON_ERROR);
+    } catch (\JsonException $e) {
+        throw new \RuntimeException(
+            "Expected valid JSON on standard output ({$e->getMessage()}).\nStandard output:\n{$this->stdout}",
+        );
+    }
+});
+
 // -- File existence (sets $this->lastFile for chained assertions) ------
 
 then('a spec file {string} should be generated', function (string $path) {

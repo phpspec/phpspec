@@ -2,6 +2,8 @@
 
 use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Report\Formatter\Agent;
+use PhpSpec\Report\Formatter\Agent\Fatal;
+use PhpSpec\Report\Formatter\Agent\ProcessEnd;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\MatchResult;
@@ -11,6 +13,22 @@ use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Specification\ExampleError;
 use Symfony\Component\Console\Output\BufferedOutput;
+
+// A process end the spec fires by hand, in place of PHP's own shutdown.
+class AgentSpecProcessEnd implements ProcessEnd
+{
+    private ?Closure $ending = null;
+
+    public function atEnd(Closure $ending): void
+    {
+        $this->ending = $ending;
+    }
+
+    public function arrives(?Fatal $fatal = null): void
+    {
+        ($this->ending)($fatal);
+    }
+}
 
 describe(Agent::class, function () {
 
@@ -104,6 +122,61 @@ describe(Agent::class, function () {
 
         expect($doc['result']['coverage'])->toBe(['percent' => 72.5, 'required' => null, 'met' => true]);
         expect($doc['result']['actionable'])->toBe(0);
+    });
+
+    it('still publishes a document when a fatal ends the process, naming what stopped it', function () {
+        $output = new BufferedOutput();
+        $end = new AgentSpecProcessEnd();
+        $formatter = new Agent($output, null, $end);
+        $formatter->begin();
+        $formatter->printResult(new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]));
+
+        // No end(), no publish(): the process died loading the next spec file.
+        $end->arrives(new Fatal('Class Mute contains 1 abstract method', getcwd() . '/spec/App/Broken.spec.php', 8));
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+
+        expect($doc['fatal'])->toBe([
+            'message' => 'Class Mute contains 1 abstract method',
+            'at' => 'spec/App/Broken.spec.php:8',
+        ]);
+        expect($doc['result']['actionable'])->toBe(1);
+        expect($doc['result']['passing'])->toBe(1);
+    });
+
+    it('publishes what it has when the process ends with no fatal', function () {
+        $output = new BufferedOutput();
+        $end = new AgentSpecProcessEnd();
+        $formatter = new Agent($output, null, $end);
+        $formatter->begin();
+
+        $end->arrives();
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+
+        expect($doc)->not()->toHaveKey('fatal');
+        expect($doc['result']['actionable'])->toBe(0);
+    });
+
+    it('leaves the published document alone when the process ends after it', function () {
+        $output = new BufferedOutput();
+        $end = new AgentSpecProcessEnd();
+        $formatter = new Agent($output, null, $end);
+        $formatter->format(new SuiteResult([]));
+
+        $end->arrives(new Fatal('something later went wrong'));
+
+        expect(substr_count($output->fetch(), '"run_started"'))->toBe(1);
+    });
+
+    it('keeps the first thing that stopped the run', function () {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->stopped('Bootstrap file not found: vendor/autoload.php');
+        $formatter->stopped('and then everything else broke');
+        $formatter->publish();
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+
+        expect($doc['fatal']['message'])->toBe('Bootstrap file not found: vendor/autoload.php');
+        expect($doc['fatal']['at'])->toBeNull();
     });
 
     it('omits coverage from the result when none was collected', function () use ($render) {

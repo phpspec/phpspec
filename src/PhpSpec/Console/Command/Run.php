@@ -31,6 +31,7 @@ use PhpSpec\Loader;
 use PhpSpec\Parallel\ParallelRunner;
 use PhpSpec\Report\Formatter;
 use PhpSpec\Report\Formatter\Agent;
+use PhpSpec\Report\Formatter\Agent\ShutdownProcessEnd;
 use PhpSpec\Report\Formatter\Dot;
 use PhpSpec\Report\Formatter\Html;
 use PhpSpec\Report\Formatter\Junit;
@@ -170,10 +171,18 @@ final class Run extends Command
         $document = $formatter instanceof Agent ? $formatter : null;
         $prose = $document !== null ? new BufferedOutput() : $output;
 
+        // PHP prints a fatal to standard output as well as the error stream, and
+        // standard output is the document's. Sending its own reports to the error
+        // stream leaves the channel clean; the document names the fatal itself.
+        $displayErrors = $document !== null ? (string) ini_set('display_errors', 'stderr') : null;
+
         try {
             return $this->perform($input, $prose, $formatter);
         } finally {
             $document?->publish();
+            if ($displayErrors !== null) {
+                ini_set('display_errors', $displayErrors);
+            }
         }
     }
 
@@ -620,7 +629,11 @@ final class Run extends Command
             'tap' => new Tap($output),
             'junit' => new Junit($output),
             'html' => new Html($output),
-            'agent' => new Agent($output, fn(SuiteResult $results) => $this->codeGenerator(false)->scan($results)->toArray()),
+            'agent' => new Agent(
+                $output,
+                fn(SuiteResult $results) => $this->codeGenerator(false)->scan($results)->toArray(),
+                new ShutdownProcessEnd(),
+            ),
             default => new Pretty($output),
         };
     }

@@ -16,7 +16,9 @@ namespace PhpSpec\Report\Formatter;
 
 use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Report\AbstractFormatter;
+use PhpSpec\Report\Formatter\Agent\Fatal;
 use PhpSpec\Report\Formatter\Agent\Offers;
+use PhpSpec\Report\Formatter\Agent\ProcessEnd;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use PhpSpec\Report\Formatter\Agent\ValueExporter;
 use PhpSpec\Result\ExampleResult;
@@ -66,10 +68,20 @@ final class Agent extends AbstractFormatter
     /** What the run covered, when coverage was collected. */
     private ?CoverageVerdict $coverage = null;
 
-    public function __construct(OutputInterface $output, ?\Closure $resolveCandidates = null)
+    /** @var array{message: string, at: string|null}|null what stopped the run short, when something did */
+    private ?array $fatal = null;
+
+    /**
+     * @param OutputInterface $output the stream the document goes to
+     * @param \Closure(SuiteResult): mixed|null $resolveCandidates resolves the run's generation candidates
+     * @param ProcessEnd|null $processEnd the promise-keeper: given one, the document
+     *                                    still goes out when the process dies mid-run
+     */
+    public function __construct(OutputInterface $output, ?\Closure $resolveCandidates = null, ?ProcessEnd $processEnd = null)
     {
         parent::__construct($output);
         $this->resolveCandidates = $resolveCandidates;
+        $processEnd?->atEnd($this->ended(...));
     }
 
     /**
@@ -110,6 +122,32 @@ final class Agent extends AbstractFormatter
     public function covered(CoverageVerdict $verdict): void
     {
         $this->coverage = $verdict;
+    }
+
+    /**
+     * Takes what stopped the run: a missing bootstrap, a rejected option, an
+     * error that killed the process. The first one to arrive is the one that
+     * mattered, so it is not overwritten by whatever came apart afterwards.
+     *
+     * @param string $message what went wrong
+     * @param string|null $at where, as a project-relative file:line
+     */
+    public function stopped(string $message, ?string $at = null): void
+    {
+        $this->fatal ??= ['message' => $message, 'at' => $at];
+    }
+
+    /**
+     * The process is going. Whatever ended it becomes part of the document, and
+     * the document goes out with what the run managed to collect.
+     */
+    private function ended(?Fatal $fatal): void
+    {
+        if ($fatal !== null) {
+            $this->stopped($fatal->message, $this->location($fatal->file, $fatal->line));
+        }
+
+        $this->publish();
     }
 
     /**
@@ -155,6 +193,7 @@ final class Agent extends AbstractFormatter
         // example: the number an agent checks must not say "nothing to do" while
         // the exit code says otherwise.
         $shortfall = $this->coverage !== null && !$this->coverage->met() ? 1 : 0;
+        $stopped = $this->fatal !== null ? 1 : 0;
 
         $result = [
             'suite' => [
@@ -177,9 +216,9 @@ final class Agent extends AbstractFormatter
                 'pending' => $pending,
                 'skipped' => $this->counts['skipped'] ?? 0,
                 // The one number an agent checks: everything red or unfinished
-                // (failures + errors + pending) plus a missed coverage gate.
-                // Zero means nothing to do.
-                'actionable' => $failing + $errors + $pending + $shortfall,
+                // (failures + errors + pending), plus a missed coverage gate and
+                // anything that stopped the run. Zero means nothing to do.
+                'actionable' => $failing + $errors + $pending + $shortfall + $stopped,
                 'duration_ms' => (int) round(($this->results?->getDuration() ?? 0.0) * 1000),
                 'offers' => $this->results !== null ? $this->offers($this->results) : [],
             ],
@@ -191,6 +230,10 @@ final class Agent extends AbstractFormatter
                 'required' => $this->coverage->required,
                 'met' => $this->coverage->met(),
             ];
+        }
+
+        if ($this->fatal !== null) {
+            $result['fatal'] = $this->fatal;
         }
 
         return $result;
