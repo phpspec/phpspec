@@ -110,6 +110,12 @@ final class PairToolExecutor implements ToolExecutor
     /** Tool rounds taken since the driving AI wrote its artifact this turn. */
     private int $postArtifactRounds = 0;
 
+    /** Whether a prose round was corrected this turn: one correction, then the prose stands. */
+    private bool $correctedThisHandle = false;
+
+    /** The chooser's note book: a note answered here is claimed, never left pending. */
+    private readonly Notes $notes;
+
     public function __construct(
         private readonly Configuration $config,
         private readonly Filesystem $filesystem,
@@ -121,6 +127,7 @@ final class PairToolExecutor implements ToolExecutor
         private readonly ?ExtensionLoader $extensionLoader = null,
     ) {
         $this->registry = new ToolRegistry($config, $filesystem, $prompts);
+        $this->notes = $chooser->notes();
     }
 
     /**
@@ -135,6 +142,7 @@ final class PairToolExecutor implements ToolExecutor
         $this->postArtifactRounds = 0;
         $this->lastSuggestion = null;
         $this->offerResolvedThisHandle = false;
+        $this->correctedThisHandle = false;
     }
 
     /**
@@ -231,10 +239,10 @@ final class PairToolExecutor implements ToolExecutor
         if ($isWrite && !$this->chooser->choose($this->confirmQuestion($toolCall), 'write-files', 'apply file changes')) {
             PairLogger::log('RESULT', 'User declined');
 
-            return self::declineSteer($this->chooser->lastNote());
+            return self::declineSteer($this->notes->take());
         }
 
-        $note = $isWrite ? $this->chooser->lastNote() : '';
+        $note = $isWrite ? $this->notes->take() : '';
 
         try {
             $result = $tool->execute($toolCall->arguments);
@@ -311,6 +319,61 @@ final class PairToolExecutor implements ToolExecutor
         }
 
         return null;
+    }
+
+    /**
+     * The correction a prose round needs before it may end the turn. The offer
+     * IS the question and the driver's diff IS the question, so asking leave to
+     * make one wastes a round trip and hands the human a decision they cannot
+     * see yet. Fires at most once a turn, and only while the tool that answers
+     * the question is still on the table: once the one offer or the one artifact
+     * is spent, asking is the honest thing to do and the human answers.
+     */
+    public function correction(Response $response): ?string
+    {
+        $role = $this->roleState->current();
+        $spent = $role->aiIsDriver() ? $this->artifactWrittenThisHandle : $this->offerResolvedThisHandle;
+
+        if ($this->correctedThisHandle || $spent || !self::asksPermission($response->text)) {
+            return null;
+        }
+
+        $this->correctedThisHandle = true;
+
+        return $role->aiIsDriver() ? self::takeItInstead() : self::offerItInstead();
+    }
+
+    /**
+     * Whether the last thing the model said was a request for leave to act:
+     * a first-person question about doing what its role already lets it do.
+     * "Should we extract a Basket class?" is a design question and stands.
+     */
+    private static function asksPermission(string $text): bool
+    {
+        $lines = array_filter(array_map('trim', explode("\n", $text)), fn(string $line): bool => $line !== '');
+        $last = end($lines);
+
+        if ($last === false || !str_ends_with($last, '?')) {
+            return false;
+        }
+
+        return preg_match('~\b(?:shall|should|may|can|could)\s+I\b|\b(?:do you want|would you like)\s+me\s+to\b|\bwant\s+me\s+to\b~i', $last) === 1;
+    }
+
+    /**
+     * The navigator's correction: the diff is how it asks.
+     */
+    private static function offerItInstead(): string
+    {
+        return 'You asked for permission you already have. Make the offer now with offer_change: the human reads the diff and accepts or declines it, with a note. Ask first only when several directions genuinely compete, and then ask with ask_user.';
+    }
+
+    /**
+     * The driver's correction: the artifact is how it asks.
+     */
+    private static function takeItInstead(): string
+    {
+        return 'You asked for permission you already have. Take the step now: write the one artifact and report what it did. If you genuinely need a yes or no before you can write it, ask with ask_user.';
     }
 
     /**
@@ -530,13 +593,14 @@ final class PairToolExecutor implements ToolExecutor
     private function askUserHandler(): Closure
     {
         $chooser = $this->chooser;
+        $notes = $this->notes;
 
-        return function (array $args) use ($chooser) {
+        return function (array $args) use ($chooser, $notes) {
             $kind = 'ai-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($args['action']));
 
             $accepted = $chooser->choose($args['question'], $kind, $args['action']);
             $answer = !$accepted ? 'no' : ($chooser->hasAlways($kind) ? 'always' : 'yes');
-            $note = $chooser->lastNote();
+            $note = $notes->take();
 
             if ($note !== '') {
                 return sprintf('%s. The human added: "%s".', $answer, $note);
@@ -773,10 +837,10 @@ final class PairToolExecutor implements ToolExecutor
             if (!$this->chooser->choose($this->offerQuestion($args), 'offer-change', 'apply offered changes')) {
                 PairLogger::log('RESULT', 'Offer declined');
 
-                return self::offerDeclined($this->chooser->lastNote());
+                return self::offerDeclined($this->notes->take());
             }
 
-            $note = $this->chooser->lastNote();
+            $note = $this->notes->take();
 
             (new Writer($filesystem))->apply($proposal);
             $this->noteArtifact($path);

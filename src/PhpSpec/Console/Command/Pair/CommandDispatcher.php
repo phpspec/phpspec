@@ -49,6 +49,10 @@ final class CommandDispatcher
     private InputParser $parser;
     private Filesystem $filesystem;
     private readonly Chooser $chooser;
+
+    /** The chooser's note book, so a note answered here is claimed, not left pending. */
+    private readonly Notes $notes;
+
     private readonly SpecRunner $specRunner;
     private readonly RoleState $roleState;
     private readonly Agent $agent;
@@ -108,6 +112,7 @@ final class CommandDispatcher
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->prompts = new PromptLibrary($this->filesystem);
         $this->chooser = $chooser ?? new Chooser($output, $interactive);
+        $this->notes = $this->chooser->notes();
         $this->specRunner = $specRunner ?? new SubprocessRunner();
         $this->roleState = $roleState ?? new RoleState();
         $this->agent = $agent ?? new Agent($this->config, $this->filesystem);
@@ -243,7 +248,9 @@ final class CommandDispatcher
     /**
      * The `next` coaching handed to the AI: the shared outside-in prompt file plus
      * a short ask. The role in force (navigator advises, driver executes) is already
-     * encoded in the AI's cached system prompt, so the ask stays role-agnostic.
+     * encoded in the AI's cached system prompt, so the ask names the step and stays
+     * out of how it is delivered: a second ruling on that can only contradict the
+     * role's own, and the model obeys whichever it read last.
      */
     private function nextInstruction(): string
     {
@@ -252,7 +259,7 @@ final class CommandDispatcher
             $coaching = 'Follow outside-in, feature-first TDD — favour feature (story) tests, always a baby step.';
         }
 
-        return $coaching . "\n\n" . 'Based on our current suite state, name and take the single next baby step now: one artifact, then hand back. Register the step with suggest_next first, then advise in prose.';
+        return $coaching . "\n\n" . 'Based on our current suite state, name the single next baby step now. Register it with suggest_next first, then act on it the way your role acts.';
     }
 
     /**
@@ -686,8 +693,10 @@ final class CommandDispatcher
                     $this->output->success(($proposal->isNew ? 'Created ' : 'Updated ') . $proposal->path);
                 }
 
-                if ($note === '' && $this->chooser->lastNote() !== '') {
-                    $note = $this->chooser->lastNote();
+                // Only the first note steers the follow-up round, so later ones
+                // stay unclaimed and reach the assistant on its next turn.
+                if ($note === '') {
+                    $note = $this->notes->take();
                     $notedPath = $proposal->path;
                     $noteFollowsApply = $applied;
                 }

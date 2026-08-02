@@ -67,6 +67,14 @@ interface ToolExecutor
     public function turnComplete(Response $response): ?string;
 
     /**
+     * The correction a round that answered in prose needs before it may end the
+     * turn (it asked for permission it already has), or null to let the prose
+     * stand. A returned line is fed back as a user message and the round runs
+     * again, so an implementation must stop correcting to keep the turn finite.
+     */
+    public function correction(Response $response): ?string;
+
+    /**
      * The structured next-step suggestion registered this turn, or null.
      *
      * @return array<string, string>|null

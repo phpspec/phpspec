@@ -1,6 +1,7 @@
 <?php
 
 use PhpSpec\Console\Command\Pair\Chooser;
+use PhpSpec\Console\Command\Pair\Notes;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -153,7 +154,7 @@ describe(Chooser::class, function () {
             });
 
             expect($chooser->choose('Apply?', 'k', 'do it'))->toBeTrue();
-            expect($chooser->lastNote())->toBe('rename');
+            expect($chooser->notes()->take())->toBe('rename');
             expect($this->buffer->fetch())->toContain('1. Yes, rename');
         });
 
@@ -164,7 +165,7 @@ describe(Chooser::class, function () {
             });
 
             expect($chooser->choose('Apply?', 'k', 'do it'))->toBeFalse();
-            expect($chooser->lastNote())->toBe('use X');
+            expect($chooser->notes()->take())->toBe('use X');
             expect($this->buffer->fetch())->toContain('3. No, use X');
         });
 
@@ -175,7 +176,7 @@ describe(Chooser::class, function () {
             });
 
             expect($chooser->choose('Apply?', 'k', 'do it'))->toBeTrue();
-            expect($chooser->lastNote())->toBe('a');
+            expect($chooser->notes()->take())->toBe('a');
         });
 
         it('cancels the note on escape but keeps the selection', function () {
@@ -185,7 +186,7 @@ describe(Chooser::class, function () {
             });
 
             expect($chooser->choose('Apply?', 'k', 'do it'))->toBeTrue();
-            expect($chooser->lastNote())->toBe('');
+            expect($chooser->notes()->take())->toBe('');
         });
 
         it('ignores Tab on the always option', function () {
@@ -196,7 +197,7 @@ describe(Chooser::class, function () {
 
             expect($chooser->choose('Apply?', 'k', 'do it'))->toBeTrue();
             expect($chooser->hasAlways('k'))->toBeTrue();
-            expect($chooser->lastNote())->toBe('');
+            expect($chooser->notes()->take())->toBe('');
         });
 
         it('resets the note between questions', function () {
@@ -206,10 +207,10 @@ describe(Chooser::class, function () {
             });
 
             $chooser->choose('First?', 'k', 'do it');
-            expect($chooser->lastNote())->toBe('x');
+            expect($chooser->notes()->take())->toBe('x');
 
             $chooser->choose('Second?', 'k2', 'do it');
-            expect($chooser->lastNote())->toBe('');
+            expect($chooser->notes()->take())->toBe('');
         });
 
         it('reads a note after a comma in line mode', function () {
@@ -217,7 +218,7 @@ describe(Chooser::class, function () {
 
             $this->answers = ['1, rename it to tasks'];
             expect($chooser->choose('Apply?', 'k', 'do it'))->toBeTrue();
-            expect($chooser->lastNote())->toBe('rename it to tasks');
+            expect($chooser->notes()->take())->toBe('rename it to tasks');
         });
 
         it('reads a decline note after a comma in line mode', function () {
@@ -225,7 +226,7 @@ describe(Chooser::class, function () {
 
             $this->answers = ['n, make it a Feature instead'];
             expect($chooser->choose('Apply?', 'k', 'do it'))->toBeFalse();
-            expect($chooser->lastNote())->toBe('make it a Feature instead');
+            expect($chooser->notes()->take())->toBe('make it a Feature instead');
         });
 
         it('leaves the note empty for a plain line answer', function () {
@@ -233,7 +234,26 @@ describe(Chooser::class, function () {
 
             $this->answers = ['3'];
             expect($chooser->choose('Apply?', 'k', 'do it'))->toBeFalse();
-            expect($chooser->lastNote())->toBe('');
+            expect($chooser->notes()->take())->toBe('');
+        });
+
+        it('reports every answered question to the session note book', function () {
+            $notes = new Notes();
+            $chooser = new Chooser($this->output, true, $this->reader, null, $notes);
+
+            $this->answers = ['n, it should be a value object'];
+            $chooser->choose('Do you want me to create class App\Todo for you?', 'create-class', 'create classes');
+
+            expect($notes->brief('what next?'))->toContain('I declined "Do you want me to create class App\Todo for you?" and said: it should be a value object');
+        });
+
+        it('reports a note left on an auto-accepted question', function () {
+            $chooser = new Chooser($this->output, true, $this->reader);
+
+            $this->answers = ['1, name it TaskList'];
+            $chooser->choose('Create the class?', 'create-class', 'create classes');
+
+            expect($chooser->notes()->brief('go on'))->toContain('I accepted "Create the class?" and said: name it TaskList');
         });
     });
 });

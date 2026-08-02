@@ -194,8 +194,25 @@ final class Agent
 
                 $transcript->heard($response);
 
-                if ($this->executor === null || !$response->hasToolCalls()) {
+                // Propose-only: one round, and the calls become proposals.
+                if ($this->executor === null) {
                     break;
+                }
+
+                if (!$response->hasToolCalls()) {
+                    // The role rail: a live session may refuse a prose round that
+                    // asked for permission it already has, and the round runs
+                    // again with the correction in front of it.
+                    $correction = $this->executor->correction($response);
+
+                    if ($correction === null) {
+                        break;
+                    }
+
+                    $rounds[] = ['response' => $response];
+                    $transcript->say($correction);
+
+                    continue;
                 }
 
                 $results = [];

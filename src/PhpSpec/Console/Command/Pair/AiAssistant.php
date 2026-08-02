@@ -44,6 +44,9 @@ final class AiAssistant
     /** The one pipeline verb, seeded with this session's transcript and executor. */
     private readonly Agent $agent;
 
+    /** The chooser's note book: whatever the human said on questions since the last turn. */
+    private readonly Notes $notes;
+
     /**
      * @param ProviderInterface $provider the AI provider for LLM interactions
      * @param Configuration $config the project configuration
@@ -72,11 +75,13 @@ final class AiAssistant
         $filesystem ??= new RealFilesystem();
         $prompts = new PromptLibrary($filesystem);
         $this->roleState = $roleState ?? new RoleState();
+        $chooser ??= new Chooser($output, $interactive);
+        $this->notes = $chooser->notes();
         $this->executor = new PairToolExecutor(
             $config,
             $filesystem,
             $output,
-            $chooser ?? new Chooser($output, $interactive),
+            $chooser,
             $this->roleState,
             $specRunner ?? new SubprocessRunner(),
             $prompts,
@@ -96,7 +101,9 @@ final class AiAssistant
      * Sends natural-language input through the agent pipeline and displays the
      * response. The persistent transcript preserves conversation history
      * between calls; a supplied suite summary seeds the turn's grounding, so
-     * the model reacts to the same red/green reality the human sees.
+     * the model reacts to the same red/green reality the human sees. Anything
+     * the human noted on a question since the last turn rides in front of the
+     * input, so a decision made outside the conversation still reaches it.
      */
     public function handle(string $input, ?SuiteSummary $situation = null): void
     {
@@ -106,7 +113,7 @@ final class AiAssistant
         try {
             PairLogger::log('INPUT', $input);
 
-            $outcome = $this->agent->chat($this->roleState->current()->commandName(), $input, new Grounding(suite: $situation));
+            $outcome = $this->agent->chat($this->roleState->current()->commandName(), $this->notes->brief($input), new Grounding(suite: $situation));
 
             $text = self::withoutMachineSuggestion($outcome->prose);
             PairLogger::log('RESPONSE', $text);

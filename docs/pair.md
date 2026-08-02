@@ -33,7 +33,7 @@ The greeting adapts to your configuration: with an AI provider configured it inv
 
 Pair mode is a pair, not a code agent: you share one keyboard and work in turns. Nobody hand-types code any more — the generators are the keyboard, and *driving* means deciding what gets generated and pulling the trigger. `/swap` changes who holds it (this needs an AI provider):
 
-- **You drive, the AI navigates** (the default). The AI reviews and suggests one step ahead (intent, then location, then the exact line only when you ask), but it never writes files unbidden. When its advice becomes concrete it **offers** the change instead of dictating code: you see the exact diff and accept or decline through the numbered chooser; an accepted offer lands through the same write gate as every other change and auto-verifies. One offer per turn, and a declined offer is never re-offered.
+- **You drive, the AI navigates** (the default). The AI reviews and suggests one step ahead (intent, then location, then the exact line only when you ask), but it never writes files unbidden. When its advice becomes concrete it **offers** the change instead of dictating code: you see the exact diff and accept or decline through the numbered chooser; an accepted offer lands through the same write gate as every other change and auto-verifies. One offer per turn, and a declined offer is never re-offered. It never asks leave to offer either: if it asks "shall I offer that?" while the offer is still on the table, PhpSpec sends it back to make the offer, since the diff is the question. Once the turn's one offer is spent, a question is a question and it reaches you.
 - **The AI drives, you navigate** (after `/swap`). You give the intent; the AI makes it real one artifact at a time, shows the diff, runs the spec, and hands back.
 
 `/help` shows the current contract. Swap back at any time with another `/swap`.
@@ -234,6 +234,11 @@ method to tasks" and the model reads exactly that amendment; decline with
 "No, make it a Feature instead" and that becomes the direction it takes next,
 instead of guessing why you said no. Piped input carries a note after a comma
 (an answer line of "3, make it a Feature instead").
+
+Every question takes a note, not just the AI's own. Decline the scaffolding
+prompt with "No, it should be a value object" and that reaches the assistant
+at the start of its next turn, so a decision you made on your own is never
+news to it.
 
 ### Project Context
 

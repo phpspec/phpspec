@@ -1090,6 +1090,126 @@ describe(AiAssistant::class, function () {
         expect($json)->toContain('Current step:');
     });
 
+    it('turns a request for permission to offer into the offer itself', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\nnamespace App;\nclass TodoList {}\n");
+        $written = [];
+        allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
+            $written[$p] = $c;
+        });
+        allow($fs->mkdir())->toReturn(null);
+
+        $seen = [];
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$seen, &$turn) {
+            $seen[] = $messages;
+            if (++$turn === 1) {
+                return new Response('We should add a tasks() accessor. Shall I offer the updated spec?');
+            }
+            if ($turn === 2) {
+                return new Response('', [new ToolCall('t1', 'offer_change', [
+                    'path' => 'src/App/TodoList.php',
+                    'content' => "<?php\nnamespace App;\nclass TodoList {\n    public function tasks(): array { return []; }\n}\n",
+                    'intent' => 'add a tasks() accessor',
+                ])]);
+            }
+
+            return new Response('applied');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+        $this->answers = ['1'];
+        $assistant->handle('how do we make this real?');
+
+        expect((string) json_encode($seen[1]))->toContain('permission you already have');
+        expect(array_keys($written))->toContain(getcwd() . '/src/App/TodoList.php');
+    });
+
+    it('lets the navigator ask again once its one offer is spent', function (Filesystem $fs) {
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$turn) {
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'offer_change', [
+                    'path' => 'src/App/TodoList.php',
+                    'content' => "<?php\nnamespace App;\nclass TodoList {}\n",
+                    'intent' => 'add the class',
+                ])]);
+            }
+
+            return new Response('Shall I try a different shape instead?');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+        $this->answers = ['3'];
+        $assistant->handle('offer me something');
+
+        // The offer is spent for this turn, so there is nothing to correct: the
+        // model has no way to comply and the human answers instead.
+        expect($turn)->toBe(2);
+    });
+
+    it('leaves a question that is not asking for permission alone', function (Filesystem $fs) {
+        $turn = 0;
+        $this->provider->responder = function () use (&$turn) {
+            return new Response(++$turn === 1 ? 'What should the argument be?' : 'Should we extract a Basket class?');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+        $assistant->handle('where do we go from here?');
+        $assistant->handle('and after that?');
+
+        expect($turn)->toBe(2);
+    });
+
+    it('carries a note left on a deterministic question into the next turn', function (Filesystem $fs) {
+        $captured = null;
+        $this->provider->responder = function (array $messages) use (&$captured) {
+            $captured = $messages;
+
+            return new Response('a value object it is');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+
+        // A scaffolding question answered with a note while no AI turn was running.
+        $this->answers = ['n, it should be a value object'];
+        $this->chooser->choose('Do you want me to create class App\Todo for you?', 'create-class', 'create classes');
+
+        $assistant->handle('what next?');
+
+        $json = (string) json_encode($captured);
+        expect($json)->toContain('[Notes I left on the choices I just made]');
+        expect($json)->toContain('I declined \"Do you want me to create class App\\\\Todo for you?\" and said: it should be a value object');
+        expect(strpos($json, 'Notes I left'))->toBeLessThan(strpos($json, 'what next?'));
+    });
+
+    it('does not repeat a note the turn already answered', function (Filesystem $fs) {
+        $captured = null;
+        $turn = 0;
+        $this->provider->responder = function (array $messages) use (&$captured, &$turn) {
+            $captured = $messages;
+            if (++$turn === 1) {
+                return new Response('', [new ToolCall('t1', 'offer_change', [
+                    'path' => 'src/App/Todo.php',
+                    'content' => "<?php\nnamespace App;\nclass Todo {}\n",
+                    'intent' => 'add the class',
+                ])]);
+            }
+
+            return new Response('understood');
+        };
+
+        $assistant = new AiAssistant($this->provider, $this->config, $this->pairOutput, $fs, true, null, $this->chooser, null, $this->specRunner);
+        $this->answers = ['3, use a collection'];
+        $assistant->handle('offer me something');
+
+        // The decline steer already told the model, so the second turn must not
+        // hand it the same note again.
+        $assistant->handle('and now?');
+
+        expect((string) json_encode($captured))->not()->toContain('[Notes I left on the choices I just made]');
+    });
+
     it('captures the pair turn to the ai debug recording', function (Filesystem $fs) {
         $written = [];
         allow($fs->write())->toReturnUsing(function (string $path, string $content) use (&$written) {

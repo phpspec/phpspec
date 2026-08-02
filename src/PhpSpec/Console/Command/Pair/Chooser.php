@@ -49,6 +49,8 @@ final class Chooser
 
     private readonly ?Closure $keys;
 
+    private readonly Notes $notes;
+
     /**
      * @param PairOutput $output the pair screen to render into
      * @param bool $interactive whether a user is attached; false auto-accepts
@@ -57,6 +59,8 @@ final class Chooser
      * @param Closure|null $keys reads one raw key token (TTY input); injectable
      *                           for specs — when given, key mode is used without
      *                           touching the real terminal
+     * @param Notes|null $notes the session's note book every answer reports to;
+     *                          defaults to one of its own
      */
     private readonly bool $detectTty;
 
@@ -65,9 +69,11 @@ final class Chooser
         private readonly bool $interactive = true,
         ?Closure $reader = null,
         ?Closure $keys = null,
+        ?Notes $notes = null,
     ) {
         $this->reader = $reader ?? fn(): string => $this->readAnswer();
         $this->keys = $keys;
+        $this->notes = $notes ?? new Notes();
         // Only probe the real terminal when no input source was injected,
         // so specs behave the same whether run from a TTY or a pipe
         $this->detectTty = $reader === null && $keys === null;
@@ -82,6 +88,33 @@ final class Chooser
      * @return bool true when the user accepted (or accepted always, now or earlier)
      */
     public function choose(string $question, string $kind, string $action): bool
+    {
+        $accepted = $this->ask($question, $kind, $action);
+        $this->notes->record($question, $accepted, $this->note);
+
+        return $accepted;
+    }
+
+    /**
+     * The session's note book, holding whatever the human said alongside their
+     * answers. Collaborators wired from this chooser read the same book, so a
+     * note reaches the assistant no matter which question carried it.
+     */
+    public function notes(): Notes
+    {
+        return $this->notes;
+    }
+
+    /**
+     * Puts the question and returns the answer, leaving any typed note behind
+     * in {@see $note} for {@see choose()} to report.
+     *
+     * @param string $question the question to display
+     * @param string $kind stable identifier grouping questions for "always" memory
+     * @param string $action verb phrase completing "always ..." in option 2
+     * @return bool true when the user accepted (or accepted always, now or earlier)
+     */
+    private function ask(string $question, string $kind, string $action): bool
     {
         $this->note = '';
 
@@ -116,17 +149,6 @@ final class Chooser
     public function hasAlways(string $kind): bool
     {
         return isset($this->always[$kind]);
-    }
-
-    /**
-     * The note the human typed alongside the latest answer: Tab on Yes or No
-     * opens an editable trailer ("1. Yes, rename it"), and a piped answer line
-     * carries it after a comma ("3, make it a Feature instead"). Empty when the
-     * answer came without one.
-     */
-    public function lastNote(): string
-    {
-        return $this->note;
     }
 
     /**
