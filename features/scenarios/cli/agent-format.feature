@@ -156,6 +156,37 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the output should contain "Expected 90.0 to be 90"
 
+  Scenario: An object in a failure is named, not numbered
+    Given a spec file "spec/App/Bag.spec.php":
+      """
+      <?php
+
+      enum Status
+      {
+          case Active;
+      }
+
+      class Money
+      {
+          public function __construct(private string $amount) {}
+
+          public function __toString(): string
+          {
+              return $this->amount;
+          }
+      }
+
+      describe('App\Bag', function () {
+          it('holds a status', function () { expect(Status::Active)->toBeNull(); });
+          it('holds an amount', function () { expect(new Money('12.00 GBP'))->toBeNull(); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "Status::Active"
+    And the output should contain "12.00 GBP"
+    And the output should not contain "Status#"
+
   Scenario: A length failure reports the length the subject actually has
     Given a spec file "spec/App/Bag.spec.php":
       """

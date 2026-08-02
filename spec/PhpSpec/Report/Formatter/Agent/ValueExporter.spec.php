@@ -23,16 +23,16 @@ describe(ValueExporter::class, function () {
         expect(strlen($out['value']))->toBe(200);
     });
 
-    it('renders an object as ClassName#id without dumping its graph', function () {
-        expect(ValueExporter::export(new \RuntimeException('boom')))->toStartWith('RuntimeException#');
+    it('names an object without dumping its graph', function () {
+        expect(ValueExporter::export(new \RuntimeException('boom')))->toBe('RuntimeException("boom")');
     });
 
-    it('exports a small array recursively, hashing nested objects', function () {
+    it('exports a small array recursively, naming nested objects', function () {
         $out = ValueExporter::export([1, 'two', new \stdClass()]);
 
         expect($out[0])->toBe(1);
         expect($out[1])->toBe('two');
-        expect($out[2])->toStartWith('stdClass#');
+        expect($out[2])->toBe('stdClass');
     });
 
     it('truncates an array with more than 10 elements and says so', function () {

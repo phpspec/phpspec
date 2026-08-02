@@ -53,7 +53,8 @@ describe(Agent::class, function () {
     it('reports the seed and suite it was told about, so a flaky order is reproducible', function () {
         $output = new BufferedOutput();
         $formatter = new Agent($output);
-        $formatter->describeRun(424242, 'spec,features/');
+        $formatter->targets('spec,features/');
+        $formatter->randomisedWith(424242);
         $formatter->format(new SuiteResult([
             new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
         ]));
@@ -79,6 +80,7 @@ describe(Agent::class, function () {
     it('publishes what it collected even when the run never reached its end', function () {
         $output = new BufferedOutput();
         $formatter = new Agent($output);
+        $formatter->targets('./spec');
         $formatter->begin();
         $formatter->printResult(new SpecificationResult('App\\Basket', [
             new ExampleResult('holds products', [MatchResult::failed(1, 2, 'Expected 1 to be 2', getcwd() . '/spec/App/Basket.spec.php', 9, null, 'toBe')]),
@@ -91,6 +93,9 @@ describe(Agent::class, function () {
         expect($doc['result']['failing'])->toBe(1);
         expect($doc['result']['duration_ms'])->toBe(0);
         expect($doc['examples'][0]['example'])->toBe('App\\Basket > holds products');
+        // What the run was trying to run is known before the run: a document cut
+        // short still says it.
+        expect($doc['suite']['suite'])->toBe('./spec');
     });
 
     it('carries a missed coverage gate in the result, and counts it as work left', function () {

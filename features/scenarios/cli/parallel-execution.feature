@@ -41,6 +41,20 @@ Feature: Parallel execution
     When I run phpspec run with option "--parallel=2"
     Then all examples should pass
 
+  Scenario: A path given after --parallel is still the path to run
+    Given a spec file "spec/App/Swallowed.spec.php":
+      """
+      <?php
+      describe('Swallowed', function () {
+          it('runs', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--parallel spec/App/Swallowed.spec.php"
+    Then all examples should pass
+    And the output should contain "1 example"
+
   Scenario: Stop on failure with parallel execution
     Given a spec file "spec/App/Failing.spec.php":
       """

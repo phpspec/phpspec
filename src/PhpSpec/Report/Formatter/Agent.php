@@ -87,16 +87,24 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * Tells the formatter about the run it is rendering, so the document
-     * carries the real seed (an agent reruns a flaky order with it) and what
-     * was run instead of placeholders.
+     * Tells the formatter what the run targets, so the header says what was
+     * asked for instead of a placeholder. Told before the suite is loaded, so a
+     * run that dies loading still reports it.
      */
-    public function describeRun(?int $seed, string $suite): void
+    public function targets(string $suite): void
     {
-        $this->seed = $seed;
         if ($suite !== '') {
             $this->suite = $suite;
         }
+    }
+
+    /**
+     * Tells the formatter the seed the run was shuffled with, so an agent can
+     * reproduce a flaky order.
+     */
+    public function randomisedWith(int $seed): void
+    {
+        $this->seed = $seed;
     }
 
     public function begin(): void {}

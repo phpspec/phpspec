@@ -171,13 +171,19 @@ final class Run extends Command
         $document = $formatter instanceof Agent ? $formatter : null;
         $prose = $document !== null ? new BufferedOutput() : $output;
 
+        // Resolved once, here: it is what the run targets, and it recovers the
+        // positional path a "--parallel features" swallows, so asking twice
+        // would answer differently the second time.
+        $files = $this->suitePaths($input);
+        $document?->targets($files);
+
         // PHP prints a fatal to standard output as well as the error stream, and
         // standard output is the document's. Sending its own reports to the error
         // stream leaves the channel clean; the document names the fatal itself.
         $displayErrors = $document !== null ? (string) ini_set('display_errors', 'stderr') : null;
 
         try {
-            return $this->perform($input, $prose, $formatter);
+            return $this->perform($input, $prose, $formatter, $files);
         } finally {
             $document?->publish();
             if ($displayErrors !== null) {
@@ -193,12 +199,13 @@ final class Run extends Command
      * @param Input $input the console input (arguments and options)
      * @param Output $prose where human-facing lines go
      * @param Formatter $formatter the console formatter for the run's results
+     * @param string $files the paths this run targets, as the loader takes them
      * @return int exit code: 0 = success, 1 = failure/error or bootstrap missing, 2 = coverage below minimum
      *
      * @throws RandomException
      * @throws DOMException
      */
-    private function perform(Input $input, Output $prose, Formatter $formatter): int
+    private function perform(Input $input, Output $prose, Formatter $formatter, string $files): int
     {
         $missingBootstrap = $this->loadBootstrap($input);
 
@@ -226,7 +233,7 @@ final class Run extends Command
         }
 
         try {
-            $results = $this->runSuiteStreaming($input, $prose, $formatter);
+            $results = $this->runSuiteStreaming($input, $prose, $formatter, $files);
         } catch (\RuntimeException $e) {
             // A load-time contract violation (e.g. two step definitions
             // sharing a title) is the user's to fix; report it, never a trace.
@@ -390,6 +397,51 @@ final class Run extends Command
     }
 
     /**
+     * What this run targets, as the loader will be given it: the paths named on
+     * the command line (and any read from --paths-from), else the suite the
+     * flags ask for, else everything the config declares. Resolved before the
+     * suite is loaded, so a run that dies while loading can still say what it
+     * was trying to run.
+     *
+     * @param Input $input the console input for the file arguments and suite flags
+     * @return string the comma-separated paths
+     */
+    private function suitePaths(Input $input): string
+    {
+        $paths = $input->getArgument('files');
+
+        // VALUE_OPTIONAL may swallow the positional arg: --parallel features → parallel="features"
+        $parallel = $input->getOption('parallel');
+        if ($parallel !== false && is_string($parallel) && !ctype_digit($parallel)) {
+            $paths[] = $parallel;
+            $input->setOption('parallel', null);
+        }
+
+        $pathsFrom = $input->getOption('paths-from');
+
+        if ($pathsFrom !== null && is_file($pathsFrom)) {
+            $listed = file($pathsFrom, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $paths = array_merge($paths, array_filter(array_map('trim', $listed ?: [])));
+        }
+
+        if (!empty($paths)) {
+            return implode(',', $paths);
+        }
+
+        if ($input->getOption('story')) {
+            return $this->config->getFeaturesPath();
+        }
+
+        if ($input->getOption('all')) {
+            $suitePaths = $this->config->getAllLoadPaths();
+
+            return str_contains($suitePaths, 'features') ? $suitePaths : $suitePaths . ',features/';
+        }
+
+        return $this->config->getAllLoadPaths();
+    }
+
+    /**
      * Checks whether any coverage option was given.
      *
      * @param Input $input the console input to check coverage options
@@ -412,39 +464,14 @@ final class Run extends Command
      * @param Input $input the console input for files, filter, order, and format options
      * @param Output $prose the channel for the run's human-facing lines
      * @param Formatter $formatter the console formatter the results stream through
+     * @param string $files the paths this run targets, as the loader takes them
      * @return SuiteResult the aggregated suite results
      *
      * @throws RandomException
      * @throws \RuntimeException when the loader rejects a duplicate step title
      */
-    private function runSuiteStreaming(Input $input, Output $prose, Formatter $formatter): SuiteResult
+    private function runSuiteStreaming(Input $input, Output $prose, Formatter $formatter, string $files): SuiteResult
     {
-        $paths = $input->getArgument('files');
-
-        // VALUE_OPTIONAL may swallow the positional arg: --parallel features → parallel="features"
-        $parallel = $input->getOption('parallel');
-        if ($parallel !== false && is_string($parallel) && !ctype_digit($parallel)) {
-            $paths[] = $parallel;
-            $input->setOption('parallel', null);
-        }
-
-        $pathsFrom = $input->getOption('paths-from');
-
-        if ($pathsFrom !== null) {
-            $listed = file($pathsFrom, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            $paths = array_merge($paths, array_filter(array_map('trim', $listed ?: [])));
-        }
-
-        if (!empty($paths)) {
-            $files = implode(',', $paths);
-        } elseif ($input->getOption('story')) {
-            $files = $this->config->getFeaturesPath();
-        } elseif ($input->getOption('all')) {
-            $suitePaths = $this->config->getAllLoadPaths();
-            $files = str_contains($suitePaths, 'features') ? $suitePaths : $suitePaths . ',features/';
-        } else {
-            $files = $this->config->getAllLoadPaths();
-        }
         $filter = $input->getOption('filter');
 
         if ($filter !== null) {
@@ -469,11 +496,12 @@ final class Run extends Command
         if ($input->getOption('order') === 'random') {
             $seed = $input->getOption('seed') !== null ? (int) $input->getOption('seed') : random_int(0, 999999);
             $prose->writeln("<fg=yellow>Randomised with seed $seed</>");
+
+            if ($formatter instanceof Agent) {
+                $formatter->randomisedWith($seed);
+            }
         }
 
-        if ($formatter instanceof Agent) {
-            $formatter->describeRun($seed, $files);
-        }
         $formatter->begin();
 
         $start = hrtime(true);

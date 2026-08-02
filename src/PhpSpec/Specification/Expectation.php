@@ -17,6 +17,7 @@ namespace PhpSpec\Specification;
 use BadMethodCallException;
 use Closure;
 use PhpSpec\Browser\Response;
+use PhpSpec\ObjectName;
 
 /**
  * Fluent assertion API returned by expect(). Provides built-in matchers (toBe, toContain, etc.)
@@ -814,7 +815,7 @@ class Expectation
     {
         foreach ($values as $value) {
             $message = match (gettype($value)) {
-                'object' => self::replaceOne('%s', get_class($value) . '#' . spl_object_id($value), $message),
+                'object' => self::replaceOne('%s', ObjectName::of($value), $message),
                 'string' => self::replaceOne('%s', '"' . self::clip($value) . '"', $message),
                 'boolean' => self::replaceOne('%s', $value ? 'true' : 'false', $message),
                 'array' => self::replaceOne('%s', self::formatArray($value), $message),
@@ -883,7 +884,7 @@ class Expectation
     private static function formatArray(array $value): string
     {
         $parts = array_map(static fn(mixed $item): string => match (gettype($item)) {
-            'object' => get_class($item) . '#' . spl_object_id($item),
+            'object' => ObjectName::of($item),
             'array' => 'array(' . count($item) . ')',
             'string' => '"' . $item . '"',
             'boolean' => $item ? 'true' : 'false',
