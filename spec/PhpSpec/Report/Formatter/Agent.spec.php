@@ -400,6 +400,21 @@ describe(Agent::class, function () {
         expect($doc['result']['rerun'])->toBe('run features/counting.feature:5');
     });
 
+    it('reports a skipped step without addressing it, so the rerun stays about failures', function () use ($render) {
+        $broken = new StepResult('Given a broken step', 'error');
+        $broken->setError(new \PhpSpec\StoryBDD\StepError('this step is broken', new \RuntimeException('this step is broken')));
+
+        $doc = $render(new SuiteResult([
+            new FeatureResult('Counting', [
+                new ScenarioResult('Counting up', [$broken, new StepResult('Then it counts', 'skipped')], 2),
+            ], 'features/counting.feature'),
+        ]));
+
+        expect($doc['examples'][1]['state'])->toBe('skipped');
+        expect($doc['examples'][1])->not()->toHaveKey('rerun');
+        expect($doc['result']['rerun'])->toBe('run features/counting.feature:2');
+    });
+
     it('leaves a passing scenario out, location and all', function () use ($render) {
         $doc = $render(new SuiteResult([
             new FeatureResult('Counting', [

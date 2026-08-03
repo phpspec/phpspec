@@ -510,9 +510,11 @@ final class Agent extends AbstractFormatter
 
         // A scenario is addressed by the line its keyword sits on, which is what
         // "file.feature:LINE" already selects, so a failing scenario re-runs on
-        // its own instead of dragging the whole story suite with it.
+        // its own instead of dragging the whole story suite with it. Only a
+        // failure is addressed, as with examples: a skipped step is not work to
+        // re-run, and the summary's rerun would otherwise sweep it up.
         $location = $this->location($origin->path, $origin->line);
-        if ($state !== 'passing' && $location !== null) {
+        if ($state === 'failing' && $location !== null) {
             $entry['spec'] = $location;
             $this->addRerun($entry, $location);
         }

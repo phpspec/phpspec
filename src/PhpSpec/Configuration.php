@@ -298,14 +298,20 @@ final class Configuration
 
     /**
      * Returns all load paths combined from all suites, comma-separated.
+     *
+     * A suite that names no paths of its own means the project's spec path: the
+     * loader has always run it that way, and saying so here keeps the answer the
+     * same wherever it is asked, including the header of a report written before
+     * anything is loaded.
      */
     public function getAllLoadPaths(): string
     {
         $paths = [];
         foreach ($this->getSuites() as $suite) {
-            $paths = array_merge($paths, $suite['paths'] ?? []);
+            $paths = array_merge($paths, $suite['paths'] ?? [$this->getSpecPath()]);
         }
-        return implode(',', $paths);
+
+        return implode(',', array_unique($paths));
     }
 
     /**

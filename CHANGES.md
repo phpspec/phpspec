@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - An errored entry carries its message in the same field a failure does
  - Failure values keep a float's fraction and name an object by what it is (an enum case, a stringable's string, else its class) instead of by a per-run object id
  - A directory argument with a trailing slash no longer doubles the separator in reported paths
+ - A suite configured without paths of its own reports the spec path instead of nothing
  - Notes typed on any pair question now reach the assistant, not just the ones the AI asked
  - /next no longer overrides the pairing role's own prompt, so the navigator offers a change instead of asking permission to offer it
 
