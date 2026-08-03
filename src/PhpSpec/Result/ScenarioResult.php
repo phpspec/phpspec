@@ -25,11 +25,23 @@ final readonly class ScenarioResult implements Results
     /**
      * @param string $title the scenario description
      * @param array<StepResult> $stepResults child StepResult instances
+     * @param int $line the line its "Scenario:" keyword sits on, or the examples
+     *                  table row for an outline expansion; 0 when unknown
      */
     public function __construct(
         private string $title,
         private array $stepResults,
+        private int $line = 0,
     ) {}
+
+    /**
+     * The line that addresses this scenario in a "file.feature:LINE" run, or 0
+     * when the result was rebuilt without one.
+     */
+    public function getLine(): int
+    {
+        return $this->line;
+    }
 
     /**
      * Returns the scenario description.

@@ -1,6 +1,9 @@
 <?php
 
+use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Report\Formatter\Agent;
+use PhpSpec\Report\Formatter\Agent\Fatal;
+use PhpSpec\Report\Formatter\Agent\ProcessEnd;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\MatchResult;
@@ -10,6 +13,22 @@ use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Specification\ExampleError;
 use Symfony\Component\Console\Output\BufferedOutput;
+
+// A process end the spec fires by hand, in place of PHP's own shutdown.
+class AgentSpecProcessEnd implements ProcessEnd
+{
+    private ?Closure $ending = null;
+
+    public function atEnd(Closure $ending): void
+    {
+        $this->ending = $ending;
+    }
+
+    public function arrives(?Fatal $fatal = null): void
+    {
+        ($this->ending)($fatal);
+    }
+}
 
 describe(Agent::class, function () {
 
@@ -28,13 +47,14 @@ describe(Agent::class, function () {
         expect($doc)->toHaveKey('suite');
         expect($doc)->toHaveKey('examples');
         expect($doc)->toHaveKey('result');
-        expect($doc['suite'])->toBe(['v' => 1, 'event' => 'run_started', 'suite' => 'default', 'examples' => 1, 'steps' => 0, 'seed' => null]);
+        expect($doc['suite'])->toBe(['v' => 1, 'event' => 'run_started', 'suite' => 'default', 'examples' => 1, 'scenarios' => 0, 'steps' => 0, 'seed' => null]);
     });
 
     it('reports the seed and suite it was told about, so a flaky order is reproducible', function () {
         $output = new BufferedOutput();
         $formatter = new Agent($output);
-        $formatter->describeRun(424242, 'spec,features/');
+        $formatter->targets('spec,features/');
+        $formatter->randomisedWith(424242);
         $formatter->format(new SuiteResult([
             new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
         ]));
@@ -42,6 +62,155 @@ describe(Agent::class, function () {
 
         expect($doc['suite']['seed'])->toBe(424242);
         expect($doc['suite']['suite'])->toBe('spec,features/');
+    });
+
+    it('writes the document once, however often the command publishes it', function () {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->format(new SuiteResult([
+            new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
+        ]));
+
+        $formatter->publish();
+        $formatter->publish();
+
+        expect(substr_count($output->fetch(), '"run_started"'))->toBe(1);
+    });
+
+    it('publishes what it collected even when the run never reached its end', function () {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->targets('./spec');
+        $formatter->begin();
+        $formatter->printResult(new SpecificationResult('App\\Basket', [
+            new ExampleResult('holds products', [MatchResult::failed(1, 2, 'Expected 1 to be 2', getcwd() . '/spec/App/Basket.spec.php', 9, null, 'toBe')]),
+        ]));
+
+        // No end(): a fatal took the process before the last example.
+        $formatter->publish();
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+
+        expect($doc['result']['failing'])->toBe(1);
+        expect($doc['result']['duration_ms'])->toBe(0);
+        expect($doc['examples'][0]['example'])->toBe('App\\Basket > holds products');
+        // What the run was trying to run is known before the run: a document cut
+        // short still says it.
+        expect($doc['suite']['suite'])->toBe('./spec');
+    });
+
+    it('carries a missed coverage gate in the result, and counts it as work left', function () {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->begin();
+        $formatter->printResult(new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]));
+        $formatter->end(new SuiteResult([]));
+        $formatter->covered(new CoverageVerdict(24.34, 90.0));
+        $formatter->publish();
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+
+        // JSON has one number type, so 90.0 comes back as 90.
+        expect($doc['result']['coverage']['percent'])->toBe(24.3);
+        expect((float) $doc['result']['coverage']['required'])->toBe(90.0);
+        expect($doc['result']['coverage']['met'])->toBeFalse();
+        expect($doc['result']['failing'])->toBe(0);
+        expect($doc['result']['actionable'])->toBe(1);
+    });
+
+    it('reports coverage without a threshold as met, adding no work', function () {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->begin();
+        $formatter->end(new SuiteResult([]));
+        $formatter->covered(new CoverageVerdict(72.5));
+        $formatter->publish();
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+
+        expect($doc['result']['coverage'])->toBe(['percent' => 72.5, 'required' => null, 'met' => true]);
+        expect($doc['result']['actionable'])->toBe(0);
+    });
+
+    it('still publishes a document when a fatal ends the process, naming what stopped it', function () {
+        $output = new BufferedOutput();
+        $end = new AgentSpecProcessEnd();
+        $formatter = new Agent($output, null, $end);
+        $formatter->begin();
+        $formatter->printResult(new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]));
+
+        // No end(), no publish(): the process died loading the next spec file.
+        $end->arrives(new Fatal('Class Mute contains 1 abstract method', getcwd() . '/spec/App/Broken.spec.php', 8));
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+
+        expect($doc['fatal'])->toBe([
+            'message' => 'Class Mute contains 1 abstract method',
+            'at' => 'spec/App/Broken.spec.php:8',
+        ]);
+        expect($doc['result']['actionable'])->toBe(1);
+        expect($doc['result']['passing'])->toBe(1);
+    });
+
+    it('publishes what it has when the process ends with no fatal', function () {
+        $output = new BufferedOutput();
+        $end = new AgentSpecProcessEnd();
+        $formatter = new Agent($output, null, $end);
+        $formatter->begin();
+
+        $end->arrives();
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+
+        expect($doc)->not()->toHaveKey('fatal');
+        expect($doc['result']['actionable'])->toBe(0);
+    });
+
+    it('leaves the published document alone when the process ends after it', function () {
+        $output = new BufferedOutput();
+        $end = new AgentSpecProcessEnd();
+        $formatter = new Agent($output, null, $end);
+        $formatter->format(new SuiteResult([]));
+
+        $end->arrives(new Fatal('something later went wrong'));
+
+        expect(substr_count($output->fetch(), '"run_started"'))->toBe(1);
+    });
+
+    it('keeps the first thing that stopped the run', function () {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->stopped('Bootstrap file not found: vendor/autoload.php');
+        $formatter->stopped('and then everything else broke');
+        $formatter->publish();
+        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+
+        expect($doc['fatal']['message'])->toBe('Bootstrap file not found: vendor/autoload.php');
+        expect($doc['fatal']['at'])->toBeNull();
+    });
+
+    it('joins every failing target into one rerun command, without repeats', function () use ($render) {
+        $spec = getcwd() . '/spec/App/Basket.spec.php';
+        $doc = $render(new SuiteResult([
+            new SpecificationResult('App\\Basket', [
+                new ExampleResult('totals', [MatchResult::failed(1, 2, 'Expected 1 to be 2', $spec, 12, null, 'toBe')]),
+                new ExampleResult('counts', [MatchResult::failed(3, 4, 'Expected 3 to be 4', $spec, 20, null, 'toBe')]),
+                new ExampleResult('repeats', [MatchResult::failed(3, 4, 'Expected 3 to be 4', $spec, 20, null, 'toBe')]),
+            ]),
+        ]));
+
+        expect($doc['result']['rerun'])->toBe('run spec/App/Basket.spec.php:12 spec/App/Basket.spec.php:20');
+    });
+
+    it('offers no rerun command when nothing failed', function () use ($render) {
+        $doc = $render(new SuiteResult([
+            new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
+        ]));
+
+        expect($doc['result'])->not()->toHaveKey('rerun');
+    });
+
+    it('omits coverage from the result when none was collected', function () use ($render) {
+        $doc = $render(new SuiteResult([
+            new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
+        ]));
+
+        expect($doc['result'])->not()->toHaveKey('coverage');
     });
 
     it('omits passing examples from the entries but still counts them', function () use ($render) {
@@ -89,7 +258,7 @@ describe(Agent::class, function () {
             ]),
         ]))['examples'][0];
 
-        expect($example['id'])->toBe(substr(sha1('App\\Basket totals the prices'), 0, 12));
+        expect($example['id'])->toBe(substr(sha1('App\\Basket > totals the prices'), 0, 12));
     });
 
     it('keeps an example id stable when only its line moves', function () use ($render) {
@@ -183,19 +352,121 @@ describe(Agent::class, function () {
         expect($result['offers'])->toBe([['action' => 'create_class', 'target' => 'App\\Coupon']]);
     });
 
-    it('counts feature steps as steps, not examples, and emits the failing one', function () use ($render) {
+    it('counts a story run in scenarios and steps, never in examples', function () use ($render) {
         $step = new StepResult('Given a basket', 'failure');
         $step->setError(new \PhpSpec\StoryBDD\StepError('step went wrong', new \RuntimeException('step went wrong')));
-        $scenario = new ScenarioResult('Checkout', [$step]);
+        $scenario = new ScenarioResult('Checkout', [$step, new StepResult('When I pay', 'skipped')]);
         $feature = new FeatureResult('Shopping', [$scenario], '/features/shopping.feature');
 
         $doc = $render(new SuiteResult([$feature]));
 
-        expect($doc['result']['steps'])->toBe(1);
+        expect($doc['result']['steps'])->toBe(2);
+        expect($doc['result']['scenarios'])->toBe(1);
         expect($doc['result']['examples'])->toBe(0);
+        // One scenario is one thing to fix, however many steps it took with it.
+        expect($doc['result']['failing'])->toBe(1);
+        expect($doc['examples'])->toHaveLength(1);
         expect($doc['examples'][0]['state'])->toBe('failing');
-        expect($doc['examples'][0]['example'])->toContain('Given a basket');
+        expect($doc['examples'][0]['example'])->toBe('Shopping > Checkout');
+        expect($doc['examples'][0]['message'])->toBe('step went wrong');
         expect($doc['examples'][0]['id'])->toBe(substr(sha1($doc['examples'][0]['example']), 0, 12));
+    });
+
+    it('carries the steps that were not passing, so the broken one is named', function () use ($render) {
+        $step = new StepResult('Given a basket', 'failure');
+        $step->setError(new \PhpSpec\StoryBDD\StepError('step went wrong', new \RuntimeException('step went wrong')));
+        $feature = new FeatureResult('Shopping', [
+            new ScenarioResult('Checkout', [
+                new StepResult('Given a shop', 'passed'),
+                $step,
+                new StepResult('When I pay', 'skipped'),
+            ], 4),
+        ], 'features/shopping.feature');
+
+        $doc = $render(new SuiteResult([$feature]));
+
+        expect($doc['examples'][0]['steps'])->toBe([
+            ['title' => 'Given a basket', 'state' => 'failing', 'message' => 'step went wrong'],
+            ['title' => 'When I pay', 'state' => 'skipped'],
+        ]);
+    });
+
+    it('names a scenario by feature and scenario, so two never share an id', function () use ($render) {
+        $failing = function (string $title): StepResult {
+            $step = new StepResult($title, 'error');
+            $step->setError(new \PhpSpec\StoryBDD\StepError('this step is broken', new \RuntimeException('this step is broken')));
+
+            return $step;
+        };
+
+        $doc = $render(new SuiteResult([
+            new FeatureResult('Counting', [
+                // The same step text in both, which is what used to collide.
+                new ScenarioResult('Counting up', [$failing('Given a broken step')], 2),
+                new ScenarioResult('Counting down', [$failing('Given a broken step')], 5),
+            ], 'features/counting.feature'),
+        ]));
+
+        expect($doc['examples'][0]['example'])->toBe('Counting > Counting up');
+        expect($doc['examples'][1]['example'])->toBe('Counting > Counting down');
+        expect($doc['examples'][0]['id'])->not()->toBe($doc['examples'][1]['id']);
+    });
+
+    it('reports a scenario once however often a step title repeats inside it', function () use ($render) {
+        $failing = function (string $title, string $state = 'error'): StepResult {
+            $step = new StepResult($title, $state);
+            $step->setError(new \PhpSpec\StoryBDD\StepError('this step is broken', new \RuntimeException('this step is broken')));
+
+            return $step;
+        };
+
+        $doc = $render(new SuiteResult([
+            new FeatureResult('Twice', [
+                new ScenarioResult('The same step twice', [
+                    $failing('Given a broken step'),
+                    new StepResult('Given a broken step', 'skipped'),
+                ], 2),
+            ], 'features/twice.feature'),
+        ]));
+
+        expect($doc['examples'])->toHaveLength(1);
+        expect($doc['examples'][0]['example'])->toBe('Twice > The same step twice');
+    });
+
+    it('addresses a failing scenario by the line that re-runs it', function () use ($render) {
+        $step = new StepResult('Given a broken step', 'error');
+        $step->setError(new \PhpSpec\StoryBDD\StepError('this step is broken', new \RuntimeException('this step is broken')));
+
+        $doc = $render(new SuiteResult([
+            new FeatureResult('Counting', [new ScenarioResult('Counting up', [$step], 5)], 'features/counting.feature'),
+        ]));
+
+        expect($doc['examples'][0]['spec'])->toBe('features/counting.feature:5');
+        expect($doc['examples'][0]['rerun'])->toBe('run features/counting.feature:5');
+        expect($doc['result']['rerun'])->toBe('run features/counting.feature:5');
+    });
+
+    it('leaves a scenario waiting on undefined steps unaddressed, so the rerun stays about failures', function () use ($render) {
+        $doc = $render(new SuiteResult([
+            new FeatureResult('Counting', [
+                new ScenarioResult('Counting up', [new StepResult('Given nothing yet', 'undefined')], 2),
+            ], 'features/counting.feature'),
+        ]));
+
+        expect($doc['examples'][0]['state'])->toBe('pending');
+        expect($doc['examples'][0])->not()->toHaveKey('rerun');
+        expect($doc['result'])->not()->toHaveKey('rerun');
+    });
+
+    it('leaves a passing scenario out, location and all', function () use ($render) {
+        $doc = $render(new SuiteResult([
+            new FeatureResult('Counting', [
+                new ScenarioResult('Counting up', [new StepResult('Given a good step', 'passed')], 2),
+            ], 'features/counting.feature'),
+        ]));
+
+        expect($doc['examples'])->toBe([]);
+        expect($doc['result'])->not()->toHaveKey('rerun');
     });
 
 });

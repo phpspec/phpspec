@@ -22,6 +22,7 @@ use PhpSpec\Console\Command\Run\GenerationReport;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
 use PhpSpec\Coverage\CoverageOptions;
+use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Extensions\FormatterBridge;
 use PhpSpec\FilterRegistry;
@@ -30,6 +31,7 @@ use PhpSpec\Loader;
 use PhpSpec\Parallel\ParallelRunner;
 use PhpSpec\Report\Formatter;
 use PhpSpec\Report\Formatter\Agent;
+use PhpSpec\Report\Formatter\Agent\ShutdownProcessEnd;
 use PhpSpec\Report\Formatter\Dot;
 use PhpSpec\Report\Formatter\Html;
 use PhpSpec\Report\Formatter\Junit;
@@ -159,51 +161,102 @@ final class Run extends Command
      */
     protected function execute(Input $input, Output $output): int
     {
-        if (!$this->loadBootstrap($input, $output)) {
-            return 1;
+        $format = $this->resolveFormat($input);
+        $formatter = $this->createFormatter($format, $output);
+        // The agent document IS the console under --format=agent, so every human
+        // line the command would otherwise print (the seed, the profile table, the
+        // coverage verdict, an error) is routed off the console: what an agent
+        // needs is told to the formatter instead and rides inside the document.
+        // For every other format the two are the same stream.
+        $document = $formatter instanceof Agent ? $formatter : null;
+        $prose = $document !== null ? new BufferedOutput() : $output;
+
+        // Resolved once, here: it is what the run targets, and it recovers the
+        // positional path a "--parallel features" swallows, so asking twice
+        // would answer differently the second time.
+        $files = $this->suitePaths($input);
+        $document?->targets($files);
+
+        // PHP prints a fatal to standard output as well as the error stream, and
+        // standard output is the document's. Sending its own reports to the error
+        // stream leaves the channel clean; the document names the fatal itself.
+        $displayErrors = $document !== null ? (string) ini_set('display_errors', 'stderr') : null;
+
+        try {
+            return $this->perform($input, $prose, $formatter, $files);
+        } finally {
+            $document?->publish();
+            if ($displayErrors !== null) {
+                ini_set('display_errors', $displayErrors);
+            }
+        }
+    }
+
+    /**
+     * The run itself, writing every human line to the prose channel and results
+     * through the formatter.
+     *
+     * @param Input $input the console input (arguments and options)
+     * @param Output $prose where human-facing lines go
+     * @param Formatter $formatter the console formatter for the run's results
+     * @param string $files the paths this run targets, as the loader takes them
+     * @return int exit code: 0 = success, 1 = failure/error or bootstrap missing, 2 = coverage below minimum
+     *
+     * @throws RandomException
+     * @throws DOMException
+     */
+    private function perform(Input $input, Output $prose, Formatter $formatter, string $files): int
+    {
+        $missingBootstrap = $this->loadBootstrap($input);
+
+        if ($missingBootstrap !== null) {
+            return $this->stopped($prose, $formatter, $missingBootstrap);
         }
         $this->registerAutoloader();
 
         $pathsFrom = $input->getOption('paths-from');
 
         if ($pathsFrom !== null && !is_file($pathsFrom)) {
-            $output->writeln("<fg=red>Paths file not found: $pathsFrom</>");
-
-            return 1;
+            return $this->stopped($prose, $formatter, "Paths file not found: $pathsFrom");
         }
 
         $unknownFormats = $this->unknownFormats($input);
 
         if ($unknownFormats !== []) {
-            $output->writeln('<fg=red>Unknown format: ' . implode(', ', $unknownFormats) . ' (available: pretty, dot, tap, junit, html, agent)</>');
-
-            return 1;
+            return $this->stopped($prose, $formatter, 'Unknown format: ' . implode(', ', $unknownFormats) . ' (available: pretty, dot, tap, junit, html, agent)');
         }
 
-        $coverageReporter = $this->startCoverage($input, $output);
+        $coverageReporter = $this->startCoverage($input);
 
-        if ($coverageReporter === false) {
-            return 1;
+        if (is_string($coverageReporter)) {
+            return $this->stopped($prose, $formatter, $coverageReporter);
         }
 
         try {
-            $results = $this->runSuiteStreaming($input, $output);
+            $results = $this->runSuiteStreaming($input, $prose, $formatter, $files);
         } catch (\RuntimeException $e) {
             // A load-time contract violation (e.g. two step definitions
             // sharing a title) is the user's to fix; report it, never a trace.
-            $output->writeln(sprintf('<fg=red>%s</>', $e->getMessage()));
-
-            return 1;
+            return $this->stopped($prose, $formatter, $e->getMessage());
         }
 
-        $this->writeReportFiles($input, $output, $results);
-        $this->printProfile($input, $output, $results);
+        $this->writeReportFiles($input, $prose, $results);
+        $this->printProfile($input, $prose, $results);
 
         if ($coverageReporter) {
-            $exitCode = $this->reportCoverage($input, $output, $coverageReporter);
+            $verdict = $this->reportCoverage($input, $prose, $coverageReporter);
 
-            if ($exitCode !== null) {
-                return $exitCode;
+            if ($verdict !== null) {
+                // The gate's verdict belongs in the document as much as in the
+                // exit code: an agent that reads one and not the other would
+                // otherwise call a failed run green.
+                if ($formatter instanceof Agent) {
+                    $formatter->covered($verdict);
+                }
+
+                if ($verdict->exitCode() !== null) {
+                    return $verdict->exitCode();
+                }
             }
         }
 
@@ -226,7 +279,7 @@ final class Run extends Command
                 SuiteSummary::fromSuiteResult($results),
             ));
         } elseif (!in_array($this->resolveFormat($input), ['junit', 'html', 'agent'], true)) {
-            $this->generateCode($output, $results, (bool) $input->getOption('fake'), $input->isInteractive());
+            $this->generateCode($prose, $results, (bool) $input->getOption('fake'), $input->isInteractive());
         }
 
         return $results->status();
@@ -271,28 +324,47 @@ final class Run extends Command
     }
 
     /**
+     * Reports what stopped the run before it could produce results: red on the
+     * console for a human, and inside the document for an agent, so a run that
+     * returns nothing never leaves either of them guessing why.
+     *
+     * @param Output $prose the channel for the run's human-facing lines
+     * @param Formatter $formatter the console formatter for the run's results
+     * @param string $message what went wrong
+     * @return int the exit code the caller returns
+     */
+    private function stopped(Output $prose, Formatter $formatter, string $message): int
+    {
+        $prose->writeln(sprintf('<fg=red>%s</>', $message));
+
+        if ($formatter instanceof Agent) {
+            $formatter->stopped($message);
+        }
+
+        return 1;
+    }
+
+    /**
      * Resolves and requires the bootstrap file from --bootstrap, config, or vendor/autoload.php.
-     * Returns false if the specified file does not exist.
      *
      * @param Input $input the console input to read --bootstrap from
-     * @param Output $output the console output for error messages
-     * @return bool true if bootstrap loaded (or none needed), false if file not found
+     * @return string|null null once loaded (or when none is needed), or why it could not be
      */
-    private function loadBootstrap(Input $input, Output $output): bool
+    private function loadBootstrap(Input $input): ?string
     {
         $bootstrap = $input->getOption('bootstrap') ?? $this->config->getBootstrap();
         if ($bootstrap === null && file_exists('vendor/autoload.php')) {
             $bootstrap = 'vendor/autoload.php';
         }
         if ($bootstrap === null) {
-            return true;
+            return null;
         }
         if (!file_exists($bootstrap)) {
-            $output->writeln("<fg=red>Bootstrap file not found: $bootstrap</>");
-            return false;
+            return "Bootstrap file not found: $bootstrap";
         }
         require $bootstrap;
-        return true;
+
+        return null;
     }
 
     private function registerAutoloader(): void
@@ -304,10 +376,10 @@ final class Run extends Command
      * Starts code coverage collection if any --coverage* option was given.
      *
      * @param Input $input the console input to check coverage options
-     * @param Output $output the console output for error messages
-     * @return CoverageReporter|null|false reporter if started, null if not requested, false on error
+     * @return CoverageReporter|null|string the reporter once started, null when no
+     *                                      coverage was asked for, or why it could not start
      */
-    private function startCoverage(Input $input, Output $output): CoverageReporter|null|false
+    private function startCoverage(Input $input): CoverageReporter|null|string
     {
         if (!$this->wantsCoverage($input)) {
             return null;
@@ -321,11 +393,52 @@ final class Run extends Command
 
         $reporter = new CoverageReporter();
 
-        if (!$reporter->start($output, perExample: $perExample)) {
-            return false;
+        return $reporter->start(perExample: $perExample) ?? $reporter;
+    }
+
+    /**
+     * What this run targets, as the loader will be given it: the paths named on
+     * the command line (and any read from --paths-from), else the suite the
+     * flags ask for, else everything the config declares. Resolved before the
+     * suite is loaded, so a run that dies while loading can still say what it
+     * was trying to run.
+     *
+     * @param Input $input the console input for the file arguments and suite flags
+     * @return string the comma-separated paths
+     */
+    private function suitePaths(Input $input): string
+    {
+        $paths = $input->getArgument('files');
+
+        // VALUE_OPTIONAL may swallow the positional arg: --parallel features → parallel="features"
+        $parallel = $input->getOption('parallel');
+        if ($parallel !== false && is_string($parallel) && !ctype_digit($parallel)) {
+            $paths[] = $parallel;
+            $input->setOption('parallel', null);
         }
 
-        return $reporter;
+        $pathsFrom = $input->getOption('paths-from');
+
+        if ($pathsFrom !== null && is_file($pathsFrom)) {
+            $listed = file($pathsFrom, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $paths = array_merge($paths, array_filter(array_map('trim', $listed ?: [])));
+        }
+
+        if (!empty($paths)) {
+            return implode(',', $paths);
+        }
+
+        if ($input->getOption('story')) {
+            return $this->config->getFeaturesPath();
+        }
+
+        if ($input->getOption('all')) {
+            $suitePaths = $this->config->getAllLoadPaths();
+
+            return str_contains($suitePaths, 'features') ? $suitePaths : $suitePaths . ',features/';
+        }
+
+        return $this->config->getAllLoadPaths();
     }
 
     /**
@@ -349,40 +462,16 @@ final class Run extends Command
      * and returns the aggregated suite results.
      *
      * @param Input $input the console input for files, filter, order, and format options
-     * @param Output $output the console output for displaying results
+     * @param Output $prose the channel for the run's human-facing lines
+     * @param Formatter $formatter the console formatter the results stream through
+     * @param string $files the paths this run targets, as the loader takes them
      * @return SuiteResult the aggregated suite results
      *
      * @throws RandomException
      * @throws \RuntimeException when the loader rejects a duplicate step title
      */
-    private function runSuiteStreaming(Input $input, Output $output): SuiteResult
+    private function runSuiteStreaming(Input $input, Output $prose, Formatter $formatter, string $files): SuiteResult
     {
-        $paths = $input->getArgument('files');
-
-        // VALUE_OPTIONAL may swallow the positional arg: --parallel features → parallel="features"
-        $parallel = $input->getOption('parallel');
-        if ($parallel !== false && is_string($parallel) && !ctype_digit($parallel)) {
-            $paths[] = $parallel;
-            $input->setOption('parallel', null);
-        }
-
-        $pathsFrom = $input->getOption('paths-from');
-
-        if ($pathsFrom !== null) {
-            $listed = file($pathsFrom, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            $paths = array_merge($paths, array_filter(array_map('trim', $listed ?: [])));
-        }
-
-        if (!empty($paths)) {
-            $files = implode(',', $paths);
-        } elseif ($input->getOption('story')) {
-            $files = $this->config->getFeaturesPath();
-        } elseif ($input->getOption('all')) {
-            $suitePaths = $this->config->getAllLoadPaths();
-            $files = str_contains($suitePaths, 'features') ? $suitePaths : $suitePaths . ',features/';
-        } else {
-            $files = $this->config->getAllLoadPaths();
-        }
         $filter = $input->getOption('filter');
 
         if ($filter !== null) {
@@ -406,13 +495,13 @@ final class Run extends Command
         $seed = null;
         if ($input->getOption('order') === 'random') {
             $seed = $input->getOption('seed') !== null ? (int) $input->getOption('seed') : random_int(0, 999999);
-            $output->writeln("<fg=yellow>Randomised with seed $seed</>");
+            $prose->writeln("<fg=yellow>Randomised with seed $seed</>");
+
+            if ($formatter instanceof Agent) {
+                $formatter->randomisedWith($seed);
+            }
         }
 
-        $formatter = $this->createFormatter($this->resolveFormat($input), $output);
-        if ($formatter instanceof Agent) {
-            $formatter->describeRun($seed, $files);
-        }
         $formatter->begin();
 
         $start = hrtime(true);
@@ -579,7 +668,11 @@ final class Run extends Command
             'tap' => new Tap($output),
             'junit' => new Junit($output),
             'html' => new Html($output),
-            'agent' => new Agent($output, fn(SuiteResult $results) => $this->codeGenerator(false)->scan($results)->toArray()),
+            'agent' => new Agent(
+                $output,
+                fn(SuiteResult $results) => $this->codeGenerator(false)->scan($results)->toArray(),
+                new ShutdownProcessEnd(),
+            ),
             default => new Pretty($output),
         };
     }
@@ -619,10 +712,10 @@ final class Run extends Command
      * @param Input $input the console input for coverage report options
      * @param Output $output the console output for report rendering
      * @param CoverageReporter $reporter the active coverage reporter
-     * @return int|null exit code if coverage below minimum, null otherwise
+     * @return CoverageVerdict|null what the run covered, or null when nothing was collected
      * @throws DOMException
      */
-    private function reportCoverage(Input $input, Output $output, CoverageReporter $reporter): ?int
+    private function reportCoverage(Input $input, Output $output, CoverageReporter $reporter): ?CoverageVerdict
     {
         if ($this->coveragePartials !== []) {
             $reporter->mergePartials($this->coveragePartials);

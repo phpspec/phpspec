@@ -17,6 +17,7 @@ namespace PhpSpec\Specification;
 use BadMethodCallException;
 use Closure;
 use PhpSpec\Browser\Response;
+use PhpSpec\ObjectName;
 
 /**
  * Fluent assertion API returned by expect(). Provides built-in matchers (toBe, toContain, etc.)
@@ -539,9 +540,13 @@ class Expectation
     {
         return $this->match(
             fn($expected) => is_string($expected) ? strlen($expected) === $length : count($expected) === $length,
-            'Expected %s to have length %s',
+            // The subject alone leaves the reader counting: an array of one array
+            // prints as "[array(2)]", which reads like a length of 2. The length
+            // asserted on is the one thing the message must state outright.
+            'Expected %s to have length %s, has %s',
             $this->subject,
             $length,
+            self::lengthOf($this->subject),
             ['__fake' => is_string($this->subject) ? "str_repeat('x', {$length})" : "array_fill(0, {$length}, null)"],
         );
     }
@@ -810,15 +815,41 @@ class Expectation
     {
         foreach ($values as $value) {
             $message = match (gettype($value)) {
-                'object' => self::replaceOne('%s', get_class($value) . '#' . spl_object_id($value), $message),
+                'object' => self::replaceOne('%s', ObjectName::of($value), $message),
                 'string' => self::replaceOne('%s', '"' . self::clip($value) . '"', $message),
                 'boolean' => self::replaceOne('%s', $value ? 'true' : 'false', $message),
                 'array' => self::replaceOne('%s', self::formatArray($value), $message),
                 'NULL' => self::replaceOne('%s', 'null', $message),
+                'double' => self::replaceOne('%s', self::formatFloat($value), $message),
                 default => self::replaceOne('%s', (string) $value, $message)
             };
         }
         return $message;
+    }
+
+    /**
+     * A float as a failure message must show it: keeping the fraction, so a
+     * strict comparison that failed on type alone does not read as a tautology
+     * ("Expected 90 to be 90"), and at full precision, so the one that failed on
+     * a rounding tail says so instead of tidying itself up to 0.3.
+     */
+    private static function formatFloat(float $value): string
+    {
+        return is_finite($value) ? var_export($value, true) : (string) $value;
+    }
+
+    /**
+     * How long a subject is in the terms toHaveLength asserts on: characters for
+     * a string, elements for anything countable, and "no length" for a subject
+     * that has none (the matcher fails it either way, and the message says why).
+     */
+    private static function lengthOf(mixed $subject): int|string
+    {
+        return match (true) {
+            is_string($subject) => strlen($subject),
+            is_countable($subject) => count($subject),
+            default => 'no length',
+        };
     }
 
     /**
@@ -853,11 +884,12 @@ class Expectation
     private static function formatArray(array $value): string
     {
         $parts = array_map(static fn(mixed $item): string => match (gettype($item)) {
-            'object' => get_class($item) . '#' . spl_object_id($item),
+            'object' => ObjectName::of($item),
             'array' => 'array(' . count($item) . ')',
             'string' => '"' . $item . '"',
             'boolean' => $item ? 'true' : 'false',
             'NULL' => 'null',
+            'double' => self::formatFloat($item),
             default => (string) $item,
         }, $value);
 

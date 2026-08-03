@@ -101,6 +101,55 @@ then('the output should be valid JSON', function () {
     }
 });
 
+// How many things the run says are worth acting on: one per example or scenario,
+// never one per step of the same broken scenario.
+then('the report should have {int} entries', function (int $count) {
+    $document = json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
+
+    expect($document['examples'] ?? [])->toHaveLength($count);
+});
+
+then('the report should have {int} entry', function (int $count) {
+    $document = json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
+
+    expect($document['examples'] ?? [])->toHaveLength($count);
+});
+
+// One field answers "what went wrong", whatever the entry's state: a consumer
+// should not have to know that an error hides its text somewhere else.
+then('every reported entry should carry a message', function () {
+    $document = json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
+    $entries = $document['examples'] ?? [];
+
+    expect($entries)->not()->toBe([]);
+
+    foreach ($entries as $entry) {
+        expect($entry)->toHaveKey('message');
+    }
+});
+
+// Every reported entry must be addressable on its own: an id that two entries
+// share cannot answer "is THIS failure still here?".
+then('the failing entries should have distinct ids', function () {
+    $document = json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
+    $ids = array_column($document['examples'] ?? [], 'id');
+
+    expect(count($ids))->toBeGreaterThan(1);
+    expect(array_unique($ids))->toHaveLength(count($ids));
+});
+
+// Standard output on its own, for the runs where the error stream carries text
+// of its own (PHP's fatal report) and the document must still stand alone.
+then('the standard output should be valid JSON', function () {
+    try {
+        json_decode(trim($this->stdout), true, 512, JSON_THROW_ON_ERROR);
+    } catch (\JsonException $e) {
+        throw new \RuntimeException(
+            "Expected valid JSON on standard output ({$e->getMessage()}).\nStandard output:\n{$this->stdout}",
+        );
+    }
+});
+
 // -- File existence (sets $this->lastFile for chained assertions) ------
 
 then('a spec file {string} should be generated', function (string $path) {

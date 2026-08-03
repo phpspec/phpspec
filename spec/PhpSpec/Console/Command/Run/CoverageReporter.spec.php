@@ -18,11 +18,11 @@ describe(CoverageReporter::class, function () {
             // whole-suite collection (xdebug coverage state is process-global).
             if (!CoverageCollector::isCollecting()) {
 
-                it('returns true when Xdebug coverage is available', function () {
+                it('starts with nothing to report when Xdebug coverage is available', function () {
                     $output = new BufferedOutput();
                     $reporter = new CoverageReporter();
 
-                    expect($reporter->start($output))->toBeTrue();
+                    expect($reporter->start())->toBeNull();
 
                     // Stop the collection so no state leaks into later examples
                     $reporter->report($output, new CoverageOptions(srcPath: 'src'));
@@ -36,7 +36,7 @@ describe(CoverageReporter::class, function () {
                 $reporter = new CoverageReporter();
 
                 try {
-                    expect($reporter->start($output, perExample: true))->toBeTrue();
+                    expect($reporter->start(perExample: true))->toBeNull();
                     expect(CoverageRegistry::collector())->toBeAnInstanceOf(PerExampleCollector::class);
                 } finally {
                     CoverageRegistry::reset();
@@ -45,23 +45,14 @@ describe(CoverageReporter::class, function () {
 
         } else {
 
-            it('returns false when Xdebug coverage is not available', function () {
-                $output = new BufferedOutput();
+            it('returns the reason when Xdebug coverage is not available', function () {
                 $reporter = new CoverageReporter();
-                expect($reporter->start($output))->toBeFalse();
+                expect($reporter->start())->toContain('Code coverage requires Xdebug');
             });
 
-            it('returns false in per-example mode when Xdebug coverage is not available', function () {
-                $output = new BufferedOutput();
+            it('returns the reason in per-example mode when Xdebug coverage is not available', function () {
                 $reporter = new CoverageReporter();
-                expect($reporter->start($output, perExample: true))->toBeFalse();
-            });
-
-            it('writes error message when Xdebug coverage is not available', function () {
-                $output = new BufferedOutput();
-                $reporter = new CoverageReporter();
-                $reporter->start($output);
-                expect($output->fetch())->toContain('Code coverage requires Xdebug');
+                expect($reporter->start(perExample: true))->toContain('Code coverage requires Xdebug');
             });
 
         }
@@ -93,7 +84,7 @@ describe(CoverageReporter::class, function () {
             $reporter = new CoverageReporter();
 
             try {
-                $exitCode = $reporter->report($output, new CoverageOptions(
+                $verdict = $reporter->report($output, new CoverageOptions(
                     srcPath: dirname($fixture),
                     showText: true,
                     cloverPath: $dir . '/clover.xml',
@@ -102,7 +93,10 @@ describe(CoverageReporter::class, function () {
                     coverageMin: '100',
                 ));
 
-                expect($exitCode)->toBeNull();
+                expect($verdict->met())->toBeTrue();
+                expect($verdict->exitCode())->toBeNull();
+                expect($verdict->percent)->toBe(100.0);
+                expect($verdict->required)->toBe(100.0);
                 expect(file_exists($dir . '/clover.xml'))->toBeTrue();
                 expect(file_exists($dir . '/html/index.html'))->toBeTrue();
                 expect(file_exists($dir . '/coverage.json'))->toBeTrue();
@@ -119,7 +113,7 @@ describe(CoverageReporter::class, function () {
             }
         });
 
-        it('returns exit code 1 when coverage is below the minimum', function (CoverageDriver $driver) {
+        it('returns a verdict that demands exit code 1 when coverage is below the minimum', function (CoverageDriver $driver) {
             $fixture = (string) realpath(__DIR__ . '/../../../Coverage/Driver/fixtures/covered_probe.php');
             allow($driver->stop())->toReturn([$fixture => [3 => 1, 4 => -1]]);
             $collector = new PerExampleCollector($driver);
@@ -132,12 +126,14 @@ describe(CoverageReporter::class, function () {
             $reporter = new CoverageReporter();
 
             try {
-                $exitCode = $reporter->report($output, new CoverageOptions(
+                $verdict = $reporter->report($output, new CoverageOptions(
                     srcPath: dirname($fixture),
                     coverageMin: '90',
                 ));
 
-                expect($exitCode)->toBe(1);
+                expect($verdict->met())->toBeFalse();
+                expect($verdict->exitCode())->toBe(1);
+                expect($verdict->percent)->toBe(50.0);
                 expect($output->fetch())->toContain('below the required');
             } finally {
                 CoverageRegistry::reset();

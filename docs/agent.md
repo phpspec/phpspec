@@ -34,13 +34,13 @@ class — produces:
 {
   "suite": {
     "v": 1, "event": "run_started", "suite": "default",
-    "examples": 3, "steps": 0, "seed": null
+    "examples": 3, "scenarios": 0, "steps": 0, "seed": null
   },
   "examples": [
     {
       "v": 1,
       "id": "6fd046add251",
-      "example": "Basket totals the prices of its products",
+      "example": "App\\Basket > totals the prices of its products",
       "state": "failing",
       "expected": { "matcher": "toBe", "value": 4000, "negated": false },
       "actual": 3500,
@@ -51,8 +51,9 @@ class — produces:
     {
       "v": 1,
       "id": "66b1647a77b6",
-      "example": "Basket applies a coupon",
+      "example": "App\\Basket > applies a coupon",
       "state": "error",
+      "message": "Class \"App\\Coupon\" not found",
       "exception": {
         "class": "Error",
         "message": "Class \"App\\Coupon\" not found",
@@ -65,7 +66,7 @@ class — produces:
   ],
   "result": {
     "v": 1, "event": "summary",
-    "examples": 3, "steps": 0,
+    "examples": 3, "scenarios": 0, "steps": 0,
     "passing": 1, "failing": 1, "errors": 1, "pending": 0, "skipped": 0,
     "actionable": 2,
     "duration_ms": 4,
@@ -81,23 +82,33 @@ Every object carries `"v"` — the agent-protocol version (currently `1`).
 
 ### `suite` — the header
 
-`examples` and `steps` are the totals for the run (`steps` is non-zero only for
-Story BDD feature runs). `suite` is the suite name; `seed` is the random-order
-seed when one was used, else `null`.
+`examples`, `scenarios` and `steps` are the totals for the run (`scenarios` and
+`steps` are non-zero only for Story BDD feature runs). `suite` is the suite name;
+`seed` is the random-order seed when one was used, else `null`.
 
 ### `examples` — only what needs attention
 
-**Passing examples are omitted.** A green suite of thousands need not spend
+**Passing entries are omitted.** A green suite of thousands need not spend
 tokens on entries an agent will never act on — the summary still counts them.
 Each listed entry is one that failed, errored, or is pending/skipped.
 
+**One entry is one thing to fix.** A spec run reports examples; a Story BDD run
+reports **scenarios**, not steps, because a scenario is what fails, what re-runs,
+and what you act on. The steps that did not pass ride inside the entry, so one
+broken scenario is a single item naming the step that broke it, never a failure
+followed by a train of skipped siblings pointing at the same line. Each row of a
+Scenario Outline is its own entry, named by its values
+(`Adding > Adding numbers (1, 2)`).
+
 | Field | Meaning |
 |---|---|
-| `id` | A stable identifier for this example — a hash of its full name (described subject + title). It survives edits that move lines or change where a failure fires, so you can ask *"is THIS exact failure still here?"* across runs. Recomputable from `example`. |
-| `example` | The full name: the described subject followed by the example title. |
+| `id` | A stable identifier for this example: a hash of its full name. It survives edits that move lines or change where a failure fires, so you can ask *"is THIS exact failure still here?"* across runs. Recomputable from `example`. |
+| `example` | The full name, as a path: `App\Basket > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. |
 | `state` | `failing`, `error`, `pending`, or `skipped` (`passing` entries are omitted). |
-| `spec` | The `file:line` of the failing assertion or the error, project-relative. |
-| `rerun` | The exact arguments to re-run **just this one example** — prepend your PhpSpec binary. No full-suite re-run needed to verify one fix. |
+| `message` | What went wrong, whatever the state. An `error` entry keeps `exception` too, for the class and the site. |
+| `spec` | The `file:line` of the failing assertion or the error, project-relative. For a scenario it is the line its `Scenario:` keyword sits on. |
+| `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. No full-suite re-run needed to verify one fix. |
+| `steps` | Scenarios only: the steps that did not pass, each `{ title, state, message? }`, in the order they were declared. |
 
 **`failing`** entries also carry the expectation:
 
@@ -111,7 +122,7 @@ Each listed entry is one that failed, errored, or is pending/skipped.
 > `expected.value` is what should have happened, `actual` is what did. (PhpSpec's
 > internal naming is the reverse — the formatter un-inverts it for you.)
 
-**`error`** entries carry `exception` (`class`, `message`, `at`) instead. When
+**`error`** entries carry `exception` (`class`, `message`, `at`) as well. When
 the error names something PhpSpec can generate — a missing class, interface, or
 method — the entry also carries a per-example `offer` (see below). A failing
 expectation carries **no** offer: the code exists and its behaviour is simply
@@ -124,14 +135,54 @@ Sometimes the deprecation is the actual clue behind a failure.
 
 Large or object values in `expected`/`actual` are exported compactly (long
 strings and arrays are truncated with a `{ "truncated": true, "length": N }`
-marker; objects render as `ClassName#id`) so the document never blows up.
+marker) so the document never blows up. Objects are named by what they are, not
+by which instance they were: an enum as `App\Status::Active`, anything that can
+describe itself as `App\Money("12.00 GBP")`, everything else as `App\Basket`.
+Two runs of the same failure therefore report the same value. Floats keep their
+fraction, so `90.0` is never reported as the `90` it was compared against.
 
 ### `result` — the summary
 
 The counts (`passing`, `failing`, `errors`, `pending`, `skipped`) are for the
-whole run. The one number to branch on is **`actionable`** = failing + errors +
-pending. **Zero means there is nothing to do.** `duration_ms` is the run's wall
-time; `offers` is the run-wide, de-duplicated list of code PhpSpec can generate.
+whole run, in the units the entries are reported in: one per example, one per
+scenario. `steps` is a size, not a verdict. The one number to branch on is
+**`actionable`** = failing + errors + pending, plus a coverage gate the run
+missed and anything that stopped it.
+**Zero means there is nothing to do**, and it never disagrees with the exit code.
+`duration_ms` is the run's wall time; `offers` is the run-wide, de-duplicated
+list of code PhpSpec can generate.
+
+| Field | Present when | Meaning |
+|---|---|---|
+| `rerun` | anything failed with a location | One command that re-runs every failing example at once, so a fix is checked against all of what it was meant to fix. |
+| `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
+
+### `fatal`: when the run could not finish
+
+A run that never started (a missing bootstrap, an unknown format) or that died
+partway (a parse error, a class that fails to compile) still answers with a
+document. It carries a top-level `fatal` of `{ "message", "at" }`, holds whatever
+the run did manage to collect, and counts 1 in `actionable`.
+
+```json
+{
+  "suite": { "v": 1, "event": "run_started", "suite": "default", "examples": 0, "steps": 0, "seed": null },
+  "examples": [],
+  "result": { "v": 1, "event": "summary", "examples": 0, "actionable": 1, "…": "…" },
+  "fatal": {
+    "message": "Class Mute contains 1 abstract method and must therefore be declared abstract or implement the remaining methods (Speaks::speak)",
+    "at": "spec/App/Broken.spec.php:8"
+  }
+}
+```
+
+### Standard output carries the document, and nothing else
+
+Under `--format=agent` the document is the only thing written to standard
+output: the randomised-order seed, the `--profile` table, coverage lines, report
+notes and error text all go elsewhere, and PHP's own fatal reports are sent to
+the error stream. Parse the whole of stdout as one JSON object; read stderr when
+you want the human text as well.
 
 ## Offers — code PhpSpec can generate for you
 
@@ -229,22 +280,28 @@ Always run PhpSpec with the machine-readable formatter and parse the JSON:
 
 Read the single JSON object it prints:
 
-- `result.actionable` is the number to act on. **0 means the suite is green —
-  stop.** Otherwise it's `failing + errors + pending`.
+- `result.actionable` is the number to act on. **0 means there is nothing left,
+  so stop.** It counts `failing + errors + pending`, plus a missed
+  `--coverage-min` gate and anything that stopped the run.
+- A run that could not finish carries a top-level `fatal` of `{ message, at }`.
+  Read it before anything else: the counts describe only what ran before it.
 - `examples[]` lists only what needs attention (passing examples are omitted).
   Each has a `state`:
   - `failing` — the code ran but behaviour is wrong. Look at `expected.value`
     (what the spec wants), `actual` (what the code produced), and `message`.
     Fix the implementation; do not change the spec to match the code unless the
     spec is genuinely wrong.
-  - `error` — an exception was thrown (`exception.class`, `exception.message`).
-    If the entry has an `offer`, PhpSpec can generate the missing piece.
+  - `error`: an exception was thrown. `message` says what, `exception` adds the
+    class and the site. If the entry has an `offer`, PhpSpec can generate the
+    missing piece.
   - `pending` — an unimplemented example; implement it.
 - To verify a single fix, re-run just that example: take its `rerun` value and
   prepend the binary — e.g. `bin/phpspec run spec/App/Basket.spec.php:6`. Don't
-  re-run the whole suite to check one change.
+  re-run the whole suite to check one change. `result.rerun` does the same for
+  every failure at once.
 - Track a specific failure across runs by its `id` (stable across edits that
-  move lines). A failure is fixed when its `id` no longer appears.
+  move lines). A failure is fixed when its `id` no longer appears. A failing
+  Story BDD scenario has an `id` and a `rerun` of its own, just like an example.
 
 ## Generating code
 

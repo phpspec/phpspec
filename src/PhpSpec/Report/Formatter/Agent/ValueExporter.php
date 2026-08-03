@@ -14,12 +14,14 @@
 
 namespace PhpSpec\Report\Formatter\Agent;
 
+use PhpSpec\ObjectName;
+
 /**
  * @internal
  * Exports an arbitrary value into a compact, JSON-encodable shape for the agent
  * formatter: scalars pass through, long strings and large arrays are truncated
- * with a marker of their real length, and objects become "ClassName#id" — never
- * a full object graph — so a single expectation cannot flood the model's context.
+ * with a marker of their real length, and objects are named rather than dumped,
+ * so a single expectation cannot flood the model's context.
  */
 final class ValueExporter
 {
@@ -35,7 +37,7 @@ final class ValueExporter
     public static function export(mixed $value, int $depth = 0): mixed
     {
         if (is_object($value)) {
-            return $value::class . '#' . spl_object_id($value);
+            return ObjectName::of($value);
         }
 
         if (is_string($value)) {

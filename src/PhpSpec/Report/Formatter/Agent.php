@@ -14,13 +14,18 @@
 
 namespace PhpSpec\Report\Formatter;
 
+use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Report\AbstractFormatter;
+use PhpSpec\Report\Formatter\Agent\Fatal;
 use PhpSpec\Report\Formatter\Agent\Offers;
+use PhpSpec\Report\Formatter\Agent\Origin;
+use PhpSpec\Report\Formatter\Agent\ProcessEnd;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use PhpSpec\Report\Formatter\Agent\ValueExporter;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\MatchResult;
+use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
@@ -47,6 +52,9 @@ final class Agent extends AbstractFormatter
     /** How many story (feature) steps ran. */
     private int $stepCount = 0;
 
+    /** How many story scenarios ran: the unit a story run is counted and reported in. */
+    private int $scenarioCount = 0;
+
     /** @var (\Closure(SuiteResult): mixed)|null resolves the run's generation candidates as a plain array */
     private readonly ?\Closure $resolveCandidates;
 
@@ -56,44 +64,167 @@ final class Agent extends AbstractFormatter
     /** What was run, as the paths the loader was given. */
     private string $suite = 'default';
 
-    public function __construct(OutputInterface $output, ?\Closure $resolveCandidates = null)
+    /** The run's results, once it reached the end; null while it is still going. */
+    private ?SuiteResult $results = null;
+
+    /** Whether the document has gone out, so it goes out exactly once. */
+    private bool $published = false;
+
+    /** What the run covered, when coverage was collected. */
+    private ?CoverageVerdict $coverage = null;
+
+    /** @var array{message: string, at: string|null}|null what stopped the run short, when something did */
+    private ?array $fatal = null;
+
+    /**
+     * @param OutputInterface $output the stream the document goes to
+     * @param \Closure(SuiteResult): mixed|null $resolveCandidates resolves the run's generation candidates
+     * @param ProcessEnd|null $processEnd the promise-keeper: given one, the document
+     *                                    still goes out when the process dies mid-run
+     */
+    public function __construct(OutputInterface $output, ?\Closure $resolveCandidates = null, ?ProcessEnd $processEnd = null)
     {
         parent::__construct($output);
         $this->resolveCandidates = $resolveCandidates;
+        $processEnd?->atEnd($this->ended(...));
     }
 
     /**
-     * Tells the formatter about the run it is rendering, so the document
-     * carries the real seed (an agent reruns a flaky order with it) and what
-     * was run instead of placeholders.
+     * Tells the formatter what the run targets, so the header says what was
+     * asked for instead of a placeholder. Told before the suite is loaded, so a
+     * run that dies loading still reports it.
      */
-    public function describeRun(?int $seed, string $suite): void
+    public function targets(string $suite): void
     {
-        $this->seed = $seed;
         if ($suite !== '') {
             $this->suite = $suite;
         }
+    }
+
+    /**
+     * Tells the formatter the seed the run was shuffled with, so an agent can
+     * reproduce a flaky order.
+     */
+    public function randomisedWith(int $seed): void
+    {
+        $this->seed = $seed;
     }
 
     public function begin(): void {}
 
     public function printResult(Results $result): void
     {
-        $this->collect($result, $this->subjectOf($result));
+        $origin = $this->within(new Origin(), $result);
+
+        if ($result instanceof ScenarioResult) {
+            $this->recordScenario($result, $origin);
+
+            return;
+        }
+
+        $this->collect($result, $origin);
     }
 
+    /**
+     * Takes the run's results. The document is not written here: it is the whole
+     * command's artifact, not the suite runner's, so it waits for {@see publish()}
+     * and can still be told what the command learns after the last example (the
+     * coverage verdict).
+     */
     public function end(SuiteResult $results): void
+    {
+        $this->results = $results;
+    }
+
+    /**
+     * Takes what the coverage run concluded, so the document reports it rather
+     * than a line printed after the document could ever say.
+     */
+    public function covered(CoverageVerdict $verdict): void
+    {
+        $this->coverage = $verdict;
+    }
+
+    /**
+     * Takes what stopped the run: a missing bootstrap, a rejected option, an
+     * error that killed the process. The first one to arrive is the one that
+     * mattered, so it is not overwritten by whatever came apart afterwards.
+     *
+     * @param string $message what went wrong
+     * @param string|null $at where, as a project-relative file:line
+     */
+    public function stopped(string $message, ?string $at = null): void
+    {
+        $this->fatal ??= ['message' => $message, 'at' => $at];
+    }
+
+    /**
+     * The process is going. Whatever ended it becomes part of the document, and
+     * the document goes out with what the run managed to collect.
+     */
+    private function ended(?Fatal $fatal): void
+    {
+        if ($fatal !== null) {
+            $this->stopped($fatal->message, $this->location($fatal->file, $fatal->line));
+        }
+
+        $this->publish();
+    }
+
+    /**
+     * A whole-suite render is complete in itself (a report file, a spec), so it
+     * publishes as it ends.
+     */
+    public function format(SuiteResult $results): void
+    {
+        parent::format($results);
+        $this->publish();
+    }
+
+    /**
+     * Writes the document, once. Every path out of the command comes through
+     * here, so an agent reads exactly one JSON object whether the run finished,
+     * failed its coverage gate, or died: calling it twice is a no-op.
+     */
+    public function publish(): void
+    {
+        if ($this->published) {
+            return;
+        }
+
+        $this->published = true;
+        // The zero fraction is kept: a float that lost it would read as the int
+        // it was compared against, turning a type failure into a tautology.
+        $json = json_encode($this->document(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION) ?: '{}';
+
+        $this->output->write($json . "\n", false, OutputInterface::OUTPUT_RAW);
+    }
+
+    /**
+     * The document as it stands: the header, every actionable entry, and the
+     * totals. Built from whatever has been collected, so a run cut short still
+     * reports what it managed to see.
+     *
+     * @return array<string, mixed>
+     */
+    private function document(): array
     {
         $failing = $this->counts['failing'] ?? 0;
         $errors = $this->counts['error'] ?? 0;
         $pending = $this->counts['pending'] ?? 0;
+        // A coverage gate the run missed is work left to do, exactly like a red
+        // example: the number an agent checks must not say "nothing to do" while
+        // the exit code says otherwise.
+        $shortfall = $this->coverage !== null && !$this->coverage->met() ? 1 : 0;
+        $stopped = $this->fatal !== null ? 1 : 0;
 
-        $document = [
+        $result = [
             'suite' => [
                 'v' => Schema::V,
                 'event' => Schema::EVENT_RUN_STARTED,
                 'suite' => $this->suite,
                 'examples' => $this->exampleCount,
+                'scenarios' => $this->scenarioCount,
                 'steps' => $this->stepCount,
                 'seed' => $this->seed,
             ],
@@ -102,23 +233,63 @@ final class Agent extends AbstractFormatter
                 'v' => Schema::V,
                 'event' => Schema::EVENT_SUMMARY,
                 'examples' => $this->exampleCount,
+                'scenarios' => $this->scenarioCount,
                 'steps' => $this->stepCount,
+                // Counted in the units the entries are reported in: one per
+                // example, one per scenario. Steps are a size, not a verdict.
                 'passing' => $this->counts['passing'] ?? 0,
                 'failing' => $failing,
                 'errors' => $errors,
                 'pending' => $pending,
                 'skipped' => $this->counts['skipped'] ?? 0,
                 // The one number an agent checks: everything red or unfinished
-                // (failures + errors + pending). Zero means nothing to do.
-                'actionable' => $failing + $errors + $pending,
-                'duration_ms' => (int) round($results->getDuration() * 1000),
-                'offers' => $this->offers($results),
+                // (failures + errors + pending), plus a missed coverage gate and
+                // anything that stopped the run. Zero means nothing to do.
+                'actionable' => $failing + $errors + $pending + $shortfall + $stopped,
+                'duration_ms' => (int) round(($this->results?->getDuration() ?? 0.0) * 1000),
+                'offers' => $this->results !== null ? $this->offers($this->results) : [],
             ],
         ];
 
-        $json = json_encode($document, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+        $rerun = $this->rerunEverything();
+        if ($rerun !== null) {
+            $result['result']['rerun'] = $rerun;
+        }
 
-        $this->output->write($json . "\n", false, OutputInterface::OUTPUT_RAW);
+        if ($this->coverage !== null) {
+            $result['result']['coverage'] = [
+                'percent' => round($this->coverage->percent, 1),
+                'required' => $this->coverage->required,
+                'met' => $this->coverage->met(),
+            ];
+        }
+
+        if ($this->fatal !== null) {
+            $result['fatal'] = $this->fatal;
+        }
+
+        return $result;
+    }
+
+    /**
+     * The one command that re-runs everything this run reported, so a fix can be
+     * checked against the whole of what it was meant to fix instead of one
+     * example at a time. Null when nothing failed anywhere with a location.
+     */
+    private function rerunEverything(): ?string
+    {
+        $targets = [];
+
+        foreach ($this->examples as $entry) {
+            $rerun = $entry['rerun'] ?? null;
+            if (is_string($rerun)) {
+                $targets[] = substr($rerun, strlen('run '));
+            }
+        }
+
+        $targets = array_values(array_unique($targets));
+
+        return $targets !== [] ? 'run ' . implode(' ', $targets) : null;
     }
 
     /**
@@ -139,53 +310,54 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * The subject a result names its children after — the described class for a
-     * spec, the title for a feature — or null when it carries none.
+     * The origin one level into a result: a spec or feature adds its title (and
+     * a feature the file it lives in), a scenario adds its title and the line
+     * that re-runs it. Anything else passes the origin through untouched.
      */
-    private function subjectOf(Results $result): ?string
+    private function within(Origin $origin, Results $result): Origin
     {
-        if ($result instanceof SpecificationResult || $result instanceof FeatureResult) {
-            return $result->getTitle();
-        }
-
-        return null;
+        return match (true) {
+            $result instanceof FeatureResult => $origin->within($result->getTitle(), $result->getPath()),
+            $result instanceof ScenarioResult => $origin->within($result->getTitle(), line: $result->getLine()),
+            $result instanceof SpecificationResult => $origin->within($result->getTitle()),
+            default => $origin,
+        };
     }
 
     /**
      * Walks the result tree, emitting one entry per example/step and threading
-     * the enclosing subject down so each entry is named in full.
+     * the origin down so each entry is named in full and knows where it lives.
      */
-    private function collect(Results $results, ?string $subject): void
+    private function collect(Results $results, Origin $origin): void
     {
         foreach ($results->getResults() as $child) {
             if ($child instanceof ExampleResult) {
-                $this->record($this->fromExample($child, $subject), 'example');
-            } elseif ($child instanceof StepResult) {
-                $this->record($this->fromStep($child, $subject), 'step');
+                $this->record($this->fromExample($child, $origin));
+            } elseif ($child instanceof ScenarioResult) {
+                // A scenario is the unit a story run reports: it is what fails,
+                // what re-runs, and what a reader acts on. Its steps ride inside
+                // it rather than becoming entries of their own, so one broken
+                // scenario is one thing to fix and not a failure plus a train of
+                // skipped siblings that address the same line.
+                $this->recordScenario($child, $this->within($origin, $child));
             } elseif ($child instanceof Results) {
-                $this->collect($child, $this->subjectOf($child) ?? $subject);
+                $this->collect($child, $this->within($origin, $child));
             }
         }
     }
 
     /**
-     * Counts an entry by state, and keeps it in the emitted list unless it
-     * passed — a green suite of thousands need not spend tokens on entries an
+     * Counts an example by state, and keeps it in the emitted list unless it
+     * passed: a green suite of thousands need not spend tokens on entries an
      * agent will never act on; the summary still counts them.
      *
      * @param array<string, mixed> $entry
-     * @param 'example'|'step' $kind
      */
-    private function record(array $entry, string $kind): void
+    private function record(array $entry): void
     {
         $state = is_string($entry['state'] ?? null) ? $entry['state'] : 'passing';
         $this->counts[$state] = ($this->counts[$state] ?? 0) + 1;
-
-        if ($kind === 'step') {
-            $this->stepCount++;
-        } else {
-            $this->exampleCount++;
-        }
+        $this->exampleCount++;
 
         if ($state !== 'passing') {
             $this->examples[] = $entry;
@@ -195,10 +367,10 @@ final class Agent extends AbstractFormatter
     /**
      * @return array<string, mixed>
      */
-    private function fromExample(ExampleResult $example, ?string $subject): array
+    private function fromExample(ExampleResult $example, Origin $origin): array
     {
         $state = $this->exampleState($example);
-        $name = $this->name($subject, $example->getTitle());
+        $name = $origin->name($example->getTitle());
         $entry = [
             'v' => Schema::V,
             'id' => $this->identify($name),
@@ -232,6 +404,9 @@ final class Agent extends AbstractFormatter
                 'message' => $error?->getMessage(),
                 'at' => $this->location($error?->getFile(), $error?->getLine()),
             ];
+            // Mirrored, so one field answers "what went wrong" whatever the
+            // state: the exception adds the class and the site, not the text.
+            $entry['message'] = $error?->getMessage();
             $location = $this->location($error?->getFile(), $error?->getLine());
             $entry['spec'] = $location;
             $this->addRerun($entry, $location);
@@ -326,36 +501,97 @@ final class Agent extends AbstractFormatter
     /**
      * @return array<string, mixed>
      */
-    private function fromStep(StepResult $step, ?string $subject): array
+    /**
+     * Records one scenario: counted whatever it did, and emitted when it needs
+     * attention, carrying the steps that were not passing so the reader sees
+     * which one broke (or which are still undefined) without a second lookup.
+     */
+    private function recordScenario(ScenarioResult $scenario, Origin $origin): void
     {
-        $state = match (true) {
+        $steps = [];
+        $state = 'passing';
+        $message = null;
+
+        foreach ($scenario->getResults() as $step) {
+            if (!$step instanceof StepResult) {
+                continue;
+            }
+
+            $this->stepCount++;
+            $stepState = $this->stepState($step);
+
+            if ($stepState === 'passing') {
+                continue;
+            }
+
+            $reported = ['title' => $step->getTitle(), 'state' => $stepState];
+
+            if ($stepState === 'failing' && $step->getError() !== null) {
+                $reported['message'] = $step->getError()->getMessage();
+                $message ??= $step->getError()->getMessage();
+            }
+
+            $steps[] = $reported;
+            $state = self::worst($state, $stepState);
+        }
+
+        $this->scenarioCount++;
+        $this->counts[$state] = ($this->counts[$state] ?? 0) + 1;
+
+        if ($state === 'passing') {
+            return;
+        }
+
+        $entry = [
+            'v' => Schema::V,
+            'id' => $this->identify($origin->name),
+            'example' => $origin->name,
+            'state' => $state,
+        ];
+
+        if ($message !== null) {
+            $entry['message'] = $message;
+        }
+
+        $entry['steps'] = $steps;
+
+        // A scenario is addressed by the line its keyword sits on, which is what
+        // "file.feature:LINE" already selects, so a failing scenario re-runs on
+        // its own instead of dragging the whole story suite with it. Only a
+        // failure is addressed, as with examples: a scenario waiting on undefined
+        // steps is work to write, not work to re-run.
+        $location = $this->location($origin->path, $origin->line);
+        if ($state === 'failing' && $location !== null) {
+            $entry['spec'] = $location;
+            $this->addRerun($entry, $location);
+        }
+
+        $this->examples[] = $entry;
+    }
+
+    /**
+     * A step's state in the document's vocabulary.
+     */
+    private function stepState(StepResult $step): string
+    {
+        return match (true) {
             $step->isPending() || $step->isUndefined() => 'pending',
             $step->isFailure() || $step->isError() => 'failing',
             $step->isSkipped() => 'skipped',
             default => 'passing',
         };
-
-        $name = $this->name($subject, $step->getTitle());
-        $entry = [
-            'v' => Schema::V,
-            'id' => $this->identify($name),
-            'example' => $name,
-            'state' => $state,
-        ];
-
-        if ($state === 'failing' && $step->getError() !== null) {
-            $entry['message'] = $step->getError()->getMessage();
-        }
-
-        return $entry;
     }
 
     /**
-     * Joins the subject and the title into the example's full name.
+     * The state a scenario takes from its steps: the one that most needs
+     * attention wins, so a scenario whose first step failed reads as failing
+     * however many of its steps were skipped behind it.
      */
-    private function name(?string $subject, string $title): string
+    private static function worst(string $state, string $candidate): string
     {
-        return $subject !== null && $subject !== '' ? $subject . ' ' . $title : $title;
+        $order = ['passing' => 0, 'skipped' => 1, 'pending' => 2, 'failing' => 3];
+
+        return $order[$candidate] > $order[$state] ? $candidate : $state;
     }
 
     /**

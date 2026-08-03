@@ -186,7 +186,7 @@ final class Loader
                 continue;
             }
 
-            $filePath = $directory . '/' . $file;
+            $filePath = self::join($directory, $file);
 
             if ($this->fs->isDir($filePath)) {
                 $subdirectoryFilePaths = $this->loadSuite($filePath);
@@ -315,7 +315,7 @@ final class Loader
                 continue;
             }
 
-            $filePath = $path . '/' . $file;
+            $filePath = self::join($path, $file);
 
             if ($this->fs->isDir($filePath)) {
                 if ($file === 'steps') {
@@ -327,6 +327,20 @@ final class Loader
                 $featureFiles[] = $filePath;
             }
         }
+    }
+
+    /**
+     * Joins a directory and one of its entries. A directory named on the command
+     * line usually carries a trailing slash ("features/"), and a doubled
+     * separator would travel from here into every path PhpSpec reports back,
+     * including the rerun commands an agent is meant to run verbatim.
+     *
+     * @param string $directory the containing directory, with or without a trailing separator
+     * @param string $entry the file or directory name inside it
+     */
+    private static function join(string $directory, string $entry): string
+    {
+        return rtrim($directory, '/\\') . '/' . $entry;
     }
 
     /**
@@ -362,7 +376,7 @@ final class Loader
             if ($file === '.' || $file === '..') {
                 continue;
             }
-            $filePath = $dir . '/' . $file;
+            $filePath = self::join($dir, $file);
             if ($this->fs->isDir($filePath)) {
                 $this->collectStepFiles($filePath, $stepFiles);
             } elseif ($this->fs->isFile($filePath) && str_ends_with($file, '.steps.php')) {

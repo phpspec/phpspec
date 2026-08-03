@@ -173,7 +173,9 @@ final readonly class Feature implements SpecBlock
 
         DispatcherRegistry::dispatcher()->removeSubscriber($collector);
 
-        return new ScenarioResult($scenario->title, $stepResults);
+        // An outline expansion is addressed by its own examples-table row; every
+        // other scenario by its keyword line.
+        return new ScenarioResult($scenario->title, $stepResults, $scenario->exampleLine ?? $scenario->line);
     }
 
     /**

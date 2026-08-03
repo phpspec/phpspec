@@ -19,6 +19,7 @@ use PhpSpec\Coverage\CloverReport;
 use PhpSpec\Coverage\CoverageCollector;
 use PhpSpec\Coverage\CoverageOptions;
 use PhpSpec\Coverage\CoverageRegistry;
+use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Coverage\Driver\XdebugDriver;
 use PhpSpec\Coverage\HtmlReport;
 use PhpSpec\Coverage\JsonReport;
@@ -47,28 +48,25 @@ final class CoverageReporter
      * is activated in the CoverageRegistry and the runner cycles it around
      * each example.
      *
-     * @param Output $output the console output for error messages
      * @param bool $perExample whether to collect coverage per example
-     * @return bool true if collection started, false if unavailable
+     * @return string|null null once collection started, or why it could not
      */
-    public function start(Output $output, bool $perExample = false): bool
+    public function start(bool $perExample = false): ?string
     {
         if (!CoverageCollector::isAvailable()) {
-            $output->writeln('<fg=red>Code coverage requires Xdebug with coverage mode enabled</>');
-
-            return false;
+            return 'Code coverage requires Xdebug with coverage mode enabled';
         }
 
         if ($perExample) {
             CoverageRegistry::activate(new PerExampleCollector(new XdebugDriver()));
 
-            return true;
+            return null;
         }
 
         $this->collector = new CoverageCollector();
         $this->collector->start();
 
-        return true;
+        return null;
     }
 
     /**
@@ -80,10 +78,11 @@ final class CoverageReporter
      *
      * @param Output $output the console output
      * @param CoverageOptions $options the requested reports and their destinations
-     * @return int|null returns 1 if below minimum threshold, null otherwise
+     * @return CoverageVerdict|null what the run covered, or null when nothing was
+     *                              collected or the state was only dumped for a worker
      * @throws DOMException
      */
-    public function report(Output $output, CoverageOptions $options): ?int
+    public function report(Output $output, CoverageOptions $options): ?CoverageVerdict
     {
         $perExampleCollector = CoverageRegistry::collector();
 
@@ -185,16 +184,16 @@ final class CoverageReporter
     }
 
     /**
-     * Renders the text, Clover and HTML reports and enforces the minimum
-     * coverage threshold.
+     * Renders the text, Clover and HTML reports and measures the run against
+     * the minimum coverage threshold.
      *
      * @param Output $output the console output
      * @param array<string, array<int, int>> $covData filtered coverage data, relative file paths mapped to line hits
      * @param CoverageOptions $options the requested reports and their destinations
-     * @return int|null returns 1 if below minimum threshold, null otherwise
+     * @return CoverageVerdict what the run covered, and whether that was enough
      * @throws DOMException
      */
-    private function renderReports(Output $output, array $covData, CoverageOptions $options): ?int
+    private function renderReports(Output $output, array $covData, CoverageOptions $options): CoverageVerdict
     {
         if ($options->showText) {
             (new TextReport())->render($covData, $output);
@@ -210,32 +209,26 @@ final class CoverageReporter
             $output->writeln("  HTML report: {$options->htmlPath}/index.html");
         }
 
-        if ($options->coverageMin !== null) {
-            $totalCovered = 0;
-            $totalExecutable = 0;
+        $totalCovered = 0;
+        $totalExecutable = 0;
 
-            foreach ($covData as $lines) {
-                $counts = CoverageCollector::countLines($lines);
-                $totalCovered += $counts['covered'];
-                $totalExecutable += $counts['executable'];
-            }
-
-            $pct = $totalExecutable > 0 ? ($totalCovered / $totalExecutable) * 100 : 0;
-            $min = (float) $options->coverageMin;
-
-            if ($pct < $min) {
-                $output->writeln(sprintf(
-                    '<fg=red>Code coverage %.1f%% is below the required %.1f%%</>',
-                    $pct,
-                    $min,
-                ));
-
-                return 1;
-            }
-
-            $output->writeln(sprintf('<fg=green>Code coverage %.1f%% meets the required %.1f%%</>', $pct, $min));
+        foreach ($covData as $lines) {
+            $counts = CoverageCollector::countLines($lines);
+            $totalCovered += $counts['covered'];
+            $totalExecutable += $counts['executable'];
         }
 
-        return null;
+        $verdict = new CoverageVerdict(
+            $totalExecutable > 0 ? ($totalCovered / $totalExecutable) * 100 : 0.0,
+            $options->coverageMin !== null ? (float) $options->coverageMin : null,
+        );
+
+        if ($verdict->required !== null) {
+            $output->writeln($verdict->met()
+                ? sprintf('<fg=green>Code coverage %.1f%% meets the required %.1f%%</>', $verdict->percent, $verdict->required)
+                : sprintf('<fg=red>Code coverage %.1f%% is below the required %.1f%%</>', $verdict->percent, $verdict->required));
+        }
+
+        return $verdict;
     }
 }
