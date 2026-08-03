@@ -131,6 +131,80 @@ Feature: Agent output format
     And the failing entries should have distinct ids
     And the output should contain "run features/counting.feature:2 features/counting.feature:5"
 
+  Scenario: A broken scenario is one entry, naming the step that broke it
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/checkout.feature":
+      """
+      Feature: Checkout
+        Scenario: Paying for a basket
+          Given a basket with 2 items
+          When I pay
+          Then I get a receipt
+      """
+    And a step file "features/steps/checkout.steps.php":
+      """
+      <?php
+
+      given('a basket with {int} items', function (int $count) {
+          throw new RuntimeException('no basket yet');
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the report should have 1 entry
+    And the output should contain "Checkout > Paying for a basket"
+    And the output should contain "no basket yet"
+    And the output should contain "run features/checkout.feature:2"
+
+  Scenario: The same step twice in one scenario is still one entry
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/twice.feature":
+      """
+      Feature: Twice
+        Scenario: The same step twice
+          Given a broken step
+          Given a broken step
+      """
+    And a step file "features/steps/twice.steps.php":
+      """
+      <?php
+
+      given('a broken step', function () {
+          throw new RuntimeException('this step is broken');
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the report should have 1 entry
+
+  Scenario: Each row of a scenario outline is told apart by its values
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/adding.feature":
+      """
+      Feature: Adding
+        Scenario Outline: Adding numbers
+          Given I add <a> and <b>
+
+          Examples:
+            | a | b |
+            | 1 | 2 |
+            | 3 | 4 |
+      """
+    And a step file "features/steps/adding.steps.php":
+      """
+      <?php
+
+      given('I add {int} and {int}', function (int $a, int $b) {
+          throw new RuntimeException("cannot add $a and $b");
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the report should have 2 entries
+    And the failing entries should have distinct ids
+    And the output should contain "Adding numbers (1, 2)"
+    And the output should contain "Adding numbers (3, 4)"
+
   Scenario: An errored example says what went wrong in the same field a failure does
     Given a spec file "spec/App/Calc.spec.php":
       """

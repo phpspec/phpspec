@@ -101,6 +101,20 @@ then('the output should be valid JSON', function () {
     }
 });
 
+// How many things the run says are worth acting on: one per example or scenario,
+// never one per step of the same broken scenario.
+then('the report should have {int} entries', function (int $count) {
+    $document = json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
+
+    expect($document['examples'] ?? [])->toHaveLength($count);
+});
+
+then('the report should have {int} entry', function (int $count) {
+    $document = json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
+
+    expect($document['examples'] ?? [])->toHaveLength($count);
+});
+
 // One field answers "what went wrong", whatever the entry's state: a consumer
 // should not have to know that an error hides its text somewhere else.
 then('every reported entry should carry a message', function () {

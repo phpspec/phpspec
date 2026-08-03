@@ -52,6 +52,9 @@ final class Agent extends AbstractFormatter
     /** How many story (feature) steps ran. */
     private int $stepCount = 0;
 
+    /** How many story scenarios ran: the unit a story run is counted and reported in. */
+    private int $scenarioCount = 0;
+
     /** @var (\Closure(SuiteResult): mixed)|null resolves the run's generation candidates as a plain array */
     private readonly ?\Closure $resolveCandidates;
 
@@ -111,7 +114,15 @@ final class Agent extends AbstractFormatter
 
     public function printResult(Results $result): void
     {
-        $this->collect($result, $this->within(new Origin(), $result));
+        $origin = $this->within(new Origin(), $result);
+
+        if ($result instanceof ScenarioResult) {
+            $this->recordScenario($result, $origin);
+
+            return;
+        }
+
+        $this->collect($result, $origin);
     }
 
     /**
@@ -213,6 +224,7 @@ final class Agent extends AbstractFormatter
                 'event' => Schema::EVENT_RUN_STARTED,
                 'suite' => $this->suite,
                 'examples' => $this->exampleCount,
+                'scenarios' => $this->scenarioCount,
                 'steps' => $this->stepCount,
                 'seed' => $this->seed,
             ],
@@ -221,7 +233,10 @@ final class Agent extends AbstractFormatter
                 'v' => Schema::V,
                 'event' => Schema::EVENT_SUMMARY,
                 'examples' => $this->exampleCount,
+                'scenarios' => $this->scenarioCount,
                 'steps' => $this->stepCount,
+                // Counted in the units the entries are reported in: one per
+                // example, one per scenario. Steps are a size, not a verdict.
                 'passing' => $this->counts['passing'] ?? 0,
                 'failing' => $failing,
                 'errors' => $errors,
@@ -317,9 +332,14 @@ final class Agent extends AbstractFormatter
     {
         foreach ($results->getResults() as $child) {
             if ($child instanceof ExampleResult) {
-                $this->record($this->fromExample($child, $origin), 'example');
-            } elseif ($child instanceof StepResult) {
-                $this->record($this->fromStep($child, $origin), 'step');
+                $this->record($this->fromExample($child, $origin));
+            } elseif ($child instanceof ScenarioResult) {
+                // A scenario is the unit a story run reports: it is what fails,
+                // what re-runs, and what a reader acts on. Its steps ride inside
+                // it rather than becoming entries of their own, so one broken
+                // scenario is one thing to fix and not a failure plus a train of
+                // skipped siblings that address the same line.
+                $this->recordScenario($child, $this->within($origin, $child));
             } elseif ($child instanceof Results) {
                 $this->collect($child, $this->within($origin, $child));
             }
@@ -327,23 +347,17 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * Counts an entry by state, and keeps it in the emitted list unless it
-     * passed — a green suite of thousands need not spend tokens on entries an
+     * Counts an example by state, and keeps it in the emitted list unless it
+     * passed: a green suite of thousands need not spend tokens on entries an
      * agent will never act on; the summary still counts them.
      *
      * @param array<string, mixed> $entry
-     * @param 'example'|'step' $kind
      */
-    private function record(array $entry, string $kind): void
+    private function record(array $entry): void
     {
         $state = is_string($entry['state'] ?? null) ? $entry['state'] : 'passing';
         $this->counts[$state] = ($this->counts[$state] ?? 0) + 1;
-
-        if ($kind === 'step') {
-            $this->stepCount++;
-        } else {
-            $this->exampleCount++;
-        }
+        $this->exampleCount++;
 
         if ($state !== 'passing') {
             $this->examples[] = $entry;
@@ -487,39 +501,97 @@ final class Agent extends AbstractFormatter
     /**
      * @return array<string, mixed>
      */
-    private function fromStep(StepResult $step, Origin $origin): array
+    /**
+     * Records one scenario: counted whatever it did, and emitted when it needs
+     * attention, carrying the steps that were not passing so the reader sees
+     * which one broke (or which are still undefined) without a second lookup.
+     */
+    private function recordScenario(ScenarioResult $scenario, Origin $origin): void
     {
-        $state = match (true) {
-            $step->isPending() || $step->isUndefined() => 'pending',
-            $step->isFailure() || $step->isError() => 'failing',
-            $step->isSkipped() => 'skipped',
-            default => 'passing',
-        };
+        $steps = [];
+        $state = 'passing';
+        $message = null;
 
-        $name = $origin->name($step->getTitle());
+        foreach ($scenario->getResults() as $step) {
+            if (!$step instanceof StepResult) {
+                continue;
+            }
+
+            $this->stepCount++;
+            $stepState = $this->stepState($step);
+
+            if ($stepState === 'passing') {
+                continue;
+            }
+
+            $reported = ['title' => $step->getTitle(), 'state' => $stepState];
+
+            if ($stepState === 'failing' && $step->getError() !== null) {
+                $reported['message'] = $step->getError()->getMessage();
+                $message ??= $step->getError()->getMessage();
+            }
+
+            $steps[] = $reported;
+            $state = self::worst($state, $stepState);
+        }
+
+        $this->scenarioCount++;
+        $this->counts[$state] = ($this->counts[$state] ?? 0) + 1;
+
+        if ($state === 'passing') {
+            return;
+        }
+
         $entry = [
             'v' => Schema::V,
-            'id' => $this->identify($name),
-            'example' => $name,
+            'id' => $this->identify($origin->name),
+            'example' => $origin->name,
             'state' => $state,
         ];
 
-        if ($state === 'failing' && $step->getError() !== null) {
-            $entry['message'] = $step->getError()->getMessage();
+        if ($message !== null) {
+            $entry['message'] = $message;
         }
+
+        $entry['steps'] = $steps;
 
         // A scenario is addressed by the line its keyword sits on, which is what
         // "file.feature:LINE" already selects, so a failing scenario re-runs on
         // its own instead of dragging the whole story suite with it. Only a
-        // failure is addressed, as with examples: a skipped step is not work to
-        // re-run, and the summary's rerun would otherwise sweep it up.
+        // failure is addressed, as with examples: a scenario waiting on undefined
+        // steps is work to write, not work to re-run.
         $location = $this->location($origin->path, $origin->line);
         if ($state === 'failing' && $location !== null) {
             $entry['spec'] = $location;
             $this->addRerun($entry, $location);
         }
 
-        return $entry;
+        $this->examples[] = $entry;
+    }
+
+    /**
+     * A step's state in the document's vocabulary.
+     */
+    private function stepState(StepResult $step): string
+    {
+        return match (true) {
+            $step->isPending() || $step->isUndefined() => 'pending',
+            $step->isFailure() || $step->isError() => 'failing',
+            $step->isSkipped() => 'skipped',
+            default => 'passing',
+        };
+    }
+
+    /**
+     * The state a scenario takes from its steps: the one that most needs
+     * attention wins, so a scenario whose first step failed reads as failing
+     * however many of its steps were skipped behind it.
+     */
+    private static function worst(string $state, string $candidate): string
+    {
+        $order = ['passing' => 0, 'skipped' => 1, 'pending' => 2, 'failing' => 3];
+
+        return $order[$candidate] > $order[$state] ? $candidate : $state;
     }
 
     /**

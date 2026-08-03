@@ -82,10 +82,11 @@ final class GherkinParser
 
         $stepIndex = $this->buildStepIndex($document);
         $scenarioLines = $this->buildScenarioLineIndex($document);
+        $exampleRows = $this->buildExampleRowIndex($document);
         $featureTags = $this->mapTags($document->feature->tags);
 
         $scenarios = array_map(
-            fn(Pickle $pickle) => $this->mapPickle($pickle, $stepIndex, $scenarioLines, $featureTags),
+            fn(Pickle $pickle) => $this->mapPickle($pickle, $stepIndex, $scenarioLines, $exampleRows, $featureTags),
             $pickles,
         );
 
@@ -179,6 +180,56 @@ final class GherkinParser
     }
 
     /**
+     * Builds an index of AST examples-row IDs to the values in that row, for
+     * outlines whose title says nothing about the row. A row that never reaches
+     * the title is the only thing telling two expansions apart, so the name has
+     * to carry it.
+     *
+     * @return array<string, string> map of row ID to its values, comma-separated
+     */
+    private function buildExampleRowIndex(GherkinDocument $document): array
+    {
+        $index = [];
+
+        if ($document->feature === null) {
+            return $index;
+        }
+
+        foreach ($document->feature->children as $child) {
+            $scenarios = [];
+            if ($child->scenario !== null) {
+                $scenarios[] = $child->scenario;
+            }
+            if ($child->rule !== null) {
+                foreach ($child->rule->children as $ruleChild) {
+                    if ($ruleChild->scenario !== null) {
+                        $scenarios[] = $ruleChild->scenario;
+                    }
+                }
+            }
+
+            foreach ($scenarios as $scenario) {
+                // A title with placeholders is already row-specific once the
+                // pickle substitutes them; appending the values would say it twice.
+                if (str_contains($scenario->name, '<')) {
+                    continue;
+                }
+
+                foreach ($scenario->examples as $examples) {
+                    foreach ($examples->tableBody as $row) {
+                        $index[$row->id] = implode(', ', array_map(
+                            static fn(object $cell): string => $cell->value,
+                            $row->cells,
+                        ));
+                    }
+                }
+            }
+        }
+
+        return $index;
+    }
+
+    /**
      * Maps a Cucumber Pickle to a ScenarioNode.
      *
      * The scenario line is the AST keyword line, shared by every scenario a
@@ -188,9 +239,10 @@ final class GherkinParser
      * @param Pickle $pickle the pickle to map
      * @param array<string, string> $stepIndex AST step ID to keyword map
      * @param array<string, int> $scenarioLines AST scenario ID to keyword line map
+     * @param array<string, string> $exampleRows AST row ID to its values, for outlines whose title omits them
      * @param string[] $featureTags feature-level tags to exclude from scenario tags
      */
-    private function mapPickle(Pickle $pickle, array $stepIndex, array $scenarioLines, array $featureTags): ScenarioNode
+    private function mapPickle(Pickle $pickle, array $stepIndex, array $scenarioLines, array $exampleRows, array $featureTags): ScenarioNode
     {
         $steps = array_map(
             fn(PickleStep $step) => $this->mapPickleStep($step, $stepIndex),
@@ -209,7 +261,13 @@ final class GherkinParser
         $pickleLine = $pickle->location->line ?? 0;
         $exampleLine = $pickleLine !== 0 && $pickleLine !== $line ? $pickleLine : null;
 
-        return new ScenarioNode($pickle->name, $steps, $scenarioTags, $line, $exampleLine);
+        // Every expansion of an outline shares its title unless the title itself
+        // names the placeholders. Naming the row makes each expansion its own
+        // scenario to a reader, instead of the same one reported twice.
+        $row = $exampleRows[$pickle->astNodeIds[1] ?? ''] ?? null;
+        $name = $row !== null ? $pickle->name . ' (' . $row . ')' : $pickle->name;
+
+        return new ScenarioNode($name, $steps, $scenarioTags, $line, $exampleLine);
     }
 
     /**

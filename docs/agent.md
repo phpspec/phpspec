@@ -34,7 +34,7 @@ class — produces:
 {
   "suite": {
     "v": 1, "event": "run_started", "suite": "default",
-    "examples": 3, "steps": 0, "seed": null
+    "examples": 3, "scenarios": 0, "steps": 0, "seed": null
   },
   "examples": [
     {
@@ -66,7 +66,7 @@ class — produces:
   ],
   "result": {
     "v": 1, "event": "summary",
-    "examples": 3, "steps": 0,
+    "examples": 3, "scenarios": 0, "steps": 0,
     "passing": 1, "failing": 1, "errors": 1, "pending": 0, "skipped": 0,
     "actionable": 2,
     "duration_ms": 4,
@@ -82,24 +82,33 @@ Every object carries `"v"` — the agent-protocol version (currently `1`).
 
 ### `suite` — the header
 
-`examples` and `steps` are the totals for the run (`steps` is non-zero only for
-Story BDD feature runs). `suite` is the suite name; `seed` is the random-order
-seed when one was used, else `null`.
+`examples`, `scenarios` and `steps` are the totals for the run (`scenarios` and
+`steps` are non-zero only for Story BDD feature runs). `suite` is the suite name;
+`seed` is the random-order seed when one was used, else `null`.
 
 ### `examples` — only what needs attention
 
-**Passing examples are omitted.** A green suite of thousands need not spend
+**Passing entries are omitted.** A green suite of thousands need not spend
 tokens on entries an agent will never act on — the summary still counts them.
 Each listed entry is one that failed, errored, or is pending/skipped.
+
+**One entry is one thing to fix.** A spec run reports examples; a Story BDD run
+reports **scenarios**, not steps, because a scenario is what fails, what re-runs,
+and what you act on. The steps that did not pass ride inside the entry, so one
+broken scenario is a single item naming the step that broke it, never a failure
+followed by a train of skipped siblings pointing at the same line. Each row of a
+Scenario Outline is its own entry, named by its values
+(`Adding > Adding numbers (1, 2)`).
 
 | Field | Meaning |
 |---|---|
 | `id` | A stable identifier for this example: a hash of its full name. It survives edits that move lines or change where a failure fires, so you can ask *"is THIS exact failure still here?"* across runs. Recomputable from `example`. |
-| `example` | The full name, as a path: `App\Basket > totals the prices` for a spec, `Counting > Counting up > Given a broken step` for a feature step. |
+| `example` | The full name, as a path: `App\Basket > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. |
 | `state` | `failing`, `error`, `pending`, or `skipped` (`passing` entries are omitted). |
 | `message` | What went wrong, whatever the state. An `error` entry keeps `exception` too, for the class and the site. |
-| `spec` | The `file:line` of the failing assertion or the error, project-relative. For a feature step it is the scenario's own line. |
+| `spec` | The `file:line` of the failing assertion or the error, project-relative. For a scenario it is the line its `Scenario:` keyword sits on. |
 | `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. No full-suite re-run needed to verify one fix. |
+| `steps` | Scenarios only: the steps that did not pass, each `{ title, state, message? }`, in the order they were declared. |
 
 **`failing`** entries also carry the expectation:
 
@@ -135,8 +144,10 @@ fraction, so `90.0` is never reported as the `90` it was compared against.
 ### `result` — the summary
 
 The counts (`passing`, `failing`, `errors`, `pending`, `skipped`) are for the
-whole run. The one number to branch on is **`actionable`** = failing + errors +
-pending, plus a coverage gate the run missed and anything that stopped it.
+whole run, in the units the entries are reported in: one per example, one per
+scenario. `steps` is a size, not a verdict. The one number to branch on is
+**`actionable`** = failing + errors + pending, plus a coverage gate the run
+missed and anything that stopped it.
 **Zero means there is nothing to do**, and it never disagrees with the exit code.
 `duration_ms` is the run's wall time; `offers` is the run-wide, de-duplicated
 list of code PhpSpec can generate.
