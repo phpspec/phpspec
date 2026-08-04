@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Console\Command;
 
+use PhpSpec\CodeGeneration\PhpName;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use Symfony\Component\Console\Command\Command;
@@ -53,14 +54,36 @@ final class Exemplify extends Command
 
     protected function execute(Input $input, Output $output): int
     {
-        $class = $input->getArgument('class');
-        $method = $input->getArgument('method');
+        $class = (string) $input->getArgument('class');
+        $method = (string) $input->getArgument('method');
+        $forAgent = $input->getOption('agent') || $input->getOption('format') === 'agent';
+
+        // Both names are judged before either is written: an invalid method must
+        // not leave a spec file behind as a souvenir of a refused command.
+        $problem = PhpName::classProblem($class) ?? PhpName::methodProblem($method);
+
+        if ($problem !== null) {
+            if ($forAgent) {
+                $json = json_encode(
+                    ['v' => Schema::V, 'action' => 'exemplify', 'error' => $problem],
+                    JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
+                ) ?: '{}';
+                $output->write($json . "\n", false, Output::OUTPUT_RAW);
+
+                return 1;
+            }
+
+            $output->writeln(sprintf('<fg=red>%s</>', $problem));
+
+            return 1;
+        }
+
         $spec = str_replace('\\', '/', $class);
 
         $this->generator->generate($spec);
         $added = $this->generator->addExample($spec, $method);
 
-        if ($input->getOption('agent') || $input->getOption('format') === 'agent') {
+        if ($forAgent) {
             $receipt = [
                 'v' => Schema::V,
                 'action' => 'exemplify',

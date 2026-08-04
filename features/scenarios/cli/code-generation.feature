@@ -54,6 +54,30 @@ Feature: Code generation
     Then a spec file "spec/App/Formatter.spec.php" should be generated
     And the spec file should contain an example for "render"
 
+  Scenario: Describe refuses a name that is not a class
+    When I run phpspec describe "1"
+    Then the exit code should be 1
+    And the output should contain "not a valid class name"
+    And no file "spec/1.spec.php" should be generated
+
+  Scenario: Describe refuses a name that is not an identifier
+    When I run phpspec describe "Foo-Bar"
+    Then the exit code should be 1
+    And the output should contain "not a valid class name"
+    And no file "spec/Foo-Bar.spec.php" should be generated
+
+  Scenario: Describe asks for the class it should describe
+    When I run phpspec describe ""
+    Then the exit code should be 1
+    And the output should contain "Describe what?"
+    And no file "spec/.spec.php" should be generated
+
+  Scenario: Exemplify refuses a method that is not an identifier
+    When I run phpspec exemplify "App\Printer" "2print"
+    Then the exit code should be 1
+    And the output should contain "not a valid method name"
+    And no file "spec/App/Printer.spec.php" should be generated
+
   Scenario: Exemplify command adds an example to an existing spec
     When I run phpspec describe "App\Converter"
     And I run phpspec exemplify "App\Converter" "convert"

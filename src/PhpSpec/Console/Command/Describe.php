@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Console\Command;
 
+use PhpSpec\CodeGeneration\PhpName;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Report\Formatter\Agent\Schema;
 use Symfony\Component\Console\Command\Command;
@@ -71,10 +72,24 @@ final class Describe extends Command
      */
     protected function execute(Input $input, Output $output): int
     {
-        $class = $input->getArgument('class');
+        $class = (string) $input->getArgument('class');
+        $method = (string) $input->getOption('exemplify');
+        $forAgent = $input->getOption('agent') || $input->getOption('format') === 'agent';
+
+        // Refused before anything is written: a spec named after something PHP
+        // cannot parse is not a bad spec, it is a file that stops the suite
+        // from loading.
+        $problem = trim($class) === ''
+            ? 'Describe what? Name the class, for example: describe App\\Basket'
+            : PhpName::classProblem($class) ?? ($method !== '' ? PhpName::methodProblem($method) : null);
+
+        if ($problem !== null) {
+            return $this->refuse($problem, $forAgent, $output);
+        }
+
         $spec = str_replace('\\', '/', $class);
 
-        if ($input->getOption('agent') || $input->getOption('format') === 'agent') {
+        if ($forAgent) {
             return $this->describeForAgent($spec, $input, $output);
         }
 
@@ -103,6 +118,33 @@ final class Describe extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * Reports a name the command will not write, on whichever channel the
+     * caller reads: a machine consumer gets the refusal as its receipt rather
+     * than as prose it cannot parse.
+     *
+     * @param string $problem why the name was refused
+     * @param bool $forAgent whether the caller asked for the machine-readable receipt
+     * @param Output $output the console output
+     * @return int the exit code (always 1)
+     */
+    private function refuse(string $problem, bool $forAgent, Output $output): int
+    {
+        if ($forAgent) {
+            $json = json_encode(
+                ['v' => Schema::V, 'action' => 'describe', 'error' => $problem],
+                JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
+            ) ?: '{}';
+            $output->write($json . "\n", false, Output::OUTPUT_RAW);
+
+            return 1;
+        }
+
+        $output->writeln(sprintf('<fg=red>%s</>', $problem));
+
+        return 1;
     }
 
     /**
