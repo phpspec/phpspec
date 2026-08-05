@@ -27,9 +27,11 @@ Decode a line, act on it, decode the next: on a long suite the first failure
 reaches you while the rest is still running.
 
 It is `--parallel`-safe, with one caveat: workers report back through JUnit,
-which carries the outcome and the message and nothing else, so entries from a
-parallel run arrive in completion order and without `expected`, `actual`,
-`spec`, `rerun` or `output`. Run without `--parallel` when you want the detail.
+which carries the outcome, the message and a scenario's line, and nothing else.
+Entries from a parallel run therefore arrive in completion order and without
+`expected`, `actual` or `output`; a failing spec example also arrives without
+`spec` and `rerun`, which JUnit has no room for. Run without `--parallel` when
+you want the whole of the detail.
 
 ## The stream
 
