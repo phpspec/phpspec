@@ -355,6 +355,50 @@ describe(Agent::class, function () {
         expect($entry)->not()->toHaveKey('notices');
     });
 
+    it('carries what an example printed, so the dump explaining it is not lost', function () use ($render) {
+        $example = new ExampleResult('totals', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/App/X.spec.php', 3)]);
+        $example->setOutput("the subject said this\n");
+
+        $entry = $render(new SuiteResult([new SpecificationResult('App\\X', [$example])]))['examples'][0];
+
+        expect($entry['output'])->toBe("the subject said this\n");
+    });
+
+    it('says nothing about output when nothing was printed', function () use ($render) {
+        $entry = $render(new SuiteResult([
+            new SpecificationResult('App\\X', [
+                new ExampleResult('totals', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/App/X.spec.php', 3)]),
+            ]),
+        ]))['examples'][0];
+
+        expect($entry)->not()->toHaveKey('output');
+    });
+
+    it('caps a flood of printed output, marking how much there was', function () use ($render) {
+        $example = new ExampleResult('totals', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/App/X.spec.php', 3)]);
+        $example->setOutput(str_repeat('x', 5000));
+
+        $entry = $render(new SuiteResult([new SpecificationResult('App\\X', [$example])]))['examples'][0];
+
+        expect($entry['output']['truncated'])->toBeTrue();
+        expect($entry['output']['length'])->toBe(5000);
+        expect(strlen($entry['output']['value']))->toBe(4000);
+    });
+
+    it('carries what a scenario printed, whichever of its steps did the printing', function () use ($render) {
+        $ran = new StepResult('Given I run the counter', 'passed');
+        $ran->setOutput('the counter said 2');
+        $checked = new StepResult('Then it should have counted 3', 'failure');
+        $checked->setError(new \PhpSpec\StoryBDD\StepError('Expected 2 to be 3', new \RuntimeException('Expected 2 to be 3')));
+
+        $entry = $render(new SuiteResult([
+            new FeatureResult('Counting', [new ScenarioResult('Counting up', [$ran, $checked], 2)], 'features/counting.feature'),
+        ]))['examples'][0];
+
+        // The step that printed it passed; the entry is what a reader acts on.
+        expect($entry['output'])->toBe('the counter said 2');
+    });
+
     it('reports an error example with the exception class, message and location', function () use ($render) {
         $errored = new ExampleResult('blows up', [], true);
         $errored->setError(new ExampleError('boom', new \RuntimeException('boom')));

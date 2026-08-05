@@ -39,6 +39,9 @@ final class ExampleResult implements Results
     /** @var array<array{severity: int, message: string, file: string, line: int}> Notice items (E_NOTICE, E_USER_NOTICE) collected during execution */
     private array $notices = [];
 
+    /** @var string What the subject printed while this example ran */
+    private string $output = '';
+
     /**
      * @param string $title the example description
      * @param array<MatchResult> $matchResults array of MatchResult instances from this example
@@ -251,6 +254,25 @@ final class ExampleResult implements Results
     public function hasNotices(): bool
     {
         return !empty($this->notices);
+    }
+
+    /**
+     * Stores what the subject printed while the example ran, which is a
+     * diagnostic about this example and not a stray line on the terminal.
+     *
+     * @param string $output everything the example's code printed
+     */
+    public function setOutput(string $output): void
+    {
+        $this->output = $output;
+    }
+
+    /**
+     * Returns what the subject printed while the example ran.
+     */
+    public function getOutput(): string
+    {
+        return $this->output;
     }
 
     /**

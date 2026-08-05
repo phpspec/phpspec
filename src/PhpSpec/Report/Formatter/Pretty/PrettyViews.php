@@ -20,6 +20,7 @@ use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\StepResult;
+use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -78,6 +79,11 @@ final class PrettyViews
                 $output->write(' <fg=gray>(' . number_format($example->getDuration() * 1000, 1) . 'ms)</>');
             }
         }
+        // A failing example shows what it printed with its failure, in the
+        // detail at the end, so it is not said twice.
+        if (!$example->isFailure() && !$example->isError()) {
+            self::printedOutput($output, $example->getOutput(), $indentation + 2);
+        }
         if ($example->hasWarnings()) {
             foreach ($example->getWarnings() as $warning) {
                 $output->write(PHP_EOL . str_repeat(' ', $indentation) . '  <fg=yellow>⚠️ ' . $warning['message'] . ' — at ' . basename($warning['file']) . ':' . $warning['line'] . '</>');
@@ -132,8 +138,28 @@ final class PrettyViews
         } elseif ($step->isSkipped()) {
             $output->write('    <fg=cyan>- ' . $step->getTitle() . '</>');
         }
+
+        if (!$step->isFailure() && !$step->isError()) {
+            self::printedOutput($output, $step->getOutput(), 6);
+        }
     }
 
+
+    /**
+     * What the subject printed, quoted rather than let loose: each line behind
+     * a bar, so a dump reads as the code talking and not as PhpSpec's own
+     * report. Console markup in the text is escaped, never interpreted.
+     */
+    public static function printedOutput(OutputInterface $output, string $printed, int $indentation): void
+    {
+        if (trim($printed) === '') {
+            return;
+        }
+
+        foreach (explode("\n", rtrim($printed, "\n")) as $line) {
+            $output->write(PHP_EOL . str_repeat(' ', $indentation) . '<fg=gray>▏ ' . OutputFormatter::escape($line) . '</>');
+        }
+    }
 
     /**
      * @param array<int, string> $surroundingCode

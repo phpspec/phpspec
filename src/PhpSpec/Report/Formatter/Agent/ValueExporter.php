@@ -29,6 +29,9 @@ final class ValueExporter
     private const ARRAY_MAX = 10;
     private const MAX_DEPTH = 5;
 
+    /** Printed output earns more room than a compared value: it is the diagnosis. */
+    private const OUTPUT_MAX = 4000;
+
     /**
      * Exports a value to a JSON-encodable representation.
      *
@@ -52,20 +55,31 @@ final class ValueExporter
     }
 
     /**
+     * Exports what a subject printed, under a cap of its own: a compared value
+     * is a value, but printed output is the diagnosis and is worth more room.
+     *
+     * @return string|array{truncated: true, length: int, value: string}
+     */
+    public static function exportOutput(string $value): string|array
+    {
+        return self::exportString($value, self::OUTPUT_MAX);
+    }
+
+    /**
      * Returns the string as-is, or a truncation marker when it exceeds the cap.
      *
      * @return string|array{truncated: true, length: int, value: string}
      */
-    private static function exportString(string $value): string|array
+    private static function exportString(string $value, int $max = self::STRING_MAX): string|array
     {
-        if (mb_strlen($value) <= self::STRING_MAX) {
+        if (mb_strlen($value) <= $max) {
             return $value;
         }
 
         return [
             'truncated' => true,
             'length' => mb_strlen($value),
-            'value' => mb_substr($value, 0, self::STRING_MAX),
+            'value' => mb_substr($value, 0, $max),
         ];
     }
 

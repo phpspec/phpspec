@@ -462,9 +462,25 @@ final class Agent extends AbstractFormatter
             }
         }
 
+        $this->attachOutput($entry, $example->getOutput());
         $this->attachNotes($entry, $example);
 
         return $entry;
+    }
+
+    /**
+     * Attaches what the subject printed while the entry ran, when it printed
+     * anything. A process a step drove, a dump left in a spec: whatever reached
+     * standard output is a diagnosis about this entry, and it is reported here
+     * rather than mixed into the stream the document is written on.
+     *
+     * @param array<string, mixed> $entry
+     */
+    private function attachOutput(array &$entry, string $printed): void
+    {
+        if ($printed !== '') {
+            $entry['output'] = ValueExporter::exportOutput($printed);
+        }
     }
 
     /**
@@ -580,6 +596,7 @@ final class Agent extends AbstractFormatter
         $state = 'passing';
         $message = null;
         $expectation = [];
+        $printed = '';
 
         foreach ($scenario->getResults() as $step) {
             if (!$step instanceof StepResult) {
@@ -588,6 +605,10 @@ final class Agent extends AbstractFormatter
 
             $this->stepCount++;
             $stepState = $this->stepState($step);
+            // Every step's, passing ones included: a scenario that shells out
+            // usually does it in a step that worked, and reads the result in the
+            // one that broke.
+            $printed .= $step->getOutput();
 
             if ($stepState === 'passing') {
                 continue;
@@ -638,6 +659,7 @@ final class Agent extends AbstractFormatter
             $entry['message'] = $message;
         }
 
+        $this->attachOutput($entry, $printed);
         $entry['steps'] = $steps;
 
         // A scenario is addressed by the line its keyword sits on, which is what

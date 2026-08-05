@@ -36,6 +36,9 @@ final class StepResult implements Results
     /** @var list<array{severity: int, message: string, file: string, line: int}> */
     private array $warnings = [];
 
+    /** @var string What the step printed while it ran */
+    private string $output = '';
+
     /**
      * @param string $title the step description
      * @param string $state the outcome state: passed, failure, error, pending, undefined, or skipped
@@ -174,5 +177,24 @@ final class StepResult implements Results
     public function getWarnings(): array
     {
         return $this->warnings;
+    }
+
+    /**
+     * Stores what the step printed while it ran: when a step drives a process
+     * of its own, what that process said is the whole of the diagnosis.
+     *
+     * @param string $output everything the step printed
+     */
+    public function setOutput(string $output): void
+    {
+        $this->output = $output;
+    }
+
+    /**
+     * Returns what the step printed while it ran.
+     */
+    public function getOutput(): string
+    {
+        return $this->output;
     }
 }

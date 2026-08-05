@@ -47,6 +47,47 @@ Feature: Agent output format
     And the output should contain "4000"
     And the output should contain "3500"
 
+  Scenario: What a failing example printed rides with it, off the document's stream
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () {
+              echo "the subject said this";
+              expect(3500)->toBe(4000);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the reported entry should have printed "the subject said this"
+
+  Scenario: What a scenario printed rides with it, whichever step printed it
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/counting.feature":
+      """
+      Feature: Counting
+        Scenario: Counting up
+          Given I run the counter
+          Then it should have counted 3
+      """
+    And a step file "features/steps/counting.steps.php":
+      """
+      <?php
+
+      given('I run the counter', function () {
+          echo "the counter said 2";
+          $this->count = 2;
+      });
+
+      then('it should have counted {int}', function (int $expected) {
+          expect($this->count)->toBe($expected);
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the reported entry should have printed "the counter said 2"
+
   Scenario: A failing example carries a line-targeted rerun command
     Given a spec file "spec/App/Calc.spec.php":
       """

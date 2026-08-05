@@ -175,6 +175,15 @@ then('the failing step should report expected {int} and actual {int}', function 
     expect($failing[0]['actual'])->toBe($actual);
 });
 
+// What the subject printed is a diagnosis about the entry it printed under, and
+// it reaches the reader as data instead of landing in the middle of the report.
+then('the reported entry should have printed {string}', function (string $text) use ($events, $entries) {
+    $entry = $entries($events($this->output))[0] ?? [];
+    $printed = $entry['output'] ?? null;
+
+    expect(is_array($printed) ? ($printed['value'] ?? '') : (string) $printed)->toContain($text);
+});
+
 // Every reported entry must be addressable on its own: an id that two entries
 // share cannot answer "is THIS failure still here?".
 then('the failing entries should have distinct ids', function () use ($events, $entries) {
