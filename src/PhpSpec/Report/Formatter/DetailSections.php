@@ -110,6 +110,7 @@ final class DetailSections
                     }
                 };
                 $this->attachPrinted('Errors', $example->getOutput());
+                $this->attachHandedOver('Errors', $example->getAttachments());
             }
         } elseif ($example->isFailure()) {
             $failures = array_values(array_filter(
@@ -124,6 +125,7 @@ final class DetailSections
                     }
                 };
                 $this->attachPrinted('Failures', $example->getOutput());
+                $this->attachHandedOver('Failures', $example->getAttachments());
             }
         } elseif ($example->isSkipped()) {
             $this->sections['Skipped'][] = static function (OutputInterface $output) use ($title): void {
@@ -192,6 +194,10 @@ final class DetailSections
                     $this->sections[$section][] = self::noteEntry($title, $warning);
                 }
             }
+
+            // Handed over by the scenario, not by any one of its steps: whichever
+            // step failed, the log the scenario was watching is the same log.
+            $this->attachHandedOver('Failures', $scenario->getAttachments());
         }
     }
 
@@ -302,6 +308,26 @@ final class DetailSections
         }
 
         return '[' . implode(', ', $parts) . ']';
+    }
+
+    /**
+     * Adds what the spec or scenario handed over about itself, under the name
+     * it was handed over with, so a watched log reads next to the failure it
+     * explains.
+     *
+     * @param array<string, string|array{error: string}> $attachments
+     */
+    private function attachHandedOver(string $section, array $attachments): void
+    {
+        foreach ($attachments as $name => $value) {
+            $text = is_string($value) ? $value : 'could not be read: ' . $value['error'];
+
+            $this->sections[$section][] = static function (OutputInterface $output) use ($name, $text): void {
+                $output->write(PHP_EOL . '  <fg=gray>' . $name . ':</>');
+                PrettyViews::printedOutput($output, $text, 2);
+                $output->write(PHP_EOL);
+            };
+        }
     }
 
     /**

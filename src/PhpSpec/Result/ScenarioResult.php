@@ -27,12 +27,27 @@ final readonly class ScenarioResult implements Results
      * @param array<StepResult> $stepResults child StepResult instances
      * @param int $line the line its "Scenario:" keyword sits on, or the examples
      *                  table row for an outline expansion; 0 when unknown
+     * @param array<string, string|array{error: string}> $attachments context the
+     *        scenario handed over about itself, read before its teardown ran
      */
     public function __construct(
         private string $title,
         private array $stepResults,
         private int $line = 0,
+        private array $attachments = [],
     ) {}
+
+    /**
+     * Context the scenario handed over about itself: the log it watched, the
+     * output of a process it drove. Empty unless something was attached, and
+     * only ever read for a scenario that needed attention.
+     *
+     * @return array<string, string|array{error: string}>
+     */
+    public function getAttachments(): array
+    {
+        return $this->attachments;
+    }
 
     /**
      * The line that addresses this scenario in a "file.feature:LINE" run, or 0

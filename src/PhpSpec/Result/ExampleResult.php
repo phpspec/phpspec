@@ -42,6 +42,9 @@ final class ExampleResult implements Results
     /** @var string What the subject printed while this example ran */
     private string $output = '';
 
+    /** @var array<string, string|array{error: string}> Context the example handed over about itself */
+    private array $attachments = [];
+
     /**
      * @param string $title the example description
      * @param array<MatchResult> $matchResults array of MatchResult instances from this example
@@ -273,6 +276,27 @@ final class ExampleResult implements Results
     public function getOutput(): string
     {
         return $this->output;
+    }
+
+    /**
+     * Stores context the example handed over about itself, read before its
+     * teardown ran.
+     *
+     * @param array<string, string|array{error: string}> $attachments
+     */
+    public function setAttachments(array $attachments): void
+    {
+        $this->attachments = $attachments;
+    }
+
+    /**
+     * Returns the context the example handed over about itself.
+     *
+     * @return array<string, string|array{error: string}>
+     */
+    public function getAttachments(): array
+    {
+        return $this->attachments;
     }
 
     /**

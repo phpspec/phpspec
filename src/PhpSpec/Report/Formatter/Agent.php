@@ -459,9 +459,32 @@ final class Agent extends AbstractFormatter
         }
 
         $this->attachOutput($entry, $example->getOutput());
+        $this->attachHandedOver($entry, $example->getAttachments());
         $this->attachNotes($entry, $example);
 
         return $entry;
+    }
+
+    /**
+     * Attaches what the spec or scenario handed over about itself: the log it
+     * watched, the output of a process it drove, the page a browser was
+     * showing. PhpSpec cannot reach any of that on its own, so what is here was
+     * offered deliberately, and only for an entry worth diagnosing.
+     *
+     * @param array<string, mixed> $entry
+     * @param array<string, string|array{error: string}> $attachments
+     */
+    private function attachHandedOver(array &$entry, array $attachments): void
+    {
+        $reported = [];
+
+        foreach ($attachments as $name => $value) {
+            $reported[$name] = is_string($value) ? ValueExporter::exportOutput($value) : $value;
+        }
+
+        if ($reported !== []) {
+            $entry['attachments'] = $reported;
+        }
     }
 
     /**
@@ -667,6 +690,7 @@ final class Agent extends AbstractFormatter
         }
 
         $this->attachOutput($entry, $printed);
+        $this->attachHandedOver($entry, $scenario->getAttachments());
         $entry['steps'] = $steps;
 
         // A scenario is addressed by the line its keyword sits on, which is what
