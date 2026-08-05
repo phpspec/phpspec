@@ -634,8 +634,7 @@ class Expectation
             fn($expected) => ($d = self::extractResponseData($expected)) !== null && $d['status'] === 200,
             'Expected response to be OK (200), got %s',
             $data['status'] ?? 'non-Response',
-            200,
-            ['__implied' => true],
+            ['__implied' => true, '__expected' => 200, '__actual' => fn() => $data['status'] ?? 'No response'],
         );
     }
 
@@ -652,8 +651,7 @@ class Expectation
             fn($expected) => ($d = self::extractResponseData($expected)) !== null && $d['status'] === 400,
             'Expected response to be Bad Request (400), got %s',
             $data['status'] ?? 'non-Response',
-            400,
-            ['__implied' => true],
+            ['__implied' => true, '__expected' => 400, '__actual' => fn() => $data['status'] ?? 'No response'],
         );
     }
 
@@ -672,6 +670,7 @@ class Expectation
             'Expected response status %s, got %s',
             $code,
             $data['status'] ?? 'non-Response',
+            ['__expected' => $code, '__actual' => fn() => $data['status'] ?? 'No response'],
         );
     }
 
@@ -765,6 +764,7 @@ class Expectation
             $url,
             $data['headers']['Location'] ?? 'no Location header',
             $data['status'] ?? 'non-Response',
+            ['__expected' => $url, '__actual' => fn() => $data['headers']['Location'] ?? 'No Location header'],
         );
     }
 
@@ -845,13 +845,20 @@ class Expectation
         // the exception it threw, which is only known once it has run, so the
         // marker is a closure resolved after the matcher decides.
         $actual = null;
+        // What to report as the expected, for a matcher whose message needs its
+        // values in an order the report does not share: "Expected status %s, got
+        // %s" wants the target first, and taking the report's target from the
+        // second value would report the status it got as the one it wanted.
+        $expects = null;
         // Extract the markers if the last argument is the marker array
         $markers = !empty($message) && is_array(end($message)) ? end($message) : [];
-        if (array_key_exists('__fake', $markers) || array_key_exists('__implied', $markers) || array_key_exists('__actual', $markers)) {
+        $known = ['__fake', '__implied', '__actual', '__expected'];
+        if (array_intersect($known, array_keys($markers)) !== []) {
             array_pop($message);
             $fakeExpression = $markers['__fake'] ?? null;
             $implied = (bool) ($markers['__implied'] ?? false);
             $actual = $markers['__actual'] ?? null;
+            $expects = array_key_exists('__expected', $markers) ? [$markers['__expected']] : null;
         }
 
         if ($this->negated) {
@@ -862,7 +869,7 @@ class Expectation
             }
             $fakeExpression = null; // negated matchers don't produce fakes
         }
-        $this->eventCreator?->createMatchEvent($match, $message[0], $fakeExpression, $matcher, $negated, $implied, $actual, ...array_slice($message, 1));
+        $this->eventCreator?->createMatchEvent($match, $message[0], $fakeExpression, $matcher, $negated, $implied, $actual, $expects, ...array_slice($message, 1));
         return $this;
     }
 

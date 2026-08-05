@@ -29,6 +29,13 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class PrettyViews
 {
+    /**
+     * How much printed or attached text a failure shows before saying how much
+     * more there was. The same cap the agent document uses, so both formatters
+     * cut at the same place and a reader comparing them sees the same text.
+     */
+    private const PRINTED_MAX = 4000;
+
     public static function specification(OutputInterface $output, SpecificationResult $specification, bool $verbose = false): void
     {
         $output->write(PHP_EOL);
@@ -146,9 +153,12 @@ final class PrettyViews
 
 
     /**
-     * What the subject printed, quoted rather than let loose: each line behind
-     * a bar, so a dump reads as the code talking and not as PhpSpec's own
-     * report. Console markup in the text is escaped, never interpreted.
+     * What the subject printed or handed over, quoted rather than let loose:
+     * each line behind a bar, so a dump reads as the code talking and not as
+     * PhpSpec's own report. Console markup in the text is escaped, never
+     * interpreted, and a flood is cut with a note of how much there was: a
+     * response body or a watched log can run to megabytes, and a terminal that
+     * scrolls for a minute has buried the failure it was meant to explain.
      */
     public static function printedOutput(OutputInterface $output, string $printed, int $indentation): void
     {
@@ -156,8 +166,15 @@ final class PrettyViews
             return;
         }
 
-        foreach (explode("\n", rtrim($printed, "\n")) as $line) {
+        $length = mb_strlen($printed);
+        $shown = $length > self::PRINTED_MAX ? mb_substr($printed, 0, self::PRINTED_MAX) : $printed;
+
+        foreach (explode("\n", rtrim($shown, "\n")) as $line) {
             $output->write(PHP_EOL . str_repeat(' ', $indentation) . '<fg=gray>▏ ' . OutputFormatter::escape($line) . '</>');
+        }
+
+        if ($length > self::PRINTED_MAX) {
+            $output->write(PHP_EOL . str_repeat(' ', $indentation) . '<fg=gray>▏ … ' . ($length - self::PRINTED_MAX) . ' more characters</>');
         }
     }
 
