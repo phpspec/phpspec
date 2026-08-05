@@ -10,14 +10,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Every offer PhpSpec makes carries an id, and `phpspec accept <id>` applies exactly what was reported, refusing an offer whose file has since changed
  - A failing story step reports the values it expected and got, on the step and on the entry, instead of only the sentence about them
  - What a spec or step printed is captured and reported as the entry's output, in the agent stream and under the failure in the human formatters
+ - `toThrow()` takes no argument, asserting only that something was thrown
 
 ### Changed
  - `--format=agent` answers in JSON Lines (protocol v2): one event per line as it happens, so a failure arrives before the suite ends
+ - A failing entry carries one `expectation` block naming both sides (`matcher`, `expected`, `actual`, `negated`), replacing the split `expected`/`actual` fields the unreleased v2 stream had
+ - A matcher that names its target only in prose now states it as a value, so `toBeTrue()` reports expecting `true` instead of `null`, and emptiness expects the empty form of what it was given
+ - A matcher with no target at all, such as a predicate, says so with `"N/A"` instead of reporting a null one, and the human formatters stop printing the empty pair
+ - `toThrow` reports the exception that was actually thrown, or "No exception", against the one it was asked for, instead of reporting the callable it was handed
+ - An exception carrying no message reads as `RuntimeException` rather than `RuntimeException("")`
+ - Objects in a failure detail are named by what they are rather than by instance id, as the agent format already did
  - The agent summary omits offers when the run found nothing to generate, as it already did for rerun and coverage
  - generate no longer writes when there is nobody to ask: it offers the change under an id, and `run --accept-offers` stays as the bulk shortcut for a run's own offers
 
 ### Fixed
  - A parallel run no longer reports `run :0` as an entry's rerun, nor a comparison of nothing with nothing: a failure that came back without its site now reports its message alone
+ - An array holding an object no longer makes the failure detail emit a PHP warning of its own
  - describe and exemplify refuse a name PHP could not parse instead of writing a spec that breaks the suite, and describe says what it needs when given nothing
  - accept resolves paths through the configuration the run was given, so `-c` is honoured
 

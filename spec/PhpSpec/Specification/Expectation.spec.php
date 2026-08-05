@@ -278,6 +278,95 @@ describe(Expectation::class, function() {
             expect($captured[0]->getMatcher())->toBe("toContain");
             expect($captured[0]->getExpected())->toBe("the haystack");
             expect($captured[0]->getActual())->toBe("missing needle");
+            expect($captured[0]->isTargetImplied())->toBeFalse();
+        });
+
+        // A matcher that names its target only in prose still states it as a
+        // value, so a report never says a failure expected null when it
+        // expected true, and marks it implied so a view does not read it back.
+        $failureOf = function (Closure $expectation): \PhpSpec\Result\MatchResult {
+            $original = \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher();
+            $captured = [];
+            $listener = new class($captured) implements \PhpSpec\EventDispatcher\Listener {
+                public function __construct(private array &$captured) {}
+                public function listen(\PhpSpec\EventDispatcher\Event $event): void
+                {
+                    if ($event instanceof \PhpSpec\EventDispatcher\Event\MatchCreated) {
+                        $this->captured[] = ($event->getMatch())();
+                    }
+                }
+            };
+
+            try {
+                $isolated = new \PhpSpec\EventDispatcher\Dispatcher();
+                $isolated->addListener($listener);
+                \PhpSpec\EventDispatcher\DispatcherRegistry::set($isolated);
+
+                $expectation();
+            } finally {
+                \PhpSpec\EventDispatcher\DispatcherRegistry::set($original);
+            }
+
+            return $captured[0];
+        };
+
+        it("states the target a matcher only names in prose", function() use ($failureOf) {
+            $failure = $failureOf(fn() => (new Expectation(false, __FILE__, __LINE__))->toBeTrue());
+
+            expect($failure->getActual())->toBeTrue();
+            expect($failure->getExpected())->toBeFalse();
+            expect($failure->isTargetImplied())->toBeTrue();
+        });
+
+        // A callable is not the interesting half of a throw expectation: what it
+        // threw is, and that is only known once it has run.
+        it("reports what a callable threw against what it was asked for", function() use ($failureOf) {
+            // As a report shows them: phpspec stores the subject as "expected"
+            // and the matcher's target as "actual", and an exception is named
+            // rather than dumped.
+            $shown = fn(mixed $value) => is_object($value) ? \PhpSpec\ObjectName::of($value) : $value;
+            $sides = function (Closure $expectation) use ($failureOf, $shown) {
+                $failure = $failureOf($expectation);
+
+                return [$shown($failure->getActual()), $shown($failure->getExpected())];
+            };
+
+            // Asked only to throw, and it did: nothing was named to compare with.
+            expect($sides(fn() => (new Expectation(fn() => throw new Exception(), __FILE__, __LINE__))->not()->toThrow()))
+                ->toBe(['N/A', 'Exception']);
+
+            // Asked only to throw, and it did not.
+            expect($sides(fn() => (new Expectation(fn() => null, __FILE__, __LINE__))->toThrow()))
+                ->toBe(['N/A', 'No exception']);
+
+            // Asked for a class, by name alone when it carries no message.
+            expect($sides(fn() => (new Expectation(fn() => throw new RuntimeException(), __FILE__, __LINE__))->not()->toThrow(RuntimeException::class)))
+                ->toBe(['RuntimeException', 'RuntimeException']);
+
+            // Asked for a class and a message, so both sides carry both.
+            expect($sides(fn() => (new Expectation(fn() => throw new RuntimeException('boom'), __FILE__, __LINE__))->not()->toThrow(RuntimeException::class, 'boom')))
+                ->toBe(['RuntimeException("boom")', 'RuntimeException("boom")']);
+
+            // Asked for a class and handed nothing at all.
+            expect($sides(fn() => (new Expectation(fn() => null, __FILE__, __LINE__))->toThrow(RuntimeException::class)))
+                ->toBe(['RuntimeException', 'No exception']);
+        });
+
+        it("says a predicate had no target rather than reporting a null one", function() use ($failureOf) {
+            $failure = $failureOf(fn() => (new Expectation(3, __FILE__, __LINE__))->toSatisfy(fn($n) => $n > 10));
+
+            expect($failure->getActual())->toBe('N/A');
+            expect($failure->getExpected())->toBe(3);
+            expect($failure->isTargetImplied())->toBeTrue();
+        });
+
+        it("wants the empty form of whatever it was given", function() use ($failureOf) {
+            $of = fn(mixed $subject) => $failureOf(fn() => (new Expectation($subject, __FILE__, __LINE__))->toBeEmpty())->getActual();
+
+            expect($of([1, 2]))->toBe([]);
+            expect($of("stuff"))->toBe("");
+            expect($of(3434))->toBe(0);
+            expect($of(new \stdClass()))->toBeNull();
         });
     });
 

@@ -88,6 +88,65 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the reported entry should have printed "the counter said 2"
 
+  Scenario: A boolean failure says what the matcher wanted, not only what it got
+    Given a spec file "spec/App/Watch.spec.php":
+      """
+      <?php
+      describe('App\Watch', function () {
+          it('arrives', function () { expect(false)->toBeTrue(); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the reported entry should expect "true" and have got "false"
+
+  Scenario: An emptiness failure wants the empty form of what it was given
+    Given a spec file "spec/App/Bag.spec.php":
+      """
+      <?php
+      describe('App\Bag', function () {
+          it('holds nothing', function () { expect([1, 2])->toBeEmpty(); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the reported entry should expect "[]" and have got "[1,2]"
+
+  Scenario: A scenario hands over the log it was watching, read before its teardown
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/watching.feature":
+      """
+      Feature: Watching
+        Scenario: Watching a file
+          Given the watcher is running
+          Then it should have arrived
+      """
+    And a step file "features/steps/watching.steps.php":
+      """
+      <?php
+
+      use function PhpSpec\attach;
+
+      given('the watcher is running', function () {
+          $this->log = sys_get_temp_dir() . '/phpspec_watch_' . getmypid() . '.log';
+          file_put_contents($this->log, 'nothing yet');
+          attach('watch.log', fn() => @file_get_contents($this->log));
+      });
+
+      then('it should have arrived', function () {
+          // The watcher writes its diagnosis only now, after the attachment was made.
+          file_put_contents($this->log, 'CANNOT READ --watch');
+          expect(false)->toBeTrue();
+      });
+
+      afterScenario(function () {
+          @unlink($this->log);
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the reported entry should have attached "watch.log" containing "CANNOT READ --watch"
+
   Scenario: A failing example carries a line-targeted rerun command
     Given a spec file "spec/App/Calc.spec.php":
       """

@@ -294,8 +294,7 @@ describe(Agent::class, function () {
 
         $example = $doc['examples'][0];
         expect($example['state'])->toBe('failing');
-        expect($example['expected'])->toBe(['matcher' => 'toBe', 'value' => 4000, 'negated' => false]);
-        expect($example['actual'])->toBe(3500);
+        expect($example['expectation'])->toBe(['matcher' => 'toBe', 'expected' => 4000, 'actual' => 3500, 'negated' => false]);
         expect($example['message'])->toBe('Expected 3500 to be 4000');
         expect($example['spec'])->toBe('spec/App/Basket.spec.php:12');
         expect($example['rerun'])->toBe('run spec/App/Basket.spec.php:12');
@@ -312,9 +311,7 @@ describe(Agent::class, function () {
             new SpecificationResult('App\\X', [new ExampleResult('greets', [$match])]),
         ]))['examples'][0];
 
-        expect($example['expected'])->toBe(['matcher' => null, 'value' => null, 'negated' => false]);
-        expect($example)->toHaveKey('actual');
-        expect($example['actual'])->toBeNull();
+        expect($example['expectation'])->toBe(['matcher' => null, 'expected' => null, 'actual' => null, 'negated' => false]);
     });
 
     it('reports only the message when a failure came back without its site', function () use ($render) {
@@ -327,8 +324,7 @@ describe(Agent::class, function () {
         ]))['examples'][0];
 
         expect($example['message'])->toBe('Expected 3500 to be 4000');
-        expect($example)->not()->toHaveKey('expected');
-        expect($example)->not()->toHaveKey('actual');
+        expect($example)->not()->toHaveKey('expectation');
         // And no location invented from the parts it does not have.
         expect($example)->not()->toHaveKey('spec');
         expect($example)->not()->toHaveKey('rerun');
@@ -340,7 +336,7 @@ describe(Agent::class, function () {
             new SpecificationResult('App\\X', [new ExampleResult('rejects equality', [$match])]),
         ]))['examples'][0];
 
-        expect($example['expected']['negated'])->toBe(true);
+        expect($example['expectation']['negated'])->toBe(true);
     });
 
     it('derives a stable id from the full example name so an agent can recompute it', function () use ($render) {
@@ -541,11 +537,10 @@ describe(Agent::class, function () {
         ]))['examples'][0];
 
         // Hoisted onto the entry, next to the message it already hoists.
-        expect($entry['expected'])->toBe(['matcher' => 'toBe', 'value' => 3, 'negated' => false]);
-        expect($entry['actual'])->toBe(2);
+        expect($entry['expectation'])->toBe(['matcher' => 'toBe', 'expected' => 3, 'actual' => 2, 'negated' => false]);
         // And on the step that made it, with the line the expectation lives on.
-        expect($entry['steps'][0]['expected']['value'])->toBe(3);
-        expect($entry['steps'][0]['actual'])->toBe(2);
+        expect($entry['steps'][0]['expectation']['expected'])->toBe(3);
+        expect($entry['steps'][0]['expectation']['actual'])->toBe(2);
         expect($entry['steps'][0]['at'])->toBe('features/steps/counting.steps.php:4');
     });
 
@@ -557,8 +552,8 @@ describe(Agent::class, function () {
             new FeatureResult('Counting', [new ScenarioResult('Counting up', [$step], 2)], 'features/counting.feature'),
         ]))['examples'][0];
 
-        expect($entry)->not()->toHaveKey('expected');
-        expect($entry['steps'][0])->not()->toHaveKey('actual');
+        expect($entry)->not()->toHaveKey('expectation');
+        expect($entry['steps'][0])->not()->toHaveKey('expectation');
     });
 
     it('names a scenario by feature and scenario, so two never share an id', function () use ($render) {

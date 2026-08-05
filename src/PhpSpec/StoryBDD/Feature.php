@@ -14,6 +14,7 @@
 
 namespace PhpSpec\StoryBDD;
 
+use PhpSpec\Attachments;
 use PhpSpec\CapturedOutput;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Result\FeatureResult;
@@ -139,6 +140,12 @@ final readonly class Feature implements SpecBlock
         $collector = new StepMatchCollector();
         DispatcherRegistry::dispatcher()->addSubscriber($collector);
 
+        // What the scenario hands over about itself, for as long as it runs: a
+        // step attaches in one place and a later step's failure is what makes it
+        // worth reading.
+        $attachments = new Attachments();
+        DispatcherRegistry::dispatcher()->addSubscriber($attachments);
+
         $stepResults = [];
         $failed = false;
 
@@ -170,13 +177,39 @@ final readonly class Feature implements SpecBlock
             }
         }
 
+        // Read before the teardown, and only for a scenario that needs
+        // attention: an after-hook that stops the process and clears the
+        // workspace would otherwise leave an empty attachment, which reads as
+        // "it said nothing" rather than "PhpSpec looked too late".
+        $attached = [];
+        if (!$attachments->isEmpty() && self::needsAttention($stepResults)) {
+            $attached = $attachments->read();
+        }
+
         $this->hooks->runAfterScenario($world);
 
         DispatcherRegistry::dispatcher()->removeSubscriber($collector);
+        DispatcherRegistry::dispatcher()->removeSubscriber($attachments);
 
         // An outline expansion is addressed by its own examples-table row; every
         // other scenario by its keyword line.
-        return new ScenarioResult($scenario->title, $stepResults, $scenario->exampleLine ?? $scenario->line);
+        return new ScenarioResult($scenario->title, $stepResults, $scenario->exampleLine ?? $scenario->line, $attached);
+    }
+
+    /**
+     * Whether any step left the scenario something to answer for.
+     *
+     * @param array<StepResult> $stepResults
+     */
+    private static function needsAttention(array $stepResults): bool
+    {
+        foreach ($stepResults as $step) {
+            if (!$step->isPassed()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

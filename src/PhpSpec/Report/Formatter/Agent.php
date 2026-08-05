@@ -459,9 +459,32 @@ final class Agent extends AbstractFormatter
         }
 
         $this->attachOutput($entry, $example->getOutput());
+        $this->attachHandedOver($entry, $example->getAttachments());
         $this->attachNotes($entry, $example);
 
         return $entry;
+    }
+
+    /**
+     * Attaches what the spec or scenario handed over about itself: the log it
+     * watched, the output of a process it drove, the page a browser was
+     * showing. PhpSpec cannot reach any of that on its own, so what is here was
+     * offered deliberately, and only for an entry worth diagnosing.
+     *
+     * @param array<string, mixed> $entry
+     * @param array<string, string|array{error: string}> $attachments
+     */
+    private function attachHandedOver(array &$entry, array $attachments): void
+    {
+        $reported = [];
+
+        foreach ($attachments as $name => $value) {
+            $reported[$name] = is_string($value) ? ValueExporter::exportOutput($value) : $value;
+        }
+
+        if ($reported !== []) {
+            $entry['attachments'] = $reported;
+        }
     }
 
     /**
@@ -557,7 +580,7 @@ final class Agent extends AbstractFormatter
      * which is a comparison worth reporting: an anonymous matcher (any
      * __call-based custom or predicate matcher) has no name to give either.
      *
-     * @return array{expected?: array{matcher: string|null, value: mixed, negated: bool}, actual?: mixed}
+     * @return array{expectation?: array{matcher: string|null, expected: mixed, actual: mixed, negated: bool}}
      */
     private function expectation(?MatchResult $match): array
     {
@@ -566,12 +589,12 @@ final class Agent extends AbstractFormatter
         }
 
         return [
-            'expected' => [
+            'expectation' => [
                 'matcher' => $match->getMatcher(),
-                'value' => ValueExporter::export($match->getActual()),
+                'expected' => ValueExporter::export($match->getActual()),
+                'actual' => ValueExporter::export($match->getExpected()),
                 'negated' => $match->isNegated(),
             ],
-            'actual' => ValueExporter::export($match->getExpected()),
         ];
     }
 
@@ -667,6 +690,7 @@ final class Agent extends AbstractFormatter
         }
 
         $this->attachOutput($entry, $printed);
+        $this->attachHandedOver($entry, $scenario->getAttachments());
         $entry['steps'] = $steps;
 
         // A scenario is addressed by the line its keyword sits on, which is what

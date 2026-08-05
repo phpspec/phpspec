@@ -16,6 +16,8 @@ namespace PhpSpec\Browser;
 
 use Closure;
 
+use function PhpSpec\attach;
+
 /**
  * @internal
  * Lightweight HTTP client using file_get_contents + stream contexts (zero dependencies).
@@ -110,6 +112,16 @@ final class Client
             }
         }
 
-        return new Response($status, $body, $responseHeaders);
+        $response = new Response($status, $body, $responseHeaders);
+
+        // What the server said, handed over so a failed expectation about a
+        // response is read next to the body that explains it: an assertion on
+        // the status says "expected 200, got 500" and never why. Attached on
+        // every request and only ever read when something needs attention, so a
+        // green suite pays nothing and the last request is the one reported.
+        attach('http.request', strtoupper($method) . ' ' . $url . ' (' . $status . ')');
+        attach('http.response', $body);
+
+        return $response;
     }
 }

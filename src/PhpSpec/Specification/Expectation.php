@@ -25,6 +25,16 @@ use PhpSpec\ObjectName;
  */
 class Expectation
 {
+    /**
+     * What a matcher states when it has no target at all: a predicate decides
+     * for itself and can only report the subject it decided about. Said out
+     * loud, because a silent null reads as "it expected null".
+     */
+    public const NO_TARGET = 'N/A';
+
+    /** What a callable that was meant to throw reports having done instead. */
+    public const NOTHING_THROWN = 'No exception';
+
     /** @var bool whether the next matcher should invert its result */
     protected bool $negated = false;
 
@@ -60,11 +70,13 @@ class Expectation
             if ($message instanceof Closure) {
                 $message = $message($this->subject, ...$arguments);
             }
+            // A custom matcher's first argument is its target; one that takes
+            // none decides for itself and has none to report.
             return $this->match(
                 fn($expected) => ($custom['matcher'])($expected, ...$arguments),
                 $message,
                 $this->subject,
-                ...$arguments,
+                ...($arguments !== [] ? $arguments : [self::NO_TARGET, ['__implied' => true]]),
             );
         }
 
@@ -85,6 +97,8 @@ class Expectation
                     fn($expected) => (bool) $expected->$method(...$arguments),
                     "Expected %s to {$prefix} {$humanized}",
                     $this->subject,
+                    self::NO_TARGET,
+                    ['__implied' => true],
                 );
             }
         }
@@ -210,7 +224,8 @@ class Expectation
             fn($expected) => $expected === true,
             'Expected %s to be true',
             $this->subject,
-            ['__fake' => 'true'],
+            true,
+            ['__fake' => 'true', '__implied' => true],
         );
     }
 
@@ -225,7 +240,8 @@ class Expectation
             fn($expected) => $expected === false,
             'Expected %s to be false',
             $this->subject,
-            ['__fake' => 'false'],
+            false,
+            ['__fake' => 'false', '__implied' => true],
         );
     }
 
@@ -240,7 +256,8 @@ class Expectation
             fn($expected) => $expected === null,
             'Expected %s to be null',
             $this->subject,
-            ['__fake' => 'null'],
+            null,
+            ['__fake' => 'null', '__implied' => true],
         );
     }
 
@@ -255,7 +272,8 @@ class Expectation
             fn($expected) => empty($expected),
             'Expected %s to be empty',
             $this->subject,
-            ['__fake' => '[]'],
+            self::emptyLike($this->subject),
+            ['__fake' => '[]', '__implied' => true],
         );
     }
 
@@ -405,7 +423,8 @@ class Expectation
             fn($expected) => is_callable($expected),
             'Expected %s to be callable',
             $this->subject,
-            ['__fake' => 'function () {}'],
+            'callable',
+            ['__fake' => 'function () {}', '__implied' => true],
         );
     }
 
@@ -492,7 +511,8 @@ class Expectation
             fn($expected) => (bool) $expected === true,
             'Expected %s to be truthy',
             $this->subject,
-            ['__fake' => 'true'],
+            'truthy',
+            ['__fake' => 'true', '__implied' => true],
         );
     }
 
@@ -507,7 +527,8 @@ class Expectation
             fn($expected) => (bool) $expected === false,
             'Expected %s to be falsy',
             $this->subject,
-            ['__fake' => 'false'],
+            'falsy',
+            ['__fake' => 'false', '__implied' => true],
         );
     }
 
@@ -595,6 +616,8 @@ class Expectation
             fn($expected) => $predicate($expected),
             'Expected %s to satisfy predicate',
             $this->subject,
+            self::NO_TARGET,
+            ['__implied' => true],
         );
     }
 
@@ -611,6 +634,7 @@ class Expectation
             fn($expected) => ($d = self::extractResponseData($expected)) !== null && $d['status'] === 200,
             'Expected response to be OK (200), got %s',
             $data['status'] ?? 'non-Response',
+            ['__implied' => true, '__expected' => 200, '__actual' => fn() => $data['status'] ?? 'No response'],
         );
     }
 
@@ -627,6 +651,7 @@ class Expectation
             fn($expected) => ($d = self::extractResponseData($expected)) !== null && $d['status'] === 400,
             'Expected response to be Bad Request (400), got %s',
             $data['status'] ?? 'non-Response',
+            ['__implied' => true, '__expected' => 400, '__actual' => fn() => $data['status'] ?? 'No response'],
         );
     }
 
@@ -645,6 +670,7 @@ class Expectation
             'Expected response status %s, got %s',
             $code,
             $data['status'] ?? 'non-Response',
+            ['__expected' => $code, '__actual' => fn() => $data['status'] ?? 'No response'],
         );
     }
 
@@ -738,6 +764,7 @@ class Expectation
             $url,
             $data['headers']['Location'] ?? 'no Location header',
             $data['status'] ?? 'non-Response',
+            ['__expected' => $url, '__actual' => fn() => $data['headers']['Location'] ?? 'No Location header'],
         );
     }
 
@@ -748,31 +775,54 @@ class Expectation
      * @param string|null $message expected exception message (exact match)
      * @return static
      */
-    public function toThrow(string $exceptionClass, ?string $message = null): static
+    public function toThrow(string $exceptionClass = '', ?string $message = null): static
     {
+        // What the callable did, filled in as it runs: the exception it threw,
+        // or the sentence for having thrown none. The reader is comparing what
+        // was asked for against what happened, not against the callable itself.
+        $outcome = self::NOTHING_THROWN;
+
         return $this->match(
-            function ($expected) use ($exceptionClass, $message) {
+            function ($expected) use ($exceptionClass, $message, &$outcome) {
                 try {
                     $expected();
+
                     return false;
                 } catch (\Throwable $e) {
-                    if (!($e instanceof $exceptionClass)) {
+                    $outcome = $e;
+                    if ($exceptionClass !== '' && !($e instanceof $exceptionClass)) {
                         return false;
                     }
                     if ($message !== null && $e->getMessage() !== $message) {
                         return false;
                     }
+
                     return true;
                 }
             },
-            'Expected callable to throw %s',
-            $exceptionClass,
+            $exceptionClass === '' ? 'Expected callable to throw' : 'Expected callable to throw %s',
+            $exceptionClass === '' ? '' : ObjectName::named($exceptionClass, $message),
+            // Whatever it was asked for, or nothing at all when it was asked
+            // only to throw.
+            $exceptionClass === '' ? self::NO_TARGET : ObjectName::named($exceptionClass, $message),
+            // By reference, and not an arrow function: this has to read the
+            // outcome as it stands once the callable has run, not as it stood
+            // when the expectation was written.
+            ['__implied' => $exceptionClass === '', '__actual' => function () use (&$outcome) {
+                return $outcome;
+            }],
         );
     }
 
     /**
      * Evaluates a matcher against the subject, handling negation and dispatching
      * the match event through EventfulExpectation.
+     *
+     * The first value is the subject and the second is what the matcher wanted,
+     * which is reported as the failure's `expected` whether or not the message
+     * has a placeholder for it. A matcher that names its target only in prose
+     * ("to be true") therefore still states it as a value, so a reader is never
+     * told a failure expected null when it expected true.
      *
      * @param Closure $match callback receiving the subject, returning bool
      * @param mixed ...$message format string followed by values, optionally ending with a fake expression array
@@ -786,10 +836,29 @@ class Expectation
         $negated = $this->negated;
 
         $fakeExpression = null;
-        // Extract fakeExpression if last argument is an array with '__fake' key
-        if (!empty($message) && is_array(end($message)) && array_key_exists('__fake', end($message))) {
-            $fakeArg = array_pop($message);
-            $fakeExpression = $fakeArg['__fake'];
+        // A matcher whose target is implied by its own name ("to be true") states
+        // the value anyway, so a report can name both sides, but says it is
+        // implied so a view does not read back "to be true: true".
+        $implied = false;
+        // What to report as the actual, for a matcher whose subject is not the
+        // interesting half: toThrow is handed a callable and the reader wants
+        // the exception it threw, which is only known once it has run, so the
+        // marker is a closure resolved after the matcher decides.
+        $actual = null;
+        // What to report as the expected, for a matcher whose message needs its
+        // values in an order the report does not share: "Expected status %s, got
+        // %s" wants the target first, and taking the report's target from the
+        // second value would report the status it got as the one it wanted.
+        $expects = null;
+        // Extract the markers if the last argument is the marker array
+        $markers = !empty($message) && is_array(end($message)) ? end($message) : [];
+        $known = ['__fake', '__implied', '__actual', '__expected'];
+        if (array_intersect($known, array_keys($markers)) !== []) {
+            array_pop($message);
+            $fakeExpression = $markers['__fake'] ?? null;
+            $implied = (bool) ($markers['__implied'] ?? false);
+            $actual = $markers['__actual'] ?? null;
+            $expects = array_key_exists('__expected', $markers) ? [$markers['__expected']] : null;
         }
 
         if ($this->negated) {
@@ -800,7 +869,7 @@ class Expectation
             }
             $fakeExpression = null; // negated matchers don't produce fakes
         }
-        $this->eventCreator?->createMatchEvent($match, $message[0], $fakeExpression, $matcher, $negated, ...array_slice($message, 1));
+        $this->eventCreator?->createMatchEvent($match, $message[0], $fakeExpression, $matcher, $negated, $implied, $actual, $expects, ...array_slice($message, 1));
         return $this;
     }
 
@@ -904,6 +973,22 @@ class Expectation
      * @param string $string source string
      * @return string string with first occurrence replaced
      */
+    /**
+     * The empty form of whatever it was given: what an emptiness matcher wanted
+     * instead of what it got. Reporting "" against an array of three hundred
+     * items would be a small lie, so the answer keeps the subject's own type.
+     */
+    private static function emptyLike(mixed $subject): mixed
+    {
+        return match (true) {
+            is_array($subject) => [],
+            is_string($subject) => '',
+            is_int($subject) => 0,
+            is_float($subject) => 0.0,
+            default => null,
+        };
+    }
+
     private static function replaceOne(string $pattern, string $replace, string $string): string
     {
         $pos = strpos($string, $pattern);

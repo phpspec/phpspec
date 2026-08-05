@@ -27,6 +27,32 @@ describe(Client::class, function () {
         expect($response->headers)->toHaveKey('Content-Type');
     });
 
+    // An assertion about a response says "expected 200, got 500" and never why.
+    // The body is the why, so the client hands it over for the report to use if
+    // the example turns out to need it.
+    it('hands over the request and what the server answered', function () {
+        $attachments = new \PhpSpec\Attachments();
+        $original = \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher();
+
+        try {
+            $isolated = new \PhpSpec\EventDispatcher\Dispatcher();
+            $isolated->addSubscriber($attachments);
+            \PhpSpec\EventDispatcher\DispatcherRegistry::set($isolated);
+
+            (new Client('http://fake-host', fn(string $url, $context) => [
+                'body' => 'Fatal: the widget service is down',
+                'headers' => ['HTTP/1.1 500 Internal Server Error'],
+            ]))->request('GET', '/widgets');
+        } finally {
+            \PhpSpec\EventDispatcher\DispatcherRegistry::set($original);
+        }
+
+        expect($attachments->read())->toBe([
+            'http.request' => 'GET http://fake-host/widgets (500)',
+            'http.response' => 'Fatal: the widget service is down',
+        ]);
+    });
+
     it('sends JSON body on POST', function () {
         $capturedContext = null;
 

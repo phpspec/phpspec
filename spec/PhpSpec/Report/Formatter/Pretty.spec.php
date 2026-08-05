@@ -1,6 +1,7 @@
 <?php
 
 use PhpSpec\Report\Formatter\Pretty;
+use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\ExampleResult;
@@ -14,6 +15,26 @@ use PhpSpec\StoryBDD\StepError;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 describe(Pretty::class, function() {
+
+    // A response body or a watched log can run to megabytes, and a terminal
+    // scrolling for a minute has buried the failure it was meant to explain.
+    it("cuts a flood of printed text, saying how much more there was", function() {
+        $output = new BufferedOutput();
+        PrettyViews::printedOutput($output, str_repeat('x', 4500), 2);
+        $written = $output->fetch();
+
+        expect(substr_count($written, 'x'))->toBe(4000);
+        expect($written)->toContain('… 500 more characters');
+    });
+
+    it("shows short printed text whole, with no note", function() {
+        $output = new BufferedOutput();
+        PrettyViews::printedOutput($output, "one\ntwo", 2);
+        $written = $output->fetch();
+
+        expect($written)->toContain('▏ one');
+        expect($written)->not()->toContain('more characters');
+    });
 
     it("formats passing results", function() {
         $output = new BufferedOutput();

@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Report\Formatter;
 
+use PhpSpec\ObjectName;
 use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
@@ -23,6 +24,7 @@ use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
+use PhpSpec\Specification\Expectation;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -35,6 +37,9 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class DetailSections
 {
+    /** How many elements of an array a pair shows before saying how many are left. */
+    private const ARRAY_MAX = 10;
+
     /** @var array<string, list<callable(OutputInterface): void>> */
     private array $sections = [];
 
@@ -105,6 +110,7 @@ final class DetailSections
                     }
                 };
                 $this->attachPrinted('Errors', $example->getOutput());
+                $this->attachHandedOver('Errors', $example->getAttachments());
             }
         } elseif ($example->isFailure()) {
             $failures = array_values(array_filter(
@@ -119,6 +125,7 @@ final class DetailSections
                     }
                 };
                 $this->attachPrinted('Failures', $example->getOutput());
+                $this->attachHandedOver('Failures', $example->getAttachments());
             }
         } elseif ($example->isSkipped()) {
             $this->sections['Skipped'][] = static function (OutputInterface $output) use ($title): void {
@@ -187,6 +194,10 @@ final class DetailSections
                     $this->sections[$section][] = self::noteEntry($title, $warning);
                 }
             }
+
+            // Handed over by the scenario, not by any one of its steps: whichever
+            // step failed, the log the scenario was watching is the same log.
+            $this->attachHandedOver('Failures', $scenario->getAttachments());
         }
     }
 
@@ -205,13 +216,18 @@ final class DetailSections
         $target = $failure->getActual();
         $matcher = $failure->getMatcher();
 
-        if ($matcher !== null && $target !== null) {
+        // A target the matcher's own name already states ("to be true") is not
+        // read back as a label and a value, which says the same thing twice.
+        // The message says it once, and the pair beneath names both sides.
+        if ($matcher !== null && $target !== null && !$failure->isTargetImplied()) {
             $label = ($failure->isNegated() ? 'not ' : '') . self::phrase($matcher);
             $this->pair($output, 'expected', self::value($subject), $label, self::value($target));
         } else {
             $output->write(PHP_EOL . '  ' . $failure->getMessage() . PHP_EOL);
 
-            if ($subject !== null || $target !== null) {
+            // A matcher with no target has nothing to put opposite the subject,
+            // and "expected: N/A" is a line that tells the reader nothing.
+            if (($subject !== null || $target !== null) && $target !== Expectation::NO_TARGET) {
                 $this->pair($output, 'expected', self::value($target), 'got', self::value($subject));
             }
         }
@@ -262,10 +278,56 @@ final class DetailSections
         return match (true) {
             is_bool($value) => $value ? 'true' : 'false',
             is_null($value) => 'null',
-            is_array($value) => var_export($value, true),
-            is_object($value) => get_class($value) . '#' . spl_object_id($value),
+            is_array($value) => self::listing($value),
+            // Named by what it is, not by which instance it was: two runs of the
+            // same failure read the same, and "Money#180" told nobody anything.
+            is_object($value) => ObjectName::of($value),
             default => (string) $value,
         };
+    }
+
+    /**
+     * An array by the same rule as anything else in it, element by element. Not
+     * var_export: an array holding an object with a reference back to itself
+     * makes that emit a PHP warning, and a report about a failure must never
+     * become a failure of its own.
+     *
+     * @param array<array-key, mixed> $value
+     */
+    private static function listing(array $value): string
+    {
+        $shown = array_slice($value, 0, self::ARRAY_MAX, true);
+        $parts = [];
+
+        foreach ($shown as $key => $item) {
+            $parts[] = is_int($key) ? self::value($item) : $key . ' => ' . self::value($item);
+        }
+
+        if (count($value) > self::ARRAY_MAX) {
+            $parts[] = '… ' . (count($value) - self::ARRAY_MAX) . ' more';
+        }
+
+        return '[' . implode(', ', $parts) . ']';
+    }
+
+    /**
+     * Adds what the spec or scenario handed over about itself, under the name
+     * it was handed over with, so a watched log reads next to the failure it
+     * explains.
+     *
+     * @param array<string, string|array{error: string}> $attachments
+     */
+    private function attachHandedOver(string $section, array $attachments): void
+    {
+        foreach ($attachments as $name => $value) {
+            $text = is_string($value) ? $value : 'could not be read: ' . $value['error'];
+
+            $this->sections[$section][] = static function (OutputInterface $output) use ($name, $text): void {
+                $output->write(PHP_EOL . '  <fg=gray>' . $name . ':</>');
+                PrettyViews::printedOutput($output, $text, 2);
+                $output->write(PHP_EOL);
+            };
+        }
     }
 
     /**
