@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - generate no longer writes when there is nobody to ask: it offers the change under an id, and `run --accept-offers` stays as the bulk shortcut for a run's own offers
 
 ### Fixed
+ - A parallel run no longer reports `run :0` as an entry's rerun, nor a comparison of nothing with nothing: a failure that came back without its site now reports its message alone
  - describe and exemplify refuse a name PHP could not parse instead of writing a spec that breaks the suite, and describe says what it needs when given nothing
  - accept resolves paths through the configuration the run was given, so `-c` is honoured
 

@@ -435,9 +435,7 @@ final class Agent extends AbstractFormatter
             $match = $this->failingMatch($example);
             $entry += $this->expectation($match);
             $entry['message'] = $example->getMessage();
-            $location = $this->location($match?->getFile(), $match?->getLine());
-            $entry['spec'] = $location;
-            $this->addRerun($entry, $location);
+            $this->addLocation($entry, $this->location($match?->getFile(), $match?->getLine()));
             // No offer on a failure: the code exists and the behaviour is wrong,
             // there is nothing to generate — `state: failing` already says so.
         } elseif ($state === 'error') {
@@ -450,9 +448,7 @@ final class Agent extends AbstractFormatter
             // Mirrored, so one field answers "what went wrong" whatever the
             // state: the exception adds the class and the site, not the text.
             $entry['message'] = $error?->getMessage();
-            $location = $this->location($error?->getFile(), $error?->getLine());
-            $entry['spec'] = $location;
-            $this->addRerun($entry, $location);
+            $this->addLocation($entry, $this->location($error?->getFile(), $error?->getLine()));
             // A missing class/method/interface the error names becomes a concrete
             // offer to generate it, right on the example that hit it. Only present
             // when the error actually maps to something a generator can create.
@@ -554,17 +550,28 @@ final class Agent extends AbstractFormatter
      * convention, so they are swapped here: actual = the subject, expected =
      * the target.
      *
-     * @return array{expected: array{matcher: string|null, value: mixed, negated: bool}, actual: mixed}
+     * A failure that came back without its site came back without its detail:
+     * a parallel worker reports through JUnit, which carries the message and
+     * nothing else, and its stand-in expectation compares null with null. Only
+     * the site tells that apart from a real failure whose values are null,
+     * which is a comparison worth reporting: an anonymous matcher (any
+     * __call-based custom or predicate matcher) has no name to give either.
+     *
+     * @return array{expected?: array{matcher: string|null, value: mixed, negated: bool}, actual?: mixed}
      */
     private function expectation(?MatchResult $match): array
     {
+        if ($match === null || $this->location($match->getFile(), $match->getLine()) === null) {
+            return [];
+        }
+
         return [
             'expected' => [
-                'matcher' => $match?->getMatcher(),
-                'value' => ValueExporter::export($match?->getActual()),
-                'negated' => $match?->isNegated() ?? false,
+                'matcher' => $match->getMatcher(),
+                'value' => ValueExporter::export($match->getActual()),
+                'negated' => $match->isNegated(),
             ],
-            'actual' => ValueExporter::export($match?->getExpected()),
+            'actual' => ValueExporter::export($match->getExpected()),
         ];
     }
 
@@ -667,10 +674,8 @@ final class Agent extends AbstractFormatter
         // its own instead of dragging the whole story suite with it. Only a
         // failure is addressed, as with examples: a scenario waiting on undefined
         // steps is work to write, not work to re-run.
-        $location = $this->location($origin->path, $origin->line);
-        if ($state === 'failing' && $location !== null) {
-            $entry['spec'] = $location;
-            $this->addRerun($entry, $location);
+        if ($state === 'failing') {
+            $this->addLocation($entry, $this->location($origin->path, $origin->line));
         }
 
         $this->report($entry);
@@ -714,28 +719,34 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * Attaches the exact line-targeted command that re-runs just this one
-     * example, so an agent can verify a single fix without a full-suite run.
-     * phpspec resolves a "spec.php:LINE" path to the example whose closure spans
-     * that line, and the expectation/error site always falls inside it — so the
-     * entry's own location is a valid target. Omitted when there is none.
+     * Attaches where the entry failed, and the exact line-targeted command that
+     * re-runs just that one, so an agent can verify a single fix without a
+     * full-suite run. phpspec resolves a "spec.php:LINE" path to the example
+     * whose closure spans that line, and the expectation/error site always
+     * falls inside it, so the entry's own location is a valid target. Both are
+     * absent when the location is not known: a key that says null is a question
+     * a reader has to ask twice.
      *
      * @param array<string, mixed> $entry
      */
-    private function addRerun(array &$entry, ?string $location): void
+    private function addLocation(array &$entry, ?string $location): void
     {
         if ($location !== null) {
+            $entry['spec'] = $location;
             $entry['rerun'] = 'run ' . $location;
         }
     }
 
     /**
      * Renders a file:line as a project-relative, forward-slashed location, or
-     * null when either part is missing.
+     * null when either part is missing. A blank file or a line of zero is
+     * missing too: a result that came back without its site (a parallel worker
+     * reports through JUnit, which carries none) must not be dressed up as
+     * ":0", which reads like a location and re-runs like nonsense.
      */
     private function location(?string $file, ?int $line): ?string
     {
-        if ($file === null || $line === null) {
+        if ($file === null || $line === null || $file === '' || $line <= 0) {
             return null;
         }
 

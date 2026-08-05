@@ -302,6 +302,38 @@ describe(Agent::class, function () {
         expect($example)->not()->toHaveKey('offer');
     });
 
+    it('keeps a null value an anonymous matcher failed on, having a site to prove it real', function () use ($render) {
+        // A custom or predicate matcher reaches phpspec through __call and stays
+        // nameless: null everywhere except the site. "Your code produced null"
+        // is exactly what the reader needs.
+        $match = MatchResult::failed(null, null, 'Expected the greeter to have greeted', getcwd() . '/spec/App/X.spec.php', 7);
+
+        $example = $render(new SuiteResult([
+            new SpecificationResult('App\\X', [new ExampleResult('greets', [$match])]),
+        ]))['examples'][0];
+
+        expect($example['expected'])->toBe(['matcher' => null, 'value' => null, 'negated' => false]);
+        expect($example)->toHaveKey('actual');
+        expect($example['actual'])->toBeNull();
+    });
+
+    it('reports only the message when a failure came back without its site', function () use ($render) {
+        // What a parallel worker's JUnit report can carry: the message, and a
+        // stand-in expectation comparing nothing with nothing.
+        $match = MatchResult::failed(null, null, 'Expected 3500 to be 4000', '', 0);
+
+        $example = $render(new SuiteResult([
+            new SpecificationResult('App\\Basket', [new ExampleResult('totals', [$match])]),
+        ]))['examples'][0];
+
+        expect($example['message'])->toBe('Expected 3500 to be 4000');
+        expect($example)->not()->toHaveKey('expected');
+        expect($example)->not()->toHaveKey('actual');
+        // And no location invented from the parts it does not have.
+        expect($example)->not()->toHaveKey('spec');
+        expect($example)->not()->toHaveKey('rerun');
+    });
+
     it('flags a negated matcher on the expected block', function () use ($render) {
         $match = MatchResult::failed(5, 5, 'Expected 5 not to be 5', getcwd() . '/spec/App/X.spec.php', 1, null, 'toBe', true);
         $example = $render(new SuiteResult([

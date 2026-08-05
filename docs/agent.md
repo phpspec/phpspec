@@ -24,8 +24,12 @@ bin/phpspec run --format=agent
 
 Standard output carries one JSON object per line, with no ANSI and no prose.
 Decode a line, act on it, decode the next: on a long suite the first failure
-reaches you while the rest is still running. It is `--parallel`-safe; entries
-then arrive in completion order rather than file order.
+reaches you while the rest is still running.
+
+It is `--parallel`-safe, with one caveat: workers report back through JUnit,
+which carries the outcome and the message and nothing else, so entries from a
+parallel run arrive in completion order and without `expected`, `actual`,
+`spec`, `rerun` or `output`. Run without `--parallel` when you want the detail.
 
 ## The stream
 
@@ -78,8 +82,8 @@ Scenario Outline is its own entry, named by its values
 | `example` | The full name, as a path: `App\Basket > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. |
 | `state` | `failing`, `error`, `pending`, or `skipped` (`passing` entries are omitted). |
 | `message` | What went wrong, whatever the state. An `error` entry keeps `exception` too, for the class and the site. |
-| `spec` | The `file:line` of the failing assertion or the error, project-relative. For a scenario it is the line its `Scenario:` keyword sits on. |
-| `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. No full-suite re-run needed to verify one fix. |
+| `spec` | The `file:line` of the failing assertion or the error, project-relative. For a scenario it is the line its `Scenario:` keyword sits on. Absent when the site is not known. |
+| `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. No full-suite re-run needed to verify one fix. Absent with `spec`. |
 | `output` | What the code printed while this entry ran, present only when it printed something. See [Printed output](#printed-output). |
 | `steps` | Scenarios only: the steps that did not pass, each `{ title, state, message?, expected?, actual?, at? }`, in the order they were declared. |
 
