@@ -2,9 +2,10 @@
 
 PhpSpec speaks a machine-readable dialect designed for coding agents (Claude
 Code, Cursor, or any script that shells out and parses output). Instead of the
-ANSI-decorated prose the human formatters produce, `--format=agent` emits a
-single JSON document where **the failure itself is the payload** — everything an
-agent needs to decide its next move, without re-reading the project.
+ANSI-decorated prose the human formatters produce, `--format=agent` emits **JSON
+Lines**: one self-contained event per line, written as it happens, where **the
+failure itself is the payload** — everything an agent needs to decide its next
+move, without re-reading the project.
 
 The same idea runs through the scaffolding commands: `describe --agent` and
 `exemplify --agent` return JSON receipts instead of prose, and `--accept-offers`
@@ -21,72 +22,43 @@ output and never hand-editing what PhpSpec can generate.
 bin/phpspec run --format=agent
 ```
 
-One JSON object is written to stdout, with no ANSI and no prose. It is
-`--parallel`-safe: the whole document is emitted once, at the end of the run,
-when the parent process holds the complete result.
+Standard output carries one JSON object per line, with no ANSI and no prose.
+Decode a line, act on it, decode the next: on a long suite the first failure
+reaches you while the rest is still running. It is `--parallel`-safe; entries
+then arrive in completion order rather than file order.
 
-## The document
+## The stream
 
 A run of three examples — one passing, one failing, one erroring on a missing
-class — produces:
+class — produces four lines:
 
 ```json
-{
-  "suite": {
-    "v": 1, "event": "run_started", "suite": "default",
-    "examples": 3, "scenarios": 0, "steps": 0, "seed": null
-  },
-  "examples": [
-    {
-      "v": 1,
-      "id": "6fd046add251",
-      "example": "App\\Basket > totals the prices of its products",
-      "state": "failing",
-      "expected": { "matcher": "toBe", "value": 4000, "negated": false },
-      "actual": 3500,
-      "message": "Expected 3500 to be 4000",
-      "spec": "spec/App/Basket.spec.php:6",
-      "rerun": "run spec/App/Basket.spec.php:6"
-    },
-    {
-      "v": 1,
-      "id": "66b1647a77b6",
-      "example": "App\\Basket > applies a coupon",
-      "state": "error",
-      "message": "Class \"App\\Coupon\" not found",
-      "exception": {
-        "class": "Error",
-        "message": "Class \"App\\Coupon\" not found",
-        "at": "spec/App/Basket.spec.php:8"
-      },
-      "spec": "spec/App/Basket.spec.php:8",
-      "rerun": "run spec/App/Basket.spec.php:8",
-      "offer": { "action": "create_class", "target": "App\\Coupon" }
-    }
-  ],
-  "result": {
-    "v": 1, "event": "summary",
-    "examples": 3, "scenarios": 0, "steps": 0,
-    "passing": 1, "failing": 1, "errors": 1, "pending": 0, "skipped": 0,
-    "actionable": 2,
-    "duration_ms": 4,
-    "offers": [
-      { "action": "create_class", "target": "App\\Coupon" },
-      { "action": "fake_method", "target": "App\\Basket::total", "value": "4000" }
-    ]
-  }
-}
+{"v":2,"event":"run_started","suite":"default","seed":null}
+{"v":2,"event":"example","id":"6fd046add251","example":"App\\Basket > totals the prices of its products","state":"failing","expected":{"matcher":"toBe","value":4000,"negated":false},"actual":3500,"message":"Expected 3500 to be 4000","spec":"spec/App/Basket.spec.php:6","rerun":"run spec/App/Basket.spec.php:6"}
+{"v":2,"event":"example","id":"66b1647a77b6","example":"App\\Basket > applies a coupon","state":"error","message":"Class \"App\\Coupon\" not found","exception":{"class":"Error","message":"Class \"App\\Coupon\" not found","at":"spec/App/Basket.spec.php:8"},"spec":"spec/App/Basket.spec.php:8","rerun":"run spec/App/Basket.spec.php:8","offer":{"action":"create_class","target":"App\\Coupon"}}
+{"v":2,"event":"summary","examples":3,"scenarios":0,"steps":0,"passing":1,"failing":1,"errors":1,"pending":0,"skipped":0,"actionable":2,"duration_ms":4,"offers":[{"action":"create_class","target":"App\\Coupon"},{"action":"fake_method","target":"App\\Basket::total","value":"4000"}]}
 ```
 
-Every object carries `"v"` — the agent-protocol version (currently `1`).
+Every line carries `"v"` — the agent-protocol version (currently `2`; version
+`1` was a single JSON object) — and an `"event"` naming its kind:
 
-### `suite` — the header
+| `event` | When | Meaning |
+|---|---|---|
+| `run_started` | always, first | The run began: what it targets and the seed it was shuffled with. |
+| `example` | per entry | One example or scenario that needs attention, the moment it is known. |
+| `fatal` | when the run died | What stopped it; the counts describe only what ran before it. |
+| `summary` | always, last | The totals, and the one number to branch on. |
 
-`examples`, `scenarios` and `steps` are the totals for the run (`scenarios` and
-`steps` are non-zero only for Story BDD feature runs). `suite` is the suite name;
-`seed` is the random-order seed when one was used, else `null`.
+The order is guaranteed: `run_started` first, `summary` last, whatever happened
+in between. A run that never started still emits both.
 
-### `examples` — only what needs attention
+### `run_started` — the header
+
+`suite` is what the run targets, as the paths were given; `seed` is the
+random-order seed when one was used, else `null`. The totals are not here: at
+this point nothing has run yet, and the `summary` carries them.
+
+### `example` — only what needs attention
 
 **Passing entries are omitted.** A green suite of thousands need not spend
 tokens on entries an agent will never act on — the summary still counts them.
@@ -108,7 +80,8 @@ Scenario Outline is its own entry, named by its values
 | `message` | What went wrong, whatever the state. An `error` entry keeps `exception` too, for the class and the site. |
 | `spec` | The `file:line` of the failing assertion or the error, project-relative. For a scenario it is the line its `Scenario:` keyword sits on. |
 | `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. No full-suite re-run needed to verify one fix. |
-| `steps` | Scenarios only: the steps that did not pass, each `{ title, state, message? }`, in the order they were declared. |
+| `output` | What the code printed while this entry ran, present only when it printed something. See [Printed output](#printed-output). |
+| `steps` | Scenarios only: the steps that did not pass, each `{ title, state, message?, expected?, actual?, at? }`, in the order they were declared. |
 
 **`failing`** entries also carry the expectation:
 
@@ -121,6 +94,12 @@ Scenario Outline is its own entry, named by its values
 > **Note on `expected` vs `actual`.** These follow the universal convention:
 > `expected.value` is what should have happened, `actual` is what did. (PhpSpec's
 > internal naming is the reverse — the formatter un-inverts it for you.)
+
+A **story step** that failed an expectation reports the same pair, on the step
+inside `steps` (with `at`, the `file:line` of the expectation in your step file)
+and hoisted onto the entry next to `message`, so acting on the entry never means
+going a level deeper. A step whose code *threw* has a `message` and no
+expectation: there was none to report.
 
 **`error`** entries carry `exception` (`class`, `message`, `at`) as well. When
 the error names something PhpSpec can generate — a missing class, interface, or
@@ -135,13 +114,27 @@ Sometimes the deprecation is the actual clue behind a failure.
 
 Large or object values in `expected`/`actual` are exported compactly (long
 strings and arrays are truncated with a `{ "truncated": true, "length": N }`
-marker) so the document never blows up. Objects are named by what they are, not
-by which instance they were: an enum as `App\Status::Active`, anything that can
-describe itself as `App\Money("12.00 GBP")`, everything else as `App\Basket`.
+marker) so one entry can never flood a context window. Objects are named by what
+they are, not by which instance they were: an enum as `App\Status::Active`,
+anything that can describe itself as `App\Money("12.00 GBP")`, everything else
+as `App\Basket`.
 Two runs of the same failure therefore report the same value. Floats keep their
 fraction, so `90.0` is never reported as the `90` it was compared against.
 
-### `result` — the summary
+### Printed output
+
+Anything your code prints while an entry runs — an `echo` left in a spec, a
+`var_dump`, the output of a process a step shelled out to and echoed — is
+captured and reported as that entry's `output`, rather than landing in the
+middle of the stream and breaking it. For a scenario it is everything its steps
+printed, in order, **including the steps that passed**: a scenario usually runs
+the process in one step and reads the result in another.
+
+`output` is a string, or `{ "truncated": true, "length": N, "value": "…" }` when
+there was more than 4000 characters of it. The key is absent when nothing was
+printed.
+
+### `summary`
 
 The counts (`passing`, `failing`, `errors`, `pending`, `skipped`) are for the
 whole run, in the units the entries are reported in: one per example, one per
@@ -149,40 +142,34 @@ scenario. `steps` is a size, not a verdict. The one number to branch on is
 **`actionable`** = failing + errors + pending, plus a coverage gate the run
 missed and anything that stopped it.
 **Zero means there is nothing to do**, and it never disagrees with the exit code.
-`duration_ms` is the run's wall time; `offers` is the run-wide, de-duplicated
-list of code PhpSpec can generate.
+`duration_ms` is the run's wall time.
 
 | Field | Present when | Meaning |
 |---|---|---|
 | `rerun` | anything failed with a location | One command that re-runs every failing example at once, so a fix is checked against all of what it was meant to fix. |
 | `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
+| `offers` | the run found code it can generate | The run-wide, de-duplicated list. Absent when there is nothing to take. |
 
 ### `fatal`: when the run could not finish
 
 A run that never started (a missing bootstrap, an unknown format) or that died
-partway (a parse error, a class that fails to compile) still answers with a
-document. It carries a top-level `fatal` of `{ "message", "at" }`, holds whatever
-the run did manage to collect, and counts 1 in `actionable`.
+partway (a parse error, a class that fails to compile) still answers. It emits a
+`fatal` line of `{ "message", "at" }`, keeps whatever it managed to collect, and
+counts 1 in `actionable`:
 
 ```json
-{
-  "suite": { "v": 1, "event": "run_started", "suite": "default", "examples": 0, "steps": 0, "seed": null },
-  "examples": [],
-  "result": { "v": 1, "event": "summary", "examples": 0, "actionable": 1, "…": "…" },
-  "fatal": {
-    "message": "Class Mute contains 1 abstract method and must therefore be declared abstract or implement the remaining methods (Speaks::speak)",
-    "at": "spec/App/Broken.spec.php:8"
-  }
-}
+{"v":2,"event":"run_started","suite":"default","seed":null}
+{"v":2,"event":"fatal","message":"Class Mute contains 1 abstract method and must therefore be declared abstract or implement the remaining methods (Speaks::speak)","at":"spec/App/Broken.spec.php:8"}
+{"v":2,"event":"summary","examples":0,"actionable":1,"…":"…"}
 ```
 
-### Standard output carries the document, and nothing else
+### Standard output carries the stream, and nothing else
 
-Under `--format=agent` the document is the only thing written to standard
+Under `--format=agent` those lines are the only thing written to standard
 output: the randomised-order seed, the `--profile` table, coverage lines, report
-notes and error text all go elsewhere, and PHP's own fatal reports are sent to
-the error stream. Parse the whole of stdout as one JSON object; read stderr when
-you want the human text as well.
+notes, error text and anything your own code printed all go elsewhere, and PHP's
+own fatal reports are sent to the error stream. Parse stdout a line at a time;
+read stderr when you want the human text as well.
 
 ## Offers — code PhpSpec can generate for you
 
@@ -198,8 +185,8 @@ turned into flat data:
 | `create_steps` | `features/checkout.feature` | A feature has undefined steps. |
 | `fake_method` | `App\Basket::total` | An existing **empty** method that a spec pins to a value; `value` is the return expression `--fake` would insert (e.g. `"4000"`, `"'hello'"`, `"true"`). |
 
-Offers appear in two places: run-wide in `result.offers`, and per-example on the
-`offer` field of an `error` entry that maps to a concrete generation.
+Offers appear in two places: run-wide on the summary's `offers`, and per-example
+on the `offer` field of an `error` entry that maps to a concrete generation.
 
 ### Acting on offers
 
@@ -244,7 +231,7 @@ content is returned; the agent reads the file itself.
 bin/phpspec describe App/Basket --agent
 ```
 ```json
-{"v":1,"action":"describe","class":"App\\Basket","spec":"spec/App/Basket.spec.php","created":true}
+{"v":2,"action":"describe","class":"App\\Basket","spec":"spec/App/Basket.spec.php","created":true}
 ```
 
 `created` is `false` when the spec already existed (both commands are
@@ -254,7 +241,7 @@ idempotent). Combine `describe --agent` with `-e` to also add a method example:
 bin/phpspec describe App/Basket --agent -e checkout
 ```
 ```json
-{"v":1,"action":"describe","class":"App\\Basket","spec":"spec/App/Basket.spec.php","created":false,"example":{"method":"checkout","added":true}}
+{"v":2,"action":"describe","class":"App\\Basket","spec":"spec/App/Basket.spec.php","created":false,"example":{"method":"checkout","added":true}}
 ```
 
 `exemplify --agent` adds a single method example to a spec (creating the spec
@@ -264,7 +251,7 @@ first if needed):
 bin/phpspec exemplify App/Basket checkout --agent
 ```
 ```json
-{"v":1,"action":"exemplify","class":"App\\Basket","method":"checkout","spec":"spec/App/Basket.spec.php","added":true}
+{"v":2,"action":"exemplify","class":"App\\Basket","method":"checkout","spec":"spec/App/Basket.spec.php","added":true}
 ```
 
 `added` is `false` when an example for that method is already present.
@@ -275,7 +262,8 @@ Putting it together, an agent drives the full cycle through the CLI:
 
 1. **Scaffold** — `describe App/Basket --agent` (and `exemplify … --agent` per
    method) to lay down specs.
-2. **Read** — `run --format=agent`; branch on `result.actionable`.
+2. **Read** — `run --format=agent`; act on each `example` line as it arrives,
+   and branch on the `summary` line's `actionable`.
 3. **Generate** — for `create_*` offers, either write the code or run
    `run --accept-offers`; for `fake_method` offers, `run --accept-offers --fake`
    to get a first green.
@@ -296,14 +284,15 @@ Always run PhpSpec with the machine-readable formatter and parse the JSON:
 
     bin/phpspec run --format=agent
 
-Read the single JSON object it prints:
+It prints JSON Lines: one JSON object per line. Decode each line and branch on
+its `event`:
 
-- `result.actionable` is the number to act on. **0 means there is nothing left,
-  so stop.** It counts `failing + errors + pending`, plus a missed
-  `--coverage-min` gate and anything that stopped the run.
-- A run that could not finish carries a top-level `fatal` of `{ message, at }`.
-  Read it before anything else: the counts describe only what ran before it.
-- `examples[]` lists only what needs attention (passing examples are omitted).
+- `summary` is the last line. Its `actionable` is the number to act on. **0 means
+  there is nothing left, so stop.** It counts `failing + errors + pending`, plus
+  a missed `--coverage-min` gate and anything that stopped the run.
+- A `fatal` line means the run could not finish. Read it before anything else:
+  the counts describe only what ran before it.
+- `example` lines are what needs attention (passing examples are not reported).
   Each has a `state`:
   - `failing` — the code ran but behaviour is wrong. Look at `expected.value`
     (what the spec wants), `actual` (what the code produced), and `message`.
@@ -313,10 +302,12 @@ Read the single JSON object it prints:
     class and the site. If the entry has an `offer`, PhpSpec can generate the
     missing piece.
   - `pending` — an unimplemented example; implement it.
+- `output` on an entry is what the code printed while it ran: read it, it is
+  often the whole diagnosis for a scenario that drove a process of its own.
 - To verify a single fix, re-run just that example: take its `rerun` value and
   prepend the binary — e.g. `bin/phpspec run spec/App/Basket.spec.php:6`. Don't
-  re-run the whole suite to check one change. `result.rerun` does the same for
-  every failure at once.
+  re-run the whole suite to check one change. The `summary`'s `rerun` does the
+  same for every failure at once.
 - Track a specific failure across runs by its `id` (stable across edits that
   move lines). A failure is fixed when its `id` no longer appears. A failing
   Story BDD scenario has an `id` and a `rerun` of its own, just like an example.

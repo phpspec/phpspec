@@ -8,8 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
  - Every offer PhpSpec makes carries an id, and `phpspec accept <id>` applies exactly what was reported, refusing an offer whose file has since changed
+ - A failing story step reports the values it expected and got, on the step and on the entry, instead of only the sentence about them
+ - What a spec or step printed is captured and reported as the entry's output, in the agent stream and under the failure in the human formatters
 
 ### Changed
+ - `--format=agent` answers in JSON Lines (protocol v2): one event per line as it happens, so a failure arrives before the suite ends
+ - The agent summary omits offers when the run found nothing to generate, as it already did for rerun and coverage
  - generate no longer writes when there is nobody to ask: it offers the change under an id, and `run --accept-offers` stays as the bulk shortcut for a run's own offers
 
 ### Fixed
