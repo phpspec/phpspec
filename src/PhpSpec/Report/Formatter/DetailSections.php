@@ -104,6 +104,7 @@ final class DetailSections
                         $output->write('     ' . ($frame['file'] ?? '?') . ':' . ($frame['line'] ?? '?') . PHP_EOL);
                     }
                 };
+                $this->attachPrinted('Errors', $example->getOutput());
             }
         } elseif ($example->isFailure()) {
             $failures = array_values(array_filter(
@@ -117,6 +118,7 @@ final class DetailSections
                         $this->matchFailure($output, $failure);
                     }
                 };
+                $this->attachPrinted('Failures', $example->getOutput());
             }
         } elseif ($example->isSkipped()) {
             $this->sections['Skipped'][] = static function (OutputInterface $output) use ($title): void {
@@ -170,12 +172,14 @@ final class DetailSections
                             $output->write('     ' . ($frame['file'] ?? '?') . ':' . ($frame['line'] ?? '?') . PHP_EOL);
                         }
                     };
+                    $this->attachPrinted('Errors', $step->getOutput());
                 } elseif ($step->isFailure() && $error !== null) {
                     $message = $error->getMessage();
                     $this->sections['Failures'][] = static function (OutputInterface $output) use ($title, $message): void {
                         $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
                         $output->write(PHP_EOL . '  ' . $message . PHP_EOL);
                     };
+                    $this->attachPrinted('Failures', $step->getOutput());
                 }
 
                 foreach ($step->getWarnings() as $warning) {
@@ -261,6 +265,24 @@ final class DetailSections
             is_array($value) => var_export($value, true),
             is_object($value) => get_class($value) . '#' . spl_object_id($value),
             default => (string) $value,
+        };
+    }
+
+    /**
+     * Adds what the subject printed underneath the entry it belongs to, so the
+     * dump that explains a failure is read next to it instead of somewhere up
+     * the terminal. Nothing is added when nothing was printed.
+     */
+    private function attachPrinted(string $section, string $printed): void
+    {
+        if (trim($printed) === '') {
+            return;
+        }
+
+        $this->sections[$section][] = static function (OutputInterface $output) use ($printed): void {
+            $output->write(PHP_EOL . '  <fg=gray>printed:</>');
+            PrettyViews::printedOutput($output, $printed, 2);
+            $output->write(PHP_EOL);
         };
     }
 

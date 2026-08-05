@@ -66,7 +66,9 @@ wording), and fully determined artifacts are generated without any model call: a
 feature request becomes a Gherkin skeleton, and `generate the steps` writes the
 step definitions for the last-touched feature by parsing it. Everything else is
 authored by the AI. Each proposal is shown as a diff and written after a `[Y/n]`
-confirmation. Requires an AI provider (see [Configuration](configuration.md#ai)).
+confirmation. With no terminal to ask, nothing is written: the change is offered
+under an id for [`accept`](#accept) to apply. Requires an AI provider (see
+[Configuration](configuration.md#ai)).
 
 ```bash
 bin/phpspec generate a feature for adding a task    # Gherkin under features/, no model call
@@ -80,6 +82,23 @@ and the artifact type follows its extension. Every exchange is captured to
 `.phpspec/ai/last-request.json`: the resolved step and its reason, the composed
 prompt files, and the model's reply, so a surprising result is debuggable at a
 glance. Also available in pair mode as `/generate <instruction>`.
+
+### `accept`
+
+Applies an offer PhpSpec made earlier, by its id. A run reports what it could
+generate, and `generate` reports what it would write; both wait under an id
+rather than changing anything on their own, so the decision is taken by whoever
+read them.
+
+```bash
+bin/phpspec accept o_7f3a1c2d               # apply exactly that offer
+bin/phpspec accept o_7f3a1c2d o_91b0e4aa    # several at once, all or nothing
+```
+
+The id is derived from the offer itself, so it is stable while the offer stands.
+An unknown id is refused, and so is an offer whose file has changed since it was
+made. `--format=agent` returns the receipt as JSON. Offers live in
+`.phpspec/offers.json`; the fifty most recent stay on the table.
 
 ### `describe`
 
@@ -201,19 +220,22 @@ bin/phpspec run --format=html > report.html
 
 #### Agent Formatter
 
-Emits the whole run as a single machine-readable JSON document for coding agents
-— no ANSI, no prose. Each failing/erroring example carries the expectation, a
-stable `id`, a line-targeted `rerun` command, and any code-generation `offer`;
-the summary carries the counts, one `rerun` for every failure at once, the
-coverage verdict when coverage was collected, and a run-wide `offers` list:
+Speaks the run to a coding agent in JSON Lines, one event per line as it
+happens: no ANSI, no prose, and no waiting for a long suite to end. Each
+failing/erroring example arrives as its own line carrying the expectation, what
+the code printed, a stable `id`, a line-targeted `rerun` command and any
+code-generation `offer`; the closing `summary` line carries the counts, one
+`rerun` for every failure at once, the coverage verdict when coverage was
+collected, and a run-wide `offers` list:
 
 ```bash
 bin/phpspec run --format=agent
 ```
 
-The document is the only thing on standard output, whatever happens: the seed
-line, the `--profile` table, coverage lines and error text move aside, and a run
-that dies partway still ends with a document naming the `fatal` that stopped it.
+Those lines are the only thing on standard output, whatever happens: the seed
+line, the `--profile` table, coverage lines, error text and anything the subject
+itself printed all move aside, and a run that dies partway still ends with a
+`fatal` line naming what stopped it and a `summary` after it.
 
 See [Coding Agents](agent.md) for the full contract, the `--accept-offers` /
 `--fake` apply flow, and a ready-made `CLAUDE.md` snippet.
@@ -331,8 +353,9 @@ bin/phpspec run --parallel=4      # four workers
 Each worker runs a slice of the spec files in its own process and reports back
 via JUnit; the parent merges the results before rendering. Coverage
 (`--coverage*`) composes with `--parallel` -- workers collect per-example
-coverage and the parent merges it. `--format=agent` is parallel-safe too, since
-its single document is emitted once the parent holds the complete result.
+coverage and the parent merges it. `--format=agent` is parallel-safe too: the
+parent emits each event as a worker reports it, so entries arrive in completion
+order rather than file order.
 
 ### Code Generation
 

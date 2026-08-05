@@ -30,8 +30,14 @@ final class StepResult implements Results
     /** @var StepError|null Error that occurred during step execution */
     private ?StepError $error = null;
 
+    /** @var MatchResult|null The expectation that did not hold, when one failed */
+    private ?MatchResult $match = null;
+
     /** @var list<array{severity: int, message: string, file: string, line: int}> */
     private array $warnings = [];
+
+    /** @var string What the step printed while it ran */
+    private string $output = '';
 
     /**
      * @param string $title the step description
@@ -125,6 +131,26 @@ final class StepResult implements Results
     }
 
     /**
+     * Keeps the expectation that did not hold, so what was wanted and what was
+     * had stay values a reader can compare, instead of a sentence to parse back.
+     *
+     * @param MatchResult $match the failing expectation
+     */
+    public function setMatch(MatchResult $match): void
+    {
+        $this->match = $match;
+    }
+
+    /**
+     * Returns the expectation that did not hold, or null when the step did not
+     * fail on one (it threw, or it passed).
+     */
+    public function getMatch(): ?MatchResult
+    {
+        return $this->match;
+    }
+
+    /**
      * Checks whether this step's code threw, as opposed to an expectation
      * failing.
      */
@@ -151,5 +177,24 @@ final class StepResult implements Results
     public function getWarnings(): array
     {
         return $this->warnings;
+    }
+
+    /**
+     * Stores what the step printed while it ran: when a step drives a process
+     * of its own, what that process said is the whole of the diagnosis.
+     *
+     * @param string $output everything the step printed
+     */
+    public function setOutput(string $output): void
+    {
+        $this->output = $output;
+    }
+
+    /**
+     * Returns what the step printed while it ran.
+     */
+    public function getOutput(): string
+    {
+        return $this->output;
     }
 }

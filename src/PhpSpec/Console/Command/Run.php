@@ -18,6 +18,7 @@ use DOMException;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\CoverageReporter;
+use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Console\Command\Run\GenerationReport;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
@@ -28,9 +29,12 @@ use PhpSpec\Extensions\FormatterBridge;
 use PhpSpec\FilterRegistry;
 use PhpSpec\LineTargetRegistry;
 use PhpSpec\Loader;
+use PhpSpec\Offers\Offer;
+use PhpSpec\Offers\OfferBook;
 use PhpSpec\Parallel\ParallelRunner;
 use PhpSpec\Report\Formatter;
 use PhpSpec\Report\Formatter\Agent;
+use PhpSpec\Report\Formatter\Agent\Offers;
 use PhpSpec\Report\Formatter\Agent\ShutdownProcessEnd;
 use PhpSpec\Report\Formatter\Dot;
 use PhpSpec\Report\Formatter\Html;
@@ -63,6 +67,11 @@ final class Run extends Command
     /** @var array<int, string> partial coverage state files written by parallel workers */
     private array $coveragePartials = [];
 
+    /** What this run could generate, scanned once and shared by everything that reports it. */
+    private ?GenerationCandidates $candidates = null;
+
+    private readonly OfferBook $offers;
+
     /**
      * @param Loader $loader the spec/feature file loader
      * @param Runner $runner the spec runner
@@ -73,7 +82,10 @@ final class Run extends Command
         private readonly Runner $runner,
         private readonly Configuration $config = new Configuration('.'),
         private readonly ?ExtensionLoader $extensionLoader = null,
+        ?OfferBook $offers = null,
     ) {
+        $this->offers = $offers ?? new OfferBook();
+
         parent::__construct();
     }
 
@@ -280,6 +292,12 @@ final class Run extends Command
             ));
         } elseif (!in_array($this->resolveFormat($input), ['junit', 'html', 'agent'], true)) {
             $this->generateCode($prose, $results, (bool) $input->getOption('fake'), $input->isInteractive());
+        }
+
+        if ($formatter instanceof Agent) {
+            // A reader that was told about an offer can take it later by id,
+            // so what was reported has to still be there when they do.
+            $this->recordOffers($results);
         }
 
         return $results->status();
@@ -670,7 +688,7 @@ final class Run extends Command
             'html' => new Html($output),
             'agent' => new Agent(
                 $output,
-                fn(SuiteResult $results) => $this->codeGenerator(false)->scan($results)->toArray(),
+                fn(SuiteResult $results) => $this->candidates($results)->toArray(),
                 new ShutdownProcessEnd(),
             ),
             default => new Pretty($output),
@@ -752,6 +770,40 @@ final class Run extends Command
      * @param bool $interactive whether generation should prompt (false = auto-accept)
      * @return CodeGenerator
      */
+    /**
+     * Puts this run's generation offers on the table under the same ids the
+     * document reports, so `phpspec accept <id>` generates exactly the one that
+     * was read. Both sides derive the id from the offer itself, so neither has
+     * to tell the other what it chose.
+     */
+    private function recordOffers(SuiteResult $results): void
+    {
+        $candidates = $this->candidates($results);
+        $offers = [];
+
+        foreach (Offers::fromCandidates($candidates->toArray()) as $offer) {
+            $offers[] = Offer::generate(
+                $offer['action'],
+                $offer['target'],
+                $this->candidates($results)->only($offer['action'], $offer['target'])->toArray(),
+            );
+        }
+
+        if ($offers !== []) {
+            $this->offers->record(...$offers);
+        }
+    }
+
+    /**
+     * What this run could generate, scanned once: the document reports it and
+     * the offer book records it, and walking every result twice to say the same
+     * thing would be work for nothing.
+     */
+    private function candidates(SuiteResult $results): GenerationCandidates
+    {
+        return $this->candidates ??= $this->codeGenerator(false)->scan($results);
+    }
+
     private function codeGenerator(bool $interactive): CodeGenerator
     {
         return new CodeGenerator(

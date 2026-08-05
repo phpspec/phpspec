@@ -74,6 +74,24 @@ when('I run phpspec run with option {string}', function (string $options) {
     _phpspec_exec($this, 'run ' . $options);
 });
 
+// Taking what PhpSpec last offered, the way a reader does: by the ids on the
+// table, in a second command, after the offers have been seen.
+when('I accept the offers phpspec made', function () {
+    $book = $this->projectDir . '/.phpspec/offers.json';
+
+    if (!file_exists($book)) {
+        throw new \RuntimeException("No offers were made: $book does not exist.");
+    }
+
+    $ids = array_column(json_decode((string) file_get_contents($book), true)['offers'] ?? [], 'id');
+
+    if ($ids === []) {
+        throw new \RuntimeException('The offer book is empty.');
+    }
+
+    _phpspec_exec($this, 'accept ' . implode(' ', $ids));
+});
+
 // A run expected to kill its process (a fatal in a spec file) must not take
 // this suite down with it, so it always gets a process of its own.
 when('I run phpspec run in a fresh process with option {string}', function (string $options) {

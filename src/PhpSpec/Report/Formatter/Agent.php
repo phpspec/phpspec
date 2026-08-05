@@ -34,14 +34,16 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * @internal
- * Emits the whole run as a single machine-readable JSON document for a coding
- * agent: a run_started header, one entry per example (and feature step), and a
- * summary with totals. No ANSI, no prose — the failure itself is the payload.
+ * Speaks the run to a coding agent in JSON Lines: a run_started header, one
+ * event per example or scenario that needs attention as it happens, and a
+ * summary with the totals. No ANSI, no prose, and no waiting for the end of a
+ * long suite — the failure itself is the payload, delivered while the rest is
+ * still running.
  */
 final class Agent extends AbstractFormatter
 {
-    /** @var list<array<string, mixed>> the actionable entries (passing ones are omitted) */
-    private array $examples = [];
+    /** @var list<string> what each reported entry re-runs, for the summary's one command */
+    private array $rerunTargets = [];
 
     /** @var array<string, int> tally of every unit by state, including passing */
     private array $counts = [];
@@ -67,7 +69,10 @@ final class Agent extends AbstractFormatter
     /** The run's results, once it reached the end; null while it is still going. */
     private ?SuiteResult $results = null;
 
-    /** Whether the document has gone out, so it goes out exactly once. */
+    /** Whether the header has gone out, so it leads the stream exactly once. */
+    private bool $started = false;
+
+    /** Whether the summary has gone out, so it closes the stream exactly once. */
     private bool $published = false;
 
     /** What the run covered, when coverage was collected. */
@@ -110,7 +115,30 @@ final class Agent extends AbstractFormatter
         $this->seed = $seed;
     }
 
-    public function begin(): void {}
+    public function begin(): void
+    {
+        $this->start();
+    }
+
+    /**
+     * Opens the stream with the header, once. Every event goes through a caller
+     * that has started it first, so the header leads the output even when the
+     * run died before it ever began.
+     */
+    private function start(): void
+    {
+        if ($this->started) {
+            return;
+        }
+
+        $this->started = true;
+        $this->emit([
+            'v' => Schema::V,
+            'event' => Schema::EVENT_RUN_STARTED,
+            'suite' => $this->suite,
+            'seed' => $this->seed,
+        ]);
+    }
 
     public function printResult(Results $result): void
     {
@@ -182,9 +210,10 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * Writes the document, once. Every path out of the command comes through
-     * here, so an agent reads exactly one JSON object whether the run finished,
-     * failed its coverage gate, or died: calling it twice is a no-op.
+     * Closes the stream, once. Every path out of the command comes through
+     * here, so the last line an agent reads is always the summary whether the
+     * run finished, failed its coverage gate, or died: calling it twice is a
+     * no-op.
      */
     public function publish(): void
     {
@@ -193,21 +222,44 @@ final class Agent extends AbstractFormatter
         }
 
         $this->published = true;
+        $this->start();
+
+        if ($this->fatal !== null) {
+            $this->emit([
+                'v' => Schema::V,
+                'event' => Schema::EVENT_FATAL,
+                'message' => $this->fatal['message'],
+                'at' => $this->fatal['at'],
+            ]);
+        }
+
+        $this->emit($this->summary());
+    }
+
+    /**
+     * Writes one event on a line of its own, which is the whole of the wire
+     * format: a reader decodes a line and acts on it, without waiting for the
+     * run to end.
+     *
+     * @param array<string, mixed> $event
+     */
+    private function emit(array $event): void
+    {
         // The zero fraction is kept: a float that lost it would read as the int
         // it was compared against, turning a type failure into a tautology.
-        $json = json_encode($this->document(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION) ?: '{}';
+        $json = json_encode($event, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION) ?: '{}';
 
         $this->output->write($json . "\n", false, OutputInterface::OUTPUT_RAW);
     }
 
     /**
-     * The document as it stands: the header, every actionable entry, and the
-     * totals. Built from whatever has been collected, so a run cut short still
-     * reports what it managed to see.
+     * The closing event: the totals, in the units the entries were reported in.
+     * Built from whatever has been collected, so a run cut short still reports
+     * what it managed to see.
      *
      * @return array<string, mixed>
      */
-    private function document(): array
+    private function summary(): array
     {
         $failing = $this->counts['failing'] ?? 0;
         $errors = $this->counts['error'] ?? 0;
@@ -218,57 +270,48 @@ final class Agent extends AbstractFormatter
         $shortfall = $this->coverage !== null && !$this->coverage->met() ? 1 : 0;
         $stopped = $this->fatal !== null ? 1 : 0;
 
-        $result = [
-            'suite' => [
-                'v' => Schema::V,
-                'event' => Schema::EVENT_RUN_STARTED,
-                'suite' => $this->suite,
-                'examples' => $this->exampleCount,
-                'scenarios' => $this->scenarioCount,
-                'steps' => $this->stepCount,
-                'seed' => $this->seed,
-            ],
-            'examples' => $this->examples,
-            'result' => [
-                'v' => Schema::V,
-                'event' => Schema::EVENT_SUMMARY,
-                'examples' => $this->exampleCount,
-                'scenarios' => $this->scenarioCount,
-                'steps' => $this->stepCount,
-                // Counted in the units the entries are reported in: one per
-                // example, one per scenario. Steps are a size, not a verdict.
-                'passing' => $this->counts['passing'] ?? 0,
-                'failing' => $failing,
-                'errors' => $errors,
-                'pending' => $pending,
-                'skipped' => $this->counts['skipped'] ?? 0,
-                // The one number an agent checks: everything red or unfinished
-                // (failures + errors + pending), plus a missed coverage gate and
-                // anything that stopped the run. Zero means nothing to do.
-                'actionable' => $failing + $errors + $pending + $shortfall + $stopped,
-                'duration_ms' => (int) round(($this->results?->getDuration() ?? 0.0) * 1000),
-                'offers' => $this->results !== null ? $this->offers($this->results) : [],
-            ],
+        $summary = [
+            'v' => Schema::V,
+            'event' => Schema::EVENT_SUMMARY,
+            'examples' => $this->exampleCount,
+            'scenarios' => $this->scenarioCount,
+            'steps' => $this->stepCount,
+            // Counted in the units the entries are reported in: one per
+            // example, one per scenario. Steps are a size, not a verdict.
+            'passing' => $this->counts['passing'] ?? 0,
+            'failing' => $failing,
+            'errors' => $errors,
+            'pending' => $pending,
+            'skipped' => $this->counts['skipped'] ?? 0,
+            // The one number an agent checks: everything red or unfinished
+            // (failures + errors + pending), plus a missed coverage gate and
+            // anything that stopped the run. Zero means nothing to do.
+            'actionable' => $failing + $errors + $pending + $shortfall + $stopped,
+            'duration_ms' => (int) round(($this->results?->getDuration() ?? 0.0) * 1000),
         ];
 
         $rerun = $this->rerunEverything();
         if ($rerun !== null) {
-            $result['result']['rerun'] = $rerun;
+            $summary['rerun'] = $rerun;
         }
 
         if ($this->coverage !== null) {
-            $result['result']['coverage'] = [
+            $summary['coverage'] = [
                 'percent' => round($this->coverage->percent, 1),
                 'required' => $this->coverage->required,
                 'met' => $this->coverage->met(),
             ];
         }
 
-        if ($this->fatal !== null) {
-            $result['fatal'] = $this->fatal;
+        // Present only when there is something to take, as with everything else
+        // the summary carries conditionally: an empty list reads as a promise
+        // that was never made.
+        $offers = $this->results !== null ? $this->offers($this->results) : [];
+        if ($offers !== []) {
+            $summary['offers'] = $offers;
         }
 
-        return $result;
+        return $summary;
     }
 
     /**
@@ -278,16 +321,7 @@ final class Agent extends AbstractFormatter
      */
     private function rerunEverything(): ?string
     {
-        $targets = [];
-
-        foreach ($this->examples as $entry) {
-            $rerun = $entry['rerun'] ?? null;
-            if (is_string($rerun)) {
-                $targets[] = substr($rerun, strlen('run '));
-            }
-        }
-
-        $targets = array_values(array_unique($targets));
+        $targets = array_values(array_unique($this->rerunTargets));
 
         return $targets !== [] ? 'run ' . implode(' ', $targets) : null;
     }
@@ -347,9 +381,9 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * Counts an example by state, and keeps it in the emitted list unless it
-     * passed: a green suite of thousands need not spend tokens on entries an
-     * agent will never act on; the summary still counts them.
+     * Counts an example by state, and reports it unless it passed: a green
+     * suite of thousands need not spend tokens on entries an agent will never
+     * act on; the summary still counts them.
      *
      * @param array<string, mixed> $entry
      */
@@ -360,8 +394,26 @@ final class Agent extends AbstractFormatter
         $this->exampleCount++;
 
         if ($state !== 'passing') {
-            $this->examples[] = $entry;
+            $this->report($entry);
         }
+    }
+
+    /**
+     * Sends an entry out the moment it is known, and remembers what it re-runs
+     * so the summary can still hand over one command for the lot.
+     *
+     * @param array<string, mixed> $entry
+     */
+    private function report(array $entry): void
+    {
+        $this->start();
+
+        $rerun = $entry['rerun'] ?? null;
+        if (is_string($rerun)) {
+            $this->rerunTargets[] = substr($rerun, strlen('run '));
+        }
+
+        $this->emit($entry);
     }
 
     /**
@@ -373,6 +425,7 @@ final class Agent extends AbstractFormatter
         $name = $origin->name($example->getTitle());
         $entry = [
             'v' => Schema::V,
+            'event' => Schema::EVENT_EXAMPLE,
             'id' => $this->identify($name),
             'example' => $name,
             'state' => $state,
@@ -380,21 +433,9 @@ final class Agent extends AbstractFormatter
 
         if ($state === 'failing') {
             $match = $this->failingMatch($example);
-            // phpspec names these from the matcher's point of view — getExpected()
-            // is the expect() subject (the value the code produced) and getActual()
-            // is the matcher's argument (the target). The agent contract uses the
-            // universal convention, so they are swapped here: actual = the subject,
-            // expected = the target.
-            $entry['expected'] = [
-                'matcher' => $match?->getMatcher(),
-                'value' => ValueExporter::export($match?->getActual()),
-                'negated' => $match?->isNegated() ?? false,
-            ];
-            $entry['actual'] = ValueExporter::export($match?->getExpected());
+            $entry += $this->expectation($match);
             $entry['message'] = $example->getMessage();
-            $location = $this->location($match?->getFile(), $match?->getLine());
-            $entry['spec'] = $location;
-            $this->addRerun($entry, $location);
+            $this->addLocation($entry, $this->location($match?->getFile(), $match?->getLine()));
             // No offer on a failure: the code exists and the behaviour is wrong,
             // there is nothing to generate — `state: failing` already says so.
         } elseif ($state === 'error') {
@@ -407,9 +448,7 @@ final class Agent extends AbstractFormatter
             // Mirrored, so one field answers "what went wrong" whatever the
             // state: the exception adds the class and the site, not the text.
             $entry['message'] = $error?->getMessage();
-            $location = $this->location($error?->getFile(), $error?->getLine());
-            $entry['spec'] = $location;
-            $this->addRerun($entry, $location);
+            $this->addLocation($entry, $this->location($error?->getFile(), $error?->getLine()));
             // A missing class/method/interface the error names becomes a concrete
             // offer to generate it, right on the example that hit it. Only present
             // when the error actually maps to something a generator can create.
@@ -419,9 +458,25 @@ final class Agent extends AbstractFormatter
             }
         }
 
+        $this->attachOutput($entry, $example->getOutput());
         $this->attachNotes($entry, $example);
 
         return $entry;
+    }
+
+    /**
+     * Attaches what the subject printed while the entry ran, when it printed
+     * anything. A process a step drove, a dump left in a spec: whatever reached
+     * standard output is a diagnosis about this entry, and it is reported here
+     * rather than mixed into the stream the document is written on.
+     *
+     * @param array<string, mixed> $entry
+     */
+    private function attachOutput(array &$entry, string $printed): void
+    {
+        if ($printed !== '') {
+            $entry['output'] = ValueExporter::exportOutput($printed);
+        }
     }
 
     /**
@@ -485,6 +540,42 @@ final class Agent extends AbstractFormatter
     }
 
     /**
+     * The expectation that did not hold, as the two values a reader compares.
+     * Whatever failed, an example or a story step, it is reported the same way,
+     * so nobody has to read a sentence back to find out what was wanted.
+     *
+     * phpspec names these from the matcher's point of view: getExpected() is the
+     * expect() subject (the value the code produced) and getActual() is the
+     * matcher's argument (the target). The agent contract uses the universal
+     * convention, so they are swapped here: actual = the subject, expected =
+     * the target.
+     *
+     * A failure that came back without its site came back without its detail:
+     * a parallel worker reports through JUnit, which carries the message and
+     * nothing else, and its stand-in expectation compares null with null. Only
+     * the site tells that apart from a real failure whose values are null,
+     * which is a comparison worth reporting: an anonymous matcher (any
+     * __call-based custom or predicate matcher) has no name to give either.
+     *
+     * @return array{expected?: array{matcher: string|null, value: mixed, negated: bool}, actual?: mixed}
+     */
+    private function expectation(?MatchResult $match): array
+    {
+        if ($match === null || $this->location($match->getFile(), $match->getLine()) === null) {
+            return [];
+        }
+
+        return [
+            'expected' => [
+                'matcher' => $match->getMatcher(),
+                'value' => ValueExporter::export($match->getActual()),
+                'negated' => $match->isNegated(),
+            ],
+            'actual' => ValueExporter::export($match->getExpected()),
+        ];
+    }
+
+    /**
      * The first failing expectation of an example, or null when none failed.
      */
     private function failingMatch(ExampleResult $example): ?MatchResult
@@ -511,6 +602,8 @@ final class Agent extends AbstractFormatter
         $steps = [];
         $state = 'passing';
         $message = null;
+        $expectation = [];
+        $printed = '';
 
         foreach ($scenario->getResults() as $step) {
             if (!$step instanceof StepResult) {
@@ -519,6 +612,10 @@ final class Agent extends AbstractFormatter
 
             $this->stepCount++;
             $stepState = $this->stepState($step);
+            // Every step's, passing ones included: a scenario that shells out
+            // usually does it in a step that worked, and reads the result in the
+            // one that broke.
+            $printed .= $step->getOutput();
 
             if ($stepState === 'passing') {
                 continue;
@@ -529,6 +626,19 @@ final class Agent extends AbstractFormatter
             if ($stepState === 'failing' && $step->getError() !== null) {
                 $reported['message'] = $step->getError()->getMessage();
                 $message ??= $step->getError()->getMessage();
+            }
+
+            // An expectation that did not hold puts its two values on the step,
+            // and on the scenario alongside the message it already hoists, so a
+            // reader acting on the entry never has to go a level deeper.
+            $match = $step->getMatch();
+            if ($match !== null) {
+                $reported += $this->expectation($match);
+                $at = $this->location($match->getFile(), $match->getLine());
+                if ($at !== null) {
+                    $reported['at'] = $at;
+                }
+                $expectation = $expectation !== [] ? $expectation : $this->expectation($match);
             }
 
             $steps[] = $reported;
@@ -544,15 +654,19 @@ final class Agent extends AbstractFormatter
 
         $entry = [
             'v' => Schema::V,
+            'event' => Schema::EVENT_EXAMPLE,
             'id' => $this->identify($origin->name),
             'example' => $origin->name,
             'state' => $state,
         ];
 
+        $entry += $expectation;
+
         if ($message !== null) {
             $entry['message'] = $message;
         }
 
+        $this->attachOutput($entry, $printed);
         $entry['steps'] = $steps;
 
         // A scenario is addressed by the line its keyword sits on, which is what
@@ -560,13 +674,11 @@ final class Agent extends AbstractFormatter
         // its own instead of dragging the whole story suite with it. Only a
         // failure is addressed, as with examples: a scenario waiting on undefined
         // steps is work to write, not work to re-run.
-        $location = $this->location($origin->path, $origin->line);
-        if ($state === 'failing' && $location !== null) {
-            $entry['spec'] = $location;
-            $this->addRerun($entry, $location);
+        if ($state === 'failing') {
+            $this->addLocation($entry, $this->location($origin->path, $origin->line));
         }
 
-        $this->examples[] = $entry;
+        $this->report($entry);
     }
 
     /**
@@ -607,28 +719,34 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * Attaches the exact line-targeted command that re-runs just this one
-     * example, so an agent can verify a single fix without a full-suite run.
-     * phpspec resolves a "spec.php:LINE" path to the example whose closure spans
-     * that line, and the expectation/error site always falls inside it — so the
-     * entry's own location is a valid target. Omitted when there is none.
+     * Attaches where the entry failed, and the exact line-targeted command that
+     * re-runs just that one, so an agent can verify a single fix without a
+     * full-suite run. phpspec resolves a "spec.php:LINE" path to the example
+     * whose closure spans that line, and the expectation/error site always
+     * falls inside it, so the entry's own location is a valid target. Both are
+     * absent when the location is not known: a key that says null is a question
+     * a reader has to ask twice.
      *
      * @param array<string, mixed> $entry
      */
-    private function addRerun(array &$entry, ?string $location): void
+    private function addLocation(array &$entry, ?string $location): void
     {
         if ($location !== null) {
+            $entry['spec'] = $location;
             $entry['rerun'] = 'run ' . $location;
         }
     }
 
     /**
      * Renders a file:line as a project-relative, forward-slashed location, or
-     * null when either part is missing.
+     * null when either part is missing. A blank file or a line of zero is
+     * missing too: a result that came back without its site (a parallel worker
+     * reports through JUnit, which carries none) must not be dressed up as
+     * ":0", which reads like a location and re-runs like nonsense.
      */
     private function location(?string $file, ?int $line): ?string
     {
-        if ($file === null || $line === null) {
+        if ($file === null || $line === null || $file === '' || $line <= 0) {
             return null;
         }
 

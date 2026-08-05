@@ -15,6 +15,7 @@
 namespace PhpSpec\Specification;
 
 use Closure;
+use PhpSpec\CapturedOutput;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\ExampleCompleted;
 use PhpSpec\EventDispatcher\Event\ExampleErrored;
@@ -163,20 +164,26 @@ class Example implements ExampleResultRegistry, Rebindable
             return true;
         }, E_WARNING | E_NOTICE | E_DEPRECATED | E_USER_WARNING | E_USER_NOTICE | E_USER_DEPRECATED);
 
+        // What the subject prints belongs to the example that provoked it, not
+        // to whatever the terminal happened to be showing at the time.
+        $printed = new CapturedOutput();
+
         $start = hrtime(true);
         try {
-            ($this->example)(...$this->resolveClosureArgs($this->example));
+            $printed->around(fn() => ($this->example)(...$this->resolveClosureArgs($this->example)));
         } catch (PendingException $e) {
             restore_error_handler();
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->title, [], false, true);
             $this->exampleResult->setWarnings($warnings);
+            $this->exampleResult->setOutput($printed->text());
             DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (SkippedException $e) {
             restore_error_handler();
             DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
             $this->exampleResult = new ExampleResult($this->title, [], false, false, true);
+            $this->exampleResult->setOutput($printed->text());
             DispatcherRegistry::dispatcher()->dispatch(new ExampleCompleted($this->title, $this->exampleResult), ExampleCompleted::NAME);
             return $this->exampleResult;
         } catch (\Throwable $e) {
@@ -191,6 +198,7 @@ class Example implements ExampleResultRegistry, Rebindable
         restore_error_handler();
         DispatcherRegistry::dispatcher()->removeSubscriber($subscriber);
         $this->exampleResult->setDuration($elapsed);
+        $this->exampleResult->setOutput($printed->text());
         $unique = [];
         foreach ($warnings as $w) {
             $key = $w['message'] . ':' . $w['file'] . ':' . $w['line'];

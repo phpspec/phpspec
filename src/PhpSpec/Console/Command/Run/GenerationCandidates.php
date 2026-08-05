@@ -46,6 +46,39 @@ final readonly class GenerationCandidates
     ) {}
 
     /**
+     * The candidates behind one offer alone, so accepting it generates that and
+     * nothing else. The action names live here, beside the lists they select,
+     * rather than in whatever happens to be reporting them.
+     *
+     * @param string $action the offer's action, e.g. create_class
+     * @param string $target what that offer would generate
+     */
+    public function only(string $action, string $target): self
+    {
+        $named = static fn(array $method): string => (string) ($method['className'] ?? '') . '::' . (string) ($method['methodName'] ?? '');
+        $matching = static fn(array $methods): array => array_values(array_filter(
+            $methods,
+            static fn(array $method): bool => $named($method) === $target,
+        ));
+        $named_ = static fn(array $fqcns): array => array_values(array_filter($fqcns, static fn(string $fqcn): bool => $fqcn === $target));
+
+        return match ($action) {
+            'create_class' => new self(
+                missingSpecClasses: $named_($this->missingSpecClasses),
+                missingStepClasses: $named_($this->missingStepClasses),
+            ),
+            'create_interface' => new self(missingMockTypes: $named_($this->missingMockTypes)),
+            'create_method' => new self(
+                undefinedMockInterfaceMethods: $matching($this->undefinedMockInterfaceMethods),
+                undefinedClassMethods: $matching($this->undefinedClassMethods),
+            ),
+            'fake_method' => new self(fakeableMethods: $matching($this->fakeableMethods)),
+            'create_steps' => new self(undefinedSteps: array_intersect_key($this->undefinedSteps, [$target => true])),
+            default => new self(),
+        };
+    }
+
+    /**
      * Returns whether there is nothing to generate.
      *
      * @return bool true when every candidate list is empty

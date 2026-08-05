@@ -14,6 +14,7 @@
 
 namespace PhpSpec\StoryBDD;
 
+use PhpSpec\CapturedOutput;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\ScenarioResult;
@@ -224,10 +225,24 @@ final readonly class Feature implements SpecBlock
     }
 
     /**
+     * Runs the matched step, keeping what it printed on its result.
+     */
+    private function executeStep(StepNode $step, string $title, StepMatch $match, object $world, StepMatchCollector $collector): StepResult
+    {
+        // What the step printed belongs to the step: a scenario that drives a
+        // process of its own says everything it knows through that output.
+        $printed = new CapturedOutput();
+        $result = $this->outcomeOf($step, $title, $match, $world, $collector, $printed);
+        $result->setOutput($printed->text());
+
+        return $result;
+    }
+
+    /**
      * Runs the matched step body and settles its outcome: an expectation that
      * did not hold is a failure; a step whose code threw is an error.
      */
-    private function executeStep(StepNode $step, string $title, StepMatch $match, object $world, StepMatchCollector $collector): StepResult
+    private function outcomeOf(StepNode $step, string $title, StepMatch $match, object $world, StepMatchCollector $collector, CapturedOutput $printed): StepResult
     {
         try {
             $args = $match->args;
@@ -237,7 +252,7 @@ final readonly class Feature implements SpecBlock
             if ($step->table !== null) {
                 $args[] = $step->table;
             }
-            $match->callback->call($world, ...$args);
+            $printed->around(fn() => $match->callback->call($world, ...$args));
         } catch (PendingException $e) {
             return new StepResult($title, 'pending');
         } catch (SkippedException $e) {
@@ -256,6 +271,9 @@ final readonly class Feature implements SpecBlock
                 $result = new StepResult($title, 'failure');
                 $ex = new \RuntimeException($message);
                 $result->setError(new StepError($message, $ex));
+                // The expectation itself travels with the result, so a reader is
+                // handed the two values instead of the sentence about them.
+                $result->setMatch($matchResult);
                 return $result;
             }
         }

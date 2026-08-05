@@ -17,6 +17,7 @@ namespace PhpSpec\Console;
 use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
+use PhpSpec\Console\Command\Accept;
 use PhpSpec\Console\Command\Describe;
 use PhpSpec\Console\Command\Exemplify;
 use PhpSpec\Console\Command\Generate;
@@ -111,6 +112,7 @@ final class Application extends BaseApplication
         $defaultCommands[] = new Refactor($config);
         $defaultCommands[] = new Next($config);
         $defaultCommands[] = new Generate($config);
+        $defaultCommands[] = new Accept(config: $config);
 
         foreach ($extensionLoader->getCommands() as $cmd) {
             $defaultCommands[] = $cmd;

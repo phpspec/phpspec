@@ -186,7 +186,7 @@ The `Report` interface delegates to a `Formatter`. Available formatters:
 | `Tap` | TAP (Test Anything Protocol) format |
 | `Junit` | JUnit XML for CI integration |
 | `Html` | Self-contained HTML report |
-| `Agent` | Single machine-readable JSON document for coding agents (see [Coding Agents](agent.md)) |
+| `Agent` | Machine-readable JSON Lines for coding agents, one event per line (see [Coding Agents](agent.md)) |
 
 ### Pretty Formatter
 

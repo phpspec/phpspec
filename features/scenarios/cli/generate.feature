@@ -65,9 +65,10 @@ Feature: Generate code from a natural-language instruction
         api_key: test-key
       """
     When I run phpspec command "generate a feature for completing_a_task.feature"
+    Then the output should contain "features/completing_a_task.feature"
+    When I accept the offers phpspec made
     Then a file "features/completing_a_task.feature" should be generated
     And the file "features/completing_a_task.feature" should contain "Feature:"
-    And the output should contain "features/completing_a_task.feature"
 
   Scenario: generate writes step definitions for the last-touched feature deterministically
     Given a phpspec.yaml config:
@@ -86,4 +87,6 @@ Feature: Generate code from a natural-language instruction
       """
     When I run phpspec command "generate the steps"
     Then the output should contain "features/steps/adding_a_task.steps.php"
-    And the file "features/steps/adding_a_task.steps.php" should contain "given("
+    And the output should contain "phpspec accept o_"
+    When I accept the offers phpspec made
+    Then the file "features/steps/adding_a_task.steps.php" should contain "given("

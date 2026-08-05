@@ -1,7 +1,22 @@
 Feature: Agent output format
   As a coding agent
-  I want phpspec results as a single machine-readable JSON document
-  So that I can decide my next action without parsing prose
+  I want phpspec results as machine-readable JSON events, one per line
+  So that I can act on a failure while the rest of the suite is still running
+
+  Scenario: The run answers in JSON Lines, one event per line
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds', function () { expect(1)->toBe(2); });
+          it('subtracts', function () { expect(3)->toBe(4); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should have 4 events
+    And the first event should be "run_started"
+    And the last event should be "summary"
 
   Scenario: A passing run emits a valid JSON document with run_started and summary
     Given a spec file "spec/App/Calc.spec.php":
@@ -31,6 +46,47 @@ Feature: Agent output format
     And the output should contain "expected"
     And the output should contain "4000"
     And the output should contain "3500"
+
+  Scenario: What a failing example printed rides with it, off the document's stream
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () {
+              echo "the subject said this";
+              expect(3500)->toBe(4000);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the reported entry should have printed "the subject said this"
+
+  Scenario: What a scenario printed rides with it, whichever step printed it
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/counting.feature":
+      """
+      Feature: Counting
+        Scenario: Counting up
+          Given I run the counter
+          Then it should have counted 3
+      """
+    And a step file "features/steps/counting.steps.php":
+      """
+      <?php
+
+      given('I run the counter', function () {
+          echo "the counter said 2";
+          $this->count = 2;
+      });
+
+      then('it should have counted {int}', function (int $expected) {
+          expect($this->count)->toBe($expected);
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the reported entry should have printed "the counter said 2"
 
   Scenario: A failing example carries a line-targeted rerun command
     Given a spec file "spec/App/Calc.spec.php":
@@ -155,6 +211,27 @@ Feature: Agent output format
     And the output should contain "Checkout > Paying for a basket"
     And the output should contain "no basket yet"
     And the output should contain "run features/checkout.feature:2"
+
+  Scenario: A failing step carries the expectation, not only the English of it
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/counting.feature":
+      """
+      Feature: Counting
+        Scenario: Counting up
+          Given I count 2 items
+      """
+    And a step file "features/steps/counting.steps.php":
+      """
+      <?php
+
+      given('I count {int} items', function (int $count) {
+          expect($count)->toBe(3);
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the report should have 1 entry
+    And the failing step should report expected 3 and actual 2
 
   Scenario: The same step twice in one scenario is still one entry
     Given a PSR-4 project with "spec", "src", and "features" directories
@@ -298,6 +375,8 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the output should contain "fatal"
     And the output should contain "Bootstrap file not found"
+    And the first event should be "run_started"
+    And the last event should be "summary"
     And the exit code should be 1
 
   Scenario: A fatal still leaves a document, naming what stopped the run
@@ -320,6 +399,23 @@ Feature: Agent output format
     Then the standard output should be valid JSON
     And the output should contain "fatal"
     And the output should contain "abstract method"
+
+  Scenario: An offer can be taken on its own, by the id the run reported
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+      describe('App\Basket', function () {
+          it('applies a coupon', function () {
+              expect(new App\Coupon())->toBeAnInstanceOf(App\Coupon::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "create_class"
+    And no file "src/App/Coupon.php" should be generated
+    When I accept the offers phpspec made
+    Then a class file "src/App/Coupon.php" should be generated
 
   Scenario: A missing class surfaces as an offer, and --accept-offers generates it
     Given a spec file "spec/App/Basket.spec.php":

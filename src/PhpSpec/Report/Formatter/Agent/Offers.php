@@ -14,6 +14,8 @@
 
 namespace PhpSpec\Report\Formatter\Agent;
 
+use PhpSpec\Offers\Offer;
+
 /**
  * @internal
  * Turns a run's code-generation candidates (the interactive runner's "shall I
@@ -26,7 +28,7 @@ final class Offers
 {
     /**
      * @param array<string, mixed> $candidates the GenerationCandidates::toArray() output
-     * @return list<array{action: string, target: string, value?: string}>
+     * @return list<array{id: string, action: string, target: string, value?: string}>
      */
     public static function fromCandidates(array $candidates): array
     {
@@ -40,7 +42,9 @@ final class Offers
             }
 
             $seen[$key] = true;
-            $offer = ['action' => $action, 'target' => $target];
+            // The id is derived, not invented, so the command that records the
+            // offer and the document that reports it agree without arranging it.
+            $offer = ['id' => Offer::generate($action, $target, [])->id, 'action' => $action, 'target' => $target];
             if ($value !== null) {
                 $offer['value'] = $value;
             }
@@ -83,25 +87,28 @@ final class Offers
      * Derives the single generation offer implied by an error message — a
      * missing class, mock interface, or method — or null when the error is not
      * something a generator can resolve. This lets each errored example carry
-     * its own offer, not just the run-wide summary.
+     * its own offer, not just the run-wide summary. Its id is the run-wide
+     * offer's id, because both are derived from the same action and target.
      *
-     * @return array{action: string, target: string}|null
+     * @return array{id: string, action: string, target: string}|null
      */
     public static function forError(string $message): ?array
     {
-        if (preg_match('/^Class "([^"]+)" not found$/', $message, $matches)) {
-            return ['action' => 'create_class', 'target' => $matches[1]];
+        $offer = match (true) {
+            preg_match('/^Class "([^"]+)" not found$/', $message, $matches) === 1
+                => ['action' => 'create_class', 'target' => $matches[1]],
+            preg_match('/Cannot create mock: class or interface \'([^\']+)\' does not exist/', $message, $matches) === 1
+                => ['action' => 'create_interface', 'target' => $matches[1]],
+            preg_match('/Call to undefined method ([^:]+)::([A-Za-z0-9_]+)\(\)/', $message, $matches) === 1
+                => ['action' => 'create_method', 'target' => $matches[1] . '::' . $matches[2]],
+            default => null,
+        };
+
+        if ($offer === null) {
+            return null;
         }
 
-        if (preg_match('/Cannot create mock: class or interface \'([^\']+)\' does not exist/', $message, $matches)) {
-            return ['action' => 'create_interface', 'target' => $matches[1]];
-        }
-
-        if (preg_match('/Call to undefined method ([^:]+)::([A-Za-z0-9_]+)\(\)/', $message, $matches)) {
-            return ['action' => 'create_method', 'target' => $matches[1] . '::' . $matches[2]];
-        }
-
-        return null;
+        return ['id' => Offer::generate($offer['action'], $offer['target'], [])->id] + $offer;
     }
 
     /**

@@ -57,7 +57,7 @@ English:
 bin/phpspec describe App/Calculator --agent
 ```
 ```json
-{"v":1,"action":"describe","class":"App\\Calculator","spec":"spec/App/Calculator.spec.php","created":true}
+{"v":2,"action":"describe","class":"App\\Calculator","spec":"spec/App/Calculator.spec.php","created":true}
 ```
 
 `created` (and `exemplify`'s `added`) report whether anything changed. See

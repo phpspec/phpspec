@@ -16,6 +16,7 @@ namespace PhpSpec\CodeGeneration;
 
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
+use RuntimeException;
 
 /**
  * @internal
@@ -86,9 +87,18 @@ final class SpecGenerator
      * example.
      *
      * @param string $spec the class path using forward slashes
+     * @throws RuntimeException when the name cannot name a class in PHP
      */
     public function skeleton(string $spec): string
     {
+        // Every writer comes through here, so a name PHP could not parse is
+        // refused once, before it reaches a file that would break the suite.
+        $problem = PhpName::classProblem($spec);
+
+        if ($problem !== null) {
+            throw new RuntimeException($problem);
+        }
+
         $pieces = explode('/', $spec);
         $use = '';
         if (count($pieces) > 1) {
@@ -116,9 +126,16 @@ final class SpecGenerator
      * @param string $content the current spec content
      * @param string $spec the class path using forward slashes
      * @param string $method the method name to exemplify
+     * @throws RuntimeException when the name cannot name a method in PHP
      */
     public function withExample(string $content, string $spec, string $method): ?string
     {
+        $problem = PhpName::methodProblem($method);
+
+        if ($problem !== null) {
+            throw new RuntimeException($problem);
+        }
+
         // Already exemplified: don't append an identical example again.
         if (str_contains($content, "it(\"should $method\",")) {
             return null;
