@@ -59,4 +59,6 @@ Feature: Agent scaffolding commands
     Then the output should be valid JSON
     And the output should contain "applied"
     And the output should contain "features/steps/adding_a_task.steps.php"
-    And the file "features/steps/adding_a_task.steps.php" should contain "given("
+    And no file "features/steps/adding_a_task.steps.php" should be generated
+    When I accept the offers phpspec made
+    Then the file "features/steps/adding_a_task.steps.php" should contain "given("

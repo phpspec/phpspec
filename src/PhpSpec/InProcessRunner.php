@@ -219,6 +219,11 @@ final class InProcessRunner
                         $result['instruction'] = [];
                     }
                     $result['instruction'][] = $part;
+                } elseif ($command === 'accept') {
+                    if (!isset($result['offer']) || !is_array($result['offer'])) {
+                        $result['offer'] = [];
+                    }
+                    $result['offer'][] = $part;
                 }
             }
         }

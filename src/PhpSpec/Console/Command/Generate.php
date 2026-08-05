@@ -23,6 +23,8 @@ use PhpSpec\Ai\Contracts\ProviderInterface;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Refactor\Diff;
 use PhpSpec\Filesystem;
+use PhpSpec\Offers\Offer;
+use PhpSpec\Offers\OfferBook;
 use PhpSpec\RealFilesystem;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -63,7 +65,7 @@ final class Generate extends Command
             ->setName('generate')
             ->setDescription('Generate a feature, steps, spec, or code from a natural-language instruction (requires AI)')
             ->addArgument('instruction', Argument::IS_ARRAY, 'What to build, in plain English')
-            ->addOption('format', 'f', Option::VALUE_REQUIRED, 'Output format: pretty, or agent (machine-readable JSON; applies without prompting)', 'pretty');
+            ->addOption('format', 'f', Option::VALUE_REQUIRED, 'Output format: pretty, or agent (machine-readable JSON receipt for coding agents)', 'pretty');
     }
 
     protected function execute(Input $input, Output $output): int
@@ -105,39 +107,79 @@ final class Generate extends Command
         }
 
         $writer = new Writer($this->filesystem);
+        $offered = [];
+
         foreach ($outcome->proposals as $proposal) {
             $this->showDiff($output, $proposal);
 
-            if ($input->isInteractive() && !$this->confirm($input, $output)) {
-                $output->writeln('  <fg=gray>Left unchanged.</>');
+            if ($input->isInteractive()) {
+                if (!$this->confirm($input, $output)) {
+                    $output->writeln('  <fg=gray>Left unchanged.</>');
+
+                    continue;
+                }
+
+                $writer->apply($proposal);
+                $output->writeln(sprintf('  <fg=green>%s %s</>', $proposal->isNew ? 'Created' : 'Updated', $proposal->path));
 
                 continue;
             }
 
-            $writer->apply($proposal);
-            $output->writeln(sprintf('  <fg=green>%s %s</>', $proposal->isNew ? 'Created' : 'Updated', $proposal->path));
+            // Nobody to ask is not the same as a yes. The change waits on the
+            // table under an id, for whoever reads this to accept.
+            $offered[] = $this->offer($proposal);
+        }
+
+        if ($offered !== []) {
+            $this->book()->record(...$offered);
+            $output->writeln('');
+            foreach ($offered as $offer) {
+                $output->writeln(sprintf('  <fg=yellow>Offered %s</> <fg=gray>%s</>', $offer->id, $offer->path));
+            }
+            $output->writeln(sprintf('  <fg=gray>Apply with:</> phpspec accept %s', implode(' ', array_map(static fn(Offer $offer): string => $offer->id, $offered))));
         }
 
         return 0;
     }
 
     /**
-     * The agent path: a machine consumer is never prompted, so every proposal
-     * applies, and the one JSON document carries the receipts (path, action,
-     * applied), never file content: the agent reads the files it now owns.
+     * The agent path: nothing is applied here either. Each proposal goes on the
+     * table with an id, and the receipt names it, so the reader accepts what it
+     * has actually read rather than whatever a second call would produce.
      */
     private function generateForAgent(Output $output, Outcome $outcome): int
     {
-        $writer = new Writer($this->filesystem);
-        $applied = [];
-        foreach ($outcome->proposals as $proposal) {
-            $writer->apply($proposal);
-            $applied[] = true;
+        $offers = array_map(fn(Proposal $proposal): Offer => $this->offer($proposal), $outcome->proposals);
+
+        if ($offers !== []) {
+            $this->book()->record(...$offers);
         }
 
-        $output->write((new OutcomePresenter())->render('generate', $outcome, $applied), false, Output::OUTPUT_RAW);
+        $presenter = new OutcomePresenter();
+        $document = $presenter->document('generate', $outcome, array_fill(0, count($offers), false));
+
+        foreach ($offers as $index => $offer) {
+            $document['proposals'][$index]['id'] = $offer->id;
+        }
+
+        $json = json_encode($document, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+        $output->write($json . "\n", false, Output::OUTPUT_RAW);
 
         return $outcome->proposals === [] ? 1 : 0;
+    }
+
+    /**
+     * The proposal as an offer that can be accepted later, remembering the file
+     * as it stands now so a stale acceptance is refused.
+     */
+    private function offer(Proposal $proposal): Offer
+    {
+        return Offer::write($proposal->path, $proposal->new, $proposal->isNew, $proposal->old);
+    }
+
+    private function book(): OfferBook
+    {
+        return new OfferBook($this->filesystem);
     }
 
     /**

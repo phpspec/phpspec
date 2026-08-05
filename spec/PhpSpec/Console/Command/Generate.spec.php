@@ -37,26 +37,72 @@ describe(Generate::class, function () {
         expect($tester->getDisplay())->toContain('AI configuration required');
     });
 
-    it('shows a NEW FILE diff and writes the proposal non-interactively', function (Filesystem $fs) use ($withAi) {
+    $proposing = fn(): ReplayProvider => new ReplayProvider([
+        new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'src/App/Calc.php', 'content' => "<?php\nclass Calc {}"])]),
+    ]);
+
+    // The offer book keeps itself on disk; a write to .phpspec is bookkeeping,
+    // not a change to the project.
+    $projectWrites = fn(array $written): array => array_filter(
+        $written,
+        fn(string $path): bool => !str_contains($path, '/.phpspec/'),
+        ARRAY_FILTER_USE_KEY,
+    );
+
+    it('shows a NEW FILE diff and offers the change rather than writing it', function (Filesystem $fs) use ($withAi, $proposing, $projectWrites) {
         $withAi($fs);
         $written = [];
         allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
             $written[$p] = $c;
         });
 
-        $provider = new ReplayProvider([
-            new Response('', [new ToolCall('1', 'propose_edit', ['path' => 'src/App/Calc.php', 'content' => "<?php\nclass Calc {}"])]),
-        ]);
-        $cmd = new Generate(new Configuration('.', $fs), $fs, $provider);
+        $cmd = new Generate(new Configuration('.', $fs), $fs, $proposing());
         $tester = new CommandTester($cmd);
 
+        // Nobody to ask is not the same as a yes.
         $tester->execute(['instruction' => ['a', 'Calc', 'class']], ['interactive' => false]);
 
         $out = $tester->getDisplay();
         expect($out)->toContain('[NEW FILE]');
         expect($out)->toContain('src/App/Calc.php');
-        expect($out)->toContain('Created');
-        expect($written[getcwd() . '/src/App/Calc.php'] ?? '')->toContain('class Calc');
+        expect($out)->toContain('phpspec accept o_');
+        expect($projectWrites($written))->toBe([]);
+    });
+
+    it('gives an agent an id for each proposal, unapplied', function (Filesystem $fs) use ($withAi, $proposing, $projectWrites) {
+        $withAi($fs);
+        $written = [];
+        allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$written) {
+            $written[$p] = $c;
+        });
+
+        $cmd = new Generate(new Configuration('.', $fs), $fs, $proposing());
+        $tester = new CommandTester($cmd);
+
+        $tester->execute(['instruction' => ['a', 'Calc', 'class'], '--format' => 'agent'], ['interactive' => false]);
+
+        $document = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        expect($document['proposals'][0]['path'])->toBe('src/App/Calc.php');
+        expect($document['proposals'][0]['applied'])->toBeFalse();
+        expect($document['proposals'][0]['id'])->toStartWith('o_');
+        expect($projectWrites($written))->toBe([]);
+    });
+
+    it('puts the proposal on the table, so accept can take exactly what was read', function (Filesystem $fs) use ($withAi, $proposing) {
+        $withAi($fs);
+        $stored = [];
+        allow($fs->write())->toReturnUsing(function (string $p, string $c) use (&$stored) {
+            $stored[$p] = $c;
+        });
+
+        $cmd = new Generate(new Configuration('.', $fs), $fs, $proposing());
+        $tester = new CommandTester($cmd);
+
+        $tester->execute(['instruction' => ['a', 'Calc', 'class'], '--format' => 'agent'], ['interactive' => false]);
+
+        $book = json_decode($stored[getcwd() . '/.phpspec/offers.json'] ?? '{}', true);
+        expect($book['offers'][0]['path'])->toBe('src/App/Calc.php');
+        expect($book['offers'][0]['content'])->toContain('class Calc');
     });
 
     it('reports when nothing could be generated', function (Filesystem $fs) use ($withAi) {
