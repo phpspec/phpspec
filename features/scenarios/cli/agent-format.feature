@@ -321,6 +321,23 @@ Feature: Agent output format
     And the output should contain "fatal"
     And the output should contain "abstract method"
 
+  Scenario: An offer can be taken on its own, by the id the run reported
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+      describe('App\Basket', function () {
+          it('applies a coupon', function () {
+              expect(new App\Coupon())->toBeAnInstanceOf(App\Coupon::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "create_class"
+    And no file "src/App/Coupon.php" should be generated
+    When I accept the offers phpspec made
+    Then a class file "src/App/Coupon.php" should be generated
+
   Scenario: A missing class surfaces as an offer, and --accept-offers generates it
     Given a spec file "spec/App/Basket.spec.php":
       """

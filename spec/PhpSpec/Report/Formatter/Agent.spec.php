@@ -315,7 +315,9 @@ describe(Agent::class, function () {
 
         $example = $render(new SuiteResult([new SpecificationResult('App\\Basket', [$errored])]))['examples'][0];
 
-        expect($example['offer'])->toBe(['action' => 'create_class', 'target' => 'App\\Coupon']);
+        expect($example['offer']['action'])->toBe('create_class');
+        expect($example['offer']['target'])->toBe('App\\Coupon');
+        expect($example['offer']['id'])->toStartWith('o_');
     });
 
     it('summarises totals and duration, offers empty for now', function () use ($render) {
@@ -349,7 +351,9 @@ describe(Agent::class, function () {
         $agent->format($suite);
 
         $result = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR)['result'];
-        expect($result['offers'])->toBe([['action' => 'create_class', 'target' => 'App\\Coupon']]);
+        expect($result['offers'][0]['action'])->toBe('create_class');
+        expect($result['offers'][0]['target'])->toBe('App\\Coupon');
+        expect($result['offers'][0]['id'])->toStartWith('o_');
     });
 
     it('counts a story run in scenarios and steps, never in examples', function () use ($render) {

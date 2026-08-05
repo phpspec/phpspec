@@ -134,7 +134,7 @@ final class Generate extends Command
             $this->book()->record(...$offered);
             $output->writeln('');
             foreach ($offered as $offer) {
-                $output->writeln(sprintf('  <fg=yellow>Offered %s</> <fg=gray>%s</>', $offer->id, $offer->path));
+                $output->writeln(sprintf('  <fg=yellow>Offered %s</> <fg=gray>%s</>', $offer->id, $offer->target));
             }
             $output->writeln(sprintf('  <fg=gray>Apply with:</> phpspec accept %s', implode(' ', array_map(static fn(Offer $offer): string => $offer->id, $offered))));
         }

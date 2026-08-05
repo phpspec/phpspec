@@ -28,9 +28,12 @@ use PhpSpec\Extensions\FormatterBridge;
 use PhpSpec\FilterRegistry;
 use PhpSpec\LineTargetRegistry;
 use PhpSpec\Loader;
+use PhpSpec\Offers\Offer;
+use PhpSpec\Offers\OfferBook;
 use PhpSpec\Parallel\ParallelRunner;
 use PhpSpec\Report\Formatter;
 use PhpSpec\Report\Formatter\Agent;
+use PhpSpec\Report\Formatter\Agent\Offers;
 use PhpSpec\Report\Formatter\Agent\ShutdownProcessEnd;
 use PhpSpec\Report\Formatter\Dot;
 use PhpSpec\Report\Formatter\Html;
@@ -280,6 +283,12 @@ final class Run extends Command
             ));
         } elseif (!in_array($this->resolveFormat($input), ['junit', 'html', 'agent'], true)) {
             $this->generateCode($prose, $results, (bool) $input->getOption('fake'), $input->isInteractive());
+        }
+
+        if ($formatter instanceof Agent) {
+            // A reader that was told about an offer can take it later by id,
+            // so what was reported has to still be there when they do.
+            $this->recordOffers($results);
         }
 
         return $results->status();
@@ -752,6 +761,30 @@ final class Run extends Command
      * @param bool $interactive whether generation should prompt (false = auto-accept)
      * @return CodeGenerator
      */
+    /**
+     * Puts this run's generation offers on the table under the same ids the
+     * document reports, so `phpspec accept <id>` generates exactly the one that
+     * was read. Both sides derive the id from the offer itself, so neither has
+     * to tell the other what it chose.
+     */
+    private function recordOffers(SuiteResult $results): void
+    {
+        $candidates = $this->codeGenerator(false)->scan($results)->toArray();
+        $offers = [];
+
+        foreach (Offers::fromCandidates($candidates) as $offer) {
+            $offers[] = Offer::generate(
+                $offer['action'],
+                $offer['target'],
+                Offers::candidateFor($candidates, $offer['action'], $offer['target']),
+            );
+        }
+
+        if ($offers !== []) {
+            (new OfferBook())->record(...$offers);
+        }
+    }
+
     private function codeGenerator(bool $interactive): CodeGenerator
     {
         return new CodeGenerator(

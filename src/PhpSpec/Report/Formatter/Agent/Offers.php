@@ -14,6 +14,8 @@
 
 namespace PhpSpec\Report\Formatter\Agent;
 
+use PhpSpec\Offers\Offer;
+
 /**
  * @internal
  * Turns a run's code-generation candidates (the interactive runner's "shall I
@@ -26,7 +28,7 @@ final class Offers
 {
     /**
      * @param array<string, mixed> $candidates the GenerationCandidates::toArray() output
-     * @return list<array{action: string, target: string, value?: string}>
+     * @return list<array{id: string, action: string, target: string, value?: string}>
      */
     public static function fromCandidates(array $candidates): array
     {
@@ -40,7 +42,9 @@ final class Offers
             }
 
             $seen[$key] = true;
-            $offer = ['action' => $action, 'target' => $target];
+            // The id is derived, not invented, so the command that records the
+            // offer and the document that reports it agree without arranging it.
+            $offer = ['id' => Offer::generate($action, $target, [])->id, 'action' => $action, 'target' => $target];
             if ($value !== null) {
                 $offer['value'] = $value;
             }
@@ -83,25 +87,71 @@ final class Offers
      * Derives the single generation offer implied by an error message — a
      * missing class, mock interface, or method — or null when the error is not
      * something a generator can resolve. This lets each errored example carry
-     * its own offer, not just the run-wide summary.
+     * its own offer, not just the run-wide summary. Its id is the run-wide
+     * offer's id, because both are derived from the same action and target.
      *
-     * @return array{action: string, target: string}|null
+     * @return array{id: string, action: string, target: string}|null
      */
     public static function forError(string $message): ?array
     {
-        if (preg_match('/^Class "([^"]+)" not found$/', $message, $matches)) {
-            return ['action' => 'create_class', 'target' => $matches[1]];
+        $offer = match (true) {
+            preg_match('/^Class "([^"]+)" not found$/', $message, $matches) === 1
+                => ['action' => 'create_class', 'target' => $matches[1]],
+            preg_match('/Cannot create mock: class or interface \'([^\']+)\' does not exist/', $message, $matches) === 1
+                => ['action' => 'create_interface', 'target' => $matches[1]],
+            preg_match('/Call to undefined method ([^:]+)::([A-Za-z0-9_]+)\(\)/', $message, $matches) === 1
+                => ['action' => 'create_method', 'target' => $matches[1] . '::' . $matches[2]],
+            default => null,
+        };
+
+        if ($offer === null) {
+            return null;
         }
 
-        if (preg_match('/Cannot create mock: class or interface \'([^\']+)\' does not exist/', $message, $matches)) {
-            return ['action' => 'create_interface', 'target' => $matches[1]];
-        }
+        return ['id' => Offer::generate($offer['action'], $offer['target'], [])->id] + $offer;
+    }
 
-        if (preg_match('/Call to undefined method ([^:]+)::([A-Za-z0-9_]+)\(\)/', $message, $matches)) {
-            return ['action' => 'create_method', 'target' => $matches[1] . '::' . $matches[2]];
-        }
+    /**
+     * The candidates for one offer alone, so accepting it generates that and
+     * nothing else. The forward mapping above and this inverse are the same
+     * vocabulary, kept in one place so they cannot drift apart.
+     *
+     * @param array<string, mixed> $candidates the full GenerationCandidates::toArray() output
+     * @param string $action the offer's action
+     * @param string $target the offer's target
+     * @return array<string, mixed> a GenerationCandidates::toArray() shape holding only this offer
+     */
+    public static function candidateFor(array $candidates, string $action, string $target): array
+    {
+        $named = static fn(array $method): string => (string) ($method['className'] ?? '') . '::' . (string) ($method['methodName'] ?? '');
+        $matching = static fn(string $key, callable $keep): array => array_values(array_filter(
+            is_array($candidates[$key] ?? null) ? $candidates[$key] : [],
+            $keep,
+        ));
 
-        return null;
+        return match ($action) {
+            'create_class' => [
+                'missingSpecClasses' => $matching('missingSpecClasses', static fn(mixed $fqcn): bool => $fqcn === $target),
+                'missingStepClasses' => $matching('missingStepClasses', static fn(mixed $fqcn): bool => $fqcn === $target),
+            ],
+            'create_interface' => [
+                'missingMockTypes' => $matching('missingMockTypes', static fn(mixed $fqcn): bool => $fqcn === $target),
+            ],
+            'create_method' => [
+                'undefinedClassMethods' => $matching('undefinedClassMethods', static fn(mixed $m): bool => is_array($m) && $named($m) === $target),
+                'undefinedMockInterfaceMethods' => $matching('undefinedMockInterfaceMethods', static fn(mixed $m): bool => is_array($m) && $named($m) === $target),
+            ],
+            'fake_method' => [
+                'fakeableMethods' => $matching('fakeableMethods', static fn(mixed $m): bool => is_array($m) && $named($m) === $target),
+            ],
+            'create_steps' => [
+                'undefinedSteps' => array_intersect_key(
+                    is_array($candidates['undefinedSteps'] ?? null) ? $candidates['undefinedSteps'] : [],
+                    [$target => true],
+                ),
+            ],
+            default => [],
+        };
     }
 
     /**

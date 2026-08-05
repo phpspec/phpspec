@@ -24,7 +24,7 @@ describe(OfferBook::class, function () {
 
         $book->record($offer);
 
-        expect((new OfferBook($fs))->find($offer->id)?->path)->toBe('src/App/Basket.php');
+        expect((new OfferBook($fs))->find($offer->id)?->target)->toBe('src/App/Basket.php');
     });
 
     it('knows nothing of an id it never recorded', function (Filesystem $fs) {

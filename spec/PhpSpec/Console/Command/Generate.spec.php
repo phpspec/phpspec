@@ -101,8 +101,8 @@ describe(Generate::class, function () {
         $tester->execute(['instruction' => ['a', 'Calc', 'class'], '--format' => 'agent'], ['interactive' => false]);
 
         $book = json_decode($stored[getcwd() . '/.phpspec/offers.json'] ?? '{}', true);
-        expect($book['offers'][0]['path'])->toBe('src/App/Calc.php');
-        expect($book['offers'][0]['content'])->toContain('class Calc');
+        expect($book['offers'][0]['target'])->toBe('src/App/Calc.php');
+        expect($book['offers'][0]['data']['content'])->toContain('class Calc');
     });
 
     it('reports when nothing could be generated', function (Filesystem $fs) use ($withAi) {

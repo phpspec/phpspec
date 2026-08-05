@@ -19,33 +19,38 @@ namespace PhpSpec\Offers;
  * Something PhpSpec will do if you say yes, kept where you can say yes to it
  * later.
  *
- * A reader has to see an offer before accepting it, and what a model proposes
- * cannot be rediscovered by asking again, so an offer carries an identity and
- * everything needed to carry it out. It also remembers the file as it was when
- * it was made: accepting an offer that no longer fits the code would apply a
- * decision to something the reader never saw.
+ * Deciding requires seeing, and seeing happens in an earlier command than
+ * accepting, so an offer carries an identity and everything needed to carry it
+ * out. The identity is derived from what the offer would do rather than
+ * invented, so an offer still on the table keeps its id from one run to the
+ * next and two commands can name the same offer without agreeing in advance.
+ *
+ * Two kinds, one shape: a change to write, whose content travels with it, and a
+ * piece of code to generate, whose recipe does.
  */
 final readonly class Offer
 {
+    public const WRITE = 'write';
+    public const GENERATE = 'generate';
+
     /**
      * @param string $id how to refer to this offer
-     * @param string $kind what sort of thing accepting it does
-     * @param string $action what it does to the target: create or update
-     * @param string $path the project-relative file it targets
-     * @param string $content the complete content it would write
-     * @param string $was the file's content when the offer was made, empty for a new file
+     * @param string $kind write, generate, or command
+     * @param string $action what accepting does, in the reader's terms
+     * @param string $target what it affects: a file path, a class, or an invocation
+     * @param array<string, mixed> $data everything else the kind needs to be carried out
      */
     private function __construct(
         public string $id,
         public string $kind,
         public string $action,
-        public string $path,
-        public string $content,
-        public string $was,
+        public string $target,
+        public array $data = [],
     ) {}
 
     /**
-     * An offer to write a file.
+     * An offer to write a file, remembering the file as it stands so a stale
+     * acceptance can be refused.
      *
      * @param string $path the project-relative path
      * @param string $content the complete proposed content
@@ -55,32 +60,72 @@ final readonly class Offer
     public static function write(string $path, string $content, bool $isNew, string $was = ''): self
     {
         return new self(
-            self::identify($path, $content),
-            'write',
+            self::identify(self::WRITE, $path, $content),
+            self::WRITE,
             $isNew ? 'create' : 'update',
             $path,
-            $content,
-            $was,
+            ['content' => $content, 'was' => $was],
         );
     }
 
     /**
-     * Whether the code has moved on since the offer was made, in which case
-     * accepting it would apply a decision taken about something else.
+     * An offer to generate code PhpSpec knows how to write: a missing class, an
+     * interface, a method, step definitions. The candidate travels with the
+     * offer, so accepting generates exactly what was reported.
+     *
+     * @param string $action the generation action, e.g. create_class
+     * @param string $target what would be generated
+     * @param array<string, mixed> $candidates the serialised GenerationCandidates holding only this one
+     */
+    public static function generate(string $action, string $target, array $candidates): self
+    {
+        return new self(
+            self::identify(self::GENERATE, $action, $target),
+            self::GENERATE,
+            $action,
+            $target,
+            ['candidates' => $candidates],
+        );
+    }
+
+    /**
+     * The complete content a write offer would put in the file.
+     */
+    public function content(): string
+    {
+        return is_string($this->data['content'] ?? null) ? $this->data['content'] : '';
+    }
+
+    /**
+     * The file's content when a write offer was made, empty for a new file.
+     */
+    public function was(): string
+    {
+        return is_string($this->data['was'] ?? null) ? $this->data['was'] : '';
+    }
+
+    /**
+     * Whether the code has moved on since a write offer was made, in which case
+     * accepting it would apply a decision taken about something else. Only a
+     * write can go stale: the generators never overwrite.
      *
      * @param string|null $current the file's content now, or null when it is not there
      */
     public function staleAgainst(?string $current): bool
     {
+        if ($this->kind !== self::WRITE) {
+            return false;
+        }
+
         if ($this->action === 'create') {
             return $current !== null;
         }
 
-        return $current === null || $current !== $this->was;
+        return $current === null || $current !== $this->was();
     }
 
     /**
-     * @return array<string, string> the offer as it is stored
+     * @return array<string, mixed> the offer as it is stored
      */
     public function toArray(): array
     {
@@ -88,9 +133,8 @@ final readonly class Offer
             'id' => $this->id,
             'kind' => $this->kind,
             'action' => $this->action,
-            'path' => $this->path,
-            'content' => $this->content,
-            'was' => $this->was,
+            'target' => $this->target,
+            'data' => $this->data,
         ];
     }
 
@@ -101,21 +145,18 @@ final readonly class Offer
     {
         return new self(
             (string) ($stored['id'] ?? ''),
-            (string) ($stored['kind'] ?? 'write'),
+            (string) ($stored['kind'] ?? self::WRITE),
             (string) ($stored['action'] ?? 'update'),
-            (string) ($stored['path'] ?? ''),
-            (string) ($stored['content'] ?? ''),
-            (string) ($stored['was'] ?? ''),
+            (string) ($stored['target'] ?? ''),
+            is_array($stored['data'] ?? null) ? $stored['data'] : [],
         );
     }
 
     /**
-     * The identity of an offer, derived from what it would do rather than
-     * invented, so an offer that is still on the table keeps the same id from
-     * one run to the next and a reader can tell it apart from a new one.
+     * The identity of an offer, derived from what it would do.
      */
-    private static function identify(string $path, string $content): string
+    private static function identify(string $kind, string $first, string $second): string
     {
-        return 'o_' . substr(sha1($path . "\0" . $content), 0, 8);
+        return 'o_' . substr(sha1($kind . "\0" . $first . "\0" . $second), 0, 8);
     }
 }

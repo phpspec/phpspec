@@ -16,6 +16,9 @@ namespace PhpSpec\Console\Command;
 
 use PhpSpec\Ai\Agent\Proposal;
 use PhpSpec\Ai\Agent\Writer;
+use PhpSpec\Configuration;
+use PhpSpec\Console\Command\Run\CodeGenerator;
+use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Filesystem;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
@@ -25,6 +28,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument as Argument;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Input\InputOption as Option;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
 /**
@@ -42,10 +46,17 @@ final class Accept extends Command
 
     private readonly OfferBook $book;
 
-    public function __construct(?Filesystem $filesystem = null, ?OfferBook $book = null, private readonly ?string $baseDir = null)
-    {
+    private readonly Configuration $config;
+
+    public function __construct(
+        ?Filesystem $filesystem = null,
+        ?OfferBook $book = null,
+        private readonly ?string $baseDir = null,
+        ?Configuration $config = null,
+    ) {
         $this->filesystem = $filesystem ?? new RealFilesystem();
         $this->book = $book ?? new OfferBook($this->filesystem, $baseDir);
+        $this->config = $config ?? new Configuration($baseDir ?? '.', $this->filesystem);
 
         parent::__construct();
     }
@@ -80,9 +91,9 @@ final class Accept extends Command
                 );
             }
 
-            if ($offer->staleAgainst($this->contentOf($offer->path))) {
+            if ($offer->staleAgainst($this->contentOf($offer->target))) {
                 return $this->refuse(
-                    sprintf('Offer "%s" no longer fits %s, which changed since the offer was made.', $id, $offer->path),
+                    sprintf('Offer "%s" no longer fits %s, which changed since the offer was made.', $id, $offer->target),
                     $forAgent,
                     $output,
                 );
@@ -101,26 +112,21 @@ final class Accept extends Command
      */
     private function take(array $offers, bool $forAgent, Output $output): int
     {
-        $writer = new Writer($this->filesystem, $this->baseDir);
         $receipts = [];
+        $notes = $forAgent ? new BufferedOutput() : $output;
 
         foreach ($offers as $offer) {
-            $writer->apply(new Proposal($offer->path, $offer->was, $offer->content, $offer->action === 'create', 'accept'));
+            match ($offer->kind) {
+                Offer::GENERATE => $this->generate($offer, $notes),
+                default => $this->write($offer, $notes),
+            };
 
             $receipts[] = [
                 'id' => $offer->id,
-                'path' => $offer->path,
+                'path' => $offer->target,
                 'action' => $offer->action,
                 'applied' => true,
             ];
-
-            if (!$forAgent) {
-                $output->writeln(sprintf(
-                    '  <fg=green>%s %s</>',
-                    $offer->action === 'create' ? 'Created' : 'Updated',
-                    $offer->path,
-                ));
-            }
         }
 
         if ($forAgent) {
@@ -128,6 +134,42 @@ final class Accept extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * Applies a change that was proposed in full: the content travelled with
+     * the offer, so what lands is what was read.
+     */
+    private function write(Offer $offer, Output $output): void
+    {
+        (new Writer($this->filesystem, $this->baseDir))
+            ->apply(new Proposal($offer->target, $offer->was(), $offer->content(), $offer->action === 'create', 'accept'));
+
+        $output->writeln(sprintf(
+            '  <fg=green>%s %s</>',
+            $offer->action === 'create' ? 'Created' : 'Updated',
+            $offer->target,
+        ));
+    }
+
+    /**
+     * Generates the one thing this offer named, through the same generator the
+     * interactive runner uses. The generators never overwrite, so an offer
+     * whose subject now exists quietly does nothing rather than clobbering it.
+     */
+    private function generate(Offer $offer, Output $output): void
+    {
+        $candidates = is_array($offer->data['candidates'] ?? null) ? $offer->data['candidates'] : [];
+
+        $generator = new CodeGenerator(
+            ltrim($this->config->getSrcPath(), './'),
+            ltrim($this->config->getSpecPath(), './'),
+            false,
+            $this->config->getSpecSuffix(),
+            $this->config->getPsr4Prefix(),
+        );
+
+        $generator->apply($output, GenerationCandidates::fromArray($candidates), $offer->action === 'fake_method');
     }
 
     /**
