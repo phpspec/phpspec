@@ -318,6 +318,14 @@ describe(Expectation::class, function() {
             expect($failure->isTargetImplied())->toBeTrue();
         });
 
+        it("says a predicate had no target rather than reporting a null one", function() use ($failureOf) {
+            $failure = $failureOf(fn() => (new Expectation(3, __FILE__, __LINE__))->toSatisfy(fn($n) => $n > 10));
+
+            expect($failure->getActual())->toBe('N/A');
+            expect($failure->getExpected())->toBe(3);
+            expect($failure->isTargetImplied())->toBeTrue();
+        });
+
         it("wants the empty form of whatever it was given", function() use ($failureOf) {
             $of = fn(mixed $subject) => $failureOf(fn() => (new Expectation($subject, __FILE__, __LINE__))->toBeEmpty())->getActual();
 

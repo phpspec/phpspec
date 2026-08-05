@@ -25,6 +25,13 @@ use PhpSpec\ObjectName;
  */
 class Expectation
 {
+    /**
+     * What a matcher states when it has no target at all: a predicate decides
+     * for itself and can only report the subject it decided about. Said out
+     * loud, because a silent null reads as "it expected null".
+     */
+    public const NO_TARGET = 'N/A';
+
     /** @var bool whether the next matcher should invert its result */
     protected bool $negated = false;
 
@@ -60,11 +67,13 @@ class Expectation
             if ($message instanceof Closure) {
                 $message = $message($this->subject, ...$arguments);
             }
+            // A custom matcher's first argument is its target; one that takes
+            // none decides for itself and has none to report.
             return $this->match(
                 fn($expected) => ($custom['matcher'])($expected, ...$arguments),
                 $message,
                 $this->subject,
-                ...$arguments,
+                ...($arguments !== [] ? $arguments : [self::NO_TARGET, ['__implied' => true]]),
             );
         }
 
@@ -85,6 +94,8 @@ class Expectation
                     fn($expected) => (bool) $expected->$method(...$arguments),
                     "Expected %s to {$prefix} {$humanized}",
                     $this->subject,
+                    self::NO_TARGET,
+                    ['__implied' => true],
                 );
             }
         }
@@ -602,6 +613,8 @@ class Expectation
             fn($expected) => $predicate($expected),
             'Expected %s to satisfy predicate',
             $this->subject,
+            self::NO_TARGET,
+            ['__implied' => true],
         );
     }
 

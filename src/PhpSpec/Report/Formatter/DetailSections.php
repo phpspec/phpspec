@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Report\Formatter;
 
+use PhpSpec\ObjectName;
 use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
@@ -23,6 +24,7 @@ use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
+use PhpSpec\Specification\Expectation;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -214,7 +216,9 @@ final class DetailSections
         } else {
             $output->write(PHP_EOL . '  ' . $failure->getMessage() . PHP_EOL);
 
-            if ($subject !== null || $target !== null) {
+            // A matcher with no target has nothing to put opposite the subject,
+            // and "expected: N/A" is a line that tells the reader nothing.
+            if (($subject !== null || $target !== null) && $target !== Expectation::NO_TARGET) {
                 $this->pair($output, 'expected', self::value($target), 'got', self::value($subject));
             }
         }
@@ -266,7 +270,9 @@ final class DetailSections
             is_bool($value) => $value ? 'true' : 'false',
             is_null($value) => 'null',
             is_array($value) => var_export($value, true),
-            is_object($value) => get_class($value) . '#' . spl_object_id($value),
+            // Named by what it is, not by which instance it was: two runs of the
+            // same failure read the same, and "Money#180" told nobody anything.
+            is_object($value) => ObjectName::of($value),
             default => (string) $value,
         };
     }
