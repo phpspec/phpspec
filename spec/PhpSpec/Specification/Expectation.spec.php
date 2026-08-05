@@ -278,6 +278,53 @@ describe(Expectation::class, function() {
             expect($captured[0]->getMatcher())->toBe("toContain");
             expect($captured[0]->getExpected())->toBe("the haystack");
             expect($captured[0]->getActual())->toBe("missing needle");
+            expect($captured[0]->isTargetImplied())->toBeFalse();
+        });
+
+        // A matcher that names its target only in prose still states it as a
+        // value, so a report never says a failure expected null when it
+        // expected true, and marks it implied so a view does not read it back.
+        $failureOf = function (Closure $expectation): \PhpSpec\Result\MatchResult {
+            $original = \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher();
+            $captured = [];
+            $listener = new class($captured) implements \PhpSpec\EventDispatcher\Listener {
+                public function __construct(private array &$captured) {}
+                public function listen(\PhpSpec\EventDispatcher\Event $event): void
+                {
+                    if ($event instanceof \PhpSpec\EventDispatcher\Event\MatchCreated) {
+                        $this->captured[] = ($event->getMatch())();
+                    }
+                }
+            };
+
+            try {
+                $isolated = new \PhpSpec\EventDispatcher\Dispatcher();
+                $isolated->addListener($listener);
+                \PhpSpec\EventDispatcher\DispatcherRegistry::set($isolated);
+
+                $expectation();
+            } finally {
+                \PhpSpec\EventDispatcher\DispatcherRegistry::set($original);
+            }
+
+            return $captured[0];
+        };
+
+        it("states the target a matcher only names in prose", function() use ($failureOf) {
+            $failure = $failureOf(fn() => (new Expectation(false, __FILE__, __LINE__))->toBeTrue());
+
+            expect($failure->getActual())->toBeTrue();
+            expect($failure->getExpected())->toBeFalse();
+            expect($failure->isTargetImplied())->toBeTrue();
+        });
+
+        it("wants the empty form of whatever it was given", function() use ($failureOf) {
+            $of = fn(mixed $subject) => $failureOf(fn() => (new Expectation($subject, __FILE__, __LINE__))->toBeEmpty())->getActual();
+
+            expect($of([1, 2]))->toBe([]);
+            expect($of("stuff"))->toBe("");
+            expect($of(3434))->toBe(0);
+            expect($of(new \stdClass()))->toBeNull();
         });
     });
 

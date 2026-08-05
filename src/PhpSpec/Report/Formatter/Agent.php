@@ -557,7 +557,7 @@ final class Agent extends AbstractFormatter
      * which is a comparison worth reporting: an anonymous matcher (any
      * __call-based custom or predicate matcher) has no name to give either.
      *
-     * @return array{expected?: array{matcher: string|null, value: mixed, negated: bool}, actual?: mixed}
+     * @return array{expectation?: array{matcher: string|null, expected: mixed, actual: mixed, negated: bool}}
      */
     private function expectation(?MatchResult $match): array
     {
@@ -566,12 +566,12 @@ final class Agent extends AbstractFormatter
         }
 
         return [
-            'expected' => [
+            'expectation' => [
                 'matcher' => $match->getMatcher(),
-                'value' => ValueExporter::export($match->getActual()),
+                'expected' => ValueExporter::export($match->getActual()),
+                'actual' => ValueExporter::export($match->getExpected()),
                 'negated' => $match->isNegated(),
             ],
-            'actual' => ValueExporter::export($match->getExpected()),
         ];
     }
 

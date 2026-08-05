@@ -205,7 +205,10 @@ final class DetailSections
         $target = $failure->getActual();
         $matcher = $failure->getMatcher();
 
-        if ($matcher !== null && $target !== null) {
+        // A target the matcher's own name already states ("to be true") is not
+        // read back as a label and a value, which says the same thing twice.
+        // The message says it once, and the pair beneath names both sides.
+        if ($matcher !== null && $target !== null && !$failure->isTargetImplied()) {
             $label = ($failure->isNegated() ? 'not ' : '') . self::phrase($matcher);
             $this->pair($output, 'expected', self::value($subject), $label, self::value($target));
         } else {

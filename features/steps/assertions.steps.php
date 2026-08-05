@@ -171,8 +171,17 @@ then('the failing step should report expected {int} and actual {int}', function 
     $failing = array_values(array_filter($entry['steps'] ?? [], fn(array $step) => $step['state'] === 'failing'));
 
     expect($failing)->not()->toBe([]);
-    expect($failing[0]['expected']['value'])->toBe($expected);
-    expect($failing[0]['actual'])->toBe($actual);
+    expect($failing[0]['expectation']['expected'])->toBe($expected);
+    expect($failing[0]['expectation']['actual'])->toBe($actual);
+});
+
+// Both sides of a failure, plainly named and compared as the JSON a reader
+// decodes, so "true" and "[]" mean what they say.
+then('the reported entry should expect {string} and have got {string}', function (string $expected, string $actual) use ($events, $entries) {
+    $expectation = $entries($events($this->output))[0]['expectation'] ?? [];
+
+    expect(json_encode($expectation['expected'] ?? null))->toBe($expected);
+    expect(json_encode($expectation['actual'] ?? null))->toBe($actual);
 });
 
 // What the subject printed is a diagnosis about the entry it printed under, and

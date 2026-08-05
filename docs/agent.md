@@ -29,7 +29,7 @@ reaches you while the rest is still running.
 It is `--parallel`-safe, with one caveat: workers report back through JUnit,
 which carries the outcome, the message and a scenario's line, and nothing else.
 Entries from a parallel run therefore arrive in completion order and without
-`expected`, `actual` or `output`; a failing spec example also arrives without
+`expectation` or `output`; a failing spec example also arrives without
 `spec` and `rerun`, which JUnit has no room for. Run without `--parallel` when
 you want the whole of the detail.
 
@@ -40,7 +40,7 @@ class — produces four lines:
 
 ```json
 {"v":2,"event":"run_started","suite":"default","seed":null}
-{"v":2,"event":"example","id":"6fd046add251","example":"App\\Basket > totals the prices of its products","state":"failing","expected":{"matcher":"toBe","value":4000,"negated":false},"actual":3500,"message":"Expected 3500 to be 4000","spec":"spec/App/Basket.spec.php:6","rerun":"run spec/App/Basket.spec.php:6"}
+{"v":2,"event":"example","id":"6fd046add251","example":"App\\Basket > totals the prices of its products","state":"failing","expectation":{"matcher":"toBe","expected":4000,"actual":3500,"negated":false},"message":"Expected 3500 to be 4000","spec":"spec/App/Basket.spec.php:6","rerun":"run spec/App/Basket.spec.php:6"}
 {"v":2,"event":"example","id":"66b1647a77b6","example":"App\\Basket > applies a coupon","state":"error","message":"Class \"App\\Coupon\" not found","exception":{"class":"Error","message":"Class \"App\\Coupon\" not found","at":"spec/App/Basket.spec.php:8"},"spec":"spec/App/Basket.spec.php:8","rerun":"run spec/App/Basket.spec.php:8","offer":{"action":"create_class","target":"App\\Coupon"}}
 {"v":2,"event":"summary","examples":3,"scenarios":0,"steps":0,"passing":1,"failing":1,"errors":1,"pending":0,"skipped":0,"actionable":2,"duration_ms":4,"offers":[{"action":"create_class","target":"App\\Coupon"},{"action":"fake_method","target":"App\\Basket::total","value":"4000"}]}
 ```
@@ -87,21 +87,27 @@ Scenario Outline is its own entry, named by its values
 | `spec` | The `file:line` of the failing assertion or the error, project-relative. For a scenario it is the line its `Scenario:` keyword sits on. Absent when the site is not known. |
 | `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. No full-suite re-run needed to verify one fix. Absent with `spec`. |
 | `output` | What the code printed while this entry ran, present only when it printed something. See [Printed output](#printed-output). |
-| `steps` | Scenarios only: the steps that did not pass, each `{ title, state, message?, expected?, actual?, at? }`, in the order they were declared. |
+| `steps` | Scenarios only: the steps that did not pass, each `{ title, state, message?, expectation?, at? }`, in the order they were declared. |
 
-**`failing`** entries also carry the expectation:
+**`failing`** entries also carry `expectation`, both sides in one block:
 
-- `expected` — what the matcher wanted: `matcher` is its name (`toBe`,
-  `toThrow`, …), `value` is the target value, and `negated` is `true` when the
-  expectation used `not()`.
-- `actual` — the value your code actually produced.
-- `message` — PhpSpec's rendered failure message.
+```json
+"expectation": {"matcher": "toBeTrue", "expected": true, "actual": false, "negated": false}
+```
 
-> **Note on `expected` vs `actual`.** These follow the universal convention:
-> `expected.value` is what should have happened, `actual` is what did. (PhpSpec's
-> internal naming is the reverse — the formatter un-inverts it for you.)
+- `matcher` — the matcher's name (`toBe`, `toThrow`, …), `null` for a custom or
+  predicate matcher, which reaches PhpSpec anonymously.
+- `expected` — what the matcher wanted, `actual` — what your code produced, in
+  the universal sense of those words. (PhpSpec's internal naming is the reverse;
+  the formatter un-inverts it for you.)
+- `negated` — `true` when the expectation used `not()`.
 
-A **story step** that failed an expectation reports the same pair, on the step
+A matcher that names its target only in prose still states it as a value, so
+`toBeTrue()` reports `expected: true` rather than the null it has no argument
+for. Emptiness wants the empty form of what it was given: `""` against a string,
+`[]` against an array, `0` against a number.
+
+A **story step** that failed an expectation reports the same block, on the step
 inside `steps` (with `at`, the `file:line` of the expectation in your step file)
 and hoisted onto the entry next to `message`, so acting on the entry never means
 going a level deeper. A step whose code *threw* has a `message` and no
@@ -118,7 +124,7 @@ warnings/deprecations/notices, the entry gains `warnings`, `deprecations` and/or
 `notices` arrays of `{ "message", "at" }` — present only when non-empty.
 Sometimes the deprecation is the actual clue behind a failure.
 
-Large or object values in `expected`/`actual` are exported compactly (long
+Large or object values in `expectation` are exported compactly (long
 strings and arrays are truncated with a `{ "truncated": true, "length": N }`
 marker) so one entry can never flood a context window. Objects are named by what
 they are, not by which instance they were: an enum as `App\Status::Active`,
@@ -300,8 +306,9 @@ its `event`:
   the counts describe only what ran before it.
 - `example` lines are what needs attention (passing examples are not reported).
   Each has a `state`:
-  - `failing` — the code ran but behaviour is wrong. Look at `expected.value`
-    (what the spec wants), `actual` (what the code produced), and `message`.
+  - `failing` — the code ran but behaviour is wrong. Look at
+    `expectation.expected` (what the spec wants), `expectation.actual` (what the
+    code produced), and `message`.
     Fix the implementation; do not change the spec to match the code unless the
     spec is genuinely wrong.
   - `error`: an exception was thrown. `message` says what, `exception` adds the

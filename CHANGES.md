@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+ - A failing entry carries one `expectation` block naming both sides (`matcher`, `expected`, `actual`, `negated`), replacing the split `expected`/`actual` fields the unreleased v2 stream had
+ - A matcher that names its target only in prose now states it as a value, so `toBeTrue()` reports expecting `true` instead of `null`, and emptiness expects the empty form of what it was given
+
 ### Added
  - Every offer PhpSpec makes carries an id, and `phpspec accept <id>` applies exactly what was reported, refusing an offer whose file has since changed
  - A failing story step reports the values it expected and got, on the step and on the entry, instead of only the sentence about them

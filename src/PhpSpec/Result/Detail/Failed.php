@@ -48,6 +48,9 @@ final class Failed extends Detail
     /** @var bool Whether the matcher was negated (expect(...)->not()->...) */
     private bool $negated = false;
 
+    /** @var bool Whether the target is implied by the matcher's own name ("to be true") */
+    private bool $impliedTarget = false;
+
     /**
      * Creates a Failed detail from a matcher comparison.
      *
@@ -61,7 +64,7 @@ final class Failed extends Detail
      * @param ?string $matcher the matcher method that produced the failure (e.g. "toBe")
      * @param bool $negated whether the matcher was negated
      */
-    public static function matcher(mixed $expected, mixed $actual, string $message, SurroundingCode $code, int $line, string $file, ?string $fakeExpression = null, ?string $matcher = null, bool $negated = false): Detail
+    public static function matcher(mixed $expected, mixed $actual, string $message, SurroundingCode $code, int $line, string $file, ?string $fakeExpression = null, ?string $matcher = null, bool $negated = false, bool $impliedTarget = false): Detail
     {
         $failed = new self($message);
         $failed->expected = $expected;
@@ -72,6 +75,7 @@ final class Failed extends Detail
         $failed->fakeExpression = $fakeExpression;
         $failed->matcher = $matcher;
         $failed->negated = $negated;
+        $failed->impliedTarget = $impliedTarget;
         return $failed;
     }
 
@@ -81,6 +85,16 @@ final class Failed extends Detail
     public function getMatcher(): ?string
     {
         return $this->matcher;
+    }
+
+    /**
+     * Returns whether the target was implied by the matcher name rather than
+     * given by the caller, so a view can avoid reading it back ("to be true:
+     * true") while a report still names both sides.
+     */
+    public function isTargetImplied(): bool
+    {
+        return $this->impliedTarget;
     }
 
     /**

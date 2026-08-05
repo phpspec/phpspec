@@ -88,6 +88,30 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the reported entry should have printed "the counter said 2"
 
+  Scenario: A boolean failure says what the matcher wanted, not only what it got
+    Given a spec file "spec/App/Watch.spec.php":
+      """
+      <?php
+      describe('App\Watch', function () {
+          it('arrives', function () { expect(false)->toBeTrue(); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the reported entry should expect "true" and have got "false"
+
+  Scenario: An emptiness failure wants the empty form of what it was given
+    Given a spec file "spec/App/Bag.spec.php":
+      """
+      <?php
+      describe('App\Bag', function () {
+          it('holds nothing', function () { expect([1, 2])->toBeEmpty(); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the reported entry should expect "[]" and have got "[1,2]"
+
   Scenario: A failing example carries a line-targeted rerun command
     Given a spec file "spec/App/Calc.spec.php":
       """

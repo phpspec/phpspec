@@ -71,6 +71,7 @@ final readonly class MatchResult implements Results
         ?string $fakeExpression = null,
         ?string $matcher = null,
         bool $negated = false,
+        bool $impliedTarget = false,
     ): MatchResult {
         return new self(
             Result::Failed,
@@ -84,6 +85,7 @@ final readonly class MatchResult implements Results
                 $fakeExpression,
                 $matcher,
                 $negated,
+                $impliedTarget,
             ),
         );
     }
@@ -169,6 +171,15 @@ final readonly class MatchResult implements Results
     public function getMatcher(): ?string
     {
         return $this->detail instanceof Detail\Failed ? $this->detail->getMatcher() : null;
+    }
+
+    /**
+     * Returns whether the target was implied by the matcher name ("to be true")
+     * rather than given by the caller; false for a passed result.
+     */
+    public function isTargetImplied(): bool
+    {
+        return $this->detail instanceof Detail\Failed && $this->detail->isTargetImplied();
     }
 
     /**

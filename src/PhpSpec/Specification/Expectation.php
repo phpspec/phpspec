@@ -210,7 +210,8 @@ class Expectation
             fn($expected) => $expected === true,
             'Expected %s to be true',
             $this->subject,
-            ['__fake' => 'true'],
+            true,
+            ['__fake' => 'true', '__implied' => true],
         );
     }
 
@@ -225,7 +226,8 @@ class Expectation
             fn($expected) => $expected === false,
             'Expected %s to be false',
             $this->subject,
-            ['__fake' => 'false'],
+            false,
+            ['__fake' => 'false', '__implied' => true],
         );
     }
 
@@ -240,7 +242,8 @@ class Expectation
             fn($expected) => $expected === null,
             'Expected %s to be null',
             $this->subject,
-            ['__fake' => 'null'],
+            null,
+            ['__fake' => 'null', '__implied' => true],
         );
     }
 
@@ -255,7 +258,8 @@ class Expectation
             fn($expected) => empty($expected),
             'Expected %s to be empty',
             $this->subject,
-            ['__fake' => '[]'],
+            self::emptyLike($this->subject),
+            ['__fake' => '[]', '__implied' => true],
         );
     }
 
@@ -405,7 +409,8 @@ class Expectation
             fn($expected) => is_callable($expected),
             'Expected %s to be callable',
             $this->subject,
-            ['__fake' => 'function () {}'],
+            'callable',
+            ['__fake' => 'function () {}', '__implied' => true],
         );
     }
 
@@ -492,7 +497,8 @@ class Expectation
             fn($expected) => (bool) $expected === true,
             'Expected %s to be truthy',
             $this->subject,
-            ['__fake' => 'true'],
+            'truthy',
+            ['__fake' => 'true', '__implied' => true],
         );
     }
 
@@ -507,7 +513,8 @@ class Expectation
             fn($expected) => (bool) $expected === false,
             'Expected %s to be falsy',
             $this->subject,
-            ['__fake' => 'false'],
+            'falsy',
+            ['__fake' => 'false', '__implied' => true],
         );
     }
 
@@ -611,6 +618,8 @@ class Expectation
             fn($expected) => ($d = self::extractResponseData($expected)) !== null && $d['status'] === 200,
             'Expected response to be OK (200), got %s',
             $data['status'] ?? 'non-Response',
+            200,
+            ['__implied' => true],
         );
     }
 
@@ -627,6 +636,8 @@ class Expectation
             fn($expected) => ($d = self::extractResponseData($expected)) !== null && $d['status'] === 400,
             'Expected response to be Bad Request (400), got %s',
             $data['status'] ?? 'non-Response',
+            400,
+            ['__implied' => true],
         );
     }
 
@@ -774,6 +785,12 @@ class Expectation
      * Evaluates a matcher against the subject, handling negation and dispatching
      * the match event through EventfulExpectation.
      *
+     * The first value is the subject and the second is what the matcher wanted,
+     * which is reported as the failure's `expected` whether or not the message
+     * has a placeholder for it. A matcher that names its target only in prose
+     * ("to be true") therefore still states it as a value, so a reader is never
+     * told a failure expected null when it expected true.
+     *
      * @param Closure $match callback receiving the subject, returning bool
      * @param mixed ...$message format string followed by values, optionally ending with a fake expression array
      */
@@ -786,10 +803,16 @@ class Expectation
         $negated = $this->negated;
 
         $fakeExpression = null;
-        // Extract fakeExpression if last argument is an array with '__fake' key
-        if (!empty($message) && is_array(end($message)) && array_key_exists('__fake', end($message))) {
-            $fakeArg = array_pop($message);
-            $fakeExpression = $fakeArg['__fake'];
+        // A matcher whose target is implied by its own name ("to be true") states
+        // the value anyway, so a report can name both sides, but says it is
+        // implied so a view does not read back "to be true: true".
+        $implied = false;
+        // Extract the markers if the last argument is the marker array
+        $markers = !empty($message) && is_array(end($message)) ? end($message) : [];
+        if (array_key_exists('__fake', $markers) || array_key_exists('__implied', $markers)) {
+            array_pop($message);
+            $fakeExpression = $markers['__fake'] ?? null;
+            $implied = (bool) ($markers['__implied'] ?? false);
         }
 
         if ($this->negated) {
@@ -800,7 +823,7 @@ class Expectation
             }
             $fakeExpression = null; // negated matchers don't produce fakes
         }
-        $this->eventCreator?->createMatchEvent($match, $message[0], $fakeExpression, $matcher, $negated, ...array_slice($message, 1));
+        $this->eventCreator?->createMatchEvent($match, $message[0], $fakeExpression, $matcher, $negated, $implied, ...array_slice($message, 1));
         return $this;
     }
 
@@ -904,6 +927,22 @@ class Expectation
      * @param string $string source string
      * @return string string with first occurrence replaced
      */
+    /**
+     * The empty form of whatever it was given: what an emptiness matcher wanted
+     * instead of what it got. Reporting "" against an array of three hundred
+     * items would be a small lie, so the answer keeps the subject's own type.
+     */
+    private static function emptyLike(mixed $subject): mixed
+    {
+        return match (true) {
+            is_array($subject) => [],
+            is_string($subject) => '',
+            is_int($subject) => 0,
+            is_float($subject) => 0.0,
+            default => null,
+        };
+    }
+
     private static function replaceOne(string $pattern, string $replace, string $string): string
     {
         $pos = strpos($string, $pattern);
