@@ -32,25 +32,83 @@ class AgentSpecProcessEnd implements ProcessEnd
 
 describe(Agent::class, function () {
 
-    $render = function (SuiteResult $suite): array {
+    // The run answers in JSON Lines. Decoding a line at a time and filing each
+    // event by its kind is the whole of what a reader does, so the spec reads
+    // the output the same way: the header, the entries as they arrived, and the
+    // summary that closed the stream.
+    $stream = function (string $output): array {
+        $document = ['suite' => null, 'examples' => [], 'result' => null];
+
+        foreach (explode("\n", trim($output)) as $line) {
+            if (trim($line) === '') {
+                continue;
+            }
+
+            $event = json_decode($line, true, flags: JSON_THROW_ON_ERROR);
+
+            match ($event['event']) {
+                'run_started' => $document['suite'] = $event,
+                'example' => $document['examples'][] = $event,
+                'fatal' => $document['fatal'] = $event,
+                'summary' => $document['result'] = $event,
+            };
+        }
+
+        return $document;
+    };
+
+    $render = function (SuiteResult $suite) use ($stream): array {
         $output = new BufferedOutput();
         (new Agent($output))->format($suite);
 
-        return json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+        return $stream($output->fetch());
     };
 
-    it('emits one JSON object with suite, examples and result sections', function () use ($render) {
+    it('answers in JSON Lines, one self-contained event per line', function () {
+        $output = new BufferedOutput();
+        (new Agent($output))->format(new SuiteResult([
+            new SpecificationResult('App\\Basket', [
+                new ExampleResult('totals', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/X.spec.php', 3)]),
+            ]),
+        ]));
+
+        $lines = explode("\n", trim($output->fetch()));
+
+        expect($lines)->toHaveLength(3);
+        foreach ($lines as $line) {
+            expect(json_decode($line, true, flags: JSON_THROW_ON_ERROR)['v'])->toBe(2);
+        }
+        expect(json_decode($lines[0], true)['event'])->toBe('run_started');
+        expect(json_decode($lines[1], true)['event'])->toBe('example');
+        expect(json_decode($lines[2], true)['event'])->toBe('summary');
+    });
+
+    it('reports a failure while the run is still going, before any summary', function () {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->begin();
+        $formatter->printResult(new SpecificationResult('App\\Basket', [
+            new ExampleResult('totals', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/X.spec.php', 3)]),
+        ]));
+
+        // Nothing has ended the run: the entry is out all the same.
+        $written = $output->fetch();
+
+        expect($written)->toContain('"event":"example"');
+        expect($written)->not()->toContain('"event":"summary"');
+    });
+
+    it('emits a header, entries and a summary', function () use ($render) {
         $doc = $render(new SuiteResult([
             new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
         ]));
 
-        expect($doc)->toHaveKey('suite');
-        expect($doc)->toHaveKey('examples');
-        expect($doc)->toHaveKey('result');
-        expect($doc['suite'])->toBe(['v' => 1, 'event' => 'run_started', 'suite' => 'default', 'examples' => 1, 'scenarios' => 0, 'steps' => 0, 'seed' => null]);
+        expect($doc['suite'])->toBe(['v' => 2, 'event' => 'run_started', 'suite' => 'default', 'seed' => null]);
+        expect($doc['examples'])->toBe([]);
+        expect($doc['result']['event'])->toBe('summary');
     });
 
-    it('reports the seed and suite it was told about, so a flaky order is reproducible', function () {
+    it('reports the seed and suite it was told about, so a flaky order is reproducible', function () use ($stream) {
         $output = new BufferedOutput();
         $formatter = new Agent($output);
         $formatter->targets('spec,features/');
@@ -58,13 +116,13 @@ describe(Agent::class, function () {
         $formatter->format(new SuiteResult([
             new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
         ]));
-        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+        $doc = $stream($output->fetch());
 
         expect($doc['suite']['seed'])->toBe(424242);
         expect($doc['suite']['suite'])->toBe('spec,features/');
     });
 
-    it('writes the document once, however often the command publishes it', function () {
+    it('closes the stream once, however often the command publishes it', function () {
         $output = new BufferedOutput();
         $formatter = new Agent($output);
         $formatter->format(new SuiteResult([
@@ -74,10 +132,12 @@ describe(Agent::class, function () {
         $formatter->publish();
         $formatter->publish();
 
-        expect(substr_count($output->fetch(), '"run_started"'))->toBe(1);
+        $written = $output->fetch();
+        expect(substr_count($written, '"run_started"'))->toBe(1);
+        expect(substr_count($written, '"summary"'))->toBe(1);
     });
 
-    it('publishes what it collected even when the run never reached its end', function () {
+    it('publishes what it collected even when the run never reached its end', function () use ($stream) {
         $output = new BufferedOutput();
         $formatter = new Agent($output);
         $formatter->targets('./spec');
@@ -88,17 +148,17 @@ describe(Agent::class, function () {
 
         // No end(): a fatal took the process before the last example.
         $formatter->publish();
-        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+        $doc = $stream($output->fetch());
 
         expect($doc['result']['failing'])->toBe(1);
         expect($doc['result']['duration_ms'])->toBe(0);
         expect($doc['examples'][0]['example'])->toBe('App\\Basket > holds products');
-        // What the run was trying to run is known before the run: a document cut
+        // What the run was trying to run is known before the run: a stream cut
         // short still says it.
         expect($doc['suite']['suite'])->toBe('./spec');
     });
 
-    it('carries a missed coverage gate in the result, and counts it as work left', function () {
+    it('carries a missed coverage gate in the summary, and counts it as work left', function () use ($stream) {
         $output = new BufferedOutput();
         $formatter = new Agent($output);
         $formatter->begin();
@@ -106,7 +166,7 @@ describe(Agent::class, function () {
         $formatter->end(new SuiteResult([]));
         $formatter->covered(new CoverageVerdict(24.34, 90.0));
         $formatter->publish();
-        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+        $doc = $stream($output->fetch());
 
         // JSON has one number type, so 90.0 comes back as 90.
         expect($doc['result']['coverage']['percent'])->toBe(24.3);
@@ -116,20 +176,20 @@ describe(Agent::class, function () {
         expect($doc['result']['actionable'])->toBe(1);
     });
 
-    it('reports coverage without a threshold as met, adding no work', function () {
+    it('reports coverage without a threshold as met, adding no work', function () use ($stream) {
         $output = new BufferedOutput();
         $formatter = new Agent($output);
         $formatter->begin();
         $formatter->end(new SuiteResult([]));
         $formatter->covered(new CoverageVerdict(72.5));
         $formatter->publish();
-        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+        $doc = $stream($output->fetch());
 
         expect($doc['result']['coverage'])->toBe(['percent' => 72.5, 'required' => null, 'met' => true]);
         expect($doc['result']['actionable'])->toBe(0);
     });
 
-    it('still publishes a document when a fatal ends the process, naming what stopped it', function () {
+    it('still closes the stream when a fatal ends the process, naming what stopped it', function () use ($stream) {
         $output = new BufferedOutput();
         $end = new AgentSpecProcessEnd();
         $formatter = new Agent($output, null, $end);
@@ -138,30 +198,28 @@ describe(Agent::class, function () {
 
         // No end(), no publish(): the process died loading the next spec file.
         $end->arrives(new Fatal('Class Mute contains 1 abstract method', getcwd() . '/spec/App/Broken.spec.php', 8));
-        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+        $doc = $stream($output->fetch());
 
-        expect($doc['fatal'])->toBe([
-            'message' => 'Class Mute contains 1 abstract method',
-            'at' => 'spec/App/Broken.spec.php:8',
-        ]);
+        expect($doc['fatal']['message'])->toBe('Class Mute contains 1 abstract method');
+        expect($doc['fatal']['at'])->toBe('spec/App/Broken.spec.php:8');
         expect($doc['result']['actionable'])->toBe(1);
         expect($doc['result']['passing'])->toBe(1);
     });
 
-    it('publishes what it has when the process ends with no fatal', function () {
+    it('publishes what it has when the process ends with no fatal', function () use ($stream) {
         $output = new BufferedOutput();
         $end = new AgentSpecProcessEnd();
         $formatter = new Agent($output, null, $end);
         $formatter->begin();
 
         $end->arrives();
-        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+        $doc = $stream($output->fetch());
 
         expect($doc)->not()->toHaveKey('fatal');
         expect($doc['result']['actionable'])->toBe(0);
     });
 
-    it('leaves the published document alone when the process ends after it', function () {
+    it('leaves the closed stream alone when the process ends after it', function () {
         $output = new BufferedOutput();
         $end = new AgentSpecProcessEnd();
         $formatter = new Agent($output, null, $end);
@@ -172,16 +230,18 @@ describe(Agent::class, function () {
         expect(substr_count($output->fetch(), '"run_started"'))->toBe(1);
     });
 
-    it('keeps the first thing that stopped the run', function () {
+    it('keeps the first thing that stopped the run', function () use ($stream) {
         $output = new BufferedOutput();
         $formatter = new Agent($output);
         $formatter->stopped('Bootstrap file not found: vendor/autoload.php');
         $formatter->stopped('and then everything else broke');
         $formatter->publish();
-        $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
+        $doc = $stream($output->fetch());
 
         expect($doc['fatal']['message'])->toBe('Bootstrap file not found: vendor/autoload.php');
         expect($doc['fatal']['at'])->toBeNull();
+        // The header still leads, even for a run that never began.
+        expect($doc['suite']['event'])->toBe('run_started');
     });
 
     it('joins every failing target into one rerun command, without repeats', function () use ($render) {
@@ -205,7 +265,7 @@ describe(Agent::class, function () {
         expect($doc['result'])->not()->toHaveKey('rerun');
     });
 
-    it('omits coverage from the result when none was collected', function () use ($render) {
+    it('omits coverage from the summary when none was collected', function () use ($render) {
         $doc = $render(new SuiteResult([
             new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
         ]));
@@ -320,7 +380,7 @@ describe(Agent::class, function () {
         expect($example['offer']['id'])->toStartWith('o_');
     });
 
-    it('summarises totals and duration, offers empty for now', function () use ($render) {
+    it('summarises totals and duration, and says nothing about offers when there are none', function () use ($render) {
         $suite = new SuiteResult([
             new SpecificationResult('App\\Basket', [
                 new ExampleResult('holds products', [MatchResult::passed()]),
@@ -338,10 +398,10 @@ describe(Agent::class, function () {
         expect($result['errors'])->toBe(0);
         expect($result['actionable'])->toBe(1);
         expect($result['duration_ms'])->toBe(74);
-        expect($result['offers'])->toBe([]);
+        expect($result)->not()->toHaveKey('offers');
     });
 
-    it('lists code-generation offers in the summary from the candidate resolver', function () {
+    it('lists code-generation offers in the summary from the candidate resolver', function () use ($stream) {
         $output = new BufferedOutput();
         $suite = new SuiteResult([
             new SpecificationResult('App\\Basket', [new ExampleResult('needs a coupon', [], true)]),
@@ -350,7 +410,7 @@ describe(Agent::class, function () {
         $agent = new Agent($output, fn() => ['missingSpecClasses' => ['App\\Coupon']]);
         $agent->format($suite);
 
-        $result = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR)['result'];
+        $result = $stream($output->fetch())['result'];
         expect($result['offers'][0]['action'])->toBe('create_class');
         expect($result['offers'][0]['target'])->toBe('App\\Coupon');
         expect($result['offers'][0]['id'])->toStartWith('o_');

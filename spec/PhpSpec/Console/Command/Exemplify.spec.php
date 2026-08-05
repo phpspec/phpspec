@@ -57,7 +57,7 @@ describe(Exemplify::class, function () {
 
         $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
         expect($doc)->toBe([
-            'v' => 1,
+            'v' => 2,
             'action' => 'exemplify',
             'class' => 'Acme\\Calculator',
             'method' => 'add',

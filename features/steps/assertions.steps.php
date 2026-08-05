@@ -91,48 +91,83 @@ then('the file {string} should contain {string} exactly {int} times', function (
     }
 });
 
-then('the output should be valid JSON', function () {
-    try {
-        json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
-    } catch (\JsonException $e) {
-        throw new \RuntimeException(
-            "Expected valid JSON output ({$e->getMessage()}).\nOutput:\n{$this->output}",
-        );
+// PhpSpec answers an agent in JSON Lines: one self-contained event per line, as
+// it happens. Decoding line by line is the whole of what a consumer does, so the
+// harness reads the output exactly the way the contract asks it to be read.
+$events = static function (string $output): array {
+    $events = [];
+
+    foreach (explode("\n", trim($output)) as $line) {
+        $line = trim($line);
+        if ($line === '') {
+            continue;
+        }
+
+        try {
+            $events[] = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new \RuntimeException(
+                "Expected every line of the output to be a JSON event ({$e->getMessage()}).\nLine:\n{$line}",
+            );
+        }
     }
+
+    return $events;
+};
+
+// The entries a run reports: one per example or scenario that needs attention.
+$entries = static function (array $events): array {
+    return array_values(array_filter($events, fn(array $event) => ($event['event'] ?? null) === 'example'));
+};
+
+then('the output should be valid JSON', function () use ($events) {
+    $events($this->output);
+});
+
+then('the output should have {int} events', function (int $count) use ($events) {
+    expect($events($this->output))->toHaveLength($count);
+});
+
+// The stream's shape: an agent knows where the run starts and that the summary
+// is the last word, whatever happened in between.
+then('the first event should be {string}', function (string $name) use ($events) {
+    $stream = $events($this->output);
+
+    expect($stream[0]['event'] ?? null)->toBe($name);
+});
+
+then('the last event should be {string}', function (string $name) use ($events) {
+    $stream = $events($this->output);
+
+    expect(end($stream)['event'] ?? null)->toBe($name);
 });
 
 // How many things the run says are worth acting on: one per example or scenario,
 // never one per step of the same broken scenario.
-then('the report should have {int} entries', function (int $count) {
-    $document = json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
-
-    expect($document['examples'] ?? [])->toHaveLength($count);
+then('the report should have {int} entries', function (int $count) use ($events, $entries) {
+    expect($entries($events($this->output)))->toHaveLength($count);
 });
 
-then('the report should have {int} entry', function (int $count) {
-    $document = json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
-
-    expect($document['examples'] ?? [])->toHaveLength($count);
+then('the report should have {int} entry', function (int $count) use ($events, $entries) {
+    expect($entries($events($this->output)))->toHaveLength($count);
 });
 
 // One field answers "what went wrong", whatever the entry's state: a consumer
 // should not have to know that an error hides its text somewhere else.
-then('every reported entry should carry a message', function () {
-    $document = json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
-    $entries = $document['examples'] ?? [];
+then('every reported entry should carry a message', function () use ($events, $entries) {
+    $reported = $entries($events($this->output));
 
-    expect($entries)->not()->toBe([]);
+    expect($reported)->not()->toBe([]);
 
-    foreach ($entries as $entry) {
+    foreach ($reported as $entry) {
         expect($entry)->toHaveKey('message');
     }
 });
 
 // Every reported entry must be addressable on its own: an id that two entries
 // share cannot answer "is THIS failure still here?".
-then('the failing entries should have distinct ids', function () {
-    $document = json_decode(trim($this->output), true, 512, JSON_THROW_ON_ERROR);
-    $ids = array_column($document['examples'] ?? [], 'id');
+then('the failing entries should have distinct ids', function () use ($events, $entries) {
+    $ids = array_column($entries($events($this->output)), 'id');
 
     expect(count($ids))->toBeGreaterThan(1);
     expect(array_unique($ids))->toHaveLength(count($ids));
@@ -140,14 +175,8 @@ then('the failing entries should have distinct ids', function () {
 
 // Standard output on its own, for the runs where the error stream carries text
 // of its own (PHP's fatal report) and the document must still stand alone.
-then('the standard output should be valid JSON', function () {
-    try {
-        json_decode(trim($this->stdout), true, 512, JSON_THROW_ON_ERROR);
-    } catch (\JsonException $e) {
-        throw new \RuntimeException(
-            "Expected valid JSON on standard output ({$e->getMessage()}).\nStandard output:\n{$this->stdout}",
-        );
-    }
+then('the standard output should be valid JSON', function () use ($events) {
+    $events($this->stdout);
 });
 
 // -- File existence (sets $this->lastFile for chained assertions) ------

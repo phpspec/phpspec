@@ -59,7 +59,7 @@ describe(Describe::class, function() {
 
         $doc = json_decode(trim($output->fetch()), true, flags: JSON_THROW_ON_ERROR);
         expect($doc)->toBe([
-            'v' => 1,
+            'v' => 2,
             'action' => 'describe',
             'class' => 'App\\Basket',
             'spec' => 'spec/App/Basket.spec.php',

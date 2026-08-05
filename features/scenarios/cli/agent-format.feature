@@ -1,7 +1,22 @@
 Feature: Agent output format
   As a coding agent
-  I want phpspec results as a single machine-readable JSON document
-  So that I can decide my next action without parsing prose
+  I want phpspec results as machine-readable JSON events, one per line
+  So that I can act on a failure while the rest of the suite is still running
+
+  Scenario: The run answers in JSON Lines, one event per line
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds', function () { expect(1)->toBe(2); });
+          it('subtracts', function () { expect(3)->toBe(4); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should have 4 events
+    And the first event should be "run_started"
+    And the last event should be "summary"
 
   Scenario: A passing run emits a valid JSON document with run_started and summary
     Given a spec file "spec/App/Calc.spec.php":
@@ -298,6 +313,8 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the output should contain "fatal"
     And the output should contain "Bootstrap file not found"
+    And the first event should be "run_started"
+    And the last event should be "summary"
     And the exit code should be 1
 
   Scenario: A fatal still leaves a document, naming what stopped the run

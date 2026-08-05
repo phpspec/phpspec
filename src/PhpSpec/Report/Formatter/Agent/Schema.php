@@ -22,8 +22,11 @@ namespace PhpSpec\Report\Formatter\Agent;
  */
 final class Schema
 {
-    public const V = 1;
+    /** 2: the run answers in JSON Lines, one event per line, as it happens. */
+    public const V = 2;
 
     public const EVENT_RUN_STARTED = 'run_started';
+    public const EVENT_EXAMPLE = 'example';
+    public const EVENT_FATAL = 'fatal';
     public const EVENT_SUMMARY = 'summary';
 }
