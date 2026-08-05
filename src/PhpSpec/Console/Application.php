@@ -112,7 +112,7 @@ final class Application extends BaseApplication
         $defaultCommands[] = new Refactor($config);
         $defaultCommands[] = new Next($config);
         $defaultCommands[] = new Generate($config);
-        $defaultCommands[] = new Accept();
+        $defaultCommands[] = new Accept(config: $config);
 
         foreach ($extensionLoader->getCommands() as $cmd) {
             $defaultCommands[] = $cmd;

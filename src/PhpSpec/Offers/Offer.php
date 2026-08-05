@@ -35,7 +35,7 @@ final readonly class Offer
 
     /**
      * @param string $id how to refer to this offer
-     * @param string $kind write, generate, or command
+     * @param string $kind write or generate
      * @param string $action what accepting does, in the reader's terms
      * @param string $target what it affects: a file path, a class, or an invocation
      * @param array<string, mixed> $data everything else the kind needs to be carried out

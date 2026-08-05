@@ -112,49 +112,6 @@ final class Offers
     }
 
     /**
-     * The candidates for one offer alone, so accepting it generates that and
-     * nothing else. The forward mapping above and this inverse are the same
-     * vocabulary, kept in one place so they cannot drift apart.
-     *
-     * @param array<string, mixed> $candidates the full GenerationCandidates::toArray() output
-     * @param string $action the offer's action
-     * @param string $target the offer's target
-     * @return array<string, mixed> a GenerationCandidates::toArray() shape holding only this offer
-     */
-    public static function candidateFor(array $candidates, string $action, string $target): array
-    {
-        $named = static fn(array $method): string => (string) ($method['className'] ?? '') . '::' . (string) ($method['methodName'] ?? '');
-        $matching = static fn(string $key, callable $keep): array => array_values(array_filter(
-            is_array($candidates[$key] ?? null) ? $candidates[$key] : [],
-            $keep,
-        ));
-
-        return match ($action) {
-            'create_class' => [
-                'missingSpecClasses' => $matching('missingSpecClasses', static fn(mixed $fqcn): bool => $fqcn === $target),
-                'missingStepClasses' => $matching('missingStepClasses', static fn(mixed $fqcn): bool => $fqcn === $target),
-            ],
-            'create_interface' => [
-                'missingMockTypes' => $matching('missingMockTypes', static fn(mixed $fqcn): bool => $fqcn === $target),
-            ],
-            'create_method' => [
-                'undefinedClassMethods' => $matching('undefinedClassMethods', static fn(mixed $m): bool => is_array($m) && $named($m) === $target),
-                'undefinedMockInterfaceMethods' => $matching('undefinedMockInterfaceMethods', static fn(mixed $m): bool => is_array($m) && $named($m) === $target),
-            ],
-            'fake_method' => [
-                'fakeableMethods' => $matching('fakeableMethods', static fn(mixed $m): bool => is_array($m) && $named($m) === $target),
-            ],
-            'create_steps' => [
-                'undefinedSteps' => array_intersect_key(
-                    is_array($candidates['undefinedSteps'] ?? null) ? $candidates['undefinedSteps'] : [],
-                    [$target => true],
-                ),
-            ],
-            default => [],
-        };
-    }
-
-    /**
      * @param array<string, mixed> $candidates
      * @return list<string>
      */

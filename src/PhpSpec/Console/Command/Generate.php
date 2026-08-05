@@ -156,7 +156,7 @@ final class Generate extends Command
         }
 
         $presenter = new OutcomePresenter();
-        $document = $presenter->document('generate', $outcome, array_fill(0, count($offers), false));
+        $document = $presenter->document('generate', $outcome);
 
         foreach ($offers as $index => $offer) {
             $document['proposals'][$index]['id'] = $offer->id;

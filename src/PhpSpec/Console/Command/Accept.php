@@ -28,7 +28,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument as Argument;
 use Symfony\Component\Console\Input\InputInterface as Input;
 use Symfony\Component\Console\Input\InputOption as Option;
-use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
 /**
@@ -91,7 +91,7 @@ final class Accept extends Command
                 );
             }
 
-            if ($offer->staleAgainst($this->contentOf($offer->target))) {
+            if ($offer->kind === Offer::WRITE && $offer->staleAgainst($this->contentOf($offer->target))) {
                 return $this->refuse(
                     sprintf('Offer "%s" no longer fits %s, which changed since the offer was made.', $id, $offer->target),
                     $forAgent,
@@ -113,7 +113,7 @@ final class Accept extends Command
     private function take(array $offers, bool $forAgent, Output $output): int
     {
         $receipts = [];
-        $notes = $forAgent ? new BufferedOutput() : $output;
+        $notes = $forAgent ? new NullOutput() : $output;
 
         foreach ($offers as $offer) {
             match ($offer->kind) {

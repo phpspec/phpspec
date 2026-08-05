@@ -203,18 +203,36 @@ Offers appear in two places: run-wide in `result.offers`, and per-example on the
 
 ### Acting on offers
 
-Rather than write the boilerplate itself, an agent can have PhpSpec apply every
-pending offer in one non-interactive pass:
+**PhpSpec never applies a change because nobody was there to say no.** Every
+offer carries an `id` and waits under it, so you accept what you have actually
+read, in a second command:
+
+```bash
+bin/phpspec accept o_7f3a1c2d               # apply exactly that offer
+bin/phpspec accept o_7f3a1c2d o_91b0e4aa    # several at once, all or nothing
+```
+
+An id is derived from what the offer would do, so the same offer keeps it
+between runs and a new one is visibly new. `accept` refuses an id it has never
+seen, and refuses an offer whose file has changed since it was made: at that
+point the decision was taken about something else. Nothing is applied unless
+every named offer can be.
+
+For the common case of taking everything a run found, the bulk shortcut remains:
 
 ```bash
 bin/phpspec run --accept-offers            # create missing classes/interfaces/methods/steps
 bin/phpspec run --accept-offers --fake     # ...and fill empty methods with their spec'd return values
 ```
 
-`--accept-offers` runs the suite, applies all offers (no prompts), and exits `0`.
-Add `--fake` to also fill empty method bodies with the hardcoded returns their
-specs expect (the `fake_method` offers) — a fast way to a first green before you
-replace the fakes with real logic.
+`--accept-offers` runs the suite, applies all of that run's offers (no prompts),
+and exits `0`. Add `--fake` to also fill empty method bodies with the hardcoded
+returns their specs expect (the `fake_method` offers), a fast way to a first
+green before you replace the fakes with real logic.
+
+`generate` proposes rather than writes: its receipt carries an `id` per
+proposal with `applied: false`, and `accept` writes exactly the content that was
+reported.
 
 ## Scaffolding with JSON receipts
 

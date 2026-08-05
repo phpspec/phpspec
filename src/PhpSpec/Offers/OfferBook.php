@@ -28,7 +28,7 @@ use PhpSpec\RealFilesystem;
 final class OfferBook
 {
     /** How many offers stay on the table. Older ones are forgotten. */
-    public const KEPT = 50;
+    private const KEPT = 50;
 
     private const PATH = '.phpspec/offers.json';
 
@@ -73,7 +73,7 @@ final class OfferBook
      *
      * @return array<string, Offer>
      */
-    public function all(): array
+    private function all(): array
     {
         $path = $this->file();
 

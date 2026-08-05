@@ -6,8 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+ - Every offer PhpSpec makes carries an id, and `phpspec accept <id>` applies exactly what was reported, refusing an offer whose file has since changed
+
+### Changed
+ - generate no longer writes when there is nobody to ask: it offers the change under an id, and `run --accept-offers` stays as the bulk shortcut for a run's own offers
+
 ### Fixed
  - describe and exemplify refuse a name PHP could not parse instead of writing a spec that breaks the suite, and describe says what it needs when given nothing
+ - accept resolves paths through the configuration the run was given, so `-c` is honoured
 
 ## [9.0.0-beta.18](https://github.com/phpspec/phpspec/compare/9.0.0-beta.17...9.0.0-beta.18)
 

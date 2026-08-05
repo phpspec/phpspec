@@ -66,7 +66,9 @@ wording), and fully determined artifacts are generated without any model call: a
 feature request becomes a Gherkin skeleton, and `generate the steps` writes the
 step definitions for the last-touched feature by parsing it. Everything else is
 authored by the AI. Each proposal is shown as a diff and written after a `[Y/n]`
-confirmation. Requires an AI provider (see [Configuration](configuration.md#ai)).
+confirmation. With no terminal to ask, nothing is written: the change is offered
+under an id for [`accept`](#accept) to apply. Requires an AI provider (see
+[Configuration](configuration.md#ai)).
 
 ```bash
 bin/phpspec generate a feature for adding a task    # Gherkin under features/, no model call
@@ -80,6 +82,23 @@ and the artifact type follows its extension. Every exchange is captured to
 `.phpspec/ai/last-request.json`: the resolved step and its reason, the composed
 prompt files, and the model's reply, so a surprising result is debuggable at a
 glance. Also available in pair mode as `/generate <instruction>`.
+
+### `accept`
+
+Applies an offer PhpSpec made earlier, by its id. A run reports what it could
+generate, and `generate` reports what it would write; both wait under an id
+rather than changing anything on their own, so the decision is taken by whoever
+read them.
+
+```bash
+bin/phpspec accept o_7f3a1c2d               # apply exactly that offer
+bin/phpspec accept o_7f3a1c2d o_91b0e4aa    # several at once, all or nothing
+```
+
+The id is derived from the offer itself, so it is stable while the offer stands.
+An unknown id is refused, and so is an offer whose file has changed since it was
+made. `--format=agent` returns the receipt as JSON. Offers live in
+`.phpspec/offers.json`; the fifty most recent stay on the table.
 
 ### `describe`
 

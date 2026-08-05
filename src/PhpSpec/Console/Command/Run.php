@@ -18,6 +18,7 @@ use DOMException;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\CoverageReporter;
+use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Console\Command\Run\GenerationReport;
 use PhpSpec\Console\Command\Run\RunOutcome;
 use PhpSpec\Console\Command\Run\SuiteSummary;
@@ -66,6 +67,11 @@ final class Run extends Command
     /** @var array<int, string> partial coverage state files written by parallel workers */
     private array $coveragePartials = [];
 
+    /** What this run could generate, scanned once and shared by everything that reports it. */
+    private ?GenerationCandidates $candidates = null;
+
+    private readonly OfferBook $offers;
+
     /**
      * @param Loader $loader the spec/feature file loader
      * @param Runner $runner the spec runner
@@ -76,7 +82,10 @@ final class Run extends Command
         private readonly Runner $runner,
         private readonly Configuration $config = new Configuration('.'),
         private readonly ?ExtensionLoader $extensionLoader = null,
+        ?OfferBook $offers = null,
     ) {
+        $this->offers = $offers ?? new OfferBook();
+
         parent::__construct();
     }
 
@@ -679,7 +688,7 @@ final class Run extends Command
             'html' => new Html($output),
             'agent' => new Agent(
                 $output,
-                fn(SuiteResult $results) => $this->codeGenerator(false)->scan($results)->toArray(),
+                fn(SuiteResult $results) => $this->candidates($results)->toArray(),
                 new ShutdownProcessEnd(),
             ),
             default => new Pretty($output),
@@ -769,20 +778,30 @@ final class Run extends Command
      */
     private function recordOffers(SuiteResult $results): void
     {
-        $candidates = $this->codeGenerator(false)->scan($results)->toArray();
+        $candidates = $this->candidates($results);
         $offers = [];
 
-        foreach (Offers::fromCandidates($candidates) as $offer) {
+        foreach (Offers::fromCandidates($candidates->toArray()) as $offer) {
             $offers[] = Offer::generate(
                 $offer['action'],
                 $offer['target'],
-                Offers::candidateFor($candidates, $offer['action'], $offer['target']),
+                $this->candidates($results)->only($offer['action'], $offer['target'])->toArray(),
             );
         }
 
         if ($offers !== []) {
-            (new OfferBook())->record(...$offers);
+            $this->offers->record(...$offers);
         }
+    }
+
+    /**
+     * What this run could generate, scanned once: the document reports it and
+     * the offer book records it, and walking every result twice to say the same
+     * thing would be work for nothing.
+     */
+    private function candidates(SuiteResult $results): GenerationCandidates
+    {
+        return $this->candidates ??= $this->codeGenerator(false)->scan($results);
     }
 
     private function codeGenerator(bool $interactive): CodeGenerator

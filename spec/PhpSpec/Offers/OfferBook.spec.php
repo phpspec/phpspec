@@ -56,7 +56,8 @@ describe(OfferBook::class, function () {
     it('forgets the oldest once the book is full, so it cannot grow without end', function (Filesystem $fs) {
         $book = new OfferBook($fs);
         $offers = [];
-        for ($i = 0; $i < OfferBook::KEPT + 5; $i++) {
+        // More than the book keeps, so the oldest must fall off the table.
+        for ($i = 0; $i < 60; $i++) {
             $offers[] = Offer::write("src/App/Class$i.php", '<?php', true, '');
         }
 
