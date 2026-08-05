@@ -184,6 +184,14 @@ then('the reported entry should expect {string} and have got {string}', function
     expect(json_encode($expectation['actual'] ?? null))->toBe($actual);
 });
 
+// Context only the test could reach, handed over under a name and read while
+// the run still stood where it was attached.
+then('the reported entry should have attached {string} containing {string}', function (string $name, string $text) use ($events, $entries) {
+    $attached = $entries($events($this->output))[0]['attachments'][$name] ?? null;
+
+    expect(is_array($attached) ? ($attached['value'] ?? $attached['error'] ?? '') : (string) $attached)->toContain($text);
+});
+
 // What the subject printed is a diagnosis about the entry it printed under, and
 // it reaches the reader as data instead of landing in the middle of the report.
 then('the reported entry should have printed {string}', function (string $text) use ($events, $entries) {
