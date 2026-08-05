@@ -112,6 +112,30 @@ describe(Feature::class, function () {
         expect($steps[1]->isSkipped())->toBeTrue();
     });
 
+    // The expectation a step fails on is kept on its result: specified end to
+    // end in features/scenarios/cli/agent-format.feature, because an expectation
+    // that fails inside a nested feature run is also collected by the example
+    // running it, which would fail this spec for the wrong reason.
+    it("leaves a thrown step without an expectation, since none was made", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a throwing step", function () {
+            throw new \RuntimeException("boom");
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Throwing',
+            '',
+            null,
+            [new ScenarioNode('Throws', [
+                new StepNode('Given', 'a throwing step'),
+            ])]
+        ), $registry, new HookRegistry());
+
+        $result = $feature->run();
+
+        expect($result->getResults()[0]->getResults()[0]->getMatch())->toBeNull();
+    });
+
     it("captures PHP warnings raised inside a step instead of leaking them", function () {
         $registry = new StepRegistry();
         $registry->addStep("a noisy step", function () {

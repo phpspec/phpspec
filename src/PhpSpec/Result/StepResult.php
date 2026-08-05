@@ -30,6 +30,9 @@ final class StepResult implements Results
     /** @var StepError|null Error that occurred during step execution */
     private ?StepError $error = null;
 
+    /** @var MatchResult|null The expectation that did not hold, when one failed */
+    private ?MatchResult $match = null;
+
     /** @var list<array{severity: int, message: string, file: string, line: int}> */
     private array $warnings = [];
 
@@ -122,6 +125,26 @@ final class StepResult implements Results
     public function getError(): ?StepError
     {
         return $this->error;
+    }
+
+    /**
+     * Keeps the expectation that did not hold, so what was wanted and what was
+     * had stay values a reader can compare, instead of a sentence to parse back.
+     *
+     * @param MatchResult $match the failing expectation
+     */
+    public function setMatch(MatchResult $match): void
+    {
+        $this->match = $match;
+    }
+
+    /**
+     * Returns the expectation that did not hold, or null when the step did not
+     * fail on one (it threw, or it passed).
+     */
+    public function getMatch(): ?MatchResult
+    {
+        return $this->match;
     }
 
     /**

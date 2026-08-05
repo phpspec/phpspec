@@ -433,17 +433,7 @@ final class Agent extends AbstractFormatter
 
         if ($state === 'failing') {
             $match = $this->failingMatch($example);
-            // phpspec names these from the matcher's point of view — getExpected()
-            // is the expect() subject (the value the code produced) and getActual()
-            // is the matcher's argument (the target). The agent contract uses the
-            // universal convention, so they are swapped here: actual = the subject,
-            // expected = the target.
-            $entry['expected'] = [
-                'matcher' => $match?->getMatcher(),
-                'value' => ValueExporter::export($match?->getActual()),
-                'negated' => $match?->isNegated() ?? false,
-            ];
-            $entry['actual'] = ValueExporter::export($match?->getExpected());
+            $entry += $this->expectation($match);
             $entry['message'] = $example->getMessage();
             $location = $this->location($match?->getFile(), $match?->getLine());
             $entry['spec'] = $location;
@@ -538,6 +528,31 @@ final class Agent extends AbstractFormatter
     }
 
     /**
+     * The expectation that did not hold, as the two values a reader compares.
+     * Whatever failed, an example or a story step, it is reported the same way,
+     * so nobody has to read a sentence back to find out what was wanted.
+     *
+     * phpspec names these from the matcher's point of view: getExpected() is the
+     * expect() subject (the value the code produced) and getActual() is the
+     * matcher's argument (the target). The agent contract uses the universal
+     * convention, so they are swapped here: actual = the subject, expected =
+     * the target.
+     *
+     * @return array{expected: array{matcher: string|null, value: mixed, negated: bool}, actual: mixed}
+     */
+    private function expectation(?MatchResult $match): array
+    {
+        return [
+            'expected' => [
+                'matcher' => $match?->getMatcher(),
+                'value' => ValueExporter::export($match?->getActual()),
+                'negated' => $match?->isNegated() ?? false,
+            ],
+            'actual' => ValueExporter::export($match?->getExpected()),
+        ];
+    }
+
+    /**
      * The first failing expectation of an example, or null when none failed.
      */
     private function failingMatch(ExampleResult $example): ?MatchResult
@@ -564,6 +579,7 @@ final class Agent extends AbstractFormatter
         $steps = [];
         $state = 'passing';
         $message = null;
+        $expectation = [];
 
         foreach ($scenario->getResults() as $step) {
             if (!$step instanceof StepResult) {
@@ -584,6 +600,19 @@ final class Agent extends AbstractFormatter
                 $message ??= $step->getError()->getMessage();
             }
 
+            // An expectation that did not hold puts its two values on the step,
+            // and on the scenario alongside the message it already hoists, so a
+            // reader acting on the entry never has to go a level deeper.
+            $match = $step->getMatch();
+            if ($match !== null) {
+                $reported += $this->expectation($match);
+                $at = $this->location($match->getFile(), $match->getLine());
+                if ($at !== null) {
+                    $reported['at'] = $at;
+                }
+                $expectation = $expectation !== [] ? $expectation : $this->expectation($match);
+            }
+
             $steps[] = $reported;
             $state = self::worst($state, $stepState);
         }
@@ -602,6 +631,8 @@ final class Agent extends AbstractFormatter
             'example' => $origin->name,
             'state' => $state,
         ];
+
+        $entry += $expectation;
 
         if ($message !== null) {
             $entry['message'] = $message;

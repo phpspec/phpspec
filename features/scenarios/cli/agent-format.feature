@@ -171,6 +171,27 @@ Feature: Agent output format
     And the output should contain "no basket yet"
     And the output should contain "run features/checkout.feature:2"
 
+  Scenario: A failing step carries the expectation, not only the English of it
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/counting.feature":
+      """
+      Feature: Counting
+        Scenario: Counting up
+          Given I count 2 items
+      """
+    And a step file "features/steps/counting.steps.php":
+      """
+      <?php
+
+      given('I count {int} items', function (int $count) {
+          expect($count)->toBe(3);
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent"
+    Then the output should be valid JSON
+    And the report should have 1 entry
+    And the failing step should report expected 3 and actual 2
+
   Scenario: The same step twice in one scenario is still one entry
     Given a PSR-4 project with "spec", "src", and "features" directories
     And a feature file "features/twice.feature":

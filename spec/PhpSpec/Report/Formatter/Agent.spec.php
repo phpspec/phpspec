@@ -455,6 +455,36 @@ describe(Agent::class, function () {
         ]);
     });
 
+    it('hands over the values a step did not match, on the step and on the entry', function () use ($render) {
+        $step = new StepResult('Given I count 2 items', 'failure');
+        $step->setError(new \PhpSpec\StoryBDD\StepError('Expected 2 to be 3', new \RuntimeException('Expected 2 to be 3')));
+        $step->setMatch(MatchResult::failed(2, 3, 'Expected 2 to be 3', getcwd() . '/features/steps/counting.steps.php', 4, null, 'toBe'));
+
+        $entry = $render(new SuiteResult([
+            new FeatureResult('Counting', [new ScenarioResult('Counting up', [$step], 2)], 'features/counting.feature'),
+        ]))['examples'][0];
+
+        // Hoisted onto the entry, next to the message it already hoists.
+        expect($entry['expected'])->toBe(['matcher' => 'toBe', 'value' => 3, 'negated' => false]);
+        expect($entry['actual'])->toBe(2);
+        // And on the step that made it, with the line the expectation lives on.
+        expect($entry['steps'][0]['expected']['value'])->toBe(3);
+        expect($entry['steps'][0]['actual'])->toBe(2);
+        expect($entry['steps'][0]['at'])->toBe('features/steps/counting.steps.php:4');
+    });
+
+    it('leaves a thrown step to its message, having no expectation to report', function () use ($render) {
+        $step = new StepResult('Given a broken step', 'error');
+        $step->setError(new \PhpSpec\StoryBDD\StepError('this step is broken', new \RuntimeException('this step is broken')));
+
+        $entry = $render(new SuiteResult([
+            new FeatureResult('Counting', [new ScenarioResult('Counting up', [$step], 2)], 'features/counting.feature'),
+        ]))['examples'][0];
+
+        expect($entry)->not()->toHaveKey('expected');
+        expect($entry['steps'][0])->not()->toHaveKey('actual');
+    });
+
     it('names a scenario by feature and scenario, so two never share an id', function () use ($render) {
         $failing = function (string $title): StepResult {
             $step = new StepResult($title, 'error');

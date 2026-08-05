@@ -256,6 +256,9 @@ final readonly class Feature implements SpecBlock
                 $result = new StepResult($title, 'failure');
                 $ex = new \RuntimeException($message);
                 $result->setError(new StepError($message, $ex));
+                // The expectation itself travels with the result, so a reader is
+                // handed the two values instead of the sentence about them.
+                $result->setMatch($matchResult);
                 return $result;
             }
         }

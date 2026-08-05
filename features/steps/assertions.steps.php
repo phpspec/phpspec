@@ -164,6 +164,17 @@ then('every reported entry should carry a message', function () use ($events, $e
     }
 });
 
+// A step's failure is data, not a sentence to parse back: the values that did
+// not match ride on the step that did not pass.
+then('the failing step should report expected {int} and actual {int}', function (int $expected, int $actual) use ($events, $entries) {
+    $entry = $entries($events($this->output))[0] ?? [];
+    $failing = array_values(array_filter($entry['steps'] ?? [], fn(array $step) => $step['state'] === 'failing'));
+
+    expect($failing)->not()->toBe([]);
+    expect($failing[0]['expected']['value'])->toBe($expected);
+    expect($failing[0]['actual'])->toBe($actual);
+});
+
 // Every reported entry must be addressable on its own: an id that two entries
 // share cannot answer "is THIS failure still here?".
 then('the failing entries should have distinct ids', function () use ($events, $entries) {
