@@ -32,6 +32,9 @@ class Expectation
      */
     public const NO_TARGET = 'N/A';
 
+    /** What a callable that was meant to throw reports having done instead. */
+    public const NOTHING_THROWN = 'No exception';
+
     /** @var bool whether the next matcher should invert its result */
     protected bool $negated = false;
 
@@ -772,25 +775,42 @@ class Expectation
      * @param string|null $message expected exception message (exact match)
      * @return static
      */
-    public function toThrow(string $exceptionClass, ?string $message = null): static
+    public function toThrow(string $exceptionClass = '', ?string $message = null): static
     {
+        // What the callable did, filled in as it runs: the exception it threw,
+        // or the sentence for having thrown none. The reader is comparing what
+        // was asked for against what happened, not against the callable itself.
+        $outcome = self::NOTHING_THROWN;
+
         return $this->match(
-            function ($expected) use ($exceptionClass, $message) {
+            function ($expected) use ($exceptionClass, $message, &$outcome) {
                 try {
                     $expected();
+
                     return false;
                 } catch (\Throwable $e) {
-                    if (!($e instanceof $exceptionClass)) {
+                    $outcome = $e;
+                    if ($exceptionClass !== '' && !($e instanceof $exceptionClass)) {
                         return false;
                     }
                     if ($message !== null && $e->getMessage() !== $message) {
                         return false;
                     }
+
                     return true;
                 }
             },
-            'Expected callable to throw %s',
-            $exceptionClass,
+            $exceptionClass === '' ? 'Expected callable to throw' : 'Expected callable to throw %s',
+            $exceptionClass === '' ? '' : ObjectName::named($exceptionClass, $message),
+            // Whatever it was asked for, or nothing at all when it was asked
+            // only to throw.
+            $exceptionClass === '' ? self::NO_TARGET : ObjectName::named($exceptionClass, $message),
+            // By reference, and not an arrow function: this has to read the
+            // outcome as it stands once the callable has run, not as it stood
+            // when the expectation was written.
+            ['__implied' => $exceptionClass === '', '__actual' => function () use (&$outcome) {
+                return $outcome;
+            }],
         );
     }
 
@@ -820,12 +840,18 @@ class Expectation
         // the value anyway, so a report can name both sides, but says it is
         // implied so a view does not read back "to be true: true".
         $implied = false;
+        // What to report as the actual, for a matcher whose subject is not the
+        // interesting half: toThrow is handed a callable and the reader wants
+        // the exception it threw, which is only known once it has run, so the
+        // marker is a closure resolved after the matcher decides.
+        $actual = null;
         // Extract the markers if the last argument is the marker array
         $markers = !empty($message) && is_array(end($message)) ? end($message) : [];
-        if (array_key_exists('__fake', $markers) || array_key_exists('__implied', $markers)) {
+        if (array_key_exists('__fake', $markers) || array_key_exists('__implied', $markers) || array_key_exists('__actual', $markers)) {
             array_pop($message);
             $fakeExpression = $markers['__fake'] ?? null;
             $implied = (bool) ($markers['__implied'] ?? false);
+            $actual = $markers['__actual'] ?? null;
         }
 
         if ($this->negated) {
@@ -836,7 +862,7 @@ class Expectation
             }
             $fakeExpression = null; // negated matchers don't produce fakes
         }
-        $this->eventCreator?->createMatchEvent($match, $message[0], $fakeExpression, $matcher, $negated, $implied, ...array_slice($message, 1));
+        $this->eventCreator?->createMatchEvent($match, $message[0], $fakeExpression, $matcher, $negated, $implied, $actual, ...array_slice($message, 1));
         return $this;
     }
 

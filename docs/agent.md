@@ -105,7 +105,21 @@ Scenario Outline is its own entry, named by its values
 A matcher that names its target only in prose still states it as a value, so
 `toBeTrue()` reports `expected: true` rather than the null it has no argument
 for. Emptiness wants the empty form of what it was given: `""` against a string,
-`[]` against an array, `0` against a number.
+`[]` against an array, `0` against a number. A matcher with no target at all,
+such as a predicate, says `"N/A"` rather than reporting a null one.
+
+`toThrow` compares what was asked for against what happened, not against the
+callable you handed it:
+
+| Expectation | `expected` | `actual` |
+|---|---|---|
+| `toThrow()` and it threw | `"N/A"` | `"Exception"` |
+| `toThrow()` and it did not | `"N/A"` | `"No exception"` |
+| `toThrow(RuntimeException::class)` | `"RuntimeException"` | `"RuntimeException"` |
+| `toThrow(RuntimeException::class, 'boom')` | `"RuntimeException(\"boom\")"` | `"RuntimeException(\"boom\")"` |
+| `toThrow(RuntimeException::class)` and it did not | `"RuntimeException"` | `"No exception"` |
+
+`toThrow()` now takes no argument at all, meaning "throw something".
 
 A **story step** that failed an expectation reports the same block, on the step
 inside `steps` (with `at`, the `file:line` of the expectation in your step file)

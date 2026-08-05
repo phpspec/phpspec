@@ -37,6 +37,9 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class DetailSections
 {
+    /** How many elements of an array a pair shows before saying how many are left. */
+    private const ARRAY_MAX = 10;
+
     /** @var array<string, list<callable(OutputInterface): void>> */
     private array $sections = [];
 
@@ -269,12 +272,36 @@ final class DetailSections
         return match (true) {
             is_bool($value) => $value ? 'true' : 'false',
             is_null($value) => 'null',
-            is_array($value) => var_export($value, true),
+            is_array($value) => self::listing($value),
             // Named by what it is, not by which instance it was: two runs of the
             // same failure read the same, and "Money#180" told nobody anything.
             is_object($value) => ObjectName::of($value),
             default => (string) $value,
         };
+    }
+
+    /**
+     * An array by the same rule as anything else in it, element by element. Not
+     * var_export: an array holding an object with a reference back to itself
+     * makes that emit a PHP warning, and a report about a failure must never
+     * become a failure of its own.
+     *
+     * @param array<array-key, mixed> $value
+     */
+    private static function listing(array $value): string
+    {
+        $shown = array_slice($value, 0, self::ARRAY_MAX, true);
+        $parts = [];
+
+        foreach ($shown as $key => $item) {
+            $parts[] = is_int($key) ? self::value($item) : $key . ' => ' . self::value($item);
+        }
+
+        if (count($value) > self::ARRAY_MAX) {
+            $parts[] = '… ' . (count($value) - self::ARRAY_MAX) . ' more';
+        }
+
+        return '[' . implode(', ', $parts) . ']';
     }
 
     /**

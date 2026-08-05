@@ -46,14 +46,28 @@ final class ObjectName
         // wall of absolute paths that shift with every edit. Its message is the
         // part that identifies it.
         if ($value instanceof Throwable) {
-            return $value::class . '("' . self::clip($value->getMessage()) . '")';
+            return self::named($value::class, $value->getMessage());
         }
 
         if ($value instanceof Stringable) {
-            return $value::class . '("' . self::clip(self::describe($value)) . '")';
+            return self::named($value::class, self::describe($value));
         }
 
         return $value::class;
+    }
+
+    /**
+     * A class and the description that tells one of its instances from another,
+     * as one rule: the class alone when there is nothing to add, so an exception
+     * carrying no message reads as "RuntimeException" and not as
+     * "RuntimeException("")". Also serves the side of a comparison that has no
+     * object yet, only the class and message a matcher was asked for.
+     */
+    public static function named(string $class, ?string $description): string
+    {
+        $description = $description !== null ? self::clip($description) : '';
+
+        return $description === '' ? $class : $class . '("' . $description . '")';
     }
 
     /**

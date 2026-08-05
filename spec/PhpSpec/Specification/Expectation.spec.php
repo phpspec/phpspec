@@ -318,6 +318,40 @@ describe(Expectation::class, function() {
             expect($failure->isTargetImplied())->toBeTrue();
         });
 
+        // A callable is not the interesting half of a throw expectation: what it
+        // threw is, and that is only known once it has run.
+        it("reports what a callable threw against what it was asked for", function() use ($failureOf) {
+            // As a report shows them: phpspec stores the subject as "expected"
+            // and the matcher's target as "actual", and an exception is named
+            // rather than dumped.
+            $shown = fn(mixed $value) => is_object($value) ? \PhpSpec\ObjectName::of($value) : $value;
+            $sides = function (Closure $expectation) use ($failureOf, $shown) {
+                $failure = $failureOf($expectation);
+
+                return [$shown($failure->getActual()), $shown($failure->getExpected())];
+            };
+
+            // Asked only to throw, and it did: nothing was named to compare with.
+            expect($sides(fn() => (new Expectation(fn() => throw new Exception(), __FILE__, __LINE__))->not()->toThrow()))
+                ->toBe(['N/A', 'Exception']);
+
+            // Asked only to throw, and it did not.
+            expect($sides(fn() => (new Expectation(fn() => null, __FILE__, __LINE__))->toThrow()))
+                ->toBe(['N/A', 'No exception']);
+
+            // Asked for a class, by name alone when it carries no message.
+            expect($sides(fn() => (new Expectation(fn() => throw new RuntimeException(), __FILE__, __LINE__))->not()->toThrow(RuntimeException::class)))
+                ->toBe(['RuntimeException', 'RuntimeException']);
+
+            // Asked for a class and a message, so both sides carry both.
+            expect($sides(fn() => (new Expectation(fn() => throw new RuntimeException('boom'), __FILE__, __LINE__))->not()->toThrow(RuntimeException::class, 'boom')))
+                ->toBe(['RuntimeException("boom")', 'RuntimeException("boom")']);
+
+            // Asked for a class and handed nothing at all.
+            expect($sides(fn() => (new Expectation(fn() => null, __FILE__, __LINE__))->toThrow(RuntimeException::class)))
+                ->toBe(['RuntimeException', 'No exception']);
+        });
+
         it("says a predicate had no target rather than reporting a null one", function() use ($failureOf) {
             $failure = $failureOf(fn() => (new Expectation(3, __FILE__, __LINE__))->toSatisfy(fn($n) => $n > 10));
 
