@@ -348,6 +348,140 @@ final class Configuration
     private const AI_KEYS = ['provider', 'model', 'max_tokens', 'effort', 'api_key', 'base_url'];
 
     /**
+     * What a guard section may say, and what it means when it says nothing.
+     * One statement of the requirements: the defaults below and the diagnosis
+     * in {@see guardSectionGap()} both read from it, so a key cannot be
+     * accepted by one and unknown to the other.
+     */
+    private const GUARD_DEFAULTS = [
+        'status' => 'off',
+        'scope' => 'spec',
+        'detection' => 'git',
+        'standards' => 'phpspec',
+        'paths' => ['src'],
+        'allow' => [],
+    ];
+
+    /** The settings that name one of a fixed set of behaviours. */
+    private const GUARD_CHOICES = [
+        'status' => ['active', 'off'],
+        'scope' => ['spec', 'story'],
+        'detection' => ['git', 'mtime'],
+    ];
+
+    /** The settings that are lists of paths or globs. */
+    private const GUARD_LISTS = ['paths', 'allow'];
+
+    /**
+     * Returns the guard configuration, every value present, or null when the
+     * section is unusable ({@see guardConfigProblem()} says why). A project
+     * that says nothing gets guard off, which is the only safe default: guard
+     * fails a run, and nobody opts into that by omission.
+     *
+     * @return array{status: string, scope: string, detection: string, standards: string, paths: list<string>, allow: list<string>}|null
+     */
+    public function getGuardConfig(): ?array
+    {
+        $guard = $this->guardSection();
+        if ($this->guardSectionGap($guard) !== null) {
+            return null;
+        }
+
+        $config = self::GUARD_DEFAULTS;
+        foreach ($guard as $key => $value) {
+            $config[$key] = in_array($key, self::GUARD_LISTS, true) ? array_values($value) : $value;
+        }
+
+        /** @var array{status: string, scope: string, detection: string, standards: string, paths: list<string>, allow: list<string>} $config */
+        return $config;
+    }
+
+    /**
+     * Says what is wrong with the guard section, or null when it is usable. An
+     * absent section is not a problem: it means guard is off.
+     */
+    public function guardConfigProblem(): ?string
+    {
+        return $this->guardSectionGap($this->guardSection());
+    }
+
+    /**
+     * The guard section as written, or an empty one when it is absent.
+     *
+     * @return array<string, mixed>
+     */
+    private function guardSection(): array
+    {
+        $guard = $this->get('guard');
+
+        return is_array($guard) ? $guard : [];
+    }
+
+    /**
+     * The one place that decides whether a guard section can be used, so the
+     * getter and the diagnosis can never disagree about it.
+     *
+     * @param array<string, mixed> $guard
+     */
+    private function guardSectionGap(array $guard): ?string
+    {
+        foreach (array_keys($guard) as $key) {
+            if (!array_key_exists($key, self::GUARD_DEFAULTS)) {
+                return $this->unknownGuardKey((string) $key);
+            }
+        }
+
+        foreach (self::GUARD_CHOICES as $key => $allowed) {
+            if (isset($guard[$key]) && !in_array($guard[$key], $allowed, true)) {
+                return sprintf(
+                    'The guard section\'s %s must be %s, not "%s".',
+                    $key,
+                    self::naturalList($allowed, 'or'),
+                    is_scalar($guard[$key]) ? (string) $guard[$key] : get_debug_type($guard[$key]),
+                );
+            }
+        }
+
+        foreach (self::GUARD_LISTS as $key) {
+            if (!isset($guard[$key])) {
+                continue;
+            }
+
+            if (!is_array($guard[$key]) || array_filter($guard[$key], 'is_string') !== $guard[$key]) {
+                return sprintf('The guard section\'s %s must be a list of paths.', $key);
+            }
+        }
+
+        if (isset($guard['standards']) && (!is_string($guard['standards']) || $guard['standards'] === '')) {
+            return 'The guard section\'s standards must be "phpspec" or the path to a standard.';
+        }
+
+        return null;
+    }
+
+    /**
+     * An unknown guard key, with the one it was probably meant to be.
+     */
+    private function unknownGuardKey(string $key): string
+    {
+        $closest = null;
+        $best = 4;
+        foreach (array_keys(self::GUARD_DEFAULTS) as $known) {
+            $distance = levenshtein($key, $known);
+            if ($distance < $best) {
+                $best = $distance;
+                $closest = $known;
+            }
+        }
+
+        if ($closest !== null) {
+            return sprintf('Unknown guard key "%s". Did you mean "%s"?', $key, $closest);
+        }
+
+        return sprintf('Unknown guard key "%s". The known keys are %s.', $key, self::naturalList(array_keys(self::GUARD_DEFAULTS)));
+    }
+
+    /**
      * Returns the AI configuration block, or null when it is absent or
      * unusable ({@see aiConfigProblem()} says why). api_key is present for
      * every provider that authenticates with one; a local ollama has none.
@@ -550,15 +684,18 @@ final class Configuration
      *
      * @param list<string> $items
      */
-    private static function naturalList(array $items): string
+    private static function naturalList(array $items, string $conjunction = 'and'): string
     {
         if (count($items) <= 1) {
             return implode('', $items);
         }
 
         $last = array_pop($items);
+        // Two items read as "active or off"; more take the comma before the
+        // conjunction that a list of three or more wants.
+        $separator = count($items) === 1 ? ' ' : ', ';
 
-        return implode(', ', $items) . ', and ' . $last;
+        return implode(', ', $items) . $separator . $conjunction . ' ' . $last;
     }
 
     /**

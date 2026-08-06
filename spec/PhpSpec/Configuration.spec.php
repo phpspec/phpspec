@@ -227,6 +227,78 @@ describe(Configuration::class, function () {
         expect($config->getExtensions())->toBe(['formatters' => ['MyFormatter']]);
     });
 
+    // Guard is off until a project says otherwise, and every value it needs has
+    // a default, so `guard: {status: active}` is a complete configuration.
+    it('leaves guard off when nothing says otherwise', function (Filesystem $fs) {
+        $config = new Configuration('/app', $fs);
+
+        expect($config->getGuardConfig())->toBe([
+            'status' => 'off',
+            'scope' => 'spec',
+            'detection' => 'git',
+            'standards' => 'phpspec',
+            'paths' => ['src'],
+            'allow' => [],
+        ]);
+        expect($config->guardConfigProblem())->toBeNull();
+    });
+
+    it('takes the guard settings a project states and defaults the rest', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => true,
+            default => false,
+        });
+        allow($fs->read())->toReturn("guard:\n  status: active\n  scope: story\n  allow: [\"src/Migrations/**\"]\n");
+
+        $config = new Configuration('/app', $fs);
+
+        expect($config->getGuardConfig())->toBe([
+            'status' => 'active',
+            'scope' => 'story',
+            'detection' => 'git',
+            'standards' => 'phpspec',
+            'paths' => ['src'],
+            'allow' => ['src/Migrations/**'],
+        ]);
+    });
+
+    it('names the guard key it does not know, and the one it thinks was meant', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => true,
+            default => false,
+        });
+        allow($fs->read())->toReturn("guard:\n  status: active\n  detecton: git\n");
+
+        $config = new Configuration('/app', $fs);
+
+        expect($config->guardConfigProblem())->toBe('Unknown guard key "detecton". Did you mean "detection"?');
+        expect($config->getGuardConfig())->toBeNull();
+    });
+
+    it('says which values a guard setting accepts when given another', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => true,
+            default => false,
+        });
+        allow($fs->read())->toReturn("guard:\n  status: on\n");
+
+        $config = new Configuration('/app', $fs);
+
+        expect($config->guardConfigProblem())->toBe('The guard section\'s status must be active or off, not "on".');
+    });
+
+    it('refuses a guarded root that is not a list of paths', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => true,
+            default => false,
+        });
+        allow($fs->read())->toReturn("guard:\n  status: active\n  paths: src\n");
+
+        $config = new Configuration('/app', $fs);
+
+        expect($config->guardConfigProblem())->toBe('The guard section\'s paths must be a list of paths.');
+    });
+
     it('returns ai config when configured with api_key', function (Filesystem $fs) {
         allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
             '/app/phpspec.yaml' => true,
