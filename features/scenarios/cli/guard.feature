@@ -217,6 +217,43 @@ Feature: Guard
     Then the output should not contain "Guard Violation"
     And the exit code should be 0
 
+  Scenario: Snapshot detection judges the session, not the whole project
+    Given a PSR-4 project with "spec" and "src" directories
+    And a file "phpspec.yml":
+      """
+      guard:
+        status: active
+        detection: mtime
+      """
+    And a class "src/App/Legacy.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Legacy
+      {
+          public function neverTested(int $value): int
+          {
+              return $value * 2;
+          }
+      }
+      """
+    And a spec file "spec/App/Nothing.spec.php":
+      """
+      <?php
+
+      describe('Nothing', function () {
+          it('is specified', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec guard
+    And I run phpspec run with coverage options ""
+    Then the output should not contain "Guard Violation"
+    And the exit code should be 0
+
   Scenario: The check asks for the coverage it is meant to judge with
     Given a PSR-4 project with "spec" and "src" directories
     When I run phpspec guard with option "--check"

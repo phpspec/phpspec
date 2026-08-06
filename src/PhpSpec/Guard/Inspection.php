@@ -74,9 +74,15 @@ final readonly class Inspection
         $git = new ShellGit($baseDir);
         $scope = new Scope($guard['paths'], $guard['allow']);
 
-        $changes = $guard['detection'] === 'git' && $git->isRepository()
-            ? new GitDelta($git, $filesystem, $scope, $baseDir)
-            : new SnapshotDelta($filesystem, $scope, $baseDir);
+        // Which reader answers is decided by what the baseline recorded, not by
+        // what the configuration prefers: the preference was already honoured
+        // when the baseline was written, and a baseline read by the wrong
+        // reader produces a verdict about the whole project rather than about
+        // this session.
+        $changes = new RecordedChanges(
+            new GitDelta($git, $filesystem, $scope, $baseDir),
+            new SnapshotDelta($filesystem, $scope, $baseDir),
+        );
 
         return new self(
             new Baseline($filesystem, $git, $baseDir),

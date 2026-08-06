@@ -38,12 +38,17 @@ final readonly class Baseline
      * repository this is the commit, because committing is a deliberate act of
      * acceptance; otherwise it is what every guarded file holds right now.
      *
+     * A project that asked for mtime detection gets a snapshot even where git
+     * could have answered: it said which reader it wants, and recording the
+     * other one would hand that reader a baseline it cannot understand.
+     *
      * @param list<string> $paths the guarded roots, used when there is no repository
+     * @param string $detection which reader the project asked for
      * @return array{kind: string, commit?: string, files?: array<string, string>}
      */
-    public function record(array $paths): array
+    public function record(array $paths, string $detection = 'git'): array
     {
-        $commit = $this->git->isRepository() ? $this->git->head() : null;
+        $commit = $detection === 'git' && $this->git->isRepository() ? $this->git->head() : null;
 
         $recorded = $commit !== null
             ? ['kind' => 'commit', 'commit' => $commit]

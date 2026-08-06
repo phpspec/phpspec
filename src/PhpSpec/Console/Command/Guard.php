@@ -88,14 +88,32 @@ final class Guard extends Command
         $guard = $this->config->getGuardConfig();
         $paths = $guard['paths'] ?? ['src'];
 
-        $recorded = (new Baseline($this->filesystem, new ShellGit($base), $base))->record($paths);
+        $recorded = (new Baseline($this->filesystem, new ShellGit($base), $base))
+            ->record($paths, $guard['detection'] ?? 'git');
 
         $output->writeln(sprintf('Config %s updated. Guard is on.', basename($written)));
-        $output->writeln($recorded['kind'] === 'commit'
-            ? sprintf('Baseline recorded at %s.', substr($recorded['commit'] ?? '', 0, 12))
-            : sprintf('Baseline recorded from %d file(s): this project is not a git repository.', count($recorded['files'] ?? [])));
+        $output->writeln($this->recorded($recorded, $guard['detection'] ?? 'git'));
 
         return self::SUCCESS;
+    }
+
+    /**
+     * What was recorded, and why it took the shape it did: a project that asked
+     * for a snapshot is not told its repository is missing.
+     *
+     * @param array{kind: string, commit?: string, files?: array<string, string>} $recorded
+     */
+    private function recorded(array $recorded, string $detection): string
+    {
+        if ($recorded['kind'] === 'commit') {
+            return sprintf('Baseline recorded at %s.', substr($recorded['commit'] ?? '', 0, 12));
+        }
+
+        $files = count($recorded['files'] ?? []);
+
+        return $detection === 'mtime'
+            ? sprintf('Baseline recorded from %d file(s).', $files)
+            : sprintf('Baseline recorded from %d file(s): this project is not a git repository.', $files);
     }
 
     /**

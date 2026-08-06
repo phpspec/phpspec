@@ -69,6 +69,19 @@ describe(Baseline::class, function () {
         expect($made)->toBe('/app/.phpspec/guard');
     });
 
+    // A project that asked for mtime detection said which reader it wants.
+    // Recording a commit anyway hands that reader a baseline it cannot read,
+    // and every guarded file then looks new.
+    it('records what the project asked for, even where git could have answered', function (Filesystem $fs, Git $git) {
+        allow($git->isRepository())->toReturn(true);
+        allow($git->head())->toReturn('abc123');
+        allow($fs->exists())->toReturn(true);
+        allow($fs->isDir())->toReturn(false);
+        allow($fs->write())->toReturn(null);
+
+        expect((new Baseline($fs, $git, '/app'))->record(['src'], 'mtime')['kind'])->toBe('snapshot');
+    });
+
     it('reads back what was recorded', function (Filesystem $fs, Git $git) {
         allow($fs->exists())->toReturn(true);
         allow($fs->read())->toReturn('{"recorded":{"kind":"commit","commit":"abc123"}}');
