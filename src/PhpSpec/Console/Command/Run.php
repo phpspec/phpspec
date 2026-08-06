@@ -297,18 +297,8 @@ final class Run extends Command
 
             // Judged after the coverage verdict, from the same data: the code
             // as it stands now, against what this session changed.
-            if ($guard !== null) {
-                $held = $guard->judge(Coverage::fromHits($coverageReporter->hits(), (string) getcwd()));
-
-                if (!$held->held()) {
-                    (new GuardReport(new RealFilesystem()))->render($held, $prose);
-
-                    if ($formatter instanceof Agent) {
-                        $formatter->guarded($held);
-                    }
-
-                    $failed = self::FAILURE;
-                }
+            if ($guard !== null && $this->violated($guard, $coverageReporter->hits(), $prose, $formatter)) {
+                $failed = self::FAILURE;
             }
         }
 
@@ -404,6 +394,43 @@ final class Run extends Command
         }
 
         return 1;
+    }
+
+    /**
+     * Whether guard found logic this session wrote that no example reaches,
+     * telling the reader and the agent document when it did.
+     *
+     * @param Inspection $guard what judging means for this project
+     * @param array<string, array<int, int>> $hits the lines this run exercised, by absolute path
+     * @param Output $prose the channel for the run's human-facing lines
+     * @param Formatter $formatter the console formatter for the run's results
+     */
+    private function violated(Inspection $guard, array $hits, Output $prose, Formatter $formatter): bool
+    {
+        $exercised = Coverage::fromHits($hits, (string) getcwd());
+
+        // A collection that reported nothing whatsoever is a collection that
+        // failed, and every changed line would read as untested. Guard says as
+        // much rather than condemning a change on no evidence.
+        if ($exercised->isEmpty()) {
+            $prose->writeln('<fg=yellow>Guard cannot judge this run: no coverage was collected.</>');
+
+            return false;
+        }
+
+        $verdict = $guard->judge($exercised);
+
+        if ($verdict->held()) {
+            return false;
+        }
+
+        (new GuardReport(new RealFilesystem()))->render($verdict, $prose);
+
+        if ($formatter instanceof Agent) {
+            $formatter->guarded($verdict);
+        }
+
+        return true;
     }
 
     /**

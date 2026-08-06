@@ -156,7 +156,11 @@ The key is absent when the cycle held.
 - **Guard collects its own coverage.** When it is on, `run` turns coverage on
   for itself, so the verdict always describes the code as it is now. Without
   Xdebug, guard says it cannot judge and stands down; it never fails a run for
-  want of a driver.
+  want of a driver. The same holds when a run collects no coverage at all,
+  which means the collection failed rather than that nothing is specified.
+- **Guard judges what this run exercised.** Code covered only by another suite,
+  or by a run in a separate process, reads as untested to the run in front of
+  it. Where that is by design, `allow` those paths.
 - **A parallel run is judged once.** Workers see a slice of the specs, so the
   parent judges after merging what all of them collected.
 - **The baseline holds file contents in `mtime` mode**, because without them a

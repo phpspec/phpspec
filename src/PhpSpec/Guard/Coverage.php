@@ -59,6 +59,18 @@ final readonly class Coverage
     }
 
     /**
+     * Whether the run reported nothing whatsoever.
+     *
+     * One file missing from a report means a file nothing exercised. Every
+     * file missing means the collection itself failed, and a judgement drawn
+     * from it would condemn the whole change on no evidence.
+     */
+    public function isEmpty(): bool
+    {
+        return $this->hits === [];
+    }
+
+    /**
      * Whether the run ever loaded this file. When it did not, guard has no
      * coverage opinion to offer and reads the source instead.
      */
