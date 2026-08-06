@@ -102,6 +102,16 @@ when('I run phpspec run {string}', function (string $path) {
     _phpspec_exec($this, 'run ' . $path);
 });
 
+// -- Guard command -----------------------------------------------------
+
+when('I run phpspec guard', function () {
+    _phpspec_exec($this, 'guard');
+});
+
+when('I run phpspec guard with option {string}', function (string $options) {
+    _phpspec_exec($this, 'guard ' . $options);
+});
+
 // -- Coverage runs (subprocess so xdebug.mode=coverage can be forced) ---
 
 when('I run phpspec run with coverage options {string}', function (string $options) {

@@ -21,6 +21,7 @@ use PhpSpec\Console\Command\Accept;
 use PhpSpec\Console\Command\Describe;
 use PhpSpec\Console\Command\Exemplify;
 use PhpSpec\Console\Command\Generate;
+use PhpSpec\Console\Command\Guard;
 use PhpSpec\Console\Command\Next;
 use PhpSpec\Console\Command\Pair;
 use PhpSpec\Console\Command\Refactor;
@@ -113,6 +114,7 @@ final class Application extends BaseApplication
         $defaultCommands[] = new Next($config);
         $defaultCommands[] = new Generate($config);
         $defaultCommands[] = new Accept(config: $config);
+        $defaultCommands[] = new Guard(config: $config);
 
         foreach ($extensionLoader->getCommands() as $cmd) {
             $defaultCommands[] = $cmd;
