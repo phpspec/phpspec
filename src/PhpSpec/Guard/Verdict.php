@@ -121,7 +121,12 @@ final readonly class Verdict
             return [];
         }
 
-        $lines = array_values($this->filesystem->readLines($path));
+        // Without their endings: the renderer adds its own, and a line that
+        // kept one would print with a blank line after it.
+        $lines = array_map(
+            static fn(string $line) => rtrim($line, "\r\n"),
+            array_values($this->filesystem->readLines($path)),
+        );
         $first = max(1, min($violation->lines) - self::CONTEXT);
         $last = min(count($lines), max($violation->lines) + self::CONTEXT);
 

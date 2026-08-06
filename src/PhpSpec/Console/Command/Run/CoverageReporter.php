@@ -41,6 +41,22 @@ final class CoverageReporter
 {
     private ?CoverageCollector $collector = null;
 
+    /** @var array<string, array<int, int>> the lines the last run exercised, by absolute path */
+    private array $hits = [];
+
+    /**
+     * The lines this run exercised, as Xdebug reports them: covered, executable
+     * but never reached, or not executable at all. Kept from the last report so
+     * guard asks the same data the percentage was worked out from, rather than
+     * collecting its own and risking a different answer.
+     *
+     * @return array<string, array<int, int>> file path => line => hit value
+     */
+    public function hits(): array
+    {
+        return $this->hits;
+    }
+
     /**
      * Checks Xdebug availability and starts coverage collection.
      *
@@ -95,7 +111,11 @@ final class CoverageReporter
                 return null;
             }
 
-            $covData = CoverageCollector::filterData($perExampleCollector->getAggregate(), $options->srcPath);
+            // Kept unfiltered and absolute: the reports want the source
+            // directory's view, guard wants the project's, and guard bounds
+            // the paths itself.
+            $this->hits = $perExampleCollector->getAggregate();
+            $covData = CoverageCollector::filterData($this->hits, $options->srcPath);
 
             if ($options->jsonPath !== null) {
                 $this->renderJson($output, $perExampleCollector, $options->srcPath, $options->jsonPath);
@@ -109,6 +129,7 @@ final class CoverageReporter
         }
 
         $this->collector->stop();
+        $this->hits = $this->collector->getData();
         $covData = $this->collector->filter($options->srcPath);
 
         return $this->renderReports($output, $covData, $options);

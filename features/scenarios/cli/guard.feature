@@ -23,6 +23,132 @@ Feature: Guard
     And the file "phpspec.yml" should contain "spec_path: spec"
     And the file "phpspec.yml" should contain "status: active"
 
+  Scenario: New logic no example reaches fails the run and names the member
+    Given a PSR-4 project with "spec" and "src" directories
+    And a class "src/App/Basket.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Basket
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+      }
+      """
+    And a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+      });
+      """
+    When I run phpspec guard
+    And a class "src/App/Basket.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Basket
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+
+          public function applyCoupon(int $value): int
+          {
+              if ($value > 100) {
+                  return 100;
+              }
+
+              return $value;
+          }
+      }
+      """
+    And I run phpspec run with coverage options ""
+    Then the output should contain "Guard Violation"
+    And the output should contain "App\Basket::applyCoupon"
+    And the output should contain "Write an example for"
+    And the exit code should be 1
+
+  Scenario: The same change passes once an example reaches it
+    Given a PSR-4 project with "spec" and "src" directories
+    And a class "src/App/Basket.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Basket
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+      }
+      """
+    And a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+      });
+      """
+    When I run phpspec guard
+    And a class "src/App/Basket.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Basket
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+
+          public function applyCoupon(int $value): int
+          {
+              return $value;
+          }
+      }
+      """
+    And a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+
+          it('applies a coupon', function () {
+              expect((new Basket())->applyCoupon(10))->toBe(10);
+          });
+      });
+      """
+    And I run phpspec run with coverage options ""
+    Then the output should not contain "Guard Violation"
+    And the exit code should be 0
+
   Scenario: Turning guard on again moves the baseline to where the session is now
     Given a PSR-4 project with "spec" and "src" directories
     When I run phpspec guard

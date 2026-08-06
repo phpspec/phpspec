@@ -95,12 +95,23 @@ final readonly class Guard
     }
 
     /**
+     * The file's lines, without their endings: they are rejoined to be
+     * tokenised, and a line that kept its newline would be counted twice,
+     * putting every member a line further down than it is.
+     *
      * @return list<string>
      */
     private function lines(string $file): array
     {
         $path = rtrim($this->baseDir, '/') . '/' . ltrim($file, './');
 
-        return $this->filesystem->exists($path) ? array_values($this->filesystem->readLines($path)) : [];
+        if (!$this->filesystem->exists($path)) {
+            return [];
+        }
+
+        return array_map(
+            static fn(string $line) => rtrim($line, "\r\n"),
+            array_values($this->filesystem->readLines($path)),
+        );
     }
 }

@@ -27,11 +27,14 @@ use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Extensions\FormatterBridge;
 use PhpSpec\FilterRegistry;
+use PhpSpec\Guard\Coverage;
+use PhpSpec\Guard\Inspection;
 use PhpSpec\LineTargetRegistry;
 use PhpSpec\Loader;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
 use PhpSpec\Parallel\ParallelRunner;
+use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter;
 use PhpSpec\Report\Formatter\Agent;
 use PhpSpec\Report\Formatter\Agent\Offers;
@@ -238,10 +241,22 @@ final class Run extends Command
             return $this->stopped($prose, $formatter, 'Unknown format: ' . implode(', ', $unknownFormats) . ' (available: pretty, dot, tap, junit, html, agent)');
         }
 
-        $coverageReporter = $this->startCoverage($input);
+        // Guard judges what the run covered, so when it is on the run collects
+        // coverage whether or not anybody asked for a report.
+        $guard = Inspection::of($this->config, new RealFilesystem());
+        $coverageReporter = $this->startCoverage($input, forced: $guard !== null);
 
         if (is_string($coverageReporter)) {
-            return $this->stopped($prose, $formatter, $coverageReporter);
+            if ($guard === null || $this->wantsCoverage($input)) {
+                return $this->stopped($prose, $formatter, $coverageReporter);
+            }
+
+            // Coverage was guard's idea, not the caller's. A machine without a
+            // driver must still be able to run its specs, so guard stands down
+            // and says so rather than failing a run it cannot judge.
+            $prose->writeln('<fg=yellow>Guard cannot judge this run: ' . $coverageReporter . '</>');
+            $guard = null;
+            $coverageReporter = null;
         }
 
         try {
@@ -255,6 +270,8 @@ final class Run extends Command
         $this->writeReportFiles($input, $prose, $results);
         $this->printProfile($input, $prose, $results);
 
+        $failed = null;
+
         if ($coverageReporter) {
             $verdict = $this->reportCoverage($input, $prose, $coverageReporter);
 
@@ -266,10 +283,28 @@ final class Run extends Command
                     $formatter->covered($verdict);
                 }
 
-                if ($verdict->exitCode() !== null) {
-                    return $verdict->exitCode();
+                $failed = $verdict->exitCode();
+            }
+
+            // Judged after the coverage verdict, from the same data: the code
+            // as it stands now, against what this session changed.
+            if ($guard !== null) {
+                $held = $guard->judge(Coverage::fromHits($coverageReporter->hits(), (string) getcwd()));
+
+                if (!$held->held()) {
+                    $held->render($prose);
+
+                    if ($formatter instanceof Agent) {
+                        $formatter->guarded($held);
+                    }
+
+                    $failed = self::FAILURE;
                 }
             }
+        }
+
+        if ($failed !== null) {
+            return $failed;
         }
 
         if ($input->getOption('accept-offers')) {
@@ -397,9 +432,9 @@ final class Run extends Command
      * @return CoverageReporter|null|string the reporter once started, null when no
      *                                      coverage was asked for, or why it could not start
      */
-    private function startCoverage(Input $input): CoverageReporter|null|string
+    private function startCoverage(Input $input, bool $forced = false): CoverageReporter|null|string
     {
-        if (!$this->wantsCoverage($input)) {
+        if (!$this->wantsCoverage($input) && !$forced) {
             return null;
         }
 
