@@ -56,8 +56,8 @@ describe(Guard::class, function () {
         expect($violations)->toHaveCount(1);
         expect($violations[0]->member)->toBe('App\\Basket::applyCoupon');
         expect($violations[0]->lines)->toBe([14, 15]);
-        expect($violations[0]->summary())->toBe('New logic in App\\Basket::applyCoupon is untested.');
-        expect($violations[0]->remedy())->toBe('Write an example for App\\Basket::applyCoupon, then make it pass.');
+        expect($violations[0]->summary)->toBe('New logic in App\\Basket::applyCoupon is untested.');
+        expect($violations[0]->remedy)->toBe('Write an example for App\\Basket::applyCoupon, then make it pass.');
     });
 
     // A brace, a blank line and a declaration are not logic. Without this

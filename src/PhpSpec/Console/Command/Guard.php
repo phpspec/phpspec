@@ -20,6 +20,7 @@ use PhpSpec\Guard\Activation;
 use PhpSpec\Guard\Artifact;
 use PhpSpec\Guard\Baseline;
 use PhpSpec\Guard\Inspection;
+use PhpSpec\Guard\Report;
 use PhpSpec\Guard\ShellGit;
 use PhpSpec\RealFilesystem;
 use Symfony\Component\Console\Command\Command;
@@ -154,7 +155,7 @@ final class Guard extends Command
             return self::SUCCESS;
         }
 
-        $verdict->render($output);
+        (new Report($this->filesystem, $base))->render($verdict, $output);
 
         return self::FAILURE;
     }

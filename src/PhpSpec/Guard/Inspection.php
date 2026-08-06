@@ -31,8 +31,6 @@ final readonly class Inspection
         private Baseline $baseline,
         private Changes $changes,
         private Guard $guard,
-        private Filesystem $filesystem,
-        private string $baseDir = '.',
     ) {}
 
     /**
@@ -88,8 +86,6 @@ final readonly class Inspection
             new Baseline($filesystem, $git, $baseDir),
             $changes,
             new Guard($filesystem, $baseDir),
-            $filesystem,
-            $baseDir,
         );
     }
 
@@ -105,11 +101,7 @@ final readonly class Inspection
             return Verdict::clean();
         }
 
-        return new Verdict(
-            $this->guard->violations($this->changes->since($recorded), $coverage),
-            $this->filesystem,
-            $this->baseDir,
-        );
+        return new Verdict($this->guard->violations($this->changes->since($recorded), $coverage));
     }
 
     /**
@@ -119,10 +111,6 @@ final readonly class Inspection
      */
     public function judgeAgainst(string $commit, Coverage $coverage): Verdict
     {
-        return new Verdict(
-            $this->guard->violations($this->changes->since(['kind' => 'commit', 'commit' => $commit]), $coverage),
-            $this->filesystem,
-            $this->baseDir,
-        );
+        return new Verdict($this->guard->violations($this->changes->since(['kind' => 'commit', 'commit' => $commit]), $coverage));
     }
 }

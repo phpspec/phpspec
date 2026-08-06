@@ -29,6 +29,7 @@ use PhpSpec\Extensions\FormatterBridge;
 use PhpSpec\FilterRegistry;
 use PhpSpec\Guard\Coverage;
 use PhpSpec\Guard\Inspection;
+use PhpSpec\Guard\Report as GuardReport;
 use PhpSpec\LineTargetRegistry;
 use PhpSpec\Loader;
 use PhpSpec\Offers\Offer;
@@ -300,7 +301,7 @@ final class Run extends Command
                 $held = $guard->judge(Coverage::fromHits($coverageReporter->hits(), (string) getcwd()));
 
                 if (!$held->held()) {
-                    $held->render($prose);
+                    (new GuardReport(new RealFilesystem()))->render($held, $prose);
 
                     if ($formatter instanceof Agent) {
                         $formatter->guarded($held);

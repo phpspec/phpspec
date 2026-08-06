@@ -43,7 +43,7 @@ final readonly class Guard
 
         foreach ($delta->all() as $file => $lines) {
             foreach ($this->byMember($file, $this->untested($file, $lines, $coverage)) as $member => $untested) {
-                $violations[] = new Violation($file, $untested, $member === '' ? null : $member);
+                $violations[] = Violation::untestedLogic($file, $untested, $member === '' ? null : $member);
             }
         }
 
