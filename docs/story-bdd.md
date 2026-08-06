@@ -51,6 +51,7 @@ then('I should see {string}', function (string $expected) {
 | `then(pattern, closure)` | Register a Then step |
 | `step_and(pattern, closure)` | Register an And step |
 | `step_but(pattern, closure)` | Register a But step |
+| `PhpSpec\attach(name, text\|closure)` | Hand over context to report with a failure (namespaced: `use function PhpSpec\attach;`) |
 
 All keywords register into the same step registry -- the keyword is for readability only, matching is pattern-based.
 
@@ -90,6 +91,26 @@ then('the message should be {string}', function (string $expected) {
 ```
 
 `StepWorld` uses `#[AllowDynamicProperties]`, so any property can be set dynamically.
+
+## Attaching Context
+
+A scenario often knows things PhpSpec cannot see: a log a process is writing, the output of a command a step captured, why a polling helper gave up. Without them a failure reads `Expected false to be true` and the reason is somewhere you have to go and find. `attach()` hands them over, and they are reported with the failure:
+
+```php
+use function PhpSpec\attach;
+
+given('the watcher is running', function () {
+    $this->log = $this->workspace . '/watch.log';
+    $this->process = proc_open($cmd, [1 => ['file', $this->log, 'w']], $pipes);
+
+    attach('watch log', fn() => @file_get_contents($this->log));   // read at failure time
+    attach('command', $cmd);                                        // already final
+});
+```
+
+A closure is read when the scenario ends, so it holds what the process wrote *after* you attached it rather than the empty file it was then. It is read **before** `afterScenario`, so a hook that terminates the process and clears the workspace cannot empty it first. Nothing is read at all when the scenario passes, so attaching a large log costs a green run nothing. The same name twice keeps the latest.
+
+Attachments appear under the failure in the pretty and dot formatters, and as `attachments` in [`--format=agent`](agent.md#handing-over-context-phpspec-cannot-see).
 
 ## Background
 
