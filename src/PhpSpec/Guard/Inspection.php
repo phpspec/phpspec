@@ -47,6 +47,30 @@ final readonly class Inspection
             return null;
         }
 
+        return self::from($guard, $filesystem, $baseDir);
+    }
+
+    /**
+     * The same inspection, for a check somebody asked for outright. Whether
+     * guard is on day to day is beside the point when the question has been put
+     * directly, which is how CI and a pre-commit hook ask it.
+     */
+    public static function forChecking(Configuration $config, Filesystem $filesystem, string $baseDir = '.'): self
+    {
+        $guard = $config->getGuardConfig() ?? [];
+
+        return self::from($guard + [
+            'paths' => ['src'],
+            'allow' => [],
+            'detection' => 'git',
+        ], $filesystem, $baseDir);
+    }
+
+    /**
+     * @param array{paths: list<string>, allow: list<string>, detection: string, ...} $guard
+     */
+    private static function from(array $guard, Filesystem $filesystem, string $baseDir): self
+    {
         $git = new ShellGit($baseDir);
         $scope = new Scope($guard['paths'], $guard['allow']);
 

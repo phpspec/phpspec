@@ -17,11 +17,14 @@ namespace PhpSpec\Console\Command;
 use PhpSpec\Configuration;
 use PhpSpec\Filesystem;
 use PhpSpec\Guard\Activation;
+use PhpSpec\Guard\Artifact;
 use PhpSpec\Guard\Baseline;
+use PhpSpec\Guard\Inspection;
 use PhpSpec\Guard\ShellGit;
 use PhpSpec\RealFilesystem;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface as Input;
+use Symfony\Component\Console\Input\InputOption as Option;
 use Symfony\Component\Console\Output\OutputInterface as Output;
 
 /**
@@ -53,6 +56,9 @@ final class Guard extends Command
     protected function configure(): void
     {
         $this
+            ->addOption('check', null, Option::VALUE_NONE, 'Judge the change now, against a coverage report a previous run made')
+            ->addOption('hash', null, Option::VALUE_REQUIRED, 'The commit to judge against, instead of the recorded baseline')
+            ->addOption('coverage', null, Option::VALUE_REQUIRED, 'A --coverage-json report to judge with')
             ->setDescription('Turns the TDD guard on and records where this session starts')
             ->setHelp('Records a baseline, then refuses a run whose changed logic no example covers.');
     }
@@ -64,6 +70,10 @@ final class Guard extends Command
             $output->writeln('<fg=red>' . $problem . '</>');
 
             return self::FAILURE;
+        }
+
+        if ($input->getOption('check')) {
+            return $this->check($input, $output);
         }
 
         $base = $this->baseDir ?? '.';
@@ -86,5 +96,48 @@ final class Guard extends Command
             : sprintf('Baseline recorded from %d file(s): this project is not a git repository.', count($recorded['files'] ?? [])));
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Judges on demand, against a coverage report a previous run left behind.
+     *
+     * For CI and pre-commit, where the suite has already run and the point of
+     * comparison is the branch this work came from rather than where somebody's
+     * session started. Asked for explicitly, so it answers even when the
+     * project keeps guard off day to day.
+     */
+    private function check(Input $input, Output $output): int
+    {
+        $base = $this->baseDir ?? '.';
+        $inspection = Inspection::forChecking($this->config, $this->filesystem, $base);
+
+        $coverage = $input->getOption('coverage');
+        if (!is_string($coverage) || $coverage === '') {
+            $output->writeln('<fg=red>guard --check needs a coverage report: run --coverage-json=cov.json first, then pass --coverage=cov.json.</>');
+
+            return self::FAILURE;
+        }
+
+        $read = (new Artifact($this->filesystem))->read($coverage);
+        if (is_string($read)) {
+            $output->writeln('<fg=red>' . $read . '</>');
+
+            return self::FAILURE;
+        }
+
+        $hash = $input->getOption('hash');
+        $verdict = is_string($hash) && $hash !== ''
+            ? $inspection->judgeAgainst($hash, $read)
+            : $inspection->judge($read);
+
+        if ($verdict->held()) {
+            $output->writeln('Guard: the cycle held.');
+
+            return self::SUCCESS;
+        }
+
+        $verdict->render($output);
+
+        return self::FAILURE;
     }
 }

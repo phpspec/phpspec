@@ -149,6 +149,86 @@ Feature: Guard
     Then the output should not contain "Guard Violation"
     And the exit code should be 0
 
+  Scenario: A parallel run judges once, on what every worker together covered
+    Given a PSR-4 project with "spec" and "src" directories
+    And a class "src/App/Basket.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Basket
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+      }
+      """
+    And a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+      });
+      """
+    When I run phpspec guard
+    And a class "src/App/Basket.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Basket
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+
+          public function applyCoupon(int $value): int
+          {
+              return $value;
+          }
+      }
+      """
+    And a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+
+          it('applies a coupon', function () {
+              expect((new Basket())->applyCoupon(10))->toBe(10);
+          });
+      });
+      """
+    And I run phpspec run with coverage options "--parallel=2"
+    Then the output should not contain "Guard Violation"
+    And the exit code should be 0
+
+  Scenario: The check asks for the coverage it is meant to judge with
+    Given a PSR-4 project with "spec" and "src" directories
+    When I run phpspec guard with option "--check"
+    Then the output should contain "needs a coverage report"
+    And the exit code should be 1
+
+  Scenario: The check says so when the report it was pointed at is not there
+    Given a PSR-4 project with "spec" and "src" directories
+    When I run phpspec guard with option "--check --coverage=nope.json"
+    Then the output should contain "Coverage file not found"
+    And the exit code should be 1
+
   Scenario: Turning guard on again moves the baseline to where the session is now
     Given a PSR-4 project with "spec" and "src" directories
     When I run phpspec guard

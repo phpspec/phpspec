@@ -35,6 +35,10 @@ describe(JsonReportBuilder::class, function () {
                 'lines' => [
                     12 => ['spec/App/Calculator.spec.php::Calculator > adds two numbers'],
                 ],
+                // What there was to run, as against what ran: line 13 was
+                // executable and nothing reached it, which is precisely what a
+                // reader of the artifact could not tell before.
+                'executable' => [12, 13],
             ],
         ]);
     });

@@ -39,7 +39,7 @@ final class JsonReportBuilder
     {
         return [
             'tests' => $this->buildTests($collector->getTests()),
-            'sources' => $this->buildSources($collector->getLines(), $srcPath, $projectRoot),
+            'sources' => $this->buildSources($collector->getLines(), $srcPath, $projectRoot, $collector->getAggregate()),
         ];
     }
 
@@ -64,6 +64,26 @@ final class JsonReportBuilder
     }
 
     /**
+     * The lines of one file that were executable, whether or not anything
+     * reached them: Xdebug marks the rest -2.
+     *
+     * @param array<int, int> $hits line => hit value
+     * @return list<int>
+     */
+    private static function executable(array $hits): array
+    {
+        $lines = [];
+        foreach ($hits as $line => $hit) {
+            if ($hit !== -2) {
+                $lines[] = $line;
+            }
+        }
+        sort($lines);
+
+        return $lines;
+    }
+
+    /**
      * Filters covered files down to the source path, relativizes them against
      * the project root and pairs each with a content checksum. Paths are
      * normalised to forward slashes on every platform (Xdebug and realpath()
@@ -72,9 +92,10 @@ final class JsonReportBuilder
      * @param array<string, array<int, array<int, string>>> $lines file path => line number => test identifiers
      * @param string $srcPath absolute path to the source directory to include
      * @param string $projectRoot absolute path to the project root used to relativize paths
-     * @return array<string, array{checksum: string, lines: array<int, array<int, string>>}>
+     * @param array<string, array<int, int>> $aggregate line hit values, for which lines were executable at all
+     * @return array<string, array{checksum: string, lines: array<int, array<int, string>>, executable: list<int>}>
      */
-    private function buildSources(array $lines, string $srcPath, string $projectRoot): array
+    private function buildSources(array $lines, string $srcPath, string $projectRoot, array $aggregate = []): array
     {
         $srcPrefix = rtrim(str_replace('\\', '/', $srcPath), '/') . '/';
         $rootPrefix = rtrim(str_replace('\\', '/', $projectRoot), '/') . '/';
@@ -91,6 +112,10 @@ final class JsonReportBuilder
             $sources[$relative] = [
                 'checksum' => md5($this->filesystem->read($file)),
                 'lines' => $fileLines,
+                // Which lines there were to reach at all, so a reader of the
+                // artifact can tell a line nothing reached from a line that
+                // was never code: "lines" holds only what ran.
+                'executable' => self::executable($aggregate[$file] ?? []),
             ];
         }
 

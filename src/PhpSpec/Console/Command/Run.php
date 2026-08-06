@@ -243,7 +243,15 @@ final class Run extends Command
 
         // Guard judges what the run covered, so when it is on the run collects
         // coverage whether or not anybody asked for a report.
-        $guard = Inspection::of($this->config, new RealFilesystem());
+        //
+        // Except in a parallel worker, which is part of a session rather than
+        // one of its own: it sees a slice of the specs, so it would judge the
+        // whole delta against a fraction of the coverage and cry wolf, and its
+        // verdict would land in the middle of the report the parent parses.
+        // The parent judges once, having merged what every worker collected.
+        $guard = $input->getOption('coverage-partial') !== null
+            ? null
+            : Inspection::of($this->config, new RealFilesystem());
         $coverageReporter = $this->startCoverage($input, forced: $guard !== null);
 
         if (is_string($coverageReporter)) {
@@ -260,7 +268,7 @@ final class Run extends Command
         }
 
         try {
-            $results = $this->runSuiteStreaming($input, $prose, $formatter, $files);
+            $results = $this->runSuiteStreaming($input, $prose, $formatter, $files, $coverageReporter !== null);
         } catch (\RuntimeException $e) {
             // A load-time contract violation (e.g. two step definitions
             // sharing a title) is the user's to fix; report it, never a trace.
@@ -523,7 +531,7 @@ final class Run extends Command
      * @throws RandomException
      * @throws \RuntimeException when the loader rejects a duplicate step title
      */
-    private function runSuiteStreaming(Input $input, Output $prose, Formatter $formatter, string $files): SuiteResult
+    private function runSuiteStreaming(Input $input, Output $prose, Formatter $formatter, string $files, bool $collectingCoverage = false): SuiteResult
     {
         $filter = $input->getOption('filter');
 
@@ -570,7 +578,11 @@ final class Run extends Command
                 }
             }
 
-            $coveragePartialDir = $this->wantsCoverage($input)
+            // Whether coverage is being collected, not whether the caller
+            // asked for a report: guard asks for coverage of its own, and a
+            // worker that was never told to dump it leaves the parent with
+            // nothing to judge.
+            $coveragePartialDir = $collectingCoverage
                 ? sys_get_temp_dir() . '/phpspec_coverage_' . uniqid()
                 : null;
 
