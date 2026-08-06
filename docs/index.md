@@ -16,11 +16,12 @@ PhpSpec lets you write expressive, readable specs using `describe`, `context`, `
 7. [Code Generation](code-generation.md) -- Specs, classes, interfaces, method stubs, step definitions
 8. [Pair Programming & AI](pair.md) -- Interactive pair mode, AI assistant, refactoring
 9. [Coding Agents](agent.md) -- `--format=agent`, offers, `--accept-offers`, and a CLAUDE.md snippet
-10. [Extensions](extensions.md) -- Custom formatters, matchers, commands, listeners
-11. [CLI Reference](cli.md) -- Commands, options, formatters, coverage
-12. [Configuration](configuration.md) -- `phpspec.json` reference, autoloading
-13. [Architecture](architecture.md) -- Internal design: loader, runner, events, results, reporting
-14. [Roadmap](roadmap.md) -- Status and planned features
+10. [Guard](guard.md) -- refusing logic you never specified, and the CI check
+11. [Extensions](extensions.md) -- Custom formatters, matchers, commands, listeners
+12. [CLI Reference](cli.md) -- Commands, options, formatters, coverage
+13. [Configuration](configuration.md) -- `phpspec.json` reference, autoloading
+14. [Architecture](architecture.md) -- Internal design: loader, runner, events, results, reporting
+15. [Roadmap](roadmap.md) -- Status and planned features
 
 ## Quick Example
 

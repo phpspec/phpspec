@@ -236,6 +236,7 @@ missed and anything that stopped it.
 |---|---|---|
 | `rerun` | anything failed with a location | One command that re-runs every failing example at once, so a fix is checked against all of what it was meant to fix. |
 | `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
+| `guard` | [guard](guard.md) is on and the change broke the cycle | `{ "held": false, "violations": [{ "file", "lines", "member", "remedy" }] }`. Each violation is new logic no example reaches, and adds 1 to `actionable`. |
 | `offers` | the run found code it can generate | The run-wide, de-duplicated list. Absent when there is nothing to take. |
 
 ### `fatal`: when the run could not finish
@@ -380,6 +381,9 @@ its `event`:
   a missed `--coverage-min` gate and anything that stopped the run.
 - A `fatal` line means the run could not finish. Read it before anything else:
   the counts describe only what ran before it.
+- `guard` on the summary means you wrote logic no example reaches. Each
+  violation names the `member` and the `remedy`: write that example, do not
+  weaken the code to get past it.
 - `example` lines are what needs attention (passing examples are not reported).
   Each has a `state`:
   - `failing` — the code ran but behaviour is wrong. Look at
