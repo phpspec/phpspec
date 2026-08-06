@@ -73,8 +73,12 @@ final readonly class Baseline
     }
 
     /**
-     * Every guarded file with the hash of what it holds, so a later run can
-     * tell which of them changed without asking git.
+     * Every guarded file with what it holds, so a later run can say not just
+     * which files changed but which lines. A hash would be smaller and would
+     * only ever support a file-level verdict, which would implicate every
+     * untested line in a legacy file the moment somebody touched one of them.
+     * The cost is a local cache under .phpspec/, which is the right place to
+     * spend it.
      *
      * @param list<string> $paths
      * @return array<string, string>
@@ -112,7 +116,7 @@ final readonly class Baseline
             if ($this->filesystem->isDir($path)) {
                 $this->collect($path, $files);
             } elseif (str_ends_with($entry, '.php')) {
-                $files[$this->relative($path)] = md5($this->filesystem->read($path));
+                $files[$this->relative($path)] = $this->filesystem->read($path);
             }
         }
     }

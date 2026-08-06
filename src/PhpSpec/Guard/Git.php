@@ -33,4 +33,22 @@ interface Git
      * repository with no commits yet has nothing to be a baseline.
      */
     public function head(): ?string;
+
+    /**
+     * The working tree against a commit, as a unified diff. The working tree,
+     * not HEAD: during a live cycle nothing is committed yet, and what has not
+     * been committed is exactly what guard is asked about.
+     *
+     * @param list<string> $paths the roots to limit the diff to
+     */
+    public function diff(string $commit, array $paths): string;
+
+    /**
+     * Files git has never been told about, under the given roots. Every line
+     * of one of these is new.
+     *
+     * @param list<string> $paths
+     * @return list<string>
+     */
+    public function untracked(array $paths): array;
 }

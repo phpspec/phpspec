@@ -37,7 +37,9 @@ describe(Baseline::class, function () {
         $recorded = (new Baseline($fs, $git, '/app'))->record(['src']);
 
         expect($recorded['kind'])->toBe('snapshot');
-        expect($recorded['files'])->toBe(['src/Basket.php' => md5('<?php class Basket {}')]);
+        // What it held, not a hash of it: without the content there is no
+        // line-level verdict later, only "this file changed".
+        expect($recorded['files'])->toBe(['src/Basket.php' => '<?php class Basket {}']);
     });
 
     // A repository with no commits yet has nothing to be a baseline, so it is

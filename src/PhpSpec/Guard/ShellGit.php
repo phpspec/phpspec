@@ -38,6 +38,23 @@ final class ShellGit implements Git
         return $this->run(['rev-parse', 'HEAD']);
     }
 
+    public function diff(string $commit, array $paths): string
+    {
+        // No colour, no rename detection, and no context: guard wants the
+        // numbers of the new lines, not something to read.
+        return $this->run(['diff', '--no-color', '--no-renames', '--unified=0', $commit, '--', ...$paths]) ?? '';
+    }
+
+    public function untracked(array $paths): array
+    {
+        $listed = $this->run(['ls-files', '--others', '--exclude-standard', '--', ...$paths]);
+        if ($listed === null) {
+            return [];
+        }
+
+        return array_values(array_filter(explode("\n", $listed), static fn(string $line) => trim($line) !== ''));
+    }
+
     /**
      * Runs one git command, returning its trimmed output, or null when git
      * could not answer.
