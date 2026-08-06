@@ -15,6 +15,7 @@
 namespace PhpSpec\Coverage;
 
 use PhpSpec\Filesystem;
+use PhpSpec\Source\Members;
 
 /**
  * @internal
@@ -33,7 +34,7 @@ final class JsonReportBuilder
      * @param PerExampleCollector $collector the collector holding per-example coverage
      * @param string $srcPath absolute path to the source directory to include
      * @param string $projectRoot absolute path to the project root used to relativize paths
-     * @return array{tests: array<string, array{time: float, memory: int, spec_file: string, spec_checksum: string}>, sources: array<string, array{checksum: string, lines: array<int, array<int, string>>}>}
+     * @return array{tests: array<string, array{time: float, memory: int, spec_file: string, spec_checksum: string}>, sources: array<string, array{checksum: string, lines: array<int, array<int, string>>, executable: list<int>, methods: array<string, array{start: int, end: int}>}>}
      */
     public function build(PerExampleCollector $collector, string $srcPath, string $projectRoot): array
     {
@@ -93,7 +94,7 @@ final class JsonReportBuilder
      * @param string $srcPath absolute path to the source directory to include
      * @param string $projectRoot absolute path to the project root used to relativize paths
      * @param array<string, array<int, int>> $aggregate line hit values, for which lines were executable at all
-     * @return array<string, array{checksum: string, lines: array<int, array<int, string>>, executable: list<int>}>
+     * @return array<string, array{checksum: string, lines: array<int, array<int, string>>, executable: list<int>, methods: array<string, array{start: int, end: int}>}>
      */
     private function buildSources(array $lines, string $srcPath, string $projectRoot, array $aggregate = []): array
     {
@@ -109,13 +110,18 @@ final class JsonReportBuilder
             }
 
             $relative = str_starts_with($normalized, $rootPrefix) ? substr($normalized, strlen($rootPrefix)) : $normalized;
+            $source = $this->filesystem->read($file);
             $sources[$relative] = [
-                'checksum' => md5($this->filesystem->read($file)),
+                'checksum' => md5($source),
                 'lines' => $fileLines,
                 // Which lines there were to reach at all, so a reader of the
                 // artifact can tell a line nothing reached from a line that
                 // was never code: "lines" holds only what ran.
                 'executable' => self::executable($aggregate[$file] ?? []),
+                // Where each method begins and ends, because a mutation is a
+                // change to a method and the tests to re-run are the ones that
+                // covered it.
+                'methods' => Members::in($source)->spans(),
             ];
         }
 

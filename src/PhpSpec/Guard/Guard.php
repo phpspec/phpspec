@@ -15,6 +15,7 @@
 namespace PhpSpec\Guard;
 
 use PhpSpec\Filesystem;
+use PhpSpec\Source\Members;
 
 /**
  * @internal
@@ -88,7 +89,7 @@ final readonly class Guard
         $grouped = [];
 
         foreach ($lines as $line) {
-            $grouped[$members[$line] ?? ''][] = $line;
+            $grouped[$members->at($line) ?? ''][] = $line;
         }
 
         return $grouped;

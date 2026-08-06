@@ -71,6 +71,10 @@ Feature: JSON coverage report
       "spec_checksum"
       """
 
+  Scenario: The report says which lines each method spans
+    When I run phpspec run with coverage options "--coverage-json=coverage.json"
+    Then the file "coverage.json" should record the method "add" spanning lines 7 to 10
+
   Scenario: Combining the JSON report with a Clover report produces both
     When I run phpspec run with coverage options "--coverage-json=coverage.json --coverage-clover=clover.xml"
     Then a file "coverage.json" should be generated

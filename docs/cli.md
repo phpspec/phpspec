@@ -443,7 +443,10 @@ change while the integration is being finalised.
             "lines": {
                 "9": ["spec/App/Calculator.spec.php::Calculator > adds two numbers"]
             },
-            "executable": [9, 12]
+            "executable": [9, 12],
+            "methods": {
+                "add": {"start": 7, "end": 10}
+            }
         }
     }
 }
@@ -461,6 +464,12 @@ change while the integration is being finalised.
   line nothing reached can be told from a line that was never code (a brace, a
   declaration). A file with no executed lines at all does not appear in
   `sources`.
+- **`methods`** gives each method's first and last line, from its `function`
+  keyword to the brace that closes it, so a mutation can be located without
+  parsing the source again. Methods with no body (interface, abstract) are
+  absent. The key is the bare method name, except when two classes in the same
+  file declare it, in which case that name is qualified (`Card::pay`) so a
+  lookup finds nothing rather than the wrong range.
 - Code executed only in `beforeAll`/`afterAll` hooks is not attributed to any
   example.
 
