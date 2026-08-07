@@ -28,8 +28,29 @@ recorded under `.phpspec/guard/`: the current commit in a git repository, or a
 snapshot of your source files without one. That is the point in time everything
 is judged against, so add `.phpspec/` to your `.gitignore`.
 
-Running `bin/phpspec guard` again moves the baseline to where you are now, which
-forgives everything uncommitted. That is deliberate, but it is worth knowing.
+Guard reads coverage, so **Xdebug has to be in coverage mode**. Either set
+`xdebug.mode=coverage` in your `php.ini`, or run with
+`XDEBUG_MODE=coverage bin/phpspec run`. Xdebug's default mode is `develop`,
+which collects nothing, and guard will tell you it cannot judge.
+
+Running `bin/phpspec guard` again re-records the baseline. In `mtime` mode that
+moves it to your files as they now stand, which forgives everything you have not
+committed. In git mode it records the current commit, so uncommitted work stays
+in the judgement: commit it, or `allow` it, if you mean guard to let it pass.
+
+### On a team
+
+The baseline is local and gitignored, so a fresh clone has `status: active` in
+the committed config and nothing to judge against. Guard says so on the first
+run and does not fail it:
+
+```
+Guard is on but no baseline is recorded in this checkout: run "bin/phpspec guard" to judge from here.
+```
+
+Everyone runs `bin/phpspec guard` once after cloning. CI does not need a
+baseline at all: it asks with `--check --hash`, which names the point of
+comparison outright. See [Continuous integration](#continuous-integration).
 
 ## What a violation looks like
 
@@ -81,11 +102,17 @@ guard:
 statement of intent, and demanding that the intent be covered by itself would
 invert the whole idea.
 
-An unknown key is named, with the one it was probably meant to be:
+An unknown key is named, with the one it was probably meant to be, and the run
+stops rather than carrying on ungated:
 
 ```
 Unknown guard key "detecton". Did you mean "detection"?
 ```
+
+A setting guard cannot read means guard is off, and off is exactly what a typo
+must not be able to do quietly, so `run` refuses until it is fixed. Note that
+YAML turns `true` and `false` into booleans: `status: true` is not `active`, and
+guard says so in those words.
 
 ## What counts as a change
 
@@ -135,6 +162,39 @@ the baseline as usual.
 | `--hash=<sha>` | Judge against this commit instead of the recorded baseline. |
 | `--coverage=<file>` | The `--coverage-json` report to judge with. Required. |
 
+The report is checked against the code before it is trusted. Every source in it
+carries a checksum, and a report describing a file that has changed since is
+refused rather than believed:
+
+```
+cov.json describes code that has changed since it was written: src/App/Basket.php. Run the suite again with --coverage-json.
+```
+
+## When guard cannot judge
+
+Guard needs a baseline and a coverage report. Missing either, it says so in a
+sentence naming what to do, and it never passes in silence: a guard that quietly
+stops guarding leaves everybody believing they still have one.
+
+Whether that stops you depends on which command asked and why:
+
+| Guard cannot judge because | `bin/phpspec run` | `guard --check` |
+|---|---|---|
+| the `guard:` section cannot be read | refuses, exit `1` | refuses, exit `1` |
+| no baseline is recorded in this checkout | says so, exit `0` | refuses, exit `1` |
+| the baseline is unreadable, or its commit is not in this checkout | says so, exit `0` | refuses, exit `1` |
+| no coverage was collected, or Xdebug is not in coverage mode | says so, exit `0` | refuses, exit `1` |
+
+A misread config is the same in every checkout and one edit away from fixed, so
+refusing costs a moment and can never flap. The rest depend on where the code is
+checked out: a clone that has recorded nothing yet, a shallow CI checkout that
+does not contain the baseline commit. Failing a developer's run over those would
+only teach them to turn guard off, so `run` tells them instead.
+
+`guard --check` refuses all four, because a check that could not check must not
+answer "fine", and its inputs are the caller's own: the commit and the report
+are named on the command line, so a refusal means one of them is wrong.
+
 ## Under `--format=agent`
 
 A violation rides in the summary as data rather than as text to parse, and each
@@ -142,22 +202,28 @@ one counts toward `actionable`, because untested logic is work left to do in
 exactly that sense:
 
 ```json
-{"v":2,"event":"summary","actionable":1,"guard":{"held":false,"violations":[
+{"v":2,"event":"summary","actionable":1,"guard":{"held":false,"judged":true,"violations":[
   {"file":"src/App/Basket.php","lines":[14,15,18],
    "member":"App\\Basket::applyCoupon",
    "remedy":"Write an example for App\\Basket::applyCoupon, then make it pass."}
 ]}}
 ```
 
-The key is absent when the cycle held.
+The key is absent when the cycle held. When guard could not judge at all it is
+present and says why, so an agent is never left to infer that silence meant a
+pass:
+
+```json
+{"v":2,"event":"summary","actionable":0,"guard":{"held":true,"judged":false,"violations":[],
+  "reason":"Guard is on but no baseline is recorded in this checkout: run \"bin/phpspec guard\" to judge from here."}}
+```
 
 ## Things worth knowing
 
 - **Guard collects its own coverage.** When it is on, `run` turns coverage on
   for itself, so the verdict always describes the code as it is now. Without
-  Xdebug, guard says it cannot judge and stands down; it never fails a run for
-  want of a driver. The same holds when a run collects no coverage at all,
-  which means the collection failed rather than that nothing is specified.
+  Xdebug in coverage mode it says it cannot judge and stands down; it never
+  fails a run for want of a driver.
 - **Guard judges what this run exercised.** Code covered only by another suite,
   or by a run in a separate process, reads as untested to the run in front of
   it. Where that is by design, `allow` those paths.

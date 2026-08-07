@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
  - `phpspec guard` turns on a TDD guard: `run` refuses a change whose new logic no example reaches, naming the member and showing the lines
  - `phpspec guard --check --hash=<sha> --coverage=<file>` asks the same question on demand, after the suite, for CI and pre-commit
- - A guard violation rides in the agent summary as `guard`, counting toward `actionable`
+ - Guard says when it cannot judge instead of passing in silence: `run` names the reason and carries on, `guard --check` refuses, and a guard config it cannot read stops both
+ - `guard --check` refuses a coverage report describing code that has changed since it was written
+ - A guard violation rides in the agent summary as `guard`, counting toward `actionable`; `judged` and `reason` say when guard reached no conclusion
  - The JSON coverage report records the executable lines of each source alongside the ones that ran, so a line nothing reached can be told from a line that was never code
  - The JSON coverage report records where each method of a source starts and ends, so a mutation testing tool can locate one without parsing the source again
  - Every offer PhpSpec makes carries an id, and `phpspec accept <id>` applies exactly what was reported, refusing an offer whose file has since changed

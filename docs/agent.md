@@ -236,7 +236,7 @@ missed and anything that stopped it.
 |---|---|---|
 | `rerun` | anything failed with a location | One command that re-runs every failing example at once, so a fix is checked against all of what it was meant to fix. |
 | `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
-| `guard` | [guard](guard.md) is on and the change broke the cycle | `{ "held": false, "violations": [{ "file", "lines", "member", "remedy" }] }`. Each violation is new logic no example reaches, and adds 1 to `actionable`. |
+| `guard` | [guard](guard.md) is on and either judged the change or could not | `{ "held": false, "judged": true, "violations": [{ "file", "lines", "member", "remedy" }] }`. Each violation is new logic no example reaches, and adds 1 to `actionable`. When `judged` is `false` there are no violations and a `reason` says what stopped it. |
 | `offers` | the run found code it can generate | The run-wide, de-duplicated list. Absent when there is nothing to take. |
 
 ### `fatal`: when the run could not finish
@@ -383,7 +383,9 @@ its `event`:
   the counts describe only what ran before it.
 - `guard` on the summary means you wrote logic no example reaches. Each
   violation names the `member` and the `remedy`: write that example, do not
-  weaken the code to get past it.
+  weaken the code to get past it. If `judged` is `false`, guard reached no
+  conclusion at all and `reason` says why: nothing was checked, so do not read
+  the run as having been guarded.
 - `example` lines are what needs attention (passing examples are not reported).
   Each has a `state`:
   - `failing` — the code ran but behaviour is wrong. Look at

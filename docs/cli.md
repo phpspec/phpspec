@@ -468,8 +468,8 @@ change while the integration is being finalised.
   keyword to the brace that closes it, so a mutation can be located without
   parsing the source again. Methods with no body (interface, abstract) are
   absent. The key is the bare method name, except when two classes in the same
-  file declare it, in which case that name is qualified (`Card::pay`) so a
-  lookup finds nothing rather than the wrong range.
+  file declare it, in which case that name is fully qualified
+  (`App\Card::pay`) so a lookup finds nothing rather than the wrong range.
 - Code executed only in `beforeAll`/`afterAll` hooks is not attributed to any
   example.
 
