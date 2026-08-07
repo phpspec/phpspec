@@ -217,6 +217,59 @@ Feature: Guard
     Then the output should not contain "Guard Violation"
     And the exit code should be 0
 
+  Scenario: A repository is judged against its commit, awkward paths and all
+    Given a PSR-4 project with "spec" and "src" directories
+    And a class "src/App/Odd Names/Basket.php":
+      """
+      <?php
+
+      namespace App\OddNames;
+
+      class Basket
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+      }
+      """
+    And a spec file "spec/App/Nothing.spec.php":
+      """
+      <?php
+
+      describe('Nothing', function () {
+          it('is specified', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    And the project is a git repository
+    When I run phpspec guard
+    Then the output should contain "Baseline recorded at"
+    And a class "src/App/Odd Names/Basket.php":
+      """
+      <?php
+
+      namespace App\OddNames;
+
+      class Basket
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+
+          public function applyCoupon(int $value): int
+          {
+              return $value;
+          }
+      }
+      """
+    And I run phpspec run with coverage options ""
+    Then the output should contain "Guard Violation"
+    And the output should contain "applyCoupon"
+    And the exit code should be 1
+
   Scenario: Snapshot detection judges the session, not the whole project
     Given a PSR-4 project with "spec" and "src" directories
     And a file "phpspec.yml":

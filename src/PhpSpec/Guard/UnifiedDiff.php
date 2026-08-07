@@ -34,9 +34,13 @@ final class UnifiedDiff
 
         foreach (explode("\n", $diff) as $text) {
             if (str_starts_with($text, '+++ ')) {
-                $named = substr($text, 4);
+                // A name with a space in it is followed by a tab, which is how
+                // the format says where the name stopped. Keeping the tab
+                // makes the path match nothing, and a file guard cannot match
+                // is a file guard silently stops judging.
+                $named = strtok(substr($text, 4), "\t");
                 // "/dev/null" is a file the diff deleted; there is nothing new in it.
-                $file = $named === '/dev/null' ? null : preg_replace('#^[ab]/#', '', $named);
+                $file = $named === '/dev/null' || $named === false ? null : preg_replace('#^[ab]/#', '', $named);
 
                 continue;
             }

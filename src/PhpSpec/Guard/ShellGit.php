@@ -47,12 +47,14 @@ final class ShellGit implements Git
 
     public function untracked(array $paths): array
     {
-        $listed = $this->run(['ls-files', '--others', '--exclude-standard', '--', ...$paths]);
+        // Terminated with NULs rather than newlines: a path may contain a
+        // newline, and one that arrives split in two matches no file at all.
+        $listed = $this->run(['ls-files', '--others', '--exclude-standard', '-z', '--', ...$paths]);
         if ($listed === null) {
             return [];
         }
 
-        return array_values(array_filter(explode("\n", $listed), static fn(string $line) => trim($line) !== ''));
+        return array_values(array_filter(explode("\0", $listed), static fn(string $line) => trim($line) !== ''));
     }
 
     /**
@@ -64,7 +66,11 @@ final class ShellGit implements Git
     private function run(array $arguments): ?string
     {
         $descriptors = [1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
-        $process = @proc_open(['git', ...$arguments], $descriptors, $pipes, $this->workingDir);
+
+        // Paths as they are on disk. Git escapes anything outside ASCII by
+        // default, and "src/caf\303\251.php" is a file guard would look for
+        // and never find, so it would quietly stop judging it.
+        $process = @proc_open(['git', '-c', 'core.quotePath=false', ...$arguments], $descriptors, $pipes, $this->workingDir);
 
         if (!is_resource($process)) {
             return null;

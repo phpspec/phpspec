@@ -17,6 +17,18 @@ describe(UnifiedDiff::class, function () {
         expect(UnifiedDiff::added($diff))->toBe(['src/App/Basket.php' => [11, 12]]);
     });
 
+    // Git marks where a name stops with a tab when the name itself contains a
+    // space. Reading the tab as part of the path leaves guard looking for a
+    // file that does not exist, and quietly judging nothing in it.
+    it('reads a path that has a space in it', function () {
+        $diff = "--- a/src/App/Odd Names/Basket.php\t\n"
+            . "+++ b/src/App/Odd Names/Basket.php\t\n"
+            . "@@ -10,0 +11,1 @@\n"
+            . "+        return 0;\n";
+
+        expect(UnifiedDiff::added($diff))->toBe(['src/App/Odd Names/Basket.php' => [11]]);
+    });
+
     it('counts context lines but not removed ones', function () {
         $diff = <<<DIFF
         --- a/src/App/Basket.php

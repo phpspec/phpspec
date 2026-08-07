@@ -49,6 +49,17 @@ given('a PSR-4 project with Composer autoloading', function () {
     // vendor/ already symlinked in beforeScenario
 });
 
+// Guard judges against a commit wherever there is one, so the git reader only
+// gets exercised end to end by a project that actually has a repository.
+given('the project is a git repository', function () {
+    $dir = escapeshellarg($this->projectDir);
+    exec("cd $dir && git init -q . && git add -A 2>/dev/null && git -c user.email=steps@phpspec.test -c user.name=steps commit -qm 'start' 2>&1", $lines, $code);
+
+    if ($code !== 0) {
+        throw new \RuntimeException("Could not make a git repository: " . implode("\n", $lines));
+    }
+});
+
 // -- File writing steps ------------------------------------------------
 // All these receive a file path ({string}) and content (doc string).
 
