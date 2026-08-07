@@ -37,21 +37,21 @@ describe(ProjectRoot::class, function () {
     // every path stays absolute: coverage of a file nobody can name, a guard
     // that reads every changed line as untested.
     it('answers to every spelling of itself the filesystem accepts', function () {
-        $real = sys_get_temp_dir() . '/phpspec_root_' . getmypid();
-        $alias = sys_get_temp_dir() . '/phpspec_alias_' . getmypid();
-        @mkdir($real . '/src', 0777, true);
-        @symlink($real, $alias);
+        $directory = sys_get_temp_dir() . '/phpspec_root_' . getmypid();
+        @mkdir($directory . '/src', 0777, true);
 
         try {
-            $root = ProjectRoot::at($alias);
+            // One directory, named two ways: as it was handed over, and as the
+            // filesystem resolves it. Windows makes that difference for free,
+            // handing the same place back as "RUNNER~1" from one call and
+            // "runneradmin" from another.
+            $root = ProjectRoot::at($directory . '/src/..');
 
-            // Named through the alias, and through what it resolves to.
-            expect($root->relative($alias . '/src/Basket.php'))->toBe('src/Basket.php');
-            expect($root->relative((string) realpath($real) . '/src/Basket.php'))->toBe('src/Basket.php');
+            expect($root->relative($directory . '/src/../src/Basket.php'))->toBe('src/Basket.php');
+            expect($root->relative((string) realpath($directory) . '/src/Basket.php'))->toBe('src/Basket.php');
         } finally {
-            @unlink($alias);
-            @rmdir($real . '/src');
-            @rmdir($real);
+            @rmdir($directory . '/src');
+            @rmdir($directory);
         }
     });
 

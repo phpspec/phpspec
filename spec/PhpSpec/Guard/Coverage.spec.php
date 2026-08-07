@@ -29,20 +29,19 @@ describe(Coverage::class, function () {
     // one directory, and a base that recognises only its own leaves every file
     // unknown, which guard reads as logic no example reached.
     it('matches a file whose path spells the project differently', function () {
-        $real = sys_get_temp_dir() . '/phpspec_cov_' . getmypid();
-        $alias = sys_get_temp_dir() . '/phpspec_cov_alias_' . getmypid();
-        @mkdir($real . '/src', 0777, true);
-        @symlink($real, $alias);
+        $directory = sys_get_temp_dir() . '/phpspec_cov_' . getmypid();
+        @mkdir($directory . '/src', 0777, true);
 
         try {
-            $coverage = Coverage::fromHits([(string) realpath($real) . '/src/Basket.php' => [7 => 1]], $alias);
+            $hits = [(string) realpath($directory) . '/src/Basket.php' => [7 => 1]];
+
+            $coverage = Coverage::fromHits($hits, $directory . '/src/..');
 
             expect($coverage->knows('src/Basket.php'))->toBeTrue();
             expect($coverage->covers('src/Basket.php', 7))->toBeTrue();
         } finally {
-            @unlink($alias);
-            @rmdir($real . '/src');
-            @rmdir($real);
+            @rmdir($directory . '/src');
+            @rmdir($directory);
         }
     });
 
