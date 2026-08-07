@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Printed and attached text is capped in the terminal as it already was in the agent document, so a large body cannot scroll the failure off screen
  - describe and exemplify refuse a name PHP could not parse instead of writing a spec that breaks the suite, and describe says what it needs when given nothing
  - accept resolves paths through the configuration the run was given, so `-c` is honoured
+ - A run nobody can answer no longer takes silence for a yes and writes generated code into the source tree: it names what was on offer and how to accept it
 
 ## [9.0.0-beta.18](https://github.com/phpspec/phpspec/compare/9.0.0-beta.17...9.0.0-beta.18)
 

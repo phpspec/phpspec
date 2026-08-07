@@ -3,6 +3,7 @@
 use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use PhpSpec\Console\Command\Run\CodeGenerator;
+use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
@@ -102,7 +103,7 @@ describe(CodeGenerator::class, function () {
             $specFile = $absDir . '/spec/CgTest/Widget.spec.php';
             file_put_contents($specFile, "<?php\nit('works', fn() => expect(\$this->widget->spin())->toBe(true));\n");
 
-            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', false);
+            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', Generation::Accepts);
 
             $original = eval("return new \\Error('Call to undefined method CgTest\\\\Widget::spin()');");
             $error = new \PhpSpec\Specification\ExampleError(
@@ -122,7 +123,6 @@ describe(CodeGenerator::class, function () {
             $generator->generate($this->output, $suite, false);
             $out = $this->output->fetch();
 
-            expect($out)->toContain('Do you want me to create');
             expect($out)->toContain('spin()');
             expect($out)->toContain('[MODIFIED]');
             expect($out)->toContain('public function spin');
@@ -146,7 +146,7 @@ describe(CodeGenerator::class, function () {
             $specFile = $absDir . '/spec/test.spec.php';
             file_put_contents($specFile, "<?php\nit('mocks', function(CgTest2\\Repo \$mock) {});\n");
 
-            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', false);
+            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', Generation::Accepts);
 
             $original = new \RuntimeException("Cannot create mock: class or interface 'CgTest2\\Repo' does not exist");
             $error = new \PhpSpec\Specification\ExampleError(
@@ -167,8 +167,10 @@ describe(CodeGenerator::class, function () {
             $out = $this->output->fetch();
 
             expect($out)->toContain('interface');
-            expect($out)->toContain('CgTest2\Repo');
             expect($out)->toContain('[NEW FILE]');
+            // Where it went, and under which namespace: taking the offer says
+            // what was written, since there was no question to say it first.
+            expect(file_get_contents($absDir . '/src/CgTest2/Repo.php'))->toContain('namespace CgTest2;');
 
             // Cleanup
             array_map('unlink', glob($absDir . '/src/CgTest2/*') ?: []);
@@ -198,7 +200,7 @@ describe(CodeGenerator::class, function () {
                 "<?php\n\nnamespace App\\Model;\n\nclass User\n{\n}\n",
             );
 
-            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', false, psr4Prefix: 'App');
+            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', Generation::Accepts, psr4Prefix: 'App');
 
             $original = new \RuntimeException('Class "App\Model\User" not found');
             $error = new \PhpSpec\Specification\ExampleError('Class "App\Model\User" not found', $original);

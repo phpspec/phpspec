@@ -98,6 +98,12 @@ when('I run phpspec run in a fresh process with option {string}', function (stri
     _phpspec_exec_subprocess($this, 'run ' . $options);
 });
 
+// A terminal PhpSpec can print a question to, with nothing behind it to answer:
+// the subprocess gets its input closed rather than fed.
+when('I run phpspec run with nobody to answer it', function () {
+    _phpspec_exec_subprocess($this, 'run');
+});
+
 when('I run phpspec run {string}', function (string $path) {
     _phpspec_exec($this, 'run ' . $path);
 });

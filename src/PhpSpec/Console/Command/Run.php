@@ -18,6 +18,7 @@ use DOMException;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\CoverageReporter;
+use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Console\Command\Run\GenerationReport;
 use PhpSpec\Console\Command\Run\RunOutcome;
@@ -320,7 +321,7 @@ final class Run extends Command
             // Apply every pending generation offer without prompting, then exit.
             // The run's own output already went out; generation notes are discarded
             // so an upstream --format=agent document stays a single clean object.
-            $this->generateCode(new BufferedOutput(), $results, (bool) $input->getOption('fake'), false);
+            $this->generateCode(new BufferedOutput(), $results, (bool) $input->getOption('fake'), Generation::Accepts);
 
             return 0;
         }
@@ -331,11 +332,11 @@ final class Run extends Command
         $reportPath = GenerationReport::requestedPath();
         if ($reportPath !== null) {
             GenerationReport::write($reportPath, new RunOutcome(
-                $this->codeGenerator(false)->scan($results),
+                $this->codeGenerator(Generation::Declines)->scan($results),
                 SuiteSummary::fromSuiteResult($results),
             ));
         } elseif (!in_array($this->resolveFormat($input), ['junit', 'html', 'agent'], true)) {
-            $this->generateCode($prose, $results, (bool) $input->getOption('fake'), $input->isInteractive());
+            $this->generateCode($prose, $results, (bool) $input->getOption('fake'), $input->isInteractive() ? Generation::Asks : Generation::Declines);
         }
 
         if ($formatter instanceof Agent) {
@@ -847,16 +848,17 @@ final class Run extends Command
      * @param Output $output the console output for prompts and confirmation messages
      * @param SuiteResult $results the suite results to scan for generation candidates
      * @param bool $fake whether --fake mode is enabled
+     * @param Generation $generation how an offer is answered when nobody is asked
      */
-    private function generateCode(Output $output, SuiteResult $results, bool $fake, bool $interactive = true): void
+    private function generateCode(Output $output, SuiteResult $results, bool $fake, Generation $generation = Generation::Asks): void
     {
-        $this->codeGenerator($interactive)->generate($output, $results, $fake);
+        $this->codeGenerator($generation)->generate($output, $results, $fake);
     }
 
     /**
      * Builds a CodeGenerator configured from the project paths.
      *
-     * @param bool $interactive whether generation should prompt (false = auto-accept)
+     * @param Generation $generation how an offer is answered when nobody is asked
      * @return CodeGenerator
      */
     /**
@@ -890,15 +892,15 @@ final class Run extends Command
      */
     private function candidates(SuiteResult $results): GenerationCandidates
     {
-        return $this->candidates ??= $this->codeGenerator(false)->scan($results);
+        return $this->candidates ??= $this->codeGenerator(Generation::Declines)->scan($results);
     }
 
-    private function codeGenerator(bool $interactive): CodeGenerator
+    private function codeGenerator(Generation $generation): CodeGenerator
     {
         return new CodeGenerator(
             ltrim($this->config->getSrcPath(), './'),
             ltrim($this->config->getSpecPath(), './'),
-            $interactive,
+            $generation,
             $this->config->getSpecSuffix(),
             $this->config->getPsr4Prefix(),
         );

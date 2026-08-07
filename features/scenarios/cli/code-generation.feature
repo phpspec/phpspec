@@ -29,6 +29,62 @@ Feature: Code generation
     When I run phpspec run and answer "y" to generation prompts
     Then the class "src/App/Calculator.php" should contain "function add"
 
+  Scenario: A run nobody can answer writes nothing into the source tree
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+      });
+      """
+    When I run phpspec run
+    Then no file "src/App/Basket.php" should be generated
+    And the output should contain "accept-offers"
+    And the exit code should be 1
+
+  Scenario: --no-interaction writes nothing into the source tree
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--no-interaction"
+    Then no file "src/App/Basket.php" should be generated
+    And the output should contain "Nothing was written"
+    # Named without its separators: Windows writes them the other way round.
+    And the output should contain "Basket.php"
+
+  # An empty answer at a terminal is somebody pressing Enter, which takes the
+  # default. Nothing to read at all is nobody there, and must not be read as one.
+  Scenario: A question nobody is there to answer writes nothing either
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+      });
+      """
+    When I run phpspec run with nobody to answer it
+    Then no file "src/App/Basket.php" should be generated
+    And the output should contain "Nothing was written"
+
   Scenario: Generate an interface from mock error
     Given a spec file "spec/App/Service.spec.php":
       """
