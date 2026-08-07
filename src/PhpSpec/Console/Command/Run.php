@@ -250,9 +250,19 @@ final class Run extends Command
         // whole delta against a fraction of the coverage and cry wolf, and its
         // verdict would land in the middle of the report the parent parses.
         // The parent judges once, having merged what every worker collected.
-        $guard = $input->getOption('coverage-partial') !== null
-            ? null
-            : Inspection::of($this->config, new RealFilesystem());
+        $worker = $input->getOption('coverage-partial') !== null;
+
+        // A guard section this cannot read leaves guard off, and off is exactly
+        // what a typo must not be able to do quietly: the whole point of the
+        // setting is that somebody asked to be stopped. Refused rather than
+        // warned about, because unlike a missing baseline it is the same in
+        // every checkout and one edit away from fixed.
+        $guardProblem = $worker ? null : $this->config->guardConfigProblem();
+        if ($guardProblem !== null) {
+            return $this->stopped($prose, $formatter, $guardProblem);
+        }
+
+        $guard = $worker ? null : Inspection::of($this->config, new RealFilesystem());
         $coverageReporter = $this->startCoverage($input, forced: $guard !== null);
 
         if (is_string($coverageReporter)) {
@@ -407,18 +417,22 @@ final class Run extends Command
      */
     private function violated(Inspection $guard, array $hits, Output $prose, Formatter $formatter): bool
     {
-        $exercised = Coverage::fromHits($hits, (string) getcwd());
+        $verdict = $guard->judge(Coverage::fromHits($hits, (string) getcwd()));
 
-        // A collection that reported nothing whatsoever is a collection that
-        // failed, and every changed line would read as untested. Guard says as
-        // much rather than condemning a change on no evidence.
-        if ($exercised->isEmpty()) {
-            $prose->writeln('<fg=yellow>Guard cannot judge this run: no coverage was collected.</>');
+        // Said out loud, and never fatal here: what stops guard judging is
+        // usually the checkout rather than the change (a clone with no
+        // baseline of its own, a collection that failed), and refusing a
+        // developer's run over that would teach them to turn guard off. CI
+        // asks the same question with "guard --check", which does refuse.
+        if (!$verdict->judged()) {
+            $prose->writeln('<fg=yellow>' . $verdict->reason() . '</>');
+
+            if ($formatter instanceof Agent) {
+                $formatter->guarded($verdict);
+            }
 
             return false;
         }
-
-        $verdict = $guard->judge($exercised);
 
         if ($verdict->held()) {
             return false;

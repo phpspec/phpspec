@@ -60,21 +60,30 @@ final readonly class Baseline
     }
 
     /**
-     * What was recorded last, or null when guard has never been turned on here.
+     * What was recorded last.
      *
-     * @return array{kind: string, commit?: string, files?: array<string, string>}|null
+     * There being nothing to read is the ordinary state of a fresh clone,
+     * because the baseline is local by design, and it is still a reason guard
+     * cannot judge rather than a reason to say everything is fine.
+     *
+     * @return array{kind: string, commit?: string, files?: array<string, string>}
+     * @throws CannotJudge when nothing was recorded here, or what was recorded cannot be read
      */
-    public function recorded(): ?array
+    public function recorded(): array
     {
         $path = $this->path();
         if (!$this->filesystem->exists($path)) {
-            return null;
+            throw new CannotJudge('Guard is on but no baseline is recorded in this checkout: run "bin/phpspec guard" to judge from here.');
         }
 
         $document = json_decode($this->filesystem->read($path), true);
         $recorded = is_array($document) && isset($document['recorded']) ? $document['recorded'] : null;
 
-        return is_array($recorded) && isset($recorded['kind']) ? $recorded : null;
+        if (!is_array($recorded) || !isset($recorded['kind'])) {
+            throw new CannotJudge(sprintf('Guard cannot read the baseline in %s: run "bin/phpspec guard" to record it again.', self::FILE));
+        }
+
+        return $recorded;
     }
 
     /**

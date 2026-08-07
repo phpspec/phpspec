@@ -90,18 +90,20 @@ final readonly class Inspection
     }
 
     /**
-     * What guard makes of this run. A project where guard was turned on but no
-     * baseline was ever recorded has nothing to compare against, and says so by
-     * holding rather than by inventing a verdict.
+     * What guard makes of this run.
+     *
+     * A checkout where guard is on but nothing was ever recorded has nothing to
+     * compare against. That is not a clean bill of health: it is the state
+     * every fresh clone is in, because the baseline is local by design, and a
+     * silent pass there leaves a whole team believing they are guarded.
      */
     public function judge(Coverage $coverage): Verdict
     {
-        $recorded = $this->baseline->recorded();
-        if ($recorded === null) {
-            return Verdict::clean();
+        try {
+            return $this->verdict($this->baseline->recorded(), $coverage);
+        } catch (CannotJudge $cannot) {
+            return Verdict::cannotJudge($cannot->getMessage());
         }
-
-        return new Verdict($this->guard->violations($this->changes->since($recorded), $coverage));
     }
 
     /**
@@ -111,6 +113,26 @@ final readonly class Inspection
      */
     public function judgeAgainst(string $commit, Coverage $coverage): Verdict
     {
-        return new Verdict($this->guard->violations($this->changes->since(['kind' => 'commit', 'commit' => $commit]), $coverage));
+        try {
+            return $this->verdict(['kind' => 'commit', 'commit' => $commit], $coverage);
+        } catch (CannotJudge $cannot) {
+            return Verdict::cannotJudge($cannot->getMessage());
+        }
+    }
+
+    /**
+     * @param array{kind: string, commit?: string, files?: array<string, string>} $recorded
+     * @throws CannotJudge when there is no evidence to judge on
+     */
+    private function verdict(array $recorded, Coverage $coverage): Verdict
+    {
+        // Coverage of nothing is a collection that failed, not a codebase
+        // without a single example: judging on it would condemn every line of
+        // the change at once.
+        if ($coverage->isEmpty()) {
+            throw new CannotJudge('Guard cannot judge this run: no coverage was collected.');
+        }
+
+        return Verdict::of($this->guard->violations($this->changes->since($recorded), $coverage));
     }
 }

@@ -434,10 +434,10 @@ final class Configuration
         foreach (self::GUARD_CHOICES as $key => $allowed) {
             if (isset($guard[$key]) && !in_array($guard[$key], $allowed, true)) {
                 return sprintf(
-                    'The guard section\'s %s must be %s, not "%s".',
+                    'The guard section\'s %s must be %s, not %s.',
                     $key,
                     self::naturalList($allowed, 'or'),
-                    is_scalar($guard[$key]) ? (string) $guard[$key] : get_debug_type($guard[$key]),
+                    self::asWritten($guard[$key]),
                 );
             }
         }
@@ -462,6 +462,20 @@ final class Configuration
     /**
      * An unknown guard key, with the one it was probably meant to be.
      */
+    /**
+     * A rejected value as the reader wrote it. YAML turns "true" into a
+     * boolean, and being told the setting must not be "1" sends them looking
+     * for a 1 that appears nowhere in their file.
+     */
+    private static function asWritten(mixed $value): string
+    {
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        return is_scalar($value) ? sprintf('"%s"', $value) : get_debug_type($value);
+    }
+
     private function unknownGuardKey(string $key): string
     {
         $closest = null;

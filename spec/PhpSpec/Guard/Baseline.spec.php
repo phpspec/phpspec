@@ -2,6 +2,7 @@
 
 use PhpSpec\Filesystem;
 use PhpSpec\Guard\Baseline;
+use PhpSpec\Guard\CannotJudge;
 use PhpSpec\Guard\Git;
 
 describe(Baseline::class, function () {
@@ -89,10 +90,22 @@ describe(Baseline::class, function () {
         expect((new Baseline($fs, $git, '/app'))->recorded())->toBe(['kind' => 'commit', 'commit' => 'abc123']);
     });
 
-    it('has nothing to read back when guard was never turned on here', function (Filesystem $fs, Git $git) {
+    // The state of every fresh clone, because the baseline is local by design.
+    // Guard has to say so: a silent pass here leaves a whole team believing
+    // they are guarded when nobody is.
+    it('refuses to judge when guard was never turned on here', function (Filesystem $fs, Git $git) {
         allow($fs->exists())->toReturn(false);
 
-        expect((new Baseline($fs, $git, '/app'))->recorded())->toBeNull();
+        expect(fn() => (new Baseline($fs, $git, '/app'))->recorded())
+            ->toThrow(CannotJudge::class, 'Guard is on but no baseline is recorded in this checkout: run "bin/phpspec guard" to judge from here.');
+    });
+
+    it('refuses to judge on a baseline it cannot read', function (Filesystem $fs, Git $git) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn('{ this is not the file we wrote');
+
+        expect(fn() => (new Baseline($fs, $git, '/app'))->recorded())
+            ->toThrow(CannotJudge::class, 'Guard cannot read the baseline in .phpspec/guard/baseline.json: run "bin/phpspec guard" to record it again.');
     });
 
 });

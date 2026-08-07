@@ -149,6 +149,16 @@ final class Guard extends Command
             ? $inspection->judgeAgainst($hash, $read)
             : $inspection->judge($read);
 
+        // A check that could not check must not answer "fine". This is the
+        // question CI asks, and its inputs are the caller's own: the commit and
+        // the report are named on the command line, so refusing can only mean
+        // one of them is wrong.
+        if (!$verdict->judged()) {
+            $output->writeln('<fg=red>' . $verdict->reason() . '</>');
+
+            return self::FAILURE;
+        }
+
         if ($verdict->held()) {
             $output->writeln('Guard: the cycle held.');
 

@@ -254,6 +254,113 @@ Feature: Guard
     Then the output should not contain "Guard Violation"
     And the exit code should be 0
 
+  Scenario: A misspelt guard setting stops the run rather than quietly ungating it
+    Given a PSR-4 project with "spec" and "src" directories
+    And a file "phpspec.yml":
+      """
+      guard:
+        stauts: active
+      """
+    And a spec file "spec/App/Nothing.spec.php":
+      """
+      <?php
+
+      describe('Nothing', function () {
+          it('is specified', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with coverage options ""
+    Then the output should contain "Unknown guard key"
+    And the output should contain "Did you mean"
+    And the exit code should be 1
+
+  Scenario: A setting YAML turned into a boolean is quoted back as a boolean
+    Given a PSR-4 project with "spec" and "src" directories
+    And a file "phpspec.yml":
+      """
+      guard:
+        status: true
+      """
+    And a spec file "spec/App/Nothing.spec.php":
+      """
+      <?php
+
+      describe('Nothing', function () {
+          it('is specified', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with coverage options ""
+    Then the output should contain "not true"
+    And the exit code should be 1
+
+  Scenario: A checkout that never recorded a baseline is told, and is not failed
+    Given a PSR-4 project with "spec" and "src" directories
+    And a file "phpspec.yml":
+      """
+      guard:
+        status: active
+      """
+    And a class "src/App/Basket.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Basket
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+      }
+      """
+    And a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      describe('Nothing', function () {
+          it('is specified', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with coverage options ""
+    Then the output should contain "no baseline is recorded in this checkout"
+    And the output should not contain "Guard Violation"
+    And the exit code should be 0
+
+  Scenario: The check refuses when it has no baseline to judge against
+    Given a PSR-4 project with "spec" and "src" directories
+    And a spec file "spec/App/Nothing.spec.php":
+      """
+      <?php
+
+      describe('Nothing', function () {
+          it('is specified', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with coverage options "--coverage-json=cov.json"
+    And I run phpspec guard with option "--check --coverage=cov.json"
+    Then the output should contain "no baseline is recorded in this checkout"
+    And the exit code should be 1
+
+  Scenario: The check refuses a report that covered nothing at all
+    Given a PSR-4 project with "spec" and "src" directories
+    And a file "cov.json":
+      """
+      {"version": 1, "tests": {}, "sources": {}}
+      """
+    When I run phpspec guard
+    And I run phpspec guard with option "--check --coverage=cov.json"
+    Then the output should contain "no coverage was collected"
+    And the exit code should be 1
+
   Scenario: The check asks for the coverage it is meant to judge with
     Given a PSR-4 project with "spec" and "src" directories
     When I run phpspec guard with option "--check"
