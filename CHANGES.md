@@ -7,10 +7,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+ - `phpspec guard` turns on a TDD guard: `run` refuses a change whose new logic no example reaches, naming the member and showing the lines
+ - `phpspec guard --check --hash=<sha> --coverage=<file>` asks the same question on demand, after the suite, for CI and pre-commit
+ - Guard says when it cannot judge instead of passing in silence: `run` names the reason and carries on, `guard --check` refuses, and a guard config it cannot read stops both
+ - Guard asks for more of an example that reaches part of a change, instead of repeating its request for a first one
+ - `guard --check` refuses a coverage report describing code that has changed since it was written
+ - A guard violation rides in the agent summary as `guard`, counting toward `actionable`; `judged` and `reason` say when guard reached no conclusion
+ - The JSON coverage report records the executable lines of each source alongside the ones that ran, so a line nothing reached can be told from a line that was never code
+ - The JSON coverage report records where each method of a source starts and ends, so a mutation testing tool can locate one without parsing the source again
  - Every offer PhpSpec makes carries an id, and `phpspec accept <id>` applies exactly what was reported, refusing an offer whose file has since changed
  - A failing story step reports the values it expected and got, on the step and on the entry, instead of only the sentence about them
  - What a spec or step printed is captured and reported as the entry's output, in the agent stream and under the failure in the human formatters
  - `toThrow()` takes no argument, asserting only that something was thrown
+ - `PhpSpec\attach()` hands over context PhpSpec cannot see, reported as the entry's attachments and under the failure in the human formatters; a closure is read at the end and before any teardown, and never on a green run
+ - The browser client attaches the request and the response body, so an assertion about a status is read next to what the server said
 
 ### Changed
  - `--format=agent` answers in JSON Lines (protocol v2): one event per line as it happens, so a failure arrives before the suite ends
@@ -26,6 +36,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
  - A parallel run no longer reports `run :0` as an entry's rerun, nor a comparison of nothing with nothing: a failure that came back without its site now reports its message alone
  - An array holding an object no longer makes the failure detail emit a PHP warning of its own
+ - The response matchers reported the two sides the wrong way round, so `toHaveStatus(201)` against a 500 said it expected 500
+ - Printed and attached text is capped in the terminal as it already was in the agent document, so a large body cannot scroll the failure off screen
  - describe and exemplify refuse a name PHP could not parse instead of writing a spec that breaks the suite, and describe says what it needs when given nothing
  - accept resolves paths through the configuration the run was given, so `-c` is honoured
  - A run nobody can answer no longer takes silence for a yes and writes generated code into the source tree: it names what was on offer and how to accept it

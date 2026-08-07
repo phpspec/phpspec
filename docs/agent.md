@@ -87,6 +87,7 @@ Scenario Outline is its own entry, named by its values
 | `spec` | The `file:line` of the failing assertion or the error, project-relative. For a scenario it is the line its `Scenario:` keyword sits on. Absent when the site is not known. |
 | `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. No full-suite re-run needed to verify one fix. Absent with `spec`. |
 | `output` | What the code printed while this entry ran, present only when it printed something. See [Printed output](#printed-output). |
+| `attachments` | Context the spec or scenario handed over about itself, by name. See [Handing over context](#handing-over-context-phpspec-cannot-see). |
 | `steps` | Scenarios only: the steps that did not pass, each `{ title, state, message?, expectation?, at? }`, in the order they were declared. |
 
 **`failing`** entries also carry `expectation`, both sides in one block:
@@ -160,6 +161,67 @@ the process in one step and reads the result in another.
 there was more than 4000 characters of it. The key is absent when nothing was
 printed.
 
+### Handing over context PhpSpec cannot see
+
+Some of what explains a failure never passes through PhpSpec: a log file a
+process is writing, the output a step captured into a variable, the body of an
+HTTP response. Hand it over with `attach()`, and it is reported as the entry's
+`attachments` if the run needs attention:
+
+```php
+use function PhpSpec\attach;
+
+given('the watcher is running', function () {
+    $this->log = $this->workspace . '/watch.log';
+    $this->process = proc_open($cmd, [1 => ['file', $this->log, 'w']], $pipes);
+
+    attach('watch log', fn() => @file_get_contents($this->log));
+});
+```
+
+```json
+"attachments": {
+  "watch log": "── SYNTAX ERROR ── src/Todo.phunkie:1:9 ──\nSyntax error, unexpected ';'"
+}
+```
+
+Four rules make that work, and each one exists because of a way it would
+otherwise quietly fail:
+
+- **A closure is read at the end, not when you attach it.** The log above is
+  empty at `proc_open` time; what you get is everything the process wrote before
+  the failure. Pass a string instead when the value is already final:
+  `attach('stdout', $process->getOutput())`.
+- **Read before your teardown runs.** An `afterScenario` that terminates the
+  process and deletes the workspace cannot empty the attachment first.
+- **Nothing is read when the run is green.** A closure over a huge log costs
+  nothing on a passing suite, so attach freely.
+- **The same name twice keeps the latest.** A helper attaching on every poll
+  leaves one attachment, not a pile.
+
+**Attach inside your helpers, not at every call site.** A helper is usually the
+only thing that knows *why* it gave up, and returning a bool throws that away:
+
+```php
+$eventually = function (callable $condition, float $seconds = 10.0) {
+    // ... poll until $condition holds or the time runs out ...
+    attach('waited', sprintf('%.1f seconds, and the condition never held.', $seconds));
+
+    return false;
+};
+```
+
+Values follow the same cap as `output`: a string, or a truncation marker past
+4000 characters. A closure that throws, or that returns `false` (what
+`file_get_contents` answers when it cannot read), is reported as
+`{ "error": "…" }` rather than as an empty attachment, so "PhpSpec could not
+look" never reads as "the subject said nothing".
+
+**Browser specs get this for free.** Every request through the browser DSL
+attaches `http.request` (the method, URL and status) and `http.response` (the
+body), so an assertion that says `expected 200, actual 500` is read next to what
+the server actually said.
+
 ### `summary`
 
 The counts (`passing`, `failing`, `errors`, `pending`, `skipped`) are for the
@@ -174,6 +236,7 @@ missed and anything that stopped it.
 |---|---|---|
 | `rerun` | anything failed with a location | One command that re-runs every failing example at once, so a fix is checked against all of what it was meant to fix. |
 | `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
+| `guard` | [guard](guard.md) is on and either judged the change or could not | `{ "held": false, "judged": true, "violations": [{ "file", "lines", "member", "remedy" }] }`. Each violation is new logic no example reaches, and adds 1 to `actionable`. When `judged` is `false` there are no violations and a `reason` says what stopped it. |
 | `offers` | the run found code it can generate | The run-wide, de-duplicated list. Absent when there is nothing to take. |
 
 ### `fatal`: when the run could not finish
@@ -318,6 +381,11 @@ its `event`:
   a missed `--coverage-min` gate and anything that stopped the run.
 - A `fatal` line means the run could not finish. Read it before anything else:
   the counts describe only what ran before it.
+- `guard` on the summary means you wrote logic no example reaches. Each
+  violation names the `member` and the `remedy`: write that example, do not
+  weaken the code to get past it. If `judged` is `false`, guard reached no
+  conclusion at all and `reason` says why: nothing was checked, so do not read
+  the run as having been guarded.
 - `example` lines are what needs attention (passing examples are not reported).
   Each has a `state`:
   - `failing` — the code ran but behaviour is wrong. Look at
@@ -331,6 +399,9 @@ its `event`:
   - `pending` — an unimplemented example; implement it.
 - `output` on an entry is what the code printed while it ran: read it, it is
   often the whole diagnosis for a scenario that drove a process of its own.
+- `attachments` on an entry is context the spec handed over about itself, by
+  name: a log, a captured stdout, an HTTP response body. Read it before you go
+  looking at files yourself.
 - To verify a single fix, re-run just that example: take its `rerun` value and
   prepend the binary — e.g. `bin/phpspec run spec/App/Basket.spec.php:6`. Don't
   re-run the whole suite to check one change. The `summary`'s `rerun` does the
@@ -338,6 +409,23 @@ its `event`:
 - Track a specific failure across runs by its `id` (stable across edits that
   move lines). A failure is fixed when its `id` no longer appears. A failing
   Story BDD scenario has an `id` and a `rerun` of its own, just like an example.
+
+## Writing specs that explain themselves
+
+When a spec or a step knows something PhpSpec cannot see, hand it over. Without
+this, an assertion on a log file or a subprocess reports `Expected false to be
+true` and nothing else, and you spend a cycle finding out why:
+
+    use function PhpSpec\attach;
+
+    attach('stdout', $process->getOutput());          // a value you already hold
+    attach('watch log', fn() => file_get_contents($f)); // read at failure time
+
+A closure is read at the end of the example or scenario and before any teardown,
+so it captures what the process wrote *after* you attached it and survives an
+`afterScenario` that deletes the workspace. Nothing is read when the run passes.
+Attach inside a polling or process helper rather than at each call site: the
+helper is the only thing that knows why it gave up.
 
 ## Generating code
 

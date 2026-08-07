@@ -35,7 +35,25 @@ describe(JsonReportBuilder::class, function () {
                 'lines' => [
                     12 => ['spec/App/Calculator.spec.php::Calculator > adds two numbers'],
                 ],
+                // What there was to run, as against what ran: line 13 was
+                // executable and nothing reached it, which is precisely what a
+                // reader of the artifact could not tell before.
+                'executable' => [12, 13],
+                'methods' => [],
             ],
+        ]);
+    });
+
+    // A mutation testing tool mutates one method and re-runs the examples that
+    // covered it, so it has to know where that method starts and stops.
+    it('says which lines each method of a source spans', function (Filesystem $filesystem) {
+        allow($filesystem->read())->toReturn("<?php\n\nclass Calculator\n{\n    public function add(int \$a, int \$b): int\n    {\n        return \$a + \$b;\n    }\n}\n");
+        $builder = new JsonReportBuilder($filesystem);
+
+        $report = $builder->build($this->collector, '/project/src', '/project');
+
+        expect($report['sources']['src/App/Calculator.php']['methods'])->toBe([
+            'add' => ['start' => 5, 'end' => 8],
         ]);
     });
 

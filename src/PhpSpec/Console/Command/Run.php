@@ -28,11 +28,15 @@ use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Extensions\ExtensionLoader;
 use PhpSpec\Extensions\FormatterBridge;
 use PhpSpec\FilterRegistry;
+use PhpSpec\Guard\Coverage;
+use PhpSpec\Guard\Inspection;
+use PhpSpec\Guard\Report as GuardReport;
 use PhpSpec\LineTargetRegistry;
 use PhpSpec\Loader;
 use PhpSpec\Offers\Offer;
 use PhpSpec\Offers\OfferBook;
 use PhpSpec\Parallel\ParallelRunner;
+use PhpSpec\RealFilesystem;
 use PhpSpec\Report\Formatter;
 use PhpSpec\Report\Formatter\Agent;
 use PhpSpec\Report\Formatter\Agent\Offers;
@@ -239,14 +243,44 @@ final class Run extends Command
             return $this->stopped($prose, $formatter, 'Unknown format: ' . implode(', ', $unknownFormats) . ' (available: pretty, dot, tap, junit, html, agent)');
         }
 
-        $coverageReporter = $this->startCoverage($input);
+        // Guard judges what the run covered, so when it is on the run collects
+        // coverage whether or not anybody asked for a report.
+        //
+        // Except in a parallel worker, which is part of a session rather than
+        // one of its own: it sees a slice of the specs, so it would judge the
+        // whole delta against a fraction of the coverage and cry wolf, and its
+        // verdict would land in the middle of the report the parent parses.
+        // The parent judges once, having merged what every worker collected.
+        $worker = $input->getOption('coverage-partial') !== null;
+
+        // A guard section this cannot read leaves guard off, and off is exactly
+        // what a typo must not be able to do quietly: the whole point of the
+        // setting is that somebody asked to be stopped. Refused rather than
+        // warned about, because unlike a missing baseline it is the same in
+        // every checkout and one edit away from fixed.
+        $guardProblem = $worker ? null : $this->config->guardConfigProblem();
+        if ($guardProblem !== null) {
+            return $this->stopped($prose, $formatter, $guardProblem);
+        }
+
+        $guard = $worker ? null : Inspection::of($this->config, new RealFilesystem());
+        $coverageReporter = $this->startCoverage($input, forced: $guard !== null);
 
         if (is_string($coverageReporter)) {
-            return $this->stopped($prose, $formatter, $coverageReporter);
+            if ($guard === null || $this->wantsCoverage($input)) {
+                return $this->stopped($prose, $formatter, $coverageReporter);
+            }
+
+            // Coverage was guard's idea, not the caller's. A machine without a
+            // driver must still be able to run its specs, so guard stands down
+            // and says so rather than failing a run it cannot judge.
+            $prose->writeln('<fg=yellow>Guard cannot judge this run: ' . $coverageReporter . '</>');
+            $guard = null;
+            $coverageReporter = null;
         }
 
         try {
-            $results = $this->runSuiteStreaming($input, $prose, $formatter, $files);
+            $results = $this->runSuiteStreaming($input, $prose, $formatter, $files, $coverageReporter !== null);
         } catch (\RuntimeException $e) {
             // A load-time contract violation (e.g. two step definitions
             // sharing a title) is the user's to fix; report it, never a trace.
@@ -255,6 +289,8 @@ final class Run extends Command
 
         $this->writeReportFiles($input, $prose, $results);
         $this->printProfile($input, $prose, $results);
+
+        $failed = null;
 
         if ($coverageReporter) {
             $verdict = $this->reportCoverage($input, $prose, $coverageReporter);
@@ -267,10 +303,18 @@ final class Run extends Command
                     $formatter->covered($verdict);
                 }
 
-                if ($verdict->exitCode() !== null) {
-                    return $verdict->exitCode();
-                }
+                $failed = $verdict->exitCode();
             }
+
+            // Judged after the coverage verdict, from the same data: the code
+            // as it stands now, against what this session changed.
+            if ($guard !== null && $this->violated($guard, $coverageReporter->hits(), $prose, $formatter)) {
+                $failed = self::FAILURE;
+            }
+        }
+
+        if ($failed !== null) {
+            return $failed;
         }
 
         if ($input->getOption('accept-offers')) {
@@ -364,6 +408,47 @@ final class Run extends Command
     }
 
     /**
+     * Whether guard found logic this session wrote that no example reaches,
+     * telling the reader and the agent document when it did.
+     *
+     * @param Inspection $guard what judging means for this project
+     * @param array<string, array<int, int>> $hits the lines this run exercised, by absolute path
+     * @param Output $prose the channel for the run's human-facing lines
+     * @param Formatter $formatter the console formatter for the run's results
+     */
+    private function violated(Inspection $guard, array $hits, Output $prose, Formatter $formatter): bool
+    {
+        $verdict = $guard->judge(Coverage::fromHits($hits, (string) getcwd()));
+
+        // Said out loud, and never fatal here: what stops guard judging is
+        // usually the checkout rather than the change (a clone with no
+        // baseline of its own, a collection that failed), and refusing a
+        // developer's run over that would teach them to turn guard off. CI
+        // asks the same question with "guard --check", which does refuse.
+        if (!$verdict->judged()) {
+            $prose->writeln('<fg=yellow>' . $verdict->reason() . '</>');
+
+            if ($formatter instanceof Agent) {
+                $formatter->guarded($verdict);
+            }
+
+            return false;
+        }
+
+        if ($verdict->held()) {
+            return false;
+        }
+
+        (new GuardReport(new RealFilesystem()))->render($verdict, $prose);
+
+        if ($formatter instanceof Agent) {
+            $formatter->guarded($verdict);
+        }
+
+        return true;
+    }
+
+    /**
      * Resolves and requires the bootstrap file from --bootstrap, config, or vendor/autoload.php.
      *
      * @param Input $input the console input to read --bootstrap from
@@ -398,9 +483,9 @@ final class Run extends Command
      * @return CoverageReporter|null|string the reporter once started, null when no
      *                                      coverage was asked for, or why it could not start
      */
-    private function startCoverage(Input $input): CoverageReporter|null|string
+    private function startCoverage(Input $input, bool $forced = false): CoverageReporter|null|string
     {
-        if (!$this->wantsCoverage($input)) {
+        if (!$this->wantsCoverage($input) && !$forced) {
             return null;
         }
 
@@ -489,7 +574,7 @@ final class Run extends Command
      * @throws RandomException
      * @throws \RuntimeException when the loader rejects a duplicate step title
      */
-    private function runSuiteStreaming(Input $input, Output $prose, Formatter $formatter, string $files): SuiteResult
+    private function runSuiteStreaming(Input $input, Output $prose, Formatter $formatter, string $files, bool $collectingCoverage = false): SuiteResult
     {
         $filter = $input->getOption('filter');
 
@@ -536,7 +621,11 @@ final class Run extends Command
                 }
             }
 
-            $coveragePartialDir = $this->wantsCoverage($input)
+            // Whether coverage is being collected, not whether the caller
+            // asked for a report: guard asks for coverage of its own, and a
+            // worker that was never told to dump it leaves the parent with
+            // nothing to judge.
+            $coveragePartialDir = $collectingCoverage
                 ? sys_get_temp_dir() . '/phpspec_coverage_' . uniqid()
                 : null;
 

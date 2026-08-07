@@ -284,6 +284,20 @@ then('the file {string} should contain {string}', function (string $path, string
     }
 });
 
+// A mutant is a change to one method, so a mutation testing tool asks the
+// report which lines that method occupies before it asks who covered them.
+then('the file {string} should record the method {string} spanning lines {int} to {int}', function (string $path, string $method, int $start, int $end) {
+    $report = json_decode((string) file_get_contents($this->projectDir . '/' . $path), true, 512, JSON_THROW_ON_ERROR);
+
+    $methods = [];
+    foreach ($report['sources'] as $source) {
+        $methods += $source['methods'] ?? [];
+    }
+
+    expect($methods)->toHaveKey($method);
+    expect($methods[$method])->toBe(['start' => $start, 'end' => $end]);
+});
+
 then('the file {string} should contain:', function (string $path, string $text) {
     $content = file_get_contents($this->projectDir . '/' . $path);
     expect($content)->toContain($text);

@@ -100,6 +100,19 @@ An unknown id is refused, and so is an offer whose file has changed since it was
 made. `--format=agent` returns the receipt as JSON. Offers live in
 `.phpspec/offers.json`; the fifty most recent stay on the table.
 
+### `guard`
+
+Turns on the TDD guard and records where this session starts.
+
+```bash
+bin/phpspec guard
+```
+
+From then on `bin/phpspec run` refuses a change whose new logic no example
+reaches, naming the member and showing the lines. `--check --hash=<sha>
+--coverage=<file>` asks the same question on demand, after the suite, for CI and
+pre-commit hooks. See [Guard](guard.md).
+
 ### `describe`
 
 Generates a spec file for a class.
@@ -429,6 +442,10 @@ change while the integration is being finalised.
             "checksum": "ac4a5f10068b3a275d47b87df2d78d59",
             "lines": {
                 "9": ["spec/App/Calculator.spec.php::Calculator > adds two numbers"]
+            },
+            "executable": [9, 12],
+            "methods": {
+                "add": {"start": 7, "end": 10}
             }
         }
     }
@@ -443,6 +460,16 @@ change while the integration is being finalised.
   example that ran it.
 - **`checksum`**/**`spec_checksum`** are MD5 hashes of the file contents,
   letting consumers detect stale coverage data.
+- **`lines`** holds what ran; **`executable`** holds what there was to run, so a
+  line nothing reached can be told from a line that was never code (a brace, a
+  declaration). A file with no executed lines at all does not appear in
+  `sources`.
+- **`methods`** gives each method's first and last line, from its `function`
+  keyword to the brace that closes it, so a mutation can be located without
+  parsing the source again. Methods with no body (interface, abstract) are
+  absent. The key is the bare method name, except when two classes in the same
+  file declare it, in which case that name is fully qualified
+  (`App\Card::pay`) so a lookup finds nothing rather than the wrong range.
 - Code executed only in `beforeAll`/`afterAll` hooks is not attributed to any
   example.
 

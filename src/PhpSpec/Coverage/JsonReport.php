@@ -30,7 +30,7 @@ final class JsonReport
      * to the specified file path. Creates parent directories if they do not exist.
      *
      * @param array<string, array{time: float, memory: int, spec_file: string, spec_checksum: string}> $tests per-example metadata keyed by test identifier
-     * @param array<string, array{checksum: string, lines: array<int, array<int, string>>}> $sources per-file checksums and line-to-test-identifier coverage, keyed by relative file path
+     * @param array<string, array{checksum: string, lines: array<int, array<int, string>>, executable?: list<int>, methods?: array<string, array{start: int, end: int}>}> $sources per-file checksums, line-to-test-identifier coverage and method spans, keyed by relative file path
      * @param string $filePath the absolute path to write the JSON file to
      * @throws RuntimeException when the document cannot be encoded as JSON
      */

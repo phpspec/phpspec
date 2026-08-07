@@ -1,0 +1,172 @@
+<?php
+
+/*
+ * This file is part of PhpSpec, A php toolset to drive emergent
+ * design by specification.
+ *
+ * (c) Marcello Duarte <marcello.duarte@gmail.com>
+ * (c) Konstantin Kudryashov <ever.zet@gmail.com>
+ * (c) Ciaran McNulty <ciaran@ciaranmcnulty.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PhpSpec\Console\Command;
+
+use PhpSpec\Configuration;
+use PhpSpec\Filesystem;
+use PhpSpec\Guard\Activation;
+use PhpSpec\Guard\Artifact;
+use PhpSpec\Guard\Baseline;
+use PhpSpec\Guard\Inspection;
+use PhpSpec\Guard\Report;
+use PhpSpec\Guard\ShellGit;
+use PhpSpec\RealFilesystem;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface as Input;
+use Symfony\Component\Console\Input\InputOption as Option;
+use Symfony\Component\Console\Output\OutputInterface as Output;
+
+/**
+ * @internal
+ * Turns guard on, and marks where this session starts.
+ *
+ * Guard's judgement is about what changed since a point in time, so there has
+ * to be a point in time: this records one. In a repository that is the current
+ * commit, because committing is a deliberate act of acceptance; without one it
+ * is a snapshot of the guarded files as they stand.
+ */
+final class Guard extends Command
+{
+    private readonly Filesystem $filesystem;
+
+    private readonly Configuration $config;
+
+    public function __construct(
+        ?Filesystem $filesystem = null,
+        private readonly ?string $baseDir = null,
+        ?Configuration $config = null,
+    ) {
+        $this->filesystem = $filesystem ?? new RealFilesystem();
+        $this->config = $config ?? new Configuration($baseDir ?? '.', $this->filesystem);
+
+        parent::__construct('guard');
+    }
+
+    protected function configure(): void
+    {
+        $this
+            ->addOption('check', null, Option::VALUE_NONE, 'Judge the change now, against a coverage report a previous run made')
+            ->addOption('hash', null, Option::VALUE_REQUIRED, 'The commit to judge against, instead of the recorded baseline')
+            ->addOption('coverage', null, Option::VALUE_REQUIRED, 'A --coverage-json report to judge with')
+            ->setDescription('Turns the TDD guard on and records where this session starts')
+            ->setHelp('Records a baseline, then refuses a run whose changed logic no example covers.');
+    }
+
+    protected function execute(Input $input, Output $output): int
+    {
+        $problem = $this->config->guardConfigProblem();
+        if ($problem !== null) {
+            $output->writeln('<fg=red>' . $problem . '</>');
+
+            return self::FAILURE;
+        }
+
+        if ($input->getOption('check')) {
+            return $this->check($input, $output);
+        }
+
+        $base = $this->baseDir ?? '.';
+        $written = (new Activation($this->filesystem, $base))->turnOn();
+
+        if ($written === null) {
+            $output->writeln('<fg=yellow>Add "guard: {status: active}" to your phpspec config: this command edits YAML only.</>');
+
+            return self::FAILURE;
+        }
+
+        $guard = $this->config->getGuardConfig();
+        $paths = $guard['paths'] ?? ['src'];
+
+        $recorded = (new Baseline($this->filesystem, new ShellGit($base), $base))
+            ->record($paths, $guard['detection'] ?? 'git');
+
+        $output->writeln(sprintf('Config %s updated. Guard is on.', basename($written)));
+        $output->writeln($this->recorded($recorded, $guard['detection'] ?? 'git'));
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * What was recorded, and why it took the shape it did: a project that asked
+     * for a snapshot is not told its repository is missing.
+     *
+     * @param array{kind: string, commit?: string, files?: array<string, string>} $recorded
+     */
+    private function recorded(array $recorded, string $detection): string
+    {
+        if ($recorded['kind'] === 'commit') {
+            return sprintf('Baseline recorded at %s.', substr($recorded['commit'] ?? '', 0, 12));
+        }
+
+        $files = count($recorded['files'] ?? []);
+
+        return $detection === 'mtime'
+            ? sprintf('Baseline recorded from %d file(s).', $files)
+            : sprintf('Baseline recorded from %d file(s): this project is not a git repository.', $files);
+    }
+
+    /**
+     * Judges on demand, against a coverage report a previous run left behind.
+     *
+     * For CI and pre-commit, where the suite has already run and the point of
+     * comparison is the branch this work came from rather than where somebody's
+     * session started. Asked for explicitly, so it answers even when the
+     * project keeps guard off day to day.
+     */
+    private function check(Input $input, Output $output): int
+    {
+        $base = $this->baseDir ?? '.';
+        $inspection = Inspection::forChecking($this->config, $this->filesystem, $base);
+
+        $coverage = $input->getOption('coverage');
+        if (!is_string($coverage) || $coverage === '') {
+            $output->writeln('<fg=red>guard --check needs a coverage report: run --coverage-json=cov.json first, then pass --coverage=cov.json.</>');
+
+            return self::FAILURE;
+        }
+
+        $read = (new Artifact($this->filesystem, $base))->read($coverage);
+        if (is_string($read)) {
+            $output->writeln('<fg=red>' . $read . '</>');
+
+            return self::FAILURE;
+        }
+
+        $hash = $input->getOption('hash');
+        $verdict = is_string($hash) && $hash !== ''
+            ? $inspection->judgeAgainst($hash, $read)
+            : $inspection->judge($read);
+
+        // A check that could not check must not answer "fine". This is the
+        // question CI asks, and its inputs are the caller's own: the commit and
+        // the report are named on the command line, so refusing can only mean
+        // one of them is wrong.
+        if (!$verdict->judged()) {
+            $output->writeln('<fg=red>' . $verdict->reason() . '</>');
+
+            return self::FAILURE;
+        }
+
+        if ($verdict->held()) {
+            $output->writeln('Guard: the cycle held.');
+
+            return self::SUCCESS;
+        }
+
+        (new Report($this->filesystem, $base))->render($verdict, $output);
+
+        return self::FAILURE;
+    }
+}

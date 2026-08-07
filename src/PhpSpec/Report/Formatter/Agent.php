@@ -15,6 +15,7 @@
 namespace PhpSpec\Report\Formatter;
 
 use PhpSpec\Coverage\CoverageVerdict;
+use PhpSpec\Guard\Verdict as GuardVerdict;
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Report\Formatter\Agent\Fatal;
 use PhpSpec\Report\Formatter\Agent\Offers;
@@ -77,6 +78,9 @@ final class Agent extends AbstractFormatter
 
     /** What the run covered, when coverage was collected. */
     private ?CoverageVerdict $coverage = null;
+
+    /** What guard made of the change, when guard is on. */
+    private ?GuardVerdict $guard = null;
 
     /** @var array{message: string, at: string|null}|null what stopped the run short, when something did */
     private ?array $fatal = null;
@@ -171,6 +175,16 @@ final class Agent extends AbstractFormatter
     public function covered(CoverageVerdict $verdict): void
     {
         $this->coverage = $verdict;
+    }
+
+    /**
+     * Takes what guard concluded, so a reader gets {member, lines, remedy} as
+     * data on the same channel as everything else instead of parsing a wall of
+     * red text meant for a person.
+     */
+    public function guarded(GuardVerdict $verdict): void
+    {
+        $this->guard = $verdict;
     }
 
     /**
@@ -269,6 +283,9 @@ final class Agent extends AbstractFormatter
         // the exit code says otherwise.
         $shortfall = $this->coverage !== null && !$this->coverage->met() ? 1 : 0;
         $stopped = $this->fatal !== null ? 1 : 0;
+        // Untested logic is work left to do in exactly the sense actionable
+        // counts: the run failed and something has to be written.
+        $unguarded = $this->guard !== null && !$this->guard->held() ? count($this->guard->violations()) : 0;
 
         $summary = [
             'v' => Schema::V,
@@ -286,13 +303,17 @@ final class Agent extends AbstractFormatter
             // The one number an agent checks: everything red or unfinished
             // (failures + errors + pending), plus a missed coverage gate and
             // anything that stopped the run. Zero means nothing to do.
-            'actionable' => $failing + $errors + $pending + $shortfall + $stopped,
+            'actionable' => $failing + $errors + $pending + $shortfall + $stopped + $unguarded,
             'duration_ms' => (int) round(($this->results?->getDuration() ?? 0.0) * 1000),
         ];
 
         $rerun = $this->rerunEverything();
         if ($rerun !== null) {
             $summary['rerun'] = $rerun;
+        }
+
+        if ($this->guard !== null && !$this->guard->held()) {
+            $summary['guard'] = $this->guard->toArray();
         }
 
         if ($this->coverage !== null) {
