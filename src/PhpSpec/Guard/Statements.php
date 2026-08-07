@@ -68,6 +68,14 @@ final class Statements
             return false;
         }
 
+        // A declaration carrying its whole body on the same line declares and
+        // does at once. Reading only its first keyword made a method written
+        // as "public function total(): int { return 0; }" invisible, and a
+        // class written that way could never be guarded at all.
+        if (str_ends_with($text, '}') && trim((string) strstr($text, '{'), "{} \t") !== '') {
+            return true;
+        }
+
         $first = strtolower((string) strtok($text, " \t(:;"));
 
         return !in_array($first, self::DECLARATIONS, true);

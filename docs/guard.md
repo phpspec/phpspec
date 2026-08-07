@@ -74,6 +74,14 @@ Write an example for App\Basket::applyCoupon, then make it pass.
 The run exits `1`. Write the example, make it pass, and the same change goes
 through untouched.
 
+Write one that reaches part of it and guard says so differently, because you
+have done the thing it asked and only some of the change is still uncovered:
+
+```
+Part of the new logic in App\Basket::applyCoupon is still unreached.
+Extend your examples for App\Basket::applyCoupon to reach lines 14 and 15.
+```
+
 `run` is the only gated command. `describe`, `exemplify` and `generate` keep
 working, so you can always scaffold your way out of a violation.
 
@@ -131,7 +139,8 @@ statement or a declaration is never a violation, however new it is.
 
 A file the run never loaded at all has no coverage to consult, which is the
 shape of a class written and never specified. Guard reads the source instead and
-asks which of its lines do something.
+asks which of its lines do something. A method written entirely on one line
+counts: it declares and does at once.
 
 ## Continuous integration
 

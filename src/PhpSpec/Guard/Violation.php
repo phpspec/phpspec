@@ -62,6 +62,48 @@ final readonly class Violation
     }
 
     /**
+     * Logic this session wrote that an example reaches part of, but not all.
+     *
+     * Said differently from logic nothing reaches, because the reader has just
+     * written the example they were asked for: telling them again to write one
+     * reads as though nothing they did counted, when in fact only the lines
+     * still named here are left.
+     *
+     * @param list<int> $lines the lines still unreached
+     */
+    public static function partlyReached(string $file, array $lines, ?string $member = null): self
+    {
+        $at = $file . ':' . ($lines[0] ?? 0);
+
+        return new self(
+            $file,
+            $lines,
+            $member,
+            sprintf('Part of the new logic in %s is still unreached.', $member ?? $at),
+            $member !== null
+                ? sprintf('Extend your examples for %s to reach %s.', $member, self::asLines($lines))
+                : sprintf('Extend your examples to reach %s of %s.', self::asLines($lines), $file),
+        );
+    }
+
+    /**
+     * The lines as a person would say them, so a remedy can name them without
+     * the reader having to count.
+     *
+     * @param list<int> $lines
+     */
+    private static function asLines(array $lines): string
+    {
+        if (count($lines) === 1) {
+            return 'line ' . $lines[0];
+        }
+
+        $last = array_pop($lines);
+
+        return sprintf('lines %s and %d', implode(', ', $lines), $last);
+    }
+
+    /**
      * @return array{file: string, lines: list<int>, member: string|null, remedy: string}
      */
     public function toArray(): array

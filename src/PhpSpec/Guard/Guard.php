@@ -42,8 +42,21 @@ final readonly class Guard
         $violations = [];
 
         foreach ($delta->all() as $file => $lines) {
-            foreach ($this->byMember($file, $this->untested($file, $lines, $coverage)) as $member => $untested) {
-                $violations[] = Violation::untestedLogic($file, $untested, $member === '' ? null : $member);
+            foreach ($this->byMember($file, $this->logic($file, $lines, $coverage)) as $member => $logic) {
+                $unreached = array_values(array_filter($logic, static fn(int $line) => !$coverage->covers($file, $line)));
+
+                if ($unreached === []) {
+                    continue;
+                }
+
+                $name = $member === '' ? null : $member;
+
+                // Whether anything at all reached this member decides how it
+                // is put: nothing written for it yet is a different thing to
+                // say than an example that does not go far enough.
+                $violations[] = count($unreached) === count($logic)
+                    ? Violation::untestedLogic($file, $unreached, $name)
+                    : Violation::partlyReached($file, $unreached, $name);
             }
         }
 
@@ -51,24 +64,24 @@ final readonly class Guard
     }
 
     /**
-     * The changed lines that carry logic and that nothing reached.
+     * The changed lines that carry logic, reached or not.
      *
      * @param list<int> $lines
      * @return list<int>
      */
-    private function untested(string $file, array $lines, Coverage $coverage): array
+    private function logic(string $file, array $lines, Coverage $coverage): array
     {
         // A file the run never loaded has no coverage to consult, which is the
         // shape of a class written and never specified: the source says which
         // of its lines are logic, and none of them were reached.
-        $logic = $coverage->knows($file) ? null : Statements::in($this->lines($file));
+        $statements = $coverage->knows($file) ? null : Statements::in($this->lines($file));
 
-        return array_values(array_filter($lines, static function (int $line) use ($file, $coverage, $logic): bool {
-            if ($logic !== null) {
-                return in_array($line, $logic, true);
+        return array_values(array_filter($lines, static function (int $line) use ($file, $coverage, $statements): bool {
+            if ($statements !== null) {
+                return in_array($line, $statements, true);
             }
 
-            return $coverage->isExecutable($file, $line) && !$coverage->covers($file, $line);
+            return $coverage->isExecutable($file, $line);
         }));
     }
 
