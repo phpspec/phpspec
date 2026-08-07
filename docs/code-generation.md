@@ -160,12 +160,29 @@ public function add()
 
 The `--fake` flag works by extracting the expected values from matcher results (via `fakeExpression` metadata) and using them as return values. This creates a quick feedback loop: write spec, run with `--fake`, get passing tests immediately, then replace the faked implementation with real logic.
 
+## Nothing is written without an answer
+
+Everything above is **offered**, never assumed. PhpSpec asks `[Y/n]` and writes
+only what you say yes to, where pressing Enter takes the default and says yes.
+
+A run with nobody to answer writes nothing at all. That covers
+`--no-interaction`, a CI job, an editor or agent shelling out, and a terminal
+whose input has already ended: in each case the question is printed with what it
+would have created, followed by the way to accept it, and no file appears.
+
+```
+Class App\Basket not found. Do you want me to create it for you?
+  Nothing was written: there is nobody to answer. Run with --accept-offers to create classes.
+```
+
+Silence is not consent: a run that cannot be answered must never leave code in
+a source tree that nobody agreed to.
+
 ## Applying Offers Non-Interactively (`--accept-offers`)
 
-Everything above is offered interactively -- PhpSpec asks `[y/n]` before it
-writes. `--accept-offers` applies **every** pending offer (missing classes,
-interfaces, methods, and feature steps) in one non-interactive pass, then exits
-`0`:
+`--accept-offers` is how you say yes in advance. It applies **every** pending
+offer (missing classes, interfaces, methods, and feature steps) in one
+non-interactive pass, then exits `0`:
 
 ```bash
 bin/phpspec run --accept-offers            # generate all missing code, no prompts

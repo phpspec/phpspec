@@ -44,7 +44,7 @@ final readonly class CodeGenerator
     /**
      * @param string $srcPath relative path to the source directory
      * @param string $specPath relative path to the spec directory
-     * @param bool $interactive whether to prompt for user input (false = auto-accept all)
+     * @param Generation $generation how an offer is answered when nobody is asked
      * @param string $specSuffix file suffix for spec files
      * @param string $psr4Prefix PSR-4 namespace prefix mapped to $srcPath
      * @param Chooser|null $chooser when given, questions are presented through this
@@ -53,7 +53,7 @@ final readonly class CodeGenerator
     public function __construct(
         private string $srcPath,
         private string $specPath,
-        private bool $interactive = true,
+        private Generation $generation = Generation::Asks,
         private string $specSuffix = '.spec.php',
         private string $psr4Prefix = '',
         private ?Chooser $chooser = null,
@@ -427,18 +427,52 @@ final readonly class CodeGenerator
             return $this->chooser->choose($question, $kind, $action);
         }
 
+        if ($this->generation === Generation::Accepts) {
+            return true;
+        }
+
+        $asking = $this->generation === Generation::Asks;
+
         $output->writeln('');
-        $output->writeln("$question [Y/n] ");
+        $output->writeln($asking ? "$question [Y/n] " : $question);
+
+        $answer = $asking ? $this->answer($output) : null;
+
+        // Nobody answered: --no-interaction, or a standard input with nothing
+        // on it. An unanswered question is not a yes, whatever the default
+        // would have been, because reading it as one puts files in a source
+        // tree that nobody agreed to. Said out loud, with the way to accept
+        // it, because a person reading a log still wants to know what was
+        // offered.
+        if ($answer === null) {
+            $output->writeln(sprintf(
+                '  <fg=yellow>Nothing was written: there is nobody to answer. Run with --accept-offers to %s.</>',
+                $action,
+            ));
+
+            return false;
+        }
+
+        return $answer === '' || strtolower($answer) === 'y';
+    }
+
+    /**
+     * What the person answered, or nothing when there was nobody there.
+     */
+    private function answer(Output $output): ?string
+    {
         if ($output instanceof ScrollRegionOutput) {
             $output->prepareForInput();
         }
+
         $answer = $this->ask('  > ');
-        if ($output instanceof ScrollRegionOutput) {
+
+        if ($output instanceof ScrollRegionOutput && $answer !== null) {
             $output->returnToContent();
             $output->echoInput($answer ?: 'Y');
         }
 
-        return $answer === '' || strtolower($answer) === 'y';
+        return $answer;
     }
 
     /**
@@ -472,15 +506,22 @@ final readonly class CodeGenerator
      * @param string $prompt the prompt string to display
      * @return string the user's input, or empty string if no input
      */
-    private function ask(string $prompt): string
+    /**
+     * One line of input, or null at end of input.
+     *
+     * The difference matters: an empty line is somebody pressing Enter, which
+     * takes the default, while nothing to read at all is nobody there.
+     */
+    private function ask(string $prompt): ?string
     {
-        if (!$this->interactive) {
-            return '';
-        }
         if (function_exists('readline') && stream_isatty(STDIN)) {
-            return (string) readline($prompt);
+            $answer = readline($prompt);
+
+            return $answer === false ? null : $answer;
         }
+
         $line = fgets(STDIN);
-        return $line === false ? '' : rtrim($line, "\r\n");
+
+        return $line === false ? null : rtrim($line, "\r\n");
     }
 }
