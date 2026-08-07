@@ -25,6 +25,7 @@ use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Pair;
 use PhpSpec\Console\Command\Run\CodeGenerator;
+use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Console\Command\Run\RecencyScanner;
 use PhpSpec\Console\Command\Run\SuiteSummary;
@@ -586,7 +587,7 @@ final class CommandDispatcher
         $codeGenerator = new CodeGenerator(
             ltrim($this->config->getSrcPath(), './'),
             ltrim($this->config->getSpecPath(), './'),
-            $this->interactive,
+            $this->interactive ? Generation::Asks : Generation::Accepts,
             $this->config->getSpecSuffix(),
             $this->config->getPsr4Prefix(),
             $this->chooser,

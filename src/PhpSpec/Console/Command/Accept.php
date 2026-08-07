@@ -18,6 +18,7 @@ use PhpSpec\Ai\Agent\Proposal;
 use PhpSpec\Ai\Agent\Writer;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Run\CodeGenerator;
+use PhpSpec\Console\Command\Run\Generation;
 use PhpSpec\Console\Command\Run\GenerationCandidates;
 use PhpSpec\Filesystem;
 use PhpSpec\Offers\Offer;
@@ -164,7 +165,9 @@ final class Accept extends Command
         $generator = new CodeGenerator(
             ltrim($this->config->getSrcPath(), './'),
             ltrim($this->config->getSpecPath(), './'),
-            false,
+            // Asked for by name on the command line: the person has already
+            // said yes, and there is nothing left to put to them.
+            Generation::Accepts,
             $this->config->getSpecSuffix(),
             $this->config->getPsr4Prefix(),
         );
