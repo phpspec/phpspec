@@ -17,6 +17,18 @@ describe(UnifiedDiff::class, function () {
         expect(UnifiedDiff::added($diff))->toBe(['src/App/Basket.php' => [11, 12]]);
     });
 
+    // Read on Windows, or from a file checked out with CRLF endings. A
+    // carriage return kept on the end of a path matches no file at all, and
+    // guard would judge nothing in it without ever saying so.
+    it('reads a diff whose lines end the way Windows ends them', function () {
+        $diff = "--- a/src/App/Basket.php\r\n"
+            . "+++ b/src/App/Basket.php\r\n"
+            . "@@ -10,0 +11,1 @@\r\n"
+            . "+        return 0;\r\n";
+
+        expect(UnifiedDiff::added($diff))->toBe(['src/App/Basket.php' => [11]]);
+    });
+
     // Git marks where a name stops with a tab when the name itself contains a
     // space. Reading the tab as part of the path leaves guard looking for a
     // file that does not exist, and quietly judging nothing in it.

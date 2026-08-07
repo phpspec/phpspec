@@ -33,6 +33,12 @@ final class UnifiedDiff
         $line = 0;
 
         foreach (explode("\n", $diff) as $text) {
+            // The diff is read for its structure, and its lines end however
+            // the platform that wrote them ended lines. A carriage return left
+            // on the end of a path makes it match no file at all, which is
+            // guard silently judging nothing in it.
+            $text = rtrim($text, "\r");
+
             if (str_starts_with($text, '+++ ')) {
                 // A name with a space in it is followed by a tab, which is how
                 // the format says where the name stopped. Keeping the tab
