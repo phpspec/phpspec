@@ -171,9 +171,13 @@ final readonly class CodeGenerator
                 continue;
             }
 
+            // Named with the file it would write. That path is worked out from
+            // the source root and the namespace, so it is a guess, and nobody
+            // can correct a guess they are never shown.
             $this->confirmAndGenerate($output, sprintf(
-                '  <fg=yellow>Class <fg=white>%s</> not found. Do you want me to create it for you?</>',
+                '  <fg=yellow>Class <fg=white>%s</> not found. Do you want me to create it in <fg=white>%s</>?</>',
                 $fqcn,
+                $location->filePath(),
             ), 'create-class', 'create classes', fn() => $classGenerator->generate($fqcn), $location->filePath());
         }
     }
@@ -212,8 +216,9 @@ final readonly class CodeGenerator
                 }
 
                 $this->confirmAndGenerate($output, sprintf(
-                    '  <fg=yellow>Do you want me to create class <fg=white>%s</> for you?</>',
+                    '  <fg=yellow>Do you want me to create class <fg=white>%s</> in <fg=white>%s</>?</>',
                     $fqcn,
+                    $location->filePath(),
                 ), 'create-class', 'create classes', fn() => $classGenerator->generate($fqcn), $location->filePath());
             }
         }
@@ -246,8 +251,9 @@ final readonly class CodeGenerator
             }
 
             $this->confirmAndGenerate($output, sprintf(
-                '  <fg=yellow>Do you want me to create interface <fg=white>%s</> for you?</>',
+                '  <fg=yellow>Do you want me to create interface <fg=white>%s</> in <fg=white>%s</>?</>',
                 $fqcn,
+                $location->filePath(),
             ), 'create-interface', 'create interfaces', fn() => $interfaceGenerator->generate($fqcn), $location->filePath());
         }
     }

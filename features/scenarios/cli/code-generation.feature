@@ -47,6 +47,24 @@ Feature: Code generation
     And the output should contain "accept-offers"
     And the exit code should be 1
 
+  Scenario: --no-interaction writes nothing into the source tree
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--no-interaction"
+    Then no file "src/App/Basket.php" should be generated
+    And the output should contain "Nothing was written"
+    And the output should contain "src/App/Basket.php"
+
   # An empty answer at a terminal is somebody pressing Enter, which takes the
   # default. Nothing to read at all is nobody there, and must not be read as one.
   Scenario: A question nobody is there to answer writes nothing either
