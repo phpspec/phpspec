@@ -16,6 +16,7 @@ namespace PhpSpec\Report\Formatter;
 
 use PhpSpec\Coverage\CoverageVerdict;
 use PhpSpec\Guard\Verdict as GuardVerdict;
+use PhpSpec\ProjectRoot;
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Report\Formatter\Agent\Fatal;
 use PhpSpec\Report\Formatter\Agent\Offers;
@@ -795,19 +796,6 @@ final class Agent extends AbstractFormatter
             return null;
         }
 
-        // Normalise both sides to forward slashes before comparing: on Windows
-        // getcwd() yields backslashes while a file path may already carry
-        // forward slashes, so a raw DIRECTORY_SEPARATOR prefix check would miss
-        // and leak the absolute path.
-        $file = str_replace('\\', '/', $file);
-        $cwd = getcwd();
-        if ($cwd !== false) {
-            $cwd = str_replace('\\', '/', $cwd);
-            if (str_starts_with($file, $cwd . '/')) {
-                $file = substr($file, strlen($cwd) + 1);
-            }
-        }
-
-        return $file . ':' . $line;
+        return ProjectRoot::here()->relative($file) . ':' . $line;
     }
 }

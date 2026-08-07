@@ -14,6 +14,8 @@
 
 namespace PhpSpec\Guard;
 
+use PhpSpec\ProjectRoot;
+
 /**
  * @internal
  * What the run exercised, line by line.
@@ -41,13 +43,11 @@ final readonly class Coverage
      */
     public static function fromHits(array $raw, string $baseDir = '.'): self
     {
-        $prefix = rtrim(str_replace('\\', '/', $baseDir), '/') . '/';
+        $root = ProjectRoot::at($baseDir);
         $hits = [];
 
         foreach ($raw as $file => $lines) {
-            $file = str_replace('\\', '/', $file);
-            $relative = str_starts_with($file, $prefix) ? substr($file, strlen($prefix)) : $file;
-            $hits[$relative] = $lines;
+            $hits[$root->relative($file)] = $lines;
         }
 
         return new self($hits);

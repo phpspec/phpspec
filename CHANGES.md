@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - generate no longer writes when there is nobody to ask: it offers the change under an id, and `run --accept-offers` stays as the bulk shortcut for a run's own offers
 
 ### Fixed
+ - Paths are named relative to the project however the platform spells its root, so on Windows guard no longer calls covered code untested, the JSON coverage report no longer keys sources absolutely, and a rerun command stays relative
  - A parallel run no longer reports `run :0` as an entry's rerun, nor a comparison of nothing with nothing: a failure that came back without its site now reports its message alone
  - An array holding an object no longer makes the failure detail emit a PHP warning of its own
  - The response matchers reported the two sides the wrong way round, so `toHaveStatus(201)` against a 500 said it expected 500
