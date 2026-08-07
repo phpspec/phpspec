@@ -350,6 +350,54 @@ Feature: Guard
     Then the output should contain "no baseline is recorded in this checkout"
     And the exit code should be 1
 
+  Scenario: The check refuses a coverage report the code has moved on from
+    Given a PSR-4 project with "spec" and "src" directories
+    And a class "src/App/Basket.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Basket
+      {
+          public function total(): int
+          {
+              return 0;
+          }
+      }
+      """
+    And a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+
+      use App\Basket;
+
+      describe('Basket', function () {
+          it('totals nothing to start with', function () {
+              expect((new Basket())->total())->toBe(0);
+          });
+      });
+      """
+    When I run phpspec guard
+    And I run phpspec run with coverage options "--coverage-json=cov.json"
+    And a class "src/App/Basket.php":
+      """
+      <?php
+
+      namespace App;
+
+      class Basket
+      {
+          public function total(): int
+          {
+              return 1;
+          }
+      }
+      """
+    And I run phpspec guard with option "--check --coverage=cov.json"
+    Then the output should contain "has changed since"
+    And the exit code should be 1
+
   Scenario: The check refuses a report that covered nothing at all
     Given a PSR-4 project with "spec" and "src" directories
     And a file "cov.json":

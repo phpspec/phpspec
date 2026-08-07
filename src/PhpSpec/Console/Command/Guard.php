@@ -137,7 +137,7 @@ final class Guard extends Command
             return self::FAILURE;
         }
 
-        $read = (new Artifact($this->filesystem))->read($coverage);
+        $read = (new Artifact($this->filesystem, $base))->read($coverage);
         if (is_string($read)) {
             $output->writeln('<fg=red>' . $read . '</>');
 

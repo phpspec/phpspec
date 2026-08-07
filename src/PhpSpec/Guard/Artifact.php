@@ -24,7 +24,10 @@ use PhpSpec\Filesystem;
  */
 final readonly class Artifact
 {
-    public function __construct(private Filesystem $filesystem) {}
+    public function __construct(
+        private Filesystem $filesystem,
+        private string $baseDir = '.',
+    ) {}
 
     /**
      * Reads a --coverage-json report into the same answer the live run gives,
@@ -43,6 +46,15 @@ final readonly class Artifact
             return sprintf('%s is not a PhpSpec coverage report: run --coverage-json to make one.', $path);
         }
 
+        $stale = $this->stale($report['sources']);
+        if ($stale !== null) {
+            return sprintf(
+                '%s describes code that has changed since it was written: %s. Run the suite again with --coverage-json.',
+                $path,
+                $stale,
+            );
+        }
+
         $hits = [];
         foreach ($report['sources'] as $file => $source) {
             // "lines" holds what ran, "executable" what there was to run: a
@@ -58,5 +70,36 @@ final readonly class Artifact
         }
 
         return new Coverage($hits);
+    }
+
+    /**
+     * The first source the report no longer describes, or null when it still
+     * describes them all.
+     *
+     * A report is a photograph of a moment. Judged against a tree that has
+     * moved on, it says lines are covered that nothing has ever run, and CI
+     * passes a change nobody tested. The report carries a checksum of every
+     * file precisely so this can be caught, so it is caught.
+     *
+     * @param array<string, mixed> $sources
+     */
+    private function stale(array $sources): ?string
+    {
+        foreach ($sources as $file => $source) {
+            $checksum = is_array($source) ? ($source['checksum'] ?? null) : null;
+            $path = rtrim($this->baseDir, '/') . '/' . ltrim((string) $file, './');
+
+            // A file that has since been deleted is not evidence of staleness:
+            // the change being judged may be the deletion itself.
+            if (!is_string($checksum) || !$this->filesystem->exists($path)) {
+                continue;
+            }
+
+            if (md5($this->filesystem->read($path)) !== $checksum) {
+                return (string) $file;
+            }
+        }
+
+        return null;
     }
 }
