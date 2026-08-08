@@ -15,6 +15,7 @@
 namespace PhpSpec\Coverage;
 
 use PhpSpec\Filesystem;
+use PhpSpec\ProjectRoot;
 use PhpSpec\Source\Members;
 
 /**
@@ -98,18 +99,16 @@ final class JsonReportBuilder
      */
     private function buildSources(array $lines, string $srcPath, string $projectRoot, array $aggregate = []): array
     {
-        $srcPrefix = rtrim(str_replace('\\', '/', $srcPath), '/') . '/';
-        $rootPrefix = rtrim(str_replace('\\', '/', $projectRoot), '/') . '/';
+        $sourceRoot = ProjectRoot::at($srcPath);
+        $root = ProjectRoot::at($projectRoot);
         $sources = [];
 
         foreach ($lines as $file => $fileLines) {
-            $normalized = str_replace('\\', '/', $file);
-
-            if (!str_starts_with($normalized, $srcPrefix) || str_contains($normalized, "eval()'d code")) {
+            if (!$sourceRoot->holds($file) || str_contains(str_replace('\\', '/', $file), "eval()'d code")) {
                 continue;
             }
 
-            $relative = str_starts_with($normalized, $rootPrefix) ? substr($normalized, strlen($rootPrefix)) : $normalized;
+            $relative = $root->relative($file);
             $source = $this->filesystem->read($file);
             $sources[$relative] = [
                 'checksum' => md5($source),

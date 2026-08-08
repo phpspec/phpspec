@@ -14,6 +14,8 @@
 
 namespace PhpSpec\Ai\Agent;
 
+use PhpSpec\ProjectRoot;
+
 /**
  * @internal
  * The one project-path normaliser for the AI surfaces. Separators are
@@ -30,13 +32,7 @@ final class ProjectPath
      */
     public static function relative(string $path): string
     {
-        $path = str_replace('\\', '/', $path);
-        $cwd = str_replace('\\', '/', getcwd() ?: '.') . '/';
-        if (str_starts_with($path, $cwd)) {
-            $path = substr($path, strlen($cwd));
-        }
-
-        return ltrim($path, '/');
+        return ltrim(ProjectRoot::here()->relative($path), '/');
     }
 
     /**

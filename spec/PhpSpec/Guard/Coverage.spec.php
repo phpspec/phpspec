@@ -24,6 +24,27 @@ describe(Coverage::class, function () {
     // logic line untested. That is right for one file and wrong for all of
     // them: a collector that reported nothing is a broken collector, not a
     // codebase without a single example, and guard must be able to tell.
+    // Xdebug reports a file as the filesystem resolved it, while the base comes
+    // from wherever the run was started. On Windows those are two spellings of
+    // one directory, and a base that recognises only its own leaves every file
+    // unknown, which guard reads as logic no example reached.
+    it('matches a file whose path spells the project differently', function () {
+        $directory = sys_get_temp_dir() . '/phpspec_cov_' . getmypid();
+        @mkdir($directory . '/src', 0777, true);
+
+        try {
+            $hits = [(string) realpath($directory) . '/src/Basket.php' => [7 => 1]];
+
+            $coverage = Coverage::fromHits($hits, $directory . '/src/..');
+
+            expect($coverage->knows('src/Basket.php'))->toBeTrue();
+            expect($coverage->covers('src/Basket.php', 7))->toBeTrue();
+        } finally {
+            @rmdir($directory . '/src');
+            @rmdir($directory);
+        }
+    });
+
     it('says when it holds no evidence at all', function () {
         expect(Coverage::nothing()->isEmpty())->toBeTrue();
         expect(Coverage::fromHits([], '/app')->isEmpty())->toBeTrue();
