@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [9.0.0-beta.19](https://github.com/phpspec/phpspec/compare/9.0.0-beta.18...9.0.0-beta.19)
+## [9.0.0-beta.20](https://github.com/phpspec/phpspec/compare/9.0.0-beta.18...9.0.0-beta.20)
 
 ### Added
  - `phpspec guard` turns on a TDD guard: `run` refuses a change whose new logic no example reaches, naming the member and showing the lines
