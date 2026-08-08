@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [9.0.0-beta.19](https://github.com/phpspec/phpspec/compare/9.0.0-beta.18...9.0.0-beta.19)
 
 ### Added
  - `phpspec guard` turns on a TDD guard: `run` refuses a change whose new logic no example reaches, naming the member and showing the lines
@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Objects in a failure detail are named by what they are rather than by instance id, as the agent format already did
  - The agent summary omits offers when the run found nothing to generate, as it already did for rerun and coverage
  - generate no longer writes when there is nobody to ask: it offers the change under an id, and `run --accept-offers` stays as the bulk shortcut for a run's own offers
+ - An offer to create a class or an interface names the file it would write, so a path derived from the source root and the namespace can be refused before it is used
 
 ### Fixed
  - Paths are named relative to the project however the platform spells its root, so on Windows guard no longer calls covered code untested, the JSON coverage report no longer keys sources absolutely, and a rerun command stays relative
