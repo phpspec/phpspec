@@ -27,7 +27,8 @@
         "symfony/yaml": "^7.0 || ^8.0",
         "cucumber/gherkin": "^39.0",
         "ext-mbstring": "*",
-        "ext-tokenizer": "*"
+        "ext-tokenizer": "*",
+        "ext-sockets": "*"
     },
 
     "autoload": {
@@ -58,7 +59,8 @@
         "friendsofphp/php-cs-fixer": "^3.75",
         "phpstan/phpstan": "^2.1",
         "papi-ai/papi-core": "^0.13 || ^0.14 || ^0.15",
-        "papi-ai/google": "^0.13 || ^0.14 || ^0.15"
+        "papi-ai/google": "^0.13 || ^0.14 || ^0.15",
+        "psr/http-message": "^2.0"
     },
 
     "conflict": {

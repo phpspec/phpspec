@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
  - The browser behind visit() is an extension point: put your own implementation of the Browser contract behind the DSL with `extensions: {browser: ...}`
  - A request `callback` option is told each exchange (method, url, status, body and headers); the default one attaches the request and response to the report
+ - Helper classes under features/support load before step definitions, the Cucumber way
 ### Changed
  - `toBeCalled()` and `toBeCalledTimes()` hold the mock to the arguments written in the expect call; written bare they still mean called at all
 ### Fixed

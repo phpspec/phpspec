@@ -296,3 +296,43 @@ Feature: Story BDD with Gherkin
       """
     When I run phpspec run "features/" and answer "y" to generation prompts
     Then the file "features/steps/repeats.steps.php" should contain "I add a {string} task {string}" exactly 1 times
+
+  Scenario: Helper classes under features/support load before the steps that use them
+    Given a feature file "features/greeting.feature":
+      """
+      Feature: Greeting
+        Scenario: Greeting comes from a support class
+          When the greeter greets
+          Then the greeting is "hello from support"
+      """
+    And a file "features/support/Greeter.php":
+      """
+      <?php
+
+      namespace Acme\Support;
+
+      class Greeter
+      {
+          public function greet(): string
+          {
+              return 'hello from support';
+          }
+      }
+      """
+    And a step file "features/steps/greeting.steps.php":
+      """
+      <?php
+
+      use Acme\Support\Greeter;
+
+      when('the greeter greets', function () {
+          $this->greeting = (new Greeter())->greet();
+      });
+
+      then('the greeting is {string}', function (string $expected) {
+          expect($this->greeting)->toBe($expected);
+      });
+      """
+    When I run phpspec run "features/greeting.feature"
+    Then the exit code should be 0
+    And the output should contain "2 steps (2 passed)"
