@@ -14,85 +14,72 @@
 
 namespace PhpSpec\Browser;
 
-use PhpSpec\Configuration;
 use RuntimeException;
 
 /**
- * @internal Not part of the public API.
- *
- * Static registry holding the Browser Client instance.
- * Lazily creates the client from Configuration on first access.
+ * @internal
+ * Holds the active browser and the base URL, and resolves each request
+ * through them. Knows nothing about where either came from.
  */
 final class BrowserRegistry
 {
-    private static ?Client $client = null;
+    private static ?Browser $browser = null;
 
-    /**
-     * Returns the HTTP client, creating it from configuration if needed.
-     *
-     * @throws RuntimeException if base_url is not configured
-     */
-    public static function client(): Client
+    private static ?string $baseUrl = null;
+
+    public static function use(Browser $browser): void
     {
-        if (self::$client === null) {
-            self::init();
-        }
+        self::$browser = $browser;
+    }
 
-        if (self::$client === null) {
-            throw new RuntimeException('Browser client failed to initialize');
-        }
-
-        return self::$client;
+    public static function init(string $baseUrl): void
+    {
+        self::$baseUrl = $baseUrl;
     }
 
     /**
-     * Loads configuration and creates the Client from base_url.
-     *
-     * @throws RuntimeException if base_url is not configured
+     * @param array<string, mixed> $options
      */
-    public static function init(): void
+    public static function request(string $method, string $path, array $options = []): Response
     {
-        $cwd = getcwd();
-        if ($cwd === false) {
-            throw new RuntimeException('Unable to determine current working directory');
-        }
-        $config = new Configuration($cwd);
-        $baseUrl = $config->getBaseUrl();
+        self::$browser ??= new Client();
 
-        if ($baseUrl === null) {
-            throw new RuntimeException(
-                'Browser testing requires "base_url" in phpspec.json. Example: {"base_url": "http://localhost:8080"}',
-            );
-        }
-
-        self::$client = new Client($baseUrl);
+        return self::$browser->request($method, self::resolve($path), $options);
     }
 
-    /**
-     * Resets the client for test isolation.
-     */
     public static function reset(): void
     {
-        self::$client = null;
+        self::$browser = null;
+        self::$baseUrl = null;
     }
 
     /**
-     * Captures the current client for later restoration.
-     *
-     * @return array{client: Client|null}
+     * @return array{browser: Browser|null, baseUrl: string|null}
      */
     public static function saveState(): array
     {
-        return ['client' => self::$client];
+        return ['browser' => self::$browser, 'baseUrl' => self::$baseUrl];
     }
 
     /**
-     * Restores a previously saved client state.
-     *
-     * @param array{client: Client|null} $state
+     * @param array{browser: Browser|null, baseUrl: string|null} $state
      */
     public static function restoreState(array $state): void
     {
-        self::$client = $state['client'];
+        self::$browser = $state['browser'];
+        self::$baseUrl = $state['baseUrl'];
+    }
+
+    private static function resolve(string $path): string
+    {
+        if (preg_match('#^https?://#i', $path) === 1) {
+            return $path;
+        }
+
+        if (self::$baseUrl === null) {
+            throw new RuntimeException('No base URL configured: call BrowserRegistry::init() with one.');
+        }
+
+        return rtrim(self::$baseUrl, '/') . '/' . ltrim($path, '/');
     }
 }

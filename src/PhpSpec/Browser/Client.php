@@ -16,13 +16,11 @@ namespace PhpSpec\Browser;
 
 use Closure;
 
-use function PhpSpec\attach;
-
 /**
  * @internal
  * Lightweight HTTP client using file_get_contents + stream contexts (zero dependencies).
  */
-final class Client
+final class Client implements Browser
 {
     /** @var ?Closure(string, resource): array{body: string|false, headers: list<string>} */
     private ?Closure $transport;
@@ -30,11 +28,11 @@ final class Client
     /**
      * Creates a new HTTP client.
      *
-     * @param string $baseUrl base URL prepended to all request paths
+     * @param string $baseUrl base URL prepended to relative request paths
      * @param ?Closure(string, resource): array{body: string|false, headers: list<string>} $transport optional custom transport callable for testing
      */
     public function __construct(
-        private readonly string $baseUrl,
+        private readonly string $baseUrl = '',
         ?Closure $transport = null,
     ) {
         $this->transport = $transport;
@@ -79,7 +77,9 @@ final class Client
         }
 
         $context = stream_context_create($contextOptions);
-        $url = rtrim($this->baseUrl, '/') . '/' . ltrim($path, '/');
+        $url = preg_match('#^https?://#i', $path) === 1
+            ? $path
+            : rtrim($this->baseUrl, '/') . '/' . ltrim($path, '/');
 
         if ($this->transport) {
             ['body' => $body, 'headers' => $rawHeaders] = ($this->transport)($url, $context);
@@ -112,16 +112,6 @@ final class Client
             }
         }
 
-        $response = new Response($status, $body, $responseHeaders);
-
-        // What the server said, handed over so a failed expectation about a
-        // response is read next to the body that explains it: an assertion on
-        // the status says "expected 200, got 500" and never why. Attached on
-        // every request and only ever read when something needs attention, so a
-        // green suite pays nothing and the last request is the one reported.
-        attach('http.request', strtoupper($method) . ' ' . $url . ' (' . $status . ')');
-        attach('http.response', $body);
-
-        return $response;
+        return new Response($status, $body, $responseHeaders);
     }
 }
