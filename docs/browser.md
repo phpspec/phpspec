@@ -74,6 +74,7 @@ The `$options` array supports:
 | `json` | `array` | JSON-encoded as the request body; sets `Content-Type: application/json` |
 | `body` | `string` | Raw request body |
 | `headers` | `array` | Additional HTTP headers (`name => value`) |
+| `callback` | `callable` | Told each exchange: `($method, $url, $status, $body, $headers)`. Overrides the default one, which attaches the request and response to the report |
 
 ### Response Object
 
@@ -184,3 +185,30 @@ expect($psr7Response)->toHavePath('data.name', 'Chuck');
 $psr7Response = app('Psr\Http\Message\ResponseInterface');
 expect($psr7Response)->toHaveStatus(201);
 ```
+
+## Replacing the Browser
+
+The bundled client is the default implementation of one contract:
+
+```php
+namespace PhpSpec\Browser;
+
+interface Browser
+{
+    public function request(string $method, string $url, array $options = []): Response;
+}
+```
+
+An extension can put anything behind `visit()` (BrowserKit, a headless
+browser) by implementing it and mapping what it drives onto the canonical
+`Response`, which is what keeps every response matcher working unchanged:
+
+```yaml
+extensions:
+  browser: Acme\BrowserKitBrowser
+```
+
+The key is singular because exactly one browser drives the DSL. A package can
+also auto-register via `extra.phpspec` (see [Extensions](extensions.md)); the
+config's choice wins, and two auto-discovered browsers with no config choice
+are refused by name.

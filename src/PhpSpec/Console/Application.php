@@ -16,6 +16,7 @@ namespace PhpSpec\Console;
 
 use function PhpSpec\attach;
 
+use PhpSpec\Browser\Browser;
 use PhpSpec\Browser\BrowserRegistry;
 use PhpSpec\Browser\Client;
 use PhpSpec\BrowserAdapter;
@@ -91,7 +92,7 @@ final class Application extends BaseApplication
         $config->registerAutoloaders();
         $extensionLoader = new ExtensionLoader($config);
         $extensionLoader->load();
-        $this->wireBrowser($config);
+        $this->wireBrowser($config, $extensionLoader->getBrowser());
 
         $defaultCommands = array_values(array_filter(
             parent::getDefaultCommands(),
@@ -134,9 +135,9 @@ final class Application extends BaseApplication
      * attachments so a failed response assertion is read next to the body
      * that explains it.
      */
-    private function wireBrowser(Configuration $config): void
+    private function wireBrowser(Configuration $config, ?Browser $browser): void
     {
-        BrowserRegistry::use(new BrowserAdapter(new Client(), static function (string $method, string $url, int $status, string $body): void {
+        BrowserRegistry::use(new BrowserAdapter($browser ?? new Client(), static function (string $method, string $url, int $status, string $body): void {
             attach('http.request', strtoupper($method) . ' ' . $url . ' (' . $status . ')');
             attach('http.response', $body);
         }));

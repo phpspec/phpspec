@@ -244,6 +244,35 @@ Available events:
 | `onPending(string $title)` | Pending example |
 | `onSkipped(string $title)` | Skipped example |
 
+### Browsers
+
+The browser behind `visit()` and the other [browser DSL](browser.md) functions
+is replaceable. Name a class implementing `PhpSpec\Browser\Browser`; it must
+map whatever it drives onto the canonical `PhpSpec\Browser\Response`, which
+keeps every response matcher working unchanged:
+
+```yaml
+extensions:
+  browser: Acme\BrowserKitBrowser
+```
+
+Unlike the other types the key is singular: exactly one browser drives the
+DSL. The config's choice beats auto-discovery, and two auto-discovered
+browsers with no config choice are refused by name. An extension cannot yet
+declare its own config keys (a kernel path, say); that hook does not exist.
+
+### AI Tools
+
+`tools` classes implement `PhpSpec\Extensions\ToolProviderInterface` and
+return AI tools the [pair](pair.md) assistant can call. Currently consumed by
+`pair` only.
+
+```yaml
+extensions:
+  tools:
+    - Acme\DeployStatusTools
+```
+
 ## Auto-Discovery
 
 Extensions can opt into auto-discovery so users don't need to add them to `phpspec.yaml` manually. Add a `phpspec` key to your package's `composer.json`:

@@ -323,6 +323,89 @@ describe(ExtensionLoader::class, function () {
 
         expect($loader->hasFormatter('foo'))->toBeFalse();
     });
+
+    it('puts the browser named in config behind the DSL', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => true,
+            default => false,
+        });
+        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => "extensions:\n  browser: " . StubBrowser::class . "\n",
+            default => '',
+        });
+
+        $config = new Configuration('/app', $fs);
+        $loader = new ExtensionLoader($config, $fs);
+        $loader->load();
+
+        expect($loader->getBrowser())->toBeAnInstanceOf(StubBrowser::class);
+    });
+
+    it('has no browser opinion when none is registered', function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
+
+        $config = new Configuration('/app', $fs);
+        $loader = new ExtensionLoader($config, $fs);
+        $loader->load();
+
+        expect($loader->getBrowser())->toBeNull();
+    });
+
+    it('refuses a browser that does not implement the contract', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => true,
+            default => false,
+        });
+        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => "extensions:\n  browser: " . StubFormatter::class . "\n",
+            default => '',
+        });
+
+        $config = new Configuration('/app', $fs);
+        $loader = new ExtensionLoader($config, $fs);
+
+        expect(fn() => $loader->load())->toThrow(
+            RuntimeException::class,
+            'The configured browser "StubFormatter" must implement PhpSpec\\Browser\\Browser.',
+        );
+    });
+
+    // Two packages each auto-discovering a browser cannot both drive visit().
+    it('refuses to pick between two auto-discovered browsers', function (Filesystem $fs) {
+        $installed = json_encode(['packages' => [
+            ['name' => 'acme/one', 'extra' => ['phpspec' => ['browser' => StubBrowser::class]]],
+            ['name' => 'acme/two', 'extra' => ['phpspec' => ['browser' => OtherStubBrowser::class]]],
+        ]]);
+        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === 'vendor/composer/installed.json');
+        allow($fs->read())->toReturnUsing(fn(string $path) => $path === 'vendor/composer/installed.json' ? $installed : '');
+
+        $config = new Configuration('/app', $fs);
+        $loader = new ExtensionLoader($config, $fs);
+
+        expect(fn() => $loader->load())->toThrow(
+            RuntimeException::class,
+            'Two browsers were auto-discovered ("StubBrowser" and "OtherStubBrowser"): pick one with "extensions: {browser: ...}".',
+        );
+    });
+
+    it('lets config settle an auto-discovery conflict', function (Filesystem $fs) {
+        $installed = json_encode(['packages' => [
+            ['name' => 'acme/one', 'extra' => ['phpspec' => ['browser' => StubBrowser::class]]],
+            ['name' => 'acme/two', 'extra' => ['phpspec' => ['browser' => OtherStubBrowser::class]]],
+        ]]);
+        allow($fs->exists())->toReturnUsing(fn(string $path) => in_array($path, ['/app/phpspec.yaml', 'vendor/composer/installed.json'], true));
+        allow($fs->read())->toReturnUsing(fn(string $path) => match ($path) {
+            '/app/phpspec.yaml' => "extensions:\n  browser: " . OtherStubBrowser::class . "\n",
+            'vendor/composer/installed.json' => $installed,
+            default => '',
+        });
+
+        $config = new Configuration('/app', $fs);
+        $loader = new ExtensionLoader($config, $fs);
+        $loader->load();
+
+        expect($loader->getBrowser())->toBeAnInstanceOf(OtherStubBrowser::class);
+    });
 });
 
 // Stub classes for testing
@@ -389,5 +472,21 @@ class StubCommand extends CommandExtension
     public function execute(\Symfony\Component\Console\Input\InputInterface $input, \Symfony\Component\Console\Output\OutputInterface $output): int
     {
         return 0;
+    }
+}
+
+class StubBrowser implements \PhpSpec\Browser\Browser
+{
+    public function request(string $method, string $url, array $options = []): \PhpSpec\Browser\Response
+    {
+        return new \PhpSpec\Browser\Response(200, 'stub', []);
+    }
+}
+
+class OtherStubBrowser implements \PhpSpec\Browser\Browser
+{
+    public function request(string $method, string $url, array $options = []): \PhpSpec\Browser\Response
+    {
+        return new \PhpSpec\Browser\Response(200, 'other', []);
     }
 }

@@ -14,11 +14,13 @@
 
 namespace PhpSpec\Extensions;
 
+use PhpSpec\Browser\Browser;
 use PhpSpec\Configuration;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\Filesystem;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Specification\Expectation;
+use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -32,6 +34,8 @@ final class ExtensionLoader
 {
     /** @var array<string, FormatterExtension> */
     private array $formatters = [];
+
+    private ?Browser $browser = null;
 
     /** @var Command[] */
     private array $commands = [];
@@ -89,6 +93,16 @@ final class ExtensionLoader
         foreach ($merged['tools'] ?? [] as $fqcn) {
             $this->loadToolProvider($fqcn);
         }
+
+        $this->loadBrowser($extensions, $autoDiscovered);
+    }
+
+    /**
+     * The browser an extension put behind visit(), or null for the default.
+     */
+    public function getBrowser(): ?Browser
+    {
+        return $this->browser;
     }
 
     /**
@@ -214,6 +228,53 @@ final class ExtensionLoader
     }
 
     /**
+     * Exactly one browser can drive the DSL, so the config's word is final and
+     * an auto-discovery tie is refused rather than settled by install order.
+     *
+     * @param array<string, mixed> $config
+     * @param array<string, mixed> $discovered
+     */
+    private function loadBrowser(array $config, array $discovered): void
+    {
+        $configured = $config['browser'] ?? null;
+        $found = array_values(array_unique(array_filter((array) ($discovered['browser'] ?? []), 'is_string')));
+
+        if (!is_string($configured) && count($found) > 1) {
+            throw new RuntimeException(sprintf(
+                'Two browsers were auto-discovered ("%s" and "%s"): pick one with "extensions: {browser: ...}".',
+                self::shortName($found[0]),
+                self::shortName($found[1]),
+            ));
+        }
+
+        $fqcn = is_string($configured) ? $configured : ($found[0] ?? null);
+        if ($fqcn === null || !class_exists($fqcn)) {
+            return;
+        }
+
+        $instance = new $fqcn();
+        if (!$instance instanceof Browser) {
+            throw new RuntimeException(sprintf(
+                'The configured browser "%s" must implement PhpSpec\Browser\Browser.',
+                self::shortName($fqcn),
+            ));
+        }
+
+        $this->browser = $instance;
+    }
+
+    private static function shortName(string $fqcn): string
+    {
+        $slash = strrpos($fqcn, '\\');
+
+        if ($slash === false) {
+            return $fqcn;
+        }
+
+        return substr($fqcn, $slash + 1);
+    }
+
+    /**
      * Reads vendor/composer/installed.json for auto-discovery.
      *
      * @param array<string> $disabled package names to skip
@@ -256,6 +317,9 @@ final class ExtensionLoader
                 if (isset($phpspec[$type]) && is_array($phpspec[$type])) {
                     $result[$type] = array_merge($result[$type] ?? [], $phpspec[$type]);
                 }
+            }
+            if (isset($phpspec['browser']) && is_string($phpspec['browser'])) {
+                $result['browser'][] = $phpspec['browser'];
             }
         }
 
