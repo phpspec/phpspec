@@ -132,7 +132,7 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
     private function extractTypehints(array &$tokens, int $variableNameIndex, Token $variableName): void
     {
         $typehint = '';
-        for ($i = $variableNameIndex - 1; !$this->haveNotReachedEndOfTypeHint($tokens[$i]); $i--) {
+        for ($i = $variableNameIndex - 1; $this->isPartOfTypeHint($tokens[$i]); $i--) {
             $scanningToken = $tokens[$i];
             $typehint = $scanningToken->asString() . $typehint;
 
@@ -142,6 +142,10 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         }
 
         if ($typehint = trim($typehint)) {
+
+            if (\str_starts_with($typehint, '?')) {
+                $typehint = ltrim(substr($typehint, 1));
+            }
 
             $class = $this->namespaceResolver->resolve($this->currentClass);
 
@@ -186,13 +190,13 @@ final class TokenizedTypeHintRewriter implements TypeHintRewriter
         }
     }
 
-    private function haveNotReachedEndOfTypeHint(Token $token) : bool
+    private function isPartOfTypeHint(Token $token): bool
     {
-        if ($token->equals('|') || $token->equals('&')) {
-            return false;
+        if ($token->equals('|') || $token->equals('&') || $token->equals('?')) {
+            return true;
         }
 
-        return !$token->isInTypes($this->typehintTokens);
+        return $token->isInTypes($this->typehintTokens);
     }
 
     private function shouldExtractTokensOfClass(string $className): bool

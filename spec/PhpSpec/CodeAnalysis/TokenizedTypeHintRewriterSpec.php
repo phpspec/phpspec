@@ -365,4 +365,127 @@ class TokenizedTypeHintRewriterSpec extends ObjectBehavior
             Argument::type(DisallowedUnionTypehintException::class)
         )->shouldHaveBeenCalled();
     }
+
+    function it_removes_nullable_typehints()
+    {
+        $this->rewrite('
+        <?php
+
+        class FooSpec
+        {
+            public function bar(?Bar $bar)
+            {
+            }
+        }
+
+        ')->shouldReturn('
+        <?php
+
+        class FooSpec
+        {
+            public function bar( $bar)
+            {
+            }
+        }
+
+        ');
+    }
+
+    function it_removes_nullable_fully_qualified_typehints()
+    {
+        $this->rewrite('
+        <?php
+
+        class FooSpec
+        {
+            public function bar(?\Foo\Bar $bar)
+            {
+            }
+        }
+
+        ')->shouldReturn('
+        <?php
+
+        class FooSpec
+        {
+            public function bar( $bar)
+            {
+            }
+        }
+
+        ');
+    }
+
+    function it_removes_nullable_typehints_with_whitespace()
+    {
+        $this->rewrite('
+        <?php
+
+        class FooSpec
+        {
+            public function bar(? Bar $bar)
+            {
+            }
+        }
+
+        ')->shouldReturn('
+        <?php
+
+        class FooSpec
+        {
+            public function bar(  $bar)
+            {
+            }
+        }
+
+        ');
+    }
+
+    function it_indexes_nullable_typehints_without_the_nullable_marker(TypeHintIndex $typeHintIndex, NamespaceResolver $namespaceResolver)
+    {
+        $namespaceResolver->analyse(Argument::any())->shouldBeCalled();
+
+        $namespaceResolver->resolve('FooSpec')->willReturn('FooSpec');
+        $namespaceResolver->resolve('Bar')->willReturn('Bar');
+
+        $this->rewrite('
+        <?php
+
+        class FooSpec
+        {
+            public function bar(?Bar $bar)
+            {
+            }
+        }
+
+        ');
+
+        $typeHintIndex->add('FooSpec', 'bar', '$bar', 'Bar')->shouldHaveBeenCalled();
+    }
+
+    function it_indexes_invalid_nullable_scalar_typehints(
+        TypeHintIndex $typeHintIndex,
+        NamespaceResolver $namespaceResolver
+    ) {
+        $e = new DisallowedNonObjectTypehintException();
+        $namespaceResolver->analyse(Argument::any())->shouldBeCalled();
+
+        $namespaceResolver->resolve('FooSpec')->willReturn('FooSpec');
+        $namespaceResolver->resolve('int')->willThrow($e);
+
+        $this->rewrite('
+        <?php
+
+        class FooSpec
+        {
+            public function bar(?int $bar)
+            {
+            }
+        }
+
+        ');
+
+        $typeHintIndex->addInvalid('FooSpec', 'bar', '$bar', $e)->shouldHaveBeenCalled();
+        $typeHintIndex->add('FooSpec', 'bar', '$bar', Argument::any())->shouldNotHaveBeenCalled();
+    }
 }
