@@ -33,22 +33,11 @@ use Throwable;
 
 /**
  * @internal
- * The one verb every AI command calls. One `chat()` resolves the command per its
- * manifest, resolves the current TDD step (the user's words first, the suite
- * state second), acts deterministically when the step fully determines the
- * artifact, and otherwise asks the model on the command's declared answer
- * channel, with a single corrective re-ask before failing cleanly. Every
- * exchange is captured to the debug recording. Tools only propose; the caller
- * confirms and applies through the Writer.
+ * Resolves each AI command turn deterministically when possible, otherwise by asking the model.
  */
 final class Agent
 {
-    /**
-     * The output-token ceiling when neither the user config nor the command
-     * manifest sets one. Generous, because a reasoning model's thinking counts
-     * against it: a tight cap comes back as an EMPTY response on both channels
-     * (seen live with gemini-3.1-pro-preview at 8192).
-     */
+    /** Fallback output-token ceiling; a tight cap returns EMPTY from reasoning models (gemini-3.1-pro-preview at 8192). */
     private const DEFAULT_MAX_TOKENS = 16384;
 
     private readonly Filesystem $filesystem;
@@ -68,12 +57,10 @@ final class Agent
     private bool $sessionCaptured = false;
 
     /**
-     * @param Configuration $config the project configuration
      * @param Filesystem|null $filesystem filesystem abstraction for testability
      * @param ProviderInterface|null $provider injectable provider seam; built from the ai config when null
      * @param ToolRegistry|null $registry the shared tool definitions
      * @param Recorder|null $recorder captures every exchange
-     * @param PromptLibrary|null $prompts loads the prompt files
      * @param Transcript|null $transcript a persistent conversation; every chat() extends it instead of starting fresh
      * @param ToolExecutor|null $executor a live session's tool half; chat() loops and executes instead of proposing
      */
@@ -95,11 +82,13 @@ final class Agent
     }
 
     /**
-     * Runs one turn of the pipeline for a named command and an instruction:
-     * the command's profile resolves through the prompt library (project
-     * overrides first). A caller that already knows part of its world (a suite
-     * it just ran, the recency it scanned) passes a seed grounding; the
-     * manifest's remaining sections are filled in around it.
+     * Runs one turn of the pipeline for a named command and an instruction
+     *
+     * @param string $command the manifest name under Prompts/commands/ (e.g. "next", "generate"), project layer first
+     * @param string $instruction what the human asked for, verbatim
+     * @param Grounding|null $seed sections the caller already built; only the missing ones are gathered
+     *
+     * @return Outcome proposals to confirm and apply
      */
     public function chat(string $command, string $instruction, ?Grounding $seed = null): Outcome
     {
@@ -109,7 +98,7 @@ final class Agent
             return new Outcome(null, [], $e->getMessage());
         }
 
-        $grounding = $this->ground($profile, $instruction, $seed);
+        $grounding = $this->groundingFor($profile, $instruction, $seed);
         $step = $this->refineSubject(Step::resolve($instruction, $grounding));
         $aiConfig = $this->config->getAiConfig();
 
@@ -127,142 +116,78 @@ final class Agent
             return new Outcome($step, $proposals);
         }
 
-        return $this->ask($profile, $step, $grounding, $instruction, $aiConfig);
+        return $this->askTheModel($profile, $step, $grounding, $instruction, $aiConfig);
     }
 
     /**
-     * Asks the model: composes the request from the prompt files, enforces the
-     * declared answer channel (one corrective re-ask when a tool_call command
-     * answers in prose), executes the tool calls into proposals, and captures
-     * the exchange.
-     *
-     * @param array{provider: string, model?: string, api_key?: string, maxTokens?: int, effort?: string}|null $aiConfig
+     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string}|null $aiConfig
      */
-    private function ask(CommandProfile $profile, ?Step $step, Grounding $grounding, string $instruction, ?array $aiConfig): Outcome
+    private function askTheModel(CommandProfile $profile, ?Step $step, Grounding $grounding, string $instruction, ?array $aiConfig): Outcome
     {
-        // A conversation grounds the suite through the per-turn situation
-        // message, so the composed context must not repeat it.
         $request = Request::compose($profile, $step, $this->transcript !== null ? $grounding->withoutSuite() : $grounding, $instruction, $this->prompts);
 
         try {
             $provider = $this->providerFor($aiConfig);
-            $options = $this->options($profile, $aiConfig ?? []);
+            $options = $this->providerOptions($profile, $aiConfig ?? []);
         } catch (RuntimeException|InvalidArgumentException $e) {
             $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], null);
 
-            // A missing ai section stays an honest config error; any other
-            // construction failure degrades like a failed call below.
             return $aiConfig === null
                 ? new Outcome($step, [], $e->getMessage())
-                : $this->failedAsk($step, $e->getMessage());
+                : $this->failureOutcome($step, $e->getMessage());
         }
 
-        // The conversation: the caller's persistent transcript when one was
-        // injected (a pair session), otherwise a fresh one for this exchange.
-        // The system slot seats once per command; a swap re-orients it.
+        $transcript = $this->seatTranscript($profile, $request, $step, $grounding);
+
+        return $this->executor === null
+            ? $this->proposeInOneRound($provider, $options, $transcript, $profile, $step, $instruction, $request, $aiConfig)
+            : $this->converseUntilHandBack($this->executor, $provider, $options, $transcript, $profile, $step, $instruction, $request, $aiConfig);
+    }
+
+    private function seatTranscript(CommandProfile $profile, Request $request, ?Step $step, Grounding $grounding): Transcript
+    {
         $transcript = $this->transcript ?? new Transcript();
         $transcript->beginTurn();
         if (!$transcript->isOrientedFor($profile->name)) {
             $transcript->orient($profile->name, $this->orientation($request->system));
         }
-        $this->situate($transcript, $step, $grounding);
+        $this->situateTranscript($transcript, $step, $grounding);
         $transcript->say($request->context);
-        $this->executor?->beginTurn();
 
-        $rounds = [];
-        $limit = $this->executor !== null ? ($profile->maxTurns ?? 50) : 1;
-        $response = null;
+        return $transcript;
+    }
 
+    /**
+     * @param array<string, mixed> $options
+     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string}|null $aiConfig
+     */
+    private function proposeInOneRound(ProviderInterface $provider, array $options, Transcript $transcript, CommandProfile $profile, ?Step $step, string $instruction, Request $request, ?array $aiConfig): Outcome
+    {
         try {
-            for ($turn = 0; $turn < $limit; $turn++) {
-                $roundOptions = $options;
-                if ($this->executor !== null) {
-                    $roundOptions['tools'] = $this->executor->advertised();
-                }
+            $response = $provider->chat($transcript->messages(), $options);
 
-                $response = $provider->chat($transcript->messages(), $roundOptions);
-
-                // The channel rail: structure only ever arrives as tool calls, so a
-                // tool_call command answered in prose gets ONE corrective re-ask.
-                // Providers that honour toolChoice (papi-core >= 0.13) make this a
-                // rare fallback; older ones ignore the option and rely on it.
-                if ($this->executor === null && $profile->answer === 'tool_call' && !$response->hasToolCalls()) {
-                    $transcript->heard($response);
-                    $transcript->say('Answer by calling exactly one of the declared tools; do not answer in prose.');
-                    $response = $provider->chat($transcript->messages(), $roundOptions);
-                }
-
+            // papi-core < 0.13 ignores toolChoice, so a prose answer gets one corrective re-ask.
+            if ($profile->answer === 'tool_call' && !$response->hasToolCalls()) {
                 $transcript->heard($response);
-
-                // Propose-only: one round, and the calls become proposals.
-                if ($this->executor === null) {
-                    break;
-                }
-
-                if (!$response->hasToolCalls()) {
-                    // The role rail: a live session may refuse a prose round that
-                    // asked for permission it already has, and the round runs
-                    // again with the correction in front of it.
-                    $correction = $this->executor->correction($response);
-
-                    if ($correction === null) {
-                        break;
-                    }
-
-                    $rounds[] = ['response' => $response];
-                    $transcript->say($correction);
-
-                    continue;
-                }
-
-                $results = [];
-                foreach ($response->toolCalls as $toolCall) {
-                    $result = $this->executor->execute($toolCall);
-                    $results[$toolCall->id] = $result;
-                    $transcript->observed($toolCall->id, $result);
-                }
-                $rounds[] = ['response' => $response, 'tool_results' => $results];
-
-                foreach ($this->executor->observations() as $report) {
-                    $transcript->say($report);
-                }
-
-                $handBack = $this->executor->turnComplete($response);
-                if ($handBack !== null) {
-                    $this->captureTurn($profile, $instruction, $step, $request, $aiConfig, $response, $rounds);
-
-                    return new Outcome($step, [], $handBack, $this->executor->lastSuggestion() ?? []);
-                }
+                $transcript->say('Answer by calling exactly one of the declared tools; do not answer in prose.');
+                $response = $provider->chat($transcript->messages(), $options);
             }
+
+            $transcript->heard($response);
         } catch (Throwable $e) {
-            // A live provider failure (bad key, HTTP error, an unenforceable
-            // toolChoice) becomes prose for the human, never a crash.
-            $this->captureTurn($profile, $instruction, $step, $request, $aiConfig, null, $rounds);
+            $this->captureTurn($profile, $instruction, $step, $request, $aiConfig, null, []);
 
-            return $this->failedAsk($step, $e->getMessage());
+            return $this->failureOutcome($step, $e->getMessage());
         }
 
-        if ($this->executor !== null) {
-            $ended = $response !== null && !$response->hasToolCalls();
-            if ($ended) {
-                $rounds[] = ['response' => $response];
-            }
-            $this->captureTurn($profile, $instruction, $step, $request, $aiConfig, $response, $rounds);
+        return $this->proposalsOutcome($response, $profile, $step, $instruction, $request, $aiConfig);
+    }
 
-            return new Outcome(
-                $step,
-                [],
-                $ended ? trim($response->text) : 'Reached maximum tool turns. Please try a simpler request.',
-                $this->executor->lastSuggestion() ?? [],
-            );
-        }
-
-        if ($response === null) {
-            // Unreachable in practice: the single propose-only round always ran
-            // and its failures returned above; kept honest for the type.
-            return $this->failedAsk($step, 'The provider returned no response.');
-        }
-
+    /**
+     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string}|null $aiConfig
+     */
+    private function proposalsOutcome(Response $response, CommandProfile $profile, ?Step $step, string $instruction, Request $request, ?array $aiConfig): Outcome
+    {
         try {
             $proposals = $this->registry->fromCalls($response->toolCalls, $step);
         } catch (RuntimeException $e) {
@@ -275,9 +200,6 @@ final class Agent
         $this->recorder->capture($profile->name, $instruction, $step, $request, $aiConfig ?? [], $response, $proposals);
 
         if ($profile->answer === 'tool_call' && $proposals === [] && $data === []) {
-            // A write-feature ask that produced nothing usable still moves the
-            // loop: the skeleton at the derived path stands in, and only there
-            // (provider errors above stay errors).
             $fallback = $this->registry->featureFallback($step);
             if ($fallback !== null) {
                 return new Outcome($step, [$fallback]);
@@ -285,8 +207,6 @@ final class Agent
 
             $prose = trim($response->text);
 
-            // Command-neutral: `next` has no instruction to rephrase, so the
-            // fallback names the likely levers instead.
             return new Outcome($step, [], $prose !== '' ? $prose : 'The model returned no usable answer. Try again, or set ai.model to a stronger model.');
         }
 
@@ -294,12 +214,88 @@ final class Agent
     }
 
     /**
-     * Captures one turn: the last-request debug file always, and, when a live
-     * session is running, the turn is appended to the session capture so the
-     * whole conversation is replayable. The session's first turn starts the
-     * file over.
-     *
-     * @param array{provider?: string, model?: string, api_key?: string, effort?: string}|null $aiConfig
+     * @param array<string, mixed> $options
+     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string}|null $aiConfig
+     */
+    private function converseUntilHandBack(ToolExecutor $executor, ProviderInterface $provider, array $options, Transcript $transcript, CommandProfile $profile, ?Step $step, string $instruction, Request $request, ?array $aiConfig): Outcome
+    {
+        $executor->beginTurn();
+
+        $rounds = [];
+        $limit = $profile->maxTurns ?? 50;
+        $response = null;
+
+        try {
+            for ($turn = 0; $turn < $limit; $turn++) {
+                $roundOptions = $options;
+                $roundOptions['tools'] = $executor->advertised();
+
+                $response = $provider->chat($transcript->messages(), $roundOptions);
+                $transcript->heard($response);
+
+                if (!$response->hasToolCalls()) {
+                    $correction = $executor->correction($response);
+
+                    if ($correction === null) {
+                        break;
+                    }
+
+                    $rounds[] = ['response' => $response];
+                    $transcript->say($correction);
+
+                    continue;
+                }
+
+                $rounds[] = ['response' => $response, 'tool_results' => $this->executeToolCalls($executor, $response, $transcript)];
+
+                foreach ($executor->observations() as $report) {
+                    $transcript->say($report);
+                }
+
+                $handBack = $executor->turnComplete($response);
+                if ($handBack !== null) {
+                    $this->captureTurn($profile, $instruction, $step, $request, $aiConfig, $response, $rounds);
+
+                    return new Outcome($step, [], $handBack, $executor->lastSuggestion() ?? []);
+                }
+            }
+        } catch (Throwable $e) {
+            $this->captureTurn($profile, $instruction, $step, $request, $aiConfig, null, $rounds);
+
+            return $this->failureOutcome($step, $e->getMessage());
+        }
+
+        $ended = $response !== null && !$response->hasToolCalls();
+        if ($ended) {
+            $rounds[] = ['response' => $response];
+        }
+        $this->captureTurn($profile, $instruction, $step, $request, $aiConfig, $response, $rounds);
+
+        return new Outcome(
+            $step,
+            [],
+            $ended ? trim($response->text) : 'Reached maximum tool turns. Please try a simpler request.',
+            $executor->lastSuggestion() ?? [],
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function executeToolCalls(ToolExecutor $executor, Response $response, Transcript $transcript): array
+    {
+        $results = [];
+        foreach ($response->toolCalls as $toolCall) {
+            $result = $executor->execute($toolCall);
+            $results[$toolCall->id] = $result;
+            $transcript->observed($toolCall->id, $result);
+        }
+
+        return $results;
+    }
+
+    /**
+     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string}|null $aiConfig
      * @param list<array{response: Response, tool_results?: array<string, mixed>}> $rounds
      */
     private function captureTurn(CommandProfile $profile, string $instruction, ?Step $step, Request $request, ?array $aiConfig, ?Response $response, array $rounds): void
@@ -314,11 +310,6 @@ final class Agent
         $this->sessionCaptured = true;
     }
 
-    /**
-     * The system text for a transcript's orient slot: the composed prompt with
-     * the project layout tokens resolved, plus, for a persistent conversation,
-     * the standing project map (fresh state rides the per-turn situation).
-     */
     private function orientation(string $system): string
     {
         if (str_contains($system, '%')) {
@@ -341,11 +332,7 @@ final class Agent
         return $map === '' ? $system : $system . "\n\n" . $map;
     }
 
-    /**
-     * Grounds a conversational turn in the live suite state and the resolved
-     * step, as the one fresh "[Current situation]" the window keeps.
-     */
-    private function situate(Transcript $transcript, ?Step $step, Grounding $grounding): void
+    private function situateTranscript(Transcript $transcript, ?Step $step, Grounding $grounding): void
     {
         if ($this->transcript === null || $grounding->suite === null) {
             return;
@@ -359,11 +346,6 @@ final class Agent
         $transcript->situate($report);
     }
 
-    /**
-     * The conversation's standing project map: the source, spec, and feature
-     * trees plus the step titles the suite already owns, built once per
-     * session for the orient slot.
-     */
     private function projectMap(): string
     {
         if ($this->projectMap !== null) {
@@ -394,7 +376,7 @@ final class Agent
             }
         }
 
-        $titles = $this->stepTitles($featuresDir);
+        $titles = $this->stepTitlesByFile($featuresDir);
         if ($titles !== '') {
             $sections[] = "## Existing step definitions\nThese steps are already defined, reuse them in new scenarios:\n$titles";
         }
@@ -404,11 +386,7 @@ final class Agent
         return $this->projectMap;
     }
 
-    /**
-     * The step titles the suite already owns, grouped by their file, from the
-     * step vocabulary (titles are keyword-blind: each registers once).
-     */
-    private function stepTitles(string $featuresRoot): string
+    private function stepTitlesByFile(string $featuresRoot): string
     {
         $byFile = [];
         foreach ((new StepVocabulary($this->filesystem))->definedTitles($featuresRoot) as $title => $file) {
@@ -427,12 +405,7 @@ final class Agent
         return implode("\n", $lines);
     }
 
-    /**
-     * The outcome of an ask the provider could not answer: for a write-feature
-     * step the derived skeleton stands in so the loop still moves offline,
-     * with the failure kept visible beside it; anything else is the error.
-     */
-    private function failedAsk(?Step $step, string $error): Outcome
+    private function failureOutcome(?Step $step, string $error): Outcome
     {
         $fallback = $this->registry->featureFallback($step);
         if ($fallback !== null) {
@@ -443,10 +416,7 @@ final class Agent
     }
 
     /**
-     * The provider to talk to: the injected seam, or one built from the ai
-     * config; a missing config is reported like any other provider failure.
-     *
-     * @param array{provider: string, model?: string, api_key?: string, maxTokens?: int, effort?: string}|null $aiConfig
+     * @param array{provider: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string}|null $aiConfig
      */
     private function providerFor(?array $aiConfig): ProviderInterface
     {
@@ -462,21 +432,16 @@ final class Agent
     }
 
     /**
-     * The provider options for a command, plus the declared tools. Precedence
-     * for model params: the user's phpspec config beats the shipped command
-     * manifest, which beats the code default.
-     *
-     * @param array{provider?: string, model?: string, maxTokens?: int, effort?: string} $aiConfig
+     * @param array{provider?: string, model?: string, maxTokens?: int, effort?: string, base_url?: string, api_key?: string} $aiConfig
      * @return array<string, mixed>
      */
-    private function options(CommandProfile $profile, array $aiConfig): array
+    private function providerOptions(CommandProfile $profile, array $aiConfig): array
     {
         $options = [
             'maxTokens' => $aiConfig['maxTokens'] ?? $profile->maxTokens ?? self::DEFAULT_MAX_TOKENS,
         ];
 
-        // Reasoning effort is the user's call entirely; providers that cannot
-        // map it yet simply ignore the option.
+        // Providers that cannot map effort ignore the option.
         if (isset($aiConfig['effort'])) {
             $options['effort'] = $aiConfig['effort'];
         }
@@ -494,9 +459,7 @@ final class Agent
         if ($tools !== []) {
             $options['tools'] = $tools;
 
-            // Force the answer channel at the provider where supported
-            // (papi-core >= 0.13); one declared tool is forced by name, several
-            // leave the model the choice of tool but not of channel.
+            // papi-core >= 0.13 enforces toolChoice at the provider; older versions ignore it.
             if ($profile->answer === 'tool_call') {
                 $options['toolChoice'] = count($profile->tools) === 1 ? ['name' => $profile->tools[0]] : 'required';
             }
@@ -505,12 +468,7 @@ final class Agent
         return $options;
     }
 
-    /**
-     * Builds the grounding sections the command's manifest asks for, around
-     * whatever the caller already seeded (a seeded section is never rebuilt).
-     * The suite section has no builder here; it always comes from the seed.
-     */
-    private function ground(CommandProfile $profile, string $instruction, ?Grounding $seed): Grounding
+    private function groundingFor(CommandProfile $profile, string $instruction, ?Grounding $seed): Grounding
     {
         $cwd = getcwd() ?: '.';
         $recentFeature = $seed?->recentFeature;
@@ -528,9 +486,6 @@ final class Agent
             $scanner = new TreeScanner($this->filesystem);
             $sections = [];
             foreach ([ltrim($this->config->getSrcPath(), './'), ltrim($this->config->getSpecPath(), './')] as $dir) {
-                // Deep enough to NAME files in a namespaced project (a one-level
-                // scan of src/App/... shows nothing but "App/"), each tree
-                // labelled with the directory it describes.
                 $listing = $scanner->scan($cwd . '/' . $dir, 3);
                 if ($listing !== '') {
                     $sections[] = "$dir/:\n" . $listing;
@@ -540,7 +495,7 @@ final class Agent
         }
 
         if (in_array('named_files', $profile->grounding, true) && $namedFiles === []) {
-            $namedFiles = $this->namedFiles($instruction);
+            $namedFiles = $this->filesNamedIn($instruction);
         }
 
         $polished = $seed->polished ?? [];
@@ -552,15 +507,9 @@ final class Agent
     }
 
     /**
-     * The existing files the instruction names: any class-like token found by
-     * basename under the configured spec and source trees, plus any explicit
-     * path token that exists (a named .feature also brings its steps file
-     * along), so the model edits what is really there even in a namespaced
-     * project.
-     *
      * @return array<string, string> relative path => contents
      */
-    private function namedFiles(string $instruction): array
+    private function filesNamedIn(string $instruction): array
     {
         $cwd = getcwd() ?: '.';
         $specPath = ltrim($this->config->getSpecPath(), './');
@@ -570,7 +519,7 @@ final class Agent
 
         foreach (array_unique($matches[0]) as $class) {
             foreach ([[$srcPath, $class . '.php'], [$specPath, $class . $this->config->getSpecSuffix()]] as [$dir, $name]) {
-                foreach ($this->findByName($cwd . '/' . $dir, $name) as $rel) {
+                foreach ($this->findFilesNamed($cwd . '/' . $dir, $name) as $rel) {
                     $files["$dir/$rel"] = $this->filesystem->read($cwd . '/' . $dir . '/' . $rel);
                 }
             }
@@ -595,13 +544,6 @@ final class Agent
         return $files;
     }
 
-    /**
-     * A bare class subject (no namespace, no path) resolved against the files
-     * that actually exist: "TodoList" in a project holding
-     * spec/App/TodoList.spec.php becomes "App\TodoList", so the derived path
-     * updates the real spec instead of creating a flat sibling. An ambiguous or
-     * unknown name is left as the user said it.
-     */
     private function refineSubject(?Step $step): ?Step
     {
         if ($step === null || $step->path !== null || $step->subject === null) {
@@ -616,7 +558,7 @@ final class Agent
             return $step;
         }
 
-        $resolved = $this->locateClass($step->subject);
+        $resolved = $this->uniqueClassFor($step->subject);
         if ($resolved === null || $resolved === $step->subject) {
             return $step;
         }
@@ -624,11 +566,7 @@ final class Agent
         return new Step($step->phase, null, $resolved, $step->because . sprintf(', resolved to "%s" from the project tree', $resolved));
     }
 
-    /**
-     * The namespaced class path a bare name denotes, when exactly one existing
-     * spec or source file matches it; null when none or several do.
-     */
-    private function locateClass(string $class): ?string
+    private function uniqueClassFor(string $class): ?string
     {
         $cwd = getcwd() ?: '.';
         $specDir = ltrim($this->config->getSpecPath(), './');
@@ -637,12 +575,10 @@ final class Agent
         $prefix = trim($this->config->getPsr4Prefix(), '\\');
 
         $candidates = [];
-        foreach ($this->findByName($cwd . '/' . $specDir, $class . $suffix) as $rel) {
-            // Specs mirror the full namespace under the spec dir.
+        foreach ($this->findFilesNamed($cwd . '/' . $specDir, $class . $suffix) as $rel) {
             $candidates[] = str_replace('/', '\\', substr($rel, 0, -strlen($suffix)));
         }
-        foreach ($this->findByName($cwd . '/' . $srcDir, $class . '.php') as $rel) {
-            // Source strips the PSR-4 prefix, so put it back for the class name.
+        foreach ($this->findFilesNamed($cwd . '/' . $srcDir, $class . '.php') as $rel) {
             $bare = str_replace('/', '\\', substr($rel, 0, -strlen('.php')));
             $candidates[] = $prefix !== '' ? $prefix . '\\' . $bare : $bare;
         }
@@ -653,12 +589,9 @@ final class Agent
     }
 
     /**
-     * Every file under a directory (to a sane depth) whose name is exactly the
-     * given one, as paths relative to that directory.
-     *
      * @return list<string>
      */
-    private function findByName(string $root, string $fileName, int $depth = 0): array
+    private function findFilesNamed(string $root, string $fileName, int $depth = 0): array
     {
         if ($depth > 6 || !$this->filesystem->exists($root) || !$this->filesystem->isDir($root)) {
             return [];
@@ -672,7 +605,7 @@ final class Agent
 
             $full = $root . '/' . $entry;
             if ($this->filesystem->isDir($full)) {
-                foreach ($this->findByName($full, $fileName, $depth + 1) as $childRel) {
+                foreach ($this->findFilesNamed($full, $fileName, $depth + 1) as $childRel) {
                     $found[] = $entry . '/' . $childRel;
                 }
 
@@ -686,5 +619,4 @@ final class Agent
 
         return $found;
     }
-
 }

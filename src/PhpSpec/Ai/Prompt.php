@@ -28,7 +28,7 @@ final readonly class Prompt
     /**
      * @param string $name the prompt name (e.g. "commands/generate")
      * @param string $text the include-expanded prompt text
-     * @param string $origin one of the PROJECT/SHIPPED constants
+     * @param self::PROJECT|self::SHIPPED $origin
      */
     public function __construct(
         public string $name,
