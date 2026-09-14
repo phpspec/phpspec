@@ -142,4 +142,28 @@ describe(Dispatcher::class, function() {
         DispatcherRegistry::set($saved);
     });
 
+    // A spec file can subscribe anything while it runs. The suite puts the
+    // list back afterwards, so one file's leak cannot judge another's matches.
+    it("restores its subscribers to a snapshot", function () {
+        $dispatcher = new Dispatcher();
+        $before = $dispatcher->snapshot();
+
+        $dispatcher->addSubscriber(new \PhpSpec\Attachments());
+        $dispatcher->restore($before);
+
+        expect($dispatcher->snapshot())->toBe($before);
+    });
+
+    it("keeps subscribers added before the snapshot", function () {
+        $dispatcher = new Dispatcher();
+        $kept = new \PhpSpec\Attachments();
+        $dispatcher->addSubscriber($kept);
+
+        $snapshot = $dispatcher->snapshot();
+        $dispatcher->addSubscriber(new \PhpSpec\Attachments());
+        $dispatcher->restore($snapshot);
+
+        expect($dispatcher->snapshot())->toBe($snapshot);
+    });
 });
+
