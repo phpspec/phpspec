@@ -18,13 +18,20 @@ describe(StepRegistry::class, function () {
             ->toThrow(RuntimeException::class);
     });
 
+    // Both registrations live inside the expect closure: expectations are
+    // deferred to the example's end, so anything the example body did to the
+    // registry afterwards would be what the matcher actually sees.
     it("rejects the duplicate whatever its keyword, because matching is keyword-blind", function () {
-        given("the list is filtered", function () {});
+        expect(function () {
+            $saved = PhpSpec\StoryBDD\StoryBDDRegistry::saveState();
 
-        expect(fn() => then("the list is filtered", function () {}))
-            ->toThrow(RuntimeException::class);
-
-        PhpSpec\StoryBDD\StoryBDDRegistry::init();
+            try {
+                given("the list is filtered", function () {});
+                then("the list is filtered", function () {});
+            } finally {
+                PhpSpec\StoryBDD\StoryBDDRegistry::restoreState($saved);
+            }
+        })->toThrow(RuntimeException::class);
     });
 
     it("names both definitions in the duplicate error", function () {
