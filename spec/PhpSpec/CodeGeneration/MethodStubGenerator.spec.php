@@ -17,7 +17,7 @@ describe(MethodStubGenerator::class, function () {
 
         $result = $this->generator->generate('Calculator', 'add', 0);
 
-        expect($fs->write('', ''))->toBeCalled();
+        expect($fs->write(any(), satisfy(fn (string $content) => str_contains($content, "public function add()\n    {\n    }"))))->toBeCalled();
         expect($result)->toContain("Method 'add()' generated");
     });
 
@@ -27,7 +27,7 @@ describe(MethodStubGenerator::class, function () {
 
         $result = $this->generator->generate('Calculator', 'add', 2);
 
-        expect($fs->write('', ''))->toBeCalled();
+        expect($fs->write(any(), satisfy(fn (string $content) => str_contains($content, 'public function add($argument1, $argument2)'))))->toBeCalled();
         expect($result)->toContain("Method 'add()' generated");
     });
 
@@ -50,7 +50,8 @@ describe(MethodStubGenerator::class, function () {
 
         $result = $this->generator->generate('Acme\\Math\\Calculator', 'add', 3);
 
-        expect($fs->write('', ''))->toBeCalled();
+        $nested = implode(DIRECTORY_SEPARATOR, ['Acme', 'Math', 'Calculator.php']);
+        expect($fs->write(satisfy(fn (string $path) => str_ends_with($path, $nested)), any()))->toBeCalled();
         expect($result)->toContain("Method 'add()' generated");
     });
 
@@ -60,7 +61,7 @@ describe(MethodStubGenerator::class, function () {
 
         $result = $this->generator->generate('Calculator', 'add', 2);
 
-        expect($fs->write('', ''))->toBeCalled();
+        expect($fs->write(any(), satisfy(fn (string $content) => str_contains($content, 'public function add($argument1, $argument2);'))))->toBeCalled();
         expect($result)->toContain("Method 'add()' generated");
     });
 
@@ -70,7 +71,7 @@ describe(MethodStubGenerator::class, function () {
 
         $result = $this->generator->generate('Calculator', 'add', 2, '42');
 
-        expect($fs->write('', ''))->toBeCalled();
+        expect($fs->write(any(), satisfy(fn (string $content) => str_contains($content, 'return 42;'))))->toBeCalled();
         expect($result)->toContain("Method 'add()' generated");
     });
 
@@ -80,7 +81,7 @@ describe(MethodStubGenerator::class, function () {
 
         $result = $this->generator->fillEmptyMethod('Calculator', 'add', '42');
 
-        expect($fs->write('', ''))->toBeCalled();
+        expect($fs->write(any(), satisfy(fn (string $content) => str_contains($content, 'return 42;'))))->toBeCalled();
         expect($result)->toContain("Method 'add()' filled");
     });
 
