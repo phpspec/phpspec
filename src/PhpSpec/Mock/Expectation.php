@@ -109,7 +109,10 @@ final class Expectation extends BaseExpectation
             $trace['file'] ?? 'unknown',
             $trace['line'] ?? 0,
             $this->negated,
-            null, // toBeCalled() counts all calls regardless of args
+            // Arguments written in the expect call are a promise: deposit(101)
+            // is not satisfied by deposit(100). Written bare, it means called
+            // at all.
+            $method->arguments === [] ? null : $method->arguments,
             $this->mockSubject,
         );
     }
@@ -172,10 +175,11 @@ final class Expectation extends BaseExpectation
         $trace = debug_backtrace()[0];
         $file = $trace['file'] ?? 'unknown';
         $line = $trace['line'] ?? 0;
+        $argPattern = $method->arguments === [] ? null : $method->arguments;
 
-        return $this->expectation(function () use ($double, $methodName, $times, $class, $file, $line) {
+        return $this->expectation(function () use ($double, $methodName, $argPattern, $times, $class, $file, $line) {
             $stack = $double->______PhpSpecGetStubbedCalls();
-            $actual = $stack->countCallsTo($methodName);
+            $actual = $stack->countCallsToWithArgs($methodName, $argPattern);
 
             return match (true) {
                 $actual === $times => MatchResult::passed(),
