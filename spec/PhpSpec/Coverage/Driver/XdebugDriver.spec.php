@@ -25,6 +25,8 @@ describe(XdebugDriver::class, function () {
             expect($data)->toHaveKey(realpath(__DIR__ . '/fixtures/covered_probe.php'));
         });
 
+        // From Xdebug 3.6 a cycle also lists the unused-line analysis of every
+        // file compiled before it began; execution counts are what start afresh.
         it('starts a fresh cycle each time', function () {
             $driver = new XdebugDriver();
 
@@ -33,7 +35,8 @@ describe(XdebugDriver::class, function () {
             $driver->start();
             $data = $driver->stop();
 
-            expect($data)->not()->toHaveKey(realpath(__DIR__ . '/fixtures/covered_probe.php'));
+            $probe = $data[realpath(__DIR__ . '/fixtures/covered_probe.php')] ?? [];
+            expect(array_filter($probe, fn (int $hit) => $hit > 0))->toBe([]);
         });
 
     }
