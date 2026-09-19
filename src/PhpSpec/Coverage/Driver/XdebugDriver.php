@@ -18,9 +18,10 @@ use PhpSpec\Coverage\CoverageDriver;
 
 /**
  * @internal
- * Xdebug-backed coverage driver. Each start()/stop() pair is a fresh
- * collection cycle, including unused and dead code analysis so that
- * executable-but-unexecuted lines are reported.
+ * Xdebug-backed coverage driver. Each start()/stop() pair is a fresh cycle
+ * of execution counts, with unused and dead code analysis so that
+ * executable-but-unexecuted lines are reported; from Xdebug 3.6 that analysis
+ * may also cover files compiled before the cycle began.
  * Requires Xdebug with coverage mode enabled.
  */
 final class XdebugDriver implements CoverageDriver
