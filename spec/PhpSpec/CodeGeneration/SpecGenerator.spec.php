@@ -24,7 +24,7 @@ describe(SpecGenerator::class, function () {
 
         $this->generator->generate('Calculator');
 
-        expect($fs->write('', ''))->toBeCalled();
+        expect($fs->write())->toBeCalled();
     });
 
     it("creates directory when it does not exist", function (Filesystem $fs) {
@@ -32,8 +32,8 @@ describe(SpecGenerator::class, function () {
 
         $this->generator->generate('App/Service');
 
-        expect($fs->mkdir(''))->toBeCalled();
-        expect($fs->write('', ''))->toBeCalled();
+        expect($fs->mkdir())->toBeCalled();
+        expect($fs->write())->toBeCalled();
     });
 
     it("returns true when it creates the spec file", function (Filesystem $fs) {
@@ -63,7 +63,7 @@ describe(SpecGenerator::class, function () {
 
         $this->generator->addExample('Calculator', 'add');
 
-        expect($fs->write($specPath, ''))->toBeCalled();
+        expect($fs->write($specPath, any()))->toBeCalled();
     });
 
     it("includes method name in added example", function (Filesystem $fs) {

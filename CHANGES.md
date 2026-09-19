@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+ - `toBeCalled()` and `toBeCalledTimes()` hold the mock to the arguments written in the expect call; written bare they still mean called at all
 ### Fixed
  - A subscriber leaked by one example or spec file no longer collects and re-judges later matches: each example and each file restores the dispatcher on its way out, so a full run and a single-file run agree
  - The loader no longer plants a permanent subscriber per spec file; a specification resets itself when it runs

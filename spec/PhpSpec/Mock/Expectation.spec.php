@@ -3,6 +3,7 @@
 use PhpSpec\Mock\Expectation;
 
 interface ExpectationSpecService {
+    public function processWith(string $tag = ""): void;
     public function process(): string;
     public function save();
     public function store(string $key, int $value);
@@ -80,6 +81,27 @@ describe(Expectation::class, function() {
     it("stubs exception with allow", function(ExpectationSpecService $service) {
         allow($service->save())->toThrow(\RuntimeException::class, "boom");
         expect(fn() => $service->save())->toThrow(\RuntimeException::class, "boom");
+    });
+
+    // Arguments written in the expect call are a promise, not decoration:
+    // deposit(101) must not be satisfied by a deposit(100).
+    it("holds toBeCalled to the arguments it was written with", function(ExpectationSpecService $service) {
+        expect($service->processWith("expected"))->not()->toBeCalled();
+
+        $service->processWith("something else");
+    });
+
+    it("counts only the calls that match the arguments it was written with", function(ExpectationSpecService $service) {
+        expect($service->processWith("expected"))->toBeCalledTimes(1);
+
+        $service->processWith("expected");
+        $service->processWith("something else");
+    });
+
+    it("still means called-at-all when written without arguments", function(ExpectationSpecService $service) {
+        expect($service->processWith())->toBeCalled();
+
+        $service->processWith("anything");
     });
 
     it("supports not()->toBeCalled()", function(ExpectationSpecService $service) {

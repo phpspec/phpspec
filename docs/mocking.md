@@ -69,12 +69,19 @@ it('handles errors', function (UserRepository $repo) {
 
 ### `toBeCalled()`
 
-Verifies the method was called at least once:
+Verifies the method was called at least once. Arguments written in the
+expect call are part of the promise: `save($user)` is not satisfied by a
+`save()` of something else. Written without arguments, it means called at all:
 
 ```php
 it('calls save', function (UserRepository $repo) {
     expect($repo->save($user))->toBeCalled();
     $repo->save($user);
+});
+
+it('saves something', function (UserRepository $repo) {
+    expect($repo->save())->toBeCalled();
+    $repo->save($anyUser);
 });
 ```
 
@@ -99,7 +106,9 @@ it('saves with correct data', function (Logger $logger) {
 
 ### `toBeCalledTimes(int $count)`
 
-Verifies the exact number of times a method was called:
+Verifies the exact number of times a method was called, counting only calls
+that match the arguments written in the expect call (all calls when written
+bare):
 
 ```php
 it('calls exactly twice', function (Logger $logger) {
@@ -111,7 +120,8 @@ it('calls exactly twice', function (Logger $logger) {
 
 ## Argument Matchers
 
-Use argument matchers with `toBeCalledWith()` for flexible argument matching:
+Use argument matchers, in the expect call or in `toBeCalledWith()`, for
+flexible argument matching:
 
 ### `any()`
 

@@ -16,8 +16,8 @@ describe(InterfaceGenerator::class, function () {
 
         $result = $this->generator->generate('Acme\\Math\\Calculator');
 
-        expect($fs->mkdir(''))->toBeCalled();
-        expect($fs->write('', ''))->toBeCalled();
+        expect($fs->mkdir())->toBeCalled();
+        expect($fs->write(any(), satisfy(fn (string $content) => str_contains($content, 'namespace Acme\\Math;'))))->toBeCalled();
         expect($result)->toContain("Interface 'Calculator' generated");
     });
 
@@ -26,7 +26,7 @@ describe(InterfaceGenerator::class, function () {
 
         $result = $this->generator->generate('Calculator');
 
-        expect($fs->write('', ''))->toBeCalled();
+        expect($fs->write(any(), satisfy(fn (string $content) => !str_contains($content, 'namespace'))))->toBeCalled();
         expect($result)->toContain("Interface 'Calculator' generated");
     });
 
@@ -35,7 +35,7 @@ describe(InterfaceGenerator::class, function () {
 
         $this->generator->generate('App\\Services\\Mailer');
 
-        expect($fs->mkdir(''))->toBeCalled();
+        expect($fs->mkdir())->toBeCalled();
     });
 
     it("throws when interface file already exists", function (Filesystem $fs) {
@@ -51,8 +51,8 @@ describe(InterfaceGenerator::class, function () {
 
         $this->generator->generate('Bar');
 
-        expect($fs->mkdir(''))->not()->toBeCalled();
-        expect($fs->write('', ''))->toBeCalled();
+        expect($fs->mkdir())->not()->toBeCalled();
+        expect($fs->write())->toBeCalled();
     });
 
 });

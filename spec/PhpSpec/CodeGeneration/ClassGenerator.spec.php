@@ -16,8 +16,8 @@ describe(ClassGenerator::class, function () {
 
         $result = $this->generator->generate('Acme\\Foo');
 
-        expect($fs->mkdir(''))->toBeCalled();
-        expect($fs->write('', ''))->toBeCalled();
+        expect($fs->mkdir())->toBeCalled();
+        expect($fs->write())->toBeCalled();
         expect($result)->toContain("Class 'Foo' generated");
     });
 
@@ -35,8 +35,8 @@ describe(ClassGenerator::class, function () {
 
         $this->generator->generate('Bar');
 
-        expect($fs->mkdir(''))->not()->toBeCalled();
-        expect($fs->write('', ''))->toBeCalled();
+        expect($fs->mkdir())->not()->toBeCalled();
+        expect($fs->write())->toBeCalled();
     });
 
     it("handles namespaced classes with nested directories", function (Filesystem $fs) {
@@ -44,7 +44,8 @@ describe(ClassGenerator::class, function () {
 
         $result = $this->generator->generate('App\\Models\\User');
 
-        expect($fs->write('', ''))->toBeCalled();
+        $nested = implode(DIRECTORY_SEPARATOR, ['App', 'Models', 'User.php']);
+        expect($fs->write(satisfy(fn (string $path) => str_ends_with($path, $nested)), any()))->toBeCalled();
         expect($result)->toContain("Class 'User' generated");
     });
 

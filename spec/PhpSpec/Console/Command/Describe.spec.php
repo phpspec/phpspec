@@ -16,7 +16,7 @@ describe(Describe::class, function() {
     it("delegates generation to spec generator", function(Filesystem $fs) {
         allow($fs->exists())->toReturn(false);
         allow($fs->mkdir())->toReturn(null);
-        expect($fs->write('', ''))->toBeCalled();
+        expect($fs->write())->toBeCalled();
         $this->describe->run(new ArrayInput(['class' => 'Some/Spec']), new NullOutput());
     });
 
@@ -35,7 +35,7 @@ describe(Describe::class, function() {
         });
         PHP);
 
-        expect($fs->write('', ''))->toBeCalled();
+        expect($fs->write())->toBeCalled();
         $this->describe->run(
             new ArrayInput(['class' => 'Some/Spec', '--exemplify' => 'doSomething']),
             new NullOutput()
