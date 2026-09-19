@@ -51,21 +51,34 @@ class Specification implements ExampleRegistry, SpecBlock
      */
     public function run(): Results
     {
+        // Stale blocks from an earlier in-process run of this same file would
+        // otherwise double up with the ones loadSubject() is about to register.
+        $this->reset();
+
         DispatcherRegistry::dispatcher()->dispatch(new SpecificationStarted($this->path), SpecificationStarted::NAME);
         CoverageRegistry::collector()?->beginSpec($this->path);
         FilterRegistry::current()?->beginSpec($this->path);
         LineTargetRegistry::beginSpec($this->path);
 
-        $subject = $this->loadSubject();
+        // Whatever this file subscribes while it runs dies with it: a leaked
+        // subscriber would otherwise collect every later file's matches too,
+        // and judge them a second time.
+        $subscribers = DispatcherRegistry::dispatcher()->snapshot();
 
-        $blockResults = [];
+        try {
+            $subject = $this->loadSubject();
 
-        foreach ($this->targetedSpecBlocks() as $specBlock) {
-            if ($specBlock instanceof Specification\Context) {
-                $specBlock->setWorld($subject);
+            $blockResults = [];
+
+            foreach ($this->targetedSpecBlocks() as $specBlock) {
+                if ($specBlock instanceof Specification\Context) {
+                    $specBlock->setWorld($subject);
+                }
+
+                $blockResults[] = $specBlock->run();
             }
-
-            $blockResults[] = $specBlock->run();
+        } finally {
+            DispatcherRegistry::dispatcher()->restore($subscribers);
         }
 
         $result = new SpecificationResult($this->getTitle(), $blockResults);
