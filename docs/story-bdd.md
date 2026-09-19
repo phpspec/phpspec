@@ -117,8 +117,8 @@ given('the watcher is running', function () {
     $this->log = $this->workspace . '/watch.log';
     $this->process = proc_open($cmd, [1 => ['file', $this->log, 'w']], $pipes);
 
-    attach('watch log', fn() => @file_get_contents($this->log));   // read at failure time
-    attach('command', $cmd);                                        // already final
+    attach('watch log', fn() => file_get_contents($this->log));   // read at failure time
+    attach('command', $cmd);                                       // already final
 });
 ```
 
