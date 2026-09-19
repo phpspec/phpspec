@@ -142,6 +142,19 @@ class Example implements ExampleResultRegistry, Rebindable
      */
     public function run(): ExampleResult
     {
+        // Whatever this example subscribes dies with it, so a leak cannot
+        // collect and re-judge its siblings' matches.
+        $boundary = DispatcherRegistry::dispatcher()->snapshot();
+
+        try {
+            return $this->execute();
+        } finally {
+            DispatcherRegistry::dispatcher()->restore($boundary);
+        }
+    }
+
+    private function execute(): ExampleResult
+    {
         $subscriber = new ExampleSubscriber($this);
         DispatcherRegistry::dispatcher()->addSubscriber($subscriber);
 

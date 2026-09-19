@@ -14,8 +14,6 @@
 
 namespace PhpSpec;
 
-use PhpSpec\EventDispatcher\DispatcherRegistry;
-use PhpSpec\EventDispatcher\Subscriber\SpecificationSubscriber;
 use PhpSpec\Specification\SpecBlock;
 use PhpSpec\StoryBDD\Feature;
 use PhpSpec\StoryBDD\FeatureNode;
@@ -97,11 +95,6 @@ final class Loader
     }
 
     /**
-     * Determines whether the path points to Gherkin feature files.
-     *
-     * @param string $path filesystem path to inspect
-     */
-    /**
      * Filters spec blocks by path or title match.
      *
      * Blocks whose path matches are kept whole. Features are otherwise
@@ -155,6 +148,9 @@ final class Loader
         return null;
     }
 
+    /**
+     * Determines whether the path points to Gherkin feature files.
+     */
     private function isFeaturePath(string $path): bool
     {
         return str_ends_with($path, '.feature')
@@ -200,15 +196,13 @@ final class Loader
     }
 
     /**
-     * Creates a Specification from a single spec file and registers its subscriber.
+     * Creates a Specification from a single spec file.
      *
      * @param string $file path to a *.spec.php file
      */
     private function loadFile(string $file): Specification
     {
-        $spec = new Specification($file, $this->specSuffix);
-        DispatcherRegistry::dispatcher()->addSubscriber(new SpecificationSubscriber($spec));
-        return $spec;
+        return new Specification($file, $this->specSuffix);
     }
 
     /**

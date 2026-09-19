@@ -78,6 +78,25 @@ final class Dispatcher
     }
 
     /**
+     * The subscriber state as it stands, for a boundary to put back later.
+     *
+     * @return array{subscribers: array<Subscriber>, byEvent: array<string, array<array{subscriber: Subscriber, methods: mixed}>>}
+     */
+    public function snapshot(): array
+    {
+        return ['subscribers' => $this->subscribers, 'byEvent' => $this->subscribersByEvent];
+    }
+
+    /**
+     * @param array{subscribers: array<Subscriber>, byEvent: array<string, array<array{subscriber: Subscriber, methods: mixed}>>} $snapshot
+     */
+    public function restore(array $snapshot): void
+    {
+        $this->subscribers = $snapshot['subscribers'];
+        $this->subscribersByEvent = $snapshot['byEvent'];
+    }
+
+    /**
      * Registers a subscriber that receives specific named events.
      *
      * @param Subscriber $subscriber the subscriber to add

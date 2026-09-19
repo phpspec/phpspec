@@ -70,4 +70,31 @@ describe(Specification::class, function() {
         expect($result->getResults()[0]->getResults())->toHaveCount(1);
     });
 
+    // A file may subscribe anything while it runs; the boundary puts the list
+    // back, so one file's leak cannot evaluate another file's matches.
+    it("forgets subscribers a spec file leaked once it has run", function () {
+        $dir = sys_get_temp_dir() . '/phpspec_leak_' . getmypid();
+        @mkdir($dir);
+        $file = $dir . '/Leaky.spec.php';
+        file_put_contents($file, '<?php
+describe("Leaky", function () {
+    it("plants a subscriber", function () {
+        \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher()->addSubscriber(new \PhpSpec\Attachments());
+        expect(true)->toBeTrue();
+    });
+});');
+
+        $dispatcher = PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher();
+        $before = $dispatcher->snapshot();
+
+        try {
+            (new Specification($file))->run();
+
+            expect($dispatcher->snapshot())->toBe($before);
+        } finally {
+            @unlink($file);
+            @rmdir($dir);
+        }
+    });
 });
+
