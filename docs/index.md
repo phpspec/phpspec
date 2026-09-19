@@ -54,7 +54,7 @@ Output:
 ```
 Once you spec, you never go back!
 
-Calculator
+Spec: Calculator
     Calculator
         ✓ instantiates
 

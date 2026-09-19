@@ -51,7 +51,7 @@ bin/phpspec run
 ```
 Once you spec, you never go back!
 
-Calculator
+Spec: Calculator
   Calculator
     ✓ adds two numbers
     ✓ subtracts two numbers

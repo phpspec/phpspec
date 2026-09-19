@@ -169,7 +169,7 @@ See [Coding Agents](agent.md) for the `--agent` receipts and
 |---|---|
 | `-f`, `--format=FORMAT` | Output formatter: `pretty` (default), `dot`, `tap`, `junit`, `html`, `agent`. Repeatable; pair each with `-o` |
 | `-o`, `--out=FILE` | Report destination for the corresponding `--format`; `std` means the console |
-| `-v` | Verbose mode -- shows per-example duration |
+| `-v` | Verbose mode -- shows the duration of each example and step |
 | `-q` | Quiet mode -- suppresses all output, exit code still reflects pass/fail |
 | `--profile[=N]` | Show the N slowest examples (default: 10) |
 
@@ -180,7 +180,7 @@ Hierarchical output with context indentation, check/cross marks, and colored err
 ```
 Once you spec, you never go back!
 
-Calculator
+Spec: Calculator
   Calculator
     ✓ adds two numbers
     ✓ subtracts two numbers
@@ -189,6 +189,8 @@ Calculator
 2 examples (2 passes)
 Finished in 0.0042 seconds
 ```
+
+An example and a step are reported with the same glyphs: `✓` passed, `✘` failed or errored, `○` pending, `-` skipped, and `?` for a step no definition matches.
 
 #### Dot Formatter
 
@@ -200,7 +202,7 @@ Compact one-character-per-example output:
 9 examples (6 passes, 1 failure, 1 pending, 1 error)
 ```
 
-- `.` pass, `F` failure, `P` pending, `E` error
+- `.` pass, `F` failure, `P` pending, `E` error, `S` skipped, `U` undefined step
 
 #### TAP Formatter
 

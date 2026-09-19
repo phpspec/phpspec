@@ -10,8 +10,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The browser behind visit() is an extension point: put your own implementation of the Browser contract behind the DSL with `extensions: {browser: ...}`
  - A request `callback` option is told each exchange (method, url, status, body and headers); the default one attaches the request and response to the report
  - Helper classes under features/support load before step definitions, the Cucumber way
+ - A step records how long it ran, shown under `-v` as an example's already was, and its warnings are shown under it
 ### Changed
  - `toBeCalled()` and `toBeCalledTimes()` hold the mock to the arguments written in the expect call; written bare they still mean called at all
+ - The pretty formatter reports an example and a step the same way: one set of glyphs (✓ ✘ ○ - ?), the title in the outcome's colour, and a spec headed `Spec:` as a feature is headed `Feature:`
+ - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
 ### Fixed
  - A subscriber leaked by one example or spec file no longer collects and re-judges later matches: each example and each file restores the dispatcher on its way out, so a full run and a single-file run agree
  - The loader no longer plants a permanent subscriber per spec file; a specification resets itself when it runs

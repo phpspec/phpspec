@@ -39,7 +39,7 @@ final class PrettyViews
     public static function specification(OutputInterface $output, SpecificationResult $specification, bool $verbose = false): void
     {
         $output->write(PHP_EOL);
-        $output->write($specification->getTitle());
+        $output->write('<fg=white;options=bold>Spec: ' . $specification->getTitle() . '</>');
         foreach ($specification->getResults() as $exampleResult) {
             if ($exampleResult instanceof ContextResult) {
                 self::context($output, $exampleResult, 2, $verbose);
@@ -66,24 +66,17 @@ final class PrettyViews
 
     public static function example(OutputInterface $output, ExampleResult $example, int $indentation, bool $verbose = false): void
     {
-        $output->write(PHP_EOL);
+        $output->write(PHP_EOL . str_repeat(' ', $indentation));
         if ($example->isPending()) {
-            $output->write(str_repeat(' ', $indentation));
-            $output->write('<fg=yellow>-</> <fg=gray>' . $example->getTitle() . ' (pending)</>');
+            self::outcome($output, 'yellow', '○', $example->getTitle());
         } elseif ($example->isSkipped()) {
-            $output->write(str_repeat(' ', $indentation));
-            $output->write('<fg=cyan>-</> <fg=gray>' . $example->getTitle() . ' (skipped)</>');
-        } elseif ($example->isError()) {
-            $output->write(str_repeat(' ', $indentation));
-            $output->write('<fg=red>✘</> <fg=gray>' . $example->getTitle() . '</>');
-        } elseif ($example->isFailure()) {
-            $output->write(str_repeat(' ', $indentation));
-            $output->write('<fg=red>✘</> <fg=gray>' . $example->getTitle() . '</>');
+            self::outcome($output, 'cyan', '-', $example->getTitle());
+        } elseif ($example->isError() || $example->isFailure()) {
+            self::outcome($output, 'red', '✘', $example->getTitle());
         } else {
-            $output->write(str_repeat(' ', $indentation));
-            $output->write('<info>' . '√ ' . '</info><fg=gray>' . $example->getTitle() . '</>');
-            if ($verbose && $example->getDuration() > 0) {
-                $output->write(' <fg=gray>(' . number_format($example->getDuration() * 1000, 1) . 'ms)</>');
+            self::outcome($output, 'green', '✓', $example->getTitle());
+            if ($verbose) {
+                self::duration($output, $example->getDuration());
             }
         }
         // A failing example shows what it printed with its failure, in the
@@ -91,64 +84,90 @@ final class PrettyViews
         if (!$example->isFailure() && !$example->isError()) {
             self::printedOutput($output, $example->getOutput(), $indentation + 2);
         }
-        if ($example->hasWarnings()) {
-            foreach ($example->getWarnings() as $warning) {
-                $output->write(PHP_EOL . str_repeat(' ', $indentation) . '  <fg=yellow>⚠️ ' . $warning['message'] . ' — at ' . basename($warning['file']) . ':' . $warning['line'] . '</>');
-            }
+        foreach ($example->getWarnings() as $warning) {
+            self::diagnostic($output, $indentation, '⚠', $warning);
         }
-        if ($example->hasDeprecations()) {
-            foreach ($example->getDeprecations() as $deprecation) {
-                $output->write(PHP_EOL . str_repeat(' ', $indentation) . '  <fg=yellow>⛔ ' . $deprecation['message'] . ' — at ' . basename($deprecation['file']) . ':' . $deprecation['line'] . '</>');
-            }
+        foreach ($example->getDeprecations() as $deprecation) {
+            self::diagnostic($output, $indentation, '⛔', $deprecation);
         }
-        if ($example->hasNotices()) {
-            foreach ($example->getNotices() as $notice) {
-                $output->write(PHP_EOL . str_repeat(' ', $indentation) . '  <fg=yellow>ℹ ' . $notice['message'] . ' — at ' . basename($notice['file']) . ':' . $notice['line'] . '</>');
-            }
+        foreach ($example->getNotices() as $notice) {
+            self::diagnostic($output, $indentation, 'ℹ', $notice);
         }
     }
 
 
-    public static function feature(OutputInterface $output, FeatureResult $feature): void
+    public static function feature(OutputInterface $output, FeatureResult $feature, bool $verbose = false): void
     {
         $output->write(PHP_EOL);
-        $output->write('<options=bold>Feature: ' . $feature->getTitle() . '</>');
+        $output->write('<fg=white;options=bold>Feature: ' . $feature->getTitle() . '</>');
         foreach ($feature->getResults() as $scenarioResult) {
             if ($scenarioResult instanceof ScenarioResult) {
-                self::scenario($output, $scenarioResult);
+                self::scenario($output, $scenarioResult, $verbose);
             }
         }
     }
 
 
-    public static function scenario(OutputInterface $output, ScenarioResult $scenario): void
+    public static function scenario(OutputInterface $output, ScenarioResult $scenario, bool $verbose = false): void
     {
         $output->write(PHP_EOL . '  ' . $scenario->getTitle());
         foreach ($scenario->getResults() as $step) {
             if ($step instanceof StepResult) {
-                self::step($output, $step);
+                self::step($output, $step, $verbose);
             }
         }
     }
 
-    public static function step(OutputInterface $output, StepResult $step): void
+    public static function step(OutputInterface $output, StepResult $step, bool $verbose = false): void
     {
-        $output->write(PHP_EOL);
+        $output->write(PHP_EOL . '    ');
         if ($step->isPassed()) {
-            $output->write('    <fg=green>✓ ' . $step->getTitle() . '</>');
+            self::outcome($output, 'green', '✓', $step->getTitle());
+            if ($verbose) {
+                self::duration($output, $step->getDuration());
+            }
         } elseif ($step->isFailure() || $step->isError()) {
-            $output->write('    <fg=red>✗ ' . $step->getTitle() . '</>');
+            self::outcome($output, 'red', '✘', $step->getTitle());
         } elseif ($step->isPending()) {
-            $output->write('    <fg=yellow>○ ' . $step->getTitle() . '</>');
+            self::outcome($output, 'yellow', '○', $step->getTitle());
         } elseif ($step->isUndefined()) {
-            $output->write('    <fg=bright-blue>? ' . $step->getTitle() . '</>');
+            self::outcome($output, 'bright-blue', '?', $step->getTitle());
         } elseif ($step->isSkipped()) {
-            $output->write('    <fg=cyan>- ' . $step->getTitle() . '</>');
+            self::outcome($output, 'cyan', '-', $step->getTitle());
         }
 
         if (!$step->isFailure() && !$step->isError()) {
             self::printedOutput($output, $step->getOutput(), 6);
         }
+        foreach ($step->getWarnings() as $warning) {
+            self::diagnostic($output, 4, '⚠', $warning);
+        }
+    }
+
+    /**
+     * One line for an outcome, glyph and title in the outcome's colour: the
+     * same line for an example and for a step.
+     */
+    private static function outcome(OutputInterface $output, string $colour, string $glyph, string $title): void
+    {
+        $output->write('<fg=' . $colour . '>' . $glyph . ' ' . $title . '</>');
+    }
+
+    private static function duration(OutputInterface $output, float $seconds): void
+    {
+        if ($seconds <= 0) {
+            return;
+        }
+
+        $output->write(' <fg=gray>(' . number_format($seconds * 1000, 1) . 'ms)</>');
+    }
+
+    /**
+     * @param array{severity: int, message: string, file: string, line: int} $raised
+     */
+    private static function diagnostic(OutputInterface $output, int $indentation, string $glyph, array $raised): void
+    {
+        $output->write(PHP_EOL . str_repeat(' ', $indentation + 2) . '<fg=yellow>' . $glyph . ' ' . $raised['message'] . ' (' . basename($raised['file']) . ':' . $raised['line'] . ')</>');
     }
 
 

@@ -245,9 +245,8 @@ describe(Dot::class, function() {
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain(".");
-        expect($text)->toContain("P");
-        expect($text)->toContain("*");
+        expect($text)->toContain(".PS");
+        expect($text)->not()->toContain("*");
         expect($text)->toContain("1 feature");
         expect($text)->toContain("1 scenario");
         expect($text)->toContain("3 steps");
@@ -328,7 +327,23 @@ describe(Dot::class, function() {
         expect($text)->toContain("2 examples");
     });
 
-    it("formats undefined step result", function() {
+    it("marks a notice with a bare warning sign", function() {
+        $output = new BufferedOutput();
+        $formatter = new Dot($output);
+
+        $example = new ExampleResult("notice fired", [MatchResult::passed()]);
+        $example->setNotices([
+            ['severity' => E_NOTICE, 'message' => 'undefined var', 'file' => __FILE__, 'line' => __LINE__],
+        ]);
+        $suite = new SuiteResult([new SpecificationResult("MySpec", [$example])]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain("⚠ notice fired");
+        expect($text)->not()->toContain("⚠\u{FE0F}");
+    });
+
+    it("formats an undefined step with U, apart from a pending one", function() {
         $output = new BufferedOutput();
         $formatter = new Dot($output);
 
@@ -339,7 +354,8 @@ describe(Dot::class, function() {
 
         $formatter->format($suite);
         $text = $output->fetch();
-        expect($text)->toContain("P");
+        expect($text)->toContain("U");
+        expect($text)->not()->toContain("P");
         expect($text)->toContain("undefined");
     });
 

@@ -221,14 +221,16 @@ final class Dot extends AbstractFormatter
      */
     private function formatStep(StepResult $step): void
     {
-        if ($step->isPending() || $step->isUndefined()) {
+        if ($step->isPending()) {
             $this->output->write('<fg=yellow>P</>');
+        } elseif ($step->isUndefined()) {
+            $this->output->write('<fg=bright-blue>U</>');
         } elseif ($step->isError()) {
             $this->output->write('<fg=red>E</>');
         } elseif ($step->isFailure()) {
             $this->output->write('<fg=red>F</>');
         } elseif ($step->isSkipped()) {
-            $this->output->write('<fg=cyan>*</>');
+            $this->output->write('<fg=cyan>S</>');
         } else {
             $this->output->write('<fg=green>.</>');
         }
@@ -279,7 +281,7 @@ final class Dot extends AbstractFormatter
         }
 
         foreach ($notices as $notice) {
-            $this->output->writeln("  <fg=yellow>⚠️ {$notice['title']}</>");
+            $this->output->writeln("  <fg=yellow>⚠ {$notice['title']}</>");
             $this->output->writeln('');
             $this->output->writeln("    Notice: {$notice['message']}");
             $this->output->writeln('');

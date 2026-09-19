@@ -52,6 +52,27 @@ describe(Feature::class, function () {
         expect($steps[2]->isPassed())->toBeTrue();
     });
 
+    it("records how long each step ran, and nothing for a step it never ran", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a slow step", function () {
+            usleep(2000);
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Test',
+            '',
+            null,
+            [new ScenarioNode('Timing', [
+                new StepNode('Given', 'a slow step'),
+                new StepNode('When', 'nobody defined this'),
+            ])]
+        ), $registry, new HookRegistry());
+
+        $steps = $feature->run()->getResults()[0]->getResults();
+        expect($steps[0]->getDuration())->toBeGreaterThan(0);
+        expect($steps[1]->getDuration())->toBe(0.0);
+    });
+
     it("marks undefined steps", function () {
         $feature = new Feature('test.feature', new FeatureNode(
             'Undefined',
