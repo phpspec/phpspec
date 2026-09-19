@@ -170,7 +170,7 @@ Feature: Browser testing
   # -- Live HTTP server scenarios ----------------------------------------
 
   Scenario: visit() makes a GET request to the server
-    Given a local HTTP server with router:
+    Given a local HTTP server responding with:
       """
       <?php
       header('Content-Type: application/json');
@@ -186,7 +186,7 @@ Feature: Browser testing
     Then all examples should pass
 
   Scenario: get() returns JSON and headers
-    Given a local HTTP server with router:
+    Given a local HTTP server responding with:
       """
       <?php
       header('Content-Type: application/json');
@@ -205,7 +205,7 @@ Feature: Browser testing
     Then all examples should pass
 
   Scenario: post() sends JSON body
-    Given a local HTTP server with router:
+    Given a local HTTP server responding with:
       """
       <?php
       $input = json_decode(file_get_contents('php://input'), true);
@@ -223,7 +223,7 @@ Feature: Browser testing
     Then all examples should pass
 
   Scenario: put() sends a replacement payload
-    Given a local HTTP server with router:
+    Given a local HTTP server responding with:
       """
       <?php
       $method = $_SERVER['REQUEST_METHOD'];
@@ -242,7 +242,7 @@ Feature: Browser testing
     Then all examples should pass
 
   Scenario: patch() sends a partial update
-    Given a local HTTP server with router:
+    Given a local HTTP server responding with:
       """
       <?php
       $method = $_SERVER['REQUEST_METHOD'];
@@ -261,7 +261,7 @@ Feature: Browser testing
     Then all examples should pass
 
   Scenario: delete() sends a DELETE request
-    Given a local HTTP server with router:
+    Given a local HTTP server responding with:
       """
       <?php
       $method = $_SERVER['REQUEST_METHOD'];
@@ -277,7 +277,7 @@ Feature: Browser testing
     Then all examples should pass
 
   Scenario: Server returns 404 for unknown route
-    Given a local HTTP server with router:
+    Given a local HTTP server responding with:
       """
       <?php
       header('Content-Type: application/json');
@@ -295,7 +295,7 @@ Feature: Browser testing
     Then all examples should pass
 
   Scenario: Server redirect followed by toRedirectTo
-    Given a local HTTP server with router:
+    Given a local HTTP server responding with:
       """
       <?php
       header('Location: /dashboard', true, 302);

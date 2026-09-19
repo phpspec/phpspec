@@ -24,7 +24,7 @@ use PhpSpec\Browser\Response;
  */
 function visit(string $path): Response
 {
-    return BrowserRegistry::client()->request('GET', $path);
+    return BrowserRegistry::request('GET', $path);
 }
 
 /**
@@ -36,7 +36,7 @@ function visit(string $path): Response
  */
 function get(string $path): Response
 {
-    return BrowserRegistry::client()->request('GET', $path);
+    return BrowserRegistry::request('GET', $path);
 }
 
 /**
@@ -49,7 +49,7 @@ function get(string $path): Response
  */
 function post(string $path, array $options = []): Response
 {
-    return BrowserRegistry::client()->request('POST', $path, $options);
+    return BrowserRegistry::request('POST', $path, $options);
 }
 
 /**
@@ -62,7 +62,7 @@ function post(string $path, array $options = []): Response
  */
 function put(string $path, array $options = []): Response
 {
-    return BrowserRegistry::client()->request('PUT', $path, $options);
+    return BrowserRegistry::request('PUT', $path, $options);
 }
 
 /**
@@ -75,7 +75,7 @@ function put(string $path, array $options = []): Response
  */
 function patch(string $path, array $options = []): Response
 {
-    return BrowserRegistry::client()->request('PATCH', $path, $options);
+    return BrowserRegistry::request('PATCH', $path, $options);
 }
 
 /**
@@ -88,5 +88,5 @@ function patch(string $path, array $options = []): Response
  */
 function delete(string $path, array $options = []): Response
 {
-    return BrowserRegistry::client()->request('DELETE', $path, $options);
+    return BrowserRegistry::request('DELETE', $path, $options);
 }

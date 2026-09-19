@@ -55,6 +55,20 @@ then('I should see {string}', function (string $expected) {
 
 All keywords register into the same step registry -- the keyword is for readability only, matching is pattern-based.
 
+## Support Files
+
+Helper classes for your steps live under `features/support/`, the Cucumber
+way: every PHP file in it (and its subdirectories) is loaded before any step
+definition, with no autoload configuration:
+
+```
+features/
+  support/
+    Server.php      # class Acme\Support\Server
+  steps/
+    checkout.steps.php   # use Acme\Support\Server;
+```
+
 ## Step Patterns
 
 Patterns use placeholders that capture values from the step text:

@@ -182,3 +182,45 @@ Feature: Extensions
     When I run phpspec command "greet"
     Then the output should contain "Hello from extension!"
     And the exit code should be 0
+
+  Scenario: Custom browser extension drives visit()
+    Given a phpspec.yaml config:
+      """
+      extensions:
+        browser: App\CannedBrowser
+      base_url: http://unused.test
+      autoload:
+        App\: src/App
+      """
+    And a class "src/App/CannedBrowser.php":
+      """
+      <?php
+      namespace App;
+
+      use PhpSpec\Browser\Browser;
+      use PhpSpec\Browser\Response;
+
+      class CannedBrowser implements Browser
+      {
+          public function request(string $method, string $url, array $options = []): Response
+          {
+              return new Response(299, "canned answer for $url", ['X-Canned' => 'yes']);
+          }
+      }
+      """
+    And a spec file "spec/App/StatusPage.spec.php":
+      """
+      <?php
+
+      describe('StatusPage', function () {
+          it('is served by whatever browser the extension registered', function () {
+              $response = visit('/status');
+
+              expect($response->status)->toBe(299);
+              expect($response->body)->toContain('canned answer for http://unused.test/status');
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "1 example (1 passes)"
+    And the exit code should be 0

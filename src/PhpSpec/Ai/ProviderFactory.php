@@ -33,6 +33,11 @@ final class ProviderFactory
     ];
 
     /**
+     * @const string Needed if user has AI configured with no api key and no base url
+     */
+    private const OLLAMA_LOCAL_SERVER_DEFAULT_ADDRESS = 'http://localhost:11434';
+
+    /**
      * Every provider name this factory can construct.
      *
      * @return list<string>
@@ -103,7 +108,7 @@ final class ProviderFactory
 
         $papiProvider = self::needsApiKey($provider)
             ? new $class($aiConfig['api_key'] ?? throw new InvalidArgumentException(sprintf('Provider "%s" needs an api_key.', $provider)))
-            : new $class($aiConfig['base_url'] ?? 'http://localhost:11434');
+            : new $class($aiConfig['base_url'] ?? self::OLLAMA_LOCAL_SERVER_DEFAULT_ADDRESS);
 
         return new PapiProvider($papiProvider);
     }

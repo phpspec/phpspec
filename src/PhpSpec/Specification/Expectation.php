@@ -18,6 +18,7 @@ use BadMethodCallException;
 use Closure;
 use PhpSpec\Browser\Response;
 use PhpSpec\ObjectName;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Fluent assertion API returned by expect(). Provides built-in matchers (toBe, toContain, etc.)
@@ -1015,8 +1016,7 @@ class Expectation
             ];
         }
 
-        if (interface_exists('Psr\Http\Message\ResponseInterface', false)
-            && $subject instanceof \Psr\Http\Message\ResponseInterface) {
+        if ($subject instanceof ResponseInterface) {
             $body = (string) $subject->getBody();
             return [
                 'status' => $subject->getStatusCode(),
