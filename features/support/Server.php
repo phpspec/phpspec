@@ -76,9 +76,11 @@ final class Server
             throw new RuntimeException('The server was never started: call start() first.');
         }
 
+        // One line per poll, never a drain: on Windows a read on an empty pipe
+        // parks inside PHP for the best part of an hour.
         $deadline = microtime(true) + $timeout;
         while (microtime(true) < $deadline) {
-            $this->announced .= (string) stream_get_contents($this->stderr);
+            $this->announced .= (string) fgets($this->stderr);
             if (str_contains($this->announced, 'started')) {
                 return;
             }
