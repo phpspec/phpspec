@@ -51,7 +51,7 @@ describe(Describe::class, function() {
         $this->describe->run(new ArrayInput(['class' => 'App/Calculator']), $output);
 
         expect($output->fetch())->toBe(
-            "\n\e[32mSpecification for \e[39m\e[33mApp/Calculator\e[39m\e[32m created in \e[39m\e[33mspec/App/Calculator.spec.php\e[39m\n",
+            PHP_EOL . "\e[32mSpecification for \e[39m\e[33mApp/Calculator\e[39m\e[32m created in \e[39m\e[33mspec/App/Calculator.spec.php\e[39m" . PHP_EOL,
         );
     });
 

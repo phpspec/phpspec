@@ -196,9 +196,14 @@ describe(CodeGenerator::class, function () {
 
             $generator->generate($this->output, $suite, false);
 
-            expect($this->output->fetch())->toContain(
-                "\n  Looks like you are trying to spec App\\Calculator,\n  a class that doesn't exist yet.\n\n  Would you like me to generate that class for you?\n",
-            );
+            expect($this->output->fetch())->toContain(implode(PHP_EOL, [
+                '',
+                '  Looks like you are trying to spec App\Calculator,',
+                "  a class that doesn't exist yet.",
+                '',
+                '  Would you like me to generate that class for you?',
+                '',
+            ]));
         });
 
         it('reads a describe block titled by the short name as describing that class', function () {
@@ -211,7 +216,7 @@ describe(CodeGenerator::class, function () {
 
             $generator->generate($this->output, $suite, false);
 
-            expect($this->output->fetch())->toContain("  Looks like you are trying to spec App\\Basket,\n");
+            expect($this->output->fetch())->toContain('  Looks like you are trying to spec App\Basket,' . PHP_EOL);
         });
 
         it('names the class a spec needs when it is not the one it describes', function () {
@@ -224,7 +229,11 @@ describe(CodeGenerator::class, function () {
 
             $generator->generate($this->output, $suite, false);
 
-            expect($this->output->fetch())->toContain("  Looks like App\\Basket needs App\\Coupon,\n  a class that doesn't exist yet.\n");
+            expect($this->output->fetch())->toContain(implode(PHP_EOL, [
+                '  Looks like App\Basket needs App\Coupon,',
+                "  a class that doesn't exist yet.",
+                '',
+            ]));
         });
     });
 

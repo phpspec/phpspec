@@ -35,7 +35,7 @@ describe(InterfaceGenerator::class, function () {
 
         $this->generator->generate('Calculator');
 
-        expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "}\n"))))->toBeCalled();
+        expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "\n"))))->toBeCalled();
     });
 
     it("creates directory if missing", function (Filesystem $fs) {

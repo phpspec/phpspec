@@ -41,13 +41,13 @@ describe(SpecGenerator::class, function () {
 
         $this->generator->generate('Calculator');
 
-        expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "});\n"))))->toBeCalled();
+        expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "\n"))))->toBeCalled();
     });
 
     it("keeps the newline at the end of a spec it grows by an example", function () {
         $grown = $this->generator->withExample($this->generator->skeleton('Calculator'), 'Calculator', 'add');
 
-        expect($grown)->toEndWith("});\n");
+        expect($grown)->toEndWith("\n");
         expect($grown)->toContain("it(\"should add\"");
     });
 

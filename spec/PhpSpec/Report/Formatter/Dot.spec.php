@@ -354,7 +354,7 @@ describe(Dot::class, function() {
 
         $formatter->format(new SuiteResult([new SpecificationResult("Calculator", [$blocked]), $ran]));
         $text = $output->fetch();
-        expect($text)->toContain("Once you spec, you never go back!\n\n.");
+        expect($text)->toContain('Once you spec, you never go back!' . PHP_EOL . PHP_EOL . '.');
         expect($text)->not()->toContain("E");
         expect($text)->toContain("2 specs");
     });

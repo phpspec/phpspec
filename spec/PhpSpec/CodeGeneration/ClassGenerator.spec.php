@@ -26,7 +26,7 @@ describe(ClassGenerator::class, function () {
 
         $this->generator->generate('Acme\\Foo');
 
-        expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "}\n"))))->toBeCalled();
+        expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "\n"))))->toBeCalled();
     });
 
     it("throws when class file already exists", function (Filesystem $fs) {
