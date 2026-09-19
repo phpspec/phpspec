@@ -194,7 +194,7 @@ final class Refactor extends Command
             return 0;
         }
 
-        $output->writeln('  <fg=red>Refactoring reverted — specs failed ✗</>');
+        $output->writeln('  <fg=red>Refactoring reverted, specs failed ✘</>');
         return 1;
     }
 

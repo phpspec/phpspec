@@ -551,4 +551,107 @@ describe(Pretty::class, function() {
         expect($text)->toContain("2 steps");
     });
 
+    it("names a spec the way a feature is named, bold white and prefixed", function () {
+        $output = new BufferedOutput(BufferedOutput::VERBOSITY_NORMAL, true);
+        $formatter = new Pretty($output);
+
+        $spec = new SpecificationResult("Wallet", [new ExampleResult("passes", [MatchResult::passed()])]);
+        $feature = new FeatureResult("Greeting", [new ScenarioResult("Say hello", [new StepResult("Given a step", "passed")])]);
+
+        $formatter->format(new SuiteResult([$spec, $feature]));
+        $text = $output->fetch();
+        expect($text)->toContain("\e[37;1mSpec: Wallet\e[39;22m");
+        expect($text)->toContain("\e[37;1mFeature: Greeting\e[39;22m");
+    });
+
+    it("colours an example title by its outcome, glyph and title together", function () {
+        $output = new BufferedOutput(BufferedOutput::VERBOSITY_NORMAL, true);
+        $formatter = new Pretty($output);
+
+        $spec = new SpecificationResult("Wallet", [
+            new ExampleResult("passes", [MatchResult::passed()]),
+            new ExampleResult("fails", [MatchResult::failed("a", "b", "Expected a to be b", __FILE__, __LINE__)]),
+            new ExampleResult("breaks", [], true),
+            new ExampleResult("waits", [], false, true),
+            new ExampleResult("rests", [], false, false, true),
+        ]);
+
+        $formatter->format(new SuiteResult([$spec]));
+        $text = $output->fetch();
+        expect($text)->toContain("\e[32m✓ passes\e[39m");
+        expect($text)->toContain("\e[31m✘ fails\e[39m");
+        expect($text)->toContain("\e[31m✘ breaks\e[39m");
+        expect($text)->toContain("\e[33m○ waits\e[39m");
+        expect($text)->toContain("\e[36m- rests\e[39m");
+        expect($text)->not()->toContain("(pending)");
+        expect($text)->not()->toContain("(skipped)");
+    });
+
+    it("colours a step title by its outcome, with the glyphs an example uses", function () {
+        $output = new BufferedOutput(BufferedOutput::VERBOSITY_NORMAL, true);
+        $formatter = new Pretty($output);
+
+        $failed = new StepResult("When it breaks", "failure");
+        $failed->setError(new StepError("broke", new \RuntimeException("broke")));
+        $scenario = new ScenarioResult("Mixed", [
+            new StepResult("Given a step", "passed"),
+            $failed,
+            new StepResult("Then pending", "pending"),
+            new StepResult("And undefined", "undefined"),
+            new StepResult("But skipped", "skipped"),
+        ]);
+
+        $formatter->format(new SuiteResult([new FeatureResult("States", [$scenario])]));
+        $text = $output->fetch();
+        expect($text)->toContain("\e[32m✓ Given a step\e[39m");
+        expect($text)->toContain("\e[31m✘ When it breaks\e[39m");
+        expect($text)->toContain("\e[33m○ Then pending\e[39m");
+        expect($text)->toContain("\e[94m? And undefined\e[39m");
+        expect($text)->toContain("\e[36m- But skipped\e[39m");
+    });
+
+    it("marks a warning with a bare warning sign and names where it was raised", function () {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $example = new ExampleResult("warns", [MatchResult::passed()]);
+        $example->setWarnings([
+            ['severity' => E_WARNING, 'message' => 'old warning', 'file' => '/project/spec/Wallet.spec.php', 'line' => 7],
+        ]);
+
+        $formatter->format(new SuiteResult([new SpecificationResult("Wallet", [$example])]));
+        $text = $output->fetch();
+        expect($text)->toContain("⚠ old warning (Wallet.spec.php:7)");
+        expect($text)->not()->toContain("⚠\u{FE0F}");
+    });
+
+    it("shows a step's warning under the step, the way an example's is shown", function () {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $noisy = new StepResult("Given I have added a task", "passed");
+        $noisy->setWarnings([
+            ['severity' => E_WARNING, 'message' => 'Undefined property: StepWorld::$list', 'file' => 'features/steps/adding.steps.php', 'line' => 4],
+        ]);
+        $scenario = new ScenarioResult("Adding a task", [$noisy]);
+
+        $formatter->format(new SuiteResult([new FeatureResult("Adding", [$scenario])]));
+        $text = $output->fetch();
+        expect($text)->toContain("      ⚠ Undefined property: StepWorld::\$list (adding.steps.php:4)");
+    });
+
+    it("shows how long a step took in verbose mode", function () {
+        $output = new BufferedOutput();
+        $output->setVerbosity(BufferedOutput::VERBOSITY_VERBOSE);
+        $formatter = new Pretty($output);
+
+        $step = new StepResult("Given a slow step", "passed");
+        $step->setDuration(0.0123);
+        $scenario = new ScenarioResult("Waiting", [$step]);
+
+        $formatter->format(new SuiteResult([new FeatureResult("Timing", [$scenario])]));
+        $text = $output->fetch();
+        expect($text)->toContain("Given a slow step (12.3ms)");
+    });
+
 });

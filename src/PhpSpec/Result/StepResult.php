@@ -39,6 +39,9 @@ final class StepResult implements Results
     /** @var string What the step printed while it ran */
     private string $output = '';
 
+    /** @var float How long the step ran, in seconds */
+    private float $duration = 0.0;
+
     /**
      * @param string $title the step description
      * @param string $state the outcome state: passed, failure, error, pending, undefined, or skipped
@@ -196,5 +199,21 @@ final class StepResult implements Results
     public function getOutput(): string
     {
         return $this->output;
+    }
+
+    /**
+     * @param float $duration elapsed time in seconds
+     */
+    public function setDuration(float $duration): void
+    {
+        $this->duration = $duration;
+    }
+
+    /**
+     * Returns how long the step ran, in seconds: zero for a step that never ran.
+     */
+    public function getDuration(): float
+    {
+        return $this->duration;
     }
 }

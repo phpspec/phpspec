@@ -60,4 +60,12 @@ describe(StepResult::class, function () {
         expect($result->getError())->toBeNull();
     });
 
+    it("records how long it ran", function () {
+        $result = new StepResult("step", "passed");
+        expect($result->getDuration())->toBe(0.0);
+
+        $result->setDuration(0.25);
+        expect($result->getDuration())->toBe(0.25);
+    });
+
 });

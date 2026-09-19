@@ -51,7 +51,7 @@ final class Pretty extends AbstractFormatter
         }
 
         if ($result instanceof FeatureResult) {
-            PrettyViews::feature($this->output, $result);
+            PrettyViews::feature($this->output, $result, $this->output->isVerbose());
         } elseif ($result instanceof SpecificationResult) {
             PrettyViews::specification($this->output, $result, $this->output->isVerbose());
         }

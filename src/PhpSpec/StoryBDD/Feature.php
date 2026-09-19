@@ -246,12 +246,14 @@ final readonly class Feature implements SpecBlock
             return true;
         }, E_WARNING | E_NOTICE | E_DEPRECATED | E_USER_WARNING | E_USER_NOTICE | E_USER_DEPRECATED);
 
+        $start = hrtime(true);
         try {
             $result = $this->executeStep($step, $title, $match, $world, $collector);
         } finally {
             restore_error_handler();
         }
 
+        $result->setDuration((hrtime(true) - $start) / 1e9);
         $result->setWarnings($warnings);
 
         return $result;
