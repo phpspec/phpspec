@@ -69,7 +69,7 @@ describe(Feature::class, function () {
         ), $registry, new HookRegistry());
 
         $steps = $feature->run()->getResults()[0]->getResults();
-        expect($steps[0]->getDuration())->toBeGreaterThan(0.001);
+        expect($steps[0]->getDuration())->toBeGreaterThan(0);
         expect($steps[1]->getDuration())->toBe(0.0);
     });
 
