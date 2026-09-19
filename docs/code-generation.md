@@ -65,14 +65,16 @@ bin/phpspec describe App/Calculator --agent
 
 ## Auto-Class Generation
 
-When specs reference a class that doesn't exist, PhpSpec's custom autoloader prompts:
+When a spec describes a class that doesn't exist, the run says so in place of the spec's tree and error detail, and offers the class in the same breath:
 
 ```
-Looks like you are trying to spec App\Calculator, a class that doesn't exist yet.
-Would you like me to generate that class for you? [y/n]
+Looks like you are trying to spec App\Calculator,
+a class that doesn't exist yet.
+
+Would you like me to generate that class for you? [Y/n]
 ```
 
-If confirmed, `ClassGenerator` creates the class at `src/App/Calculator.php`:
+A spec that needs some other class than the one it describes reads `Looks like App\Basket needs App\Coupon, a class that doesn't exist yet.` If confirmed, `ClassGenerator` creates the class and names the file, `src/App/Calculator.php`:
 
 ```php
 <?php
@@ -171,7 +173,10 @@ whose input has already ended: in each case the question is printed with what it
 would have created, followed by the way to accept it, and no file appears.
 
 ```
-Class App\Basket not found. Do you want me to create it for you?
+Looks like you are trying to spec App\Basket,
+a class that doesn't exist yet.
+
+Would you like me to generate that class for you?
   Nothing was written: there is nobody to answer. Run with --accept-offers to create classes.
 ```
 

@@ -30,6 +30,8 @@ final class Pretty extends AbstractFormatter
 {
     private bool $hasResults = false;
 
+    private bool $blocked = false;
+
     /**
      * No-op; the banner is deferred to the first printResult call.
      */
@@ -39,12 +41,20 @@ final class Pretty extends AbstractFormatter
     }
 
     /**
-     * Renders a single specification or feature result.
+     * Renders a single specification or feature result. A specification
+     * blocked on a class that does not exist yet is left to the run, which
+     * offers that class where its error would have been reported.
      *
      * @param Results $result one spec or feature result to render
      */
     public function printResult(Results $result): void
     {
+        if ($result instanceof SpecificationResult && $result->isBlockedOnMissingClass()) {
+            $this->blocked = true;
+
+            return;
+        }
+
         if (!$this->hasResults) {
             $this->output->writeln('Once you spec, you never go back!');
             $this->hasResults = true;
@@ -66,7 +76,10 @@ final class Pretty extends AbstractFormatter
     public function end(SuiteResult $results): void
     {
         if (!$this->hasResults) {
-            $this->output->writeln('No specs found.');
+            if (!$this->blocked) {
+                $this->output->writeln('No specs found.');
+            }
+
             return;
         }
 

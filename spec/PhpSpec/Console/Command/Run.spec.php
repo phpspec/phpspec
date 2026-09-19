@@ -75,6 +75,16 @@ describe(Run::class, function () {
             expect($tester->getDisplay())->toContain('Unknown format: nope');
         });
 
+        it('stops when a path it was given does not exist, naming it', function (Filesystem $execFs) {
+            $config = new Configuration('.', $execFs);
+            $cmd = new Run(new Loader($execFs), new Runner(), $config);
+
+            $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
+            $exitCode = $tester->execute(['files' => ['spec/App/Missing.spec.php:6']]);
+            expect($exitCode)->toBe(1);
+            expect($tester->getDisplay())->toContain('Path not found: spec/App/Missing.spec.php:6');
+        });
+
         it('pairs each -o file with its format by position', function (Filesystem $execFs) {
             $dir = sys_get_temp_dir() . '/phpspec_reports_' . uniqid();
             $config = new Configuration('.', $execFs);
@@ -266,7 +276,7 @@ describe(Run::class, function () {
 
         it('reads spec paths from the paths file', function (Filesystem $execFs) {
             $pathsFile = tempnam(sys_get_temp_dir(), 'phpspec_paths_') . '.txt';
-            file_put_contents($pathsFile, "spec/App/NotThere.spec.php\n\n");
+            file_put_contents($pathsFile, sys_get_temp_dir() . "\n\n");
 
             $config = new Configuration('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);
@@ -276,6 +286,23 @@ describe(Run::class, function () {
                 $exitCode = $tester->execute(['--paths-from' => $pathsFile]);
                 expect($exitCode)->toBe(0);
                 expect($tester->getDisplay())->toContain('No specs found');
+            } finally {
+                unlink($pathsFile);
+            }
+        });
+
+        it('stops when the paths file names a path that does not exist', function (Filesystem $execFs) {
+            $pathsFile = tempnam(sys_get_temp_dir(), 'phpspec_paths_') . '.txt';
+            file_put_contents($pathsFile, "spec/App/NotThere.spec.php\n");
+
+            $config = new Configuration('.', $execFs);
+            $cmd = new Run(new Loader($execFs), new Runner(), $config);
+
+            try {
+                $tester = new \Symfony\Component\Console\Tester\CommandTester($cmd);
+                $exitCode = $tester->execute(['--paths-from' => $pathsFile]);
+                expect($exitCode)->toBe(1);
+                expect($tester->getDisplay())->toContain('Path not found: spec/App/NotThere.spec.php');
             } finally {
                 unlink($pathsFile);
             }

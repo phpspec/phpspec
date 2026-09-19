@@ -5,11 +5,33 @@
  * for creating temporary project structures.
  */
 
+if (!function_exists('_phpspec_remove_dir')) {
+    function _phpspec_remove_dir(string $dir): void
+    {
+        $entries = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST,
+        );
+
+        foreach ($entries as $entry) {
+            $entry->isDir() && !$entry->isLink() ? rmdir($entry->getPathname()) : unlink($entry->getPathname());
+        }
+
+        rmdir($dir);
+    }
+}
+
+afterScenario(function () {
+    if (isset($this->projectDir) && is_dir($this->projectDir)) {
+        _phpspec_remove_dir($this->projectDir);
+    }
+});
+
 beforeScenario(function () {
-    // Clean up stale temp dirs (older than 1 hour)
+    // Left behind by an interrupted run (older than 1 hour)
     foreach (glob(sys_get_temp_dir() . '/phpspec_feat_*') as $dir) {
         if (is_dir($dir) && filemtime($dir) < time() - 3600) {
-            exec('rm -rf ' . escapeshellarg($dir));
+            _phpspec_remove_dir($dir);
         }
     }
 

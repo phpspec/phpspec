@@ -285,7 +285,21 @@ describe(ResultScanner::class, function () {
 
     context('collectMissingSpecClasses', function () {
 
-        it('collects missing class names from spec example errors', function () {
+        it('keys each missing class to the class its spec describes', function () {
+            $error = new ExampleError(
+                'Class "App\\Coupon" not found',
+                new \RuntimeException('Class "App\\Coupon" not found')
+            );
+
+            $example = new ExampleResult('applies a coupon', [], isError: true);
+            $example->setError($error);
+            $describe = new ContextResult('App\\Basket', [new ContextResult('when discounted', [$example])]);
+            $suite = new SuiteResult([new SpecificationResult("Basket", [$describe])]);
+
+            expect($this->scanner->collectMissingSpecClasses($suite))->toBe(['App\\Coupon' => 'App\\Basket']);
+        });
+
+        it('keys a missing class to itself when no describe block encloses the example', function () {
             $error = new ExampleError(
                 'Class "App\\Service\\Mailer" not found',
                 new \RuntimeException('Class "App\\Service\\Mailer" not found')
@@ -296,9 +310,7 @@ describe(ResultScanner::class, function () {
             $spec = new SpecificationResult("spec", [$example]);
             $suite = new SuiteResult([$spec]);
 
-            $result = $this->scanner->collectMissingSpecClasses($suite);
-            expect($result)->toHaveCount(1);
-            expect($result[0])->toBe('App\\Service\\Mailer');
+            expect($this->scanner->collectMissingSpecClasses($suite))->toBe(['App\\Service\\Mailer' => 'App\\Service\\Mailer']);
         });
 
         it('deduplicates missing classes', function () {
@@ -340,7 +352,7 @@ describe(ResultScanner::class, function () {
             $suite = new SuiteResult([$spec]);
 
             $result = $this->scanner->collectMissingSpecClasses($suite);
-            expect($result)->toHaveCount(1);
+            expect($result)->toBe(['App\\Bar' => 'ctx']);
         });
     });
 

@@ -81,7 +81,9 @@ final class DetailSections
         foreach ($children as $child) {
             if ($child instanceof ContextResult) {
                 if ($child->isError() && $child->getError() !== null) {
-                    $this->collectContextError($child, $path . ' > ' . $child->getTitle());
+                    if ($child->getError()->missingClass() === null) {
+                        $this->collectContextError($child, $path . ' > ' . $child->getTitle());
+                    }
 
                     continue;
                 }
@@ -93,13 +95,17 @@ final class DetailSections
         }
     }
 
+    /**
+     * A missing class is not detailed here: the run offers to generate it,
+     * and that offer names it.
+     */
     private function collectExample(ExampleResult $example, string $path): void
     {
         $title = $path . ' > ' . $example->getTitle();
 
         if ($example->isError()) {
             $error = $example->getError();
-            if ($error !== null) {
+            if ($error !== null && $error->missingClass() === null) {
                 $this->sections['Errors'][] = static function (OutputInterface $output) use ($title, $error): void {
                     $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
                     $output->write(PHP_EOL . '  Error: ' . $error->getMessage() . PHP_EOL . PHP_EOL);

@@ -42,6 +42,19 @@ describe(Describe::class, function() {
         );
     });
 
+    it("names the spec it wrote from the project root, in colour, after a blank line", function(Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
+        allow($fs->mkdir())->toReturn(null);
+        allow($fs->write())->toReturn(null);
+
+        $output = new BufferedOutput(BufferedOutput::VERBOSITY_NORMAL, true);
+        $this->describe->run(new ArrayInput(['class' => 'App/Calculator']), $output);
+
+        expect($output->fetch())->toBe(
+            "\n\e[32mSpecification for \e[39m\e[33mApp/Calculator\e[39m\e[32m created in \e[39m\e[33mspec/App/Calculator.spec.php\e[39m\n",
+        );
+    });
+
     it("does not add example without -e option", function(Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
         $output = new \Symfony\Component\Console\Output\BufferedOutput();

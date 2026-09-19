@@ -182,6 +182,52 @@ describe(CodeGenerator::class, function () {
         });
     });
 
+    context('offers a class that does not exist yet where its error would have been reported', function () {
+
+        it('says the spec is about a class that does not exist yet, then asks to generate it', function () {
+            $generator = new CodeGenerator('src', 'spec', Generation::Declines);
+
+            $error = new \PhpSpec\Specification\ExampleError('Class "App\Calculator" not found', new \Error('Class "App\Calculator" not found'));
+            $example = new ExampleResult('App\Calculator', [], isError: true);
+            $example->setError($error);
+            $describe = new ContextResult('App\Calculator', [$example]);
+            $describe->setError($error);
+            $suite = new SuiteResult([new SpecificationResult('Calculator', [$describe])]);
+
+            $generator->generate($this->output, $suite, false);
+
+            expect($this->output->fetch())->toContain(
+                "\n  Looks like you are trying to spec App\\Calculator,\n  a class that doesn't exist yet.\n\n  Would you like me to generate that class for you?\n",
+            );
+        });
+
+        it('reads a describe block titled by the short name as describing that class', function () {
+            $generator = new CodeGenerator('src', 'spec', Generation::Declines);
+
+            $error = new \PhpSpec\Specification\ExampleError('Class "App\Basket" not found', new \Error('Class "App\Basket" not found'));
+            $example = new ExampleResult('totals nothing to start with', [], isError: true);
+            $example->setError($error);
+            $suite = new SuiteResult([new SpecificationResult('Basket', [new ContextResult('Basket', [$example])])]);
+
+            $generator->generate($this->output, $suite, false);
+
+            expect($this->output->fetch())->toContain("  Looks like you are trying to spec App\\Basket,\n");
+        });
+
+        it('names the class a spec needs when it is not the one it describes', function () {
+            $generator = new CodeGenerator('src', 'spec', Generation::Declines);
+
+            $error = new \PhpSpec\Specification\ExampleError('Class "App\Coupon" not found', new \Error('Class "App\Coupon" not found'));
+            $example = new ExampleResult('applies a coupon', [], isError: true);
+            $example->setError($error);
+            $suite = new SuiteResult([new SpecificationResult('Basket', [new ContextResult('App\Basket', [$example])])]);
+
+            $generator->generate($this->output, $suite, false);
+
+            expect($this->output->fetch())->toContain("  Looks like App\\Basket needs App\\Coupon,\n  a class that doesn't exist yet.\n");
+        });
+    });
+
     context('does not offer to create a class whose file already exists', function () {
 
         it('skips the create-class offer for a "Class not found" that is really a PSR-4/autoload mismatch', function () {
@@ -212,9 +258,8 @@ describe(CodeGenerator::class, function () {
             $generator->generate($this->output, $suite, false);
             $out = $this->output->fetch();
 
-            expect($out)->not()->toContain('Do you want me to create');
-            expect($out)->not()->toContain('not found');
-            expect($out)->toBe('');
+            expect($out)->not()->toContain('Would you like me to generate');
+            expect($out)->toContain($relDir . '/src/Model/User.php exists, but App\Model\User could not be autoloaded: check the PSR-4 mapping in composer.json.');
 
             // The existing file is untouched.
             expect(file_get_contents($absDir . '/src/Model/User.php'))->toContain('class User');

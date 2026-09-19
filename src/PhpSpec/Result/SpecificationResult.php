@@ -43,4 +43,19 @@ final readonly class SpecificationResult implements Results
     {
         return $this->exampleResults;
     }
+
+    /**
+     * Whether a describe block of this specification could not run because a
+     * class it needs does not exist yet.
+     */
+    public function isBlockedOnMissingClass(): bool
+    {
+        foreach ($this->exampleResults as $result) {
+            if ($result instanceof ContextResult && $result->isError() && $result->getError()?->missingClass() !== null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

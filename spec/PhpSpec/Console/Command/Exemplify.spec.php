@@ -30,12 +30,12 @@ describe(Exemplify::class, function () {
         });
         PHP);
 
-        $output = new BufferedOutput();
+        $output = new BufferedOutput(BufferedOutput::VERBOSITY_NORMAL, true);
         $this->exemplify->run(
             new ArrayInput(['class' => 'Acme\Calculator', 'method' => 'add']),
             $output
         );
-        expect($output->fetch())->toContain('Example for Acme\Calculator::add added.');
+        expect($output->fetch())->toBe("\n\e[32mExample for \e[39m\e[33mAcme\\Calculator::add\e[39m\e[32m added.\e[39m\n");
     });
 
     it('emits a JSON receipt with --agent instead of prose', function (Filesystem $fs) {

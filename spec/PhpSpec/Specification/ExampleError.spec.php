@@ -56,5 +56,15 @@ describe(ExampleError::class, function() {
         }
     });
 
+    it("names the class a class-not-found error is about", function() {
+        $message = 'Class "App\Calculator" not found';
+        $error = new ExampleError($message, new \Error($message));
+        expect($error->missingClass())->toBe('App\Calculator');
+    });
+
+    it("names no class for any other error", function() {
+        $error = new ExampleError("something broke", new \RuntimeException("something broke"));
+        expect($error->missingClass())->toBeNull();
+    });
 
 });

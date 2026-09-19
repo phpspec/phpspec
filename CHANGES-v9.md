@@ -14,8 +14,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
  - `toBeCalled()` and `toBeCalledTimes()` hold the mock to the arguments written in the expect call; written bare they still mean called at all
  - The pretty formatter reports an example and a step the same way: one set of glyphs (✓ ✘ ○ - ?), the title in the outcome's colour, and a spec headed `Spec:` as a feature is headed `Feature:`
+ - A spec describing a class that does not exist yet is met with a sentence saying so and the offer to generate it, in place of a tree, an Errors section and a count; the generated-file message and diff name the file from the project root
+ - A class whose file exists but could not be autoloaded is said to be a PSR-4 problem, instead of being passed over in silence
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
+ - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - A path given to `run` that does not exist stops the run and is named, instead of finding no specs and exiting 0
+ - A generated class, interface or spec ends with a newline
  - A subscriber leaked by one example or spec file no longer collects and re-judges later matches: each example and each file restores the dispatcher on its way out, so a full run and a single-file run agree
  - The loader no longer plants a permanent subscriber per spec file; a specification resets itself when it runs
 

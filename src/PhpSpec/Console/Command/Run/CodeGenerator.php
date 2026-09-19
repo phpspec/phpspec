@@ -24,6 +24,7 @@ use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\ScrollRegionOutput;
 use PhpSpec\Console\Command\Refactor\Diff;
 use PhpSpec\Filesystem;
+use PhpSpec\ProjectRoot;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Results;
 use RuntimeException;
@@ -147,10 +148,12 @@ final readonly class CodeGenerator
     }
 
     /**
-     * Offers to generate classes for types referenced in spec examples that don't exist.
+     * Offers the classes spec examples referenced that do not exist, each
+     * introduced by the spec that needs it, where its error would otherwise
+     * have been reported.
      *
      * @param Output $output the console output for prompts and confirmation messages
-     * @param array<string> $missingClasses FQCNs referenced in specs that do not exist
+     * @param array<string, string> $missingClasses FQCNs that do not exist, each keyed to the class its spec describes
      */
     private function generateMissingSpecClasses(Output $output, array $missingClasses): void
     {
@@ -160,26 +163,47 @@ final readonly class CodeGenerator
 
         $classGenerator = new ClassGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
 
-        foreach ($missingClasses as $fqcn) {
+        foreach ($missingClasses as $fqcn => $describes) {
             $location = ClassLocation::for($fqcn, $this->srcPath, $this->psr4Prefix);
 
             // "Class X not found" from a run is a runtime/autoload failure, not
-            // proof the source file is missing — a PSR-4 mismatch triggers it
-            // while the file is right there. Gate on the file the generator would
-            // write, so we never offer to create a class that already exists.
+            // proof the source file is missing: a PSR-4 mismatch triggers it
+            // while the file is right there.
             if ($location->exists($this->filesystem)) {
+                $output->writeln('');
+                $output->writeln(sprintf(
+                    '  <fg=yellow>%s exists, but %s could not be autoloaded: check the PSR-4 mapping in composer.json.</>',
+                    ProjectRoot::here()->relative($location->filePath()),
+                    $fqcn,
+                ));
+
                 continue;
             }
 
-            // Named with the file it would write. That path is worked out from
-            // the source root and the namespace, so it is a guess, and nobody
-            // can correct a guess they are never shown.
-            $this->confirmAndGenerate($output, sprintf(
-                '  <fg=yellow>Class <fg=white>%s</> not found. Do you want me to create it in <fg=white>%s</>?</>',
-                $fqcn,
+            $output->writeln('');
+            $output->writeln(sprintf('  <fg=#f59e0b>%s,</>', self::describes($describes, $fqcn)
+                ? "Looks like you are trying to spec $fqcn"
+                : "Looks like $describes needs $fqcn"));
+            $output->writeln("  <fg=#f59e0b>a class that doesn't exist yet.</>");
+
+            $this->confirmAndGenerate(
+                $output,
+                '  <fg=gray>Would you like me to generate that class for you?</>',
+                'create-class',
+                'create classes',
+                fn() => $classGenerator->generate($fqcn),
                 $location->filePath(),
-            ), 'create-class', 'create classes', fn() => $classGenerator->generate($fqcn), $location->filePath());
+            );
         }
+    }
+
+    /**
+     * Whether a describe block's title names the class, in full or by its
+     * short name.
+     */
+    private static function describes(string $title, string $fqcn): bool
+    {
+        return $title === $fqcn || str_ends_with($fqcn, '\\' . $title);
     }
 
     /**
@@ -496,7 +520,7 @@ final readonly class CodeGenerator
         $label = $oldLines === null ? '[NEW FILE]' : '[MODIFIED]';
 
         $output->writeln('');
-        $output->writeln("  <fg=yellow>$label</> <fg=white>$filePath</>");
+        $output->writeln("  <fg=yellow>$label</> <fg=white>" . ProjectRoot::here()->relative($filePath) . '</>');
         $output->writeln('');
 
         // A proper line diff, so only genuinely new lines are marked "+" — a

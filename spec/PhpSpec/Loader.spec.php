@@ -217,7 +217,8 @@ describe(Loader::class, function () {
         );
 
         try {
-            $suite = (new Loader())->load($root . '/features/scenarios/checkout');
+            $loader = new Loader(featuresPath: $root . '/nowhere');
+            $suite = $loader->load($root . '/features/scenarios/checkout');
 
             $steps = $suite->getSpecifications()[0]->run()->getResults()[0]->getResults();
             expect($steps[0]->isUndefined())->toBeFalse();

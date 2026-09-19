@@ -640,6 +640,58 @@ describe(Pretty::class, function() {
         expect($text)->toContain("      ⚠ Undefined property: StepWorld::\$list (adding.steps.php:4)");
     });
 
+    it("prints nothing for a spec blocked on a class that does not exist yet, which the run offers instead", function () {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $error = new ExampleError('Class "App\Calculator" not found', new \Error('Class "App\Calculator" not found'));
+        $example = new ExampleResult("App\\Calculator", [], true);
+        $example->setError($error);
+        $context = new ContextResult("App\\Calculator", [$example]);
+        $context->setError($error);
+
+        $formatter->format(new SuiteResult([new SpecificationResult("Calculator", [$context])]));
+        expect($output->fetch())->toBe("");
+    });
+
+    it("keeps the tree and the counts for what did run alongside a blocked spec", function () {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $error = new ExampleError('Class "App\Calculator" not found', new \Error('Class "App\Calculator" not found'));
+        $blockedExample = new ExampleResult("App\\Calculator", [], true);
+        $blockedExample->setError($error);
+        $blocked = new ContextResult("App\\Calculator", [$blockedExample]);
+        $blocked->setError($error);
+        $ran = new ContextResult("App\\Basket", [new ExampleResult("totals the prices", [MatchResult::passed()])]);
+
+        $formatter->format(new SuiteResult([
+            new SpecificationResult("Calculator", [$blocked]),
+            new SpecificationResult("Basket", [$ran]),
+        ]));
+        $text = $output->fetch();
+        expect($text)->not()->toContain("Calculator");
+        expect($text)->toContain("Spec: Basket");
+        expect($text)->toContain("✓ totals the prices");
+        expect($text)->toContain("2 specs");
+    });
+
+    it("leaves an example's missing class out of the Errors section, since the run offers to generate it", function () {
+        $output = new BufferedOutput();
+        $formatter = new Pretty($output);
+
+        $error = new ExampleError('Class "App\Report" not found', new \Error('Class "App\Report" not found'));
+        $errored = new ExampleResult("builds a report", [], true);
+        $errored->setError($error);
+        $context = new ContextResult("App\\Basket", [new ExampleResult("totals the prices", [MatchResult::passed()]), $errored]);
+
+        $formatter->format(new SuiteResult([new SpecificationResult("Basket", [$context])]));
+        $text = $output->fetch();
+        expect($text)->toContain("✘ builds a report");
+        expect($text)->not()->toContain("Errors:");
+        expect($text)->toContain("2 examples");
+    });
+
     it("shows how long a step took in verbose mode", function () {
         $output = new BufferedOutput();
         $output->setVerbosity(BufferedOutput::VERBOSITY_VERBOSE);

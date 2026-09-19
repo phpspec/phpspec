@@ -42,6 +42,7 @@ describe(SpecSubprocess::class, function () {
 
     it('returns output for non-existent spec path', function () {
         [$exitCode, $output] = SpecSubprocess::run('/nonexistent/path/spec.php');
-        expect($output)->toContain('No specs found');
+        expect($exitCode)->toBe(1);
+        expect($output)->toContain('Path not found: /nonexistent/path/spec.php');
     });
 });

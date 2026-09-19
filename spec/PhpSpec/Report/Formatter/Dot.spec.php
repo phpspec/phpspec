@@ -327,6 +327,55 @@ describe(Dot::class, function() {
         expect($text)->toContain("2 examples");
     });
 
+    it("prints nothing for a spec blocked on a class that does not exist yet, which the run offers instead", function() {
+        $output = new BufferedOutput();
+        $formatter = new Dot($output);
+
+        $error = new ExampleError('Class "App\Calculator" not found', new \Error('Class "App\Calculator" not found'));
+        $example = new ExampleResult("App\\Calculator", [], true);
+        $example->setError($error);
+        $describe = new ContextResult("App\\Calculator", [$example]);
+        $describe->setError($error);
+
+        $formatter->format(new SuiteResult([new SpecificationResult("Calculator", [$describe])]));
+        expect($output->fetch())->toBe("");
+    });
+
+    it("keeps the dots and the counts for what did run alongside a blocked spec", function() {
+        $output = new BufferedOutput();
+        $formatter = new Dot($output);
+
+        $error = new ExampleError('Class "App\Calculator" not found', new \Error('Class "App\Calculator" not found'));
+        $blockedExample = new ExampleResult("App\\Calculator", [], true);
+        $blockedExample->setError($error);
+        $blocked = new ContextResult("App\\Calculator", [$blockedExample]);
+        $blocked->setError($error);
+        $ran = new SpecificationResult("Basket", [new ExampleResult("totals the prices", [MatchResult::passed()])]);
+
+        $formatter->format(new SuiteResult([new SpecificationResult("Calculator", [$blocked]), $ran]));
+        $text = $output->fetch();
+        expect($text)->toContain("Once you spec, you never go back!\n\n.");
+        expect($text)->not()->toContain("E");
+        expect($text)->toContain("2 specs");
+    });
+
+    it("does not detail a missing class, which the run offers to generate instead", function() {
+        $output = new BufferedOutput();
+        $formatter = new Dot($output);
+
+        $error = new ExampleError('Class "App\Report" not found', new \Error('Class "App\Report" not found'));
+        $errored = new ExampleResult("builds a report", [], true);
+        $errored->setError($error);
+        $suite = new SuiteResult([new SpecificationResult("Basket", [$errored])]);
+
+        $formatter->format($suite);
+        $text = $output->fetch();
+        expect($text)->toContain("E");
+        expect($text)->toContain("1 errors");
+        expect($text)->not()->toContain("Errors:");
+        expect($text)->not()->toContain("not found");
+    });
+
     it("marks a notice with a bare warning sign", function() {
         $output = new BufferedOutput();
         $formatter = new Dot($output);

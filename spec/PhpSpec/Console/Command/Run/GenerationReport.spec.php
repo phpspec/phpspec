@@ -35,7 +35,7 @@ describe(GenerationReport::class, function () {
 
     it('round-trips a run outcome (candidates and suite summary) through write and read', function () {
         $outcome = new RunOutcome(
-            new GenerationCandidates(missingSpecClasses: ['App\\Foo']),
+            new GenerationCandidates(missingSpecClasses: ['App\\Foo' => 'App\\Foo']),
             new SuiteSummary(
                 'red',
                 ['examples' => 1, 'passes' => 0, 'failures' => 1, 'errors' => 0, 'pending' => 0],
@@ -46,7 +46,7 @@ describe(GenerationReport::class, function () {
         GenerationReport::write($this->path, $outcome);
 
         $read = GenerationReport::read($this->path);
-        expect($read->candidates->missingSpecClasses)->toBe(['App\\Foo']);
+        expect($read->candidates->missingSpecClasses)->toBe(['App\\Foo' => 'App\\Foo']);
         expect($read->summary->status())->toBe('red');
         expect($read->summary->failing())->toBe([
             ['subject' => 'App\\Foo', 'example' => 'works', 'error' => 'Expected true but got false'],
@@ -56,11 +56,11 @@ describe(GenerationReport::class, function () {
     it('reads a legacy bare-candidates report as an outcome without a summary', function () {
         file_put_contents(
             $this->path,
-            (string) json_encode((new GenerationCandidates(missingSpecClasses: ['App\\Legacy']))->toArray()),
+            (string) json_encode((new GenerationCandidates(missingSpecClasses: ['App\\Legacy' => 'App\\Legacy']))->toArray()),
         );
 
         $read = GenerationReport::read($this->path);
-        expect($read->candidates->missingSpecClasses)->toBe(['App\\Legacy']);
+        expect($read->candidates->missingSpecClasses)->toBe(['App\\Legacy' => 'App\\Legacy']);
         expect($read->summary)->toBeNull();
     });
 

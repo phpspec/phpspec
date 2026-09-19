@@ -63,8 +63,7 @@ Feature: Code generation
     When I run phpspec run in a fresh process with option "--no-interaction"
     Then no file "src/App/Basket.php" should be generated
     And the output should contain "Nothing was written"
-    # Named without its separators: Windows writes them the other way round.
-    And the output should contain "Basket.php"
+    And the output should contain "Looks like you are trying to spec App\Basket"
 
   # An empty answer at a terminal is somebody pressing Enter, which takes the
   # default. Nothing to read at all is nobody there, and must not be read as one.

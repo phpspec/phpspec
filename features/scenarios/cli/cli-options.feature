@@ -353,6 +353,20 @@ Feature: CLI options
     Then the exit code should not be 0
     And the output should contain "Unknown format: nope"
 
+  Scenario: A path that does not exist stops the run instead of finding no specs
+    Given a spec file "spec/App/Present.spec.php":
+      """
+      <?php
+      describe('Present', function () {
+          it('passes', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run "spec/App/Missing.spec.php"
+    Then the exit code should not be 0
+    And the output should contain "Path not found: spec/App/Missing.spec.php"
+
   Scenario: Random execution order with seed
     Given a spec file "spec/App/Random.spec.php":
       """
