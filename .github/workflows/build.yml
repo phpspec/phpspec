@@ -37,6 +37,7 @@ jobs:
     tests:
         name: Test (PHP ${{ matrix.php }}, ${{ matrix.operating-system }})
         runs-on: ${{ matrix.operating-system }}
+        timeout-minutes: 20
         strategy:
             fail-fast: false
             matrix:
