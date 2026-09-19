@@ -5,7 +5,7 @@ use PhpSpec\Report\Formatter\Agent\Offers;
 describe(Offers::class, function () {
 
     it('maps a missing spec class to create_class', function () {
-        $offers = Offers::fromCandidates(['missingSpecClasses' => ['App\\Coupon']]);
+        $offers = Offers::fromCandidates(['missingSpecClasses' => ['App\\Coupon' => 'App\\Basket']]);
 
         expect($offers[0]['action'])->toBe('create_class');
         expect($offers[0]['target'])->toBe('App\\Coupon');
@@ -53,7 +53,7 @@ describe(Offers::class, function () {
     });
 
     it('deduplicates the same action and target', function () {
-        $candidates = ['missingSpecClasses' => ['App\\Coupon'], 'missingStepClasses' => ['App\\Coupon']];
+        $candidates = ['missingSpecClasses' => ['App\\Coupon' => 'App\\Basket'], 'missingStepClasses' => ['App\\Coupon']];
 
         $offers = Offers::fromCandidates($candidates);
 
@@ -71,7 +71,7 @@ describe(Offers::class, function () {
         expect($offer['action'])->toBe('create_class');
         expect($offer['target'])->toBe('App\\Coupon');
         // The same id the run-wide offer carries: both are derived from the same thing.
-        expect($offer['id'])->toBe(Offers::fromCandidates(['missingSpecClasses' => ['App\\Coupon']])[0]['id']);
+        expect($offer['id'])->toBe(Offers::fromCandidates(['missingSpecClasses' => ['App\\Coupon' => 'App\\Basket']])[0]['id']);
     });
 
     it('derives a create_interface offer from a mock-creation error', function () {

@@ -7,7 +7,7 @@ use PhpSpec\Console\Command\Run\SuiteSummary;
 describe(RunOutcome::class, function () {
 
     it('carries the generation candidates and the suite summary', function () {
-        $candidates = new GenerationCandidates(missingSpecClasses: ['App\\Calculator']);
+        $candidates = new GenerationCandidates(missingSpecClasses: ['App\\Calculator' => 'App\\Calculator']);
         $summary = new SuiteSummary('red');
 
         $outcome = new RunOutcome($candidates, $summary);
@@ -19,7 +19,7 @@ describe(RunOutcome::class, function () {
     it('reports empty candidates when there is nothing to generate', function () {
         expect((new RunOutcome(null, null))->isEmptyCandidates())->toBe(true);
         expect((new RunOutcome(new GenerationCandidates()))->isEmptyCandidates())->toBe(true);
-        expect((new RunOutcome(new GenerationCandidates(missingSpecClasses: ['App\\Calculator'])))->isEmptyCandidates())->toBe(false);
+        expect((new RunOutcome(new GenerationCandidates(missingSpecClasses: ['App\\Calculator' => 'App\\Calculator'])))->isEmptyCandidates())->toBe(false);
     });
 
 });

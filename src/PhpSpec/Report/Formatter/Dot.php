@@ -18,6 +18,7 @@ use PhpSpec\CodeGeneration\SurroundingCode;
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Result\Counts;
 use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
@@ -35,6 +36,7 @@ final class Dot extends AbstractFormatter
     private int $col = 0;
     private int $total = 0;
     private bool $hasResults = false;
+    private bool $blocked = false;
 
     /**
      * Calculates line widths and delegates to the parent format pipeline.
@@ -61,9 +63,17 @@ final class Dot extends AbstractFormatter
 
     /**
      * Outputs progress characters for each example or step in the result tree.
+     * A specification blocked on a class that does not exist yet is left to
+     * the run, which offers that class where its error would have been reported.
      */
     public function printResult(Results $result): void
     {
+        if ($result instanceof SpecificationResult && $result->isBlockedOnMissingClass()) {
+            $this->blocked = true;
+
+            return;
+        }
+
         if (!$this->hasResults) {
             $this->output->writeln('Once you spec, you never go back!');
             $this->output->writeln('');
@@ -78,8 +88,11 @@ final class Dot extends AbstractFormatter
      */
     public function end(SuiteResult $results): void
     {
-        if (count($results->getResults()) === 0) {
-            $this->output->writeln('No specs found.');
+        if (!$this->hasResults) {
+            if (!$this->blocked) {
+                $this->output->writeln('No specs found.');
+            }
+
             return;
         }
 

@@ -58,14 +58,16 @@ Spec files must end with `.spec.php`. The loader recursively scans the `spec/` d
 
 ## Auto-Class Generation
 
-When a spec references a class that doesn't exist, PhpSpec will prompt you interactively:
+When a spec describes a class that doesn't exist, the run says so where the error would have been, and offers the class:
 
 ```
-Looks like you are trying to spec App\Calculator, a class that doesn't exist yet.
-Would you like me to generate that class for you? [y/n]
+Looks like you are trying to spec App\Calculator,
+a class that doesn't exist yet.
+
+Would you like me to generate that class for you? [Y/n]
 ```
 
-Answering `y` generates the class in `src/` following the namespace structure and autoloads it immediately.
+Pressing Enter generates the class in `src/` following the namespace structure, and names the file it wrote. Run again and the spec runs against it.
 
 ## Story BDD
 

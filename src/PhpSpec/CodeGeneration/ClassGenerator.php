@@ -15,6 +15,7 @@
 namespace PhpSpec\CodeGeneration;
 
 use PhpSpec\Filesystem;
+use PhpSpec\ProjectRoot;
 use PhpSpec\RealFilesystem;
 use RuntimeException;
 
@@ -90,7 +91,9 @@ final class ClassGenerator
     {
         ['shortName' => $className, 'namespace' => $namespace, 'filePath' => $filePath] = self::resolveFqcn($fqcn, $this->srcPath, $this->psr4Prefix);
 
-        return $this->generateClass($className, $filePath, $namespace);
+        $this->generateClass($className, $filePath, $namespace);
+
+        return sprintf('Class %s generated in %s', $fqcn, ProjectRoot::here()->relative($filePath));
     }
 
     /**
@@ -99,10 +102,9 @@ final class ClassGenerator
      * @param string $className the short class name
      * @param string $filePath the absolute path to write the file to
      * @param string $namespace the namespace declaration string (including "namespace" keyword)
-     * @return string confirmation message
      * @throws RuntimeException if the file already exists
      */
-    public function generateClass(string $className, string $filePath, string $namespace): string
+    public function generateClass(string $className, string $filePath, string $namespace): void
     {
         $classContent = <<<EOD
         <?php$namespace
@@ -111,16 +113,16 @@ final class ClassGenerator
         {
 
         }
+
         EOD;
 
-        if (!$this->filesystem->exists($filePath)) {
-            if (!$this->filesystem->exists(dirname($filePath))) {
-                $this->filesystem->mkdir(dirname($filePath));
-            }
-            $this->filesystem->write($filePath, $classContent);
-            return "Class '$className' generated at '$filePath'\n";
-        } else {
-            throw new RuntimeException("Class '$className' already exists at '$filePath'\n");
+        if ($this->filesystem->exists($filePath)) {
+            throw new RuntimeException(sprintf('Class %s already exists in %s.', $className, ProjectRoot::here()->relative($filePath)));
         }
+
+        if (!$this->filesystem->exists(dirname($filePath))) {
+            $this->filesystem->mkdir(dirname($filePath));
+        }
+        $this->filesystem->write($filePath, $classContent);
     }
 }

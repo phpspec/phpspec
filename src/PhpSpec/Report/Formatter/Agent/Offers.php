@@ -52,7 +52,7 @@ final class Offers
             $offers[] = $offer;
         };
 
-        foreach (self::fqcns($candidates, 'missingSpecClasses') as $fqcn) {
+        foreach (self::keys($candidates, 'missingSpecClasses') as $fqcn) {
             $add('create_class', $fqcn);
         }
 
@@ -120,6 +120,17 @@ final class Offers
         $values = $candidates[$key] ?? [];
 
         return is_array($values) ? array_values(array_filter($values, 'is_string')) : [];
+    }
+
+    /**
+     * @param array<string, mixed> $candidates
+     * @return list<string>
+     */
+    private static function keys(array $candidates, string $key): array
+    {
+        $values = $candidates[$key] ?? [];
+
+        return is_array($values) ? array_values(array_filter(array_keys($values), 'is_string')) : [];
     }
 
     /**

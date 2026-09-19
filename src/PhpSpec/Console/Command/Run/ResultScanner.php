@@ -15,6 +15,7 @@
 namespace PhpSpec\Console\Command\Run;
 
 use PhpSpec\Mock\Double;
+use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\ScenarioResult;
@@ -239,27 +240,30 @@ final readonly class ResultScanner
     }
 
     /**
-     * Collects FQCNs of classes that do not exist, referenced in spec examples.
+     * Collects the classes spec examples referenced that do not exist, each
+     * keyed to the class its spec describes: the outermost describe block, or
+     * the missing class itself when no block encloses the example.
      *
      * @param Results $results the results tree to scan
-     * @return array<string> list of missing fully qualified class names
+     * @param string|null $describes the class the enclosing spec describes
+     * @return array<string, string> missing FQCN => the class the spec describes
      */
-    public function collectMissingSpecClasses(Results $results): array
+    public function collectMissingSpecClasses(Results $results, ?string $describes = null): array
     {
         $missing = [];
         foreach ($results->getResults() as $result) {
             if ($result instanceof ExampleResult && $result->isError()) {
-                $error = $result->getError();
-                if ($error !== null && preg_match('/^Class "([^"]+)" not found$/', $error->getMessage(), $m)) {
-                    $missing[$m[1]] = true;
+                $fqcn = $result->getError()?->missingClass();
+                if ($fqcn !== null) {
+                    $missing[$fqcn] = $describes ?? $fqcn;
                 }
             } elseif ($result instanceof Results) {
-                foreach ($this->collectMissingSpecClasses($result) as $fqcn) {
-                    $missing[$fqcn] = true;
-                }
+                $enclosing = $result instanceof ContextResult ? ($describes ?? $result->getTitle()) : $describes;
+                $missing += $this->collectMissingSpecClasses($result, $enclosing);
             }
         }
-        return array_keys($missing);
+
+        return $missing;
     }
 
     /**

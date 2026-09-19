@@ -15,6 +15,7 @@
 namespace PhpSpec\CodeGeneration;
 
 use PhpSpec\Filesystem;
+use PhpSpec\ProjectRoot;
 use PhpSpec\RealFilesystem;
 use RuntimeException;
 
@@ -55,16 +56,20 @@ final class InterfaceGenerator
         {
 
         }
+
         EOD;
 
-        if (!$this->filesystem->exists($filePath)) {
-            if (!$this->filesystem->exists(dirname($filePath))) {
-                $this->filesystem->mkdir(dirname($filePath));
-            }
-            $this->filesystem->write($filePath, $content);
-            return "Interface '$interfaceName' generated at '$filePath'\n";
-        } else {
-            throw new RuntimeException("Interface '$interfaceName' already exists at '$filePath'\n");
+        $file = ProjectRoot::here()->relative($filePath);
+
+        if ($this->filesystem->exists($filePath)) {
+            throw new RuntimeException(sprintf('Interface %s already exists in %s.', $fqcn, $file));
         }
+
+        if (!$this->filesystem->exists(dirname($filePath))) {
+            $this->filesystem->mkdir(dirname($filePath));
+        }
+        $this->filesystem->write($filePath, $content);
+
+        return sprintf('Interface %s generated in %s', $fqcn, $file);
     }
 }

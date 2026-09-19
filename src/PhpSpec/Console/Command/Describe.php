@@ -94,19 +94,17 @@ final class Describe extends Command
         }
 
         $this->generator->generate($spec);
-        $specPath = $this->generator->getSpecPath();
-        $output->writeln(
-            'Specification for ' . $class .
-            ' created in ' . getcwd() . DIRECTORY_SEPARATOR .
-            $specPath . DIRECTORY_SEPARATOR .
-            str_replace('\\', DIRECTORY_SEPARATOR, $class) .
-            $this->generator->getSpecSuffix(),
-        );
+        $output->writeln('');
+        $output->writeln(sprintf(
+            '<fg=green>Specification for <fg=yellow>%s</> created in <fg=yellow>%s</></>',
+            $class,
+            $this->specFile($spec),
+        ));
 
         $method = $input->getOption('exemplify');
         if ($method) {
             $this->generator->addExample($spec, $method);
-            $output->writeln("Example for method <info>$method</info> added.");
+            $output->writeln(sprintf('<fg=green>Example for method <fg=yellow>%s</> added.</>', $method));
         }
 
         if ($input->getOption('run')) {
@@ -118,6 +116,16 @@ final class Describe extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * The spec file for a class path, named from the project root.
+     *
+     * @param string $spec the class path using forward slashes
+     */
+    private function specFile(string $spec): string
+    {
+        return $this->generator->getSpecPath() . '/' . $spec . $this->generator->getSpecSuffix();
     }
 
     /**
@@ -166,7 +174,7 @@ final class Describe extends Command
             'v' => Schema::V,
             'action' => 'describe',
             'class' => str_replace('/', '\\', $spec),
-            'spec' => $this->generator->getSpecPath() . '/' . $spec . $this->generator->getSpecSuffix(),
+            'spec' => $this->specFile($spec),
             'created' => $created,
         ];
 

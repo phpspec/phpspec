@@ -18,7 +18,15 @@ describe(ClassGenerator::class, function () {
 
         expect($fs->mkdir())->toBeCalled();
         expect($fs->write())->toBeCalled();
-        expect($result)->toContain("Class 'Foo' generated");
+        expect($result)->toBe("Class Acme\\Foo generated in src/Acme/Foo.php");
+    });
+
+    it("ends the file with a newline", function (Filesystem $fs) {
+        allow($fs->exists(any()))->toReturn(false);
+
+        $this->generator->generate('Acme\\Foo');
+
+        expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "\n"))))->toBeCalled();
     });
 
     it("throws when class file already exists", function (Filesystem $fs) {
@@ -46,7 +54,7 @@ describe(ClassGenerator::class, function () {
 
         $nested = implode(DIRECTORY_SEPARATOR, ['App', 'Models', 'User.php']);
         expect($fs->write(satisfy(fn (string $path) => str_ends_with($path, $nested)), any()))->toBeCalled();
-        expect($result)->toContain("Class 'User' generated");
+        expect($result)->toContain("Class App\\Models\\User generated in");
     });
 
     it("strips PSR-4 prefix from directory path", function () {

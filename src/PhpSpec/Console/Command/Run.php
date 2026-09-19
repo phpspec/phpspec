@@ -191,7 +191,8 @@ final class Run extends Command
         // Resolved once, here: it is what the run targets, and it recovers the
         // positional path a "--parallel features" swallows, so asking twice
         // would answer differently the second time.
-        $files = $this->suitePaths($input);
+        $given = $this->givenPaths($input);
+        $files = $this->suitePaths($input, $given);
         $document?->targets($files);
 
         // PHP prints a fatal to standard output as well as the error stream, and
@@ -200,7 +201,7 @@ final class Run extends Command
         $displayErrors = $document !== null ? (string) ini_set('display_errors', 'stderr') : null;
 
         try {
-            return $this->perform($input, $prose, $formatter, $files);
+            return $this->perform($input, $prose, $formatter, $files, $given);
         } finally {
             $document?->publish();
             if ($displayErrors !== null) {
@@ -217,12 +218,13 @@ final class Run extends Command
      * @param Output $prose where human-facing lines go
      * @param Formatter $formatter the console formatter for the run's results
      * @param string $files the paths this run targets, as the loader takes them
+     * @param list<string> $given the paths the caller named outright
      * @return int exit code: 0 = success, 1 = failure/error or bootstrap missing, 2 = coverage below minimum
      *
      * @throws RandomException
      * @throws DOMException
      */
-    private function perform(Input $input, Output $prose, Formatter $formatter, string $files): int
+    private function perform(Input $input, Output $prose, Formatter $formatter, string $files, array $given): int
     {
         $missingBootstrap = $this->loadBootstrap($input);
 
@@ -235,6 +237,12 @@ final class Run extends Command
 
         if ($pathsFrom !== null && !is_file($pathsFrom)) {
             return $this->stopped($prose, $formatter, "Paths file not found: $pathsFrom");
+        }
+
+        $missing = self::missingPath($given);
+
+        if ($missing !== null) {
+            return $this->stopped($prose, $formatter, "Path not found: $missing");
         }
 
         $unknownFormats = $this->unknownFormats($input);
@@ -507,10 +515,37 @@ final class Run extends Command
      * suite is loaded, so a run that dies while loading can still say what it
      * was trying to run.
      *
-     * @param Input $input the console input for the file arguments and suite flags
+     * @param Input $input the console input for the suite flags
+     * @param list<string> $given the paths the caller named outright
      * @return string the comma-separated paths
      */
-    private function suitePaths(Input $input): string
+    private function suitePaths(Input $input, array $given): string
+    {
+        if ($given !== []) {
+            return implode(',', $given);
+        }
+
+        if ($input->getOption('story')) {
+            return $this->config->getFeaturesPath();
+        }
+
+        if ($input->getOption('all')) {
+            $suitePaths = $this->config->getAllLoadPaths();
+
+            return str_contains($suitePaths, 'features') ? $suitePaths : $suitePaths . ',features/';
+        }
+
+        return $this->config->getAllLoadPaths();
+    }
+
+    /**
+     * The paths the caller named outright: the arguments, the one a
+     * "--parallel features" swallows, and the lines of a --paths-from file.
+     *
+     * @param Input $input the console input for the file arguments
+     * @return list<string>
+     */
+    private function givenPaths(Input $input): array
     {
         $paths = $input->getArgument('files');
 
@@ -525,24 +560,28 @@ final class Run extends Command
 
         if ($pathsFrom !== null && is_file($pathsFrom)) {
             $listed = file($pathsFrom, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            $paths = array_merge($paths, array_filter(array_map('trim', $listed ?: [])));
+            $paths = array_merge($paths, $listed ?: []);
         }
 
-        if (!empty($paths)) {
-            return implode(',', $paths);
+        return array_values(array_filter(array_map('trim', $paths), static fn(string $path): bool => $path !== ''));
+    }
+
+    /**
+     * The first named path that is not there, or null. Only paths given
+     * outright are checked: a configured default may be absent in a project
+     * with nothing to run yet, which is not a mistake.
+     *
+     * @param list<string> $given the paths the caller named, a line number allowed after a file
+     */
+    private static function missingPath(array $given): ?string
+    {
+        foreach ($given as $path) {
+            if (!file_exists((string) preg_replace('/:\d+$/', '', $path))) {
+                return $path;
+            }
         }
 
-        if ($input->getOption('story')) {
-            return $this->config->getFeaturesPath();
-        }
-
-        if ($input->getOption('all')) {
-            $suitePaths = $this->config->getAllLoadPaths();
-
-            return str_contains($suitePaths, 'features') ? $suitePaths : $suitePaths . ',features/';
-        }
-
-        return $this->config->getAllLoadPaths();
+        return null;
     }
 
     /**

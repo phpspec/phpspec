@@ -114,6 +114,7 @@ final class SpecGenerator
             let("$lcClass", fn() => new $class());
             it("instantiates", fn() => expect(\$this->$lcClass)->toBeAnInstanceOf($class::class));
         });
+
         EOD;
     }
 

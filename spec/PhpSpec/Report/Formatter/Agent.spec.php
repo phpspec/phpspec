@@ -479,7 +479,7 @@ describe(Agent::class, function () {
             new SpecificationResult('App\\Basket', [new ExampleResult('needs a coupon', [], true)]),
         ]);
 
-        $agent = new Agent($output, fn() => ['missingSpecClasses' => ['App\\Coupon']]);
+        $agent = new Agent($output, fn() => ['missingSpecClasses' => ['App\\Coupon' => 'App\\Basket']]);
         $agent->format($suite);
 
         $result = $stream($output->fetch())['result'];

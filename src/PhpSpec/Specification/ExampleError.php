@@ -62,6 +62,19 @@ final class ExampleError extends \Exception
     }
 
     /**
+     * The class this error says does not exist, or null when it is about
+     * anything else.
+     */
+    public function missingClass(): ?string
+    {
+        if (preg_match('/^Class "([^"]+)" not found$/', $this->message, $matches) !== 1) {
+            return null;
+        }
+
+        return $matches[1];
+    }
+
+    /**
      * Returns the stack trace filtered to exclude PhpSpec internals and vendor frames.
      *
      * @return array<int, array<string, mixed>> stack frames from user spec code only

@@ -28,7 +28,7 @@ final readonly class GenerationCandidates
 {
     /**
      * @param array<string, array<array{keyword: string, text: string}>> $undefinedSteps undefined Gherkin steps grouped by feature file path
-     * @param array<string> $missingSpecClasses FQCNs referenced in specs that do not exist
+     * @param array<string, string> $missingSpecClasses FQCNs referenced in specs that do not exist, each keyed to the class its spec describes
      * @param array<string> $missingStepClasses FQCNs referenced in steps that do not exist
      * @param array<string> $missingMockTypes FQCNs that could not be mocked because they do not exist
      * @param array<array{className: string, methodName: string, file: string, line: int}> $undefinedMockInterfaceMethods methods called on interface mocks that do not exist
@@ -64,7 +64,7 @@ final readonly class GenerationCandidates
 
         return match ($action) {
             'create_class' => new self(
-                missingSpecClasses: $named_($this->missingSpecClasses),
+                missingSpecClasses: array_filter($this->missingSpecClasses, static fn(string $fqcn): bool => $fqcn === $target, ARRAY_FILTER_USE_KEY),
                 missingStepClasses: $named_($this->missingStepClasses),
             ),
             'create_interface' => new self(missingMockTypes: $named_($this->missingMockTypes)),
@@ -113,16 +113,22 @@ final readonly class GenerationCandidates
     }
 
     /**
-     * Reconstructs from a json_decode'd array, tolerating missing keys.
+     * Reconstructs from a json_decode'd array, tolerating missing keys and a
+     * missing-class list recorded before the describing class was kept.
      *
      * @param array<string, mixed> $data the decoded candidate data
      * @return self
      */
     public static function fromArray(array $data): self
     {
+        $missingSpecClasses = $data['missingSpecClasses'] ?? [];
+        if (is_array($missingSpecClasses) && array_is_list($missingSpecClasses)) {
+            $missingSpecClasses = array_combine($missingSpecClasses, $missingSpecClasses);
+        }
+
         return new self(
             $data['undefinedSteps'] ?? [],
-            $data['missingSpecClasses'] ?? [],
+            $missingSpecClasses,
             $data['missingStepClasses'] ?? [],
             $data['missingMockTypes'] ?? [],
             $data['undefinedMockInterfaceMethods'] ?? [],

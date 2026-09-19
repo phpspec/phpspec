@@ -18,7 +18,7 @@ describe(InterfaceGenerator::class, function () {
 
         expect($fs->mkdir())->toBeCalled();
         expect($fs->write(any(), satisfy(fn (string $content) => str_contains($content, 'namespace Acme\\Math;'))))->toBeCalled();
-        expect($result)->toContain("Interface 'Calculator' generated");
+        expect($result)->toBe("Interface Acme\\Math\\Calculator generated in src/Acme/Math/Calculator.php");
     });
 
     it("generates interface file without namespace", function (Filesystem $fs) {
@@ -27,7 +27,15 @@ describe(InterfaceGenerator::class, function () {
         $result = $this->generator->generate('Calculator');
 
         expect($fs->write(any(), satisfy(fn (string $content) => !str_contains($content, 'namespace'))))->toBeCalled();
-        expect($result)->toContain("Interface 'Calculator' generated");
+        expect($result)->toBe("Interface Calculator generated in src/Calculator.php");
+    });
+
+    it("ends the file with a newline", function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(false);
+
+        $this->generator->generate('Calculator');
+
+        expect($fs->write(any(), satisfy(fn (string $content) => str_ends_with($content, "\n"))))->toBeCalled();
     });
 
     it("creates directory if missing", function (Filesystem $fs) {
