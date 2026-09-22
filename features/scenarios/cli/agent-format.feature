@@ -525,6 +525,24 @@ Feature: Agent output format
     Then the exit code should be 0
     And a class file "src/App/Coupon.php" should be generated
 
+  Scenario: The summary of an --accept-offers run says what was written and that nothing has verified it
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+      describe('App\Basket', function () {
+          it('applies a coupon', function () {
+              expect(new App\Coupon())->toBeAnInstanceOf(App\Coupon::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent --accept-offers"
+    Then the exit code should be 0
+    And the output should be valid JSON
+    And the output should contain "applied"
+    And the output should contain "src/App/Coupon.php"
+    And the output should contain "verified"
+    And a class file "src/App/Coupon.php" should be generated
+
   Scenario: An empty method surfaces as a fake_method offer, filled by --accept-offers --fake
     Given a spec file "spec/App/Calculator.spec.php":
       """

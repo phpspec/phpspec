@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A request `callback` option is told each exchange (method, url, status, body and headers); the default one attaches the request and response to the report
  - Helper classes under features/support load before step definitions, the Cucumber way
  - A step records how long it ran, shown under `-v` as an example's already was, and its warnings are shown under it
+ - The summary of a `--accept-offers` run carries `applied`: what was written, under the ids the offers carried, the files changed, and that nothing has verified it; a person sees the generation notes on the console instead of nothing
  - `phpspec api` describes the spec-writing API from the code itself: DSL, matchers, mocks, story steps and the timing rules; `--format=agent` gives it to a coding agent as one JSON object
 ### Changed
  - `toBeCalled()` and `toBeCalledTimes()` hold the mock to the arguments written in the expect call; written bare they still mean called at all

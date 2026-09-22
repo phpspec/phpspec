@@ -83,6 +83,9 @@ final class Agent extends AbstractFormatter
     /** What guard made of the change, when guard is on. */
     private ?GuardVerdict $guard = null;
 
+    /** @var list<array{id: string, action: string, target: string, file: string}> */
+    private array $applied = [];
+
     /** @var array{message: string, at: string|null}|null what stopped the run short, when something did */
     private ?array $fatal = null;
 
@@ -176,6 +179,17 @@ final class Agent extends AbstractFormatter
     public function covered(CoverageVerdict $verdict): void
     {
         $this->coverage = $verdict;
+    }
+
+    /**
+     * Takes what --accept-offers wrote after the run, so the summary says it
+     * as data: an exit code of 0 alone reads as verified, and it is not.
+     *
+     * @param list<array{id: string, action: string, target: string, file: string}> $applied
+     */
+    public function applied(array $applied): void
+    {
+        $this->applied = $applied;
     }
 
     /**
@@ -331,6 +345,16 @@ final class Agent extends AbstractFormatter
         $offers = $this->results !== null ? $this->offers($this->results) : [];
         if ($offers !== []) {
             $summary['offers'] = $offers;
+        }
+
+        // Written after the run the counts describe, under the ids the offers
+        // carried, so a reader knows what changed and that it is unverified.
+        if ($this->applied !== []) {
+            $summary['applied'] = [
+                'offers' => $this->applied,
+                'files' => array_values(array_unique(array_column($this->applied, 'file'))),
+                'verified' => false,
+            ];
         }
 
         return $summary;

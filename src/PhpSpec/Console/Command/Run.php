@@ -327,9 +327,19 @@ final class Run extends Command
 
         if ($input->getOption('accept-offers')) {
             // Apply every pending generation offer without prompting, then exit.
-            // The run's own output already went out; generation notes are discarded
-            // so an upstream --format=agent document stays a single clean object.
-            $this->generateCode(new BufferedOutput(), $results, (bool) $input->getOption('fake'), Generation::Accepts);
+            // A person reads the generation notes on the console; an agent gets
+            // what was applied as data in the summary, so its document stays one
+            // clean stream.
+            $applied = $this->generateCode(
+                $formatter instanceof Agent ? new BufferedOutput() : $prose,
+                $results,
+                (bool) $input->getOption('fake'),
+                Generation::Accepts,
+            );
+
+            if ($formatter instanceof Agent) {
+                $formatter->applied($applied);
+            }
 
             return 0;
         }
@@ -888,10 +898,11 @@ final class Run extends Command
      * @param SuiteResult $results the suite results to scan for generation candidates
      * @param bool $fake whether --fake mode is enabled
      * @param Generation $generation how an offer is answered when nobody is asked
+     * @return list<array{id: string, action: string, target: string, file: string}> what was written
      */
-    private function generateCode(Output $output, SuiteResult $results, bool $fake, Generation $generation = Generation::Asks): void
+    private function generateCode(Output $output, SuiteResult $results, bool $fake, Generation $generation = Generation::Asks): array
     {
-        $this->codeGenerator($generation)->generate($output, $results, $fake);
+        return $this->codeGenerator($generation)->generate($output, $results, $fake);
     }
 
     /**

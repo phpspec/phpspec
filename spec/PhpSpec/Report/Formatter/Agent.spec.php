@@ -176,6 +176,29 @@ describe(Agent::class, function () {
         expect($doc['result']['actionable'])->toBe(1);
     });
 
+    it('reports in the summary what --accept-offers wrote, and that nothing has verified it', function () use ($stream) {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->begin();
+        $formatter->printResult(new SpecificationResult('App\\Basket', [new ExampleResult('applies a coupon', [], true)]));
+        $formatter->applied([
+            ['id' => 'o_1', 'action' => 'create_class', 'target' => 'App\\Coupon', 'file' => 'src/App/Coupon.php'],
+            ['id' => 'o_2', 'action' => 'create_method', 'target' => 'App\\Coupon::apply', 'file' => 'src/App/Coupon.php'],
+        ]);
+        $formatter->publish();
+        $doc = $stream($output->fetch());
+
+        expect($doc['result']['applied'])->toBe([
+            'offers' => [
+                ['id' => 'o_1', 'action' => 'create_class', 'target' => 'App\\Coupon', 'file' => 'src/App/Coupon.php'],
+                ['id' => 'o_2', 'action' => 'create_method', 'target' => 'App\\Coupon::apply', 'file' => 'src/App/Coupon.php'],
+            ],
+            'files' => ['src/App/Coupon.php'],
+            'verified' => false,
+        ]);
+        expect($doc['result']['errors'])->toBe(1);
+    });
+
     it('reports coverage without a threshold as met, adding no work', function () use ($stream) {
         $output = new BufferedOutput();
         $formatter = new Agent($output);

@@ -238,6 +238,7 @@ missed and anything that stopped it.
 | `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
 | `guard` | [guard](guard.md) is on and either judged the change or could not | `{ "held": false, "judged": true, "violations": [{ "file", "lines", "member", "remedy" }] }`. Each violation is new logic no example reaches, and adds 1 to `actionable`. When `judged` is `false` there are no violations and a `reason` says what stopped it. |
 | `offers` | the run found code it can generate | The run-wide, de-duplicated list. Absent when there is nothing to take. |
+| `applied` | `--accept-offers` wrote something | `{ "offers": [{ "id", "action", "target", "file" }], "files", "verified": false }`: what was written after the run, under the ids the offers carried. The counts describe the code before it, so run again to verify. |
 
 ### `fatal`: when the run could not finish
 
@@ -305,6 +306,12 @@ bin/phpspec run --accept-offers --fake     # ...and fill empty methods with thei
 and exits `0`. Add `--fake` to also fill empty method bodies with the hardcoded
 returns their specs expect (the `fake_method` offers), a fast way to a first
 green before you replace the fakes with real logic.
+
+The summary of such a run says what was written, in `applied`: each piece
+under the id its offer carried, the files it changed, and `verified: false`,
+because the counts on the same line describe the code before the writing.
+Run again to verify; the exit code of `0` says the offers were applied, not
+that the suite is green.
 
 `generate` proposes rather than writes: its receipt carries an `id` per
 proposal with `applied: false`, and `accept` writes exactly the content that was
@@ -449,6 +456,9 @@ Prefer letting PhpSpec generate boilerplate over writing it by hand:
   `bin/phpspec run --accept-offers`
 - Also fill empty methods with their spec'd return values (fast first green):
   `bin/phpspec run --accept-offers --fake`
+- The summary of an `--accept-offers` run carries `applied`: what was written,
+  by file. Its counts describe the run before the writing, so run again to
+  verify; exit code 0 means applied, not green.
 
 `--fake` produces hardcoded returns to reach green quickly — always replace them
 with real logic before considering the work done. Offers are suggestions, not
