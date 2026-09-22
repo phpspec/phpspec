@@ -278,6 +278,11 @@ expect(fn () => throw new \RuntimeException('boom'))
     ->toThrow(\RuntimeException::class, 'boom');
 ```
 
+The callable runs where the expectation is written, so the lines after it see
+what it did: a fixture cleaned up in a `finally`, or a file checked for
+rollback, is looked at after the operation, in reading order. Only the verdict
+waits for the end of the example, as it does for every matcher.
+
 ## HTTP Response Matchers
 
 For asserting on HTTP responses. All work with the built-in `Browser\Response`

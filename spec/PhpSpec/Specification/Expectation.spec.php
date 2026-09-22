@@ -63,6 +63,32 @@ describe(Expectation::class, function() {
             expect(fn() => throw new \RuntimeException("boom"))->toThrow(\RuntimeException::class);
         });
 
+        it("runs the callable where toThrow is written, so what follows sees its effects", function() {
+            $ran = false;
+            expect(function () use (&$ran) {
+                $ran = true;
+
+                throw new \RuntimeException("boom");
+            })->toThrow(\RuntimeException::class);
+
+            expect($ran)->toBeTrue();
+        });
+
+        it("judges what the callable threw when it ran, not the state at the end of the example", function() {
+            $path = tempnam(sys_get_temp_dir(), 'phpspec_throw_');
+            file_put_contents($path, '{broken');
+
+            try {
+                expect(function () use ($path) {
+                    $raw = is_file($path) ? (string) file_get_contents($path) : '';
+
+                    return $raw === '' ? [] : json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+                })->toThrow(\JsonException::class);
+            } finally {
+                unlink($path);
+            }
+        });
+
         it("passes toThrow with message check", function() {
             expect(fn() => throw new \RuntimeException("boom"))->toThrow(\RuntimeException::class, "boom");
         });

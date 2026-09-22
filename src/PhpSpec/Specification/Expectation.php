@@ -778,40 +778,29 @@ class Expectation
      */
     public function toThrow(string $exceptionClass = '', ?string $message = null): static
     {
-        // What the callable did, filled in as it runs: the exception it threw,
-        // or the sentence for having thrown none. The reader is comparing what
-        // was asked for against what happened, not against the callable itself.
+        // The subject is the operation under test, so it runs here, where the
+        // expectation is written, and what follows in the example sees what it
+        // did. Only the verdict waits for the end of the example. The reader
+        // is then shown what was asked for against what happened: the
+        // exception it threw, or the sentence for having thrown none.
         $outcome = self::NOTHING_THROWN;
 
+        try {
+            ($this->subject)();
+        } catch (\Throwable $e) {
+            $outcome = $e;
+        }
+
         return $this->match(
-            function ($expected) use ($exceptionClass, $message, &$outcome) {
-                try {
-                    $expected();
-
-                    return false;
-                } catch (\Throwable $e) {
-                    $outcome = $e;
-                    if ($exceptionClass !== '' && !($e instanceof $exceptionClass)) {
-                        return false;
-                    }
-                    if ($message !== null && $e->getMessage() !== $message) {
-                        return false;
-                    }
-
-                    return true;
-                }
-            },
+            fn() => $outcome instanceof \Throwable
+                && ($exceptionClass === '' || $outcome instanceof $exceptionClass)
+                && ($message === null || $outcome->getMessage() === $message),
             $exceptionClass === '' ? 'Expected callable to throw' : 'Expected callable to throw %s',
             $exceptionClass === '' ? '' : ObjectName::named($exceptionClass, $message),
             // Whatever it was asked for, or nothing at all when it was asked
             // only to throw.
             $exceptionClass === '' ? self::NO_TARGET : ObjectName::named($exceptionClass, $message),
-            // By reference, and not an arrow function: this has to read the
-            // outcome as it stands once the callable has run, not as it stood
-            // when the expectation was written.
-            ['__implied' => $exceptionClass === '', '__actual' => function () use (&$outcome) {
-                return $outcome;
-            }],
+            ['__implied' => $exceptionClass === '', '__actual' => fn() => $outcome],
         );
     }
 
