@@ -8,6 +8,8 @@ use PhpSpec\LineTargetRegistry;
 use PhpSpec\Specification\Context;
 use PhpSpec\Specification\Subject;
 use PhpSpec\Result\ContextResult;
+use PhpSpec\StopConditions;
+use PhpSpec\StopRegistry;
 use PhpSpec\TitleFilter;
 
 describe(Context::class, function() {
@@ -530,6 +532,29 @@ describe(Context::class, function() {
         }
 
         expect($ran)->toBe(['first', 'third']);
+    });
+
+    it("runs no more examples once a stop condition is met", function () {
+        $ran = [];
+        $block = function () use (&$ran) {
+            it("first", function () use (&$ran) { $ran[] = 'first'; throw new \RuntimeException('boom'); });
+            it("second", function () use (&$ran) { $ran[] = 'second'; });
+        };
+        $saved = \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher();
+        \PhpSpec\EventDispatcher\DispatcherRegistry::reset();
+        StopRegistry::activate(new StopConditions(onError: true));
+
+        try {
+            $ctx = new Context("Halting", $block);
+            $ctx->setWorld(new Subject());
+            $result = $ctx->run();
+        } finally {
+            StopRegistry::reset();
+            \PhpSpec\EventDispatcher\DispatcherRegistry::set($saved);
+        }
+
+        expect($ran)->toBe(['first']);
+        expect($result->getResults())->toHaveCount(1);
     });
 
     it("runs the whole context when the targeted line is inside it but on no example", function () {

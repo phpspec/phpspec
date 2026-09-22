@@ -24,6 +24,7 @@ use PhpSpec\Results;
 use PhpSpec\Specification\PendingException;
 use PhpSpec\Specification\SkippedException;
 use PhpSpec\Specification\SpecBlock;
+use PhpSpec\StopRegistry;
 use PhpSpec\TitleFilter;
 
 /**
@@ -89,17 +90,22 @@ final readonly class Feature implements SpecBlock
     {
         $this->hooks->runBeforeFeature();
 
-        foreach ($this->featureNode->scenarios as $scenario) {
-            if ($scenario instanceof ScenarioOutlineNode) {
-                foreach ($scenario->expand() as $expanded) {
-                    yield $this->runScenario($expanded);
-                }
-            } else {
-                yield $this->runScenario($scenario);
-            }
-        }
+        try {
+            foreach ($this->featureNode->scenarios as $scenario) {
+                $expansions = $scenario instanceof ScenarioOutlineNode ? $scenario->expand() : [$scenario];
 
-        $this->hooks->runAfterFeature();
+                foreach ($expansions as $expanded) {
+                    $result = $this->runScenario($expanded);
+                    yield $result;
+
+                    if (StopRegistry::reached($result)) {
+                        return;
+                    }
+                }
+            }
+        } finally {
+            $this->hooks->runAfterFeature();
+        }
     }
 
     /**

@@ -160,6 +160,21 @@ Feature: Agent output format
     And the output should contain "rerun"
     And the output should contain "run spec/App/Calc.spec.php:"
 
+  Scenario: A stop flag halts the run at the first example that meets it
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('Calc', function () {
+          it('adds', function () { throw new RuntimeException('boom'); });
+          it('subtracts', function () { expect(1)->toBe(1); });
+          it('multiplies', function () { throw new RuntimeException('bang'); });
+      });
+      """
+    When I run phpspec run with option "--format=agent --stop-on-error"
+    Then the output should be valid JSON
+    And the output should contain "Calc > adds" exactly 1 times
+    And the output should not contain "multiplies"
+
   Scenario: A rerun naming several lines of one file reports each example once
     Given a spec file "spec/App/Calc.spec.php":
       """

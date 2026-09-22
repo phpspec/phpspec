@@ -284,7 +284,8 @@ rejected with an error rather than silently falling back.
 | `--seed=SEED` | Seed for random ordering (for reproducibility) |
 
 **Stopping early.** By default a run continues to the end. These flags halt it at
-the first result of a given kind (useful for tight feedback loops and CI):
+the first result of a given kind: nothing after that example or scenario runs,
+in its own file or in any later one (useful for tight feedback loops and CI):
 
 | Option | Stops on the first... |
 |---|---|

@@ -541,6 +541,54 @@ Feature: CLI options
     When I run phpspec run with option "--stop-on-error"
     Then the output should not contain "ZZAfterError"
 
+  Scenario: Stop on the first error inside a file
+    Given a spec file "spec/App/Halting.spec.php":
+      """
+      <?php
+      describe('Halting', function () {
+          it('errors', function () {
+              throw new RuntimeException('boom');
+          });
+          it('later example in the same describe', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      describe('HaltingToo', function () {
+          it('later describe in the same file', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--stop-on-error"
+    Then the output should contain "✘ errors"
+    And the output should not contain "✓"
+    And the output should not contain "HaltingToo"
+    And the output should contain "1 example ("
+
+  Scenario: Stop on the first failing scenario inside a feature
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/halting.feature":
+      """
+      Feature: Halting
+        Scenario: Fails
+          Given a failing step
+        Scenario: Should not run
+          Given a later step
+      """
+    And a step file "features/steps/halting.steps.php":
+      """
+      <?php
+      given('a failing step', function () {
+          expect(1)->toBe(2);
+      });
+      given('a later step', function () {
+          expect(true)->toBeTrue();
+      });
+      """
+    When I run phpspec run with option "features/ --stop-on-failure"
+    Then the output should not contain "Should not run"
+    And the output should contain "1 scenario,"
+
   Scenario: Stop on first warning
     Given a spec file "spec/App/AAStopWarning.spec.php":
       """

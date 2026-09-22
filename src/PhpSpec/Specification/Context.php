@@ -24,6 +24,7 @@ use PhpSpec\LineTargetRegistry;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Results;
+use PhpSpec\StopRegistry;
 use ReflectionException;
 use ReflectionFunction;
 use Throwable;
@@ -161,9 +162,14 @@ class Context implements ExampleRegistry, Rebindable
                     $block->inheritHooks($this->beforeEachHooks, $this->afterEachHooks, $this->letBindings);
                 }
 
-                $results[] = $block instanceof Example && !$block->isPending()
+                $result = $block instanceof Example && !$block->isPending()
                     ? $this->runExampleWithHooks($block)
                     : $block->run();
+                $results[] = $result;
+
+                if (StopRegistry::reached($result)) {
+                    break;
+                }
             }
 
             if (!$this->pending) {

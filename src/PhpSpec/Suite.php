@@ -17,8 +17,6 @@ namespace PhpSpec;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\SuiteFinished;
 use PhpSpec\EventDispatcher\Event\SuiteStarted;
-use PhpSpec\Result\ExampleResult;
-use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Specification\SpecBlock;
 
@@ -60,14 +58,21 @@ final readonly class Suite implements SpecBlock
             shuffle($specs);
         }
 
-        foreach ($specs as $spec) {
-            $result = $spec->run();
-            yield $result;
+        if ($stop->any()) {
+            StopRegistry::activate($stop);
+        }
 
-            if ($stop->any() && $this->shouldStop($result, $stop)) {
-                DispatcherRegistry::dispatcher()->dispatch(new SuiteFinished(), SuiteFinished::NAME);
-                return;
+        try {
+            foreach ($specs as $spec) {
+                $result = $spec->run();
+                yield $result;
+
+                if (StopRegistry::reached($result)) {
+                    break;
+                }
             }
+        } finally {
+            StopRegistry::reset();
         }
 
         DispatcherRegistry::dispatcher()->dispatch(new SuiteFinished(), SuiteFinished::NAME);
@@ -85,44 +90,4 @@ final readonly class Suite implements SpecBlock
         return new SuiteResult(iterator_to_array($this->stream($stop, $seed), false));
     }
 
-    /**
-     * Recursively checks whether a result tree should trigger a stop.
-     *
-     * @param Results $results result node to inspect
-     * @param StopConditions $stop the active stop conditions
-     */
-    private function shouldStop(Results $results, StopConditions $stop): bool
-    {
-        foreach ($results->getResults() as $result) {
-            if ($result instanceof ExampleResult) {
-                if ($stop->onFailure && ($result->isFailure() || $result->isError())) {
-                    return true;
-                }
-                if ($stop->onError && $result->isError()) {
-                    return true;
-                }
-                if ($stop->onWarning && $result->hasWarnings()) {
-                    return true;
-                }
-                if ($stop->onDeprecation && $result->hasDeprecations()) {
-                    return true;
-                }
-                if ($stop->onNotice && $result->hasNotices()) {
-                    return true;
-                }
-                if ($stop->onSkipped && $result->isSkipped()) {
-                    return true;
-                }
-            } elseif ($result instanceof StepResult) {
-                if ($stop->onFailure && $result->isFailure()) {
-                    return true;
-                }
-            } elseif ($result instanceof Results) {
-                if ($this->shouldStop($result, $stop)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 }

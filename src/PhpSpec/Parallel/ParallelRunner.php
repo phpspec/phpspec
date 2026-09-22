@@ -14,8 +14,6 @@
 
 namespace PhpSpec\Parallel;
 
-use PhpSpec\Result\ExampleResult;
-use PhpSpec\Result\StepResult;
 use PhpSpec\Results;
 use PhpSpec\StopConditions;
 
@@ -116,7 +114,7 @@ final class ParallelRunner
                     $results = $fiber->getReturn();
                     foreach ($results as $result) {
                         yield $result;
-                        if ($this->stop->any() && self::shouldStop($result, $this->stop)) {
+                        if ($this->stop->metBy($result)) {
                             foreach ($processes as $p) {
                                 $p->terminate();
                             }
@@ -170,41 +168,4 @@ final class ParallelRunner
         return $resolved !== false ? $resolved : $argv0;
     }
 
-    /**
-     * Checks whether any result in the tree triggers a configured stop condition.
-     */
-    private static function shouldStop(Results $results, StopConditions $stop): bool
-    {
-        foreach ($results->getResults() as $result) {
-            if ($result instanceof ExampleResult) {
-                if ($stop->onFailure && ($result->isFailure() || $result->isError())) {
-                    return true;
-                }
-                if ($stop->onError && $result->isError()) {
-                    return true;
-                }
-                if ($stop->onWarning && $result->hasWarnings()) {
-                    return true;
-                }
-                if ($stop->onDeprecation && $result->hasDeprecations()) {
-                    return true;
-                }
-                if ($stop->onNotice && $result->hasNotices()) {
-                    return true;
-                }
-                if ($stop->onSkipped && $result->isSkipped()) {
-                    return true;
-                }
-            } elseif ($result instanceof StepResult) {
-                if ($stop->onFailure && ($result->isFailure() || $result->isError())) {
-                    return true;
-                }
-            } elseif ($result instanceof Results) {
-                if (self::shouldStop($result, $stop)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 }

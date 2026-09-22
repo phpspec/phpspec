@@ -75,7 +75,12 @@ class Specification implements ExampleRegistry, SpecBlock
                     $specBlock->setWorld($subject);
                 }
 
-                $blockResults[] = $specBlock->run();
+                $blockResult = $specBlock->run();
+                $blockResults[] = $blockResult;
+
+                if (StopRegistry::reached($blockResult)) {
+                    break;
+                }
             }
         } finally {
             DispatcherRegistry::dispatcher()->restore($subscribers);

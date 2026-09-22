@@ -14,6 +14,9 @@
 
 namespace PhpSpec;
 
+use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\StepResult;
+
 /**
  * @internal
  * Value object specifying which result states should halt the suite early.
@@ -48,6 +51,34 @@ final readonly class StopConditions
             || $this->onDeprecation
             || $this->onNotice
             || $this->onSkipped;
+    }
+
+    /**
+     * Whether this result, or any result under it, is of a kind to stop on.
+     */
+    public function metBy(Results $result): bool
+    {
+        if ($result instanceof ExampleResult) {
+            return ($this->onFailure && ($result->isFailure() || $result->isError()))
+                || ($this->onError && $result->isError())
+                || ($this->onWarning && $result->hasWarnings())
+                || ($this->onDeprecation && $result->hasDeprecations())
+                || ($this->onNotice && $result->hasNotices())
+                || ($this->onSkipped && $result->isSkipped());
+        }
+
+        if ($result instanceof StepResult) {
+            return ($this->onFailure && ($result->isFailure() || $result->isError()))
+                || ($this->onError && $result->isError());
+        }
+
+        foreach ($result->getResults() as $child) {
+            if ($this->metBy($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
