@@ -186,7 +186,7 @@ stop_on_skipped: true
 
 ### `autoload`
 
-PSR-4 namespace-to-directory mappings. PhpSpec uses these to locate source files for code generation and to autoload classes during spec execution.
+PSR-4 namespace-to-directory mappings, used to autoload classes while specs run. Where generated classes are written is decided by `src_path` and `psr4_prefix`, or by `composer.json` when neither is set; see [Code Generation](code-generation.md#where-generated-classes-go).
 
 ```yaml
 autoload:

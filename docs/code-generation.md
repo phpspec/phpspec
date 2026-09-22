@@ -35,6 +35,27 @@ Generates a spec that includes an example for the `add` method.
 
 The argument uses `/` as separator: `App/Calculator` becomes `spec/App/Calculator.spec.php`. This maps to the namespace `App\Calculator`.
 
+## Where Generated Classes Go
+
+A generated class, interface or method stub is written under the source
+directory, at the path its namespace maps to. The mapping is taken, in order,
+from:
+
+1. The phpspec config: `src_path` with `psr4_prefix`, or a suite's `src` with
+   its `namespace`. The prefix is the part of the namespace the directory
+   already stands for, so `psr4_prefix: App` with `src_path: src` puts
+   `App\Model\User` in `src/Model/User.php`.
+2. Otherwise `composer.json`: the first entry under `autoload.psr-4`, which is
+   what Composer autoloads from, so `"Tasker\\": "src/"` puts `Tasker\TaskList`
+   in `src/TaskList.php`.
+3. Otherwise `src/` with every namespace segment as a directory:
+   `src/Tasker/TaskList.php`.
+
+A phpspec `autoload` map is consulted at run time only, to load classes while
+specs run; a config that states one keeps the third layout for generation.
+The offer, the diff and the receipt all name the file that will be or was
+written, so a wrong guess is visible before it is taken.
+
 ## The `exemplify` Command
 
 Add an example for a single method to a spec (creating the spec first if it

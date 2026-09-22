@@ -316,4 +316,42 @@ describe(Loader::class, function () {
         expect($scenarios[0]->getTitle())->toBe('Second');
     });
 
+    it("loads a feature once with the scenarios at every line targeted on it", function (Filesystem $fs) {
+        allow($fs->isFile())->toReturnUsing(fn(string $p) => $p === './features/greeting.feature');
+        allow($fs->isDir())->toReturn(false);
+        allow($fs->read())->toReturn(
+            "Feature: Test\n  Scenario: First\n    Given a step\n\n  Scenario: Second\n    Given a step\n\n  Scenario: Third\n    Given a step\n"
+        );
+
+        $suite = (new Loader($fs))->load('./features/greeting.feature:8,./features/greeting.feature:2');
+
+        $features = $suite->getSpecifications();
+        expect($features)->toHaveCount(1);
+        $scenarios = $features[0]->run()->getResults();
+        expect(array_map(fn($scenario) => $scenario->getTitle(), $scenarios))->toBe(['First', 'Third']);
+    });
+
+    it("loads a spec file once however many of its lines are targeted", function (Filesystem $fs) {
+        allow($fs->isFile())->toReturnUsing(fn(string $p) => $p === './spec/Picky.spec.php');
+        allow($fs->isDir())->toReturn(false);
+
+        $suite = (new Loader($fs))->load('./spec/Picky.spec.php:3,./spec/Picky.spec.php:9');
+
+        expect($suite->getSpecifications())->toHaveCount(1);
+    });
+
+    it("loads a file whole when it is asked for whole as well as by a line", function (Filesystem $fs) {
+        allow($fs->isFile())->toReturnUsing(fn(string $p) => $p === './features/greeting.feature');
+        allow($fs->isDir())->toReturn(false);
+        allow($fs->read())->toReturn(
+            "Feature: Test\n  Scenario: First\n    Given a step\n\n  Scenario: Second\n    Given a step\n"
+        );
+
+        $suite = (new Loader($fs))->load('./features/greeting.feature:5,./features/greeting.feature');
+
+        $features = $suite->getSpecifications();
+        expect($features)->toHaveCount(1);
+        expect($features[0]->run()->getResults())->toHaveCount(2);
+    });
+
 });

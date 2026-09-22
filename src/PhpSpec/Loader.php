@@ -58,31 +58,13 @@ final class Loader
             $files = './spec';
         }
 
-        $paths = array_map('trim', explode(',', $files));
         $blocks = [];
 
-        foreach ($paths as $path) {
-            if ($path === '') {
-                continue;
-            }
-
-            $lineTarget = null;
-
-            if (preg_match('/^(.+):(\d+)$/', $path, $matches) === 1
-                && (str_ends_with($matches[1], '.feature') || str_ends_with($matches[1], $this->specSuffix))
-            ) {
-                $path = $matches[1];
-                $lineTarget = (int) $matches[2];
-            }
-
+        foreach ($this->targets($files) as $path => $lines) {
             if ($this->isFeaturePath($path)) {
-                $blocks = array_merge($blocks, $this->loadFeatures($path, $lineTarget));
+                $blocks = array_merge($blocks, $this->loadFeatures($path, $lines));
             } else {
-                if ($lineTarget !== null) {
-                    // Example positions are only known at run time; the
-                    // registry hands the target to the spec as it runs
-                    LineTargetRegistry::add($path, $lineTarget);
-                }
+                LineTargetRegistry::add($path, ...$lines);
                 $blocks = array_merge($blocks, $this->loadSuite($path));
             }
         }
@@ -92,6 +74,41 @@ final class Loader
         }
 
         return new Suite($blocks);
+    }
+
+    /**
+     * The paths to load, each with the lines its "path:LINE" selectors
+     * target. A path asked for whole has no lines, and a selector on it does
+     * not narrow it.
+     *
+     * @param string $files the comma-separated paths
+     * @return array<string, list<int>>
+     */
+    private function targets(string $files): array
+    {
+        $targets = [];
+        $whole = [];
+
+        foreach (array_map('trim', explode(',', $files)) as $path) {
+            if ($path === '') {
+                continue;
+            }
+
+            if (preg_match('/^(.+):(\d+)$/', $path, $matches) !== 1
+                || (!str_ends_with($matches[1], '.feature') && !str_ends_with($matches[1], $this->specSuffix))
+            ) {
+                $whole[$path] = true;
+                $targets[$path] = [];
+
+                continue;
+            }
+
+            if (!isset($whole[$matches[1]])) {
+                $targets[$matches[1]][] = (int) $matches[2];
+            }
+        }
+
+        return $targets;
     }
 
     /**
@@ -207,14 +224,14 @@ final class Loader
 
     /**
      * Parses Gherkin feature files and loads associated step definitions.
-     * When a line target is given, each feature is reduced to the scenarios
-     * addressed by that line.
+     * When lines are targeted, each feature is reduced to the scenarios they
+     * address.
      *
      * @param string $path directory or file containing .feature files
-     * @param int|null $lineTarget line number from a "file.feature:LINE" path, or null to load all scenarios
+     * @param list<int> $lines the line numbers from "file.feature:LINE" paths, none to load all scenarios
      * @return array<\PhpSpec\StoryBDD\Feature>
      */
-    private function loadFeatures(string $path, ?int $lineTarget = null): array
+    private function loadFeatures(string $path, array $lines = []): array
     {
         $parser = new GherkinParser();
         $featureFiles = [];
@@ -261,12 +278,12 @@ final class Loader
             $content = $this->fs->read($featureFile);
             $featureNode = $parser->parse($content, $featureFile);
 
-            if ($lineTarget !== null) {
+            if ($lines !== []) {
                 $featureNode = new FeatureNode(
                     $featureNode->title,
                     $featureNode->description,
                     $featureNode->background,
-                    ScenarioLineSelector::select($featureNode->scenarios, $lineTarget),
+                    ScenarioLineSelector::select($featureNode->scenarios, ...$lines),
                     $featureNode->tags,
                 );
             }

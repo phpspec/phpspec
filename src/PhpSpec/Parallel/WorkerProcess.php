@@ -21,6 +21,7 @@ use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Specification\ExampleError;
+use PhpSpec\StopConditions;
 use PhpSpec\StoryBDD\StepError;
 
 /**
@@ -45,12 +46,14 @@ final class WorkerProcess
      * @param string $phpspecBin absolute path to the phpspec binary
      * @param string|null $coveragePartial file path for the worker to dump raw coverage state to, or null to run without coverage
      * @param string|null $configPath explicit config file path to forward to the worker, or null to use the working directory lookup
+     * @param StopConditions $stop the conditions the worker halts on, as its parent does
      */
     public function __construct(
         private readonly array $paths,
         private readonly string $phpspecBin,
         private readonly ?string $coveragePartial = null,
         private readonly ?string $configPath = null,
+        private readonly StopConditions $stop = new StopConditions(),
     ) {}
 
     /**
@@ -79,6 +82,8 @@ final class WorkerProcess
         if ($this->configPath !== null) {
             $command[] = '--config=' . $this->configPath;
         }
+
+        array_push($command, ...$this->stop->options());
 
         return array_values($command);
     }

@@ -75,7 +75,12 @@ class Specification implements ExampleRegistry, SpecBlock
                     $specBlock->setWorld($subject);
                 }
 
-                $blockResults[] = $specBlock->run();
+                $blockResult = $specBlock->run();
+                $blockResults[] = $blockResult;
+
+                if (StopRegistry::reached($blockResult)) {
+                    break;
+                }
             }
         } finally {
             DispatcherRegistry::dispatcher()->restore($subscribers);
@@ -118,23 +123,24 @@ class Specification implements ExampleRegistry, SpecBlock
     }
 
     /**
-     * Returns the top-level blocks to run, honouring an active line target:
-     * only blocks whose closure spans the targeted line run, and none when
-     * the line falls outside every block.
+     * Returns the top-level blocks to run, honouring the active line targets:
+     * only blocks whose closure spans a targeted line run, and none when
+     * every line falls outside every block.
      *
-     * @return array<SpecBlock> the blocks addressed by the line target, or all blocks
+     * @return array<SpecBlock> the blocks addressed by the line targets, or all blocks
      */
     private function targetedSpecBlocks(): array
     {
-        $line = LineTargetRegistry::currentTarget();
+        $lines = LineTargetRegistry::currentTargets();
 
-        if ($line === null) {
+        if ($lines === []) {
             return $this->specBlocks;
         }
 
         return array_values(array_filter(
             $this->specBlocks,
-            fn(SpecBlock $block) => $block instanceof Specification\Context && $block->containsLine($line),
+            fn(SpecBlock $block) => $block instanceof Specification\Context
+                && array_filter($lines, $block->containsLine(...)) !== [],
         ));
     }
 

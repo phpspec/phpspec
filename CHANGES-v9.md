@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A request `callback` option is told each exchange (method, url, status, body and headers); the default one attaches the request and response to the report
  - Helper classes under features/support load before step definitions, the Cucumber way
  - A step records how long it ran, shown under `-v` as an example's already was, and its warnings are shown under it
+ - When nothing in the phpspec config lays out the source tree, generated classes follow the first PSR-4 mapping in composer.json instead of assuming `src/` plus every namespace segment
+ - The summary of a `--accept-offers` run carries `applied`: what was written, under the ids the offers carried, the files changed, and that nothing has verified it; a person sees the generation notes on the console instead of nothing
+ - `phpspec api` describes the spec-writing API from the code itself: DSL, matchers, mocks, story steps and the timing rules; `--format=agent` gives it to a coding agent as one JSON object
+ - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
 ### Changed
  - `toBeCalled()` and `toBeCalledTimes()` hold the mock to the arguments written in the expect call; written bare they still mean called at all
  - The pretty formatter reports an example and a step the same way: one set of glyphs (✓ ✘ ○ - ?), the title in the outcome's colour, and a spec headed `Spec:` as a feature is headed `Feature:`
@@ -19,6 +23,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - The `accept` receipt names each offer's `target` and the `files` it wrote; its `path` had carried a class or method name for generated code
+ - `run --help` names `agent` among the formats
+ - The console application is named phpspec and carries its version as a version, so `--version` reads `phpspec 9.0.0-beta.21` and a command can ask which version it runs in
+ - `toThrow()` runs its callable where the expectation is written, so a `finally` cleanup or a later assertion sees what it did; only the verdict waits for the end of the example
+ - A `--stop-on-*` flag halts the run at the example or scenario that meets it, instead of finishing that file first, under `--parallel` too; a step that threw now stops a `--stop-on-error` run as an example that threw does
+ - Several `path:LINE` selectors on one file run each addressed example or scenario once, so the `rerun` command in an agent summary can be pasted back as it is
  - A path given to `run` that does not exist stops the run and is named, instead of finding no specs and exiting 0
  - A generated class, interface or spec ends with a newline
  - A subscriber leaked by one example or spec file no longer collects and re-judges later matches: each example and each file restores the dispatcher on its way out, so a full run and a single-file run agree

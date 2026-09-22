@@ -29,9 +29,9 @@ reaches you while the rest is still running.
 It is `--parallel`-safe, with one caveat: workers report back through JUnit,
 which carries the outcome, the message and a scenario's line, and nothing else.
 Entries from a parallel run therefore arrive in completion order and without
-`expectation` or `output`; a failing spec example also arrives without
-`spec` and `rerun`, which JUnit has no room for. Run without `--parallel` when
-you want the whole of the detail.
+`expectation` or `output`; a spec example, failing or passing, also arrives
+without `spec` and `rerun`, which JUnit has no room for. Run without
+`--parallel` when you want the whole of the detail.
 
 ## The stream
 
@@ -66,9 +66,13 @@ this point nothing has run yet, and the `summary` carries them.
 
 ### `example` — only what needs attention
 
-**Passing entries are omitted.** A green suite of thousands need not spend
-tokens on entries an agent will never act on — the summary still counts them.
-Each listed entry is one that failed, errored, or is pending/skipped.
+**Passing entries are omitted** unless you ask for them. A green suite of
+thousands need not spend tokens on entries an agent will never act on; the
+summary still counts them. Each listed entry is one that failed, errored, or is
+pending/skipped. Under `-v` every passing example and scenario is reported too,
+as `{id, example, state: "passing", spec, rerun}`, so you can name the examples
+that cover a change and re-run one of them on its own. The summary is the same
+either way, and its `rerun` still names only what failed.
 
 **One entry is one thing to fix.** A spec run reports examples; a Story BDD run
 reports **scenarios**, not steps, because a scenario is what fails, what re-runs,
@@ -82,9 +86,9 @@ Scenario Outline is its own entry, named by its values
 |---|---|
 | `id` | A stable identifier for this example: a hash of its full name. It survives edits that move lines or change where a failure fires, so you can ask *"is THIS exact failure still here?"* across runs. Recomputable from `example`. |
 | `example` | The full name, as a path: `App\Basket > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. |
-| `state` | `failing`, `error`, `pending`, or `skipped` (`passing` entries are omitted). |
+| `state` | `failing`, `error`, `pending`, or `skipped`; `passing` only under `-v`. |
 | `message` | What went wrong, whatever the state. An `error` entry keeps `exception` too, for the class and the site. |
-| `spec` | The `file:line` of the failing assertion or the error, project-relative. For a scenario it is the line its `Scenario:` keyword sits on. Absent when the site is not known. |
+| `spec` | The `file:line` of the failing assertion or the error, project-relative. For a passing example it is the line its `it()` sits on; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
 | `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. No full-suite re-run needed to verify one fix. Absent with `spec`. |
 | `output` | What the code printed while this entry ran, present only when it printed something. See [Printed output](#printed-output). |
 | `attachments` | Context the spec or scenario handed over about itself, by name. See [Handing over context](#handing-over-context-phpspec-cannot-see). |
@@ -238,6 +242,7 @@ missed and anything that stopped it.
 | `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
 | `guard` | [guard](guard.md) is on and either judged the change or could not | `{ "held": false, "judged": true, "violations": [{ "file", "lines", "member", "remedy" }] }`. Each violation is new logic no example reaches, and adds 1 to `actionable`. When `judged` is `false` there are no violations and a `reason` says what stopped it. |
 | `offers` | the run found code it can generate | The run-wide, de-duplicated list. Absent when there is nothing to take. |
+| `applied` | `--accept-offers` wrote something | `{ "offers": [{ "id", "action", "target", "file" }], "files", "verified": false }`: what was written after the run, under the ids the offers carried. The counts describe the code before it, so run again to verify. |
 
 ### `fatal`: when the run could not finish
 
@@ -294,6 +299,17 @@ seen, and refuses an offer whose file has changed since it was made: at that
 point the decision was taken about something else. Nothing is applied unless
 every named offer can be.
 
+With `--format=agent`, `accept` answers with one receipt:
+
+```json
+{"v":2,"action":"accept","accepted":[{"id":"o_7f3a1c2d","action":"create_class","target":"App\\Coupon","files":["src/App/Coupon.php"],"applied":true}]}
+```
+
+`target` is what the offer named, a class, a method, a feature file, or the
+path of a proposed write; `files` are the files it wrote, from the project
+root. Generated classes land where the project's layout says their namespace
+lives (see [Code Generation](code-generation.md#where-generated-classes-go)).
+
 For the common case of taking everything a run found, the bulk shortcut remains:
 
 ```bash
@@ -305,6 +321,12 @@ bin/phpspec run --accept-offers --fake     # ...and fill empty methods with thei
 and exits `0`. Add `--fake` to also fill empty method bodies with the hardcoded
 returns their specs expect (the `fake_method` offers), a fast way to a first
 green before you replace the fakes with real logic.
+
+The summary of such a run says what was written, in `applied`: each piece
+under the id its offer carried, the files it changed, and `verified: false`,
+because the counts on the same line describe the code before the writing.
+Run again to verify; the exit code of `0` says the offers were applied, not
+that the suite is green.
 
 `generate` proposes rather than writes: its receipt carries an `id` per
 proposal with `applied: false`, and `accept` writes exactly the content that was
@@ -386,8 +408,8 @@ its `event`:
   weaken the code to get past it. If `judged` is `false`, guard reached no
   conclusion at all and `reason` says why: nothing was checked, so do not read
   the run as having been guarded.
-- `example` lines are what needs attention (passing examples are not reported).
-  Each has a `state`:
+- `example` lines are what needs attention (passing examples are reported only
+  under `-v`). Each has a `state`:
   - `failing` — the code ran but behaviour is wrong. Look at
     `expectation.expected` (what the spec wants), `expectation.actual` (what the
     code produced), and `message`.
@@ -409,6 +431,18 @@ its `event`:
 - Track a specific failure across runs by its `id` (stable across edits that
   move lines). A failure is fixed when its `id` no longer appears. A failing
   Story BDD scenario has an `id` and a `rerun` of its own, just like an example.
+
+## Learning the spec-writing API
+
+Before writing specs, read the surface off the code once instead of guessing
+or reflecting on the source:
+
+    bin/phpspec api --format=agent
+
+One JSON object: every DSL function and matcher with its signature and
+summary, the mock and story functions, and the `timing` rules. Read `timing`
+first: expectations are judged at the end of the example, and `toThrow()` runs
+its callable where it is written.
 
 ## Writing specs that explain themselves
 
@@ -437,6 +471,9 @@ Prefer letting PhpSpec generate boilerplate over writing it by hand:
   `bin/phpspec run --accept-offers`
 - Also fill empty methods with their spec'd return values (fast first green):
   `bin/phpspec run --accept-offers --fake`
+- The summary of an `--accept-offers` run carries `applied`: what was written,
+  by file. Its counts describe the run before the writing, so run again to
+  verify; exit code 0 means applied, not green.
 
 `--fake` produces hardcoded returns to reach green quickly — always replace them
 with real logic before considering the work done. Offers are suggestions, not

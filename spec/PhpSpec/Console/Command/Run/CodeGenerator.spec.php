@@ -4,6 +4,7 @@ use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\PairOutput;
 use PhpSpec\Console\Command\Run\CodeGenerator;
 use PhpSpec\Console\Command\Run\Generation;
+use PhpSpec\Offers\Offer;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
@@ -234,6 +235,50 @@ describe(CodeGenerator::class, function () {
                 "  a class that doesn't exist yet.",
                 '',
             ]));
+        });
+    });
+
+    context('reports what it applied', function () {
+
+        it('returns each generated piece with its offer id, action, target and file', function () {
+            $relDir = '.tmp_codegen_applied_' . getmypid();
+            $absDir = getcwd() . '/' . $relDir;
+            mkdir($absDir . '/src', 0777, true);
+            mkdir($absDir . '/spec', 0777, true);
+
+            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', Generation::Accepts);
+            $error = new \PhpSpec\Specification\ExampleError('Class "App\Coupon" not found', new \Error('Class "App\Coupon" not found'));
+            $example = new ExampleResult('applies a coupon', [], isError: true);
+            $example->setError($error);
+            $suite = new SuiteResult([new SpecificationResult('Basket', [new ContextResult('App\Basket', [$example])])]);
+
+            try {
+                $applied = $generator->generate($this->output, $suite, false);
+            } finally {
+                foreach ([$absDir . '/src/App/Coupon.php'] as $file) {
+                    is_file($file) && unlink($file);
+                }
+                foreach ([$absDir . '/src/App', $absDir . '/src', $absDir . '/spec', $absDir] as $dir) {
+                    is_dir($dir) && rmdir($dir);
+                }
+            }
+
+            expect($applied)->toBe([[
+                'id' => Offer::generate('create_class', 'App\Coupon', [])->id,
+                'action' => 'create_class',
+                'target' => 'App\Coupon',
+                'file' => $relDir . '/src/App/Coupon.php',
+            ]]);
+        });
+
+        it('returns nothing when nothing was written', function () {
+            $generator = new CodeGenerator('src', 'spec', Generation::Declines);
+            $error = new \PhpSpec\Specification\ExampleError('Class "App\Coupon" not found', new \Error('Class "App\Coupon" not found'));
+            $example = new ExampleResult('applies a coupon', [], isError: true);
+            $example->setError($error);
+            $suite = new SuiteResult([new SpecificationResult('Basket', [new ContextResult('App\Basket', [$example])])]);
+
+            expect($generator->generate($this->output, $suite, false))->toBe([]);
         });
     });
 

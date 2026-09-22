@@ -24,6 +24,7 @@ use PhpSpec\Console\Command\Pair\Chooser;
 use PhpSpec\Console\Command\Pair\ScrollRegionOutput;
 use PhpSpec\Console\Command\Refactor\Diff;
 use PhpSpec\Filesystem;
+use PhpSpec\Offers\Offer;
 use PhpSpec\ProjectRoot;
 use PhpSpec\RealFilesystem;
 use PhpSpec\Results;
@@ -35,6 +36,8 @@ use Symfony\Component\Console\Output\OutputInterface as Output;
  * Mediator that coordinates result scanning, source analysis, and interactive code generation.
  * Orchestrates all generation phases: step definitions, missing classes/interfaces,
  * undefined methods, and --fake mode empty-body filling.
+ *
+ * @phpstan-type Applied array{id: string, action: string, target: string, file: string}
  */
 final readonly class CodeGenerator
 {
@@ -70,10 +73,11 @@ final readonly class CodeGenerator
      * @param Output $output the console output
      * @param Results $results the spec/feature results to scan
      * @param bool $fake whether --fake mode is enabled
+     * @return list<Applied> what was written, each under the id its offer carries
      */
-    public function generate(Output $output, Results $results, bool $fake): void
+    public function generate(Output $output, Results $results, bool $fake): array
     {
-        $this->apply($output, $this->scan($results), $fake);
+        return $this->apply($output, $this->scan($results), $fake);
     }
 
     /**
@@ -104,18 +108,19 @@ final readonly class CodeGenerator
      * @param Output $output the console output for prompts and confirmation messages
      * @param GenerationCandidates $candidates the opportunities to offer
      * @param bool $fake whether --fake mode is enabled
+     * @return list<Applied> what was written, each under the id its offer carries
      */
-    public function apply(Output $output, GenerationCandidates $candidates, bool $fake): void
+    public function apply(Output $output, GenerationCandidates $candidates, bool $fake): array
     {
-        $this->generateStepDefinitions($output, $candidates->undefinedSteps);
-        $this->generateMissingSpecClasses($output, $candidates->missingSpecClasses);
-        $this->generateMissingStepClasses($output, $candidates->missingStepClasses);
-        $this->generateMissingInterfaces($output, $candidates->missingMockTypes);
-        $this->generateMockInterfaceMethods($output, $candidates->undefinedMockInterfaceMethods);
-        $this->generateClassMethods($output, $candidates->undefinedClassMethods, $fake);
-        if ($fake) {
-            $this->fillEmptyMethods($output, $candidates->fakeableMethods);
-        }
+        return [
+            ...$this->generateStepDefinitions($output, $candidates->undefinedSteps),
+            ...$this->generateMissingSpecClasses($output, $candidates->missingSpecClasses),
+            ...$this->generateMissingStepClasses($output, $candidates->missingStepClasses),
+            ...$this->generateMissingInterfaces($output, $candidates->missingMockTypes),
+            ...$this->generateMockInterfaceMethods($output, $candidates->undefinedMockInterfaceMethods),
+            ...$this->generateClassMethods($output, $candidates->undefinedClassMethods, $fake),
+            ...($fake ? $this->fillEmptyMethods($output, $candidates->fakeableMethods) : []),
+        ];
     }
 
     /**
@@ -123,12 +128,11 @@ final readonly class CodeGenerator
      *
      * @param Output $output the console output for prompts and confirmation messages
      * @param array<string, array<array{keyword: string, text: string}>> $undefinedSteps undefined steps grouped by feature file path
+     * @return list<Applied>
      */
-    private function generateStepDefinitions(Output $output, array $undefinedSteps): void
+    private function generateStepDefinitions(Output $output, array $undefinedSteps): array
     {
-        if (empty($undefinedSteps)) {
-            return;
-        }
+        $applied = [];
 
         foreach ($undefinedSteps as $featurePath => $steps) {
             $count = count($steps);
@@ -143,8 +147,11 @@ final readonly class CodeGenerator
                 $generator = new StepGenerator();
                 $stepsFile = $generator->generate($featurePath, $steps);
                 $output->writeln("  <fg=green>Step definitions generated at $stepsFile</>");
+                $applied[] = self::applied('create_steps', $featurePath, $stepsFile);
             }
         }
+
+        return $applied;
     }
 
     /**
@@ -154,13 +161,11 @@ final readonly class CodeGenerator
      *
      * @param Output $output the console output for prompts and confirmation messages
      * @param array<string, string> $missingClasses FQCNs that do not exist, each keyed to the class its spec describes
+     * @return list<Applied>
      */
-    private function generateMissingSpecClasses(Output $output, array $missingClasses): void
+    private function generateMissingSpecClasses(Output $output, array $missingClasses): array
     {
-        if (empty($missingClasses)) {
-            return;
-        }
-
+        $applied = [];
         $classGenerator = new ClassGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
 
         foreach ($missingClasses as $fqcn => $describes) {
@@ -186,7 +191,7 @@ final readonly class CodeGenerator
                 : "Looks like $describes needs $fqcn"));
             $output->writeln("  <fg=#f59e0b>a class that doesn't exist yet.</>");
 
-            $this->confirmAndGenerate(
+            $generated = $this->confirmAndGenerate(
                 $output,
                 '  <fg=gray>Would you like me to generate that class for you?</>',
                 'create-class',
@@ -194,7 +199,13 @@ final readonly class CodeGenerator
                 fn() => $classGenerator->generate($fqcn),
                 $location->filePath(),
             );
+
+            if ($generated) {
+                $applied[] = self::applied('create_class', $fqcn, $location->filePath());
+            }
         }
+
+        return $applied;
     }
 
     /**
@@ -211,13 +222,11 @@ final readonly class CodeGenerator
      *
      * @param Output $output the console output for prompts and confirmation messages
      * @param array<string> $missingStepClasses FQCNs referenced in steps that do not exist
+     * @return list<Applied>
      */
-    private function generateMissingStepClasses(Output $output, array $missingStepClasses): void
+    private function generateMissingStepClasses(Output $output, array $missingStepClasses): array
     {
-        if (empty($missingStepClasses)) {
-            return;
-        }
-
+        $applied = [];
         $specGenerator = new SpecGenerator($this->specPath, specSuffix: $this->specSuffix);
         $classGenerator = new ClassGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
 
@@ -229,23 +238,32 @@ final readonly class CodeGenerator
                 $fqcn,
             );
 
-            if ($this->confirm($output, $question, 'create-spec', 'create specs')) {
-                $specGenerator->generate($specName);
-                $output->writeln(sprintf('  <fg=green>Spec for %s created.</>', $fqcn));
+            if (!$this->confirm($output, $question, 'create-spec', 'create specs')) {
+                continue;
+            }
 
-                $location = ClassLocation::for($fqcn, $this->srcPath, $this->psr4Prefix);
+            $specGenerator->generate($specName);
+            $output->writeln(sprintf('  <fg=green>Spec for %s created.</>', $fqcn));
+            $applied[] = self::applied('create_spec', $fqcn, $this->specPath . '/' . $specName . $this->specSuffix);
 
-                if ($location->exists($this->filesystem)) {
-                    continue;
-                }
+            $location = ClassLocation::for($fqcn, $this->srcPath, $this->psr4Prefix);
 
-                $this->confirmAndGenerate($output, sprintf(
-                    '  <fg=yellow>Do you want me to create class <fg=white>%s</> in <fg=white>%s</>?</>',
-                    $fqcn,
-                    $location->filePath(),
-                ), 'create-class', 'create classes', fn() => $classGenerator->generate($fqcn), $location->filePath());
+            if ($location->exists($this->filesystem)) {
+                continue;
+            }
+
+            $generated = $this->confirmAndGenerate($output, sprintf(
+                '  <fg=yellow>Do you want me to create class <fg=white>%s</> in <fg=white>%s</>?</>',
+                $fqcn,
+                $location->filePath(),
+            ), 'create-class', 'create classes', fn() => $classGenerator->generate($fqcn), $location->filePath());
+
+            if ($generated) {
+                $applied[] = self::applied('create_class', $fqcn, $location->filePath());
             }
         }
+
+        return $applied;
     }
 
     /**
@@ -253,33 +271,32 @@ final readonly class CodeGenerator
      *
      * @param Output $output the console output for prompts and confirmation messages
      * @param array<string> $missingMockTypes FQCNs that could not be mocked because they do not exist
+     * @return list<Applied>
      */
-    private function generateMissingInterfaces(Output $output, array $missingMockTypes): void
+    private function generateMissingInterfaces(Output $output, array $missingMockTypes): array
     {
-        $uniqueMissing = [];
-        foreach ($missingMockTypes as $fqcn) {
-            $uniqueMissing[$fqcn] = true;
-        }
-
-        if (empty($uniqueMissing)) {
-            return;
-        }
-
+        $applied = [];
         $interfaceGenerator = new InterfaceGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
 
-        foreach (array_keys($uniqueMissing) as $fqcn) {
+        foreach (array_unique($missingMockTypes) as $fqcn) {
             $location = ClassLocation::for($fqcn, $this->srcPath, $this->psr4Prefix);
 
             if ($location->exists($this->filesystem)) {
                 continue;
             }
 
-            $this->confirmAndGenerate($output, sprintf(
+            $generated = $this->confirmAndGenerate($output, sprintf(
                 '  <fg=yellow>Do you want me to create interface <fg=white>%s</> in <fg=white>%s</>?</>',
                 $fqcn,
                 $location->filePath(),
             ), 'create-interface', 'create interfaces', fn() => $interfaceGenerator->generate($fqcn), $location->filePath());
+
+            if ($generated) {
+                $applied[] = self::applied('create_interface', $fqcn, $location->filePath());
+            }
         }
+
+        return $applied;
     }
 
     /**
@@ -287,27 +304,29 @@ final readonly class CodeGenerator
      *
      * @param Output $output the console output for prompts and confirmation messages
      * @param array<array{className: string, methodName: string, file: string, line: int}> $mockMethods undefined interface-mock methods
+     * @return list<Applied>
      */
-    private function generateMockInterfaceMethods(Output $output, array $mockMethods): void
+    private function generateMockInterfaceMethods(Output $output, array $mockMethods): array
     {
-        $uniqueMockMethods = $this->uniqueByClassMethod($mockMethods);
-
-        if (empty($uniqueMockMethods)) {
-            return;
-        }
-
+        $applied = [];
         $methodGenerator = new MethodStubGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
 
-        foreach ($uniqueMockMethods as $error) {
+        foreach ($this->uniqueByClassMethod($mockMethods) as $error) {
             $argCount = $this->analyser->extractArgumentCount($error['file'], $error['line'], $error['methodName']);
             $filePath = ClassGenerator::resolveFqcn($error['className'], $this->srcPath, $this->psr4Prefix)['filePath'];
 
-            $this->confirmAndGenerate($output, sprintf(
+            $generated = $this->confirmAndGenerate($output, sprintf(
                 '  <fg=yellow>Do you want me to add method <fg=white>%s()</> to interface <fg=white>%s</>?</>',
                 $error['methodName'],
                 $error['className'],
             ), 'add-interface-method', 'add interface methods', fn() => $methodGenerator->generate($error['className'], $error['methodName'], $argCount), $filePath);
+
+            if ($generated) {
+                $applied[] = self::applied('create_method', $error['className'] . '::' . $error['methodName'], $filePath);
+            }
         }
+
+        return $applied;
     }
 
     /**
@@ -317,20 +336,17 @@ final readonly class CodeGenerator
      * @param Output $output the console output for prompts and confirmation messages
      * @param array<array{className: string, methodName: string, file: string, line: int}> $classMethods undefined real-class methods
      * @param bool $fake whether --fake mode is enabled
+     * @return list<Applied>
      */
-    private function generateClassMethods(Output $output, array $classMethods, bool $fake): void
+    private function generateClassMethods(Output $output, array $classMethods, bool $fake): array
     {
-        $unique = $this->uniqueByClassMethod($classMethods);
-
-        if (empty($unique)) {
-            return;
-        }
-
+        $applied = [];
         $generator = new MethodStubGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
 
-        foreach ($unique as $error) {
+        foreach ($this->uniqueByClassMethod($classMethods) as $error) {
             $argCount = $this->analyser->extractArgumentCount($error['file'], $error['line'], $error['methodName']);
             $filePath = ClassGenerator::resolveFqcn($error['className'], $this->srcPath, $this->psr4Prefix)['filePath'];
+            $target = $error['className'] . '::' . $error['methodName'];
 
             $returnExpr = null;
             if ($fake) {
@@ -338,19 +354,31 @@ final readonly class CodeGenerator
             }
 
             if ($fake && $returnExpr !== null) {
-                $this->confirmAndGenerate($output, sprintf(
+                $generated = $this->confirmAndGenerate($output, sprintf(
                     '  <fg=yellow>Are you sure you want <fg=white>%s()</> to always return <fg=white>%s</>?</>',
                     $error['methodName'],
                     $returnExpr,
                 ), 'confirm-fake-return', 'set fake return values', fn() => $generator->generate($error['className'], $error['methodName'], $argCount, $returnExpr), $filePath);
-            } else {
-                $this->confirmAndGenerate($output, sprintf(
-                    '  <fg=yellow>Do you want me to create <fg=white>%s::%s()</> for you?</>',
-                    $error['className'],
-                    $error['methodName'],
-                ), 'create-method', 'create methods', fn() => $generator->generate($error['className'], $error['methodName'], $argCount), $filePath);
+
+                if ($generated) {
+                    $applied[] = self::applied('fake_method', $target, $filePath);
+                }
+
+                continue;
+            }
+
+            $generated = $this->confirmAndGenerate($output, sprintf(
+                '  <fg=yellow>Do you want me to create <fg=white>%s::%s()</> for you?</>',
+                $error['className'],
+                $error['methodName'],
+            ), 'create-method', 'create methods', fn() => $generator->generate($error['className'], $error['methodName'], $argCount), $filePath);
+
+            if ($generated) {
+                $applied[] = self::applied('create_method', $target, $filePath);
             }
         }
+
+        return $applied;
     }
 
     /**
@@ -359,25 +387,21 @@ final readonly class CodeGenerator
      *
      * @param Output $output the console output for prompts and confirmation messages
      * @param array<array{className: string, methodName: string, fakeExpression: string, file: string, line: int}> $fakeableMethods empty methods that --fake could fill
+     * @return list<Applied>
      */
-    private function fillEmptyMethods(Output $output, array $fakeableMethods): void
+    private function fillEmptyMethods(Output $output, array $fakeableMethods): array
     {
-        $uniqueEmpty = $this->uniqueByClassMethod($fakeableMethods);
-
-        if (empty($uniqueEmpty)) {
-            return;
-        }
-
+        $applied = [];
         $generator = new MethodStubGenerator($this->srcPath, psr4Prefix: $this->psr4Prefix);
 
-        foreach ($uniqueEmpty as $candidate) {
+        foreach ($this->uniqueByClassMethod($fakeableMethods) as $candidate) {
             if (!$generator->hasEmptyMethod($candidate['className'], $candidate['methodName'])) {
                 continue;
             }
 
             $filePath = ClassGenerator::resolveFqcn($candidate['className'], $this->srcPath, $this->psr4Prefix)['filePath'];
 
-            $this->confirmAndGenerate($output, sprintf(
+            $generated = $this->confirmAndGenerate($output, sprintf(
                 '  <fg=yellow>Are you sure you want <fg=white>%s()</> to always return <fg=white>%s</>?</>',
                 $candidate['methodName'],
                 $candidate['fakeExpression'],
@@ -386,7 +410,29 @@ final readonly class CodeGenerator
                 $candidate['methodName'],
                 $candidate['fakeExpression'],
             ), $filePath);
+
+            if ($generated) {
+                $applied[] = self::applied('fake_method', $candidate['className'] . '::' . $candidate['methodName'], $filePath);
+            }
         }
+
+        return $applied;
+    }
+
+    /**
+     * What one generation wrote, under the id its offer carries: derived from
+     * the action and target, as the offer's own is, so the two agree.
+     *
+     * @return Applied
+     */
+    private static function applied(string $action, string $target, string $file): array
+    {
+        return [
+            'id' => Offer::generate($action, $target, [])->id,
+            'action' => $action,
+            'target' => $target,
+            'file' => ProjectRoot::here()->relative($file),
+        ];
     }
 
     /**
@@ -418,10 +464,10 @@ final readonly class CodeGenerator
      * @param callable $generate the generation action to run; should return a success message string
      * @param string|null $filePath path to the file being modified, for diff display
      */
-    private function confirmAndGenerate(Output $output, string $question, string $kind, string $action, callable $generate, ?string $filePath = null): void
+    private function confirmAndGenerate(Output $output, string $question, string $kind, string $action, callable $generate, ?string $filePath = null): bool
     {
         if (!$this->confirm($output, $question, $kind, $action)) {
-            return;
+            return false;
         }
 
         try {
@@ -438,7 +484,11 @@ final readonly class CodeGenerator
             }
         } catch (RuntimeException $e) {
             $output->writeln("  <fg=red>{$e->getMessage()}</>");
+
+            return false;
         }
+
+        return true;
     }
 
     /**

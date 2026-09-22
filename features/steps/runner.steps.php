@@ -74,22 +74,38 @@ when('I run phpspec run with option {string}', function (string $options) {
     _phpspec_exec($this, 'run ' . $options);
 });
 
+if (!function_exists('_phpspec_offer_ids')) {
+    /**
+     * The ids on the table, as a reader would take them from the offer book.
+     *
+     * @return list<string>
+     */
+    function _phpspec_offer_ids(object $world): array
+    {
+        $book = $world->projectDir . '/.phpspec/offers.json';
+
+        if (!file_exists($book)) {
+            throw new \RuntimeException("No offers were made: $book does not exist.");
+        }
+
+        $ids = array_column(json_decode((string) file_get_contents($book), true)['offers'] ?? [], 'id');
+
+        if ($ids === []) {
+            throw new \RuntimeException('The offer book is empty.');
+        }
+
+        return $ids;
+    }
+}
+
 // Taking what PhpSpec last offered, the way a reader does: by the ids on the
 // table, in a second command, after the offers have been seen.
 when('I accept the offers phpspec made', function () {
-    $book = $this->projectDir . '/.phpspec/offers.json';
+    _phpspec_exec($this, 'accept ' . implode(' ', _phpspec_offer_ids($this)));
+});
 
-    if (!file_exists($book)) {
-        throw new \RuntimeException("No offers were made: $book does not exist.");
-    }
-
-    $ids = array_column(json_decode((string) file_get_contents($book), true)['offers'] ?? [], 'id');
-
-    if ($ids === []) {
-        throw new \RuntimeException('The offer book is empty.');
-    }
-
-    _phpspec_exec($this, 'accept ' . implode(' ', $ids));
+when('I accept the offers phpspec made with option {string}', function (string $options) {
+    _phpspec_exec($this, 'accept ' . implode(' ', _phpspec_offer_ids($this)) . ' ' . $options);
 });
 
 // A run expected to kill its process (a fatal in a spec file) must not take
@@ -106,6 +122,16 @@ when('I run phpspec run with nobody to answer it', function () {
 
 when('I run phpspec run {string}', function (string $path) {
     _phpspec_exec($this, 'run ' . $path);
+});
+
+// -- Api command -------------------------------------------------------
+
+when('I run phpspec api', function () {
+    _phpspec_exec($this, 'api');
+});
+
+when('I run phpspec api with option {string}', function (string $options) {
+    _phpspec_exec($this, 'api ' . $options);
 });
 
 // -- Guard command -----------------------------------------------------

@@ -13,6 +13,8 @@ use PhpSpec\StoryBDD\DataTable;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
+use PhpSpec\StopConditions;
+use PhpSpec\StopRegistry;
 
 describe(Feature::class, function () {
 
@@ -71,6 +73,38 @@ describe(Feature::class, function () {
         $steps = $feature->run()->getResults()[0]->getResults();
         expect($steps[0]->getDuration())->toBeGreaterThan(0);
         expect($steps[1]->getDuration())->toBe(0.0);
+    });
+
+    it("runs no more scenarios once a stop condition is met", function () {
+        $registry = new StepRegistry();
+        $registry->addStep("a breaking step", function () {
+            throw new \RuntimeException("boom");
+        });
+        $ran = false;
+        $registry->addStep("a later step", function () use (&$ran) {
+            $ran = true;
+        });
+
+        $feature = new Feature('test.feature', new FeatureNode(
+            'Halting',
+            '',
+            null,
+            [
+                new ScenarioNode('Breaks', [new StepNode('Given', 'a breaking step')]),
+                new ScenarioNode('Should not run', [new StepNode('Given', 'a later step')]),
+            ]
+        ), $registry, new HookRegistry());
+
+        StopRegistry::activate(new StopConditions(onFailure: true));
+
+        try {
+            $scenarios = $feature->run()->getResults();
+        } finally {
+            StopRegistry::reset();
+        }
+
+        expect($scenarios)->toHaveCount(1);
+        expect($ran)->toBeFalse();
     });
 
     it("marks undefined steps", function () {

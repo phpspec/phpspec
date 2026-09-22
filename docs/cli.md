@@ -97,8 +97,9 @@ bin/phpspec accept o_7f3a1c2d o_91b0e4aa    # several at once, all or nothing
 
 The id is derived from the offer itself, so it is stable while the offer stands.
 An unknown id is refused, and so is an offer whose file has changed since it was
-made. `--format=agent` returns the receipt as JSON. Offers live in
-`.phpspec/offers.json`; the fifty most recent stay on the table.
+made. `--format=agent` returns the receipt as JSON, naming each offer's target
+and the files it wrote. Offers live in `.phpspec/offers.json`; the fifty most
+recent stay on the table.
 
 ### `guard`
 
@@ -112,6 +113,21 @@ From then on `bin/phpspec run` refuses a change whose new logic no example
 reaches, naming the member and showing the lines. `--check --hash=<sha>
 --coverage=<file>` asks the same question on demand, after the suite, for CI and
 pre-commit hooks. See [Guard](guard.md).
+
+### `api`
+
+Describes the spec-writing API from the code itself: every DSL function and
+matcher with its real signature and summary, the mock and story functions, and
+the timing rules nothing can introspect (expectations are judged at the end of
+the example; `toThrow()` runs its callable where it is written).
+
+```bash
+bin/phpspec api                   # as prose
+bin/phpspec api --format=agent    # as one JSON object, for a coding agent
+```
+
+Because it is read off the code, it cannot drift from what runs. See
+[Coding Agents](agent.md) for the place it takes in an agent's instructions.
 
 ### `describe`
 
@@ -169,7 +185,7 @@ See [Coding Agents](agent.md) for the `--agent` receipts and
 |---|---|
 | `-f`, `--format=FORMAT` | Output formatter: `pretty` (default), `dot`, `tap`, `junit`, `html`, `agent`. Repeatable; pair each with `-o` |
 | `-o`, `--out=FILE` | Report destination for the corresponding `--format`; `std` means the console |
-| `-v` | Verbose mode -- shows the duration of each example and step |
+| `-v` | Verbose mode -- shows the duration of each example and step; `--format=agent` reports the passing entries too |
 | `-q` | Quiet mode -- suppresses all output, exit code still reflects pass/fail |
 | `--profile[=N]` | Show the N slowest examples (default: 10) |
 
@@ -284,7 +300,9 @@ rejected with an error rather than silently falling back.
 | `--seed=SEED` | Seed for random ordering (for reproducibility) |
 
 **Stopping early.** By default a run continues to the end. These flags halt it at
-the first result of a given kind (useful for tight feedback loops and CI):
+the first result of a given kind: nothing after that example or scenario runs,
+in its own file or in any later one, and under `--parallel` every worker halts
+the same way (useful for tight feedback loops and CI):
 
 | Option | Stops on the first... |
 |---|---|
@@ -327,6 +345,16 @@ Any line inside an example (or scenario) body selects it; a line inside a
 `describe` but outside its examples runs that whole context. For Gherkin,
 targeting a `Scenario Outline:` line runs every row of its examples table,
 while targeting a single examples row runs just that expansion.
+
+Several selectors run each addressed block once, whether they name lines of
+one file or of many, so the `rerun` command an agent summary carries can be
+pasted back as it is:
+
+```bash
+bin/phpspec run spec/App/Calculator.spec.php:14 spec/App/Calculator.spec.php:22
+```
+
+A path given whole alongside one of its lines runs whole.
 
 ### Bootstrap
 

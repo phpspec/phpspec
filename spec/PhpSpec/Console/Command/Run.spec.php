@@ -65,6 +65,16 @@ describe(Run::class, function () {
             expect($tester->getDisplay())->toContain('<!DOCTYPE html>');
         });
 
+        it('names every format it accepts in the help of --format', function (Filesystem $execFs) {
+            $cmd = new Run(new Loader($execFs), new Runner(), new Configuration('.', $execFs));
+
+            $help = $cmd->getDefinition()->getOption('format')->getDescription();
+
+            foreach (['pretty', 'dot', 'tap', 'junit', 'html', 'agent'] as $format) {
+                expect($help)->toContain($format);
+            }
+        });
+
         it('rejects unknown formats', function (Filesystem $execFs) {
             $config = new Configuration('.', $execFs);
             $cmd = new Run(new Loader($execFs), new Runner(), $config);

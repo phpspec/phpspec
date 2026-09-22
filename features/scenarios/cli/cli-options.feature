@@ -147,6 +147,73 @@ Feature: CLI options
     And the output should not contain "second example"
     And the output should contain "1 example"
 
+  Scenario: Run several examples of one file by their line numbers
+    Given a spec file "spec/App/Trio.spec.php":
+      """
+      <?php
+      describe('Trio', function () {
+          it('first example', function () {
+              expect(true)->toBeTrue();
+          });
+          it('second example', function () {
+              expect(true)->toBeTrue();
+          });
+          it('third example', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run "spec/App/Trio.spec.php:3 spec/App/Trio.spec.php:9"
+    Then all examples should pass
+    And the output should contain "first example" exactly 1 times
+    And the output should contain "third example" exactly 1 times
+    And the output should not contain "second example"
+    And the output should contain "2 examples"
+
+  Scenario: A whole file asked for alongside one of its lines runs whole
+    Given a spec file "spec/App/Whole.spec.php":
+      """
+      <?php
+      describe('Whole', function () {
+          it('first example', function () {
+              expect(true)->toBeTrue();
+          });
+          it('second example', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run "spec/App/Whole.spec.php:3 spec/App/Whole.spec.php"
+    Then all examples should pass
+    And the output should contain "first example" exactly 1 times
+    And the output should contain "second example" exactly 1 times
+    And the output should contain "2 examples"
+
+  Scenario: Run several scenarios of one feature by their line numbers
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/trio.feature":
+      """
+      Feature: Trio
+        Scenario: First
+          Given a trio step
+        Scenario: Second
+          Given a trio step
+        Scenario: Third
+          Given a trio step
+      """
+    And a step file "features/steps/trio.steps.php":
+      """
+      <?php
+      given('a trio step', function () {
+          expect(true)->toBeTrue();
+      });
+      """
+    When I run phpspec run "features/trio.feature:2 features/trio.feature:7"
+    Then the output should contain "First" exactly 1 times
+    And the output should contain "Third" exactly 1 times
+    And the output should not contain "Second"
+    And the output should contain "1 feature, 2 scenarios"
+
   Scenario: Run a single scenario by its line number
     Given a PSR-4 project with "spec", "src", and "features" directories
     And a feature file "features/numbers.feature":
@@ -473,6 +540,54 @@ Feature: CLI options
       """
     When I run phpspec run with option "--stop-on-error"
     Then the output should not contain "ZZAfterError"
+
+  Scenario: Stop on the first error inside a file
+    Given a spec file "spec/App/Halting.spec.php":
+      """
+      <?php
+      describe('Halting', function () {
+          it('errors', function () {
+              throw new RuntimeException('boom');
+          });
+          it('later example in the same describe', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      describe('HaltingToo', function () {
+          it('later describe in the same file', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--stop-on-error"
+    Then the output should contain "✘ errors"
+    And the output should not contain "✓"
+    And the output should not contain "HaltingToo"
+    And the output should contain "1 example ("
+
+  Scenario: Stop on the first failing scenario inside a feature
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/halting.feature":
+      """
+      Feature: Halting
+        Scenario: Fails
+          Given a failing step
+        Scenario: Should not run
+          Given a later step
+      """
+    And a step file "features/steps/halting.steps.php":
+      """
+      <?php
+      given('a failing step', function () {
+          expect(1)->toBe(2);
+      });
+      given('a later step', function () {
+          expect(true)->toBeTrue();
+      });
+      """
+    When I run phpspec run with option "features/ --stop-on-failure"
+    Then the output should not contain "Should not run"
+    And the output should contain "1 scenario,"
 
   Scenario: Stop on first warning
     Given a spec file "spec/App/AAStopWarning.spec.php":

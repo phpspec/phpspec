@@ -45,6 +45,12 @@ final class ExampleResult implements Results
     /** @var array<string, string|array{error: string}> Context the example handed over about itself */
     private array $attachments = [];
 
+    /** @var string|null The file the example is declared in */
+    private ?string $file = null;
+
+    /** @var int|null The line the example is declared on */
+    private ?int $line = null;
+
     /**
      * @param string $title the example description
      * @param array<MatchResult> $matchResults array of MatchResult instances from this example
@@ -76,6 +82,32 @@ final class ExampleResult implements Results
     public function getDuration(): float
     {
         return $this->duration;
+    }
+
+    /**
+     * Records where the example is declared, which is what addresses it when
+     * nothing in it failed.
+     */
+    public function declaredAt(string $file, int $line): void
+    {
+        $this->file = $file;
+        $this->line = $line;
+    }
+
+    /**
+     * Returns the file the example is declared in, or null when unknown.
+     */
+    public function getFile(): ?string
+    {
+        return $this->file;
+    }
+
+    /**
+     * Returns the line the example is declared on, or null when unknown.
+     */
+    public function getLine(): ?int
+    {
+        return $this->line;
     }
 
     /**

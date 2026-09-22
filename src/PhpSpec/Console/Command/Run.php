@@ -114,7 +114,7 @@ final class Run extends Command
             ->addOption('stop-on-problems', null, Option::VALUE_NONE, 'Stop on any non-pass result')
             ->addOption('filter', null, Option::VALUE_REQUIRED, 'Run only specs matching pattern')
             ->addOption('paths-from', null, Option::VALUE_REQUIRED, 'Read spec/feature paths to run from a file, one per line')
-            ->addOption('format', 'f', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Output format(s): pretty, dot, tap, junit, html; repeatable, pair each with -o', [])
+            ->addOption('format', 'f', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Output format(s): pretty, dot, tap, junit, html, agent (JSON Lines for coding agents); repeatable, pair each with -o', [])
             ->addOption('out', 'o', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Report destination for the corresponding --format; "std" is the console', [])
             ->addOption('order', null, Option::VALUE_REQUIRED, 'Run order (default, random)', 'default')
             ->addOption('seed', null, Option::VALUE_REQUIRED, 'Seed for random order')
@@ -327,9 +327,19 @@ final class Run extends Command
 
         if ($input->getOption('accept-offers')) {
             // Apply every pending generation offer without prompting, then exit.
-            // The run's own output already went out; generation notes are discarded
-            // so an upstream --format=agent document stays a single clean object.
-            $this->generateCode(new BufferedOutput(), $results, (bool) $input->getOption('fake'), Generation::Accepts);
+            // A person reads the generation notes on the console; an agent gets
+            // what was applied as data in the summary, so its document stays one
+            // clean stream.
+            $applied = $this->generateCode(
+                $formatter instanceof Agent ? new BufferedOutput() : $prose,
+                $results,
+                (bool) $input->getOption('fake'),
+                Generation::Accepts,
+            );
+
+            if ($formatter instanceof Agent) {
+                $formatter->applied($applied);
+            }
 
             return 0;
         }
@@ -888,10 +898,11 @@ final class Run extends Command
      * @param SuiteResult $results the suite results to scan for generation candidates
      * @param bool $fake whether --fake mode is enabled
      * @param Generation $generation how an offer is answered when nobody is asked
+     * @return list<array{id: string, action: string, target: string, file: string}> what was written
      */
-    private function generateCode(Output $output, SuiteResult $results, bool $fake, Generation $generation = Generation::Asks): void
+    private function generateCode(Output $output, SuiteResult $results, bool $fake, Generation $generation = Generation::Asks): array
     {
-        $this->codeGenerator($generation)->generate($output, $results, $fake);
+        return $this->codeGenerator($generation)->generate($output, $results, $fake);
     }
 
     /**

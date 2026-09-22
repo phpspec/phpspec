@@ -99,6 +99,25 @@ Feature: Code generation
     Then a file "src/App/Logger.php" should be generated
     And it should contain "interface Logger"
 
+  Scenario: A generated class lands where composer.json says its namespace lives
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Tasker\\": "src/"}}}
+      """
+    And a spec file "spec/Tasker/TaskList.spec.php":
+      """
+      <?php
+      describe('Tasker\TaskList', function () {
+          it('starts empty', function () {
+              expect(new Tasker\TaskList())->toBeAnInstanceOf(Tasker\TaskList::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then a class file "src/TaskList.php" should be generated
+    And no file "src/Tasker/TaskList.php" should be generated
+
   Scenario: Describe command generates a spec
     When I run phpspec describe "App\Formatter"
     Then a spec file "spec/App/Formatter.spec.php" should be generated

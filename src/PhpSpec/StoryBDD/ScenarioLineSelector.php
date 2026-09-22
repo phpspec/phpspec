@@ -24,13 +24,32 @@ namespace PhpSpec\StoryBDD;
 final class ScenarioLineSelector
 {
     /**
-     * Selects the scenarios matching the given line number.
+     * Selects the scenarios matching the given lines, once each, in
+     * declaration order.
      *
      * @param ScenarioNode[] $scenarios all scenarios of the feature, in declaration order
-     * @param int $line the targeted line number
-     * @return ScenarioNode[] the selected scenarios, empty when the line precedes every scenario
+     * @param int ...$lines the targeted line numbers
+     * @return ScenarioNode[] the selected scenarios, empty when every line precedes every scenario
      */
-    public static function select(array $scenarios, int $line): array
+    public static function select(array $scenarios, int ...$lines): array
+    {
+        $selected = [];
+
+        foreach ($lines as $line) {
+            array_push($selected, ...self::atLine($scenarios, $line));
+        }
+
+        return array_values(array_filter(
+            $scenarios,
+            fn(ScenarioNode $scenario) => in_array($scenario, $selected, true),
+        ));
+    }
+
+    /**
+     * @param ScenarioNode[] $scenarios
+     * @return ScenarioNode[]
+     */
+    private static function atLine(array $scenarios, int $line): array
     {
         $exact = array_values(array_filter(
             $scenarios,

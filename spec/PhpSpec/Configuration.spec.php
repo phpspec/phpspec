@@ -17,6 +17,38 @@ describe(Configuration::class, function () {
         expect($config->getBaseUrl())->toBeNull();
     });
 
+    it('lays generated classes out by the first PSR-4 mapping in composer.json when nothing configures it', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/composer.json');
+        allow($fs->read())->toReturn(json_encode(['autoload' => ['psr-4' => ['Tasker\\' => 'src/', 'Tests\\' => 'tests/']]]));
+
+        $config = new Configuration('/app', $fs);
+
+        expect($config->getSrcPath())->toBe('src');
+        expect($config->getPsr4Prefix())->toBe('Tasker');
+    });
+
+    it('takes the first directory of a composer mapping that lists several', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => $path === '/app/composer.json');
+        allow($fs->read())->toReturn(json_encode(['autoload' => ['psr-4' => ['App\\' => ['src/', 'lib/']]]]));
+
+        $config = new Configuration('/app', $fs);
+
+        expect($config->getSrcPath())->toBe('src');
+        expect($config->getPsr4Prefix())->toBe('App');
+    });
+
+    it('keeps a configured layout over the one composer.json declares', function (Filesystem $fs) {
+        allow($fs->exists())->toReturnUsing(fn(string $path) => in_array($path, ['/app/phpspec.json', '/app/composer.json'], true));
+        allow($fs->read())->toReturnUsing(fn(string $path) => $path === '/app/phpspec.json'
+            ? json_encode(['src_path' => 'lib'])
+            : json_encode(['autoload' => ['psr-4' => ['Tasker\\' => 'src/']]]));
+
+        $config = new Configuration('/app', $fs);
+
+        expect($config->getSrcPath())->toBe('lib');
+        expect($config->getPsr4Prefix())->toBe('');
+    });
+
     it('loads from phpspec.json when it exists', function (Filesystem $fs) {
         $json = json_encode([
             'spec_path' => './tests',

@@ -93,9 +93,13 @@ describe(Accept::class, function () {
 
         $document = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
         expect($document['action'])->toBe('accept');
-        expect($document['accepted'][0]['id'])->toBe($offer->id);
-        expect($document['accepted'][0]['path'])->toBe('src/App/Basket.php');
-        expect($document['accepted'][0]['applied'])->toBeTrue();
+        expect($document['accepted'][0])->toBe([
+            'id' => $offer->id,
+            'action' => 'create',
+            'target' => 'src/App/Basket.php',
+            'files' => ['src/App/Basket.php'],
+            'applied' => true,
+        ]);
     });
 
     it('tells an agent why it refused, on the same channel', function () {

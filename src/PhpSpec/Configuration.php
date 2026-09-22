@@ -146,45 +146,98 @@ final class Configuration
     }
 
     /**
-     * Returns the source directory path. Defaults to './src'.
-     * Falls back to the first suite's src key when no flat src_path is set.
+     * Returns the source directory generated classes are written under.
      */
     public function getSrcPath(): string
     {
-        if (isset($this->config['src_path'])) {
-            return $this->config['src_path'];
-        }
-        if (isset($this->config['suites']) && is_array($this->config['suites'])) {
-            foreach ($this->config['suites'] as $suite) {
-                if (isset($suite['src'])) {
-                    return $suite['src'];
-                }
-            }
-        }
-        return './src';
+        return $this->layout()['src'];
     }
 
     /**
      * Returns the PSR-4 namespace prefix mapped to the source directory.
      * When set, namespace segments matching the prefix are not reflected
-     * in the directory structure during code generation.
-     *
-     * Reads from top-level `psr4_prefix` or per-suite `namespace` key.
-     * Defaults to '' (PSR-0 behaviour: all segments become directories).
+     * in the directory structure during code generation; '' means every
+     * segment becomes a directory.
      */
     public function getPsr4Prefix(): string
     {
-        if (isset($this->config['psr4_prefix']) && is_string($this->config['psr4_prefix'])) {
-            return rtrim($this->config['psr4_prefix'], '\\');
+        return $this->layout()['prefix'];
+    }
+
+    /**
+     * Where generated classes go: the layout the config states (`src_path`
+     * and `psr4_prefix`, or a suite's `src` and `namespace`), else the first
+     * PSR-4 mapping composer.json declares, else `src/` with every namespace
+     * segment as a directory. A config that states an `autoload` map keeps
+     * that last layout, as it always has.
+     *
+     * @return array{src: string, prefix: string}
+     */
+    private function layout(): array
+    {
+        $src = $this->config['src_path'] ?? $this->suiteValue('src');
+        $prefix = $this->config['psr4_prefix'] ?? $this->suiteValue('namespace');
+
+        if (is_string($src) || is_string($prefix) || isset($this->config['autoload'])) {
+            return [
+                'src' => is_string($src) ? $src : './src',
+                'prefix' => is_string($prefix) ? rtrim($prefix, '\\') : '',
+            ];
         }
-        if (isset($this->config['suites']) && is_array($this->config['suites'])) {
-            foreach ($this->config['suites'] as $suite) {
-                if (isset($suite['namespace']) && is_string($suite['namespace'])) {
-                    return rtrim($suite['namespace'], '\\');
-                }
+
+        return $this->composerLayout() ?? ['src' => './src', 'prefix' => ''];
+    }
+
+    /**
+     * The first suite's value for a key, or null.
+     */
+    private function suiteValue(string $key): mixed
+    {
+        $suites = $this->config['suites'] ?? null;
+
+        if (!is_array($suites)) {
+            return null;
+        }
+
+        foreach ($suites as $suite) {
+            if (is_array($suite) && isset($suite[$key])) {
+                return $suite[$key];
             }
         }
-        return '';
+
+        return null;
+    }
+
+    /**
+     * The layout of the first PSR-4 mapping in composer.json, or null when
+     * there is none to read.
+     *
+     * @return array{src: string, prefix: string}|null
+     */
+    private function composerLayout(): ?array
+    {
+        $path = rtrim($this->rootDir, '/') . '/composer.json';
+
+        if (!$this->fs->exists($path)) {
+            return null;
+        }
+
+        $composer = json_decode($this->fs->read($path), true);
+        $mappings = is_array($composer) ? ($composer['autoload']['psr-4'] ?? null) : null;
+
+        if (!is_array($mappings) || $mappings === []) {
+            return null;
+        }
+
+        $prefix = (string) array_key_first($mappings);
+        $directory = $mappings[$prefix];
+        $directory = is_array($directory) ? ($directory[0] ?? null) : $directory;
+
+        if (!is_string($directory) || $directory === '') {
+            return null;
+        }
+
+        return ['src' => rtrim($directory, '/'), 'prefix' => rtrim($prefix, '\\')];
     }
 
     /**

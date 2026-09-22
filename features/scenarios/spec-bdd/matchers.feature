@@ -102,6 +102,24 @@ Feature: Matchers
     When I run the spec
     Then all examples should pass
 
+  Scenario: The exception matcher runs its callable where it is written
+    Given a spec with example:
+      """
+      $path = tempnam(sys_get_temp_dir(), 'phpspec');
+      file_put_contents($path, '{broken');
+      try {
+          expect(function () use ($path) {
+              $raw = is_file($path) ? (string) file_get_contents($path) : '';
+
+              return $raw === '' ? [] : json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+          })->toThrow(\JsonException::class);
+      } finally {
+          unlink($path);
+      }
+      """
+    When I run the spec
+    Then all examples should pass
+
   Scenario: Negated matchers
     Given a spec with example:
       """

@@ -160,6 +160,74 @@ Feature: Agent output format
     And the output should contain "rerun"
     And the output should contain "run spec/App/Calc.spec.php:"
 
+  Scenario: A stop flag halts the run at the first example that meets it
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('Calc', function () {
+          it('adds', function () { throw new RuntimeException('boom'); });
+          it('subtracts', function () { expect(1)->toBe(1); });
+          it('multiplies', function () { throw new RuntimeException('bang'); });
+      });
+      """
+    When I run phpspec run with option "--format=agent --stop-on-error"
+    Then the output should be valid JSON
+    And the output should contain "Calc > adds" exactly 1 times
+    And the output should not contain "multiplies"
+
+  Scenario: A rerun naming several lines of one file reports each example once
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('Calc', function () {
+          it('adds', function () { expect(1)->toBe(2); });
+          it('subtracts', function () { expect(3)->toBe(3); });
+          it('multiplies', function () { expect(5)->toBe(6); });
+      });
+      """
+    When I run phpspec run with option "spec/App/Calc.spec.php:3 spec/App/Calc.spec.php:5 --format=agent"
+    Then the output should be valid JSON
+    And the output should contain "Calc > adds" exactly 1 times
+    And the output should contain "Calc > multiplies" exactly 1 times
+    And the output should not contain "subtracts"
+
+  Scenario: A verbose run reports each passing example too, with its id and the line that re-runs it alone
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('Calc', function () {
+          it('adds', function () { expect(1)->toBe(1); });
+          it('subtracts', function () { expect(3)->toBe(2); });
+      });
+      """
+    When I run phpspec run with option "--format=agent -v"
+    Then the output should be valid JSON
+    And the output should have 4 events
+    And the output should contain "Calc > adds" exactly 1 times
+    And the output should contain "run spec/App/Calc.spec.php:3" exactly 1 times
+    And the output should contain "run spec/App/Calc.spec.php:4" exactly 2 times
+
+  Scenario: A verbose story run reports each passing scenario too
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/counting.feature":
+      """
+      Feature: Counting
+        Scenario: Counting up
+          Given a working step
+      """
+    And a step file "features/steps/counting.steps.php":
+      """
+      <?php
+
+      given('a working step', function () {
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent -v"
+    Then the output should be valid JSON
+    And the output should have 3 events
+    And the output should contain "Counting > Counting up" exactly 1 times
+    And the output should contain "run features/counting.feature:2" exactly 1 times
+
   Scenario: A randomised run keeps the document the only thing on stdout
     Given a spec file "spec/App/Calc.spec.php":
       """
@@ -476,6 +544,23 @@ Feature: Agent output format
     When I accept the offers phpspec made
     Then a class file "src/App/Coupon.php" should be generated
 
+  Scenario: The accept receipt names the file a generated class was written to
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+      describe('App\Basket', function () {
+          it('applies a coupon', function () {
+              expect(new App\Coupon())->toBeAnInstanceOf(App\Coupon::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    And I accept the offers phpspec made with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "files"
+    And the output should contain "src/App/Coupon.php"
+    And a class file "src/App/Coupon.php" should be generated
+
   Scenario: A missing class surfaces as an offer, and --accept-offers generates it
     Given a spec file "spec/App/Basket.spec.php":
       """
@@ -492,6 +577,24 @@ Feature: Agent output format
     And the output should contain "Coupon"
     When I run phpspec run with option "--accept-offers"
     Then the exit code should be 0
+    And a class file "src/App/Coupon.php" should be generated
+
+  Scenario: The summary of an --accept-offers run says what was written and that nothing has verified it
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+      describe('App\Basket', function () {
+          it('applies a coupon', function () {
+              expect(new App\Coupon())->toBeAnInstanceOf(App\Coupon::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent --accept-offers"
+    Then the exit code should be 0
+    And the output should be valid JSON
+    And the output should contain "applied"
+    And the output should contain "src/App/Coupon.php"
+    And the output should contain "verified"
     And a class file "src/App/Coupon.php" should be generated
 
   Scenario: An empty method surfaces as a fake_method offer, filled by --accept-offers --fake

@@ -32,4 +32,8 @@ describe(ScenarioLineSelector::class, function () {
     it('selects nothing when the line is before the first scenario', function () {
         expect(ScenarioLineSelector::select($this->scenarios, 1))->toBe([]);
     });
+
+    it('selects the scenarios at every given line, once each, in declaration order', function () {
+        expect(ScenarioLineSelector::select($this->scenarios, 13, 5, 6))->toBe([$this->second, $this->rowTwo]);
+    });
 });
