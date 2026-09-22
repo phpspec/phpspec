@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - Several `path:LINE` selectors on one file run each addressed example or scenario once, so the `rerun` command in an agent summary can be pasted back as it is
  - A path given to `run` that does not exist stops the run and is named, instead of finding no specs and exiting 0
  - A generated class, interface or spec ends with a newline
  - A subscriber leaked by one example or spec file no longer collects and re-judges later matches: each example and each file restores the dispatcher on its way out, so a full run and a single-file run agree

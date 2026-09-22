@@ -378,16 +378,16 @@ class Context implements ExampleRegistry, Rebindable
      */
     private function applyLineFilter(): void
     {
-        $line = LineTargetRegistry::currentTarget();
+        $lines = LineTargetRegistry::currentTargets();
 
-        if ($line === null) {
+        if ($lines === []) {
             return;
         }
 
         $containing = array_values(array_filter(
             $this->specBlocks,
             fn(SpecBlock $block) => ($block instanceof Example || $block instanceof Context)
-                && $block->containsLine($line),
+                && array_filter($lines, $block->containsLine(...)) !== [],
         ));
 
         if ($containing !== []) {

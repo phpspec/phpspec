@@ -18,52 +18,56 @@ namespace PhpSpec;
  * @internal
  * Holds the line targets from "file.spec.php:LINE" run paths for the current
  * run. The runner announces each spec file as it starts, and contexts consult
- * the current target when pruning examples; with no targets set (the normal
+ * the current targets when pruning examples; with no targets set (the normal
  * case) those consultations are no-ops.
  */
 final class LineTargetRegistry
 {
-    /** @var array<string, int> targeted line numbers keyed by normalised spec path */
+    /** @var array<string, list<int>> targeted line numbers keyed by normalised spec path */
     private static array $targets = [];
 
-    private static ?int $current = null;
+    /** @var list<int> */
+    private static array $current = [];
 
     /**
-     * Registers a line target for a spec file.
+     * Registers line targets for a spec file.
      *
      * @param string $path the spec file path as given on the command line
-     * @param int $line the targeted line number
+     * @param int ...$lines the targeted line numbers
      */
-    public static function add(string $path, int $line): void
+    public static function add(string $path, int ...$lines): void
     {
-        self::$targets[self::normalise($path)] = $line;
+        $key = self::normalise($path);
+        self::$targets[$key] = array_merge(self::$targets[$key] ?? [], array_values($lines));
     }
 
     /**
-     * Records the spec file that is about to run, exposing its line target.
+     * Records the spec file that is about to run, exposing its line targets.
      *
      * @param string $path the spec file path
      */
     public static function beginSpec(string $path): void
     {
-        self::$current = self::$targets[self::normalise($path)] ?? null;
+        self::$current = self::$targets[self::normalise($path)] ?? [];
     }
 
     /**
-     * Returns the line target of the currently running spec, or null.
+     * The line targets of the currently running spec, none when it runs whole.
+     *
+     * @return list<int>
      */
-    public static function currentTarget(): ?int
+    public static function currentTargets(): array
     {
         return self::$current;
     }
 
     /**
-     * Removes all targets and the current target.
+     * Removes all targets and the current targets.
      */
     public static function reset(): void
     {
         self::$targets = [];
-        self::$current = null;
+        self::$current = [];
     }
 
     /**

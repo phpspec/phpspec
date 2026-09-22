@@ -510,6 +510,28 @@ describe(Context::class, function() {
         expect($result->getResults())->toHaveCount(1);
     });
 
+    it("runs the example at each of several targeted lines", function () {
+        $ran = [];
+        $firstLine = __LINE__ + 2;
+        $block = function () use (&$ran) {
+            it("first", function () use (&$ran) { $ran[] = 'first'; });
+            it("second", function () use (&$ran) { $ran[] = 'second'; });
+            it("third", function () use (&$ran) { $ran[] = 'third'; });
+        };
+        LineTargetRegistry::add('ctx.spec.php', $firstLine, $firstLine + 2);
+        LineTargetRegistry::beginSpec('ctx.spec.php');
+
+        try {
+            $ctx = new Context("LineTargeted", $block);
+            $ctx->setWorld(new Subject());
+            $ctx->run();
+        } finally {
+            LineTargetRegistry::reset();
+        }
+
+        expect($ran)->toBe(['first', 'third']);
+    });
+
     it("runs the whole context when the targeted line is inside it but on no example", function () {
         $ran = [];
         $blockLine = __LINE__ + 1;

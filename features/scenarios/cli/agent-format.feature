@@ -160,6 +160,22 @@ Feature: Agent output format
     And the output should contain "rerun"
     And the output should contain "run spec/App/Calc.spec.php:"
 
+  Scenario: A rerun naming several lines of one file reports each example once
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('Calc', function () {
+          it('adds', function () { expect(1)->toBe(2); });
+          it('subtracts', function () { expect(3)->toBe(3); });
+          it('multiplies', function () { expect(5)->toBe(6); });
+      });
+      """
+    When I run phpspec run with option "spec/App/Calc.spec.php:3 spec/App/Calc.spec.php:5 --format=agent"
+    Then the output should be valid JSON
+    And the output should contain "Calc > adds" exactly 1 times
+    And the output should contain "Calc > multiplies" exactly 1 times
+    And the output should not contain "subtracts"
+
   Scenario: A randomised run keeps the document the only thing on stdout
     Given a spec file "spec/App/Calc.spec.php":
       """

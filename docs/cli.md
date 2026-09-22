@@ -328,6 +328,16 @@ Any line inside an example (or scenario) body selects it; a line inside a
 targeting a `Scenario Outline:` line runs every row of its examples table,
 while targeting a single examples row runs just that expansion.
 
+Several selectors run each addressed block once, whether they name lines of
+one file or of many, so the `rerun` command an agent summary carries can be
+pasted back as it is:
+
+```bash
+bin/phpspec run spec/App/Calculator.spec.php:14 spec/App/Calculator.spec.php:22
+```
+
+A path given whole alongside one of its lines runs whole.
+
 ### Bootstrap
 
 | Option | Description |
