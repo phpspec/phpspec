@@ -285,7 +285,8 @@ rejected with an error rather than silently falling back.
 
 **Stopping early.** By default a run continues to the end. These flags halt it at
 the first result of a given kind: nothing after that example or scenario runs,
-in its own file or in any later one (useful for tight feedback loops and CI):
+in its own file or in any later one, and under `--parallel` every worker halts
+the same way (useful for tight feedback loops and CI):
 
 | Option | Stops on the first... |
 |---|---|

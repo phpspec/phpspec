@@ -92,7 +92,7 @@ final class ParallelRunner
                 $this->coveragePartials[] = $coveragePartial;
             }
 
-            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->configPath);
+            $process = new WorkerProcess($partition, $this->phpspecBin, $coveragePartial, $this->configPath, $this->stop);
             $processes[] = $process;
 
             $fiber = new \Fiber(function () use ($process) {

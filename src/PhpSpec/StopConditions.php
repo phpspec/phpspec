@@ -82,6 +82,24 @@ final readonly class StopConditions
     }
 
     /**
+     * The run options that would set these conditions again, for a worker
+     * process to halt as its parent would.
+     *
+     * @return list<string>
+     */
+    public function options(): array
+    {
+        return array_keys(array_filter([
+            '--stop-on-failure' => $this->onFailure,
+            '--stop-on-error' => $this->onError,
+            '--stop-on-warning' => $this->onWarning,
+            '--stop-on-deprecation' => $this->onDeprecation,
+            '--stop-on-notice' => $this->onNotice,
+            '--stop-on-skipped' => $this->onSkipped,
+        ]));
+    }
+
+    /**
      * Creates a StopConditions that stops on any non-pass result.
      */
     public static function fromProblems(): self

@@ -77,6 +77,23 @@ Feature: Parallel execution
     When I run phpspec run with option "--parallel=1 --stop-on-failure"
     Then the exit code should not be 0
 
+  Scenario: Stop on the first error inside a file with parallel execution
+    Given a spec file "spec/App/Halting.spec.php":
+      """
+      <?php
+      describe('Halting', function () {
+          it('errors', function () {
+              throw new RuntimeException('boom');
+          });
+          it('later example', function () {
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--parallel=1 --stop-on-error"
+    Then the output should contain "1 example ("
+    And the output should not contain "✓"
+
   Scenario: Parallel with profile does not crash
     Given a spec file "spec/App/Slow.spec.php":
       """

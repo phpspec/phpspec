@@ -77,6 +77,11 @@ describe(StopConditions::class, function () {
         expect($stop->any())->toBeTrue();
     });
 
+    it("spells itself as the run options that would set it again", function () {
+        expect((new StopConditions(onError: true, onSkipped: true))->options())->toBe(['--stop-on-error', '--stop-on-skipped']);
+        expect((new StopConditions())->options())->toBe([]);
+    });
+
     it("creates fromProblems with all flags set", function () {
         $stop = StopConditions::fromProblems();
         expect($stop->onFailure)->toBeTrue();

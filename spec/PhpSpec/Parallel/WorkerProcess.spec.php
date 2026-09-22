@@ -6,6 +6,7 @@ use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\StepResult;
+use PhpSpec\StopConditions;
 
 describe(WorkerProcess::class, function () {
 
@@ -294,6 +295,15 @@ describe(WorkerProcess::class, function () {
             $command = $worker->buildCommand();
 
             expect($command)->toContain('--config=custom/my-config.json');
+        });
+
+        it('forwards the stop conditions to the worker, so it halts as the parent would', function () {
+            $worker = new WorkerProcess(['spec/A.spec.php'], '/path/to/phpspec', stop: new StopConditions(onError: true, onSkipped: true));
+            $command = $worker->buildCommand();
+
+            expect($command)->toContain('--stop-on-error');
+            expect($command)->toContain('--stop-on-skipped');
+            expect($command)->not()->toContain('--stop-on-failure');
         });
     });
 
