@@ -439,14 +439,24 @@ final class Agent extends AbstractFormatter
         $this->counts[$state] = ($this->counts[$state] ?? 0) + 1;
         $this->exampleCount++;
 
-        if ($state !== 'passing') {
+        if ($this->reports($state)) {
             $this->report($entry);
         }
     }
 
     /**
+     * Whether an entry in this state goes out: everything that needs attention
+     * does, and a passing one only when the reader asked for the whole run.
+     */
+    private function reports(string $state): bool
+    {
+        return $state !== 'passing' || $this->output->isVerbose();
+    }
+
+    /**
      * Sends an entry out the moment it is known, and remembers what it re-runs
-     * so the summary can still hand over one command for the lot.
+     * so the summary can still hand over one command for the lot. A passing
+     * entry is not part of that lot: it re-runs on its own, not with the fixes.
      *
      * @param array<string, mixed> $entry
      */
@@ -455,7 +465,7 @@ final class Agent extends AbstractFormatter
         $this->start();
 
         $rerun = $entry['rerun'] ?? null;
-        if (is_string($rerun)) {
+        if (is_string($rerun) && $entry['state'] !== 'passing') {
             $this->rerunTargets[] = substr($rerun, strlen('run '));
         }
 
@@ -502,6 +512,10 @@ final class Agent extends AbstractFormatter
             if ($offer !== null) {
                 $entry['offer'] = $offer;
             }
+        } elseif ($state === 'passing') {
+            // Nothing in it failed, so the example is addressed by where it is
+            // declared: the it() line, which its closure spans.
+            $this->addLocation($entry, $this->location($example->getFile(), $example->getLine()));
         }
 
         $this->attachOutput($entry, $example->getOutput());
@@ -717,7 +731,7 @@ final class Agent extends AbstractFormatter
         $this->scenarioCount++;
         $this->counts[$state] = ($this->counts[$state] ?? 0) + 1;
 
-        if ($state === 'passing') {
+        if (!$this->reports($state)) {
             return;
         }
 
@@ -737,14 +751,17 @@ final class Agent extends AbstractFormatter
 
         $this->attachOutput($entry, $printed);
         $this->attachHandedOver($entry, $scenario->getAttachments());
-        $entry['steps'] = $steps;
+
+        if ($steps !== []) {
+            $entry['steps'] = $steps;
+        }
 
         // A scenario is addressed by the line its keyword sits on, which is what
         // "file.feature:LINE" already selects, so a failing scenario re-runs on
-        // its own instead of dragging the whole story suite with it. Only a
-        // failure is addressed, as with examples: a scenario waiting on undefined
-        // steps is work to write, not work to re-run.
-        if ($state === 'failing') {
+        // its own instead of dragging the whole story suite with it. A failure
+        // and a pass are addressed, as with examples: a scenario waiting on
+        // undefined steps is work to write, not work to re-run.
+        if ($state === 'failing' || $state === 'passing') {
             $this->addLocation($entry, $this->location($origin->path, $origin->line));
         }
 

@@ -184,6 +184,19 @@ describe(Example::class, function() {
         expect($receivedService)->toBeAnInstanceOf(\JsonSerializable::class);
     });
 
+    it("records on its result the file and line it is declared at", function() {
+        $line = __LINE__ + 1;
+        $example = new Example("declared", function() {});
+
+        \PhpSpec\EventDispatcher\DispatcherRegistry::dispatcher()->addSubscriber(
+            new \PhpSpec\EventDispatcher\Subscriber\ExampleSubscriber($example)
+        );
+        $result = $example->run();
+
+        expect($result->getFile())->toBe(__FILE__);
+        expect($result->getLine())->toBe($line);
+    });
+
     it("knows whether a line falls within its closure", function() {
         $start = __LINE__ + 1;
         $example = new Example("span test", function() {

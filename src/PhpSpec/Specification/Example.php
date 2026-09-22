@@ -147,10 +147,23 @@ class Example implements ExampleResultRegistry, Rebindable
         $boundary = DispatcherRegistry::dispatcher()->snapshot();
 
         try {
-            return $this->execute();
+            return $this->declared($this->execute());
         } finally {
             DispatcherRegistry::dispatcher()->restore($boundary);
         }
+    }
+
+    private function declared(ExampleResult $result): ExampleResult
+    {
+        $reflection = new ReflectionFunction($this->example);
+        $file = $reflection->getFileName();
+        $line = $reflection->getStartLine();
+
+        if ($file !== false && $line !== false) {
+            $result->declaredAt($file, $line);
+        }
+
+        return $result;
     }
 
     private function execute(): ExampleResult

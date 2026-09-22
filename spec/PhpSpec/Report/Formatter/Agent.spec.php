@@ -13,6 +13,7 @@ use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Specification\ExampleError;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 
 // A process end the spec fires by hand, in place of PHP's own shutdown.
 class AgentSpecProcessEnd implements ProcessEnd
@@ -305,6 +306,71 @@ describe(Agent::class, function () {
         expect($doc['result']['passing'])->toBe(1);
         expect($doc['result']['examples'])->toBe(1);
         expect($doc['result']['actionable'])->toBe(0);
+    });
+
+    // What a reader gets when it asks for everything: the same stream, with
+    // the passing entries in it.
+    $renderVerbose = function (SuiteResult $suite) use ($stream): array {
+        $output = new BufferedOutput(OutputInterface::VERBOSITY_VERBOSE);
+        (new Agent($output))->format($suite);
+
+        return $stream($output->fetch());
+    };
+
+    it('reports a passing example under verbose output, addressed by the line that declares it', function () use ($renderVerbose) {
+        $passing = new ExampleResult('holds products', [MatchResult::passed()]);
+        $passing->declaredAt(getcwd() . '/spec/App/Basket.spec.php', 7);
+
+        $doc = $renderVerbose(new SuiteResult([new SpecificationResult('App\\Basket', [$passing])]));
+
+        expect($doc['examples'])->toBe([[
+            'v' => 2,
+            'event' => 'example',
+            'id' => substr(sha1('App\\Basket > holds products'), 0, 12),
+            'example' => 'App\\Basket > holds products',
+            'state' => 'passing',
+            'spec' => 'spec/App/Basket.spec.php:7',
+            'rerun' => 'run spec/App/Basket.spec.php:7',
+        ]]);
+        expect($doc['result']['passing'])->toBe(1);
+        expect($doc['result']['actionable'])->toBe(0);
+    });
+
+    it('keeps passing entries out of the summary rerun command', function () use ($renderVerbose) {
+        $passing = new ExampleResult('holds products', [MatchResult::passed()]);
+        $passing->declaredAt(getcwd() . '/spec/App/Basket.spec.php', 7);
+        $failing = new ExampleResult('totals', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/App/Basket.spec.php', 12)]);
+
+        $doc = $renderVerbose(new SuiteResult([new SpecificationResult('App\\Basket', [$passing, $failing])]));
+
+        expect($doc['result']['rerun'])->toBe('run spec/App/Basket.spec.php:12');
+    });
+
+    it('reports a passing example that came back without its site by name alone', function () use ($renderVerbose) {
+        // A parallel worker's JUnit report knows no declaration line.
+        $doc = $renderVerbose(new SuiteResult([
+            new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
+        ]));
+
+        expect($doc['examples'][0]['state'])->toBe('passing');
+        expect($doc['examples'][0])->not()->toHaveKey('spec');
+        expect($doc['examples'][0])->not()->toHaveKey('rerun');
+    });
+
+    it('reports a passing scenario under verbose output, addressed by its line', function () use ($renderVerbose) {
+        $step = new StepResult('a working step', 'passed');
+        $scenario = new ScenarioResult('Counting up', [$step], 2);
+
+        $doc = $renderVerbose(new SuiteResult([
+            new FeatureResult('Counting', [$scenario], getcwd() . '/features/counting.feature'),
+        ]));
+
+        expect($doc['examples'])->toHaveLength(1);
+        expect($doc['examples'][0]['example'])->toBe('Counting > Counting up');
+        expect($doc['examples'][0]['state'])->toBe('passing');
+        expect($doc['examples'][0]['rerun'])->toBe('run features/counting.feature:2');
+        expect($doc['examples'][0])->not()->toHaveKey('steps');
+        expect($doc['result'])->not()->toHaveKey('rerun');
     });
 
     it('reports a failing example, mapping the subject to actual and the target to expected', function () use ($render) {

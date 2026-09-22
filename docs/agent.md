@@ -29,9 +29,9 @@ reaches you while the rest is still running.
 It is `--parallel`-safe, with one caveat: workers report back through JUnit,
 which carries the outcome, the message and a scenario's line, and nothing else.
 Entries from a parallel run therefore arrive in completion order and without
-`expectation` or `output`; a failing spec example also arrives without
-`spec` and `rerun`, which JUnit has no room for. Run without `--parallel` when
-you want the whole of the detail.
+`expectation` or `output`; a spec example, failing or passing, also arrives
+without `spec` and `rerun`, which JUnit has no room for. Run without
+`--parallel` when you want the whole of the detail.
 
 ## The stream
 
@@ -66,9 +66,13 @@ this point nothing has run yet, and the `summary` carries them.
 
 ### `example` — only what needs attention
 
-**Passing entries are omitted.** A green suite of thousands need not spend
-tokens on entries an agent will never act on — the summary still counts them.
-Each listed entry is one that failed, errored, or is pending/skipped.
+**Passing entries are omitted** unless you ask for them. A green suite of
+thousands need not spend tokens on entries an agent will never act on; the
+summary still counts them. Each listed entry is one that failed, errored, or is
+pending/skipped. Under `-v` every passing example and scenario is reported too,
+as `{id, example, state: "passing", spec, rerun}`, so you can name the examples
+that cover a change and re-run one of them on its own. The summary is the same
+either way, and its `rerun` still names only what failed.
 
 **One entry is one thing to fix.** A spec run reports examples; a Story BDD run
 reports **scenarios**, not steps, because a scenario is what fails, what re-runs,
@@ -82,9 +86,9 @@ Scenario Outline is its own entry, named by its values
 |---|---|
 | `id` | A stable identifier for this example: a hash of its full name. It survives edits that move lines or change where a failure fires, so you can ask *"is THIS exact failure still here?"* across runs. Recomputable from `example`. |
 | `example` | The full name, as a path: `App\Basket > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. |
-| `state` | `failing`, `error`, `pending`, or `skipped` (`passing` entries are omitted). |
+| `state` | `failing`, `error`, `pending`, or `skipped`; `passing` only under `-v`. |
 | `message` | What went wrong, whatever the state. An `error` entry keeps `exception` too, for the class and the site. |
-| `spec` | The `file:line` of the failing assertion or the error, project-relative. For a scenario it is the line its `Scenario:` keyword sits on. Absent when the site is not known. |
+| `spec` | The `file:line` of the failing assertion or the error, project-relative. For a passing example it is the line its `it()` sits on; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
 | `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. No full-suite re-run needed to verify one fix. Absent with `spec`. |
 | `output` | What the code printed while this entry ran, present only when it printed something. See [Printed output](#printed-output). |
 | `attachments` | Context the spec or scenario handed over about itself, by name. See [Handing over context](#handing-over-context-phpspec-cannot-see). |
@@ -404,8 +408,8 @@ its `event`:
   weaken the code to get past it. If `judged` is `false`, guard reached no
   conclusion at all and `reason` says why: nothing was checked, so do not read
   the run as having been guarded.
-- `example` lines are what needs attention (passing examples are not reported).
-  Each has a `state`:
+- `example` lines are what needs attention (passing examples are reported only
+  under `-v`). Each has a `state`:
   - `failing` — the code ran but behaviour is wrong. Look at
     `expectation.expected` (what the spec wants), `expectation.actual` (what the
     code produced), and `message`.

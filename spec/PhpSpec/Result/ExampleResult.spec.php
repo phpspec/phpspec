@@ -54,6 +54,17 @@ describe(ExampleResult::class, function() {
         expect($result->isPending())->toBe(false);
     });
 
+    it("knows where its example is declared once told", function() {
+        $result = new ExampleResult("test", []);
+        expect($result->getFile())->toBeNull();
+        expect($result->getLine())->toBeNull();
+
+        $result->declaredAt("/project/spec/App/Basket.spec.php", 7);
+
+        expect($result->getFile())->toBe("/project/spec/App/Basket.spec.php");
+        expect($result->getLine())->toBe(7);
+    });
+
     it("tracks duration", function() {
         $result = new ExampleResult("test", []);
         expect($result->getDuration())->toBe(0.0);

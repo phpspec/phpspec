@@ -185,7 +185,7 @@ See [Coding Agents](agent.md) for the `--agent` receipts and
 |---|---|
 | `-f`, `--format=FORMAT` | Output formatter: `pretty` (default), `dot`, `tap`, `junit`, `html`, `agent`. Repeatable; pair each with `-o` |
 | `-o`, `--out=FILE` | Report destination for the corresponding `--format`; `std` means the console |
-| `-v` | Verbose mode -- shows the duration of each example and step |
+| `-v` | Verbose mode -- shows the duration of each example and step; `--format=agent` reports the passing entries too |
 | `-q` | Quiet mode -- suppresses all output, exit code still reflects pass/fail |
 | `--profile[=N]` | Show the N slowest examples (default: 10) |
 

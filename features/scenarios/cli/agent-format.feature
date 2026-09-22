@@ -191,6 +191,43 @@ Feature: Agent output format
     And the output should contain "Calc > multiplies" exactly 1 times
     And the output should not contain "subtracts"
 
+  Scenario: A verbose run reports each passing example too, with its id and the line that re-runs it alone
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('Calc', function () {
+          it('adds', function () { expect(1)->toBe(1); });
+          it('subtracts', function () { expect(3)->toBe(2); });
+      });
+      """
+    When I run phpspec run with option "--format=agent -v"
+    Then the output should be valid JSON
+    And the output should have 4 events
+    And the output should contain "Calc > adds" exactly 1 times
+    And the output should contain "run spec/App/Calc.spec.php:3" exactly 1 times
+    And the output should contain "run spec/App/Calc.spec.php:4" exactly 2 times
+
+  Scenario: A verbose story run reports each passing scenario too
+    Given a PSR-4 project with "spec", "src", and "features" directories
+    And a feature file "features/counting.feature":
+      """
+      Feature: Counting
+        Scenario: Counting up
+          Given a working step
+      """
+    And a step file "features/steps/counting.steps.php":
+      """
+      <?php
+
+      given('a working step', function () {
+      });
+      """
+    When I run phpspec run with option "features/ --format=agent -v"
+    Then the output should be valid JSON
+    And the output should have 3 events
+    And the output should contain "Counting > Counting up" exactly 1 times
+    And the output should contain "run features/counting.feature:2" exactly 1 times
+
   Scenario: A randomised run keeps the document the only thing on stdout
     Given a spec file "spec/App/Calc.spec.php":
       """
