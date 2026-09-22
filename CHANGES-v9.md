@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - `run --help` names `agent` among the formats
+ - `toThrow()` runs its callable where the expectation is written, so a `finally` cleanup or a later assertion sees what it did; only the verdict waits for the end of the example
  - A `--stop-on-*` flag halts the run at the example or scenario that meets it, instead of finishing that file first, under `--parallel` too; a step that threw now stops a `--stop-on-error` run as an example that threw does
  - Several `path:LINE` selectors on one file run each addressed example or scenario once, so the `rerun` command in an agent summary can be pasted back as it is
  - A path given to `run` that does not exist stops the run and is named, instead of finding no specs and exiting 0

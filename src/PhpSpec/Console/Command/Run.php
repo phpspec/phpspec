@@ -114,7 +114,7 @@ final class Run extends Command
             ->addOption('stop-on-problems', null, Option::VALUE_NONE, 'Stop on any non-pass result')
             ->addOption('filter', null, Option::VALUE_REQUIRED, 'Run only specs matching pattern')
             ->addOption('paths-from', null, Option::VALUE_REQUIRED, 'Read spec/feature paths to run from a file, one per line')
-            ->addOption('format', 'f', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Output format(s): pretty, dot, tap, junit, html; repeatable, pair each with -o', [])
+            ->addOption('format', 'f', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Output format(s): pretty, dot, tap, junit, html, agent (JSON Lines for coding agents); repeatable, pair each with -o', [])
             ->addOption('out', 'o', Option::VALUE_REQUIRED | Option::VALUE_IS_ARRAY, 'Report destination for the corresponding --format; "std" is the console', [])
             ->addOption('order', null, Option::VALUE_REQUIRED, 'Run order (default, random)', 'default')
             ->addOption('seed', null, Option::VALUE_REQUIRED, 'Seed for random order')
