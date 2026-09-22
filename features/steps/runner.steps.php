@@ -108,6 +108,16 @@ when('I run phpspec run {string}', function (string $path) {
     _phpspec_exec($this, 'run ' . $path);
 });
 
+// -- Api command -------------------------------------------------------
+
+when('I run phpspec api', function () {
+    _phpspec_exec($this, 'api');
+});
+
+when('I run phpspec api with option {string}', function (string $options) {
+    _phpspec_exec($this, 'api ' . $options);
+});
+
 // -- Guard command -----------------------------------------------------
 
 when('I run phpspec guard', function () {

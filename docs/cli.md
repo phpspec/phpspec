@@ -113,6 +113,21 @@ reaches, naming the member and showing the lines. `--check --hash=<sha>
 --coverage=<file>` asks the same question on demand, after the suite, for CI and
 pre-commit hooks. See [Guard](guard.md).
 
+### `api`
+
+Describes the spec-writing API from the code itself: every DSL function and
+matcher with its real signature and summary, the mock and story functions, and
+the timing rules nothing can introspect (expectations are judged at the end of
+the example; `toThrow()` runs its callable where it is written).
+
+```bash
+bin/phpspec api                   # as prose
+bin/phpspec api --format=agent    # as one JSON object, for a coding agent
+```
+
+Because it is read off the code, it cannot drift from what runs. See
+[Coding Agents](agent.md) for the place it takes in an agent's instructions.
+
 ### `describe`
 
 Generates a spec file for a class.

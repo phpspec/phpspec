@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A request `callback` option is told each exchange (method, url, status, body and headers); the default one attaches the request and response to the report
  - Helper classes under features/support load before step definitions, the Cucumber way
  - A step records how long it ran, shown under `-v` as an example's already was, and its warnings are shown under it
+ - `phpspec api` describes the spec-writing API from the code itself: DSL, matchers, mocks, story steps and the timing rules; `--format=agent` gives it to a coding agent as one JSON object
 ### Changed
  - `toBeCalled()` and `toBeCalledTimes()` hold the mock to the arguments written in the expect call; written bare they still mean called at all
  - The pretty formatter reports an example and a step the same way: one set of glyphs (✓ ✘ ○ - ?), the title in the outcome's colour, and a spec headed `Spec:` as a feature is headed `Feature:`
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
  - `run --help` names `agent` among the formats
+ - The console application is named phpspec and carries its version as a version, so `--version` reads `phpspec 9.0.0-beta.21` and a command can ask which version it runs in
  - `toThrow()` runs its callable where the expectation is written, so a `finally` cleanup or a later assertion sees what it did; only the verdict waits for the end of the example
  - A `--stop-on-*` flag halts the run at the example or scenario that meets it, instead of finishing that file first, under `--parallel` too; a step that threw now stops a `--stop-on-error` run as an example that threw does
  - Several `path:LINE` selectors on one file run each addressed example or scenario once, so the `rerun` command in an agent summary can be pasted back as it is

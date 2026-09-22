@@ -410,6 +410,18 @@ its `event`:
   move lines). A failure is fixed when its `id` no longer appears. A failing
   Story BDD scenario has an `id` and a `rerun` of its own, just like an example.
 
+## Learning the spec-writing API
+
+Before writing specs, read the surface off the code once instead of guessing
+or reflecting on the source:
+
+    bin/phpspec api --format=agent
+
+One JSON object: every DSL function and matcher with its signature and
+summary, the mock and story functions, and the `timing` rules. Read `timing`
+first: expectations are judged at the end of the example, and `toThrow()` runs
+its callable where it is written.
+
 ## Writing specs that explain themselves
 
 When a spec or a step knows something PhpSpec cannot see, hand it over. Without
