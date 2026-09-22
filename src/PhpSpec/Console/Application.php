@@ -24,6 +24,7 @@ use PhpSpec\CodeGeneration\ClassGenerator;
 use PhpSpec\CodeGeneration\SpecGenerator;
 use PhpSpec\Configuration;
 use PhpSpec\Console\Command\Accept;
+use PhpSpec\Console\Command\Api;
 use PhpSpec\Console\Command\Describe;
 use PhpSpec\Console\Command\Exemplify;
 use PhpSpec\Console\Command\Generate;
@@ -59,7 +60,7 @@ final class Application extends BaseApplication
         $globalArgv = $_SERVER['argv'] ?? null;
         $this->argv = $argv ?? (is_array($globalArgv) ? $globalArgv : []);
 
-        parent::__construct($version);
+        parent::__construct('phpspec', $version);
     }
 
     /**
@@ -122,6 +123,7 @@ final class Application extends BaseApplication
         $defaultCommands[] = new Generate($config);
         $defaultCommands[] = new Accept(config: $config);
         $defaultCommands[] = new Guard(config: $config);
+        $defaultCommands[] = new Api();
 
         foreach ($extensionLoader->getCommands() as $cmd) {
             $defaultCommands[] = $cmd;
