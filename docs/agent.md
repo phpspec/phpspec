@@ -295,6 +295,17 @@ seen, and refuses an offer whose file has changed since it was made: at that
 point the decision was taken about something else. Nothing is applied unless
 every named offer can be.
 
+With `--format=agent`, `accept` answers with one receipt:
+
+```json
+{"v":2,"action":"accept","accepted":[{"id":"o_7f3a1c2d","action":"create_class","target":"App\\Coupon","files":["src/App/Coupon.php"],"applied":true}]}
+```
+
+`target` is what the offer named, a class, a method, a feature file, or the
+path of a proposed write; `files` are the files it wrote, from the project
+root. Generated classes land where the project's layout says their namespace
+lives (see [Code Generation](code-generation.md#where-generated-classes-go)).
+
 For the common case of taking everything a run found, the bulk shortcut remains:
 
 ```bash

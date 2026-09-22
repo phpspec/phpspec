@@ -507,6 +507,23 @@ Feature: Agent output format
     When I accept the offers phpspec made
     Then a class file "src/App/Coupon.php" should be generated
 
+  Scenario: The accept receipt names the file a generated class was written to
+    Given a spec file "spec/App/Basket.spec.php":
+      """
+      <?php
+      describe('App\Basket', function () {
+          it('applies a coupon', function () {
+              expect(new App\Coupon())->toBeAnInstanceOf(App\Coupon::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    And I accept the offers phpspec made with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "files"
+    And the output should contain "src/App/Coupon.php"
+    And a class file "src/App/Coupon.php" should be generated
+
   Scenario: A missing class surfaces as an offer, and --accept-offers generates it
     Given a spec file "spec/App/Basket.spec.php":
       """

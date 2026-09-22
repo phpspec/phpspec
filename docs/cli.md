@@ -97,8 +97,9 @@ bin/phpspec accept o_7f3a1c2d o_91b0e4aa    # several at once, all or nothing
 
 The id is derived from the offer itself, so it is stable while the offer stands.
 An unknown id is refused, and so is an offer whose file has changed since it was
-made. `--format=agent` returns the receipt as JSON. Offers live in
-`.phpspec/offers.json`; the fifty most recent stay on the table.
+made. `--format=agent` returns the receipt as JSON, naming each offer's target
+and the files it wrote. Offers live in `.phpspec/offers.json`; the fifty most
+recent stay on the table.
 
 ### `guard`
 

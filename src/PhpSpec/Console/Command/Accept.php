@@ -117,15 +117,18 @@ final class Accept extends Command
         $notes = $forAgent ? new NullOutput() : $output;
 
         foreach ($offers as $offer) {
-            match ($offer->kind) {
+            $files = match ($offer->kind) {
                 Offer::GENERATE => $this->generate($offer, $notes),
                 default => $this->write($offer, $notes),
             };
 
+            // The target is what the offer named, which for generated code is a
+            // class or a method; the files are where it landed.
             $receipts[] = [
                 'id' => $offer->id,
-                'path' => $offer->target,
                 'action' => $offer->action,
+                'target' => $offer->target,
+                'files' => $files,
                 'applied' => true,
             ];
         }
@@ -140,8 +143,10 @@ final class Accept extends Command
     /**
      * Applies a change that was proposed in full: the content travelled with
      * the offer, so what lands is what was read.
+     *
+     * @return list<string> the file written
      */
-    private function write(Offer $offer, Output $output): void
+    private function write(Offer $offer, Output $output): array
     {
         (new Writer($this->filesystem, $this->baseDir))
             ->apply(new Proposal($offer->target, $offer->was(), $offer->content(), $offer->action === 'create', 'accept'));
@@ -151,14 +156,18 @@ final class Accept extends Command
             $offer->action === 'create' ? 'Created' : 'Updated',
             $offer->target,
         ));
+
+        return [$offer->target];
     }
 
     /**
      * Generates the one thing this offer named, through the same generator the
      * interactive runner uses. The generators never overwrite, so an offer
      * whose subject now exists quietly does nothing rather than clobbering it.
+     *
+     * @return list<string> the files written, from the project root
      */
-    private function generate(Offer $offer, Output $output): void
+    private function generate(Offer $offer, Output $output): array
     {
         $candidates = is_array($offer->data['candidates'] ?? null) ? $offer->data['candidates'] : [];
 
@@ -172,7 +181,9 @@ final class Accept extends Command
             $this->config->getPsr4Prefix(),
         );
 
-        $generator->apply($output, GenerationCandidates::fromArray($candidates), $offer->action === 'fake_method');
+        $applied = $generator->apply($output, GenerationCandidates::fromArray($candidates), $offer->action === 'fake_method');
+
+        return array_values(array_unique(array_column($applied, 'file')));
     }
 
     /**
