@@ -39,5 +39,5 @@ interface GeneratedDouble
     /**
      * @param array<int, mixed>|null $args
      */
-    public function ______PhpSpecStubThrow(string $method, string $exceptionClass, string $message = '', ?array $args = null): void;
+    public function ______PhpSpecStubThrow(string $method, string|\Throwable $exception, string $message = '', ?array $args = null): void;
 }

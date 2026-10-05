@@ -91,7 +91,7 @@ describe('Outer', function () {
 
 ## `let(string $name, Closure $fn)`
 
-While not strictly a hook, `let` is the primary way to set up shared state. The closure runs once when the context is initialized:
+While not strictly a hook, `let` is the primary way to set up shared state. The closure runs afresh before each example, so every example gets its own value; one that throws fails that example alone:
 
 ```php
 describe(UserService::class, function () {

@@ -65,6 +65,9 @@ it('handles errors', function (UserRepository $repo) {
 });
 ```
 
+Give it the very instance to throw, as above, or a class name and a message
+and it builds one at the call: `toThrow(\RuntimeException::class, 'Not found')`.
+
 ## Verifying Method Calls
 
 ### `toBeCalled()`

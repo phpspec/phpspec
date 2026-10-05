@@ -62,4 +62,19 @@ describe(ValueExporter::class, function () {
         expect($node['truncated'])->toBe(true);
     });
 
+    it('names a float JSON cannot hold, at any depth', function () {
+        expect(ValueExporter::export(INF))->toBe('INF');
+        expect(ValueExporter::export(-INF))->toBe('-INF');
+        expect(ValueExporter::export(NAN))->toBe('NAN');
+        expect(ValueExporter::export(['value' => INF]))->toBe(['value' => 'INF']);
+    });
+
+    it('names a resource by its type rather than failing to encode it', function () {
+        $stream = fopen('php://memory', 'r');
+
+        expect(ValueExporter::export($stream))->toBe('resource (stream)');
+
+        fclose($stream);
+    });
+
 });

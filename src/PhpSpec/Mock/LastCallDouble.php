@@ -95,13 +95,13 @@ final class LastCallDouble implements MatchableDouble
      * Configures the tracked method to throw an exception on subsequent calls.
      * Removes the verification call from the calls stack to avoid false counts.
      *
-     * @param class-string<Exception> $exceptionClass the exception class to throw
-     * @param string $message the exception message
+     * @param class-string<\Throwable>|\Throwable $exception the exception to throw: the class to build one from, or the very instance
+     * @param string $message the exception message, when a class is given
      */
-    public function toThrow(string $exceptionClass, string $message = ''): void
+    public function toThrow(string|\Throwable $exception, string $message = ''): void
     {
         if ($this->double instanceof GeneratedDouble) {
-            $this->double->______PhpSpecStubThrow($this->method, $exceptionClass, $message, $this->args);
+            $this->double->______PhpSpecStubThrow($this->method, $exception, $message, $this->args);
             $this->double->______PhpSpecGetStubbedCalls()->pop();
         }
     }

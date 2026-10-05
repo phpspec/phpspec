@@ -11,7 +11,7 @@ Feature: Spec API reference
     Then the exit code should be 0
     And the output should contain "Timing"
     And the output should contain "describe(string $context, Closure $examples): void"
-    And the output should contain "toThrow(string $exceptionClass = '', ?string $message = null): static"
+    And the output should contain "toThrow(Throwable|string $exception = '', ?string $message = null): static"
     And the output should contain "mock(string $class): object"
     And the output should contain "given(string $pattern, Closure $fn): void"
     And the output should contain "visit(string $path): PhpSpec\Browser\Response"

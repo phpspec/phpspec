@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+ - A stubbed method can be told to throw an exception instance, `allow($repo->find(999))->toThrow(new RuntimeException('Not found'))`, as the mocking docs showed; a class name and a message still build one at the call
  - The browser behind visit() is an extension point: put your own implementation of the Browser contract behind the DSL with `extensions: {browser: ...}`
  - A request `callback` option is told each exchange (method, url, status, body and headers); the default one attaches the request and response to the report
  - Helper classes under features/support load before step definitions, the Cucumber way
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - An agent entry whose value is a float JSON cannot hold (`INF`, `NAN`), or whose value or printed output holds a byte that is not UTF-8, arrives whole: the float is named, the byte replaced, and an event is never written as `{}`
  - `phpspec api` names the docs by their absolute path inside the installed package, and the package ships `docs/`; it used to name paths relative to a checkout that a Composer install did not have
  - A `file:LINE` selector that reaches no example or scenario stops the run with `No example at ...` and exit 1, with a remedy, instead of running nothing and exiting 0
  - `describe -r` under `--format=agent` runs the new spec after its receipt, in the agent format and with the describe's interactivity, and exits with the run's code; it used to stop at the receipt
