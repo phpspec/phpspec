@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - `toBeCalledWith()` judges every call the double received during the example, as `toBeCalled()` and `toBeCalledTimes()` do; it used to see only the most recent call, so a call made before the expectation was written was missed
  - An error that came back from a `--parallel` worker carries no site, so the agent entry has no `spec` or `rerun` for it and the human formatters show no code around it; it used to name a line inside PhpSpec itself. The JUnit report carries the error's type, so the entry names it
  - A `let()` binding or a `beforeEach` hook that throws fails the example it was preparing and the others still run; it used to fold the whole describe into one error, so the count of examples moved between runs
  - An agent entry's `rerun` targets the `it()` line that declares the example, whatever line `spec` points at inside the file

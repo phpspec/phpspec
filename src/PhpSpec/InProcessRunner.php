@@ -50,7 +50,6 @@ final class InProcessRunner
         $savedLastDouble = MockExpectation::$lastDouble;
         $savedLastMockReturn = MockExpectation::$lastMockReturn;
         $savedLastCallForAllow = MockExpectation::$lastCallForAllow;
-        $savedRegistry = MockExpectation::$registry;
         $savedAutoloaders = spl_autoload_functions();
         $savedStoryBDD = StoryBDDRegistry::saveState();
         $savedBrowser = BrowserRegistry::saveState();
@@ -62,7 +61,6 @@ final class InProcessRunner
         MockExpectation::$lastDouble = null;
         MockExpectation::$lastMockReturn = null;
         MockExpectation::$lastCallForAllow = null;
-        MockExpectation::$registry = [];
         StoryBDDRegistry::init();
         BrowserRegistry::reset();
         CoverageRegistry::reset();
@@ -89,7 +87,6 @@ final class InProcessRunner
             MockExpectation::$lastDouble = $savedLastDouble;
             MockExpectation::$lastMockReturn = $savedLastMockReturn;
             MockExpectation::$lastCallForAllow = $savedLastCallForAllow;
-            MockExpectation::$registry = $savedRegistry;
             StoryBDDRegistry::restoreState($savedStoryBDD);
             BrowserRegistry::restoreState($savedBrowser);
 

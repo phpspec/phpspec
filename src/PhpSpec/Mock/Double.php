@@ -135,7 +135,6 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
             \$this->______phpspec_stack = new \PhpSpec\Mock\MethodCallsStack();
         }
         \$mocked = new \PhpSpec\Mock\MockedMethod(\$this, \$method, \$args);
-        \PhpSpec\Mock\Expectation::\$registry["$mockClassName"] = \$mocked;
         \$this->______phpspec_stack->push(\$mocked);
         \$__lcd = new \PhpSpec\Mock\LastCallDouble(\$this, \$method);
         \PhpSpec\Mock\Expectation::\$lastDouble = \$__lcd;

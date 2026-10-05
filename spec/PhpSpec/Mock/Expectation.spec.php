@@ -145,6 +145,16 @@ describe(Expectation::class, function() {
         expect($lcd->______PhpSpecGetMethod())->toBe('process');
     });
 
+    it("holds toBeCalledWith to a call made before the expectation was written", function(ExpectationSpecService $service) {
+        $service->store('foo', 42);
+        expect($service->store('foo', 42))->toBeCalledWith('foo', 42);
+    });
+
+    it("negated toBeCalledWith passes when the earlier call had other arguments", function(ExpectationSpecService $service) {
+        $service->store('other', 50);
+        expect($service->store('foo', 42))->not()->toBeCalledWith('foo', 42);
+    });
+
     it("negated toBeCalledWith with wrong arg count", function(ExpectationSpecService $service) {
         expect($service->store('foo', 42))->not()->toBeCalledWith('bar');
         $service->store('baz', 100);

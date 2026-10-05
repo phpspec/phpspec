@@ -59,6 +59,25 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
+  Scenario: An argument expectation judges calls made before it was written
+    Given an interface "src/App/Logger.php":
+      """
+      <?php
+      namespace App;
+
+      interface Logger {
+          public function log(string $message): void;
+      }
+      """
+    And a spec with example:
+      """
+      $logger = mock(App\Logger::class);
+      $logger->log('paid');
+      expect($logger->log('paid'))->toBeCalledWith('paid');
+      """
+    When I run the spec
+    Then all examples should pass
+
   Scenario: Verifying call count
     Given an interface "src/App/Counter.php":
       """
