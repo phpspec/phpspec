@@ -332,7 +332,7 @@ describe(CodeGenerator::class, function () {
             try {
                 $applied = $generator->generate($this->output, $suite, false);
             } finally {
-                array_map('unlink', glob($absDir . '/src/CgTest/*') + glob($absDir . '/spec/CgTest/*'));
+                array_map('unlink', array_merge(glob($absDir . '/src/CgTest/*') ?: [], glob($absDir . '/spec/CgTest/*') ?: []));
                 foreach ([$absDir . '/src/CgTest', $absDir . '/spec/CgTest', $absDir . '/src', $absDir . '/spec', $absDir] as $dir) {
                     rmdir($dir);
                 }
