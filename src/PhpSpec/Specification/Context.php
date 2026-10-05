@@ -15,6 +15,7 @@
 namespace PhpSpec\Specification;
 
 use Closure;
+use PhpSpec\CapturedOutput;
 use PhpSpec\Coverage\CoverageRegistry;
 use PhpSpec\EventDispatcher\DispatcherRegistry;
 use PhpSpec\EventDispatcher\Event\ContextRan;
@@ -210,24 +211,46 @@ class Context implements ExampleRegistry, Rebindable
         $coverage = CoverageRegistry::collector();
         $coverage?->beginExample();
 
+        // What the hooks print belongs to the example they wrap, next to what
+        // its body printed, not to the terminal between two results.
+        $setup = new CapturedOutput();
+        $teardown = new CapturedOutput();
+
         try {
-            $this->reapplyLets();
-            foreach ($this->beforeEachHooks as $hook) {
-                $hook(...$this->resolveClosureArgs($hook));
-            }
-            $this->world->__phpspec_let_mocks = $this->letMocks;
+            $setup->around(function (): void {
+                $this->reapplyLets();
+                foreach ($this->beforeEachHooks as $hook) {
+                    $hook(...$this->resolveClosureArgs($hook));
+                }
+                $this->world->__phpspec_let_mocks = $this->letMocks;
+            });
         } catch (Throwable $e) {
             $coverage?->endExample($example->getTitle());
 
-            return $example->failedToStart($e);
+            return $this->printed($example->failedInHook($e), $setup->text(), '');
         }
 
         $result = $example->run();
+        $body = $result->getOutput();
 
-        foreach ($this->afterEachHooks as $hook) {
-            $hook(...$this->resolveClosureArgs($hook));
+        try {
+            $teardown->around(function (): void {
+                foreach ($this->afterEachHooks as $hook) {
+                    $hook(...$this->resolveClosureArgs($hook));
+                }
+            });
+        } catch (Throwable $e) {
+            $result = $example->failedInHook($e);
         }
+
         $coverage?->endExample($result->getTitle());
+
+        return $this->printed($result, $setup->text() . $body, $teardown->text());
+    }
+
+    private function printed(ExampleResult $result, string $before, string $after): ExampleResult
+    {
+        $result->setOutput($before . $after);
 
         return $result;
     }

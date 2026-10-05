@@ -167,11 +167,11 @@ class Example implements ExampleResultRegistry, Rebindable
     }
 
     /**
-     * The result of an example whose setup (a let binding, a beforeEach hook)
-     * threw before its body could run: an error of its own, declared where it
-     * is, so the examples beside it still run and the count holds.
+     * The result of an example whose hook (a let binding, a beforeEach, an
+     * afterEach) threw: an error of its own, declared where it is, so the
+     * examples beside it still run and the count holds.
      */
-    public function failedToStart(\Throwable $e): ExampleResult
+    public function failedInHook(\Throwable $e): ExampleResult
     {
         DispatcherRegistry::dispatcher()->dispatch(new ExampleStarted($this->title), ExampleStarted::NAME);
 

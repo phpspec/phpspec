@@ -82,6 +82,35 @@ describe(Context::class, function() {
         expect($results[1]->getMessage())->toBe('no setup');
     });
 
+    it("fails the example whose afterEach threw, and goes on to the next", function() {
+        $ctx = new Context("broken teardown", function() {
+            afterEach(function() { throw new \RuntimeException('no teardown'); });
+            it("one", function() { expect(true)->toBeTrue(); });
+            it("two", function() { expect(true)->toBeTrue(); });
+        });
+        $ctx->setWorld(new Subject());
+
+        $results = $ctx->run()->getResults();
+
+        expect($results)->toHaveCount(2);
+        expect($results[0]->isError())->toBeTrue();
+        expect($results[0]->getMessage())->toBe('no teardown');
+        expect($results[0]->getTitle())->toBe('one');
+    });
+
+    it("keeps what the hooks printed with the example's output, around what the body printed", function() {
+        $ctx = new Context("printing hooks", function() {
+            beforeEach(function() { echo "setup "; });
+            afterEach(function() { echo " teardown"; });
+            it("prints", function() { echo "body"; });
+        });
+        $ctx->setWorld(new Subject());
+
+        $results = $ctx->run()->getResults();
+
+        expect($results[0]->getOutput())->toBe("setup body teardown");
+    });
+
     it("runs beforeEach hooks before each example", function() {
         $log = [];
         $ctx = new Context("hooks test", function() use (&$log) {

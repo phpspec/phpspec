@@ -83,6 +83,27 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the reported entry should have printed "the subject said this"
 
+  Scenario: What the hooks printed rides with the example, and nothing but the document reaches standard output
+    Given a spec file "spec/App/Noisy.spec.php":
+      """
+      <?php
+      describe('App\Noisy', function () {
+          beforeAll(function () { echo "beforeAll says hi\n"; });
+          beforeEach(function () { echo "setup says hello\n"; });
+          afterEach(function () { echo "teardown says goodbye\n"; });
+
+          it('prints from the body', function () {
+              echo "body says this";
+              expect(1)->toBe(2);
+          });
+      });
+      """
+    When I run phpspec run in a fresh process with option "--format=agent"
+    Then the standard output should be valid JSON
+    And the reported entry should have printed "setup says hello"
+    And the reported entry should have printed "body says this"
+    And the reported entry should have printed "teardown says goodbye"
+
   Scenario: What a scenario printed rides with it, whichever step printed it
     Given a PSR-4 project with "spec", "src", and "features" directories
     And a feature file "features/counting.feature":

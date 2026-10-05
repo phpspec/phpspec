@@ -211,11 +211,11 @@ describe(Example::class, function() {
         expect($example->containsLine($end + 1))->toBeFalse();
     });
 
-    it("reports a failure before it could start as its own error, declared where it is", function() {
+    it("reports a hook that threw as its own error, declared where it is", function() {
         $line = __LINE__ + 1;
         $example = new Example("never started", function() {});
 
-        $result = $example->failedToStart(new \RuntimeException('no setup'));
+        $result = $example->failedInHook(new \RuntimeException('no setup'));
 
         expect($result->isError())->toBeTrue();
         expect($result->getMessage())->toBe('no setup');

@@ -297,7 +297,9 @@ final class Run extends Command
         }
 
         try {
-            $results = $this->runSuiteStreaming($input, $prose, $formatter, $files, $coverageReporter !== null);
+            $results = $formatter instanceof Agent
+                ? $this->withOnlyTheDocumentOnStdout(fn(): SuiteResult => $this->runSuiteStreaming($input, $prose, $formatter, $files, $coverageReporter !== null))
+                : $this->runSuiteStreaming($input, $prose, $formatter, $files, $coverageReporter !== null);
         } catch (\RuntimeException $e) {
             // A load-time contract violation (e.g. two step definitions
             // sharing a title) is the user's to fix; report it, never a trace.
@@ -410,6 +412,32 @@ final class Run extends Command
 
         foreach ($outputs['extraConsole'] as $format) {
             $this->createFormatter($format, $output)->format($results);
+        }
+    }
+
+    /**
+     * Runs the suite with standard output reserved for the document: whatever
+     * user code prints outside an example's own capture (a describe body, a
+     * beforeAll hook) goes to standard error as it is printed, instead of
+     * landing between two events and breaking the stream.
+     *
+     * @param callable(): SuiteResult $run
+     */
+    private function withOnlyTheDocumentOnStdout(callable $run): SuiteResult
+    {
+        $level = ob_get_level();
+        ob_start(static function (string $printed): string {
+            fwrite(STDERR, $printed);
+
+            return '';
+        }, 1);
+
+        try {
+            return $run();
+        } finally {
+            while (ob_get_level() > $level) {
+                ob_end_clean();
+            }
         }
     }
 

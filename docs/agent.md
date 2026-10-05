@@ -177,9 +177,13 @@ fraction, so `90.0` is never reported as the `90` it was compared against.
 Anything your code prints while an entry runs — an `echo` left in a spec, a
 `var_dump`, the output of a process a step shelled out to and echoed — is
 captured and reported as that entry's `output`, rather than landing in the
-middle of the stream and breaking it. For a scenario it is everything its steps
+middle of the stream and breaking it. What `beforeEach` and `afterEach` print
+belongs to the example they wrap and rides in the same `output`, before and
+after what the body printed. For a scenario it is everything its steps
 printed, in order, **including the steps that passed**: a scenario usually runs
-the process in one step and reads the result in another.
+the process in one step and reads the result in another. Anything printed
+outside an example altogether, from a describe body or a `beforeAll`, goes to
+standard error, so standard output stays the document and nothing else.
 
 `output` is a string, or `{ "truncated": true, "length": N, "value": "…" }` when
 there was more than 4000 characters of it. The key is absent when nothing was

@@ -29,7 +29,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
  - `toBeCalledWith()` judges every call the double received during the example, as `toBeCalled()` and `toBeCalledTimes()` do; it used to see only the most recent call, so a call made before the expectation was written was missed
  - An error that came back from a `--parallel` worker carries no site, so the agent entry has no `spec` or `rerun` for it and the human formatters show no code around it; it used to name a line inside PhpSpec itself. The JUnit report carries the error's type, so the entry names it
- - A `let()` binding or a `beforeEach` hook that throws fails the example it was preparing and the others still run; it used to fold the whole describe into one error, so the count of examples moved between runs
+ - A `let()` binding, a `beforeEach` or an `afterEach` hook that throws fails the example it wraps and the others still run; it used to fold the whole describe into one error, so the count of examples moved between runs
+ - What `beforeEach` and `afterEach` print rides in the example's `output`, and under `--format=agent` anything printed outside an example goes to standard error; hook output used to land between two events and break the stream
  - An agent entry's `rerun` targets the `it()` line that declares the example, whatever line `spec` points at inside the file
  - A failed mock expectation reports the call the spec wanted and the calls the double received, arguments included, under the matcher's name; the pair used to read `1` against `PhpSpec\Mock\LastCallDouble`
  - A method called on a double that its type does not define fails naming the type, `Call to undefined method App\Clock::now()`, as PHP would on the real object; the error, the agent entry's offer and the summary's offer agree, where the entry used to name the generated double and a double of a class got no offer at all

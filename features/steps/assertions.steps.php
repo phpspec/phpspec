@@ -121,11 +121,11 @@ $entries = static function (array $events): array {
 };
 
 then('the output should be valid JSON', function () use ($events) {
-    $events($this->output);
+    $events($this->stdout ?? $this->output);
 });
 
 then('the output should have {int} events', function (int $count) use ($events) {
-    expect($events($this->output))->toHaveLength($count);
+    expect($events($this->stdout ?? $this->output))->toHaveLength($count);
 });
 
 // The stream's shape: an agent knows where the run starts and that the summary
@@ -141,7 +141,7 @@ then('the receipt should report the offer as not applied because {string}', func
 
 // The value as JSON when it reads as JSON (false, 3, null), else as the string it is.
 then('the header should state {string} as {string}', function (string $key, string $value) use ($events) {
-    $header = $events($this->output)[0] ?? [];
+    $header = $events($this->stdout ?? $this->output)[0] ?? [];
 
     try {
         $expected = json_decode($value, flags: JSON_THROW_ON_ERROR);
@@ -154,19 +154,19 @@ then('the header should state {string} as {string}', function (string $key, stri
 });
 
 then('the header should state {string}', function (string $key) use ($events) {
-    $header = $events($this->output)[0] ?? [];
+    $header = $events($this->stdout ?? $this->output)[0] ?? [];
 
     expect(isset($header[$key]) && $header[$key] !== '')->toBeTrue();
 });
 
 then('the first event should be {string}', function (string $name) use ($events) {
-    $stream = $events($this->output);
+    $stream = $events($this->stdout ?? $this->output);
 
     expect($stream[0]['event'] ?? null)->toBe($name);
 });
 
 then('the last event should be {string}', function (string $name) use ($events) {
-    $stream = $events($this->output);
+    $stream = $events($this->stdout ?? $this->output);
 
     expect(end($stream)['event'] ?? null)->toBe($name);
 });
@@ -174,17 +174,17 @@ then('the last event should be {string}', function (string $name) use ($events) 
 // How many things the run says are worth acting on: one per example or scenario,
 // never one per step of the same broken scenario.
 then('the report should have {int} entries', function (int $count) use ($events, $entries) {
-    expect($entries($events($this->output)))->toHaveLength($count);
+    expect($entries($events($this->stdout ?? $this->output)))->toHaveLength($count);
 });
 
 then('the report should have {int} entry', function (int $count) use ($events, $entries) {
-    expect($entries($events($this->output)))->toHaveLength($count);
+    expect($entries($events($this->stdout ?? $this->output)))->toHaveLength($count);
 });
 
 // One field answers "what went wrong", whatever the entry's state: a consumer
 // should not have to know that an error hides its text somewhere else.
 then('every reported entry should carry a message', function () use ($events, $entries) {
-    $reported = $entries($events($this->output));
+    $reported = $entries($events($this->stdout ?? $this->output));
 
     expect($reported)->not()->toBe([]);
 
@@ -196,7 +196,7 @@ then('every reported entry should carry a message', function () use ($events, $e
 // A step's failure is data, not a sentence to parse back: the values that did
 // not match ride on the step that did not pass.
 then('the failing step should report expected {int} and actual {int}', function (int $expected, int $actual) use ($events, $entries) {
-    $entry = $entries($events($this->output))[0] ?? [];
+    $entry = $entries($events($this->stdout ?? $this->output))[0] ?? [];
     $failing = array_values(array_filter($entry['steps'] ?? [], fn(array $step) => $step['state'] === 'failing'));
 
     expect($failing)->not()->toBe([]);
@@ -207,7 +207,7 @@ then('the failing step should report expected {int} and actual {int}', function 
 // Both sides of a failure, plainly named and compared as the JSON a reader
 // decodes, so "true" and "[]" mean what they say.
 then('the reported entry should expect {string} and have got {string}', function (string $expected, string $actual) use ($events, $entries) {
-    $expectation = $entries($events($this->output))[0]['expectation'] ?? [];
+    $expectation = $entries($events($this->stdout ?? $this->output))[0]['expectation'] ?? [];
 
     expect(json_encode($expectation['expected'] ?? null))->toBe($expected);
     expect(json_encode($expectation['actual'] ?? null))->toBe($actual);
@@ -216,7 +216,7 @@ then('the reported entry should expect {string} and have got {string}', function
 // Context only the test could reach, handed over under a name and read while
 // the run still stood where it was attached.
 then('the reported entry should have attached {string} containing {string}', function (string $name, string $text) use ($events, $entries) {
-    $attached = $entries($events($this->output))[0]['attachments'][$name] ?? null;
+    $attached = $entries($events($this->stdout ?? $this->output))[0]['attachments'][$name] ?? null;
 
     expect(is_array($attached) ? ($attached['value'] ?? $attached['error'] ?? '') : (string) $attached)->toContain($text);
 });
@@ -224,7 +224,7 @@ then('the reported entry should have attached {string} containing {string}', fun
 // What the subject printed is a diagnosis about the entry it printed under, and
 // it reaches the reader as data instead of landing in the middle of the report.
 then('the reported entry should have printed {string}', function (string $text) use ($events, $entries) {
-    $entry = $entries($events($this->output))[0] ?? [];
+    $entry = $entries($events($this->stdout ?? $this->output))[0] ?? [];
     $printed = $entry['output'] ?? null;
 
     expect(is_array($printed) ? ($printed['value'] ?? '') : (string) $printed)->toContain($text);
@@ -233,7 +233,7 @@ then('the reported entry should have printed {string}', function (string $text) 
 // Every reported entry must be addressable on its own: an id that two entries
 // share cannot answer "is THIS failure still here?".
 then('the failing entries should have distinct ids', function () use ($events, $entries) {
-    $ids = array_column($entries($events($this->output)), 'id');
+    $ids = array_column($entries($events($this->stdout ?? $this->output)), 'id');
 
     expect(count($ids))->toBeGreaterThan(1);
     expect(array_unique($ids))->toHaveLength(count($ids));
