@@ -117,7 +117,7 @@ final readonly class Surface
                 'functions' => self::functions(self::BROWSER),
                 'note' => 'Every call returns a Response the response matchers accept, and attaches the exchange to the report.',
             ],
-            'docs' => array_map(static fn(string $path): string => dirname(__DIR__, 3) . '/' . $path, self::DOCS),
+            'docs' => array_map(static fn(string $path): string => dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path), self::DOCS),
         ];
     }
 

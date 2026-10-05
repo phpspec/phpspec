@@ -21,4 +21,4 @@ Feature: Spec API reference
     Then the output should be valid JSON
     And the output should contain "timing"
     And the output should contain "runs_subject"
-    And the output should contain "docs/matchers.md"
+    And the output should contain "matchers.md"
