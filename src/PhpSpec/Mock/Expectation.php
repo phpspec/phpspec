@@ -42,16 +42,20 @@ final class Expectation extends BaseExpectation
     private MatchableDouble $mockSubject;
 
     /**
-     * Creates a mock expectation wrapping a MatchableDouble subject.
+     * Creates a mock expectation on a doubled method call: the call matchers
+     * (toBeCalled, toBeCalledWith) judge the double, the ordinary matchers
+     * judge what the call returned, so a stubbed call compares its value and
+     * verifies itself alike.
      *
-     * @param MatchableDouble $subject the mock wrapper returned by a doubled method call
+     * @param MatchableDouble $double the mock wrapper the doubled method call stands for
      * @param string $file the spec file where the expectation was created
      * @param int $line the line number in the spec file
+     * @param mixed ...$returned what the call returned, when a stub gave it a value; else the double itself
      */
-    public function __construct(MatchableDouble $subject, string $file, int $line)
+    public function __construct(MatchableDouble $double, string $file, int $line, mixed ...$returned)
     {
-        $this->mockSubject = $subject;
-        parent::__construct($subject, $file, $line);
+        $this->mockSubject = $double;
+        parent::__construct($returned === [] ? $double : $returned[0], $file, $line);
     }
 
     /**

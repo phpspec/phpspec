@@ -717,12 +717,12 @@ PHP;
                 $stubCheck = "\$__match = \\PhpSpec\\Mock\\StubRegistry::findMatch('$methodName', func_get_args(), \$this->______phpspec_stubbedReturns, \$this->______phpspec_stubbedReturnCallbacks, \$this->______phpspec_stubbedThrows);"
                     . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
                     . " if (\$__match['type'] === 'callback') { try { (\$__match['data'])(...func_get_args()); } catch (\\ArgumentCountError) {} }"
-                    . ' \\PhpSpec\\Mock\\Expectation::$lastDouble = null; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return; }';
+                    . ' \\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return; }';
             } elseif ($simpleReturnName !== 'never') {
                 $stubCheck = "\$__match = \\PhpSpec\\Mock\\StubRegistry::findMatch('$methodName', func_get_args(), \$this->______phpspec_stubbedReturns, \$this->______phpspec_stubbedReturnCallbacks, \$this->______phpspec_stubbedThrows);"
                     . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
-                    . " if (\$__match['type'] === 'callback') { try { \$__ret = (\$__match['data'])(...func_get_args()); \\PhpSpec\\Mock\\Expectation::\$lastDouble = null; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = null; return \$__ret; } catch (\\ArgumentCountError) {} }"
-                    . " if (\$__match['type'] === 'value') { \\PhpSpec\\Mock\\Expectation::\$lastDouble = null; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = null; return \$__match['data']; } }";
+                    . " if (\$__match['type'] === 'callback') { try { \$__ret = (\$__match['data'])(...func_get_args()); \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; } catch (\\ArgumentCountError) {} }"
+                    . " if (\$__match['type'] === 'value') { \$__ret = \$__match['data']; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = \$__ret; return \$__ret; } }";
             }
 
             // put it all together

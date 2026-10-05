@@ -70,6 +70,10 @@ and it builds one at the call: `toThrow(\RuntimeException::class, 'Not found')`.
 
 ## Verifying Method Calls
 
+Stub and verify the same call in any order: a stubbed call still records
+that it was made, and its returned value still compares with the ordinary
+matchers.
+
 ### `toBeCalled()`
 
 Verifies the method was called at least once. Arguments written in the

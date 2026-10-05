@@ -155,6 +155,26 @@ describe(Expectation::class, function() {
         expect($service->store('foo', 42))->not()->toBeCalledWith('foo', 42);
     });
 
+    it("verifies a call that was stubbed first", function(ExpectationSpecService $service) {
+        allow($service->process())->toReturn('winter');
+        expect($service->process())->toBeCalled();
+
+        $service->process();
+    });
+
+    it("verifies a call stubbed with a callback first", function(ExpectationSpecService $service) {
+        allow($service->process())->toReturnUsing(fn() => 'summer');
+        expect($service->process())->toBeCalledTimes(1);
+
+        $service->process();
+    });
+
+    it("still compares a stubbed return value with an ordinary matcher", function(ExpectationSpecService $service) {
+        allow($service->process())->toReturn('winter');
+
+        expect($service->process())->toBe('winter');
+    });
+
     it("negated toBeCalledWith with wrong arg count", function(ExpectationSpecService $service) {
         expect($service->store('foo', 42))->not()->toBeCalledWith('bar');
         $service->store('baz', 100);

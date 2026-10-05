@@ -140,6 +140,27 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
+  Scenario: A call stubbed first can still be verified
+    Given an interface "src/App/Catalogue.php":
+      """
+      <?php
+      namespace App;
+
+      interface Catalogue {
+          public function name(): string;
+      }
+      """
+    And a spec with example:
+      """
+      $catalogue = mock(App\Catalogue::class);
+      allow($catalogue->name())->toReturn('winter');
+      expect($catalogue->name())->toBeCalled();
+
+      expect($catalogue->name())->toBe('winter');
+      """
+    When I run the spec
+    Then all examples should pass
+
   Scenario: Stubbing a return value
     Given an interface "src/App/UserRepository.php":
       """

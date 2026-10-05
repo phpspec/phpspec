@@ -85,7 +85,7 @@ namespace {
             \PhpSpec\Mock\Expectation::$lastCallForAllow = null;
 
             if ($subject === $lastReturn) {
-                return new \PhpSpec\Mock\Expectation($lastDouble, $file, $line);
+                return new \PhpSpec\Mock\Expectation($lastDouble, $file, $line, $subject);
             }
         }
 
