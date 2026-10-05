@@ -108,14 +108,30 @@ final class Describe extends Command
         }
 
         if ($input->getOption('run')) {
-            $application = $this->getApplication();
-            if ($application === null) {
-                return 1;
-            }
-            return $application->find('run')->run(new ArrayInput([]), $output);
+            return $this->runAfter($input, $output, []);
         }
 
         return 0;
+    }
+
+    /**
+     * Runs the suite the way it was asked for, in the format the describe was
+     * asked in, so a reader of the receipt reads the run that followed it on
+     * the same channel and gets the run's exit code.
+     *
+     * @param array<string, mixed> $arguments the run command's arguments
+     */
+    private function runAfter(Input $input, Output $output, array $arguments): int
+    {
+        $application = $this->getApplication();
+        if ($application === null) {
+            return 1;
+        }
+
+        $run = new ArrayInput($arguments);
+        $run->setInteractive($input->isInteractive());
+
+        return $application->find('run')->run($run, $output);
     }
 
     /**
@@ -188,6 +204,10 @@ final class Describe extends Command
 
         $json = json_encode($receipt, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
         $output->write($json . "\n", false, Output::OUTPUT_RAW);
+
+        if ($input->getOption('run')) {
+            return $this->runAfter($input, $output, ['--format' => 'agent']);
+        }
 
         return 0;
     }

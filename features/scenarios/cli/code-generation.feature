@@ -195,6 +195,12 @@ Feature: Code generation
     Then a spec file "spec/App/Formatter.spec.php" should be generated
     And it should contain a describe block for "App\Formatter"
 
+  Scenario: Describe with run under the agent format runs the new spec and reports it
+    When I run phpspec describe "App\Formatter" with option "-r --format=agent -n"
+    Then the output should contain "run_started"
+    And the output should contain "summary"
+    And the exit code should be 1
+
   Scenario: Describe command with exemplified method
     When I run phpspec describe "App\Formatter" with option "-e render"
     Then a spec file "spec/App/Formatter.spec.php" should be generated
