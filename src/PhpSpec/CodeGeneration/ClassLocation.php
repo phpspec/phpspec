@@ -15,14 +15,16 @@
 namespace PhpSpec\CodeGeneration;
 
 use PhpSpec\Filesystem;
+use PhpSpec\ProjectRoot;
+use ReflectionClass;
 
 /**
  * @internal
- * Where a class lives and whether it is really there. Resolves an FQCN to its
- * source file via the one canonical resolver (ClassGenerator::resolveFqcn) and
- * distinguishes "the file exists" from "the class loads" — so a runtime
- * class-not-found (an autoload/PSR-4 mismatch) is never mistaken for a missing
- * source file.
+ * Where a class lives and whether it is really there. A class that is loaded
+ * lives where it was loaded from; one that is not yet written lives where the
+ * layout (source directory and PSR-4 prefix) says it will. Distinguishes "the
+ * file exists" from "the class loads", so a runtime class-not-found (an
+ * autoload/PSR-4 mismatch) is never mistaken for a missing source file.
  */
 final readonly class ClassLocation
 {
@@ -32,12 +34,29 @@ final readonly class ClassLocation
     ) {}
 
     /**
-     * Resolves the location of a class from its FQCN, the source directory, and
-     * the PSR-4 prefix mapped to it — the same resolution the generator writes to.
+     * The file a loaded class came from, when it is one of the project's own;
+     * otherwise where the layout would put the class. A missing method on a
+     * vendor or internal class must never be written into vendor/.
      */
     public static function for(string $fqcn, string $srcPath, string $psr4Prefix = ''): self
     {
-        return new self($fqcn, ClassGenerator::resolveFqcn($fqcn, $srcPath, $psr4Prefix)['filePath']);
+        return new self($fqcn, self::loadedFrom($fqcn) ?? ClassGenerator::resolveFqcn($fqcn, $srcPath, $psr4Prefix)['filePath']);
+    }
+
+    private static function loadedFrom(string $fqcn): ?string
+    {
+        if (!class_exists($fqcn) && !interface_exists($fqcn) && !trait_exists($fqcn)) {
+            return null;
+        }
+
+        $file = (new ReflectionClass($fqcn))->getFileName();
+        $root = ProjectRoot::here();
+
+        if ($file === false || !$root->holds($file) || str_starts_with($root->relative($file), 'vendor/')) {
+            return null;
+        }
+
+        return $file;
     }
 
     /**

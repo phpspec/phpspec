@@ -197,6 +197,11 @@ autoload:
 
 Each key is a namespace prefix (with trailing `\`), and each value is the directory path relative to the project root.
 
+Classes under the source directory are loaded by PhpSpec itself as well, at
+the path the layout maps their namespace to (the same place generated classes
+are written), so a project with no Composer autoloader, or one whose mapping
+changed without a `composer dump-autoload`, still runs.
+
 ### `base_url`
 
 Base URL for browser testing. Default: `null`.

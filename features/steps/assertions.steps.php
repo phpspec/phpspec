@@ -130,6 +130,35 @@ then('the output should have {int} events', function (int $count) use ($events) 
 
 // The stream's shape: an agent knows where the run starts and that the summary
 // is the last word, whatever happened in between.
+then('the receipt should report the offer as not applied because {string}', function (string $reason) {
+    $receipt = json_decode(trim($this->output), true, flags: JSON_THROW_ON_ERROR);
+    $accepted = $receipt['accepted'][0] ?? [];
+
+    if (($accepted['applied'] ?? null) !== false || !str_contains((string) ($accepted['reason'] ?? ''), $reason)) {
+        throw new RuntimeException("Expected the receipt to report the offer as not applied because \"{$reason}\".\nOutput:\n{$this->output}");
+    }
+});
+
+// The value as JSON when it reads as JSON (false, 3, null), else as the string it is.
+then('the header should state {string} as {string}', function (string $key, string $value) use ($events) {
+    $header = $events($this->output)[0] ?? [];
+
+    try {
+        $expected = json_decode($value, flags: JSON_THROW_ON_ERROR);
+    } catch (\JsonException) {
+        $expected = $value;
+    }
+
+    expect(array_key_exists($key, $header))->toBeTrue();
+    expect($header[$key])->toBe($expected);
+});
+
+then('the header should state {string}', function (string $key) use ($events) {
+    $header = $events($this->output)[0] ?? [];
+
+    expect(isset($header[$key]) && $header[$key] !== '')->toBeTrue();
+});
+
 then('the first event should be {string}', function (string $name) use ($events) {
     $stream = $events($this->output);
 

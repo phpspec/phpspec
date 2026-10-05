@@ -229,20 +229,20 @@ final class Run extends Command
         $missingBootstrap = $this->loadBootstrap($input);
 
         if ($missingBootstrap !== null) {
-            return $this->stopped($prose, $formatter, $missingBootstrap);
+            return $this->stopped($prose, $formatter, $missingBootstrap, 'Point --bootstrap, or the bootstrap in the config, at a file that exists.');
         }
         $this->registerAutoloader();
 
         $pathsFrom = $input->getOption('paths-from');
 
         if ($pathsFrom !== null && !is_file($pathsFrom)) {
-            return $this->stopped($prose, $formatter, "Paths file not found: $pathsFrom");
+            return $this->stopped($prose, $formatter, "Paths file not found: $pathsFrom", 'Point --paths-from at a file that exists.');
         }
 
         $missing = self::missingPath($given);
 
         if ($missing !== null) {
-            return $this->stopped($prose, $formatter, "Path not found: $missing");
+            return $this->stopped($prose, $formatter, "Path not found: $missing", 'Check the path, or give none to run the configured suite.');
         }
 
         $unknownFormats = $this->unknownFormats($input);
@@ -276,15 +276,24 @@ final class Run extends Command
 
         if (is_string($coverageReporter)) {
             if ($guard === null || $this->wantsCoverage($input)) {
-                return $this->stopped($prose, $formatter, $coverageReporter);
+                return $this->stopped($prose, $formatter, $coverageReporter, self::coverageRemedy());
             }
 
             // Coverage was guard's idea, not the caller's. A machine without a
             // driver must still be able to run its specs, so guard stands down
             // and says so rather than failing a run it cannot judge.
             $prose->writeln('<fg=yellow>Guard cannot judge this run: ' . $coverageReporter . '</>');
+            $guardStoodDown = true;
             $guard = null;
             $coverageReporter = null;
+        }
+
+        if ($formatter instanceof Agent) {
+            $formatter->runningWith($coverageReporter !== null, match (true) {
+                $guard !== null => 'on',
+                $guardStoodDown ?? false => 'stood down',
+                default => 'off',
+            });
         }
 
         try {
@@ -412,17 +421,33 @@ final class Run extends Command
      * @param Output $prose the channel for the run's human-facing lines
      * @param Formatter $formatter the console formatter for the run's results
      * @param string $message what went wrong
+     * @param string|null $remedy how to get past it, when that is known
      * @return int the exit code the caller returns
      */
-    private function stopped(Output $prose, Formatter $formatter, string $message): int
+    private function stopped(Output $prose, Formatter $formatter, string $message, ?string $remedy = null): int
     {
         $prose->writeln(sprintf('<fg=red>%s</>', $message));
 
+        if ($remedy !== null) {
+            $prose->writeln(sprintf('<fg=yellow>%s</>', $remedy));
+        }
+
         if ($formatter instanceof Agent) {
-            $formatter->stopped($message);
+            $formatter->stopped($message, remedy: $remedy);
         }
 
         return 1;
+    }
+
+    /**
+     * The same command under a coverage driver, which is the one thing a run
+     * that wanted coverage and found no Xdebug needs to hear.
+     */
+    private static function coverageRemedy(): string
+    {
+        $argv = $_SERVER['argv'] ?? [];
+
+        return 'XDEBUG_MODE=coverage ' . implode(' ', is_array($argv) && $argv !== [] ? array_map('strval', $argv) : ['bin/phpspec', 'run']);
     }
 
     /**
@@ -898,7 +923,7 @@ final class Run extends Command
      * @param SuiteResult $results the suite results to scan for generation candidates
      * @param bool $fake whether --fake mode is enabled
      * @param Generation $generation how an offer is answered when nobody is asked
-     * @return list<array{id: string, action: string, target: string, file: string}> what was written
+     * @return list<array{id: string, action: string, target: string, file: string, applied: bool, reason?: string}> what was written
      */
     private function generateCode(Output $output, SuiteResult $results, bool $fake, Generation $generation = Generation::Asks): array
     {

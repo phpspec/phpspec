@@ -268,7 +268,7 @@ final class WorkerProcess
             } elseif (isset($testcase->error)) {
                 $message = (string) ($testcase->error['message'] ?? 'Error');
                 $result = new ExampleResult($title, [], true);
-                $result->setError(new ExampleError($message, new \RuntimeException($message)));
+                $result->setError(ExampleError::fromReport($message, (string) ($testcase->error['type'] ?? 'Error')));
                 $examples[] = $result;
             } elseif (isset($testcase->failure)) {
                 $message = (string) ($testcase->failure['message'] ?? 'Failed');
@@ -301,12 +301,12 @@ final class WorkerProcess
                 } elseif (isset($testcase->error)) {
                     $message = (string) ($testcase->error['message'] ?? 'Errored');
                     $step = new StepResult($title, 'error');
-                    $step->setError(new StepError($message, new \RuntimeException($message)));
+                    $step->setError(StepError::fromReport($message, (string) ($testcase->error['type'] ?? 'Error')));
                     $steps[] = $step;
                 } elseif (isset($testcase->failure)) {
                     $message = (string) ($testcase->failure['message'] ?? 'Failed');
                     $step = new StepResult($title, 'failure');
-                    $step->setError(new StepError($message, new \RuntimeException($message)));
+                    $step->setError(StepError::fromReport($message, 'Failure'));
                     $steps[] = $step;
                 } else {
                     $steps[] = new StepResult($title, 'passed');

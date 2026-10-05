@@ -49,6 +49,39 @@ describe(Context::class, function() {
         expect($result->isError())->toBe(true);
     });
 
+    it("fails each example whose let binding throws, and still runs the rest", function() {
+        $ctx = new Context("broken let", function() {
+            let('money', fn() => throw new \RuntimeException('not yet'));
+            it("one", function() { expect($this->money)->toBeNull(); });
+            it("two", function() { expect($this->money)->toBeNull(); });
+            it("three", function() { expect(true)->toBeTrue(); });
+        });
+        $ctx->setWorld(new Subject());
+
+        $results = $ctx->run()->getResults();
+
+        expect($results)->toHaveCount(3);
+        expect($results[0]->isError())->toBeTrue();
+        expect($results[0]->getMessage())->toBe('not yet');
+        expect($results[0]->getTitle())->toBe('one');
+        expect($results[2]->isError())->toBeTrue();
+    });
+
+    it("fails the example whose beforeEach threw, and goes on to the next", function() {
+        $ctx = new Context("broken hook", function() {
+            beforeEach(function() { throw new \RuntimeException('no setup'); });
+            it("one", function() { expect(true)->toBeTrue(); });
+            it("two", function() { expect(true)->toBeTrue(); });
+        });
+        $ctx->setWorld(new Subject());
+
+        $results = $ctx->run()->getResults();
+
+        expect($results)->toHaveCount(2);
+        expect($results[1]->isError())->toBeTrue();
+        expect($results[1]->getMessage())->toBe('no setup');
+    });
+
     it("runs beforeEach hooks before each example", function() {
         $log = [];
         $ctx = new Context("hooks test", function() use (&$log) {

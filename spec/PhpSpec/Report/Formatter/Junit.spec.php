@@ -63,6 +63,7 @@ describe(Junit::class, function() {
         $text = $output->fetch();
         expect($text)->toContain('<error');
         expect($text)->toContain('boom');
+        expect($text)->toContain('type="RuntimeException"');
         expect($text)->toContain('errors="1"');
     });
 

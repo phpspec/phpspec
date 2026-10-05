@@ -47,10 +47,11 @@ final class MethodStubGenerator
      * @param string $methodName the method name to generate
      * @param int $argumentCount number of arguments to include in the signature
      * @param string|null $returnExpression PHP expression to return (--fake mode), or null for empty body
+     * @param bool $static whether the method was called statically, and is declared so
      * @return string confirmation message
      * @throws RuntimeException if the source file is not found, the method already exists, or the closing brace is missing
      */
-    public function generate(string $className, string $methodName, int $argumentCount = 0, ?string $returnExpression = null): string
+    public function generate(string $className, string $methodName, int $argumentCount = 0, ?string $returnExpression = null, bool $static = false): string
     {
         $filePath = $this->resolveFilePath($className);
 
@@ -71,13 +72,14 @@ final class MethodStubGenerator
         $paramString = implode(', ', $params);
 
         $isInterface = (bool) preg_match('/\binterface\s+\w+/', $content);
+        $signature = ($static ? 'public static function ' : 'public function ') . "$methodName($paramString)";
 
         if ($isInterface) {
-            $stub = "\n    public function $methodName($paramString);\n";
+            $stub = "\n    $signature;\n";
         } elseif ($returnExpression !== null) {
-            $stub = "\n    public function $methodName($paramString)\n    {\n        return $returnExpression;\n    }\n";
+            $stub = "\n    $signature\n    {\n        return $returnExpression;\n    }\n";
         } else {
-            $stub = "\n    public function $methodName($paramString)\n    {\n    }\n";
+            $stub = "\n    $signature\n    {\n    }\n";
         }
 
         $lastBrace = strrpos($content, '}');
@@ -150,14 +152,8 @@ final class MethodStubGenerator
         return (bool) preg_match($pattern, $content);
     }
 
-    /**
-     * Resolves a fully qualified class name to its expected file path under the source directory.
-     *
-     * @param string $className the fully qualified class name
-     * @return string the absolute file path
-     */
     private function resolveFilePath(string $className): string
     {
-        return ClassGenerator::resolveFqcn($className, $this->srcPath, $this->psr4Prefix)['filePath'];
+        return ClassLocation::for($className, $this->srcPath, $this->psr4Prefix)->filePath();
     }
 }

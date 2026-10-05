@@ -14,15 +14,12 @@
 
 namespace PhpSpec\Console\Command\Run;
 
-use PhpSpec\Mock\Double;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
 use PhpSpec\Result\FeatureResult;
 use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Results;
-use ReflectionClass;
-use ReflectionException;
 
 /**
  * @internal
@@ -60,75 +57,54 @@ final readonly class ResultScanner
     }
 
     /**
-     * Collects undefined methods called on mock doubles whose originals are interfaces.
-     * Uses the Double registry to resolve mock class names back to their original FQCNs.
+     * Collects undefined methods called on interfaces, as a double of one
+     * reports such a call: naming the interface, not the double.
      *
      * @param Results $results the results tree to scan
      * @return array<array{className: string, methodName: string, file: string, line: int}>
      */
     public function collectUndefinedMockInterfaceMethods(Results $results): array
     {
-        $errors = [];
-        foreach ($results->getResults() as $result) {
-            if ($result instanceof ExampleResult && $result->isError()) {
-                $error = $result->getError();
-                if ($error !== null && preg_match('/^Call to undefined method ([A-Za-z0-9_\\\\]+)::([A-Za-z0-9_]+)\(\)$/', $error->getMessage(), $matches)) {
-                    $mockClassName = $matches[1];
-                    $methodName = $matches[2];
-
-                    if (str_contains($mockClassName, '_Double_') && isset(Double::$doubleRegistry[$mockClassName])) {
-                        $originalFqcn = Double::$doubleRegistry[$mockClassName];
-                        try {
-                            $reflection = new ReflectionClass($originalFqcn);
-                            if ($reflection->isInterface()) {
-                                $errors[] = [
-                                    'className' => $originalFqcn,
-                                    'methodName' => $methodName,
-                                    'file' => $error->getFile(),
-                                    'line' => $error->getLine(),
-                                ];
-                            }
-                        } catch (ReflectionException) {
-                            // Class no longer exists, skip
-                        }
-                    }
-                }
-            } elseif ($result instanceof Results) {
-                $errors = array_merge($errors, $this->collectUndefinedMockInterfaceMethods($result));
-            }
-        }
-        return $errors;
+        return $this->collectUndefinedMethods($results, interface_exists(...));
     }
 
     /**
-     * Collects undefined methods called on real (non-mock) classes.
+     * Collects undefined methods called on classes.
      *
      * @param Results $results the results tree to scan
      * @return array<array{className: string, methodName: string, file: string, line: int}>
      */
     public function collectUndefinedClassMethods(Results $results): array
     {
+        return $this->collectUndefinedMethods($results, fn(string $type): bool => !interface_exists($type));
+    }
+
+    /**
+     * @param callable(string): bool $onType which types' undefined methods to collect
+     * @return array<array{className: string, methodName: string, file: string, line: int}>
+     */
+    private function collectUndefinedMethods(Results $results, callable $onType): array
+    {
         $errors = [];
         foreach ($results->getResults() as $result) {
             if ($result instanceof ExampleResult && $result->isError()) {
                 $error = $result->getError();
-                if ($error !== null && preg_match('/^Call to undefined method ([A-Za-z0-9_\\\\]+)::([A-Za-z0-9_]+)\(\)$/', $error->getMessage(), $matches)) {
-                    $className = $matches[1];
-                    // Skip mock doubles — handled in collectUndefinedMockInterfaceMethods
-                    if (str_contains($className, '_Double_')) {
-                        continue;
-                    }
+                if ($error !== null
+                    && preg_match('/^Call to undefined method ([A-Za-z0-9_\\\\]+)::([A-Za-z0-9_]+)\(\)$/', $error->getMessage(), $matches)
+                    && $onType($matches[1])
+                ) {
                     $errors[] = [
-                        'className' => $className,
+                        'className' => $matches[1],
                         'methodName' => $matches[2],
                         'file' => $error->getFile(),
                         'line' => $error->getLine(),
                     ];
                 }
             } elseif ($result instanceof Results) {
-                $errors = array_merge($errors, $this->collectUndefinedClassMethods($result));
+                $errors = array_merge($errors, $this->collectUndefinedMethods($result, $onType));
             }
         }
+
         return $errors;
     }
 

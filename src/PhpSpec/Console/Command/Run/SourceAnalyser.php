@@ -31,19 +31,34 @@ final class SourceAnalyser
      */
     public function extractArgumentCount(string $file, int $line, string $methodName): int
     {
-        if (!file_exists($file)) {
-            return 0;
-        }
-        $lines = file($file);
-        if ($lines === false) {
-            return 0;
-        }
-        $sourceLine = $lines[$line - 1] ?? '';
+        $sourceLine = $this->sourceLine($file, $line);
 
-        if (preg_match('/->' . preg_quote($methodName, '/') . '\(([^)]*)\)/', $sourceLine, $m)) {
+        if (preg_match('/(?:->|::)' . preg_quote($methodName, '/') . '\(([^)]*)\)/', $sourceLine, $m)) {
             return $this->countArguments($m[1]);
         }
+
         return 0;
+    }
+
+    /**
+     * Whether the method call at the given source location is a static one,
+     * `Name::method()`, `self::method()` or `static::method()`, so the stub
+     * generated for it can be called the way the spec calls it.
+     */
+    public function isStaticCall(string $file, int $line, string $methodName): bool
+    {
+        return preg_match('/[\w\\\\$]::' . preg_quote($methodName, '/') . '\(/', $this->sourceLine($file, $line)) === 1;
+    }
+
+    private function sourceLine(string $file, int $line): string
+    {
+        if (!file_exists($file)) {
+            return '';
+        }
+
+        $lines = file($file);
+
+        return $lines === false ? '' : ($lines[$line - 1] ?? '');
     }
 
     /**

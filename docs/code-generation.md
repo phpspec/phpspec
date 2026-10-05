@@ -51,6 +51,10 @@ from:
 3. Otherwise `src/` with every namespace segment as a directory:
    `src/Tasker/TaskList.php`.
 
+A method stub is different: its class already exists, so it is written into
+the file the class was loaded from, wherever that is, and the mapping above is
+not consulted. A method on a vendor or internal class is never written.
+
 A phpspec `autoload` map is consulted at run time only, to load classes while
 specs run; a config that states one keeps the third layout for generation.
 The offer, the diff and the receipt all name the file that will be or was
@@ -132,11 +136,12 @@ interface UserRepository
 
 ### Method Addition to Interfaces
 
-When a mock calls a method that doesn't exist on the interface, PhpSpec offers to add the method:
+When a spec calls a method on a double that its interface does not define, the
+error names the interface, `Call to undefined method App\UserRepository::find()`,
+and PhpSpec offers to add the method:
 
 ```
-Method "find" does not exist on App\UserRepository.
-Would you like me to add it? [y/n]
+Do you want me to add method find() to interface App\UserRepository? [Y/n]
 ```
 
 This appends the method signature to the interface.

@@ -104,7 +104,7 @@ describe(Agent::class, function () {
             new SpecificationResult('App\\Basket', [new ExampleResult('holds products', [MatchResult::passed()])]),
         ]));
 
-        expect($doc['suite'])->toBe(['v' => 2, 'event' => 'run_started', 'suite' => 'default', 'seed' => null]);
+        expect($doc['suite'])->toBe(['v' => 2, 'event' => 'run_started', 'suite' => 'default', 'seed' => null, 'php' => PHP_VERSION, 'coverage' => false, 'guard' => 'off']);
         expect($doc['examples'])->toBe([]);
         expect($doc['result']['event'])->toBe('summary');
     });
@@ -121,6 +121,38 @@ describe(Agent::class, function () {
 
         expect($doc['suite']['seed'])->toBe(424242);
         expect($doc['suite']['suite'])->toBe('spec,features/');
+    });
+
+    it('states in the header the mode it runs in, so a reader knows upfront what verdicts to expect', function () use ($stream) {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->runningWith(coverage: true, guard: 'stood down');
+        $formatter->format(new SuiteResult([]));
+        $doc = $stream($output->fetch());
+
+        expect($doc['suite']['php'])->toBe(PHP_VERSION);
+        expect($doc['suite']['coverage'])->toBeTrue();
+        expect($doc['suite']['guard'])->toBe('stood down');
+    });
+
+    it('carries the remedy for what stopped the run, when there is one', function () use ($stream) {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->stopped('Code coverage requires Xdebug with coverage mode enabled', remedy: 'XDEBUG_MODE=coverage bin/phpspec run --coverage-min=90');
+        $formatter->publish();
+        $doc = $stream($output->fetch());
+
+        expect($doc['fatal']['remedy'])->toBe('XDEBUG_MODE=coverage bin/phpspec run --coverage-min=90');
+    });
+
+    it('carries no remedy key when nothing is known to help', function () use ($stream) {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->stopped('Two step definitions share a title');
+        $formatter->publish();
+        $doc = $stream($output->fetch());
+
+        expect($doc['fatal'])->not()->toHaveKey('remedy');
     });
 
     it('closes the stream once, however often the command publishes it', function () {
@@ -183,21 +215,37 @@ describe(Agent::class, function () {
         $formatter->begin();
         $formatter->printResult(new SpecificationResult('App\\Basket', [new ExampleResult('applies a coupon', [], true)]));
         $formatter->applied([
-            ['id' => 'o_1', 'action' => 'create_class', 'target' => 'App\\Coupon', 'file' => 'src/App/Coupon.php'],
-            ['id' => 'o_2', 'action' => 'create_method', 'target' => 'App\\Coupon::apply', 'file' => 'src/App/Coupon.php'],
+            ['id' => 'o_1', 'action' => 'create_class', 'target' => 'App\\Coupon', 'file' => 'src/App/Coupon.php', 'applied' => true],
+            ['id' => 'o_2', 'action' => 'create_method', 'target' => 'App\\Coupon::apply', 'file' => 'src/App/Coupon.php', 'applied' => true],
         ]);
         $formatter->publish();
         $doc = $stream($output->fetch());
 
         expect($doc['result']['applied'])->toBe([
             'offers' => [
-                ['id' => 'o_1', 'action' => 'create_class', 'target' => 'App\\Coupon', 'file' => 'src/App/Coupon.php'],
-                ['id' => 'o_2', 'action' => 'create_method', 'target' => 'App\\Coupon::apply', 'file' => 'src/App/Coupon.php'],
+                ['id' => 'o_1', 'action' => 'create_class', 'target' => 'App\\Coupon', 'file' => 'src/App/Coupon.php', 'applied' => true],
+                ['id' => 'o_2', 'action' => 'create_method', 'target' => 'App\\Coupon::apply', 'file' => 'src/App/Coupon.php', 'applied' => true],
             ],
             'files' => ['src/App/Coupon.php'],
             'verified' => false,
         ]);
         expect($doc['result']['errors'])->toBe(1);
+    });
+
+    it('keeps an offer that was not applied out of the files written, carrying its reason', function () use ($stream) {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->begin();
+        $formatter->applied([
+            ['id' => 'o_1', 'action' => 'create_class', 'target' => 'App\\Coupon', 'file' => 'src/App/Coupon.php', 'applied' => true],
+            ['id' => 'o_2', 'action' => 'create_method', 'target' => 'App\\Basket::total', 'file' => 'src/App/Basket.php', 'applied' => false, 'reason' => "Method 'total' already exists"],
+        ]);
+        $formatter->publish();
+        $doc = $stream($output->fetch());
+
+        expect($doc['result']['applied']['files'])->toBe(['src/App/Coupon.php']);
+        expect($doc['result']['applied']['offers'][1]['applied'])->toBeFalse();
+        expect($doc['result']['applied']['offers'][1]['reason'])->toBe("Method 'total' already exists");
     });
 
     it('reports coverage without a threshold as met, adding no work', function () use ($stream) {
@@ -331,6 +379,7 @@ describe(Agent::class, function () {
             'state' => 'passing',
             'spec' => 'spec/App/Basket.spec.php:7',
             'rerun' => 'run spec/App/Basket.spec.php:7',
+            'rerun_argv' => ['run', 'spec/App/Basket.spec.php:7', '--format=agent'],
         ]]);
         expect($doc['result']['passing'])->toBe(1);
         expect($doc['result']['actionable'])->toBe(0);
@@ -390,6 +439,39 @@ describe(Agent::class, function () {
         expect($example)->not()->toHaveKey('offer');
     });
 
+    it('points at the first difference between two strings, so a reader need not diff them by eye', function () use ($render) {
+        $match = MatchResult::failed("total: 0\n", 'total: 0', 'no', getcwd() . '/spec/App/Basket.spec.php', 12, null, 'toBe');
+
+        $example = $render(new SuiteResult([
+            new SpecificationResult('App\\Basket', [new ExampleResult('prints the total', [$match])]),
+        ]))['examples'][0];
+
+        expect($example['expectation']['diff'])->toBe(['offset' => 8, 'expected' => '', 'actual' => "\n"]);
+    });
+
+    it('carries no diff when the two sides are not strings or arrays alike', function () use ($render) {
+        $match = MatchResult::failed(3500, 4000, 'no', getcwd() . '/spec/App/Basket.spec.php', 12, null, 'toBe');
+
+        $example = $render(new SuiteResult([
+            new SpecificationResult('App\\Basket', [new ExampleResult('totals', [$match])]),
+        ]))['examples'][0];
+
+        expect($example['expectation'])->not()->toHaveKey('diff');
+    });
+
+    it('hands over the rerun as arguments too, carrying the format, so an agent need not rebuild the command', function () use ($render) {
+        $match = MatchResult::failed(1, 2, 'no', getcwd() . '/spec/App/Basket.spec.php', 12);
+        $doc = $render(new SuiteResult([
+            new SpecificationResult('App\\Basket', [
+                new ExampleResult('totals', [$match]),
+                new ExampleResult('adds', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/App/Basket.spec.php', 20)]),
+            ]),
+        ]));
+
+        expect($doc['examples'][0]['rerun_argv'])->toBe(['run', 'spec/App/Basket.spec.php:12', '--format=agent']);
+        expect($doc['result']['rerun_argv'])->toBe(['run', 'spec/App/Basket.spec.php:12', 'spec/App/Basket.spec.php:20', '--format=agent']);
+    });
+
     it('keeps a null value an anonymous matcher failed on, having a site to prove it real', function () use ($render) {
         // A custom or predicate matcher reaches phpspec through __call and stays
         // nameless: null everywhere except the site. "Your code produced null"
@@ -417,6 +499,7 @@ describe(Agent::class, function () {
         // And no location invented from the parts it does not have.
         expect($example)->not()->toHaveKey('spec');
         expect($example)->not()->toHaveKey('rerun');
+        expect($example)->not()->toHaveKey('rerun_argv');
     });
 
     it('flags a negated matcher on the expected block', function () use ($render) {
@@ -528,6 +611,51 @@ describe(Agent::class, function () {
         expect($example['exception']['at'])->toContain(':');
         expect($example['rerun'])->toBe('run ' . $example['spec']);
         expect($example)->not()->toHaveKey('offer');
+    });
+
+    // An error whose site is somewhere other than where it was thrown, as PHP
+    // reports one thrown inside the code under test.
+    $thrownAt = function (string $message, string $file, int $line): \Throwable {
+        $error = new \RuntimeException($message);
+        foreach (['file' => $file, 'line' => $line] as $property => $value) {
+            $ref = new \ReflectionProperty(\Exception::class, $property);
+            $ref->setValue($error, $value);
+        }
+
+        return $error;
+    };
+
+    it('addresses an error thrown inside the code under test by the line that declares the example', function () use ($render, $thrownAt) {
+        $errored = new ExampleResult('adds cents', [], true);
+        $errored->declaredAt(getcwd() . '/spec/App/Money.spec.php', 7);
+        $errored->setError(new ExampleError('not yet', $thrownAt('not yet', getcwd() . '/src/App/Money.php', 9)));
+
+        $example = $render(new SuiteResult([new SpecificationResult('App\\Money', [$errored])]))['examples'][0];
+
+        expect($example['spec'])->toBe('spec/App/Money.spec.php:7');
+        expect($example['rerun'])->toBe('run spec/App/Money.spec.php:7');
+        expect($example['exception']['at'])->toBe('src/App/Money.php:9');
+    });
+
+    it('keeps the site of an error that surfaced in the spec file itself, re-running by the declaring line', function () use ($render, $thrownAt) {
+        $errored = new ExampleResult('adds cents', [], true);
+        $errored->declaredAt(getcwd() . '/spec/App/Money.spec.php', 7);
+        $errored->setError(new ExampleError('boom', $thrownAt('boom', getcwd() . '/spec/App/Money.spec.php', 12)));
+
+        $example = $render(new SuiteResult([new SpecificationResult('App\\Money', [$errored])]))['examples'][0];
+
+        expect($example['spec'])->toBe('spec/App/Money.spec.php:12');
+        expect($example['rerun'])->toBe('run spec/App/Money.spec.php:7');
+    });
+
+    it('addresses a failure asserted in a helper by the line that declares the example', function () use ($render) {
+        $failing = new ExampleResult('adds cents', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/support/helpers.php', 40)]);
+        $failing->declaredAt(getcwd() . '/spec/App/Money.spec.php', 7);
+
+        $example = $render(new SuiteResult([new SpecificationResult('App\\Money', [$failing])]))['examples'][0];
+
+        expect($example['spec'])->toBe('spec/App/Money.spec.php:7');
+        expect($example['rerun'])->toBe('run spec/App/Money.spec.php:7');
     });
 
     it('carries a per-example create_class offer when the error is a missing class', function () use ($render) {

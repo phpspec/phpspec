@@ -94,6 +94,22 @@ Feature: Parallel execution
     Then the output should contain "1 example ("
     And the output should not contain "✓"
 
+  Scenario: An error under --parallel carries no location it cannot know
+    Given a spec file "spec/App/Halting.spec.php":
+      """
+      <?php
+      describe('Halting', function () {
+          it('errors', function () {
+              throw new RuntimeException('boom');
+          });
+      });
+      """
+    When I run phpspec run with option "--parallel=1 --format=agent"
+    Then the output should be valid JSON
+    And the output should contain "RuntimeException"
+    And the output should not contain "WorkerProcess"
+    And the output should not contain "rerun"
+
   Scenario: Parallel with profile does not crash
     Given a spec file "spec/App/Slow.spec.php":
       """

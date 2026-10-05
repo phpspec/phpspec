@@ -211,4 +211,17 @@ describe(Example::class, function() {
         expect($example->containsLine($end + 1))->toBeFalse();
     });
 
+    it("reports a failure before it could start as its own error, declared where it is", function() {
+        $line = __LINE__ + 1;
+        $example = new Example("never started", function() {});
+
+        $result = $example->failedToStart(new \RuntimeException('no setup'));
+
+        expect($result->isError())->toBeTrue();
+        expect($result->getMessage())->toBe('no setup');
+        expect($result->getTitle())->toBe('never started');
+        expect($result->getFile())->toBe(__FILE__);
+        expect($result->getLine())->toBe($line);
+    });
+
 });

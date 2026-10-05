@@ -71,7 +71,7 @@ describe(Calculator::class, function() {
 });
 ```
 
-The closure is called once when the context is set up, and the result is assigned to `$this->calculator`. This works because the `Subject` object (which is the `$this` inside spec closures) uses `#[AllowDynamicProperties]`.
+The closure is called afresh before each example, and the result is assigned to `$this->calculator`. This works because the `Subject` object (which is the `$this` inside spec closures) uses `#[AllowDynamicProperties]`. A closure that throws fails the example it was preparing, reported as that example's error; the other examples still run.
 
 `let()` also supports type-hinted mock injection:
 
@@ -121,6 +121,9 @@ describe(Calculator::class, function () {
     it('adds', fn () => expect($this->calculator->add(2, 3))->toBe(5));
 });
 ```
+
+A `beforeEach` that throws fails the example it was preparing, reported as
+that example's error; the other examples still run.
 
 ### `beforeAll` / `afterAll`
 

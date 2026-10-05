@@ -19,6 +19,7 @@ use PhpSpec\Guard\Verdict as GuardVerdict;
 use PhpSpec\ProjectRoot;
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Report\Formatter\Agent\Fatal;
+use PhpSpec\Report\Formatter\Agent\FirstDifference;
 use PhpSpec\Report\Formatter\Agent\Offers;
 use PhpSpec\Report\Formatter\Agent\Origin;
 use PhpSpec\Report\Formatter\Agent\ProcessEnd;
@@ -83,11 +84,17 @@ final class Agent extends AbstractFormatter
     /** What guard made of the change, when guard is on. */
     private ?GuardVerdict $guard = null;
 
-    /** @var list<array{id: string, action: string, target: string, file: string}> */
+    /** @var list<array{id: string, action: string, target: string, file: string, applied: bool, reason?: string}> */
     private array $applied = [];
 
-    /** @var array{message: string, at: string|null}|null what stopped the run short, when something did */
+    /** @var array{message: string, at: string|null, remedy: string|null}|null what stopped the run short, when something did */
     private ?array $fatal = null;
+
+    /** Whether this run collects coverage, so a reader knows a verdict will follow. */
+    private bool $collectingCoverage = false;
+
+    /** Guard's standing in this run: on, off, or stood down for lack of a coverage driver. */
+    private string $guardStanding = 'off';
 
     /**
      * @param OutputInterface $output the stream the document goes to
@@ -123,6 +130,16 @@ final class Agent extends AbstractFormatter
         $this->seed = $seed;
     }
 
+    /**
+     * Tells the formatter the mode the run is in, so the header says upfront
+     * whether a coverage verdict and a guard verdict are to be expected.
+     */
+    public function runningWith(bool $coverage, string $guard): void
+    {
+        $this->collectingCoverage = $coverage;
+        $this->guardStanding = $guard;
+    }
+
     public function begin(): void
     {
         $this->start();
@@ -145,6 +162,9 @@ final class Agent extends AbstractFormatter
             'event' => Schema::EVENT_RUN_STARTED,
             'suite' => $this->suite,
             'seed' => $this->seed,
+            'php' => PHP_VERSION,
+            'coverage' => $this->collectingCoverage,
+            'guard' => $this->guardStanding,
         ]);
     }
 
@@ -182,10 +202,11 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * Takes what --accept-offers wrote after the run, so the summary says it
-     * as data: an exit code of 0 alone reads as verified, and it is not.
+     * Takes what --accept-offers wrote after the run, and what it could not,
+     * so the summary says it as data: an exit code of 0 alone reads as
+     * verified, and it is not.
      *
-     * @param list<array{id: string, action: string, target: string, file: string}> $applied
+     * @param list<array{id: string, action: string, target: string, file: string, applied: bool, reason?: string}> $applied
      */
     public function applied(array $applied): void
     {
@@ -209,10 +230,11 @@ final class Agent extends AbstractFormatter
      *
      * @param string $message what went wrong
      * @param string|null $at where, as a project-relative file:line
+     * @param string|null $remedy how to get past it, when that is known
      */
-    public function stopped(string $message, ?string $at = null): void
+    public function stopped(string $message, ?string $at = null, ?string $remedy = null): void
     {
-        $this->fatal ??= ['message' => $message, 'at' => $at];
+        $this->fatal ??= ['message' => $message, 'at' => $at, 'remedy' => $remedy];
     }
 
     /**
@@ -254,12 +276,18 @@ final class Agent extends AbstractFormatter
         $this->start();
 
         if ($this->fatal !== null) {
-            $this->emit([
+            $fatal = [
                 'v' => Schema::V,
                 'event' => Schema::EVENT_FATAL,
                 'message' => $this->fatal['message'],
                 'at' => $this->fatal['at'],
-            ]);
+            ];
+
+            if ($this->fatal['remedy'] !== null) {
+                $fatal['remedy'] = $this->fatal['remedy'];
+            }
+
+            $this->emit($fatal);
         }
 
         $this->emit($this->summary());
@@ -322,9 +350,13 @@ final class Agent extends AbstractFormatter
             'duration_ms' => (int) round(($this->results?->getDuration() ?? 0.0) * 1000),
         ];
 
-        $rerun = $this->rerunEverything();
-        if ($rerun !== null) {
-            $summary['rerun'] = $rerun;
+        // The one command that re-runs everything this run reported, so a fix
+        // is checked against the whole of what it was meant to fix, as a string
+        // to paste and as the arguments to hand a process.
+        $targets = array_values(array_unique($this->rerunTargets));
+        if ($targets !== []) {
+            $summary['rerun'] = 'run ' . implode(' ', $targets);
+            $summary['rerun_argv'] = ['run', ...$targets, '--format=agent'];
         }
 
         if ($this->guard !== null && !$this->guard->held()) {
@@ -350,26 +382,15 @@ final class Agent extends AbstractFormatter
         // Written after the run the counts describe, under the ids the offers
         // carried, so a reader knows what changed and that it is unverified.
         if ($this->applied !== []) {
+            $written = array_filter($this->applied, fn(array $offer): bool => $offer['applied']);
             $summary['applied'] = [
                 'offers' => $this->applied,
-                'files' => array_values(array_unique(array_column($this->applied, 'file'))),
+                'files' => array_values(array_unique(array_column($written, 'file'))),
                 'verified' => false,
             ];
         }
 
         return $summary;
-    }
-
-    /**
-     * The one command that re-runs everything this run reported, so a fix can be
-     * checked against the whole of what it was meant to fix instead of one
-     * example at a time. Null when nothing failed anywhere with a location.
-     */
-    private function rerunEverything(): ?string
-    {
-        $targets = array_values(array_unique($this->rerunTargets));
-
-        return $targets !== [] ? 'run ' . implode(' ', $targets) : null;
     }
 
     /**
@@ -491,7 +512,7 @@ final class Agent extends AbstractFormatter
             $match = $this->failingMatch($example);
             $entry += $this->expectation($match);
             $entry['message'] = $example->getMessage();
-            $this->addLocation($entry, $this->location($match?->getFile(), $match?->getLine()));
+            $this->address($entry, $example, $match?->getFile(), $match?->getLine());
             // No offer on a failure: the code exists and the behaviour is wrong,
             // there is nothing to generate — `state: failing` already says so.
         } elseif ($state === 'error') {
@@ -504,7 +525,7 @@ final class Agent extends AbstractFormatter
             // Mirrored, so one field answers "what went wrong" whatever the
             // state: the exception adds the class and the site, not the text.
             $entry['message'] = $error?->getMessage();
-            $this->addLocation($entry, $this->location($error?->getFile(), $error?->getLine()));
+            $this->address($entry, $example, $error?->getFile(), $error?->getLine());
             // A missing class/method/interface the error names becomes a concrete
             // offer to generate it, right on the example that hit it. Only present
             // when the error actually maps to something a generator can create.
@@ -513,9 +534,7 @@ final class Agent extends AbstractFormatter
                 $entry['offer'] = $offer;
             }
         } elseif ($state === 'passing') {
-            // Nothing in it failed, so the example is addressed by where it is
-            // declared: the it() line, which its closure spans.
-            $this->addLocation($entry, $this->location($example->getFile(), $example->getLine()));
+            $this->address($entry, $example, null, null);
         }
 
         $this->attachOutput($entry, $example->getOutput());
@@ -640,7 +659,7 @@ final class Agent extends AbstractFormatter
      * which is a comparison worth reporting: an anonymous matcher (any
      * __call-based custom or predicate matcher) has no name to give either.
      *
-     * @return array{expectation?: array{matcher: string|null, expected: mixed, actual: mixed, negated: bool}}
+     * @return array{expectation?: array{matcher: string|null, expected: mixed, actual: mixed, negated: bool, diff?: array<string, mixed>}}
      */
     private function expectation(?MatchResult $match): array
     {
@@ -648,14 +667,19 @@ final class Agent extends AbstractFormatter
             return [];
         }
 
-        return [
-            'expectation' => [
-                'matcher' => $match->getMatcher(),
-                'expected' => ValueExporter::export($match->getActual()),
-                'actual' => ValueExporter::export($match->getExpected()),
-                'negated' => $match->isNegated(),
-            ],
+        $expectation = [
+            'matcher' => $match->getMatcher(),
+            'expected' => ValueExporter::export($match->getActual()),
+            'actual' => ValueExporter::export($match->getExpected()),
+            'negated' => $match->isNegated(),
         ];
+
+        $difference = FirstDifference::between($match->getActual(), $match->getExpected());
+        if ($difference !== null) {
+            $expectation['diff'] = $difference;
+        }
+
+        return ['expectation' => $expectation];
     }
 
     /**
@@ -762,7 +786,8 @@ final class Agent extends AbstractFormatter
         // and a pass are addressed, as with examples: a scenario waiting on
         // undefined steps is work to write, not work to re-run.
         if ($state === 'failing' || $state === 'passing') {
-            $this->addLocation($entry, $this->location($origin->path, $origin->line));
+            $scenario = $this->location($origin->path, $origin->line);
+            $this->addLocation($entry, $scenario, $scenario);
         }
 
         $this->report($entry);
@@ -806,21 +831,39 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * Attaches where the entry failed, and the exact line-targeted command that
-     * re-runs just that one, so an agent can verify a single fix without a
-     * full-suite run. phpspec resolves a "spec.php:LINE" path to the example
-     * whose closure spans that line, and the expectation/error site always
-     * falls inside it, so the entry's own location is a valid target. Both are
-     * absent when the location is not known: a key that says null is a question
-     * a reader has to ask twice.
+     * Addresses an example, always in its own spec file: `spec` is the site of
+     * what went wrong when that site is in the file (the expect() line, a let
+     * binding that threw), else the line that declares the example; `rerun`
+     * targets the declaring line, which phpspec resolves to this example and
+     * no other. An error thrown inside the code under test, or an expectation
+     * asserted in a helper, would otherwise hand an agent a path that is not a
+     * spec, and "run src/App/Money.php:12" would be executed blindly. Nothing
+     * is attached when neither the declaration nor the site is known.
      *
      * @param array<string, mixed> $entry
      */
-    private function addLocation(array &$entry, ?string $location): void
+    private function address(array &$entry, ExampleResult $example, ?string $file, ?int $line): void
     {
-        if ($location !== null) {
-            $entry['spec'] = $location;
-            $entry['rerun'] = 'run ' . $location;
+        $declared = $this->location($example->getFile(), $example->getLine());
+        $site = $declared === null || $file === $example->getFile() ? $this->location($file, $line) : null;
+
+        $this->addLocation($entry, $site ?? $declared, $declared ?? $site);
+    }
+
+    /**
+     * Attaches the line the entry is acted on from, and the exact line-targeted
+     * command that re-runs just that one, so an agent can verify a single fix
+     * without a full-suite run. Both are absent when the location is not known:
+     * a key that says null is a question a reader has to ask twice.
+     *
+     * @param array<string, mixed> $entry
+     */
+    private function addLocation(array &$entry, ?string $spec, ?string $rerun): void
+    {
+        if ($spec !== null && $rerun !== null) {
+            $entry['spec'] = $spec;
+            $entry['rerun'] = 'run ' . $rerun;
+            $entry['rerun_argv'] = ['run', $rerun, '--format=agent'];
         }
     }
 

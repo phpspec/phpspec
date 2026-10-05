@@ -32,6 +32,27 @@ Feature: Agent output format
     And the output should contain "summary"
     And the output should contain "passing"
 
+  Scenario: The header states which PHP ran and whether coverage and guard are on
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () { expect(2)->toBe(2); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the header should state "php"
+    And the header should state "coverage" as "false"
+    And the header should state "guard" as "off"
+
+  Scenario: A fatal says how to get past it, when that is known
+    When I run phpspec run with option "--bootstrap=nope.php --format=agent"
+    Then the output should be valid JSON
+    And the output should contain "fatal"
+    And the output should contain "remedy"
+    And the output should contain "--bootstrap"
+
   Scenario: A failing example carries its expected, actual and state
     Given a spec file "spec/App/Calc.spec.php":
       """
@@ -100,6 +121,31 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the reported entry should expect "true" and have got "false"
 
+  Scenario: A string failure points at the first character where the two sides part
+    Given a spec file "spec/App/Receipt.spec.php":
+      """
+      <?php
+      describe('App\Receipt', function () {
+          it('prints the total', function () { expect("total: 0\n")->toBe("total: 0"); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "offset"
+
+  Scenario: A rerun comes as arguments too, carrying the format
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () { expect(3500)->toBe(4000); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "rerun_argv"
+    And the output should contain "--format=agent"
+
   Scenario: An emptiness failure wants the empty form of what it was given
     Given a spec file "spec/App/Bag.spec.php":
       """
@@ -159,6 +205,52 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the output should contain "rerun"
     And the output should contain "run spec/App/Calc.spec.php:"
+
+  Scenario: An error thrown inside the code under test is addressed by the example that reached it
+    Given a class "src/App/Money.php":
+      """
+      <?php
+      namespace App;
+
+      class Money {
+          public static function fromCents(int $cents): self {
+              throw new \RuntimeException('not yet');
+          }
+      }
+      """
+    And a spec file "spec/App/Money.spec.php":
+      """
+      <?php
+      describe('App\Money', function () {
+          it('is made from cents', function () {
+              expect(App\Money::fromCents(1000))->toBeAnInstanceOf(App\Money::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "run spec/App/Money.spec.php:3"
+    And the output should contain "src/App/Money.php:6"
+    And the output should not contain "run src/"
+
+  Scenario: A let binding that throws fails each example that needed it, and the count holds
+    Given a spec file "spec/App/Money.spec.php":
+      """
+      <?php
+      describe('App\Money', function () {
+          let('tenEuros', fn() => throw new RuntimeException('not yet'));
+
+          it('one', function () { expect($this->tenEuros)->toBeNull(); });
+          it('two', function () { expect($this->tenEuros)->toBeNull(); });
+          it('three', function () { expect(true)->toBeTrue(); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should have 5 events
+    And the output should contain "Money > one"
+    And the output should contain "Money > three"
+    And the output should contain "run spec/App/Money.spec.php:5"
 
   Scenario: A stop flag halts the run at the first example that meets it
     Given a spec file "spec/App/Calc.spec.php":
@@ -543,6 +635,121 @@ Feature: Agent output format
     And no file "src/App/Coupon.php" should be generated
     When I accept the offers phpspec made
     Then a class file "src/App/Coupon.php" should be generated
+
+  Scenario: A missing method surfaces as an offer, and accept by id writes it
+    Given a class "src/App/Calc.php":
+      """
+      <?php
+      namespace App;
+
+      class Calc {}
+      """
+    And a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () {
+              expect((new App\Calc())->add(2, 3))->toBe(5);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "create_method"
+    When I accept the offers phpspec made with option "--format=agent"
+    Then the output should contain "src/App/Calc.php"
+    And the class "src/App/Calc.php" should contain "public function add($argument1, $argument2)"
+
+  Scenario: An offer whose method was written by hand in the meantime is reported as not applied
+    Given a class "src/App/Calc.php":
+      """
+      <?php
+      namespace App;
+
+      class Calc {}
+      """
+    And a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () {
+              expect((new App\Calc())->add(2, 3))->toBe(5);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    And a class "src/App/Calc.php":
+      """
+      <?php
+      namespace App;
+
+      class Calc {
+          public function add($a, $b) { return $a + $b; }
+      }
+      """
+    And I accept the offers phpspec made with option "--format=agent"
+    Then the receipt should report the offer as not applied because "already exists"
+    And the exit code should be 1
+
+  Scenario: An undefined method on a double is offered on the type it doubles
+    Given a class "src/App/Sundial.php":
+      """
+      <?php
+      namespace App;
+
+      interface Sundial {}
+      """
+    And a spec file "spec/App/Alarm.spec.php":
+      """
+      <?php
+      describe('App\Alarm', function () {
+          it('rings on time', function () {
+              $sundial = mock(App\Sundial::class);
+              allow($sundial->now())->toReturn('noon');
+              expect($sundial->now())->toBe('noon');
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "Sundial::now"
+    And the output should not contain "PhpspecDouble"
+    When I run phpspec run with option "--accept-offers"
+    Then the file "src/App/Sundial.php" should contain "public function now("
+
+  Scenario: A mock failure says what call was wanted and what the double received
+    Given a class "src/App/Ledger.php":
+      """
+      <?php
+      namespace App;
+
+      interface Ledger {
+          public function record(string $line): void;
+      }
+      """
+    And a spec file "spec/App/Till.spec.php":
+      """
+      <?php
+      describe('App\Till', function () {
+          it('records a sale', function () {
+              $ledger = mock(App\Ledger::class);
+              $ledger->record('refund');
+              expect($ledger->record('sale'))->toBeCalled();
+          });
+
+          it('records the sale it was asked to', function () {
+              $ledger = mock(App\Ledger::class);
+              $ledger->record('refund');
+              expect($ledger->record('sale'))->toBeCalledWith('sale');
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "toBeCalled" exactly 2 times
+    And the output should contain "toBeCalledWith"
+    And the output should contain "refund"
+    And the output should not contain "LastCallDouble"
 
   Scenario: The accept receipt names the file a generated class was written to
     Given a spec file "spec/App/Basket.spec.php":

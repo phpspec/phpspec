@@ -103,6 +103,26 @@ final class MethodCallsStack
      *
      * @param string $method the method name to count calls for
      */
+    /**
+     * The calls received to a method, each with its arguments, in the order
+     * they came. A call taken back, which is what a verification's own call
+     * becomes, is not one the double received.
+     *
+     * @return list<array{arguments: list<mixed>}>
+     */
+    public function callsTo(string $method): array
+    {
+        $calls = [];
+
+        foreach ($this->stack as $mockedMethod) {
+            if ($mockedMethod->method === $method && $mockedMethod->getTimesCalled() > 0) {
+                $calls[] = ['arguments' => array_values($mockedMethod->arguments)];
+            }
+        }
+
+        return $calls;
+    }
+
     public function countCallsTo(string $method): int
     {
         $count = 0;

@@ -31,19 +31,15 @@ use Throwable;
  */
 final class Double
 {
-    /** @var array<string, class-string> Maps generated mock class names to their original FQCNs */
-    public static array $doubleRegistry = [];
-
     /** @var array<string, array{mockClassName: string, reflectionClass: ReflectionClass<object>}> Cached class definitions by FQCN */
     private static array $classCache = [];
 
     /**
-     * Resets the class cache and double registry between in-process runs.
+     * Resets the class cache between in-process runs.
      */
     public static function resetCache(): void
     {
         self::$classCache = [];
-        self::$doubleRegistry = [];
     }
 
     /**
@@ -72,9 +68,6 @@ final class Double
         $shortName = substr($class, strrpos($class, '\\') + 1);
         $mockClassName = 'PhpspecDouble\\' . $shortName . '_Double_' . $classHash . '_' . uniqid();
 
-        // register the mapping from mock class name to original FQCN
-        self::$doubleRegistry[$mockClassName] = $class;
-
         // generate the methods for the double
         $reflectionClass = new ReflectionClass($class);
 
@@ -101,6 +94,7 @@ final class Double
         }
 
         $methods = self::generateMethods($reflectionClass);
+        $undefinedMethodGuard = self::undefinedMethodGuard($reflectionClass, ltrim($class, '\\'));
 
         // prefix class name with a namespace separator
         $prefixedClass = $class;
@@ -134,6 +128,7 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
     private \$______phpspec_stubbedReturnCallbacks = [];
 
     $methods
+    $undefinedMethodGuard
 
     private function ______PhpSpecWasCalledWith(\$method, \$args) {
         if (!isset(\$this->______phpspec_stack)) {
@@ -475,6 +470,27 @@ PHP;
             }
         }
         return false;
+    }
+
+    /**
+     * A method the doubled type does not define is an error naming that type,
+     * as PHP would report it on the real object, so a reader and a generator
+     * see what the spec asked of App\Clock rather than of a generated double.
+     * A type with a __call of its own keeps it.
+     *
+     * @param ReflectionClass<object> $reflectionClass
+     */
+    private static function undefinedMethodGuard(ReflectionClass $reflectionClass, string $doubled): string
+    {
+        if ($reflectionClass->hasMethod('__call')) {
+            return '';
+        }
+
+        return <<<PHP
+    public function __call(string \$method, array \$arguments): mixed {
+        throw new \Error("Call to undefined method $doubled::{\$method}()");
+    }
+PHP;
     }
 
     /**

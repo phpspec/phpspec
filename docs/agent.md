@@ -39,7 +39,7 @@ A run of three examples — one passing, one failing, one erroring on a missing
 class — produces four lines:
 
 ```json
-{"v":2,"event":"run_started","suite":"default","seed":null}
+{"v":2,"event":"run_started","suite":"default","seed":null,"php":"8.3.16","coverage":false,"guard":"off"}
 {"v":2,"event":"example","id":"6fd046add251","example":"App\\Basket > totals the prices of its products","state":"failing","expectation":{"matcher":"toBe","expected":4000,"actual":3500,"negated":false},"message":"Expected 3500 to be 4000","spec":"spec/App/Basket.spec.php:6","rerun":"run spec/App/Basket.spec.php:6"}
 {"v":2,"event":"example","id":"66b1647a77b6","example":"App\\Basket > applies a coupon","state":"error","message":"Class \"App\\Coupon\" not found","exception":{"class":"Error","message":"Class \"App\\Coupon\" not found","at":"spec/App/Basket.spec.php:8"},"spec":"spec/App/Basket.spec.php:8","rerun":"run spec/App/Basket.spec.php:8","offer":{"action":"create_class","target":"App\\Coupon"}}
 {"v":2,"event":"summary","examples":3,"scenarios":0,"steps":0,"passing":1,"failing":1,"errors":1,"pending":0,"skipped":0,"actionable":2,"duration_ms":4,"offers":[{"action":"create_class","target":"App\\Coupon"},{"action":"fake_method","target":"App\\Basket::total","value":"4000"}]}
@@ -61,8 +61,12 @@ in between. A run that never started still emits both.
 ### `run_started` — the header
 
 `suite` is what the run targets, as the paths were given; `seed` is the
-random-order seed when one was used, else `null`. The totals are not here: at
-this point nothing has run yet, and the `summary` carries them.
+random-order seed when one was used, else `null`. `php` is the version that
+ran, `coverage` says whether coverage is being collected, so a `coverage`
+verdict will follow, and `guard` is `on`, `off` or `stood down` (guard is on
+but there is no coverage driver to judge with, so no verdict will come). The
+totals are not here: at this point nothing has run yet, and the `summary`
+carries them.
 
 ### `example` — only what needs attention
 
@@ -88,8 +92,9 @@ Scenario Outline is its own entry, named by its values
 | `example` | The full name, as a path: `App\Basket > totals the prices` for a spec, `Checkout > Paying for a basket` for a scenario. |
 | `state` | `failing`, `error`, `pending`, or `skipped`; `passing` only under `-v`. |
 | `message` | What went wrong, whatever the state. An `error` entry keeps `exception` too, for the class and the site. |
-| `spec` | The `file:line` of the failing assertion or the error, project-relative. For a passing example it is the line its `it()` sits on; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
-| `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. No full-suite re-run needed to verify one fix. Absent with `spec`. |
+| `spec` | The line to act on, project-relative and always in the spec file: the failing `expect()`, or the line where an error surfaced in the spec. An error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it; `exception.at` keeps the throw site. For a passing example it is the `it()` line; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
+| `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. It targets the `it()` line that declares the example (the `Scenario:` line for a scenario), which PhpSpec resolves to that one and no other. No full-suite re-run needed to verify one fix. Absent with `spec`. |
+| `rerun_argv` | The same re-run as an argument list, `["run", "spec/App/Basket.spec.php:6", "--format=agent"]`, to hand your PhpSpec binary and a process API: no quoting, and the stream stays JSON Lines. Absent with `rerun`. |
 | `output` | What the code printed while this entry ran, present only when it printed something. See [Printed output](#printed-output). |
 | `attachments` | Context the spec or scenario handed over about itself, by name. See [Handing over context](#handing-over-context-phpspec-cannot-see). |
 | `steps` | Scenarios only: the steps that did not pass, each `{ title, state, message?, expectation?, at? }`, in the order they were declared. |
@@ -106,6 +111,11 @@ Scenario Outline is its own entry, named by its values
   the universal sense of those words. (PhpSpec's internal naming is the reverse;
   the formatter un-inverts it for you.)
 - `negated` — `true` when the expectation used `not()`.
+- `diff` — present when both sides are strings, or arrays of one shape, that
+  differ: for strings `{ "offset", "expected", "actual" }`, the byte where they
+  part and a window of each from there; for arrays `{ "path", "expected",
+  "actual" }`, the key where they part (`items[2].price`). A trailing newline
+  stops costing a re-read.
 
 A matcher that names its target only in prose still states it as a value, so
 `toBeTrue()` reports `expected: true` rather than the null it has no argument
@@ -125,6 +135,16 @@ callable you handed it:
 | `toThrow(RuntimeException::class)` and it did not | `"RuntimeException"` | `"No exception"` |
 
 `toThrow()` now takes no argument at all, meaning "throw something".
+
+A mock expectation (`toBeCalled`, `toBeCalledWith`, `toBeCalledTimes`) compares
+the call the spec wanted with the calls the double received, arguments included:
+
+```json
+"expectation": {"matcher": "toBeCalled", "expected": {"method": "App\\Ledger::record", "arguments": ["sale"], "times": "at least 1"}, "actual": {"method": "App\\Ledger::record", "calls": [{"arguments": ["refund"]}]}, "negated": false}
+```
+
+`arguments` is absent when the expectation was written bare, and an argument
+matcher reads as it was written: `any()`, `type(string)`, `anInstanceOf(App\Task)`.
 
 A **story step** that failed an expectation reports the same block, on the step
 inside `steps` (with `at`, the `file:line` of the expectation in your step file)
@@ -239,20 +259,24 @@ missed and anything that stopped it.
 | Field | Present when | Meaning |
 |---|---|---|
 | `rerun` | anything failed with a location | One command that re-runs every failing example at once, so a fix is checked against all of what it was meant to fix. |
+| `rerun_argv` | with `rerun` | The same as an argument list ending in `--format=agent`. |
 | `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
 | `guard` | [guard](guard.md) is on and either judged the change or could not | `{ "held": false, "judged": true, "violations": [{ "file", "lines", "member", "remedy" }] }`. Each violation is new logic no example reaches, and adds 1 to `actionable`. When `judged` is `false` there are no violations and a `reason` says what stopped it. |
 | `offers` | the run found code it can generate | The run-wide, de-duplicated list. Absent when there is nothing to take. |
-| `applied` | `--accept-offers` wrote something | `{ "offers": [{ "id", "action", "target", "file" }], "files", "verified": false }`: what was written after the run, under the ids the offers carried. The counts describe the code before it, so run again to verify. |
+| `applied` | `--accept-offers` was asked to write | `{ "offers": [{ "id", "action", "target", "file", "applied", "reason"? }], "files", "verified": false }`: what was written after the run, under the ids the offers carried, and what could not be, with `applied: false` and the `reason`. `files` names only what changed. The counts describe the code before it, so run again to verify. |
 
 ### `fatal`: when the run could not finish
 
 A run that never started (a missing bootstrap, an unknown format) or that died
 partway (a parse error, a class that fails to compile) still answers. It emits a
-`fatal` line of `{ "message", "at" }`, keeps whatever it managed to collect, and
-counts 1 in `actionable`:
+`fatal` line of `{ "message", "at", "remedy"? }`, keeps whatever it managed to
+collect, and counts 1 in `actionable`. `remedy` is present when the way past is
+known: a run that wanted coverage and found no Xdebug gets the same command
+under `XDEBUG_MODE=coverage`, a missing bootstrap or path gets what to point
+where:
 
 ```json
-{"v":2,"event":"run_started","suite":"default","seed":null}
+{"v":2,"event":"run_started","suite":"default","seed":null,"php":"8.3.16","coverage":false,"guard":"off"}
 {"v":2,"event":"fatal","message":"Class Mute contains 1 abstract method and must therefore be declared abstract or implement the remaining methods (Speaks::speak)","at":"spec/App/Broken.spec.php:8"}
 {"v":2,"event":"summary","examples":0,"actionable":1,"…":"…"}
 ```
@@ -307,7 +331,10 @@ With `--format=agent`, `accept` answers with one receipt:
 
 `target` is what the offer named, a class, a method, a feature file, or the
 path of a proposed write; `files` are the files it wrote, from the project
-root. Generated classes land where the project's layout says their namespace
+root. An offer that could not be applied, because the method was written by
+hand in the meantime or the class file is not where the layout says, comes
+back with `applied: false`, a `reason` and no `files`, and the command exits
+`1`. Generated classes land where the project's layout says their namespace
 lives (see [Code Generation](code-generation.md#where-generated-classes-go)).
 
 For the common case of taking everything a run found, the bulk shortcut remains:

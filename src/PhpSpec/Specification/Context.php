@@ -210,11 +210,17 @@ class Context implements ExampleRegistry, Rebindable
         $coverage = CoverageRegistry::collector();
         $coverage?->beginExample();
 
-        $this->reapplyLets();
-        foreach ($this->beforeEachHooks as $hook) {
-            $hook(...$this->resolveClosureArgs($hook));
+        try {
+            $this->reapplyLets();
+            foreach ($this->beforeEachHooks as $hook) {
+                $hook(...$this->resolveClosureArgs($hook));
+            }
+            $this->world->__phpspec_let_mocks = $this->letMocks;
+        } catch (Throwable $e) {
+            $coverage?->endExample($example->getTitle());
+
+            return $example->failedToStart($e);
         }
-        $this->world->__phpspec_let_mocks = $this->letMocks;
 
         $result = $example->run();
 
@@ -426,7 +432,6 @@ class Context implements ExampleRegistry, Rebindable
     public function modify(string $property, Closure $setter): void
     {
         $this->letBindings[] = ['named', $property, $setter];
-        $this->evaluateNamedLet($property, $setter);
     }
 
     /**
@@ -439,7 +444,6 @@ class Context implements ExampleRegistry, Rebindable
     public function modifyWithInjection(Closure $setter): void
     {
         $this->letBindings[] = ['injection', null, $setter];
-        $this->evaluateInjectionLet($setter);
     }
 
     /**

@@ -118,6 +118,7 @@ final class Junit extends AbstractFormatter
             } elseif ($example['error']) {
                 $error = $xml->createElement('error');
                 $error->setAttribute('message', $example['message']);
+                $error->setAttribute('type', $example['type']);
                 $testcase->appendChild($error);
                 $errors++;
             } elseif ($example['failure']) {
@@ -178,6 +179,7 @@ final class Junit extends AbstractFormatter
                 } elseif ($step->isError()) {
                     $error = $xml->createElement('error');
                     $error->setAttribute('message', $step->getError()?->getMessage() ?? 'Errored');
+                    $error->setAttribute('type', $step->getError()?->getType() ?? 'Error');
                     $testcase->appendChild($error);
                 } elseif ($step->isFailure()) {
                     $failure = $xml->createElement('failure');
@@ -197,8 +199,8 @@ final class Junit extends AbstractFormatter
     /**
      * Recursively collects all examples into a flat list for testsuite construction.
      *
-     * @param array<int, array{title: string, pending: bool, error: bool, failure: bool, message: string}> $examples
-     * @return array<int, array{title: string, pending: bool, error: bool, failure: bool, message: string}>
+     * @param array<int, array{title: string, pending: bool, error: bool, failure: bool, message: string, type: string}> $examples
+     * @return array<int, array{title: string, pending: bool, error: bool, failure: bool, message: string, type: string}>
      */
     private function collectExamples(Results $results, string $prefix = '', array &$examples = []): array
     {
@@ -210,6 +212,7 @@ final class Junit extends AbstractFormatter
                     'error' => $result->isError(),
                     'failure' => $result->isFailure(),
                     'message' => $result->getMessage(),
+                    'type' => $result->getError()?->getType() ?? 'Error',
                 ];
             } elseif ($result instanceof Results) {
                 $newPrefix = $prefix;

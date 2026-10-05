@@ -55,6 +55,16 @@ describe(MethodStubGenerator::class, function () {
         expect($result)->toContain("Method 'add()' generated");
     });
 
+    it("writes into the file a loaded class came from when the layout says otherwise", function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\n\nnamespace PhpSpec\\CodeGeneration;\n\nclass ClassGenerator\n{\n}\n");
+
+        (new MethodStubGenerator('lib', $fs, 'Acme'))->generate('PhpSpec\\CodeGeneration\\ClassGenerator', 'spin', 0);
+
+        $loadedFrom = realpath(__DIR__ . '/../../../src/PhpSpec/CodeGeneration/ClassGenerator.php');
+        expect($fs->write($loadedFrom, any()))->toBeCalled();
+    });
+
     it("generates interface method stub without body", function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
         allow($fs->read())->toReturn("<?php\n\ninterface Calculator\n{\n}\n");
@@ -63,6 +73,24 @@ describe(MethodStubGenerator::class, function () {
 
         expect($fs->write(any(), satisfy(fn (string $content) => str_contains($content, 'public function add($argument1, $argument2);'))))->toBeCalled();
         expect($result)->toContain("Method 'add()' generated");
+    });
+
+    it("generates a static method stub when the method was called statically", function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\n\nclass TaskList\n{\n}\n");
+
+        $this->generator->generate('TaskList', 'of', 2, static: true);
+
+        expect($fs->write(any(), satisfy(fn (string $content) => str_contains($content, "public static function of(\$argument1, \$argument2)\n    {\n    }"))))->toBeCalled();
+    });
+
+    it("generates a static interface method stub when the method was called statically", function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\n\ninterface TaskList\n{\n}\n");
+
+        $this->generator->generate('TaskList', 'of', 1, static: true);
+
+        expect($fs->write(any(), satisfy(fn (string $content) => str_contains($content, 'public static function of($argument1);'))))->toBeCalled();
     });
 
     it("generates method with hardcoded return value when given", function (Filesystem $fs) {

@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - When nothing in the phpspec config lays out the source tree, generated classes follow the first PSR-4 mapping in composer.json instead of assuming `src/` plus every namespace segment
  - The summary of a `--accept-offers` run carries `applied`: what was written, under the ids the offers carried, the files changed, and that nothing has verified it; a person sees the generation notes on the console instead of nothing
  - `phpspec api` describes the spec-writing API from the code itself: DSL, matchers, mocks, story steps and the timing rules; `--format=agent` gives it to a coding agent as one JSON object
+ - An agent entry's `expectation` carries `diff` when both sides are strings or arrays of one shape: the byte offset, or the key path, where they part, with a window of each from there
+ - An agent entry and the summary carry `rerun_argv`, the re-run as an argument list ending in `--format=agent`, next to the `rerun` string
+ - The agent header says which PHP ran, whether coverage is collected and whether guard is on, off or stood down, so a reader knows upfront which verdicts will follow
+ - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
 ### Changed
  - `toBeCalled()` and `toBeCalledTimes()` hold the mock to the arguments written in the expect call; written bare they still mean called at all
@@ -23,6 +27,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - An error that came back from a `--parallel` worker carries no site, so the agent entry has no `spec` or `rerun` for it and the human formatters show no code around it; it used to name a line inside PhpSpec itself. The JUnit report carries the error's type, so the entry names it
+ - A `let()` binding or a `beforeEach` hook that throws fails the example it was preparing and the others still run; it used to fold the whole describe into one error, so the count of examples moved between runs
+ - An agent entry's `rerun` targets the `it()` line that declares the example, whatever line `spec` points at inside the file
+ - A failed mock expectation reports the call the spec wanted and the calls the double received, arguments included, under the matcher's name; the pair used to read `1` against `PhpSpec\Mock\LastCallDouble`
+ - A method called on a double that its type does not define fails naming the type, `Call to undefined method App\Clock::now()`, as PHP would on the real object; the error, the agent entry's offer and the summary's offer agree, where the entry used to name the generated double and a double of a class got no offer at all
+ - PhpSpec's own autoloader finds a class at the path the layout maps its namespace to, where the generator writes it; under a PSR-4 prefix it looked for the full namespace path, so a generated class was not found by the next run unless Composer knew the mapping
+ - A generation that could not be applied says so: the `accept` receipt and the `applied` block of an `--accept-offers` summary carry `applied: false` and the `reason`, and `accept` exits 1; the receipt used to read `applied: true` with no files, and the summary said nothing
+ - A method is generated into the file its class was loaded from, so a composer mapping that disagrees with where the file sits no longer sends the stub to a path that does not exist; a vendor or internal class is still never written to
+ - An agent entry's `spec` and `rerun` stay in the spec file: an error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it, with `exception.at` keeping the throw site; `rerun` used to name a line of `src/`
+ - A method the spec calls statically is generated as a static method, with as many arguments as the call passes; it used to come out as an instance method taking none, and the next run failed on it
  - The `accept` receipt names each offer's `target` and the `files` it wrote; its `path` had carried a class or method name for generated code
  - `run --help` names `agent` among the formats
  - The console application is named phpspec and carries its version as a version, so `--version` reads `phpspec 9.0.0-beta.21` and a command can ask which version it runs in

@@ -29,6 +29,30 @@ Feature: Code generation
     When I run phpspec run and answer "y" to generation prompts
     Then the class "src/App/Calculator.php" should contain "function add"
 
+  Scenario: A method called statically is generated static, with its arguments
+    Given a class "src/App/TaskList.php":
+      """
+      <?php
+      namespace App;
+
+      class TaskList {}
+      """
+    And a spec file "spec/App/TaskList.spec.php":
+      """
+      <?php
+      use App\TaskList;
+
+      describe(TaskList::class, function () {
+          it('is built from titles', function () {
+              expect(TaskList::of('write the spec', 'make it pass'))->toBeAnInstanceOf(TaskList::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then the class "src/App/TaskList.php" should contain "public static function of($argument1, $argument2)"
+    When I run phpspec run with option "--format=agent"
+    Then the output should not contain "cannot be called statically"
+
   Scenario: A run nobody can answer writes nothing into the source tree
     Given a spec file "spec/App/Basket.spec.php":
       """
@@ -117,6 +141,54 @@ Feature: Code generation
     When I run phpspec run with option "--accept-offers"
     Then a class file "src/TaskList.php" should be generated
     And no file "src/Tasker/TaskList.php" should be generated
+
+  Scenario: A method lands in the file its class was loaded from, wherever composer says the namespace lives
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Tasker\\": "src/"}}}
+      """
+    And a class "src/Tasker/TaskList.php":
+      """
+      <?php
+      namespace Tasker;
+
+      class TaskList {}
+      """
+    And a spec file "spec/Tasker/TaskList.spec.php":
+      """
+      <?php
+      describe('Tasker\TaskList', function () {
+          it('adds a task', function () {
+              (new Tasker\TaskList())->add('write the spec');
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then the class "src/Tasker/TaskList.php" should contain "function add"
+    And no file "src/TaskList.php" should be generated
+
+  Scenario: A class generated under a composer mapping is found by the next run
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Tasker\\": "src/Tasker/"}}}
+      """
+    And a spec file "spec/Tasker/Board.spec.php":
+      """
+      <?php
+      describe('Tasker\Board', function () {
+          it('starts empty', function () {
+              expect(new Tasker\Board())->toBeAnInstanceOf(Tasker\Board::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then a class file "src/Tasker/Board.php" should be generated
+    When I run phpspec run with option "--format=agent"
+    Then the output should not contain "create_class"
+    And the exit code should be 0
 
   Scenario: Describe command generates a spec
     When I run phpspec describe "App\Formatter"

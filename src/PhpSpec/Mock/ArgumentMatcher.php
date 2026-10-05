@@ -119,6 +119,21 @@ final readonly class ArgumentMatcher
      *
      * @param mixed $actual the value to test against
      */
+    /**
+     * The matcher as it is written in a spec, for a report that names what was
+     * wanted: any(), type(string), anInstanceOf(App\Task).
+     */
+    public function describe(): string
+    {
+        return match ($this->type) {
+            'type' => sprintf('type(%s)', $this->value),
+            'instanceOf' => sprintf('anInstanceOf(%s)', $this->value),
+            'startWith', 'arrayIncluding' => sprintf('%s(%s)', $this->type, json_encode($this->value)),
+            'callback' => 'callback(...)',
+            default => $this->type . '()',
+        };
+    }
+
     public function matches(mixed $actual): bool
     {
         return match ($this->type) {

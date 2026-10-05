@@ -113,7 +113,6 @@ final class Expectation extends BaseExpectation
             // is not satisfied by deposit(100). Written bare, it means called
             // at all.
             $method->arguments === [] ? null : $method->arguments,
-            $this->mockSubject,
         );
     }
 
@@ -148,8 +147,9 @@ final class Expectation extends BaseExpectation
         return $this->should(
             get_class($double),
             fn($mocked) => $mocked->wasCalled() && $this->matchArguments($mocked->arguments, $expectedArgs),
-            'Expected %s to be called with specific arguments',
-            $class . '::' . $methodName . '()',
+            "Expected $class::$methodName() to be called with specific arguments",
+            new CallComparison($class, $methodName, $expectedArgs, 'at least 1', $calls),
+            'toBeCalledWith',
         );
     }
 
@@ -180,15 +180,17 @@ final class Expectation extends BaseExpectation
         return $this->expectation(function () use ($double, $methodName, $argPattern, $times, $class, $file, $line) {
             $stack = $double->______PhpSpecGetStubbedCalls();
             $actual = $stack->countCallsToWithArgs($methodName, $argPattern);
+            $comparison = new CallComparison($class, $methodName, $argPattern, "exactly $times", $stack);
 
             return match (true) {
                 $actual === $times => MatchResult::passed(),
                 default => MatchResult::failed(
-                    $this->mockSubject,
-                    $times,
+                    $comparison->received(),
+                    $comparison->wanted(),
                     "Expected $class::$methodName() to be called $times time(s), but was called $actual time(s)",
                     $file,
                     $line,
+                    matcher: 'toBeCalledTimes',
                 )
             };
         });
@@ -210,13 +212,14 @@ final class Expectation extends BaseExpectation
      * Dispatches a mock verification as an expectation event.
      * Handles negation by inverting the match closure and adjusting the message.
      *
-     * @param mixed $doubleName the double class name used as registry key
+     * @param string $doubleName the double class name used as registry key
      * @param Closure $match closure that receives the MockedMethod and returns pass/fail
-     * @param mixed $message the failure message template with %s placeholders
-     * @param mixed $values values to interpolate into the message
+     * @param string $message the failure message
+     * @param CallComparison $comparison the call wanted and the calls received, for the failure's data
+     * @param string $matcher the matcher's name
      * @return $this
      */
-    private function should($doubleName, Closure $match, $message, ...$values): static
+    private function should(string $doubleName, Closure $match, string $message, CallComparison $comparison, string $matcher): static
     {
         $trace = debug_backtrace()[1];
         $file = $trace['file'] ?? 'unknown';
@@ -228,19 +231,20 @@ final class Expectation extends BaseExpectation
             $message = str_replace(' to ', ' not to ', $message);
         }
 
-        return $this->expectation(function () use ($doubleName, $match, $values, $message, $file, $line) {
-
+        return $this->expectation(function () use ($doubleName, $match, $message, $comparison, $matcher, $file, $line) {
             $mocked = self::$registry[$doubleName];
             $result = $match($mocked);
 
             return match (true) {
                 $result => MatchResult::passed(),
                 default => MatchResult::failed(
-                    $this->mockSubject,
-                    $values[0] ?? null,
-                    self::formatMessage($message, ...$values),
+                    $comparison->received(),
+                    $comparison->wanted(),
+                    $message,
                     $file,
                     $line,
+                    matcher: $matcher,
+                    negated: $this->negated,
                 )
             };
         });
