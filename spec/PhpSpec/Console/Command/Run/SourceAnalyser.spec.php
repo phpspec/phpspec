@@ -53,6 +53,56 @@ describe(SourceAnalyser::class, function () {
             unlink($tmpFile);
             expect($count)->toBe(0);
         });
+
+        it('counts the arguments of a static call', function () {
+            $tmpFile = tempnam(sys_get_temp_dir(), 'phpspec_test_');
+            file_put_contents($tmpFile, "<?php\nexpect(TaskList::of('write the spec', 'make it pass'))->toBeAnInstanceOf(TaskList::class);\n");
+
+            $count = $this->analyser->extractArgumentCount($tmpFile, 2, 'of');
+            unlink($tmpFile);
+            expect($count)->toBe(2);
+        });
+    });
+
+    context('isStaticCall', function () {
+
+        $lineOf = function (string $code): array {
+            $tmpFile = tempnam(sys_get_temp_dir(), 'phpspec_test_');
+            file_put_contents($tmpFile, "<?php\n" . $code . "\n");
+
+            return [$tmpFile, 2];
+        };
+
+        it('tells a static call from an instance call', function () use ($lineOf) {
+            [$static, $line] = $lineOf("expect(TaskList::empty())->toBeAnInstanceOf(TaskList::class);");
+            [$instance] = $lineOf("expect(\$list->empty())->toBeTrue();");
+
+            expect($this->analyser->isStaticCall($static, $line, 'empty'))->toBeTrue();
+            expect($this->analyser->isStaticCall($instance, $line, 'empty'))->toBeFalse();
+
+            unlink($static);
+            unlink($instance);
+        });
+
+        it('treats self and static calls as static', function () use ($lineOf) {
+            [$self, $line] = $lineOf("return self::build(\$title);");
+            [$lateStatic] = $lineOf("return static::build(\$title);");
+
+            expect($this->analyser->isStaticCall($self, $line, 'build'))->toBeTrue();
+            expect($this->analyser->isStaticCall($lateStatic, $line, 'build'))->toBeTrue();
+
+            unlink($self);
+            unlink($lateStatic);
+        });
+
+        it('is not static when the file or the call is not there', function () use ($lineOf) {
+            [$other, $line] = $lineOf("\$x = 42;");
+
+            expect($this->analyser->isStaticCall('/nonexistent/file.php', 1, 'build'))->toBeFalse();
+            expect($this->analyser->isStaticCall($other, $line, 'build'))->toBeFalse();
+
+            unlink($other);
+        });
     });
 
     context('resolveVariableClass', function () {

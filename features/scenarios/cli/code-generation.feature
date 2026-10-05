@@ -29,6 +29,30 @@ Feature: Code generation
     When I run phpspec run and answer "y" to generation prompts
     Then the class "src/App/Calculator.php" should contain "function add"
 
+  Scenario: A method called statically is generated static, with its arguments
+    Given a class "src/App/TaskList.php":
+      """
+      <?php
+      namespace App;
+
+      class TaskList {}
+      """
+    And a spec file "spec/App/TaskList.spec.php":
+      """
+      <?php
+      use App\TaskList;
+
+      describe(TaskList::class, function () {
+          it('is built from titles', function () {
+              expect(TaskList::of('write the spec', 'make it pass'))->toBeAnInstanceOf(TaskList::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then the class "src/App/TaskList.php" should contain "public static function of($argument1, $argument2)"
+    When I run phpspec run with option "--format=agent"
+    Then the output should not contain "cannot be called statically"
+
   Scenario: A run nobody can answer writes nothing into the source tree
     Given a spec file "spec/App/Basket.spec.php":
       """

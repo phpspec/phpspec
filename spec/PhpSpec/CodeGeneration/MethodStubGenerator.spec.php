@@ -65,6 +65,24 @@ describe(MethodStubGenerator::class, function () {
         expect($result)->toContain("Method 'add()' generated");
     });
 
+    it("generates a static method stub when the method was called statically", function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\n\nclass TaskList\n{\n}\n");
+
+        $this->generator->generate('TaskList', 'of', 2, static: true);
+
+        expect($fs->write(any(), satisfy(fn (string $content) => str_contains($content, "public static function of(\$argument1, \$argument2)\n    {\n    }"))))->toBeCalled();
+    });
+
+    it("generates a static interface method stub when the method was called statically", function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\n\ninterface TaskList\n{\n}\n");
+
+        $this->generator->generate('TaskList', 'of', 1, static: true);
+
+        expect($fs->write(any(), satisfy(fn (string $content) => str_contains($content, 'public static function of($argument1);'))))->toBeCalled();
+    });
+
     it("generates method with hardcoded return value when given", function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
         allow($fs->read())->toReturn("<?php\n\nclass Calculator\n{\n}\n");

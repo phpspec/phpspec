@@ -138,6 +138,44 @@ describe(CodeGenerator::class, function () {
             @rmdir($absDir);
         });
 
+        it('generates a static method with its arguments for a method called statically', function () {
+            $relDir = '.tmp_codegen_static_' . getmypid();
+            $absDir = getcwd() . '/' . $relDir;
+            @mkdir($absDir . '/src/CgTest', 0777, true);
+            @mkdir($absDir . '/spec/CgTest', 0777, true);
+
+            $classFile = $absDir . '/src/CgTest/Widget.php';
+            file_put_contents($classFile, "<?php\n\nnamespace CgTest;\n\nclass Widget\n{\n}\n");
+
+            $specFile = $absDir . '/spec/CgTest/Widget.spec.php';
+            file_put_contents($specFile, "<?php\nit('works', fn() => expect(Widget::of('a', 'b'))->toBeAnInstanceOf(Widget::class));\n");
+
+            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', Generation::Accepts);
+
+            $original = eval("return new \\Error('Call to undefined method CgTest\\\\Widget::of()');");
+            $error = new \PhpSpec\Specification\ExampleError('Call to undefined method CgTest\Widget::of()', $original);
+            $ref = new \ReflectionProperty(\Exception::class, 'file');
+            $ref->setValue($error, $specFile);
+            $ref = new \ReflectionProperty(\Exception::class, 'line');
+            $ref->setValue($error, 2);
+
+            $example = new ExampleResult('works', [], isError: true);
+            $example->setError($error);
+            $suite = new SuiteResult([new SpecificationResult('CgTest\Widget', [$example])]);
+
+            $generator->generate($this->output, $suite, false);
+
+            expect(file_get_contents($classFile))->toContain('public static function of($argument1, $argument2)');
+
+            array_map('unlink', glob($absDir . '/src/CgTest/*'));
+            array_map('unlink', glob($absDir . '/spec/CgTest/*'));
+            @rmdir($absDir . '/src/CgTest');
+            @rmdir($absDir . '/spec/CgTest');
+            @rmdir($absDir . '/src');
+            @rmdir($absDir . '/spec');
+            @rmdir($absDir);
+        });
+
         it('shows NEW FILE diff for generated interface', function () {
             $relDir = '.tmp_codegen_test_' . getmypid();
             $absDir = getcwd() . '/' . $relDir;

@@ -345,6 +345,7 @@ final readonly class CodeGenerator
 
         foreach ($this->uniqueByClassMethod($classMethods) as $error) {
             $argCount = $this->analyser->extractArgumentCount($error['file'], $error['line'], $error['methodName']);
+            $static = $this->analyser->isStaticCall($error['file'], $error['line'], $error['methodName']);
             $filePath = ClassGenerator::resolveFqcn($error['className'], $this->srcPath, $this->psr4Prefix)['filePath'];
             $target = $error['className'] . '::' . $error['methodName'];
 
@@ -358,7 +359,7 @@ final readonly class CodeGenerator
                     '  <fg=yellow>Are you sure you want <fg=white>%s()</> to always return <fg=white>%s</>?</>',
                     $error['methodName'],
                     $returnExpr,
-                ), 'confirm-fake-return', 'set fake return values', fn() => $generator->generate($error['className'], $error['methodName'], $argCount, $returnExpr), $filePath);
+                ), 'confirm-fake-return', 'set fake return values', fn() => $generator->generate($error['className'], $error['methodName'], $argCount, $returnExpr, $static), $filePath);
 
                 if ($generated) {
                     $applied[] = self::applied('fake_method', $target, $filePath);
@@ -371,7 +372,7 @@ final readonly class CodeGenerator
                 '  <fg=yellow>Do you want me to create <fg=white>%s::%s()</> for you?</>',
                 $error['className'],
                 $error['methodName'],
-            ), 'create-method', 'create methods', fn() => $generator->generate($error['className'], $error['methodName'], $argCount), $filePath);
+            ), 'create-method', 'create methods', fn() => $generator->generate($error['className'], $error['methodName'], $argCount, static: $static), $filePath);
 
             if ($generated) {
                 $applied[] = self::applied('create_method', $target, $filePath);
