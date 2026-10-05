@@ -78,4 +78,16 @@ describe(RealFilesystem::class, function() {
         unlink($tmp);
     });
 
+    it("reads no lines from a path that is not a file, without a word about it", function() {
+        set_error_handler(function (int $severity, string $message): bool { throw new \ErrorException($message, 0, $severity); });
+
+        try {
+            $lines = (new RealFilesystem())->readLines("/nowhere/Double.php(173) : eval()'d code");
+        } finally {
+            restore_error_handler();
+        }
+
+        expect($lines)->toBe([]);
+    });
+
 });

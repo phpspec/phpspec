@@ -30,6 +30,20 @@ Feature: Error reporting
     When I run phpspec run
     Then the output should contain "Location.spec.php"
 
+  Scenario: An error raised inside PhpSpec itself points at the spec line
+    Given a spec file "spec/App/Service.spec.php":
+      """
+      <?php
+      describe('Service', function () {
+          it('uses a notifier', function (App\Nowhere $notifier) {
+              expect($notifier)->toBeAnInstanceOf(App\Nowhere::class);
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "Service.spec.php:3"
+    And the output should not contain "Mock/Double.php"
+
   Scenario: Shows surrounding code context
     Given a spec file "spec/App/Context.spec.php":
       """

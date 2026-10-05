@@ -14,7 +14,6 @@
 
 namespace PhpSpec\Specification;
 
-use PhpSpec\CodeGeneration\SurroundingCode;
 use Throwable;
 
 /**
@@ -24,6 +23,8 @@ use Throwable;
  */
 final class ExampleError extends \Exception
 {
+    use BlameTrait;
+
     /** @var string fully qualified class name of the original exception */
     private string $type;
 
@@ -54,22 +55,6 @@ final class ExampleError extends \Exception
         return $error;
     }
 
-    /**
-     * Returns source code lines surrounding the error location.
-     *
-     * @param int $before number of lines before the error line
-     * @param int $after number of lines after the error line
-     * @return array<int, string> lines of source code with line numbers as keys
-     */
-    public function getSurroundingCode(int $before = 3, int $after = 3): array
-    {
-        if ($this->file === '') {
-            return [];
-        }
-
-        $surroundingCode = new SurroundingCode($this->original->getFile(), $this->original->getLine(), $before, $after);
-        return $surroundingCode->toArray();
-    }
 
     /**
      * Returns the class name of the original exception.
@@ -94,30 +79,4 @@ final class ExampleError extends \Exception
         return $matches[1];
     }
 
-    /**
-     * Returns the stack trace filtered to exclude PhpSpec internals and vendor frames.
-     *
-     * @return array<int, array<string, mixed>> stack frames from user spec code only
-     */
-    public function getFilteredTrace(): array
-    {
-        $trace = $this->original->getTrace();
-        $filtered = [];
-        foreach ($trace as $frame) {
-            if (!isset($frame['file'])) {
-                continue;
-            }
-            if (str_contains($frame['file'], 'src/PhpSpec/')) {
-                continue;
-            }
-            if (str_contains($frame['file'], 'vendor/')) {
-                continue;
-            }
-            if (str_contains($frame['file'], 'functions.php') && !str_contains($frame['file'], 'spec/')) {
-                continue;
-            }
-            $filtered[] = $frame;
-        }
-        return $filtered;
-    }
 }

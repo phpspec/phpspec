@@ -14,6 +14,7 @@
 
 namespace PhpSpec\Report\Formatter;
 
+use PhpSpec\CodeGeneration\SurroundingCode;
 use PhpSpec\ObjectName;
 use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Result\ContextResult;
@@ -24,6 +25,7 @@ use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\SpecificationResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
+use PhpSpec\Specification\ExampleError;
 use PhpSpec\Specification\Expectation;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -106,11 +108,13 @@ final class DetailSections
         if ($example->isError()) {
             $error = $example->getError();
             if ($error !== null && $error->missingClass() === null) {
-                $this->sections['Errors'][] = static function (OutputInterface $output) use ($title, $error): void {
+                $at = self::blameFor($example, $error);
+                $code = (new SurroundingCode($at['file'], $at['line']))->toArray();
+                $this->sections['Errors'][] = static function (OutputInterface $output) use ($title, $error, $at, $code): void {
                     $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
                     $output->write(PHP_EOL . '  Error: ' . $error->getMessage() . PHP_EOL . PHP_EOL);
-                    PrettyViews::surroundingCode($output, $error->getSurroundingCode(), $error->getLine());
-                    $output->write(PHP_EOL . '  at ' . $error->getFile() . ':' . $error->getLine() . PHP_EOL);
+                    PrettyViews::surroundingCode($output, $code, $at['line']);
+                    $output->write(PHP_EOL . '  at ' . $at['file'] . ':' . $at['line'] . PHP_EOL);
                     foreach (array_slice($error->getFilteredTrace(), 0, 5) as $frame) {
                         $output->write('     ' . ($frame['file'] ?? '?') . ':' . ($frame['line'] ?? '?') . PHP_EOL);
                     }
@@ -153,9 +157,33 @@ final class DetailSections
         $this->sections['Errors'][] = static function (OutputInterface $output) use ($title, $error): void {
             $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
             $output->write(PHP_EOL . '  ' . $error->getType() . ': ' . $error->getMessage() . PHP_EOL . PHP_EOL);
-            PrettyViews::surroundingCode($output, $error->getSurroundingCode(), $error->getLine());
-            $output->write(PHP_EOL . '  at ' . $error->getFile() . ':' . $error->getLine() . PHP_EOL);
+            $blame = $error->blame() ?? ['file' => $error->getFile(), 'line' => $error->getLine()];
+            PrettyViews::surroundingCode($output, $error->getSurroundingCode(), $blame['line']);
+            $output->write(PHP_EOL . '  at ' . $blame['file'] . ':' . $blame['line'] . PHP_EOL);
         };
+    }
+
+    /**
+     * The line an example's error is shown at: the site when it is the user's
+     * code, else the frame of the spec that led there, else the line that
+     * declares the example, which is all there is when the error came while
+     * its arguments were being resolved.
+     *
+     * @return array{file: string, line: int}
+     */
+    private static function blameFor(ExampleResult $example, ExampleError $error): array
+    {
+        $blame = $error->blame();
+        $declared = $example->getFile() !== null && $example->getLine() !== null
+            ? ['file' => $example->getFile(), 'line' => $example->getLine()]
+            : null;
+        $isSite = $blame !== null && $blame['file'] === $error->getFile() && $blame['line'] === $error->getLine();
+
+        if ($blame !== null && ($isSite || $declared === null || $blame['file'] === $declared['file'])) {
+            return $blame;
+        }
+
+        return $declared ?? $blame ?? ['file' => $error->getFile(), 'line' => $error->getLine()];
     }
 
     private function collectFeature(FeatureResult $feature): void
@@ -179,8 +207,9 @@ final class DetailSections
                     $this->sections['Errors'][] = static function (OutputInterface $output) use ($title, $error): void {
                         $output->write(PHP_EOL . '  <fg=red>• ' . $title . '</>' . PHP_EOL);
                         $output->write(PHP_EOL . '  ' . $error->getType() . ': ' . $error->getMessage() . PHP_EOL . PHP_EOL);
-                        PrettyViews::surroundingCode($output, $error->getSurroundingCode(), $error->getLine());
-                        $output->write(PHP_EOL . '  at ' . $error->getFile() . ':' . $error->getLine() . PHP_EOL);
+                        $blame = $error->blame() ?? ['file' => $error->getFile(), 'line' => $error->getLine()];
+                        PrettyViews::surroundingCode($output, $error->getSurroundingCode(), $blame['line']);
+                        $output->write(PHP_EOL . '  at ' . $blame['file'] . ':' . $blame['line'] . PHP_EOL);
                         foreach (array_slice($error->getFilteredTrace(), 0, 5) as $frame) {
                             $output->write('     ' . ($frame['file'] ?? '?') . ':' . ($frame['line'] ?? '?') . PHP_EOL);
                         }

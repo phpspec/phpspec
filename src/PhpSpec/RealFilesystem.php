@@ -51,6 +51,10 @@ final class RealFilesystem implements Filesystem
     /** {@inheritdoc} */
     public function readLines(string $path): array
     {
+        if (!is_file($path)) {
+            return [];
+        }
+
         $lines = file($path);
         return $lines !== false ? $lines : [];
     }
