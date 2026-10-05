@@ -51,6 +51,10 @@ from:
 3. Otherwise `src/` with every namespace segment as a directory:
    `src/Tasker/TaskList.php`.
 
+A method stub is different: its class already exists, so it is written into
+the file the class was loaded from, wherever that is, and the mapping above is
+not consulted. A method on a vendor or internal class is never written.
+
 A phpspec `autoload` map is consulted at run time only, to load classes while
 specs run; a config that states one keeps the third layout for generation.
 The offer, the diff and the receipt all name the file that will be or was

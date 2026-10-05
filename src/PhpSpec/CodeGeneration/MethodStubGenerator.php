@@ -152,14 +152,8 @@ final class MethodStubGenerator
         return (bool) preg_match($pattern, $content);
     }
 
-    /**
-     * Resolves a fully qualified class name to its expected file path under the source directory.
-     *
-     * @param string $className the fully qualified class name
-     * @return string the absolute file path
-     */
     private function resolveFilePath(string $className): string
     {
-        return ClassGenerator::resolveFqcn($className, $this->srcPath, $this->psr4Prefix)['filePath'];
+        return ClassLocation::for($className, $this->srcPath, $this->psr4Prefix)->filePath();
     }
 }

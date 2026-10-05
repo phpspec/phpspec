@@ -313,7 +313,7 @@ final readonly class CodeGenerator
 
         foreach ($this->uniqueByClassMethod($mockMethods) as $error) {
             $argCount = $this->analyser->extractArgumentCount($error['file'], $error['line'], $error['methodName']);
-            $filePath = ClassGenerator::resolveFqcn($error['className'], $this->srcPath, $this->psr4Prefix)['filePath'];
+            $filePath = ClassLocation::for($error['className'], $this->srcPath, $this->psr4Prefix)->filePath();
 
             $generated = $this->confirmAndGenerate($output, sprintf(
                 '  <fg=yellow>Do you want me to add method <fg=white>%s()</> to interface <fg=white>%s</>?</>',
@@ -346,7 +346,7 @@ final readonly class CodeGenerator
         foreach ($this->uniqueByClassMethod($classMethods) as $error) {
             $argCount = $this->analyser->extractArgumentCount($error['file'], $error['line'], $error['methodName']);
             $static = $this->analyser->isStaticCall($error['file'], $error['line'], $error['methodName']);
-            $filePath = ClassGenerator::resolveFqcn($error['className'], $this->srcPath, $this->psr4Prefix)['filePath'];
+            $filePath = ClassLocation::for($error['className'], $this->srcPath, $this->psr4Prefix)->filePath();
             $target = $error['className'] . '::' . $error['methodName'];
 
             $returnExpr = null;
@@ -400,7 +400,7 @@ final readonly class CodeGenerator
                 continue;
             }
 
-            $filePath = ClassGenerator::resolveFqcn($candidate['className'], $this->srcPath, $this->psr4Prefix)['filePath'];
+            $filePath = ClassLocation::for($candidate['className'], $this->srcPath, $this->psr4Prefix)->filePath();
 
             $generated = $this->confirmAndGenerate($output, sprintf(
                 '  <fg=yellow>Are you sure you want <fg=white>%s()</> to always return <fg=white>%s</>?</>',

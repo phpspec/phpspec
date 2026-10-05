@@ -21,6 +21,24 @@ describe(ClassLocation::class, function () {
         expect($location->exists($fs))->toBe(true);
     });
 
+    it('locates a loaded class by the file it was loaded from, whatever the layout says', function () {
+        $location = ClassLocation::for('PhpSpec\\CodeGeneration\\ClassGenerator', 'lib', 'Acme');
+
+        expect($location->filePath())->toBe(realpath(__DIR__ . '/../../../src/PhpSpec/CodeGeneration/ClassGenerator.php'));
+    });
+
+    it('keeps a vendor class where the layout would put it, never in vendor', function () {
+        $location = ClassLocation::for('Symfony\\Component\\Console\\Application', 'src', '');
+
+        expect($location->filePath())->toBe(
+            getcwd() . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Symfony' . DIRECTORY_SEPARATOR . 'Component' . DIRECTORY_SEPARATOR . 'Console' . DIRECTORY_SEPARATOR . 'Application.php',
+        );
+    });
+
+    it('keeps an internal class where the layout would put it', function () {
+        expect(ClassLocation::for('ArrayObject', 'src', '')->filePath())->toBe(getcwd() . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'ArrayObject.php');
+    });
+
     it('is autoloadable when the class actually exists', function () {
         $location = ClassLocation::for('PhpSpec\\CodeGeneration\\ClassGenerator', 'src', 'PhpSpec');
 

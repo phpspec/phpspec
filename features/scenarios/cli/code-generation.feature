@@ -142,6 +142,33 @@ Feature: Code generation
     Then a class file "src/TaskList.php" should be generated
     And no file "src/Tasker/TaskList.php" should be generated
 
+  Scenario: A method lands in the file its class was loaded from, wherever composer says the namespace lives
+    Given no phpspec.json config
+    And a file "composer.json":
+      """
+      {"autoload": {"psr-4": {"Tasker\\": "src/"}}}
+      """
+    And a class "src/Tasker/TaskList.php":
+      """
+      <?php
+      namespace Tasker;
+
+      class TaskList {}
+      """
+    And a spec file "spec/Tasker/TaskList.spec.php":
+      """
+      <?php
+      describe('Tasker\TaskList', function () {
+          it('adds a task', function () {
+              (new Tasker\TaskList())->add('write the spec');
+              expect(true)->toBeTrue();
+          });
+      });
+      """
+    When I run phpspec run with option "--accept-offers"
+    Then the class "src/Tasker/TaskList.php" should contain "function add"
+    And no file "src/TaskList.php" should be generated
+
   Scenario: Describe command generates a spec
     When I run phpspec describe "App\Formatter"
     Then a spec file "spec/App/Formatter.spec.php" should be generated

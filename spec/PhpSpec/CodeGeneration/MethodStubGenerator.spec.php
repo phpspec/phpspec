@@ -55,6 +55,16 @@ describe(MethodStubGenerator::class, function () {
         expect($result)->toContain("Method 'add()' generated");
     });
 
+    it("writes into the file a loaded class came from when the layout says otherwise", function (Filesystem $fs) {
+        allow($fs->exists())->toReturn(true);
+        allow($fs->read())->toReturn("<?php\n\nnamespace PhpSpec\\CodeGeneration;\n\nclass ClassGenerator\n{\n}\n");
+
+        (new MethodStubGenerator('lib', $fs, 'Acme'))->generate('PhpSpec\\CodeGeneration\\ClassGenerator', 'spin', 0);
+
+        $loadedFrom = realpath(__DIR__ . '/../../../src/PhpSpec/CodeGeneration/ClassGenerator.php');
+        expect($fs->write($loadedFrom, any()))->toBeCalled();
+    });
+
     it("generates interface method stub without body", function (Filesystem $fs) {
         allow($fs->exists())->toReturn(true);
         allow($fs->read())->toReturn("<?php\n\ninterface Calculator\n{\n}\n");

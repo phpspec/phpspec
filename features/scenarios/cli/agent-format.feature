@@ -571,6 +571,30 @@ Feature: Agent output format
     When I accept the offers phpspec made
     Then a class file "src/App/Coupon.php" should be generated
 
+  Scenario: A missing method surfaces as an offer, and accept by id writes it
+    Given a class "src/App/Calc.php":
+      """
+      <?php
+      namespace App;
+
+      class Calc {}
+      """
+    And a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () {
+              expect((new App\Calc())->add(2, 3))->toBe(5);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "create_method"
+    When I accept the offers phpspec made with option "--format=agent"
+    Then the output should contain "src/App/Calc.php"
+    And the class "src/App/Calc.php" should contain "public function add($argument1, $argument2)"
+
   Scenario: The accept receipt names the file a generated class was written to
     Given a spec file "spec/App/Basket.spec.php":
       """

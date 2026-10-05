@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - A method is generated into the file its class was loaded from, so a composer mapping that disagrees with where the file sits no longer sends the stub to a path that does not exist; a vendor or internal class is still never written to
  - An agent entry's `spec` and `rerun` stay in the spec file: an error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it, with `exception.at` keeping the throw site; `rerun` used to name a line of `src/`
  - A method the spec calls statically is generated as a static method, with as many arguments as the call passes; it used to come out as an instance method taking none, and the next run failed on it
  - The `accept` receipt names each offer's `target` and the `files` it wrote; its `path` had carried a class or method name for generated code
