@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - The dot formatter marks a skipped step `S`, as it does an example, and an undefined step `U` instead of folding it into pending
  - `describe` and `exemplify` report what they wrote in green, naming the class and the spec file in yellow, the file from the project root
 ### Fixed
+ - `phpspec api` names the docs by their absolute path inside the installed package, and the package ships `docs/`; it used to name paths relative to a checkout that a Composer install did not have
  - A `file:LINE` selector that reaches no example or scenario stops the run with `No example at ...` and exit 1, with a remedy, instead of running nothing and exiting 0
  - `describe -r` under `--format=agent` runs the new spec after its receipt, in the agent format and with the describe's interactivity, and exits with the run's code; it used to stop at the receipt
  - `toBeCalledWith()` judges every call the double received during the example, as `toBeCalled()` and `toBeCalledTimes()` do; it used to see only the most recent call, so a call made before the expectation was written was missed
