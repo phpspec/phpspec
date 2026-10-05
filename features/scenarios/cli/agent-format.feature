@@ -595,6 +595,37 @@ Feature: Agent output format
     Then the output should contain "src/App/Calc.php"
     And the class "src/App/Calc.php" should contain "public function add($argument1, $argument2)"
 
+  Scenario: An offer whose method was written by hand in the meantime is reported as not applied
+    Given a class "src/App/Calc.php":
+      """
+      <?php
+      namespace App;
+
+      class Calc {}
+      """
+    And a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () {
+              expect((new App\Calc())->add(2, 3))->toBe(5);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    And a class "src/App/Calc.php":
+      """
+      <?php
+      namespace App;
+
+      class Calc {
+          public function add($a, $b) { return $a + $b; }
+      }
+      """
+    And I accept the offers phpspec made with option "--format=agent"
+    Then the receipt should report the offer as not applied because "already exists"
+    And the exit code should be 1
+
   Scenario: The accept receipt names the file a generated class was written to
     Given a spec file "spec/App/Basket.spec.php":
       """

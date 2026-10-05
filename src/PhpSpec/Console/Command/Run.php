@@ -898,7 +898,7 @@ final class Run extends Command
      * @param SuiteResult $results the suite results to scan for generation candidates
      * @param bool $fake whether --fake mode is enabled
      * @param Generation $generation how an offer is answered when nobody is asked
-     * @return list<array{id: string, action: string, target: string, file: string}> what was written
+     * @return list<array{id: string, action: string, target: string, file: string, applied: bool, reason?: string}> what was written
      */
     private function generateCode(Output $output, SuiteResult $results, bool $fake, Generation $generation = Generation::Asks): array
     {

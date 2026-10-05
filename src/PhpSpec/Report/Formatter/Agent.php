@@ -83,7 +83,7 @@ final class Agent extends AbstractFormatter
     /** What guard made of the change, when guard is on. */
     private ?GuardVerdict $guard = null;
 
-    /** @var list<array{id: string, action: string, target: string, file: string}> */
+    /** @var list<array{id: string, action: string, target: string, file: string, applied: bool, reason?: string}> */
     private array $applied = [];
 
     /** @var array{message: string, at: string|null}|null what stopped the run short, when something did */
@@ -182,10 +182,11 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * Takes what --accept-offers wrote after the run, so the summary says it
-     * as data: an exit code of 0 alone reads as verified, and it is not.
+     * Takes what --accept-offers wrote after the run, and what it could not,
+     * so the summary says it as data: an exit code of 0 alone reads as
+     * verified, and it is not.
      *
-     * @param list<array{id: string, action: string, target: string, file: string}> $applied
+     * @param list<array{id: string, action: string, target: string, file: string, applied: bool, reason?: string}> $applied
      */
     public function applied(array $applied): void
     {
@@ -350,9 +351,10 @@ final class Agent extends AbstractFormatter
         // Written after the run the counts describe, under the ids the offers
         // carried, so a reader knows what changed and that it is unverified.
         if ($this->applied !== []) {
+            $written = array_filter($this->applied, fn(array $offer): bool => $offer['applied']);
             $summary['applied'] = [
                 'offers' => $this->applied,
-                'files' => array_values(array_unique(array_column($this->applied, 'file'))),
+                'files' => array_values(array_unique(array_column($written, 'file'))),
                 'verified' => false,
             ];
         }

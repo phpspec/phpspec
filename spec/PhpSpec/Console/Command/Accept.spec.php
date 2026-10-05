@@ -102,6 +102,23 @@ describe(Accept::class, function () {
         ]);
     });
 
+    it('reports an offer it could not apply as not applied, with the reason, and exits 1', function () {
+        $offer = Offer::generate('create_method', 'App\\Calc::add', [
+            'undefinedClassMethods' => [['className' => 'App\\Calc', 'methodName' => 'add', 'file' => '/project/spec/App/Calc.spec.php', 'line' => 3]],
+        ]);
+        $this->book->record($offer);
+
+        $tester = ($this->tester)();
+        $tester->execute(['offer' => [$offer->id], '--format' => 'agent'], ['interactive' => false]);
+
+        $document = json_decode(trim($tester->getDisplay()), true, flags: JSON_THROW_ON_ERROR);
+        expect($tester->getStatusCode())->toBe(1);
+        expect($document['accepted'][0]['applied'])->toBeFalse();
+        expect($document['accepted'][0]['reason'])->toContain('Source file not found');
+        expect($document['accepted'][0]['files'])->toBe([]);
+        expect($this->written)->toBe([]);
+    });
+
     it('tells an agent why it refused, on the same channel', function () {
         $tester = ($this->tester)();
         $tester->execute(['offer' => ['o_nothing'], '--format' => 'agent'], ['interactive' => false]);

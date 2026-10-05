@@ -242,7 +242,7 @@ missed and anything that stopped it.
 | `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
 | `guard` | [guard](guard.md) is on and either judged the change or could not | `{ "held": false, "judged": true, "violations": [{ "file", "lines", "member", "remedy" }] }`. Each violation is new logic no example reaches, and adds 1 to `actionable`. When `judged` is `false` there are no violations and a `reason` says what stopped it. |
 | `offers` | the run found code it can generate | The run-wide, de-duplicated list. Absent when there is nothing to take. |
-| `applied` | `--accept-offers` wrote something | `{ "offers": [{ "id", "action", "target", "file" }], "files", "verified": false }`: what was written after the run, under the ids the offers carried. The counts describe the code before it, so run again to verify. |
+| `applied` | `--accept-offers` was asked to write | `{ "offers": [{ "id", "action", "target", "file", "applied", "reason"? }], "files", "verified": false }`: what was written after the run, under the ids the offers carried, and what could not be, with `applied: false` and the `reason`. `files` names only what changed. The counts describe the code before it, so run again to verify. |
 
 ### `fatal`: when the run could not finish
 
@@ -307,7 +307,10 @@ With `--format=agent`, `accept` answers with one receipt:
 
 `target` is what the offer named, a class, a method, a feature file, or the
 path of a proposed write; `files` are the files it wrote, from the project
-root. Generated classes land where the project's layout says their namespace
+root. An offer that could not be applied, because the method was written by
+hand in the meantime or the class file is not where the layout says, comes
+back with `applied: false`, a `reason` and no `files`, and the command exits
+`1`. Generated classes land where the project's layout says their namespace
 lives (see [Code Generation](code-generation.md#where-generated-classes-go)).
 
 For the common case of taking everything a run found, the bulk shortcut remains:

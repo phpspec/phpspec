@@ -183,21 +183,37 @@ describe(Agent::class, function () {
         $formatter->begin();
         $formatter->printResult(new SpecificationResult('App\\Basket', [new ExampleResult('applies a coupon', [], true)]));
         $formatter->applied([
-            ['id' => 'o_1', 'action' => 'create_class', 'target' => 'App\\Coupon', 'file' => 'src/App/Coupon.php'],
-            ['id' => 'o_2', 'action' => 'create_method', 'target' => 'App\\Coupon::apply', 'file' => 'src/App/Coupon.php'],
+            ['id' => 'o_1', 'action' => 'create_class', 'target' => 'App\\Coupon', 'file' => 'src/App/Coupon.php', 'applied' => true],
+            ['id' => 'o_2', 'action' => 'create_method', 'target' => 'App\\Coupon::apply', 'file' => 'src/App/Coupon.php', 'applied' => true],
         ]);
         $formatter->publish();
         $doc = $stream($output->fetch());
 
         expect($doc['result']['applied'])->toBe([
             'offers' => [
-                ['id' => 'o_1', 'action' => 'create_class', 'target' => 'App\\Coupon', 'file' => 'src/App/Coupon.php'],
-                ['id' => 'o_2', 'action' => 'create_method', 'target' => 'App\\Coupon::apply', 'file' => 'src/App/Coupon.php'],
+                ['id' => 'o_1', 'action' => 'create_class', 'target' => 'App\\Coupon', 'file' => 'src/App/Coupon.php', 'applied' => true],
+                ['id' => 'o_2', 'action' => 'create_method', 'target' => 'App\\Coupon::apply', 'file' => 'src/App/Coupon.php', 'applied' => true],
             ],
             'files' => ['src/App/Coupon.php'],
             'verified' => false,
         ]);
         expect($doc['result']['errors'])->toBe(1);
+    });
+
+    it('keeps an offer that was not applied out of the files written, carrying its reason', function () use ($stream) {
+        $output = new BufferedOutput();
+        $formatter = new Agent($output);
+        $formatter->begin();
+        $formatter->applied([
+            ['id' => 'o_1', 'action' => 'create_class', 'target' => 'App\\Coupon', 'file' => 'src/App/Coupon.php', 'applied' => true],
+            ['id' => 'o_2', 'action' => 'create_method', 'target' => 'App\\Basket::total', 'file' => 'src/App/Basket.php', 'applied' => false, 'reason' => "Method 'total' already exists"],
+        ]);
+        $formatter->publish();
+        $doc = $stream($output->fetch());
+
+        expect($doc['result']['applied']['files'])->toBe(['src/App/Coupon.php']);
+        expect($doc['result']['applied']['offers'][1]['applied'])->toBeFalse();
+        expect($doc['result']['applied']['offers'][1]['reason'])->toBe("Method 'total' already exists");
     });
 
     it('reports coverage without a threshold as met, adding no work', function () use ($stream) {

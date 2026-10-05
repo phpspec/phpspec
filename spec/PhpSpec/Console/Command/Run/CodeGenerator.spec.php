@@ -306,7 +306,43 @@ describe(CodeGenerator::class, function () {
                 'action' => 'create_class',
                 'target' => 'App\Coupon',
                 'file' => $relDir . '/src/App/Coupon.php',
+                'applied' => true,
             ]]);
+        });
+
+        it('reports a method it could not write as not applied, with the reason', function () {
+            $relDir = '.tmp_codegen_refused_' . getmypid();
+            $absDir = getcwd() . '/' . $relDir;
+            mkdir($absDir . '/src/CgTest', 0777, true);
+            mkdir($absDir . '/spec/CgTest', 0777, true);
+            file_put_contents($absDir . '/src/CgTest/Widget.php', "<?php\n\nnamespace CgTest;\n\nclass Widget\n{\n    public function spin() {}\n}\n");
+            $specFile = $absDir . '/spec/CgTest/Widget.spec.php';
+            file_put_contents($specFile, "<?php\nit('works', fn() => expect(\$this->widget->spin())->toBe(true));\n");
+
+            $generator = new CodeGenerator($relDir . '/src', $relDir . '/spec', Generation::Accepts);
+            $original = eval("return new \\Error('Call to undefined method CgTest\\\\Widget::spin()');");
+            $error = new \PhpSpec\Specification\ExampleError('Call to undefined method CgTest\Widget::spin()', $original);
+            foreach (['file' => $specFile, 'line' => 2] as $property => $value) {
+                (new \ReflectionProperty(\Exception::class, $property))->setValue($error, $value);
+            }
+            $example = new ExampleResult('works', [], isError: true);
+            $example->setError($error);
+            $suite = new SuiteResult([new SpecificationResult('CgTest\Widget', [$example])]);
+
+            try {
+                $applied = $generator->generate($this->output, $suite, false);
+            } finally {
+                array_map('unlink', glob($absDir . '/src/CgTest/*') + glob($absDir . '/spec/CgTest/*'));
+                foreach ([$absDir . '/src/CgTest', $absDir . '/spec/CgTest', $absDir . '/src', $absDir . '/spec', $absDir] as $dir) {
+                    rmdir($dir);
+                }
+            }
+
+            expect($applied)->toHaveLength(1);
+            expect($applied[0]['action'])->toBe('create_method');
+            expect($applied[0]['target'])->toBe('CgTest\Widget::spin');
+            expect($applied[0]['applied'])->toBeFalse();
+            expect($applied[0]['reason'])->toContain('already exists');
         });
 
         it('returns nothing when nothing was written', function () {

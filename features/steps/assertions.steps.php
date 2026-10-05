@@ -130,6 +130,15 @@ then('the output should have {int} events', function (int $count) use ($events) 
 
 // The stream's shape: an agent knows where the run starts and that the summary
 // is the last word, whatever happened in between.
+then('the receipt should report the offer as not applied because {string}', function (string $reason) {
+    $receipt = json_decode(trim($this->output), true, flags: JSON_THROW_ON_ERROR);
+    $accepted = $receipt['accepted'][0] ?? [];
+
+    if (($accepted['applied'] ?? null) !== false || !str_contains((string) ($accepted['reason'] ?? ''), $reason)) {
+        throw new RuntimeException("Expected the receipt to report the offer as not applied because \"{$reason}\".\nOutput:\n{$this->output}");
+    }
+});
+
 then('the first event should be {string}', function (string $name) use ($events) {
     $stream = $events($this->output);
 

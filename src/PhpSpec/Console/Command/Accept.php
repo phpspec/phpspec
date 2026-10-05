@@ -117,34 +117,46 @@ final class Accept extends Command
         $notes = $forAgent ? new NullOutput() : $output;
 
         foreach ($offers as $offer) {
-            $files = match ($offer->kind) {
+            $outcomes = match ($offer->kind) {
                 Offer::GENERATE => $this->generate($offer, $notes),
                 default => $this->write($offer, $notes),
             };
 
+            $written = array_filter($outcomes, fn(array $outcome): bool => $outcome['applied']);
+            $reasons = array_column(array_filter($outcomes, fn(array $outcome): bool => !$outcome['applied']), 'reason');
+
             // The target is what the offer named, which for generated code is a
-            // class or a method; the files are where it landed.
-            $receipts[] = [
+            // class or a method; the files are where it landed. An offer that
+            // could not be applied says so and why, rather than reading as done.
+            $receipt = [
                 'id' => $offer->id,
                 'action' => $offer->action,
                 'target' => $offer->target,
-                'files' => $files,
-                'applied' => true,
+                'files' => array_values(array_unique(array_column($written, 'file'))),
+                'applied' => $written !== [] && $reasons === [],
             ];
+
+            if ($reasons !== []) {
+                $receipt['reason'] = implode(' ', $reasons);
+            } elseif ($written === []) {
+                $receipt['reason'] = 'Nothing was left to apply.';
+            }
+
+            $receipts[] = $receipt;
         }
 
         if ($forAgent) {
             $this->emit(['v' => Schema::V, 'action' => 'accept', 'accepted' => $receipts], $output);
         }
 
-        return 0;
+        return in_array(false, array_column($receipts, 'applied'), true) ? 1 : 0;
     }
 
     /**
      * Applies a change that was proposed in full: the content travelled with
      * the offer, so what lands is what was read.
      *
-     * @return list<string> the file written
+     * @return list<array{file: string, applied: bool}> the file written
      */
     private function write(Offer $offer, Output $output): array
     {
@@ -157,15 +169,15 @@ final class Accept extends Command
             $offer->target,
         ));
 
-        return [$offer->target];
+        return [['file' => $offer->target, 'applied' => true]];
     }
 
     /**
      * Generates the one thing this offer named, through the same generator the
      * interactive runner uses. The generators never overwrite, so an offer
-     * whose subject now exists quietly does nothing rather than clobbering it.
+     * whose subject now exists is reported as not applied rather than clobbering it.
      *
-     * @return list<string> the files written, from the project root
+     * @return list<array{file: string, applied: bool, reason?: string}> what was written, from the project root, and what could not be
      */
     private function generate(Offer $offer, Output $output): array
     {
@@ -181,9 +193,7 @@ final class Accept extends Command
             $this->config->getPsr4Prefix(),
         );
 
-        $applied = $generator->apply($output, GenerationCandidates::fromArray($candidates), $offer->action === 'fake_method');
-
-        return array_values(array_unique(array_column($applied, 'file')));
+        return $generator->apply($output, GenerationCandidates::fromArray($candidates), $offer->action === 'fake_method');
     }
 
     /**
