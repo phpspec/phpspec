@@ -491,7 +491,7 @@ final class Agent extends AbstractFormatter
             $match = $this->failingMatch($example);
             $entry += $this->expectation($match);
             $entry['message'] = $example->getMessage();
-            $this->addLocation($entry, $this->location($match?->getFile(), $match?->getLine()));
+            $this->addLocation($entry, $this->address($example, $match?->getFile(), $match?->getLine()));
             // No offer on a failure: the code exists and the behaviour is wrong,
             // there is nothing to generate — `state: failing` already says so.
         } elseif ($state === 'error') {
@@ -504,7 +504,7 @@ final class Agent extends AbstractFormatter
             // Mirrored, so one field answers "what went wrong" whatever the
             // state: the exception adds the class and the site, not the text.
             $entry['message'] = $error?->getMessage();
-            $this->addLocation($entry, $this->location($error?->getFile(), $error?->getLine()));
+            $this->addLocation($entry, $this->address($example, $error?->getFile(), $error?->getLine()));
             // A missing class/method/interface the error names becomes a concrete
             // offer to generate it, right on the example that hit it. Only present
             // when the error actually maps to something a generator can create.
@@ -513,9 +513,7 @@ final class Agent extends AbstractFormatter
                 $entry['offer'] = $offer;
             }
         } elseif ($state === 'passing') {
-            // Nothing in it failed, so the example is addressed by where it is
-            // declared: the it() line, which its closure spans.
-            $this->addLocation($entry, $this->location($example->getFile(), $example->getLine()));
+            $this->addLocation($entry, $this->address($example, null, null));
         }
 
         $this->attachOutput($entry, $example->getOutput());
@@ -806,13 +804,32 @@ final class Agent extends AbstractFormatter
     }
 
     /**
-     * Attaches where the entry failed, and the exact line-targeted command that
-     * re-runs just that one, so an agent can verify a single fix without a
-     * full-suite run. phpspec resolves a "spec.php:LINE" path to the example
-     * whose closure spans that line, and the expectation/error site always
-     * falls inside it, so the entry's own location is a valid target. Both are
-     * absent when the location is not known: a key that says null is a question
-     * a reader has to ask twice.
+     * The line an example is acted on from, always in its own spec file: the
+     * site of what went wrong when that site is in the file, else the line that
+     * declares the example. An error thrown inside the code under test, or an
+     * expectation asserted in a helper, would otherwise hand an agent a path
+     * that is not a spec, and "run src/App/Money.php:12" would be executed
+     * blindly. Null when the example's file is not known and the site is not
+     * either.
+     */
+    private function address(ExampleResult $example, ?string $file, ?int $line): ?string
+    {
+        $declared = $example->getFile();
+
+        if ($declared === null || $file === $declared) {
+            return $this->location($file, $line);
+        }
+
+        return $this->location($declared, $example->getLine());
+    }
+
+    /**
+     * Attaches the line the entry is acted on from, and the exact line-targeted
+     * command that re-runs just that one, so an agent can verify a single fix
+     * without a full-suite run. phpspec resolves a "spec.php:LINE" path to the
+     * example whose closure spans that line. Both are absent when the location
+     * is not known: a key that says null is a question a reader has to ask
+     * twice.
      *
      * @param array<string, mixed> $entry
      */

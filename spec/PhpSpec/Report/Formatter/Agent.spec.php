@@ -530,6 +530,51 @@ describe(Agent::class, function () {
         expect($example)->not()->toHaveKey('offer');
     });
 
+    // An error whose site is somewhere other than where it was thrown, as PHP
+    // reports one thrown inside the code under test.
+    $thrownAt = function (string $message, string $file, int $line): \Throwable {
+        $error = new \RuntimeException($message);
+        foreach (['file' => $file, 'line' => $line] as $property => $value) {
+            $ref = new \ReflectionProperty(\Exception::class, $property);
+            $ref->setValue($error, $value);
+        }
+
+        return $error;
+    };
+
+    it('addresses an error thrown inside the code under test by the line that declares the example', function () use ($render, $thrownAt) {
+        $errored = new ExampleResult('adds cents', [], true);
+        $errored->declaredAt(getcwd() . '/spec/App/Money.spec.php', 7);
+        $errored->setError(new ExampleError('not yet', $thrownAt('not yet', getcwd() . '/src/App/Money.php', 9)));
+
+        $example = $render(new SuiteResult([new SpecificationResult('App\\Money', [$errored])]))['examples'][0];
+
+        expect($example['spec'])->toBe('spec/App/Money.spec.php:7');
+        expect($example['rerun'])->toBe('run spec/App/Money.spec.php:7');
+        expect($example['exception']['at'])->toBe('src/App/Money.php:9');
+    });
+
+    it('keeps the site of an error that surfaced in the spec file itself', function () use ($render, $thrownAt) {
+        $errored = new ExampleResult('adds cents', [], true);
+        $errored->declaredAt(getcwd() . '/spec/App/Money.spec.php', 7);
+        $errored->setError(new ExampleError('boom', $thrownAt('boom', getcwd() . '/spec/App/Money.spec.php', 12)));
+
+        $example = $render(new SuiteResult([new SpecificationResult('App\\Money', [$errored])]))['examples'][0];
+
+        expect($example['spec'])->toBe('spec/App/Money.spec.php:12');
+        expect($example['rerun'])->toBe('run spec/App/Money.spec.php:12');
+    });
+
+    it('addresses a failure asserted in a helper by the line that declares the example', function () use ($render) {
+        $failing = new ExampleResult('adds cents', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/support/helpers.php', 40)]);
+        $failing->declaredAt(getcwd() . '/spec/App/Money.spec.php', 7);
+
+        $example = $render(new SuiteResult([new SpecificationResult('App\\Money', [$failing])]))['examples'][0];
+
+        expect($example['spec'])->toBe('spec/App/Money.spec.php:7');
+        expect($example['rerun'])->toBe('run spec/App/Money.spec.php:7');
+    });
+
     it('carries a per-example create_class offer when the error is a missing class', function () use ($render) {
         $errored = new ExampleResult('needs a coupon', [], true);
         $errored->setError(new ExampleError('Class "App\\Coupon" not found', new \Error('Class "App\\Coupon" not found')));

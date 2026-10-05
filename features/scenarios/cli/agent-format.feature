@@ -160,6 +160,33 @@ Feature: Agent output format
     And the output should contain "rerun"
     And the output should contain "run spec/App/Calc.spec.php:"
 
+  Scenario: An error thrown inside the code under test is addressed by the example that reached it
+    Given a class "src/App/Money.php":
+      """
+      <?php
+      namespace App;
+
+      class Money {
+          public static function fromCents(int $cents): self {
+              throw new \RuntimeException('not yet');
+          }
+      }
+      """
+    And a spec file "spec/App/Money.spec.php":
+      """
+      <?php
+      describe('App\Money', function () {
+          it('is made from cents', function () {
+              expect(App\Money::fromCents(1000))->toBeAnInstanceOf(App\Money::class);
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "run spec/App/Money.spec.php:3"
+    And the output should contain "src/App/Money.php:6"
+    And the output should not contain "run src/"
+
   Scenario: A stop flag halts the run at the first example that meets it
     Given a spec file "spec/App/Calc.spec.php":
       """
