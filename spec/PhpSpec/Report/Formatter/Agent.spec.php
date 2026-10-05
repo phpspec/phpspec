@@ -379,6 +379,7 @@ describe(Agent::class, function () {
             'state' => 'passing',
             'spec' => 'spec/App/Basket.spec.php:7',
             'rerun' => 'run spec/App/Basket.spec.php:7',
+            'rerun_argv' => ['run', 'spec/App/Basket.spec.php:7', '--format=agent'],
         ]]);
         expect($doc['result']['passing'])->toBe(1);
         expect($doc['result']['actionable'])->toBe(0);
@@ -438,6 +439,39 @@ describe(Agent::class, function () {
         expect($example)->not()->toHaveKey('offer');
     });
 
+    it('points at the first difference between two strings, so a reader need not diff them by eye', function () use ($render) {
+        $match = MatchResult::failed("total: 0\n", 'total: 0', 'no', getcwd() . '/spec/App/Basket.spec.php', 12, null, 'toBe');
+
+        $example = $render(new SuiteResult([
+            new SpecificationResult('App\\Basket', [new ExampleResult('prints the total', [$match])]),
+        ]))['examples'][0];
+
+        expect($example['expectation']['diff'])->toBe(['offset' => 8, 'expected' => '', 'actual' => "\n"]);
+    });
+
+    it('carries no diff when the two sides are not strings or arrays alike', function () use ($render) {
+        $match = MatchResult::failed(3500, 4000, 'no', getcwd() . '/spec/App/Basket.spec.php', 12, null, 'toBe');
+
+        $example = $render(new SuiteResult([
+            new SpecificationResult('App\\Basket', [new ExampleResult('totals', [$match])]),
+        ]))['examples'][0];
+
+        expect($example['expectation'])->not()->toHaveKey('diff');
+    });
+
+    it('hands over the rerun as arguments too, carrying the format, so an agent need not rebuild the command', function () use ($render) {
+        $match = MatchResult::failed(1, 2, 'no', getcwd() . '/spec/App/Basket.spec.php', 12);
+        $doc = $render(new SuiteResult([
+            new SpecificationResult('App\\Basket', [
+                new ExampleResult('totals', [$match]),
+                new ExampleResult('adds', [MatchResult::failed(1, 2, 'no', getcwd() . '/spec/App/Basket.spec.php', 20)]),
+            ]),
+        ]));
+
+        expect($doc['examples'][0]['rerun_argv'])->toBe(['run', 'spec/App/Basket.spec.php:12', '--format=agent']);
+        expect($doc['result']['rerun_argv'])->toBe(['run', 'spec/App/Basket.spec.php:12', 'spec/App/Basket.spec.php:20', '--format=agent']);
+    });
+
     it('keeps a null value an anonymous matcher failed on, having a site to prove it real', function () use ($render) {
         // A custom or predicate matcher reaches phpspec through __call and stays
         // nameless: null everywhere except the site. "Your code produced null"
@@ -465,6 +499,7 @@ describe(Agent::class, function () {
         // And no location invented from the parts it does not have.
         expect($example)->not()->toHaveKey('spec');
         expect($example)->not()->toHaveKey('rerun');
+        expect($example)->not()->toHaveKey('rerun_argv');
     });
 
     it('flags a negated matcher on the expected block', function () use ($render) {

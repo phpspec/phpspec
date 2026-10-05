@@ -19,6 +19,7 @@ use PhpSpec\Guard\Verdict as GuardVerdict;
 use PhpSpec\ProjectRoot;
 use PhpSpec\Report\AbstractFormatter;
 use PhpSpec\Report\Formatter\Agent\Fatal;
+use PhpSpec\Report\Formatter\Agent\FirstDifference;
 use PhpSpec\Report\Formatter\Agent\Offers;
 use PhpSpec\Report\Formatter\Agent\Origin;
 use PhpSpec\Report\Formatter\Agent\ProcessEnd;
@@ -349,9 +350,13 @@ final class Agent extends AbstractFormatter
             'duration_ms' => (int) round(($this->results?->getDuration() ?? 0.0) * 1000),
         ];
 
-        $rerun = $this->rerunEverything();
-        if ($rerun !== null) {
-            $summary['rerun'] = $rerun;
+        // The one command that re-runs everything this run reported, so a fix
+        // is checked against the whole of what it was meant to fix, as a string
+        // to paste and as the arguments to hand a process.
+        $targets = array_values(array_unique($this->rerunTargets));
+        if ($targets !== []) {
+            $summary['rerun'] = 'run ' . implode(' ', $targets);
+            $summary['rerun_argv'] = ['run', ...$targets, '--format=agent'];
         }
 
         if ($this->guard !== null && !$this->guard->held()) {
@@ -386,18 +391,6 @@ final class Agent extends AbstractFormatter
         }
 
         return $summary;
-    }
-
-    /**
-     * The one command that re-runs everything this run reported, so a fix can be
-     * checked against the whole of what it was meant to fix instead of one
-     * example at a time. Null when nothing failed anywhere with a location.
-     */
-    private function rerunEverything(): ?string
-    {
-        $targets = array_values(array_unique($this->rerunTargets));
-
-        return $targets !== [] ? 'run ' . implode(' ', $targets) : null;
     }
 
     /**
@@ -666,7 +659,7 @@ final class Agent extends AbstractFormatter
      * which is a comparison worth reporting: an anonymous matcher (any
      * __call-based custom or predicate matcher) has no name to give either.
      *
-     * @return array{expectation?: array{matcher: string|null, expected: mixed, actual: mixed, negated: bool}}
+     * @return array{expectation?: array{matcher: string|null, expected: mixed, actual: mixed, negated: bool, diff?: array<string, mixed>}}
      */
     private function expectation(?MatchResult $match): array
     {
@@ -674,14 +667,19 @@ final class Agent extends AbstractFormatter
             return [];
         }
 
-        return [
-            'expectation' => [
-                'matcher' => $match->getMatcher(),
-                'expected' => ValueExporter::export($match->getActual()),
-                'actual' => ValueExporter::export($match->getExpected()),
-                'negated' => $match->isNegated(),
-            ],
+        $expectation = [
+            'matcher' => $match->getMatcher(),
+            'expected' => ValueExporter::export($match->getActual()),
+            'actual' => ValueExporter::export($match->getExpected()),
+            'negated' => $match->isNegated(),
         ];
+
+        $difference = FirstDifference::between($match->getActual(), $match->getExpected());
+        if ($difference !== null) {
+            $expectation['diff'] = $difference;
+        }
+
+        return ['expectation' => $expectation];
     }
 
     /**
@@ -865,6 +863,7 @@ final class Agent extends AbstractFormatter
         if ($spec !== null && $rerun !== null) {
             $entry['spec'] = $spec;
             $entry['rerun'] = 'run ' . $rerun;
+            $entry['rerun_argv'] = ['run', $rerun, '--format=agent'];
         }
     }
 

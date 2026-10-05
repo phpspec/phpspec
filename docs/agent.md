@@ -94,6 +94,7 @@ Scenario Outline is its own entry, named by its values
 | `message` | What went wrong, whatever the state. An `error` entry keeps `exception` too, for the class and the site. |
 | `spec` | The line to act on, project-relative and always in the spec file: the failing `expect()`, or the line where an error surfaced in the spec. An error thrown inside the code under test, or an expectation asserted in a helper, is addressed by the `it()` line that reached it; `exception.at` keeps the throw site. For a passing example it is the `it()` line; for a scenario, the line its `Scenario:` keyword sits on. Absent when the site is not known. |
 | `rerun` | The exact arguments to re-run **just this one example or scenario**: prepend your PhpSpec binary. It targets the `it()` line that declares the example (the `Scenario:` line for a scenario), which PhpSpec resolves to that one and no other. No full-suite re-run needed to verify one fix. Absent with `spec`. |
+| `rerun_argv` | The same re-run as an argument list, `["run", "spec/App/Basket.spec.php:6", "--format=agent"]`, to hand your PhpSpec binary and a process API: no quoting, and the stream stays JSON Lines. Absent with `rerun`. |
 | `output` | What the code printed while this entry ran, present only when it printed something. See [Printed output](#printed-output). |
 | `attachments` | Context the spec or scenario handed over about itself, by name. See [Handing over context](#handing-over-context-phpspec-cannot-see). |
 | `steps` | Scenarios only: the steps that did not pass, each `{ title, state, message?, expectation?, at? }`, in the order they were declared. |
@@ -110,6 +111,11 @@ Scenario Outline is its own entry, named by its values
   the universal sense of those words. (PhpSpec's internal naming is the reverse;
   the formatter un-inverts it for you.)
 - `negated` — `true` when the expectation used `not()`.
+- `diff` — present when both sides are strings, or arrays of one shape, that
+  differ: for strings `{ "offset", "expected", "actual" }`, the byte where they
+  part and a window of each from there; for arrays `{ "path", "expected",
+  "actual" }`, the key where they part (`items[2].price`). A trailing newline
+  stops costing a re-read.
 
 A matcher that names its target only in prose still states it as a value, so
 `toBeTrue()` reports `expected: true` rather than the null it has no argument
@@ -253,6 +259,7 @@ missed and anything that stopped it.
 | Field | Present when | Meaning |
 |---|---|---|
 | `rerun` | anything failed with a location | One command that re-runs every failing example at once, so a fix is checked against all of what it was meant to fix. |
+| `rerun_argv` | with `rerun` | The same as an argument list ending in `--format=agent`. |
 | `coverage` | a `--coverage*` option was given | `{ "percent", "required", "met" }`. `required` is `null` without `--coverage-min`, and `met` is then always `true`. A missed gate adds 1 to `actionable`. |
 | `guard` | [guard](guard.md) is on and either judged the change or could not | `{ "held": false, "judged": true, "violations": [{ "file", "lines", "member", "remedy" }] }`. Each violation is new logic no example reaches, and adds 1 to `actionable`. When `judged` is `false` there are no violations and a `reason` says what stopped it. |
 | `offers` | the run found code it can generate | The run-wide, de-duplicated list. Absent when there is nothing to take. |

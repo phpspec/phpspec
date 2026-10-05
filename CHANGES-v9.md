@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - When nothing in the phpspec config lays out the source tree, generated classes follow the first PSR-4 mapping in composer.json instead of assuming `src/` plus every namespace segment
  - The summary of a `--accept-offers` run carries `applied`: what was written, under the ids the offers carried, the files changed, and that nothing has verified it; a person sees the generation notes on the console instead of nothing
  - `phpspec api` describes the spec-writing API from the code itself: DSL, matchers, mocks, story steps and the timing rules; `--format=agent` gives it to a coding agent as one JSON object
+ - An agent entry's `expectation` carries `diff` when both sides are strings or arrays of one shape: the byte offset, or the key path, where they part, with a window of each from there
+ - An agent entry and the summary carry `rerun_argv`, the re-run as an argument list ending in `--format=agent`, next to the `rerun` string
  - The agent header says which PHP ran, whether coverage is collected and whether guard is on, off or stood down, so a reader knows upfront which verdicts will follow
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged

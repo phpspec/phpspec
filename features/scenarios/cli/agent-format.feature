@@ -121,6 +121,31 @@ Feature: Agent output format
     Then the output should be valid JSON
     And the reported entry should expect "true" and have got "false"
 
+  Scenario: A string failure points at the first character where the two sides part
+    Given a spec file "spec/App/Receipt.spec.php":
+      """
+      <?php
+      describe('App\Receipt', function () {
+          it('prints the total', function () { expect("total: 0\n")->toBe("total: 0"); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "offset"
+
+  Scenario: A rerun comes as arguments too, carrying the format
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds two numbers', function () { expect(3500)->toBe(4000); });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "rerun_argv"
+    And the output should contain "--format=agent"
+
   Scenario: An emptiness failure wants the empty form of what it was given
     Given a spec file "spec/App/Bag.spec.php":
       """
