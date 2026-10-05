@@ -42,6 +42,7 @@ Feature: Story BDD with Gherkin
       """
     When I run phpspec run "features/"
     Then the output should contain "undefined"
+    And the exit code should be 1
 
   Scenario: Pending steps are reported
     Given a feature file "features/pending.feature":
@@ -59,6 +60,7 @@ Feature: Story BDD with Gherkin
       """
     When I run phpspec run "features/"
     Then the output should contain "pending"
+    And the exit code should be 0
 
   Scenario: A step that throws is an error and skips the remaining steps
     Given a feature file "features/failing.feature":

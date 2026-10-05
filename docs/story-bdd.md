@@ -255,7 +255,10 @@ bin/phpspec run features/greeting.feature  # Run a specific feature
 
 ## Step Generation
 
-When running features with undefined steps, PhpSpec offers to generate step definition stubs:
+A scenario with an undefined step was never checked, so the run fails with exit
+code 1 until the step is defined; a `pending()` step is work deferred on
+purpose and leaves the exit code at 0. When running features with undefined
+steps, PhpSpec offers to generate step definition stubs:
 
 ```
 3 undefined steps in features/greeting.feature.

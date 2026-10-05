@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - A `fatal` carries a `remedy` when the way past is known: the same command under `XDEBUG_MODE=coverage`, or where to point a missing bootstrap or path; the console prints it too
  - Under `-v`, `--format=agent` reports each passing example and scenario too, with its id and the command that re-runs it alone; the summary is unchanged
 ### Changed
+ - An undefined step fails the run with exit code 1: the scenario was never checked; a `pending()` step still leaves it at 0
  - `toBeCalled()` and `toBeCalledTimes()` hold the mock to the arguments written in the expect call; written bare they still mean called at all
  - The pretty formatter reports an example and a step the same way: one set of glyphs (✓ ✘ ○ - ?), the title in the outcome's colour, and a spec headed `Spec:` as a feature is headed `Feature:`
  - A spec describing a class that does not exist yet is met with a sentence saying so and the offer to generate it, in place of a tree, an Errors section and a count; the generated-file message and diff name the file from the project root

@@ -42,6 +42,20 @@ describe(SuiteResult::class, function() {
         expect($result->status())->toBe(1);
     });
 
+    it("returns 1 when a step is undefined: that scenario was never checked", function() {
+        $scenario = new \PhpSpec\Result\ScenarioResult("No definitions", [new \PhpSpec\Result\StepResult("a step with no definition", "undefined")]);
+        $result = new SuiteResult([new \PhpSpec\Result\FeatureResult("Missing steps", [$scenario], "features/missing.feature")]);
+
+        expect($result->status())->toBe(1);
+    });
+
+    it("returns 0 when a step is pending: work deferred on purpose", function() {
+        $scenario = new \PhpSpec\Result\ScenarioResult("Work in progress", [new \PhpSpec\Result\StepResult("a pending step", "pending")]);
+        $result = new SuiteResult([new \PhpSpec\Result\FeatureResult("Pending", [$scenario], "features/pending.feature")]);
+
+        expect($result->status())->toBe(0);
+    });
+
     it("tracks duration", function() {
         $result = new SuiteResult([]);
         expect($result->getDuration())->toBe(0.0);
