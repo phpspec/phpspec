@@ -39,6 +39,22 @@ final class ExampleError extends \Exception
     }
 
     /**
+     * An error rebuilt from a report that carried its message and type and
+     * nothing else, as a parallel worker's does. It has no site: one made up
+     * from where it was rebuilt would read like a location and re-run like
+     * nonsense.
+     */
+    public static function fromReport(string $message, string $type): self
+    {
+        $error = new self($message, new \RuntimeException($message));
+        $error->file = '';
+        $error->line = 0;
+        $error->type = $type;
+
+        return $error;
+    }
+
+    /**
      * Returns source code lines surrounding the error location.
      *
      * @param int $before number of lines before the error line
@@ -47,6 +63,10 @@ final class ExampleError extends \Exception
      */
     public function getSurroundingCode(int $before = 3, int $after = 3): array
     {
+        if ($this->file === '') {
+            return [];
+        }
+
         $surroundingCode = new SurroundingCode($this->original->getFile(), $this->original->getLine(), $before, $after);
         return $surroundingCode->toArray();
     }

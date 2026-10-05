@@ -67,4 +67,14 @@ describe(ExampleError::class, function() {
         expect($error->missingClass())->toBeNull();
     });
 
+    it("carries no site when rebuilt from a report that had none", function() {
+        $error = ExampleError::fromReport("Something went wrong", "LogicException");
+
+        expect($error->getMessage())->toBe("Something went wrong");
+        expect($error->getType())->toBe("LogicException");
+        expect($error->getFile())->toBe('');
+        expect($error->getLine())->toBe(0);
+        expect($error->getSurroundingCode())->toBe([]);
+    });
+
 });

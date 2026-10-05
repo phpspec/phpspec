@@ -101,7 +101,7 @@ describe(WorkerProcess::class, function () {
             <testsuites>
               <testsuite name="Calculator" tests="1" failures="0" errors="1">
                 <testcase name="errors">
-                  <error message="Something went wrong"/>
+                  <error message="Something went wrong" type="LogicException"/>
                 </testcase>
               </testsuite>
             </testsuites>
@@ -115,6 +115,10 @@ describe(WorkerProcess::class, function () {
             $examples = $results[0]->getResults();
 
             expect($examples[0]->isError())->toBeTrue();
+            // The report knows the message and the type, and no site: none is invented.
+            expect($examples[0]->getError()->getType())->toBe('LogicException');
+            expect($examples[0]->getError()->getFile())->toBe('');
+            expect($examples[0]->getError()->getLine())->toBe(0);
         });
 
         it('parses skipped testcases', function () {

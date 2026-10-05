@@ -51,4 +51,13 @@ describe(StepError::class, function () {
         }
     });
 
+    it("carries no site when rebuilt from a report that had none", function() {
+        $error = StepError::fromReport("step went wrong", "LogicException");
+
+        expect($error->getType())->toBe("LogicException");
+        expect($error->getFile())->toBe('');
+        expect($error->getLine())->toBe(0);
+        expect($error->getSurroundingCode())->toBe([]);
+    });
+
 });
