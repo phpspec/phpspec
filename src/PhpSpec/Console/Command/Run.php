@@ -47,6 +47,7 @@ use PhpSpec\Report\Formatter\Junit;
 use PhpSpec\Report\Formatter\Pretty;
 use PhpSpec\Report\Formatter\Tap;
 use PhpSpec\Result\ExampleResult;
+use PhpSpec\Result\ScenarioResult;
 use PhpSpec\Result\StepResult;
 use PhpSpec\Result\SuiteResult;
 use PhpSpec\Results;
@@ -306,6 +307,15 @@ final class Run extends Command
             return $this->stopped($prose, $formatter, $e->getMessage());
         }
 
+        if ($this->selectedNothing($given, $results)) {
+            return $this->stopped(
+                $prose,
+                $formatter,
+                'No example at ' . implode(', ', $given),
+                'Point at a line inside an it() or a Scenario, or give the file alone to run all of it.',
+            );
+        }
+
         $this->writeReportFiles($input, $prose, $results);
         $this->printProfile($input, $prose, $results);
 
@@ -413,6 +423,33 @@ final class Run extends Command
         foreach ($outputs['extraConsole'] as $format) {
             $this->createFormatter($format, $output)->format($results);
         }
+    }
+
+    /**
+     * Whether every path given was a "file:LINE" selector and none of them
+     * reached an example or a scenario: an explicit line is a precise ask, and
+     * a run that answers it with nothing has not answered it.
+     *
+     * @param list<string> $given the paths as given on the command line
+     */
+    private function selectedNothing(array $given, SuiteResult $results): bool
+    {
+        if ($given === [] || array_filter($given, static fn(string $path): bool => preg_match('/:\d+$/', $path) !== 1) !== []) {
+            return false;
+        }
+
+        return !$this->ranAnything($results);
+    }
+
+    private function ranAnything(Results $results): bool
+    {
+        foreach ($results->getResults() as $result) {
+            if ($result instanceof ExampleResult || $result instanceof ScenarioResult || $this->ranAnything($result)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

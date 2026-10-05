@@ -288,6 +288,21 @@ Feature: Agent output format
     And the output should contain "Calc > adds" exactly 1 times
     And the output should not contain "multiplies"
 
+  Scenario: A line that selects no example is a fatal with a remedy
+    Given a spec file "spec/App/Calc.spec.php":
+      """
+      <?php
+      describe('App\Calc', function () {
+          it('adds', function () { expect(1)->toBe(1); });
+      });
+      """
+    When I run phpspec run with option "spec/App/Calc.spec.php:9999 --format=agent"
+    Then the output should be valid JSON
+    And the output should contain "fatal"
+    And the output should contain "No example at"
+    And the output should contain "remedy"
+    And the exit code should be 1
+
   Scenario: A rerun naming several lines of one file reports each example once
     Given a spec file "spec/App/Calc.spec.php":
       """
