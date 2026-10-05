@@ -34,10 +34,14 @@ if (!function_exists('_phpspec_exec')) {
     {
         $cmd = [$world->phpBin, '-d', 'xdebug.mode=' . $xdebugMode, $world->phpspecBin, ...preg_split('/\s+/', $args)];
 
+        // The error stream goes to a file rather than a second pipe: reading
+        // two pipes one after the other deadlocks once the child fills the one
+        // nobody is reading yet, and Windows pipes are small.
+        $errorFile = tempnam(sys_get_temp_dir(), 'phpspec_stderr_');
         $descriptors = [
             0 => ['pipe', 'r'],
             1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
+            2 => ['file', $errorFile, 'w'],
         ];
 
         $process = proc_open($cmd, $descriptors, $pipes, $world->projectDir);
@@ -48,11 +52,11 @@ if (!function_exists('_phpspec_exec')) {
         fclose($pipes[0]);
 
         $stdout = stream_get_contents($pipes[1]);
-        $stderr = stream_get_contents($pipes[2]);
         fclose($pipes[1]);
-        fclose($pipes[2]);
 
         $world->exitCode = proc_close($process);
+        $stderr = (string) file_get_contents($errorFile);
+        unlink($errorFile);
         $world->output = $stdout . $stderr;
         // Kept apart as well: a machine-readable format owns standard output
         // alone, and PHP's own error text belongs on the error stream.

@@ -455,25 +455,26 @@ final class Run extends Command
     /**
      * Runs the suite with standard output reserved for the document: whatever
      * user code prints outside an example's own capture (a describe body, a
-     * beforeAll hook) goes to standard error as it is printed, instead of
-     * landing between two events and breaking the stream.
+     * beforeAll hook) is held back and goes to standard error once the run is
+     * over, instead of landing between two events and breaking the stream.
      *
      * @param callable(): SuiteResult $run
      */
     private function withOnlyTheDocumentOnStdout(callable $run): SuiteResult
     {
         $level = ob_get_level();
-        ob_start(static function (string $printed): string {
-            fwrite(STDERR, $printed);
-
-            return '';
-        }, 1);
+        ob_start();
 
         try {
             return $run();
         } finally {
+            $leaked = '';
             while (ob_get_level() > $level) {
-                ob_end_clean();
+                $leaked = (string) ob_get_clean() . $leaked;
+            }
+
+            if ($leaked !== '') {
+                fwrite(STDERR, $leaked);
             }
         }
     }
