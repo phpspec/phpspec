@@ -193,13 +193,41 @@ final readonly class ArgumentMatcher
                 if (!$exp->matches($actual[$i])) {
                     return false;
                 }
-            } elseif ($actual[$i] !== $exp) {
+            } elseif (!self::same($actual[$i], $exp)) {
                 return false;
             }
         }
 
         // If actual has more args than expected (and no cetera), it's a mismatch
         return count($actual) === count($expected);
+    }
+
+    /**
+     * Whether an argument is the one that was written: scalars strictly, an
+     * object by value (an equal Money is the Money that was meant, whichever
+     * instance carries it), an array by the same rule for each element.
+     */
+    private static function same(mixed $actual, mixed $expected): bool
+    {
+        if (is_object($actual) && is_object($expected)) {
+            return $actual == $expected;
+        }
+
+        if (is_array($actual) && is_array($expected)) {
+            if (array_keys($actual) !== array_keys($expected)) {
+                return false;
+            }
+
+            foreach ($expected as $key => $value) {
+                if (!self::same($actual[$key], $value)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return $actual === $expected;
     }
 
     /**
@@ -210,7 +238,7 @@ final readonly class ArgumentMatcher
     private function arrayContainsSubset(array $actual): bool
     {
         foreach ($this->value as $key => $value) {
-            if (!array_key_exists($key, $actual) || $actual[$key] !== $value) {
+            if (!array_key_exists($key, $actual) || !self::same($actual[$key], $value)) {
                 return false;
             }
         }

@@ -123,6 +123,11 @@ it('calls exactly twice', function (Logger $logger) {
 
 ## Argument Matchers
 
+An argument written as a value matches by value: a scalar strictly, an object
+when it equals the one written (`new Money(900)` matches any `Money(900)`,
+whichever instance carries it), an array element by element on the same rule.
+For anything looser, use a matcher:
+
 Use argument matchers, in the expect call or in `toBeCalledWith()`, for
 flexible argument matching:
 

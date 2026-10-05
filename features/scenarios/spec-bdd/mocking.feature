@@ -99,6 +99,47 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
+  Scenario: An equal value object matches a stub and a verification
+    Given a class "src/App/Money.php":
+      """
+      <?php
+      namespace App;
+
+      class Money {
+          public function __construct(public readonly int $pence) {}
+      }
+      """
+    And an interface "src/App/Discount.php":
+      """
+      <?php
+      namespace App;
+
+      interface Discount {
+          public function applyTo(Money $amount): Money;
+      }
+      """
+    And an interface "src/App/Ledger.php":
+      """
+      <?php
+      namespace App;
+
+      interface Ledger {
+          public function record(Money $amount): void;
+      }
+      """
+    And a spec with example:
+      """
+      $discount = mock(App\Discount::class);
+      allow($discount->applyTo(new App\Money(900)))->toReturn(new App\Money(720));
+      expect($discount->applyTo(new App\Money(900))->pence)->toBe(720);
+
+      $ledger = mock(App\Ledger::class);
+      $ledger->record(new App\Money(5));
+      expect($ledger->record(new App\Money(5)))->toBeCalled();
+      """
+    When I run the spec
+    Then all examples should pass
+
   Scenario: Stubbing a return value
     Given an interface "src/App/UserRepository.php":
       """
