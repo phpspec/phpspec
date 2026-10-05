@@ -17,6 +17,19 @@ Feature: Error reporting
     Then the output should contain "expected"
     And the output should contain "actual"
 
+  Scenario: A failure tells a string from a number of the same digits
+    Given a spec file "spec/App/Typed.spec.php":
+      """
+      <?php
+      describe('Typed', function () {
+          it('compares', function () {
+              expect('42')->toBe(42);
+          });
+      });
+      """
+    When I run phpspec run
+    Then the output should contain "to be: 42"
+
   Scenario: Error shows file and line number
     Given a spec file "spec/App/Location.spec.php":
       """

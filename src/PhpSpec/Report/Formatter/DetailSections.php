@@ -16,6 +16,7 @@ namespace PhpSpec\Report\Formatter;
 
 use PhpSpec\CodeGeneration\SurroundingCode;
 use PhpSpec\ObjectName;
+use PhpSpec\Report\FirstDifference;
 use PhpSpec\Report\Formatter\Pretty\PrettyViews;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Result\ExampleResult;
@@ -41,6 +42,15 @@ final class DetailSections
 {
     /** How many elements of an array a pair shows before saying how many are left. */
     private const ARRAY_MAX = 10;
+
+    /** How long a string gets before the pair caps it. */
+    private const STRING_MAX = 60;
+
+    /** How deep an object's properties are shown. */
+    private const OBJECT_DEPTH = 3;
+
+    /** The matchers that want two values to be the same, where a first difference means something. */
+    private const EQUALITY_MATCHERS = ['toBe', 'toEqual', 'toBeLike'];
 
     /** @var array<string, list<callable(OutputInterface): void>> */
     private array $sections = [];
@@ -256,7 +266,21 @@ final class DetailSections
         // The message says it once, and the pair beneath names both sides.
         if ($matcher !== null && $target !== null && !$failure->isTargetImplied()) {
             $label = ($failure->isNegated() ? 'not ' : '') . self::phrase($matcher);
-            $this->pair($output, 'expected', self::value($subject), $label, self::value($target));
+
+            // Two long strings that are meant to be equal part at one place,
+            // and the pair shows that place rather than two heads and tails
+            // that read alike.
+            $offset = in_array($matcher, self::EQUALITY_MATCHERS, true) && is_string($subject) && is_string($target)
+                && max(strlen($subject), strlen($target)) > self::STRING_MAX
+                ? FirstDifference::between($target, $subject)['offset'] ?? null
+                : null;
+
+            if (is_int($offset)) {
+                $this->pair($output, 'expected', self::window($subject, $offset), $label, self::window($target, $offset));
+                $output->write('  first difference at offset ' . $offset . PHP_EOL);
+            } else {
+                $this->pair($output, 'expected', self::value($subject), $label, self::value($target));
+            }
         } else {
             $output->write(PHP_EOL . '  ' . $failure->getMessage() . PHP_EOL);
 
@@ -291,34 +315,74 @@ final class DetailSections
     {
         $width = max(strlen($firstLabel), strlen($secondLabel));
 
-        $output->write(PHP_EOL . '  ' . str_pad($firstLabel, $width, ' ', STR_PAD_LEFT) . ': "' . $firstValue . '"' . PHP_EOL);
-        $output->write('  ' . str_pad($secondLabel, $width, ' ', STR_PAD_LEFT) . ': "' . $secondValue . '"' . PHP_EOL);
+        $output->write(PHP_EOL . '  ' . str_pad($firstLabel, $width, ' ', STR_PAD_LEFT) . ': ' . $firstValue . PHP_EOL);
+        $output->write('  ' . str_pad($secondLabel, $width, ' ', STR_PAD_LEFT) . ': ' . $secondValue . PHP_EOL);
     }
 
     /**
-     * A value as the pair shows it: newlines escaped, and a long or multiline
-     * string capped to its first thirty and last thirty characters around a
-     * [...] marker, because the pair names the difference, not the whole blob.
+     * A value as the pair shows it, typed: a string in quotes, a number bare
+     * and a float at full precision, so "42" and 42, null and "null", 0.3 and
+     * 0.30000000000000004 read apart. A long string is capped to its first
+     * thirty and last thirty characters around a [...] marker, because the
+     * pair names the difference, not the whole blob.
      */
-    private static function value(mixed $value): string
+    private static function value(mixed $value, int $depth = 0): string
     {
         if (is_string($value)) {
-            $capped = strlen($value) > 60
+            $capped = strlen($value) > self::STRING_MAX
                 ? substr($value, 0, 30) . '[...]' . substr($value, -30)
                 : $value;
 
-            return str_replace(["\r\n", "\n", "\r"], '\n', $capped);
+            return '"' . self::escaped($capped) . '"';
         }
 
         return match (true) {
             is_bool($value) => $value ? 'true' : 'false',
             is_null($value) => 'null',
-            is_array($value) => self::listing($value),
-            // Named by what it is, not by which instance it was: two runs of the
-            // same failure read the same, and "Money#180" told nobody anything.
-            is_object($value) => ObjectName::of($value),
+            is_float($value) => is_finite($value) ? var_export($value, true) : (string) $value,
+            is_array($value) => self::listing($value, $depth),
+            is_object($value) => self::object($value, $depth),
             default => (string) $value,
         };
+    }
+
+    /**
+     * A string from around the place two strings part, so the character that
+     * differs is on the line instead of under a [...] marker.
+     */
+    private static function window(string $value, int $offset): string
+    {
+        $start = max(0, $offset - 20);
+        $cut = substr($value, $start, self::STRING_MAX);
+
+        return '"' . ($start > 0 ? '[...]' : '') . self::escaped($cut) . (strlen($value) > $start + self::STRING_MAX ? '[...]' : '') . '"';
+    }
+
+    private static function escaped(string $value): string
+    {
+        return str_replace(["\r\n", "\n", "\r"], '\n', $value);
+    }
+
+    /**
+     * An object named by what it is, with its properties when the name alone
+     * tells nothing: two points that differ read Point{x: 1, y: 2} against
+     * Point{x: 1, y: 3}, not Point against Point. An enum, a throwable or
+     * anything that describes itself is named as it describes itself.
+     */
+    private static function object(object $value, int $depth): string
+    {
+        $name = ObjectName::of($value);
+
+        if ($name !== $value::class || $depth >= self::OBJECT_DEPTH) {
+            return $name;
+        }
+
+        $properties = [];
+        foreach (array_slice((array) $value, 0, self::ARRAY_MAX, true) as $key => $item) {
+            $properties[] = preg_replace('/^\0.*\0/', '', (string) $key) . ': ' . self::value($item, $depth + 1);
+        }
+
+        return $properties === [] ? $name : $name . '{' . implode(', ', $properties) . '}';
     }
 
     /**
@@ -329,13 +393,13 @@ final class DetailSections
      *
      * @param array<array-key, mixed> $value
      */
-    private static function listing(array $value): string
+    private static function listing(array $value, int $depth = 0): string
     {
         $shown = array_slice($value, 0, self::ARRAY_MAX, true);
         $parts = [];
 
         foreach ($shown as $key => $item) {
-            $parts[] = is_int($key) ? self::value($item) : $key . ' => ' . self::value($item);
+            $parts[] = is_int($key) ? self::value($item, $depth + 1) : $key . ' => ' . self::value($item, $depth + 1);
         }
 
         if (count($value) > self::ARRAY_MAX) {

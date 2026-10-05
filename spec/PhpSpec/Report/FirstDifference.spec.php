@@ -1,6 +1,6 @@
 <?php
 
-use PhpSpec\Report\Formatter\Agent\FirstDifference;
+use PhpSpec\Report\FirstDifference;
 
 describe(FirstDifference::class, function () {
 

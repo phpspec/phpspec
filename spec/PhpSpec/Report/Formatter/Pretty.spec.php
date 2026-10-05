@@ -14,6 +14,11 @@ use PhpSpec\Specification\ExampleError;
 use PhpSpec\StoryBDD\StepError;
 use Symfony\Component\Console\Output\BufferedOutput;
 
+final class PrettySpecPoint
+{
+    public function __construct(public int $x, public int $y) {}
+}
+
 describe(Pretty::class, function() {
 
     // A response body or a watched log can run to megabytes, and a terminal
@@ -140,6 +145,51 @@ describe(Pretty::class, function() {
         expect($text)->toContain('e me to refactor that? [Y/n] "');
         expect($text)->not()->toContain("Analysing project...\n");          // raw newlines never reach the pair
         expect($text)->toContain('to contain: "Would you like me to run it now?"');
+    });
+
+    // A failing pair, rendered: the two sides as the reader sees them.
+    $pairFor = function (mixed $subject, mixed $target, string $matcher = 'toBe'): string {
+        $output = new BufferedOutput();
+        $example = new ExampleResult("compares", [MatchResult::failed($subject, $target, "irrelevant", __FILE__, __LINE__, null, $matcher, false)]);
+        (new Pretty($output))->format(new SuiteResult([new SpecificationResult("MySpec", [$example])]));
+
+        return $output->fetch();
+    };
+
+    it("tells a string from a number of the same digits", function() use ($pairFor) {
+        $text = $pairFor('42', 42);
+
+        expect($text)->toContain('expected: "42"');
+        expect($text)->toContain('to be: 42');
+    });
+
+    it("tells null from the string null", function() use ($pairFor) {
+        $text = $pairFor(null, 'null');
+
+        expect($text)->toContain('expected: null');
+        expect($text)->toContain('to be: "null"');
+    });
+
+    it("keeps a float's full precision, so 0.1 + 0.2 reads apart from 0.3", function() use ($pairFor) {
+        $text = $pairFor(0.1 + 0.2, 0.3);
+
+        expect($text)->toContain('expected: 0.30000000000000004');
+        expect($text)->toContain('to be: 0.3');
+    });
+
+    it("shows an object's properties when its name alone tells nothing", function() use ($pairFor) {
+        $text = $pairFor(new PrettySpecPoint(1, 2), new PrettySpecPoint(1, 3), 'toBeLike');
+
+        expect($text)->toContain('expected: PrettySpecPoint{x: 1, y: 2}');
+        expect($text)->toContain('to be like: PrettySpecPoint{x: 1, y: 3}');
+    });
+
+    it("points at the first difference of two long strings instead of eliding it", function() use ($pairFor) {
+        $text = $pairFor(str_repeat('a', 60) . 'X' . str_repeat('b', 60), str_repeat('a', 60) . 'Y' . str_repeat('b', 60));
+
+        expect($text)->toContain('first difference at offset 60');
+        expect($text)->toContain('X');
+        expect($text)->toContain('Y');
     });
 
     it("groups the detail into Failures, Errors, Warnings, Deprecations, and Skipped sections, in that order", function() {
