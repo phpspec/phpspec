@@ -277,7 +277,8 @@ partway (a parse error, a class that fails to compile) still answers. It emits a
 collect, and counts 1 in `actionable`. `remedy` is present when the way past is
 known: a run that wanted coverage and found no Xdebug gets the same command
 under `XDEBUG_MODE=coverage`, a missing bootstrap or path gets what to point
-where:
+where, and a `file:LINE` selector that reaches no example is told to point
+inside an `it()` or a `Scenario`:
 
 ```json
 {"v":2,"event":"run_started","suite":"default","seed":null,"php":"8.3.16","coverage":false,"guard":"off"}

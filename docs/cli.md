@@ -344,7 +344,10 @@ bin/phpspec run features/checkout.feature:12      # The scenario at line 12
 Any line inside an example (or scenario) body selects it; a line inside a
 `describe` but outside its examples runs that whole context. For Gherkin,
 targeting a `Scenario Outline:` line runs every row of its examples table,
-while targeting a single examples row runs just that expansion.
+while targeting a single examples row runs just that expansion. A line that
+reaches no example at all stops the run with `No example at <path:LINE>` and
+exit code 1: an explicit line is a precise ask, and running nothing is not an
+answer to it.
 
 Several selectors run each addressed block once, whether they name lines of
 one file or of many, so the `rerun` command an agent summary carries can be
