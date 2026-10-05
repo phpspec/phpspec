@@ -67,15 +67,16 @@ final class Expectation extends BaseExpectation
     }
 
     /**
-     * Configures the mock method to throw an exception when called.
+     * Configures the mock method to throw an exception when called: the very
+     * instance given, or one built from a class name and a message.
      *
-     * @param string $exceptionClass the exception class to throw
-     * @param string|null $message the exception message
+     * @param string|\Throwable $exception the exception to throw: a class name, or the very instance
+     * @param string|null $message the exception message, when a class is given
      * @return $this
      */
-    public function toThrow(string $exceptionClass = '', ?string $message = null): static
+    public function toThrow(string|\Throwable $exception = '', ?string $message = null): static
     {
-        $this->mockSubject->toThrow($exceptionClass, $message ?? '');
+        $this->mockSubject->toThrow($exception, $message ?? '');
         return $this;
     }
 

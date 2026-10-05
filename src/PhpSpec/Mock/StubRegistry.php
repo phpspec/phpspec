@@ -29,7 +29,7 @@ final class StubRegistry
      * @param array<int, mixed> $actualArgs the actual arguments passed to the method
      * @param array<string, list<array{0: array<int, mixed>|null, 1: mixed}>> $stubbedReturns keyed by method name, each value is array of [$argPattern, $value]
      * @param array<string, list<array{0: array<int, mixed>|null, 1: callable}>> $stubbedReturnCallbacks keyed by method name, each value is array of [$argPattern, callable]
-     * @param array<string, list<array{0: array<int, mixed>|null, 1: array{class: string, message: string}}>> $stubbedThrows keyed by method name, each value is array of [$argPattern, ['class'=>..., 'message'=>...]]
+     * @param array<string, list<array{0: array<int, mixed>|null, 1: array{throwable?: \Throwable, class?: string, message?: string}}>> $stubbedThrows keyed by method name, each value is array of [$argPattern, ['class'=>..., 'message'=>...]]
      * @return array{type: string, data: mixed}|null ['type' => 'value'|'callback'|'throw', 'data' => mixed] or null if no match
      */
     public static function findMatch(

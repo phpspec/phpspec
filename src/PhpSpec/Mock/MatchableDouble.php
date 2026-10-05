@@ -40,5 +40,5 @@ interface MatchableDouble
     /**
      * Configures the mock method to throw an exception.
      */
-    public function toThrow(string $exceptionClass, string $message = ''): void;
+    public function toThrow(string|\Throwable $exception, string $message = ''): void;
 }

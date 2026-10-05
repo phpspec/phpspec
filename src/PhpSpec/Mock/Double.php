@@ -163,9 +163,10 @@ class $mockShortName $extends $prefixedClass $implementsGenerated {
         array_unshift(\$this->______phpspec_stubbedReturnCallbacks[\$method], [\$args, \$callback]);
     }
 
-    public function ______PhpSpecStubThrow(string \$method, string \$exceptionClass, string \$message = '', ?array \$args = null): void {
+    public function ______PhpSpecStubThrow(string \$method, string|\Throwable \$exception, string \$message = '', ?array \$args = null): void {
         if (!isset(\$this->______phpspec_stubbedThrows[\$method])) { \$this->______phpspec_stubbedThrows[\$method] = []; }
-        array_unshift(\$this->______phpspec_stubbedThrows[\$method], [\$args, ['class' => \$exceptionClass, 'message' => \$message]]);
+        \$stub = \$exception instanceof \Throwable ? ['throwable' => \$exception] : ['class' => \$exception, 'message' => \$message];
+        array_unshift(\$this->______phpspec_stubbedThrows[\$method], [\$args, \$stub]);
     }
 }
 PHP;
@@ -714,12 +715,12 @@ PHP;
             $throwCheck = '';
             if ($simpleReturnName === 'void') {
                 $stubCheck = "\$__match = \\PhpSpec\\Mock\\StubRegistry::findMatch('$methodName', func_get_args(), \$this->______phpspec_stubbedReturns, \$this->______phpspec_stubbedReturnCallbacks, \$this->______phpspec_stubbedThrows);"
-                    . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw new \$__match['data']['class'](\$__match['data']['message']); }"
+                    . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
                     . " if (\$__match['type'] === 'callback') { try { (\$__match['data'])(...func_get_args()); } catch (\\ArgumentCountError) {} }"
                     . ' \\PhpSpec\\Mock\\Expectation::$lastDouble = null; \\PhpSpec\\Mock\\Expectation::$lastMockReturn = null; return; }';
             } elseif ($simpleReturnName !== 'never') {
                 $stubCheck = "\$__match = \\PhpSpec\\Mock\\StubRegistry::findMatch('$methodName', func_get_args(), \$this->______phpspec_stubbedReturns, \$this->______phpspec_stubbedReturnCallbacks, \$this->______phpspec_stubbedThrows);"
-                    . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw new \$__match['data']['class'](\$__match['data']['message']); }"
+                    . " if (\$__match !== null) { if (\$__match['type'] === 'throw') { throw \$__match['data']['throwable'] ?? new \$__match['data']['class'](\$__match['data']['message']); }"
                     . " if (\$__match['type'] === 'callback') { try { \$__ret = (\$__match['data'])(...func_get_args()); \\PhpSpec\\Mock\\Expectation::\$lastDouble = null; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = null; return \$__ret; } catch (\\ArgumentCountError) {} }"
                     . " if (\$__match['type'] === 'value') { \\PhpSpec\\Mock\\Expectation::\$lastDouble = null; \\PhpSpec\\Mock\\Expectation::\$lastMockReturn = null; return \$__match['data']; } }";
             }

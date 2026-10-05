@@ -118,6 +118,25 @@ Feature: Mocking
     When I run the spec
     Then all examples should pass
 
+  Scenario: Stubbing a method to throw the exception it is given
+    Given an interface "src/App/UserRepository.php":
+      """
+      <?php
+      namespace App;
+
+      interface UserRepository {
+          public function find(int $id): ?string;
+      }
+      """
+    And a spec with example:
+      """
+      $repo = mock(App\UserRepository::class);
+      allow($repo->find(999))->toThrow(new \RuntimeException('Not found'));
+      expect(fn () => $repo->find(999))->toThrow(\RuntimeException::class, 'Not found');
+      """
+    When I run the spec
+    Then all examples should pass
+
   Scenario: Stubbing with a callback for dynamic returns
     Given an interface "src/App/UserRepository.php":
       """

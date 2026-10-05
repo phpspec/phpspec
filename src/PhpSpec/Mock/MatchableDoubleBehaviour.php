@@ -54,9 +54,9 @@ trait MatchableDoubleBehaviour
         $this->______phpspec_mockedObject->______PhpSpecGetStubbedCalls()->pop();
     }
 
-    public function toThrow(string $exceptionClass, string $message = ''): void
+    public function toThrow(string|\Throwable $exception, string $message = ''): void
     {
-        $this->______phpspec_mockedObject->______PhpSpecStubThrow($this->______phpspec_methodName, $exceptionClass, $message);
+        $this->______phpspec_mockedObject->______PhpSpecStubThrow($this->______phpspec_methodName, $exception, $message);
         $this->______phpspec_mockedObject->______PhpSpecGetStubbedCalls()->pop();
     }
 }

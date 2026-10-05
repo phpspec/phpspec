@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+ - A stubbed method can be told to throw an exception instance, `allow($repo->find(999))->toThrow(new RuntimeException('Not found'))`, as the mocking docs showed; a class name and a message still build one at the call
  - The browser behind visit() is an extension point: put your own implementation of the Browser contract behind the DSL with `extensions: {browser: ...}`
  - A request `callback` option is told each exchange (method, url, status, body and headers); the default one attaches the request and response to the report
  - Helper classes under features/support load before step definitions, the Cucumber way

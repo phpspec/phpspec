@@ -79,7 +79,7 @@ describe(Api::class, function () {
         expect($display)->toContain('Timing');
         expect($display)->toContain('describe(string $context, Closure $examples): void');
         expect($display)->toContain('Registers a new example (test case) in the current context scope.');
-        expect($display)->toContain('toThrow(string $exceptionClass = \'\', ?string $message = null): static');
+        expect($display)->toContain('toThrow(Throwable|string $exception = \'\', ?string $message = null): static');
         expect($display)->toContain('mock(string $class): object');
         expect($display)->toContain('given(string $pattern, Closure $fn): void');
     });

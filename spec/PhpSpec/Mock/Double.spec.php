@@ -260,6 +260,22 @@ describe(Double::class, function() {
         expect(fn() => $double->greet())->toThrow(\InvalidArgumentException::class, 'bad');
     });
 
+    it("throws the very exception instance a stub was given", function() {
+        $double = Double::getInstance(DoubleSpecClass::class);
+        $notFound = new \RuntimeException('Not found');
+        allow($double->greet())->toThrow($notFound);
+
+        try {
+            $double->greet();
+        } catch (\RuntimeException $thrown) {
+            expect($thrown)->toBe($notFound);
+
+            return;
+        }
+
+        expect(false)->toBeTrue();
+    });
+
     it("counts method calls", function() {
         $double = Double::getInstance(DoubleSpecClass::class);
         $double->greet();
