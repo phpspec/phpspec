@@ -652,6 +652,40 @@ Feature: Agent output format
     When I run phpspec run with option "--accept-offers"
     Then the file "src/App/Sundial.php" should contain "public function now("
 
+  Scenario: A mock failure says what call was wanted and what the double received
+    Given a class "src/App/Ledger.php":
+      """
+      <?php
+      namespace App;
+
+      interface Ledger {
+          public function record(string $line): void;
+      }
+      """
+    And a spec file "spec/App/Till.spec.php":
+      """
+      <?php
+      describe('App\Till', function () {
+          it('records a sale', function () {
+              $ledger = mock(App\Ledger::class);
+              $ledger->record('refund');
+              expect($ledger->record('sale'))->toBeCalled();
+          });
+
+          it('records the sale it was asked to', function () {
+              $ledger = mock(App\Ledger::class);
+              $ledger->record('refund');
+              expect($ledger->record('sale'))->toBeCalledWith('sale');
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "toBeCalled" exactly 2 times
+    And the output should contain "toBeCalledWith"
+    And the output should contain "refund"
+    And the output should not contain "LastCallDouble"
+
   Scenario: The accept receipt names the file a generated class was written to
     Given a spec file "spec/App/Basket.spec.php":
       """

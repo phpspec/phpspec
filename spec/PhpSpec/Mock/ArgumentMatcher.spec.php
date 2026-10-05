@@ -166,4 +166,17 @@ describe(ArgumentMatcher::class, function () {
         });
     });
 
+    describe('describe()', function () {
+        it('describes itself the way it is written in a spec', function () {
+            expect(ArgumentMatcher::any()->describe())->toBe('any()');
+            expect(ArgumentMatcher::type('string')->describe())->toBe('type(string)');
+            expect(ArgumentMatcher::instanceOf('App\\Task')->describe())->toBe('anInstanceOf(App\\Task)');
+            expect(ArgumentMatcher::startWith('pre')->describe())->toBe('startWith("pre")');
+            expect(ArgumentMatcher::arrayIncluding(['a' => 1])->describe())->toBe('arrayIncluding({"a":1})');
+            expect(ArgumentMatcher::callback(fn() => true)->describe())->toBe('callback(...)');
+            expect(ArgumentMatcher::noArgs()->describe())->toBe('noArgs()');
+            expect(ArgumentMatcher::cetera()->describe())->toBe('cetera()');
+        });
+    });
+
 });

@@ -126,6 +126,16 @@ callable you handed it:
 
 `toThrow()` now takes no argument at all, meaning "throw something".
 
+A mock expectation (`toBeCalled`, `toBeCalledWith`, `toBeCalledTimes`) compares
+the call the spec wanted with the calls the double received, arguments included:
+
+```json
+"expectation": {"matcher": "toBeCalled", "expected": {"method": "App\\Ledger::record", "arguments": ["sale"], "times": "at least 1"}, "actual": {"method": "App\\Ledger::record", "calls": [{"arguments": ["refund"]}]}, "negated": false}
+```
+
+`arguments` is absent when the expectation was written bare, and an argument
+matcher reads as it was written: `any()`, `type(string)`, `anInstanceOf(App\Task)`.
+
 A **story step** that failed an expectation reports the same block, on the step
 inside `steps` (with `at`, the `file:line` of the expectation in your step file)
 and hoisted onto the entry next to `message`, so acting on the entry never means

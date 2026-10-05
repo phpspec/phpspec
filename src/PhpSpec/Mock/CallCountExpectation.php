@@ -40,7 +40,6 @@ final class CallCountExpectation
      * @param int $line the line number in the spec file
      * @param bool $negated whether the expectation is negated (not()->toBeCalled())
      * @param array<int, mixed>|null $argPattern argument pattern to filter counted calls, or null for all calls
-     * @param MatchableDouble $mockSubject the mock subject being verified
      */
     public function __construct(
         private readonly string $methodName,
@@ -50,7 +49,6 @@ final class CallCountExpectation
         private readonly int $line,
         private readonly bool $negated,
         private readonly ?array $argPattern,
-        private readonly MatchableDouble $mockSubject,
     ) {
         DispatcherRegistry::dispatcher()->dispatch(new ExpectationStarted(), ExpectationStarted::NAME);
         DispatcherRegistry::dispatcher()->dispatch(new MatchCreated(function () {
@@ -152,13 +150,16 @@ final class CallCountExpectation
 
         $not = $this->negated ? ' not' : '';
         $message = "Expected $this->class::{$this->methodName}()$not to be called $label time(s), but was called $actual time(s)";
+        $comparison = new CallComparison($this->class, $this->methodName, $this->argPattern, $label, $this->calls);
 
         return MatchResult::failed(
-            $this->mockSubject,
-            $this->count,
+            $comparison->received(),
+            $comparison->wanted(),
             $message,
             $this->file,
             $this->line,
+            matcher: 'toBeCalled',
+            negated: $this->negated,
         );
     }
 }

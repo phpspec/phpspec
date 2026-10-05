@@ -1,7 +1,6 @@
 <?php
 
 use PhpSpec\Mock\CallCountExpectation;
-use PhpSpec\Mock\LastCallDouble;
 use PhpSpec\Mock\MethodCallsStack;
 use PhpSpec\Mock\MockedMethod;
 use PhpSpec\Result\MatchResult;
@@ -13,8 +12,7 @@ describe(CallCountExpectation::class, function () {
         $subject = new stdClass();
         $calls->push(new MockedMethod($subject, 'foo', []));
 
-        $matchable = new LastCallDouble($subject, 'foo');
-        $exp = new CallCountExpectation('foo', $calls, 'stdClass', __FILE__, __LINE__, false, null, $matchable);
+        $exp = new CallCountExpectation('foo', $calls, 'stdClass', __FILE__, __LINE__, false, null);
         $exp->once();
     });
 
@@ -24,8 +22,7 @@ describe(CallCountExpectation::class, function () {
         $calls->push(new MockedMethod($subject, 'bar', []));
         $calls->push(new MockedMethod($subject, 'bar', []));
 
-        $matchable = new LastCallDouble($subject, 'bar');
-        $exp = new CallCountExpectation('bar', $calls, 'stdClass', __FILE__, __LINE__, false, null, $matchable);
+        $exp = new CallCountExpectation('bar', $calls, 'stdClass', __FILE__, __LINE__, false, null);
         $exp->twice();
     });
 
@@ -33,8 +30,7 @@ describe(CallCountExpectation::class, function () {
         $calls = new MethodCallsStack();
         $subject = new stdClass();
 
-        $matchable = new LastCallDouble($subject, 'baz');
-        $exp = new CallCountExpectation('baz', $calls, 'stdClass', __FILE__, __LINE__, false, null, $matchable);
+        $exp = new CallCountExpectation('baz', $calls, 'stdClass', __FILE__, __LINE__, false, null);
         $exp->never();
     });
 
@@ -43,8 +39,7 @@ describe(CallCountExpectation::class, function () {
         $subject = new stdClass();
         $calls->push(new MockedMethod($subject, 'qux', []));
 
-        $matchable = new LastCallDouble($subject, 'qux');
-        $exp = new CallCountExpectation('qux', $calls, 'stdClass', __FILE__, __LINE__, false, null, $matchable);
+        $exp = new CallCountExpectation('qux', $calls, 'stdClass', __FILE__, __LINE__, false, null);
         $exp->atMost(2)->times();
     });
 
@@ -54,8 +49,7 @@ describe(CallCountExpectation::class, function () {
         $calls->push(new MockedMethod($subject, 'quux', []));
         $calls->push(new MockedMethod($subject, 'quux', []));
 
-        $matchable = new LastCallDouble($subject, 'quux');
-        $exp = new CallCountExpectation('quux', $calls, 'stdClass', __FILE__, __LINE__, false, null, $matchable);
+        $exp = new CallCountExpectation('quux', $calls, 'stdClass', __FILE__, __LINE__, false, null);
         $exp->atLeast(1)->times();
     });
 
@@ -66,8 +60,7 @@ describe(CallCountExpectation::class, function () {
         $calls->push(new MockedMethod($subject, 'w', []));
         $calls->push(new MockedMethod($subject, 'w', []));
 
-        $matchable = new LastCallDouble($subject, 'w');
-        $exp = new CallCountExpectation('w', $calls, 'stdClass', __FILE__, __LINE__, false, null, $matchable);
+        $exp = new CallCountExpectation('w', $calls, 'stdClass', __FILE__, __LINE__, false, null);
         $exp->exactly(3)->times();
     });
 
@@ -77,8 +70,7 @@ describe(CallCountExpectation::class, function () {
         $calls->push(new MockedMethod($subject, 'neg', []));
         $calls->push(new MockedMethod($subject, 'neg', []));
 
-        $matchable = new LastCallDouble($subject, 'neg');
-        $exp = new CallCountExpectation('neg', $calls, 'stdClass', __FILE__, __LINE__, true, null, $matchable);
+        $exp = new CallCountExpectation('neg', $calls, 'stdClass', __FILE__, __LINE__, true, null);
         $exp->once();
     });
 
@@ -87,8 +79,7 @@ describe(CallCountExpectation::class, function () {
         $subject = new stdClass();
         $calls->push(new MockedMethod($subject, 'neg2', []));
 
-        $matchable = new LastCallDouble($subject, 'neg2');
-        $exp = new CallCountExpectation('neg2', $calls, 'stdClass', __FILE__, __LINE__, true, null, $matchable);
+        $exp = new CallCountExpectation('neg2', $calls, 'stdClass', __FILE__, __LINE__, true, null);
         $exp->never();
     });
 
@@ -97,8 +88,7 @@ describe(CallCountExpectation::class, function () {
         $subject = new stdClass();
         $calls->push(new MockedMethod($subject, 'x', []));
 
-        $matchable = new LastCallDouble($subject, 'x');
-        $exp = new CallCountExpectation('x', $calls, 'stdClass', __FILE__, __LINE__, false, null, $matchable);
+        $exp = new CallCountExpectation('x', $calls, 'stdClass', __FILE__, __LINE__, false, null);
         $exp->setConstraint('exactly', 1);
     });
 
@@ -108,8 +98,7 @@ describe(CallCountExpectation::class, function () {
         $calls->push(new MockedMethod($subject, 'find', ['alice']));
         $calls->push(new MockedMethod($subject, 'find', ['bob']));
 
-        $matchable = new LastCallDouble($subject, 'find');
-        $exp = new CallCountExpectation('find', $calls, 'stdClass', __FILE__, __LINE__, false, ['alice'], $matchable);
+        $exp = new CallCountExpectation('find', $calls, 'stdClass', __FILE__, __LINE__, false, ['alice']);
         $exp->once();
     });
 
@@ -119,9 +108,8 @@ describe(CallCountExpectation::class, function () {
         $calls->push(new MockedMethod($subject, 'foo', []));
         $calls->push(new MockedMethod($subject, 'foo', []));
 
-        $matchable = new LastCallDouble($subject, 'foo');
         // Default is atLeast(1) which passes (2>=1), so deferred eval will succeed
-        $exp = new CallCountExpectation('foo', $calls, 'stdClass', __FILE__, __LINE__, false, null, $matchable);
+        $exp = new CallCountExpectation('foo', $calls, 'stdClass', __FILE__, __LINE__, false, null);
 
         // Set failing constraint and test via Reflection
         $exp->setConstraint('exactly', 1);
@@ -137,9 +125,8 @@ describe(CallCountExpectation::class, function () {
         $calls = new MethodCallsStack();
         $subject = new stdClass();
 
-        $matchable = new LastCallDouble($subject, 'bar');
         // Default atLeast(1), 0 calls → deferred FAILS. Override immediately.
-        $exp = new CallCountExpectation('bar', $calls, 'stdClass', __FILE__, __LINE__, false, null, $matchable);
+        $exp = new CallCountExpectation('bar', $calls, 'stdClass', __FILE__, __LINE__, false, null);
         // Override to passing default
         $exp->setConstraint('atLeast', 0);
 
@@ -160,8 +147,7 @@ describe(CallCountExpectation::class, function () {
         $calls->push(new MockedMethod($subject, 'baz', []));
         $calls->push(new MockedMethod($subject, 'baz', []));
 
-        $matchable = new LastCallDouble($subject, 'baz');
-        $exp = new CallCountExpectation('baz', $calls, 'stdClass', __FILE__, __LINE__, false, null, $matchable);
+        $exp = new CallCountExpectation('baz', $calls, 'stdClass', __FILE__, __LINE__, false, null);
 
         // Test failure path via Reflection
         $exp->setConstraint('atMost', 1);
@@ -177,8 +163,7 @@ describe(CallCountExpectation::class, function () {
         $calls = new MethodCallsStack();
         $subject = new stdClass();
 
-        $matchable = new LastCallDouble($subject, 'x');
-        $exp = new CallCountExpectation('x', $calls, 'stdClass', __FILE__, __LINE__, false, null, $matchable);
+        $exp = new CallCountExpectation('x', $calls, 'stdClass', __FILE__, __LINE__, false, null);
         $exp->setConstraint('custom', 5);
         $ref = new ReflectionMethod($exp, 'evaluate');
         $result = $ref->invoke($exp);
@@ -187,6 +172,22 @@ describe(CallCountExpectation::class, function () {
 
         // Reset to passing
         $exp->setConstraint('atLeast', 0);
+    });
+
+    it('reports the call it wanted and the calls the double received, as data', function () {
+        $calls = new MethodCallsStack();
+        $subject = new stdClass();
+        $calls->push(new MockedMethod($subject, 'log', ['paid later']));
+
+        $exp = new CallCountExpectation('log', $calls, '\\App\\Logger', __FILE__, __LINE__, false, ['paid']);
+        $exp->setConstraint('exactly', 1);
+        $result = (new ReflectionMethod($exp, 'evaluate'))->invoke($exp);
+        // Back to a constraint the deferred check meets.
+        $exp->setConstraint('atLeast', 0);
+
+        expect($result->getMatcher())->toBe('toBeCalled');
+        expect($result->getActual())->toBe(['method' => 'App\\Logger::log', 'arguments' => ['paid'], 'times' => 'exactly 1']);
+        expect($result->getExpected())->toBe(['method' => 'App\\Logger::log', 'calls' => [['arguments' => ['paid later']]]]);
     });
 
 });

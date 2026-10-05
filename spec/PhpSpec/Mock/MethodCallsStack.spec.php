@@ -104,4 +104,15 @@ describe(MethodCallsStack::class, function() {
         expect($stack->countCallsToWithArgs("store", [\PhpSpec\Mock\ArgumentMatcher::type('string'), \PhpSpec\Mock\ArgumentMatcher::any()]))->toBe(2);
     });
 
+    it("lists the calls received to a method with their arguments, leaving out ones taken back", function() {
+        $subject = new \stdClass();
+        $this->stack->push(new MockedMethod($subject, "log", ["a"]));
+        $verification = new MockedMethod($subject, "log", ["b"]);
+        $this->stack->push($verification);
+        $verification->unCall();
+        $this->stack->push(new MockedMethod($subject, "other", []));
+
+        expect($this->stack->callsTo("log"))->toBe([["arguments" => ["a"]]]);
+    });
+
 });
