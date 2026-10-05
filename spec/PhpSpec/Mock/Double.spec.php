@@ -14,6 +14,10 @@ class DoubleSpecClass {
     public function nullableUnionReturn(): string|null { return null; }
 }
 
+class DoubleSpecMagic {
+    public function __call(string $name, array $arguments): string { return 'magic'; }
+}
+
 class DoubleSpecClassWithDeps {
     public function __construct(private DoubleSpecContract $dep, private string $name) {}
     public function getDep(): DoubleSpecContract { return $this->dep; }
@@ -335,10 +339,22 @@ describe(Double::class, function() {
         expect($double->greet())->toBe('dynamic');
     });
 
-    it("registers doubles in the static registry", function() {
+    it("names the interface it doubles when a method it does not define is called", function() {
         $double = Double::getInstance(DoubleSpecContract::class);
-        $className = get_class($double);
-        expect(isset(Double::$doubleRegistry[$className]))->toBe(true);
+
+        expect(fn() => $double->undefinedOne())->toThrow(\Error::class, 'Call to undefined method DoubleSpecContract::undefinedOne()');
+    });
+
+    it("names the class it doubles when a method it does not define is called", function() {
+        $double = Double::getInstance(DoubleSpecClass::class);
+
+        expect(fn() => $double->undefinedOne())->toThrow(\Error::class, 'Call to undefined method DoubleSpecClass::undefinedOne()');
+    });
+
+    it("leaves a __call the doubled class defines in charge of unknown methods", function() {
+        $double = Double::getInstance(DoubleSpecMagic::class);
+
+        expect(fn() => $double->anything())->not()->toThrow();
     });
 
     it("handles private constructor", function() {

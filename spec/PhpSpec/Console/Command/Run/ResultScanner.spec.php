@@ -12,7 +12,6 @@ use PhpSpec\Result\MatchResult;
 use PhpSpec\Result\ContextResult;
 use PhpSpec\Specification\ExampleError;
 use PhpSpec\StoryBDD\StepError;
-use PhpSpec\Mock\Double;
 
 interface ResultScannerTestInterface {
     public function doWork(): void;
@@ -93,10 +92,10 @@ describe(ResultScanner::class, function () {
             expect($result[0]['methodName'])->toBe('add');
         });
 
-        it('skips mock double errors', function () {
+        it('leaves a method undefined on an interface to the interface collector', function () {
             $error = new ExampleError(
-                "Call to undefined method MyClass_Double_abc123::someMethod()",
-                new \RuntimeException("Call to undefined method MyClass_Double_abc123::someMethod()")
+                "Call to undefined method ResultScannerTestInterface::someMethod()",
+                new \RuntimeException("Call to undefined method ResultScannerTestInterface::someMethod()")
             );
 
             $example = new ExampleResult('test', [], isError: true);
@@ -127,14 +126,10 @@ describe(ResultScanner::class, function () {
 
     context('collectUndefinedMockInterfaceMethods', function () {
 
-        it('collects undefined method on mock interface', function () {
-            // Create a real mock to get a registered double
-            $mock = mock(ResultScannerTestInterface::class);
-            $mockClassName = get_class($mock);
-
+        it('collects an undefined method on an interface, as a double of it reports the call', function () {
             $error = new ExampleError(
-                "Call to undefined method {$mockClassName}::newMethod()",
-                new \RuntimeException("Call to undefined method {$mockClassName}::newMethod()")
+                "Call to undefined method ResultScannerTestInterface::newMethod()",
+                new \RuntimeException("Call to undefined method ResultScannerTestInterface::newMethod()")
             );
 
             $example = new ExampleResult('test', [], isError: true);
@@ -144,10 +139,11 @@ describe(ResultScanner::class, function () {
 
             $result = $this->scanner->collectUndefinedMockInterfaceMethods($suite);
             expect($result)->toHaveCount(1);
+            expect($result[0]['className'])->toBe('ResultScannerTestInterface');
             expect($result[0]['methodName'])->toBe('newMethod');
         });
 
-        it('skips non-double class method errors', function () {
+        it('leaves a method undefined on a class to the class collector', function () {
             $error = new ExampleError(
                 "Call to undefined method SomeRegularClass::newMethod()",
                 new \RuntimeException("Call to undefined method SomeRegularClass::newMethod()")
@@ -172,14 +168,10 @@ describe(ResultScanner::class, function () {
             expect($result)->toHaveCount(0);
         });
 
-        it('handles ReflectionException for non-existent registered class', function () {
-            // Register a fake entry in the double registry
-            $fakeMockName = 'Fake_Double_' . uniqid();
-            Double::$doubleRegistry[$fakeMockName] = 'NonExistentClass' . uniqid();
-
+        it('skips a type that does not exist', function () {
             $error = new ExampleError(
-                "Call to undefined method {$fakeMockName}::someMethod()",
-                new \RuntimeException("Call to undefined method {$fakeMockName}::someMethod()")
+                "Call to undefined method NonExistentType::someMethod()",
+                new \RuntimeException("Call to undefined method NonExistentType::someMethod()")
             );
 
             $example = new ExampleResult('test', [], isError: true);

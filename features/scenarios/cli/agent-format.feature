@@ -626,6 +626,32 @@ Feature: Agent output format
     Then the receipt should report the offer as not applied because "already exists"
     And the exit code should be 1
 
+  Scenario: An undefined method on a double is offered on the type it doubles
+    Given a class "src/App/Sundial.php":
+      """
+      <?php
+      namespace App;
+
+      interface Sundial {}
+      """
+    And a spec file "spec/App/Alarm.spec.php":
+      """
+      <?php
+      describe('App\Alarm', function () {
+          it('rings on time', function () {
+              $sundial = mock(App\Sundial::class);
+              allow($sundial->now())->toReturn('noon');
+              expect($sundial->now())->toBe('noon');
+          });
+      });
+      """
+    When I run phpspec run with option "--format=agent"
+    Then the output should be valid JSON
+    And the output should contain "Sundial::now"
+    And the output should not contain "PhpspecDouble"
+    When I run phpspec run with option "--accept-offers"
+    Then the file "src/App/Sundial.php" should contain "public function now("
+
   Scenario: The accept receipt names the file a generated class was written to
     Given a spec file "spec/App/Basket.spec.php":
       """

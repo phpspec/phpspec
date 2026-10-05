@@ -136,11 +136,12 @@ interface UserRepository
 
 ### Method Addition to Interfaces
 
-When a mock calls a method that doesn't exist on the interface, PhpSpec offers to add the method:
+When a spec calls a method on a double that its interface does not define, the
+error names the interface, `Call to undefined method App\UserRepository::find()`,
+and PhpSpec offers to add the method:
 
 ```
-Method "find" does not exist on App\UserRepository.
-Would you like me to add it? [y/n]
+Do you want me to add method find() to interface App\UserRepository? [Y/n]
 ```
 
 This appends the method signature to the interface.
